@@ -1,40 +1,31 @@
-import { useState } from 'react';
 import { Outlet, Navigate } from 'react-router';
 import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
-import { UserButton } from '@clerk/react';
 import { Loader2 } from 'lucide-react';
-import Sidebar from '../components/Sidebar';
+import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { AppSidebar } from '@/components/app-sidebar';
 
 function DashboardContent() {
-  const [collapsed, setCollapsed] = useState(false);
-
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+    <TooltipProvider delayDuration={0}>
+      <SidebarProvider>
+        <AppSidebar />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top header */}
-        <header className="flex items-center justify-between h-14 border-b px-6 bg-background sticky top-0 z-10">
-          <div />
-          <div className="flex items-center gap-3">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: 'w-8 h-8',
-                },
-              }}
-            />
-          </div>
-        </header>
+        <SidebarInset>
+          {/* Top header */}
+          <header className="flex items-center h-14 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
+            <SidebarTrigger className="-ml-1" />
+          </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="animate-fade-in">
-            <Outlet />
-          </div>
-        </main>
-      </div>
-    </div>
+          {/* Page content */}
+          <main className="flex-1 px-14 py-8 md:px-12 lg:px-28 overflow-auto">
+            <div className="animate-fade-in">
+              <Outlet />
+            </div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
 

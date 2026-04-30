@@ -9,40 +9,71 @@ const mockCustomers = [
   { id: 6, name: 'Daniel Kim', phone: '+60 16-789 0123', email: 'daniel@example.com', source: 'Instagram', lastActive: '1 day ago', conversations: 1 },
 ];
 
-const sourceColors: Record<string, string> = {
-  WhatsApp: 'bg-emerald-500/10 text-emerald-600',
-  Website: 'bg-blue-500/10 text-blue-600',
-  Instagram: 'bg-pink-500/10 text-pink-600',
+const sourceBadge: Record<string, { bg: string; color: string }> = {
+  WhatsApp: { bg: 'rgba(34,197,94,0.15)', color: '#4ade80' },
+  Website: { bg: 'rgba(59,130,246,0.15)', color: '#60a5fa' },
+  Instagram: { bg: 'rgba(236,72,153,0.15)', color: '#f472b6' },
 };
+
+const avatarColors = ['rgba(14,165,233,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,197,94,0.2)', 'rgba(234,179,8,0.2)', 'rgba(168,85,247,0.2)', 'rgba(239,68,68,0.2)'];
 
 export default function CustomersPage() {
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-2xl font-semibold text-foreground tracking-tight">Customers</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
+            Customers
+          </h1>
+          <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-foreground-muted)' }}>
             Your customer directory with contact details and conversation history
           </p>
         </div>
-        <button className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity cursor-pointer border-none">
-          <Plus className="w-4 h-4" />
+        <button
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '8px 16px', fontSize: '13px', fontWeight: 600,
+            borderRadius: '8px', background: 'var(--color-primary)',
+            color: 'var(--color-primary-foreground)', border: 'none',
+            cursor: 'pointer', transition: 'opacity 0.15s',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
+          onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+        >
+          <Plus size={14} />
           Add Customer
         </button>
       </div>
 
       {/* Search & Filter */}
-      <div className="flex gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search
+            size={15}
+            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-foreground-subtle)' }}
+          />
           <input
             type="text"
             placeholder="Search by name, phone, or email..."
-            className="w-full h-10 pl-10 pr-4 text-sm rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 focus:ring-offset-background"
+            style={{
+              width: '100%', height: '38px', paddingLeft: '36px', paddingRight: '14px',
+              fontSize: '13px', borderRadius: '8px',
+              border: '1px solid var(--color-border)',
+              background: 'var(--color-surface)',
+              color: 'var(--color-foreground)',
+              outline: 'none', boxSizing: 'border-box',
+            }}
           />
         </div>
-        <select className="h-10 px-3 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer">
+        <select
+          style={{
+            height: '38px', padding: '0 12px', fontSize: '13px',
+            borderRadius: '8px', border: '1px solid var(--color-border)',
+            background: 'var(--color-surface)', color: 'var(--color-foreground)',
+            cursor: 'pointer', outline: 'none',
+          }}
+        >
           <option>All Sources</option>
           <option>WhatsApp</option>
           <option>Website</option>
@@ -50,64 +81,80 @@ export default function CustomersPage() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="rounded-xl border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      {/* Table card */}
+      <div style={{ background: 'var(--color-surface)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr className="bg-muted/50 border-b border-border">
-              <th className="text-left font-medium text-muted-foreground px-5 py-3">Customer</th>
-              <th className="text-left font-medium text-muted-foreground px-5 py-3">Phone</th>
-              <th className="text-left font-medium text-muted-foreground px-5 py-3">Source</th>
-              <th className="text-left font-medium text-muted-foreground px-5 py-3">Conversations</th>
-              <th className="text-left font-medium text-muted-foreground px-5 py-3">Last Active</th>
+            <tr style={{ background: 'var(--color-surface-hover)' }}>
+              {['Customer', 'Phone', 'Source', 'Conversations', 'Last Active'].map(h => (
+                <th
+                  key={h}
+                  style={{
+                    textAlign: 'left', padding: '10px 20px',
+                    fontSize: '11px', fontWeight: 600,
+                    color: 'var(--color-foreground-muted)',
+                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                    borderBottom: '1px solid var(--color-border)',
+                  }}
+                >
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {mockCustomers.map((customer, index) => (
-              <tr
-                key={customer.id}
-                className={`hover:bg-muted/30 transition-colors cursor-pointer ${
-                  index !== mockCustomers.length - 1 ? 'border-b border-border' : ''
-                }`}
-              >
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {customer.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{customer.name}</p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <Mail className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">{customer.email}</span>
+            {mockCustomers.map((customer, index) => {
+              const badge = sourceBadge[customer.source] || { bg: '#f4f4f5', color: '#71717a' };
+              const avatarBg = avatarColors[index % avatarColors.length];
+              const initials = customer.name.split(' ').map(n => n[0]).join('');
+              return (
+                <tr
+                  key={customer.id}
+                  style={{ borderBottom: index !== mockCustomers.length - 1 ? '1px solid var(--color-border)' : 'none', cursor: 'pointer', transition: 'background 0.12s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <td style={{ padding: '13px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-foreground)' }}>{initials}</span>
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-foreground)' }}>{customer.name}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                          <Mail size={11} color="var(--color-foreground-subtle)" />
+                          <span style={{ fontSize: '12px', color: 'var(--color-foreground-muted)' }}>{customer.email}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center gap-1.5 text-foreground">
-                    <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                    {customer.phone}
-                  </div>
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className={`text-[11px] font-medium px-2 py-1 rounded-md ${sourceColors[customer.source] || ''}`}>
-                    {customer.source}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-foreground">{customer.conversations}</td>
-                <td className="px-5 py-3.5 text-muted-foreground">{customer.lastActive}</td>
-              </tr>
-            ))}
+                  </td>
+                  <td style={{ padding: '13px 20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-foreground)' }}>
+                      <Phone size={13} color="var(--color-foreground-subtle)" />
+                      {customer.phone}
+                    </div>
+                  </td>
+                  <td style={{ padding: '13px 20px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: badge.bg, color: badge.color }}>
+                      {customer.source}
+                    </span>
+                  </td>
+                  <td style={{ padding: '13px 20px', color: 'var(--color-foreground)', fontWeight: 500 }}>
+                    {customer.conversations}
+                  </td>
+                  <td style={{ padding: '13px 20px', color: 'var(--color-foreground-muted)' }}>
+                    {customer.lastActive}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
-      {/* Footer hint */}
-      <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
-        <Users className="w-4 h-4" />
+      {/* Footer */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-foreground-subtle)' }}>
+        <Users size={14} />
         <span>Showing sample data — customers are added automatically from conversations</span>
       </div>
     </div>
