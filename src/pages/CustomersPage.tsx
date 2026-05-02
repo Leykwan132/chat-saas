@@ -1,4 +1,5 @@
-import { Users, Search, Plus, Phone, Mail } from 'lucide-react';
+import { Users, Search, Plus, Phone, Mail, BadgeCheck } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 const mockCustomers = [
   { id: 1, name: 'Sarah Chen', phone: '+60 12-345 6789', email: 'sarah@example.com', source: 'WhatsApp', lastActive: '2 mins ago', conversations: 5 },
@@ -9,13 +10,11 @@ const mockCustomers = [
   { id: 6, name: 'Daniel Kim', phone: '+60 16-789 0123', email: 'daniel@example.com', source: 'Instagram', lastActive: '1 day ago', conversations: 1 },
 ];
 
-const sourceBadge: Record<string, { bg: string; color: string }> = {
-  WhatsApp: { bg: 'rgba(34,197,94,0.15)', color: '#4ade80' },
-  Website: { bg: 'rgba(59,130,246,0.15)', color: '#60a5fa' },
-  Instagram: { bg: 'rgba(236,72,153,0.15)', color: '#f472b6' },
+const sourceBadgeInfo = {
+  WhatsApp: { icon: BadgeCheck },
+  Website: { icon: BadgeCheck },
+  Instagram: { icon: BadgeCheck },
 };
-
-const avatarColors = ['rgba(14,165,233,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,197,94,0.2)', 'rgba(234,179,8,0.2)', 'rgba(168,85,247,0.2)', 'rgba(239,68,68,0.2)'];
 
 export default function CustomersPage() {
   return (
@@ -104,9 +103,9 @@ export default function CustomersPage() {
           </thead>
           <tbody>
             {mockCustomers.map((customer, index) => {
-              const badge = sourceBadge[customer.source] || { bg: '#f4f4f5', color: '#71717a' };
-              const avatarBg = avatarColors[index % avatarColors.length];
-              const initials = customer.name.split(' ').map(n => n[0]).join('');
+              const SourceIcon = sourceBadgeInfo[customer.source as keyof typeof sourceBadgeInfo]?.icon || Globe;
+              const badgeVariant = sourceBadgeInfo[customer.source as keyof typeof sourceBadgeInfo]?.variant || 'outline';
+
               return (
                 <tr
                   key={customer.id}
@@ -116,9 +115,6 @@ export default function CustomersPage() {
                 >
                   <td style={{ padding: '13px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
-                      <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-foreground)' }}>{initials}</span>
-                      </div>
                       <div>
                         <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-foreground)' }}>{customer.name}</p>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
@@ -135,9 +131,10 @@ export default function CustomersPage() {
                     </div>
                   </td>
                   <td style={{ padding: '13px 20px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '6px', background: badge.bg, color: badge.color }}>
+                    <Badge variant={badgeVariant}>
+                      <SourceIcon data-icon="inline-start" />
                       {customer.source}
-                    </span>
+                    </Badge>
                   </td>
                   <td style={{ padding: '13px 20px', color: 'var(--color-foreground)', fontWeight: 500 }}>
                     {customer.conversations}

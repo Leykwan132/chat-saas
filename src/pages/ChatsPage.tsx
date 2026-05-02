@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { MessageSquare, Search, Plus, Send, Phone, Video, MoreVertical, Paperclip } from 'lucide-react';
+import { MessageSquare, Search, Send, MoreVertical, Paperclip, Calendar, Bot, Pin } from 'lucide-react';
+import { ChatRow } from '@/components/ChatRow';
+import type { Chat } from '@/components/ChatRow';
 
 const firstNames = ['Sarah', 'James', 'Maria', 'Alex', 'Emily', 'Daniel', 'Sophia', 'Michael', 'Emma', 'David'];
 const lastNames = ['Chen', 'Wilson', 'Garcia', 'Thompson', 'Davis', 'Kim', 'Martinez', 'Brown', 'Taylor', 'Anderson'];
 const sources = ['WhatsApp', 'Website', 'Instagram'];
+const leadStatuses = ['Hot', 'Warm', 'Cold', 'Interested'];
 const messages = [
   'Hi, I need help with my order...',
   'Thanks for the quick response!',
@@ -23,12 +26,17 @@ const mockChats = Array.from({ length: 100 }, (_, i) => {
   const source = sources[Math.floor(Math.random() * sources.length)];
   const message = messages[Math.floor(Math.random() * messages.length)];
   const unread = Math.random() > 0.8 ? Math.floor(Math.random() * 5) + 1 : 0;
+  const requiresAction = Math.random() > 0.7;
 
   let time;
   if (i < 5) time = `${i + 1}m ago`;
   else if (i < 20) time = `${Math.floor(Math.random() * 50) + 10}m ago`;
   else if (i < 50) time = `${Math.floor(Math.random() * 10) + 1}h ago`;
   else time = `${Math.floor(Math.random() * 5) + 1}d ago`;
+
+  const startDate = new Date(Date.now() - Math.floor(Math.random() * 15552000000)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  const leadStatus = leadStatuses[Math.floor(Math.random() * leadStatuses.length)];
+  const aiMessagesCount = Math.floor(Math.random() * 5) + 1;
 
   return {
     id: i + 1,
@@ -37,6 +45,10 @@ const mockChats = Array.from({ length: 100 }, (_, i) => {
     time,
     unread,
     source,
+    requiresAction,
+    startDate,
+    leadStatus,
+    aiMessagesCount,
   };
 });
 
@@ -51,12 +63,26 @@ const avatarColors = ['rgba(14,165,233,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,1
 export default function ChatsPage() {
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [filterLabel, setFilterLabel] = useState<string>('All');
+  const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
+
+  const togglePin = (id: number) => {
+    setPinnedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const filteredChats = mockChats.filter(chat => {
     if (filterLabel === 'All') return true;
     if (filterLabel === 'Unread') return chat.unread > 0;
+    if (filterLabel === 'Requires action') return chat.requiresAction;
     return chat.source === filterLabel;
   });
+
+  const pinnedChats = filteredChats.filter(c => pinnedIds.has(c.id));
+  const unpinnedChats = filteredChats.filter(c => !pinnedIds.has(c.id));
 
   const selectedChat = mockChats.find(c => c.id === selectedChatId);
   const selectedAvatarBg = selectedChatId ? avatarColors[(selectedChatId - 1) % avatarColors.length] : '';
@@ -66,28 +92,14 @@ export default function ChatsPage() {
     <div style={{ display: 'flex', gap: '24px', height: 'calc(100vh - 120px)', width: '100%' }}>
 
       {/* LEFT COLUMN: Chat List */}
-      <div style={{ width: '380px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ width: '300px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
 
         {/* Header & Search */}
         <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
             <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
               Messages
             </h1>
-            <button
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '8px 14px', fontSize: '13px', fontWeight: 600,
-                borderRadius: '8px', background: 'var(--color-primary)',
-                color: 'var(--color-primary-foreground)', border: 'none',
-                cursor: 'pointer', transition: 'opacity 0.15s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = '0.88')}
-              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-            >
-              <Plus size={14} />
-              New
-            </button>
           </div>
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <Search
@@ -110,7 +122,7 @@ export default function ChatsPage() {
 
           {/* Filter Pills */}
           <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', margin: '0 -4px', paddingLeft: '4px', paddingRight: '4px' }} className="no-scrollbar">
-            {['All', 'Unread', 'WhatsApp', 'Website', 'Instagram'].map(label => {
+            {['All', 'Requires action'].map(label => {
               const isActive = filterLabel === label;
               return (
                 <button
@@ -133,83 +145,39 @@ export default function ChatsPage() {
 
         {/* List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
-          {filteredChats.map((chat, index) => {
-            const badge = sourceBadge[chat.source] || { bg: '#f4f4f5', color: '#71717a' };
-            const avatarBg = avatarColors[index % avatarColors.length];
-            const initials = chat.name.split(' ').map(n => n[0]).join('');
-            const isSelected = selectedChatId === chat.id;
 
-            return (
-              <div
-                key={chat.id}
-                onClick={() => setSelectedChatId(chat.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '14px',
-                  padding: '16px 20px',
-                  borderBottom: index !== filteredChats.length - 1 ? '1px solid var(--color-border)' : 'none',
-                  cursor: 'pointer', transition: 'background 0.12s',
-                  background: isSelected ? 'var(--color-surface-hover)' : 'transparent',
-                }}
-                onMouseEnter={e => (!isSelected && (e.currentTarget.style.background = 'var(--color-surface-hover)'))}
-                onMouseLeave={e => (!isSelected && (e.currentTarget.style.background = 'transparent'))}
-              >
-                {/* Avatar */}
-                <div style={{ width: 42, height: 42, borderRadius: '50%', background: avatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-foreground)' }}>{initials}</span>
-                </div>
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {chat.name}
-                    </span>
-                    <span style={{ fontSize: '12px', color: isSelected ? 'var(--color-foreground)' : 'var(--color-foreground-subtle)' }}>
-                      {chat.time}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <p style={{ margin: 0, fontSize: '13px', color: isSelected ? 'var(--color-foreground)' : 'var(--color-foreground-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
-                      {chat.message}
-                    </p>
-                    {chat.unread > 0 && (
-                      <span style={{ width: 18, height: 18, borderRadius: '50%', background: 'var(--color-primary)', color: 'var(--color-primary-foreground)', fontSize: '11px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {chat.unread}
-                      </span>
-                    )}
-                  </div>
-                </div>
+          {/* Pinned Section */}
+          {pinnedChats.length > 0 && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)' }}>
+                <Pin size={11} color="var(--color-foreground-subtle)" />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pinned</span>
               </div>
-            );
-          })}
+              {pinnedChats.map((chat, index) => (
+                <ChatRow key={chat.id} chat={chat} index={index} total={pinnedChats.length} isSelected={selectedChatId === chat.id} isPinned onSelect={setSelectedChatId} onTogglePin={togglePin} />
+              ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)', borderTop: '1px solid var(--color-border)' }}>
+                <MessageSquare size={11} color="var(--color-foreground-subtle)" />
+                <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>All</span>
+              </div>
+            </>
+          )}
+
+          {/* All / Unpinned Chats */}
+          {unpinnedChats.map((chat, index) => (
+            <ChatRow key={chat.id} chat={chat} index={index} total={unpinnedChats.length} isSelected={selectedChatId === chat.id} isPinned={false} onSelect={setSelectedChatId} onTogglePin={togglePin} />
+          ))}
         </div>
       </div>
 
-      {/* RIGHT COLUMN: Chat Window */}
+      {/* MIDDLE COLUMN: Chat Window */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden' }}>
         {selectedChat ? (
           <>
             {/* Chat Header */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: selectedAvatarBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-foreground)' }}>{selectedInitials}</span>
-                </div>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--color-foreground)' }}>{selectedChat.name}</h2>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#4ade80' }} />
-                    <span style={{ fontSize: '12px', color: 'var(--color-foreground-muted)' }}>Online</span>
-                    <span style={{ fontSize: '12px', color: 'var(--color-foreground-subtle)', margin: '0 4px' }}>•</span>
-                    <span style={{ fontSize: '11px', fontWeight: 600, padding: '2px 6px', borderRadius: '4px', background: sourceBadge[selectedChat.source].bg, color: sourceBadge[selectedChat.source].color }}>
-                      {selectedChat.source}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--color-foreground)' }}>{selectedChat.name}</h2>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--color-foreground-muted)' }}>
-                <Video size={18} style={{ cursor: 'pointer' }} />
-                <Phone size={18} style={{ cursor: 'pointer' }} />
                 <MoreVertical size={18} style={{ cursor: 'pointer' }} />
               </div>
             </div>
@@ -261,6 +229,44 @@ export default function ChatsPage() {
           </div>
         )}
       </div>
+
+      {/* RIGHT COLUMN: Details */}
+      {selectedChat && (
+        <div style={{ width: '300px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
+            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-foreground)' }}>Details</h2>
+          </div>
+
+          {/* Body */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>Start date</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-foreground)', fontSize: '13px' }}>
+                  <Calendar size={14} color="var(--color-foreground-muted)" /> {selectedChat.startDate}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>Lead status</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 500, color: 'var(--color-foreground)' }}>
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: selectedChat.leadStatus === 'Hot' ? '#ef4444' : selectedChat.leadStatus === 'Warm' ? '#f59e0b' : selectedChat.leadStatus === 'Cold' ? '#3b82f6' : '#8b5cf6' }} />
+                  {selectedChat.leadStatus}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>AI Agent</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--color-foreground)' }}>
+                  <Bot size={14} color="var(--color-foreground-muted)" />
+                  Followed up {selectedChat.aiMessagesCount} times
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

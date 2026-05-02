@@ -2,23 +2,23 @@ import { BarChart3, TrendingUp, TrendingDown, MessageSquare, SmilePlus, Meh, Fro
 
 const sentimentData = [
   { label: 'Positive', percentage: 62, icon: SmilePlus, color: '#16a34a', bg: '#16a34a', barBg: '#dcfce7' },
-  { label: 'Neutral',  percentage: 28, icon: Meh,       color: '#d97706', bg: '#d97706', barBg: '#fef3c7' },
-  { label: 'Negative', percentage: 10, icon: Frown,     color: '#dc2626', bg: '#dc2626', barBg: '#fee2e2' },
+  { label: 'Neutral', percentage: 28, icon: Meh, color: '#d97706', bg: '#d97706', barBg: '#fef3c7' },
+  { label: 'Negative', percentage: 10, icon: Frown, color: '#dc2626', bg: '#dc2626', barBg: '#fee2e2' },
 ];
 
 const topTopics = [
-  { topic: 'Shipping & Delivery',  count: 142, trend: 'up',   change: '+12%' },
-  { topic: 'Product Quality',      count: 98,  trend: 'up',   change: '+8%' },
-  { topic: 'Refunds & Returns',    count: 76,  trend: 'down', change: '-3%' },
-  { topic: 'Account Issues',       count: 54,  trend: 'up',   change: '+5%' },
-  { topic: 'Pricing Questions',    count: 43,  trend: 'down', change: '-7%' },
-  { topic: 'Feature Requests',     count: 31,  trend: 'up',   change: '+15%' },
+  { topic: 'Shipping & Delivery', count: 142, trend: 'up', change: '+12%' },
+  { topic: 'Product Quality', count: 98, trend: 'up', change: '+8%' },
+  { topic: 'Refunds & Returns', count: 76, trend: 'down', change: '-3%' },
+  { topic: 'Account Issues', count: 54, trend: 'up', change: '+5%' },
+  { topic: 'Pricing Questions', count: 43, trend: 'down', change: '-7%' },
+  { topic: 'Feature Requests', count: 31, trend: 'up', change: '+15%' },
 ];
 
 const overviewCards = [
   { label: 'Total Conversations', value: '1,248', change: '+12.5%', trend: 'up' as const },
-  { label: 'Avg. Response Time',  value: '2.4m',  change: '-18.2%', trend: 'down' as const },
-  { label: 'Resolution Rate',     value: '94.2%', change: '+3.1%',  trend: 'up' as const },
+  { label: 'Avg. Response Time', value: '2.4m', change: '-18.2%', trend: 'down' as const },
+  { label: 'Resolution Rate', value: '94.2%', change: '+3.1%', trend: 'up' as const },
   { label: 'Customer Satisfaction', value: '4.7/5', change: '+0.3', trend: 'up' as const },
 ];
 
