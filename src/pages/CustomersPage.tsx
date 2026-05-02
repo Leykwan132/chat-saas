@@ -103,9 +103,7 @@ export default function CustomersPage() {
           </thead>
           <tbody>
             {mockCustomers.map((customer, index) => {
-              const SourceIcon = sourceBadgeInfo[customer.source as keyof typeof sourceBadgeInfo]?.icon || Globe;
-              const badgeVariant = sourceBadgeInfo[customer.source as keyof typeof sourceBadgeInfo]?.variant || 'outline';
-
+              const SourceIcon = sourceBadgeInfo[customer.source as keyof typeof sourceBadgeInfo]?.icon;
               return (
                 <tr
                   key={customer.id}
@@ -131,7 +129,7 @@ export default function CustomersPage() {
                     </div>
                   </td>
                   <td style={{ padding: '13px 20px' }}>
-                    <Badge variant={badgeVariant}>
+                    <Badge variant="outline">
                       <SourceIcon data-icon="inline-start" />
                       {customer.source}
                     </Badge>
