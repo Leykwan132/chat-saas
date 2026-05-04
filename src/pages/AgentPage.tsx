@@ -1,11 +1,10 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { Link, useNavigate, useParams } from 'react-router';
 import {
   Bot,
   Check,
   ChevronDown,
-  Send,
   Globe,
   FileText,
   AlignLeft,
@@ -41,6 +40,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Conversation,
+  ConversationContent,
+  ConversationEmptyState,
+  ConversationScrollButton,
+} from "@/components/ai-elements/conversation";
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@/components/ai-elements/message";
+import {
+  PromptInput,
+  type PromptInputMessage,
+  PromptInputTextarea,
+  PromptInputSubmit,
+} from "@/components/ai-elements/prompt-input";
 
 function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   const [visibleText] = useSmoothText(text, { startStreaming: status === "streaming" });
@@ -92,11 +108,10 @@ function TestChatWindow({
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [expandOpen, setExpandOpen] = useState(false);
   const [reserveSpace, setReserveSpace] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesEndDialogRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const inputDialogRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputDialogRef = useRef<HTMLTextAreaElement>(null);
   const threadInitRef = useRef(false);
+  const shouldFocusAfterSend = useRef(false);
 
   const resetThreadMutation = useMutation(api.chat.streaming.resetThread);
   const sendMessageMutation = useMutation(api.chat.streaming.sendMessage).withOptimisticUpdate((store, args) => {
@@ -147,43 +162,32 @@ function TestChatWindow({
   }, [agentId, threadId, resetThreadMutation, navigate]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (expandOpen) {
-      messagesEndDialogRef.current?.scrollIntoView({ behavior: "auto" });
+    if (!isSending && shouldFocusAfterSend.current) {
+      inputRef.current?.focus();
+      inputDialogRef.current?.focus();
+      shouldFocusAfterSend.current = false;
     }
-  }, [messages, expandOpen]);
-
-  useEffect(() => {
-    if (status !== "LoadingMore") return;
-    const interval = setInterval(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-      messagesEndDialogRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-    }, 100);
-    return () => clearInterval(interval);
-  }, [status]);
-
-  useEffect(() => {
-    if (!isSending) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
-    messagesEndDialogRef.current?.scrollIntoView({ behavior: "auto", block: "end" });
   }, [isSending]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !threadId || isSending) return;
-    const prompt = input.trim();
+  const handleSend = useCallback(async (promptText?: string) => {
+    const prompt = (promptText ?? input).trim();
+    if (!prompt || !threadId || isSending) return;
     setInput("");
     setIsSending(true);
+    shouldFocusAfterSend.current = true;
     try {
       await sendMessageMutation({ threadId, agentId, prompt });
     } finally {
       setIsSending(false);
-      inputRef.current?.focus();
-      inputDialogRef.current?.focus();
     }
-  };
+  }, [input, threadId, isSending, agentId, sendMessageMutation]);
+
+  const handleSubmit = useCallback(
+    (message: PromptInputMessage) => {
+      handleSend(message.text);
+    },
+    [handleSend]
+  );
 
   const handleReset = () => {
     if (!threadId) return;
@@ -199,84 +203,78 @@ function TestChatWindow({
     navigate(`/dashboard/${agentId}/agent/${newThreadId}`, { replace: true });
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const chatMessages = (endRef?: React.RefObject<HTMLDivElement | null>) => (
-    <div className="flex-1 overflow-y-auto p-4 space-y-6">
-      {messages.length === 0 && (
-        <div className="flex items-center justify-center h-full">
-          <p className="text-sm text-muted-foreground">
-            Send a message to test your agent.
-          </p>
-        </div>
-      )}
-      {messages.map((message) => (
-        <div
-          key={message.key}
-          className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-        >
-          {message.role !== "user" ? (
-            <div className="flex items-start gap-2">
-              <AnimatedBotIcon isAnimating={message.status === "streaming" || message.status === "pending"} />
-              <div className="text-base text-foreground leading-relaxed pt-1 prose prose-sm dark:prose-invert max-w-none">
-                <StreamingMarkdown text={message.text} status={message.status} />
+  const renderMessages = () => (
+    <>
+      <ConversationContent>
+        {messages.length === 0 ? (
+          <ConversationEmptyState
+            title="No messages yet"
+            description="Send a message to test your agent."
+          />
+        ) : (
+          messages.map((message) => (
+            <Message from={message.role} key={message.key}>
+              <MessageContent>
+                {message.role !== "user" ? (
+                  <div className="flex items-start gap-2">
+                    <AnimatedBotIcon
+                      isAnimating={
+                        message.status === "streaming" ||
+                        message.status === "pending"
+                      }
+                    />
+                    <MessageResponse>
+                      <StreamingMarkdown
+                        text={message.text}
+                        status={message.status}
+                      />
+                    </MessageResponse>
+                  </div>
+                ) : (
+                  <div className=" rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground ml-auto">
+                    {message.text}
+                  </div>
+                )}
+              </MessageContent>
+            </Message>
+          ))
+        )}
+        {status === "LoadingMore" && messages.length > 0 && (
+          <Message from="assistant">
+            <MessageContent>
+              <div className="flex items-start gap-2">
+                <AnimatedBotIcon isAnimating={true} />
+                <div className="pt-1">
+                  <Spinner className="size-4" />
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="max-w-[80%] rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground">
-              {message.text}
-            </div>
-          )}
-        </div>
-      ))}
-      {status === "LoadingMore" && messages.length > 0 && (
-        <div className="flex justify-start">
-          <div className="flex items-start gap-2">
-            <AnimatedBotIcon isAnimating={true} />
-            <div className="pt-1">
-              <Spinner className="size-4" />
-            </div>
-          </div>
-        </div>
-      )}
-      {reserveSpace && (
-        <div className="h-[30vh] shrink-0" />
-      )}
-      <div ref={endRef} className="h-0 shrink-0" />
-    </div>
+            </MessageContent>
+          </Message>
+        )}
+      </ConversationContent>
+      <ConversationScrollButton />
+    </>
   );
 
-  const chatInput = (ref: React.RefObject<HTMLInputElement | null>) => (
+  const renderInput = (ref: React.RefObject<HTMLTextAreaElement | null>) => (
     <div className="border-t border-border p-4">
-      <div className="relative flex items-center">
-        <Input
-          ref={ref}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a message..."
-          disabled={isSending}
-          className="pr-10"
-        />
-        <Button
-          size="icon-sm"
-          variant="ghost"
-          onClick={handleSend}
-          disabled={!input.trim() || isSending}
-          className="absolute right-1 top-1/2 -translate-y-1/2"
-        >
-          {isSending ? (
-            <Spinner className="size-4" />
-          ) : (
-            <Send className="size-4" />
-          )}
-        </Button>
-      </div>
+      <PromptInput onSubmit={handleSubmit}>
+        <div className="relative flex items-center">
+          <PromptInputTextarea
+            inputRef={ref}
+            value={input}
+            onChange={(e) => setInput(e.currentTarget.value)}
+            placeholder="Type a message..."
+            disabled={isSending}
+            className="pr-10"
+          />
+          <PromptInputSubmit
+            status={isSending ? "streaming" : "ready"}
+            disabled={!input.trim() || isSending}
+            className="absolute bottom-1 right-1"
+          />
+        </div>
+      </PromptInput>
     </div>
   );
 
@@ -313,8 +311,10 @@ function TestChatWindow({
             </div>
           </div>
 
-          {chatMessages(messagesEndRef)}
-          {chatInput(inputRef)}
+          <Conversation>
+            {renderMessages()}
+          </Conversation>
+          {renderInput(inputRef)}
         </div>
 
         <p className="mt-2 text-xs text-muted-foreground">
@@ -360,8 +360,10 @@ function TestChatWindow({
               Test your agent
             </DialogTitle>
           </div>
-          {chatMessages(messagesEndDialogRef)}
-          {chatInput(inputDialogRef)}
+          <Conversation>
+            {renderMessages()}
+          </Conversation>
+          {renderInput(inputDialogRef)}
         </DialogContent>
       </Dialog>
     </>
