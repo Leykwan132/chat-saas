@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, Search, Send, MoreVertical, Paperclip, Calendar, Bot, Pin } from 'lucide-react';
 import { ChatRow } from '@/components/ChatRow';
-import type { Chat } from '@/components/ChatRow';
 
 const firstNames = ['Sarah', 'James', 'Maria', 'Alex', 'Emily', 'Daniel', 'Sophia', 'Michael', 'Emma', 'David'];
 const lastNames = ['Chen', 'Wilson', 'Garcia', 'Thompson', 'Davis', 'Kim', 'Martinez', 'Brown', 'Taylor', 'Anderson'];
@@ -51,12 +50,6 @@ const mockChats = Array.from({ length: 100 }, (_, i) => {
     aiMessagesCount,
   };
 });
-
-const sourceBadge: Record<string, { bg: string; color: string }> = {
-  WhatsApp: { bg: 'rgba(34,197,94,0.15)', color: '#4ade80' },
-  Website: { bg: 'rgba(59,130,246,0.15)', color: '#60a5fa' },
-  Instagram: { bg: 'rgba(236,72,153,0.15)', color: '#f472b6' },
-};
 
 const avatarColors = ['rgba(14,165,233,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,197,94,0.2)', 'rgba(234,179,8,0.2)', 'rgba(168,85,247,0.2)'];
 

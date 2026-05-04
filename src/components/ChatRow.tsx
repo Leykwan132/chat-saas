@@ -6,16 +6,6 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 
-const avatarColors = [
-  { bg: 'rgba(14,165,233,0.18)', text: '#38bdf8' },
-  { bg: 'rgba(236,72,153,0.18)', text: '#f472b6' },
-  { bg: 'rgba(34,197,94,0.18)', text: '#4ade80' },
-  { bg: 'rgba(234,179,8,0.18)', text: '#fbbf24' },
-  { bg: 'rgba(168,85,247,0.18)', text: '#c084fc' },
-  { bg: 'rgba(239,68,68,0.18)', text: '#f87171' },
-  { bg: 'rgba(20,184,166,0.18)', text: '#2dd4bf' },
-];
-
 export type Chat = {
   id: number;
   name: string;

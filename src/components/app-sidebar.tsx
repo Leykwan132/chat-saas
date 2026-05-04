@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router';
 import { useUser, UserButton } from '@clerk/react';
 import { MessageSquare, Bot, Users, BarChart3, Sparkles } from 'lucide-react';
+import type { Doc } from '../../convex/_generated/dataModel';
 import {
   Sidebar,
   SidebarContent,
@@ -16,12 +17,14 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 
-const navItems = [
-  { to: '/dashboard',           icon: MessageSquare, label: 'Chats',     end: true },
-  { to: '/dashboard/agents',    icon: Bot,           label: 'AI Agents'            },
-  { to: '/dashboard/customers', icon: Users,         label: 'Customers'            },
-  { to: '/dashboard/analytics', icon: BarChart3,     label: 'Analytics'            },
-];
+function getNavItems(agentId: string) {
+  return [
+    { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true },
+    { to: `/dashboard/${agentId}/agent`, icon: Bot, label: 'AI Agent' },
+    { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers' },
+    { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
+  ];
+}
 
 function UserFooter() {
   const { user } = useUser();
@@ -51,7 +54,13 @@ function UserFooter() {
   );
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
+  agent: Doc<'agents'>;
+};
+
+export function AppSidebar({ agent, ...props }: AppSidebarProps) {
+  const navItems = getNavItems(agent._id);
+
   return (
     <Sidebar collapsible="icon" {...props}>
       {/* Logo */}
@@ -59,13 +68,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
+              <a href="/workspace">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Sparkles className="size-4" />
                 </div>
-                <div className="flex flex-col gap-0.5 leading-none">
+                <div className="flex min-w-0 flex-col gap-0.5 leading-none">
                   <span className="font-semibold text-[15px] tracking-tight">ChatSaaS</span>
-                  <span className="text-xs text-sidebar-foreground/60">Dashboard</span>
+                  <span className="truncate text-xs text-sidebar-foreground/60">{agent.name}</span>
                 </div>
               </a>
             </SidebarMenuButton>
