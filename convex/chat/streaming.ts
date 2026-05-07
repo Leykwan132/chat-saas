@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalAction } from "../_generated/server";
 import type { QueryCtx, MutationCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { components } from "../_generated/api";
 import {
@@ -10,28 +11,70 @@ import {
   syncStreams,
   Agent,
   stepCountIs,
+  createTool,
 } from "@convex-dev/agent";
 import { vStreamArgs } from "@convex-dev/agent";
 import { google } from "@ai-sdk/google";
 import { paginationOptsValidator } from "convex/server";
+import { z } from "zod";
+import { getAuthContext } from "../authUtils";
 
-/* ── Helpers ──────────────────────────────────────────── */
+function buildAgent(
+  agent: { name: string; model: string; systemPrompt: string },
+  agentId: Id<"agents">,
+  enableCitations: boolean = false,
+) {
+  const tools = {
+    fetchContext: createTool({
+      description:
+        "MUST be called before answering ANY user question. Searches the knowledge base (uploaded documents, Q&A pairs, web references) for relevant context. Always call this first — even if you think you know the answer.",
+      inputSchema: z.object({
+        query: z.string().describe("The exact user original query"),
+      }),
+      execute: async (ctx, { query }) => {
+        const result = await ctx.runAction(internal.cloudflare.internalSearch, {
+          agentId,
+          query,
+        });
+        return result;
+      },
+    }),
+  };
 
-async function getAuth(ctx: QueryCtx | MutationCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  const orgId =
-    (identity as Record<string, unknown>).o?.id as string | undefined ??
-    "personal";
-  return { userId: identity.subject, orgId };
-}
+  const citationBlock = enableCitations
+    ? `\n\nWhen responding, include:
+- A comprehensive paragraph with inline citations marked as [1], [2], etc.
+- 2-3 citations with realistic source information
+- Each citation MUST have a {title: "", url: "", description: ""} JSON object. If ANY of them doesn't exist, leave it as empty string "" for that key. 
+- If it's a file, the URL value must start with https://chat-saas.com/{{fileName}}
+- The description key MUST contain a short summary of the content from the source. 
+- Make the content informative and the sources credible
+Format citations as numbered references within the text. Use only sources found via \`fetchContext\` — do not fabricate sources.
+- This is citations section, not references. Must use the keyword Citations.`
+    : "";
 
-function buildAgent(agent: { name: string; model: string; systemPrompt: string }) {
+  const instructions = `${agent.systemPrompt}
+
+  ## Tool Usage — REQUIRED
+  You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
+
+  ### Steps for every response:
+  1. Call \`fetchContext\` with the user's original query
+  2. Read the returned context carefully
+  3. If relevant context is found: base your answer on it
+  4. If no relevant context is found: explicitly tell the user ("I couldn't find relevant information in the company knowledge base") only then supplement with general knowledge
+  ${citationBlock}`;
+
   return new Agent(components.agent, {
     name: agent.name,
     languageModel: google(agent.model),
-    instructions: agent.systemPrompt,
+    instructions,
     stopWhen: stepCountIs(6),
+    // rawRequestResponseHandler: async (ctx, { request, response }) => {
+    //   console.log("request", request);
+    //   console.log("response", response);
+    // },
+    tools,
   });
 }
 
@@ -43,12 +86,12 @@ export const resetThread = mutation({
     existingThreadId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuth(ctx);
+    const { userId, orgId } = await getAuthContext(ctx);
 
     if (args.existingThreadId) {
       const agentDoc = await ctx.db.get(args.agentId);
       if (agentDoc) {
-        const configuredAgent = buildAgent(agentDoc);
+        const configuredAgent = buildAgent(agentDoc, args.agentId);
         await configuredAgent.deleteThreadAsync(ctx, {
           threadId: args.existingThreadId,
         });
@@ -85,6 +128,7 @@ export const sendMessage = mutation({
     threadId: v.string(),
     agentId: v.id("agents"),
     prompt: v.string(),
+    enableCitations: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const { messageId } = await saveMessage(ctx, components.agent, {
@@ -99,6 +143,7 @@ export const sendMessage = mutation({
         threadId: args.threadId,
         agentId: args.agentId,
         promptMessageId: messageId,
+        enableCitations: args.enableCitations,
       },
     );
 
@@ -111,6 +156,7 @@ export const generateResponseAsync = internalAction({
     threadId: v.string(),
     agentId: v.id("agents"),
     promptMessageId: v.string(),
+    enableCitations: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
     const agent = await ctx.runQuery(internal.agents.internalGet, {
@@ -118,7 +164,7 @@ export const generateResponseAsync = internalAction({
     });
     if (!agent) throw new Error("Agent not found");
 
-    const configuredAgent = buildAgent(agent);
+    const configuredAgent = buildAgent(agent, args.agentId, args.enableCitations ?? false);
     const result = await configuredAgent.streamText(ctx, { threadId: args.threadId }, { promptMessageId: args.promptMessageId },
       {
         saveStreamDeltas: {

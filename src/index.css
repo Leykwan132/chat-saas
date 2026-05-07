@@ -79,6 +79,17 @@ body {
     animation: spin 0.8s linear infinite;
 }
 
+/* ── Shimmer ── */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
     width: 6px;

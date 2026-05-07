@@ -10,7 +10,10 @@
 
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agents from "../agents.js";
+import type * as authUtils from "../authUtils.js";
 import type * as chat_streaming from "../chat/streaming.js";
+import type * as cloudflare from "../cloudflare.js";
+import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as messages from "../messages.js";
 
 import type {
@@ -22,7 +25,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   agentRuntime: typeof agentRuntime;
   agents: typeof agents;
+  authUtils: typeof authUtils;
   "chat/streaming": typeof chat_streaming;
+  cloudflare: typeof cloudflare;
+  knowledgeBase: typeof knowledgeBase;
   messages: typeof messages;
 }>;
 

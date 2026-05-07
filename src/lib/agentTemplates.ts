@@ -1,5 +1,7 @@
 export type AgentTemplateKey = 'blank' | 'sales' | 'support';
 
+import { TEMPLATE_PROMPTS } from './utils';
+
 export const GOOGLE_MODELS = [
   { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
   { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
@@ -11,21 +13,18 @@ export const AGENT_TEMPLATES: Record<
   { label: string; description: string; prompt: string }
 > = {
   blank: {
-    label: 'Blank',
+    label: 'General',
     description: 'A general-purpose assistant ready for custom instructions.',
-    prompt:
-      'You are a helpful AI agent. Answer clearly, ask concise follow-up questions when needed, and stay aligned with the business context provided by the user.',
+    prompt: TEMPLATE_PROMPTS.general,
   },
   sales: {
     label: 'Sales Agent',
     description: 'Qualifies leads, handles objections, and drives next steps.',
-    prompt:
-      'You are a sales AI agent. Qualify leads, understand customer needs, explain value clearly, handle objections with empathy, and guide prospects toward the next best action.',
+    prompt: TEMPLATE_PROMPTS.sales,
   },
   support: {
     label: 'Support Agent',
     description: 'Resolves customer issues with patient, practical guidance.',
-    prompt:
-      'You are a support AI agent. Resolve customer issues patiently, ask for missing details, explain steps clearly, and escalate when a request requires a human teammate.',
+    prompt: TEMPLATE_PROMPTS.support,
   },
 };

@@ -1,12 +1,10 @@
 import { query } from "./_generated/server";
+import { getAuthContext } from "./authUtils";
 
 export const getForCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (identity === null) {
-      throw new Error("Not authenticated");
-    }
+    const { identity } = await getAuthContext(ctx);
 
     return await ctx.db
       .query("messages")

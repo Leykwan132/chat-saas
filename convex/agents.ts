@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
+import { getAuthContext } from "./authUtils";
 
 const DEFAULT_MODEL = "gemini-2.5-flash";
-const PERSONAL_ORG_ID = "personal";
 
 const templateKeyValidator = v.union(
   v.literal("blank"),
@@ -19,28 +19,6 @@ const TEMPLATE_PROMPTS = {
   support: "You are a support AI agent. Resolve customer issues patiently, ask for missing details, explain steps clearly, and escalate when a request requires a human teammate.",
 } as const;
 
-type AuthContext = {
-  userId: string;
-  orgId: string;
-};
-
-async function getAuthContext(
-  ctx: QueryCtx | MutationCtx,
-  activeOrgId: string | null,
-): Promise<AuthContext> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity === null) {
-    throw new Error("Not authenticated");
-  }
-
-  const identityOrgId = typeof identity.org_id === "string" ? identity.org_id : null;
-
-  return {
-    userId: identity.tokenIdentifier,
-    orgId: activeOrgId ?? identityOrgId ?? PERSONAL_ORG_ID,
-  };
-}
-
 function getPrompt(templateKey: keyof typeof TEMPLATE_PROMPTS, systemPrompt: string | null) {
   const trimmedPrompt = systemPrompt?.trim();
   if (trimmedPrompt) {
@@ -50,13 +28,10 @@ function getPrompt(templateKey: keyof typeof TEMPLATE_PROMPTS, systemPrompt: str
 }
 
 async function getOwnedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">) {
-  const identity = await ctx.auth.getUserIdentity();
-  if (identity === null) {
-    throw new Error("Not authenticated");
-  }
+  const { userId } = await getAuthContext(ctx);
 
   const agent = await ctx.db.get(agentId);
-  if (agent === null || agent.userId !== identity.tokenIdentifier) {
+  if (agent === null || agent.userId !== userId) {
     return null;
   }
 
@@ -122,6 +97,7 @@ export const create = mutation({
       templateKey: args.templateKey,
       websiteUrls: args.websiteUrls ?? [],
       contacts: args.contacts?.trim() || undefined,
+      fileSize: 0,
       userId,
       orgId,
       createdAt: now,
