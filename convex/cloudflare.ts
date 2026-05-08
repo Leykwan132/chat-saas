@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
+import { cfUploadPool, cfDeletePool, webScraperPool, linkDiscovererPool } from "./workpool";
 import Cloudflare from "cloudflare";
 
 const cfAccountId = process.env.CF_ACCOUNT_ID!;
@@ -18,7 +19,7 @@ const brClient = new Cloudflare({
   apiToken: process.env.CF_BROWSER_RUN_TOKEN!,
 });
 
-async function uploadToCF(
+export async function uploadToCF(
   content: File,
   metadata: { agent_id: string, org_id: string, user_id: string },
 ): Promise<string> {
@@ -37,7 +38,7 @@ async function uploadToCF(
   return response.id;
 }
 
-async function deleteFromCF(cfItemId: string): Promise<void> {
+export async function deleteFromCF(cfItemId: string): Promise<void> {
   try {
     await client.aiSearch.namespaces.instances.items.delete(
       cfNamespace,
@@ -52,9 +53,12 @@ async function deleteFromCF(cfItemId: string): Promise<void> {
 
 // ─── Browser rendering helpers ───────────────────────────
 
-async function scrapeLinks(url: string): Promise<string[]> {
+
+
+export async function scrapeLinks(url: string): Promise<string[]> {
   const result = await brClient.browserRendering.links.create({
     account_id: cfAccountId,
+    excludeExternalLinks: true,
     url,
   });
 
@@ -65,7 +69,7 @@ async function scrapeLinks(url: string): Promise<string[]> {
   return result;
 }
 
-async function scrapeMarkdown(url: string): Promise<string> {
+export async function scrapeMarkdown(url: string): Promise<string> {
   const result = await brClient.browserRendering.markdown.create({
     account_id: cfAccountId,
     url,
@@ -526,25 +530,312 @@ export const deleteWebEntry = action({
   },
 });
 
+export const deleteWebEntryGroup = action({
+  args: { parentId: v.id("webEntries") },
+  handler: async (ctx, args) => {
+    const parent = await ctx.runQuery(internal.knowledgeBase.internalGetWebEntry, {
+      entryId: args.parentId,
+    });
+    if (!parent) throw new Error("Parent entry not found");
+
+    const children = await ctx.runQuery(internal.knowledgeBase.internalGetWebEntriesByParentId, {
+      parentId: args.parentId,
+    });
+
+    const allEntries = [parent, ...children];
+
+    // Mark all as deleting and enqueue CF deletion for each
+    for (const entry of allEntries) {
+      await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+        entryId: entry._id,
+        status: "deleting",
+      });
+
+      await cfDeletePool.enqueueAction(ctx, internal.workpool.cfDeleteWorker, {
+        cfItemId: entry.cfItemId,
+      }, {
+        onComplete: internal.knowledgeBase.cfDeleteComplete,
+        context: { entryId: entry._id, entryType: "web" },
+      });
+    }
+  },
+});
+
 export const deleteQAEntry = action({
   args: { entryId: v.id("qaEntries") },
   handler: async (ctx, args) => {
-    const entry = await ctx.runQuery(internal.knowledgeBase.internalGetQAEntry, {
-      entryId: args.entryId,
-    });
+    const entry = await ctx.runQuery(internal.knowledgeBase.internalGetQAEntry, { entryId: args.entryId });
     if (!entry) throw new Error("Entry not found");
-
     if (entry.cfItemId) {
       await deleteFromCF(entry.cfItemId);
     }
+    await ctx.runMutation(internal.knowledgeBase.internalRemoveQAEntry, { entryId: args.entryId });
+  },
+});
 
-    await ctx.runMutation(internal.knowledgeBase.internalRemoveQAEntry, {
+// ─── Async upload/delete (workpool-based) ─────────────────
+
+export const enqueueTextUpload = action({
+  args: {
+    agentId: v.id("agents"),
+    title: v.string(),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const auth = await getAuthContext(ctx);
+    const title = args.title.trim();
+    const content = args.content.trim();
+    if (!title || !content) throw new Error("Title and content are required");
+
+    const fileSize = new Blob([title + content]).size;
+    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreTextEntry, {
+      agentId: args.agentId,
+      title,
+      content,
+      fileSize,
+      userId: auth.userId,
+      orgId: auth.orgId,
+    });
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+      entryId,
+      status: "queued",
+    });
+
+    await cfUploadPool.enqueueAction(ctx, internal.workpool.cfUploadWorker, {
+      entryId,
+      entryType: "text",
+      title,
+      content,
+      agentId: args.agentId,
+      orgId: auth.orgId,
+      userId: auth.userId,
+    }, {
+      onComplete: internal.knowledgeBase.cfUploadComplete,
+      context: { entryId, entryType: "text" },
+      retry: true
+    });
+
+    return { entryId };
+  },
+});
+
+export const enqueueFileUpload = action({
+  args: {
+    agentId: v.id("agents"),
+    fileBytes: v.bytes(),
+    fileName: v.string(),
+    title: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    console.log('enqueueing file upload', args);
+    const auth = await getAuthContext(ctx);
+    const fileName = args.fileName.trim();
+    if (!fileName) throw new Error("File name is required");
+
+    console.log('filename', fileName)
+    console.log('args.fileBytes', args.fileBytes)
+    const MAX_FILE_SIZE = 4 * 1024 * 1024;
+    if (args.fileBytes.byteLength > MAX_FILE_SIZE) {
+      throw new Error("File too big. Limit is 4 MB per file.");
+    }
+
+    const fileContent = new File([args.fileBytes], fileName);
+    const fileSize = fileContent.size;
+    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreFileEntry, {
+      agentId: args.agentId,
+      title: args.title,
+      fileName,
+      fileSize,
+      userId: auth.userId,
+      orgId: auth.orgId,
+    });
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+      entryId,
+      status: "queued",
+    });
+
+    await cfUploadPool.enqueueAction(ctx, internal.workpool.cfUploadWorker, {
+      entryId,
+      entryType: "file",
+      fileName,
+      fileBytes: args.fileBytes,
+      agentId: args.agentId,
+      orgId: auth.orgId,
+      userId: auth.userId,
+    }, {
+      onComplete: internal.knowledgeBase.cfUploadComplete,
+      context: { entryId, entryType: "file" },
+      retry: true
+    });
+
+    return { entryId, fileSize };
+  },
+});
+
+export const enqueueQAUpload = action({
+  args: {
+    agentId: v.id("agents"),
+    question: v.string(),
+    answer: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const auth = await getAuthContext(ctx);
+    const question = args.question.trim();
+    const answer = args.answer.trim();
+    if (!question || !answer) throw new Error("Question and answer are required");
+
+    const fileSize = new Blob([question + answer]).size;
+    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreQAEntry, {
+      agentId: args.agentId,
+      question,
+      answer,
+      fileSize,
+      userId: auth.userId,
+      orgId: auth.orgId,
+    });
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+      entryId,
+      status: "queued",
+    });
+
+    await cfUploadPool.enqueueAction(ctx, internal.workpool.cfUploadWorker, {
+      entryId,
+      entryType: "qa",
+      question,
+      answer,
+      agentId: args.agentId,
+      orgId: auth.orgId,
+      userId: auth.userId,
+    }, {
+      onComplete: internal.knowledgeBase.cfUploadComplete,
+      context: { entryId, entryType: "qa" },
+      retry: true
+    });
+
+    return { entryId };
+  },
+});
+
+export const enqueueWebScrape = action({
+  args: {
+    agentId: v.id("agents"),
+    url: v.string(),
+    parentUrl: v.optional(v.string()),
+    parentId: v.optional(v.id("webEntries")),
+    userId: v.optional(v.string()),
+    orgId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const url = args.url.trim();
+    if (!url) throw new Error("URL is required");
+
+    // When called from scheduler, userId/orgId are passed directly (no auth context available)
+    let userId = args.userId;
+    let orgId = args.orgId ?? null;
+    if (!userId) {
+      const auth = await getAuthContext(ctx);
+      userId = auth.userId;
+      orgId = auth.orgId;
+    }
+
+    const fileSize = new Blob([url]).size;
+    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreWebEntry, {
+      agentId: args.agentId,
+      url,
+      fileSize,
+      parentUrl: args.parentUrl,
+      parentId: args.parentId,
+      userId: userId!,
+      orgId: orgId!,
+    });
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+      entryId,
+      status: "gettingMarkdown",
+    });
+
+    await webScraperPool.enqueueAction(ctx, internal.workpool.webScraperWorker, {
+      entryId,
+      url,
+      parentUrl: args.parentUrl,
+      agentId: args.agentId,
+      orgId: orgId ?? "",
+      userId: userId!,
+    }, {
+      onComplete: internal.knowledgeBase.webScraperComplete,
+      context: { entryId },
+      retry: true
+    });
+
+    return { entryId, url };
+  },
+});
+
+export const enqueueDelete = action({
+  args: {
+    entryId: v.union(
+      v.id("textEntries"),
+      v.id("fileEntries"),
+      v.id("webEntries"),
+      v.id("qaEntries"),
+    ),
+    entryType: v.union(
+      v.literal("text"),
+      v.literal("file"),
+      v.literal("web"),
+      v.literal("qa"),
+    ),
+    cfItemId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
       entryId: args.entryId,
+      status: "deleting",
+    });
+
+    await cfDeletePool.enqueueAction(ctx, internal.workpool.cfDeleteWorker, {
+      cfItemId: args.cfItemId,
+    }, {
+      onComplete: internal.knowledgeBase.cfDeleteComplete,
+      context: { entryId: args.entryId, entryType: args.entryType },
     });
   },
 });
 
-// ─── Job status check ──────────────────────────────────────
+export const enqueueLinkDiscovery = action({
+  args: {
+    agentId: v.id("agents"),
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const auth = await getAuthContext(ctx);
+    const url = args.url.trim();
+    if (!url) throw new Error("URL is required");
+
+    const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreWebEntry, {
+      agentId: args.agentId,
+      url,
+      fileSize: new Blob([url]).size,
+      userId: auth.userId,
+      orgId: auth.orgId,
+    });
+    await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+      entryId,
+      status: "gettingLinks",
+    });
+
+    await linkDiscovererPool.enqueueAction(ctx, internal.workpool.linkDiscovererWorker, {
+      entryId,
+      url,
+    }, {
+      onComplete: internal.knowledgeBase.linkDiscovererComplete,
+      context: { entryId, agentId: args.agentId, parentUrl: url, userId: auth.userId, orgId: auth.orgId },
+      retry: true
+    });
+
+    return { entryId };
+  },
+});
+// ─── Internal search (used by agent tool) ──────────────────
 
 export const getIndexingStatus = action({
   args: {},
@@ -555,11 +846,9 @@ export const getIndexingStatus = action({
         cfInstanceName,
         { account_id: cfAccountId },
       );
-
       const queued = stats.queued ?? 0;
       const running = stats.running ?? 0;
       const completed = stats.completed ?? 0;
-
       return {
         isIndexing: queued + running > 0,
         queued,

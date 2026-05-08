@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { useUser, UserButton } from '@clerk/react';
-import { MessageSquare, Bot, Users, BarChart3, Sparkles } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Globe, FileText, AlignLeft, HelpCircle, ChevronRight } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import {
   Sidebar,
@@ -13,17 +13,42 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 function getNavItems(agentId: string) {
-  return [
-    { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true },
-    { to: `/dashboard/${agentId}/agent`, icon: Bot, label: 'AI Agent' },
-    { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers' },
-    { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
-  ];
+  return {
+    engagement: [
+      { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true },
+      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers' },
+    ],
+    configuration: [
+      { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground' },
+    ],
+    knowledgeBase: {
+      to: `/dashboard/${agentId}/knowledge-base`,
+      icon: BookOpen,
+      label: 'Knowledge Base',
+      children: [
+        { to: `/dashboard/${agentId}/knowledge-base/web`, icon: Globe, label: 'Web' },
+        { to: `/dashboard/${agentId}/knowledge-base/file`, icon: FileText, label: 'Files' },
+        { to: `/dashboard/${agentId}/knowledge-base/text`, icon: AlignLeft, label: 'Text' },
+        { to: `/dashboard/${agentId}/knowledge-base/qa`, icon: HelpCircle, label: 'Q&A' },
+      ],
+    },
+    insights: [
+      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
+    ],
+  };
 }
 
 function UserFooter() {
@@ -60,6 +85,8 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const navItems = getNavItems(agent._id);
+  const location = useLocation();
+  const isKnowledgeBaseActive = location.pathname.includes('/knowledge-base/');
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -85,12 +112,90 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       {/* Nav */}
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>Engagement</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {navItems.engagement.map((item) => (
                 <SidebarMenuItem key={item.to}>
                   <NavLink to={item.to} end={item.end}>
+                    {({ isActive }) => (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.label}
+                      >
+                        <span>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </span>
+                      </SidebarMenuButton>
+                    )}
+                  </NavLink>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.configuration.map((item) => (
+                <SidebarMenuItem key={item.to}>
+                  <NavLink to={item.to} end>
+                    {({ isActive }) => (
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.label}
+                      >
+                        <span>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </span>
+                      </SidebarMenuButton>
+                    )}
+                  </NavLink>
+                </SidebarMenuItem>
+              ))}
+
+              <Collapsible defaultOpen className="group/collapsible">
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={navItems.knowledgeBase.label} isActive={isKnowledgeBaseActive}>
+                      <navItems.knowledgeBase.icon />
+                      <span>{navItems.knowledgeBase.label}</span>
+                      <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {navItems.knowledgeBase.children.map((child) => (
+                        <SidebarMenuSubItem key={child.label}>
+                          <SidebarMenuSubButton asChild className="h-auto py-2">
+                            <NavLink to={child.to} end>
+                              <child.icon className="size-3.5" />
+                              <span>{child.label}</span>
+                            </NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Insights</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navItems.insights.map((item) => (
+                <SidebarMenuItem key={item.to}>
+                  <NavLink to={item.to} end>
                     {({ isActive }) => (
                       <SidebarMenuButton
                         asChild

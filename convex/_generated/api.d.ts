@@ -15,6 +15,7 @@ import type * as chat_streaming from "../chat/streaming.js";
 import type * as cloudflare from "../cloudflare.js";
 import type * as knowledgeBase from "../knowledgeBase.js";
 import type * as messages from "../messages.js";
+import type * as workpool from "../workpool.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   cloudflare: typeof cloudflare;
   knowledgeBase: typeof knowledgeBase;
   messages: typeof messages;
+  workpool: typeof workpool;
 }>;
 
 /**
@@ -60,4 +62,8 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
+  cfUploadWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfUploadWorkpool">;
+  cfDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfDeleteWorkpool">;
+  webScraperWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"webScraperWorkpool">;
+  linkDiscovererWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"linkDiscovererWorkpool">;
 };

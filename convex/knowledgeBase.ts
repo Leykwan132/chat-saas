@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import { internal, api } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 
 // ─── Text Entries ──────────────────────────────────────────
@@ -255,6 +256,18 @@ export const internalGetWebEntry = internalQuery({
   },
 });
 
+export const internalGetWebEntriesByParentId = internalQuery({
+  args: {
+    parentId: v.id("webEntries"),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("webEntries")
+      .filter((q) => q.eq(q.field("parentId"), args.parentId))
+      .collect();
+  },
+});
+
 export const internalGetQAEntry = internalQuery({
   args: { entryId: v.id("qaEntries") },
   handler: async (ctx, args) => {
@@ -399,6 +412,7 @@ export const internalStoreWebEntry = internalMutation({
     fileSize: v.number(),
     cfItemId: v.optional(v.string()),
     parentUrl: v.optional(v.string()),
+    parentId: v.optional(v.id("webEntries")),
     userId: v.string(),
     orgId: v.string(),
   },
@@ -409,6 +423,7 @@ export const internalStoreWebEntry = internalMutation({
       fileSize: args.fileSize,
       cfItemId: args.cfItemId,
       parentUrl: args.parentUrl,
+      parentId: args.parentId,
       userId: args.userId,
       orgId: args.orgId,
       createdAt: Date.now(),
@@ -512,5 +527,274 @@ export const internalRemoveQAEntry = internalMutation({
   args: { entryId: v.id("qaEntries") },
   handler: async (ctx, args) => {
     await ctx.db.delete(args.entryId);
+  },
+});
+
+// ─── Status management ────────────────────────────────────
+
+export const internalSetStatus = internalMutation({
+  args: {
+    entryId: v.union(
+      v.id("textEntries"),
+      v.id("fileEntries"),
+      v.id("webEntries"),
+      v.id("qaEntries"),
+    ),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("deleting"),
+      v.literal("gettingLinks"),
+      v.literal("linksObtained"),
+      v.literal("gettingMarkdown"),
+    ),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.entryId, { status: args.status });
+  },
+});
+
+export const internalCompleteTextEntry = internalMutation({
+  args: {
+    entryId: v.id("textEntries"),
+    cfItemId: v.string(),
+    fileSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.entryId, {
+      status: "completed",
+      cfItemId: args.cfItemId,
+      fileSize: args.fileSize,
+    });
+  },
+});
+
+export const internalCompleteFileEntry = internalMutation({
+  args: {
+    entryId: v.id("fileEntries"),
+    cfItemId: v.string(),
+    fileSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.entryId, {
+      status: "completed",
+      cfItemId: args.cfItemId,
+      fileSize: args.fileSize,
+    });
+  },
+});
+
+export const internalCompleteWebEntry = internalMutation({
+  args: {
+    entryId: v.id("webEntries"),
+    cfItemId: v.string(),
+    fileSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.entryId, {
+      status: "completed",
+      cfItemId: args.cfItemId,
+      fileSize: args.fileSize,
+    });
+  },
+});
+
+export const internalCompleteQAEntry = internalMutation({
+  args: {
+    entryId: v.id("qaEntries"),
+    cfItemId: v.string(),
+    fileSize: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.entryId, {
+      status: "completed",
+      cfItemId: args.cfItemId,
+      fileSize: args.fileSize,
+    });
+  },
+});
+
+// ─── Workpool onComplete handlers ─────────────────────────
+
+export const cfUploadComplete = internalMutation({
+  args: {
+    workId: v.string(),
+    context: v.object({
+      entryId: v.string(),
+      entryType: v.union(
+        v.literal("text"),
+        v.literal("file"),
+        v.literal("qa"),
+      ),
+    }),
+    result: v.union(
+      v.object({ kind: v.literal("success"), returnValue: v.any() }),
+      v.object({ kind: v.literal("failed"), error: v.string() }),
+      v.object({ kind: v.literal("canceled") }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { entryId, entryType } = args.context;
+
+    if (args.result.kind === "success" && args.result.returnValue) {
+      const { cfItemId, fileSize } = args.result.returnValue as { cfItemId: string; fileSize: number };
+      switch (entryType) {
+        case "text":
+          await ctx.runMutation(internal.knowledgeBase.internalCompleteTextEntry, {
+            entryId: entryId as never, cfItemId, fileSize,
+          });
+          break;
+        case "file":
+          await ctx.runMutation(internal.knowledgeBase.internalCompleteFileEntry, {
+            entryId: entryId as never, cfItemId, fileSize,
+          });
+          break;
+        case "qa":
+          await ctx.runMutation(internal.knowledgeBase.internalCompleteQAEntry, {
+            entryId: entryId as never, cfItemId, fileSize,
+          });
+          break;
+      }
+    } else {
+      await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+        entryId: entryId as never,
+        status: "failed",
+      });
+    }
+  },
+});
+
+export const cfDeleteComplete = internalMutation({
+  args: {
+    workId: v.string(),
+    context: v.object({
+      entryId: v.string(),
+      entryType: v.union(
+        v.literal("text"),
+        v.literal("file"),
+        v.literal("web"),
+        v.literal("qa"),
+      ),
+    }),
+    result: v.union(
+      v.object({ kind: v.literal("success"), returnValue: v.any() }),
+      v.object({ kind: v.literal("failed"), error: v.string() }),
+      v.object({ kind: v.literal("canceled") }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { entryId, entryType } = args.context;
+
+    if (args.result.kind !== "canceled") {
+      switch (entryType) {
+        case "text":
+          await ctx.runMutation(internal.knowledgeBase.internalRemoveTextEntry, {
+            entryId: entryId as never,
+          });
+          break;
+        case "file":
+          await ctx.runMutation(internal.knowledgeBase.internalRemoveFileEntry, {
+            entryId: entryId as never,
+          });
+          break;
+        case "web":
+          await ctx.runMutation(internal.knowledgeBase.internalRemoveWebEntry, {
+            entryId: entryId as never,
+          });
+          break;
+        case "qa":
+          await ctx.runMutation(internal.knowledgeBase.internalRemoveQAEntry, {
+            entryId: entryId as never,
+          });
+          break;
+      }
+    }
+  },
+});
+
+export const webScraperComplete = internalMutation({
+  args: {
+    workId: v.string(),
+    context: v.object({
+      entryId: v.string(),
+    }),
+    result: v.union(
+      v.object({ kind: v.literal("success"), returnValue: v.any() }),
+      v.object({ kind: v.literal("failed"), error: v.string() }),
+      v.object({ kind: v.literal("canceled") }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { entryId } = args.context;
+
+    if (args.result.kind === "success" && args.result.returnValue) {
+      const { cfItemId, fileSize } = args.result.returnValue as { cfItemId: string; fileSize: number };
+      await ctx.runMutation(internal.knowledgeBase.internalCompleteWebEntry, {
+        entryId: entryId as never, cfItemId, fileSize,
+      });
+
+      // Check if all siblings are completed, and if so, mark parent as completed
+      const entry = await ctx.db.query("webEntries").filter((q) => q.eq(q.field("_id"), entryId)).first();
+      if (entry && entry.parentId) {
+        const siblings = await ctx.db.query("webEntries")
+          .withIndex("by_agentId", (q) => q.eq("agentId", entry.agentId))
+          .filter((q) => q.eq(q.field("parentUrl"), entry.parentUrl))
+          .collect();
+        const allDone = siblings.every((s) => s.status === "completed");
+        if (allDone) {
+          await ctx.db.patch(entry.parentId, { status: "completed" });
+        }
+      }
+    } else {
+      await ctx.runMutation(internal.knowledgeBase.internalSetStatus, {
+        entryId: entryId as never,
+        status: "failed",
+      });
+    }
+  },
+});
+
+export const linkDiscovererComplete = internalMutation({
+  args: {
+    workId: v.string(),
+    context: v.object({
+      entryId: v.string(),
+      agentId: v.string(),
+      parentUrl: v.string(),
+      userId: v.string(),
+      orgId: v.string(),
+    }),
+    result: v.union(
+      v.object({ kind: v.literal("success"), returnValue: v.any() }),
+      v.object({ kind: v.literal("failed"), error: v.string() }),
+      v.object({ kind: v.literal("canceled") }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { entryId, agentId, parentUrl, userId, orgId } = args.context;
+
+    if (args.result.kind === "success" && args.result.returnValue) {
+      const { links } = args.result.returnValue as { links: string[]; sourceUrl: string };
+
+      // Mark parent as processing while children are being scraped
+      await ctx.db.patch(entryId as never, { status: "gettingMarkdown" });
+
+      // Schedule enqueueWebScrape for each link — it handles DB insertion + workpool enqueueing
+      for (const link of links) {
+        await ctx.scheduler.runAfter(0, api.cloudflare.enqueueWebScrape, {
+          agentId: agentId as never,
+          url: link,
+          parentUrl,
+          parentId: entryId as never,
+          userId,
+          orgId,
+        });
+      }
+    } else {
+      // On failure or cancel, mark parent as failed
+      await ctx.db.patch(entryId as never, { status: "failed" });
+    }
   },
 });

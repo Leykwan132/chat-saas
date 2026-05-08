@@ -11,6 +11,7 @@ export async function getAuthContext(
     throw new Error("Not authenticated");
   }
   const identityOrgId =
+    // @ts-ignore
     (identity as Record<string, unknown>).o?.id as string | undefined ?? null;
   return {
     userId: identity.subject,

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Routes, Route, useNavigate } from 'react-router'
+import { BrowserRouter, Navigate, Routes, Route, useNavigate, useParams } from 'react-router'
 import { ClerkProvider, useAuth } from '@clerk/react'
 import { ConvexProviderWithClerk } from 'convex/react-clerk'
 import { ConvexReactClient } from 'convex/react'
@@ -9,6 +9,7 @@ import App from './App.tsx'
 import DashboardLayout from './layouts/DashboardLayout.tsx'
 import ChatsPage from './pages/ChatsPage.tsx'
 import AgentPage from './pages/AgentPage.tsx'
+import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
 import WorkspacePage from './pages/WorkspacePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
@@ -21,6 +22,16 @@ const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
 
 if (!PUBLISHABLE_KEY) {
   throw new Error('Missing Publishable Key')
+}
+
+function OldAgentRedirect() {
+  const { agentId, threadId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/playground${threadId ? `/${threadId}` : ''}`} replace />
+}
+
+function KnowledgeBaseIndex() {
+  const { agentId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
 }
 
 function RootLayout() {
@@ -42,7 +53,10 @@ function RootLayout() {
             <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
               <Route index element={<ChatsPage />} />
               <Route path="chats" element={<ChatsPage />} />
-              <Route path="agent/:threadId?" element={<AgentPage />} />
+              <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
+              <Route path="playground/:threadId?" element={<AgentPage />} />
+              <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
+              <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
             </Route>

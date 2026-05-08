@@ -13,6 +13,7 @@
     "@ai-sdk/google": "^3.0.65",
     "@clerk/react": "^6.4.6",
     "@convex-dev/agent": "^0.6.1",
+    "@convex-dev/workpool": "^0.4.6",
     "@fontsource-variable/inter": "^5.2.8",
     "@tailwindcss/vite": "^4.2.4",
     "ai": "^6.0.174",
