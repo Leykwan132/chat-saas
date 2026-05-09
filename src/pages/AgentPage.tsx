@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 
 import {
   ChevronDown,
@@ -53,7 +53,6 @@ import { TestChatWindow } from "@/components/TestChatWindow";
 // ─── Main Page ──────────────────────────────────────────────────
 
 export default function AgentPage() {
-  const navigate = useNavigate();
   const { agentId, threadId } = useParams();
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const agent = useQuery(

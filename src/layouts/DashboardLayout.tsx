@@ -25,7 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
+import type { Id, Doc } from '../../convex/_generated/dataModel';
 
 type DashboardHeaderProps = {
   agent: { _id: Id<'agents'>; name: string };
@@ -84,7 +84,7 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
                   ) : allAgents.length === 0 ? (
                     <DropdownMenuItem disabled>No agents found</DropdownMenuItem>
                   ) : (
-                    allAgents.map((a) => (
+                    allAgents.map((a: Doc<'agents'>) => (
                       <DropdownMenuItem
                         key={a._id}
                         onSelect={() => navigate(`/dashboard/${a._id}/${subPath}`)}

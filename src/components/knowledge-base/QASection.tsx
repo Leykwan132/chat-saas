@@ -73,7 +73,6 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
     setEditingQAEntry(entry); setEditQAPairs([{ question: entry.question, answer: entry.answer }]);
   };
 
-  const addEditQAPair = () => setEditQAPairs((prev) => [...prev, { question: "", answer: "" }]);
   const updateEditQAPair = (index: number, field: "question" | "answer", value: string) => {
     setEditQAPairs((prev) => prev.map((pair, i) => (i === index ? { ...pair, [field]: value } : pair)));
   };

@@ -1,4 +1,3 @@
-import { Spinner } from '@/components/ui/spinner';
 import { X } from 'lucide-react';
 import type { Id } from '../../../convex/_generated/dataModel';
 

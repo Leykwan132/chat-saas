@@ -45,7 +45,7 @@ interface FileSectionProps {
 export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }: FileSectionProps) {
   const enqueueFileUpload = useAction(api.cloudflare.enqueueFileUpload);
 
-  const [isSavingFile, setIsSavingFile] = useState(false);
+  const [, setIsSavingFile] = useState(false);
   const [editingFileEntry, setEditingFileEntry] = useState<any | null>(null);
 
   const handleSaveFile = async (files: File[]) => {

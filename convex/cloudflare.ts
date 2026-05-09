@@ -584,7 +584,7 @@ export const enqueueTextUpload = action({
     title: v.string(),
     content: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ entryId: string }> => {
     const auth = await getAuthContext(ctx);
     const title = args.title.trim();
     const content = args.content.trim();
@@ -629,7 +629,7 @@ export const enqueueFileUpload = action({
     fileName: v.string(),
     title: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ entryId: string; fileSize: number }> => {
     console.log('enqueueing file upload', args);
     const auth = await getAuthContext(ctx);
     const fileName = args.fileName.trim();
@@ -681,7 +681,7 @@ export const enqueueQAUpload = action({
     question: v.string(),
     answer: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ entryId: string }> => {
     const auth = await getAuthContext(ctx);
     const question = args.question.trim();
     const answer = args.answer.trim();
@@ -728,7 +728,7 @@ export const enqueueWebScrape = action({
     userId: v.optional(v.string()),
     orgId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ entryId: string; url: string }> => {
     const url = args.url.trim();
     if (!url) throw new Error("URL is required");
 
@@ -809,7 +809,7 @@ export const enqueueLinkDiscovery = action({
     agentId: v.id("agents"),
     url: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ entryId: string }> => {
     const auth = await getAuthContext(ctx);
     const url = args.url.trim();
     if (!url) throw new Error("URL is required");
@@ -872,7 +872,7 @@ export const internalSearch = internalAction({
     agentId: v.id("agents"),
     query: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const response = await client.aiSearch.namespaces.instances.search(
       cfNamespace,
       cfInstanceName,

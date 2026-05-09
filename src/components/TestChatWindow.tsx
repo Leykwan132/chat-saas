@@ -124,13 +124,13 @@ function injectCitations(
   }
 
   if (Array.isArray(node)) {
-    return node.map((child, i) => injectCitations(child, citations));
+    return node.map((child) => injectCitations(child, citations));
   }
 
   if (isValidElement(node)) {
     const childProps = node.props as { children?: React.ReactNode };
     if (childProps.children) {
-      return cloneElement(node, {
+      return cloneElement(node as React.ReactElement<Record<string, unknown>>, {
         ...childProps,
         children: injectCitations(childProps.children, citations),
       });
@@ -211,7 +211,7 @@ export function TestChatWindow({
   threadId: string | undefined;
 }) {
   const navigate = useNavigate();
-  const [conversationId, setConversationId] =
+  const [, setConversationId] =
     useState<Id<"conversations"> | null>(null);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);

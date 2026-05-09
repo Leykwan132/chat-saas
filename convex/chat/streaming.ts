@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { mutation, query, internalAction } from "../_generated/server";
-import type { QueryCtx, MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { components } from "../_generated/api";
@@ -99,7 +98,7 @@ export const resetThread = mutation({
       const existingConv = await ctx.db
         .query("conversations")
         .withIndex("by_threadId", (q) =>
-          q.eq("threadId", args.existingThreadId),
+          q.eq("threadId", args.existingThreadId!),
         )
         .first();
       if (existingConv) {

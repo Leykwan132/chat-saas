@@ -259,7 +259,7 @@ export function AgentsIndex() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
-          {agents.map((agent) => (
+          {agents.map((agent: Doc<'agents'>) => (
             <AgentCard
               key={agent._id}
               agent={agent}

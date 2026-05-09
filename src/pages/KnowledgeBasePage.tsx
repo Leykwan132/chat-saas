@@ -61,14 +61,14 @@ export default function KnowledgeBasePage() {
   const maxTotalSize = storageLimits?.maxTotalSize ?? 4 * 1024 * 1024;
 
   // ── Stats ──
-  const textCount = (textEntries ?? []).filter(e => e.status === "completed").length;
-  const fileCount = (fileEntries ?? []).filter(e => e.status === "completed").length;
-  const webCount = (webEntries ?? []).filter(e => e.parentId && e.status === "completed").length;
-  const qaCount = (qaEntries ?? []).filter(e => e.status === "completed").length;
-  const webSize = (webEntries ?? []).reduce((sum, e) => sum + (e.fileSize ?? 0), 0);
-  const fileSizeVal = (fileEntries ?? []).reduce((sum, e) => sum + (e.fileSize ?? 0), 0);
-  const textSize = (textEntries ?? []).reduce((sum, e) => sum + (e.fileSize ?? 0), 0);
-  const qaSize = (qaEntries ?? []).reduce((sum, e) => sum + (e.fileSize ?? 0), 0);
+  const textCount = textEntries?.filter(e => e.status === "completed").length ?? 0;
+  const fileCount = fileEntries?.filter(e => e.status === "completed").length ?? 0;
+  const webCount = webEntries?.filter(e => e.parentId && e.status === "completed").length ?? 0;
+  const qaCount = qaEntries?.filter(e => e.status === "completed").length ?? 0;
+  const webSize = webEntries?.reduce((sum, e) => sum + (e.fileSize ?? 0), 0) ?? 0;
+  const fileSizeVal = fileEntries?.reduce((sum, e) => sum + (e.fileSize ?? 0), 0) ?? 0;
+  const textSize = textEntries?.reduce((sum, e) => sum + (e.fileSize ?? 0), 0) ?? 0;
+  const qaSize = qaEntries?.reduce((sum, e) => sum + (e.fileSize ?? 0), 0) ?? 0;
   const totalFileSize = webSize + fileSizeVal + textSize + qaSize;
 
   // ── Shared delete handler ──

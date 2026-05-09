@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { internal, components } from "./_generated/api";
+import { components } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
 import { uploadToCF, deleteFromCF, scrapeMarkdown, scrapeLinks } from "./cloudflare";
 
@@ -44,7 +44,7 @@ export const cfUploadWorker = internalAction({
     orgId: v.optional(v.string()),
     userId: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     let fileContent: File;
     let fileSize: number;
 
@@ -118,7 +118,7 @@ export const webScraperWorker = internalAction({
     orgId: v.string(),
     userId: v.string(),
   },
-  handler: async (ctx, args) => {
+  handler: async (_ctx, args) => {
     const markdown = await scrapeMarkdown(args.url);
     const uid = args.entryId.slice(-8);
     const safeName = args.url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);

@@ -10,7 +10,6 @@ import {
   CommandList,
 } from "cmdk";
 import { Popover as PopoverPrimitive } from "radix-ui";
-import type { ComponentProps } from "react";
 import * as React from "react";
 
 /* ─── Popover wrappers ─── */
