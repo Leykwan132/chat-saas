@@ -1,9 +1,11 @@
-import { StrictMode } from 'react'
+import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Navigate, Routes, Route, useNavigate, useParams } from 'react-router'
-import { ClerkProvider, useAuth } from '@clerk/react'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
+import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
+import { ConvexProviderWithAuthKit } from '@convex-dev/workos'
 import { ConvexReactClient } from 'convex/react'
+import '@radix-ui/themes/styles.css'
+import '@workos-inc/widgets/styles.css'
 import './index.css'
 import App from './App.tsx'
 import DashboardLayout from './layouts/DashboardLayout.tsx'
@@ -18,10 +20,13 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string
+const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
+const WORKOS_REDIRECT_URI = import.meta.env.VITE_WORKOS_REDIRECT_URI as
+  | string
+  | undefined
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error('Missing Publishable Key')
+if (!WORKOS_CLIENT_ID) {
+  throw new Error('Missing VITE_WORKOS_CLIENT_ID')
 }
 
 function OldAgentRedirect() {
@@ -34,18 +39,33 @@ function KnowledgeBaseIndex() {
   return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
 }
 
+// Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
+// Redirects page. WorkOS-initiated flows (impersonation, third-party login)
+// land here, and we kick off the OAuth flow immediately.
+function LoginRoute() {
+  const { signIn } = useAuth()
+  useEffect(() => {
+    void signIn()
+  }, [signIn])
+  return null
+}
+
 function RootLayout() {
   const navigate = useNavigate()
 
   return (
-    <ClerkProvider
-      publishableKey={PUBLISHABLE_KEY}
-      routerPush={(to) => navigate(to)}
-      routerReplace={(to) => navigate(to, { replace: true })}
+    <AuthKitProvider
+      clientId={WORKOS_CLIENT_ID}
+      redirectUri={WORKOS_REDIRECT_URI}
+      onRedirectCallback={({ state }) => {
+        const target = (state as { returnTo?: string } | undefined)?.returnTo
+        if (target) navigate(target, { replace: true })
+      }}
     >
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+      <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
         <TooltipProvider>
           <Routes>
+            <Route path="/login" element={<LoginRoute />} />
             <Route path="/" element={<App />} />
             <Route path="/workspace" element={<WorkspacePage />} />
             <Route path="/create-agent" element={<CreateAgentPage />} />
@@ -63,8 +83,8 @@ function RootLayout() {
           </Routes>
           <Toaster />
         </TooltipProvider>
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+      </ConvexProviderWithAuthKit>
+    </AuthKitProvider>
   )
 }
 

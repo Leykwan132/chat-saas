@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
-import { useUser, UserButton } from '@clerk/react';
 import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
+import { AccountDialog } from '@/components/AccountDialog';
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-  useSidebar,
 } from '@/components/ui/sidebar';
 
 function getNavItems(agentId: string) {
@@ -31,34 +30,6 @@ function getNavItems(agentId: string) {
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
     ],
   };
-}
-
-function UserFooter() {
-  const { user } = useUser();
-  const { state } = useSidebar();
-  const collapsed = state === 'collapsed';
-
-  return (
-    <SidebarMenuButton
-      size="lg"
-      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-      tooltip={user?.primaryEmailAddress?.emailAddress ?? 'Account'}
-    >
-      <UserButton
-        appearance={{ elements: { avatarBox: 'w-8 h-8' } }}
-      />
-      {!collapsed && (
-        <div className="flex flex-col gap-0.5 leading-none min-w-0">
-          <span className="truncate font-semibold text-sm">
-            {user?.fullName ?? 'Account'}
-          </span>
-          <span className="truncate text-xs text-sidebar-foreground/60">
-            {user?.primaryEmailAddress?.emailAddress}
-          </span>
-        </div>
-      )}
-    </SidebarMenuButton>
-  );
 }
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
@@ -173,7 +144,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <UserFooter />
+            <AccountDialog />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

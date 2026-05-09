@@ -1,6 +1,6 @@
 import { Link, Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
 import { Authenticated, Unauthenticated, AuthLoading, useQuery } from 'convex/react';
-import { useAuth } from '@clerk/react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { Bot, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
@@ -34,8 +34,8 @@ type DashboardHeaderProps = {
 function DashboardHeader({ agent }: DashboardHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { orgId } = useAuth();
-  const activeOrgId = orgId ?? null;
+  const { organizationId } = useAuth();
+  const activeOrgId = organizationId ?? null;
   const allAgents = useQuery(api.agents.list, { orgId: activeOrgId });
 
   // Determine sub-path so switching agents keeps you on the same section

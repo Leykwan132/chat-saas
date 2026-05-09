@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useAuth, useUser, UserButton } from '@clerk/react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { Authenticated, AuthLoading, Unauthenticated, useMutation, useQuery } from 'convex/react';
+import { AccountDialog } from '@/components/AccountDialog';
 import { Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -55,8 +56,6 @@ function AgentPreview() {
 }
 
 function AgentsSidebar() {
-  const { user } = useUser();
-
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
@@ -95,20 +94,7 @@ function AgentsSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <UserButton appearance={{ elements: { avatarBox: 'w-8 h-8' } }} />
-              <div className="flex flex-col gap-0.5 leading-none min-w-0">
-                <span className="truncate font-semibold text-sm">
-                  {user?.fullName ?? 'Account'}
-                </span>
-                <span className="truncate text-xs text-sidebar-foreground/60">
-                  {user?.primaryEmailAddress?.emailAddress}
-                </span>
-              </div>
-            </SidebarMenuButton>
+            <AccountDialog />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -205,8 +191,8 @@ function AgentCard({
 
 function AgentsDirectory() {
   const navigate = useNavigate();
-  const { orgId } = useAuth();
-  const activeOrgId = orgId ?? null;
+  const { organizationId } = useAuth();
+  const activeOrgId = organizationId ?? null;
   const agents = useQuery(api.agents.list, { orgId: activeOrgId });
   const removeAgent = useMutation(api.agents.remove);
 

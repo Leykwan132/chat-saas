@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '@clerk/react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { Authenticated, AuthLoading, Unauthenticated, useMutation } from 'convex/react';
 import { Link, Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
@@ -32,8 +32,8 @@ export default function CreateAgentPage() {
 
 function CreateAgentForm() {
   const navigate = useNavigate();
-  const { orgId } = useAuth();
-  const activeOrgId = orgId ?? null;
+  const { organizationId } = useAuth();
+  const activeOrgId = organizationId ?? null;
   const createAgent = useMutation(api.agents.create);
 
   const [name, setName] = useState('');

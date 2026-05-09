@@ -2,6 +2,30 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  users: defineTable({
+    workosUserId: v.string(),
+    email: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    profilePictureUrl: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workosUserId", ["workosUserId"])
+    .index("by_email", ["email"]),
+  organizations: defineTable({
+    workosOrgId: v.string(),
+    name: v.string(),
+    members: v.array(v.id("users")),
+    admins: v.array(v.id("users")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workosOrgId", ["workosOrgId"]),
+  // Used for webhook idempotency. WorkOS may retry deliveries; dedupe on event.id.
+  processedEvents: defineTable({
+    eventId: v.string(),
+    processedAt: v.number(),
+  }).index("by_eventId", ["eventId"]),
   messages: defineTable({
     author: v.string(),
     text: v.string(),
