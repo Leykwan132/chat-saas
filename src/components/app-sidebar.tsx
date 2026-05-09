@@ -1,6 +1,6 @@
-import { NavLink, useLocation } from 'react-router';
+import { NavLink } from 'react-router';
 import { useUser, UserButton } from '@clerk/react';
-import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Globe, FileText, AlignLeft, HelpCircle, ChevronRight } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import {
   Sidebar,
@@ -13,17 +13,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 
 function getNavItems(agentId: string) {
   return {
@@ -33,18 +25,8 @@ function getNavItems(agentId: string) {
     ],
     configuration: [
       { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground' },
+      { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base' },
     ],
-    knowledgeBase: {
-      to: `/dashboard/${agentId}/knowledge-base`,
-      icon: BookOpen,
-      label: 'Knowledge Base',
-      children: [
-        { to: `/dashboard/${agentId}/knowledge-base/web`, icon: Globe, label: 'Web' },
-        { to: `/dashboard/${agentId}/knowledge-base/file`, icon: FileText, label: 'Files' },
-        { to: `/dashboard/${agentId}/knowledge-base/text`, icon: AlignLeft, label: 'Text' },
-        { to: `/dashboard/${agentId}/knowledge-base/qa`, icon: HelpCircle, label: 'Q&A' },
-      ],
-    },
     insights: [
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
     ],
@@ -85,8 +67,6 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const navItems = getNavItems(agent._id);
-  const location = useLocation();
-  const isKnowledgeBaseActive = location.pathname.includes('/knowledge-base/');
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -143,7 +123,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarMenu>
               {navItems.configuration.map((item) => (
                 <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to} end>
+                  <NavLink to={item.to} end={item.label === 'Playground'}>
                     {({ isActive }) => (
                       <SidebarMenuButton
                         asChild
@@ -159,32 +139,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                   </NavLink>
                 </SidebarMenuItem>
               ))}
-
-              <Collapsible defaultOpen className="group/collapsible">
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={navItems.knowledgeBase.label} isActive={isKnowledgeBaseActive}>
-                      <navItems.knowledgeBase.icon />
-                      <span>{navItems.knowledgeBase.label}</span>
-                      <ChevronRight className="ml-auto size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {navItems.knowledgeBase.children.map((child) => (
-                        <SidebarMenuSubItem key={child.label}>
-                          <SidebarMenuSubButton asChild className="h-auto py-2">
-                            <NavLink to={child.to} end>
-                              <child.icon className="size-3.5" />
-                              <span>{child.label}</span>
-                            </NavLink>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
