@@ -120,8 +120,9 @@ export const webScraperWorker = internalAction({
   },
   handler: async (ctx, args) => {
     const markdown = await scrapeMarkdown(args.url);
+    const uid = args.entryId.slice(-8);
     const safeName = args.url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-    const markdownBlob = new File([markdown], `${safeName}.md`, { type: "text/markdown" });
+    const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
     const fileSize = markdownBlob.size;
 
     const cfItemId = await uploadToCF(markdownBlob, {

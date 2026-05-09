@@ -206,8 +206,9 @@ export const processWebUrl = action({
     if (!url) throw new Error("URL is required");
 
     const markdown = await scrapeMarkdown(url);
+    const uid = Math.random().toString(36).slice(2, 10);
     const safeName = url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-    const markdownBlob = new File([markdown], `${safeName}.md`, { type: "text/markdown" });
+    const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
     const fileSize = markdownBlob.size;
 
     const MAX_TOTAL_SIZE = 4 * 1024 * 1024;
@@ -278,9 +279,11 @@ export const uploadWebEntry = action({
             // Scrape markdown for this URL
             const markdown = await scrapeMarkdown(linkUrl);
 
-            // Upload markdown to CF AI Search
+            // Upload markdown to CF AI Search — unique suffix prevents collisions
+            // between URLs that share the same sanitized 50-char prefix.
+            const uid = Math.random().toString(36).slice(2, 10);
             const safeName = linkUrl.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
-            const markdownBlob = new File([markdown], `${safeName}.md`, { type: "text/markdown" });
+            const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
             const cfItemId = await uploadToCF(markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
             // Store entry with markdown in Convex storage

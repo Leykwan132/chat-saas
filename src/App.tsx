@@ -4,9 +4,12 @@ import { Navigate } from 'react-router';
 import { Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import { POST_LOGIN_REDIRECT } from '@/main';
 
 function SignInCard() {
-  const { signIn, signUp } = useAuth();
+  const { user, signIn, signUp } = useAuth();
+
+  console.log('user', user);
 
   return (
     <div className="flex min-h-[100svh] items-center justify-center bg-background px-6">
@@ -23,7 +26,7 @@ function SignInCard() {
             type="button"
             size="lg"
             onClick={() => {
-              void signIn({ state: { returnTo: '/workspace' } });
+              void signIn();
             }}
           >
             Sign in
@@ -33,7 +36,7 @@ function SignInCard() {
             variant="outline"
             size="lg"
             onClick={() => {
-              void signUp({ state: { returnTo: '/workspace' } });
+              void signUp({ state: { returnTo: POST_LOGIN_REDIRECT } });
             }}
           >
             Create an account
@@ -58,7 +61,7 @@ export default function App() {
       </Unauthenticated>
 
       <Authenticated>
-        <Navigate to="/workspace" replace />
+        <Navigate to={POST_LOGIN_REDIRECT} replace />
       </Authenticated>
     </>
   );

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { Authenticated, AuthLoading, Unauthenticated, useMutation, useQuery } from 'convex/react';
 import { AccountDialog } from '@/components/AccountDialog';
-import { Navigate, useNavigate } from 'react-router';
+import { Navigate, Outlet, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
   Bot,
@@ -94,7 +94,7 @@ function AgentsSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <AccountDialog />
+            <AccountDialog accountPath="/workspace/account" />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -189,7 +189,24 @@ function AgentCard({
   );
 }
 
-function AgentsDirectory() {
+// ─── Shell layout (sidebar + inset, renders child routes via Outlet) ──
+
+function WorkspaceShell() {
+  return (
+    <SidebarProvider>
+      <AgentsSidebar />
+      <SidebarInset>
+        <main className="flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28">
+          <Outlet />
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}
+
+// ─── Agents index content ─────────────────────────────────────────
+
+export function AgentsIndex() {
   const navigate = useNavigate();
   const { organizationId } = useAuth();
   const activeOrgId = organizationId ?? null;
@@ -213,54 +230,50 @@ function AgentsDirectory() {
   };
 
   return (
-    <SidebarProvider>
-      <AgentsSidebar />
+    <div className="mt-4">
+      <div className="mb-9 flex items-center justify-between gap-4">
+        <h1 className="m-0 text-2xl font-bold tracking-tight">Agents</h1>
+        <Button type="button" size="lg" onClick={() => navigate('/create-agent')}>
+          <Plus className="size-4" />
+          New AI agent
+        </Button>
+      </div>
 
-      <SidebarInset>
-        <main className="flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28">
-          <div className="mb-9 mt-4 flex items-center justify-between gap-4">
-            <h1 className="m-0 text-2xl font-bold tracking-tight">Agents</h1>
-            <Button type="button" size="lg" onClick={() => navigate('/create-agent')}>
-              <Plus className="size-4" />
-              New AI agent
-            </Button>
-          </div>
+      {error && (
+        <div className="mb-6 max-w-3xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
-          {error && (
-            <div className="mb-6 max-w-3xl rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              {error}
-            </div>
-          )}
-
-          {agents === undefined ? (
-            <div className="flex h-64 items-center justify-center text-muted-foreground">
-              <Spinner className="size-6" />
-            </div>
-          ) : agents.length === 0 ? (
-            <div className="flex h-72 max-w-xl flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-center">
-              <Bot className="mb-3 size-8 text-muted-foreground" />
-              <h2 className="m-0 text-base font-semibold">No agents yet</h2>
-              <p className="m-0 mt-2 max-w-sm text-sm text-muted-foreground">
-                Create an AI agent for a specific use case, then open its dashboard.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
-              {agents.map((agent) => (
-                <AgentCard
-                  key={agent._id}
-                  agent={agent}
-                  deletingId={deletingId}
-                  onDelete={handleDelete}
-                />
-              ))}
-            </div>
-          )}
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
+      {agents === undefined ? (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          <Spinner className="size-6" />
+        </div>
+      ) : agents.length === 0 ? (
+        <div className="flex h-72 max-w-xl flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-center">
+          <Bot className="mb-3 size-8 text-muted-foreground" />
+          <h2 className="m-0 text-base font-semibold">No agents yet</h2>
+          <p className="m-0 mt-2 max-w-sm text-sm text-muted-foreground">
+            Create an AI agent for a specific use case, then open its dashboard.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+          {agents.map((agent) => (
+            <AgentCard
+              key={agent._id}
+              agent={agent}
+              deletingId={deletingId}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
+
+// ─── Route component (auth guard + shell) ────────────────────────
 
 export default function WorkspacePage() {
   return (
@@ -276,7 +289,7 @@ export default function WorkspacePage() {
       </Unauthenticated>
 
       <Authenticated>
-        <AgentsDirectory />
+        <WorkspaceShell />
       </Authenticated>
     </>
   );

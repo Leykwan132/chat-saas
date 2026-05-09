@@ -12,10 +12,11 @@ import DashboardLayout from './layouts/DashboardLayout.tsx'
 import ChatsPage from './pages/ChatsPage.tsx'
 import AgentPage from './pages/AgentPage.tsx'
 import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
-import WorkspacePage from './pages/WorkspacePage.tsx'
+import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
+import AccountPage from './pages/AccountPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 
@@ -29,6 +30,11 @@ if (!WORKOS_CLIENT_ID) {
   throw new Error('Missing VITE_WORKOS_CLIENT_ID')
 }
 
+// Single source of truth for the destination users land on after a successful
+// AuthKit sign-in or sign-up. Used by `onRedirectCallback` (default fallback),
+// the `/login` route, and the SignInCard buttons in `App.tsx`.
+export const POST_LOGIN_REDIRECT = '/workspace'
+
 function OldAgentRedirect() {
   const { agentId, threadId } = useParams()
   return <Navigate to={`/dashboard/${agentId}/playground${threadId ? `/${threadId}` : ''}`} replace />
@@ -41,11 +47,12 @@ function KnowledgeBaseIndex() {
 
 // Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
 // Redirects page. WorkOS-initiated flows (impersonation, third-party login)
-// land here, and we kick off the OAuth flow immediately.
+// land here, and we kick off the OAuth flow immediately. Pass the post-login
+// destination as `state.returnTo` so onRedirectCallback knows where to land.
 function LoginRoute() {
   const { signIn } = useAuth()
   useEffect(() => {
-    void signIn()
+    void signIn({ state: { returnTo: POST_LOGIN_REDIRECT } })
   }, [signIn])
   return null
 }
@@ -58,8 +65,11 @@ function RootLayout() {
       clientId={WORKOS_CLIENT_ID}
       redirectUri={WORKOS_REDIRECT_URI}
       onRedirectCallback={({ state }) => {
-        const target = (state as { returnTo?: string } | undefined)?.returnTo
-        if (target) navigate(target, { replace: true })
+        // AuthKit has already exchanged the code and stored tokens by the time
+        // this fires. We just need to send the user to the right page and
+        // strip the OAuth query params via `replace: true`.
+        const returnTo = (state as { returnTo?: string } | undefined)?.returnTo
+        navigate(returnTo ?? POST_LOGIN_REDIRECT, { replace: true })
       }}
     >
       <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
@@ -67,7 +77,10 @@ function RootLayout() {
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
             <Route path="/" element={<App />} />
-            <Route path="/workspace" element={<WorkspacePage />} />
+            <Route path="/workspace" element={<WorkspacePage />}>
+              <Route index element={<AgentsIndex />} />
+              <Route path="account" element={<AccountPage />} />
+            </Route>
             <Route path="/create-agent" element={<CreateAgentPage />} />
             <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
             <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
@@ -79,6 +92,7 @@ function RootLayout() {
               <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="account" element={<AccountPage />} />
             </Route>
           </Routes>
           <Toaster />

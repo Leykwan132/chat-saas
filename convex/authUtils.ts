@@ -1,6 +1,6 @@
 import type { QueryCtx, MutationCtx, ActionCtx } from "./_generated/server";
 
-const PERSONAL_ORG_ID = "personal";
+const PERSONAL_ORG_ID = "";
 
 // WorkOS AuthKit access tokens carry org_id, role, roles, and permissions
 // claims. The Convex identity object keeps the standard subject/email fields

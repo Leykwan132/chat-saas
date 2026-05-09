@@ -144,7 +144,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <AccountDialog />
+            <AccountDialog accountPath={`/dashboard/${agent._id}/account`} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
