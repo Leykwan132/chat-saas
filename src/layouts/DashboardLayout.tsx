@@ -1,5 +1,5 @@
 import { Link, Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
-import { Authenticated, Unauthenticated, AuthLoading, useQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { Bot, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/s
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
+import { RequireOrganization } from '@/components/RequireOrganization';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -165,21 +166,26 @@ function DashboardContent() {
 }
 
 export default function DashboardLayout() {
+  const { isLoading: workosLoading, user } = useAuth();
+
+  // Wait for WorkOS to restore the session before deciding whether to
+  // redirect. Without this, a brief unauthenticated window during token
+  // hydration would bounce the user back to "/" on every page refresh.
+  if (workosLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[100svh] bg-background">
+        <Spinner className="w-8 h-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
-    <>
-      <AuthLoading>
-        <div className="flex items-center justify-center min-h-[100svh] bg-background">
-          <Spinner className="w-8 h-8 text-muted-foreground" />
-        </div>
-      </AuthLoading>
-
-      <Unauthenticated>
-        <Navigate to="/" replace />
-      </Unauthenticated>
-
-      <Authenticated>
-        <DashboardContent />
-      </Authenticated>
-    </>
+    <RequireOrganization>
+      <DashboardContent />
+    </RequireOrganization>
   );
 }

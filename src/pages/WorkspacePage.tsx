@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { Authenticated, AuthLoading, Unauthenticated, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { AccountDialog } from '@/components/AccountDialog';
-import { Navigate, Outlet, useNavigate } from 'react-router';
+import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
   Bot,
@@ -37,6 +37,7 @@ import {
   SidebarProvider,
   SidebarInset,
 } from '@/components/ui/sidebar';
+import { RequireOrganization } from '@/components/RequireOrganization';
 
 function AgentPreview() {
   return (
@@ -56,13 +57,16 @@ function AgentPreview() {
 }
 
 function AgentsSidebar() {
+  const { pathname } = useLocation();
+  const isAgentsRoute = pathname === '/workspace';
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/agents">
+              <Link to="/workspace">
                 <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <Sparkles className="size-4" />
                 </div>
@@ -70,7 +74,7 @@ function AgentsSidebar() {
                   <span className="font-semibold text-[15px] tracking-tight">ChatSaaS</span>
                   <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
                 </div>
-              </a>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -81,9 +85,11 @@ function AgentsSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton isActive tooltip="Agents">
-                  <Bot />
-                  <span>Agents</span>
+                <SidebarMenuButton asChild isActive={isAgentsRoute} tooltip="Agents">
+                  <Link to="/workspace">
+                    <Bot />
+                    <span>Agents</span>
+                  </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -276,21 +282,27 @@ export function AgentsIndex() {
 // ─── Route component (auth guard + shell) ────────────────────────
 
 export default function WorkspacePage() {
+  const { isLoading: workosLoading, user } = useAuth();
+
+  // Keep showing a spinner while WorkOS is restoring the session (e.g. after
+  // a page refresh). Without this guard the Convex <Unauthenticated> block
+  // could fire before AuthKit has had a chance to validate the stored tokens,
+  // bouncing the user back to the home page unnecessarily.
+  if (workosLoading) {
+    return (
+      <div className="flex min-h-[100svh] items-center justify-center bg-background">
+        <Spinner className="size-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
-    <>
-      <AuthLoading>
-        <div className="flex min-h-[100svh] items-center justify-center bg-background">
-          <Spinner className="size-8 text-muted-foreground" />
-        </div>
-      </AuthLoading>
-
-      <Unauthenticated>
-        <Navigate to="/" replace />
-      </Unauthenticated>
-
-      <Authenticated>
-        <WorkspaceShell />
-      </Authenticated>
-    </>
+    <RequireOrganization>
+      <WorkspaceShell />
+    </RequireOrganization>
   );
 }

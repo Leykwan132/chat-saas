@@ -1,6 +1,26 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+const serviceValidator = v.union(
+  v.literal("whatsapp"),
+  v.literal("instagram"),
+  v.literal("messenger"),
+);
+
+const conversationServiceValidator = v.union(
+  v.literal("playground"),
+  v.literal("whatsapp"),
+  v.literal("instagram"),
+  v.literal("messenger"),
+);
+
+const customerServiceValidator = v.union(
+  v.literal("whatsapp"),
+  v.literal("instagram"),
+  v.literal("messenger"),
+  v.literal("manual"),
+);
+
 export default defineSchema({
   users: defineTable({
     workosUserId: v.string(),
@@ -26,10 +46,6 @@ export default defineSchema({
     eventId: v.string(),
     processedAt: v.number(),
   }).index("by_eventId", ["eventId"]),
-  messages: defineTable({
-    author: v.string(),
-    text: v.string(),
-  }).index("by_author", ["author"]),
   agents: defineTable({
     name: v.string(),
     provider: v.literal("google"),
@@ -132,16 +148,124 @@ export default defineSchema({
   })
     .index("by_agentId", ["agentId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
-  conversations: defineTable({
-    threadId: v.string(),
-    sender: v.string(),
-    recipient: v.string(),
-    agentId: v.id("agents"),
-    userId: v.string(),
+  // Per-org Meta connection. wabaId/phoneNumberId/accessToken are optional so a
+  // row can exist before signup completes (status: "pending") and so future
+  // Instagram/Messenger rows can live in the same table.
+  channels: defineTable({
     orgId: v.string(),
+    service: serviceValidator,
+    wabaId: v.optional(v.string()),
+    phoneNumberId: v.optional(v.string()),
+    displayPhoneNumber: v.optional(v.string()),
+    accessToken: v.optional(v.string()),
+    tokenExpiresAt: v.optional(v.number()),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("connected"),
+      v.literal("disconnected"),
+      v.literal("error"),
+    ),
+    progressStep: v.optional(
+      v.union(
+        v.literal("linking"),
+        v.literal("subscribing"),
+        v.literal("registering"),
+      ),
+    ),
+    lastError: v.optional(v.string()),
+    connectedByUserId: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_service", ["orgId", "service"])
+    .index("by_phoneNumberId", ["phoneNumberId"]),
+  // A customer is anyone who messaged the org via any channel, or who was
+  // added manually. Natural key is (orgId, service, contactAddress).
+  customers: defineTable({
+    orgId: v.string(),
+    service: customerServiceValidator,
+    contactAddress: v.string(),
+    name: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
+    tags: v.array(v.string()),
+    notes: v.optional(v.string()),
+    source: customerServiceValidator,
+    firstSeenAt: v.number(),
+    lastSeenAt: v.number(),
+    lastConversationId: v.optional(v.id("conversations")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_lastSeenAt", ["orgId", "lastSeenAt"])
+    .index("by_orgId_and_service_and_contactAddress", [
+      "orgId",
+      "service",
+      "contactAddress",
+    ]),
+  // Unified conversation table. service: "playground" rows are AI-playground
+  // threads; the rest are channel-backed inbox conversations.
+  conversations: defineTable({
+    orgId: v.string(),
+    channelId: v.optional(v.id("channels")),
+    service: conversationServiceValidator,
+    orgAddress: v.string(),
+    contactAddress: v.string(),
+    contactName: v.optional(v.string()),
+    customerId: v.optional(v.id("customers")),
+    status: v.union(
+      v.literal("open"),
+      v.literal("snoozed"),
+      v.literal("closed"),
+    ),
+    tag: v.optional(v.string()),
+    assignedAgentId: v.optional(v.id("agents")),
+    assignedUserId: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+    lastMessageAt: v.number(),
+    lastMessagePreview: v.optional(v.string()),
+    unreadCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
+    .index("by_channel_and_contactAddress", ["channelId", "contactAddress"])
+    .index("by_threadId", ["threadId"])
+    .index("by_customerId", ["customerId"]),
+  messages: defineTable({
+    orgId: v.string(),
+    conversationId: v.id("conversations"),
+    channelId: v.optional(v.id("channels")),
+    service: conversationServiceValidator,
+    externalId: v.optional(v.string()),
+    orgAddress: v.string(),
+    contactAddress: v.string(),
+    direction: v.union(v.literal("incoming"), v.literal("outgoing")),
+    agentId: v.optional(v.id("agents")),
+    authorUserId: v.optional(v.string()),
+    contentType: v.union(
+      v.literal("text"),
+      v.literal("image"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("document"),
+      v.literal("unknown"),
+    ),
+    content: v.string(),
+    mediaUrl: v.optional(v.string()),
+    status: v.optional(
+      v.union(
+        v.literal("queued"),
+        v.literal("sent"),
+        v.literal("delivered"),
+        v.literal("read"),
+        v.literal("failed"),
+      ),
+    ),
+    failureReason: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_threadId", ["threadId"])
-    .index("by_agentId", ["agentId"])
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
+    .index("by_externalId", ["externalId"])
+    .index("by_orgId", ["orgId"]),
 });

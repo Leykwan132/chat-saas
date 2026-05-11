@@ -1,6 +1,11 @@
 import { useState } from 'react';
-import { MessageSquare, Search, Send, MoreVertical, Paperclip, Calendar, Bot, Pin } from 'lucide-react';
+import { Link, useParams } from 'react-router';
+import { useQuery } from 'convex/react';
+import { MessageSquare, Search, Send, MoreVertical, Paperclip, Calendar, Bot, Pin, Plug } from 'lucide-react';
 import { ChatRow } from '@/components/ChatRow';
+import { Button } from '@/components/ui/button';
+import { Spinner } from '@/components/ui/spinner';
+import { api } from '../../convex/_generated/api';
 
 const firstNames = ['Sarah', 'James', 'Maria', 'Alex', 'Emily', 'Daniel', 'Sophia', 'Michael', 'Emma', 'David'];
 const lastNames = ['Chen', 'Wilson', 'Garcia', 'Thompson', 'Davis', 'Kim', 'Martinez', 'Brown', 'Taylor', 'Anderson'];
@@ -54,9 +59,48 @@ const mockChats = Array.from({ length: 100 }, (_, i) => {
 const avatarColors = ['rgba(14,165,233,0.2)', 'rgba(236,72,153,0.2)', 'rgba(34,197,94,0.2)', 'rgba(234,179,8,0.2)', 'rgba(168,85,247,0.2)'];
 
 export default function ChatsPage() {
+  const { agentId } = useParams();
+  const connectedChannels = useQuery(api.channels.getConnectedForCurrentOrg, {});
+
   const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
   const [filterLabel, setFilterLabel] = useState<string>('All');
   const [pinnedIds, setPinnedIds] = useState<Set<number>>(new Set());
+
+  if (connectedChannels === undefined) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <ChatsPageHeader />
+        <div className="flex items-center justify-center py-20">
+          <Spinner className="size-6 text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (connectedChannels.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <ChatsPageHeader />
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+            <Plug className="size-6 text-muted-foreground" />
+          </div>
+          <div className="flex max-w-sm flex-col gap-1">
+            <h2 className="text-lg font-semibold tracking-tight">
+              No channels are connected
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Connect WhatsApp, Instagram, or Messenger to start receiving
+              conversations from your customers.
+            </p>
+          </div>
+          <Button asChild>
+            <Link to={`/dashboard/${agentId}/channels`}>Connect a channel</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const togglePin = (id: number) => {
     setPinnedIds(prev => {
@@ -82,18 +126,16 @@ export default function ChatsPage() {
   const selectedInitials = selectedChat ? selectedChat.name.split(' ').map(n => n[0]).join('') : '';
 
   return (
-    <div style={{ display: 'flex', gap: '24px', height: 'calc(100vh - 120px)', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+      <ChatsPageHeader />
+
+      <div style={{ display: 'flex', gap: '24px', height: 'calc(100vh - 200px)', width: '100%' }}>
 
       {/* LEFT COLUMN: Chat List */}
       <div style={{ width: '300px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
 
-        {/* Header & Search */}
-        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--color-border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-            <h1 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
-              Messages
-            </h1>
-          </div>
+        {/* Search & Filters */}
+        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--color-border)' }}>
           <div style={{ position: 'relative', marginBottom: '12px' }}>
             <Search
               size={15}
@@ -261,6 +303,22 @@ export default function ChatsPage() {
         </div>
       )}
 
+      </div>
+    </div>
+  );
+}
+
+function ChatsPageHeader() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div>
+        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
+          Messages
+        </h1>
+        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-foreground-muted)' }}>
+          Conversations from your connected channels
+        </p>
+      </div>
     </div>
   );
 }

@@ -19,6 +19,8 @@ export const wipe = internalMutation({
       "qaEntries",
       "conversations",
       "messages",
+      "channels",
+      "customers",
       "users",
       "organizations",
       "processedEvents",

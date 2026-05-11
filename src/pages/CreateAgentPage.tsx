@@ -9,6 +9,7 @@ import { api } from '../../convex/_generated/api';
 import { AGENT_TEMPLATES, GOOGLE_MODELS, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RequireOrganization } from '@/components/RequireOrganization';
 
 export default function CreateAgentPage() {
   return (
@@ -24,7 +25,9 @@ export default function CreateAgentPage() {
       </Unauthenticated>
 
       <Authenticated>
-        <CreateAgentForm />
+        <RequireOrganization>
+          <CreateAgentForm />
+        </RequireOrganization>
       </Authenticated>
     </>
   );

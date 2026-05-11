@@ -1,5 +1,4 @@
 import { useAuth } from '@workos-inc/authkit-react';
-import { Authenticated, Unauthenticated, AuthLoading } from 'convex/react';
 import { Navigate } from 'react-router';
 import { Sparkles } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
@@ -7,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { POST_LOGIN_REDIRECT } from '@/main';
 
 function SignInCard() {
-  const { user, signIn, signUp } = useAuth();
-
-  console.log('user', user);
+  const { signIn, signUp } = useAuth();
 
   return (
     <div className="flex min-h-[100svh] items-center justify-center bg-background px-6">
@@ -47,22 +44,24 @@ function SignInCard() {
   );
 }
 
+// Root route ("/"). Uses WorkOS's isLoading / user directly rather than
+// Convex's <Authenticated> wrappers so there is no race between AuthKit
+// restoring tokens from storage and Convex's auth context catching up.
+// Without this, a brief unauthenticated flash could prevent the redirect.
 export default function App() {
-  return (
-    <>
-      <AuthLoading>
-        <div className="flex items-center justify-center min-h-[100svh] bg-background">
-          <Spinner className="w-8 h-8 text-muted-foreground" />
-        </div>
-      </AuthLoading>
+  const { isLoading, user } = useAuth();
 
-      <Unauthenticated>
-        <SignInCard />
-      </Unauthenticated>
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[100svh] items-center justify-center bg-background">
+        <Spinner className="w-8 h-8 text-muted-foreground" />
+      </div>
+    );
+  }
 
-      <Authenticated>
-        <Navigate to={POST_LOGIN_REDIRECT} replace />
-      </Authenticated>
-    </>
-  );
+  if (user) {
+    return <Navigate to={POST_LOGIN_REDIRECT} replace />;
+  }
+
+  return <SignInCard />;
 }

@@ -108,14 +108,20 @@ export const resetThread = mutation({
 
     const threadId = await createThread(ctx, components.agent);
 
+    const now = Date.now();
     const conversationId = await ctx.db.insert("conversations", {
-      threadId,
-      sender: "user",
-      recipient: "bot",
-      agentId: args.agentId,
-      userId,
       orgId,
-      createdAt: Date.now(),
+      service: "playground",
+      orgAddress: "agent",
+      contactAddress: "user",
+      status: "open",
+      assignedAgentId: args.agentId,
+      assignedUserId: userId,
+      threadId,
+      lastMessageAt: now,
+      unreadCount: 0,
+      createdAt: now,
+      updatedAt: now,
     });
 
     return { threadId, conversationId };

@@ -17,6 +17,7 @@ import CustomersPage from './pages/CustomersPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
 import AccountPage from './pages/AccountPage.tsx'
+import ChannelsPage from './pages/ChannelsPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 
@@ -90,6 +91,7 @@ function RootLayout() {
               <Route path="playground/:threadId?" element={<AgentPage />} />
               <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
               <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
+              <Route path="channels" element={<ChannelsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="account" element={<AccountPage />} />

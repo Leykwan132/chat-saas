@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Plug } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { AccountDialog } from '@/components/AccountDialog';
 import {
@@ -25,6 +25,7 @@ function getNavItems(agentId: string) {
     configuration: [
       { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground' },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base' },
+      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels' },
     ],
     insights: [
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
@@ -89,7 +90,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel>Configuration</SidebarGroupLabel>
+          <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.configuration.map((item) => (
