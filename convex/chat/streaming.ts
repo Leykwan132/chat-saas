@@ -45,7 +45,7 @@ function buildAgent(
 - A comprehensive paragraph with inline citations marked as [1], [2], etc.
 - 2-3 citations with realistic source information
 - Each citation MUST have a {title: "", url: "", description: ""} JSON object. If ANY of them doesn't exist, leave it as empty string "" for that key. 
-- If it's a file, the URL value must start with https://chat-saas.com/{{fileName}}
+- If it's a file, the URL value must start with https://kilobot.app/{{fileName}}
 - The description key MUST contain a short summary of the content from the source. 
 - Make the content informative and the sources credible
 Format citations as numbered references within the text. Use only sources found via \`fetchContext\` — do not fabricate sources.

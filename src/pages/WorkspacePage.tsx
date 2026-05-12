@@ -71,7 +71,7 @@ function AgentsSidebar() {
                   <Sparkles className="size-4" />
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-                  <span className="font-semibold text-[15px] tracking-tight">ChatSaaS</span>
+                  <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
                   <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
                 </div>
               </Link>
@@ -214,7 +214,7 @@ function WorkspaceShell() {
 
 export function AgentsIndex() {
   const navigate = useNavigate();
-  const { organizationId } = useAuth();
+  const { organizationId, user } = useAuth();
   const activeOrgId = organizationId ?? null;
   const agents = useQuery(api.agents.list, { orgId: activeOrgId });
   const removeAgent = useMutation(api.agents.remove);
@@ -284,6 +284,7 @@ export function AgentsIndex() {
 export default function WorkspacePage() {
   const { isLoading: workosLoading, user } = useAuth();
 
+  console.log(user);
   // Keep showing a spinner while WorkOS is restoring the session (e.g. after
   // a page refresh). Without this guard the Convex <Unauthenticated> block
   // could fire before AuthKit has had a chance to validate the stored tokens,
@@ -296,9 +297,9 @@ export default function WorkspacePage() {
     );
   }
 
-  if (!user) {
-    return <Navigate to="/" replace />;
-  }
+  // if (!user) {
+  //   return <Navigate to="/" replace />;
+  // }
 
   return (
     <RequireOrganization>

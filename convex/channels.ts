@@ -1,5 +1,11 @@
 import { v } from "convex/values";
-import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+  type MutationCtx,
+} from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
@@ -176,22 +182,26 @@ export const internalStartPending = internalMutation({
   },
 });
 
-// Patches just the progressStep on the existing whatsapp row. Used between
+// Patches just the progressStep on the existing channel row. Used between
 // each Graph call in completeSignup so the live `Shimmer` label can advance.
+// Service is explicit so a single helper can drive every channel kind.
 export const internalSetProgress = internalMutation({
   args: {
     orgId: v.string(),
+    service: serviceValidator,
     progressStep: v.union(
       v.literal("linking"),
       v.literal("subscribing"),
       v.literal("registering"),
+      v.literal("exchanging"),
+      v.literal("backfilling"),
     ),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
       .query("channels")
       .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "whatsapp"),
+        q.eq("orgId", args.orgId).eq("service", args.service),
       )
       .unique();
     if (existing === null) return;
@@ -240,6 +250,255 @@ export const internalRecordError = internalMutation({
   },
 });
 
-// Webhook lookup: find the channel row for the WhatsApp business phone number
-// the message was delivered to.
+// ──────────────────────────────────────────────────────────────────────────
+// Instagram
+// ──────────────────────────────────────────────────────────────────────────
+
+// Insert (or patch) a pending Instagram channel row right before we kick off
+// the OAuth code → token exchange, so the UI can subscribe to progressStep.
+export const internalStartInstagramPending = internalMutation({
+  args: {
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+  },
+  handler: async (ctx, args): Promise<Id<"channels">> => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) =>
+        q.eq("orgId", args.orgId).eq("service", "instagram"),
+      )
+      .unique();
+    if (existing === null) {
+      return await ctx.db.insert("channels", {
+        orgId: args.orgId,
+        service: "instagram",
+        status: "pending",
+        progressStep: "exchanging",
+        connectedByUserId: args.connectedByUserId,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    await ctx.db.patch(existing._id, {
+      status: "pending",
+      progressStep: "exchanging",
+      lastError: undefined,
+      connectedByUserId: args.connectedByUserId,
+      updatedAt: now,
+    });
+    return existing._id;
+  },
+});
+
+// Promote the pending Instagram row to `connected` with the long-lived token,
+// IG user id, and handle. Mirrors `internalUpsertWhatsApp`.
+export const internalUpsertInstagram = internalMutation({
+  args: {
+    orgId: v.string(),
+    igUserId: v.string(),
+    displayUsername: v.optional(v.string()),
+    accessToken: v.string(),
+    tokenExpiresAt: v.optional(v.number()),
+    connectedByUserId: v.string(),
+  },
+  handler: async (ctx, args): Promise<Id<"channels">> => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) =>
+        q.eq("orgId", args.orgId).eq("service", "instagram"),
+      )
+      .unique();
+
+    const patch = {
+      igUserId: args.igUserId,
+      displayUsername: args.displayUsername,
+      accessToken: args.accessToken,
+      tokenExpiresAt: args.tokenExpiresAt,
+      status: "connected" as const,
+      progressStep: undefined,
+      lastError: undefined,
+      updatedAt: now,
+    };
+
+    if (existing === null) {
+      return await ctx.db.insert("channels", {
+        orgId: args.orgId,
+        service: "instagram",
+        ...patch,
+        connectedByUserId: args.connectedByUserId,
+        createdAt: now,
+      });
+    }
+    await ctx.db.patch(existing._id, {
+      ...patch,
+      connectedByUserId: args.connectedByUserId,
+    });
+    return existing._id;
+  },
+});
+
+// Patch just the token + expiry on an existing Instagram row. Used by the
+// 60-day refresh cron so we never have to touch unrelated fields.
+export const internalUpdateInstagramToken = internalMutation({
+  args: {
+    channelId: v.id("channels"),
+    accessToken: v.string(),
+    tokenExpiresAt: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.channelId, {
+      accessToken: args.accessToken,
+      tokenExpiresAt: args.tokenExpiresAt,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Returns Instagram channels whose token expires before `now + withinMs`.
+// Used by the refresh cron to enqueue per-channel refresh actions.
+export const internalGetExpiringInstagramTokens = internalQuery({
+  args: { withinMs: v.number() },
+  handler: async (ctx, args) => {
+    const cutoff = Date.now() + args.withinMs;
+    // We expect very few Instagram channels per deployment, so a small
+    // full-table scan is fine — the schema does not currently index
+    // tokenExpiresAt, and adding an index for a once-a-day cron would be
+    // premature.
+    const rows = await ctx.db.query("channels").collect();
+    return rows.filter(
+      (r) =>
+        r.service === "instagram" &&
+        r.status === "connected" &&
+        typeof r.tokenExpiresAt === "number" &&
+        r.tokenExpiresAt < cutoff,
+    );
+  },
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Messenger
+// ──────────────────────────────────────────────────────────────────────────
+
+// Insert (or patch) a pending Messenger channel row before we run the
+// FB Login for Business code exchange. Same role as the Instagram variant.
+export const internalStartMessengerPending = internalMutation({
+  args: {
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+  },
+  handler: async (ctx, args): Promise<Id<"channels">> => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) =>
+        q.eq("orgId", args.orgId).eq("service", "messenger"),
+      )
+      .unique();
+    if (existing === null) {
+      return await ctx.db.insert("channels", {
+        orgId: args.orgId,
+        service: "messenger",
+        status: "pending",
+        progressStep: "exchanging",
+        connectedByUserId: args.connectedByUserId,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+    await ctx.db.patch(existing._id, {
+      status: "pending",
+      progressStep: "exchanging",
+      lastError: undefined,
+      connectedByUserId: args.connectedByUserId,
+      updatedAt: now,
+    });
+    return existing._id;
+  },
+});
+
+// Promote the pending Messenger row to `connected` with the long-lived Page
+// access token + Page id + Page name. No `tokenExpiresAt` is stored because
+// FB Login for Business issues long-lived Page tokens that never expire.
+export const internalUpsertMessenger = internalMutation({
+  args: {
+    orgId: v.string(),
+    pageId: v.string(),
+    displayUsername: v.optional(v.string()),
+    accessToken: v.string(),
+    connectedByUserId: v.string(),
+  },
+  handler: async (ctx, args): Promise<Id<"channels">> => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) =>
+        q.eq("orgId", args.orgId).eq("service", "messenger"),
+      )
+      .unique();
+
+    const patch = {
+      pageId: args.pageId,
+      displayUsername: args.displayUsername,
+      accessToken: args.accessToken,
+      tokenExpiresAt: undefined,
+      status: "connected" as const,
+      progressStep: undefined,
+      lastError: undefined,
+      updatedAt: now,
+    };
+
+    if (existing === null) {
+      return await ctx.db.insert("channels", {
+        orgId: args.orgId,
+        service: "messenger",
+        ...patch,
+        connectedByUserId: args.connectedByUserId,
+        createdAt: now,
+      });
+    }
+    await ctx.db.patch(existing._id, {
+      ...patch,
+      connectedByUserId: args.connectedByUserId,
+    });
+    return existing._id;
+  },
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Shared lookups used by webhook + sync workers
+// ──────────────────────────────────────────────────────────────────────────
+
+// Webhook lookup: find the channel row for an Instagram-scoped user id.
+export const internalGetChannelByIgUserId = internalQuery({
+  args: { igUserId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("channels")
+      .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId))
+      .unique();
+  },
+});
+
+// Webhook lookup: find the channel row for a Facebook Page id.
+export const internalGetChannelByPageId = internalQuery({
+  args: { pageId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("channels")
+      .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
+      .unique();
+  },
+});
+
+// Internal accessor used by sync actions to retrieve the persisted access
+// token (kept off the public API surface).
+export const internalGetChannel = internalQuery({
+  args: { channelId: v.id("channels") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.channelId);
+  },
+});
+
 export { statusValidator };

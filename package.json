@@ -1,5 +1,5 @@
 {
-  "name": "chat-saas",
+  "name": "kilobot",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/google": "^3.0.65",
     "@convex-dev/agent": "^0.6.1",
+    "@convex-dev/crons": "^0.2.0",
     "@convex-dev/workos": "^0.0.1",
     "@convex-dev/workos-authkit": "^0.2.4",
     "@convex-dev/workpool": "^0.4.6",

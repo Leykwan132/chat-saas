@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import {
   httpAction,
   internalMutation,
+  type ActionCtx,
   type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
@@ -44,45 +45,23 @@ export const verify = httpAction(async (_ctx, req) => {
   return new Response("forbidden", { status: 403 });
 });
 
-// POST /webhook/meta — incoming events.
+// POST /webhook/meta — incoming WhatsApp events.
 //
-// We:
-//   1. Read the raw body (signature is computed over the exact bytes Meta
-//      sent, so we can't use req.json() before validating).
-//   2. Verify the X-Hub-Signature-256 HMAC against META_APP_SECRET.
-//   3. Walk entry[].changes[].value and dispatch each message / status into
-//      an internal mutation that writes to the DB atomically.
-//   4. Always reply 200 once the signature is valid — Meta otherwise retries
-//      and we'd dedupe via externalId, but this keeps the dashboard clean.
-export const receive = httpAction(async (ctx, req) => {
-  const appSecret = process.env.META_APP_SECRET;
-  if (!appSecret) {
-    console.error("META_APP_SECRET is not configured");
-    return new Response("server misconfigured", { status: 500 });
-  }
-
-  const sigHeader = req.headers.get("x-hub-signature-256");
-  if (!sigHeader || !sigHeader.startsWith("sha256=")) {
-    return new Response("missing signature", { status: 400 });
-  }
-  const providedHex = sigHeader.slice("sha256=".length);
-
-  const rawBody = await req.text();
-  const valid = await verifyHmac(appSecret, rawBody, providedHex);
-  if (!valid) {
-    return new Response("invalid signature", { status: 401 });
-  }
-
+// The /webhook/meta dispatcher (convex/http.ts) verifies the X-Hub-Signature
+// HMAC and reads the raw body before calling this handler, so we just walk
+// entry[].changes[].value and persist each message / status update.
+//
+// Exposed as a plain async function (not an httpAction) so the dispatcher
+// can invoke it directly with the already-decoded body.
+export async function receive(
+  ctx: ActionCtx,
+  rawBody: string,
+): Promise<Response> {
   let payload: WhatsAppWebhookPayload;
   try {
     payload = JSON.parse(rawBody) as WhatsAppWebhookPayload;
   } catch {
     return new Response("invalid json", { status: 400 });
-  }
-
-  if (payload.object !== "whatsapp_business_account") {
-    // We only register for the WhatsApp product today; ignore others.
-    return new Response(null, { status: 200 });
   }
 
   for (const entry of payload.entry ?? []) {
@@ -131,7 +110,7 @@ export const receive = httpAction(async (ctx, req) => {
   }
 
   return new Response(null, { status: 200 });
-});
+}
 
 // Persist one inbound message + upsert its conversation + customer. Wrapped
 // in a single internal mutation so all three writes happen atomically.
@@ -347,31 +326,6 @@ function mapStatus(status?: string) {
     default:
       return "queued" as const;
   }
-}
-
-async function verifyHmac(secret: string, body: string, providedHex: string) {
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const sig = await crypto.subtle.sign("HMAC", key, enc.encode(body));
-  const expectedHex = Array.from(new Uint8Array(sig))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  return timingSafeEqualHex(expectedHex, providedHex.toLowerCase());
-}
-
-function timingSafeEqualHex(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) {
-    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return diff === 0;
 }
 
 // --- Inbound payload types (subset of Meta docs we actually use) ---

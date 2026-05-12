@@ -61,6 +61,10 @@ const PROGRESS_LABELS: Record<NonNullable<Doc<'channels'>['progressStep']>, stri
   linking: 'Linking your WhatsApp Business account',
   subscribing: 'Connecting realtime updates',
   registering: 'Activating your phone number',
+  // WhatsApp does not use these two — they exist on the shared progressStep
+  // union for Instagram / Messenger. Mapped here so the type stays exhaustive.
+  exchanging: 'Exchanging your code for an access token',
+  backfilling: 'Loading your recent conversations',
 };
 
 const PAYMENT_METHOD_URL = 'https://business.facebook.com/wa/manage/home/';

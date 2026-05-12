@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { Authenticated, AuthLoading, Unauthenticated, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { Link, Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { ArrowLeft, Bot, Plus, Globe, Mail, FileText } from 'lucide-react';
@@ -12,24 +12,24 @@ import { Input } from '@/components/ui/input';
 import { RequireOrganization } from '@/components/RequireOrganization';
 
 export default function CreateAgentPage() {
+  const { isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[100svh] items-center justify-center bg-background">
+        <Spinner className="size-8 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
-    <>
-      <AuthLoading>
-        <div className="flex min-h-[100svh] items-center justify-center bg-background">
-          <Spinner className="size-8 text-muted-foreground" />
-        </div>
-      </AuthLoading>
-
-      <Unauthenticated>
-        <Navigate to="/" replace />
-      </Unauthenticated>
-
-      <Authenticated>
-        <RequireOrganization>
-          <CreateAgentForm />
-        </RequireOrganization>
-      </Authenticated>
-    </>
+    <RequireOrganization>
+      <CreateAgentForm />
+    </RequireOrganization>
   );
 }
 

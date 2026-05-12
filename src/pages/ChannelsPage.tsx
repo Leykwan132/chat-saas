@@ -1,11 +1,15 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
+import { useSearchParams } from 'react-router';
 import {
   Building2,
   CheckCircle2,
   CircleAlert,
+  FileText,
+  FilePlus2,
   Loader2,
+  Send,
   Trash2,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
@@ -16,8 +20,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
+import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
+import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
 
 type ChannelDoc = Doc<'channels'>;
+
+const WHATSAPP_GRAPH_API_VERSION = 'v25.0';
+const WHATSAPP_DEMO_ACCESS_TOKEN = 'EAAONOfH9nHYBRe6bjD7HyXWaUdKHNArANgtDaJlyZBoN1yfunMfIU5ZA6MmrHleH7t8ROwjjP7X1kzVRF93KfDRcpS0H1m0jDRljdOzkJq6P653FSBoRrZAZCKMiC1CZBjZC9g9Btgw5VdBZBNxOnpIZCYn7e9ZBwTEJZBWgZBuDLH8sHDZBLdn5tk034iEAZBQ7TJYn7QrOjXvN1f1EPDvLFYgQmearNoLCG7A3vy7FDIR2JiGZBXR30L0FwBVPcZCz7md2RROkOKBrgOVuyuGLFRotpJDDOQZBiAZDZD';
+const WHATSAPP_DEMO_PHONE_NUMBER_ID = '1121402084386768';
+const WHATSAPP_DEMO_RECIPIENT = '60129499394';
+const WHATSAPP_DEMO_TEMPLATE_NAME = 'jaspers_market_plain_text_v1';
+const WHATSAPP_DEMO_TEMPLATE_LANGUAGE = 'en_US';
+const WHATSAPP_DEMO_WABA_ID = '1457383175576319';
+const WHATSAPP_DEMO_NEW_TEMPLATE_NAME = 'jaspers_market_demo_text_v2';
+const WHATSAPP_DEMO_NEW_TEMPLATE_BODY =
+  "Thank you for reaching out to Jasper's Market. We'll reply as soon as we can.";
 
 const SERVICE_META: Record<
   ChannelDoc['service'],
@@ -51,12 +68,65 @@ const STATUS_META: Record<
   error: { label: 'Error', tone: 'danger' },
 };
 
+// Picks the most user-friendly identifier we have for a channel row.
+// WhatsApp surfaces the phone number; Instagram its handle; Messenger its
+// Page name. Falls back to whichever Meta id we know.
+function channelIdentifier(channel: ChannelDoc): string {
+  switch (channel.service) {
+    case 'whatsapp':
+      return (
+        channel.displayPhoneNumber ??
+        channel.phoneNumberId ??
+        channel.wabaId ??
+        'No identifier yet'
+      );
+    case 'instagram':
+      return channel.displayUsername ?? channel.igUserId ?? 'No identifier yet';
+    case 'messenger':
+      return channel.displayUsername ?? channel.pageId ?? 'No identifier yet';
+  }
+}
+
+// Handles the Instagram OAuth redirect that lands back on this page with
+// `?code=...`. We swallow the code once, hand it to the backend, then strip
+// it from the URL. The exchanged-once ref keeps StrictMode's double-invoke
+// of effects from firing the action twice.
+function useInstagramOAuthCallback() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const completeSignup = useAction(api.instagramConnect.completeSignup);
+  const handledCodeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (!code) return;
+    if (handledCodeRef.current === code) return;
+    handledCodeRef.current = code;
+
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
+    const next = new URLSearchParams(searchParams);
+    next.delete('code');
+    next.delete('state');
+    setSearchParams(next, { replace: true });
+
+    void (async () => {
+      try {
+        await completeSignup({ code, redirectUri });
+        toast.success('Instagram connected');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error(`Instagram connect failed: ${message}`);
+      }
+    })();
+  }, [completeSignup, searchParams, setSearchParams]);
+}
+
 export default function ChannelsPage() {
   const { organizationId } = useAuth();
   const channels = useQuery(
     api.channels.listForCurrentOrg,
     organizationId ? {} : 'skip',
   );
+  useInstagramOAuthCallback();
 
   if (!organizationId) {
     return (
@@ -88,10 +158,18 @@ export default function ChannelsPage() {
             service="whatsapp"
             cta={<ConnectWhatsAppButton />}
           />
-          <AvailableChannelCard service="instagram" comingSoon />
-          <AvailableChannelCard service="messenger" comingSoon />
+          <AvailableChannelCard
+            service="instagram"
+            cta={<ConnectInstagramButton />}
+          />
+          <AvailableChannelCard
+            service="messenger"
+            cta={<ConnectMessengerButton />}
+          />
         </div>
       </section>
+
+      <WhatsAppCloudApiDemo channels={channels ?? []} />
 
       {channels !== undefined && channels.length > 0 ? (
         <section className="flex flex-col gap-4">
@@ -108,6 +186,221 @@ export default function ChannelsPage() {
       ) : null}
     </div>
   );
+}
+
+function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {
+  const whatsappChannel = channels.find((channel) => channel.service === 'whatsapp');
+  const [busyAction, setBusyAction] = useState<
+    'send' | 'templates' | 'createTemplate' | null
+  >(null);
+  const [result, setResult] = useState<string | null>(null);
+
+  const runDemoRequest = useCallback(
+    (action: 'send' | 'templates' | 'createTemplate') => {
+      void (async () => {
+        if (!WHATSAPP_DEMO_ACCESS_TOKEN.trim()) {
+          const message =
+            'Add a temporary WhatsApp Cloud API access token to WHATSAPP_DEMO_ACCESS_TOKEN first.';
+          setResult(message);
+          toast.error(message);
+          return;
+        }
+
+        setBusyAction(action);
+        setResult(null);
+
+        try {
+          if (action === 'send') {
+            const response = await fetch(
+              `https://graph.facebook.com/${WHATSAPP_GRAPH_API_VERSION}/${WHATSAPP_DEMO_PHONE_NUMBER_ID}/messages`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${WHATSAPP_DEMO_ACCESS_TOKEN}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  messaging_product: 'whatsapp',
+                  to: WHATSAPP_DEMO_RECIPIENT,
+                  type: 'template',
+                  template: {
+                    name: WHATSAPP_DEMO_TEMPLATE_NAME,
+                    language: { code: WHATSAPP_DEMO_TEMPLATE_LANGUAGE },
+                  },
+                }),
+              },
+            );
+            setResult(await formatGraphResponse(response));
+            toast.success('Demo WhatsApp template request completed');
+            return;
+          }
+
+          const wabaId = whatsappChannel?.wabaId ?? WHATSAPP_DEMO_WABA_ID;
+          if ((action === 'templates' || action === 'createTemplate') && !wabaId) {
+            throw new Error(
+              'No WhatsApp Business Account ID found. Connect WhatsApp or add one to WHATSAPP_DEMO_WABA_ID.',
+            );
+          }
+
+          if (action === 'createTemplate') {
+            const response = await fetch(
+              `https://graph.facebook.com/${WHATSAPP_GRAPH_API_VERSION}/${wabaId}/message_templates`,
+              {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${WHATSAPP_DEMO_ACCESS_TOKEN}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  name: WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
+                  category: 'UTILITY',
+                  language: WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
+                  components: [
+                    {
+                      type: 'BODY',
+                      text: WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
+                    },
+                  ],
+                }),
+              },
+            );
+            setResult(await formatGraphResponse(response));
+            toast.success('WhatsApp message template creation request completed');
+            return;
+          }
+
+          const response = await fetch(
+            `https://graph.facebook.com/${WHATSAPP_GRAPH_API_VERSION}/${wabaId}/message_templates`,
+            {
+              headers: {
+                Authorization: `Bearer ${WHATSAPP_DEMO_ACCESS_TOKEN}`,
+              },
+            },
+          );
+          setResult(await formatGraphResponse(response));
+          toast.success('WhatsApp message templates request completed');
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          setResult(message);
+          toast.error(message);
+        } finally {
+          setBusyAction(null);
+        }
+      })();
+    },
+    [whatsappChannel?.wabaId],
+  );
+
+  return (
+    <section className="flex flex-col gap-4 rounded-xl border border-dashed border-border bg-muted/20 p-5">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">
+            WhatsApp Cloud API quick demo
+          </h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Temporary test helper for sending the sample template message and
+            creating or retrieving message templates. Paste a short-lived token into
+            <code className="mx-1 rounded bg-muted px-1 py-0.5 text-xs">
+              WHATSAPP_DEMO_ACCESS_TOKEN
+            </code>
+            before running it.
+          </p>
+        </div>
+        <Badge variant="outline" className="w-fit">
+          Demo only
+        </Badge>
+      </div>
+
+      <div className="grid gap-3 text-sm md:grid-cols-3">
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="font-medium">Send template message</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Sends {WHATSAPP_DEMO_TEMPLATE_NAME} to {WHATSAPP_DEMO_RECIPIENT}.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="font-medium">Create message template</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Creates {WHATSAPP_DEMO_NEW_TEMPLATE_NAME} on the selected WABA.
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-3">
+          <p className="font-medium">Retrieve message templates</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Uses the connected WhatsApp WABA ID, or WHATSAPP_DEMO_WABA_ID if set.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button
+          type="button"
+          onClick={() => runDemoRequest('send')}
+          disabled={busyAction !== null}
+        >
+          {busyAction === 'send' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Send className="size-4" />
+          )}
+          Send sample message
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => runDemoRequest('createTemplate')}
+          disabled={busyAction !== null}
+        >
+          {busyAction === 'createTemplate' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <FilePlus2 className="size-4" />
+          )}
+          Create demo template
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => runDemoRequest('templates')}
+          disabled={busyAction !== null}
+        >
+          {busyAction === 'templates' ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <FileText className="size-4" />
+          )}
+          Retrieve templates
+        </Button>
+      </div>
+
+      {result ? (
+        <pre className="max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
+          {result}
+        </pre>
+      ) : null}
+    </section>
+  );
+}
+
+async function formatGraphResponse(response: Response) {
+  const text = await response.text();
+  let body: unknown = text;
+
+  try {
+    body = JSON.parse(text);
+  } catch {
+    // Facebook can return non-JSON errors for edge cases; keep the raw body.
+  }
+
+  const formattedBody =
+    typeof body === 'string' ? body : JSON.stringify(body, null, 2);
+
+  if (!response.ok) {
+    throw new Error(`Graph API ${response.status}: ${formattedBody}`);
+  }
+
+  return formattedBody;
 }
 
 function PageHeader() {
@@ -222,10 +515,7 @@ function ConnectedChannelRow({ channel }: { channel: ChannelDoc }) {
         <div className="flex flex-col gap-0.5 min-w-0">
           <p className="truncate text-sm font-semibold">{meta.label}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {channel.displayPhoneNumber ??
-              channel.phoneNumberId ??
-              channel.wabaId ??
-              'No identifier yet'}
+            {channelIdentifier(channel)}
           </p>
           {channel.status === 'error' && channel.lastError ? (
             <p className="mt-1 flex items-center gap-1 text-xs text-destructive">

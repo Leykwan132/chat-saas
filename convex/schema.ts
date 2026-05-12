@@ -157,6 +157,9 @@ export default defineSchema({
     wabaId: v.optional(v.string()),
     phoneNumberId: v.optional(v.string()),
     displayPhoneNumber: v.optional(v.string()),
+    igUserId: v.optional(v.string()),
+    pageId: v.optional(v.string()),
+    displayUsername: v.optional(v.string()),
     accessToken: v.optional(v.string()),
     tokenExpiresAt: v.optional(v.number()),
     status: v.union(
@@ -170,6 +173,8 @@ export default defineSchema({
         v.literal("linking"),
         v.literal("subscribing"),
         v.literal("registering"),
+        v.literal("exchanging"),
+        v.literal("backfilling"),
       ),
     ),
     lastError: v.optional(v.string()),
@@ -178,7 +183,9 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_orgId_and_service", ["orgId", "service"])
-    .index("by_phoneNumberId", ["phoneNumberId"]),
+    .index("by_phoneNumberId", ["phoneNumberId"])
+    .index("by_igUserId", ["igUserId"])
+    .index("by_pageId", ["pageId"]),
   // A customer is anyone who messaged the org via any channel, or who was
   // added manually. Natural key is (orgId, service, contactAddress).
   customers: defineTable({

@@ -109,6 +109,7 @@ export const completeSignup = action({
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId,
+        service: "whatsapp",
         progressStep: "subscribing",
       });
 
@@ -125,6 +126,7 @@ export const completeSignup = action({
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId,
+        service: "whatsapp",
         progressStep: "registering",
       });
 

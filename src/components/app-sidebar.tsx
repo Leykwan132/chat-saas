@@ -52,7 +52,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                   <Sparkles className="size-4" />
                 </div>
                 <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-                  <span className="font-semibold text-[15px] tracking-tight">ChatSaaS</span>
+                  <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
                   <span className="truncate text-xs text-sidebar-foreground/60">{agent.name}</span>
                 </div>
               </a>
