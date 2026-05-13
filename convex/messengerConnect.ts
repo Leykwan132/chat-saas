@@ -57,15 +57,17 @@ type PageEdge = {
 
 export async function exchangeCodeForUserToken(
   code: string,
-  redirectUri: string,
   appId: string,
   appSecret: string,
+  redirectUri?: string,
 ): Promise<string> {
   const tokenUrl = new URL(`${fbGraphBase()}${"/oauth/access_token"}`);
   tokenUrl.searchParams.set("client_id", appId);
   tokenUrl.searchParams.set("client_secret", appSecret);
-  tokenUrl.searchParams.set("redirect_uri", redirectUri);
   tokenUrl.searchParams.set("code", code);
+  if (redirectUri != null && redirectUri.length > 0) {
+    tokenUrl.searchParams.set("redirect_uri", redirectUri);
+  }
   const res = await graphFetch<{ access_token: string; expires_in?: number }>(
     tokenUrl.toString(),
     { method: "GET" },
@@ -157,12 +159,6 @@ async function completeMessengerFromUserAccessToken(
   }
 
   if (!args.pageId && pages.length > 1) {
-    await ctx.runMutation(internal.channels.internalRecordError, {
-      orgId,
-      service: "messenger",
-      error: "Multiple Pages available — please pick one.",
-      connectedByUserId: userId,
-    });
     return {
       needsPagePicker: true,
       pages: pages.map((p) => ({ id: p.id, name: p.name })),
@@ -234,9 +230,9 @@ export const listPages = action({
     }
     const userToken = await exchangeCodeForUserToken(
       args.code,
-      args.redirectUri,
       appId,
       appSecret,
+      args.redirectUri,
     );
     const pages = await listUserPages(userToken);
     return { pages: pages.map((p) => ({ id: p.id, name: p.name })) };
@@ -251,15 +247,22 @@ export const listPages = action({
 export const completeSignup = action({
   args: {
     code: v.string(),
-    redirectUri: v.string(),
+    /** Classic `dialog/oauth`; omit for Facebook Login for Business Embedded Signup (`config_id`). */
+    redirectUri: v.optional(v.string()),
     pageId: v.optional(v.string()),
+    /** Stored on the OAuth hold row when `needsPagePicker` (for finalizePick). */
+    returnPath: v.optional(v.string()),
   },
   handler: async (
     ctx,
     args,
   ): Promise<
     | { channelId: Id<"channels">; displayUsername?: string }
-    | { needsPagePicker: true; pages: Array<{ id: string; name?: string }> }
+    | {
+        needsPagePicker: true;
+        pages: Array<{ id: string; name?: string }>;
+        sessionId: Id<"oauthSessions">;
+      }
   > => {
     const { orgId, userId } = await getAuthContext(ctx);
     if (orgId === "personal" || !orgId) {
@@ -284,17 +287,36 @@ export const completeSignup = action({
 
       const userToken = await exchangeCodeForUserToken(
         args.code,
-        args.redirectUri,
         appId,
         appSecret,
+        args.redirectUri,
       );
 
-      return await completeMessengerFromUserAccessToken(ctx, {
+      const result = await completeMessengerFromUserAccessToken(ctx, {
         orgId,
         userId,
         userAccessToken: userToken,
         pageId: args.pageId,
       });
+
+      if ("needsPagePicker" in result) {
+        const sessionId = await ctx.runMutation(
+          internal.oauthSessions.internalCreateMessengerPickerHold,
+          {
+            orgId,
+            userId,
+            userAccessToken: userToken,
+            returnPath: args.returnPath,
+          },
+        );
+        return {
+          needsPagePicker: true,
+          pages: result.pages,
+          sessionId,
+        };
+      }
+
+      return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.channels.internalRecordError, {
@@ -353,9 +375,9 @@ export const internalOAuthCallback = internalAction({
 
       const userToken = await exchangeCodeForUserToken(
         args.code,
-        args.redirectUri,
         appId,
         appSecret,
+        args.redirectUri,
       );
 
       const result = await completeMessengerFromUserAccessToken(ctx, {

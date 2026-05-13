@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { generateCsrfToken, sanitizeReturnPath } from "./oauthShared";
 
 const SESSION_TTL_MS = 10 * 60 * 1000;
 
@@ -26,6 +27,33 @@ export const internalCreate = internalMutation({
       returnPath: args.returnPath,
       expiresAt: Date.now() + SESSION_TTL_MS,
       consumed: false,
+    });
+  },
+});
+
+/**
+ * After Messenger Embedded Signup (`FB.login` + `config_id`) the user token
+ * cannot be returned to the client when multiple Pages exist — we persist it
+ * until `messengerAuth.finalizePick` (same as redirect-flow picker).
+ */
+export const internalCreateMessengerPickerHold = internalMutation({
+  args: {
+    orgId: v.string(),
+    userId: v.string(),
+    userAccessToken: v.string(),
+    returnPath: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<Id<"oauthSessions">> => {
+    const returnPath = sanitizeReturnPath(args.returnPath);
+    return await ctx.db.insert("oauthSessions", {
+      csrf: generateCsrfToken(),
+      service: "messenger",
+      orgId: args.orgId,
+      userId: args.userId,
+      returnPath,
+      expiresAt: Date.now() + SESSION_TTL_MS,
+      consumed: false,
+      pendingUserAccessToken: args.userAccessToken,
     });
   },
 });

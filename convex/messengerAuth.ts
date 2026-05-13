@@ -16,9 +16,9 @@ function fbOAuthDialogVersion() {
   return process.env.META_GRAPH_API_VERSION || DEFAULT_FB_OAUTH_VERSION;
 }
 
-// Classic Facebook Login OAuth — same `redirect_uri` must be registered in
-// Meta (Valid OAuth Redirect URIs) and passed unchanged to the token
-// exchange on the backend.
+// OAuth helpers for Messenger. The in-app connect button uses Embedded
+// Signup (`messengerConnect.completeSignup` + `FB.login`). `start` remains
+// for classic `dialog/oauth` → `/auth/messenger/callback` if needed.
 const MESSENGER_OAUTH_SCOPES = "pages_messaging,pages_show_list";
 
 /**

@@ -25,6 +25,9 @@ import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
 
 type ChannelDoc = Doc<'channels'>;
 
+/** Toggle the WhatsApp Cloud API quick demo section on the Channels page. */
+const SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO = false;
+
 const WHATSAPP_GRAPH_API_VERSION = 'v25.0';
 const WHATSAPP_DEMO_ACCESS_TOKEN = 'EAAONOfH9nHYBRe6bjD7HyXWaUdKHNArANgtDaJlyZBoN1yfunMfIU5ZA6MmrHleH7t8ROwjjP7X1kzVRF93KfDRcpS0H1m0jDRljdOzkJq6P653FSBoRrZAZCKMiC1CZBjZC9g9Btgw5VdBZBNxOnpIZCYn7e9ZBwTEJZBWgZBuDLH8sHDZBLdn5tk034iEAZBQ7TJYn7QrOjXvN1f1EPDvLFYgQmearNoLCG7A3vy7FDIR2JiGZBXR30L0FwBVPcZCz7md2RROkOKBrgOVuyuGLFRotpJDDOQZBiAZDZD';
 const WHATSAPP_DEMO_PHONE_NUMBER_ID = '1121402084386768';
@@ -183,7 +186,9 @@ export default function ChannelsPage() {
         </div>
       </section>
 
-      <WhatsAppCloudApiDemo channels={channels ?? []} />
+      {SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO ? (
+        <WhatsAppCloudApiDemo channels={channels ?? []} />
+      ) : null}
 
       {channels !== undefined && channels.length > 0 ? (
         <section className="flex flex-col gap-4">
