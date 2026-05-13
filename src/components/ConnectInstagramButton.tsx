@@ -1,30 +1,28 @@
 import { useCallback, useMemo, useState } from 'react';
-import { useQuery } from 'convex/react';
-import { CheckCircle2, ExternalLink, Plus } from 'lucide-react';
+import { useAction, useQuery } from 'convex/react';
+import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
-const INSTAGRAM_SCOPES = [
-  'instagram_business_basic',
-  'instagram_business_manage_messages',
-  'instagram_business_manage_comments',
-  'instagram_business_content_publish',
-  'instagram_business_manage_insights',
-].join(',');
-
-const INSTAGRAM_OAUTH_BASE = 'https://www.instagram.com/oauth/authorize';
-
-// The Instagram OAuth redirect lands on /dashboard/:agentId/channels with
-// `?code=...`. ChannelsPage detects the code on mount and calls
-// `api.instagramConnect.completeSignup`. This button only assembles the
-// authorize URL and navigates the browser to it.
+// The Instagram OAuth flow uses a STATIC redirect URI registered with Meta:
+//   ${CONVEX_SITE_URL}/auth/instagram/callback
+//
+// Per-flow dynamic state (specifically, where to drop the user back into the
+// app after the connect succeeds) travels inside the OAuth `state`
+// parameter, which is generated server-side in `instagramAuth.start`. This
+// component only:
+//   1. Asks the backend for an authorize URL bound to the current return path
+//   2. Navigates the browser to that URL
+//
+// On successful completion the static callback 302-redirects the browser
+// back to `returnPath?instagram=connected`, where ChannelsPage shows a
+// toast. There is no `?code=` handling on the frontend anymore.
 export function ConnectInstagramButton() {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const startInstagramAuth = useAction(api.instagramAuth.start);
   const [busy, setBusy] = useState(false);
-
-  const appId = import.meta.env.VITE_INSTAGRAM_APP_ID as string | undefined;
 
   const instagramChannel = useMemo(
     () => channels?.find((c) => c.service === 'instagram'),
@@ -32,22 +30,19 @@ export function ConnectInstagramButton() {
   );
 
   const launchSignup = useCallback(() => {
-    if (!appId) {
-      toast.error(
-        'Instagram is not configured. Set VITE_INSTAGRAM_APP_ID on the frontend.',
-      );
-      return;
-    }
     setBusy(true);
-    const redirectUri = `${window.location.origin}${window.location.pathname}`;
-    const url = new URL(INSTAGRAM_OAUTH_BASE);
-    url.searchParams.set('force_reauth', 'true');
-    url.searchParams.set('client_id', appId);
-    url.searchParams.set('redirect_uri', redirectUri);
-    url.searchParams.set('response_type', 'code');
-    url.searchParams.set('scope', INSTAGRAM_SCOPES);
-    window.location.assign(url.toString());
-  }, [appId]);
+    void (async () => {
+      try {
+        const returnPath = `${window.location.pathname}${window.location.search}`;
+        const { authorizeUrl } = await startInstagramAuth({ returnPath });
+        window.location.assign(authorizeUrl);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error(`Instagram connect failed: ${message}`);
+        setBusy(false);
+      }
+    })();
+  }, [startInstagramAuth]);
 
   if (instagramChannel?.status === 'connected') {
     return (
@@ -60,9 +55,14 @@ export function ConnectInstagramButton() {
 
   return (
     <Button type="button" onClick={launchSignup} disabled={busy}>
-      {busy ? <Spinner className="size-4" /> : <Plus className="size-4" />}
-      Connect
-      <ExternalLink className="size-3.5 opacity-70" />
+      {busy ? (
+        <>
+          <Spinner className="size-4" />
+          Connect
+        </>
+      ) : (
+        'Connect'
+      )}
     </Button>
   );
 }

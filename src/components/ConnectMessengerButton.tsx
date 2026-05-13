@@ -1,143 +1,66 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
-import { CheckCircle2, CircleAlert, ExternalLink, Plus } from 'lucide-react';
+import { useSearchParams } from 'react-router';
+import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Doc } from '../../convex/_generated/dataModel';
+import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-import { ensureFacebookSdkLoaded, type FBLoginResponse } from '@/lib/fbSdk';
+import { useFacebookSession } from '@/lib/fbSdk';
 
-const DEFAULT_MESSENGER_CONFIG_ID = '1680761212948366';
-
-const PROGRESS_LABELS: Record<NonNullable<Doc<'channels'>['progressStep']>, string> = {
-  linking: 'Linking your Facebook account',
-  subscribing: 'Subscribing the Page to webhooks',
-  registering: 'Registering the Page',
-  exchanging: 'Exchanging your code for an access token',
-  backfilling: 'Loading your recent conversations',
-};
-
-type DialogState =
-  | { kind: 'closed' }
-  | { kind: 'connecting' }
-  | { kind: 'picker'; code: string; redirectUri: string; pages: Array<{ id: string; name?: string }> }
-  | { kind: 'success' }
-  | { kind: 'error'; message: string };
-
+// Messenger uses classic Facebook OAuth — same shape as Meta docs:
+//   https://www.facebook.com/v25.0/dialog/oauth?client_id=...&redirect_uri=...
+//   &state=...&response_type=code&scope=pages_messaging,pages_show_list
+//
+// `redirect_uri` is always `${CONVEX_SITE_URL}/auth/messenger/callback`
+// (built server-side in messengerAuth.start). The Convex HTTP handler
+// exchanges the code with that exact same string — required by Meta.
+//
+// WhatsApp still uses FB.login + Embedded Signup (`config_id`); Messenger
+// does not use FB.login for the primary connect path anymore.
 export function ConnectMessengerButton({
   onConnected,
 }: {
   onConnected?: () => void;
 }) {
-  const completeSignup = useAction(api.messengerConnect.completeSignup);
+  const startMessengerOAuth = useAction(api.messengerAuth.start);
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
-  const [dialogState, setDialogState] = useState<DialogState>({ kind: 'closed' });
 
   const appId = import.meta.env.VITE_META_APP_ID as string | undefined;
-  const configId =
-    (import.meta.env.VITE_MESSENGER_CONFIG_ID as string | undefined) ||
-    DEFAULT_MESSENGER_CONFIG_ID;
   const graphVersion =
-    (import.meta.env.VITE_META_GRAPH_API_VERSION as string | undefined) || 'v22.0';
+    (import.meta.env.VITE_META_GRAPH_API_VERSION as string | undefined) ||
+    'v22.0';
 
-  useEffect(() => {
-    if (!appId) return;
-    ensureFacebookSdkLoaded({ appId, version: graphVersion });
-  }, [appId, graphVersion]);
+  const fbSession = useFacebookSession({ appId, version: graphVersion });
 
   const messengerChannel = useMemo(
     () => channels?.find((c) => c.service === 'messenger'),
     [channels],
   );
 
-  const runCompleteSignup = useCallback(
-    async (
-      code: string,
-      redirectUri: string,
-      pageId?: string,
-    ) => {
-      try {
-        const result = await completeSignup({ code, redirectUri, pageId });
-        if ('needsPagePicker' in result && result.needsPagePicker) {
-          setDialogState({
-            kind: 'picker',
-            code,
-            redirectUri,
-            pages: result.pages,
-          });
-          return;
-        }
-        setDialogState({ kind: 'success' });
-        onConnected?.();
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        setDialogState({ kind: 'error', message: msg });
-      }
-    },
-    [completeSignup, onConnected],
-  );
-
   const launchSignup = useCallback(() => {
-    if (!appId) {
-      toast.error(
-        'Messenger is not configured. Set VITE_META_APP_ID on the frontend.',
-      );
-      return;
-    }
-    if (!window.FB) {
-      toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
-      return;
-    }
     setBusy(true);
-
-    window.FB.login(
-      (response: FBLoginResponse) => {
-        void (async () => {
-          try {
-            const code = response.authResponse?.code;
-            if (!code) {
-              toast.error(
-                response.status === 'unknown'
-                  ? 'Signup cancelled before completion.'
-                  : 'Did not receive an authorisation code.',
-              );
-              return;
-            }
-            setDialogState({ kind: 'connecting' });
-            // FB Login for Business validates redirect_uri loosely — the
-            // origin is what matters, so we pass the page origin.
-            await runCompleteSignup(code, window.location.origin);
-          } finally {
-            setBusy(false);
-          }
-        })();
-      },
-      {
-        config_id: configId,
-        response_type: 'code',
-        override_default_response_type: true,
-      },
-    );
-  }, [appId, configId, runCompleteSignup]);
-
-  const handleDialogOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) return;
-      if (dialogState.kind === 'connecting') return;
-      setDialogState({ kind: 'closed' });
-    },
-    [dialogState.kind],
-  );
+    void (async () => {
+      try {
+        const returnPath = `${window.location.pathname}${window.location.search}`;
+        const { authorizeUrl } = await startMessengerOAuth({ returnPath });
+        window.location.assign(authorizeUrl);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        toast.error(`Messenger connect failed: ${message}`);
+        setBusy(false);
+      }
+    })();
+  }, [startMessengerOAuth]);
 
   if (messengerChannel?.status === 'connected') {
     return (
@@ -150,185 +73,203 @@ export function ConnectMessengerButton({
 
   return (
     <>
-      <Button type="button" onClick={launchSignup} disabled={busy}>
-        {busy && dialogState.kind === 'closed' ? (
-          <Spinner className="size-4" />
-        ) : (
-          <Plus className="size-4" />
-        )}
-        Connect
-      </Button>
+      <div className="flex flex-col items-end gap-1">
+        <Button type="button" onClick={launchSignup} disabled={busy}>
+          {busy ? (
+            <>
+              <Spinner className="size-4" />
+              Connect
+            </>
+          ) : (
+            'Connect'
+          )}
+        </Button>
+        {fbSession.status === 'connected' ? (
+          <span className="text-[10px] text-muted-foreground">
+            Facebook session detected
+          </span>
+        ) : null}
+      </div>
 
-      <Dialog
-        open={dialogState.kind !== 'closed'}
-        onOpenChange={handleDialogOpenChange}
-      >
-        <DialogContent
-          showCloseButton={dialogState.kind !== 'connecting'}
-          onInteractOutside={(e) => {
-            if (dialogState.kind === 'connecting') e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            if (dialogState.kind === 'connecting') e.preventDefault();
-          }}
-        >
-          {dialogState.kind === 'connecting' ? (
-            <ConnectingState channel={messengerChannel} />
-          ) : dialogState.kind === 'picker' ? (
-            <PickerState
-              pages={dialogState.pages}
-              onPick={(pageId) => {
-                setDialogState({ kind: 'connecting' });
-                void runCompleteSignup(
-                  dialogState.code,
-                  dialogState.redirectUri,
-                  pageId,
-                );
-              }}
-            />
-          ) : dialogState.kind === 'success' ? (
-            <SuccessState channel={messengerChannel} />
-          ) : dialogState.kind === 'error' ? (
-            <ErrorState
-              message={dialogState.message}
-              onRetry={() => {
-                setDialogState({ kind: 'closed' });
-                launchSignup();
-              }}
-            />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+      <MessengerPagePickerDialog onConnected={onConnected} />
     </>
   );
 }
 
-function ConnectingState({ channel }: { channel: Doc<'channels'> | undefined }) {
-  const label =
-    channel?.progressStep && PROGRESS_LABELS[channel.progressStep]
-      ? PROGRESS_LABELS[channel.progressStep]
-      : 'Setting things up';
-  return (
-    <div className="flex flex-col items-center gap-5 py-6 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <Spinner className="size-6 text-muted-foreground" />
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <DialogTitle className="text-base">Connecting your Page</DialogTitle>
-        <DialogDescription asChild>
-          <div>
-            <Shimmer duration={2} spread={3}>
-              {label}
-            </Shimmer>
-          </div>
-        </DialogDescription>
-      </div>
-      <p className="text-xs text-muted-foreground">
-        This usually takes a few seconds. Please keep this window open.
-      </p>
-    </div>
-  );
-}
-
-function PickerState({
-  pages,
-  onPick,
+/**
+ * When the user manages multiple Facebook Pages, the OAuth callback
+ * redirects back with `?messenger=pick&session=<oauthSessionId>`. This
+ * dialog loads the Page list and calls `messengerAuth.finalizePick`.
+ */
+function MessengerPagePickerDialog({
+  onConnected,
 }: {
-  pages: Array<{ id: string; name?: string }>;
-  onPick: (pageId: string) => void;
+  onConnected?: () => void;
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const getPickerPages = useAction(api.messengerAuth.getPickerPages);
+  const finalizePick = useAction(api.messengerAuth.finalizePick);
+
+  const sessionIdRaw =
+    searchParams.get('messenger') === 'pick'
+      ? searchParams.get('session')
+      : null;
+  const sessionId = sessionIdRaw as Id<'oauthSessions'> | null;
+
+  const [pages, setPages] = useState<
+    Array<{ id: string; name?: string }> | null
+  >(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pickingId, setPickingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setPages(null);
+      setLoadError(null);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { pages: loaded } = await getPickerPages({ sessionId });
+        if (cancelled) return;
+        setPages(loaded);
+        setLoadError(null);
+      } catch (err) {
+        if (cancelled) return;
+        const message = err instanceof Error ? err.message : String(err);
+        setLoadError(message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, getPickerPages]);
+
+  const clearPickerParams = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('messenger');
+    next.delete('session');
+    next.delete('message');
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handlePick = useCallback(
+    (pageId: string) => {
+      if (!sessionId) return;
+      setPickingId(pageId);
+      void (async () => {
+        try {
+          await finalizePick({ sessionId, pageId });
+          toast.success('Messenger account connected');
+          clearPickerParams();
+          onConnected?.();
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          toast.error(`Messenger connect failed: ${message}`);
+        } finally {
+          setPickingId(null);
+        }
+      })();
+    },
+    [sessionId, finalizePick, clearPickerParams, onConnected],
+  );
+
+  const open = sessionId !== null;
+
   return (
-    <div className="flex flex-col gap-4 py-2">
-      <div className="flex flex-col gap-1">
-        <DialogTitle className="text-base">Choose a Page</DialogTitle>
-        <DialogDescription>
-          You manage multiple Facebook Pages. Pick the one you want to connect
-          to this workspace.
-        </DialogDescription>
-      </div>
-      <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
-        {pages.map((page) => (
-          <li key={page.id} className="flex items-center justify-between gap-3 px-3 py-2">
-            <div className="flex flex-col min-w-0">
-              <span className="truncate text-sm font-medium">
-                {page.name ?? page.id}
-              </span>
-              <span className="truncate text-xs text-muted-foreground">
-                {page.id}
-              </span>
+    <Dialog open={open} modal>
+      <DialogContent
+        showCloseButton={false}
+        className="max-h-[85vh] w-full max-w-xl gap-4 overflow-y-auto p-6 sm:max-w-2xl sm:p-8"
+        onPointerDownOutside={(e) => e.preventDefault()}
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
+        {loadError ? (
+          <div className="flex flex-col items-center gap-3 py-2 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
+              <CircleAlert className="size-6" />
             </div>
-            <Button type="button" size="sm" onClick={() => onPick(page.id)}>
-              Use this Page
+            <DialogTitle className="text-lg font-semibold sm:text-xl">
+              Could not load Pages
+            </DialogTitle>
+            <DialogDescription className="max-w-prose">
+              {loadError}
+            </DialogDescription>
+            <Button
+              type="button"
+              variant="outline"
+              className="mt-2"
+              onClick={() => clearPickerParams()}
+            >
+              Close
             </Button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function SuccessState({ channel }: { channel: Doc<'channels'> | undefined }) {
-  const name = channel?.displayUsername ?? channel?.pageId ?? undefined;
-  return (
-    <div className="flex flex-col gap-5 py-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="size-6" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <DialogTitle className="text-base">Messenger connected</DialogTitle>
-          <DialogDescription>
-            {name
-              ? `${name} is linked to this workspace.`
-              : 'Your Facebook Page is linked to this workspace.'}
-          </DialogDescription>
-        </div>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <DialogClose asChild>
-          <Button variant="outline">Done</Button>
-        </DialogClose>
-        <Button asChild>
-          <a
-            href="https://business.facebook.com/latest/inbox"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Open Meta Business Suite
-            <ExternalLink className="size-4" />
-          </a>
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-5 py-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-          <CircleAlert className="size-6" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <DialogTitle className="text-base">Connection failed</DialogTitle>
-          <DialogDescription>{message}</DialogDescription>
-        </div>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <DialogClose asChild>
-          <Button variant="outline">Close</Button>
-        </DialogClose>
-        <Button type="button" onClick={onRetry}>
-          Try again
-        </Button>
-      </div>
-    </div>
+          </div>
+        ) : pages === null ? (
+          <div className="flex flex-col items-center gap-4 py-8 text-center sm:py-10">
+            <Spinner className="size-8 text-muted-foreground" />
+            <DialogTitle className="text-lg font-semibold sm:text-xl">
+              Loading your Pages
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div>
+                <Shimmer duration={2} spread={3}>
+                  Fetching Facebook Pages
+                </Shimmer>
+              </div>
+            </DialogDescription>
+          </div>
+        ) : (
+          <div className="mx-auto flex w-full max-w-prose flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2">
+              <DialogTitle className="text-lg font-semibold sm:text-xl">
+                Choose a Page
+              </DialogTitle>
+              <DialogDescription className="text-base leading-relaxed">
+                You manage multiple Facebook Pages. Pick the one you want to
+                connect to this workspace.
+              </DialogDescription>
+            </div>
+            <ul className="flex max-h-[min(32rem,60vh)] w-full flex-col gap-3 overflow-y-auto">
+              {pages.map((page) => {
+                const isBusy = pickingId === page.id;
+                return (
+                  <li
+                    key={page.id}
+                    className="flex flex-row items-center gap-3 rounded-xl border border-border bg-card/40 px-4 py-4"
+                  >
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <p className="text-sm font-medium leading-snug text-foreground whitespace-normal [overflow-wrap:anywhere]">
+                        {page.name ?? page.id}
+                      </p>
+                      <p className="font-mono text-xs leading-relaxed text-muted-foreground [overflow-wrap:anywhere] break-all">
+                        {page.id}
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="shrink-0"
+                      disabled={pickingId !== null}
+                      onClick={() => handlePick(page.id)}
+                    >
+                      {isBusy ? (
+                        <>
+                          <Spinner className="size-3.5" />
+                          Connecting
+                        </>
+                      ) : (
+                        'Use this Page'
+                      )}
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -421,10 +421,14 @@ export const internalStartMessengerPending = internalMutation({
 // Promote the pending Messenger row to `connected` with the long-lived Page
 // access token + Page id + Page name. No `tokenExpiresAt` is stored because
 // FB Login for Business issues long-lived Page tokens that never expire.
+// `fbUserId` is the Facebook user id of the connecting account — captured
+// from /me?fields=id and stored so the deauthorize / data-deletion
+// callbacks can resolve which channel row(s) to disconnect.
 export const internalUpsertMessenger = internalMutation({
   args: {
     orgId: v.string(),
     pageId: v.string(),
+    fbUserId: v.optional(v.string()),
     displayUsername: v.optional(v.string()),
     accessToken: v.string(),
     connectedByUserId: v.string(),
@@ -440,6 +444,7 @@ export const internalUpsertMessenger = internalMutation({
 
     const patch = {
       pageId: args.pageId,
+      fbUserId: args.fbUserId,
       displayUsername: args.displayUsername,
       accessToken: args.accessToken,
       tokenExpiresAt: undefined,
@@ -498,6 +503,59 @@ export const internalGetChannel = internalQuery({
   args: { channelId: v.id("channels") },
   handler: async (ctx, args) => {
     return await ctx.db.get(args.channelId);
+  },
+});
+
+// ──────────────────────────────────────────────────────────────────────────
+// Deauthorize / data-deletion helpers
+//
+// Meta delivers Deauthorize and Data Deletion callbacks at the
+// IG-user / FB-user level. The HTTP routes verify the signed_request, then
+// hand the user id to one of these mutations to drop access tokens for
+// every affected channel row. Per product decision: we keep conversations
+// and messages — only the channel link is severed and the token cleared so
+// no further Graph calls can be made on that user's behalf.
+// ──────────────────────────────────────────────────────────────────────────
+
+async function disconnectChannelRow(
+  ctx: MutationCtx,
+  channelId: Id<"channels">,
+) {
+  await ctx.db.patch(channelId, {
+    status: "disconnected",
+    accessToken: undefined,
+    tokenExpiresAt: undefined,
+    lastError: undefined,
+    progressStep: undefined,
+    updatedAt: Date.now(),
+  });
+}
+
+export const internalDisconnectByIgUserId = internalMutation({
+  args: { igUserId: v.string() },
+  handler: async (ctx, args): Promise<Array<Id<"channels">>> => {
+    const rows = await ctx.db
+      .query("channels")
+      .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId))
+      .collect();
+    for (const row of rows) {
+      await disconnectChannelRow(ctx, row._id);
+    }
+    return rows.map((r) => r._id);
+  },
+});
+
+export const internalDisconnectByFbUserId = internalMutation({
+  args: { fbUserId: v.string() },
+  handler: async (ctx, args): Promise<Array<Id<"channels">>> => {
+    const rows = await ctx.db
+      .query("channels")
+      .withIndex("by_fbUserId", (q) => q.eq("fbUserId", args.fbUserId))
+      .collect();
+    for (const row of rows) {
+      await disconnectChannelRow(ctx, row._id);
+    }
+    return rows.map((r) => r._id);
   },
 });
 

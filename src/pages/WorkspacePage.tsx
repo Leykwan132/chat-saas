@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
 import { AccountDialog } from '@/components/AccountDialog';
-import { Link, Navigate, Outlet, useLocation, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
   Bot,
@@ -214,7 +214,7 @@ function WorkspaceShell() {
 
 export function AgentsIndex() {
   const navigate = useNavigate();
-  const { organizationId, user } = useAuth();
+  const { organizationId } = useAuth();
   const activeOrgId = organizationId ?? null;
   const agents = useQuery(api.agents.list, { orgId: activeOrgId });
   const removeAgent = useMutation(api.agents.remove);
@@ -283,8 +283,16 @@ export function AgentsIndex() {
 
 export default function WorkspacePage() {
   const { isLoading: workosLoading, user } = useAuth();
-
-  console.log(user);
+  const authUser = useQuery(
+    api.users.getAuthUser,
+    workosLoading ? 'skip' : {},
+  );
+  console.log(authUser);
+  useEffect(() => {
+    if (workosLoading) return;
+    console.log('useAuth().user', user);
+    console.log('Convex users.getAuthUser (ctx.auth.getUserIdentity)', authUser);
+  }, [workosLoading, user, authUser]);
   // Keep showing a spinner while WorkOS is restoring the session (e.g. after
   // a page refresh). Without this guard the Convex <Unauthenticated> block
   // could fire before AuthKit has had a chance to validate the stored tokens,

@@ -1,6 +1,6 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Routes, Route, useNavigate, useParams } from 'react-router'
+import { BrowserRouter, Navigate, Routes, Route, useParams } from 'react-router'
 import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
 import { ConvexProviderWithAuthKit } from '@convex-dev/workos'
 import { ConvexReactClient } from 'convex/react'
@@ -71,12 +71,11 @@ function CallbackRoute() {
 }
 
 function RootLayout() {
-  const navigate = useNavigate()
-
   return (
     <AuthKitProvider
       clientId={WORKOS_CLIENT_ID}
       redirectUri={WORKOS_REDIRECT_URI}
+      devMode={true}
     >
       <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
         <TooltipProvider>

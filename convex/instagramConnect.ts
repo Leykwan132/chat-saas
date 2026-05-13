@@ -1,8 +1,7 @@
 import { v } from "convex/values";
-import { action, internalAction } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
 import { instagramSyncPool } from "./channelSyncPools";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
@@ -46,8 +45,15 @@ async function graphFetch<T>(
   return body as T;
 }
 
-// Public action invoked from the Channels page after the Instagram OAuth
-// redirect lands back on /dashboard/:agentId/channels?code=...
+// Internal action invoked from the static HTTP callback at
+// /auth/instagram/callback. The callback decodes `state`, looks up the
+// matching oauthSessions row (which carries the authenticated orgId/userId
+// that initiated the flow), then calls this with explicit identity args.
+//
+// We do NOT expose a public action equivalent: a logged-in attacker could
+// otherwise call it directly with a stolen `code` and connect Instagram
+// against their own org. The `oauthSessions` row is the single bridge
+// between authenticated state and the un-authenticated HTTP callback.
 //
 // Steps:
 //   1. Seed a pending channel row so the UI dialog can subscribe to progress.
@@ -58,24 +64,26 @@ async function graphFetch<T>(
 //   4. GET graph.instagram.com/{version}/me?fields=id,username → IG handle.
 //   5. Persist the channel row, then enqueue a one-time backfill of the
 //      latest 10 conversations on the dedicated workpool.
-export const completeSignup = action({
+export const internalCompleteSignup = internalAction({
   args: {
     code: v.string(),
     redirectUri: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
   },
   handler: async (
     ctx,
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
-    const { orgId, userId } = await getAuthContext(ctx);
+    const { orgId, userId } = args;
     if (orgId === "personal" || !orgId) {
       throw new Error(
         "You must belong to an organization before connecting Instagram.",
       );
     }
 
-    const appId = process.env.INSTAGRAM_APP_ID;
-    const appSecret = process.env.INSTAGRAM_APP_SECRET;
+    const appId = process.env.META_IG_APP_ID;
+    const appSecret = process.env.META_IG_APP_SECRET;
     if (!appId || !appSecret) {
       throw new Error(
         "INSTAGRAM_APP_ID / INSTAGRAM_APP_SECRET are not configured on the Convex deployment.",

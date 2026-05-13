@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
-import { CheckCircle2, CircleAlert, ExternalLink, Plus } from 'lucide-react';
+import { CheckCircle2, CircleAlert, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
@@ -14,27 +14,11 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { Shimmer } from '@/components/ai-elements/shimmer';
-
-declare global {
-  interface Window {
-    FB?: {
-      init: (opts: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void;
-      login: (
-        cb: (response: FBLoginResponse) => void,
-        opts: Record<string, unknown>,
-      ) => void;
-    };
-    fbAsyncInit?: () => void;
-  }
-}
-
-type FBLoginResponse = {
-  authResponse?: {
-    code?: string;
-    accessToken?: string;
-  } | null;
-  status?: string;
-};
+import {
+  refreshFacebookLoginStatus,
+  useFacebookSession,
+  type FBLoginResponse,
+} from '@/lib/fbSdk';
 
 type SessionInfoMessage = {
   type: 'WA_EMBEDDED_SIGNUP';
@@ -81,30 +65,11 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
   const graphVersion =
     (import.meta.env.VITE_META_GRAPH_API_VERSION as string | undefined) || 'v22.0';
 
-  // Load the Facebook SDK once on mount. Mirrors the working reference pattern:
-  // body append, id guard, no promise singleton.
-  useEffect(() => {
-    if (window.FB) return;
-
-    window.fbAsyncInit = function () {
-      window.FB!.init({
-        appId: appId ?? '',
-        cookie: true,
-        xfbml: false,
-        version: graphVersion,
-      });
-    };
-
-    if (document.getElementById('facebook-jssdk')) return;
-
-    const script = document.createElement('script');
-    script.id = 'facebook-jssdk';
-    script.src = 'https://connect.facebook.net/en_US/sdk.js';
-    script.async = true;
-    script.defer = true;
-    script.crossOrigin = 'anonymous';
-    document.body.appendChild(script);
-  }, [appId, graphVersion]);
+  // The shared session hook handles SDK loading, the initial
+  // getLoginStatus round-trip, and live auth.statusChange updates. The
+  // Messenger button uses the same hook, so we only ever load the SDK
+  // once per page.
+  const fbSession = useFacebookSession({ appId, version: graphVersion });
 
   // Listen for the session info postMessage from the Embedded Signup popup.
   // Meta sends this when the user finishes the flow; the payload carries the
@@ -155,7 +120,7 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
       return;
     }
 
-    if (!window.FB) {
+    if (!fbSession.ready || !window.FB) {
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       return;
     }
@@ -165,6 +130,9 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
 
     window.FB.login(
       (response: FBLoginResponse) => {
+        // Pull the freshest login state into the cache. auth.statusChange
+        // also fires on its own, this is just belt-and-braces.
+        refreshFacebookLoginStatus();
         void (async () => {
           try {
             const code = response.authResponse?.code;
@@ -214,7 +182,7 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
         },
       },
     );
-  }, [appId, configId, completeSignup, onConnected]);
+  }, [appId, configId, completeSignup, onConnected, fbSession.ready]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -229,14 +197,23 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
 
   return (
     <>
-      <Button type="button" onClick={launchSignup} disabled={busy}>
-        {busy && dialogState.kind === 'closed' ? (
-          <Spinner className="size-4" />
-        ) : (
-          <Plus className="size-4" />
-        )}
-        Connect
-      </Button>
+      <div className="flex flex-col items-end gap-1">
+        <Button type="button" onClick={launchSignup} disabled={busy}>
+          {busy && dialogState.kind === 'closed' ? (
+            <>
+              <Spinner className="size-4" />
+              Connect
+            </>
+          ) : (
+            'Connect'
+          )}
+        </Button>
+        {fbSession.status === 'connected' ? (
+          <span className="text-[10px] text-muted-foreground">
+            Facebook session detected
+          </span>
+        ) : null}
+      </div>
 
       <Dialog
         open={dialogState.kind !== 'closed'}

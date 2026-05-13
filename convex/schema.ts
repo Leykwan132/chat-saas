@@ -159,6 +159,11 @@ export default defineSchema({
     displayPhoneNumber: v.optional(v.string()),
     igUserId: v.optional(v.string()),
     pageId: v.optional(v.string()),
+    // Facebook user id of the person who completed the Messenger connect.
+    // Meta deliver Deauthorize / Data Deletion callbacks at the FB-user
+    // level (not the Page level), so we need this to resolve which channel
+    // row(s) to disconnect when those callbacks fire.
+    fbUserId: v.optional(v.string()),
     displayUsername: v.optional(v.string()),
     accessToken: v.optional(v.string()),
     tokenExpiresAt: v.optional(v.number()),
@@ -185,7 +190,8 @@ export default defineSchema({
     .index("by_orgId_and_service", ["orgId", "service"])
     .index("by_phoneNumberId", ["phoneNumberId"])
     .index("by_igUserId", ["igUserId"])
-    .index("by_pageId", ["pageId"]),
+    .index("by_pageId", ["pageId"])
+    .index("by_fbUserId", ["fbUserId"]),
   // A customer is anyone who messaged the org via any channel, or who was
   // added manually. Natural key is (orgId, service, contactAddress).
   customers: defineTable({
@@ -275,4 +281,28 @@ export default defineSchema({
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
     .index("by_externalId", ["externalId"])
     .index("by_orgId", ["orgId"]),
+  // Short-lived one-time sessions used to tie a third-party OAuth callback
+  // (e.g. Instagram) back to the authenticated user/org that started it.
+  // The row is created when the user clicks "Connect" and consumed once the
+  // OAuth provider redirects to our static callback. `csrf` is the random
+  // token also embedded in the OAuth `state` parameter; presence of a row
+  // with a matching csrf is what proves the callback corresponds to a flow
+  // we initiated. `consumed` flips to true after a successful callback so a
+  // replayed `state` cannot upsert a second channel row.
+  // Primarily used by Instagram (full-page redirect → /auth/instagram/callback)
+  // and Messenger (`dialog/oauth` → /auth/messenger/callback). `service`
+  // distinguishes rows; both flows use the same session + CSRF pattern.
+  oauthSessions: defineTable({
+    csrf: v.string(),
+    service: v.union(v.literal("instagram"), v.literal("messenger")),
+    orgId: v.string(),
+    userId: v.string(),
+    returnPath: v.string(),
+    expiresAt: v.number(),
+    consumed: v.boolean(),
+    // Messenger OAuth redirect flow: when the user owns multiple Pages we
+    // stash the user access token between the callback and the in-app
+    // Page picker (authorization codes are single-use).
+    pendingUserAccessToken: v.optional(v.string()),
+  }).index("by_csrf", ["csrf"]),
 });

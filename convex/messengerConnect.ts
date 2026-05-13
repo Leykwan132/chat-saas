@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { messengerSyncPool } from "./channelSyncPools";
@@ -13,6 +14,15 @@ function graphVersion() {
 
 function fbGraphBase() {
   return `https://graph.facebook.com/${graphVersion()}`;
+}
+
+/** Canonical redirect for classic OAuth + token exchange (must match Meta app settings). */
+export function messengerOAuthRedirectUri(): string {
+  const siteUrl = process.env.CONVEX_SITE_URL;
+  if (!siteUrl) {
+    throw new Error("CONVEX_SITE_URL is not set");
+  }
+  return siteUrl.replace(/\/+$/, "") + "/auth/messenger/callback";
 }
 
 type GraphErrorBody = { error?: { message?: string } };
@@ -32,8 +42,9 @@ async function graphFetch<T>(
   }
   if (!res.ok) {
     const err = (body as GraphErrorBody).error;
-    const msg = err?.message ?? `HTTP ${res.status}`;
-    throw new Error(`${context} failed: ${msg}`);
+    const msg =
+      err?.message != null ? err.message : "HTTP " + String(res.status);
+    throw new Error(context + " failed: " + msg);
   }
   return body as T;
 }
@@ -44,13 +55,13 @@ type PageEdge = {
   access_token?: string;
 };
 
-async function exchangeCodeForUserToken(
+export async function exchangeCodeForUserToken(
   code: string,
   redirectUri: string,
   appId: string,
   appSecret: string,
 ): Promise<string> {
-  const tokenUrl = new URL(`${fbGraphBase()}/oauth/access_token`);
+  const tokenUrl = new URL(`${fbGraphBase()}${"/oauth/access_token"}`);
   tokenUrl.searchParams.set("client_id", appId);
   tokenUrl.searchParams.set("client_secret", appSecret);
   tokenUrl.searchParams.set("redirect_uri", redirectUri);
@@ -64,7 +75,7 @@ async function exchangeCodeForUserToken(
 }
 
 async function listUserPages(userAccessToken: string): Promise<PageEdge[]> {
-  const url = new URL(`${fbGraphBase()}/me/accounts`);
+  const url = new URL(`${fbGraphBase()}${"/me/accounts"}`);
   url.searchParams.set("fields", "id,name,access_token");
   url.searchParams.set("access_token", userAccessToken);
   const res = await graphFetch<{ data?: PageEdge[] }>(
@@ -75,9 +86,135 @@ async function listUserPages(userAccessToken: string): Promise<PageEdge[]> {
   return res.data ?? [];
 }
 
-// Helper for the picker UI: returns the Pages the connecting user owns
-// without persisting anything. The same `code` can then be passed back into
-// `completeSignup` with the selected `pageId`.
+/** Public helper for messengerAuth.getPickerPages — re-fetches /me/accounts. */
+export async function listPagesForUserToken(
+  userAccessToken: string,
+): Promise<PageEdge[]> {
+  return listUserPages(userAccessToken);
+}
+
+async function fetchFbUserId(
+  userAccessToken: string,
+): Promise<string | undefined> {
+  try {
+    const url = new URL(`${fbGraphBase()}${"/me"}`);
+    url.searchParams.set("fields", "id");
+    url.searchParams.set("access_token", userAccessToken);
+    const res = await graphFetch<{ id?: string }>(
+      url.toString(),
+      { method: "GET" },
+      "Facebook user id fetch",
+    );
+    return res.id;
+  } catch (err) {
+    console.warn("Failed to fetch Facebook user id", err);
+    return undefined;
+  }
+}
+
+async function subscribePage(page: PageEdge): Promise<void> {
+  if (!page.access_token) {
+    throw new Error(
+      "Selected Page is unavailable or did not return an access token.",
+    );
+  }
+  const subscribeUrl = new URL(
+    fbGraphBase() + "/" + page.id + "/subscribed_apps",
+  );
+  subscribeUrl.searchParams.set(
+    "subscribed_fields",
+    "messages,messaging_postbacks",
+  );
+  await graphFetch(
+    subscribeUrl.toString(),
+    {
+      method: "POST",
+      headers: { Authorization: "Bearer " + page.access_token },
+    },
+    "Messenger page subscribe",
+  );
+}
+
+/** Shared core after we hold a user access token (popup or OAuth redirect). */
+async function completeMessengerFromUserAccessToken(
+  ctx: ActionCtx,
+  args: {
+    orgId: string;
+    userId: string;
+    userAccessToken: string;
+    pageId?: string;
+  },
+): Promise<
+  | { channelId: Id<"channels">; displayUsername?: string }
+  | { needsPagePicker: true; pages: Array<{ id: string; name?: string }> }
+> {
+  const { orgId, userId, userAccessToken } = args;
+  const pages = await listUserPages(userAccessToken);
+  if (pages.length === 0) {
+    throw new Error(
+      "No Facebook Pages were returned. Make sure the connecting account manages at least one Page.",
+    );
+  }
+
+  if (!args.pageId && pages.length > 1) {
+    await ctx.runMutation(internal.channels.internalRecordError, {
+      orgId,
+      service: "messenger",
+      error: "Multiple Pages available — please pick one.",
+      connectedByUserId: userId,
+    });
+    return {
+      needsPagePicker: true,
+      pages: pages.map((p) => ({ id: p.id, name: p.name })),
+    };
+  }
+
+  const selected = args.pageId
+    ? pages.find((p) => p.id === args.pageId)
+    : pages[0];
+  if (!selected || !selected.access_token) {
+    throw new Error(
+      "Selected Page is unavailable or did not return an access token.",
+    );
+  }
+
+  await ctx.runMutation(internal.channels.internalSetProgress, {
+    orgId,
+    service: "messenger",
+    progressStep: "subscribing",
+  });
+
+  await subscribePage(selected);
+
+  await ctx.runMutation(internal.channels.internalSetProgress, {
+    orgId,
+    service: "messenger",
+    progressStep: "backfilling",
+  });
+
+  const fbUserId = await fetchFbUserId(userAccessToken);
+
+  const channelId: Id<"channels"> = await ctx.runMutation(
+    internal.channels.internalUpsertMessenger,
+    {
+      orgId,
+      pageId: selected.id,
+      fbUserId,
+      displayUsername: selected.name,
+      accessToken: selected.access_token,
+      connectedByUserId: userId,
+    },
+  );
+
+  await messengerSyncPool.enqueueAction(
+    ctx,
+    internal.messengerSync.backfillConversations,
+    { channelId, limit: 10 },
+  );
+
+  return { channelId, displayUsername: selected.name };
+}
+
 export const listPages = action({
   args: {
     code: v.string(),
@@ -106,19 +243,11 @@ export const listPages = action({
   },
 });
 
-// Public action invoked from the Messenger connect button after FB.login
-// returns an auth code via SDK callback.
-//
-// Steps:
-//   1. Seed a pending channel row so the UI can subscribe to progressStep.
-//   2. Exchange code → short-lived user access token.
-//   3. GET /me/accounts to enumerate Pages owned by the user.
-//   4. If multiple Pages and no `pageId` arg, return them so the UI can
-//      render a picker. Otherwise auto-select the only Page.
-//   5. Subscribe the chosen Page to the `messages` + `messaging_postbacks`
-//      webhook fields.
-//   6. Persist as connected, then enqueue a one-time backfill of the latest
-//      10 conversations.
+/**
+ * FB.login popup path: `redirectUri` is the SPA origin (e.g. https://app...).
+ * OAuth redirect path: use `messengerOAuthRedirectUri()` for BOTH authorize
+ * URL and this action — must match byte-for-byte.
+ */
 export const completeSignup = action({
   args: {
     code: v.string(),
@@ -160,87 +289,12 @@ export const completeSignup = action({
         appSecret,
       );
 
-      const pages = await listUserPages(userToken);
-      if (pages.length === 0) {
-        throw new Error(
-          "No Facebook Pages were returned. Make sure the connecting account manages at least one Page.",
-        );
-      }
-
-      // Picker path — if the user owns multiple pages we surface them and
-      // let the UI call us back with a chosen pageId. We intentionally do
-      // not persist anything yet so a cancelled picker leaves no state.
-      if (!args.pageId && pages.length > 1) {
-        // Reset the pending row so the user is not stuck in `exchanging`.
-        await ctx.runMutation(internal.channels.internalRecordError, {
-          orgId,
-          service: "messenger",
-          error: "Multiple Pages available — please pick one.",
-          connectedByUserId: userId,
-        });
-        return {
-          needsPagePicker: true,
-          pages: pages.map((p) => ({ id: p.id, name: p.name })),
-        };
-      }
-
-      const selected = args.pageId
-        ? pages.find((p) => p.id === args.pageId)
-        : pages[0];
-      if (!selected || !selected.access_token) {
-        throw new Error(
-          "Selected Page is unavailable or did not return an access token.",
-        );
-      }
-
-      await ctx.runMutation(internal.channels.internalSetProgress, {
+      return await completeMessengerFromUserAccessToken(ctx, {
         orgId,
-        service: "messenger",
-        progressStep: "subscribing",
+        userId,
+        userAccessToken: userToken,
+        pageId: args.pageId,
       });
-
-      // Subscribe the page to messaging webhooks. Without this Meta will
-      // not deliver inbound DMs for this Page.
-      const subscribeUrl = new URL(
-        `${fbGraphBase()}/${selected.id}/subscribed_apps`,
-      );
-      subscribeUrl.searchParams.set(
-        "subscribed_fields",
-        "messages,messaging_postbacks",
-      );
-      await graphFetch(
-        subscribeUrl.toString(),
-        {
-          method: "POST",
-          headers: { Authorization: `Bearer ${selected.access_token}` },
-        },
-        "Messenger page subscribe",
-      );
-
-      await ctx.runMutation(internal.channels.internalSetProgress, {
-        orgId,
-        service: "messenger",
-        progressStep: "backfilling",
-      });
-
-      const channelId: Id<"channels"> = await ctx.runMutation(
-        internal.channels.internalUpsertMessenger,
-        {
-          orgId,
-          pageId: selected.id,
-          displayUsername: selected.name,
-          accessToken: selected.access_token,
-          connectedByUserId: userId,
-        },
-      );
-
-      await messengerSyncPool.enqueueAction(
-        ctx,
-        internal.messengerSync.backfillConversations,
-        { channelId, limit: 10 },
-      );
-
-      return { channelId, displayUsername: selected.name };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.channels.internalRecordError, {
@@ -248,6 +302,126 @@ export const completeSignup = action({
         service: "messenger",
         error: message,
         connectedByUserId: userId,
+      });
+      throw err;
+    }
+  },
+});
+
+/** HTTP `/auth/messenger/callback`: exchange code with the SAME redirect_uri as authorize. */
+export const internalOAuthCallback = internalAction({
+  args: {
+    code: v.string(),
+    redirectUri: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<
+    | {
+        kind: "connected";
+        channelId: Id<"channels">;
+        displayUsername?: string;
+      }
+    | {
+        kind: "needsPicker";
+        userAccessToken: string;
+        pages: Array<{ id: string; name?: string }>;
+      }
+  > => {
+    const { orgId, userId } = args;
+    if (orgId === "personal" || !orgId) {
+      throw new Error(
+        "You must belong to an organization before connecting Messenger.",
+      );
+    }
+    const appId = process.env.META_APP_ID;
+    const appSecret = process.env.META_APP_SECRET;
+    if (!appId || !appSecret) {
+      throw new Error(
+        "META_APP_ID / META_APP_SECRET are not configured on the Convex deployment.",
+      );
+    }
+
+    try {
+      await ctx.runMutation(internal.channels.internalStartMessengerPending, {
+        orgId,
+        connectedByUserId: userId,
+      });
+
+      const userToken = await exchangeCodeForUserToken(
+        args.code,
+        args.redirectUri,
+        appId,
+        appSecret,
+      );
+
+      const result = await completeMessengerFromUserAccessToken(ctx, {
+        orgId,
+        userId,
+        userAccessToken: userToken,
+      });
+
+      if ("needsPagePicker" in result) {
+        return {
+          kind: "needsPicker",
+          userAccessToken: userToken,
+          pages: result.pages,
+        };
+      }
+      return {
+        kind: "connected",
+        channelId: result.channelId,
+        displayUsername: result.displayUsername,
+      };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await ctx.runMutation(internal.channels.internalRecordError, {
+        orgId,
+        service: "messenger",
+        error: message,
+        connectedByUserId: userId,
+      });
+      throw err;
+    }
+  },
+});
+
+export const internalFinalizeMessengerPagePick = internalAction({
+  args: {
+    orgId: v.string(),
+    userId: v.string(),
+    pageId: v.string(),
+    userAccessToken: v.string(),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
+    try {
+      await ctx.runMutation(internal.channels.internalStartMessengerPending, {
+        orgId: args.orgId,
+        connectedByUserId: args.userId,
+      });
+      const result = await completeMessengerFromUserAccessToken(ctx, {
+        orgId: args.orgId,
+        userId: args.userId,
+        userAccessToken: args.userAccessToken,
+        pageId: args.pageId,
+      });
+      if ("needsPagePicker" in result) {
+        throw new Error("Page selection did not complete the connection.");
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await ctx.runMutation(internal.channels.internalRecordError, {
+        orgId: args.orgId,
+        service: "messenger",
+        error: message,
+        connectedByUserId: args.userId,
       });
       throw err;
     }

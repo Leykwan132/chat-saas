@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { useSearchParams } from 'react-router';
 import {
   Building2,
@@ -87,37 +87,51 @@ function channelIdentifier(channel: ChannelDoc): string {
   }
 }
 
-// Handles the Instagram OAuth redirect that lands back on this page with
-// `?code=...`. We swallow the code once, hand it to the backend, then strip
-// it from the URL. The exchanged-once ref keeps StrictMode's double-invoke
-// of effects from firing the action twice.
-function useInstagramOAuthCallback() {
+// Static OAuth callbacks redirect back with `?instagram=...` or
+// `?messenger=...`. Toast once and strip query params so refresh does not
+// replay. Multi-Page Messenger pick (`?messenger=pick`) is handled inside
+// ConnectMessengerButton.
+function useMetaChannelCallbackParams() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const completeSignup = useAction(api.instagramConnect.completeSignup);
-  const handledCodeRef = useRef<string | null>(null);
+  const handledRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const code = searchParams.get('code');
-    if (!code) return;
-    if (handledCodeRef.current === code) return;
-    handledCodeRef.current = code;
+    const instagram = searchParams.get('instagram');
+    const messenger = searchParams.get('messenger');
 
-    const redirectUri = `${window.location.origin}${window.location.pathname}`;
-    const next = new URLSearchParams(searchParams);
-    next.delete('code');
-    next.delete('state');
-    setSearchParams(next, { replace: true });
-
-    void (async () => {
-      try {
-        await completeSignup({ code, redirectUri });
-        toast.success('Instagram connected');
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
+    if (instagram === 'connected' || instagram === 'error') {
+      const key = `instagram:${instagram}`;
+      if (handledRef.current === key) return;
+      handledRef.current = key;
+      if (instagram === 'connected') {
+        toast.success('Instagram account connected');
+      } else {
+        const message = searchParams.get('message') ?? 'Unknown error';
         toast.error(`Instagram connect failed: ${message}`);
       }
-    })();
-  }, [completeSignup, searchParams, setSearchParams]);
+      const next = new URLSearchParams(searchParams);
+      next.delete('instagram');
+      next.delete('message');
+      setSearchParams(next, { replace: true });
+      return;
+    }
+
+    if (messenger === 'connected' || messenger === 'error') {
+      const key = `messenger:${messenger}`;
+      if (handledRef.current === key) return;
+      handledRef.current = key;
+      if (messenger === 'connected') {
+        toast.success('Messenger account connected');
+      } else {
+        const message = searchParams.get('message') ?? 'Unknown error';
+        toast.error(`Messenger connect failed: ${message}`);
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete('messenger');
+      next.delete('message');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
 }
 
 export default function ChannelsPage() {
@@ -126,7 +140,7 @@ export default function ChannelsPage() {
     api.channels.listForCurrentOrg,
     organizationId ? {} : 'skip',
   );
-  useInstagramOAuthCallback();
+  useMetaChannelCallbackParams();
 
   if (!organizationId) {
     return (
