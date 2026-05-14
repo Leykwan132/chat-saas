@@ -3,6 +3,46 @@ import { paginationOptsValidator } from "convex/server";
 import { mutation, query } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 
+// Latest inbox threads tied to channels that are still connected. Omits the AI
+// playground and orphaned rows left after disconnect (channel no longer linked).
+export const listLinkedForCurrentOrg = query({
+  args: {},
+  handler: async (ctx) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (orgId === "personal" || !orgId) {
+      return [];
+    }
+
+    const channelRows = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+      .collect();
+
+    const connectedIds = new Set(
+      channelRows
+        .filter((c) => c.status === "connected")
+        .map((c) => c._id),
+    );
+
+    if (connectedIds.size === 0) {
+      return [];
+    }
+
+    const recent = await ctx.db
+      .query("conversations")
+      .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
+      .order("desc")
+      .take(400);
+
+    return recent.filter(
+      (c) =>
+        c.service !== "playground" &&
+        c.channelId !== undefined &&
+        connectedIds.has(c.channelId),
+    );
+  },
+});
+
 // Inbox list for the caller's org. Excludes "playground" service rows so the
 // AI-playground threads don't show up in the customer-conversations inbox.
 export const listForCurrentOrg = query({

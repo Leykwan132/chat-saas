@@ -70,6 +70,7 @@ export const backfillConversations = internalAction({
       internal.channels.internalGetChannel,
       { channelId: args.channelId },
     );
+    console.log('channel', channel);
     if (
       channel === null ||
       channel.service !== "instagram" ||
@@ -78,18 +79,25 @@ export const backfillConversations = internalAction({
       return;
     }
 
+    console.log('enqueueing instagram sync messages');
     try {
+      console.log('fetching instagram conversations list');
       const url = new URL(`${instagramGraphBase()}/me/conversations`);
       url.searchParams.set("platform", "instagram");
       url.searchParams.set("limit", String(args.limit));
       url.searchParams.set("access_token", channel.accessToken);
+
+      console.log('url', url.toString());
       const list = await graphFetch<ConversationListResponse>(
         url.toString(),
         "Instagram conversations list",
       );
+      console.log('instagram conversations list', list);
       const conversations = list.data ?? [];
       for (const conv of conversations) {
+        console.log('conv', conv);
         if (!conv.id) continue;
+        console.log('enqueueing instagram sync messages', conv.id);
         await instagramSyncPool.enqueueAction(
           ctx,
           internal.instagramSync.syncMessages,

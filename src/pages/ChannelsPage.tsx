@@ -1,23 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { useSearchParams } from 'react-router';
 import {
   Building2,
-  CheckCircle2,
+  Check,
   CircleAlert,
   FileText,
   FilePlus2,
   Loader2,
+  RefreshCw,
   Send,
   Trash2,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Doc, Id } from '../../convex/_generated/dataModel';
+import type { Doc } from '../../convex/_generated/dataModel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
@@ -145,6 +154,32 @@ export default function ChannelsPage() {
   );
   useMetaChannelCallbackParams();
 
+  const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
+    Set<string>
+  >(new Set());
+
+  const connectedChannelsList = useMemo(
+    () =>
+      (channels ?? []).filter(
+        (c) =>
+          c.status !== 'disconnected' &&
+          !disconnectingChannelIds.has(c._id as string),
+      ),
+    [channels, disconnectingChannelIds],
+  );
+
+  useEffect(() => {
+    if (!channels) return;
+    setDisconnectingChannelIds((prev) => {
+      const next = new Set(prev);
+      for (const id of prev) {
+        const ch = channels.find((c) => (c._id as string) === id);
+        if (!ch || ch.status === 'disconnected') next.delete(id);
+      }
+      return next;
+    });
+  }, [channels]);
+
   if (!organizationId) {
     return (
       <div className="flex w-full flex-col gap-6">
@@ -190,15 +225,30 @@ export default function ChannelsPage() {
         <WhatsAppCloudApiDemo channels={channels ?? []} />
       ) : null}
 
-      {channels !== undefined && channels.length > 0 ? (
+      {channels !== undefined && connectedChannelsList.length > 0 ? (
         <section className="flex flex-col gap-4">
           <SectionTitle
             title="Connected channels"
             description="Channels currently linked to your organization."
           />
           <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
-            {channels.map((channel) => (
-              <ConnectedChannelRow key={channel._id} channel={channel} />
+            {connectedChannelsList.map((channel) => (
+              <ConnectedChannelRow
+                key={channel._id}
+                channel={channel}
+                onDisconnectBegin={() => {
+                  setDisconnectingChannelIds((s) =>
+                    new Set(s).add(channel._id as string),
+                  );
+                }}
+                onDisconnectUndone={() => {
+                  setDisconnectingChannelIds((s) => {
+                    const next = new Set(s);
+                    next.delete(channel._id as string);
+                    return next;
+                  });
+                }}
+              />
             ))}
           </ul>
         </section>
@@ -493,81 +543,183 @@ function AvailableChannelCard({
   );
 }
 
-function ConnectedChannelRow({ channel }: { channel: ChannelDoc }) {
+function formatConnectedSince(ts: number): string {
+  return new Date(ts).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function ConnectedChannelRow({
+  channel,
+  onDisconnectBegin,
+  onDisconnectUndone,
+}: {
+  channel: ChannelDoc;
+  onDisconnectBegin: () => void;
+  onDisconnectUndone: () => void;
+}) {
   const meta = SERVICE_META[channel.service];
   const Icon = meta.icon;
   const status = STATUS_META[channel.status];
   const disconnect = useMutation(api.channels.disconnect);
-  const [busy, setBusy] = useState(false);
-
-  const handleDisconnect = useCallback(
-    (channelId: Id<'channels'>) => {
-      void (async () => {
-        if (
-          !window.confirm(
-            'Disconnect this channel? Existing conversations will be kept but new messages will not be received until you reconnect.',
-          )
-        ) {
-          return;
-        }
-        setBusy(true);
-        try {
-          await disconnect({ channelId });
-          toast.success('Channel disconnected');
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          toast.error(msg);
-        } finally {
-          setBusy(false);
-        }
-      })();
-    },
-    [disconnect],
+  const enqueueSyncConversations = useAction(
+    api.channels.enqueueSyncConversations,
   );
+  const [busy, setBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+
+  const channelName = channelIdentifier(channel);
+
+  const confirmDisconnect = useCallback(async () => {
+    onDisconnectBegin();
+    setBusy(true);
+    try {
+      await disconnect({ channelId: channel._id });
+      toast.success('Channel disconnected');
+      setDisconnectOpen(false);
+    } catch (err) {
+      onDisconnectUndone();
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  }, [disconnect, channel._id, onDisconnectBegin, onDisconnectUndone]);
+
+  const canSyncConversations =
+    channel.status === 'connected' &&
+    (channel.service === 'instagram' || channel.service === 'messenger');
+
+  const handleSyncConversations = useCallback(async () => {
+    setSyncBusy(true);
+    try {
+      await enqueueSyncConversations({ channelId: channel._id });
+      toast.success('Conversation sync queued');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setSyncBusy(false);
+    }
+  }, [enqueueSyncConversations, channel._id]);
 
   return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3 min-w-0">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
+    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      <div className="flex min-w-0 flex-1 gap-3">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
           <Icon className="size-5" />
         </div>
-        <div className="flex flex-col gap-0.5 min-w-0">
-          <p className="truncate text-sm font-semibold">{meta.label}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {channelIdentifier(channel)}
-          </p>
+        <div className="flex min-w-0 flex-1 flex-col gap-0">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
+              {channelName}
+            </p>
+            {channel.status === 'connected' ? (
+              <span
+                className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white dark:bg-emerald-600"
+                title="Connected"
+                aria-label="Connected"
+              >
+                <Check className="size-2 stroke-[2.75]" aria-hidden />
+              </span>
+            ) : null}
+          </div>
+          {channel.status === 'connected' ? (
+            <p className="text-xs text-muted-foreground">
+              Connected since {formatConnectedSince(channel.createdAt)}
+            </p>
+          ) : null}
           {channel.status === 'error' && channel.lastError ? (
-            <p className="mt-1 flex items-center gap-1 text-xs text-destructive">
-              <CircleAlert className="size-3.5" />
-              {channel.lastError}
+            <p className="flex items-start gap-1.5 text-xs text-destructive">
+              <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
+              <span>{channel.lastError}</span>
             </p>
           ) : null}
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <StatusBadge tone={status.tone}>
-          {channel.status === 'connected' ? (
-            <CheckCircle2 className="size-3.5" />
-          ) : channel.status === 'error' ? (
-            <CircleAlert className="size-3.5" />
-          ) : null}
-          {status.label}
-        </StatusBadge>
-        {channel.status === 'connected' || channel.status === 'error' ? (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={busy}
-            onClick={() => handleDisconnect(channel._id)}
-          >
-            {busy ? (
+      <div className="flex shrink-0 items-center justify-end gap-2 self-start sm:pt-0.5">
+        {channel.status !== 'connected' ? (
+          <StatusBadge tone={status.tone}>
+            {channel.status === 'pending' ? (
               <Loader2 className="size-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="size-3.5" />
-            )}
-            Disconnect
-          </Button>
+            ) : channel.status === 'error' ? (
+              <CircleAlert className="size-3.5" />
+            ) : null}
+            {status.label}
+          </StatusBadge>
+        ) : null}
+        {channel.status === 'connected' || channel.status === 'error' ? (
+          <>
+            {canSyncConversations ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                className="text-muted-foreground hover:text-foreground"
+                disabled={busy || syncBusy}
+                onClick={() => void handleSyncConversations()}
+                aria-label={`Sync conversations for ${channelName}`}
+                title="Sync conversations"
+              >
+                <RefreshCw
+                  className={`size-4 ${syncBusy ? 'animate-spin' : ''}`}
+                />
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground hover:text-destructive"
+              disabled={busy || syncBusy}
+              onClick={() => setDisconnectOpen(true)}
+              aria-label={`Disconnect ${channelName}`}
+            >
+              <Trash2 className="size-4" />
+            </Button>
+            <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
+              <DialogContent showCloseButton={!busy}>
+                <DialogHeader>
+                  <DialogTitle>Disconnect {channelName}?</DialogTitle>
+                  <DialogDescription>
+                    Existing conversations stay in your inbox, but new messages
+                    will not arrive until you connect this channel again. This
+                    disconnects{' '}
+                    <span className="font-medium text-foreground">{channelName}</span>{' '}
+                    ({meta.label}).
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => setDisconnectOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    disabled={busy}
+                    onClick={() => void confirmDisconnect()}
+                  >
+                    {busy ? (
+                      <>
+                        <Loader2 className="size-3.5 animate-spin" />
+                        Disconnecting…
+                      </>
+                    ) : (
+                      'Disconnect'
+                    )}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </>
         ) : null}
       </div>
     </li>

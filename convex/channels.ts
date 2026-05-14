@@ -1,13 +1,19 @@
 import { v } from "convex/values";
 import {
+  action,
   internalMutation,
   internalQuery,
   mutation,
   query,
   type MutationCtx,
 } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
+
+/** Matches initial connect backfill; re-sync uses the same Graph list window. */
+const META_SYNC_CONVERSATIONS_LIMIT = 10;
 
 const serviceValidator = v.union(
   v.literal("whatsapp"),
@@ -68,6 +74,51 @@ export const disconnect = mutation({
       updatedAt: Date.now(),
     });
     return null;
+  },
+});
+
+// Enqueues Meta conversation list + per-conversation hydrate on the platform
+// workpool (same pipeline as post-connect backfill). Instagram and Messenger only.
+export const enqueueSyncConversations = action({
+  args: { channelId: v.id("channels") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (!orgId) {
+      throw new Error("Organization required");
+    }
+    const channel = await ctx.runQuery(internal.channels.internalGetChannel, {
+      channelId: args.channelId,
+    });
+    if (channel === null || channel.orgId !== orgId) {
+      throw new Error("Channel not found");
+    }
+    if (channel.status !== "connected") {
+      throw new Error("Channel is not connected");
+    }
+    if (channel.service === "instagram") {
+      console.log('enqueueing instagram sync');
+      await instagramSyncPool.enqueueAction(
+        ctx,
+        internal.instagramSync.backfillConversations,
+        {
+          channelId: args.channelId,
+          limit: META_SYNC_CONVERSATIONS_LIMIT,
+        },
+      );
+      return null;
+    }
+    if (channel.service === "messenger") {
+      await messengerSyncPool.enqueueAction(
+        ctx,
+        internal.messengerSync.backfillConversations,
+        {
+          channelId: args.channelId,
+          limit: META_SYNC_CONVERSATIONS_LIMIT,
+        },
+      );
+      return null;
+    }
+    throw new Error("Sync is only available for Instagram and Messenger");
   },
 });
 

@@ -1,23 +1,42 @@
 import { Pin, PinOff } from 'lucide-react';
+import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import type { Id } from '../../convex/_generated/dataModel';
+
+export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger';
 
 export type Chat = {
-  id: number;
+  id: Id<'conversations'>;
   name: string;
   message: string;
   time: string;
   unread: number;
-  source: string;
+  platform: ConversationPlatform;
   requiresAction: boolean;
-  startDate: string;
-  leadStatus: string;
-  aiMessagesCount: number;
+  /** Inbox row status; used for label filter on Chats page. */
+  conversationStatus: 'open' | 'snoozed' | 'closed';
 };
+
+function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
+  const common = { size: 14, style: { flexShrink: 0 } as const };
+  switch (platform) {
+    case 'whatsapp':
+      return <SiWhatsapp {...common} className="text-[#25D366]" title="WhatsApp" />;
+    case 'instagram':
+      return (
+        <SiInstagram {...common} className="text-[#E4405F]" title="Instagram" />
+      );
+    case 'messenger':
+      return (
+        <SiMessenger {...common} className="text-[#0866FF]" title="Messenger" />
+      );
+  }
+}
 
 type ChatRowProps = {
   chat: Chat;
@@ -25,8 +44,8 @@ type ChatRowProps = {
   total: number;
   isSelected: boolean;
   isPinned: boolean;
-  onSelect: (id: number) => void;
-  onTogglePin: (id: number) => void;
+  onSelect: (id: Id<'conversations'>) => void;
+  onTogglePin: (id: Id<'conversations'>) => void;
 };
 
 export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, onTogglePin }: ChatRowProps) {
@@ -53,9 +72,10 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
               <span style={{
                 fontSize: '13px', fontWeight: 600, color: 'var(--color-foreground)',
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                display: 'flex', alignItems: 'center', gap: '5px',
+                display: 'flex', alignItems: 'center', gap: '6px',
               }}>
                 {isPinned && <Pin size={10} color="var(--color-foreground-subtle)" style={{ flexShrink: 0 }} />}
+                <PlatformGlyph platform={chat.platform} />
                 {chat.name}
               </span>
               <span style={{ fontSize: '11px', color: 'var(--color-foreground-subtle)', flexShrink: 0, marginLeft: '8px' }}>
