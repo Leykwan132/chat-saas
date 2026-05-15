@@ -8,19 +8,16 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
-
-const DEFAULT_GRAPH_VERSION = "v22.0";
+const DEFAULT_GRAPH_VERSION = "v25.0";
 
 function graphBase() {
   const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
   return `https://graph.facebook.com/${version}`;
 }
 
-// Send a freeform text reply on an existing WhatsApp conversation. The Cloud
-// API only allows freeform replies inside the 24-hour customer-care window;
-// outside that window the request will fail and we record the message with
-// status: "failed".
+// Send a plain-text Messenger reply on an existing Page conversation. Uses the
+// Page access token on the channel row; recipient PSID is `conversation.contactAddress`
+// (same natural key as webhooks and sync ingest).
 export const sendText = action({
   args: {
     conversationId: v.id("conversations"),
@@ -35,46 +32,43 @@ export const sendText = action({
     if (!trimmed) {
       throw new Error("Cannot send an empty message");
     }
+    if ([...trimmed].length > 2000) {
+      throw new Error("Messenger text messages must be 2000 characters or less");
+    }
 
     const ctxData: SendContext | null = await ctx.runQuery(
-      internal.whatsappSend.internalGetSendContext,
+      internal.messengerSend.internalGetSendContext,
       { conversationId: args.conversationId, orgId },
     );
     if (ctxData === null) {
       throw new Error("Conversation not found");
     }
     const { conversation, channel } = ctxData;
-    if (conversation.service !== "whatsapp" || channel.service !== "whatsapp") {
-      throw new Error("Not a WhatsApp conversation");
+    if (
+      conversation.service !== "messenger" ||
+      channel.service !== "messenger"
+    ) {
+      throw new Error("Not a Messenger conversation");
     }
-    if (channel.status !== "connected" || !channel.phoneNumberId) {
-      throw new Error("WhatsApp channel is not connected");
-    }
-
-    const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-    const accessToken = isDemoChannel
-      ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-      : (channel.accessToken ?? "").trim();
-    if (!accessToken) {
-      throw new Error(
-        isDemoChannel
-          ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to send from the demo WhatsApp inbox."
-          : "WhatsApp channel is not connected",
-      );
+    if (
+      channel.status !== "connected" ||
+      !channel.accessToken?.trim() ||
+      !channel.pageId
+    ) {
+      throw new Error("Messenger channel is not connected");
     }
 
-    const url = `${graphBase()}/${channel.phoneNumberId}/messages`;
+    const pageId = channel.pageId;
+    const url = `${graphBase()}/me/messages`;
     const payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: conversation.contactAddress,
-      type: "text",
-      text: { body: trimmed },
+      recipient: { id: conversation.contactAddress },
+      messaging_type: "RESPONSE",
+      message: { text: trimmed },
     };
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${channel.accessToken.trim()}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
@@ -89,11 +83,11 @@ export const sendText = action({
 
     if (!res.ok) {
       const errMsg = body?.error?.message ?? `HTTP ${res.status}`;
-      await ctx.runMutation(internal.whatsappSend.internalRecordOutgoing, {
+      await ctx.runMutation(internal.messengerSend.internalRecordOutgoing, {
         conversationId: args.conversationId,
         channelId: channel._id,
         orgId: channel.orgId,
-        orgAddress: channel.phoneNumberId,
+        orgAddress: pageId,
         contactAddress: conversation.contactAddress,
         content: trimmed,
         authorUserId: userId,
@@ -101,15 +95,15 @@ export const sendText = action({
         status: "failed",
         failureReason: errMsg,
       });
-      throw new Error(`WhatsApp send failed: ${errMsg}`);
+      throw new Error(`Messenger send failed: ${errMsg}`);
     }
 
-    const externalId = body?.messages?.[0]?.id;
-    await ctx.runMutation(internal.whatsappSend.internalRecordOutgoing, {
+    const externalId = body?.message_id;
+    await ctx.runMutation(internal.messengerSend.internalRecordOutgoing, {
       conversationId: args.conversationId,
       channelId: channel._id,
       orgId: channel.orgId,
-      orgAddress: channel.phoneNumberId,
+      orgAddress: pageId,
       contactAddress: conversation.contactAddress,
       content: trimmed,
       authorUserId: userId,
@@ -133,11 +127,11 @@ export const internalGetSendContext = internalQuery({
   handler: async (ctx, args): Promise<SendContext | null> => {
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== args.orgId) return null;
-    if (conv.service !== "whatsapp") return null;
+    if (conv.service !== "messenger") return null;
     if (!conv.channelId) return null;
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null || channel.orgId !== args.orgId) return null;
-    if (channel.service !== "whatsapp") return null;
+    if (channel.service !== "messenger") return null;
     return { conversation: conv, channel };
   },
 });
@@ -167,7 +161,7 @@ export const internalRecordOutgoing = internalMutation({
       orgId: args.orgId,
       conversationId: args.conversationId,
       channelId: args.channelId,
-      service: "whatsapp",
+      service: "messenger",
       externalId: args.externalId,
       orgAddress: args.orgAddress ?? "",
       contactAddress: args.contactAddress,
@@ -182,21 +176,19 @@ export const internalRecordOutgoing = internalMutation({
 
     const conv = await ctx.db.get(args.conversationId);
     if (conv !== null) {
-      const patch: Record<string, unknown> = {
+      await ctx.db.patch(args.conversationId, {
         lastMessageAt: now,
         lastMessagePreview: args.content.slice(0, 140),
         unreadCount: 0,
         updatedAt: now,
-      };
-      await ctx.db.patch(args.conversationId, patch);
+      });
     }
     return messageId;
   },
 });
 
 type GraphSendResponse = {
-  messaging_product?: string;
-  contacts?: Array<{ input?: string; wa_id?: string }>;
-  messages?: Array<{ id?: string }>;
+  recipient_id?: string;
+  message_id?: string;
   error?: { message?: string; code?: number; type?: string };
 };

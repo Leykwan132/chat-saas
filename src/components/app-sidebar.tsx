@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Plug } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Plug, FileText } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { AccountDialog } from '@/components/AccountDialog';
 import {
@@ -26,6 +26,11 @@ function getNavItems(agentId: string) {
       { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground' },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base' },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels' },
+      {
+        to: `/dashboard/${agentId}/whatsapp-demo/template`,
+        icon: FileText,
+        label: 'WA templates',
+      },
     ],
     insights: [
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },

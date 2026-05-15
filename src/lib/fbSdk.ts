@@ -7,8 +7,8 @@
 // `useFacebookSession()` exposes the user's current FB login state so
 // components can:
 //   - tell when the SDK is ready (replacing brittle `!window.FB` checks)
-//   - surface a "Facebook session detected" hint when the user is already
-//     signed into FB in this browser (`status === 'connected'`)
+//   - know when the user is already signed into FB in this browser
+//     (`status === 'connected'`)
 //   - react to cross-tab logouts via the `auth.statusChange` event
 //
 // The session is held in a module-level cache so multiple consumers on

@@ -8,19 +8,35 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
+const DEFAULT_GRAPH_VERSION = "v25.0";
 
-const DEFAULT_GRAPH_VERSION = "v22.0";
-
-function graphBase() {
-  const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
-  return `https://graph.facebook.com/${version}`;
+function graphVersion() {
+  return process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
 }
 
-// Send a freeform text reply on an existing WhatsApp conversation. The Cloud
-// API only allows freeform replies inside the 24-hour customer-care window;
-// outside that window the request will fail and we record the message with
-// status: "failed".
+function instagramGraphBase() {
+  return `https://graph.instagram.com/${graphVersion()}`;
+}
+
+/** Strip BOM, quotes, and accidental `Bearer ` prefix from dashboard/env pastes. */
+function normalizeMetaAccessToken(raw: string | undefined): string {
+  if (raw === undefined) return "";
+  let t = raw.trim();
+  if (t.charCodeAt(0) === 0xfeff) t = t.slice(1).trim();
+  if (
+    (t.startsWith('"') && t.endsWith('"')) ||
+    (t.startsWith("'") && t.endsWith("'"))
+  ) {
+    t = t.slice(1, -1).trim();
+  }
+  if (t.toLowerCase().startsWith("bearer ")) {
+    t = t.slice(7).trim();
+  }
+  return t;
+}
+
+// POST graph.instagram.com/<META_GRAPH_API_VERSION>/me/messages with
+// { message, recipient } (same key order as Meta’s curl).
 export const sendText = action({
   args: {
     conversationId: v.id("conversations"),
@@ -35,42 +51,34 @@ export const sendText = action({
     if (!trimmed) {
       throw new Error("Cannot send an empty message");
     }
+    const bytes = new TextEncoder().encode(trimmed).length;
+    if (bytes > 1000) {
+      throw new Error("Instagram text messages must be 1000 bytes or less (UTF-8)");
+    }
 
     const ctxData: SendContext | null = await ctx.runQuery(
-      internal.whatsappSend.internalGetSendContext,
+      internal.instagramSend.internalGetSendContext,
       { conversationId: args.conversationId, orgId },
     );
     if (ctxData === null) {
       throw new Error("Conversation not found");
     }
     const { conversation, channel } = ctxData;
-    if (conversation.service !== "whatsapp" || channel.service !== "whatsapp") {
-      throw new Error("Not a WhatsApp conversation");
-    }
-    if (channel.status !== "connected" || !channel.phoneNumberId) {
-      throw new Error("WhatsApp channel is not connected");
+    if (channel.status !== "connected" || !channel.igUserId) {
+      throw new Error("Instagram channel is not connected");
     }
 
-    const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-    const accessToken = isDemoChannel
-      ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-      : (channel.accessToken ?? "").trim();
+    const accessToken = normalizeMetaAccessToken(channel.accessToken);
     if (!accessToken) {
-      throw new Error(
-        isDemoChannel
-          ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to send from the demo WhatsApp inbox."
-          : "WhatsApp channel is not connected",
-      );
+      throw new Error("Instagram channel is not connected");
     }
 
-    const url = `${graphBase()}/${channel.phoneNumberId}/messages`;
+    const url = `${instagramGraphBase()}/me/messages`;
     const payload = {
-      messaging_product: "whatsapp",
-      recipient_type: "individual",
-      to: conversation.contactAddress,
-      type: "text",
-      text: { body: trimmed },
+      message: { text: trimmed },
+      recipient: { id: conversation.contactAddress },
     };
+
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -89,11 +97,11 @@ export const sendText = action({
 
     if (!res.ok) {
       const errMsg = body?.error?.message ?? `HTTP ${res.status}`;
-      await ctx.runMutation(internal.whatsappSend.internalRecordOutgoing, {
+      await ctx.runMutation(internal.instagramSend.internalRecordOutgoing, {
         conversationId: args.conversationId,
         channelId: channel._id,
         orgId: channel.orgId,
-        orgAddress: channel.phoneNumberId,
+        orgAddress: channel.igUserId,
         contactAddress: conversation.contactAddress,
         content: trimmed,
         authorUserId: userId,
@@ -101,15 +109,15 @@ export const sendText = action({
         status: "failed",
         failureReason: errMsg,
       });
-      throw new Error(`WhatsApp send failed: ${errMsg}`);
+      throw new Error(`Instagram send failed: ${errMsg}`);
     }
 
-    const externalId = body?.messages?.[0]?.id;
-    await ctx.runMutation(internal.whatsappSend.internalRecordOutgoing, {
+    const externalId = body?.message_id ?? body?.id;
+    await ctx.runMutation(internal.instagramSend.internalRecordOutgoing, {
       conversationId: args.conversationId,
       channelId: channel._id,
       orgId: channel.orgId,
-      orgAddress: channel.phoneNumberId,
+      orgAddress: channel.igUserId,
       contactAddress: conversation.contactAddress,
       content: trimmed,
       authorUserId: userId,
@@ -133,11 +141,11 @@ export const internalGetSendContext = internalQuery({
   handler: async (ctx, args): Promise<SendContext | null> => {
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== args.orgId) return null;
-    if (conv.service !== "whatsapp") return null;
+    if (conv.service !== "instagram") return null;
     if (!conv.channelId) return null;
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null || channel.orgId !== args.orgId) return null;
-    if (channel.service !== "whatsapp") return null;
+    if (channel.service !== "instagram") return null;
     return { conversation: conv, channel };
   },
 });
@@ -167,7 +175,7 @@ export const internalRecordOutgoing = internalMutation({
       orgId: args.orgId,
       conversationId: args.conversationId,
       channelId: args.channelId,
-      service: "whatsapp",
+      service: "instagram",
       externalId: args.externalId,
       orgAddress: args.orgAddress ?? "",
       contactAddress: args.contactAddress,
@@ -182,21 +190,20 @@ export const internalRecordOutgoing = internalMutation({
 
     const conv = await ctx.db.get(args.conversationId);
     if (conv !== null) {
-      const patch: Record<string, unknown> = {
+      await ctx.db.patch(args.conversationId, {
         lastMessageAt: now,
         lastMessagePreview: args.content.slice(0, 140),
         unreadCount: 0,
         updatedAt: now,
-      };
-      await ctx.db.patch(args.conversationId, patch);
+      });
     }
     return messageId;
   },
 });
 
 type GraphSendResponse = {
-  messaging_product?: string;
-  contacts?: Array<{ input?: string; wa_id?: string }>;
-  messages?: Array<{ id?: string }>;
+  recipient_id?: string;
+  message_id?: string;
+  id?: string;
   error?: { message?: string; code?: number; type?: string };
 };

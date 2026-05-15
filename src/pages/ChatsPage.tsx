@@ -6,6 +6,7 @@ import {
   Calendar,
   ChevronDown,
   CircleDot,
+  FileText,
   MessageSquare,
   Moon,
   MoreVertical,
@@ -31,6 +32,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { WHATSAPP_DEMO_CONVERSATION_TAG } from '@/lib/whatsappCloudDemo';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -170,7 +172,7 @@ export default function ChatsPage() {
   const connectedChannels = useQuery(api.channels.getConnectedForCurrentOrg, {});
   const linkedConversations = useQuery(
     api.conversations.listLinkedForCurrentOrg,
-    connectedChannels !== undefined && connectedChannels.length > 0 ? {} : 'skip',
+    connectedChannels !== undefined ? {} : 'skip',
   );
 
   const [selectedConversationId, setSelectedConversationId] = useState<
@@ -183,9 +185,29 @@ export default function ChatsPage() {
   const [draftReply, setDraftReply] = useState('');
   const [sendBusy, setSendBusy] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const demoSeedWhatsappRef = useRef(false);
 
   const markRead = useMutation(api.conversations.markRead);
+  const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
   const sendWhatsAppText = useAction(api.whatsappSend.sendText);
+  const sendInstagramText = useAction(api.instagramSend.sendText);
+  const sendMessengerText = useAction(api.messengerSend.sendText);
+
+  useEffect(() => {
+    if (connectedChannels === undefined) return;
+    if (!demoSeedWhatsappRef.current) {
+      demoSeedWhatsappRef.current = true;
+      void ensureWhatsappDemoInbox({})
+        .then((res) => {
+          if (res.status === 'no_organization') {
+            demoSeedWhatsappRef.current = false;
+          }
+        })
+        .catch(() => {
+          demoSeedWhatsappRef.current = false;
+        });
+    }
+  }, [connectedChannels, ensureWhatsappDemoInbox]);
 
   const selectedConversation = useQuery(
     api.conversations.get,
@@ -305,6 +327,11 @@ export default function ChatsPage() {
 
   const displayHeaderName = selectedName ?? selectedListItem?.name ?? null;
 
+  const canReplyFromInbox =
+    selectedConversation?.service === 'whatsapp' ||
+    selectedConversation?.service === 'instagram' ||
+    selectedConversation?.service === 'messenger';
+
   useEffect(() => {
     if (threadDataLoading) return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -313,16 +340,35 @@ export default function ChatsPage() {
   const handleSendReply = async () => {
     const trimmed = draftReply.trim();
     if (!trimmed || !selectedConversationId || sendBusy || threadDataLoading) return;
-    if (selectedConversation?.service !== 'whatsapp') {
-      toast.error('Sending from the inbox is available for WhatsApp only right now.');
+    const service = selectedConversation?.service;
+    if (
+      service !== 'whatsapp' &&
+      service !== 'instagram' &&
+      service !== 'messenger'
+    ) {
+      toast.error(
+        'Sending from the inbox is available for WhatsApp, Instagram, and Messenger only right now.',
+      );
       return;
     }
     setSendBusy(true);
     try {
-      await sendWhatsAppText({
-        conversationId: selectedConversationId,
-        content: trimmed,
-      });
+      if (service === 'whatsapp') {
+        await sendWhatsAppText({
+          conversationId: selectedConversationId,
+          content: trimmed,
+        });
+      } else if (service === 'instagram') {
+        await sendInstagramText({
+          conversationId: selectedConversationId,
+          content: trimmed,
+        });
+      } else {
+        await sendMessengerText({
+          conversationId: selectedConversationId,
+          content: trimmed,
+        });
+      }
       setDraftReply('');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to send message');
@@ -557,7 +603,15 @@ export default function ChatsPage() {
                   <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--color-foreground-muted)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-foreground-muted)' }}>
+                {selectedConversation?.tag === WHATSAPP_DEMO_CONVERSATION_TAG && agentId ? (
+                  <Button variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 px-2.5 text-xs font-normal" asChild>
+                    <Link to={`/dashboard/${agentId}/whatsapp-demo/template`}>
+                      <FileText className="size-3.5" />
+                      WA templates
+                    </Link>
+                  </Button>
+                ) : null}
                 <MoreVertical size={18} style={{ cursor: 'pointer' }} />
               </div>
             </div>
@@ -625,14 +679,14 @@ export default function ChatsPage() {
                   placeholder={
                     threadDataLoading
                       ? 'Loading conversation…'
-                      : selectedConversation?.service === 'whatsapp'
+                      : canReplyFromInbox
                         ? `Reply to ${displayHeaderName ?? 'customer'}…`
-                        : 'Replies from the inbox are supported on WhatsApp only'
+                        : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
                   }
                   disabled={
                     threadDataLoading ||
                     sendBusy ||
-                    selectedConversation?.service !== 'whatsapp'
+                    !canReplyFromInbox
                   }
                   value={draftReply}
                   onChange={(e) => setDraftReply(e.target.value)}
@@ -648,7 +702,7 @@ export default function ChatsPage() {
                   type="button"
                   disabled={
                     threadDataLoading ||
-                    selectedConversation?.service !== 'whatsapp' ||
+                    !canReplyFromInbox ||
                     sendBusy ||
                     !draftReply.trim()
                   }
@@ -663,15 +717,11 @@ export default function ChatsPage() {
                     justifyContent: 'center',
                     border: 'none',
                     cursor:
-                      !threadDataLoading &&
-                      selectedConversation?.service === 'whatsapp' &&
-                      draftReply.trim()
+                      !threadDataLoading && canReplyFromInbox && draftReply.trim()
                         ? 'pointer'
                         : 'not-allowed',
                     opacity:
-                      threadDataLoading ||
-                      selectedConversation?.service !== 'whatsapp' ||
-                      !draftReply.trim()
+                      threadDataLoading || !canReplyFromInbox || !draftReply.trim()
                         ? 0.45
                         : 1,
                   }}

@@ -208,11 +208,6 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
             'Connect'
           )}
         </Button>
-        {fbSession.status === 'connected' ? (
-          <span className="text-[10px] text-muted-foreground">
-            Facebook session detected
-          </span>
-        ) : null}
       </div>
 
       <Dialog
