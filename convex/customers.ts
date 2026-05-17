@@ -6,7 +6,7 @@ import {
   query,
   type MutationCtx,
 } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
 const customerServiceValidator = v.union(
@@ -21,6 +21,130 @@ const channelServiceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
 );
+
+// Distinct WhatsApp contacts that have a conversation on this channel
+// (used for template broadcast recipient pickers).
+export const listWhatsAppBroadcastCandidates = query({
+  args: { channelId: v.id("channels") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (orgId === "personal" || !orgId) {
+      return [];
+    }
+    const channel = await ctx.db.get(args.channelId);
+    if (
+      channel === null ||
+      channel.orgId !== orgId ||
+      channel.service !== "whatsapp"
+    ) {
+      throw new Error("Channel not found");
+    }
+
+    const convs = await ctx.db
+      .query("conversations")
+      .withIndex("by_channel_and_contactAddress", (q) =>
+        q.eq("channelId", args.channelId),
+      )
+      .collect();
+
+    const whatsappConvs = convs.filter((c) => c.service === "whatsapp");
+    const bestByPhone = new Map<string, Doc<"conversations">>();
+    for (const c of whatsappConvs) {
+      const phone = c.contactAddress.trim();
+      if (!phone) continue;
+      const prev = bestByPhone.get(phone);
+      if (
+        prev === undefined ||
+        (!prev.customerId && c.customerId !== undefined)
+      ) {
+        bestByPhone.set(phone, c);
+      }
+    }
+
+    const out: Array<{
+      customerId: Id<"customers"> | undefined;
+      name: string | undefined;
+      phone: string;
+    }> = [];
+
+    for (const c of bestByPhone.values()) {
+      const phone = c.contactAddress.trim();
+      if (c.customerId !== undefined) {
+        const cust = await ctx.db.get(c.customerId);
+        if (cust !== null && cust.orgId === orgId) {
+          out.push({
+            customerId: cust._id,
+            name: cust.name?.trim() || c.contactName,
+            phone: (cust.phone?.trim() || phone) as string,
+          });
+          continue;
+        }
+      }
+      out.push({
+        customerId: undefined,
+        name: c.contactName,
+        phone,
+      });
+    }
+
+    out.sort((a, b) =>
+      (a.name ?? a.phone).localeCompare(b.name ?? b.phone, undefined, {
+        sensitivity: "base",
+      }),
+    );
+    return out;
+  },
+});
+
+// Name, platform label, and phone for the inbox details sidebar (auth-checked
+// via the parent conversation).
+export const getSidebarDetailsForConversation = query({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      return null;
+    }
+
+    let customer: Doc<"customers"> | null = null;
+    if (conv.customerId !== undefined) {
+      const row = await ctx.db.get(conv.customerId);
+      if (row !== null && row.orgId === orgId) {
+        customer = row;
+      }
+    }
+
+    const fromCustName = customer?.name?.trim();
+    const fromConvName = conv.contactName?.trim();
+    const name =
+      fromCustName ||
+      fromConvName ||
+      conv.contactAddress.trim() ||
+      "Unknown";
+
+    let phone: string | null = null;
+    const custPhone = customer?.phone?.trim();
+    if (custPhone) {
+      phone = custPhone;
+    } else if (conv.service === "whatsapp") {
+      phone = conv.contactAddress.trim() || null;
+    }
+
+    const platformLabel =
+      conv.service === "whatsapp"
+        ? "WhatsApp"
+        : conv.service === "instagram"
+          ? "Instagram"
+          : conv.service === "messenger"
+            ? "Messenger"
+            : conv.service === "playground"
+              ? "Playground"
+              : conv.service;
+
+    return { name, platformLabel, phone };
+  },
+});
 
 // Paginated list of customers for the caller's org, newest activity first.
 export const listForCurrentOrg = query({

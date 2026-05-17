@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
 // Latest inbox threads tied to channels that are still connected. Omits the AI
@@ -88,6 +89,173 @@ export const markRead = mutation({
     if (conv.unreadCount === 0) return;
     await ctx.db.patch(args.conversationId, {
       unreadCount: 0,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const ensureAssignedAgent = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    const agent = await ctx.db.get(args.agentId);
+    if (agent === null || agent.orgId !== orgId) {
+      throw new Error("Agent not found");
+    }
+    if (conv.assignedAgentId === args.agentId) return;
+    await ctx.db.patch(args.conversationId, {
+      assignedAgentId: args.agentId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Who owns outbound replies: `assignToAiAgent` + optional human on `assignedUserId`.
+export const setAssignee = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    assignee: v.union(
+      v.object({ kind: v.literal("ai") }),
+      v.object({ kind: v.literal("user"), workosUserId: v.string() }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+
+    if (args.assignee.kind === "ai") {
+      await ctx.db.patch(args.conversationId, {
+        assignToAiAgent: true,
+        assignedUserId: undefined,
+        updatedAt: Date.now(),
+      });
+      return;
+    }
+
+    const { workosUserId } = args.assignee;
+
+    const org = await ctx.db
+      .query("organizations")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+      .unique();
+    if (org === null) {
+      throw new Error("Organization not found");
+    }
+
+    const userRow = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+      .unique();
+    if (userRow === null || !org.members.includes(userRow._id)) {
+      throw new Error("User is not a member of this organization");
+    }
+
+    await ctx.db.patch(args.conversationId, {
+      assignToAiAgent: false,
+      assignedUserId: workosUserId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const internalResolveAgentId = internalQuery({
+  args: {
+    orgId: v.string(),
+    preferredAgentId: v.optional(v.id("agents")),
+  },
+  handler: async (ctx, args): Promise<Id<"agents"> | undefined> => {
+    if (args.preferredAgentId) {
+      const agent = await ctx.db.get(args.preferredAgentId);
+      if (agent !== null && agent.orgId === args.orgId) {
+        return args.preferredAgentId;
+      }
+    }
+    const agents = await ctx.db
+      .query("agents")
+      .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+      .collect();
+    if (agents.length === 1) return agents[0]!._id;
+    return undefined;
+  },
+});
+
+const MAX_TAGS_PER_CONVERSATION = 24;
+const MAX_TAG_LENGTH = 48;
+
+export const addConversationTag = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    const normalized = args.tag.trim().slice(0, MAX_TAG_LENGTH);
+    if (normalized.length === 0) {
+      throw new Error("Tag cannot be empty");
+    }
+    const current = conv.tags ?? [];
+    if (current.includes(normalized)) {
+      return;
+    }
+    if (current.length >= MAX_TAGS_PER_CONVERSATION) {
+      throw new Error("Too many tags on this conversation");
+    }
+    await ctx.db.patch(args.conversationId, {
+      tags: [...current, normalized],
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const removeConversationTag = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    const current = conv.tags ?? [];
+    await ctx.db.patch(args.conversationId, {
+      tags: current.filter((t) => t !== args.tag),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+const MAX_INTERACTION_SUMMARY_LENGTH = 8000;
+
+export const setInteractionSummary = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    summary: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    const trimmed = args.summary.trim().slice(0, MAX_INTERACTION_SUMMARY_LENGTH);
+    await ctx.db.patch(args.conversationId, {
+      interactionSummary: trimmed.length > 0 ? trimmed : undefined,
       updatedAt: Date.now(),
     });
   },

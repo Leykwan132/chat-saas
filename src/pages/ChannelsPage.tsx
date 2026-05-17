@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { useSearchParams } from 'react-router';
+import { Link, useParams, useSearchParams } from 'react-router';
 import {
   Building2,
   Check,
@@ -145,6 +145,7 @@ function useMetaChannelCallbackParams() {
 
 export default function ChannelsPage() {
   const { organizationId } = useAuth();
+  const { agentId } = useParams();
   const channels = useQuery(
     api.channels.listForCurrentOrg,
     organizationId ? {} : 'skip',
@@ -232,6 +233,7 @@ export default function ChannelsPage() {
             {connectedChannelsList.map((channel) => (
               <ConnectedChannelRow
                 key={channel._id}
+                agentId={agentId}
                 channel={channel}
                 onDisconnectBegin={() => {
                   setDisconnectingChannelIds((s) =>
@@ -490,10 +492,12 @@ function formatConnectedSince(ts: number): string {
 }
 
 function ConnectedChannelRow({
+  agentId,
   channel,
   onDisconnectBegin,
   onDisconnectUndone,
 }: {
+  agentId?: string;
   channel: ChannelDoc;
   onDisconnectBegin: () => void;
   onDisconnectUndone: () => void;
@@ -544,40 +548,72 @@ function ConnectedChannelRow({
     }
   }, [enqueueSyncConversations, channel._id]);
 
-  return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-      <div className="flex min-w-0 flex-1 gap-3">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-          <Icon className="size-5" />
+  const canOpenTemplates =
+    Boolean(agentId) &&
+    channel.service === 'whatsapp' &&
+    channel.status === 'connected' &&
+    Boolean(channel.wabaId?.trim());
+
+  const templatesTo =
+    canOpenTemplates && agentId
+      ? `/dashboard/${agentId}/channels/${channel._id}/templates`
+      : null;
+
+  const mainBlock = (
+    <>
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
+        <Icon className="size-5" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-0">
+        <div className="flex min-w-0 items-center gap-1.5">
+          <p className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
+            {channelName}
+          </p>
+          {channel.status === 'connected' ? (
+            <span
+              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white dark:bg-emerald-600"
+              title="Connected"
+              aria-label="Connected"
+            >
+              <Check className="size-2 stroke-[2.75]" aria-hidden />
+            </span>
+          ) : null}
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-0">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <p className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
-              {channelName}
-            </p>
-            {channel.status === 'connected' ? (
-              <span
-                className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white dark:bg-emerald-600"
-                title="Connected"
-                aria-label="Connected"
-              >
-                <Check className="size-2 stroke-[2.75]" aria-hidden />
+        {channel.status === 'connected' ? (
+          <p className="text-xs text-muted-foreground">
+            Connected since {formatConnectedSince(channel.createdAt)}
+            {templatesTo ? (
+              <span className="text-muted-foreground"> · </span>
+            ) : null}
+            {templatesTo ? (
+              <span className="text-xs text-muted-foreground">
+                Click the row to manage message templates
               </span>
             ) : null}
-          </div>
-          {channel.status === 'connected' ? (
-            <p className="text-xs text-muted-foreground">
-              Connected since {formatConnectedSince(channel.createdAt)}
-            </p>
-          ) : null}
-          {channel.status === 'error' && channel.lastError ? (
-            <p className="flex items-start gap-1.5 text-xs text-destructive">
-              <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
-              <span>{channel.lastError}</span>
-            </p>
-          ) : null}
-        </div>
+          </p>
+        ) : null}
+        {channel.status === 'error' && channel.lastError ? (
+          <p className="flex items-start gap-1.5 text-xs text-destructive">
+            <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
+            <span>{channel.lastError}</span>
+          </p>
+        ) : null}
       </div>
+    </>
+  );
+
+  return (
+    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+      {templatesTo ? (
+        <Link
+          to={templatesTo}
+          className="flex min-w-0 flex-1 items-start gap-3 rounded-lg outline-none ring-offset-background transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {mainBlock}
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 gap-3">{mainBlock}</div>
+      )}
       <div className="flex shrink-0 items-center justify-end gap-2 self-start sm:pt-0.5">
         {channel.status !== 'connected' ? (
           <StatusBadge tone={status.tone}>

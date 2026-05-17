@@ -1,11 +1,6 @@
 import { v } from "convex/values";
-import {
-  internalMutation,
-  type ActionCtx,
-  type MutationCtx,
-} from "./_generated/server";
+import { internalMutation, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { instagramSyncPool } from "./channelSyncPools";
 
 // POST handler for the `object: "instagram"` branch of /webhook/meta.
@@ -102,16 +97,13 @@ export const handleIncoming = internalMutation({
     }
 
     // Is the sender us (echoed outgoing) or the customer?
-    const isOutgoing = args.senderIgUserId === args.recipientIgUserId;
-    const contactAddress = isOutgoing
-      ? args.recipientIgUserId
-      : args.senderIgUserId;
+    const isOutgoing =
+      channel.igUserId !== undefined &&
+      args.senderIgUserId === channel.igUserId;
+    if (isOutgoing) return;
 
-    // Determine up-front whether we've already stored this conversation;
-    // if not, hydrate full history from Graph in the background once. The
-    // single message we are about to insert is still saved synchronously so
-    // it never goes missing, and the hydrate is idempotent (deduped by
-    // externalId).
+    const contactAddress = args.senderIgUserId;
+
     const existingConversation = await ctx.db
       .query("conversations")
       .withIndex("by_channel_and_contactAddress", (q) =>
@@ -126,101 +118,18 @@ export const handleIncoming = internalMutation({
       );
     }
 
-    const customerId: Id<"customers"> = await ctx.runMutation(
-      internal.customers.internalUpsertFromWebhook,
-      {
-        orgId: channel.orgId,
-        service: "instagram",
-        contactAddress,
-        profileName: undefined,
-      },
-    );
-
-    const conversationId = await upsertConversation(ctx, {
-      orgId: channel.orgId,
+    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
-      orgAddress: channel.igUserId ?? args.recipientIgUserId,
-      contactAddress,
-      customerId,
-      lastMessageAt: args.timestampMs,
-      preview: (args.text ?? "").slice(0, 140),
-      isIncoming: !isOutgoing,
-    });
-
-    await ctx.db.insert("messages", {
-      orgId: channel.orgId,
-      conversationId,
-      channelId: channel._id,
-      service: "instagram",
       externalId: args.externalId,
-      orgAddress: channel.igUserId ?? args.recipientIgUserId,
       contactAddress,
-      direction: isOutgoing ? "outgoing" : "incoming",
-      contentType: "text",
+      direction: "incoming",
       content: args.text ?? "",
-      createdAt: args.timestampMs,
-    });
-
-    await ctx.runMutation(internal.customers.internalSetLastConversation, {
-      customerId,
-      conversationId,
+      contentType: "text",
+      timestampMs: args.timestampMs,
+      isHistorical: false,
     });
   },
 });
-
-async function upsertConversation(
-  ctx: MutationCtx,
-  args: {
-    orgId: string;
-    channelId: Id<"channels">;
-    orgAddress: string;
-    contactAddress: string;
-    customerId: Id<"customers">;
-    lastMessageAt: number;
-    preview: string;
-    isIncoming: boolean;
-  },
-): Promise<Id<"conversations">> {
-  const existing = await ctx.db
-    .query("conversations")
-    .withIndex("by_channel_and_contactAddress", (q) =>
-      q
-        .eq("channelId", args.channelId)
-        .eq("contactAddress", args.contactAddress),
-    )
-    .unique();
-  const now = Date.now();
-  if (existing === null) {
-    return await ctx.db.insert("conversations", {
-      orgId: args.orgId,
-      channelId: args.channelId,
-      service: "instagram",
-      orgAddress: args.orgAddress,
-      contactAddress: args.contactAddress,
-      customerId: args.customerId,
-      status: "open",
-      lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview,
-      unreadCount: args.isIncoming ? 1 : 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-  const patch: Record<string, unknown> = {
-    lastMessageAt: args.lastMessageAt,
-    lastMessagePreview: args.preview,
-    updatedAt: now,
-  };
-  if (args.isIncoming) {
-    patch.unreadCount = existing.unreadCount + 1;
-  }
-  if (!existing.customerId) {
-    patch.customerId = args.customerId;
-  }
-  if (existing.status === "closed") patch.status = "open";
-  await ctx.db.patch(existing._id, patch);
-  return existing._id;
-}
 
 type InstagramWebhookEnvelope = {
   object?: string;

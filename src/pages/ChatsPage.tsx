@@ -1,21 +1,26 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
+import { usePaginatedQuery } from 'convex-helpers/react';
 import {
   Archive,
-  Calendar,
+  Bot,
   ChevronDown,
   CircleDot,
+  Contact,
   FileText,
+  History,
   MessageSquare,
   Moon,
-  MoreVertical,
   Paperclip,
   Pin,
   Plug,
   RotateCcw,
   Search,
   Send,
+  Tag,
+  User,
+  Users,
   type LucideIcon,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
@@ -27,12 +32,22 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
+import { Textarea } from '@/components/ui/textarea';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import { WHATSAPP_DEMO_CONVERSATION_TAG } from '@/lib/whatsappCloudDemo';
+import { cn } from '@/lib/utils';
+import type { InboxUIMessage } from '@/lib/inboxOptimistic';
+import {
+  Conversation,
+  ConversationContent,
+} from '@/components/ai-elements/conversation';
+import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -69,39 +84,17 @@ function formatRelative(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString();
 }
 
-function messageBodyPreview(m: Doc<'messages'>): string {
-  switch (m.contentType) {
-    case 'image':
-      return '[Image]';
-    case 'audio':
-      return '[Audio]';
-    case 'video':
-      return '[Video]';
-    case 'document':
-      return '[Document]';
-    case 'unknown':
-      return m.content.trim() ? m.content : '[Message]';
-    default:
-      return m.content;
-  }
+function historyMessageLineTitle(text: string): string {
+  const s = text.replace(/\s+/g, ' ').trim();
+  if (!s) return 'Message';
+  if (s.length <= 72) return s;
+  return `${s.slice(0, 69)}…`;
 }
 
-/** Skip bubbles that would show no body (e.g. blank text). Keep failed rows with a reason. */
-function shouldRenderThreadMessage(m: Doc<'messages'>): boolean {
-  if (m.status === 'failed' && m.failureReason?.trim()) return true;
-  return messageBodyPreview(m).trim().length > 0;
-}
-
-function HeaderPlatformIcon({ platform }: { platform: ConversationPlatform }) {
-  const common = { size: 18 } as const;
-  switch (platform) {
-    case 'whatsapp':
-      return <SiWhatsapp {...common} className="text-[#25D366]" />;
-    case 'instagram':
-      return <SiInstagram {...common} className="text-[#E4405F]" />;
-    case 'messenger':
-      return <SiMessenger {...common} className="text-[#0866FF]" />;
-  }
+function formatOrgMemberDisplayName(u: Doc<'users'>): string {
+  const parts = [u.firstName, u.lastName].filter(Boolean);
+  if (parts.length > 0) return parts.join(' ');
+  return u.email;
 }
 
 function PlatformMenuIcon({
@@ -124,20 +117,14 @@ function PlatformMenuIcon({
 
 /** Staggered skeleton while the active thread’s Convex data is loading. */
 function ChatThreadSkeleton() {
-  const rows = [
-    { side: 'left' as const, w: 'min(78%, 320px)' },
-    { side: 'right' as const, w: 'min(62%, 240px)' },
-    { side: 'left' as const, w: 'min(70%, 280px)' },
-    { side: 'right' as const, w: 'min(55%, 200px)' },
-    { side: 'left' as const, w: 'min(65%, 260px)' },
-  ];
   return (
-    <div
-      className="flex flex-1 flex-col gap-3 px-6 py-5"
+    <ConversationContent
+      scrollClassName="no-scrollbar"
+      className="gap-2 px-6 py-6"
       aria-busy
       aria-label="Loading messages"
     >
-      {rows.map((row, i) => (
+      {CHAT_THREAD_SKELETON_ROWS.map((row, i) => (
         <div
           key={i}
           className={`flex w-full ${row.side === 'right' ? 'justify-end' : 'justify-start'}`}
@@ -152,13 +139,21 @@ function ChatThreadSkeleton() {
           />
         </div>
       ))}
-    </div>
+    </ConversationContent>
   );
 }
 
+const CHAT_THREAD_SKELETON_ROWS = [
+  { side: 'left' as const, w: 'min(78%, 320px)' },
+  { side: 'right' as const, w: 'min(62%, 240px)' },
+  { side: 'left' as const, w: 'min(70%, 280px)' },
+  { side: 'right' as const, w: 'min(55%, 200px)' },
+  { side: 'left' as const, w: 'min(65%, 260px)' },
+];
+
 function DetailsPanelSkeleton() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-5 motion-safe:animate-pulse" aria-hidden>
+    <div className="flex flex-1 flex-col gap-3 px-4 py-4 motion-safe:animate-pulse" aria-hidden>
       <div className="h-4 w-24 rounded-md bg-muted" />
       <div className="h-4 w-full rounded-md bg-muted/70" />
       <div className="h-4 w-[85%] rounded-md bg-muted/60" />
@@ -184,14 +179,38 @@ export default function ChatsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [draftReply, setDraftReply] = useState('');
   const [sendBusy, setSendBusy] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [pendingOutbound, setPendingOutbound] = useState<
+    Array<{
+      clientId: string;
+      text: string;
+      agentName: string;
+      createdAt: number;
+    }>
+  >([]);
   const demoSeedWhatsappRef = useRef(false);
 
   const markRead = useMutation(api.conversations.markRead);
+  const updateConversationAssignee = useMutation(api.conversations.setAssignee);
+  const addConversationTag = useMutation(api.conversations.addConversationTag);
+  const removeConversationTag = useMutation(api.conversations.removeConversationTag);
+  const saveInteractionSummary = useMutation(api.conversations.setInteractionSummary);
+  const teamUsers = useQuery(api.users.getUsers, {});
+  const [assigneeSaving, setAssigneeSaving] = useState(false);
+  const [tagDraft, setTagDraft] = useState('');
+  const [tagMutationBusy, setTagMutationBusy] = useState(false);
+  const [interactionSummaryDraft, setInteractionSummaryDraft] = useState('');
+  const [interactionSummarySaving, setInteractionSummarySaving] = useState(false);
+  const [interactionHistoryOpen, setInteractionHistoryOpen] = useState(false);
+  const [interactionSummaryOpen, setInteractionSummaryOpen] = useState(false);
+  const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
+  const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
-  const sendWhatsAppText = useAction(api.whatsappSend.sendText);
-  const sendInstagramText = useAction(api.instagramSend.sendText);
-  const sendMessengerText = useAction(api.messengerSend.sendText);
+  const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
+  const dashboardAgent = useQuery(
+    api.agents.get,
+    agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
+  );
+  const productAgentName = dashboardAgent?.name?.trim() || 'Unknown agent';
 
   useEffect(() => {
     if (connectedChannels === undefined) return;
@@ -214,8 +233,20 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
-  const recentMessages = useQuery(
-    api.messages.listRecentForConversation,
+  const threadId = selectedConversation?.threadId;
+
+  const sendReply = useAction(api.chat.inboxActions.sendReply);
+
+  const { results: threadMessages, status: threadMessagesStatus } = usePaginatedQuery(
+    api.chat.inbox.listThreadMessagesForInbox,
+    threadId && selectedConversationId
+      ? { threadId, conversationId: selectedConversationId }
+      : 'skip',
+    { initialNumItems: 80 },
+  );
+
+  const customerSidebarDetails = useQuery(
+    api.customers.getSidebarDetailsForConversation,
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
@@ -238,6 +269,33 @@ export default function ChatsPage() {
     if (!selectedConversationId) return;
     void markRead({ conversationId: selectedConversationId });
   }, [selectedConversationId, markRead]);
+
+  useEffect(() => {
+    if (!selectedConversationId || !agentId) return;
+    void ensureAssignedAgent({
+      conversationId: selectedConversationId,
+      agentId: agentId as Id<'agents'>,
+    }).catch(() => {});
+  }, [selectedConversationId, agentId, ensureAssignedAgent]);
+
+  useEffect(() => {
+    setTagDraft('');
+    setPendingOutbound([]);
+  }, [selectedConversationId]);
+
+  useEffect(() => {
+    if (!selectedConversationId) {
+      setInteractionSummaryDraft('');
+      return;
+    }
+    if (
+      !selectedConversation ||
+      selectedConversation._id !== selectedConversationId
+    ) {
+      return;
+    }
+    setInteractionSummaryDraft(selectedConversation.interactionSummary ?? '');
+  }, [selectedConversationId, selectedConversation]);
 
   const chatItems = useMemo(() => {
     if (!linkedConversations) return [];
@@ -315,11 +373,30 @@ export default function ChatsPage() {
 
   const threadDataLoading =
     Boolean(selectedConversationId) &&
-    (!conversationDocMatchesSelection || recentMessages === undefined);
+    (!conversationDocMatchesSelection ||
+      (threadMessagesStatus === 'LoadingFirstPage' && threadMessages.length === 0));
 
-  const visibleThreadMessages = useMemo(
-    () => (recentMessages ?? []).filter(shouldRenderThreadMessage),
-    [recentMessages],
+  const visibleThreadMessages = useMemo(() => {
+    const fromServer = threadMessages.filter((m) => m.text.trim().length > 0);
+    const pendingUi: InboxUIMessage[] = pendingOutbound.map((p) => ({
+      key: `pending-${p.clientId}`,
+      id: p.clientId,
+      order: Number.MAX_SAFE_INTEGER,
+      stepOrder: 0,
+      status: 'pending',
+      role: 'assistant',
+      text: p.text,
+      agentName: p.agentName,
+      sentByAi: false,
+      parts: [{ type: 'text', text: p.text }],
+      _creationTime: p.createdAt,
+    }));
+    return [...fromServer, ...pendingUi];
+  }, [threadMessages, pendingOutbound]);
+
+  const interactionHistoryMessages = useMemo(
+    () => [...visibleThreadMessages].reverse(),
+    [visibleThreadMessages],
   );
 
   const detailsPanelLoading =
@@ -327,19 +404,111 @@ export default function ChatsPage() {
 
   const displayHeaderName = selectedName ?? selectedListItem?.name ?? null;
 
+  const assignedMemberLabel = useMemo(() => {
+    const wid = selectedConversation?.assignedUserId;
+    if (!wid || !teamUsers) return null;
+    const u = teamUsers.find((m) => m.workosUserId === wid);
+    return u ? formatOrgMemberDisplayName(u) : 'Teammate';
+  }, [selectedConversation?.assignedUserId, teamUsers]);
+
+  const interactionSummaryDirty = useMemo(() => {
+    if (!conversationDocMatchesSelection) return false;
+    const server = selectedConversation?.interactionSummary ?? '';
+    return interactionSummaryDraft !== server;
+  }, [
+    conversationDocMatchesSelection,
+    selectedConversation?.interactionSummary,
+    interactionSummaryDraft,
+  ]);
+
+  const handleAssignConversation = async (next: { kind: 'ai' } | { kind: 'user'; workosUserId: string }) => {
+    if (!selectedConversationId) return;
+    setAssigneeSaving(true);
+    try {
+      if (next.kind === 'ai') {
+        await updateConversationAssignee({
+          conversationId: selectedConversationId,
+          assignee: { kind: 'ai' },
+        });
+      } else {
+        await updateConversationAssignee({
+          conversationId: selectedConversationId,
+          assignee: { kind: 'user', workosUserId: next.workosUserId },
+        });
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update assignee');
+    } finally {
+      setAssigneeSaving(false);
+    }
+  };
+
+  const handleAddConversationTag = async () => {
+    const raw = tagDraft.trim();
+    if (!raw || !selectedConversationId) return;
+    const parts = raw
+      .split(/[,;\n]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (parts.length === 0) return;
+    setTagMutationBusy(true);
+    try {
+      for (const tag of parts) {
+        await addConversationTag({
+          conversationId: selectedConversationId,
+          tag,
+        });
+      }
+      setTagDraft('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not add tag');
+    } finally {
+      setTagMutationBusy(false);
+    }
+  };
+
+  const handleRemoveConversationTag = async (tag: string) => {
+    if (!selectedConversationId) return;
+    setTagMutationBusy(true);
+    try {
+      await removeConversationTag({
+        conversationId: selectedConversationId,
+        tag,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not remove tag');
+    } finally {
+      setTagMutationBusy(false);
+    }
+  };
+
+  const handleSaveInteractionSummary = async () => {
+    if (!selectedConversationId || !conversationDocMatchesSelection) return;
+    setInteractionSummarySaving(true);
+    try {
+      await saveInteractionSummary({
+        conversationId: selectedConversationId,
+        summary: interactionSummaryDraft,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not save summary');
+    } finally {
+      setInteractionSummarySaving(false);
+    }
+  };
+
   const canReplyFromInbox =
     selectedConversation?.service === 'whatsapp' ||
     selectedConversation?.service === 'instagram' ||
     selectedConversation?.service === 'messenger';
 
-  useEffect(() => {
-    if (threadDataLoading) return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [selectedConversationId, recentMessages, threadDataLoading]);
-
   const handleSendReply = async () => {
     const trimmed = draftReply.trim();
     if (!trimmed || !selectedConversationId || sendBusy || threadDataLoading) return;
+    if (!threadId) {
+      toast.error('Conversation thread is not ready yet.');
+      return;
+    }
     const service = selectedConversation?.service;
     if (
       service !== 'whatsapp' &&
@@ -351,26 +520,29 @@ export default function ChatsPage() {
       );
       return;
     }
+    const clientId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : `pending-${Date.now()}`;
+    setPendingOutbound((prev) => [
+      ...prev,
+      {
+        clientId,
+        text: trimmed,
+        agentName: productAgentName,
+        createdAt: Date.now(),
+      },
+    ]);
     setSendBusy(true);
     try {
-      if (service === 'whatsapp') {
-        await sendWhatsAppText({
-          conversationId: selectedConversationId,
-          content: trimmed,
-        });
-      } else if (service === 'instagram') {
-        await sendInstagramText({
-          conversationId: selectedConversationId,
-          content: trimmed,
-        });
-      } else {
-        await sendMessengerText({
-          conversationId: selectedConversationId,
-          content: trimmed,
-        });
-      }
+      await sendReply({
+        conversationId: selectedConversationId,
+        content: trimmed,
+      });
       setDraftReply('');
+      setPendingOutbound((prev) => prev.filter((p) => p.clientId !== clientId));
     } catch (e) {
+      setPendingOutbound((prev) => prev.filter((p) => p.clientId !== clientId));
       toast.error(e instanceof Error ? e.message : 'Failed to send message');
     } finally {
       setSendBusy(false);
@@ -416,13 +588,13 @@ export default function ChatsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-      <ChatsPageHeader />
+    <div className="flex h-[calc(100svh-6rem)] min-h-0 w-full flex-col gap-6 overflow-hidden">
+      <ChatsPageHeader className="shrink-0" />
 
-      <div style={{ display: 'flex', gap: '24px', height: 'calc(100vh - 200px)', width: '100%' }}>
+      <div className="flex min-h-0 flex-1 gap-6 overflow-hidden">
 
       {/* LEFT COLUMN: Chat List */}
-      <div style={{ width: '300px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
+      <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
 
         {/* Search & Filters */}
         <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--color-border)' }}>
@@ -551,7 +723,7 @@ export default function ChatsPage() {
         </div>
 
         {/* List */}
-        <div style={{ flex: 1, overflowY: 'auto', position: 'relative' }}>
+        <div className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto">
           {conversationsStillLoading ? (
             <div className="flex items-center justify-center py-16">
               <Spinner className="size-6 text-muted-foreground" />
@@ -590,88 +762,53 @@ export default function ChatsPage() {
         </div>
       </div>
 
-      {/* MIDDLE COLUMN: Chat Window */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden' }}>
+      {/* MIDDLE COLUMN: Chat Window (layout matches TestChatWindow) */}
+      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
         {selectedConversationId ? (
-          <>
+          <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]">
             {/* Chat Header */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', minWidth: 0, flex: 1 }}>
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
+              <div className="flex min-w-0 flex-1 items-center">
                 {displayHeaderName ? (
-                  <h2 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--color-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayHeaderName}</h2>
+                  <h2 className="m-0 truncate text-lg font-semibold text-foreground">
+                    {displayHeaderName}
+                  </h2>
                 ) : (
                   <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
                 )}
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--color-foreground-muted)' }}>
-                {selectedConversation?.tag === WHATSAPP_DEMO_CONVERSATION_TAG && agentId ? (
+              <div className="flex items-center gap-2.5 text-muted-foreground">
+                {selectedConversation?.service === 'whatsapp' &&
+                selectedConversation.channelId &&
+                agentId ? (
                   <Button variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 px-2.5 text-xs font-normal" asChild>
-                    <Link to={`/dashboard/${agentId}/whatsapp-demo/template`}>
+                    <Link
+                      to={`/dashboard/${agentId}/channels/${selectedConversation.channelId}/templates`}
+                    >
                       <FileText className="size-3.5" />
-                      WA templates
+                      Message templates
                     </Link>
                   </Button>
                 ) : null}
-                <MoreVertical size={18} style={{ cursor: 'pointer' }} />
               </div>
             </div>
 
-            {/* Chat Messages Area */}
-            <div style={{ flex: 1, background: 'var(--color-background)', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+            <div className="relative min-h-0 overflow-hidden">
+              <Conversation className="no-scrollbar size-full min-h-0">
               {threadDataLoading ? (
                 <ChatThreadSkeleton />
               ) : (
-                <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-                  {visibleThreadMessages.length === 0 ? (
-                    <div className="flex flex-1 flex-col items-center justify-center text-center text-sm text-muted-foreground">
-                      No messages in this conversation yet.
-                    </div>
-                  ) : (
-                    visibleThreadMessages.map((m) => {
-                      const incoming = m.direction === 'incoming';
-                      return (
-                        <div
-                          key={m._id}
-                          style={{
-                            display: 'flex',
-                            justifyContent: incoming ? 'flex-start' : 'flex-end',
-                            width: '100%',
-                          }}
-                        >
-                          <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div
-                              style={{
-                                background: incoming ? 'var(--color-surface)' : 'var(--color-primary)',
-                                color: incoming ? 'var(--color-foreground)' : 'var(--color-primary-foreground)',
-                                padding: '10px 14px',
-                                borderRadius: incoming ? '2px 16px 16px 16px' : '16px 16px 2px 16px',
-                                border: incoming ? '1px solid var(--color-border)' : 'none',
-                                fontSize: '14px',
-                                lineHeight: 1.5,
-                                whiteSpace: 'pre-wrap',
-                                wordBreak: 'break-word',
-                              }}
-                            >
-                              {messageBodyPreview(m)}
-                            </div>
-                            <span style={{ fontSize: '11px', color: 'var(--color-foreground-subtle)', paddingLeft: incoming ? '4px' : '0', paddingRight: incoming ? '0' : '4px', alignSelf: incoming ? 'flex-start' : 'flex-end' }}>
-                              {formatRelative(m.createdAt)}
-                              {m.status === 'failed' && m.failureReason && (
-                                <span className="text-destructive"> — {m.failureReason}</span>
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                  <div ref={messagesEndRef} />
-                </div>
+                <InboxThreadMessages
+                  messages={visibleThreadMessages}
+                  emptyTitle="No messages in this conversation yet."
+                  emptyDescription="When customers message you, the thread appears here."
+                />
               )}
+              </Conversation>
             </div>
 
             {/* Chat Input */}
-            <div style={{ padding: '16px 24px', borderTop: '1px solid var(--color-border)', background: 'var(--color-surface)' }}>
+            <div className="shrink-0 border-t border-border bg-card px-6 py-4">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '8px 16px' }}>
                 <Paperclip size={18} color="var(--color-foreground-subtle)" style={{ cursor: 'pointer', opacity: 0.45 }} />
                 <input
@@ -730,9 +867,9 @@ export default function ChatsPage() {
                 </button>
               </div>
             </div>
-          </>
+          </div>
         ) : (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-foreground-subtle)', background: 'var(--color-background)' }}>
+          <div className="flex h-full flex-1 flex-col items-center justify-center bg-background text-muted-foreground">
             <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
               <MessageSquare size={28} />
             </div>
@@ -744,47 +881,350 @@ export default function ChatsPage() {
 
       {/* RIGHT COLUMN: Details */}
       {selectedConversationId && (
-        <div style={{ width: '300px', display: 'flex', flexDirection: 'column', background: 'var(--color-surface)', borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', flexShrink: 0 }}>
+        <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
           <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
             <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-foreground)' }}>Details</h2>
           </div>
 
-          <div style={{ flex: 1, overflowY: 'auto', padding: detailsPanelLoading ? '0' : '20px' }}>
+          <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
             {detailsPanelLoading ? (
               <DetailsPanelSkeleton />
             ) : (
               selectedConversation && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)', flexShrink: 0 }}>Platform</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: 500, color: 'var(--color-foreground)', minWidth: 0 }}>
-                      <HeaderPlatformIcon platform={selectedConversation.service as ConversationPlatform} />
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {PLATFORM_LABEL[selectedConversation.service as ConversationPlatform]}
+                <div className="flex flex-col">
+                  <div className="px-4 pb-3 pt-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="text-sm font-semibold text-foreground">Assignee</span>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={assigneeSaving}
+                          className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
+                          aria-label="Who responds in this conversation"
+                        >
+                          <span className="flex min-w-0 flex-1 items-center gap-2">
+                            {selectedConversation.assignToAiAgent ? (
+                              <>
+                                <Bot className="size-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate text-foreground">AI Agent</span>
+                              </>
+                            ) : (
+                              <>
+                                <User className="size-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate text-foreground">
+                                  {assignedMemberLabel ?? 'Teammate'}
+                                </span>
+                              </>
+                            )}
+                          </span>
+                          <ChevronDown className="size-4 shrink-0 opacity-60" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem
+                            className="cursor-pointer gap-2"
+                            onSelect={() => void handleAssignConversation({ kind: 'ai' })}
+                          >
+                            <Bot className="size-4 shrink-0" />
+                            AI Agent
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        {teamUsers !== undefined && teamUsers.length > 0 ? (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuGroup>
+                              {teamUsers.map((u) => (
+                                <DropdownMenuItem
+                                  key={u._id}
+                                  className="cursor-pointer gap-2"
+                                  onSelect={() =>
+                                    void handleAssignConversation({
+                                      kind: 'user',
+                                      workosUserId: u.workosUserId,
+                                    })
+                                  }
+                                >
+                                  <User className="size-4 shrink-0 text-muted-foreground" />
+                                  {formatOrgMemberDisplayName(u)}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuGroup>
+                          </>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  <Separator />
+
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                      onClick={() => setCustomerDetailsOpen((o) => !o)}
+                      aria-expanded={customerDetailsOpen}
+                    >
+                      <Contact className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="flex-1 text-sm font-semibold text-foreground">
+                        Customer details
                       </span>
-                    </div>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                          !customerDetailsOpen && '-rotate-90',
+                        )}
+                      />
+                    </button>
+                    {customerDetailsOpen ? (
+                      <div className="px-4 pb-3">
+                        {customerSidebarDetails === undefined ? (
+                          <p className="m-0 text-xs text-muted-foreground">Loading…</p>
+                        ) : (
+                          <div className="flex flex-col gap-2.5 text-sm">
+                            <div className="flex justify-between gap-4">
+                              <span className="shrink-0 text-muted-foreground">Name</span>
+                              <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                {customerSidebarDetails?.name ?? '—'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="shrink-0 text-muted-foreground">Platform</span>
+                              <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                {customerSidebarDetails?.platformLabel ?? '—'}
+                              </span>
+                            </div>
+                            <div className="flex justify-between gap-4">
+                              <span className="shrink-0 text-muted-foreground">Phone number</span>
+                              <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                {customerSidebarDetails?.phone?.trim()
+                                  ? customerSidebarDetails.phone
+                                  : '—'}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>Status</span>
-                    <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-foreground)', textTransform: 'capitalize' }}>
-                      {selectedConversation.status}
-                    </span>
+                  <Separator />
+
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                      onClick={() => setTagsSectionOpen((o) => !o)}
+                      aria-expanded={tagsSectionOpen}
+                    >
+                      <Tag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="flex-1 text-sm font-semibold text-foreground">Tags</span>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                          !tagsSectionOpen && '-rotate-90',
+                        )}
+                      />
+                    </button>
+                    {tagsSectionOpen ? (
+                      <div className="px-4 pb-3">
+                        {(selectedConversation.tags ?? []).length > 0 ? (
+                          <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
+                            {(selectedConversation.tags ?? []).map((tag) => (
+                              <li key={tag}>
+                                <div className="flex items-center justify-between gap-3 py-2.5 font-mono text-sm text-foreground">
+                                  <span className="min-w-0 flex-1 truncate" title={tag}>
+                                    {tag}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="shrink-0 select-none px-1 text-base leading-none text-muted-foreground hover:text-foreground disabled:opacity-40"
+                                    disabled={tagMutationBusy}
+                                    aria-label={`Remove tag ${tag}`}
+                                    onClick={() => void handleRemoveConversationTag(tag)}
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="m-0 border-y border-border py-2.5 text-xs text-muted-foreground">
+                            No tags yet.
+                          </p>
+                        )}
+                        <div className="mt-3 flex gap-2">
+                          <Input
+                            value={tagDraft}
+                            onChange={(e) => setTagDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                void handleAddConversationTag();
+                              }
+                            }}
+                            placeholder="Add tags (comma-separated)…"
+                            disabled={tagMutationBusy}
+                            className="h-9 flex-1 font-mono text-xs"
+                          />
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="h-9 shrink-0 px-3 text-xs"
+                            disabled={tagMutationBusy || !tagDraft.trim()}
+                            onClick={() => void handleAddConversationTag()}
+                          >
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>Started</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-foreground)', fontSize: '13px' }}>
-                      <Calendar size={14} color="var(--color-foreground-muted)" />
-                      {new Date(selectedConversation.createdAt).toLocaleDateString()}
-                    </div>
+                  <Separator />
+
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                      onClick={() => setInteractionSummaryOpen((o) => !o)}
+                      aria-expanded={interactionSummaryOpen}
+                    >
+                      <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="flex-1 text-sm font-semibold text-foreground">
+                        Interaction summary
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                          !interactionSummaryOpen && '-rotate-90',
+                        )}
+                      />
+                    </button>
+                    {interactionSummaryOpen ? (
+                      <div className="space-y-2 px-4 pb-3">
+                        <Textarea
+                          value={interactionSummaryDraft}
+                          onChange={(e) => setInteractionSummaryDraft(e.target.value)}
+                          placeholder="Notes on this thread for your team…"
+                          disabled={interactionSummarySaving}
+                          rows={5}
+                          className="min-h-[120px] resize-y text-xs"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            className="h-8 px-3 text-xs"
+                            disabled={
+                              interactionSummarySaving || !interactionSummaryDirty
+                            }
+                            onClick={() => void handleSaveInteractionSummary()}
+                          >
+                            {interactionSummarySaving ? 'Saving…' : 'Save summary'}
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '13px', color: 'var(--color-foreground-muted)' }}>Last activity</span>
-                    <span style={{ fontSize: '13px', color: 'var(--color-foreground)' }}>
-                      {formatRelative(selectedConversation.lastMessageAt)}
-                    </span>
+                  <Separator />
+
+                  <div className="flex flex-col">
+                    <button
+                      type="button"
+                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                      onClick={() => setInteractionHistoryOpen((o) => !o)}
+                      aria-expanded={interactionHistoryOpen}
+                    >
+                      <History className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="flex-1 text-sm font-semibold text-foreground">
+                        Interaction history
+                      </span>
+                      <ChevronDown
+                        className={cn(
+                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                          !interactionHistoryOpen && '-rotate-90',
+                        )}
+                      />
+                    </button>
+                    {interactionHistoryOpen ? (
+                      <div className="no-scrollbar max-h-72 overflow-y-auto px-4 pb-3">
+                        {threadDataLoading ? (
+                          <p className="m-0 text-xs text-muted-foreground">Loading messages…</p>
+                        ) : interactionHistoryMessages.length === 0 ? (
+                          <p className="m-0 text-xs text-muted-foreground">No messages yet</p>
+                        ) : (
+                          <div className="flex flex-col">
+                            {interactionHistoryMessages.map((m, i) => {
+                              const isNewest = i === 0;
+                              const isLast = i === interactionHistoryMessages.length - 1;
+                              return (
+                                <div
+                                  key={m.key}
+                                  className={cn(
+                                    'flex gap-3 py-1',
+                                    isNewest && 'rounded-md bg-muted/40 px-1',
+                                  )}
+                                >
+                                  <div className="flex w-5 shrink-0 flex-col items-center">
+                                    {!isNewest ? (
+                                      <div className="w-px flex-1 bg-border" style={{ minHeight: 6 }} />
+                                    ) : (
+                                      <div style={{ minHeight: 4 }} />
+                                    )}
+                                    <div
+                                      className={cn(
+                                        'size-2 shrink-0 rounded-sm',
+                                        isNewest
+                                          ? 'bg-red-600 dark:bg-red-500'
+                                          : 'bg-muted-foreground/45',
+                                      )}
+                                      aria-hidden
+                                    />
+                                    {!isLast ? (
+                                      <div className="w-px flex-1 bg-border" style={{ minHeight: 14 }} />
+                                    ) : null}
+                                  </div>
+                                  <div className="min-w-0 flex-1 pb-3 pr-0.5">
+                                    <div className="truncate text-sm font-medium text-foreground">
+                                      {historyMessageLineTitle(m.text)}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground">
+                                      {m.role === 'user' ? (
+                                        'Customer'
+                                      ) : (
+                                        <>
+                                          {(m as InboxUIMessage).agentName ?? 'Unknown agent'}
+                                          {(m as InboxUIMessage).sentByAi ? (
+                                            <span className="ml-1 text-muted-foreground">· AI</span>
+                                          ) : null}
+                                        </>
+                                      )}
+                                    </div>
+                                    <div className="mt-1 text-xs text-foreground">
+                                      <span className="font-semibold">Status </span>
+                                      <span className="font-normal">
+                                        {m.role === 'user'
+                                          ? 'Received'
+                                          : (m.status ?? 'Sent')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               )
@@ -798,9 +1238,9 @@ export default function ChatsPage() {
   );
 }
 
-function ChatsPageHeader() {
+function ChatsPageHeader({ className }: { className?: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+    <div className={cn('flex items-start justify-between', className)}>
       <div>
         <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
           Messages

@@ -20,7 +20,10 @@ import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
 import AccountPage from './pages/AccountPage.tsx'
 import ChannelsPage from './pages/ChannelsPage.tsx'
-import WhatsappDemoTemplatePage from './pages/WhatsappDemoTemplatePage.tsx'
+import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.tsx'
+import AutomationsIndexPage from './pages/AutomationsIndexPage.tsx'
+import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
+import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
@@ -43,6 +46,12 @@ function OldAgentRedirect() {
 function KnowledgeBaseIndex() {
   const { agentId } = useParams()
   return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
+}
+
+/** Legacy sidebar URL; templates now live under Channels → channel. */
+function WhatsappDemoTemplateRedirect() {
+  const { agentId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/channels`} replace />
 }
 
 // Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
@@ -99,7 +108,11 @@ function RootLayout() {
               <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
               <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
               <Route path="channels" element={<ChannelsPage />} />
-              <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplatePage />} />
+              <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
+              <Route path="automations" element={<AutomationsIndexPage />} />
+              <Route path="automations/broadcast" element={<AutomationsBroadcastPage />} />
+              <Route path="automations/follow-up" element={<AutomationsFollowUpPage />} />
+              <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="account" element={<AccountPage />} />

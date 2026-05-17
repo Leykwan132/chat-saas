@@ -231,11 +231,15 @@ export default defineSchema({
       v.literal("snoozed"),
       v.literal("closed"),
     ),
-    tag: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())),
+    interactionSummary: v.optional(v.string()),
     assignedAgentId: v.optional(v.id("agents")),
     assignedUserId: v.optional(v.string()),
-    threadId: v.optional(v.string()),
+    assignToAiAgent: v.boolean(),
+    threadId: v.string(),
     lastMessageAt: v.number(),
+    /** Last inbound (customer) message time — used for Meta messaging window checks. */
+    lastCustomerMessageAt: v.optional(v.number()),
     lastMessagePreview: v.optional(v.string()),
     unreadCount: v.number(),
     createdAt: v.number(),
@@ -276,9 +280,11 @@ export default defineSchema({
       ),
     ),
     failureReason: v.optional(v.string()),
+    agentMessageId: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
+    .index("by_agentMessageId", ["agentMessageId"])
     .index("by_externalId", ["externalId"])
     .index("by_orgId", ["orgId"]),
   // Short-lived one-time sessions used to tie a third-party OAuth callback

@@ -1,12 +1,6 @@
 import { v } from "convex/values";
-import {
-  httpAction,
-  internalMutation,
-  type ActionCtx,
-  type MutationCtx,
-} from "./_generated/server";
+import { httpAction, internalMutation, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 
 const contentTypeValidator = v.union(
   v.literal("text"),
@@ -145,46 +139,16 @@ export const handleIncoming = internalMutation({
       return;
     }
 
-    const customerId: Id<"customers"> = await ctx.runMutation(
-      internal.customers.internalUpsertFromWebhook,
-      {
-        orgId: channel.orgId,
-        service: "whatsapp",
-        contactAddress: args.from,
-        profileName: args.profileName,
-      },
-    );
-
-    const conversationId = await upsertConversation(ctx, {
-      orgId: channel.orgId,
+    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
-      orgAddress: channel.phoneNumberId ?? args.phoneNumberId,
+      externalId: args.externalId,
       contactAddress: args.from,
       contactName: args.profileName,
-      customerId,
-      lastMessageAt: args.timestampMs,
-      preview: previewFor(args.contentType, args.content),
-    });
-
-    await ctx.db.insert("messages", {
-      orgId: channel.orgId,
-      conversationId,
-      channelId: channel._id,
-      service: "whatsapp",
-      externalId: args.externalId,
-      orgAddress: channel.phoneNumberId ?? args.phoneNumberId,
-      contactAddress: args.from,
       direction: "incoming",
-      contentType: args.contentType,
       content: args.content,
-      createdAt: args.timestampMs,
-    });
-
-    // Patch lastConversationId on the customer so the Customers page can
-    // jump straight into the most recent thread.
-    await ctx.runMutation(internal.customers.internalSetLastConversation, {
-      customerId,
-      conversationId,
+      contentType: args.contentType,
+      timestampMs: args.timestampMs,
+      isHistorical: false,
     });
   },
 });
@@ -209,62 +173,6 @@ export const handleStatus = internalMutation({
     await ctx.db.patch(msg._id, patch);
   },
 });
-
-async function upsertConversation(
-  ctx: MutationCtx,
-  args: {
-    orgId: string;
-    channelId: Id<"channels">;
-    orgAddress: string;
-    contactAddress: string;
-    contactName?: string;
-    customerId: Id<"customers">;
-    lastMessageAt: number;
-    preview: string;
-  },
-): Promise<Id<"conversations">> {
-  const existing = await ctx.db
-    .query("conversations")
-    .withIndex("by_channel_and_contactAddress", (q) =>
-      q.eq("channelId", args.channelId).eq("contactAddress", args.contactAddress),
-    )
-    .unique();
-
-  const now = Date.now();
-  if (existing === null) {
-    return await ctx.db.insert("conversations", {
-      orgId: args.orgId,
-      channelId: args.channelId,
-      service: "whatsapp",
-      orgAddress: args.orgAddress,
-      contactAddress: args.contactAddress,
-      contactName: args.contactName,
-      customerId: args.customerId,
-      status: "open",
-      lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview,
-      unreadCount: 1,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-
-  const patch: Record<string, unknown> = {
-    lastMessageAt: args.lastMessageAt,
-    lastMessagePreview: args.preview,
-    unreadCount: existing.unreadCount + 1,
-    updatedAt: now,
-  };
-  if (!existing.contactName && args.contactName) {
-    patch.contactName = args.contactName;
-  }
-  if (!existing.customerId) {
-    patch.customerId = args.customerId;
-  }
-  if (existing.status === "closed") patch.status = "open";
-  await ctx.db.patch(existing._id, patch);
-  return existing._id;
-}
 
 // --- Helpers ---
 
@@ -303,14 +211,6 @@ function extractContent(msg: WhatsAppIncomingMessage): string {
   if (msg.interactive?.list_reply?.title)
     return msg.interactive.list_reply.title;
   return `<${msg.type ?? "unknown"}>`;
-}
-
-function previewFor(
-  contentType: "text" | "image" | "audio" | "video" | "document" | "unknown",
-  content: string,
-): string {
-  if (contentType === "text") return content.slice(0, 140);
-  return `[${contentType}] ${content.slice(0, 140)}`;
 }
 
 function mapStatus(status?: string) {

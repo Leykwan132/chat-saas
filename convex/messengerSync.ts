@@ -3,11 +3,16 @@ import {
   internalAction,
   internalMutation,
   type ActionCtx,
-  type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Doc } from "./_generated/dataModel";
 import { messengerSyncPool } from "./channelSyncPools";
+import {
+  ingestChannelMessage,
+  resolveSyncMessageDirection,
+  businessAgentName,
+} from "./chat/threads";
+import { inboxAiReplyPool } from "./inboxPools";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -199,12 +204,10 @@ async function ingestConversationMessages(
   const messages = detail.messages?.data ?? [];
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
-    const pageId = channel.pageId;
-    const fromId = message.from?.id;
-    const isOutgoing = pageId !== undefined && fromId === pageId;
+    const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = isOutgoing
       ? message.to?.data?.[0]?.id
-      : fromId;
+      : message.from?.id;
     const contactName = isOutgoing
       ? message.to?.data?.[0]?.name
       : message.from?.name;
@@ -234,117 +237,35 @@ export const internalIngestMessage = internalMutation({
     timestampMs: v.number(),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("messages")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
-      .unique();
-    if (existing !== null) return;
-
     const channel = await ctx.db.get(args.channelId);
     if (channel === null) return;
 
-    const customerId: Id<"customers"> = await ctx.runMutation(
-      internal.customers.internalUpsertFromWebhook,
+    const result = await ingestChannelMessage(ctx, {
+      channelId: args.channelId,
+      externalId: args.externalId,
+      contactAddress: args.contactAddress,
+      contactName: args.contactName,
+      direction: args.direction,
+      content: args.content,
+      contentType: "text",
+      timestampMs: args.timestampMs,
+      isHistorical: true,
+      humanAgentName:
+        args.direction === "outgoing" ? businessAgentName(channel) : undefined,
+    });
+    if (result.skipped || !result.shouldEnqueueAi) return;
+    const conv = await ctx.db.get(result.conversationId);
+    if (conv === null || !conv.assignToAiAgent || !conv.assignedAgentId) return;
+    await inboxAiReplyPool.enqueueAction(
+      ctx,
+      internal.chat.inbox.generateAiReplyWorker,
       {
-        orgId: channel.orgId,
-        service: "messenger",
-        contactAddress: args.contactAddress,
-        profileName: args.contactName,
+        conversationId: result.conversationId,
+        promptContent: args.content.trim(),
       },
     );
-
-    const orgAddress = channel.pageId ?? "";
-    const conversationId = await upsertConversation(ctx, {
-      orgId: channel.orgId,
-      channelId: channel._id,
-      orgAddress,
-      contactAddress: args.contactAddress,
-      contactName: args.contactName,
-      customerId,
-      lastMessageAt: args.timestampMs,
-      preview: args.content.slice(0, 140),
-      isIncoming: args.direction === "incoming",
-    });
-
-    await ctx.db.insert("messages", {
-      orgId: channel.orgId,
-      conversationId,
-      channelId: channel._id,
-      service: "messenger",
-      externalId: args.externalId,
-      orgAddress,
-      contactAddress: args.contactAddress,
-      direction: args.direction,
-      contentType: "text",
-      content: args.content,
-      createdAt: args.timestampMs,
-    });
-
-    await ctx.runMutation(internal.customers.internalSetLastConversation, {
-      customerId,
-      conversationId,
-    });
   },
 });
-
-async function upsertConversation(
-  ctx: MutationCtx,
-  args: {
-    orgId: string;
-    channelId: Id<"channels">;
-    orgAddress: string;
-    contactAddress: string;
-    contactName?: string;
-    customerId: Id<"customers">;
-    lastMessageAt: number;
-    preview: string;
-    isIncoming: boolean;
-  },
-): Promise<Id<"conversations">> {
-  const existing = await ctx.db
-    .query("conversations")
-    .withIndex("by_channel_and_contactAddress", (q) =>
-      q
-        .eq("channelId", args.channelId)
-        .eq("contactAddress", args.contactAddress),
-    )
-    .unique();
-  const now = Date.now();
-  if (existing === null) {
-    return await ctx.db.insert("conversations", {
-      orgId: args.orgId,
-      channelId: args.channelId,
-      service: "messenger",
-      orgAddress: args.orgAddress,
-      contactAddress: args.contactAddress,
-      contactName: args.contactName,
-      customerId: args.customerId,
-      status: "open",
-      lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview,
-      unreadCount: args.isIncoming ? 1 : 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-  const patch: Record<string, unknown> = {
-    lastMessageAt: args.lastMessageAt,
-    lastMessagePreview: args.preview,
-    updatedAt: now,
-  };
-  if (args.isIncoming) {
-    patch.unreadCount = existing.unreadCount + 1;
-  }
-  if (!existing.contactName && args.contactName) {
-    patch.contactName = args.contactName;
-  }
-  if (!existing.customerId) {
-    patch.customerId = args.customerId;
-  }
-  if (existing.status === "closed") patch.status = "open";
-  await ctx.db.patch(existing._id, patch);
-  return existing._id;
-}
 
 function parseTimestamp(ts?: string): number {
   if (!ts) return Date.now();

@@ -1,0 +1,81 @@
+import { listMessages } from "@convex-dev/agent";
+import { toUIMessages } from "@convex-dev/agent";
+import { sorted } from "@convex-dev/agent";
+import type { MessageDoc } from "@convex-dev/agent";
+import type { UIMessage } from "@convex-dev/agent/react";
+
+/** Invisible user turn so each outbound assistant message gets its own `order`. */
+export const INBOX_ORDER_SPACER_TEXT = "\u200B";
+
+export type InboxOutboundMeta = {
+  agentName: string;
+  sentByAi: boolean;
+  authorUserId?: string;
+};
+
+export type InboxMessageMetadata = {
+  inboxOrderSpacer?: boolean;
+  inboxOutbound?: InboxOutboundMeta;
+};
+
+export type InboxUIMessage = UIMessage & {
+  sentByAi?: boolean;
+};
+
+type MessageDocWithMeta = MessageDoc & {
+  metadata?: InboxMessageMetadata;
+  agentName?: string;
+};
+
+export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
+  const meta = (doc as MessageDocWithMeta).metadata;
+  if (meta?.inboxOrderSpacer === true) return true;
+  const text = doc.text?.trim() ?? "";
+  return text === INBOX_ORDER_SPACER_TEXT;
+}
+
+function legacySentByAi(
+  doc: MessageDocWithMeta,
+  uiRole: UIMessage["role"],
+): boolean | undefined {
+  if (uiRole !== "assistant") return undefined;
+  const meta = doc.metadata?.inboxOutbound;
+  if (meta !== undefined) return meta.sentByAi;
+  const legacyName = doc.agentName?.trim();
+  if (!legacyName) return true;
+  return undefined;
+}
+
+function resolveAgentName(
+  doc: MessageDocWithMeta,
+  uiRole: UIMessage["role"],
+): string | undefined {
+  if (uiRole !== "assistant") return undefined;
+  const fromMeta = doc.metadata?.inboxOutbound?.agentName?.trim();
+  if (fromMeta) return fromMeta;
+  const legacy = doc.agentName?.trim();
+  if (legacy) return legacy;
+  return "Unknown agent";
+}
+
+/** One MessageDoc → one UIMessage (avoids merging consecutive assistant rows). */
+export function messageDocsToInboxUIMessages(docs: MessageDoc[]): InboxUIMessage[] {
+  return sorted(docs)
+    .filter((doc) => !isInboxOrderSpacerDoc(doc))
+    .flatMap((doc) => {
+      const withMeta = doc as MessageDocWithMeta;
+      const [ui] = toUIMessages([doc]);
+      if (!ui) return [];
+      const sentByAi = legacySentByAi(withMeta, ui.role);
+      const agentName = resolveAgentName(withMeta, ui.role);
+      return [
+        {
+          ...ui,
+          ...(agentName !== undefined ? { agentName } : {}),
+          ...(sentByAi !== undefined ? { sentByAi } : {}),
+        },
+      ];
+    });
+}
+
+export { listMessages };

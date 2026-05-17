@@ -109,6 +109,16 @@ body {
     background: #a1a1aa;
 }
 
+/* Hide scrollbar while keeping scroll (wheel / trackpad / touch) */
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
 @theme inline {
     --font-heading: var(--font-sans);
     --font-sans: "Google Sans Flex", sans-serif;

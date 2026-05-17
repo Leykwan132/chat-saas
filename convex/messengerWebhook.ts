@@ -1,11 +1,6 @@
 import { v } from "convex/values";
-import {
-  internalMutation,
-  type ActionCtx,
-  type MutationCtx,
-} from "./_generated/server";
+import { internalMutation, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { messengerSyncPool } from "./channelSyncPools";
 
 // POST handler for the `object: "page"` branch of /webhook/meta.
@@ -121,97 +116,18 @@ export const handleIncoming = internalMutation({
       );
     }
 
-    const customerId: Id<"customers"> = await ctx.runMutation(
-      internal.customers.internalUpsertFromWebhook,
-      {
-        orgId: channel.orgId,
-        service: "messenger",
-        contactAddress,
-        profileName: undefined,
-      },
-    );
-
-    const conversationId = await upsertConversation(ctx, {
-      orgId: channel.orgId,
+    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
-      orgAddress: channel.pageId ?? args.pageId,
-      contactAddress,
-      customerId,
-      lastMessageAt: args.timestampMs,
-      preview: (args.text ?? "").slice(0, 140),
-    });
-
-    await ctx.db.insert("messages", {
-      orgId: channel.orgId,
-      conversationId,
-      channelId: channel._id,
-      service: "messenger",
       externalId: args.externalId,
-      orgAddress: channel.pageId ?? args.pageId,
       contactAddress,
       direction: "incoming",
-      contentType: "text",
       content: args.text ?? "",
-      createdAt: args.timestampMs,
-    });
-
-    await ctx.runMutation(internal.customers.internalSetLastConversation, {
-      customerId,
-      conversationId,
+      contentType: "text",
+      timestampMs: args.timestampMs,
+      isHistorical: false,
     });
   },
 });
-
-async function upsertConversation(
-  ctx: MutationCtx,
-  args: {
-    orgId: string;
-    channelId: Id<"channels">;
-    orgAddress: string;
-    contactAddress: string;
-    customerId: Id<"customers">;
-    lastMessageAt: number;
-    preview: string;
-  },
-): Promise<Id<"conversations">> {
-  const existing = await ctx.db
-    .query("conversations")
-    .withIndex("by_channel_and_contactAddress", (q) =>
-      q
-        .eq("channelId", args.channelId)
-        .eq("contactAddress", args.contactAddress),
-    )
-    .unique();
-  const now = Date.now();
-  if (existing === null) {
-    return await ctx.db.insert("conversations", {
-      orgId: args.orgId,
-      channelId: args.channelId,
-      service: "messenger",
-      orgAddress: args.orgAddress,
-      contactAddress: args.contactAddress,
-      customerId: args.customerId,
-      status: "open",
-      lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview,
-      unreadCount: 1,
-      createdAt: now,
-      updatedAt: now,
-    });
-  }
-  const patch: Record<string, unknown> = {
-    lastMessageAt: args.lastMessageAt,
-    lastMessagePreview: args.preview,
-    unreadCount: existing.unreadCount + 1,
-    updatedAt: now,
-  };
-  if (!existing.customerId) {
-    patch.customerId = args.customerId;
-  }
-  if (existing.status === "closed") patch.status = "open";
-  await ctx.db.patch(existing._id, patch);
-  return existing._id;
-}
 
 type MessengerWebhookEnvelope = {
   object?: string;
