@@ -135,6 +135,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
   cfUploadWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfUploadWorkpool">;
   cfDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfDeleteWorkpool">;
