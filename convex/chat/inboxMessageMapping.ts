@@ -3,6 +3,8 @@ import { toUIMessages } from "@convex-dev/agent";
 import { sorted } from "@convex-dev/agent";
 import type { MessageDoc } from "@convex-dev/agent";
 import type { UIMessage } from "@convex-dev/agent/react";
+import type { Id } from "../_generated/dataModel";
+import type { QueryCtx } from "../_generated/server";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -15,6 +17,8 @@ export type InboxOutboundMeta = {
 
 export type InboxMessageMetadata = {
   inboxOrderSpacer?: boolean;
+  /** When the message was sent on the channel (not thread upload time). */
+  sentAt?: number;
   inboxOutbound?: InboxOutboundMeta;
 };
 
@@ -58,8 +62,45 @@ function resolveAgentName(
   return "Unknown agent";
 }
 
+function agentMessageDocId(doc: MessageDoc): string | undefined {
+  const d = doc as MessageDoc & { id?: string; _id?: string };
+  return d.id ?? d._id;
+}
+
+function resolveSentAt(
+  doc: MessageDocWithMeta,
+  sentAtByAgentMessageId: Map<string, number>,
+): number {
+  const metaSentAt = doc.metadata?.sentAt;
+  if (metaSentAt !== undefined) return metaSentAt;
+  const docId = agentMessageDocId(doc);
+  if (docId !== undefined) {
+    const fromLedger = sentAtByAgentMessageId.get(docId);
+    if (fromLedger !== undefined) return fromLedger;
+  }
+  return doc._creationTime;
+}
+
 /** One MessageDoc → one UIMessage (avoids merging consecutive assistant rows). */
-export function messageDocsToInboxUIMessages(docs: MessageDoc[]): InboxUIMessage[] {
+export async function messageDocsToInboxUIMessages(
+  ctx: QueryCtx,
+  conversationId: Id<"conversations">,
+  docs: MessageDoc[],
+): Promise<InboxUIMessage[]> {
+  const ledgerRows = await ctx.db
+    .query("messages")
+    .withIndex("by_conversationId_and_createdAt", (q) =>
+      q.eq("conversationId", conversationId),
+    )
+    .collect();
+
+  const sentAtByAgentMessageId = new Map<string, number>();
+  for (const row of ledgerRows) {
+    if (row.agentMessageId) {
+      sentAtByAgentMessageId.set(row.agentMessageId, row.createdAt);
+    }
+  }
+
   return sorted(docs)
     .filter((doc) => !isInboxOrderSpacerDoc(doc))
     .flatMap((doc) => {
@@ -68,9 +109,11 @@ export function messageDocsToInboxUIMessages(docs: MessageDoc[]): InboxUIMessage
       if (!ui) return [];
       const sentByAi = legacySentByAi(withMeta, ui.role);
       const agentName = resolveAgentName(withMeta, ui.role);
+      const sentAt = resolveSentAt(withMeta, sentAtByAgentMessageId);
       return [
         {
           ...ui,
+          _creationTime: sentAt,
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
         },

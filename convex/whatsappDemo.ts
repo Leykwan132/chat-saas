@@ -128,7 +128,7 @@ export const ensureInbox = mutation({
       userId,
     });
 
-    const agentMessageId = await saveUserMessage(ctx, threadId, WELCOME_COPY);
+    const agentMessageId = await saveUserMessage(ctx, threadId, WELCOME_COPY, now);
 
     const conversationId = await ctx.db.insert("conversations", {
       orgId,

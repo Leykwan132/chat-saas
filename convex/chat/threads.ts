@@ -66,10 +66,12 @@ export async function saveUserMessage(
   ctx: MutationCtx,
   threadId: string,
   content: string,
+  sentAt: number = Date.now(),
 ): Promise<string> {
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId,
     message: { role: "user", content },
+    metadata: { sentAt } as Record<string, unknown>,
   });
   return messageId;
 }
@@ -85,13 +87,17 @@ async function saveAssistantWithOwnOrder(
   args: {
     threadId: string;
     content: string;
+    sentAt: number;
     outbound: InboxOutboundMeta;
   },
 ): Promise<string> {
   const { messageId: spacerId } = await saveMessage(ctx, components.agent, {
     threadId: args.threadId,
     message: { role: "user", content: INBOX_ORDER_SPACER_TEXT },
-    metadata: { inboxOrderSpacer: true } as Record<string, unknown>,
+    metadata: { inboxOrderSpacer: true, sentAt: args.sentAt } as Record<
+      string,
+      unknown
+    >,
   });
 
   const { messageId } = await saveMessage(ctx, components.agent, {
@@ -99,7 +105,10 @@ async function saveAssistantWithOwnOrder(
     agentName: args.outbound.agentName,
     message: { role: "assistant", content: args.content },
     promptMessageId: spacerId,
-    metadata: { inboxOutbound: args.outbound } as Record<string, unknown>,
+    metadata: {
+      sentAt: args.sentAt,
+      inboxOutbound: args.outbound,
+    } as Record<string, unknown>,
   });
   return messageId;
 }
@@ -111,12 +120,14 @@ export async function saveHumanReply(
   opts: {
     assignedAgentId: Id<"agents"> | undefined;
     authorUserId?: string;
+    sentAt?: number;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
     content,
+    sentAt: opts.sentAt ?? Date.now(),
     outbound: {
       agentName,
       sentByAi: false,
@@ -132,11 +143,13 @@ export async function saveAiReply(
   threadId: string,
   content: string,
   assignedAgentId: Id<"agents"> | undefined,
+  sentAt: number = Date.now(),
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, assignedAgentId);
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
     content,
+    sentAt,
     outbound: {
       agentName,
       sentByAi: true,
@@ -338,12 +351,18 @@ export async function ingestChannelMessage(
   const trimmedContent = args.content.trim();
   if (trimmedContent.length > 0) {
     if (args.direction === "incoming") {
-      agentMessageId = await saveUserMessage(ctx, threadId, trimmedContent);
+      agentMessageId = await saveUserMessage(
+        ctx,
+        threadId,
+        trimmedContent,
+        args.timestampMs,
+      );
     } else {
       const conv = await ctx.db.get(conversationId);
       agentMessageId = await saveHumanReply(ctx, threadId, trimmedContent, {
         assignedAgentId: conv?.assignedAgentId ?? args.assignedAgentId,
         authorUserId: args.authorUserId,
+        sentAt: args.timestampMs,
       });
     }
   }

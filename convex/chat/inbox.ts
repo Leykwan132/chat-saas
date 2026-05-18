@@ -68,9 +68,11 @@ export const internalPersistHumanReply = internalMutation({
     }
 
     const trimmed = args.content.trim();
+    const sentAt = Date.now();
     const agentMessageId = await saveHumanReply(ctx, conv.threadId, trimmed, {
       assignedAgentId: conv.assignedAgentId,
       authorUserId: args.authorUserId,
+      sentAt,
     });
 
     const now = Date.now();
@@ -102,6 +104,7 @@ export const internalPersistAiReply = internalMutation({
       args.threadId,
       trimmed,
       conv.assignedAgentId,
+      Date.now(),
     );
     const now = Date.now();
 
@@ -220,7 +223,11 @@ export const listThreadMessagesForInbox = query({
     const streams = await syncStreams(ctx, components.agent, args);
     return {
       ...paginated,
-      page: messageDocsToInboxUIMessages(paginated.page),
+      page: await messageDocsToInboxUIMessages(
+        ctx,
+        args.conversationId,
+        paginated.page,
+      ),
       streams,
     };
   },
