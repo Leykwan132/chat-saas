@@ -2,9 +2,10 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { components } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
 import { uploadToCF, deleteFromCF, scrapeMarkdown, scrapeLinks } from "./cloudflare";
+import { r2 } from "./media/r2";
 
 // ─── Workpool instances ───────────────────────────────────
 
@@ -152,5 +153,17 @@ export const linkDiscovererWorker = internalAction({
     const uniqueLinks = [...new Set([args.url, ...links])].slice(0, 20);
 
     return { links: uniqueLinks, sourceUrl: args.url };
+  },
+});
+
+// ─── Media Delete Worker ────────────────────────────────────
+
+export const mediaDeleteWorker = internalAction({
+  args: {
+    r2Key: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await r2.deleteObject(ctx, args.r2Key);
+    return { deleted: true };
   },
 });

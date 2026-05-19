@@ -15,6 +15,7 @@ import {
   ingestChannelMessage,
   ingestChannelMessageArgs,
   saveHumanReply,
+  saveHumanReplyTextAndImages,
   buildAgent,
   saveAiReply,
 } from "./threads";
@@ -57,6 +58,15 @@ export const internalPersistHumanReply = internalMutation({
     content: v.string(),
     authorUserId: v.string(),
     externalId: v.optional(v.string()),
+    images: v.optional(
+      v.array(
+        v.object({
+          publicUrl: v.string(),
+          mediaType: v.string(),
+        }),
+      ),
+    ),
+    clientIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
@@ -67,18 +77,89 @@ export const internalPersistHumanReply = internalMutation({
       throw new Error("Conversation has no assigned agent");
     }
 
+    const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
+    const orgAddress =
+      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+
     const trimmed = args.content.trim();
+    const images = args.images ?? [];
     const sentAt = Date.now();
-    const agentMessageId = await saveHumanReply(ctx, conv.threadId, trimmed, {
-      assignedAgentId: conv.assignedAgentId,
-      authorUserId: args.authorUserId,
-      sentAt,
-    });
+    const humanReplyImages = images.map((img) => ({
+      url: img.publicUrl,
+      mimeType: img.mediaType,
+    }));
+
+    const agentMessageId =
+      trimmed.length > 0 && humanReplyImages.length > 0
+        ? await saveHumanReplyTextAndImages(
+            ctx,
+            conv.threadId,
+            trimmed,
+            humanReplyImages,
+            {
+              assignedAgentId: conv.assignedAgentId,
+              authorUserId: args.authorUserId,
+              sentAt,
+              clientIds: args.clientIds,
+            },
+          )
+        : await saveHumanReply(ctx, conv.threadId, trimmed, {
+            assignedAgentId: conv.assignedAgentId,
+            authorUserId: args.authorUserId,
+            sentAt,
+            images: humanReplyImages,
+          });
 
     const now = Date.now();
+    for (const img of images) {
+      await ctx.db.insert("messages", {
+        orgId: conv.orgId,
+        conversationId: conv._id,
+        channelId: conv.channelId,
+        service: conv.service,
+        externalId: args.externalId,
+        orgAddress,
+        contactAddress: conv.contactAddress,
+        direction: "outgoing",
+        authorUserId: args.authorUserId,
+        contentType: "image",
+        content: img.publicUrl,
+        mediaUrl: img.publicUrl,
+        agentMessageId,
+        status: "sent",
+        createdAt: now,
+      });
+    }
+
+    if (trimmed.length > 0) {
+      await ctx.db.insert("messages", {
+        orgId: conv.orgId,
+        conversationId: conv._id,
+        channelId: conv.channelId,
+        service: conv.service,
+        externalId: args.externalId,
+        orgAddress,
+        contactAddress: conv.contactAddress,
+        direction: "outgoing",
+        authorUserId: args.authorUserId,
+        contentType: "text",
+        content: trimmed,
+        agentMessageId,
+        status: "sent",
+        createdAt: now,
+      });
+    }
+
+    const preview =
+      trimmed.length > 0
+        ? trimmed.slice(0, 140)
+        : images.length > 0
+          ? "Image"
+          : "";
+
     await ctx.db.patch(conv._id, {
       lastMessageAt: now,
-      lastMessagePreview: trimmed.slice(0, 140),
+      lastMessagePreview: preview,
       unreadCount: 0,
       updatedAt: now,
     });

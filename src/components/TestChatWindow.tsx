@@ -46,12 +46,8 @@ import {
   MessageContent,
   MessageResponse,
 } from "@/components/ai-elements/message";
-import {
-  PromptInput,
-  type PromptInputMessage,
-  PromptInputTextarea,
-  PromptInputSubmit,
-} from "@/components/ai-elements/prompt-input";
+import { ChatPromptInput } from "@/components/ChatPromptInput";
+import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
 function renderCitationBadge(
@@ -363,7 +359,7 @@ export function TestChatWindow({
   );
 
   const renderInput = (ref: React.RefObject<HTMLTextAreaElement | null>) => (
-    <div className="border-t border-border p-4">
+    <div className="w-full min-w-0 max-w-full shrink-0 overflow-hidden border-t border-border p-4">
       {messages.length === 0 && (
         <div className="pb-4">
           <Suggestions>
@@ -373,30 +369,24 @@ export function TestChatWindow({
           </Suggestions>
         </div>
       )}
-      <PromptInput onSubmit={handleSubmit}>
-        <div className="relative flex items-center">
-          <PromptInputTextarea
-            inputRef={ref}
-            value={input}
-            onChange={(e) => setInput(e.currentTarget.value)}
-            placeholder="Type a message..."
-            disabled={isSending}
-            className="pr-10"
-          />
-          <PromptInputSubmit
-            status={isSending ? "streaming" : "ready"}
-            disabled={!input.trim() || isSending}
-            className="absolute bottom-1 right-1"
-          />
-        </div>
-      </PromptInput>
+      <ChatPromptInput
+        containerClassName="w-full max-w-full"
+        disabled={isSending}
+        onChange={setInput}
+        onSubmit={handleSubmit}
+        placeholder="Type a message..."
+        submitDisabled={isSending}
+        submitStatus={isSending ? "submitted" : undefined}
+        textareaRef={ref}
+        value={input}
+      />
     </div>
   );
 
   return (
     <>
-      <div>
-        <div className="flex h-[694px] flex-col rounded-lg border border-border bg-card shadow-sm mt-4">
+      <div className="w-full min-w-0 max-w-full">
+        <div className="flex h-[694px] w-full min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm mt-4">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <div className="flex items-center gap-2">
@@ -426,7 +416,7 @@ export function TestChatWindow({
             </div>
           </div>
 
-          <Conversation>
+          <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
             {renderMessages()}
           </Conversation>
 
@@ -463,14 +453,14 @@ export function TestChatWindow({
 
       <Dialog open={expandOpen} onOpenChange={setExpandOpen}>
         <DialogContent
-          className="min-w-[85vw] h-[90vh] flex flex-col p-0 gap-0"
+          className="flex h-[90vh] min-w-0 w-[85vw] max-w-[85vw] flex-col gap-0 overflow-hidden p-0"
         >
           <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <DialogTitle className="text-sm font-semibold">
               Test your agent
             </DialogTitle>
           </div>
-          <Conversation>
+          <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
             {renderMessages()}
           </Conversation>
           {messages.length === 0 && (

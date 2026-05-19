@@ -1,8 +1,16 @@
 import type { UIMessage } from '@convex-dev/agent/react';
+import { isFileUIPart } from 'ai';
 
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
 };
+
+export function hasVisibleInboxContent(message: InboxUIMessage): boolean {
+  if ((message.text?.trim() ?? '').length > 0) return true;
+  return (message.parts ?? []).some(
+    (part) => isFileUIPart(part) && Boolean(part.url),
+  );
+}
 import type { OptimisticLocalStore } from 'convex/browser';
 import { insertAtTop } from 'convex/react';
 import type { FunctionReference, PaginationOptions, PaginationResult } from 'convex/server';

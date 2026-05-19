@@ -6,19 +6,24 @@ import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import {
   sendTextToChannel,
-  formatChannelSendError,
+  sendMediaToChannel,
+  sendTextAndImage,
+  throwIfChannelSendFailed,
   type ChannelSendResult,
 } from "./channelSend";
 
 export const sendReply = action({
   args: {
     conversationId: v.id("conversations"),
-    content: v.string(),
+    content: v.optional(v.string()),
+    clientIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args): Promise<{ agentMessageId: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    const trimmed = args.content.trim();
-    if (!trimmed) {
+    const trimmed = (args.content ?? "").trim();
+    const clientIds = args.clientIds ?? [];
+
+    if (!trimmed && clientIds.length === 0) {
       throw new Error("Cannot send an empty message");
     }
 
@@ -41,13 +46,67 @@ export const sendReply = action({
       throw new Error("Not a channel conversation");
     }
 
-    const result = await sendTextToChannel(conversation, channel, trimmed, {
-      allowHumanAgentTag: true,
-    });
+    const readyUploads =
+      clientIds.length > 0
+        ? await ctx.runMutation(internal.media.attachments.internalGetReadyUploads, {
+            clientIds,
+            orgId,
+            userId,
+          })
+        : [];
 
-    if (!result.ok) {
-      throw new Error(formatChannelSendError(result));
+    const imageUrls = readyUploads.map((u) => u.publicUrl);
+    const channelSendOptions = { allowHumanAgentTag: true as const };
+    const persistImages = readyUploads.map((u) => ({
+      publicUrl: u.publicUrl,
+      mediaType: u.mediaType,
+    }));
+
+    const isMetaTextAndImage =
+      (conversation.service === "instagram" ||
+        conversation.service === "messenger") &&
+      trimmed.length > 0 &&
+      imageUrls.length > 0;
+
+    if (isMetaTextAndImage) {
+      const { imageResult, textResult } = await sendTextAndImage(
+        conversation,
+        channel,
+        {
+          text: trimmed,
+          imageUrls,
+          ...channelSendOptions,
+        },
+      );
+
+      throwIfChannelSendFailed(imageResult);
+      throwIfChannelSendFailed(textResult);
+
+      const agentMessageId: string = await ctx.runMutation(
+        internal.chat.inbox.internalPersistHumanReply,
+        {
+          conversationId: args.conversationId,
+          content: trimmed,
+          authorUserId: userId,
+          externalId: textResult.externalId,
+          images: persistImages,
+          clientIds,
+        },
+      );
+
+      return { agentMessageId };
     }
+
+    const result =
+      imageUrls.length > 0
+        ? await sendMediaToChannel(conversation, channel, {
+            text: trimmed,
+            imageUrls,
+            ...channelSendOptions,
+          })
+        : await sendTextToChannel(conversation, channel, trimmed, channelSendOptions);
+
+    throwIfChannelSendFailed(result);
 
     const agentMessageId: string = await ctx.runMutation(
       internal.chat.inbox.internalPersistHumanReply,
@@ -56,6 +115,7 @@ export const sendReply = action({
         content: trimmed,
         authorUserId: userId,
         externalId: result.externalId,
+        images: persistImages,
       },
     );
 

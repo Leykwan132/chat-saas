@@ -180,9 +180,9 @@ export default function AgentPage() {
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[3fr_7fr]">
+      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
         {/* LEFT COLUMN */}
-        <div className="flex flex-col gap-4">
+        <div className="flex min-w-0 flex-col gap-4">
           {/* ── Agent Status ── */}
           <div className="space-y-2">
             <Popover>
@@ -373,7 +373,7 @@ export default function AgentPage() {
         </div>
 
         {/* RIGHT COLUMN: Playground */}
-        <aside className="xl:sticky xl:top-6 space-y-2">
+        <aside className="min-w-0 w-full max-w-full space-y-2 xl:sticky xl:top-6">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <Gamepad2 className="size-4" />
             Playground

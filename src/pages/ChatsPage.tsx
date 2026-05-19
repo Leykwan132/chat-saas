@@ -12,12 +12,10 @@ import {
   History,
   MessageSquare,
   Moon,
-  Paperclip,
   Pin,
   Plug,
   RotateCcw,
   Search,
-  Send,
   Tag,
   User,
   Users,
@@ -42,12 +40,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
-import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import {
-  Conversation,
-  ConversationContent,
-} from '@/components/ai-elements/conversation';
+  hasVisibleInboxContent,
+  type InboxUIMessage,
+} from '@/lib/inboxOptimistic';
+import { Conversation } from '@/components/ai-elements/conversation';
+import { Shimmer } from '@/components/ai-elements/shimmer';
+import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
+import type { PromptInputMessage } from '@/components/ai-elements/prompt-input';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -115,41 +116,20 @@ function PlatformMenuIcon({
   }
 }
 
-/** Staggered skeleton while the active thread’s Convex data is loading. */
-function ChatThreadSkeleton() {
+function ChatThreadLoading() {
   return (
-    <ConversationContent
-      scrollClassName="no-scrollbar"
-      className="gap-2 px-6 py-6"
+    <div
+      className="flex size-full min-h-0 flex-col items-center justify-center px-6"
       aria-busy
-      aria-label="Loading messages"
+      aria-live="polite"
+      aria-label="Loading conversation"
     >
-      {CHAT_THREAD_SKELETON_ROWS.map((row, i) => (
-        <div
-          key={i}
-          className={`flex w-full ${row.side === 'right' ? 'justify-end' : 'justify-start'}`}
-        >
-          <div
-            className="h-[42px] rounded-2xl bg-muted/80 motion-safe:animate-pulse"
-            style={{
-              width: row.w,
-              animationDelay: `${i * 90}ms`,
-              animationDuration: '1.1s',
-            }}
-          />
-        </div>
-      ))}
-    </ConversationContent>
+      <Shimmer duration={1} spread={3} className="text-sm font-medium">
+        Loading conversation…
+      </Shimmer>
+    </div>
   );
 }
-
-const CHAT_THREAD_SKELETON_ROWS = [
-  { side: 'left' as const, w: 'min(78%, 320px)' },
-  { side: 'right' as const, w: 'min(62%, 240px)' },
-  { side: 'left' as const, w: 'min(70%, 280px)' },
-  { side: 'right' as const, w: 'min(55%, 200px)' },
-  { side: 'left' as const, w: 'min(65%, 260px)' },
-];
 
 function DetailsPanelSkeleton() {
   return (
@@ -275,7 +255,7 @@ export default function ChatsPage() {
     void ensureAssignedAgent({
       conversationId: selectedConversationId,
       agentId: agentId as Id<'agents'>,
-    }).catch(() => {});
+    }).catch(() => { });
   }, [selectedConversationId, agentId, ensureAssignedAgent]);
 
   useEffect(() => {
@@ -367,8 +347,8 @@ export default function ChatsPage() {
 
   const conversationDocMatchesSelection = Boolean(
     selectedConversationId &&
-      selectedConversation != null &&
-      selectedConversation._id === selectedConversationId,
+    selectedConversation != null &&
+    selectedConversation._id === selectedConversationId,
   );
 
   const threadDataLoading =
@@ -377,7 +357,7 @@ export default function ChatsPage() {
       (threadMessagesStatus === 'LoadingFirstPage' && threadMessages.length === 0));
 
   const visibleThreadMessages = useMemo(() => {
-    const fromServer = threadMessages.filter((m) => m.text.trim().length > 0);
+    const fromServer = threadMessages.filter(hasVisibleInboxContent);
     const pendingUi: InboxUIMessage[] = pendingOutbound.map((p) => ({
       key: `pending-${p.clientId}`,
       id: p.clientId,
@@ -502,9 +482,15 @@ export default function ChatsPage() {
     selectedConversation?.service === 'instagram' ||
     selectedConversation?.service === 'messenger';
 
-  const handleSendReply = async () => {
-    const trimmed = draftReply.trim();
-    if (!trimmed || !selectedConversationId || sendBusy || threadDataLoading) return;
+  const handleSendReply = async (message?: PromptInputMessage) => {
+    const trimmed = (message?.text ?? draftReply).trim();
+    const attachedImages = message?.files?.filter((file) =>
+      file.mediaType?.startsWith('image/'),
+    ) ?? [];
+    const imageClientIds = attachedImages.map((file) => file.id);
+    if ((!trimmed && attachedImages.length === 0) || !selectedConversationId || sendBusy || threadDataLoading) {
+      return;
+    }
     if (!threadId) {
       toast.error('Conversation thread is not ready yet.');
       return;
@@ -538,6 +524,7 @@ export default function ChatsPage() {
       await sendReply({
         conversationId: selectedConversationId,
         content: trimmed,
+        clientIds: imageClientIds.length > 0 ? imageClientIds : undefined,
       });
       setDraftReply('');
       setPendingOutbound((prev) => prev.filter((p) => p.clientId !== clientId));
@@ -593,226 +580,227 @@ export default function ChatsPage() {
 
       <div className="flex min-h-0 flex-1 gap-6 overflow-hidden">
 
-      {/* LEFT COLUMN: Chat List */}
-      <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+        {/* LEFT COLUMN: Chat List */}
+        <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
 
-        {/* Search & Filters */}
-        <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--color-border)' }}>
-          <div style={{ position: 'relative', marginBottom: '12px' }}>
-            <Search
-              size={15}
-              style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-foreground-subtle)' }}
-            />
-            <input
-              type="text"
-              placeholder="Search conversations..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%', height: '38px', paddingLeft: '36px', paddingRight: '14px',
-                fontSize: '13px', borderRadius: '8px',
-                border: '1px solid var(--color-border)',
-                background: 'var(--color-background)',
-                color: 'var(--color-foreground)',
-                outline: 'none', boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {/* Platform (left) + Label (right): compact triggers sized to content */}
-          <div className="flex w-full items-center justify-between gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-9 w-auto max-w-[min(100%,12rem)] shrink-0 gap-1.5 px-2.5 font-normal"
-                >
-                  <span className="truncate text-left text-sm">
-                    {platformFilter === 'all' ? (
-                      <span className="text-muted-foreground">Platform</span>
-                    ) : (
-                      <span className="text-foreground">{PLATFORM_LABEL[platformFilter]}</span>
-                    )}
-                  </span>
-                  <ChevronDown className="size-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="min-w-[11rem] p-0">
-                <div className="flex items-center justify-between gap-1 border-b border-border/60 px-2 py-2">
-                  <span className="pl-1 text-xs font-medium text-muted-foreground">
-                    Platform
-                  </span>
-                  <DropdownMenuItem
-                    className="h-7 w-7 shrink-0 justify-center rounded-md p-0"
-                    onSelect={() => setPlatformFilter('all')}
-                    aria-label="Reset platform filter"
-                  >
-                    <RotateCcw className="size-3.5 text-muted-foreground" />
-                  </DropdownMenuItem>
-                </div>
-                <div className="p-1.5">
-                  <DropdownMenuGroup>
-                    {connectedPlatforms.map((p) => (
-                      <DropdownMenuItem
-                        key={p}
-                        className="cursor-pointer gap-2.5"
-                        onSelect={() => setPlatformFilter(p)}
-                      >
-                        <PlatformMenuIcon platform={p} size={16} />
-                        {PLATFORM_LABEL[p]}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-9 w-auto max-w-[min(100%,12rem)] shrink-0 gap-1.5 px-2.5 font-normal"
-                >
-                  <span className="truncate text-left text-sm">
-                    {labelFilter === 'all' ? (
-                      <span className="text-muted-foreground">Label</span>
-                    ) : (
-                      <span className="text-foreground">
-                        {STATUS_LABEL_MENU[labelFilter].title}
-                      </span>
-                    )}
-                  </span>
-                  <ChevronDown className="size-4 shrink-0 opacity-50" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[11rem] p-0">
-                <div className="flex items-center justify-between gap-1 border-b border-border/60 px-2 py-2">
-                  <span className="pl-1 text-xs font-medium text-muted-foreground">
-                    Label
-                  </span>
-                  <DropdownMenuItem
-                    className="h-7 w-7 shrink-0 justify-center rounded-md p-0"
-                    onSelect={() => setLabelFilter('all')}
-                    aria-label="Reset label filter"
-                  >
-                    <RotateCcw className="size-3.5 text-muted-foreground" />
-                  </DropdownMenuItem>
-                </div>
-                <div className="p-1.5">
-                  <DropdownMenuGroup>
-                    {STATUS_LABEL_OPTIONS.map((key) => {
-                      const { title, Icon, iconClass } = STATUS_LABEL_MENU[key];
-                      return (
-                        <DropdownMenuItem
-                          key={key}
-                          className="cursor-pointer gap-2.5"
-                          onSelect={() => setLabelFilter(key)}
-                        >
-                          <Icon className={`size-4 shrink-0 ${iconClass}`} />
-                          {title}
-                        </DropdownMenuItem>
-                      );
-                    })}
-                  </DropdownMenuGroup>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* List */}
-        <div className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto">
-          {conversationsStillLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Spinner className="size-6 text-muted-foreground" />
+          {/* Search & Filters */}
+          <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--color-border)' }}>
+            <div style={{ position: 'relative', marginBottom: '12px' }}>
+              <Search
+                size={15}
+                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-foreground-subtle)' }}
+              />
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{
+                  width: '100%', height: '38px', paddingLeft: '36px', paddingRight: '14px',
+                  fontSize: '13px', borderRadius: '8px',
+                  border: '1px solid var(--color-border)',
+                  background: 'var(--color-background)',
+                  color: 'var(--color-foreground)',
+                  outline: 'none', boxSizing: 'border-box',
+                }}
+              />
             </div>
-          ) : filteredChats.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
-              <MessageSquare className="size-8 opacity-40" />
-              <p className="m-0 font-medium text-foreground">No conversations yet</p>
-              <p className="m-0 text-xs leading-relaxed">
-                When customers message your connected channels, threads appear here.
-              </p>
-            </div>
-          ) : (
-            <>
-              {pinnedChats.length > 0 && (
-                <>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)' }}>
-                    <Pin size={11} color="var(--color-foreground-subtle)" />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pinned</span>
-                  </div>
-                  {pinnedChats.map((chat, index) => (
-                    <ChatRow key={chat.id} chat={chat} index={index} total={pinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned onSelect={setSelectedConversationId} onTogglePin={togglePin} />
-                  ))}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)', borderTop: '1px solid var(--color-border)' }}>
-                    <MessageSquare size={11} color="var(--color-foreground-subtle)" />
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>All</span>
-                  </div>
-                </>
-              )}
 
-              {unpinnedChats.map((chat, index) => (
-                <ChatRow key={chat.id} chat={chat} index={index} total={unpinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned={false} onSelect={setSelectedConversationId} onTogglePin={togglePin} />
-              ))}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* MIDDLE COLUMN: Chat Window (layout matches TestChatWindow) */}
-      <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
-        {selectedConversationId ? (
-          <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]">
-            {/* Chat Header */}
-            <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
-              <div className="flex min-w-0 flex-1 items-center">
-                {displayHeaderName ? (
-                  <h2 className="m-0 truncate text-lg font-semibold text-foreground">
-                    {displayHeaderName}
-                  </h2>
-                ) : (
-                  <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
-                )}
-              </div>
-              <div className="flex items-center gap-2.5 text-muted-foreground">
-                {selectedConversation?.service === 'whatsapp' &&
-                selectedConversation.channelId &&
-                agentId ? (
-                  <Button variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 px-2.5 text-xs font-normal" asChild>
-                    <Link
-                      to={`/dashboard/${agentId}/channels/${selectedConversation.channelId}/templates`}
-                    >
-                      <FileText className="size-3.5" />
-                      Message templates
-                    </Link>
+            {/* Platform (left) + Label (right): compact triggers sized to content */}
+            <div className="flex w-full items-center justify-between gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 w-auto max-w-[min(100%,12rem)] shrink-0 gap-1.5 px-2.5 font-normal"
+                  >
+                    <span className="truncate text-left text-sm">
+                      {platformFilter === 'all' ? (
+                        <span className="text-muted-foreground">Platform</span>
+                      ) : (
+                        <span className="text-foreground">{PLATFORM_LABEL[platformFilter]}</span>
+                      )}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-50" />
                   </Button>
-                ) : null}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="min-w-[11rem] p-0">
+                  <div className="flex items-center justify-between gap-1 border-b border-border/60 px-2 py-2">
+                    <span className="pl-1 text-xs font-medium text-muted-foreground">
+                      Platform
+                    </span>
+                    <DropdownMenuItem
+                      className="h-7 w-7 shrink-0 justify-center rounded-md p-0"
+                      onSelect={() => setPlatformFilter('all')}
+                      aria-label="Reset platform filter"
+                    >
+                      <RotateCcw className="size-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                  </div>
+                  <div className="p-1.5">
+                    <DropdownMenuGroup>
+                      {connectedPlatforms.map((p) => (
+                        <DropdownMenuItem
+                          key={p}
+                          className="cursor-pointer gap-2.5"
+                          onSelect={() => setPlatformFilter(p)}
+                        >
+                          <PlatformMenuIcon platform={p} size={16} />
+                          {PLATFORM_LABEL[p]}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuGroup>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 w-auto max-w-[min(100%,12rem)] shrink-0 gap-1.5 px-2.5 font-normal"
+                  >
+                    <span className="truncate text-left text-sm">
+                      {labelFilter === 'all' ? (
+                        <span className="text-muted-foreground">Label</span>
+                      ) : (
+                        <span className="text-foreground">
+                          {STATUS_LABEL_MENU[labelFilter].title}
+                        </span>
+                      )}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[11rem] p-0">
+                  <div className="flex items-center justify-between gap-1 border-b border-border/60 px-2 py-2">
+                    <span className="pl-1 text-xs font-medium text-muted-foreground">
+                      Label
+                    </span>
+                    <DropdownMenuItem
+                      className="h-7 w-7 shrink-0 justify-center rounded-md p-0"
+                      onSelect={() => setLabelFilter('all')}
+                      aria-label="Reset label filter"
+                    >
+                      <RotateCcw className="size-3.5 text-muted-foreground" />
+                    </DropdownMenuItem>
+                  </div>
+                  <div className="p-1.5">
+                    <DropdownMenuGroup>
+                      {STATUS_LABEL_OPTIONS.map((key) => {
+                        const { title, Icon, iconClass } = STATUS_LABEL_MENU[key];
+                        return (
+                          <DropdownMenuItem
+                            key={key}
+                            className="cursor-pointer gap-2.5"
+                            onSelect={() => setLabelFilter(key)}
+                          >
+                            <Icon className={`size-4 shrink-0 ${iconClass}`} />
+                            {title}
+                          </DropdownMenuItem>
+                        );
+                      })}
+                    </DropdownMenuGroup>
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+
+          {/* List */}
+          <div className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto">
+            {conversationsStillLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Spinner className="size-6 text-muted-foreground" />
               </div>
-            </div>
+            ) : filteredChats.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
+                <MessageSquare className="size-8 opacity-40" />
+                <p className="m-0 font-medium text-foreground">No conversations yet</p>
+                <p className="m-0 text-xs leading-relaxed">
+                  When customers message your connected channels, threads appear here.
+                </p>
+              </div>
+            ) : (
+              <>
+                {pinnedChats.length > 0 && (
+                  <>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)' }}>
+                      <Pin size={11} color="var(--color-foreground-subtle)" />
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pinned</span>
+                    </div>
+                    {pinnedChats.map((chat, index) => (
+                      <ChatRow key={chat.id} chat={chat} index={index} total={pinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned onSelect={setSelectedConversationId} onTogglePin={togglePin} />
+                    ))}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)', borderTop: '1px solid var(--color-border)' }}>
+                      <MessageSquare size={11} color="var(--color-foreground-subtle)" />
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>All</span>
+                    </div>
+                  </>
+                )}
 
-            <div className="relative min-h-0 overflow-hidden">
-              <Conversation className="no-scrollbar size-full min-h-0">
-              {threadDataLoading ? (
-                <ChatThreadSkeleton />
-              ) : (
-                <InboxThreadMessages
-                  messages={visibleThreadMessages}
-                  emptyTitle="No messages in this conversation yet."
-                  emptyDescription="When customers message you, the thread appears here."
-                />
-              )}
-              </Conversation>
-            </div>
+                {unpinnedChats.map((chat, index) => (
+                  <ChatRow key={chat.id} chat={chat} index={index} total={unpinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned={false} onSelect={setSelectedConversationId} onTogglePin={togglePin} />
+                ))}
+              </>
+            )}
+          </div>
+        </div>
 
-            {/* Chat Input */}
-            <div className="shrink-0 border-t border-border bg-card px-6 py-4">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'var(--color-background)', border: '1px solid var(--color-border)', borderRadius: '24px', padding: '8px 16px' }}>
-                <Paperclip size={18} color="var(--color-foreground-subtle)" style={{ cursor: 'pointer', opacity: 0.45 }} />
-                <input
-                  type="text"
+        {/* MIDDLE COLUMN: Chat Window (layout matches TestChatWindow) */}
+        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
+          {selectedConversationId ? (
+            <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]">
+              {/* Chat Header */}
+              <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
+                <div className="flex min-w-0 flex-1 items-center">
+                  {displayHeaderName ? (
+                    <h2 className="m-0 truncate text-lg font-semibold text-foreground">
+                      {displayHeaderName}
+                    </h2>
+                  ) : (
+                    <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
+                  )}
+                </div>
+                <div className="flex items-center gap-2.5 text-muted-foreground">
+                  {selectedConversation?.service === 'whatsapp' &&
+                    selectedConversation.channelId &&
+                    agentId ? (
+                    <Button variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 px-2.5 text-xs font-normal" asChild>
+                      <Link
+                        to={`/dashboard/${agentId}/channels/${selectedConversation.channelId}/templates`}
+                      >
+                        <FileText className="size-3.5" />
+                        Message templates
+                      </Link>
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="relative min-h-0 overflow-hidden">
+                <Conversation className="no-scrollbar size-full min-h-0">
+                  {threadDataLoading ? (
+                    <ChatThreadLoading />
+                  ) : (
+                    <InboxThreadMessages
+                      messages={visibleThreadMessages}
+                      emptyTitle="No messages in this conversation yet."
+                      emptyDescription="When customers message you, the thread appears here."
+                    />
+                  )}
+                </Conversation>
+              </div>
+
+              {/* Chat Input */}
+              <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4">
+                <InboxReplyInput
+                  busy={sendBusy}
+                  disabled={threadDataLoading || !canReplyFromInbox}
+                  onChange={setDraftReply}
+                  onSubmit={(message) => void handleSendReply(message)}
                   placeholder={
                     threadDataLoading
                       ? 'Loading conversation…'
@@ -820,418 +808,374 @@ export default function ChatsPage() {
                         ? `Reply to ${displayHeaderName ?? 'customer'}…`
                         : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
                   }
-                  disabled={
-                    threadDataLoading ||
-                    sendBusy ||
-                    !canReplyFromInbox
-                  }
                   value={draftReply}
-                  onChange={(e) => setDraftReply(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      void handleSendReply();
-                    }
-                  }}
-                  style={{ flex: 1, background: 'transparent', border: 'none', outline: 'none', color: 'var(--color-foreground)', fontSize: '14px' }}
                 />
-                <button
-                  type="button"
-                  disabled={
-                    threadDataLoading ||
-                    !canReplyFromInbox ||
-                    sendBusy ||
-                    !draftReply.trim()
-                  }
-                  onClick={() => void handleSendReply()}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: 'var(--color-primary)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    border: 'none',
-                    cursor:
-                      !threadDataLoading && canReplyFromInbox && draftReply.trim()
-                        ? 'pointer'
-                        : 'not-allowed',
-                    opacity:
-                      threadDataLoading || !canReplyFromInbox || !draftReply.trim()
-                        ? 0.45
-                        : 1,
-                  }}
-                >
-                  <Send size={14} color="var(--color-primary-foreground)" style={{ marginLeft: '-2px' }} />
-                </button>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="flex h-full flex-1 flex-col items-center justify-center bg-background text-muted-foreground">
-            <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
-              <MessageSquare size={28} />
+          ) : (
+            <div className="flex h-full flex-1 flex-col items-center justify-center bg-background text-muted-foreground">
+              <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
+                <MessageSquare size={28} />
+              </div>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-foreground)' }}>No chat selected</h3>
+              <p style={{ margin: '8px 0 0', fontSize: '13px' }}>Select a conversation from the left to start replying</p>
             </div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-foreground)' }}>No chat selected</h3>
-            <p style={{ margin: '8px 0 0', fontSize: '13px' }}>Select a conversation from the left to start replying</p>
+          )}
+        </div>
+
+        {/* RIGHT COLUMN: Details */}
+        {selectedConversationId && (
+          <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
+            <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
+              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-foreground)' }}>Details</h2>
+            </div>
+
+            <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+              {detailsPanelLoading ? (
+                <DetailsPanelSkeleton />
+              ) : (
+                selectedConversation && (
+                  <div className="flex flex-col">
+                    <div className="px-4 pb-3 pt-4">
+                      <div className="mb-2 flex items-center gap-2">
+                        <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="text-sm font-semibold text-foreground">Assignee</span>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={assigneeSaving}
+                            className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
+                            aria-label="Who responds in this conversation"
+                          >
+                            <span className="flex min-w-0 flex-1 items-center gap-2">
+                              {selectedConversation.assignToAiAgent ? (
+                                <>
+                                  <Bot className="size-4 shrink-0 text-muted-foreground" />
+                                  <span className="truncate text-foreground">AI Agent</span>
+                                </>
+                              ) : (
+                                <>
+                                  <User className="size-4 shrink-0 text-muted-foreground" />
+                                  <span className="truncate text-foreground">
+                                    {assignedMemberLabel ?? 'Teammate'}
+                                  </span>
+                                </>
+                              )}
+                            </span>
+                            <ChevronDown className="size-4 shrink-0 opacity-60" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
+                          <DropdownMenuGroup>
+                            <DropdownMenuItem
+                              className="cursor-pointer gap-2"
+                              onSelect={() => void handleAssignConversation({ kind: 'ai' })}
+                            >
+                              <Bot className="size-4 shrink-0" />
+                              AI Agent
+                            </DropdownMenuItem>
+                          </DropdownMenuGroup>
+                          {teamUsers !== undefined && teamUsers.length > 0 ? (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuGroup>
+                                {teamUsers.map((u) => (
+                                  <DropdownMenuItem
+                                    key={u._id}
+                                    className="cursor-pointer gap-2"
+                                    onSelect={() =>
+                                      void handleAssignConversation({
+                                        kind: 'user',
+                                        workosUserId: u.workosUserId,
+                                      })
+                                    }
+                                  >
+                                    <User className="size-4 shrink-0 text-muted-foreground" />
+                                    {formatOrgMemberDisplayName(u)}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuGroup>
+                            </>
+                          ) : null}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setCustomerDetailsOpen((o) => !o)}
+                        aria-expanded={customerDetailsOpen}
+                      >
+                        <Contact className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 text-sm font-semibold text-foreground">
+                          Customer details
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !customerDetailsOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {customerDetailsOpen ? (
+                        <div className="px-4 pb-3">
+                          {customerSidebarDetails === undefined ? (
+                            <p className="m-0 text-xs text-muted-foreground">Loading…</p>
+                          ) : (
+                            <div className="flex flex-col gap-2.5 text-sm">
+                              <div className="flex justify-between gap-4">
+                                <span className="shrink-0 text-muted-foreground">Name</span>
+                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                  {customerSidebarDetails?.name ?? '—'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="shrink-0 text-muted-foreground">Platform</span>
+                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                  {customerSidebarDetails?.platformLabel ?? '—'}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="shrink-0 text-muted-foreground">Phone number</span>
+                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                  {customerSidebarDetails?.phone?.trim()
+                                    ? customerSidebarDetails.phone
+                                    : '—'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setTagsSectionOpen((o) => !o)}
+                        aria-expanded={tagsSectionOpen}
+                      >
+                        <Tag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 text-sm font-semibold text-foreground">Tags</span>
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !tagsSectionOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {tagsSectionOpen ? (
+                        <div className="px-4 pb-3">
+                          {(selectedConversation.tags ?? []).length > 0 ? (
+                            <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
+                              {(selectedConversation.tags ?? []).map((tag) => (
+                                <li key={tag}>
+                                  <div className="flex items-center justify-between gap-3 py-2.5 font-mono text-sm text-foreground">
+                                    <span className="min-w-0 flex-1 truncate" title={tag}>
+                                      {tag}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="shrink-0 select-none px-1 text-base leading-none text-muted-foreground hover:text-foreground disabled:opacity-40"
+                                      disabled={tagMutationBusy}
+                                      aria-label={`Remove tag ${tag}`}
+                                      onClick={() => void handleRemoveConversationTag(tag)}
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="m-0 border-y border-border py-2.5 text-xs text-muted-foreground">
+                              No tags yet.
+                            </p>
+                          )}
+                          <div className="mt-3 flex gap-2">
+                            <Input
+                              value={tagDraft}
+                              onChange={(e) => setTagDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  void handleAddConversationTag();
+                                }
+                              }}
+                              placeholder="Add tags (comma-separated)…"
+                              disabled={tagMutationBusy}
+                              className="h-9 flex-1 font-mono text-xs"
+                            />
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              className="h-9 shrink-0 px-3 text-xs"
+                              disabled={tagMutationBusy || !tagDraft.trim()}
+                              onClick={() => void handleAddConversationTag()}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setInteractionSummaryOpen((o) => !o)}
+                        aria-expanded={interactionSummaryOpen}
+                      >
+                        <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 text-sm font-semibold text-foreground">
+                          Interaction summary
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !interactionSummaryOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {interactionSummaryOpen ? (
+                        <div className="space-y-2 px-4 pb-3">
+                          <Textarea
+                            value={interactionSummaryDraft}
+                            onChange={(e) => setInteractionSummaryDraft(e.target.value)}
+                            placeholder="Notes on this thread for your team…"
+                            disabled={interactionSummarySaving}
+                            rows={5}
+                            className="min-h-[120px] resize-y text-xs"
+                          />
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              className="h-8 px-3 text-xs"
+                              disabled={
+                                interactionSummarySaving || !interactionSummaryDirty
+                              }
+                              onClick={() => void handleSaveInteractionSummary()}
+                            >
+                              {interactionSummarySaving ? 'Saving…' : 'Save summary'}
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setInteractionHistoryOpen((o) => !o)}
+                        aria-expanded={interactionHistoryOpen}
+                      >
+                        <History className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 text-sm font-semibold text-foreground">
+                          Interaction history
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !interactionHistoryOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {interactionHistoryOpen ? (
+                        <div className="no-scrollbar max-h-72 overflow-y-auto px-4 pb-3">
+                          {threadDataLoading ? (
+                            <p className="m-0 text-xs text-muted-foreground">Loading messages…</p>
+                          ) : interactionHistoryMessages.length === 0 ? (
+                            <p className="m-0 text-xs text-muted-foreground">No messages yet</p>
+                          ) : (
+                            <div className="flex flex-col">
+                              {interactionHistoryMessages.map((m, i) => {
+                                const isNewest = i === 0;
+                                const isLast = i === interactionHistoryMessages.length - 1;
+                                return (
+                                  <div
+                                    key={m.key}
+                                    className={cn(
+                                      'flex gap-3 py-1',
+                                      isNewest && 'rounded-md bg-muted/40 px-1',
+                                    )}
+                                  >
+                                    <div className="flex w-5 shrink-0 flex-col items-center">
+                                      {!isNewest ? (
+                                        <div className="w-px flex-1 bg-border" style={{ minHeight: 6 }} />
+                                      ) : (
+                                        <div style={{ minHeight: 4 }} />
+                                      )}
+                                      <div
+                                        className={cn(
+                                          'size-2 shrink-0 rounded-sm',
+                                          isNewest
+                                            ? 'bg-red-600 dark:bg-red-500'
+                                            : 'bg-muted-foreground/45',
+                                        )}
+                                        aria-hidden
+                                      />
+                                      {!isLast ? (
+                                        <div className="w-px flex-1 bg-border" style={{ minHeight: 14 }} />
+                                      ) : null}
+                                    </div>
+                                    <div className="min-w-0 flex-1 pb-3 pr-0.5">
+                                      <div className="truncate text-sm font-medium text-foreground">
+                                        {historyMessageLineTitle(m.text)}
+                                      </div>
+                                      <div className="text-xs text-muted-foreground">
+                                        {m.role === 'user' ? (
+                                          'Customer'
+                                        ) : (
+                                          <>
+                                            {(m as InboxUIMessage).agentName ?? 'Unknown agent'}
+                                            {(m as InboxUIMessage).sentByAi ? (
+                                              <span className="ml-1 text-muted-foreground">· AI</span>
+                                            ) : null}
+                                          </>
+                                        )}
+                                      </div>
+                                      <div className="mt-1 text-xs text-foreground">
+                                        <span className="font-semibold">Status </span>
+                                        <span className="font-normal">
+                                          {m.role === 'user'
+                                            ? 'Received'
+                                            : (m.status ?? 'Sent')}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         )}
-      </div>
-
-      {/* RIGHT COLUMN: Details */}
-      {selectedConversationId && (
-        <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
-          <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
-            <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-foreground)' }}>Details</h2>
-          </div>
-
-          <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
-            {detailsPanelLoading ? (
-              <DetailsPanelSkeleton />
-            ) : (
-              selectedConversation && (
-                <div className="flex flex-col">
-                  <div className="px-4 pb-3 pt-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="text-sm font-semibold text-foreground">Assignee</span>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={assigneeSaving}
-                          className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
-                          aria-label="Who responds in this conversation"
-                        >
-                          <span className="flex min-w-0 flex-1 items-center gap-2">
-                            {selectedConversation.assignToAiAgent ? (
-                              <>
-                                <Bot className="size-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate text-foreground">AI Agent</span>
-                              </>
-                            ) : (
-                              <>
-                                <User className="size-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate text-foreground">
-                                  {assignedMemberLabel ?? 'Teammate'}
-                                </span>
-                              </>
-                            )}
-                          </span>
-                          <ChevronDown className="size-4 shrink-0 opacity-60" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem
-                            className="cursor-pointer gap-2"
-                            onSelect={() => void handleAssignConversation({ kind: 'ai' })}
-                          >
-                            <Bot className="size-4 shrink-0" />
-                            AI Agent
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        {teamUsers !== undefined && teamUsers.length > 0 ? (
-                          <>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuGroup>
-                              {teamUsers.map((u) => (
-                                <DropdownMenuItem
-                                  key={u._id}
-                                  className="cursor-pointer gap-2"
-                                  onSelect={() =>
-                                    void handleAssignConversation({
-                                      kind: 'user',
-                                      workosUserId: u.workosUserId,
-                                    })
-                                  }
-                                >
-                                  <User className="size-4 shrink-0 text-muted-foreground" />
-                                  {formatOrgMemberDisplayName(u)}
-                                </DropdownMenuItem>
-                              ))}
-                            </DropdownMenuGroup>
-                          </>
-                        ) : null}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                      onClick={() => setCustomerDetailsOpen((o) => !o)}
-                      aria-expanded={customerDetailsOpen}
-                    >
-                      <Contact className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="flex-1 text-sm font-semibold text-foreground">
-                        Customer details
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                          !customerDetailsOpen && '-rotate-90',
-                        )}
-                      />
-                    </button>
-                    {customerDetailsOpen ? (
-                      <div className="px-4 pb-3">
-                        {customerSidebarDetails === undefined ? (
-                          <p className="m-0 text-xs text-muted-foreground">Loading…</p>
-                        ) : (
-                          <div className="flex flex-col gap-2.5 text-sm">
-                            <div className="flex justify-between gap-4">
-                              <span className="shrink-0 text-muted-foreground">Name</span>
-                              <span className="min-w-0 truncate text-right font-medium text-foreground">
-                                {customerSidebarDetails?.name ?? '—'}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                              <span className="shrink-0 text-muted-foreground">Platform</span>
-                              <span className="min-w-0 truncate text-right font-medium text-foreground">
-                                {customerSidebarDetails?.platformLabel ?? '—'}
-                              </span>
-                            </div>
-                            <div className="flex justify-between gap-4">
-                              <span className="shrink-0 text-muted-foreground">Phone number</span>
-                              <span className="min-w-0 truncate text-right font-medium text-foreground">
-                                {customerSidebarDetails?.phone?.trim()
-                                  ? customerSidebarDetails.phone
-                                  : '—'}
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                      onClick={() => setTagsSectionOpen((o) => !o)}
-                      aria-expanded={tagsSectionOpen}
-                    >
-                      <Tag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="flex-1 text-sm font-semibold text-foreground">Tags</span>
-                      <ChevronDown
-                        className={cn(
-                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                          !tagsSectionOpen && '-rotate-90',
-                        )}
-                      />
-                    </button>
-                    {tagsSectionOpen ? (
-                      <div className="px-4 pb-3">
-                        {(selectedConversation.tags ?? []).length > 0 ? (
-                          <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
-                            {(selectedConversation.tags ?? []).map((tag) => (
-                              <li key={tag}>
-                                <div className="flex items-center justify-between gap-3 py-2.5 font-mono text-sm text-foreground">
-                                  <span className="min-w-0 flex-1 truncate" title={tag}>
-                                    {tag}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="shrink-0 select-none px-1 text-base leading-none text-muted-foreground hover:text-foreground disabled:opacity-40"
-                                    disabled={tagMutationBusy}
-                                    aria-label={`Remove tag ${tag}`}
-                                    onClick={() => void handleRemoveConversationTag(tag)}
-                                  >
-                                    ×
-                                  </button>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p className="m-0 border-y border-border py-2.5 text-xs text-muted-foreground">
-                            No tags yet.
-                          </p>
-                        )}
-                        <div className="mt-3 flex gap-2">
-                          <Input
-                            value={tagDraft}
-                            onChange={(e) => setTagDraft(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                void handleAddConversationTag();
-                              }
-                            }}
-                            placeholder="Add tags (comma-separated)…"
-                            disabled={tagMutationBusy}
-                            className="h-9 flex-1 font-mono text-xs"
-                          />
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            className="h-9 shrink-0 px-3 text-xs"
-                            disabled={tagMutationBusy || !tagDraft.trim()}
-                            onClick={() => void handleAddConversationTag()}
-                          >
-                            Add
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                      onClick={() => setInteractionSummaryOpen((o) => !o)}
-                      aria-expanded={interactionSummaryOpen}
-                    >
-                      <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="flex-1 text-sm font-semibold text-foreground">
-                        Interaction summary
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                          !interactionSummaryOpen && '-rotate-90',
-                        )}
-                      />
-                    </button>
-                    {interactionSummaryOpen ? (
-                      <div className="space-y-2 px-4 pb-3">
-                        <Textarea
-                          value={interactionSummaryDraft}
-                          onChange={(e) => setInteractionSummaryDraft(e.target.value)}
-                          placeholder="Notes on this thread for your team…"
-                          disabled={interactionSummarySaving}
-                          rows={5}
-                          className="min-h-[120px] resize-y text-xs"
-                        />
-                        <div className="flex justify-end">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            className="h-8 px-3 text-xs"
-                            disabled={
-                              interactionSummarySaving || !interactionSummaryDirty
-                            }
-                            onClick={() => void handleSaveInteractionSummary()}
-                          >
-                            {interactionSummarySaving ? 'Saving…' : 'Save summary'}
-                          </Button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex flex-col">
-                    <button
-                      type="button"
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-                      onClick={() => setInteractionHistoryOpen((o) => !o)}
-                      aria-expanded={interactionHistoryOpen}
-                    >
-                      <History className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                      <span className="flex-1 text-sm font-semibold text-foreground">
-                        Interaction history
-                      </span>
-                      <ChevronDown
-                        className={cn(
-                          'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                          !interactionHistoryOpen && '-rotate-90',
-                        )}
-                      />
-                    </button>
-                    {interactionHistoryOpen ? (
-                      <div className="no-scrollbar max-h-72 overflow-y-auto px-4 pb-3">
-                        {threadDataLoading ? (
-                          <p className="m-0 text-xs text-muted-foreground">Loading messages…</p>
-                        ) : interactionHistoryMessages.length === 0 ? (
-                          <p className="m-0 text-xs text-muted-foreground">No messages yet</p>
-                        ) : (
-                          <div className="flex flex-col">
-                            {interactionHistoryMessages.map((m, i) => {
-                              const isNewest = i === 0;
-                              const isLast = i === interactionHistoryMessages.length - 1;
-                              return (
-                                <div
-                                  key={m.key}
-                                  className={cn(
-                                    'flex gap-3 py-1',
-                                    isNewest && 'rounded-md bg-muted/40 px-1',
-                                  )}
-                                >
-                                  <div className="flex w-5 shrink-0 flex-col items-center">
-                                    {!isNewest ? (
-                                      <div className="w-px flex-1 bg-border" style={{ minHeight: 6 }} />
-                                    ) : (
-                                      <div style={{ minHeight: 4 }} />
-                                    )}
-                                    <div
-                                      className={cn(
-                                        'size-2 shrink-0 rounded-sm',
-                                        isNewest
-                                          ? 'bg-red-600 dark:bg-red-500'
-                                          : 'bg-muted-foreground/45',
-                                      )}
-                                      aria-hidden
-                                    />
-                                    {!isLast ? (
-                                      <div className="w-px flex-1 bg-border" style={{ minHeight: 14 }} />
-                                    ) : null}
-                                  </div>
-                                  <div className="min-w-0 flex-1 pb-3 pr-0.5">
-                                    <div className="truncate text-sm font-medium text-foreground">
-                                      {historyMessageLineTitle(m.text)}
-                                    </div>
-                                    <div className="text-xs text-muted-foreground">
-                                      {m.role === 'user' ? (
-                                        'Customer'
-                                      ) : (
-                                        <>
-                                          {(m as InboxUIMessage).agentName ?? 'Unknown agent'}
-                                          {(m as InboxUIMessage).sentByAi ? (
-                                            <span className="ml-1 text-muted-foreground">· AI</span>
-                                          ) : null}
-                                        </>
-                                      )}
-                                    </div>
-                                    <div className="mt-1 text-xs text-foreground">
-                                      <span className="font-semibold">Status </span>
-                                      <span className="font-normal">
-                                        {m.role === 'user'
-                                          ? 'Received'
-                                          : (m.status ?? 'Sent')}
-                                      </span>
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-      )}
 
       </div>
     </div>

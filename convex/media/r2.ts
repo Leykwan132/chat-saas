@@ -1,0 +1,42 @@
+import { R2 } from "@convex-dev/r2";
+import { components } from "../_generated/api";
+
+// Convex env: R2_BUCKET, R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_TOKEN
+// Server send path: MEDIA_CDN_BASE_URL (custom domain, no trailing slash)
+// Client previews: VITE_MEDIA_CDN_BASE_URL (same origin)
+
+export const r2 = new R2(components.r2);
+
+const DEFAULT_MEDIA_CDN_BASE_URL = "";
+
+export function getMediaCdnBaseUrl(): string {
+  const base = process.env.MEDIA_CDN_BASE_URL ?? DEFAULT_MEDIA_CDN_BASE_URL;
+  return base.replace(/\/$/, "");
+}
+
+/** Stable HTTPS URL served via the R2 custom domain. */
+export function getPublicMediaUrl(r2Key: string): string {
+  const base = getMediaCdnBaseUrl();
+  if (!base) {
+    throw new Error(
+      "MEDIA_CDN_BASE_URL is not configured. Set it to your R2 custom domain.",
+    );
+  }
+  return `${base}/${r2Key}`;
+}
+
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/gif": "gif",
+  "image/webp": "webp",
+  "image/heic": "heic",
+  "image/heif": "heif",
+};
+
+export function generateInboxMediaKey(orgId: string, mimeType: string): string {
+  const ext = MIME_TO_EXT[mimeType] ?? "bin";
+  const id = crypto.randomUUID();
+  return `inbox/${orgId}/${id}.${ext}`;
+}

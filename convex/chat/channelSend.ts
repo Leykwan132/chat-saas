@@ -62,6 +62,134 @@ export type SendTextToChannelOptions = {
   allowHumanAgentTag?: boolean;
 };
 
+export type SendMediaToChannelOptions = SendTextToChannelOptions & {
+  text?: string;
+  imageUrls: string[];
+};
+
+export type SendTextAndImageOptions = SendTextToChannelOptions & {
+  text: string;
+  imageUrls: string[];
+};
+
+export type TextAndImageSendResult = {
+  imageResult: ChannelSendResult;
+  textResult: ChannelSendResult;
+};
+
+/** Instagram/Messenger: media first, then text (two channel messages). */
+export async function sendTextAndImage(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: SendTextAndImageOptions,
+): Promise<TextAndImageSendResult> {
+  const imageUrls = options.imageUrls.filter((url) => url.trim().length > 0);
+  const trimmed = options.text.trim();
+  if (!trimmed) {
+    throw new Error("sendTextAndImage requires non-empty text");
+  }
+  if (imageUrls.length === 0) {
+    throw new Error("sendTextAndImage requires at least one image");
+  }
+
+  const channelOptions: SendTextToChannelOptions = {
+    allowHumanAgentTag: options.allowHumanAgentTag,
+  };
+
+  if (conversation.service === "instagram") {
+    const imageResult = await sendInstagramMedia(conversation, channel, {
+      text: "",
+      imageUrls,
+      options: channelOptions,
+    });
+    if (!imageResult.ok) {
+      return { imageResult, textResult: imageResult };
+    }
+    const textResult = await sendInstagram(
+      conversation,
+      channel,
+      trimmed,
+      channelOptions,
+    );
+    return { imageResult, textResult };
+  }
+
+  if (conversation.service === "messenger") {
+    const imageResult = await sendMessengerMedia(conversation, channel, {
+      text: "",
+      imageUrls,
+      options: channelOptions,
+    });
+    if (!imageResult.ok) {
+      return { imageResult, textResult: imageResult };
+    }
+    const textResult = await sendMessenger(
+      conversation,
+      channel,
+      trimmed,
+      channelOptions,
+    );
+    return { imageResult, textResult };
+  }
+
+  throw new Error("sendTextAndImage requires instagram or messenger");
+}
+
+export async function sendMediaToChannel(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: SendMediaToChannelOptions,
+): Promise<ChannelSendResult> {
+  const imageUrls = options.imageUrls.filter((url) => url.trim().length > 0);
+  const trimmed = options.text?.trim() ?? "";
+
+  if (imageUrls.length === 0) {
+    return sendTextToChannel(conversation, channel, trimmed, options);
+  }
+
+  if (conversation.service === "whatsapp") {
+    return {
+      ok: false,
+      error:
+        "Image attachments are not supported for WhatsApp yet. Send text only.",
+      policy: "generic",
+    };
+  }
+
+  switch (conversation.service) {
+    case "instagram":
+      if (trimmed.length > 0) {
+        const { textResult } = await sendTextAndImage(conversation, channel, {
+          text: trimmed,
+          imageUrls,
+          allowHumanAgentTag: options.allowHumanAgentTag,
+        });
+        return textResult;
+      }
+      return sendInstagramMedia(conversation, channel, {
+        text: "",
+        imageUrls,
+        options,
+      });
+    case "messenger":
+      if (trimmed.length > 0) {
+        const { textResult } = await sendTextAndImage(conversation, channel, {
+          text: trimmed,
+          imageUrls,
+          allowHumanAgentTag: options.allowHumanAgentTag,
+        });
+        return textResult;
+      }
+      return sendMessengerMedia(conversation, channel, {
+        text: "",
+        imageUrls,
+        options,
+      });
+    default:
+      return { ok: false, error: "Unsupported service", policy: "generic" };
+  }
+}
+
 export async function sendTextToChannel(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -93,6 +221,14 @@ export function formatChannelSendError(result: Extract<ChannelSendResult, { ok: 
     );
   }
   return result.error;
+}
+
+export function throwIfChannelSendFailed(
+  result: ChannelSendResult,
+): asserts result is Extract<ChannelSendResult, { ok: true }> {
+  if (!result.ok) {
+    throw new Error(formatChannelSendError(result));
+  }
 }
 
 function messagingWindowState(
@@ -220,6 +356,96 @@ async function sendInstagram(
   return parsed;
 }
 
+function buildImageAttachments(imageUrls: string[]) {
+  return imageUrls.map((url) => ({
+    type: "image" as const,
+    payload: { url },
+  }));
+}
+
+async function sendInstagramMedia(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  args: {
+    text: string;
+    imageUrls: string[];
+    options?: SendTextToChannelOptions;
+  },
+): Promise<ChannelSendResult> {
+  if (channel.status !== "connected" || !channel.igUserId) {
+    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+  }
+
+  const trimmed = args.text;
+  if (trimmed.length > 0) {
+    const bytes = new TextEncoder().encode(trimmed).length;
+    if (bytes > 1000) {
+      return {
+        ok: false,
+        error: "Instagram text messages must be 1000 bytes or less (UTF-8)",
+        policy: "generic",
+      };
+    }
+  }
+
+  const windowState = messagingWindowState(conversation);
+  if (windowState === "blocked") {
+    return {
+      ok: false,
+      error: "Outside Instagram messaging window",
+      policy: "messaging_window",
+    };
+  }
+
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+  }
+
+  const useHumanAgent =
+    windowState === "human_agent" && args.options?.allowHumanAgentTag === true;
+
+  const message: Record<string, unknown> = {
+    attachments: buildImageAttachments(args.imageUrls),
+  };
+  if (trimmed.length > 0) {
+    message.text = trimmed;
+  }
+
+  const body: Record<string, unknown> = {
+    message,
+    recipient: { id: conversation.contactAddress },
+  };
+  if (useHumanAgent) {
+    body.messaging_type = "MESSAGE_TAG";
+    body.tag = "HUMAN_AGENT";
+  }
+
+  const res = await fetch(`${igGraphBase()}/me/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const parsed = await parseGraphResponse(res);
+  if (
+    !parsed.ok &&
+    parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
+    windowState === "human_agent" &&
+    args.options?.allowHumanAgentTag &&
+    !useHumanAgent
+  ) {
+    return sendInstagramMedia(conversation, channel, {
+      ...args,
+      options: { ...args.options, allowHumanAgentTag: true },
+    });
+  }
+  return parsed;
+}
+
 async function sendMessenger(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -277,6 +503,82 @@ async function sendMessenger(
     return sendMessenger(conversation, channel, trimmed, {
       ...options,
       allowHumanAgentTag: true,
+    });
+  }
+  return parsed;
+}
+
+async function sendMessengerMedia(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  args: {
+    text: string;
+    imageUrls: string[];
+    options?: SendTextToChannelOptions;
+  },
+): Promise<ChannelSendResult> {
+  if (channel.status !== "connected" || !channel.pageId) {
+    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+  }
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+  }
+
+  const windowState = messagingWindowState(conversation);
+  if (windowState === "blocked") {
+    return {
+      ok: false,
+      error: "Outside Messenger messaging window",
+      policy: "messaging_window",
+    };
+  }
+
+  const useHumanAgent =
+    windowState === "human_agent" && args.options?.allowHumanAgentTag === true;
+
+  const message: Record<string, unknown> = {
+    attachments: buildImageAttachments(args.imageUrls),
+  };
+  if (args.text.length > 0) {
+    message.text = args.text;
+  }
+
+  const payload: Record<string, unknown> = {
+    recipient: { id: conversation.contactAddress },
+    message,
+  };
+  if (useHumanAgent) {
+    // payload.messaging_type = "MESSAGE_TAG";
+    // payload.tag = "HUMAN_AGENT";
+  } else {
+    payload.messaging_type = "RESPONSE";
+  }
+  console.log("recipient", conversation.contactAddress);
+  console.log("accessToken", accessToken);
+  console.log("payload", payload);
+  const res = await fetch(`${fbGraphBase()}/me/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  console.log("res", res);
+
+  const parsed = await parseGraphResponse(res);
+  if (
+    !parsed.ok &&
+    parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
+    windowState === "human_agent" &&
+    args.options?.allowHumanAgentTag &&
+    !useHumanAgent
+  ) {
+    return sendMessengerMedia(conversation, channel, {
+      ...args,
+      options: { ...args.options, allowHumanAgentTag: true },
     });
   }
   return parsed;

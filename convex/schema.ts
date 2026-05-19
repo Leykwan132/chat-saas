@@ -311,4 +311,25 @@ export default defineSchema({
     // Page picker (authorization codes are single-use).
     pendingUserAccessToken: v.optional(v.string()),
   }).index("by_csrf", ["csrf"]),
+  mediaUploads: defineTable({
+    clientId: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("uploading"),
+      v.literal("ready"),
+      v.literal("failed"),
+      v.literal("cancelled"),
+      v.literal("deleting"),
+    ),
+    r2Key: v.optional(v.string()),
+    publicUrl: v.optional(v.string()),
+    mediaType: v.string(),
+    filename: v.optional(v.string()),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
+    .index("by_orgId_userId", ["orgId", "userId"]),
 });

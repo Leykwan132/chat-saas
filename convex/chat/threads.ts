@@ -82,13 +82,61 @@ export async function saveUserMessage(
  * UI. We insert a hidden user "spacer" turn first, then attach the assistant
  * reply to that turn via `promptMessageId`.
  */
+type HumanReplyImage = { url: string; mimeType: string };
+
+type HumanReplyMultimodalContent = Array<
+  { type: "text"; text: string } | { type: "file"; data: string; mediaType: string }
+>;
+
+function buildHumanReplyTextAndImagesContent(
+  text: string,
+  images: HumanReplyImage[],
+): HumanReplyMultimodalContent {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Text is required when saving text and images together");
+  }
+  if (images.length === 0) {
+    throw new Error("At least one image is required when saving text and images together");
+  }
+
+  const imageParts = images.map((img) => ({
+    type: "file" as const,
+    data: img.url,
+    mediaType: img.mimeType,
+  }));
+
+  return [...imageParts, { type: "text" as const, text: trimmed }];
+}
+
+function buildHumanReplyContent(
+  text: string,
+  images: HumanReplyImage[],
+): string | HumanReplyMultimodalContent {
+  const trimmed = text.trim();
+  const imageParts = images.map((img) => ({
+    type: "file" as const,
+    data: img.url,
+    mediaType: img.mimeType,
+  }));
+
+  if (imageParts.length === 0) {
+    return trimmed;
+  }
+  if (trimmed.length === 0) {
+    return imageParts;
+  }
+  return buildHumanReplyTextAndImagesContent(trimmed, images);
+}
+
 async function saveAssistantWithOwnOrder(
   ctx: MutationCtx,
   args: {
     threadId: string;
-    content: string;
+    content: string | HumanReplyMultimodalContent;
     sentAt: number;
     outbound: InboxOutboundMeta;
+    messageMetadata?: Record<string, unknown>;
   },
 ): Promise<string> {
   const { messageId: spacerId } = await saveMessage(ctx, components.agent, {
@@ -108,6 +156,7 @@ async function saveAssistantWithOwnOrder(
     metadata: {
       sentAt: args.sentAt,
       inboxOutbound: args.outbound,
+      ...args.messageMetadata,
     } as Record<string, unknown>,
   });
   return messageId;
@@ -121,12 +170,14 @@ export async function saveHumanReply(
     assignedAgentId: Id<"agents"> | undefined;
     authorUserId?: string;
     sentAt?: number;
+    images?: HumanReplyImage[];
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
+  const replyContent = buildHumanReplyContent(content, opts.images ?? []);
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
-    content,
+    content: replyContent,
     sentAt: opts.sentAt ?? Date.now(),
     outbound: {
       agentName,
@@ -135,6 +186,41 @@ export async function saveHumanReply(
         ? { authorUserId: opts.authorUserId }
         : {}),
     },
+  });
+}
+
+/** One agent-thread message with image file part(s) and text (inbox caption + attachments). */
+export async function saveHumanReplyTextAndImages(
+  ctx: MutationCtx,
+  threadId: string,
+  text: string,
+  images: HumanReplyImage[],
+  opts: {
+    assignedAgentId: Id<"agents"> | undefined;
+    authorUserId?: string;
+    sentAt?: number;
+    clientIds?: string[];
+  },
+): Promise<string> {
+  const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
+  const replyContent = buildHumanReplyTextAndImagesContent(text, images);
+  const sentAt = opts.sentAt ?? Date.now();
+
+  return await saveAssistantWithOwnOrder(ctx, {
+    threadId,
+    content: replyContent,
+    sentAt,
+    outbound: {
+      agentName,
+      sentByAi: false,
+      ...(opts.authorUserId !== undefined
+        ? { authorUserId: opts.authorUserId }
+        : {}),
+    },
+    messageMetadata:
+      opts.clientIds !== undefined && opts.clientIds.length > 0
+        ? { clientIds: opts.clientIds }
+        : undefined,
   });
 }
 

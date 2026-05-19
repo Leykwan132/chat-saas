@@ -1,5 +1,19 @@
 import { Check, Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
+import { isFileUIPart } from 'ai';
+import { useMemo, useState } from 'react';
+import {
+  Attachment,
+  AttachmentPreview,
+  Attachments,
+  getAttachmentLabel,
+  getMediaCategory,
+  type AttachmentData,
+} from '@/components/ai-elements/attachments';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   ConversationContent,
   ConversationEmptyState,
@@ -13,6 +27,19 @@ import {
 import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import { inboxMessageFrom } from '@/lib/inboxOptimistic';
 import { cn } from '@/lib/utils';
+
+function getInboxMessageFileParts(
+  message: InboxUIMessage,
+): AttachmentData[] {
+  const parts = message.parts ?? [];
+  return parts
+    .filter(isFileUIPart)
+    .filter((part) => Boolean(part.url))
+    .map((part, index) => ({
+      ...part,
+      id: `${message.key}-file-${index}`,
+    }));
+}
 
 export type InboxThreadMessagesProps = {
   messages: InboxUIMessage[];
@@ -44,6 +71,157 @@ function OutgoingLabel({ message }: { message: InboxUIMessage }) {
   );
 }
 
+function InboxImageLightbox({
+  file,
+  open,
+  onOpenChange,
+}: {
+  file: AttachmentData | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  if (!file || file.type !== 'file' || !file.url) return null;
+
+  const label = getAttachmentLabel(file);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton
+        className={cn(
+          // Override default dialog centering (top-1/2, translate, sm:max-w-md, grid, zoom)
+          'fixed inset-0 z-50 m-0 h-svh w-svw max-w-none translate-none transform-none',
+          'top-0 left-0 rounded-none border-0 bg-black/50 p-0 shadow-none ring-0 supports-backdrop-filter:backdrop-blur-sm',
+          'sm:top-0 sm:left-0 sm:max-w-none',
+          'data-open:fade-in-0 data-closed:fade-out-0',
+          '[&_[data-slot=dialog-close]]:z-10 [&_[data-slot=dialog-close]]:bg-white/10',
+          '[&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:hover:bg-white/20',
+        )}
+      >
+        <DialogTitle className="sr-only">{label}</DialogTitle>
+        <div
+          className="absolute inset-0 flex cursor-default items-center justify-center p-4"
+          onClick={() => onOpenChange(false)}
+        >
+          <img
+            src={file.url}
+            alt={label}
+            className="max-h-full max-w-full cursor-default object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function InboxMessageAttachments({
+  files,
+  isCustomer,
+}: {
+  files: AttachmentData[];
+  isCustomer: boolean;
+}) {
+  const [lightboxFile, setLightboxFile] = useState<AttachmentData | null>(null);
+
+  if (files.length === 0) return null;
+
+  return (
+    <>
+      <Attachments
+        className={cn(
+          'w-fit',
+          isCustomer ? 'ml-0 justify-start' : 'ml-auto justify-end',
+        )}
+        variant="grid"
+      >
+        {files.map((file) => {
+          const isImage =
+            file.type === 'file' &&
+            getMediaCategory(file) === 'image' &&
+            Boolean(file.url);
+
+          return (
+            <Attachment
+              key={file.id}
+              className={cn(
+                'size-48 max-w-[min(240px,100%)]',
+                isImage && 'cursor-zoom-in',
+              )}
+              data={file}
+              role={isImage ? 'button' : undefined}
+              tabIndex={isImage ? 0 : undefined}
+              aria-label={isImage ? `View ${getAttachmentLabel(file)}` : undefined}
+              onClick={
+                isImage
+                  ? () => setLightboxFile(file)
+                  : undefined
+              }
+              onKeyDown={
+                isImage
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setLightboxFile(file);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              <AttachmentPreview />
+            </Attachment>
+          );
+        })}
+      </Attachments>
+      <InboxImageLightbox
+        file={lightboxFile}
+        open={lightboxFile !== null}
+        onOpenChange={(open) => {
+          if (!open) setLightboxFile(null);
+        }}
+      />
+    </>
+  );
+}
+
+function InboxMessageBody({
+  message,
+  isCustomer,
+  isPending,
+}: {
+  message: InboxUIMessage;
+  isCustomer: boolean;
+  isPending: boolean;
+}) {
+  const files = useMemo(() => getInboxMessageFileParts(message), [message]);
+  const text = message.text?.trim() ?? '';
+  const showText = text.length > 0;
+  const showFiles = files.length > 0;
+
+  return (
+    <>
+      {showFiles ? (
+        <InboxMessageAttachments files={files} isCustomer={isCustomer} />
+      ) : null}
+      {showText ? (
+        <div
+          className={cn(
+            'w-fit max-w-full px-3 py-1.5 text-sm leading-snug whitespace-pre-wrap break-words',
+            isCustomer
+              ? 'rounded-[2px_16px_16px_16px] border border-border bg-card text-foreground'
+              : cn(
+                  'rounded-[16px_16px_2px_16px] bg-primary text-primary-foreground',
+                  isPending && 'opacity-80',
+                ),
+          )}
+        >
+          {text}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 export function InboxThreadMessages({
   messages,
   loading = false,
@@ -51,7 +229,6 @@ export function InboxThreadMessages({
   emptyDescription = 'Messages in this conversation will appear here.',
 }: InboxThreadMessagesProps) {
   const threadItems = useMemo(() => buildInboxThreadItems(messages), [messages]);
-
   return (
     <>
       <ConversationContent
@@ -79,31 +256,24 @@ export function InboxThreadMessages({
                   className={cn('max-w-[78%]', !isCustomer && 'ml-auto')}
                 >
                   {isCustomer ? (
-                    <div className="flex w-fit max-w-full flex-col items-start gap-0.5">
-                      <div
-                        className={cn(
-                          'w-fit max-w-full rounded-[2px_16px_16px_16px] border border-border bg-card px-3 py-1.5',
-                          'text-sm leading-snug text-foreground whitespace-pre-wrap break-words',
-                        )}
-                      >
-                        {m.text}
-                      </div>
+                    <div className="flex w-fit max-w-full flex-col items-start gap-1">
+                      <InboxMessageBody
+                        isCustomer
+                        isPending={isPending}
+                        message={m}
+                      />
                       <span className="pl-0.5 text-xs text-muted-foreground">
                         {formatMessageTime(m._creationTime)}
                       </span>
                     </div>
                   ) : (
-                    <div className="flex w-fit max-w-full flex-col items-end gap-0.5">
+                    <div className="flex w-fit max-w-full flex-col items-end gap-1">
                       <OutgoingLabel message={m} />
-                      <div
-                        className={cn(
-                          'w-fit max-w-full rounded-[16px_16px_2px_16px] bg-primary px-3 py-1.5',
-                          'text-sm leading-snug text-primary-foreground whitespace-pre-wrap break-words',
-                          isPending && 'opacity-80',
-                        )}
-                      >
-                        {m.text}
-                      </div>
+                      <InboxMessageBody
+                        isCustomer={false}
+                        isPending={isPending}
+                        message={m}
+                      />
                       <span className="flex items-center justify-end gap-0.5 pr-0.5 text-xs text-muted-foreground">
                         {isPending ? (
                           <Loader2
