@@ -549,14 +549,12 @@ async function sendMessengerMedia(
     message,
   };
   if (useHumanAgent) {
-    // payload.messaging_type = "MESSAGE_TAG";
-    // payload.tag = "HUMAN_AGENT";
+    payload.messaging_type = "MESSAGE_TAG";
+    payload.tag = "HUMAN_AGENT";
   } else {
     payload.messaging_type = "RESPONSE";
   }
-  console.log("recipient", conversation.contactAddress);
-  console.log("accessToken", accessToken);
-  console.log("payload", payload);
+
   const res = await fetch(`${fbGraphBase()}/me/messages`, {
     method: "POST",
     headers: {
@@ -565,8 +563,6 @@ async function sendMessengerMedia(
     },
     body: JSON.stringify(payload),
   });
-
-  console.log("res", res);
 
   const parsed = await parseGraphResponse(res);
   if (
