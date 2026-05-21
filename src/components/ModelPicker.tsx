@@ -50,7 +50,7 @@ const ModelPickerItem = memo(function ModelPickerItem({
     >
       <ModelSelectorLogo provider={option.chefSlug} />
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
-        <ModelSelectorName className={cn('truncate', selected && 'font-semibold')}>
+        <ModelSelectorName className={cn('truncate flex-initial min-w-0', selected && 'font-semibold')}>
           {option.label}
         </ModelSelectorName>
         {option.isPopular && (
