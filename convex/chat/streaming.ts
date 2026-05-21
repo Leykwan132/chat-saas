@@ -324,3 +324,31 @@ export const listThreadMessages = query({
     return { ...paginated, streams };
   },
 });
+
+export const getLatestPlaygroundThread = query({
+  args: {
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const { userId, orgId } = await getAuthContext(ctx);
+    if (!orgId) return null;
+
+    const conv = await ctx.db
+      .query("conversations")
+      .withIndex("by_orgId_and_service_and_assignedAgentId_and_assignedUserId", (q) =>
+        q
+          .eq("orgId", orgId)
+          .eq("service", "playground")
+          .eq("assignedAgentId", args.agentId)
+          .eq("assignedUserId", userId),
+      )
+      .filter((q) => q.eq(q.field("status"), "open"))
+      .first();
+
+    if (conv === null) return null;
+    return {
+      threadId: conv.threadId,
+      conversationId: conv._id,
+    };
+  },
+});

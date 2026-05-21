@@ -289,6 +289,11 @@ export function TestChatWindow({
     api.knowledgeBaseImages.listReadyMediaByAgent,
     { agentId },
   ) ?? {};
+  const latestPlaygroundThread = useQuery(
+    api.chat.streaming.getLatestPlaygroundThread,
+    threadId ? "skip" : { agentId }
+  );
+
   useEffect(() => {
     if (conversation) {
       setConversationId(conversation._id);
@@ -296,17 +301,26 @@ export function TestChatWindow({
   }, [conversation]);
 
   useEffect(() => {
-    if (threadInitRef.current) return;
     if (threadId) {
       threadInitRef.current = true;
       return;
     }
+
+    if (latestPlaygroundThread === undefined) return;
+
+    if (threadInitRef.current) return;
     threadInitRef.current = true;
-    resetThreadMutation({ agentId }).then(({ threadId, conversationId }) => {
-      setConversationId(conversationId);
-      navigate(`/dashboard/${agentId}/agent/${threadId}`, { replace: true });
-    });
-  }, [agentId, threadId, resetThreadMutation, navigate]);
+
+    if (latestPlaygroundThread !== null) {
+      setConversationId(latestPlaygroundThread.conversationId);
+      navigate(`/dashboard/${agentId}/playground/${latestPlaygroundThread.threadId}`, { replace: true });
+    } else {
+      resetThreadMutation({ agentId }).then(({ threadId: newThreadId, conversationId }) => {
+        setConversationId(conversationId);
+        navigate(`/dashboard/${agentId}/playground/${newThreadId}`, { replace: true });
+      });
+    }
+  }, [agentId, threadId, latestPlaygroundThread, resetThreadMutation, navigate]);
 
   useEffect(() => {
     if (!isSending && shouldFocusAfterSend.current) {
@@ -355,83 +369,99 @@ export function TestChatWindow({
     const { threadId: newThreadId, conversationId: newConversationId } =
       await resetThreadMutation({ agentId, existingThreadId: threadId });
     setConversationId(newConversationId);
-    navigate(`/dashboard/${agentId}/agent/${newThreadId}`, { replace: true });
+    navigate(`/dashboard/${agentId}/playground/${newThreadId}`, { replace: true });
   };
 
-  const renderMessages = () => (
-    <>
-      <ConversationContent>
-        {messages.length === 0 ? (
-          <ConversationEmptyState
-            title="Chat with your agent"
-            description="Send a message to test your agent."
-          />
-        ) : (
-          messages.map((message) => {
-            const rawText = message.text ?? "";
-            const displayText =
-              message.role === "user" ? rawText : stripMediaMarkers(rawText);
-            const mediaItems =
-              message.role === "user"
-                ? []
-                : extractMediaKeys(rawText)
-                    .map((clientId) => mediaByClientId[clientId])
-                    .filter(
-                      (item): item is { url: string; mediaType: string } =>
-                        item !== undefined,
-                    );
+  const isConversationLoading = !threadId || status === "LoadingFirstPage";
 
-            return (
-            // @ts-ignore
-            <Message from={message.role} key={message.key}>
+  const renderMessages = () => {
+    if (isConversationLoading) {
+      return (
+        <ConversationContent>
+          <div className="flex size-full min-h-[400px] flex-col items-center justify-center gap-3 text-center">
+            <Shimmer duration={2} spread={3} className="text-sm font-medium">
+              Loading Conversations...
+            </Shimmer>
+          </div>
+        </ConversationContent>
+      );
+    }
+
+    return (
+      <>
+        <ConversationContent>
+          {messages.length === 0 ? (
+            <ConversationEmptyState
+              title="Chat with your agent"
+              description="Send a message to test your agent."
+            />
+          ) : (
+            messages.map((message) => {
+              const rawText = message.text ?? "";
+              const displayText =
+                message.role === "user" ? rawText : stripMediaMarkers(rawText);
+              const mediaItems =
+                message.role === "user"
+                  ? []
+                  : extractMediaKeys(rawText)
+                      .map((clientId) => mediaByClientId[clientId])
+                      .filter(
+                        (item): item is { url: string; mediaType: string } =>
+                          item !== undefined,
+                      );
+
+              return (
+              // @ts-ignore
+              <Message from={message.role} key={message.key}>
+                <MessageContent>
+                  {message.role !== "user" ? (
+                    <div className="flex items-start gap-2">
+                      <AnimatedBotIcon
+                        isAnimating={
+                          message.status === "streaming" ||
+                          message.status === "pending"
+                        }
+                      />
+                      <MessageResponse>
+                        <StreamingMarkdown
+                          text={displayText}
+                          status={message.status}
+                        />
+                        <PlaygroundMessageAttachments
+                          messageKey={message.key}
+                          items={mediaItems}
+                        />
+                      </MessageResponse>
+                    </div>
+                  ) : (
+                    <div className=" rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground ml-auto">
+                      {displayText}
+                    </div>
+                  )}
+                </MessageContent>
+              </Message>
+              );
+            })
+          )}
+          {status === "LoadingMore" && messages.length > 0 && (
+            <Message from="assistant">
               <MessageContent>
-                {message.role !== "user" ? (
-                  <div className="flex items-start gap-2">
-                    <AnimatedBotIcon
-                      isAnimating={
-                        message.status === "streaming" ||
-                        message.status === "pending"
-                      }
-                    />
-                    <MessageResponse>
-                      <StreamingMarkdown
-                        text={displayText}
-                        status={message.status}
-                      />
-                      <PlaygroundMessageAttachments
-                        messageKey={message.key}
-                        items={mediaItems}
-                      />
-                    </MessageResponse>
+                <div className="flex items-start gap-2">
+                  <AnimatedBotIcon isAnimating={true} />
+                  <div className="pt-1">
+                    <Shimmer duration={3} spread={3}>
+                      Slower shimmer with wider spread
+                    </Shimmer>
                   </div>
-                ) : (
-                  <div className=" rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground ml-auto">
-                    {displayText}
-                  </div>
-                )}
+                </div>
               </MessageContent>
             </Message>
-            );
-          })
-        )}
-        {status === "LoadingMore" && messages.length > 0 && (
-          <Message from="assistant">
-            <MessageContent>
-              <div className="flex items-start gap-2">
-                <AnimatedBotIcon isAnimating={true} />
-                <div className="pt-1">
-                  <Shimmer duration={3} spread={3}>
-                    Slower shimmer with wider spread
-                  </Shimmer>
-                </div>
-              </div>
-            </MessageContent>
-          </Message>
-        )}
-      </ConversationContent>
-      <ConversationScrollButton />
-    </>
-  );
+          )}
+        </ConversationContent>
+        <ConversationScrollButton />
+      </>
+    );
+  };
 
   const renderInput = (ref: React.RefObject<HTMLTextAreaElement | null>) => (
     <div className="w-full min-w-0 max-w-full shrink-0 overflow-hidden border-t border-border p-4">

@@ -249,7 +249,13 @@ export default defineSchema({
     .index("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
     .index("by_channel_and_contactAddress", ["channelId", "contactAddress"])
     .index("by_threadId", ["threadId"])
-    .index("by_customerId", ["customerId"]),
+    .index("by_customerId", ["customerId"])
+    .index("by_orgId_and_service_and_assignedAgentId_and_assignedUserId", [
+      "orgId",
+      "service",
+      "assignedAgentId",
+      "assignedUserId",
+    ]),
   messages: defineTable({
     orgId: v.string(),
     conversationId: v.id("conversations"),

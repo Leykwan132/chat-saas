@@ -48,8 +48,6 @@ export default function AgentPage() {
     selectedAgentId ? { agentId: selectedAgentId } : 'skip',
   );
   const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
-  const creditBalance = useQuery(api.credits.getBalance);
-  const playgroundDeductEnabled = useQuery(api.credits.isPlaygroundDeductEnabled);
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
   const [model, setModel] = useState('');
@@ -155,11 +153,6 @@ export default function AgentPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {playgroundDeductEnabled && creditBalance !== undefined && creditBalance !== null && (
-            <span className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-              {creditBalance.credits} credits
-            </span>
-          )}
           {status && (
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
               <Check className="size-4" />
