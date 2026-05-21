@@ -20,6 +20,14 @@ export function formatTimeAgo(ts: number): string {
   return `${days}d ago`;
 }
 
+/** react-drag-drop-files passes a FileList (not File[]) when multiple is enabled. */
+export function normalizeUploaderFiles(
+  fileOrFiles: File | FileList | File[],
+): File[] {
+  if (fileOrFiles instanceof File) return [fileOrFiles];
+  return Array.from(fileOrFiles);
+}
+
 // ─── Status helpers ────────────────────────────────────────
 
 export function StatusBadge({ status }: { status?: string }) {
@@ -37,6 +45,10 @@ export function isInProgress(status?: string) {
     status === "queued" || status === "processing" || status === "deleting";
 }
 
+export function isKbImageInProgress(status?: string) {
+  return status === "queued" || status === "uploading" || status === "deleting";
+}
+
 export function isValidUrl(url: string): boolean {
   try {
     const parsed = new URL(url);
@@ -47,8 +59,8 @@ export function isValidUrl(url: string): boolean {
 // ─── Types ─────────────────────────────────────────────────
 
 export type OpenDeleteDialog = (
-  entryType: 'web' | 'file' | 'text' | 'qa',
-  entryId: Id<any>,
+  entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
+  entryId: Id<any> | string,
   cfItemId?: string,
   isGroup?: boolean,
 ) => void;

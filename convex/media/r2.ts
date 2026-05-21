@@ -40,3 +40,39 @@ export function generateInboxMediaKey(orgId: string, mimeType: string): string {
   const id = crypto.randomUUID();
   return `inbox/${orgId}/${id}.${ext}`;
 }
+
+// ─── Knowledge-base image helpers ─────────────────────────
+
+function sanitizePathSegment(value: string): string {
+  return value.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 100);
+}
+
+export function buildKnowledgeBaseImageFileName(
+  collectionName: string,
+  originalFileName: string,
+): string {
+  const collection = sanitizePathSegment(collectionName.trim());
+  const trimmed = originalFileName.trim();
+  if (!collection) return sanitizePathSegment(trimmed);
+  if (!trimmed) return collection;
+
+  const dotIdx = trimmed.lastIndexOf(".");
+  const stem = dotIdx > 0 ? trimmed.slice(0, dotIdx) : trimmed;
+  const ext =
+    dotIdx > 0 ? trimmed.slice(dotIdx).replace(/[^a-zA-Z0-9.]/g, "") : "";
+  const safeStem = sanitizePathSegment(stem);
+  const prefix = `${collection}_`;
+  const finalStem = safeStem.startsWith(prefix) ? safeStem : `${collection}_${safeStem}`;
+  return `${finalStem}${ext}`;
+}
+
+export function generateKnowledgeBaseImageKey(
+  orgId: string,
+  agentId: string,
+  collectionName: string,
+  fileName: string,
+): string {
+  const safeCollection = sanitizePathSegment(collectionName.trim());
+  const safeFileName = sanitizePathSegment(fileName.trim());
+  return `knowledge-base/${orgId}/${agentId}/${safeCollection}/${safeFileName}`;
+}

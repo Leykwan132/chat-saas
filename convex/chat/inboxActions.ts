@@ -10,6 +10,7 @@ import {
   sendTextAndImage,
   throwIfChannelSendFailed,
   type ChannelSendResult,
+  type ChannelSendPolicy,
 } from "./channelSend";
 
 export const sendReply = action({
@@ -145,3 +146,71 @@ export const internalSendText = internalAction({
     );
   },
 });
+
+export const internalSendAiReply = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    content: v.string(),
+    mediaUrls: v.array(v.string()),
+    allowHumanAgentTag: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<{
+    ok: boolean;
+    error?: string;
+    policy?: ChannelSendPolicy;
+    textExternalId?: string;
+    mediaExternalIds?: string[];
+  }> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return { ok: false, error: "Conversation not found", policy: "generic" };
+    }
+    const { conversation, channel } = ctxData;
+    const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
+
+    // Case 1: text + media
+    if (args.content.trim() && args.mediaUrls.length > 0) {
+      if (conversation.service === "instagram" || conversation.service === "messenger") {
+        const { imageResult, textResult } = await sendTextAndImage(
+          conversation,
+          channel,
+          { text: args.content, imageUrls: args.mediaUrls, ...options },
+        );
+        if (!imageResult.ok) return { ok: false, error: imageResult.error, policy: imageResult.policy };
+        if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
+        return {
+          ok: true,
+          textExternalId: textResult.externalId,
+          mediaExternalIds: imageResult.externalId ? [imageResult.externalId] : [],
+        };
+      }
+      // WhatsApp: send text only
+      const textResult = await sendTextToChannel(conversation, channel, args.content, options);
+      if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
+      return { ok: true, textExternalId: textResult.externalId, mediaExternalIds: [] };
+    }
+
+    // Case 2: text only
+    if (args.content.trim()) {
+      const result = await sendTextToChannel(conversation, channel, args.content, options);
+      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+      return { ok: true, textExternalId: result.externalId };
+    }
+
+    // Case 3: media only
+    if (args.mediaUrls.length > 0) {
+      const result = await sendMediaToChannel(conversation, channel, {
+        imageUrls: args.mediaUrls,
+        ...options,
+      });
+      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+      return { ok: true, mediaExternalIds: result.externalId ? [result.externalId] : [] };
+    }
+
+    return { ok: false, error: "Nothing to send", policy: "generic" };
+  },
+});
+

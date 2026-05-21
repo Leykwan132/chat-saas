@@ -2,6 +2,10 @@ import { useEffect, useState, useRef, useCallback, isValidElement, cloneElement 
 import { useMutation, useQuery } from 'convex/react';
 import { useNavigate } from 'react-router';
 import { Bot, RotateCw, Maximize2 } from 'lucide-react';
+import {
+  extractMediaKeys,
+  stripMediaMarkers,
+} from "../../convex/chat/mediaUrlExtractor";
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useUIMessages, useSmoothText, optimisticallySendMessage } from "@convex-dev/agent/react";
@@ -49,6 +53,13 @@ import {
 import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import {
+  Attachment,
+  AttachmentOpen,
+  AttachmentPreview,
+  Attachments,
+  getMediaCategory,
+} from "@/components/ai-elements/attachments";
 
 function renderCitationBadge(
   citationNumber: string,
@@ -134,6 +145,42 @@ function injectCitations(
   }
 
   return node;
+}
+
+function PlaygroundMessageAttachments({
+  messageKey,
+  items,
+}: {
+  messageKey: string;
+  items: Array<{ url: string; mediaType: string }>;
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <Attachments className="mt-2 ml-0 mr-auto w-fit justify-start" variant="grid">
+      {items.map((item, index) => {
+        const file = {
+          type: "file" as const,
+          url: item.url,
+          mediaType: item.mediaType,
+          id: `${messageKey}-file-${index}`,
+        };
+        const isImage =
+          getMediaCategory(file) === "image" && Boolean(file.url);
+
+        return (
+          <Attachment
+            className={isImage ? "size-40 p-0 overflow-hidden" : undefined}
+            data={file}
+            key={file.id}
+          >
+            <AttachmentPreview />
+            {isImage ? <AttachmentOpen /> : null}
+          </Attachment>
+        );
+      })}
+    </Attachments>
+  );
 }
 
 function StreamingMarkdown({ text, status }: { text: string; status: string }) {
@@ -237,6 +284,10 @@ export function TestChatWindow({
     { initialNumItems: 10, stream: true },
   );
 
+  const mediaByClientId = useQuery(
+    api.knowledgeBaseImages.listReadyMediaByAgent,
+    { agentId },
+  ) ?? {};
   useEffect(() => {
     if (conversation) {
       setConversationId(conversation._id);
@@ -311,7 +362,21 @@ export function TestChatWindow({
             description="Send a message to test your agent."
           />
         ) : (
-          messages.map((message) => (
+          messages.map((message) => {
+            const rawText = message.text ?? "";
+            const displayText =
+              message.role === "user" ? rawText : stripMediaMarkers(rawText);
+            const mediaItems =
+              message.role === "user"
+                ? []
+                : extractMediaKeys(rawText)
+                    .map((clientId) => mediaByClientId[clientId])
+                    .filter(
+                      (item): item is { url: string; mediaType: string } =>
+                        item !== undefined,
+                    );
+
+            return (
             // @ts-ignore
             <Message from={message.role} key={message.key}>
               <MessageContent>
@@ -325,19 +390,24 @@ export function TestChatWindow({
                     />
                     <MessageResponse>
                       <StreamingMarkdown
-                        text={message.text}
+                        text={displayText}
                         status={message.status}
+                      />
+                      <PlaygroundMessageAttachments
+                        messageKey={message.key}
+                        items={mediaItems}
                       />
                     </MessageResponse>
                   </div>
                 ) : (
                   <div className=" rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground ml-auto">
-                    {message.text}
+                    {displayText}
                   </div>
                 )}
               </MessageContent>
             </Message>
-          ))
+            );
+          })
         )}
         {status === "LoadingMore" && messages.length > 0 && (
           <Message from="assistant">

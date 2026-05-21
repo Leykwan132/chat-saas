@@ -4,7 +4,7 @@ import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import { r2, generateInboxMediaKey } from "./r2";
 import { mediaDeletePool } from "../mediaPools";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 
 /** Signed URL + org-scoped key for client-side PUT (used with `useUploadFile` pattern). */
 export const generateUploadUrl = mutation({

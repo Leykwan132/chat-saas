@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
 import {
-  FileText,
   Upload,
   Trash2,
   Check,
@@ -20,16 +19,10 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import { FileUploader } from "react-drag-drop-files";
 import {
   formatFileSize,
+  normalizeUploaderFiles,
   StatusBadge,
   isInProgress,
   type OpenDeleteDialog,
@@ -71,9 +64,8 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Files</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <FileUploader
-            handleChange={(fileOrFiles: File | File[]) => {
-              const files: File[] = Array.isArray(fileOrFiles) ? fileOrFiles : [fileOrFiles];
-              handleSaveFile(files);
+            handleChange={(fileOrFiles) => {
+              void handleSaveFile(normalizeUploaderFiles(fileOrFiles));
             }}
             onSizeError={(fileName: string) => {
               toast.error(`${fileName} exceeds the ${formatFileSize(maxFileSize)} limit`);
@@ -83,7 +75,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
             }}
             multiple
             maxSize={maxFileSize}
-            types={["pdf", "txt", "doc", "docx", "csv", "json"]}
+            types={["txt", "doc", "docx", "csv", "json"]}
           >
             <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border p-6 text-center hover:border-muted-foreground/50 transition-colors cursor-pointer">
               <Upload className="size-8 text-muted-foreground mb-3" />
@@ -95,19 +87,9 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
       </div>
 
       {/* ── Your Files ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Your files</h2>
-        {(entries ?? []).length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon"><FileText className="size-6" /></EmptyMedia>
-                <EmptyTitle>No entries yet</EmptyTitle>
-                <EmptyDescription>Add some files above to get started.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
-        ) : (
+      {(entries ?? []).length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Your files</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
               <div key={entry._id} onClick={() => setEditingFileEntry(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
@@ -136,8 +118,8 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Edit File Sheet ── */}
       <Sheet open={editingFileEntry !== null} onOpenChange={(open) => { if (!open) setEditingFileEntry(null); }}>

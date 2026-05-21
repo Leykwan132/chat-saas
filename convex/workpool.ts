@@ -2,10 +2,10 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { components, internal } from "./_generated/api";
+import { components } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
 import { uploadToCF, deleteFromCF, scrapeMarkdown, scrapeLinks } from "./cloudflare";
-import { r2 } from "./media/r2";
+import { r2, generateKnowledgeBaseImageKey, getPublicMediaUrl } from "./media/r2";
 
 // ─── Workpool instances ───────────────────────────────────
 
@@ -91,6 +91,39 @@ export const cfUploadWorker = internalAction({
     });
 
     return { cfItemId, fileSize };
+  },
+});
+
+// ─── KB Image Upload Worker ─────────────────────────────────
+
+export const kbImageUploadWorker = internalAction({
+  args: {
+    uploadId: v.id("mediaUploads"),
+    clientId: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
+    agentId: v.id("agents"),
+    collectionName: v.string(),
+    fileName: v.string(),
+    mimeType: v.string(),
+    fileBytes: v.bytes(),
+  },
+  handler: async (ctx, args) => {
+    const key = generateKnowledgeBaseImageKey(
+      args.orgId,
+      args.agentId,
+      args.collectionName,
+      args.fileName,
+    );
+
+    const blob = new Blob([args.fileBytes], { type: args.mimeType });
+    await r2.store(ctx, blob, { key });
+
+    return {
+      r2Key: key,
+      fileSize: args.fileBytes.byteLength,
+      publicUrl: getPublicMediaUrl(key),
+    };
   },
 });
 

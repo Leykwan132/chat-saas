@@ -2,7 +2,6 @@ import { useState, useMemo } from 'react';
 import { useAction } from 'convex/react';
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
-  Globe,
   Trash2,
   X,
   Check,
@@ -29,13 +28,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+
 import {
   formatFileSize,
   formatTimeAgo,
@@ -146,19 +139,9 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
       </div>
 
       {/* ── Your Web ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Your web</h2>
-        {(entries ?? []).length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon"><Globe className="size-6" /></EmptyMedia>
-                <EmptyTitle>No entries yet</EmptyTitle>
-                <EmptyDescription>Add some web above to get started.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
-        ) : (
+      {(entries ?? []).length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Your web</h2>
           <div className="space-y-2">
             {groupedWeb.map(([id, parentUrl, groupEntries]) => {
               const parent = groupEntries.find((e: any) => !e.parentUrl || e.url === parentUrl);
@@ -248,8 +231,8 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
               );
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Edit Web Sheet ── */}
       <Sheet open={editingWebEntry !== null} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }}>

@@ -106,7 +106,7 @@ function buildHumanReplyTextAndImagesContent(
     mediaType: img.mimeType,
   }));
 
-  return [...imageParts, { type: "text" as const, text: trimmed }];
+  return [{ type: "text" as const, text: trimmed }, ...imageParts];
 }
 
 function buildHumanReplyContent(
@@ -243,10 +243,13 @@ export async function saveAiReply(
   });
 }
 
+export { inferMediaMimeType } from "./mediaUrlExtractor";
+
 export function buildAgent(
   agent: { name: string; model: string; systemPrompt: string },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
+  mediaCollections: string[] = [],
 ) {
   const tools = {
     fetchContext: createTool({
@@ -260,6 +263,20 @@ export function buildAgent(
           agentId,
           query,
         });
+        return result;
+      },
+    }),
+    sendMedia: createTool({
+      description:
+        "Retrieves media assets (images, PDFs) from a specific collection to send to the customer. Call when the customer's question relates to an available media collection. You MUST include the returned clientId values in your response formatted as [MEDIA:clientId] so they are sent as attachments.",
+      inputSchema: z.object({
+        collectionName: z.string().describe("The exact collection name to retrieve media from"),
+      }),
+      execute: async (ctx, { collectionName }) => {
+        const result = await ctx.runQuery(
+          internal.knowledgeBaseImages.internalListReadyByCollection,
+          { agentId, collectionName },
+        );
         return result;
       },
     }),
@@ -277,17 +294,53 @@ Format citations as numbered references within the text. Use only sources found 
 - This is citations section, not references. Must use the keyword Citations.`
     : "";
 
+  const mediaBlock = mediaCollections.length > 0
+    ? `\n\n## Send Media to Customer
+You have media collections that can be sent directly to the customer as attachments.
+Available collections: ${mediaCollections.map(c => `"${c}"`).join(", ")}
+
+When the customer asks about something that matches one of these collections:
+1. Call \`sendMedia\` with the exact collection name.
+2. Include the returned clientId values in your response using the format: [MEDIA:clientId]
+3. If \`fetchContext\` returned no relevant text, send the media with one short, friendly sentence to identify it (e.g. from the collection name). Do NOT describe what the file shows, what it is useful for, or any details not in \`fetchContext\`.
+Do NOT fabricate clientIds or URLs. Only use clientIds returned by the \`sendMedia\` tool.
+If \`sendMedia\` returns assets for a matching collection, that counts as a successful answer — never say you couldn't find anything.`
+    : "";
+
+  const toneBlock = `\n\n## Tone
+- Be warm, friendly, and conversational — like a helpful colleague, not a robot or search engine.
+- Use natural, approachable phrasing. Brief is fine, but never sound cold, stiff, or overly formal.
+- When you can help, sound glad to assist. When you can't, say so kindly (e.g. "Sorry, I'm not sure about that" or "I don't have that info — let me know if there's something else I can help with").
+- Friendliness comes from how you say things, not from adding extra facts you don't have.`;
+
+  const groundingBlock = `\n\n## Grounding — REQUIRED
+- Only state facts that come directly from \`fetchContext\` results or explicit tool metadata (collection name, filename, etc.).
+- Do NOT invent details, generic explanations, or filler about attachments or topics.
+- Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
+- Do NOT pad responses with obvious or generic statements. Prefer short, direct replies.
+- Never mention internal tools, searches, or a "knowledge base" to the user.
+- If tools returned nothing useful, reply briefly and honestly — but stay friendly. Do not guess or elaborate.`;
+
+  const toolSteps = mediaCollections.length > 0
+    ? `  ### Steps for every response:
+  1. Call \`fetchContext\` with the user's original query
+  2. If the question matches an available media collection, call \`sendMedia\` with the exact collection name
+  3. Read the returned context and any media assets carefully
+  4. Reply using ONLY what the tools returned. If only media was found, send it with a brief, friendly label — nothing more.
+  5. Only if BOTH \`fetchContext\` returned nothing relevant AND \`sendMedia\` returned no matching assets: give a short, natural reply that you don't have that information`
+    : `  ### Steps for every response:
+  1. Call \`fetchContext\` with the user's original query
+  2. Read the returned context carefully
+  3. If relevant context is found: answer using only that context
+  4. If no relevant context is found: give a short, natural reply that you don't have that information. Do not guess or add filler`;
+
   const instructions = `${agent.systemPrompt}
 
   ## Tool Usage — REQUIRED
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
 
-  ### Steps for every response:
-  1. Call \`fetchContext\` with the user's original query
-  2. Read the returned context carefully
-  3. If relevant context is found: base your answer on it
-  4. If no relevant context is found: explicitly tell the user ("I couldn't find relevant information in the company knowledge base") only then supplement with general knowledge
-  ${citationBlock}`;
+${toolSteps}${toneBlock}${groundingBlock}
+  ${citationBlock}${mediaBlock}`;
 
   return new Agent(components.agent, {
     name: agent.name,
@@ -295,6 +348,10 @@ Format citations as numbered references within the text. Use only sources found 
     instructions,
     stopWhen: stepCountIs(6),
     tools,
+    rawRequestResponseHandler: async (ctx, { request, response }) => {
+      console.log("request", request);
+      console.log("response", response);
+    },
   });
 }
 

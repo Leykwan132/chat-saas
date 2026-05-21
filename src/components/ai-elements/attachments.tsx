@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { FileUIPart, SourceDocumentUIPart } from "ai";
 import {
+  ExternalLinkIcon,
   FileTextIcon,
   GlobeIcon,
   ImageIcon,
@@ -361,6 +362,65 @@ export const AttachmentRemove = ({
     >
       {children ?? <XIcon />}
       <span className="sr-only">{label}</span>
+    </Button>
+  );
+};
+
+// ============================================================================
+// AttachmentOpen - Open in new tab (grid images)
+// ============================================================================
+
+export type AttachmentOpenProps = ComponentProps<typeof Button> & {
+  label?: string;
+};
+
+export const AttachmentOpen = ({
+  label = "Open",
+  className,
+  children,
+  ...props
+}: AttachmentOpenProps) => {
+  const { data, mediaCategory, variant } = useAttachmentContext();
+
+  const url = data.type === "file" ? data.url : undefined;
+  const canOpen =
+    variant === "grid" &&
+    Boolean(url) &&
+    (mediaCategory === "image" || mediaCategory === "document");
+
+  const handleClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (url) {
+        window.open(url, "_blank", "noopener,noreferrer");
+      }
+    },
+    [url],
+  );
+
+  if (!canOpen) {
+    return null;
+  }
+
+  return (
+    <Button
+      aria-label={label}
+      size="icon-xs"
+      variant="ghost"
+      className={cn(
+        variant === "grid" && [
+          "absolute top-2 right-2 z-10 rounded-full border-0",
+          "bg-black/55 text-white shadow-md backdrop-blur-sm",
+          "opacity-0 transition-opacity group-hover:opacity-100",
+          "hover:bg-black/70 hover:text-white",
+        ],
+        className,
+      )}
+      onClick={handleClick}
+      type="button"
+      {...props}
+    >
+      {children ?? <ExternalLinkIcon className="size-3" />}
     </Button>
   );
 };

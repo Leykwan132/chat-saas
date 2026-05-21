@@ -19,8 +19,8 @@ import {
   buildAgent,
   saveAiReply,
 } from "./threads";
-import { formatChannelSendError } from "./channelSend";
 import { inboxAiReplyPool } from "../inboxPools";
+import { extractMediaFromText } from "./mediaUrlExtractor";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -200,6 +200,64 @@ export const internalPersistAiReply = internalMutation({
   },
 });
 
+export const internalPersistAiMediaReply = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    threadId: v.string(),
+    mediaUrls: v.array(v.string()),
+    externalIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null) return null;
+
+    const now = Date.now();
+    const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
+    const orgAddress =
+      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+
+    // Save each media URL as assistant message in the agent thread
+    const agentMessageId = await saveAiReply(
+      ctx,
+      args.threadId,
+      args.mediaUrls.join("\n"),
+      conv.assignedAgentId,
+      now,
+    );
+
+    // Insert into messages ledger for inbox display
+    for (let i = 0; i < args.mediaUrls.length; i++) {
+      const url = args.mediaUrls[i];
+      const externalId = args.externalIds[i] ?? undefined;
+      await ctx.db.insert("messages", {
+        orgId: conv.orgId,
+        conversationId: conv._id,
+        channelId: conv.channelId,
+        service: conv.service,
+        externalId,
+        orgAddress,
+        contactAddress: conv.contactAddress,
+        direction: "outgoing",
+        contentType: "image",
+        content: url,
+        mediaUrl: url,
+        agentMessageId,
+        status: "sent",
+        createdAt: now,
+      });
+    }
+
+    await ctx.db.patch(conv._id, {
+      lastMessageAt: now,
+      lastMessagePreview: "📎 Media",
+      unreadCount: 0,
+      updatedAt: now,
+    });
+
+    return agentMessageId;
+  },
+});
+
 export const generateAiReplyWorker = internalAction({
   args: {
     conversationId: v.id("conversations"),
@@ -222,7 +280,16 @@ export const generateAiReplyWorker = internalAction({
     });
     if (!agent) return;
 
-    const configuredAgent = buildAgent(agent, conv.assignedAgentId, false);
+    const mediaCollections: string[] = await ctx.runQuery(
+      internal.knowledgeBaseImages.internalListCollectionNames,
+      { agentId: conv.assignedAgentId },
+    );
+    const configuredAgent = buildAgent(
+      agent,
+      conv.assignedAgentId,
+      false,
+      mediaCollections,
+    );
     const result = await configuredAgent.generateText(
       ctx,
       { threadId: conv.threadId },
@@ -232,11 +299,30 @@ export const generateAiReplyWorker = internalAction({
     const replyText = result.text.trim();
     if (!replyText) return;
 
-    const sendResult = await ctx.runAction(
-      internal.chat.inboxActions.internalSendText,
+    const { text: cleanText, mediaUrls, mediaClientIds } =
+      extractMediaFromText(replyText);
+    const urlsFromClientIds: string[] =
+      mediaClientIds.length > 0
+        ? await ctx.runQuery(
+            internal.knowledgeBaseImages.internalResolveClientIdsToPublicUrls,
+            { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
+          )
+        : [];
+    const allMediaUrls = [...mediaUrls, ...urlsFromClientIds];
+    if (!cleanText && allMediaUrls.length === 0) return;
+
+    const sendResult: {
+      ok: boolean;
+      error?: string;
+      policy?: string;
+      textExternalId?: string;
+      mediaExternalIds?: string[];
+    } = await ctx.runAction(
+      internal.chat.inboxActions.internalSendAiReply,
       {
         conversationId: conv._id,
-        content: replyText,
+        content: cleanText,
+        mediaUrls: allMediaUrls,
         allowHumanAgentTag: false,
       },
     );
@@ -244,18 +330,32 @@ export const generateAiReplyWorker = internalAction({
     if (!sendResult.ok) {
       console.error(
         "AI reply not sent to channel:",
-        formatChannelSendError(sendResult),
+        sendResult.error,
         { conversationId: conv._id, service: conv.service },
       );
       return;
     }
 
-    await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
-      conversationId: conv._id,
-      threadId: conv.threadId,
-      content: replyText,
-      externalId: sendResult.externalId,
-    });
+    if (cleanText) {
+      await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
+        conversationId: conv._id,
+        threadId: conv.threadId,
+        content: cleanText,
+        externalId: sendResult.textExternalId,
+      });
+    }
+
+    if (allMediaUrls.length > 0) {
+      await ctx.runMutation(
+        internal.chat.inbox.internalPersistAiMediaReply,
+        {
+          conversationId: conv._id,
+          threadId: conv.threadId,
+          mediaUrls: allMediaUrls,
+          externalIds: sendResult.mediaExternalIds ?? [],
+        },
+      );
+    }
   },
 });
 

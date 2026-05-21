@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
 import {
-  HelpCircle,
   Trash2,
   Check,
   Plus,
@@ -21,13 +20,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+
 import {
   formatFileSize,
   StatusBadge,
@@ -120,19 +113,9 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
       </div>
 
       {/* ── Your Q&A ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Your Q&A</h2>
-        {(entries ?? []).length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon"><HelpCircle className="size-6" /></EmptyMedia>
-                <EmptyTitle>No entries yet</EmptyTitle>
-                <EmptyDescription>Add some Q&A above to get started.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
-        ) : (
+      {(entries ?? []).length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Your Q&A</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
               <div key={entry._id} onClick={() => openEditQA(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
@@ -161,8 +144,8 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Edit Q&A Sheet ── */}
       <Sheet open={editingQAEntry !== null} onOpenChange={(open) => { if (!open) setEditingQAEntry(null); }}>

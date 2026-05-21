@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
 import {
-  AlignLeft,
   Trash2,
   Check,
 } from 'lucide-react';
@@ -20,13 +19,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+
 import {
   formatFileSize,
   StatusBadge,
@@ -95,19 +88,9 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
       </div>
 
       {/* ── Your Text ── */}
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Your text</h2>
-        {(entries ?? []).length === 0 ? (
-          <div className="rounded-lg border border-border bg-card p-8">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon"><AlignLeft className="size-6" /></EmptyMedia>
-                <EmptyTitle>No entries yet</EmptyTitle>
-                <EmptyDescription>Add some text above to get started.</EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </div>
-        ) : (
+      {(entries ?? []).length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-foreground mb-3">Your text</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
               <div key={entry._id} onClick={() => openEditText(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
@@ -136,8 +119,8 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
               </div>
             ))}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Edit Text Sheet ── */}
       <Sheet open={editingTextEntry !== null} onOpenChange={(open) => { if (!open) setEditingTextEntry(null); }}>

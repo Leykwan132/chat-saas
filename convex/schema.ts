@@ -327,9 +327,14 @@ export default defineSchema({
     publicUrl: v.optional(v.string()),
     mediaType: v.string(),
     filename: v.optional(v.string()),
+    fileSize: v.optional(v.number()),
+    purpose: v.optional(v.literal("knowledgeBase")),
+    agentId: v.optional(v.id("agents")),
+    collectionName: v.optional(v.string()),
     error: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
-    .index("by_orgId_userId", ["orgId", "userId"]),
+    .index("by_orgId_userId", ["orgId", "userId"])
+    .index("by_agentId", ["agentId"]),
 });

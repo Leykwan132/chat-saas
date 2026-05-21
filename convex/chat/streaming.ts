@@ -14,6 +14,10 @@ import {
   buildAgent,
   createThreadForConversation,
 } from "./threads";
+import {
+  extractMediaUrls,
+  replaceMediaUrlsWithKeys,
+} from "./mediaUrlExtractor";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -89,7 +93,7 @@ export const sendMessage = mutation({
 
     await ctx.scheduler.runAfter(
       0,
-      internal.chat.streaming.generateResponseAsync,
+      internal.chat.streaming.generatePlaygroundResponseAsync,
       {
         threadId: args.threadId,
         agentId: args.agentId,
@@ -102,7 +106,7 @@ export const sendMessage = mutation({
   },
 });
 
-export const generateResponseAsync = internalAction({
+export const generatePlaygroundResponseAsync = internalAction({
   args: {
     threadId: v.string(),
     agentId: v.id("agents"),
@@ -115,10 +119,16 @@ export const generateResponseAsync = internalAction({
     });
     if (!agent) throw new Error("Agent not found");
 
+    const mediaCollections: string[] = await ctx.runQuery(
+      internal.knowledgeBaseImages.internalListCollectionNames,
+      { agentId: args.agentId },
+    );
+
     const configuredAgent = buildAgent(
       agent,
       args.agentId,
       args.enableCitations ?? false,
+      mediaCollections,
     );
     const result = await configuredAgent.streamText(
       ctx,
@@ -131,7 +141,39 @@ export const generateResponseAsync = internalAction({
         },
       },
     );
-    await result.consumeStream();
+
+    const replyText = (await result.text).trim();
+    if (!replyText) return;
+
+    const { text: cleanText, mediaUrls } = extractMediaUrls(replyText);
+    const hasMediaKeys = /\[MEDIA:(?!https?:\/\/)/.test(replyText);
+    if (!cleanText && mediaUrls.length === 0 && !hasMediaKeys) return;
+
+    const savedAssistant = result.savedMessages
+      ?.filter((message) => message.message?.role === "assistant")
+      .at(-1);
+
+    if (!savedAssistant) return;
+
+    let contentWithKeys = replyText;
+    if (mediaUrls.length > 0) {
+      const urlToClientId: Record<string, string> = await ctx.runQuery(
+        internal.knowledgeBaseImages.internalResolvePublicUrlsToClientIds,
+        { agentId: args.agentId, urls: mediaUrls },
+      );
+      const urlToKey = new Map(Object.entries(urlToClientId));
+      contentWithKeys = replaceMediaUrlsWithKeys(replyText, urlToKey);
+    }
+
+    if (contentWithKeys !== replyText) {
+      await configuredAgent.updateMessage(ctx, {
+        messageId: savedAssistant._id,
+        patch: {
+          message: { role: "assistant", content: contentWithKeys },
+          status: "success",
+        },
+      });
+    }
   },
 });
 
