@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query, internalAction } from "../_generated/server";
+import { mutation, query, internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
+import type { Doc } from "../_generated/dataModel";
 import { components } from "../_generated/api";
 import {
   saveMessage,
@@ -18,6 +19,7 @@ import {
   extractMediaUrls,
   replaceMediaUrlsWithKeys,
 } from "./mediaUrlExtractor";
+import { isPlaygroundCreditsEnabled } from "../credits";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -86,6 +88,29 @@ export const sendMessage = mutation({
     enableCitations: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
+    const { userId } = await getAuthContext(ctx);
+    const agentDoc = await ctx.db.get(args.agentId);
+    if (agentDoc === null) {
+      throw new Error("Agent not found");
+    }
+
+    const deductCredits = isPlaygroundCreditsEnabled();
+    if (deductCredits) {
+      const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
+        workosUserId: userId,
+        modelId: agentDoc.model,
+      });
+      if (!creditCheck.ok) {
+        if (creditCheck.reason === "insufficient_credits") {
+          throw new Error("Insufficient credits to send this message");
+        }
+        if (creditCheck.reason === "user_not_found") {
+          throw new Error("User account not found");
+        }
+        throw new Error("Selected model is not available");
+      }
+    }
+
     const { messageId } = await saveMessage(ctx, components.agent, {
       threadId: args.threadId,
       prompt: args.prompt,
@@ -99,6 +124,8 @@ export const sendMessage = mutation({
         agentId: args.agentId,
         promptMessageId: messageId,
         enableCitations: args.enableCitations,
+        billingUserId: userId,
+        deductCredits,
       },
     );
 
@@ -112,6 +139,8 @@ export const generatePlaygroundResponseAsync = internalAction({
     agentId: v.id("agents"),
     promptMessageId: v.string(),
     enableCitations: v.optional(v.boolean()),
+    billingUserId: v.string(),
+    deductCredits: v.boolean(),
   },
   handler: async (ctx, args) => {
     const agent = await ctx.runQuery(internal.agents.internalGet, {
@@ -155,6 +184,19 @@ export const generatePlaygroundResponseAsync = internalAction({
 
     if (!savedAssistant) return;
 
+    const conv: Doc<"conversations"> | null = await ctx.runQuery(
+      internal.chat.streaming.internalGetConversationByThreadId,
+      { threadId: args.threadId },
+    );
+
+    const usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
+      workosUserId: args.billingUserId,
+      modelId: agent.model,
+      skipDeduction: !args.deductCredits,
+      conversationId: conv?._id,
+      reason: "AI playground response",
+    });
+
     let contentWithKeys = replyText;
     if (mediaUrls.length > 0) {
       const urlToClientId: Record<string, string> = await ctx.runQuery(
@@ -174,6 +216,70 @@ export const generatePlaygroundResponseAsync = internalAction({
         },
       });
     }
+
+    await ctx.runMutation(components.agent.messages.updateMessage, {
+      messageId: savedAssistant._id,
+      patch: {
+        model: usage.llmModel,
+        provider: "openrouter",
+      },
+    });
+
+    if (conv) {
+      await ctx.runMutation(internal.chat.streaming.internalPersistPlaygroundAiUsage, {
+        conversationId: conv._id,
+        agentId: args.agentId,
+        agentMessageId: savedAssistant._id,
+        content: contentWithKeys,
+        llmModel: usage.llmModel,
+        creditsCharged: usage.creditsCharged,
+      });
+    }
+  },
+});
+
+export const internalGetConversationByThreadId = internalQuery({
+  args: { threadId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("conversations")
+      .withIndex("by_threadId", (q) => q.eq("threadId", args.threadId))
+      .first();
+  },
+});
+
+export const internalPersistPlaygroundAiUsage = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+    agentMessageId: v.string(),
+    content: v.string(),
+    llmModel: v.string(),
+    creditsCharged: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null) return;
+
+    const trimmed = args.content.trim();
+    if (!trimmed) return;
+
+    await ctx.db.insert("messages", {
+      orgId: conv.orgId,
+      conversationId: conv._id,
+      service: conv.service,
+      orgAddress: conv.orgAddress,
+      contactAddress: conv.contactAddress,
+      direction: "outgoing",
+      agentId: args.agentId,
+      contentType: "text",
+      content: trimmed,
+      agentMessageId: args.agentMessageId,
+      llmModel: args.llmModel,
+      creditsCharged: args.creditsCharged,
+      status: "sent",
+      createdAt: Date.now(),
+    });
   },
 });
 

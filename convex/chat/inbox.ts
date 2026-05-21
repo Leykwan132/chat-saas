@@ -174,20 +174,54 @@ export const internalPersistAiReply = internalMutation({
     threadId: v.string(),
     content: v.string(),
     externalId: v.optional(v.string()),
+    llmModel: v.optional(v.string()),
+    creditsCharged: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) return null;
 
     const trimmed = args.content.trim();
+    const now = Date.now();
+    const messageMetadata =
+      args.llmModel !== undefined
+        ? {
+            llmModel: args.llmModel,
+            creditsCharged: args.creditsCharged ?? 0,
+          }
+        : undefined;
+
     const agentMessageId = await saveAiReply(
       ctx,
       args.threadId,
       trimmed,
       conv.assignedAgentId,
-      Date.now(),
+      now,
+      { messageMetadata },
     );
-    const now = Date.now();
+
+    const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
+    const orgAddress =
+      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+
+    await ctx.db.insert("messages", {
+      orgId: conv.orgId,
+      conversationId: conv._id,
+      channelId: conv.channelId,
+      service: conv.service,
+      externalId: args.externalId,
+      orgAddress,
+      contactAddress: conv.contactAddress,
+      direction: "outgoing",
+      agentId: conv.assignedAgentId,
+      contentType: "text",
+      content: trimmed,
+      agentMessageId,
+      llmModel: args.llmModel,
+      creditsCharged: args.creditsCharged,
+      status: "sent",
+      createdAt: now,
+    });
 
     await ctx.db.patch(conv._id, {
       lastMessageAt: now,
@@ -280,6 +314,19 @@ export const generateAiReplyWorker = internalAction({
     });
     if (!agent) return;
 
+    const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
+      workosUserId: agent.userId,
+      modelId: agent.model,
+    });
+    if (!creditCheck.ok) {
+      console.error("AI reply skipped: insufficient credits or unavailable model", {
+        conversationId: args.conversationId,
+        reason: creditCheck.reason,
+        agentUserId: agent.userId,
+      });
+      return;
+    }
+
     const mediaCollections: string[] = await ctx.runQuery(
       internal.knowledgeBaseImages.internalListCollectionNames,
       { agentId: conv.assignedAgentId },
@@ -310,6 +357,22 @@ export const generateAiReplyWorker = internalAction({
         : [];
     const allMediaUrls = [...mediaUrls, ...urlsFromClientIds];
     if (!cleanText && allMediaUrls.length === 0) return;
+
+    let usage: { llmModel: string; creditsCharged: number };
+    try {
+      usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
+        workosUserId: agent.userId,
+        modelId: agent.model,
+        conversationId: conv._id,
+        reason: `AI reply in ${conv.service} conversation`,
+      });
+    } catch (error) {
+      console.error("AI reply skipped: credit deduction failed", {
+        conversationId: args.conversationId,
+        error,
+      });
+      return;
+    }
 
     const sendResult: {
       ok: boolean;
@@ -342,6 +405,8 @@ export const generateAiReplyWorker = internalAction({
         threadId: conv.threadId,
         content: cleanText,
         externalId: sendResult.textExternalId,
+        llmModel: usage.llmModel,
+        creditsCharged: usage.creditsCharged,
       });
     }
 

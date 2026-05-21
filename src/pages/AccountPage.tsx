@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useQuery } from 'convex/react';
-import { WorkOsWidgets, UsersManagement } from '@workos-inc/widgets';
-import { Building2, Check, LogOut, User } from 'lucide-react';
+import { UsersManagement, OrganizationSwitcher } from '@workos-inc/widgets';
+import { Building2, LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
+import { WorkOsWidgetsPanel } from '@/components/workos/WorkOsWidgetsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────
 
@@ -160,8 +159,6 @@ function OrganisationsContent({
   switchToOrganization: (opts: { organizationId: string }) => Promise<void>;
 }) {
   const [token, setToken] = useState<string | null>(null);
-  const [switchingTo, setSwitchingTo] = useState<string | null>(null);
-  const orgs = useQuery(api.organizations.listForCurrentUser);
 
   // Re-fetch the access token whenever the active org changes so the embedded
   // UsersManagement widget always sees a token whose `org_id` claim matches
@@ -183,117 +180,18 @@ function OrganisationsContent({
     );
   }
 
-  const handleSwitch = async (workosOrgId: string) => {
-    if (workosOrgId === organizationId) return;
-    setSwitchingTo(workosOrgId);
-    try {
-      await switchToOrganization({ organizationId: workosOrgId });
-    } finally {
-      // No-op cleanup: switchToOrganization triggers an OAuth redirect, but
-      // if it ever resolves locally without leaving the page we still want
-      // to stop showing the spinner.
-      setSwitchingTo(null);
-    }
-  };
-
   return (
-    <div className="flex flex-col gap-6">
-      {/* ── Your organisations: switcher list + create ─────────── */}
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h3 className="m-0 text-sm font-semibold text-foreground">
-              Your organisations
-            </h3>
-            <p className="m-0 mt-1 text-xs text-muted-foreground">
-              Switch between organisations or create a new one.
-            </p>
-          </div>
-          <CreateOrganizationDialog />
-        </div>
-
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-card p-2">
-          {orgs === undefined ? (
-            Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-                <Skeleton className="size-8 rounded-lg shrink-0" />
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Skeleton className="h-3.5 w-32" />
-                  <Skeleton className="h-3 w-24" />
-                </div>
-              </div>
-            ))
-          ) : orgs.length === 0 ? (
-            <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-              No organisations yet.
-            </p>
-          ) : (
-            orgs.map((org) => {
-              const isActive = org.workosOrgId === organizationId;
-              const isSwitching = switchingTo === org.workosOrgId;
-              return (
-                <button
-                  key={org.workosOrgId}
-                  type="button"
-                  onClick={() => handleSwitch(org.workosOrgId)}
-                  disabled={isActive || switchingTo !== null}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors',
-                    isActive
-                      ? 'bg-accent cursor-default'
-                      : 'hover:bg-accent disabled:opacity-50',
-                  )}
-                >
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0">
-                    <Building2 className="size-4" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="truncate text-sm font-medium text-foreground">
-                      {org.name}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {org.memberCount}{' '}
-                      {org.memberCount === 1 ? 'member' : 'members'}
-                      {org.isAdmin ? ' · Admin' : ''}
-                    </span>
-                  </div>
-                  {isSwitching ? (
-                    <Spinner className="size-4 text-muted-foreground" />
-                  ) : isActive ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-                      <Check className="size-3.5" /> Active
-                    </span>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">Switch</span>
-                  )}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* ── WorkOS User Management widget for the active org ────── */}
-      <section className="flex flex-col gap-3">
-        <div>
-          <h3 className="m-0 text-sm font-semibold text-foreground">
-            Members
-          </h3>
-          <p className="m-0 mt-1 text-xs text-muted-foreground">
-            Invite teammates and manage roles in the active organisation.
-          </p>
-        </div>
-        {!token ? (
-          <MembersSkeleton />
-        ) : (
-          <WorkOsWidgets>
-            <UsersManagement authToken={() => Promise.resolve(token)} />
-          </WorkOsWidgets>
-        )}
-      </section>
-    </div>
+    <WorkOsWidgetsPanel>
+      <OrganizationSwitcher
+        authToken={getAccessToken}
+        switchToOrganization={switchToOrganization}
+      />
+      {!token ? (
+        <MembersSkeleton />
+      ) : (
+        <UsersManagement authToken={() => Promise.resolve(token)} />
+      )}
+    </WorkOsWidgetsPanel>
   );
 }
 

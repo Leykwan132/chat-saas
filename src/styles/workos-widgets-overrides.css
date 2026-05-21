@@ -1,0 +1,16 @@
+/* WorkOS widgets default to 100% width/height on .woswidgets-root, which
+   stretches compact widgets inside flex layouts. Scope fixes to our panel. */
+
+.workos-widgets--panel.woswidgets-root {
+  inline-size: 100%;
+  block-size: auto;
+  width: 100%;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.workos-widgets-panel [data-woswidgets-widget-id='organization-switcher'] {
+  align-self: flex-start;
+  width: fit-content;
+}

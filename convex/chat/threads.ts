@@ -9,7 +9,7 @@ import {
   stepCountIs,
   createTool,
 } from "@convex-dev/agent";
-import { google } from "@ai-sdk/google";
+import { openRouterModel } from "../llm/openRouter";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import {
@@ -230,6 +230,9 @@ export async function saveAiReply(
   content: string,
   assignedAgentId: Id<"agents"> | undefined,
   sentAt: number = Date.now(),
+  opts?: {
+    messageMetadata?: Record<string, unknown>;
+  },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, assignedAgentId);
   return await saveAssistantWithOwnOrder(ctx, {
@@ -240,6 +243,7 @@ export async function saveAiReply(
       agentName,
       sentByAi: true,
     },
+    messageMetadata: opts?.messageMetadata,
   });
 }
 
@@ -344,13 +348,13 @@ ${toolSteps}${toneBlock}${groundingBlock}
 
   return new Agent(components.agent, {
     name: agent.name,
-    languageModel: google(agent.model),
+    languageModel: openRouterModel(agent.model),
     instructions,
     stopWhen: stepCountIs(6),
     tools,
-    rawRequestResponseHandler: async (ctx, { request, response }) => {
-      console.log("request", request);
-      console.log("response", response);
+    rawRequestResponseHandler: async () => {
+      // console.log("request", request);
+      // console.log("response", response);
     },
   });
 }

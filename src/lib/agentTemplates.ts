@@ -2,12 +2,6 @@ export type AgentTemplateKey = 'blank' | 'sales' | 'support';
 
 import { TEMPLATE_PROMPTS } from './utils';
 
-export const GOOGLE_MODELS = [
-  { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-  { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-  { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-];
-
 export const AGENT_TEMPLATES: Record<
   AgentTemplateKey,
   { label: string; description: string; prompt: string }

@@ -28,6 +28,7 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
+    credits: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -48,7 +49,7 @@ export default defineSchema({
   }).index("by_eventId", ["eventId"]),
   agents: defineTable({
     name: v.string(),
-    provider: v.literal("google"),
+    provider: v.union(v.literal("google"), v.literal("openrouter")),
     model: v.string(),
     systemPrompt: v.string(),
     templateKey: v.union(
@@ -281,6 +282,8 @@ export default defineSchema({
     ),
     failureReason: v.optional(v.string()),
     agentMessageId: v.optional(v.string()),
+    llmModel: v.optional(v.string()),
+    creditsCharged: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
@@ -337,4 +340,22 @@ export default defineSchema({
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
     .index("by_orgId_userId", ["orgId", "userId"])
     .index("by_agentId", ["agentId"]),
+  creditLogs: defineTable({
+    userId: v.id("users"),
+    amount: v.number(),
+    type: v.union(
+      v.literal("deduction"),
+      v.literal("top_up"),
+      v.literal("grant")
+    ),
+    balanceBefore: v.number(),
+    balanceAfter: v.number(),
+    modelId: v.optional(v.string()),
+    conversationId: v.optional(v.id("conversations")),
+    reason: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_createdAt", ["createdAt"])
+    .index("by_userId_and_createdAt", ["userId", "createdAt"]),
 });

@@ -8,6 +8,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { RequireOrganization } from '@/components/RequireOrganization';
+import { UserProfileButton } from '@/components/UserProfileButton';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -102,6 +103,9 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
+      <div className="ml-auto flex items-center">
+        <UserProfileButton accountPath={`/dashboard/${agent._id}/account`} />
+      </div>
     </header>
   );
 }

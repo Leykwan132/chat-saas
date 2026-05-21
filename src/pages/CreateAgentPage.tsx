@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { Link, Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { ArrowLeft, Bot, Plus, Globe, Mail, FileText } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '../../convex/_generated/api';
-import { AGENT_TEMPLATES, GOOGLE_MODELS, type AgentTemplateKey } from '@/lib/agentTemplates';
+import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RequireOrganization } from '@/components/RequireOrganization';
+import { ModelPicker } from '@/components/ModelPicker';
 
 export default function CreateAgentPage() {
   const { isLoading, user } = useAuth();
@@ -38,15 +39,21 @@ function CreateAgentForm() {
   const { organizationId } = useAuth();
   const activeOrgId = organizationId ?? null;
   const createAgent = useMutation(api.agents.create);
+  const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
 
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
-  const [model, setModel] = useState(GOOGLE_MODELS[0].value);
+  const [model, setModel] = useState('');
   const [systemPrompt, setSystemPrompt] = useState(AGENT_TEMPLATES.blank.prompt);
   const [websiteUrls, setWebsiteUrls] = useState('');
   const [contacts, setContacts] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabledModels || enabledModels.length === 0 || model) return;
+    setModel(enabledModels[0].value);
+  }, [enabledModels, model]);
 
   const applyTemplate = (key: AgentTemplateKey) => {
     setTemplateKey(key);
@@ -60,6 +67,12 @@ function CreateAgentForm() {
     const trimmedName = name.trim();
     if (!trimmedName) {
       setError('Agent name is required');
+      setIsCreating(false);
+      return;
+    }
+
+    if (!model.trim()) {
+      setError('Model is required');
       setIsCreating(false);
       return;
     }
@@ -217,17 +230,12 @@ function CreateAgentForm() {
 
               <label className="flex flex-col gap-2">
                 <span className="text-xs font-medium text-muted-foreground">Model</span>
-                <select
+                <ModelPicker
+                  models={enabledModels}
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/30"
-                >
-                  {GOOGLE_MODELS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  onChange={setModel}
+                  disabled={!enabledModels || enabledModels.length === 0}
+                />
               </label>
 
               <label className="flex flex-col gap-2">

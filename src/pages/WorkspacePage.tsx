@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
-import { AccountDialog } from '@/components/AccountDialog';
+import { UserProfileButton } from '@/components/UserProfileButton';
+import { CreditMeter } from '@/components/CreditMeter';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -36,7 +37,14 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarInset,
+  SidebarTrigger,
 } from '@/components/ui/sidebar';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from '@/components/ui/breadcrumb';
 import { RequireOrganization } from '@/components/RequireOrganization';
 
 function AgentPreview() {
@@ -98,11 +106,7 @@ function AgentsSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <AccountDialog accountPath="/workspace/account" />
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <CreditMeter />
       </SidebarFooter>
     </Sidebar>
   );
@@ -202,8 +206,26 @@ function WorkspaceShell() {
     <SidebarProvider>
       <AgentsSidebar />
       <SidebarInset>
+        {/* Top header with breadcrumb */}
+        <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
+          <SidebarTrigger className="-ml-1" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Workspace</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <div className="ml-auto flex items-center">
+            <UserProfileButton accountPath="/workspace/account" />
+          </div>
+        </header>
+
+        {/* Page content */}
         <main className="flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28">
-          <Outlet />
+          <div className="animate-fade-in">
+            <Outlet />
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>
@@ -287,11 +309,8 @@ export default function WorkspacePage() {
     api.users.getAuthUser,
     workosLoading ? 'skip' : {},
   );
-  console.log(authUser);
   useEffect(() => {
     if (workosLoading) return;
-    console.log('useAuth().user', user);
-    console.log('Convex users.getAuthUser (ctx.auth.getUserIdentity)', authUser);
   }, [workosLoading, user, authUser]);
   // Keep showing a spinner while WorkOS is restoring the session (e.g. after
   // a page refresh). Without this guard the Convex <Unauthenticated> block

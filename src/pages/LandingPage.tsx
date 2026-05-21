@@ -681,7 +681,6 @@ function Footer({ hasSession, onSignIn }: { hasSession: boolean; onSignIn: () =>
 
 export default function LandingPage() {
   const { user, signIn, signUp } = useAuth();
-  console.log(user);
   const hasSession = Boolean(user);
 
   const returnTo = { returnTo: POST_LOGIN_REDIRECT };

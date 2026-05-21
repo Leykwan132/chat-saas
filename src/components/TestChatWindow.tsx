@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, isValidElement, cloneElement } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { useNavigate } from 'react-router';
+import { toast } from 'sonner';
 import { Bot, RotateCw, Maximize2 } from 'lucide-react';
 import {
   extractMediaKeys,
@@ -323,6 +324,10 @@ export function TestChatWindow({
     shouldFocusAfterSend.current = true;
     try {
       await sendMessageMutation({ threadId, agentId, prompt, enableCitations: true });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Unable to send message';
+      toast.error(message);
     } finally {
       setIsSending(false);
     }

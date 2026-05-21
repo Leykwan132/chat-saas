@@ -2,8 +2,9 @@ import { v } from "convex/values";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
 const templateKeyValidator = v.union(
   v.literal("blank"),
@@ -25,6 +26,12 @@ function getPrompt(templateKey: keyof typeof TEMPLATE_PROMPTS, systemPrompt: str
     return trimmedPrompt;
   }
   return TEMPLATE_PROMPTS[templateKey];
+}
+
+async function assertEnabledModel(modelId: string) {
+  if (!isEnabledModel(modelId)) {
+    throw new Error("Selected model is not available");
+  }
 }
 
 async function getOwnedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">) {
@@ -89,10 +96,13 @@ export const create = mutation({
       throw new Error("Agent name is required");
     }
 
+    const model = args.model?.trim() || DEFAULT_MODEL;
+    await assertEnabledModel(model);
+
     const agentId = await ctx.db.insert("agents", {
       name,
-      provider: "google",
-      model: args.model?.trim() || DEFAULT_MODEL,
+      provider: "openrouter",
+      model,
       systemPrompt: getPrompt(args.templateKey, args.systemPrompt ?? null),
       templateKey: args.templateKey,
       websiteUrls: args.websiteUrls ?? [],
@@ -137,6 +147,8 @@ export const update = mutation({
     if (!systemPrompt) {
       throw new Error("System prompt is required");
     }
+
+    await assertEnabledModel(model);
 
     await ctx.db.patch(args.agentId, {
       name,

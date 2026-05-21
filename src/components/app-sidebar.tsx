@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router';
 import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Plug, Zap } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
-import { AccountDialog } from '@/components/AccountDialog';
+import { CreditMeter } from '@/components/CreditMeter';
 import {
   Sidebar,
   SidebarContent,
@@ -144,11 +144,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <AccountDialog accountPath={`/dashboard/${agent._id}/account`} />
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <CreditMeter />
       </SidebarFooter>
 
       {/* Drag rail to resize */}

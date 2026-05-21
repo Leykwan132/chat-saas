@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { AGENT_TEMPLATES, GOOGLE_MODELS, type AgentTemplateKey } from '@/lib/agentTemplates';
+import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,20 +35,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  ModelSelector,
-  ModelSelectorContent,
-  ModelSelectorEmpty,
-  ModelSelectorGroup,
-  ModelSelectorInput,
-  ModelSelectorItem,
-  ModelSelectorList,
-  ModelSelectorLogo,
-  ModelSelectorName,
-  ModelSelectorTrigger,
-} from "@/components/ai-elements/model-selector";
-
 import { TestChatWindow } from "@/components/TestChatWindow";
+import { ModelPicker } from "@/components/ModelPicker";
 
 // ─── Main Page ──────────────────────────────────────────────────
 
@@ -59,10 +47,12 @@ export default function AgentPage() {
     api.agents.get,
     selectedAgentId ? { agentId: selectedAgentId } : 'skip',
   );
+  const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
+  const creditBalance = useQuery(api.credits.getBalance);
+  const playgroundDeductEnabled = useQuery(api.credits.isPlaygroundDeductEnabled);
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
-  const [model, setModel] = useState(GOOGLE_MODELS[0].value);
-  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
+  const [model, setModel] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
@@ -165,6 +155,11 @@ export default function AgentPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {playgroundDeductEnabled && creditBalance !== undefined && creditBalance !== null && (
+            <span className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+              {creditBalance.credits} credits
+            </span>
+          )}
           {status && (
             <span className="inline-flex items-center gap-1 text-sm text-muted-foreground">
               <Check className="size-4" />
@@ -265,45 +260,11 @@ export default function AgentPage() {
                     <span className="text-xs font-medium text-muted-foreground">
                       Model
                     </span>
-                    <ModelSelector
-                      open={modelSelectorOpen}
-                      onOpenChange={setModelSelectorOpen}
-                    >
-                      <ModelSelectorTrigger className="w-full">
-                        <ModelSelectorLogo provider="google" />
-                        <ModelSelectorName>
-                          {GOOGLE_MODELS.find((m) => m.value === model)?.label ??
-                            model}
-                        </ModelSelectorName>
-                        <ChevronDown className="ml-auto size-4 text-muted-foreground shrink-0" />
-                      </ModelSelectorTrigger>
-                      <ModelSelectorContent>
-                        <ModelSelectorInput placeholder="Search models..." />
-                        <ModelSelectorList>
-                          <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
-                          <ModelSelectorGroup heading="Google">
-                            {GOOGLE_MODELS.map((option) => (
-                              <ModelSelectorItem
-                                key={option.value}
-                                value={option.value}
-                                onSelect={(value) => {
-                                  setModel(value);
-                                  setModelSelectorOpen(false);
-                                }}
-                              >
-                                <ModelSelectorLogo provider="google" />
-                                <ModelSelectorName>
-                                  {option.label}
-                                </ModelSelectorName>
-                                {model === option.value && (
-                                  <Check className="ml-auto size-4" />
-                                )}
-                              </ModelSelectorItem>
-                            ))}
-                          </ModelSelectorGroup>
-                        </ModelSelectorList>
-                      </ModelSelectorContent>
-                    </ModelSelector>
+                    <ModelPicker
+                      models={enabledModels}
+                      value={model}
+                      onChange={setModel}
+                    />
                   </label>
 
                   <div>
@@ -313,7 +274,7 @@ export default function AgentPage() {
                     <div className="mt-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="w-full justify-between">
+                          <Button variant="outline" className="w-full justify-between rounded-lg">
                             <span>{AGENT_TEMPLATES[templateKey].label}</span>
                             <ChevronDown className="size-4 text-muted-foreground" />
                           </Button>

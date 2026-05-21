@@ -383,13 +383,11 @@ export const listReadyMediaByAgent = query({
 export const internalListCollectionNames = internalQuery({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
-    console.log("args", args);
     const rows = await ctx.db
       .query("mediaUploads")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
       .collect();
 
-    console.log("rows", rows);
     const names = new Set(
       rows
         .filter((r) => r.status === "ready" && r.collectionName)

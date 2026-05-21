@@ -20,6 +20,8 @@ export type InboxMessageMetadata = {
   /** When the message was sent on the channel (not thread upload time). */
   sentAt?: number;
   inboxOutbound?: InboxOutboundMeta;
+  llmModel?: string;
+  creditsCharged?: number;
 };
 
 export type InboxUIMessage = UIMessage & {
