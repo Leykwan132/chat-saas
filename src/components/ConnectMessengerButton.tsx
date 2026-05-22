@@ -254,9 +254,6 @@ function ConnectingState({
           </div>
         </DialogDescription>
       </div>
-      <p className="text-xs text-muted-foreground">
-        This usually takes a few seconds. Please keep this window open.
-      </p>
     </div>
   );
 }

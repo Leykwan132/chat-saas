@@ -12,7 +12,7 @@ export default function SignInPage() {
   }, [signIn]);
 
   return (
-    <div className="flex min-h-[100svh] items-center justify-center bg-[#050505]">
+    <div className="flex min-h-[100svh] items-center justify-center bg-background text-foreground">
       <Spinner className="h-8 w-8 text-zinc-500" />
     </div>
   );

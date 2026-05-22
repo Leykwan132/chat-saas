@@ -434,7 +434,7 @@ export function TestChatWindow({
                       </MessageResponse>
                     </div>
                   ) : (
-                    <div className=" rounded-lg bg-primary px-3 py-2 text-base text-primary-foreground ml-auto">
+                    <div className=" rounded-lg bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-base text-blue-950 dark:text-blue-200 ml-auto">
                       {displayText}
                     </div>
                   )}

@@ -43,7 +43,7 @@ async function graphFetch<T>(url: string, context: string): Promise<T> {
   return body as T;
 }
 
-type MessengerParticipant = { id?: string; name?: string };
+type MessengerParticipant = { id?: string; name?: string; email?: string };
 type MessengerMessage = {
   id: string;
   from?: MessengerParticipant;
@@ -53,6 +53,7 @@ type MessengerMessage = {
 };
 type ConversationDetailResponse = {
   id?: string;
+  participants?: { data?: MessengerParticipant[] };
   messages?: { data?: MessengerMessage[] };
 };
 
@@ -132,7 +133,7 @@ export const syncMessages = internalAction({
       );
       url.searchParams.set(
         "fields",
-        "messages{id,from,to,message,created_time}",
+        "participants{id,name,email},messages{id,from,to,message,created_time}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const detail = await graphFetch<ConversationDetailResponse>(
@@ -178,7 +179,7 @@ export const hydrateConversationByParticipant = internalAction({
       url.searchParams.set("user_id", args.participantUserId);
       url.searchParams.set(
         "fields",
-        "id,messages{id,from,to,message,created_time}",
+        "id,participants{id,name,email},messages{id,from,to,message,created_time}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const list = await graphFetch<{
@@ -202,15 +203,18 @@ async function ingestConversationMessages(
   detail: ConversationDetailResponse,
 ) {
   const messages = detail.messages?.data ?? [];
+  const participants = detail.participants?.data ?? [];
+  const customerParticipant = participants.find((p) => p.id && p.id !== channel.pageId);
+
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
     const isOutgoing = resolveSyncMessageDirection(channel, message);
-    const contactAddress = isOutgoing
+    const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
-      : message.from?.id;
-    const contactName = isOutgoing
+      : message.from?.id) || customerParticipant?.id;
+    const contactName = (isOutgoing
       ? message.to?.data?.[0]?.name
-      : message.from?.name;
+      : message.from?.name) || customerParticipant?.name;
     if (!contactAddress) continue;
 
     await ctx.runMutation(internal.messengerSync.internalIngestMessage, {
@@ -218,6 +222,7 @@ async function ingestConversationMessages(
       externalId: message.id,
       contactAddress,
       contactName,
+      contactEmail: customerParticipant?.email,
       direction: isOutgoing ? "outgoing" : "incoming",
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
@@ -232,6 +237,7 @@ export const internalIngestMessage = internalMutation({
     externalId: v.string(),
     contactAddress: v.string(),
     contactName: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
     direction: v.union(v.literal("incoming"), v.literal("outgoing")),
     content: v.string(),
     timestampMs: v.number(),
@@ -245,6 +251,7 @@ export const internalIngestMessage = internalMutation({
       externalId: args.externalId,
       contactAddress: args.contactAddress,
       contactName: args.contactName,
+      contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
       contentType: "text",

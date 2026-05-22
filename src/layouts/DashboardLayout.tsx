@@ -9,6 +9,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { UserProfileButton } from '@/components/UserProfileButton';
+import { ModeToggle } from '@/components/mode-toggle';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -103,7 +104,8 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="ml-auto flex items-center">
+      <div className="ml-auto flex items-center gap-3">
+        <ModeToggle />
         <UserProfileButton accountPath={`/dashboard/${agent._id}/account`} />
       </div>
     </header>

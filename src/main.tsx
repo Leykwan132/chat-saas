@@ -28,6 +28,7 @@ import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
+import { ThemeProvider } from '@/components/theme-provider'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
@@ -72,7 +73,7 @@ function CallbackRoute() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100svh] items-center justify-center bg-[#050505]">
+      <div className="flex min-h-[100svh] items-center justify-center bg-background text-foreground">
         <Spinner className="h-8 w-8 text-zinc-500" />
       </div>
     )
@@ -83,13 +84,14 @@ function CallbackRoute() {
 
 function RootLayout() {
   return (
-    <AuthKitProvider
-      clientId={WORKOS_CLIENT_ID}
-      redirectUri={WORKOS_REDIRECT_URI}
-      devMode={true}
-    >
-      <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
-        <TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <AuthKitProvider
+        clientId={WORKOS_CLIENT_ID}
+        redirectUri={WORKOS_REDIRECT_URI}
+        devMode={true}
+      >
+        <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
+          <TooltipProvider>
           <Routes>
             <Route path="/login" element={<LoginRoute />} />
             <Route path="/callback" element={<CallbackRoute />} />
@@ -123,6 +125,7 @@ function RootLayout() {
         </TooltipProvider>
       </ConvexProviderWithAuthKit>
     </AuthKitProvider>
+    </ThemeProvider>
   )
 }
 

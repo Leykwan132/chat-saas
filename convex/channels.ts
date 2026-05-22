@@ -67,6 +67,8 @@ export const disconnect = mutation({
     if (channel === null || channel.orgId !== orgId) {
       throw new Error("Channel not found");
     }
+    await cleanupChannelData(ctx, args.channelId);
+
     await ctx.db.patch(args.channelId, {
       status: "disconnected",
       accessToken: undefined,
@@ -568,10 +570,38 @@ export const internalGetChannel = internalQuery({
 // no further Graph calls can be made on that user's behalf.
 // ──────────────────────────────────────────────────────────────────────────
 
+async function cleanupChannelData(
+  ctx: MutationCtx,
+  channelId: Id<"channels">,
+) {
+  const conversations = await ctx.db
+    .query("conversations")
+    .withIndex("by_channel_and_contactAddress", (q) =>
+      q.eq("channelId", channelId),
+    )
+    .collect();
+
+  for (const conv of conversations) {
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversationId_and_createdAt", (q) =>
+        q.eq("conversationId", conv._id),
+      )
+      .collect();
+
+    for (const msg of messages) {
+      await ctx.db.delete(msg._id);
+    }
+    await ctx.db.delete(conv._id);
+  }
+}
+
 async function disconnectChannelRow(
   ctx: MutationCtx,
   channelId: Id<"channels">,
 ) {
+  await cleanupChannelData(ctx, channelId);
+
   await ctx.db.patch(channelId, {
     status: "disconnected",
     accessToken: undefined,

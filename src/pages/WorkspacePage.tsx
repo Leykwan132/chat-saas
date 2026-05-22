@@ -3,6 +3,7 @@ import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { CreditMeter } from '@/components/CreditMeter';
+import { ModeToggle } from '@/components/mode-toggle';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import {
@@ -216,7 +217,8 @@ function WorkspaceShell() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <div className="ml-auto flex items-center">
+          <div className="ml-auto flex items-center gap-3">
+            <ModeToggle />
             <UserProfileButton accountPath="/workspace/account" />
           </div>
         </header>

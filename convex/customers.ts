@@ -233,6 +233,8 @@ export const internalUpsertFromWebhook = internalMutation({
     service: channelServiceValidator,
     contactAddress: v.string(),
     profileName: v.optional(v.string()),
+    email: v.optional(v.string()),
+    phone: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<Id<"customers">> => {
     return await upsertCustomer(ctx, args);
@@ -246,6 +248,8 @@ async function upsertCustomer(
     service: "whatsapp" | "instagram" | "messenger";
     contactAddress: string;
     profileName?: string;
+    email?: string;
+    phone?: string;
   },
 ): Promise<Id<"customers">> {
   const now = Date.now();
@@ -265,8 +269,9 @@ async function upsertCustomer(
       service: args.service,
       contactAddress: args.contactAddress,
       name: args.profileName,
+      email: args.email?.trim() || undefined,
       phone:
-        args.service === "whatsapp" ? args.contactAddress : undefined,
+        args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined),
       tags: [],
       source: args.service,
       firstSeenAt: now,
@@ -283,6 +288,13 @@ async function upsertCustomer(
   // Only refresh the cached name if we never had one — preserve user edits.
   if (!existing.name && args.profileName) {
     patch.name = args.profileName;
+  }
+  // Only refresh email/phone if we never had them — preserve user edits.
+  if (!existing.email && args.email) {
+    patch.email = args.email.trim();
+  }
+  if (!existing.phone && args.phone) {
+    patch.phone = args.phone.trim();
   }
   await ctx.db.patch(existing._id, patch);
   return existing._id;

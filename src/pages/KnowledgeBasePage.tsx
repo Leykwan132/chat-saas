@@ -165,7 +165,7 @@ export default function KnowledgeBasePage() {
                       className={cn(
                         'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left w-full',
                         isActive
-                          ? 'bg-foreground text-background'
+                          ? 'bg-secondary text-secondary-foreground font-semibold'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       )}
                     >
@@ -192,7 +192,7 @@ export default function KnowledgeBasePage() {
                       className={cn(
                         'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left w-full',
                         isActive
-                          ? 'bg-foreground text-background'
+                          ? 'bg-secondary text-secondary-foreground font-semibold'
                           : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                       )}
                     >

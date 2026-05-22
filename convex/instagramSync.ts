@@ -47,8 +47,11 @@ type ConversationListResponse = {
   data?: Array<{ id: string; updated_time?: string }>;
 };
 
+type InstagramParticipant = { id?: string; username?: string; name?: string };
+
 type ConversationDetailResponse = {
   id?: string;
+  participants?: { data?: InstagramParticipant[] };
   messages?: {
     data?: Array<InstagramMessage>;
   };
@@ -56,8 +59,8 @@ type ConversationDetailResponse = {
 
 type InstagramMessage = {
   id: string;
-  from?: { id?: string; username?: string };
-  to?: { data?: Array<{ id?: string; username?: string }> };
+  from?: InstagramParticipant;
+  to?: { data?: InstagramParticipant[] };
   message?: string;
   created_time?: string;
 };
@@ -145,7 +148,7 @@ export const syncMessages = internalAction({
       );
       url.searchParams.set(
         "fields",
-        "messages{id,from,to,message,created_time}",
+        "participants{id,username,name},messages{id,from,to,message,created_time}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const detail = await graphFetch<ConversationDetailResponse>(
@@ -191,7 +194,7 @@ export const hydrateConversationByParticipant = internalAction({
       listUrl.searchParams.set("user_id", args.participantUserId);
       listUrl.searchParams.set(
         "fields",
-        "id,messages{id,from,to,message,created_time}",
+        "id,participants{id,username,name},messages{id,from,to,message,created_time}",
       );
       listUrl.searchParams.set("access_token", channel.accessToken);
       const list = await graphFetch<{
@@ -215,16 +218,19 @@ async function ingestConversationMessages(
   detail: ConversationDetailResponse,
 ) {
   const messages = detail.messages?.data ?? [];
+  const participants = detail.participants?.data ?? [];
+  const customerParticipant = participants.find((p) => p.id && p.id !== channel.igUserId);
+
   // Graph returns newest first; ingest oldest-first for natural ordering.
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
     const isOutgoing = resolveSyncMessageDirection(channel, message);
-    const contactAddress = isOutgoing
+    const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
-      : message.from?.id;
-    const contactName = isOutgoing
-      ? message.to?.data?.[0]?.username
-      : message.from?.username;
+      : message.from?.id) || customerParticipant?.id;
+    const contactName = (isOutgoing
+      ? message.to?.data?.[0]?.username ?? message.to?.data?.[0]?.name
+      : message.from?.username ?? message.from?.name) || customerParticipant?.username || customerParticipant?.name;
     if (!contactAddress) continue;
 
     await ctx.runMutation(internal.instagramSync.internalIngestMessage, {
@@ -249,6 +255,7 @@ export const internalIngestMessage = internalMutation({
     externalId: v.string(),
     contactAddress: v.string(),
     contactName: v.optional(v.string()),
+    contactEmail: v.optional(v.string()),
     direction: v.union(v.literal("incoming"), v.literal("outgoing")),
     content: v.string(),
     timestampMs: v.number(),
@@ -262,6 +269,7 @@ export const internalIngestMessage = internalMutation({
       externalId: args.externalId,
       contactAddress: args.contactAddress,
       contactName: args.contactName,
+      contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
       contentType: "text",

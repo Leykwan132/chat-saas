@@ -406,6 +406,8 @@ export const ingestChannelMessageArgs = {
   externalId: v.optional(v.string()),
   contactAddress: v.string(),
   contactName: v.optional(v.string()),
+  contactEmail: v.optional(v.string()),
+  contactPhone: v.optional(v.string()),
   direction: directionValidator,
   content: v.string(),
   contentType: v.optional(contentTypeValidator),
@@ -421,6 +423,8 @@ export type IngestChannelMessageArgs = {
   externalId?: string;
   contactAddress: string;
   contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
   direction: "incoming" | "outgoing";
   content: string;
   contentType?: Doc<"messages">["contentType"];
@@ -474,6 +478,8 @@ export async function ingestChannelMessage(
       service,
       contactAddress: args.contactAddress,
       profileName: args.contactName,
+      email: args.contactEmail,
+      phone: args.contactPhone,
     },
   );
 

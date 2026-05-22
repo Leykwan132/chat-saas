@@ -655,15 +655,11 @@ function ConnectedChannelRow({
               <Trash2 className="size-4" />
             </Button>
             <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
-              <DialogContent showCloseButton={!busy}>
+              <DialogContent showCloseButton={false}>
                 <DialogHeader>
-                  <DialogTitle>Disconnect {channelName}?</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl font-semibold">Disconnect {channelName}?</DialogTitle>
                   <DialogDescription>
-                    Existing conversations stay in your inbox, but new messages
-                    will not arrive until you connect this channel again. This
-                    disconnects{' '}
-                    <span className="font-medium text-foreground">{channelName}</span>{' '}
-                    ({meta.label}).
+                    Disconnecting {channelName} ({meta.label}) will stop new messages from arriving.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>

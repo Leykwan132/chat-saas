@@ -210,7 +210,7 @@ function InboxMessageBody({
             isCustomer
               ? 'rounded-[2px_16px_16px_16px] border border-border bg-card text-foreground'
               : cn(
-                  'rounded-[16px_16px_2px_16px] bg-primary text-primary-foreground',
+                  'rounded-[16px_16px_2px_16px] bg-blue-50 dark:bg-blue-950/40 text-blue-950 dark:text-blue-200',
                   isPending && 'opacity-80',
                 ),
           )}

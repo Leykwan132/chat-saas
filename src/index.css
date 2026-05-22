@@ -195,6 +195,12 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* ── Custom surface / text aliases ── */
+    --color-surface: oklch(0.97 0 0);
+    --color-surface-hover: oklch(0.94 0 0);
+    --color-foreground-muted: oklch(0.556 0 0);
+    --color-foreground-subtle: oklch(0.65 0 0);
 }
 
 .dark {

@@ -55,13 +55,21 @@ function legacySentByAi(
 function resolveAgentName(
   doc: MessageDocWithMeta,
   uiRole: UIMessage["role"],
+  fallbackChannelName: string,
 ): string | undefined {
   if (uiRole !== "assistant") return undefined;
-  const fromMeta = doc.metadata?.inboxOutbound?.agentName?.trim();
-  if (fromMeta) return fromMeta;
+  const outbound = doc.metadata?.inboxOutbound;
+  if (outbound) {
+    const isAi = outbound.sentByAi === true;
+    const isUser = !!outbound.authorUserId;
+    if (isAi || isUser) {
+      return outbound.agentName?.trim() || "Unknown agent";
+    }
+    return fallbackChannelName;
+  }
   const legacy = doc.agentName?.trim();
-  if (legacy) return legacy;
-  return "Unknown agent";
+  if (legacy && legacy !== "Unknown agent") return legacy;
+  return fallbackChannelName;
 }
 
 function agentMessageDocId(doc: MessageDoc): string | undefined {
@@ -103,6 +111,28 @@ export async function messageDocsToInboxUIMessages(
     }
   }
 
+  const conversation = await ctx.db.get(conversationId);
+  const channel = conversation?.channelId
+    ? await ctx.db.get(conversation.channelId)
+    : null;
+
+  let fallbackChannelName = "Unknown agent";
+  if (channel) {
+    if (channel.service === "whatsapp") {
+      fallbackChannelName =
+        channel.displayPhoneNumber ??
+        channel.phoneNumberId ??
+        channel.wabaId ??
+        "WhatsApp";
+    } else {
+      fallbackChannelName =
+        channel.displayUsername ??
+        channel.pageId ??
+        channel.igUserId ??
+        (channel.service === "instagram" ? "Instagram" : "Messenger");
+    }
+  }
+
   return sorted(docs)
     .filter((doc) => !isInboxOrderSpacerDoc(doc))
     .flatMap((doc) => {
@@ -110,7 +140,7 @@ export async function messageDocsToInboxUIMessages(
       const [ui] = toUIMessages([doc]);
       if (!ui) return [];
       const sentByAi = legacySentByAi(withMeta, ui.role);
-      const agentName = resolveAgentName(withMeta, ui.role);
+      const agentName = resolveAgentName(withMeta, ui.role, fallbackChannelName);
       const sentAt = resolveSentAt(withMeta, sentAtByAgentMessageId);
       return [
         {
