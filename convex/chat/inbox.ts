@@ -19,14 +19,30 @@ import {
   buildAgent,
   saveAiReply,
 } from "./threads";
-import { inboxAiReplyPool } from "../inboxPools";
+import { inboxAiReplyPool, threadSummarizerPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
+import { generateText } from "ai";
+import { openRouterModel } from "../llm/openRouter";
+import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
+import { updateThreadMetadata } from "@convex-dev/agent";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
   handler: async (ctx, args) => {
     const result = await ingestChannelMessage(ctx, args);
-    if (result.skipped || !result.shouldEnqueueAi) {
+    if (result.skipped) {
+      return result;
+    }
+
+    if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
+      await threadSummarizerPool.enqueueAction(
+        ctx,
+        internal.chat.inbox.summarizeThreadWorker,
+        { conversationId: result.conversationId },
+      );
+    }
+
+    if (!result.shouldEnqueueAi) {
       return result;
     }
 
@@ -163,6 +179,12 @@ export const internalPersistHumanReply = internalMutation({
       unreadCount: 0,
       updatedAt: now,
     });
+
+    await threadSummarizerPool.enqueueAction(
+      ctx,
+      internal.chat.inbox.summarizeThreadWorker,
+      { conversationId: conv._id },
+    );
 
     return agentMessageId;
   },
@@ -421,6 +443,10 @@ export const generateAiReplyWorker = internalAction({
         },
       );
     }
+
+    await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
+      conversationId: conv._id,
+    });
   },
 });
 
@@ -476,5 +502,119 @@ export const listThreadMessagesForInbox = query({
       ),
       streams,
     };
+  },
+});
+
+export const internalGetMessagesForSummary = internalQuery({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_conversationId_and_createdAt", (q) =>
+        q.eq("conversationId", args.conversationId),
+      )
+      .order("asc")
+      .take(100);
+  },
+});
+
+export const internalUpdateThreadSummary = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    summary: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) return;
+
+    await ctx.db.patch(args.conversationId, {
+      interactionSummary: args.summary,
+      updatedAt: Date.now(),
+    });
+
+    await updateThreadMetadata(ctx, components.agent, {
+      threadId: conv.threadId,
+      patch: { summary: args.summary },
+    });
+  },
+});
+
+export const internalEnqueueSummarization = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    await threadSummarizerPool.enqueueAction(
+      ctx,
+      internal.chat.inbox.summarizeThreadWorker,
+      { conversationId: args.conversationId },
+    );
+  },
+});
+
+export const summarizeThreadWorker = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      { conversationId: args.conversationId },
+    );
+    if (conv === null) return;
+
+    const messages = await ctx.runQuery(
+      internal.chat.inbox.internalGetMessagesForSummary,
+      { conversationId: args.conversationId },
+    );
+    if (messages.length === 0) return;
+
+    let modelId = DEFAULT_OPENROUTER_MODEL;
+    if (conv.assignedAgentId) {
+      const agent = await ctx.runQuery(internal.agents.internalGet, {
+        agentId: conv.assignedAgentId,
+      });
+      if (agent) {
+        modelId = agent.model;
+      }
+    }
+
+    const transcript = messages
+      .map((m) => {
+        const sender =
+          m.direction === "incoming"
+            ? "Customer"
+            : m.authorUserId
+              ? "Agent (User)"
+              : "Agent (AI)";
+        return `${sender}: ${m.content}`;
+      })
+      .join("\n");
+
+    const systemPrompt = `You are a helpful assistant that summarizes chat transcripts between a customer and a business agent.
+Generate a very simple, clear, and easy-to-understand summary of 1-2 sentences.
+Use plain English, avoid formal business speak or jargon, and explain:
+1. What product the user is interested in (identify the specific product or topic if mentioned).
+2. The current stage of the conversation (e.g., asking for details, waiting for support, pricing question, finalized purchase, etc.).
+Make it readable at a single glance.`;
+    const prompt = `Please summarize the following chat transcript clearly and simply in 1-2 sentences:\n\n${transcript}`;
+
+    try {
+      const { text } = await generateText({
+        model: openRouterModel(modelId),
+        prompt,
+        system: systemPrompt,
+      });
+      const summary = text.trim();
+      if (summary) {
+        await ctx.runMutation(
+          internal.chat.inbox.internalUpdateThreadSummary,
+          {
+            conversationId: args.conversationId,
+            summary,
+          },
+        );
+      }
+    } catch (error) {
+      console.error("Failed to generate thread summary:", error);
+    }
   },
 });

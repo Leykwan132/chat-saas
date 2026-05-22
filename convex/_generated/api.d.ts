@@ -163,6 +163,7 @@ export declare const components: {
   messengerSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"messengerSyncWorkpool">;
   inboxAiReplyWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"inboxAiReplyWorkpool">;
   mediaDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"mediaDeleteWorkpool">;
+  threadSummarizerWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"threadSummarizerWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
 };

@@ -5,7 +5,7 @@ import {
   type ActionCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Doc } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { messengerSyncPool } from "./channelSyncPools";
 import {
   ingestChannelMessage,
@@ -141,7 +141,12 @@ export const syncMessages = internalAction({
         "Messenger conversation fetch",
       );
       console.log('msg detail', detail);
-      await ingestConversationMessages(ctx, channel, detail);
+      const conversationId = await ingestConversationMessages(ctx, channel, detail);
+      if (conversationId) {
+        await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
+          conversationId,
+        });
+      }
     } catch (err) {
       console.error(
         `Messenger syncMessages failed for ${args.conversationExternalId}`,
@@ -186,7 +191,12 @@ export const hydrateConversationByParticipant = internalAction({
         data?: Array<ConversationDetailResponse>;
       }>(url.toString(), "Messenger conversation lookup by user_id");
       for (const conv of list.data ?? []) {
-        await ingestConversationMessages(ctx, channel, conv);
+        const conversationId = await ingestConversationMessages(ctx, channel, conv);
+        if (conversationId) {
+          await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
+            conversationId,
+          });
+        }
       }
     } catch (err) {
       console.error(
@@ -201,10 +211,12 @@ async function ingestConversationMessages(
   ctx: ActionCtx,
   channel: Doc<"channels">,
   detail: ConversationDetailResponse,
-) {
+): Promise<Id<"conversations"> | null> {
   const messages = detail.messages?.data ?? [];
   const participants = detail.participants?.data ?? [];
   const customerParticipant = participants.find((p) => p.id && p.id !== channel.pageId);
+
+  let conversationId: Id<"conversations"> | null = null;
 
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
@@ -217,7 +229,7 @@ async function ingestConversationMessages(
       : message.from?.name) || customerParticipant?.name;
     if (!contactAddress) continue;
 
-    await ctx.runMutation(internal.messengerSync.internalIngestMessage, {
+    const res = await ctx.runMutation(internal.messengerSync.internalIngestMessage, {
       channelId: channel._id,
       externalId: message.id,
       contactAddress,
@@ -227,7 +239,11 @@ async function ingestConversationMessages(
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
     });
+    if (res?.conversationId) {
+      conversationId = res.conversationId;
+    }
   }
+  return conversationId;
 }
 
 // Atomically upsert customer + conversation + message for Messenger.
@@ -244,7 +260,7 @@ export const internalIngestMessage = internalMutation({
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
-    if (channel === null) return;
+    if (channel === null) return null;
 
     const result = await ingestChannelMessage(ctx, {
       channelId: args.channelId,
@@ -260,9 +276,13 @@ export const internalIngestMessage = internalMutation({
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
     });
-    if (result.skipped || !result.shouldEnqueueAi) return;
+    if (result.skipped || !result.shouldEnqueueAi) {
+      return result;
+    }
     const conv = await ctx.db.get(result.conversationId);
-    if (conv === null || !conv.assignToAiAgent || !conv.assignedAgentId) return;
+    if (conv === null || !conv.assignToAiAgent || !conv.assignedAgentId) {
+      return result;
+    }
     await inboxAiReplyPool.enqueueAction(
       ctx,
       internal.chat.inbox.generateAiReplyWorker,
@@ -271,6 +291,7 @@ export const internalIngestMessage = internalMutation({
         promptContent: args.content.trim(),
       },
     );
+    return result;
   },
 });
 

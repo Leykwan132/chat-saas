@@ -442,6 +442,7 @@ export async function ingestChannelMessage(
   conversationId: Id<"conversations">;
   skipped: boolean;
   shouldEnqueueAi?: boolean;
+  isNew?: boolean;
 }> {
   if (args.externalId) {
     const existingLedger = await ctx.db
@@ -486,7 +487,7 @@ export async function ingestChannelMessage(
   const orgAddress =
     channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? "";
 
-  const { conversationId, threadId } = await upsertInboxConversation(ctx, {
+  const { conversationId, threadId, isNew } = await upsertInboxConversation(ctx, {
     orgId: channel.orgId,
     channelId: channel._id,
     service,
@@ -549,6 +550,7 @@ export async function ingestChannelMessage(
       !args.isHistorical &&
       args.direction === "incoming" &&
       Boolean(agentMessageId && trimmedContent.length > 0),
+    isNew,
   };
 }
 
@@ -567,7 +569,7 @@ async function upsertInboxConversation(
     isIncoming: boolean;
     assignedAgentId?: Id<"agents">;
   },
-): Promise<{ conversationId: Id<"conversations">; threadId: string }> {
+): Promise<{ conversationId: Id<"conversations">; threadId: string; isNew: boolean }> {
   const existing = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>
@@ -608,7 +610,7 @@ async function upsertInboxConversation(
       updatedAt: now,
     });
 
-    return { conversationId, threadId };
+    return { conversationId, threadId, isNew: true };
   }
 
   const patch: Record<string, unknown> = {
@@ -632,5 +634,5 @@ async function upsertInboxConversation(
   }
   await ctx.db.patch(existing._id, patch);
 
-  return { conversationId: existing._id, threadId: existing.threadId };
+  return { conversationId: existing._id, threadId: existing.threadId, isNew: false };
 }

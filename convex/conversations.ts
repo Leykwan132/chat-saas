@@ -3,6 +3,8 @@ import { paginationOptsValidator } from "convex/server";
 import { internalQuery, mutation, query } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { updateThreadMetadata, getThreadMetadata } from "@convex-dev/agent";
+import { components } from "./_generated/api";
 
 // Latest inbox threads tied to channels that are still connected. Omits the AI
 // playground and orphaned rows left after disconnect (channel no longer linked).
@@ -258,5 +260,29 @@ export const setInteractionSummary = mutation({
       interactionSummary: trimmed.length > 0 ? trimmed : undefined,
       updatedAt: Date.now(),
     });
+    await updateThreadMetadata(ctx, components.agent, {
+      threadId: conv.threadId,
+      patch: { summary: trimmed },
+    });
+  },
+});
+
+export const getThreadSummary = query({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      return null;
+    }
+    try {
+      const metadata = await getThreadMetadata(ctx, components.agent, {
+        threadId: conv.threadId,
+      });
+      return metadata.summary ?? null;
+    } catch (e) {
+      console.error("Failed to fetch thread metadata summary", e);
+      return conv.interactionSummary ?? null;
+    }
   },
 });

@@ -16,6 +16,7 @@ import {
   Plug,
   RotateCcw,
   Search,
+  Sparkles,
   Tag,
   User,
   Users,
@@ -36,7 +37,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { Textarea } from '@/components/ui/textarea';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
@@ -173,13 +173,10 @@ export default function ChatsPage() {
   const updateConversationAssignee = useMutation(api.conversations.setAssignee);
   const addConversationTag = useMutation(api.conversations.addConversationTag);
   const removeConversationTag = useMutation(api.conversations.removeConversationTag);
-  const saveInteractionSummary = useMutation(api.conversations.setInteractionSummary);
   const teamUsers = useQuery(api.users.getUsers, {});
   const [assigneeSaving, setAssigneeSaving] = useState(false);
   const [tagDraft, setTagDraft] = useState('');
   const [tagMutationBusy, setTagMutationBusy] = useState(false);
-  const [interactionSummaryDraft, setInteractionSummaryDraft] = useState('');
-  const [interactionSummarySaving, setInteractionSummarySaving] = useState(false);
   const [interactionHistoryOpen, setInteractionHistoryOpen] = useState(false);
   const [interactionSummaryOpen, setInteractionSummaryOpen] = useState(false);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
@@ -210,6 +207,11 @@ export default function ChatsPage() {
 
   const selectedConversation = useQuery(
     api.conversations.get,
+    selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
+  );
+
+  const threadSummary = useQuery(
+    api.conversations.getThreadSummary,
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
@@ -263,19 +265,7 @@ export default function ChatsPage() {
     setPendingOutbound([]);
   }, [selectedConversationId]);
 
-  useEffect(() => {
-    if (!selectedConversationId) {
-      setInteractionSummaryDraft('');
-      return;
-    }
-    if (
-      !selectedConversation ||
-      selectedConversation._id !== selectedConversationId
-    ) {
-      return;
-    }
-    setInteractionSummaryDraft(selectedConversation.interactionSummary ?? '');
-  }, [selectedConversationId, selectedConversation]);
+
 
   const chatItems = useMemo(() => {
     if (!linkedConversations) return [];
@@ -391,15 +381,7 @@ export default function ChatsPage() {
     return u ? formatOrgMemberDisplayName(u) : 'Teammate';
   }, [selectedConversation?.assignedUserId, teamUsers]);
 
-  const interactionSummaryDirty = useMemo(() => {
-    if (!conversationDocMatchesSelection) return false;
-    const server = selectedConversation?.interactionSummary ?? '';
-    return interactionSummaryDraft !== server;
-  }, [
-    conversationDocMatchesSelection,
-    selectedConversation?.interactionSummary,
-    interactionSummaryDraft,
-  ]);
+
 
   const handleAssignConversation = async (next: { kind: 'ai' } | { kind: 'user'; workosUserId: string }) => {
     if (!selectedConversationId) return;
@@ -462,20 +444,7 @@ export default function ChatsPage() {
     }
   };
 
-  const handleSaveInteractionSummary = async () => {
-    if (!selectedConversationId || !conversationDocMatchesSelection) return;
-    setInteractionSummarySaving(true);
-    try {
-      await saveInteractionSummary({
-        conversationId: selectedConversationId,
-        summary: interactionSummaryDraft,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not save summary');
-    } finally {
-      setInteractionSummarySaving(false);
-    }
-  };
+
 
   const canReplyFromInbox =
     selectedConversation?.service === 'whatsapp' ||
@@ -1041,9 +1010,14 @@ export default function ChatsPage() {
                         aria-expanded={interactionSummaryOpen}
                       >
                         <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="flex-1 text-sm font-semibold text-foreground">
+                        <span className="text-sm font-semibold text-foreground">
                           Interaction summary
                         </span>
+                        <div className="flex items-center gap-1 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
+                          <Sparkles className="size-2.5 animate-pulse" />
+                          <span>AI</span>
+                        </div>
+                        <div className="flex-1" />
                         <ChevronDown
                           className={cn(
                             'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
@@ -1052,29 +1026,24 @@ export default function ChatsPage() {
                         />
                       </button>
                       {interactionSummaryOpen ? (
-                        <div className="space-y-2 px-4 pb-3">
-                          <Textarea
-                            value={interactionSummaryDraft}
-                            onChange={(e) => setInteractionSummaryDraft(e.target.value)}
-                            placeholder="Notes on this thread for your team…"
-                            disabled={interactionSummarySaving}
-                            rows={5}
-                            className="min-h-[120px] resize-y text-xs"
-                          />
-                          <div className="flex justify-end">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              className="h-8 px-3 text-xs"
-                              disabled={
-                                interactionSummarySaving || !interactionSummaryDirty
-                              }
-                              onClick={() => void handleSaveInteractionSummary()}
-                            >
-                              {interactionSummarySaving ? 'Saving…' : 'Save summary'}
-                            </Button>
-                          </div>
+                        <div className="px-4 pb-3 space-y-2">
+                          {threadSummary ? (
+                            <div className="pl-4 border-l border-violet-200 dark:border-violet-800">
+                              <Shimmer
+                                duration={3}
+                                spread={2}
+                                className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap block w-full"
+                              >
+                                {threadSummary}
+                              </Shimmer>
+                            </div>
+                          ) : (
+                            <div className="pl-4 border-l border-violet-200 dark:border-violet-800">
+                              <Shimmer duration={1.5} spread={2} className="text-xs text-muted-foreground font-normal italic">
+                                Generating summary in background…
+                              </Shimmer>
+                            </div>
+                          )}
                         </div>
                       ) : null}
                     </div>
