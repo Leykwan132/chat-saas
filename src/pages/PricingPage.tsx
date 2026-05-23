@@ -6,10 +6,7 @@ import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { ModeToggle } from '@/components/mode-toggle';
 import { toast } from 'sonner';
-import {
-  ChevronDown,
-  ArrowRight,
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import {
   type BillingInterval,
   type PlanKey,
@@ -83,15 +80,6 @@ export default function PricingPage() {
             Kilobot
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
-            <Link to="/#product" className="inline-flex items-center gap-1 transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Product <ChevronDown className="size-3" />
-            </Link>
-            <Link to="/#resources" className="inline-flex items-center gap-1 transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Resources <ChevronDown className="size-3" />
-            </Link>
-            <Link to="/#enterprise" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Enterprise
-            </Link>
             <Link to="/pricing" className="transition-colors text-zinc-900 dark:text-white font-medium">
               Pricing
             </Link>

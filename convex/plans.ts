@@ -1,8 +1,8 @@
-import { query, internalMutation, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { query, internalQuery, internalMutation, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
-import { components, internal } from "./_generated/api";
+import { components } from "./_generated/api";
 import {
   EXTRA_CREDITS_PRICE_ID,
   PLAN_CATALOG,
@@ -225,12 +225,6 @@ export async function syncCreditBilling(
     };
   }
 
-  const isOrg = "workosOrgId" in entity;
-  await ctx.scheduler.runAfter(0, internal.plans.persistCreditPeriodReset, {
-    workosUserId: isOrg ? undefined : entity.workosUserId,
-    workosOrgId: isOrg ? entity.workosOrgId : undefined,
-  });
-
   return {
     entity: {
       ...entity,
@@ -342,7 +336,7 @@ export const getPlanAndUsage = query({
   },
 });
 
-export const internalGetPlanFromStripe = query({
+export const internalGetPlanFromStripe = internalQuery({
   args: { entityId: v.string() },
   handler: async (ctx, args) => {
     return await getPlanFromStripe(ctx, args.entityId);

@@ -16,7 +16,6 @@ import {
   Play,
   Plug,
   Search,
-  Sparkles,
   Users,
   Workflow,
   Zap,
@@ -108,15 +107,6 @@ function Nav({
           Kilobot
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
-          <a href="#product" className="inline-flex items-center gap-1 transition-colors hover:text-zinc-900 dark:hover:text-white">
-            Product <ChevronDown className="size-3" />
-          </a>
-          <a href="#resources" className="inline-flex items-center gap-1 transition-colors hover:text-zinc-900 dark:hover:text-white">
-            Resources <ChevronDown className="size-3" />
-          </a>
-          <a href="#enterprise" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-            Enterprise
-          </a>
           <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
             Pricing
           </Link>
@@ -541,10 +531,6 @@ function Hero({
         </div>
       </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
-        <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] px-3 py-1 text-xs font-medium tracking-wide text-zinc-600 dark:text-zinc-400 shadow-[0_0_32px_rgba(0,0,0,0.02)] dark:shadow-[0_0_32px_rgba(255,255,255,0.06)] backdrop-blur">
-          <Sparkles className="size-3.5 text-zinc-700 dark:text-zinc-200" />
-          AI sales agents for your inbox
-        </p>
         <h1 className="text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950 dark:text-white sm:text-6xl md:text-7xl lg:text-[5.25rem]">
           1000x your inbox{' '}
           <Highlighter action="highlight" color="#FACC15" isView>
@@ -552,6 +538,10 @@ function Hero({
           </Highlighter>
           {' '}with Kilobot.
         </h1>
+        <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
+          Kilobot keeps your inbox moving 24/7. It qualifies leads, answers questions, and pushes deals
+          forward—all while you sleep.
+        </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
           <a
@@ -639,7 +629,7 @@ function FeatureCard({
 
 function AgenticShowcase() {
   return (
-    <section id="product" className="scroll-mt-16 px-5 py-24 sm:px-6">
+    <section className="scroll-mt-16 px-5 py-24 sm:px-6">
       <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-start">
         <SectionHeading
           label="Product"
@@ -682,7 +672,7 @@ function StatsStrip() {
             <Card size="sm" className={landingCardClass}>
               <CardContent className="py-5 text-center sm:text-left">
                 <p className="text-4xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                  {stat.prefix}
+                  {'prefix' in stat ? stat.prefix : ''}
                   <NumberTicker value={stat.value} />
                   {stat.suffix}
                 </p>
@@ -725,7 +715,7 @@ function ReplyDemo() {
 
 function ModelEcosystem() {
   return (
-    <section id="resources" className="scroll-mt-16 border-t border-zinc-200 px-5 py-24 dark:border-white/[0.06] sm:px-6">
+    <section className="scroll-mt-16 border-t border-zinc-200 px-5 py-24 dark:border-white/[0.06] sm:px-6">
       <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-start">
         <SectionHeading
           label="Models"

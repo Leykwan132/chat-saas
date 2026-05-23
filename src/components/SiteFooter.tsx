@@ -5,8 +5,6 @@ import { POST_LOGIN_REDIRECT } from '@/constants';
 import { cn } from '@/lib/utils';
 
 const footerGroups = [
-  { title: 'Product', links: ['Inbox', 'Agents', 'Knowledge Base', 'Analytics'] },
-  { title: 'Resources', links: ['Docs', 'Playbooks', 'Templates', 'Changelog'] },
   { title: 'Company', links: ['Customers', 'Careers', 'Security', 'Contact'] },
   { title: 'Legal', links: ['Privacy', 'Terms', 'DPA'] },
 ];
@@ -25,7 +23,6 @@ export function SiteFooter({ className }: SiteFooterProps) {
 
   return (
     <footer
-      id="enterprise"
       className={cn(
         'border-t border-zinc-200 px-5 py-12 dark:border-white/[0.06] sm:px-6',
         className,
@@ -45,7 +42,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
               AI inbox agents for sales teams.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-2">
             {footerGroups.map((group) => (
               <div key={group.title}>
                 <p className="text-sm font-medium text-zinc-900 dark:text-white">{group.title}</p>
@@ -53,7 +50,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
                   {group.links.map((link) => (
                     <a
                       key={link}
-                      href="/#product"
+                      href="#"
                       className="block text-sm text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
                     >
                       {link}
