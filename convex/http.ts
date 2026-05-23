@@ -19,6 +19,70 @@ import {
 const http = httpRouter();
 authKit.registerRoutes(http);
 
+import { components } from "./_generated/api";
+import { registerRoutes } from "@convex-dev/stripe";
+
+registerRoutes(http, components.stripe, {
+  webhookPath: "/stripe/webhook",
+  events: {
+    "customer.subscription.created": async (ctx, event: any) => {
+      const subscription = event.data.object;
+      console.log("Subscription created:", subscription.id, subscription.status);
+      const orgId = subscription.metadata?.orgId;
+      if (orgId) {
+        const item = subscription.items?.data?.[0];
+        await ctx.runMutation(internal.stripe.handleSubscriptionUpdatedInternal, {
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          status: subscription.status,
+          priceId: item?.price?.id || "",
+          currentPeriodEnd: item?.current_period_end || 0,
+          orgId,
+        });
+      }
+    },
+    "customer.subscription.updated": async (ctx, event: any) => {
+      const subscription = event.data.object;
+      console.log("Subscription updated:", subscription.id, subscription.status);
+      const orgId = subscription.metadata?.orgId;
+      if (orgId) {
+        const item = subscription.items?.data?.[0];
+        await ctx.runMutation(internal.stripe.handleSubscriptionUpdatedInternal, {
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: subscription.customer as string,
+          status: subscription.status,
+          priceId: item?.price?.id || "",
+          currentPeriodEnd: item?.current_period_end || 0,
+          orgId,
+        });
+      }
+    },
+    "customer.subscription.deleted": async (ctx, event: any) => {
+      const subscription = event.data.object;
+      const orgId = subscription.metadata?.orgId;
+      if (orgId) {
+        await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
+          stripeSubscriptionId: subscription.id,
+          orgId,
+        });
+      }
+    },
+    "checkout.session.completed": async (ctx, event: any) => {
+      const session = event.data.object;
+      if (session.mode === "payment" && session.metadata?.type === "extra_credits") {
+        const orgId = session.metadata?.orgId;
+        if (orgId) {
+          await ctx.runMutation(internal.stripe.handlePaymentCompletedInternal, {
+            stripeCustomerId: session.customer as string | undefined,
+            orgId,
+            amountInCents: session.amount_total || 0,
+          });
+        }
+      }
+    },
+  },
+});
+
 http.route({
   path: "/webhook/workos",
   method: "POST",

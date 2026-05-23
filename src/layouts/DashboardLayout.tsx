@@ -3,7 +3,7 @@ import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { Bot, ChevronDown } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AppSidebar } from '@/components/app-sidebar';
 import { Button } from '@/components/ui/button';
@@ -47,8 +47,6 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
 
   return (
     <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
-      <SidebarTrigger className="-ml-1" />
-
       <Breadcrumb>
         <BreadcrumbList>
           {/* Workspace crumb */}

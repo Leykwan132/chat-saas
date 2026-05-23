@@ -11,6 +11,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
+import { checkPlatformSupport, getPlanFromStripe } from "./plans";
 
 /** Matches initial connect backfill; re-sync uses the same Graph list window. */
 const META_SYNC_CONVERSATIONS_LIMIT = 10;
@@ -202,6 +203,10 @@ export const internalStartPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
+    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    if (!checkPlatformSupport(stripeInfo.plan, "whatsapp")) {
+      throw new Error(`WhatsApp is not supported on the ${stripeInfo.plan} plan.`);
+    }
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
@@ -315,6 +320,10 @@ export const internalStartInstagramPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
+    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    if (!checkPlatformSupport(stripeInfo.plan, "instagram")) {
+      throw new Error(`Instagram is not supported on the ${stripeInfo.plan} plan.`);
+    }
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
@@ -442,6 +451,10 @@ export const internalStartMessengerPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
+    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    if (!checkPlatformSupport(stripeInfo.plan, "messenger")) {
+      throw new Error(`Messenger is not supported on the ${stripeInfo.plan} plan.`);
+    }
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")

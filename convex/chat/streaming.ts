@@ -20,6 +20,7 @@ import {
   replaceMediaUrlsWithKeys,
 } from "./mediaUrlExtractor";
 import { isPlaygroundCreditsEnabled } from "../credits";
+import { checkModelAccess, getPlanFromStripe } from "../plans";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -88,24 +89,33 @@ export const sendMessage = mutation({
     enableCitations: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx);
+    const { userId, orgId } = await getAuthContext(ctx);
     const agentDoc = await ctx.db.get(args.agentId);
     if (agentDoc === null) {
       throw new Error("Agent not found");
     }
 
+    const entityId = !orgId || orgId === "personal" ? userId : orgId;
+    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const plan = stripeInfo.plan;
+
+    if (!checkModelAccess(plan, agentDoc.model)) {
+      throw new Error(`Your plan does not support model: ${agentDoc.model}`);
+    }
+
     const deductCredits = isPlaygroundCreditsEnabled();
     if (deductCredits) {
       const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
-        workosUserId: userId,
+        orgId: orgId,
         modelId: agentDoc.model,
+        workosUserId: userId,
       });
       if (!creditCheck.ok) {
         if (creditCheck.reason === "insufficient_credits") {
           throw new Error("Insufficient credits to send this message");
         }
-        if (creditCheck.reason === "user_not_found") {
-          throw new Error("User account not found");
+        if (creditCheck.reason === "org_not_found" || creditCheck.reason === "user_not_found") {
+          throw new Error("Billing account not found");
         }
         throw new Error("Selected model is not available");
       }
@@ -190,10 +200,12 @@ export const generatePlaygroundResponseAsync = internalAction({
     );
 
     const usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
-      workosUserId: args.billingUserId,
+      orgId: agent.orgId,
       modelId: agent.model,
+      workosUserId: args.billingUserId,
       skipDeduction: !args.deductCredits,
       conversationId: conv?._id,
+      agentId: args.agentId,
       reason: "AI playground response",
     });
 
@@ -331,7 +343,7 @@ export const getLatestPlaygroundThread = query({
   },
   handler: async (ctx, args) => {
     const { userId, orgId } = await getAuthContext(ctx);
-    if (!orgId) return null;
+    if (!userId) return null;
 
     const conv = await ctx.db
       .query("conversations")

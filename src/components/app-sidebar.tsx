@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, Sparkles, BookOpen, Plug, Zap } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { CreditMeter } from '@/components/CreditMeter';
+import { Button } from '@/components/ui/button';
 import {
   Sidebar,
   SidebarContent,
@@ -14,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
 
 function getNavItems(agentId: string) {
@@ -39,28 +41,44 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 };
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
+  const { state, toggleSidebar } = useSidebar();
   const navItems = getNavItems(agent._id);
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* Logo */}
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="/workspace">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Sparkles className="size-4" />
-                </div>
-                <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-                  <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
-                  <span className="truncate text-xs text-sidebar-foreground/60">{agent.name}</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      {/* Logo / Toggle */}
+      {state === 'collapsed' ? (
+        <SidebarHeader className="flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <PanelLeftOpen className="size-5" />
+            <span className="sr-only">Expand Sidebar</span>
+          </Button>
+        </SidebarHeader>
+      ) : (
+        <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
+          <a href="/workspace" className="flex items-center gap-3">
+            <img src="/icon.svg" className="size-6 dark:invert" />
+            <div className="flex min-w-0 flex-col gap-0.5 leading-none">
+              <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
+              <span className="truncate text-xs text-sidebar-foreground/60">{agent.name}</span>
+            </div>
+          </a>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <PanelLeftClose className="size-5" />
+            <span className="sr-only">Collapse Sidebar</span>
+          </Button>
+        </SidebarHeader>
+      )}
 
       {/* Nav */}
       <SidebarContent>

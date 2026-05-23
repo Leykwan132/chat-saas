@@ -29,9 +29,16 @@ export async function getAuthContext(
   const roles = claims.roles ?? (role ? [role] : []);
   const permissions = claims.permissions ?? [];
 
+  const orgId =
+    activeOrgId !== undefined
+      ? !activeOrgId || activeOrgId === "personal"
+        ? PERSONAL_ORG_ID
+        : activeOrgId
+      : tokenOrgId ?? PERSONAL_ORG_ID;
+
   return {
     userId: identity.subject,
-    orgId: activeOrgId ?? tokenOrgId ?? PERSONAL_ORG_ID,
+    orgId,
     role,
     roles,
     permissions,

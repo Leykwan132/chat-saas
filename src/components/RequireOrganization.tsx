@@ -1,21 +1,24 @@
 import type { ReactNode } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
-import { OrganizationOnboarding } from '@/components/OrganizationOnboarding';
+import { Navigate } from 'react-router';
 
 type RequireOrganizationProps = {
   children: ReactNode;
 };
 
-// Gates protected dashboard routes behind an active WorkOS organization.
-// AuthKit puts the active org in the access token's `org_id` claim, which is
-// surfaced as `organizationId` from `useAuth`. Users who just signed up have
-// no membership yet (organizationId === null), so we render the onboarding
-// instead of the protected page. Once the user creates an org and AuthKit
-// mints a fresh token via `switchToOrganization`, this component re-renders
-// with `organizationId` populated and falls through to children.
+// Gates protected dashboard routes behind the user's onboarding completion state.
+// We load the current user's DB row via `api.users.currentUser`. If loading,
+// we display a spinner. If the user hasn't completed their onboarding questionnaire
+// (role, usecase, plan), we redirect to /onboarding. Once they onboard, they
+// are permitted to access their personal workspace or active organization workspace.
 export function RequireOrganization({ children }: RequireOrganizationProps) {
-  const { isLoading, organizationId } = useAuth();
+  const { isLoading: isAuthLoading } = useAuth();
+  const currentUser = useQuery(api.users.currentUser);
+
+  const isLoading = isAuthLoading || currentUser === undefined;
 
   if (isLoading) {
     return (
@@ -25,9 +28,25 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
     );
   }
 
-  if (!organizationId) {
-    return <OrganizationOnboarding />;
+  // If user row is not created yet (e.g. webhook sync delay), show spinner
+  if (currentUser === null) {
+    return (
+      <div className="flex min-h-[100svh] flex-col items-center justify-center gap-4 bg-background">
+        <Spinner className="size-8 text-muted-foreground" />
+        <p className="text-xs text-muted-foreground">Setting up your profile...</p>
+      </div>
+    );
+  }
+
+  const hasValidPlan =
+    currentUser.plan === 'free' ||
+    currentUser.stripeSubscriptionStatus === 'active' ||
+    currentUser.stripeSubscriptionStatus === 'trialing';
+
+  if (!currentUser.onboarded || !hasValidPlan) {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
 }
+

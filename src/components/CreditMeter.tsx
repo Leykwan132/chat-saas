@@ -1,44 +1,54 @@
 import { useState } from 'react';
 import { Coins, Plus } from 'lucide-react';
 import { useMutation, useQuery } from 'convex/react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-
-const DEFAULT_CREDITS = 500;
+import { cn } from '@/lib/utils';
 
 export function CreditMeter() {
-  const balance = useQuery(api.credits.getBalance);
+  const { organizationId, isLoading: isAuthLoading } = useAuth();
+  const billingOrgId = organizationId ?? null;
+  const planAndUsage = useQuery(
+    api.plans.getPlanAndUsage,
+    isAuthLoading ? 'skip' : { orgId: billingOrgId },
+  );
   const topUpMutation = useMutation(api.credits.topUp);
   const [isToppingUp, setIsToppingUp] = useState(false);
 
-  const credits = balance?.credits ?? 0;
-  const pct = Math.min(100, Math.round((credits / DEFAULT_CREDITS) * 100));
-
-  const barColor =
-    pct <= 10
-      ? 'bg-red-500'
-      : pct <= 30
-      ? 'bg-amber-400'
-      : 'bg-primary';
-
-  const textColor =
-    pct <= 10
-      ? 'text-red-500'
-      : pct <= 30
-      ? 'text-amber-500'
-      : 'text-muted-foreground';
+  const isLoading = isAuthLoading || planAndUsage === undefined;
+  const credits = planAndUsage?.credits ?? 0;
+  const monthlyAllowance = planAndUsage?.planConfig.monthlyCredits ?? 0;
+  const pct =
+    monthlyAllowance > 0
+      ? Math.min(100, Math.round((credits / monthlyAllowance) * 100))
+      : 0;
 
   const handleTopUp = async () => {
     try {
       setIsToppingUp(true);
-      await topUpMutation();
+      await topUpMutation({ orgId: billingOrgId });
     } catch (error) {
       console.error('Failed to top up:', error);
     } finally {
       setIsToppingUp(false);
     }
   };
+
+  const statusText = isLoading
+    ? 'Loading…'
+    : !planAndUsage
+    ? 'Unavailable'
+    : credits <= 0
+    ? 'Out of credits'
+    : pct <= 10
+    ? 'Almost out of credits'
+    : pct <= 30
+    ? 'Credits running low'
+    : credits > monthlyAllowance
+    ? `${credits.toLocaleString()} credits active`
+    : `${(monthlyAllowance - credits).toLocaleString()} used this month`;
 
   return (
     <div className="group-data-[collapsible=icon]:hidden px-3 py-2">
@@ -48,29 +58,31 @@ export function CreditMeter() {
             <Coins className="size-3.5 text-muted-foreground" />
             <span className="text-xs font-medium text-foreground">Credits</span>
           </div>
-          <span className={`text-xs font-semibold tabular-nums ${textColor}`}>
-            {balance === undefined ? '…' : `${credits} / ${DEFAULT_CREDITS}`}
+          <span
+            className={cn(
+              'text-xs font-semibold tabular-nums',
+              !isLoading && pct <= 10 && 'text-red-500',
+              !isLoading && pct > 10 && pct <= 30 && 'text-amber-500',
+              (isLoading || pct > 30) && 'text-muted-foreground',
+            )}
+          >
+            {isLoading
+              ? '…'
+              : `${credits.toLocaleString()} / ${monthlyAllowance.toLocaleString()}`}
           </span>
         </div>
         <Progress
-          value={balance === undefined ? 0 : pct}
-          className={`h-1.5 [&>[data-slot=progress-indicator]]:${barColor}`}
+          value={isLoading ? 0 : pct}
+          className={cn(
+            'h-1.5',
+            !isLoading && pct <= 10 && '[&>[data-slot=progress-indicator]]:bg-red-500',
+            !isLoading && pct > 10 && pct <= 30 && '[&>[data-slot=progress-indicator]]:bg-amber-400',
+            !isLoading && pct > 30 && '[&>[data-slot=progress-indicator]]:bg-primary',
+          )}
         />
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[11px] text-muted-foreground truncate">
-            {balance === undefined
-              ? 'Loading…'
-              : credits <= 0
-              ? 'Out of credits'
-              : pct <= 10
-              ? 'Almost out of credits'
-              : pct <= 30
-              ? 'Credits running low'
-              : credits > DEFAULT_CREDITS
-              ? `${credits} credits active`
-              : `${DEFAULT_CREDITS - credits} credits used`}
-          </p>
-          {balance !== undefined && (
+          <p className="text-[11px] text-muted-foreground truncate">{statusText}</p>
+          {!isLoading && planAndUsage && (
             <Button
               variant="outline"
               size="xs"

@@ -2,7 +2,6 @@ import { WorkOS } from "@workos-inc/node";
 import { httpAction, internalMutation, type MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
-import { getDefaultUserCredits } from "./credits";
 
 // POST /webhook/workos
 // Verifies the WorkOS-Signature header against WORKOS_WEBHOOK_SECRET, dedupes
@@ -132,20 +131,9 @@ async function upsertUser(ctx: MutationCtx, data: any) {
     updatedAt: now,
   };
   if (existing === null) {
-    const defaultCredits = getDefaultUserCredits();
-    const userId = await ctx.db.insert("users", {
+    await ctx.db.insert("users", {
       workosUserId,
       ...patch,
-      credits: defaultCredits,
-      createdAt: now,
-    });
-    await ctx.db.insert("creditLogs", {
-      userId,
-      amount: defaultCredits,
-      type: "grant",
-      balanceBefore: 0,
-      balanceAfter: defaultCredits,
-      reason: "Initial user creation credit grant",
       createdAt: now,
     });
   } else {
@@ -187,6 +175,8 @@ async function upsertOrganization(ctx: MutationCtx, data: any) {
       name,
       members: [],
       admins: [],
+      plan: "free",
+      credits: 500,
       createdAt: now,
       updatedAt: now,
     });
@@ -255,23 +245,11 @@ async function ensureUser(ctx: MutationCtx, workosUserId: string) {
     .unique();
   if (existing !== null) return existing._id;
   const now = Date.now();
-  const defaultCredits = getDefaultUserCredits();
   const userId = await ctx.db.insert("users", {
     workosUserId,
     email: "",
-    credits: defaultCredits,
     createdAt: now,
     updatedAt: now,
-  });
-
-  await ctx.db.insert("creditLogs", {
-    userId,
-    amount: defaultCredits,
-    type: "grant",
-    balanceBefore: 0,
-    balanceAfter: defaultCredits,
-    reason: "Initial membership user creation credit grant",
-    createdAt: now,
   });
 
   return userId;
@@ -289,6 +267,8 @@ async function ensureOrganization(ctx: MutationCtx, workosOrgId: string) {
     name: "Untitled Organization",
     members: [],
     admins: [],
+    plan: "free",
+    credits: 500,
     createdAt: now,
     updatedAt: now,
   });

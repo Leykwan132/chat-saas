@@ -3,6 +3,7 @@ import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from 
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
+import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe } from "./plans";
 
 const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
@@ -52,13 +53,23 @@ export const list = query({
   handler: async (ctx, args) => {
     const { userId, orgId } = await getAuthContext(ctx, args.orgId);
 
-    return await ctx.db
-      .query("agents")
-      .withIndex("by_userId_and_orgId", (q) =>
-        q.eq("userId", userId).eq("orgId", orgId),
-      )
-      .order("desc")
-      .take(50);
+    if (!orgId || orgId === "personal") {
+      return await ctx.db
+        .query("agents")
+        .withIndex("by_userId_and_orgId", (q) =>
+          q.eq("userId", userId).eq("orgId", orgId),
+        )
+        .order("desc")
+        .take(50);
+    } else {
+      return await ctx.db
+        .query("agents")
+        .withIndex("by_orgId", (q) =>
+          q.eq("orgId", orgId),
+        )
+        .order("desc")
+        .take(50);
+    }
   },
 });
 
@@ -89,6 +100,29 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, orgId } = await getAuthContext(ctx, args.orgId);
+    
+    const entityId = !orgId || orgId === "personal" ? userId : orgId;
+    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const plan = stripeInfo.plan;
+
+    const currentAgents = (!orgId || orgId === "personal")
+      ? await ctx.db
+          .query("agents")
+          .withIndex("by_userId_and_orgId", (q) =>
+            q.eq("userId", userId).eq("orgId", orgId),
+          )
+          .collect()
+      : await ctx.db
+          .query("agents")
+          .withIndex("by_orgId", (q) =>
+            q.eq("orgId", orgId),
+          )
+          .collect();
+
+    if (!checkAgentCreationLimit(plan, currentAgents.length)) {
+      throw new Error(`Your plan (${plan ?? "free"}) limit exceeded for agents.`);
+    }
+
     const now = Date.now();
     const name = args.name.trim();
 
@@ -98,6 +132,10 @@ export const create = mutation({
 
     const model = args.model?.trim() || DEFAULT_MODEL;
     await assertEnabledModel(model);
+
+    if (!checkModelAccess(plan, model)) {
+      throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
+    }
 
     const agentId = await ctx.db.insert("agents", {
       name,
@@ -134,6 +172,10 @@ export const update = mutation({
       throw new Error("Agent not found");
     }
 
+    const entityId = !agent.orgId || agent.orgId === "personal" ? agent.userId : agent.orgId;
+    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const plan = stripeInfo.plan;
+
     const name = args.name.trim();
     const model = args.model.trim();
     const systemPrompt = args.systemPrompt.trim();
@@ -149,6 +191,10 @@ export const update = mutation({
     }
 
     await assertEnabledModel(model);
+
+    if (!checkModelAccess(plan, model)) {
+      throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
+    }
 
     await ctx.db.patch(args.agentId, {
       name,

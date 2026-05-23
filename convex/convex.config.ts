@@ -6,7 +6,10 @@ import workOSAuthKit from "@convex-dev/workos-authkit/convex.config";
 import crons from "@convex-dev/crons/convex.config.js";
 import r2 from "@convex-dev/r2/convex.config.js";
 
+import stripe from "@convex-dev/stripe/convex.config.js";
+
 const app = defineApp();
+app.use(stripe);
 app.use(r2);
 app.use(agent);
 app.use(workpool, { name: "cfUploadWorkpool" });

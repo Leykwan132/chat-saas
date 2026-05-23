@@ -39,7 +39,7 @@ function CreateAgentForm() {
   const { organizationId } = useAuth();
   const activeOrgId = organizationId ?? null;
   const createAgent = useMutation(api.agents.create);
-  const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
+  const enabledModels = useQuery(api.llm.modelPricing.listEnabled, { orgId: activeOrgId });
 
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');

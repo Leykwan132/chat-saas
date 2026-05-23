@@ -25,6 +25,7 @@ import { generateText } from "ai";
 import { openRouterModel } from "../llm/openRouter";
 import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
 import { updateThreadMetadata } from "@convex-dev/agent";
+import { checkAiFeature, getPlanFromStripe } from "../plans";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -34,19 +35,24 @@ export const internalIngestChannelMessage = internalMutation({
       return result;
     }
 
-    if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
-      await threadSummarizerPool.enqueueAction(
-        ctx,
-        internal.chat.inbox.summarizeThreadWorker,
-        { conversationId: result.conversationId },
-      );
+    const conv = await ctx.db.get(result.conversationId);
+    if (conv) {
+      const stripeInfo = await getPlanFromStripe(ctx, conv.orgId);
+      if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
+        if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
+          await threadSummarizerPool.enqueueAction(
+            ctx,
+            internal.chat.inbox.summarizeThreadWorker,
+            { conversationId: result.conversationId },
+          );
+        }
+      }
     }
 
     if (!result.shouldEnqueueAi) {
       return result;
     }
 
-    const conv = await ctx.db.get(result.conversationId);
     if (
       conv === null ||
       !conv.assignToAiAgent ||
@@ -180,11 +186,14 @@ export const internalPersistHumanReply = internalMutation({
       updatedAt: now,
     });
 
-    await threadSummarizerPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.summarizeThreadWorker,
-      { conversationId: conv._id },
-    );
+    const stripeInfo = await getPlanFromStripe(ctx, conv.orgId);
+    if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
+      await threadSummarizerPool.enqueueAction(
+        ctx,
+        internal.chat.inbox.summarizeThreadWorker,
+        { conversationId: conv._id },
+      );
+    }
 
     return agentMessageId;
   },
@@ -331,20 +340,32 @@ export const generateAiReplyWorker = internalAction({
       return;
     }
 
+    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
+      entityId: conv.orgId,
+    });
+
+    if (!checkAiFeature(stripeInfo.plan, "auto_reply")) {
+      console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
+        orgId: conv.orgId,
+        plan: stripeInfo.plan,
+      });
+      return;
+    }
+
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
     });
     if (!agent) return;
 
     const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
-      workosUserId: agent.userId,
+      orgId: conv.orgId,
       modelId: agent.model,
     });
     if (!creditCheck.ok) {
       console.error("AI reply skipped: insufficient credits or unavailable model", {
         conversationId: args.conversationId,
         reason: creditCheck.reason,
-        agentUserId: agent.userId,
+        orgId: conv.orgId,
       });
       return;
     }
@@ -383,9 +404,11 @@ export const generateAiReplyWorker = internalAction({
     let usage: { llmModel: string; creditsCharged: number };
     try {
       usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
-        workosUserId: agent.userId,
+        orgId: conv.orgId,
         modelId: agent.model,
+        workosUserId: agent.userId,
         conversationId: conv._id,
+        agentId: conv.assignedAgentId,
         reason: `AI reply in ${conv.service} conversation`,
       });
     } catch (error) {
@@ -458,6 +481,16 @@ export const internalGetSendContext = internalQuery({
     const channel = await ctx.db.get(conv.channelId);
     if (channel === null) return null;
     return { conversation: conv, channel };
+  },
+});
+
+export const internalGetOrgByWorkosId = internalQuery({
+  args: { orgId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("organizations")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
+      .unique();
   },
 });
 
@@ -566,6 +599,18 @@ export const summarizeThreadWorker = internalAction({
       { conversationId: args.conversationId },
     );
     if (messages.length === 0) return;
+
+    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
+      entityId: conv.orgId,
+    });
+
+    if (!checkAiFeature(stripeInfo.plan, "thread_summary")) {
+      console.warn("Thread summary skipped: feature disabled for plan tier", {
+        orgId: conv.orgId,
+        plan: stripeInfo.plan,
+      });
+      return;
+    }
 
     let modelId = DEFAULT_OPENROUTER_MODEL;
     if (conv.assignedAgentId) {

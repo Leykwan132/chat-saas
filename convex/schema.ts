@@ -29,6 +29,28 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
     credits: v.optional(v.number()),
+    plan: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("standard"),
+        v.literal("pro"),
+        v.literal("ultra"),
+      )
+    ),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripePriceId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
+    stripeSubscriptionCurrentPeriodEnd: v.optional(v.number()),
+    creditsPeriodMonthKey: v.optional(v.string()),
+    onboarded: v.optional(v.boolean()),
+    onboardingAnswers: v.optional(
+      v.object({
+        role: v.string(),
+        useCase: v.array(v.string()),
+        channels: v.array(v.string()),
+      })
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -39,6 +61,21 @@ export default defineSchema({
     name: v.string(),
     members: v.array(v.id("users")),
     admins: v.array(v.id("users")),
+    plan: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("standard"),
+        v.literal("pro"),
+        v.literal("ultra"),
+      )
+    ),
+    credits: v.optional(v.number()),
+    stripeCustomerId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
+    stripePriceId: v.optional(v.string()),
+    stripeSubscriptionStatus: v.optional(v.string()),
+    stripeSubscriptionCurrentPeriodEnd: v.optional(v.number()),
+    creditsPeriodMonthKey: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_workosOrgId", ["workosOrgId"]),
@@ -347,7 +384,8 @@ export default defineSchema({
     .index("by_orgId_userId", ["orgId", "userId"])
     .index("by_agentId", ["agentId"]),
   creditLogs: defineTable({
-    userId: v.id("users"),
+    orgId: v.string(),
+    userId: v.optional(v.id("users")),
     amount: v.number(),
     type: v.union(
       v.literal("deduction"),
@@ -357,11 +395,13 @@ export default defineSchema({
     balanceBefore: v.number(),
     balanceAfter: v.number(),
     modelId: v.optional(v.string()),
+    agentId: v.optional(v.id("agents")),
     conversationId: v.optional(v.id("conversations")),
     reason: v.optional(v.string()),
     createdAt: v.number(),
   })
-    .index("by_userId", ["userId"])
+    .index("by_orgId", ["orgId"])
     .index("by_createdAt", ["createdAt"])
+    .index("by_orgId_and_createdAt", ["orgId", "createdAt"])
     .index("by_userId_and_createdAt", ["userId", "createdAt"]),
 });

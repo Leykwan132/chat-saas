@@ -29,6 +29,8 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
 import { ThemeProvider } from '@/components/theme-provider'
+import { OnboardingFlow } from '@/components/OnboardingFlow'
+import PricingPage from './pages/PricingPage.tsx'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
@@ -97,6 +99,8 @@ function RootLayout() {
             <Route path="/callback" element={<CallbackRoute />} />
             <Route path="/" element={<HomePage />} />
             <Route path="/sign-in" element={<SignInPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/onboarding" element={<OnboardingFlow />} />
             <Route path="/workspace" element={<WorkspacePage />}>
               <Route index element={<AgentsIndex />} />
               <Route path="account" element={<AccountPage />} />

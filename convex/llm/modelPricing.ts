@@ -98,9 +98,30 @@ export function listEnabledModels() {
     }));
 }
 
+import { v } from "convex/values";
+import { getAuthContext } from "../authUtils";
+import { checkModelAccess, getPlanFromStripe } from "../plans";
+
 export const listEnabled = query({
-  args: {},
-  handler: async () => {
-    return listEnabledModels();
+  args: {
+    orgId: v.optional(v.union(v.string(), v.null())),
+  },
+  handler: async (ctx, args) => {
+    const models = listEnabledModels();
+    let activePlan: string | undefined = undefined;
+    
+    try {
+      const { orgId, userId } = await getAuthContext(ctx, args.orgId);
+      const entityId = !orgId || orgId === "personal" ? userId : orgId;
+      const stripeInfo = await getPlanFromStripe(ctx, entityId);
+      activePlan = stripeInfo.plan;
+    } catch (e) {
+      // Ignore auth/db errors for anonymous access or fallback
+    }
+
+    if (activePlan !== undefined) {
+      return models.filter((m) => checkModelAccess(activePlan, m.value));
+    }
+    return models;
   },
 });

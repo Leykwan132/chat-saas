@@ -10,7 +10,8 @@ import {
   Bot,
   Plus,
   Trash2,
-  Sparkles,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -38,7 +39,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   Breadcrumb,
@@ -68,26 +69,43 @@ function AgentPreview() {
 function AgentsSidebar() {
   const { pathname } = useLocation();
   const isAgentsRoute = pathname === '/workspace';
+  const { state, toggleSidebar } = useSidebar();
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <Link to="/workspace">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Sparkles className="size-4" />
-                </div>
-                <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-                  <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
-                  <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
-                </div>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
+      {/* Logo / Toggle */}
+      {state === 'collapsed' ? (
+        <SidebarHeader className="flex items-center justify-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <PanelLeftOpen className="size-5" />
+            <span className="sr-only">Expand Sidebar</span>
+          </Button>
+        </SidebarHeader>
+      ) : (
+        <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
+          <Link to="/workspace" className="flex items-center gap-3">
+            <img src="/icon.svg" className="size-6 dark:invert" />
+            <div className="flex min-w-0 flex-col gap-0.5 leading-none">
+              <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
+              <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
+            </div>
+          </Link>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleSidebar}
+            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+          >
+            <PanelLeftClose className="size-5" />
+            <span className="sr-only">Collapse Sidebar</span>
+          </Button>
+        </SidebarHeader>
+      )}
 
       <SidebarContent>
         <SidebarGroup>
@@ -209,7 +227,6 @@ function WorkspaceShell() {
       <SidebarInset>
         {/* Top header with breadcrumb */}
         <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
-          <SidebarTrigger className="-ml-1" />
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

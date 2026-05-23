@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as accountDeletion from "../accountDeletion.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agents from "../agents.js";
 import type * as auth from "../auth.js";
@@ -53,7 +54,11 @@ import type * as oauthSessions from "../oauthSessions.js";
 import type * as oauthShared from "../oauthShared.js";
 import type * as organizations from "../organizations.js";
 import type * as organizationsAdmin from "../organizationsAdmin.js";
+import type * as planCatalog from "../planCatalog.js";
+import type * as planStripe from "../planStripe.js";
+import type * as plans from "../plans.js";
 import type * as signedRequest from "../signedRequest.js";
+import type * as stripe from "../stripe.js";
 import type * as users from "../users.js";
 import type * as whatsappBroadcast from "../whatsappBroadcast.js";
 import type * as whatsappDemo from "../whatsappDemo.js";
@@ -70,6 +75,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  accountDeletion: typeof accountDeletion;
   agentRuntime: typeof agentRuntime;
   agents: typeof agents;
   auth: typeof auth;
@@ -115,7 +121,11 @@ declare const fullApi: ApiFromModules<{
   oauthShared: typeof oauthShared;
   organizations: typeof organizations;
   organizationsAdmin: typeof organizationsAdmin;
+  planCatalog: typeof planCatalog;
+  planStripe: typeof planStripe;
+  plans: typeof plans;
   signedRequest: typeof signedRequest;
+  stripe: typeof stripe;
   users: typeof users;
   whatsappBroadcast: typeof whatsappBroadcast;
   whatsappDemo: typeof whatsappDemo;
@@ -153,6 +163,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
   r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;
   cfUploadWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"cfUploadWorkpool">;

@@ -1,23 +1,46 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { UsersManagement, OrganizationSwitcher } from '@workos-inc/widgets';
-import { Building2, LogOut, User } from 'lucide-react';
+import { useAction } from 'convex/react';
+import { api } from '../../convex/_generated/api';
+import { Building2, User, CreditCard, Plus, BarChart3, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PlanTab } from '@/components/PlanTab';
+import { UsageTab } from '@/components/UsageTab';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { CreateOrganizationDialog } from '@/components/CreateOrganizationDialog';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { UsersManagement, OrganizationSwitcher } from '@workos-inc/widgets';
 import { WorkOsWidgetsPanel } from '@/components/workos/WorkOsWidgetsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────
 
-type AccountSection = 'profile' | 'organisations';
+type AccountSection = 'profile' | 'organisations' | 'plan' | 'usage';
 
 const NAV_ITEMS: { key: AccountSection; label: string; icon: React.ElementType }[] = [
   { key: 'profile', label: 'Profile', icon: User },
   { key: 'organisations', label: 'Organisations', icon: Building2 },
+  { key: 'plan', label: 'Plan', icon: CreditCard },
+  { key: 'usage', label: 'Usage', icon: BarChart3 },
 ];
 
 // ─── Field row ────────────────────────────────────────────────────
@@ -83,11 +106,11 @@ function MembersSkeleton() {
 // ─── Profile content ──────────────────────────────────────────────
 
 function ProfileContent({
-  onSignOut,
-  isSigningOut,
+  onDeleteAccount,
+  isDeletingAccount,
 }: {
-  onSignOut: () => void;
-  isSigningOut: boolean;
+  onDeleteAccount: () => void;
+  isDeletingAccount: boolean;
 }) {
   const { user, isLoading } = useAuth();
 
@@ -129,76 +152,97 @@ function ProfileContent({
       <FieldRow label="Email" value={user.email} />
       <FieldRow label="Address" value={null} />
 
-      <Button
-        type="button"
-        variant="destructive"
-        className="w-fit"
-        disabled={isSigningOut}
-        onClick={onSignOut}
-      >
-        {isSigningOut ? (
-          <Spinner className="size-4" />
-        ) : (
-          <LogOut className="size-4" />
-        )}
-        Sign out
-      </Button>
+      <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+            <AlertTriangle className="size-4" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <h3 className="text-sm font-semibold text-destructive">Danger zone</h3>
+            <p className="text-sm text-muted-foreground">
+              Delete your account and remove all personal data from this app. This
+              action is permanent.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-col gap-3 border-t border-destructive/20 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-foreground">
+            Once deleted, you will lose access immediately and cannot recover your data.
+          </p>
+          <Button
+            type="button"
+            disabled={isDeletingAccount}
+            onClick={onDeleteAccount}
+            className="w-full shrink-0 sm:w-auto bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/30 dark:bg-red-600 dark:hover:bg-red-700"
+          >
+            Delete account
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
 
 // ─── Organisations content (token-gated) ─────────────────────────
 
-function OrganisationsContent({
-  organizationId,
-  getAccessToken,
-  switchToOrganization,
-}: {
-  organizationId: string | null;
-  getAccessToken: () => Promise<string>;
-  switchToOrganization: (opts: { organizationId: string }) => Promise<void>;
-}) {
+function OrganisationsContent() {
+  const { organizationId, getAccessToken, switchToOrganization } = useAuth();
   const [token, setToken] = useState<string | null>(null);
 
   // Re-fetch the access token whenever the active org changes so the embedded
   // UsersManagement widget always sees a token whose `org_id` claim matches
-  // the org the user is viewing.
   useEffect(() => {
+    if (!organizationId) return;
     setToken(null);
     void getAccessToken().then(setToken);
-  }, [getAccessToken, organizationId]);
+  }, [organizationId, getAccessToken]);
 
-  if (!organizationId) {
+  if (organizationId) {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-20 text-center">
-        <Building2 className="size-8 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">
-          You are not part of an organization yet.
-        </p>
-        <CreateOrganizationDialog />
-      </div>
+      <WorkOsWidgetsPanel>
+        <OrganizationSwitcher
+          authToken={getAccessToken}
+          switchToOrganization={switchToOrganization}
+        />
+        {!token ? (
+          <MembersSkeleton />
+        ) : (
+          <UsersManagement authToken={() => Promise.resolve(token)} />
+        )}
+      </WorkOsWidgetsPanel>
     );
   }
 
   return (
-    <WorkOsWidgetsPanel>
-      <OrganizationSwitcher
-        authToken={getAccessToken}
-        switchToOrganization={switchToOrganization}
-      />
-      {!token ? (
-        <MembersSkeleton />
-      ) : (
-        <UsersManagement authToken={() => Promise.resolve(token)} />
-      )}
-    </WorkOsWidgetsPanel>
+    <Empty className="max-w-2xl border bg-muted/20">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <Building2 />
+        </EmptyMedia>
+        <EmptyTitle>Create Organization</EmptyTitle>
+        <EmptyDescription>
+          Don&apos;t scale alone—build the team your customers deserve.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <CreateOrganizationDialog
+          trigger={
+            <Button type="button" className="gap-1.5 bg-black hover:bg-black/90 dark:bg-white dark:hover:bg-white/90 text-white dark:text-black border-0 font-medium">
+              <Plus className="size-4" />
+              Create
+            </Button>
+          }
+        />
+      </EmptyContent>
+    </Empty>
   );
 }
 
 // ─── Page content (rendered inside DashboardLayout's <Outlet />) ──
 
 export default function AccountPage() {
-  const { organizationId, signOut, getAccessToken, switchToOrganization } = useAuth();
+  const { user, signOut } = useAuth();
+  const deleteAccount = useAction(api.accountDeletion.deleteAccount);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Accept the legacy ?section=members link in case anything still points at
@@ -207,14 +251,23 @@ export default function AccountPage() {
   const section: AccountSection =
     rawSection === 'organisations' || rawSection === 'members'
       ? 'organisations'
+      : rawSection === 'plan'
+      ? 'plan'
+      : rawSection === 'usage'
+      ? 'usage'
       : 'profile';
 
-  const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const handleSignOut = useCallback(() => {
+  const handleDeleteAccount = useCallback(() => {
     void (async () => {
-      setIsSigningOut(true);
+      setDeleteError(null);
+      setIsDeletingAccount(true);
       try {
+        await deleteAccount({ confirmation: 'DELETE' });
         const result = signOut({
           returnTo: `${window.location.origin}/`,
           navigate: false,
@@ -226,14 +279,17 @@ export default function AccountPage() {
           await (result as Promise<void>);
         }
         window.location.replace('/');
-      } catch {
-        setIsSigningOut(false);
+      } catch (err) {
+        setIsDeletingAccount(false);
+        setDeleteError(
+          err instanceof Error ? err.message : 'Failed to delete account',
+        );
       }
     })();
-  }, [signOut]);
+  }, [deleteAccount, signOut]);
 
   const setSection = (s: AccountSection) =>
-    setSearchParams(s === 'profile' ? {} : { section: 'organisations' }, {
+    setSearchParams(s === 'profile' ? {} : { section: s }, {
       replace: true,
     });
 
@@ -278,36 +334,134 @@ export default function AccountPage() {
         <div className="flex flex-col gap-4 min-w-0">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">
-              {section === 'profile' ? 'Profile' : 'Organisations'}
+              {section === 'profile'
+                ? 'Profile'
+                : section === 'organisations'
+                ? 'Organisations'
+                : section === 'plan'
+                ? 'Plan'
+                : 'Usage'}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {section === 'profile'
                 ? 'View your personal information.'
-                : 'Switch organisations, create new ones, and manage members.'}
+                : section === 'organisations'
+                ? 'Switch organisations, create new ones, and manage members.'
+                : section === 'plan'
+                ? 'Manage subscription plans, billing, and add-ons.'
+                : 'Track credit balance and usage across your agents.'}
             </p>
             <Separator className="mt-4" />
           </div>
 
           {section === 'profile' ? (
             <ProfileContent
-              onSignOut={handleSignOut}
-              isSigningOut={isSigningOut}
+              onDeleteAccount={() => {
+                setDeleteConfirmation('');
+                setDeleteError(null);
+                setDeleteDialogOpen(true);
+              }}
+              isDeletingAccount={isDeletingAccount}
             />
+          ) : section === 'organisations' ? (
+            <OrganisationsContent />
+          ) : section === 'plan' ? (
+            <PlanTab />
           ) : (
-            <OrganisationsContent
-              organizationId={organizationId}
-              getAccessToken={getAccessToken}
-              switchToOrganization={switchToOrganization}
-            />
+            <UsageTab />
           )}
         </div>
       </div>
 
-      {/* Sign-out overlay */}
-      {isSigningOut && (
+      {/* Delete account confirmation */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!isDeletingAccount) {
+            setDeleteDialogOpen(open);
+            if (!open) {
+              setDeleteConfirmation('');
+              setDeleteError(null);
+            }
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogDescription>
+              This permanently removes your account and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 text-sm">
+            <p className="text-muted-foreground">
+              You are deleting the account linked to{' '}
+              <span className="font-medium text-foreground">{user?.email ?? 'your email'}</span>.
+            </p>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="mb-2 font-medium text-foreground">The following will be deleted</p>
+              <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">
+                <li>Your login profile (WorkOS)</li>
+                <li>Personal workspace data: agents, knowledge base, playground chats, and credit usage</li>
+                <li>Personal Stripe subscription and billing customer</li>
+                <li>Organizations where you are the only member, including their agents, channels, conversations, and billing</li>
+              </ul>
+            </div>
+
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+              <p className="mb-2 font-medium text-foreground">The following will be kept</p>
+              <ul className="list-disc space-y-1.5 pl-5 text-muted-foreground">
+                <li>Shared organizations you belong to — your membership is removed, but the org and its data remain for other members</li>
+              </ul>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label htmlFor="delete-confirmation" className="text-sm text-muted-foreground">
+                Type{' '}
+                <span className="font-mono font-semibold text-foreground">DELETE</span>{' '}
+                to confirm you understand this is irreversible.
+              </label>
+              <Input
+                id="delete-confirmation"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                placeholder="DELETE"
+                disabled={isDeletingAccount}
+                autoComplete="off"
+              />
+              {deleteError && (
+                <p className="text-sm text-destructive">{deleteError}</p>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-row justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeletingAccount}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={isDeletingAccount || deleteConfirmation !== 'DELETE'}
+              onClick={() => void handleDeleteAccount()}
+              className="bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/30 dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              {isDeletingAccount ? <Spinner className="size-4" /> : 'Permanently delete account'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {isDeletingAccount && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/80 backdrop-blur-sm">
           <Spinner className="size-8 text-muted-foreground" />
-          <p className="text-sm font-medium text-foreground">Signing out…</p>
+          <p className="text-sm font-medium text-foreground">Deleting account…</p>
         </div>
       )}
     </div>
