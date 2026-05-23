@@ -36,6 +36,8 @@ export function CreditMeter() {
     }
   };
 
+  const usedThisMonth = Math.max(0, monthlyAllowance - credits);
+
   const statusText = isLoading
     ? 'Loading…'
     : !planAndUsage
@@ -48,7 +50,9 @@ export function CreditMeter() {
     ? 'Credits running low'
     : credits > monthlyAllowance
     ? `${credits.toLocaleString()} credits active`
-    : `${(monthlyAllowance - credits).toLocaleString()} used this month`;
+    : usedThisMonth === 0
+    ? '100% available'
+    : `${usedThisMonth.toLocaleString()} used this month`;
 
   return (
     <div className="group-data-[collapsible=icon]:hidden px-3 py-2">

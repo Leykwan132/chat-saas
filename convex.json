@@ -2,13 +2,13 @@
     "authKit": {
       "dev": {
         "configure": {
-          "redirectUris": ["https://governmentally-nonfreezing-zaire.ngrok-free.dev/callback"],
-          "appHomepageUrl": "https://governmentally-nonfreezing-zaire.ngrok-free.dev",
-          "corsOrigins": ["https://governmentally-nonfreezing-zaire.ngrok-free.dev"]
+          "redirectUris": ["https://kilobot.app/callback"],
+          "appHomepageUrl": "https://kilobot.app",
+          "corsOrigins": ["https://kilobot.app"]
         },
         "localEnvVars": {
           "VITE_WORKOS_CLIENT_ID": "${authEnv.WORKOS_CLIENT_ID}",
-          "VITE_WORKOS_REDIRECT_URI": "https://governmentally-nonfreezing-zaire.ngrok-free.dev/callback"
+          "VITE_WORKOS_REDIRECT_URI": "https://kilobot.app/callback"
         }
       },
       "preview": {

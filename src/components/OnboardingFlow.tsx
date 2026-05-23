@@ -221,7 +221,7 @@ export function OnboardingFlow() {
   return (
     <div className="flex min-h-[100svh] flex-col bg-background">
       <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 bg-white/75 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#060606]/75">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center px-5 sm:px-6">
           <Link
             to="/"
             className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-900 transition-opacity hover:opacity-80 dark:text-white"
@@ -229,21 +229,6 @@ export function OnboardingFlow() {
             <img src="/icon.svg" className="size-6 dark:invert" alt="Kilobot" />
             Kilobot
           </Link>
-
-          <button
-            type="button"
-            onClick={handleBack}
-            disabled={step === 1 || submitting}
-            aria-label="Go back"
-            className={cn(
-              'flex size-8 items-center justify-center rounded-xl border transition-all',
-              step === 1 || submitting
-                ? 'border-border/20 text-muted-foreground/20 cursor-not-allowed'
-                : 'border-border hover:bg-accent text-foreground cursor-pointer',
-            )}
-          >
-            <ArrowLeft className="size-3.5" />
-          </button>
         </div>
       </header>
 

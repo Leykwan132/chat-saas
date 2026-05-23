@@ -51,17 +51,27 @@ export function SubscriptionPlanPicker({
       {showBillingToggle && <PlanBillingToggle billingInterval={billingInterval} onChange={onBillingIntervalChange} />}
 
       <div className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {plans.map((plan) => (
-          <SubscriptionPlanCard
-            key={plan.id}
-            plan={plan}
-            billingInterval={billingInterval}
-            isCurrent={currentPlanId === plan.id}
-            highlightCurrent={variant === 'account' && currentPlanId === plan.id}
-            disabled={disabled}
-            action={renderPlanAction(plan)}
-          />
-        ))}
+        {plans.map((plan) => {
+          const isCurrent = currentPlanId === plan.id;
+          const highlightCurrent = variant === 'account' && isCurrent;
+          const showPopularHighlight =
+            plan.popular &&
+            !highlightCurrent &&
+            (variant === 'onboarding' || currentPlanId == null);
+
+          return (
+            <SubscriptionPlanCard
+              key={plan.id}
+              plan={plan}
+              billingInterval={billingInterval}
+              isCurrent={isCurrent}
+              highlightCurrent={highlightCurrent}
+              showPopularHighlight={showPopularHighlight}
+              disabled={disabled}
+              action={renderPlanAction(plan)}
+            />
+          );
+        })}
       </div>
     </div>
   );
@@ -120,6 +130,7 @@ type SubscriptionPlanCardProps = {
   billingInterval: BillingInterval;
   isCurrent: boolean;
   highlightCurrent?: boolean;
+  showPopularHighlight?: boolean;
   disabled?: boolean;
   action: ReactNode;
 };
@@ -129,11 +140,10 @@ function SubscriptionPlanCard({
   billingInterval,
   isCurrent,
   highlightCurrent = false,
+  showPopularHighlight = false,
   disabled = false,
   action,
 }: SubscriptionPlanCardProps) {
-  const showPopularHighlight = plan.popular && !highlightCurrent;
-
   return (
     <Card
       className={cn(
