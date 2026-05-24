@@ -149,8 +149,17 @@ export type BillingInterval = "monthly" | "annual";
 
 export const ANNUAL_DISCOUNT_PERCENT = 20;
 
-export const EXTRA_CREDITS_PACK_RM = 45;
+export const EXTRA_CREDITS_PACK_RM = 99;
 export const EXTRA_CREDITS_PACK_AMOUNT = 1000;
+export const EXTRA_CREDITS_PACK_NOTE =
+  "Extra credit will be carried forward and won't expire.";
+
+export const STRIPE_EXTRA_CREDITS_METADATA_TYPE = "extra_credits";
+export const STRIPE_CREDITS_AMOUNT_METADATA_KEY = "creditsAmount";
+
+export function formatExtraCreditsPackPrice(): string {
+  return formatPlanPriceRm(EXTRA_CREDITS_PACK_RM);
+}
 
 export function getAnnualMonthlyEquivalent(priceMonthlyRm: number, priceAnnualRm?: number): number {
   if (priceAnnualRm !== undefined) {

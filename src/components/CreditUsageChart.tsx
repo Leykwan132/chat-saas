@@ -1,5 +1,16 @@
-import { useMemo, useState } from 'react';
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { useMemo, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router';
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { useQuery } from 'convex/react';
+import { useAuth } from '@workos-inc/authkit-react';
+import { Coins, Info } from 'lucide-react';
+import { api } from '../../convex/_generated/api';
 import {
   Card,
   CardContent,
@@ -15,6 +26,9 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -22,227 +36,386 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import {
+  buildFakeUsageChartData,
+  FAKE_MONTHLY_ALLOWANCE,
+  FAKE_MONTHLY_CREDITS_REMAINING,
+  FAKE_PURCHASED_CREDITS,
+  FAKE_PURCHASED_CREDITS_GRANTED,
+  getFakeBillingPeriodLabel,
+  getUsageMetricDescription,
+  USAGE_METRIC_OPTIONS,
+  USAGE_TIME_RANGE_OPTIONS,
+  type UsageGroupBy,
+  type UsageMetric,
+  type UsageTimeRange,
+} from '@/lib/fakeUsageData';
 
-type DailyUsageRow = Record<string, number | string>;
+function planProgressValue(remaining: number, allowance: number) {
+  if (allowance <= 0) {
+    return 0;
+  }
+  return Math.min(100, Math.round((remaining / allowance) * 100));
+}
 
-type ChartSeriesConfig = {
-  key: string;
-  label: string;
-  color: string;
-};
+function topUpProgressValue(remaining: number, granted: number) {
+  if (granted <= 0) {
+    return remaining > 0 ? 100 : 0;
+  }
+  return Math.min(100, Math.round((remaining / granted) * 100));
+}
 
-type CreditUsageChartProps = {
-  credits: number;
-  totalUsedThisPeriod: number;
-  periodStartMs: number;
-  periodEndMs: number;
-  dailyUsage: DailyUsageRow[];
-  chartConfig: ChartSeriesConfig[];
-};
+const TOP_UP_PROGRESS_CLASS = '[&>[data-slot=progress-indicator]]:bg-green-600';
 
-const TOTAL_SERIES = 'total';
+const balanceCardClassName =
+  'overflow-hidden rounded-xl py-0 shadow-none ring-1 ring-border/70';
 
-export function CreditUsageChart({
-  credits,
-  totalUsedThisPeriod,
-  periodStartMs,
-  periodEndMs,
-  dailyUsage,
-  chartConfig,
-}: CreditUsageChartProps) {
-  const [activeSeries, setActiveSeries] = useState<string>(TOTAL_SERIES);
+function CompactBalanceCard({
+  title,
+  description,
+  infoTooltip,
+  action,
+  children,
+}: {
+  title: string;
+  description: string;
+  infoTooltip?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <Card className={balanceCardClassName}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+              {infoTooltip ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex text-muted-foreground transition-colors hover:text-foreground"
+                      aria-label={infoTooltip}
+                    >
+                      <Info className="size-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent sideOffset={6}>{infoTooltip}</TooltipContent>
+                </Tooltip>
+              ) : null}
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+          </div>
+          {action}
+        </div>
+        <div className="mt-4">{children}</div>
+      </CardContent>
+    </Card>
+  );
+}
 
-  const rechartsConfig = useMemo(() => {
-    const config: ChartConfig = {
-      credits: { label: 'Credits' },
-    };
-    for (const series of chartConfig) {
-      config[series.key] = {
-        label: series.label,
-        color: series.color,
+function CreditUsageRow({
+  title,
+  remaining,
+  total,
+  progressValue,
+  progressClassName,
+}: {
+  title: string;
+  remaining: number;
+  total: number;
+  progressValue: number;
+  progressClassName?: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-medium text-foreground">{title}</span>
+        <p className="shrink-0 truncate text-sm tabular-nums">
+          <span className="text-xl font-semibold tracking-tight">
+            {remaining.toLocaleString()}
+          </span>
+          <span className="text-muted-foreground"> of {total.toLocaleString()} credits</span>
+        </p>
+      </div>
+      <Progress value={progressValue} className={cn('h-1.5', progressClassName)} />
+    </div>
+  );
+}
+
+function PlanUsageBody({
+  monthlyCredits,
+  monthlyAllowance,
+  purchasedCredits,
+  purchasedCreditsGranted,
+  monthlyProgressValue,
+  monthlyProgressClassName,
+  topUpProgressPct,
+}: {
+  monthlyCredits: number;
+  monthlyAllowance: number;
+  purchasedCredits: number;
+  purchasedCreditsGranted: number;
+  monthlyProgressValue: number;
+  monthlyProgressClassName?: string;
+  topUpProgressPct: number;
+}) {
+  return (
+    <div className="space-y-4">
+      <CreditUsageRow
+        title="Credits"
+        remaining={monthlyCredits}
+        total={monthlyAllowance}
+        progressValue={monthlyProgressValue}
+        progressClassName={monthlyProgressClassName}
+      />
+      {purchasedCredits > 0 ? (
+        <CreditUsageRow
+          title="Top-ups"
+          remaining={purchasedCredits}
+          total={purchasedCreditsGranted}
+          progressValue={topUpProgressPct}
+          progressClassName={TOP_UP_PROGRESS_CLASS}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function BalanceCardSkeleton() {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-4 w-14" />
+        <Skeleton className="h-6 w-32" />
+      </div>
+      <Skeleton className="h-1.5 w-full rounded-full" />
+    </div>
+  );
+}
+
+export function CreditUsageChart() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const { organizationId, isLoading: isAuthLoading } = useAuth();
+  const billingOrgId = organizationId ?? null;
+  const planAndUsage = useQuery(
+    api.plans.getPlanAndUsage,
+    isAuthLoading ? 'skip' : { orgId: billingOrgId },
+  );
+
+  const [groupBy, setGroupBy] = useState<UsageGroupBy>('model');
+  const [timeRange, setTimeRange] = useState<UsageTimeRange>('30d');
+  const [metric, setMetric] = useState<UsageMetric>('cumulative');
+
+  const { series, rows } = useMemo(
+    () => buildFakeUsageChartData(groupBy, timeRange, metric),
+    [groupBy, timeRange, metric],
+  );
+
+  const chartConfig = useMemo(() => {
+    const config: ChartConfig = {};
+    for (const item of series) {
+      config[item.key] = {
+        label: item.label,
+        theme: item.theme,
       };
     }
     return config;
-  }, [chartConfig]);
+  }, [series]);
 
-  const agentSeries = useMemo(
-    () => chartConfig.filter((series) => series.key !== TOTAL_SERIES),
-    [chartConfig],
-  );
+  const isBalanceLoading = isAuthLoading || planAndUsage === undefined;
+  const monthlyCredits = planAndUsage?.monthlyCredits ?? FAKE_MONTHLY_CREDITS_REMAINING;
+  const purchasedCredits = planAndUsage?.purchasedCredits ?? FAKE_PURCHASED_CREDITS;
+  const purchasedCreditsGranted =
+    planAndUsage?.purchasedCreditsGranted ?? FAKE_PURCHASED_CREDITS_GRANTED;
+  const monthlyAllowance = planAndUsage?.monthlyAllowance ?? FAKE_MONTHLY_ALLOWANCE;
+  const planPct = planProgressValue(monthlyCredits, monthlyAllowance);
+  const topUpPct = topUpProgressValue(purchasedCredits, purchasedCreditsGranted);
+  const planName = planAndUsage?.planConfig.name ?? 'Free';
 
-  const visibleSeries = useMemo(() => {
-    if (activeSeries === TOTAL_SERIES) {
-      return agentSeries.length > 0 ? agentSeries : [{ key: TOTAL_SERIES, label: 'Total usage', color: 'var(--chart-1)' }];
-    }
-    const selected = chartConfig.find((series) => series.key === activeSeries);
-    return selected ? [selected] : [{ key: TOTAL_SERIES, label: 'Total usage', color: 'var(--chart-1)' }];
-  }, [activeSeries, agentSeries, chartConfig]);
-
-  const periodLabel = `${new Date(periodStartMs).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  })} – ${new Date(periodEndMs).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })}`;
+  const goToPlan = () => {
+    navigate(`${pathname}?section=plan#plan-add-ons`);
+  };
 
   return (
-    <Card className="overflow-hidden py-0">
-      <CardHeader className="flex flex-col items-stretch border-b p-0 sm:flex-row">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6">
-          <CardTitle>Your usage</CardTitle>
-          <CardDescription>
-            Credit usage per day across this billing period ({periodLabel})
-          </CardDescription>
-        </div>
-        <div className="flex border-t sm:border-t-0 sm:border-l">
-          <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:px-8 sm:py-6">
-            <span className="text-xs text-muted-foreground">Current balance</span>
-            <span className="text-lg leading-none font-bold tabular-nums sm:text-3xl">
-              {credits.toLocaleString()}
-            </span>
-          </div>
-          <div className="flex flex-1 flex-col justify-center gap-1 border-l px-6 py-4 sm:px-8 sm:py-6">
-            <span className="text-xs text-muted-foreground">Total usage</span>
-            <span className="text-lg leading-none font-bold tabular-nums sm:text-3xl">
-              {totalUsedThisPeriod.toLocaleString()}
-            </span>
-          </div>
-        </div>
-      </CardHeader>
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <CompactBalanceCard
+          title="Plan usage"
+          description={
+            isBalanceLoading ? 'Loading plan…' : `You are on ${planName} plan`
+          }
+          infoTooltip="Usage will reset every month"
+          action={
+            !isBalanceLoading ? (
+              <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={goToPlan}>
+                <Coins className="size-3.5" />
+                More credits
+              </Button>
+            ) : undefined
+          }
+        >
+          {isBalanceLoading ? (
+            <BalanceCardSkeleton />
+          ) : (
+            <PlanUsageBody
+              monthlyCredits={monthlyCredits}
+              monthlyAllowance={monthlyAllowance}
+              purchasedCredits={purchasedCredits}
+              purchasedCreditsGranted={purchasedCreditsGranted}
+              monthlyProgressValue={planPct}
+              monthlyProgressClassName={cn(
+                planPct <= 10 && '[&>[data-slot=progress-indicator]]:bg-red-500',
+                planPct > 10 && planPct <= 30 && '[&>[data-slot=progress-indicator]]:bg-amber-400',
+              )}
+              topUpProgressPct={topUpPct}
+            />
+          )}
+        </CompactBalanceCard>
+      </div>
 
-      <CardContent className="px-2 pb-6 pt-4 sm:px-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Group by</span>
-            <Select value={activeSeries} onValueChange={setActiveSeries}>
-              <SelectTrigger size="sm" className="w-[200px]">
-                <SelectValue placeholder="Select agent" />
+      <Card className="overflow-hidden rounded-2xl py-0 shadow-none ring-1 ring-border/70">
+        <CardHeader className="flex flex-col gap-4 border-b px-6 pt-6 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-lg font-semibold">Your usage</CardTitle>
+            <CardDescription>
+              {getUsageMetricDescription(metric)} across this billing period (
+              {getFakeBillingPeriodLabel()})
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Select value={metric} onValueChange={(value) => setMetric(value as UsageMetric)}>
+              <SelectTrigger size="sm" className="w-[140px]">
+                <SelectValue placeholder="Metric" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value={TOTAL_SERIES}>All agents</SelectItem>
-                {agentSeries.map((series) => (
-                  <SelectItem key={series.key} value={series.key}>
-                    {series.label}
+                {USAGE_METRIC_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        <ChartContainer config={rechartsConfig} className="aspect-auto h-[280px] w-full">
-          <LineChart
-            accessibilityLayer
-            data={dailyUsage}
-            margin={{ left: 4, right: 12, top: 8 }}
-          >
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(`${value}T00:00:00.000Z`);
-                return date.toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                });
-              }}
-            />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              width={48}
-              tickFormatter={(value) => value.toLocaleString()}
-            />
-            <ChartTooltip
-              content={
-                <ChartTooltipContent
-                  className="w-[180px]"
-                  labelFormatter={(value) => {
-                    const date = new Date(`${value}T00:00:00.000Z`);
-                    return date.toLocaleDateString(undefined, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    });
-                  }}
-                  formatter={(value) => (
-                    <span className="font-mono tabular-nums">
-                      {typeof value === 'number' ? value.toLocaleString() : String(value)} credits
-                    </span>
-                  )}
-                />
-              }
-            />
-            {activeSeries === TOTAL_SERIES && agentSeries.length > 0 ? (
-              <>
-                {visibleSeries.map((series) => (
-                  <Line
-                    key={series.key}
-                    dataKey={series.key}
-                    type="monotone"
-                    stroke={`var(--color-${series.key})`}
-                    strokeWidth={2}
-                    dot={false}
-                  />
+            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as UsageTimeRange)}>
+              <SelectTrigger size="sm" className="w-[150px]">
+                <SelectValue placeholder="Time range" />
+              </SelectTrigger>
+              <SelectContent>
+                {USAGE_TIME_RANGE_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
                 ))}
-                {chartConfig.some((series) => series.key === 'other') && (
-                  <Line
-                    dataKey="other"
-                    type="monotone"
-                    stroke="var(--color-other)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                )}
-                <ChartLegend content={<ChartLegendContent />} />
-              </>
-            ) : (
-              <Line
-                dataKey={activeSeries === TOTAL_SERIES ? TOTAL_SERIES : visibleSeries[0]?.key ?? TOTAL_SERIES}
-                type="monotone"
-                stroke={`var(--color-${activeSeries === TOTAL_SERIES ? TOTAL_SERIES : visibleSeries[0]?.key ?? TOTAL_SERIES})`}
-                strokeWidth={2}
-                dot={false}
-              />
-            )}
-          </LineChart>
-        </ChartContainer>
-
-        {agentSeries.length > 0 && (
-          <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
-            {agentSeries.map((series, index) => (
-              <button
-                key={series.key}
-                type="button"
-                onClick={() => setActiveSeries(series.key)}
-                className={cn(
-                  'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs transition-colors',
-                  activeSeries === series.key
-                    ? 'border-foreground/20 bg-muted/60 text-foreground'
-                    : 'border-transparent text-muted-foreground hover:bg-muted/40',
-                )}
-              >
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: series.color }}
-                />
-                {series.label}
-                {index === 0 && (
-                  <span className="text-[10px] uppercase tracking-wide opacity-70">Most used</span>
-                )}
-              </button>
-            ))}
+              </SelectContent>
+            </Select>
+            <Select value={groupBy} onValueChange={(value) => setGroupBy(value as UsageGroupBy)}>
+              <SelectTrigger size="sm" className="w-[140px]">
+                <SelectValue placeholder="Group by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="agent">Agent</SelectItem>
+                <SelectItem value="model">Model</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+
+        <CardContent className="px-6 py-6 sm:px-8 sm:py-8">
+          <ChartContainer
+            key={`${groupBy}-${timeRange}-${metric}`}
+            config={chartConfig}
+            className="aspect-auto h-[380px] w-full"
+          >
+            <AreaChart
+              accessibilityLayer
+              data={rows}
+              margin={{ left: 8, right: 16, top: 12, bottom: 8 }}
+            >
+              <defs>
+                {series.map((item) => (
+                  <linearGradient
+                    key={item.key}
+                    id={`fill-${item.key}`}
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor={`var(--color-${item.key})`}
+                      stopOpacity={0.8}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor={`var(--color-${item.key})`}
+                      stopOpacity={0.1}
+                    />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={28}
+                tickFormatter={(value) => {
+                  const date = new Date(`${value}T00:00:00.000Z`);
+                  return date.toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                  });
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                width={52}
+                tickFormatter={(value) => value.toLocaleString()}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={
+                  <ChartTooltipContent
+                    className="w-[220px]"
+                    indicator="dot"
+                    labelFormatter={(value) => {
+                      const date = new Date(`${value}T00:00:00.000Z`);
+                      return date.toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                }
+              />
+              {series.map((item) => (
+                <Area
+                  key={item.key}
+                  dataKey={item.key}
+                  type="natural"
+                  stackId="usage"
+                  stroke={`var(--color-${item.key})`}
+                  fill={`url(#fill-${item.key})`}
+                  strokeWidth={2}
+                />
+              ))}
+              <ChartLegend content={<ChartLegendContent />} />
+            </AreaChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

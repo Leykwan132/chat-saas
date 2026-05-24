@@ -4,7 +4,17 @@ import { StripeSubscriptions } from "@convex-dev/stripe";
 import { v } from "convex/values";
 import { getAuthContext } from "./authUtils";
 import { getPlan } from "./plans";
-import { EXTRA_CREDITS_PRICE_ID, getStripePriceId, resolvePlanKeyFromStripePriceId } from "./planCatalog";
+import { EXTRA_CREDITS_PRICE_ID, EXTRA_CREDITS_PACK_AMOUNT, getStripePriceId, resolvePlanKeyFromStripePriceId } from "./planCatalog";
+import {
+  STRIPE_CREDITS_AMOUNT_METADATA_KEY,
+  STRIPE_EXTRA_CREDITS_METADATA_TYPE,
+} from "../shared/planCatalog";
+import {
+  buildTopUpLabel,
+  insertCreditLog,
+  snapshotCreditBalances,
+} from "./creditLogs";
+import { nextPurchasedCreditGrant } from "./creditBalance";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
@@ -62,19 +72,25 @@ export const createCheckout = action({
       ? `${frontendUrl}${args.cancelPath}`
       : `${frontendUrl}/workspace/account?canceled=true`;
 
+    const creditMetadata = {
+      orgId: entityId,
+      type: STRIPE_EXTRA_CREDITS_METADATA_TYPE,
+      [STRIPE_CREDITS_AMOUNT_METADATA_KEY]: String(EXTRA_CREDITS_PACK_AMOUNT),
+    };
+
     const sessionParams: any = {
       priceId,
       customerId: customer.customerId,
       mode: args.mode,
       successUrl,
       cancelUrl,
-      metadata: { orgId: entityId, type: args.mode === "payment" ? "extra_credits" : "subscription" },
+      metadata: args.mode === "payment" ? creditMetadata : { orgId: entityId, type: "subscription" },
     };
 
     if (args.mode === "subscription") {
       sessionParams.subscriptionMetadata = { orgId: entityId };
     } else {
-      sessionParams.paymentIntentMetadata = { orgId: entityId };
+      sessionParams.paymentIntentMetadata = creditMetadata;
     }
 
     return await stripeClient.createCheckoutSession(ctx, sessionParams);
@@ -234,15 +250,26 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
       await ctx.db.patch(user._id, updates);
 
       if (isPlanChanged || isNewPeriod) {
-        await ctx.db.insert("creditLogs", {
+        const before = snapshotCreditBalances(user);
+        const monthlyCreditsAfter = monthlyCredits;
+        const purchasedCreditsAfter = before.purchasedCreditsBefore;
+        const balanceAfter = monthlyCreditsAfter + purchasedCreditsAfter;
+        await insertCreditLog(ctx, {
           orgId: "",
           userId: user._id,
-          amount: monthlyCredits - (user.credits ?? 0),
-          type: "grant",
-          balanceBefore: user.credits ?? 0,
-          balanceAfter: monthlyCredits,
+          eventType: isNewPeriod && !isPlanChanged ? "monthly_reset" : "grant",
+          label:
+            isNewPeriod && !isPlanChanged
+              ? "Monthly reset"
+              : `Plan ${isPlanChanged ? "change" : "renewal"} (${planConfig.name})`,
+          amount: balanceAfter - before.balanceBefore,
+          balanceBefore: before.balanceBefore,
+          balanceAfter,
+          monthlyCreditsBefore: before.monthlyCreditsBefore,
+          monthlyCreditsAfter,
+          purchasedCreditsBefore: before.purchasedCreditsBefore,
+          purchasedCreditsAfter,
           reason: `Subscription ${isPlanChanged ? "change" : "renewal"} to ${planConfig.name} plan`,
-          createdAt: Date.now(),
         });
       }
     } else {
@@ -273,14 +300,25 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
       await ctx.db.patch(org._id, updates);
 
       if (isPlanChanged || isNewPeriod) {
-        await ctx.db.insert("creditLogs", {
+        const before = snapshotCreditBalances(org);
+        const monthlyCreditsAfter = monthlyCredits;
+        const purchasedCreditsAfter = before.purchasedCreditsBefore;
+        const balanceAfter = monthlyCreditsAfter + purchasedCreditsAfter;
+        await insertCreditLog(ctx, {
           orgId: args.orgId,
-          amount: monthlyCredits - (org.credits ?? 0),
-          type: "grant",
-          balanceBefore: org.credits ?? 0,
-          balanceAfter: monthlyCredits,
+          eventType: isNewPeriod && !isPlanChanged ? "monthly_reset" : "grant",
+          label:
+            isNewPeriod && !isPlanChanged
+              ? "Monthly reset"
+              : `Plan ${isPlanChanged ? "change" : "renewal"} (${planConfig.name})`,
+          amount: balanceAfter - before.balanceBefore,
+          balanceBefore: before.balanceBefore,
+          balanceAfter,
+          monthlyCreditsBefore: before.monthlyCreditsBefore,
+          monthlyCreditsAfter,
+          purchasedCreditsBefore: before.purchasedCreditsBefore,
+          purchasedCreditsAfter,
           reason: `Subscription ${isPlanChanged ? "change" : "renewal"} to ${planConfig.name} plan`,
-          createdAt: Date.now(),
         });
       }
     }
@@ -305,26 +343,32 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         throw new Error("User not found");
       }
 
-      const balanceBefore = user.credits ?? 0;
+      const before = snapshotCreditBalances(user);
+      const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
+      const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
 
       await ctx.db.patch(user._id, {
         stripeSubscriptionId: undefined,
         stripePriceId: undefined,
         stripeSubscriptionStatus: "canceled",
         stripeSubscriptionCurrentPeriodEnd: undefined,
-        credits: Math.min(balanceBefore, freePlanConfig.monthlyCredits),
+        credits: newMonthlyCredits,
         updatedAt: Date.now(),
       });
 
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: "",
         userId: user._id,
-        amount: -Math.max(0, balanceBefore - freePlanConfig.monthlyCredits),
-        type: "deduction",
-        balanceBefore,
-        balanceAfter: Math.min(balanceBefore, freePlanConfig.monthlyCredits),
+        eventType: "adjustment",
+        label: "Plan canceled",
+        amount: balanceAfter - before.balanceBefore,
+        balanceBefore: before.balanceBefore,
+        balanceAfter,
+        monthlyCreditsBefore: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: newMonthlyCredits,
+        purchasedCreditsBefore: before.purchasedCreditsBefore,
+        purchasedCreditsAfter: before.purchasedCreditsBefore,
         reason: "Subscription canceled, reverted to Free plan",
-        createdAt: Date.now(),
       });
     } else {
       const org = await ctx.db
@@ -335,39 +379,58 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         throw new Error("Organization not found");
       }
 
-      const balanceBefore = org.credits ?? 0;
+      const before = snapshotCreditBalances(org);
+      const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
+      const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
 
       await ctx.db.patch(org._id, {
         stripeSubscriptionId: undefined,
         stripePriceId: undefined,
         stripeSubscriptionStatus: "canceled",
         stripeSubscriptionCurrentPeriodEnd: undefined,
-        credits: Math.min(balanceBefore, freePlanConfig.monthlyCredits),
+        credits: newMonthlyCredits,
         updatedAt: Date.now(),
       });
 
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: args.orgId,
-        amount: -Math.max(0, balanceBefore - freePlanConfig.monthlyCredits),
-        type: "deduction",
-        balanceBefore,
-        balanceAfter: Math.min(balanceBefore, freePlanConfig.monthlyCredits),
+        eventType: "adjustment",
+        label: "Plan canceled",
+        amount: balanceAfter - before.balanceBefore,
+        balanceBefore: before.balanceBefore,
+        balanceAfter,
+        monthlyCreditsBefore: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: newMonthlyCredits,
+        purchasedCreditsBefore: before.purchasedCreditsBefore,
+        purchasedCreditsAfter: before.purchasedCreditsBefore,
         reason: "Subscription canceled, reverted to Free plan",
-        createdAt: Date.now(),
       });
     }
   },
 });
 
-export const handlePaymentCompletedInternal = internalMutation({
+export const handlePaymentIntentSucceededInternal = internalMutation({
   args: {
-    stripeCustomerId: v.optional(v.string()),
+    stripePaymentIntentId: v.string(),
     orgId: v.string(),
-    amountInCents: v.number(),
+    creditsToGrant: v.number(),
   },
   handler: async (ctx, args) => {
+    if (args.creditsToGrant <= 0) {
+      throw new Error("Invalid credits amount");
+    }
+
+    const existing = await ctx.db
+      .query("processedStripePayments")
+      .withIndex("by_stripePaymentIntentId", (q) =>
+        q.eq("stripePaymentIntentId", args.stripePaymentIntentId),
+      )
+      .unique();
+    if (existing) {
+      return { success: true, alreadyProcessed: true };
+    }
+
     const isPersonal = args.orgId.startsWith("user_");
-    const creditsToGrant = 1000;
 
     if (isPersonal) {
       const user = await ctx.db
@@ -378,23 +441,31 @@ export const handlePaymentCompletedInternal = internalMutation({
         throw new Error("User not found");
       }
 
-      const balanceBefore = user.credits ?? 0;
-      const balanceAfter = balanceBefore + creditsToGrant;
+      const before = snapshotCreditBalances(user);
+      const purchased = nextPurchasedCreditGrant(user, args.creditsToGrant);
+      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
 
       await ctx.db.patch(user._id, {
-        credits: balanceAfter,
+        purchasedCredits: purchased.purchasedCredits,
+        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
         updatedAt: Date.now(),
       });
 
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: "",
         userId: user._id,
-        amount: creditsToGrant,
-        type: "top_up",
-        balanceBefore,
+        eventType: "top_up",
+        label: buildTopUpLabel(args.creditsToGrant),
+        amount: args.creditsToGrant,
+        balanceBefore: before.balanceBefore,
         balanceAfter,
-        reason: `Stripe payment: Purchased ${creditsToGrant} extra credits`,
-        createdAt: Date.now(),
+        monthlyCreditsBefore: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        purchasedCreditsBefore: before.purchasedCreditsBefore,
+        purchasedCreditsAfter: purchased.purchasedCredits,
+        creditCost: args.creditsToGrant,
+        stripePaymentIntentId: args.stripePaymentIntentId,
+        reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
       });
     } else {
       const org = await ctx.db
@@ -405,24 +476,53 @@ export const handlePaymentCompletedInternal = internalMutation({
         throw new Error("Organization not found");
       }
 
-      const balanceBefore = org.credits ?? 0;
-      const balanceAfter = balanceBefore + creditsToGrant;
+      const before = snapshotCreditBalances(org);
+      const purchased = nextPurchasedCreditGrant(org, args.creditsToGrant);
+      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
 
       await ctx.db.patch(org._id, {
-        credits: balanceAfter,
+        purchasedCredits: purchased.purchasedCredits,
+        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
         updatedAt: Date.now(),
       });
 
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: args.orgId,
-        amount: creditsToGrant,
-        type: "top_up",
-        balanceBefore,
+        eventType: "top_up",
+        label: buildTopUpLabel(args.creditsToGrant),
+        amount: args.creditsToGrant,
+        balanceBefore: before.balanceBefore,
         balanceAfter,
-        reason: `Stripe payment: Purchased ${creditsToGrant} extra credits`,
-        createdAt: Date.now(),
+        monthlyCreditsBefore: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        purchasedCreditsBefore: before.purchasedCreditsBefore,
+        purchasedCreditsAfter: purchased.purchasedCredits,
+        creditCost: args.creditsToGrant,
+        stripePaymentIntentId: args.stripePaymentIntentId,
+        reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
       });
     }
+
+    await ctx.db.insert("processedStripePayments", {
+      stripePaymentIntentId: args.stripePaymentIntentId,
+      orgId: args.orgId,
+      creditsGranted: args.creditsToGrant,
+      processedAt: Date.now(),
+    });
+
+    return { success: true, alreadyProcessed: false };
+  },
+});
+
+export const handlePaymentCompletedInternal = internalMutation({
+  args: {
+    stripeCustomerId: v.optional(v.string()),
+    orgId: v.string(),
+    amountInCents: v.number(),
+  },
+  handler: async (_ctx, _args) => {
+    // Credit top-ups are granted from payment_intent.succeeded to avoid double grants.
+    return { success: true, skipped: true };
   },
 });
 

@@ -29,6 +29,8 @@ export default defineSchema({
     lastName: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
     credits: v.optional(v.number()),
+    purchasedCredits: v.optional(v.number()),
+    purchasedCreditsGranted: v.optional(v.number()),
     plan: v.optional(
       v.union(
         v.literal("free"),
@@ -70,6 +72,8 @@ export default defineSchema({
       )
     ),
     credits: v.optional(v.number()),
+    purchasedCredits: v.optional(v.number()),
+    purchasedCreditsGranted: v.optional(v.number()),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
@@ -392,16 +396,40 @@ export default defineSchema({
       v.literal("top_up"),
       v.literal("grant")
     ),
+    eventType: v.optional(
+      v.union(
+        v.literal("monthly_reset"),
+        v.literal("usage"),
+        v.literal("top_up"),
+        v.literal("grant"),
+        v.literal("adjustment"),
+      ),
+    ),
+    label: v.optional(v.string()),
     balanceBefore: v.number(),
     balanceAfter: v.number(),
+    monthlyCreditsBefore: v.optional(v.number()),
+    monthlyCreditsAfter: v.optional(v.number()),
+    purchasedCreditsBefore: v.optional(v.number()),
+    purchasedCreditsAfter: v.optional(v.number()),
+    creditCost: v.optional(v.number()),
     modelId: v.optional(v.string()),
     agentId: v.optional(v.id("agents")),
+    agentName: v.optional(v.string()),
     conversationId: v.optional(v.id("conversations")),
     reason: v.optional(v.string()),
+    stripePaymentIntentId: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_orgId", ["orgId"])
     .index("by_createdAt", ["createdAt"])
     .index("by_orgId_and_createdAt", ["orgId", "createdAt"])
-    .index("by_userId_and_createdAt", ["userId", "createdAt"]),
+    .index("by_userId_and_createdAt", ["userId", "createdAt"])
+    .index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
+  processedStripePayments: defineTable({
+    stripePaymentIntentId: v.string(),
+    orgId: v.string(),
+    creditsGranted: v.number(),
+    processedAt: v.number(),
+  }).index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
 });

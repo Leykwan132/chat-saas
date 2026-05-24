@@ -3,6 +3,7 @@ import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { getPlan, getPlanFromStripe } from "./plans";
+import { insertCreditLog } from "./creditLogs";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -99,15 +100,20 @@ export const completeOnboarding = mutation({
     });
 
     if (user.credits === undefined) {
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: "",
         userId: user._id,
+        eventType: "grant",
+        label: `Welcome credits (${planConfig.name})`,
         amount: initialCredits,
-        type: "grant",
         balanceBefore: 0,
         balanceAfter: initialCredits,
+        monthlyCreditsBefore: 0,
+        monthlyCreditsAfter: initialCredits,
+        purchasedCreditsBefore: 0,
+        purchasedCreditsAfter: 0,
+        creditCost: initialCredits,
         reason: `Initial onboarding credit grant for ${planConfig.name} plan`,
-        createdAt: Date.now(),
       });
     }
 

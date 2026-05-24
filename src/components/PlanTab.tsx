@@ -1,10 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router';
 import { useQuery, useAction } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardFooter,
+  CardHeader,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +25,8 @@ import {
 } from '@/components/ui/empty';
 import {
   EXTRA_CREDITS_PACK_AMOUNT,
-  EXTRA_CREDITS_PACK_RM,
+  EXTRA_CREDITS_PACK_NOTE,
+  formatExtraCreditsPackPrice,
   getPlanChangeActionLabel,
   type BillingInterval,
   type PlanKey,
@@ -52,6 +58,16 @@ export function PlanTab() {
   const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCreditsLoading, setIsCreditsLoading] = useState(false);
+
+  useEffect(() => {
+    if (window.location.hash !== '#plan-add-ons') {
+      return;
+    }
+    document.getElementById('plan-add-ons')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
 
   if (isAuthLoading || planAndUsage === undefined) {
     return (
@@ -175,34 +191,39 @@ export function PlanTab() {
       </div>
 
       {/* Add-ons */}
-      <div>
+      <div id="plan-add-ons" className="scroll-mt-6">
         <h3 className="text-sm font-semibold text-foreground">Add-ons</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           One-time purchases on top of your subscription.
         </p>
-        <div className="mt-4 rounded-xl border border-border bg-card p-5">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-3">
-              <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40">
-                <Coins className="size-4 text-muted-foreground" />
+        <div className="mt-4 flex flex-wrap gap-4">
+          <Card className="w-full max-w-[17.5rem] overflow-hidden rounded-xl border border-border bg-card py-0 shadow-none ring-0">
+            <CardHeader className="rounded-none px-5 pt-5 pb-4">
+              <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                <Coins className="size-3.5 text-muted-foreground" />
+                {EXTRA_CREDITS_PACK_AMOUNT.toLocaleString()} credits
+              </p>
+              <div className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-4xl font-normal tracking-tight text-foreground">
+                  {formatExtraCreditsPackPrice()}
+                </span>
               </div>
-              <div>
-                <h4 className="text-sm font-medium text-foreground">Extra credits</h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {EXTRA_CREDITS_PACK_AMOUNT.toLocaleString()} credits · RM{EXTRA_CREDITS_PACK_RM} one-time
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="shrink-0"
-              onClick={() => handleCheckout(null, 'payment')}
-              disabled={isCreditsLoading}
-            >
-              {isCreditsLoading ? 'Loading…' : 'Buy credits'}
-            </Button>
-          </div>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                {EXTRA_CREDITS_PACK_NOTE}
+              </p>
+            </CardHeader>
+            <CardFooter className="rounded-none border-t border-border/60 px-5 pb-5 pt-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="h-9 w-full rounded-lg text-sm font-medium"
+                onClick={() => handleCheckout(null, 'payment')}
+                disabled={isCreditsLoading}
+              >
+                {isCreditsLoading ? <Spinner className="size-3.5" /> : 'Top Up Now'}
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
       </div>
 

@@ -21,6 +21,11 @@ authKit.registerRoutes(http);
 
 import { components } from "./_generated/api";
 import { registerRoutes } from "@convex-dev/stripe";
+import {
+  EXTRA_CREDITS_PACK_AMOUNT,
+  STRIPE_CREDITS_AMOUNT_METADATA_KEY,
+  STRIPE_EXTRA_CREDITS_METADATA_TYPE,
+} from "../shared/planCatalog";
 
 registerRoutes(http, components.stripe, {
   webhookPath: "/stripe/webhook",
@@ -69,16 +74,71 @@ registerRoutes(http, components.stripe, {
     },
     "checkout.session.completed": async (ctx, event: any) => {
       const session = event.data.object;
-      if (session.mode === "payment" && session.metadata?.type === "extra_credits") {
-        const orgId = session.metadata?.orgId;
-        if (orgId) {
-          await ctx.runMutation(internal.stripe.handlePaymentCompletedInternal, {
-            stripeCustomerId: session.customer as string | undefined,
-            orgId,
-            amountInCents: session.amount_total || 0,
-          });
-        }
+      if (session.mode === "payment" && session.metadata?.type === STRIPE_EXTRA_CREDITS_METADATA_TYPE) {
+        // Credits are granted from payment_intent.succeeded after verification.
+        return;
       }
+    },
+    "payment_intent.succeeded": async (ctx, event: any) => {
+      const paymentIntent = event.data.object;
+      if (paymentIntent.status !== "succeeded") {
+        return;
+      }
+
+      const storedPayment = await ctx.runQuery(components.stripe.public.getPayment, {
+        stripePaymentIntentId: paymentIntent.id,
+      });
+      if (!storedPayment || storedPayment.status !== "succeeded") {
+        console.warn(
+          "payment_intent.succeeded without stored succeeded payment:",
+          paymentIntent.id,
+        );
+        return;
+      }
+
+      const metadata = {
+        ...(storedPayment.metadata ?? {}),
+        ...(paymentIntent.metadata ?? {}),
+      };
+      if (metadata.type !== STRIPE_EXTRA_CREDITS_METADATA_TYPE) {
+        return;
+      }
+
+      const creditsRaw =
+        metadata[STRIPE_CREDITS_AMOUNT_METADATA_KEY] ?? metadata.creditsAmount;
+      const creditsToGrant = Number.parseInt(
+        String(creditsRaw ?? EXTRA_CREDITS_PACK_AMOUNT),
+        10,
+      );
+      if (!Number.isFinite(creditsToGrant) || creditsToGrant <= 0) {
+        console.warn("Invalid credits metadata for payment intent:", paymentIntent.id);
+        return;
+      }
+
+      const stripeCustomerId =
+        (typeof paymentIntent.customer === "string"
+          ? paymentIntent.customer
+          : undefined) ?? storedPayment.stripeCustomerId;
+      if (!stripeCustomerId) {
+        console.warn("payment_intent.succeeded missing customer:", paymentIntent.id);
+        return;
+      }
+
+      const customer = await ctx.runQuery(components.stripe.public.getCustomer, {
+        stripeCustomerId,
+      });
+      if (!customer?.userId) {
+        console.warn("payment_intent.succeeded customer not mapped:", stripeCustomerId);
+        return;
+      }
+
+      const orgId = (metadata.orgId as string | undefined) ?? customer.userId;
+
+      await ctx.runMutation(internal.stripe.handlePaymentIntentSucceededInternal, {
+        stripePaymentIntentId: paymentIntent.id,
+        orgId,
+        creditsToGrant,
+      });
     },
   },
 });

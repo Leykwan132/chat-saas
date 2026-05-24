@@ -8,6 +8,19 @@ import {
 import { getAuthContext } from "./authUtils";
 import { getModelPricing } from "./llm/modelPricing";
 import { lazyResetCreditsIfNeeded, getPlanFromStripe, syncCreditBilling } from "./plans";
+import {
+  applyCreditDeduction,
+  getTotalCreditBalance,
+  nextPurchasedCreditGrant,
+} from "./creditBalance";
+import {
+  buildTopUpLabel,
+  buildUsageLabel,
+  formatCreditLogEventType,
+  formatCreditLogLabel,
+  insertCreditLog,
+  snapshotCreditBalances,
+} from "./creditLogs";
 import type { Doc, Id } from "./_generated/dataModel";
 
 export function getDefaultUserCredits(): number {
@@ -91,7 +104,7 @@ export const internalCheckCredits = internalQuery({
         return { ok: false as const, reason: "user_not_found" as const };
       }
       const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
-      const balance = currentUserDoc.credits ?? 0;
+      const balance = getTotalCreditBalance(currentUserDoc);
       const cost = pricing.creditCost;
       if (balance < cost) {
         return {
@@ -113,7 +126,7 @@ export const internalCheckCredits = internalQuery({
     }
 
     const simulatedOrg = (await lazyResetCreditsIfNeeded(ctx, org)) as Doc<"organizations">;
-    const balance = simulatedOrg.credits ?? 0;
+    const balance = getTotalCreditBalance(simulatedOrg);
     const cost = pricing.creditCost;
     if (balance < cost) {
       return {
@@ -153,6 +166,12 @@ export const internalDeductCredits = internalMutation({
       agentId = conversation?.assignedAgentId;
     }
 
+    let agentName: string | undefined;
+    if (agentId) {
+      const agent = await ctx.db.get(agentId);
+      agentName = agent?.name;
+    }
+
     if (!args.orgId || args.orgId === "personal") {
       if (!args.workosUserId) {
         throw new Error("User ID is required for personal workspace deductions");
@@ -166,31 +185,40 @@ export const internalDeductCredits = internalMutation({
       }
 
       user = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
-      const balance = user.credits ?? 0;
+      const before = snapshotCreditBalances(user);
+      let balanceAfter = before.balanceBefore;
 
       if (!skipDeduction) {
-        if (balance < pricing.creditCost) {
+        if (before.balanceBefore < pricing.creditCost) {
           throw new Error("Insufficient credits");
         }
-        const newBalance = balance - pricing.creditCost;
+        const updatedBalances = applyCreditDeduction(user, pricing.creditCost);
+        balanceAfter = updatedBalances.totalAfter;
         await ctx.db.patch(user._id, {
-          credits: newBalance,
+          credits: updatedBalances.credits,
+          purchasedCredits: updatedBalances.purchasedCredits,
           updatedAt: Date.now(),
         });
 
         if (creditsCharged > 0) {
-          await ctx.db.insert("creditLogs", {
+          await insertCreditLog(ctx, {
             orgId: "",
             userId: user._id,
+            eventType: "usage",
+            label: buildUsageLabel(agentName),
             amount: -creditsCharged,
-            type: "deduction",
-            balanceBefore: balance,
-            balanceAfter: newBalance,
+            balanceBefore: before.balanceBefore,
+            balanceAfter,
+            monthlyCreditsBefore: before.monthlyCreditsBefore,
+            monthlyCreditsAfter: updatedBalances.credits,
+            purchasedCreditsBefore: before.purchasedCreditsBefore,
+            purchasedCreditsAfter: updatedBalances.purchasedCredits,
+            creditCost: creditsCharged,
             modelId: args.modelId,
             agentId,
+            agentName,
             conversationId: args.conversationId,
             reason: args.reason ?? `AI reply using ${args.modelId}`,
-            createdAt: Date.now(),
           });
         }
       }
@@ -198,7 +226,7 @@ export const internalDeductCredits = internalMutation({
       return {
         llmModel: args.modelId,
         creditsCharged,
-        balanceAfter: skipDeduction ? balance : balance - pricing.creditCost,
+        balanceAfter,
       };
     }
 
@@ -223,31 +251,40 @@ export const internalDeductCredits = internalMutation({
     }
 
     org = (await lazyResetCreditsIfNeeded(ctx, org)) as Doc<"organizations">;
-    const balance = org.credits ?? 0;
+    const before = snapshotCreditBalances(org);
+    let balanceAfter = before.balanceBefore;
 
     if (!skipDeduction) {
-      if (balance < pricing.creditCost) {
+      if (before.balanceBefore < pricing.creditCost) {
         throw new Error("Insufficient credits");
       }
-      const newBalance = balance - pricing.creditCost;
+      const updatedBalances = applyCreditDeduction(org, pricing.creditCost);
+      balanceAfter = updatedBalances.totalAfter;
       await ctx.db.patch(org._id, {
-        credits: newBalance,
+        credits: updatedBalances.credits,
+        purchasedCredits: updatedBalances.purchasedCredits,
         updatedAt: Date.now(),
       });
 
       if (creditsCharged > 0) {
-        await ctx.db.insert("creditLogs", {
+        await insertCreditLog(ctx, {
           orgId: org.workosOrgId,
           userId: userDbId,
+          eventType: "usage",
+          label: buildUsageLabel(agentName),
           amount: -creditsCharged,
-          type: "deduction",
-          balanceBefore: balance,
-          balanceAfter: newBalance,
+          balanceBefore: before.balanceBefore,
+          balanceAfter,
+          monthlyCreditsBefore: before.monthlyCreditsBefore,
+          monthlyCreditsAfter: updatedBalances.credits,
+          purchasedCreditsBefore: before.purchasedCreditsBefore,
+          purchasedCreditsAfter: updatedBalances.purchasedCredits,
+          creditCost: creditsCharged,
           modelId: args.modelId,
           agentId,
+          agentName,
           conversationId: args.conversationId,
           reason: args.reason ?? `AI reply using ${args.modelId}`,
-          createdAt: Date.now(),
         });
       }
     }
@@ -255,7 +292,7 @@ export const internalDeductCredits = internalMutation({
     return {
       llmModel: args.modelId,
       creditsCharged,
-      balanceAfter: skipDeduction ? balance : balance - pricing.creditCost,
+      balanceAfter,
     };
   },
 });
@@ -276,25 +313,32 @@ export const topUp = mutation({
     }
 
     if (!orgId || orgId === "personal") {
-      const currentCredits = userObj.credits ?? 0;
-      const newCredits = currentCredits + 500;
+      const before = snapshotCreditBalances(userObj);
+      const purchased = nextPurchasedCreditGrant(userObj, 500);
+      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
       await ctx.db.patch(userObj._id, {
-        credits: newCredits,
+        purchasedCredits: purchased.purchasedCredits,
+        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
         updatedAt: Date.now(),
       });
 
-      await ctx.db.insert("creditLogs", {
+      await insertCreditLog(ctx, {
         orgId: "",
         userId: userObj._id,
+        eventType: "top_up",
+        label: buildTopUpLabel(500),
         amount: 500,
-        type: "top_up",
-        balanceBefore: currentCredits,
-        balanceAfter: newCredits,
+        balanceBefore: before.balanceBefore,
+        balanceAfter,
+        monthlyCreditsBefore: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        purchasedCreditsBefore: before.purchasedCreditsBefore,
+        purchasedCreditsAfter: purchased.purchasedCredits,
+        creditCost: 500,
         reason: "User topped up credits (manual/test)",
-        createdAt: Date.now(),
       });
 
-      return { success: true, newCredits };
+      return { success: true, newCredits: balanceAfter };
     }
 
     const org = await ctx.db
@@ -305,25 +349,32 @@ export const topUp = mutation({
       throw new Error("Organization not found");
     }
 
-    const currentCredits = org.credits ?? 0;
-    const newCredits = currentCredits + 500;
+    const before = snapshotCreditBalances(org);
+    const purchased = nextPurchasedCreditGrant(org, 500);
+    const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
     await ctx.db.patch(org._id, {
-      credits: newCredits,
+      purchasedCredits: purchased.purchasedCredits,
+      purchasedCreditsGranted: purchased.purchasedCreditsGranted,
       updatedAt: Date.now(),
     });
 
-    await ctx.db.insert("creditLogs", {
+    await insertCreditLog(ctx, {
       orgId: org.workosOrgId,
       userId: userObj._id,
+      eventType: "top_up",
+      label: buildTopUpLabel(500),
       amount: 500,
-      type: "top_up",
-      balanceBefore: currentCredits,
-      balanceAfter: newCredits,
+      balanceBefore: before.balanceBefore,
+      balanceAfter,
+      monthlyCreditsBefore: before.monthlyCreditsBefore,
+      monthlyCreditsAfter: before.monthlyCreditsBefore,
+      purchasedCreditsBefore: before.purchasedCreditsBefore,
+      purchasedCreditsAfter: purchased.purchasedCredits,
+      creditCost: 500,
       reason: "Organization topped up credits (manual/test)",
-      createdAt: Date.now(),
     });
 
-    return { success: true, newCredits };
+    return { success: true, newCredits: balanceAfter };
   },
 });
 
@@ -450,7 +501,8 @@ export const getUsageDashboard = query({
     const dailyUsageByAgent = new Map<string, Map<string, number>>();
 
     for (const log of logs) {
-      if (log.type !== "deduction") {
+      const eventType = formatCreditLogEventType(log);
+      if (eventType !== "usage" && log.type !== "deduction") {
         continue;
       }
 
@@ -460,7 +512,7 @@ export const getUsageDashboard = query({
       }
 
       const key = resolveLogAgentId(log, conversationAgentCache);
-      const amount = Math.abs(log.amount);
+      const amount = log.creditCost ?? Math.abs(log.amount);
       usageByAgent.set(key, (usageByAgent.get(key) ?? 0) + amount);
 
       const dateKey = toUtcDateKey(log.createdAt);
@@ -573,6 +625,115 @@ export const getUsageDashboard = query({
       agents: agents.map((agent) => ({ _id: agent._id, name: agent.name })),
       dailyUsage,
       chartConfig,
+    };
+  },
+});
+
+export const getCreditHistory = query({
+  args: {
+    orgId: v.optional(v.union(v.string(), v.null())),
+    agentId: v.optional(v.id("agents")),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
+    const isPersonal = !orgId || orgId === "personal";
+    const logOrgId = isPersonal ? "" : orgId;
+    const limit = Math.min(Math.max(args.limit ?? 100, 1), 200);
+
+    let userDoc: Doc<"users"> | null = null;
+    let orgDoc: Doc<"organizations"> | null = null;
+    let stripeEntityId = userId;
+    let periodEndMs: number | undefined;
+
+    if (isPersonal) {
+      userDoc = await ctx.db
+        .query("users")
+        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
+        .unique();
+      if (!userDoc) {
+        return null;
+      }
+      periodEndMs = userDoc.stripeSubscriptionCurrentPeriodEnd;
+    } else {
+      orgDoc = await ctx.db
+        .query("organizations")
+        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+        .unique();
+      if (!orgDoc) {
+        return null;
+      }
+      stripeEntityId = orgId;
+      periodEndMs = orgDoc.stripeSubscriptionCurrentPeriodEnd;
+    }
+
+    const stripeInfo = await getPlanFromStripe(ctx, stripeEntityId);
+    const entity = (userDoc ?? orgDoc)!;
+    const { billing } = await syncCreditBilling(ctx, entity, stripeInfo);
+    const periodStartMs = getUsagePeriodStartMs(periodEndMs);
+
+    const logs = isPersonal
+      ? userDoc
+        ? await ctx.db
+            .query("creditLogs")
+            .withIndex("by_userId_and_createdAt", (q) =>
+              q.eq("userId", userDoc!._id).gte("createdAt", periodStartMs),
+            )
+            .order("desc")
+            .take(limit * 2)
+        : []
+      : await ctx.db
+          .query("creditLogs")
+          .withIndex("by_orgId_and_createdAt", (q) =>
+            q.eq("orgId", logOrgId).gte("createdAt", periodStartMs),
+          )
+          .order("desc")
+          .take(limit * 2);
+
+    const filteredLogs = args.agentId
+      ? logs.filter((log) => {
+          const eventType = formatCreditLogEventType(log);
+          if (eventType !== "usage") {
+            return false;
+          }
+          return log.agentId === args.agentId;
+        })
+      : logs;
+
+    const entries = filteredLogs.slice(0, limit).map((log) => {
+      const eventType = formatCreditLogEventType(log);
+      const pricing = log.modelId ? getModelPricing(log.modelId) : null;
+      const creditCost =
+        log.creditCost ??
+        (eventType === "usage" ? Math.abs(log.amount) : log.amount > 0 ? log.amount : undefined);
+
+      return {
+        id: log._id,
+        createdAt: log.createdAt,
+        eventType,
+        label: formatCreditLogLabel(log),
+        modelId: log.modelId ?? null,
+        modelLabel: pricing?.label ?? log.modelId ?? null,
+        creditCost: creditCost ?? null,
+        amount: log.amount,
+        balanceBefore: log.balanceBefore,
+        balanceAfter: log.balanceAfter,
+        monthlyCreditsBefore: log.monthlyCreditsBefore ?? null,
+        monthlyCreditsAfter: log.monthlyCreditsAfter ?? null,
+        purchasedCreditsBefore: log.purchasedCreditsBefore ?? null,
+        purchasedCreditsAfter: log.purchasedCreditsAfter ?? null,
+        agentId: log.agentId ?? null,
+        agentName: log.agentName ?? null,
+        reason: log.reason ?? null,
+      };
+    });
+
+    return {
+      credits: billing.effectiveCredits,
+      monthlyAllowance: billing.monthlyAllowance,
+      periodStartMs,
+      periodEndMs: periodEndMs ?? periodStartMs + MONTHLY_PERIOD_MS,
+      entries,
     };
   },
 });

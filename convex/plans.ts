@@ -13,6 +13,16 @@ import {
   type PlanFeatureFlags,
   type PlanKey,
 } from "./planCatalog";
+import {
+  getPurchasedCredits,
+  getMonthlyCredits,
+  getPurchasedCreditsGranted,
+} from "./creditBalance";
+import {
+  insertCreditLog,
+  snapshotCreditBalances,
+  sumTopUpGrants,
+} from "./creditLogs";
 
 export type { PlanKey, PlanCatalogEntry, PlanFeatureFlags };
 
@@ -110,6 +120,17 @@ export type CreditBillingSnapshot = {
   resetReason?: string;
 };
 
+async function resolvePurchasedCreditsGranted(
+  ctx: QueryCtx,
+  entity: Doc<"organizations"> | Doc<"users">,
+  scope: { orgId: string; userId?: Doc<"users">["_id"] },
+): Promise<number> {
+  const remaining = getPurchasedCredits(entity);
+  const stored = getPurchasedCreditsGranted(entity);
+  const fromLogs = await sumTopUpGrants(ctx, scope);
+  return Math.max(remaining, stored, fromLogs);
+}
+
 function getCalendarMonthKey(date = new Date()): string {
   const year = date.getUTCFullYear();
   const month = String(date.getUTCMonth() + 1).padStart(2, "0");
@@ -126,14 +147,15 @@ export function resolveCreditBilling(
 ): CreditBillingSnapshot {
   const planConfig = getPlan(stripeInfo.plan);
   const monthlyAllowance = planConfig.monthlyCredits;
-  const balance = entity.credits ?? 0;
+  const monthlyBalance = entity.credits ?? 0;
+  const purchasedBalance = getPurchasedCredits(entity);
   const stripePeriodEnd = hasActiveStripeBilling(stripeInfo.status)
     ? stripeInfo.currentPeriodEnd
     : undefined;
 
   if (stripePeriodEnd && entity.stripeSubscriptionCurrentPeriodEnd !== stripePeriodEnd) {
     return {
-      effectiveCredits: monthlyAllowance,
+      effectiveCredits: monthlyAllowance + purchasedBalance,
       monthlyAllowance,
       needsPersistedReset: true,
       resetReason: `Monthly subscription credit reset for ${planConfig.name} plan`,
@@ -143,7 +165,7 @@ export function resolveCreditBilling(
   const monthKey = getCalendarMonthKey();
   if (!stripePeriodEnd && entity.creditsPeriodMonthKey !== monthKey) {
     return {
-      effectiveCredits: monthlyAllowance,
+      effectiveCredits: monthlyAllowance + purchasedBalance,
       monthlyAllowance,
       needsPersistedReset: true,
       resetReason: `Monthly credit reset for ${planConfig.name} plan`,
@@ -151,7 +173,7 @@ export function resolveCreditBilling(
   }
 
   return {
-    effectiveCredits: balance,
+    effectiveCredits: monthlyBalance + purchasedBalance,
     monthlyAllowance,
     needsPersistedReset: false,
   };
@@ -172,14 +194,16 @@ async function persistCreditPeriodResetOnEntity(
   }
 
   const isOrg = "workosOrgId" in entity;
-  const balanceBefore = entity.credits ?? 0;
+  const before = snapshotCreditBalances(entity);
+  const purchasedBalance = before.purchasedCreditsBefore;
   const stripePeriodEnd = hasActiveStripeBilling(stripeInfo.status)
     ? stripeInfo.currentPeriodEnd
     : undefined;
   const monthKey = getCalendarMonthKey();
+  const monthlyCreditsAfter = billing.effectiveCredits - purchasedBalance;
 
   const patch: Record<string, unknown> = {
-    credits: billing.effectiveCredits,
+    credits: monthlyCreditsAfter,
     updatedAt: Date.now(),
   };
   if (stripePeriodEnd) {
@@ -189,15 +213,19 @@ async function persistCreditPeriodResetOnEntity(
   }
 
   await ctx.db.patch(entity._id as any, patch);
-  await ctx.db.insert("creditLogs", {
+  await insertCreditLog(ctx, {
     orgId: isOrg ? entity.workosOrgId : "",
     userId: isOrg ? undefined : entity._id,
-    amount: billing.effectiveCredits - balanceBefore,
-    type: "grant",
-    balanceBefore,
+    eventType: "monthly_reset",
+    label: "Monthly reset",
+    amount: billing.effectiveCredits - before.balanceBefore,
+    balanceBefore: before.balanceBefore,
     balanceAfter: billing.effectiveCredits,
+    monthlyCreditsBefore: before.monthlyCreditsBefore,
+    monthlyCreditsAfter,
+    purchasedCreditsBefore: purchasedBalance,
+    purchasedCreditsAfter: purchasedBalance,
     reason: billing.resetReason,
-    createdAt: Date.now(),
   });
 
   const updated = await ctx.db.get(entity._id as any);
@@ -228,7 +256,7 @@ export async function syncCreditBilling(
   return {
     entity: {
       ...entity,
-      credits: billing.effectiveCredits,
+      credits: billing.effectiveCredits - getPurchasedCredits(entity),
     } as Doc<"organizations"> | Doc<"users">,
     billing,
   };
@@ -291,14 +319,22 @@ export const getPlanAndUsage = query({
         return null;
       }
       const stripeInfo = await getPlanFromStripe(ctx, userId);
-      const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
+      const { entity, billing } = await syncCreditBilling(ctx, user, stripeInfo);
       const planConfig = getPlan(stripeInfo.plan);
+      const purchasedCredits = getPurchasedCredits(entity);
+      const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(ctx, entity, {
+        orgId: "",
+        userId: user._id,
+      });
 
       return {
         orgName: "Personal Workspace",
         plan: stripeInfo.plan,
         planConfig,
         credits: billing.effectiveCredits,
+        monthlyCredits: getMonthlyCredits(entity),
+        purchasedCredits,
+        purchasedCreditsGranted,
         monthlyAllowance: billing.monthlyAllowance,
         stripeSubscriptionStatus: stripeInfo.status,
         stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
@@ -318,14 +354,21 @@ export const getPlanAndUsage = query({
     }
 
     const stripeInfo = await getPlanFromStripe(ctx, orgId);
-    const { billing } = await syncCreditBilling(ctx, org, stripeInfo);
+    const { entity, billing } = await syncCreditBilling(ctx, org, stripeInfo);
     const planConfig = getPlan(stripeInfo.plan);
+    const purchasedCredits = getPurchasedCredits(entity);
+    const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(ctx, entity, {
+      orgId,
+    });
 
     return {
       orgName: org.name,
       plan: stripeInfo.plan,
       planConfig,
       credits: billing.effectiveCredits,
+      monthlyCredits: getMonthlyCredits(entity),
+      purchasedCredits,
+      purchasedCreditsGranted,
       monthlyAllowance: billing.monthlyAllowance,
       stripeSubscriptionStatus: stripeInfo.status,
       stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
