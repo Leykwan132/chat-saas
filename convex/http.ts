@@ -72,7 +72,7 @@ registerRoutes(http, components.stripe, {
         });
       }
     },
-    "checkout.session.completed": async (ctx, event: any) => {
+    "checkout.session.completed": async (_ctx, event: any) => {
       const session = event.data.object;
       if (session.mode === "payment" && session.metadata?.type === STRIPE_EXTRA_CREDITS_METADATA_TYPE) {
         // Credits are granted from payment_intent.succeeded after verification.

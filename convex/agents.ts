@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 
@@ -51,18 +51,21 @@ async function listAgentsForContext(
   userId: string,
   orgId: string | null,
 ) {
+  const normalizedOrgId =
+    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
+
   if (!orgId || orgId === "personal") {
     return await ctx.db
       .query("agents")
       .withIndex("by_userId_and_orgId", (q) =>
-        q.eq("userId", userId).eq("orgId", orgId),
+        q.eq("userId", userId).eq("orgId", normalizedOrgId),
       )
       .collect();
   }
 
   return await ctx.db
     .query("agents")
-    .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+    .withIndex("by_orgId", (q) => q.eq("orgId", normalizedOrgId))
     .collect();
 }
 
