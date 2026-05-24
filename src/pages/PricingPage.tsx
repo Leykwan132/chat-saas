@@ -120,7 +120,7 @@ export default function PricingPage() {
       {/* ─── PRICING MAIN CONTAINER ─── */}
       <main className="flex flex-1 flex-col items-center justify-center px-5 py-32 sm:px-6 sm:py-40">
         <div className="flex w-full max-w-6xl flex-col gap-8">
-          <h1 className="text-center text-4xl sm:text-5xl font-bold tracking-tight">
+          <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl">
             Choose your plan
           </h1>
 

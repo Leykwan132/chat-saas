@@ -172,7 +172,16 @@ body {
     background-position: 0% 0%;
         }
     }
-}
+  --animate-blink-cursor: blink-cursor 1.2s step-end infinite
+;
+  @keyframes blink-cursor {
+  0%, 49% {
+    opacity: 1;
+        }
+  50%, 100% {
+    opacity: 0;
+        }
+    }}
 
 :root {
     --background: oklch(1 0 0);
@@ -253,6 +262,11 @@ body {
     --color-surface-hover: oklch(0.22 0 0);
     --color-foreground-muted: oklch(0.60 0 0);
     --color-foreground-subtle: oklch(0.44 0 0);
+}
+
+/* Sonner hard-codes description colors that can clash with app theme tokens. */
+html [data-sonner-toaster] [data-sonner-toast][data-styled="true"] [data-description] {
+    color: var(--muted-foreground);
 }
 
 @layer base {

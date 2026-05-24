@@ -149,7 +149,7 @@ export default function AgentPage() {
     <div className="flex w-full flex-col gap-6">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
-          <h1 className="m-0 text-2xl font-bold tracking-tight">Playground</h1>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight">Playground</h1>
           <p className="m-0 mt-1 text-sm text-muted-foreground">
             Test and configure your agent.
           </p>

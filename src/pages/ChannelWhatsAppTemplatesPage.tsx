@@ -163,7 +163,7 @@ export default function ChannelWhatsAppTemplatesPage() {
             WhatsApp · Message templates
           </span>
         </div>
-        <h1 className="m-0 text-2xl font-bold tracking-tight">{label}</h1>
+        <h1 className="m-0 text-3xl font-semibold tracking-tight">{label}</h1>
         <p className="m-0 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Create and list templates for this WhatsApp Business Account. Graph API
           calls run on Convex using this channel&apos;s credentials (or the demo

@@ -138,7 +138,7 @@ export default function KnowledgeBasePage() {
       <div className="flex w-full flex-col gap-6">
         <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
           <div>
-            <h1 className="m-0 text-2xl font-bold tracking-tight">Knowledge Base</h1>
+            <h1 className="m-0 text-3xl font-semibold tracking-tight">Knowledge Base</h1>
             <p className="m-0 mt-1 text-sm text-muted-foreground">Add and manage knowledge sources for your agent.</p>
           </div>
           <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
@@ -210,7 +210,7 @@ export default function KnowledgeBasePage() {
             <div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+                  <h2 className="flex items-center gap-2 text-3xl font-semibold tracking-tight">
                     {type === 'web' && 'Web Sources'}
                     {type === 'file' && (
                       <span className="flex items-center gap-1.5">

@@ -48,6 +48,7 @@ import {
   BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
 import { RequireOrganization } from '@/components/RequireOrganization';
+import { showAgentLimitToast } from '@/lib/agentCreationLimit';
 
 function AgentPreview() {
   return (
@@ -190,10 +191,12 @@ function AgentCard({
               </Button>
             </DialogTrigger>
             <DialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader>
-                <DialogTitle>Delete Agent</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete "{agent.name}"? This action cannot be undone.
+              <DialogHeader className="gap-2">
+                <DialogTitle className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                  Delete {agent.name}?
+                </DialogTitle>
+                <DialogDescription className="text-sm leading-relaxed">
+                  This permanently removes the agent. You can&apos;t undo this action.
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -258,10 +261,22 @@ export function AgentsIndex() {
   const { organizationId } = useAuth();
   const activeOrgId = organizationId ?? null;
   const agents = useQuery(api.agents.list, { orgId: activeOrgId });
+  const canCreateAgent = useQuery(api.agents.canCreate, { orgId: activeOrgId });
   const removeAgent = useMutation(api.agents.remove);
 
   const [deletingId, setDeletingId] = useState<Id<'agents'> | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleNewAgent = () => {
+    if (canCreateAgent === undefined) return;
+
+    if (!canCreateAgent.allowed) {
+      showAgentLimitToast(navigate);
+      return;
+    }
+
+    navigate('/create-agent');
+  };
 
   const handleDelete = async (agentId: Id<'agents'>, agentName: string) => {
     setDeletingId(agentId);
@@ -279,8 +294,8 @@ export function AgentsIndex() {
   return (
     <div className="mt-4">
       <div className="mb-9 flex items-center justify-between gap-4">
-        <h1 className="m-0 text-2xl font-bold tracking-tight">Agents</h1>
-        <Button type="button" size="lg" onClick={() => navigate('/create-agent')}>
+        <h1 className="m-0 text-3xl font-semibold tracking-tight">Agents</h1>
+        <Button type="button" size="lg" onClick={handleNewAgent}>
           <Plus className="size-4" />
           New AI agent
         </Button>

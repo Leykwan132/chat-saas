@@ -44,7 +44,13 @@ export function WordRotate({
   const Wrapper = inline ? "span" : "div"
 
   return (
-    <Wrapper className={cn("overflow-hidden", inline ? "inline-block align-baseline" : "py-2")}>
+    <Wrapper
+      className={cn(
+        inline
+          ? "inline-block align-baseline overflow-x-hidden pb-1"
+          : "overflow-hidden py-2",
+      )}
+    >
       <AnimatePresence mode="wait">
         <MotionTag
           key={word}

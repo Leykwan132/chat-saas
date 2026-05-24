@@ -219,7 +219,7 @@ export default function AccountPage() {
       {/* Page header — mirrors KnowledgeBasePage header exactly */}
       <header className="border-b border-border pb-6">
         <div>
-          <h1 className="m-0 text-2xl font-bold tracking-tight">Account</h1>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight">Account</h1>
           <p className="m-0 mt-1 text-sm text-muted-foreground">
             Manage your profile and organization settings.
           </p>
@@ -254,7 +254,7 @@ export default function AccountPage() {
         {/* RIGHT: content */}
         <div className="flex flex-col gap-4 min-w-0">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">
+            <h2 className="text-3xl font-semibold tracking-tight">
               {section === 'profile'
                 ? 'Profile'
                 : section === 'organisations'

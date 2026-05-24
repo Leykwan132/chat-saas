@@ -278,7 +278,7 @@ export default function AutomationsBroadcastPage() {
             <Megaphone className="size-5" />
           </div>
           <div>
-            <h1 className="m-0 text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
               Broadcast
             </h1>
             <p className="m-0 mt-1 text-sm text-muted-foreground">

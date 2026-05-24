@@ -1155,7 +1155,7 @@ function ChatsPageHeader({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-start justify-between', className)}>
       <div>
-        <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--color-foreground)', letterSpacing: '-0.02em' }}>
+        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
           Messages
         </h1>
         <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-foreground-muted)' }}>

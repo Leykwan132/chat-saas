@@ -248,7 +248,7 @@ export function OnboardingFlow() {
             {step === 4 ? (
               <motion.div {...fadeInMotion} className="flex flex-col gap-8">
                 <div className="flex flex-col gap-5">
-                  <h1 className="text-center text-4xl sm:text-5xl font-bold tracking-tight">
+                  <h1 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
                     Choose your plan
                   </h1>
 
@@ -298,7 +298,7 @@ export function OnboardingFlow() {
                 <motion.div key="s1" {...slideStepMotion} className="flex flex-col gap-8">
                   <div className="flex flex-col gap-2">
                     <BlurFade delay={0.05}>
-                      <h1 className="text-3xl font-bold tracking-tight">What's your role?</h1>
+                      <h1 className="text-3xl font-semibold tracking-tight">What's your role?</h1>
                     </BlurFade>
                     <BlurFade delay={0.08}>
                       <p className="text-sm text-muted-foreground">We'll personalise your workspace defaults around this.</p>
@@ -352,7 +352,7 @@ export function OnboardingFlow() {
               {step === 2 && (
                 <motion.div key="s2" {...slideStepMotion} className="flex flex-col gap-8">
                   <div className="flex flex-col gap-2">
-                    <BlurFade delay={0.05}><h1 className="text-3xl font-bold tracking-tight">Use cases?</h1></BlurFade>
+                    <BlurFade delay={0.05}><h1 className="text-3xl font-semibold tracking-tight">Use cases?</h1></BlurFade>
                     <BlurFade delay={0.08}><p className="text-sm text-muted-foreground">Pick all that apply — we'll load the right templates.</p></BlurFade>
                   </div>
 
@@ -402,7 +402,7 @@ export function OnboardingFlow() {
               {step === 3 && (
                 <motion.div key="s3" {...slideStepMotion} className="flex flex-col gap-8">
                   <div className="flex flex-col gap-2">
-                    <BlurFade delay={0.05}><h1 className="text-3xl font-bold tracking-tight">Which channels?</h1></BlurFade>
+                    <BlurFade delay={0.05}><h1 className="text-3xl font-semibold tracking-tight">Which channels?</h1></BlurFade>
                     <BlurFade delay={0.08}><p className="text-sm text-muted-foreground">Pick all that apply — you can always add more later.</p></BlurFade>
                   </div>
 

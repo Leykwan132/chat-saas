@@ -3,7 +3,7 @@ import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from 
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
-import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe } from "./plans";
+import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 
 const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
@@ -44,6 +44,26 @@ async function getOwnedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">)
   }
 
   return agent;
+}
+
+async function listAgentsForContext(
+  ctx: QueryCtx | MutationCtx,
+  userId: string,
+  orgId: string | null,
+) {
+  if (!orgId || orgId === "personal") {
+    return await ctx.db
+      .query("agents")
+      .withIndex("by_userId_and_orgId", (q) =>
+        q.eq("userId", userId).eq("orgId", orgId),
+      )
+      .collect();
+  }
+
+  return await ctx.db
+    .query("agents")
+    .withIndex("by_orgId", (q) => q.eq("orgId", orgId))
+    .collect();
 }
 
 export const list = query({
@@ -88,6 +108,27 @@ export const get = query({
   },
 });
 
+export const canCreate = query({
+  args: {
+    orgId: orgIdValidator,
+  },
+  handler: async (ctx, args) => {
+    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
+    const entityId = !orgId || orgId === "personal" ? userId : orgId;
+    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const plan = stripeInfo.plan;
+    const planConfig = getPlan(plan);
+    const currentAgents = await listAgentsForContext(ctx, userId, orgId);
+
+    return {
+      allowed: checkAgentCreationLimit(plan, currentAgents.length),
+      plan,
+      currentCount: currentAgents.length,
+      maxAgents: planConfig.maxAgents,
+    };
+  },
+});
+
 export const create = mutation({
   args: {
     name: v.string(),
@@ -105,19 +146,7 @@ export const create = mutation({
     const stripeInfo = await getPlanFromStripe(ctx, entityId);
     const plan = stripeInfo.plan;
 
-    const currentAgents = (!orgId || orgId === "personal")
-      ? await ctx.db
-          .query("agents")
-          .withIndex("by_userId_and_orgId", (q) =>
-            q.eq("userId", userId).eq("orgId", orgId),
-          )
-          .collect()
-      : await ctx.db
-          .query("agents")
-          .withIndex("by_orgId", (q) =>
-            q.eq("orgId", orgId),
-          )
-          .collect();
+    const currentAgents = await listAgentsForContext(ctx, userId, orgId);
 
     if (!checkAgentCreationLimit(plan, currentAgents.length)) {
       throw new Error(`Your plan (${plan ?? "free"}) limit exceeded for agents.`);

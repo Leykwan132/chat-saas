@@ -1,13 +1,35 @@
-import { useTheme } from "next-themes"
+import { useEffect, useState } from "react"
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
+import { useTheme } from "@/components/theme-provider"
+
+function useResolvedTheme(): "light" | "dark" {
+  const { theme } = useTheme()
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light",
+  )
+
+  useEffect(() => {
+    if (theme === "system") {
+      const media = window.matchMedia("(prefers-color-scheme: dark)")
+      const updateTheme = () => setResolvedTheme(media.matches ? "dark" : "light")
+      updateTheme()
+      media.addEventListener("change", updateTheme)
+      return () => media.removeEventListener("change", updateTheme)
+    }
+
+    setResolvedTheme(theme)
+  }, [theme])
+
+  return resolvedTheme
+}
 
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
+  const resolvedTheme = useResolvedTheme()
 
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={resolvedTheme}
       className="toaster group"
       icons={{
         success: (
@@ -37,6 +59,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          description: "text-muted-foreground!",
         },
       }}
       {...props}
