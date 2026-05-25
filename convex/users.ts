@@ -4,6 +4,10 @@ import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { getPlan, getPlanFromStripe } from "./plans";
 import { insertCreditLog } from "./creditLogs";
+import {
+  ensureActiveCreditPeriod,
+  scopeFromUser,
+} from "./creditEntries";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -100,6 +104,16 @@ export const completeOnboarding = mutation({
     });
 
     if (user.credits === undefined) {
+      const scope = scopeFromUser(user);
+      const periodKey = `month:${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, "0")}`;
+      const creditPeriod = await ensureActiveCreditPeriod(
+        ctx,
+        scope,
+        periodKey,
+        initialCredits,
+        initialCredits,
+      );
+
       await insertCreditLog(ctx, {
         orgId: "",
         userId: user._id,
@@ -113,6 +127,7 @@ export const completeOnboarding = mutation({
         purchasedCreditsBefore: 0,
         purchasedCreditsAfter: 0,
         creditCost: initialCredits,
+        creditPeriodId: creditPeriod._id,
         reason: `Initial onboarding credit grant for ${planConfig.name} plan`,
       });
     }

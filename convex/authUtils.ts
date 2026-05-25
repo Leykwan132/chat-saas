@@ -47,3 +47,8 @@ export async function getAuthContext(
 }
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
+
+/** Channel rows are keyed by org id; personal workspaces use the user id. */
+export function resolveChannelOrgId(orgId: string, userId: string): string {
+  return !orgId || orgId === "personal" ? userId : orgId;
+}

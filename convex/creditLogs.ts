@@ -48,6 +48,9 @@ export type CreditLogInsert = {
   conversationId?: Id<"conversations">;
   reason?: string;
   stripePaymentIntentId?: string;
+  creditPeriodId?: Id<"creditPeriods">;
+  topUpEntryId?: Id<"topUpEntries">;
+  deductionSource?: "monthly" | "top_up";
 };
 
 function legacyTypeForEvent(eventType: CreditLogEventType) {
@@ -87,6 +90,23 @@ export async function sumTopUpGrants(
   ctx: Pick<QueryCtx, "db">,
   scope: { orgId: string; userId?: Id<"users"> },
 ): Promise<number> {
+  const entries =
+    scope.orgId !== ""
+      ? await ctx.db
+          .query("topUpEntries")
+          .withIndex("by_orgId", (q) => q.eq("orgId", scope.orgId))
+          .collect()
+      : scope.userId
+        ? await ctx.db
+            .query("topUpEntries")
+            .withIndex("by_userId", (q) => q.eq("userId", scope.userId!))
+            .collect()
+        : [];
+
+  if (entries.length > 0) {
+    return entries.reduce((sum, entry) => sum + entry.amount, 0);
+  }
+
   const logs =
     scope.orgId !== ""
       ? await ctx.db
@@ -129,6 +149,9 @@ export async function insertCreditLog(
     conversationId: entry.conversationId,
     reason: entry.reason,
     stripePaymentIntentId: entry.stripePaymentIntentId,
+    creditPeriodId: entry.creditPeriodId,
+    topUpEntryId: entry.topUpEntryId,
+    deductionSource: entry.deductionSource,
     createdAt: Date.now(),
   });
 }

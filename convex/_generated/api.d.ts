@@ -24,6 +24,7 @@ import type * as chat_threads from "../chat/threads.js";
 import type * as cloudflare from "../cloudflare.js";
 import type * as conversations from "../conversations.js";
 import type * as creditBalance from "../creditBalance.js";
+import type * as creditEntries from "../creditEntries.js";
 import type * as creditLogs from "../creditLogs.js";
 import type * as credits from "../credits.js";
 import type * as crons from "../crons.js";
@@ -92,6 +93,7 @@ declare const fullApi: ApiFromModules<{
   cloudflare: typeof cloudflare;
   conversations: typeof conversations;
   creditBalance: typeof creditBalance;
+  creditEntries: typeof creditEntries;
   creditLogs: typeof creditLogs;
   credits: typeof credits;
   crons: typeof crons;

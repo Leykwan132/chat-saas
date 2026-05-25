@@ -387,6 +387,33 @@ export default defineSchema({
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
     .index("by_orgId_userId", ["orgId", "userId"])
     .index("by_agentId", ["agentId"]),
+  // One row per billing month (or Stripe period). `amount` is the grant;
+  // `balance` is what's left in that period before top-ups are touched.
+  creditPeriods: defineTable({
+    orgId: v.string(),
+    userId: v.optional(v.id("users")),
+    periodKey: v.string(),
+    amount: v.number(),
+    balance: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_periodKey", ["orgId", "periodKey"])
+    .index("by_userId_and_periodKey", ["userId", "periodKey"]),
+  // One row per top-up purchase. Usage deducts from entries FIFO by createdAt.
+  topUpEntries: defineTable({
+    orgId: v.string(),
+    userId: v.optional(v.id("users")),
+    amount: v.number(),
+    balance: v.number(),
+    label: v.optional(v.string()),
+    stripePaymentIntentId: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId", ["orgId"])
+    .index("by_userId", ["userId"])
+    .index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
   creditLogs: defineTable({
     orgId: v.string(),
     userId: v.optional(v.id("users")),
@@ -419,6 +446,11 @@ export default defineSchema({
     conversationId: v.optional(v.id("conversations")),
     reason: v.optional(v.string()),
     stripePaymentIntentId: v.optional(v.string()),
+    creditPeriodId: v.optional(v.id("creditPeriods")),
+    topUpEntryId: v.optional(v.id("topUpEntries")),
+    deductionSource: v.optional(
+      v.union(v.literal("monthly"), v.literal("top_up")),
+    ),
     createdAt: v.number(),
   })
     .index("by_orgId", ["orgId"])

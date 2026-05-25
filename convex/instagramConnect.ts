@@ -76,10 +76,8 @@ export const internalCompleteSignup = internalAction({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = args;
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting Instagram.",
-      );
+    if (!orgId) {
+      throw new Error("Missing channel scope for Instagram connect.");
     }
 
     const appId = process.env.META_IG_APP_ID;

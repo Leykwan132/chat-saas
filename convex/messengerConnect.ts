@@ -3,7 +3,7 @@ import { action, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { ActionCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { messengerSyncPool } from "./channelSyncPools";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
@@ -265,11 +265,7 @@ export const completeSignup = action({
       }
   > => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting Messenger.",
-      );
-    }
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
@@ -281,7 +277,7 @@ export const completeSignup = action({
 
     try {
       await ctx.runMutation(internal.channels.internalStartMessengerPending, {
-        orgId,
+        orgId: channelOrgId,
         connectedByUserId: userId,
       });
 
@@ -293,7 +289,7 @@ export const completeSignup = action({
       );
 
       const result = await completeMessengerFromUserAccessToken(ctx, {
-        orgId,
+        orgId: channelOrgId,
         userId,
         userAccessToken: userToken,
         pageId: args.pageId,
@@ -303,7 +299,7 @@ export const completeSignup = action({
         const sessionId = await ctx.runMutation(
           internal.oauthSessions.internalCreateMessengerPickerHold,
           {
-            orgId,
+            orgId: channelOrgId,
             userId,
             userAccessToken: userToken,
             returnPath: args.returnPath,
@@ -320,7 +316,7 @@ export const completeSignup = action({
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.channels.internalRecordError, {
-        orgId,
+        orgId: channelOrgId,
         service: "messenger",
         error: message,
         connectedByUserId: userId,
@@ -354,10 +350,8 @@ export const internalOAuthCallback = internalAction({
       }
   > => {
     const { orgId, userId } = args;
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting Messenger.",
-      );
+    if (!orgId) {
+      throw new Error("Missing channel scope for Messenger connect.");
     }
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;

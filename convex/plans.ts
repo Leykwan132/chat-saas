@@ -23,6 +23,15 @@ import {
   snapshotCreditBalances,
   sumTopUpGrants,
 } from "./creditLogs";
+import {
+  createCreditPeriodReset,
+  ensureCreditEntryState,
+  getCreditPeriodKey,
+  getCreditPeriodSummary,
+  getTopUpSummary,
+  scopeFromOrg,
+  scopeFromUser,
+} from "./creditEntries";
 
 export type { PlanKey, PlanCatalogEntry, PlanFeatureFlags };
 
@@ -125,6 +134,10 @@ async function resolvePurchasedCreditsGranted(
   entity: Doc<"organizations"> | Doc<"users">,
   scope: { orgId: string; userId?: Doc<"users">["_id"] },
 ): Promise<number> {
+  const topUpSummary = await getTopUpSummary(ctx, scope);
+  if (topUpSummary.purchasedCreditsGranted > 0) {
+    return topUpSummary.purchasedCreditsGranted;
+  }
   const remaining = getPurchasedCredits(entity);
   const stored = getPurchasedCreditsGranted(entity);
   const fromLogs = await sumTopUpGrants(ctx, scope);
@@ -194,16 +207,29 @@ async function persistCreditPeriodResetOnEntity(
   }
 
   const isOrg = "workosOrgId" in entity;
+  const scope = isOrg ? scopeFromOrg(entity) : scopeFromUser(entity);
+  const periodKey = getCreditPeriodKey(stripeInfo);
   const before = snapshotCreditBalances(entity);
-  const purchasedBalance = before.purchasedCreditsBefore;
+  const topUpSummary = await getTopUpSummary(ctx, scope);
+
+  const creditPeriod = await createCreditPeriodReset(
+    ctx,
+    scope,
+    periodKey,
+    billing.monthlyAllowance,
+  );
+  const monthlyCreditsAfter = creditPeriod.balance;
+  const purchasedBalance = topUpSummary.purchasedCredits;
+  const balanceAfter = monthlyCreditsAfter + purchasedBalance;
+
   const stripePeriodEnd = hasActiveStripeBilling(stripeInfo.status)
     ? stripeInfo.currentPeriodEnd
     : undefined;
   const monthKey = getCalendarMonthKey();
-  const monthlyCreditsAfter = billing.effectiveCredits - purchasedBalance;
 
   const patch: Record<string, unknown> = {
     credits: monthlyCreditsAfter,
+    purchasedCredits: purchasedBalance,
     updatedAt: Date.now(),
   };
   if (stripePeriodEnd) {
@@ -218,13 +244,14 @@ async function persistCreditPeriodResetOnEntity(
     userId: isOrg ? undefined : entity._id,
     eventType: "monthly_reset",
     label: "Monthly reset",
-    amount: billing.effectiveCredits - before.balanceBefore,
+    amount: balanceAfter - before.balanceBefore,
     balanceBefore: before.balanceBefore,
-    balanceAfter: billing.effectiveCredits,
+    balanceAfter,
     monthlyCreditsBefore: before.monthlyCreditsBefore,
     monthlyCreditsAfter,
-    purchasedCreditsBefore: purchasedBalance,
+    purchasedCreditsBefore: before.purchasedCreditsBefore,
     purchasedCreditsAfter: purchasedBalance,
+    creditPeriodId: creditPeriod._id,
     reason: billing.resetReason,
   });
 
@@ -241,25 +268,49 @@ export async function syncCreditBilling(
   const resolvedStripeInfo = stripeInfo ?? (await getPlanFromStripe(ctx, entityId));
   const billing = resolveCreditBilling(entity, resolvedStripeInfo);
 
-  if (!billing.needsPersistedReset) {
-    return { entity, billing };
-  }
-
   if (isMutationCtx(ctx)) {
-    const updated = await persistCreditPeriodResetOnEntity(ctx, entity, resolvedStripeInfo);
+    const scope =
+      "workosOrgId" in entity ? scopeFromOrg(entity) : scopeFromUser(entity);
+    const periodKey = getCreditPeriodKey(resolvedStripeInfo);
+
+    if (billing.needsPersistedReset) {
+      const updated = await persistCreditPeriodResetOnEntity(
+        ctx,
+        entity,
+        resolvedStripeInfo,
+      );
+      return {
+        entity: updated,
+        billing: resolveCreditBilling(updated, resolvedStripeInfo),
+      };
+    }
+
+    await ensureCreditEntryState(
+      ctx,
+      entity,
+      scope,
+      periodKey,
+      billing.monthlyAllowance,
+    );
+    const updated = await ctx.db.get(entity._id as any);
+    const syncedEntity = (updated ?? entity) as Doc<"organizations"> | Doc<"users">;
     return {
-      entity: updated,
-      billing: resolveCreditBilling(updated, resolvedStripeInfo),
+      entity: syncedEntity,
+      billing: resolveCreditBilling(syncedEntity, resolvedStripeInfo),
     };
   }
 
-  return {
-    entity: {
-      ...entity,
-      credits: billing.effectiveCredits - getPurchasedCredits(entity),
-    } as Doc<"organizations"> | Doc<"users">,
-    billing,
-  };
+  if (billing.needsPersistedReset) {
+    return {
+      entity: {
+        ...entity,
+        credits: billing.effectiveCredits - getPurchasedCredits(entity),
+      } as Doc<"organizations"> | Doc<"users">,
+      billing,
+    };
+  }
+
+  return { entity, billing };
 }
 
 export async function lazyResetCreditsIfNeeded(
@@ -321,21 +372,31 @@ export const getPlanAndUsage = query({
       const stripeInfo = await getPlanFromStripe(ctx, userId);
       const { entity, billing } = await syncCreditBilling(ctx, user, stripeInfo);
       const planConfig = getPlan(stripeInfo.plan);
-      const purchasedCredits = getPurchasedCredits(entity);
-      const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(ctx, entity, {
-        orgId: "",
-        userId: user._id,
-      });
+      const scope = scopeFromUser(entity);
+      const periodKey = getCreditPeriodKey(stripeInfo);
+      const periodSummary = await getCreditPeriodSummary(ctx, scope, periodKey);
+      const topUpSummary = await getTopUpSummary(ctx, scope);
+      const purchasedCredits =
+        topUpSummary.purchasedCredits || getPurchasedCredits(entity);
+      const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(
+        ctx,
+        entity,
+        { orgId: "", userId: user._id },
+      );
+      const monthlyCredits =
+        periodSummary.monthlyCredits || getMonthlyCredits(entity);
+      const monthlyAllowance =
+        periodSummary.monthlyAllowance || billing.monthlyAllowance;
 
       return {
         orgName: "Personal Workspace",
         plan: stripeInfo.plan,
         planConfig,
-        credits: billing.effectiveCredits,
-        monthlyCredits: getMonthlyCredits(entity),
+        credits: monthlyCredits + purchasedCredits,
+        monthlyCredits,
         purchasedCredits,
         purchasedCreditsGranted,
-        monthlyAllowance: billing.monthlyAllowance,
+        monthlyAllowance,
         stripeSubscriptionStatus: stripeInfo.status,
         stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
         memberCount: 1,
@@ -356,20 +417,31 @@ export const getPlanAndUsage = query({
     const stripeInfo = await getPlanFromStripe(ctx, orgId);
     const { entity, billing } = await syncCreditBilling(ctx, org, stripeInfo);
     const planConfig = getPlan(stripeInfo.plan);
-    const purchasedCredits = getPurchasedCredits(entity);
-    const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(ctx, entity, {
-      orgId,
-    });
+    const scope = scopeFromOrg(entity);
+    const periodKey = getCreditPeriodKey(stripeInfo);
+    const periodSummary = await getCreditPeriodSummary(ctx, scope, periodKey);
+    const topUpSummary = await getTopUpSummary(ctx, scope);
+    const purchasedCredits =
+      topUpSummary.purchasedCredits || getPurchasedCredits(entity);
+    const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(
+      ctx,
+      entity,
+      { orgId },
+    );
+    const monthlyCredits =
+      periodSummary.monthlyCredits || getMonthlyCredits(entity);
+    const monthlyAllowance =
+      periodSummary.monthlyAllowance || billing.monthlyAllowance;
 
     return {
       orgName: org.name,
       plan: stripeInfo.plan,
       planConfig,
-      credits: billing.effectiveCredits,
-      monthlyCredits: getMonthlyCredits(entity),
+      credits: monthlyCredits + purchasedCredits,
+      monthlyCredits,
       purchasedCredits,
       purchasedCreditsGranted,
-      monthlyAllowance: billing.monthlyAllowance,
+      monthlyAllowance,
       stripeSubscriptionStatus: stripeInfo.status,
       stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
       memberCount: org.members.length,

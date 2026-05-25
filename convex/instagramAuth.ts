@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import {
   encodeOAuthState,
   generateCsrfToken,
@@ -39,11 +39,7 @@ export const start = action({
   },
   handler: async (ctx, args): Promise<{ authorizeUrl: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting Instagram.",
-      );
-    }
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_IG_APP_ID;
     if (!appId) {
@@ -64,7 +60,7 @@ export const start = action({
     await ctx.runMutation(internal.oauthSessions.internalCreate, {
       csrf,
       service: "instagram",
-      orgId,
+      orgId: channelOrgId,
       userId,
       returnPath,
     });

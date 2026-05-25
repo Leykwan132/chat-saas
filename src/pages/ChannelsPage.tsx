@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from '@workos-inc/authkit-react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import {
-  Building2,
   Check,
   CircleAlert,
   FileText,
@@ -144,12 +142,8 @@ function useMetaChannelCallbackParams() {
 }
 
 export default function ChannelsPage() {
-  const { organizationId } = useAuth();
   const { agentId } = useParams();
-  const channels = useQuery(
-    api.channels.listForCurrentOrg,
-    organizationId ? {} : 'skip',
-  );
+  const channels = useQuery(api.channels.listForCurrentOrg, {});
   useMetaChannelCallbackParams();
 
   const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
@@ -177,22 +171,6 @@ export default function ChannelsPage() {
       return next;
     });
   }, [channels]);
-
-  if (!organizationId) {
-    return (
-      <div className="flex w-full flex-col gap-6">
-        <PageHeader />
-        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border py-20 text-center">
-          <Building2 className="size-8 text-muted-foreground" />
-          <h2 className="text-base font-semibold">No organization selected</h2>
-          <p className="max-w-sm text-sm text-muted-foreground">
-            You need to belong to an organization before you can connect a
-            messaging channel. Create or join one from the Account page.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex w-full flex-col gap-8">
@@ -227,7 +205,7 @@ export default function ChannelsPage() {
         <section className="flex flex-col gap-4">
           <SectionTitle
             title="Connected channels"
-            description="Channels currently linked to your organization."
+            description="Channels currently linked to your workspace."
           />
           <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
             {connectedChannelsList.map((channel) => (

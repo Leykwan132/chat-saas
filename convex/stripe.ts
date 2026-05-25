@@ -14,7 +14,14 @@ import {
   insertCreditLog,
   snapshotCreditBalances,
 } from "./creditLogs";
-import { nextPurchasedCreditGrant } from "./creditBalance";
+import {
+  createTopUpEntry,
+  getCreditPeriodKey,
+  scopeFromOrg,
+  scopeFromUser,
+  syncDenormalizedCreditFields,
+} from "./creditEntries";
+import { getPlanFromStripe } from "./plans";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
@@ -441,15 +448,23 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
         throw new Error("User not found");
       }
 
+      const scope = scopeFromUser(user);
+      const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+      const periodKey = getCreditPeriodKey(stripeInfo);
       const before = snapshotCreditBalances(user);
-      const purchased = nextPurchasedCreditGrant(user, args.creditsToGrant);
-      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
-
-      await ctx.db.patch(user._id, {
-        purchasedCredits: purchased.purchasedCredits,
-        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
-        updatedAt: Date.now(),
+      const topUpEntryId = await createTopUpEntry(ctx, scope, {
+        amount: args.creditsToGrant,
+        label: buildTopUpLabel(args.creditsToGrant),
+        stripePaymentIntentId: args.stripePaymentIntentId,
       });
+      const synced = await syncDenormalizedCreditFields(
+        ctx,
+        user._id,
+        scope,
+        periodKey,
+        user,
+      );
+      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 
       await insertCreditLog(ctx, {
         orgId: "",
@@ -460,11 +475,12 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
         balanceBefore: before.balanceBefore,
         balanceAfter,
         monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: synced.monthlyCredits,
         purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: purchased.purchasedCredits,
+        purchasedCreditsAfter: synced.purchasedCredits,
         creditCost: args.creditsToGrant,
         stripePaymentIntentId: args.stripePaymentIntentId,
+        topUpEntryId,
         reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
       });
     } else {
@@ -476,15 +492,23 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
         throw new Error("Organization not found");
       }
 
+      const scope = scopeFromOrg(org);
+      const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+      const periodKey = getCreditPeriodKey(stripeInfo);
       const before = snapshotCreditBalances(org);
-      const purchased = nextPurchasedCreditGrant(org, args.creditsToGrant);
-      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
-
-      await ctx.db.patch(org._id, {
-        purchasedCredits: purchased.purchasedCredits,
-        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
-        updatedAt: Date.now(),
+      const topUpEntryId = await createTopUpEntry(ctx, scope, {
+        amount: args.creditsToGrant,
+        label: buildTopUpLabel(args.creditsToGrant),
+        stripePaymentIntentId: args.stripePaymentIntentId,
       });
+      const synced = await syncDenormalizedCreditFields(
+        ctx,
+        org._id,
+        scope,
+        periodKey,
+        org,
+      );
+      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 
       await insertCreditLog(ctx, {
         orgId: args.orgId,
@@ -494,11 +518,12 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
         balanceBefore: before.balanceBefore,
         balanceAfter,
         monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: synced.monthlyCredits,
         purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: purchased.purchasedCredits,
+        purchasedCreditsAfter: synced.purchasedCredits,
         creditCost: args.creditsToGrant,
         stripePaymentIntentId: args.stripePaymentIntentId,
+        topUpEntryId,
         reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
       });
     }

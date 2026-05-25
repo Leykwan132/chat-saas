@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
@@ -66,11 +66,7 @@ export const completeSignup = action({
     args,
   ): Promise<{ channelId: Id<"channels">; displayPhoneNumber?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting WhatsApp.",
-      );
-    }
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
@@ -84,7 +80,7 @@ export const completeSignup = action({
       // 0. Seed a `pending` channel row with progressStep="linking" so the
       //    connecting dialog has something to subscribe to immediately.
       await ctx.runMutation(internal.channels.internalStartPending, {
-        orgId,
+        orgId: channelOrgId,
         wabaId: args.wabaId,
         phoneNumberId: args.phoneNumberId,
         connectedByUserId: userId,
@@ -108,7 +104,7 @@ export const completeSignup = action({
         : undefined;
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
-        orgId,
+        orgId: channelOrgId,
         service: "whatsapp",
         progressStep: "subscribing",
       });
@@ -125,7 +121,7 @@ export const completeSignup = action({
       );
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
-        orgId,
+        orgId: channelOrgId,
         service: "whatsapp",
         progressStep: "registering",
       });
@@ -166,7 +162,7 @@ export const completeSignup = action({
       const channelId: Id<"channels"> = await ctx.runMutation(
         internal.channels.internalUpsertWhatsApp,
         {
-          orgId,
+          orgId: channelOrgId,
           wabaId: args.wabaId,
           phoneNumberId: args.phoneNumberId,
           displayPhoneNumber,
@@ -180,7 +176,7 @@ export const completeSignup = action({
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await ctx.runMutation(internal.channels.internalRecordError, {
-        orgId,
+        orgId: channelOrgId,
         service: "whatsapp",
         error: message,
         connectedByUserId: userId,

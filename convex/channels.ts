@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe } from "./plans";
 
@@ -34,11 +34,11 @@ const statusValidator = v.union(
 export const listForCurrentOrg = query({
   args: {},
   handler: async (ctx) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) return [];
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     return await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
       .collect();
   },
 });
@@ -48,11 +48,11 @@ export const listForCurrentOrg = query({
 export const getConnectedForCurrentOrg = query({
   args: {},
   handler: async (ctx) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) return [];
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const rows = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
       .collect();
     return rows.filter((r) => r.status === "connected");
   },
@@ -63,9 +63,10 @@ export const getConnectedForCurrentOrg = query({
 export const disconnect = mutation({
   args: { channelId: v.id("channels") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const channel = await ctx.db.get(args.channelId);
-    if (channel === null || channel.orgId !== orgId) {
+    if (channel === null || channel.orgId !== channelOrgId) {
       throw new Error("Channel not found");
     }
     await cleanupChannelData(ctx, args.channelId);
@@ -85,14 +86,12 @@ export const disconnect = mutation({
 export const enqueueSyncConversations = action({
   args: { channelId: v.id("channels") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId) {
-      throw new Error("Organization required");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const channel = await ctx.runQuery(internal.channels.internalGetChannel, {
       channelId: args.channelId,
     });
-    if (channel === null || channel.orgId !== orgId) {
+    if (channel === null || channel.orgId !== channelOrgId) {
       throw new Error("Channel not found");
     }
     if (channel.status !== "connected") {

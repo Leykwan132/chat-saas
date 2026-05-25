@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import {
   encodeOAuthState,
   generateCsrfToken,
@@ -31,11 +31,7 @@ export const start = action({
   },
   handler: async (ctx, args): Promise<{ authorizeUrl: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      throw new Error(
-        "You must belong to an organization before connecting Messenger.",
-      );
-    }
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
 
     const appId = process.env.META_APP_ID;
     if (!appId) {
@@ -51,7 +47,7 @@ export const start = action({
     await ctx.runMutation(internal.oauthSessions.internalCreate, {
       csrf,
       service: "messenger",
-      orgId,
+      orgId: channelOrgId,
       userId,
       returnPath,
     });
@@ -78,13 +74,14 @@ export const getPickerPages = action({
     args,
   ): Promise<{ pages: Array<{ id: string; name?: string }> }> => {
     const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const session = await ctx.runQuery(internal.oauthSessions.internalGetById, {
       sessionId: args.sessionId,
     });
     if (
       session === null ||
       session.service !== "messenger" ||
-      session.orgId !== orgId ||
+      session.orgId !== channelOrgId ||
       session.userId !== userId ||
       session.consumed ||
       session.expiresAt < Date.now() ||
@@ -107,13 +104,14 @@ export const finalizePick = action({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
     const session = await ctx.runQuery(internal.oauthSessions.internalGetById, {
       sessionId: args.sessionId,
     });
     if (
       session === null ||
       session.service !== "messenger" ||
-      session.orgId !== orgId ||
+      session.orgId !== channelOrgId ||
       session.userId !== userId ||
       session.consumed ||
       session.expiresAt < Date.now() ||
@@ -125,7 +123,7 @@ export const finalizePick = action({
     const result = await ctx.runAction(
       internal.messengerConnect.internalFinalizeMessengerPagePick,
       {
-        orgId,
+        orgId: channelOrgId,
         userId,
         pageId: args.pageId,
         userAccessToken: session.pendingUserAccessToken,

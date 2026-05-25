@@ -4,15 +4,16 @@ import {
   mutation,
   internalQuery,
   internalMutation,
+  type MutationCtx,
 } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import { getModelPricing } from "./llm/modelPricing";
-import { lazyResetCreditsIfNeeded, getPlanFromStripe, syncCreditBilling } from "./plans";
 import {
-  applyCreditDeduction,
-  getTotalCreditBalance,
-  nextPurchasedCreditGrant,
-} from "./creditBalance";
+  lazyResetCreditsIfNeeded,
+  getPlanFromStripe,
+  syncCreditBilling,
+} from "./plans";
+import { getTotalCreditBalance } from "./creditBalance";
 import {
   buildTopUpLabel,
   buildUsageLabel,
@@ -21,6 +22,15 @@ import {
   insertCreditLog,
   snapshotCreditBalances,
 } from "./creditLogs";
+import {
+  createTopUpEntry,
+  deductFromCreditEntries,
+  getCreditPeriodKey,
+  scopeFromOrg,
+  scopeFromUser,
+  syncDenormalizedCreditFields,
+  type CreditScope,
+} from "./creditEntries";
 import type { Doc, Id } from "./_generated/dataModel";
 
 export function getDefaultUserCredits(): number {
@@ -34,6 +44,73 @@ export function getDefaultUserCredits(): number {
 export function isPlaygroundCreditsEnabled(): boolean {
   const raw = process.env.PLAYGROUND_DEDUCT_CREDITS?.trim().toLowerCase();
   return raw === "true" || raw === "1" || raw === "yes";
+}
+
+async function applyUsageDeduction(
+  ctx: MutationCtx,
+  args: {
+    entity: Doc<"users"> | Doc<"organizations">;
+    scope: CreditScope;
+    stripeEntityId: string;
+    creditsCharged: number;
+    before: ReturnType<typeof snapshotCreditBalances>;
+    log: {
+      orgId: string;
+      userId?: Id<"users">;
+      modelId: string;
+      agentId?: Id<"agents">;
+      agentName?: string;
+      conversationId?: Id<"conversations">;
+      reason?: string;
+    };
+  },
+): Promise<number> {
+  const stripeInfo = await getPlanFromStripe(ctx, args.stripeEntityId);
+  const periodKey = getCreditPeriodKey(stripeInfo);
+  const deduction = await deductFromCreditEntries(
+    ctx,
+    args.scope,
+    periodKey,
+    args.creditsCharged,
+  );
+  const synced = await syncDenormalizedCreditFields(
+    ctx,
+    args.entity._id,
+    args.scope,
+    periodKey,
+    args.entity,
+  );
+  const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
+
+  await insertCreditLog(ctx, {
+    orgId: args.log.orgId,
+    userId: args.log.userId,
+    eventType: "usage",
+    label: buildUsageLabel(args.log.agentName),
+    amount: -args.creditsCharged,
+    balanceBefore: args.before.balanceBefore,
+    balanceAfter,
+    monthlyCreditsBefore: args.before.monthlyCreditsBefore,
+    monthlyCreditsAfter: synced.monthlyCredits,
+    purchasedCreditsBefore: args.before.purchasedCreditsBefore,
+    purchasedCreditsAfter: synced.purchasedCredits,
+    creditCost: args.creditsCharged,
+    modelId: args.log.modelId,
+    agentId: args.log.agentId,
+    agentName: args.log.agentName,
+    conversationId: args.log.conversationId,
+    reason: args.log.reason,
+    creditPeriodId: deduction.creditPeriodId,
+    topUpEntryId: deduction.topUpAllocations[0]?.topUpEntryId,
+    deductionSource:
+      deduction.monthlyDeducted > 0
+        ? "monthly"
+        : deduction.topUpDeducted > 0
+          ? "top_up"
+          : undefined,
+  });
+
+  return balanceAfter;
 }
 
 export const isPlaygroundDeductEnabled = query({
@@ -192,35 +269,22 @@ export const internalDeductCredits = internalMutation({
         if (before.balanceBefore < pricing.creditCost) {
           throw new Error("Insufficient credits");
         }
-        const updatedBalances = applyCreditDeduction(user, pricing.creditCost);
-        balanceAfter = updatedBalances.totalAfter;
-        await ctx.db.patch(user._id, {
-          credits: updatedBalances.credits,
-          purchasedCredits: updatedBalances.purchasedCredits,
-          updatedAt: Date.now(),
-        });
-
-        if (creditsCharged > 0) {
-          await insertCreditLog(ctx, {
+        balanceAfter = await applyUsageDeduction(ctx, {
+          entity: user,
+          scope: scopeFromUser(user),
+          stripeEntityId: user.workosUserId,
+          creditsCharged,
+          before,
+          log: {
             orgId: "",
             userId: user._id,
-            eventType: "usage",
-            label: buildUsageLabel(agentName),
-            amount: -creditsCharged,
-            balanceBefore: before.balanceBefore,
-            balanceAfter,
-            monthlyCreditsBefore: before.monthlyCreditsBefore,
-            monthlyCreditsAfter: updatedBalances.credits,
-            purchasedCreditsBefore: before.purchasedCreditsBefore,
-            purchasedCreditsAfter: updatedBalances.purchasedCredits,
-            creditCost: creditsCharged,
             modelId: args.modelId,
             agentId,
             agentName,
             conversationId: args.conversationId,
             reason: args.reason ?? `AI reply using ${args.modelId}`,
-          });
-        }
+          },
+        });
       }
 
       return {
@@ -258,35 +322,22 @@ export const internalDeductCredits = internalMutation({
       if (before.balanceBefore < pricing.creditCost) {
         throw new Error("Insufficient credits");
       }
-      const updatedBalances = applyCreditDeduction(org, pricing.creditCost);
-      balanceAfter = updatedBalances.totalAfter;
-      await ctx.db.patch(org._id, {
-        credits: updatedBalances.credits,
-        purchasedCredits: updatedBalances.purchasedCredits,
-        updatedAt: Date.now(),
-      });
-
-      if (creditsCharged > 0) {
-        await insertCreditLog(ctx, {
+      balanceAfter = await applyUsageDeduction(ctx, {
+        entity: org,
+        scope: scopeFromOrg(org),
+        stripeEntityId: org.workosOrgId,
+        creditsCharged,
+        before,
+        log: {
           orgId: org.workosOrgId,
           userId: userDbId,
-          eventType: "usage",
-          label: buildUsageLabel(agentName),
-          amount: -creditsCharged,
-          balanceBefore: before.balanceBefore,
-          balanceAfter,
-          monthlyCreditsBefore: before.monthlyCreditsBefore,
-          monthlyCreditsAfter: updatedBalances.credits,
-          purchasedCreditsBefore: before.purchasedCreditsBefore,
-          purchasedCreditsAfter: updatedBalances.purchasedCredits,
-          creditCost: creditsCharged,
           modelId: args.modelId,
           agentId,
           agentName,
           conversationId: args.conversationId,
           reason: args.reason ?? `AI reply using ${args.modelId}`,
-        });
-      }
+        },
+      });
     }
 
     return {
@@ -313,14 +364,22 @@ export const topUp = mutation({
     }
 
     if (!orgId || orgId === "personal") {
+      const scope = scopeFromUser(userObj);
+      const stripeInfo = await getPlanFromStripe(ctx, userId);
+      const periodKey = getCreditPeriodKey(stripeInfo);
       const before = snapshotCreditBalances(userObj);
-      const purchased = nextPurchasedCreditGrant(userObj, 500);
-      const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
-      await ctx.db.patch(userObj._id, {
-        purchasedCredits: purchased.purchasedCredits,
-        purchasedCreditsGranted: purchased.purchasedCreditsGranted,
-        updatedAt: Date.now(),
+      const topUpEntryId = await createTopUpEntry(ctx, scope, {
+        amount: 500,
+        label: buildTopUpLabel(500),
       });
+      const synced = await syncDenormalizedCreditFields(
+        ctx,
+        userObj._id,
+        scope,
+        periodKey,
+        userObj,
+      );
+      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 
       await insertCreditLog(ctx, {
         orgId: "",
@@ -331,10 +390,11 @@ export const topUp = mutation({
         balanceBefore: before.balanceBefore,
         balanceAfter,
         monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: before.monthlyCreditsBefore,
+        monthlyCreditsAfter: synced.monthlyCredits,
         purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: purchased.purchasedCredits,
+        purchasedCreditsAfter: synced.purchasedCredits,
         creditCost: 500,
+        topUpEntryId,
         reason: "User topped up credits (manual/test)",
       });
 
@@ -349,14 +409,22 @@ export const topUp = mutation({
       throw new Error("Organization not found");
     }
 
+    const scope = scopeFromOrg(org);
+    const stripeInfo = await getPlanFromStripe(ctx, orgId);
+    const periodKey = getCreditPeriodKey(stripeInfo);
     const before = snapshotCreditBalances(org);
-    const purchased = nextPurchasedCreditGrant(org, 500);
-    const balanceAfter = before.monthlyCreditsBefore + purchased.purchasedCredits;
-    await ctx.db.patch(org._id, {
-      purchasedCredits: purchased.purchasedCredits,
-      purchasedCreditsGranted: purchased.purchasedCreditsGranted,
-      updatedAt: Date.now(),
+    const topUpEntryId = await createTopUpEntry(ctx, scope, {
+      amount: 500,
+      label: buildTopUpLabel(500),
     });
+    const synced = await syncDenormalizedCreditFields(
+      ctx,
+      org._id,
+      scope,
+      periodKey,
+      org,
+    );
+    const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 
     await insertCreditLog(ctx, {
       orgId: org.workosOrgId,
@@ -367,10 +435,11 @@ export const topUp = mutation({
       balanceBefore: before.balanceBefore,
       balanceAfter,
       monthlyCreditsBefore: before.monthlyCreditsBefore,
-      monthlyCreditsAfter: before.monthlyCreditsBefore,
+      monthlyCreditsAfter: synced.monthlyCredits,
       purchasedCreditsBefore: before.purchasedCreditsBefore,
-      purchasedCreditsAfter: purchased.purchasedCredits,
+      purchasedCreditsAfter: synced.purchasedCredits,
       creditCost: 500,
+      topUpEntryId,
       reason: "Organization topped up credits (manual/test)",
     });
 
