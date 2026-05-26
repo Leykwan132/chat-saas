@@ -25,6 +25,7 @@ import {
   normalizeUploaderFiles,
   StatusBadge,
   isInProgress,
+  KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
 
@@ -33,9 +34,10 @@ interface FileSectionProps {
   agentId: Id<'agents'> | undefined;
   openDeleteDialog: OpenDeleteDialog;
   maxFileSize: number;
+  canManage?: boolean;
 }
 
-export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }: FileSectionProps) {
+export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, canManage = true }: FileSectionProps) {
   const enqueueFileUpload = useAction(api.cloudflare.enqueueFileUpload);
 
   const [, setIsSavingFile] = useState(false);
@@ -56,10 +58,15 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
   const visibleEntries = (entries ?? []).filter(e => e.status !== "deleting");
   const inProgressEntries = visibleEntries.filter(e => isInProgress(e.status));
   const completedEntries = visibleEntries.filter(e => !isInProgress(e.status));
+  const hasEntries = (entries ?? []).length > 0;
+
+  if (!canManage && !hasEntries) {
+    return <KnowledgeBaseEmptyState />;
+  }
 
   return (
     <>
-      {/* ── Add Files ── */}
+      {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Files</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -85,14 +92,14 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
           </FileUploader>
         </div>
       </div>
+      ) : null}
 
-      {/* ── Your Files ── */}
-      {(entries ?? []).length > 0 && (
+      {hasEntries && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Your files</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your files' : 'Sources'}</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => setEditingFileEntry(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => setEditingFileEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <Spinner className="size-4 shrink-0 text-yellow-500" />
                   <span className="text-sm truncate">{entry.fileName}</span>
@@ -100,12 +107,14 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {entry.fileSize > 0 && <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>}
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('file', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
             {completedEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => setEditingFileEntry(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => setEditingFileEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"><Check className="size-2.5 text-white" /></div>
                   <span className="text-sm truncate">{entry.fileName}</span>
@@ -113,7 +122,9 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('file', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -121,7 +132,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
         </div>
       )}
 
-      {/* ── Edit File Sheet ── */}
+      {canManage && editingFileEntry !== null ? (
       <Sheet open={editingFileEntry !== null} onOpenChange={(open) => { if (!open) setEditingFileEntry(null); }}>
         <SheetContent>
           <SheetHeader>
@@ -144,6 +155,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize }:
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      ) : null}
     </>
   );
 }

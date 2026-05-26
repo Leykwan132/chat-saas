@@ -52,6 +52,7 @@ export default function PricingPage() {
           interval: billingInterval,
           mode: 'subscription',
           orgId: 'personal',
+          cancelPath: '/pricing',
         });
         if (session?.url) {
           window.location.href = session.url;

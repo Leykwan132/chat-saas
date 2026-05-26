@@ -34,6 +34,7 @@ import {
   formatTimeAgo,
   StatusBadge,
   isValidUrl,
+  KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
 
@@ -41,9 +42,10 @@ interface WebSectionProps {
   entries: any[] | undefined;
   agentId: Id<'agents'> | undefined;
   openDeleteDialog: OpenDeleteDialog;
+  canManage?: boolean;
 }
 
-export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionProps) {
+export function WebSection({ entries, agentId, openDeleteDialog, canManage = true }: WebSectionProps) {
   const enqueueLinkDiscovery = useAction(api.cloudflare.enqueueLinkDiscovery);
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
 
@@ -100,9 +102,15 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
       .map(([id, group]) => [id, group.parent.url as string, [group.parent, ...group.children]] as const);
   }, [entries]);
 
+  const hasEntries = (entries ?? []).length > 0;
+
+  if (!canManage && !hasEntries) {
+    return <KnowledgeBaseEmptyState />;
+  }
+
   return (
     <>
-      {/* ── Add Web ── */}
+      {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Web</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -137,11 +145,11 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
           </div>
         </div>
       </div>
+      ) : null}
 
-      {/* ── Your Web ── */}
-      {(entries ?? []).length > 0 && (
+      {hasEntries && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Your web</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your web' : 'Sources'}</h2>
           <div className="space-y-2">
             {groupedWeb.map(([id, parentUrl, groupEntries]) => {
               const parent = groupEntries.find((e: any) => !e.parentUrl || e.url === parentUrl);
@@ -163,9 +171,11 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Shimmer duration={2} spread={1}>Exploring...</Shimmer>
+                      {canManage ? (
                       <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('web', parent._id, parent.cfItemId, true); }} className="rounded p-1 text-destructive hover:bg-background transition-colors">
                         <Trash2 className="size-3.5" />
                       </button>
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -197,9 +207,11 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
                         ) : null}
                       </div>
                     </CollapsibleTrigger>
+                    {canManage ? (
                     <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('web', parent._id, parent.cfItemId, true); }} className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-destructive hover:bg-background transition-colors">
                       <Trash2 className="size-3.5" />
                     </button>
+                    ) : null}
                   </div>
                   <CollapsibleContent>
                     <div className="border-t border-border px-4 py-3">
@@ -207,7 +219,7 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
                         {childLinks.map((entry: any) => {
                           const isGettingMarkdown = entry.status === "gettingMarkdown";
                           return (
-                            <div key={entry._id} onClick={() => setEditingWebEntry(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 cursor-pointer hover:bg-muted/80 transition-colors">
+                            <div key={entry._id} onClick={canManage ? () => setEditingWebEntry(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-2.5 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                               <div className="flex items-center gap-2 min-w-0">
                                 {entry.status === "completed" ? (
                                   <div className="flex size-2 shrink-0 rounded-full bg-emerald-500" />
@@ -219,7 +231,9 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
                                 {!isGettingMarkdown && entry.fileSize > 0 && <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>}
+                                {canManage ? (
                                 <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('web', entry._id, entry.cfItemId); }} className="rounded p-1 text-destructive hover:bg-background transition-colors"><Trash2 className="size-3.5" /></button>
+                                ) : null}
                               </div>
                             </div>
                           );
@@ -234,7 +248,7 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
         </div>
       )}
 
-      {/* ── Edit Web Sheet ── */}
+      {canManage && editingWebEntry !== null ? (
       <Sheet open={editingWebEntry !== null} onOpenChange={(open) => { if (!open) setEditingWebEntry(null); }}>
         <SheetContent>
           <SheetHeader>
@@ -257,6 +271,7 @@ export function WebSection({ entries, agentId, openDeleteDialog }: WebSectionPro
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      ) : null}
     </>
   );
 }

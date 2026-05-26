@@ -41,13 +41,12 @@ import { Coins, ExternalLink, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function PlanTab() {
-  const { organizationId, isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isAuthLoading } = useAuth();
   const { pathname } = useLocation();
   const planReturnPath = `${pathname}?section=plan`;
-  const billingOrgId = organizationId ?? null;
   const planAndUsage = useQuery(
     api.plans.getPlanAndUsage,
-    isAuthLoading ? 'skip' : { orgId: billingOrgId },
+    isAuthLoading ? 'skip' : {},
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
@@ -72,7 +71,7 @@ export function PlanTab() {
   if (isAuthLoading || planAndUsage === undefined) {
     return (
       <div className="space-y-6 max-w-xl">
-        <Skeleton className="h-36 w-full rounded-xl" />
+        <Skeleton className="h-36 w-full max-w-md rounded-xl" />
         <Skeleton className="h-28 w-full rounded-xl" />
       </div>
     );
@@ -113,7 +112,7 @@ export function PlanTab() {
         plan: isCredits ? undefined : (planKey ?? undefined),
         interval: isCredits ? undefined : billingInterval,
         mode,
-        orgId: billingOrgId,
+        cancelPath: planReturnPath,
       });
       if (session && session.url) {
         window.location.href = session.url;
@@ -136,7 +135,6 @@ export function PlanTab() {
     setIsPortalLoading(true);
     try {
       const session = await createPortal({
-        orgId: billingOrgId,
         returnPath: planReturnPath,
       });
       if (session && session.url) {
@@ -155,7 +153,7 @@ export function PlanTab() {
   return (
     <div className="space-y-8 max-w-xl">
       {/* Current plan */}
-      <div className="rounded-xl border border-border bg-card p-5">
+      <div className="rounded-xl border border-border bg-card p-5 max-w-md">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <h3 className="text-xl font-semibold tracking-tight text-foreground">
             {planConfig.name}
@@ -181,7 +179,6 @@ export function PlanTab() {
 
         <Button
           type="button"
-          variant="outline"
           size="sm"
           className="mt-5"
           onClick={() => setPlansDialogOpen(true)}

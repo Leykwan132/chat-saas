@@ -26,6 +26,27 @@ import { openRouterModel } from "../llm/openRouter";
 import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
 import { updateThreadMetadata } from "@convex-dev/agent";
 import { checkAiFeature, getPlanFromStripe } from "../plans";
+import type { Doc } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
+
+async function getConversationBillingUserId(
+  ctx: Pick<MutationCtx, "db">,
+  conv: Doc<"conversations">,
+): Promise<string | null> {
+  if (conv.assignedAgentId) {
+    const agent = await ctx.db.get(conv.assignedAgentId);
+    if (agent) {
+      return agent.userId;
+    }
+  }
+  if (conv.channelId) {
+    const channel = await ctx.db.get(conv.channelId);
+    if (channel) {
+      return channel.connectedByUserId;
+    }
+  }
+  return null;
+}
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -37,14 +58,17 @@ export const internalIngestChannelMessage = internalMutation({
 
     const conv = await ctx.db.get(result.conversationId);
     if (conv) {
-      const stripeInfo = await getPlanFromStripe(ctx, conv.orgId);
-      if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
-        if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
-          await threadSummarizerPool.enqueueAction(
-            ctx,
-            internal.chat.inbox.summarizeThreadWorker,
-            { conversationId: result.conversationId },
-          );
+      const billingUserId = await getConversationBillingUserId(ctx, conv);
+      if (billingUserId) {
+        const stripeInfo = await getPlanFromStripe(ctx, billingUserId);
+        if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
+          if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
+            await threadSummarizerPool.enqueueAction(
+              ctx,
+              internal.chat.inbox.summarizeThreadWorker,
+              { conversationId: result.conversationId },
+            );
+          }
         }
       }
     }
@@ -186,7 +210,7 @@ export const internalPersistHumanReply = internalMutation({
       updatedAt: now,
     });
 
-    const stripeInfo = await getPlanFromStripe(ctx, conv.orgId);
+    const stripeInfo = await getPlanFromStripe(ctx, args.authorUserId);
     if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
       await threadSummarizerPool.enqueueAction(
         ctx,
@@ -340,32 +364,32 @@ export const generateAiReplyWorker = internalAction({
       return;
     }
 
-    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
-      entityId: conv.orgId,
-    });
-
-    if (!checkAiFeature(stripeInfo.plan, "auto_reply")) {
-      console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
-        orgId: conv.orgId,
-        plan: stripeInfo.plan,
-      });
-      return;
-    }
-
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
     });
     if (!agent) return;
 
+    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
+      entityId: agent.userId,
+    });
+
+    if (!checkAiFeature(stripeInfo.plan, "auto_reply")) {
+      console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
+        billingUserId: agent.userId,
+        plan: stripeInfo.plan,
+      });
+      return;
+    }
+
     const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
-      orgId: conv.orgId,
+      workosUserId: agent.userId,
       modelId: agent.model,
     });
     if (!creditCheck.ok) {
       console.error("AI reply skipped: insufficient credits or unavailable model", {
         conversationId: args.conversationId,
         reason: creditCheck.reason,
-        orgId: conv.orgId,
+        billingUserId: agent.userId,
       });
       return;
     }
@@ -404,9 +428,8 @@ export const generateAiReplyWorker = internalAction({
     let usage: { llmModel: string; creditsCharged: number };
     try {
       usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
-        orgId: conv.orgId,
-        modelId: agent.model,
         workosUserId: agent.userId,
+        modelId: agent.model,
         conversationId: conv._id,
         agentId: conv.assignedAgentId,
         reason: `AI reply in ${conv.service} conversation`,

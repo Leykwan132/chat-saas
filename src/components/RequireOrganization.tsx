@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Navigate } from 'react-router';
@@ -15,8 +15,23 @@ type RequireOrganizationProps = {
 // (role, usecase, plan), we redirect to /onboarding. Once they onboard, they
 // are permitted to access their personal workspace or active organization workspace.
 export function RequireOrganization({ children }: RequireOrganizationProps) {
-  const { isLoading: isAuthLoading } = useAuth();
+  const { isLoading: isAuthLoading, user: authUser } = useAuth();
   const currentUser = useQuery(api.users.currentUser);
+  const ensureCurrentUser = useMutation(api.users.ensureCurrentUser);
+  const provisioningRef = useRef(false);
+
+  useEffect(() => {
+    if (isAuthLoading || authUser === null || currentUser !== null) {
+      return;
+    }
+    if (provisioningRef.current) {
+      return;
+    }
+    provisioningRef.current = true;
+    void ensureCurrentUser({}).finally(() => {
+      provisioningRef.current = false;
+    });
+  }, [authUser, currentUser, ensureCurrentUser, isAuthLoading]);
 
   const isLoading = isAuthLoading || currentUser === undefined;
 
@@ -49,4 +64,3 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
 
   return <>{children}</>;
 }
-

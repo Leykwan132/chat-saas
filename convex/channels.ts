@@ -202,7 +202,7 @@ export const internalStartPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
-    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
     if (!checkPlatformSupport(stripeInfo.plan, "whatsapp")) {
       throw new Error(`WhatsApp is not supported on the ${stripeInfo.plan} plan.`);
     }
@@ -319,7 +319,7 @@ export const internalStartInstagramPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
-    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
     if (!checkPlatformSupport(stripeInfo.plan, "instagram")) {
       throw new Error(`Instagram is not supported on the ${stripeInfo.plan} plan.`);
     }
@@ -450,7 +450,7 @@ export const internalStartMessengerPending = internalMutation({
     connectedByUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
-    const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
+    const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
     if (!checkPlatformSupport(stripeInfo.plan, "messenger")) {
       throw new Error(`Messenger is not supported on the ${stripeInfo.plan} plan.`);
     }

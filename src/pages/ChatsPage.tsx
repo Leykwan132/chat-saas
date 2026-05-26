@@ -10,6 +10,7 @@ import {
   Contact,
   FileText,
   History,
+  Lock,
   MessageSquare,
   Moon,
   Pin,
@@ -49,6 +50,8 @@ import { Shimmer } from '@/components/ai-elements/shimmer';
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import type { PromptInputMessage } from '@/components/ai-elements/prompt-input';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Permission } from '../../shared/permissions';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -144,6 +147,7 @@ function DetailsPanelSkeleton() {
 
 export default function ChatsPage() {
   const { agentId } = useParams();
+  const { can, isLoading } = usePermissions();
   const connectedChannels = useQuery(api.channels.getConnectedForCurrentOrg, {});
   const linkedConversations = useQuery(
     api.conversations.listLinkedForCurrentOrg,
@@ -507,6 +511,38 @@ export default function ChatsPage() {
 
   const conversationsStillLoading = linkedConversations === undefined;
 
+  if (isLoading || connectedChannels === undefined) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <ChatsPageHeader />
+        <div className="flex items-center justify-center py-20">
+          <Spinner className="size-6 text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!can(Permission.CHATS_READ)) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+        <ChatsPageHeader />
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
+          <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
+            <Lock className="size-6 text-muted-foreground" />
+          </div>
+          <div className="flex max-w-sm flex-col gap-1">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Access Denied
+            </h2>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              You do not have permission to view conversations in this workspace.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (connectedChannels === undefined) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -767,15 +803,17 @@ export default function ChatsPage() {
               <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4">
                 <InboxReplyInput
                   busy={sendBusy}
-                  disabled={threadDataLoading || !canReplyFromInbox}
+                  disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
                   onChange={setDraftReply}
                   onSubmit={(message) => void handleSendReply(message)}
                   placeholder={
                     threadDataLoading
                       ? 'Loading conversation…'
-                      : canReplyFromInbox
-                        ? `Reply to ${displayHeaderName ?? 'customer'}…`
-                        : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
+                      : !can(Permission.CHATS_REPLY)
+                        ? 'You do not have permission to reply to chats'
+                        : canReplyFromInbox
+                          ? `Reply to ${displayHeaderName ?? 'customer'}…`
+                          : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
                   }
                   value={draftReply}
                 />
@@ -810,67 +848,92 @@ export default function ChatsPage() {
                         <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="text-sm font-semibold text-foreground">Assignee</span>
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            disabled={assigneeSaving}
-                            className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
-                            aria-label="Who responds in this conversation"
-                          >
-                            <span className="flex min-w-0 flex-1 items-center gap-2">
-                              {selectedConversation.assignToAiAgent ? (
-                                <>
-                                  <Bot className="size-4 shrink-0 text-muted-foreground" />
-                                  <span className="truncate text-foreground">AI Agent</span>
-                                </>
-                              ) : (
-                                <>
-                                  <User className="size-4 shrink-0 text-muted-foreground" />
-                                  <span className="truncate text-foreground">
-                                    {assignedMemberLabel ?? 'Teammate'}
-                                  </span>
-                                </>
-                              )}
-                            </span>
-                            <ChevronDown className="size-4 shrink-0 opacity-60" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
-                          <DropdownMenuGroup>
-                            <DropdownMenuItem
-                              className="cursor-pointer gap-2"
-                              onSelect={() => void handleAssignConversation({ kind: 'ai' })}
+                      {can(Permission.CHATS_ASSIGN) ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled={assigneeSaving}
+                              className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
+                              aria-label="Who responds in this conversation"
                             >
-                              <Bot className="size-4 shrink-0" />
-                              AI Agent
-                            </DropdownMenuItem>
-                          </DropdownMenuGroup>
-                          {teamUsers !== undefined && teamUsers.length > 0 ? (
-                            <>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuGroup>
-                                {teamUsers.map((u) => (
-                                  <DropdownMenuItem
-                                    key={u._id}
-                                    className="cursor-pointer gap-2"
-                                    onSelect={() =>
-                                      void handleAssignConversation({
-                                        kind: 'user',
-                                        workosUserId: u.workosUserId,
-                                      })
-                                    }
-                                  >
+                              <span className="flex min-w-0 flex-1 items-center gap-2">
+                                {selectedConversation.assignToAiAgent ? (
+                                  <>
+                                    <Bot className="size-4 shrink-0 text-muted-foreground" />
+                                    <span className="truncate text-foreground">AI Agent</span>
+                                  </>
+                                ) : (
+                                  <>
                                     <User className="size-4 shrink-0 text-muted-foreground" />
-                                    {formatOrgMemberDisplayName(u)}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuGroup>
-                            </>
-                          ) : null}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                                    <span className="truncate text-foreground">
+                                      {assignedMemberLabel ?? 'Teammate'}
+                                    </span>
+                                  </>
+                                )}
+                              </span>
+                              <ChevronDown className="size-4 shrink-0 opacity-60" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
+                            <DropdownMenuGroup>
+                              <DropdownMenuItem
+                                className="cursor-pointer gap-2"
+                                onSelect={() => void handleAssignConversation({ kind: 'ai' })}
+                              >
+                                <Bot className="size-4 shrink-0" />
+                                AI Agent
+                              </DropdownMenuItem>
+                            </DropdownMenuGroup>
+                            {teamUsers !== undefined && teamUsers.length > 0 ? (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuGroup>
+                                  {teamUsers.map((u) => (
+                                    <DropdownMenuItem
+                                      key={u._id}
+                                      className="cursor-pointer gap-2"
+                                      onSelect={() =>
+                                        void handleAssignConversation({
+                                          kind: 'user',
+                                          workosUserId: u.workosUserId,
+                                        })
+                                      }
+                                    >
+                                      <User className="size-4 shrink-0 text-muted-foreground" />
+                                      {formatOrgMemberDisplayName(u)}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuGroup>
+                              </>
+                            ) : null}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled
+                          className="h-auto min-h-10 w-full cursor-default justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none disabled:opacity-100"
+                        >
+                          <span className="flex min-w-0 flex-1 items-center gap-2">
+                            {selectedConversation.assignToAiAgent ? (
+                              <>
+                                <Bot className="size-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate text-foreground">AI Agent</span>
+                              </>
+                            ) : (
+                              <>
+                                <User className="size-4 shrink-0 text-muted-foreground" />
+                                <span className="truncate text-foreground">
+                                  {assignedMemberLabel ?? 'Teammate'}
+                                </span>
+                              </>
+                            )}
+                          </span>
+                        </Button>
+                      )}
                     </div>
 
                     <Separator />
@@ -956,7 +1019,7 @@ export default function ChatsPage() {
                                     <button
                                       type="button"
                                       className="shrink-0 select-none px-1 text-base leading-none text-muted-foreground hover:text-foreground disabled:opacity-40"
-                                      disabled={tagMutationBusy}
+                                      disabled={tagMutationBusy || !can(Permission.CHATS_TAG)}
                                       aria-label={`Remove tag ${tag}`}
                                       onClick={() => void handleRemoveConversationTag(tag)}
                                     >
@@ -971,31 +1034,33 @@ export default function ChatsPage() {
                               No tags yet.
                             </p>
                           )}
-                          <div className="mt-3 flex gap-2">
-                            <Input
-                              value={tagDraft}
-                              onChange={(e) => setTagDraft(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  void handleAddConversationTag();
-                                }
-                              }}
-                              placeholder="Add tags (comma-separated)…"
-                              disabled={tagMutationBusy}
-                              className="h-9 flex-1 font-mono text-xs"
-                            />
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              className="h-9 shrink-0 px-3 text-xs"
-                              disabled={tagMutationBusy || !tagDraft.trim()}
-                              onClick={() => void handleAddConversationTag()}
-                            >
-                              Add
-                            </Button>
-                          </div>
+                          {can(Permission.CHATS_TAG) && (
+                            <div className="mt-3 flex gap-2">
+                              <Input
+                                value={tagDraft}
+                                onChange={(e) => setTagDraft(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    void handleAddConversationTag();
+                                  }
+                                }}
+                                placeholder="Add tags (comma-separated)…"
+                                disabled={tagMutationBusy}
+                                className="h-9 flex-1 font-mono text-xs"
+                              />
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                className="h-9 shrink-0 px-3 text-xs"
+                                disabled={tagMutationBusy || !tagDraft.trim()}
+                                onClick={() => void handleAddConversationTag()}
+                              >
+                                Add
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ) : null}
                     </div>

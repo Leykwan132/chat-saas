@@ -1,8 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { LogOut } from 'lucide-react';
+import { useQuery } from 'convex/react';
+import { CreditCard, LogOut, Settings } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
+import { TeamsAccountSubmenu, accountMenuProfileRowClassName } from '@/components/TeamsAccountSubmenu';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,17 +14,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { api } from '../../convex/_generated/api';
+import { PLAN_CATALOG, type PlanKey } from '../../shared/planCatalog';
 
-export function UserProfileButton({ accountPath }: { accountPath: string }) {
-  const { user, signOut } = useAuth();
+const accountMenuAvatarClassName = 'size-10 shrink-0 rounded-full object-cover';
+
+export function UserProfileButton({ settingsPath }: { settingsPath: string }) {
+  const { user, signOut, isLoading: isAuthLoading } = useAuth();
   const navigate = useNavigate();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const currentUser = useQuery(api.users.currentUser, isAuthLoading ? 'skip' : {});
 
   const email = user?.email ?? 'Account';
   const displayName =
     [user?.firstName, user?.lastName].filter(Boolean).join(' ') ||
     user?.email ||
     'Account';
+  const planLabel =
+    currentUser?.plan != null
+      ? PLAN_CATALOG[currentUser.plan as PlanKey]?.name
+      : null;
   const initials = getInitials(user?.firstName, user?.lastName, user?.email);
   const profilePicture = user?.profilePictureUrl ?? null;
 
@@ -69,21 +81,66 @@ export function UserProfileButton({ accountPath }: { accountPath: string }) {
           </button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuLabel className="flex flex-col gap-1 font-normal">
-            <span className="text-sm font-semibold text-foreground">{displayName}</span>
-            <span className="truncate text-xs font-normal text-muted-foreground">
-              {email}
-            </span>
+        <DropdownMenuContent align="end" className="w-72 p-2">
+          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-normal text-muted-foreground">
+            Account
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+
+          <div className={accountMenuProfileRowClassName}>
+            {profilePicture ? (
+              <img
+                src={profilePicture}
+                alt={displayName}
+                className={accountMenuAvatarClassName}
+              />
+            ) : (
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {initials}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="truncate text-sm font-semibold text-foreground">{displayName}</div>
+                {planLabel ? (
+                  <Badge
+                    variant="secondary"
+                    className="shrink-0 rounded-md px-1.5 py-0 text-[10px] font-medium"
+                  >
+                    {planLabel}
+                  </Badge>
+                ) : null}
+              </div>
+              <div className="truncate text-xs text-muted-foreground">{email}</div>
+            </div>
+          </div>
+
+          <DropdownMenuSeparator className="my-2" />
+
+          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-normal text-muted-foreground">
+            Teams
+          </DropdownMenuLabel>
+          <TeamsAccountSubmenu settingsPath={settingsPath} />
+
+          <DropdownMenuSeparator className="my-2" />
+
           <DropdownMenuItem
             disabled={isSigningOut}
-            onSelect={() => navigate(accountPath)}
+            onSelect={() => navigate(settingsPath)}
           >
-            Account detail
+            <Settings className="size-4" />
+            Settings
           </DropdownMenuItem>
-          <DropdownMenuSeparator />
+
+          <DropdownMenuItem
+            disabled={isSigningOut}
+            onSelect={() => navigate('/pricing')}
+          >
+            <CreditCard className="size-4" />
+            Plan and pricing
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="my-2" />
+
           <DropdownMenuItem
             variant="destructive"
             disabled={isSigningOut}

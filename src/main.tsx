@@ -19,7 +19,9 @@ import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
-import AccountPage from './pages/AccountPage.tsx'
+import CreateTeamPage from './pages/CreateTeamPage.tsx'
+import SettingsPage from './pages/SettingsPage.tsx'
+import InvitationsPage from './pages/InvitationsPage.tsx'
 import ChannelsPage from './pages/ChannelsPage.tsx'
 import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.tsx'
 import AutomationsIndexPage from './pages/AutomationsIndexPage.tsx'
@@ -31,6 +33,8 @@ import { Spinner } from "@/components/ui/spinner"
 import { ThemeProvider } from '@/components/theme-provider'
 import { OnboardingFlow } from '@/components/OnboardingFlow'
 import PricingPage from './pages/PricingPage.tsx'
+import { usePermissions } from './hooks/usePermissions'
+import { Permission } from '../shared/permissions'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
@@ -56,6 +60,43 @@ function KnowledgeBaseIndex() {
 function WhatsappDemoTemplateRedirect() {
   const { agentId } = useParams()
   return <Navigate to={`/dashboard/${agentId}/channels`} replace />
+}
+
+function DashboardIndexRedirect() {
+  const { agentId } = useParams()
+  const { can, isLoading } = usePermissions()
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center bg-background text-foreground">
+        <Spinner className="h-8 w-8 text-zinc-500" />
+      </div>
+    )
+  }
+
+  if (can(Permission.CHATS_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/chats`} replace />
+  }
+  if (can(Permission.PLAYGROUND_ACCESS)) {
+    return <Navigate to={`/dashboard/${agentId}/playground`} replace />
+  }
+  if (can(Permission.KB_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/knowledge-base`} replace />
+  }
+  if (can(Permission.CUSTOMERS_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/customers`} replace />
+  }
+  if (can(Permission.CHANNELS_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/channels`} replace />
+  }
+  if (can(Permission.AUTOMATION_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/automations`} replace />
+  }
+  if (can(Permission.ANALYTICS_READ)) {
+    return <Navigate to={`/dashboard/${agentId}/analytics`} replace />
+  }
+
+  return <Navigate to={`/dashboard/${agentId}/chats`} replace />
 }
 
 // Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
@@ -103,12 +144,15 @@ function RootLayout() {
             <Route path="/onboarding" element={<OnboardingFlow />} />
             <Route path="/workspace" element={<WorkspacePage />}>
               <Route index element={<AgentsIndex />} />
-              <Route path="account" element={<AccountPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="invitations" element={<InvitationsPage />} />
+              <Route path="account" element={<Navigate to="../settings" replace />} />
             </Route>
             <Route path="/create-agent" element={<CreateAgentPage />} />
+            <Route path="/create-team" element={<CreateTeamPage />} />
             <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
             <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
-              <Route index element={<ChatsPage />} />
+              <Route index element={<DashboardIndexRedirect />} />
               <Route path="chats" element={<ChatsPage />} />
               <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
               <Route path="playground/:threadId?" element={<AgentPage />} />
@@ -122,7 +166,8 @@ function RootLayout() {
               <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="account" element={<AccountPage />} />
+              <Route path="settings" element={<SettingsPage />} />
+              <Route path="account" element={<Navigate to="../settings" replace />} />
             </Route>
           </Routes>
           <Toaster />

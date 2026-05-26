@@ -2,7 +2,7 @@ import { action, internalMutation, internalQuery } from "./_generated/server";
 import { components, internal } from "./_generated/api";
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import { v } from "convex/values";
-import { getAuthContext } from "./authUtils";
+import { getBillingWorkosUserId } from "./billingScope";
 import { getPlan } from "./plans";
 import { EXTRA_CREDITS_PRICE_ID, EXTRA_CREDITS_PACK_AMOUNT, getStripePriceId, resolvePlanKeyFromStripePriceId } from "./planCatalog";
 import {
@@ -34,9 +34,7 @@ export const createCheckout = action({
     cancelPath: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-    const isPersonal = !orgId || orgId === "personal";
-    const entityId = isPersonal ? userId : orgId;
+    const userId = await getBillingWorkosUserId(ctx);
 
     const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
     if (!user) {
@@ -44,19 +42,12 @@ export const createCheckout = action({
     }
 
     const email = user.email;
-    let name = user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : user.email;
+    const name = user.firstName
+      ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+      : user.email;
 
-    if (!isPersonal) {
-      const org = (await ctx.runQuery(internal.stripe.internalGetOrg, { orgId })) as any;
-      if (!org) {
-        throw new Error("Organization not found");
-      }
-      name = org.name;
-    }
-
-    // Create or retrieve Stripe Customer linked to organization's ID or user's ID
     const customer = await stripeClient.getOrCreateCustomer(ctx, {
-      userId: entityId,
+      userId,
       email,
       name,
     });
@@ -74,13 +65,13 @@ export const createCheckout = action({
     }
 
     const frontendUrl = process.env.APP_BASE_URL || "http://localhost:5173";
-    const successUrl = `${frontendUrl}/workspace/account?success=true`;
+    const successUrl = `${frontendUrl}/workspace?success=true`;
     const cancelUrl = args.cancelPath
       ? `${frontendUrl}${args.cancelPath}`
-      : `${frontendUrl}/workspace/account?canceled=true`;
+      : `${frontendUrl}/onboarding`;
 
     const creditMetadata = {
-      orgId: entityId,
+      orgId: userId,
       type: STRIPE_EXTRA_CREDITS_METADATA_TYPE,
       [STRIPE_CREDITS_AMOUNT_METADATA_KEY]: String(EXTRA_CREDITS_PACK_AMOUNT),
     };
@@ -91,11 +82,11 @@ export const createCheckout = action({
       mode: args.mode,
       successUrl,
       cancelUrl,
-      metadata: args.mode === "payment" ? creditMetadata : { orgId: entityId, type: "subscription" },
+      metadata: args.mode === "payment" ? creditMetadata : { orgId: userId, type: "subscription" },
     };
 
     if (args.mode === "subscription") {
-      sessionParams.subscriptionMetadata = { orgId: entityId };
+      sessionParams.subscriptionMetadata = { orgId: userId };
     } else {
       sessionParams.paymentIntentMetadata = creditMetadata;
     }
@@ -110,26 +101,18 @@ export const createPortal = action({
     returnPath: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-    const isPersonal = !orgId || orgId === "personal";
+    const userId = await getBillingWorkosUserId(ctx);
 
-    let stripeCustomerId: string | undefined = undefined;
-    if (isPersonal) {
-      const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
-      if (!user) throw new Error("User not found");
-      stripeCustomerId = user.stripeCustomerId;
-    } else {
-      const org = (await ctx.runQuery(internal.stripe.internalGetOrg, { orgId })) as any;
-      if (!org) throw new Error("Organization not found");
-      stripeCustomerId = org.stripeCustomerId;
-    }
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    if (!user) throw new Error("User not found");
+    const stripeCustomerId = user.stripeCustomerId;
 
     if (!stripeCustomerId) {
       throw new Error("No Stripe billing customer found.");
     }
 
     const frontendUrl = process.env.APP_BASE_URL || process.env.FRONTEND_URL || "http://localhost:5173";
-    const returnPath = args.returnPath ?? "/workspace/account?section=plan";
+    const returnPath = args.returnPath ?? "/workspace/settings?section=plan";
     const returnUrl = `${frontendUrl}${returnPath.startsWith("/") ? returnPath : `/${returnPath}`}`;
 
     const portalSession = await stripeClient.createCustomerPortalSession(ctx, {
@@ -144,15 +127,12 @@ export const syncBillingWithStripe = action({
   args: {
     orgId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-    const isPersonal = !orgId || orgId === "personal";
-    const entityId = isPersonal ? userId : orgId;
+  handler: async (ctx, _args) => {
+    const userId = await getBillingWorkosUserId(ctx);
 
-    // Query Stripe subscription from component database table
     const subscription = await ctx.runQuery(
       components.stripe.public.getSubscriptionByOrgId,
-      { orgId: entityId }
+      { orgId: userId },
     );
 
     if (subscription) {
@@ -162,29 +142,19 @@ export const syncBillingWithStripe = action({
         status: subscription.status,
         priceId: subscription.priceId,
         currentPeriodEnd: subscription.currentPeriodEnd,
-        orgId: entityId,
+        orgId: userId,
       });
       return { success: true, plan: subscription.priceId };
-    } else {
-      if (isPersonal) {
-        const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
-        if (user && user.stripePriceId) {
-          await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
-            stripeSubscriptionId: user.stripeSubscriptionId || "unknown",
-            orgId: entityId,
-          });
-        }
-      } else {
-        const org = (await ctx.runQuery(internal.stripe.internalGetOrg, { orgId })) as any;
-        if (org && org.stripePriceId) {
-          await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
-            stripeSubscriptionId: org.stripeSubscriptionId || "unknown",
-            orgId: entityId,
-          });
-        }
-      }
-      return { success: true, plan: "free" };
     }
+
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    if (user && user.stripePriceId) {
+      await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
+        stripeSubscriptionId: user.stripeSubscriptionId || "unknown",
+        orgId: userId,
+      });
+    }
+    return { success: true, plan: "free" };
   },
 });
 
@@ -555,10 +525,8 @@ export const createStripeCustomer = action({
   args: {
     orgId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-    const isPersonal = !orgId || orgId === "personal";
-    const entityId = isPersonal ? userId : orgId;
+  handler: async (ctx, _args) => {
+    const userId = await getBillingWorkosUserId(ctx);
 
     const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
     if (!user) {
@@ -566,18 +534,12 @@ export const createStripeCustomer = action({
     }
 
     const email = user.email;
-    let name = user.firstName ? `${user.firstName} ${user.lastName ?? ""}`.trim() : user.email;
-
-    if (!isPersonal) {
-      const org = (await ctx.runQuery(internal.stripe.internalGetOrg, { orgId })) as any;
-      if (!org) {
-        throw new Error("Organization not found");
-      }
-      name = org.name;
-    }
+    const name = user.firstName
+      ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+      : user.email;
 
     await stripeClient.getOrCreateCustomer(ctx, {
-      userId: entityId,
+      userId,
       email,
       name,
     });

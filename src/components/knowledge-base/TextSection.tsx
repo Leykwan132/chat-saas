@@ -24,6 +24,7 @@ import {
   formatFileSize,
   StatusBadge,
   isInProgress,
+  KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
 
@@ -31,9 +32,10 @@ interface TextSectionProps {
   entries: any[] | undefined;
   agentId: Id<'agents'> | undefined;
   openDeleteDialog: OpenDeleteDialog;
+  canManage?: boolean;
 }
 
-export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionProps) {
+export function TextSection({ entries, agentId, openDeleteDialog, canManage = true }: TextSectionProps) {
   const enqueueTextUpload = useAction(api.cloudflare.enqueueTextUpload);
   const updateTextEntry = useAction(api.cloudflare.updateTextEntry);
 
@@ -70,10 +72,15 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
 
   const inProgressEntries = (entries ?? []).filter(e => isInProgress(e.status));
   const completedEntries = (entries ?? []).filter(e => !isInProgress(e.status));
+  const hasEntries = (entries ?? []).length > 0;
+
+  if (!canManage && !hasEntries) {
+    return <KnowledgeBaseEmptyState />;
+  }
 
   return (
     <>
-      {/* ── Add Text ── */}
+      {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Text</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -86,14 +93,14 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
           </div>
         </div>
       </div>
+      ) : null}
 
-      {/* ── Your Text ── */}
-      {(entries ?? []).length > 0 && (
+      {hasEntries && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Your text</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your text' : 'Sources'}</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => openEditText(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => openEditText(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <Spinner className="size-4 shrink-0 text-yellow-500" />
                   <span className={`text-sm truncate ${entry.status === "deleting" ? "line-through opacity-50" : ""}`}>{entry.title}</span>
@@ -101,12 +108,14 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {entry.fileSize > 0 && <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>}
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('text', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
             {completedEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => openEditText(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => openEditText(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"><Check className="size-2.5 text-white" /></div>
                   <span className="text-sm truncate">{entry.title}</span>
@@ -114,7 +123,9 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('text', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -122,7 +133,7 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
         </div>
       )}
 
-      {/* ── Edit Text Sheet ── */}
+      {canManage && editingTextEntry !== null ? (
       <Sheet open={editingTextEntry !== null} onOpenChange={(open) => { if (!open) setEditingTextEntry(null); }}>
         <SheetContent>
           <SheetHeader>
@@ -146,6 +157,7 @@ export function TextSection({ entries, agentId, openDeleteDialog }: TextSectionP
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      ) : null}
     </>
   );
 }

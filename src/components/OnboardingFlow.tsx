@@ -15,8 +15,8 @@ import {
 import { toast } from 'sonner';
 import {
   ArrowLeft,
-  ArrowRight,
   Check,
+  CornerDownLeft,
   Banknote,
   Bot,
   MessageSquare,
@@ -116,6 +116,29 @@ export function OnboardingFlow() {
     }
   }, [currentUser]);
 
+  useEffect(() => {
+    if (step >= 4 || submitting) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter' || event.defaultPrevented) return;
+      if (event.target instanceof HTMLTextAreaElement) return;
+
+      if (step === 1 && role) {
+        event.preventDefault();
+        setStep(2);
+      } else if (step === 2 && useCases.length > 0) {
+        event.preventDefault();
+        setStep(3);
+      } else if (step === 3 && channels.length > 0) {
+        event.preventDefault();
+        setStep(4);
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [step, role, useCases, channels, submitting]);
+
   if (currentUser === undefined) {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background">
@@ -165,10 +188,10 @@ export function OnboardingFlow() {
 
   const nextButtonClass = (enabled: boolean) =>
     cn(
-      'flex size-9 items-center justify-center rounded-xl transition-all',
+      'flex min-w-[5.5rem] items-center justify-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium transition-all',
       enabled
-        ? 'bg-foreground text-background hover:bg-foreground/90 cursor-pointer'
-        : 'bg-secondary text-muted-foreground cursor-not-allowed',
+        ? 'cursor-pointer bg-foreground text-background hover:bg-foreground/90'
+        : 'cursor-not-allowed bg-secondary text-muted-foreground',
     );
 
   const handleNext = () => { if (step < 4) setStep((p) => (p + 1) as Step); };
@@ -331,18 +354,15 @@ export function OnboardingFlow() {
                     })}
                   </div>
 
-                  {/* Next — inline, bottom-right */}
                   <div className="flex justify-end">
                     <button
                       type="button"
                       onClick={handleNext}
                       disabled={!role}
-                      className={cn(
-                        'flex size-9 items-center justify-center rounded-xl transition-all',
-                        role ? 'bg-foreground text-background hover:bg-foreground/90 cursor-pointer' : 'bg-secondary text-muted-foreground cursor-not-allowed'
-                      )}
+                      className={nextButtonClass(Boolean(role))}
                     >
-                      <ArrowRight className="size-4" />
+                      Enter
+                      <CornerDownLeft className="size-4" />
                     </button>
                   </div>
                 </motion.div>
@@ -392,7 +412,8 @@ export function OnboardingFlow() {
                       disabled={useCases.length === 0}
                       className={nextButtonClass(useCases.length > 0)}
                     >
-                      <ArrowRight className="size-4" />
+                      Enter
+                      <CornerDownLeft className="size-4" />
                     </button>
                   </div>
                 </motion.div>
@@ -441,7 +462,8 @@ export function OnboardingFlow() {
                       disabled={channels.length === 0}
                       className={nextButtonClass(channels.length > 0)}
                     >
-                      <ArrowRight className="size-4" />
+                      Enter
+                      <CornerDownLeft className="size-4" />
                     </button>
                   </div>
                 </motion.div>

@@ -17,21 +17,35 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '../hooks/usePermissions';
+import { Permission, type PermissionSlug } from '../../shared/permissions';
 
-function getNavItems(agentId: string) {
+type NavItem = {
+  to: string;
+  icon: any;
+  label: string;
+  end?: boolean;
+  requiredPermission: PermissionSlug;
+};
+
+function getNavItems(agentId: string): {
+  engagement: NavItem[];
+  configuration: NavItem[];
+  insights: NavItem[];
+} {
   return {
     engagement: [
-      { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true },
-      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers' },
+      { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true, requiredPermission: Permission.CHATS_READ },
+      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers', requiredPermission: Permission.CUSTOMERS_READ },
     ],
     configuration: [
-      { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground' },
-      { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base' },
-      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels' },
-      { to: `/dashboard/${agentId}/automations`, icon: Zap, label: 'Automations' },
+      { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
+      { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
+      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
+      { to: `/dashboard/${agentId}/automations`, icon: Zap, label: 'Automations', requiredPermission: Permission.AUTOMATION_READ },
     ],
     insights: [
-      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics' },
+      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
   };
 }
@@ -42,7 +56,17 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
+  const { can, isLoading } = usePermissions();
   const navItems = getNavItems(agent._id);
+
+  const filterItems = (items: NavItem[]) => {
+    if (isLoading) return [];
+    return items.filter((item) => can(item.requiredPermission));
+  };
+
+  const engagementItems = filterItems(navItems.engagement);
+  const configurationItems = filterItems(navItems.configuration);
+  const insightsItems = filterItems(navItems.insights);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -82,83 +106,89 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
 
       {/* Nav */}
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Engagement</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.engagement.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to} end={item.end}>
-                    {({ isActive }) => (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.label}
-                      >
-                        <span>
-                          <item.icon />
-                          <span>{item.label}</span>
-                        </span>
-                      </SidebarMenuButton>
-                    )}
-                  </NavLink>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {engagementItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Engagement</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {engagementItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to} end={item.end}>
+                      {({ isActive }) => (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                        >
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.configuration.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to} end={item.label === 'Playground'}>
-                    {({ isActive }) => (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.label}
-                      >
-                        <span>
-                          <item.icon />
-                          <span>{item.label}</span>
-                        </span>
-                      </SidebarMenuButton>
-                    )}
-                  </NavLink>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {configurationItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {configurationItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to} end={item.label === 'Playground'}>
+                      {({ isActive }) => (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                        >
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Insights</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.insights.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <NavLink to={item.to} end>
-                    {({ isActive }) => (
-                      <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.label}
-                      >
-                        <span>
-                          <item.icon />
-                          <span>{item.label}</span>
-                        </span>
-                      </SidebarMenuButton>
-                    )}
-                  </NavLink>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {insightsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Insights</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {insightsItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to} end>
+                      {({ isActive }) => (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                        >
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter>
@@ -170,3 +200,4 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     </Sidebar>
   );
 }
+

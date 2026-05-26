@@ -3,12 +3,12 @@ import { useAuth } from '@workos-inc/authkit-react';
 import { SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 
 /**
- * Sidebar footer button that navigates to the account page.
- * Pass `accountPath` to control where the account route is mounted:
- *   - DashboardLayout:  `/dashboard/:agentId/account`
- *   - WorkspacePage:    `/workspace/account`
+ * Sidebar footer button that navigates to the settings page.
+ * Pass `settingsPath` to control where the settings route is mounted:
+ *   - DashboardLayout:  `/dashboard/:agentId/settings`
+ *   - WorkspacePage:    `/workspace/settings`
  */
-export function AccountDialog({ accountPath }: { accountPath: string }) {
+export function AccountDialog({ settingsPath }: { settingsPath: string }) {
   const { user } = useAuth();
   const sidebar = useSidebar();
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ export function AccountDialog({ accountPath }: { accountPath: string }) {
     <SidebarMenuButton
       size="lg"
       tooltip={user?.email ?? 'Account'}
-      onClick={() => navigate(accountPath)}
+      onClick={() => navigate(settingsPath)}
       className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
     >
       <Avatar src={profilePicture} initials={initials} />

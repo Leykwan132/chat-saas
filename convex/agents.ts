@@ -13,8 +13,6 @@ const templateKeyValidator = v.union(
   v.literal("support"),
 );
 
-const orgIdValidator = v.union(v.string(), v.null());
-
 const TEMPLATE_PROMPTS = {
   blank: "You are a helpful AI agent. Answer clearly, ask concise follow-up questions when needed, and stay aligned with the business context provided by the user.",
   sales: "You are a sales AI agent. Qualify leads, understand customer needs, explain value clearly, handle objections with empathy, and guide prospects toward the next best action.",
@@ -36,10 +34,26 @@ async function assertEnabledModel(modelId: string) {
 }
 
 async function getOwnedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">) {
-  const { userId } = await getAuthContext(ctx);
+  const { userId, orgId } = await getAuthContext(ctx);
 
   const agent = await ctx.db.get(agentId);
-  if (agent === null || agent.userId !== userId) {
+  if (agent === null) {
+    return null;
+  }
+
+  const normalizedOrgId =
+    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
+  const agentOrgId =
+    !agent.orgId || agent.orgId === "personal" ? PERSONAL_ORG_FALLBACK : agent.orgId;
+
+  if (agentOrgId !== PERSONAL_ORG_FALLBACK) {
+    if (agentOrgId === normalizedOrgId) {
+      return agent;
+    }
+    return null;
+  }
+
+  if (agent.userId !== userId) {
     return null;
   }
 
@@ -70,11 +84,9 @@ async function listAgentsForContext(
 }
 
 export const list = query({
-  args: {
-    orgId: orgIdValidator,
-  },
-  handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
+  args: {},
+  handler: async (ctx) => {
+    const { userId, orgId } = await getAuthContext(ctx);
 
     if (!orgId || orgId === "personal") {
       return await ctx.db
@@ -112,13 +124,10 @@ export const get = query({
 });
 
 export const canCreate = query({
-  args: {
-    orgId: orgIdValidator,
-  },
-  handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
-    const entityId = !orgId || orgId === "personal" ? userId : orgId;
-    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+  args: {},
+  handler: async (ctx) => {
+    const { userId, orgId } = await getAuthContext(ctx);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
     const planConfig = getPlan(plan);
     const currentAgents = await listAgentsForContext(ctx, userId, orgId);
@@ -140,13 +149,15 @@ export const create = mutation({
     templateKey: templateKeyValidator,
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
-    orgId: orgIdValidator,
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
-    
-    const entityId = !orgId || orgId === "personal" ? userId : orgId;
-    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const { userId, orgId, permissions } = await getAuthContext(ctx);
+
+    if (orgId && orgId !== "personal" && !permissions.includes("agents:create")) {
+      throw new Error("You do not have permission to create agents in this workspace.");
+    }
+
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
 
     const currentAgents = await listAgentsForContext(ctx, userId, orgId);
@@ -199,13 +210,17 @@ export const update = mutation({
     contacts: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    const { orgId, permissions } = await getAuthContext(ctx);
+    if (orgId && orgId !== "personal" && !permissions.includes("agents:manage")) {
+      throw new Error("You do not have permission to modify agents in this workspace.");
+    }
+
     const agent = await getOwnedAgent(ctx, args.agentId);
     if (agent === null) {
       throw new Error("Agent not found");
     }
 
-    const entityId = !agent.orgId || agent.orgId === "personal" ? agent.userId : agent.orgId;
-    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const stripeInfo = await getPlanFromStripe(ctx, agent.userId);
     const plan = stripeInfo.plan;
 
     const name = args.name.trim();
@@ -256,6 +271,11 @@ export const remove = mutation({
     agentId: v.id("agents"),
   },
   handler: async (ctx, args) => {
+    const { orgId, permissions } = await getAuthContext(ctx);
+    if (orgId && orgId !== "personal" && !permissions.includes("agents:manage")) {
+      throw new Error("You do not have permission to delete agents in this workspace.");
+    }
+
     const agent = await getOwnedAgent(ctx, args.agentId);
     if (agent === null) {
       throw new Error("Agent not found");

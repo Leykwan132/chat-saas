@@ -18,18 +18,17 @@ const TOP_UP_PROGRESS_CLASS = '[&>[data-slot=progress-indicator]]:bg-green-600';
 
 function usePlanTopUpPath() {
   const { agentId } = useParams();
-  const base = agentId ? `/dashboard/${agentId}/account` : '/workspace/account';
+  const base = agentId ? `/dashboard/${agentId}/settings` : '/workspace/settings';
   return `${base}?section=plan#plan-add-ons`;
 }
 
 export function CreditMeter() {
   const navigate = useNavigate();
   const planTopUpPath = usePlanTopUpPath();
-  const { organizationId, isLoading: isAuthLoading } = useAuth();
-  const billingOrgId = organizationId ?? null;
+  const { isLoading: isAuthLoading } = useAuth();
   const planAndUsage = useQuery(
     api.plans.getPlanAndUsage,
-    isAuthLoading ? 'skip' : { orgId: billingOrgId },
+    isAuthLoading ? 'skip' : {},
   );
 
   const isLoading = isAuthLoading || planAndUsage === undefined;

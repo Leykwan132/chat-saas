@@ -34,6 +34,7 @@ import {
   normalizeUploaderFiles,
   StatusBadge,
   isKbImageInProgress,
+  KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
 
@@ -42,6 +43,7 @@ interface ImageSectionProps {
   openDeleteDialog: OpenDeleteDialog;
   maxFileSize: number;
   type: 'media';
+  canManage?: boolean;
 }
 
 type PendingImage = {
@@ -72,7 +74,7 @@ function revokePendingPreviews(items: PendingImage[]) {
   }
 }
 
-export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSectionProps) {
+export function ImageSection({ agentId, openDeleteDialog, maxFileSize, canManage = true }: ImageSectionProps) {
   const entries = useQuery(
     api.knowledgeBaseImages.listKbImagesByAgent,
     agentId ? { agentId } : "skip",
@@ -165,6 +167,10 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSe
 
   const hasEntries = filteredEntries.length > 0;
 
+  if (!canManage && !hasEntries) {
+    return <KnowledgeBaseEmptyState />;
+  }
+
   const titleText = 'Media Assets';
   const singularText = 'media asset';
   const pluralText = 'media assets';
@@ -172,6 +178,7 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSe
 
   return (
     <>
+      {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add {titleText}</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-4">
@@ -317,10 +324,11 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSe
           ) : null}
         </div>
       </div>
+      ) : null}
 
       {hasEntries && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3 font-medium text-muted-foreground">Your {pluralText}</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3 font-medium text-muted-foreground">{canManage ? `Your ${pluralText}` : 'Sources'}</h2>
           <div className="space-y-3">
             {grouped.map(([name, groupEntries]) => (
               <Collapsible key={name} defaultOpen className="rounded-lg border border-border bg-card">
@@ -390,6 +398,7 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSe
                                   </div>
                                 ) : null}
                                 {!inProgress ? (
+                                  canManage ? (
                                   <button
                                     type="button"
                                     onClick={() => openDeleteDialog('media', entry.clientId)}
@@ -398,6 +407,7 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize }: ImageSe
                                   >
                                     <Trash2 className="size-3" />
                                   </button>
+                                  ) : null
                                 ) : null}
                               </div>
                             </div>

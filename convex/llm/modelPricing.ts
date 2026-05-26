@@ -98,22 +98,18 @@ export function listEnabledModels() {
     }));
 }
 
-import { v } from "convex/values";
-import { getAuthContext } from "../authUtils";
+import { getBillingWorkosUserId } from "../billingScope";
 import { checkModelAccess, getPlanFromStripe } from "../plans";
 
 export const listEnabled = query({
-  args: {
-    orgId: v.optional(v.union(v.string(), v.null())),
-  },
-  handler: async (ctx, args) => {
+  args: {},
+  handler: async (ctx) => {
     const models = listEnabledModels();
     let activePlan: string | undefined = undefined;
-    
+
     try {
-      const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-      const entityId = !orgId || orgId === "personal" ? userId : orgId;
-      const stripeInfo = await getPlanFromStripe(ctx, entityId);
+      const userId = await getBillingWorkosUserId(ctx);
+      const stripeInfo = await getPlanFromStripe(ctx, userId);
       activePlan = stripeInfo.plan;
     } catch (e) {
       // Ignore auth/db errors for anonymous access or fallback

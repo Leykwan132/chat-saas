@@ -4,10 +4,11 @@ import { useMutation, useQuery } from 'convex/react';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { CreditMeter } from '@/components/CreditMeter';
 import { ModeToggle } from '@/components/mode-toggle';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import {
   Bot,
+  Mail,
   Plus,
   Trash2,
   PanelLeftClose,
@@ -35,6 +36,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
@@ -43,12 +45,16 @@ import {
 } from '@/components/ui/sidebar';
 import {
   Breadcrumb,
-  BreadcrumbItem,
   BreadcrumbList,
-  BreadcrumbPage,
 } from '@/components/ui/breadcrumb';
 import { RequireOrganization } from '@/components/RequireOrganization';
+import { TeamSwitcher } from '@/components/TeamSwitcher';
 import { showAgentLimitToast } from '@/lib/agentCreationLimit';
+import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
+
+import { usePermissions } from '@/hooks/usePermissions';
+import { Permission } from '../../shared/permissions';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 
 function AgentPreview() {
   return (
@@ -67,10 +73,35 @@ function AgentPreview() {
   );
 }
 
+function AgentCardSkeleton() {
+  return (
+    <div className="w-full max-w-[456px] overflow-hidden rounded-lg border border-border bg-card">
+      <div className="relative h-50 overflow-hidden bg-muted/40 animate-pulse">
+        <div className="absolute left-1/2 top-5 w-56 -translate-x-1/2 overflow-hidden rounded-t-xl bg-muted/20 border border-muted/30">
+          <div className="h-10 bg-muted/30" />
+          <div className="h-35 px-3 py-3 space-y-3">
+            <div className="h-7 w-28 rounded-full bg-muted/20 animate-pulse" />
+            <div className="ml-auto h-7 w-28 rounded-full bg-muted/30 animate-pulse" />
+          </div>
+        </div>
+      </div>
+      <div className="flex items-start justify-between border-t border-border px-6 py-6">
+        <div className="flex-1 space-y-2">
+          <div className="h-5 w-2/3 rounded-md bg-muted/40 animate-pulse" />
+          <div className="h-4 w-1/2 rounded-md bg-muted/20 animate-pulse" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AgentsSidebar() {
   const { pathname } = useLocation();
   const isAgentsRoute = pathname === '/workspace';
+  const isInvitationsRoute = pathname === '/workspace/invitations';
   const { state, toggleSidebar } = useSidebar();
+  const { count: pendingInvitationCount } = usePendingTeamInvitations();
+  const { can } = usePermissions();
 
   return (
     <Sidebar collapsible="icon">
@@ -120,6 +151,21 @@ function AgentsSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {can(Permission.TEAM_MANAGE) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild isActive={isInvitationsRoute} tooltip="Invitations">
+                    <Link to="/workspace/invitations">
+                      <Mail />
+                      <span>Invitations</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {pendingInvitationCount > 0 ? (
+                    <SidebarMenuBadge className="bg-red-600 text-white peer-data-active/menu-button:!text-white">
+                      {pendingInvitationCount}
+                    </SidebarMenuBadge>
+                  ) : null}
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -136,10 +182,12 @@ function AgentCard({
   agent,
   deletingId,
   onDelete,
+  canDelete,
 }: {
   agent: Doc<'agents'>;
   deletingId: Id<'agents'> | null;
   onDelete: (agentId: Id<'agents'>, agentName: string) => void;
+  canDelete: boolean;
 }) {
   const navigate = useNavigate();
 
@@ -147,7 +195,7 @@ function AgentCard({
     if (!e.currentTarget.contains(e.target as Node)) {
       return;
     }
-    navigate(`/dashboard/${agent._id}/chats`);
+    navigate(`/dashboard/${agent._id}`);
   };
 
   return (
@@ -171,51 +219,53 @@ function AgentCard({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                aria-label={`Delete ${agent.name}`}
-                disabled={deletingId === agent._id}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {deletingId === agent._id ? (
-                  <Spinner className="size-4" />
-                ) : (
-                  <Trash2 className="size-4" />
-                )}
-              </Button>
-            </DialogTrigger>
-            <DialogContent onClick={(e) => e.stopPropagation()}>
-              <DialogHeader className="gap-2">
-                <DialogTitle className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                  Delete {agent.name}?
-                </DialogTitle>
-                <DialogDescription className="text-sm leading-relaxed">
-                  This permanently removes the agent. You can&apos;t undo this action.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="outline">Cancel</Button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    onClick={() => onDelete(agent._id, agent.name)}
-                  >
-                    Delete
-                  </Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+        {canDelete && (
+          <div className="flex items-center gap-2">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label={`Delete ${agent.name}`}
+                  disabled={deletingId === agent._id}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {deletingId === agent._id ? (
+                    <Spinner className="size-4" />
+                  ) : (
+                    <Trash2 className="size-4" />
+                  )}
+                </Button>
+              </DialogTrigger>
+              <DialogContent onClick={(e) => e.stopPropagation()}>
+                <DialogHeader className="gap-2">
+                  <DialogTitle className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                    Delete {agent.name}?
+                  </DialogTitle>
+                  <DialogDescription className="text-sm leading-relaxed">
+                    This permanently removes the agent. You can&apos;t undo this action.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => onDelete(agent._id, agent.name)}
+                    >
+                      Delete
+                    </Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
       </div>
     </article>
   );
@@ -232,14 +282,12 @@ function WorkspaceShell() {
         <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbPage>Workspace</BreadcrumbPage>
-              </BreadcrumbItem>
+              <TeamSwitcher settingsPath="/workspace/settings" />
             </BreadcrumbList>
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-3">
             <ModeToggle />
-            <UserProfileButton accountPath="/workspace/account" />
+            <UserProfileButton settingsPath="/workspace/settings" />
           </div>
         </header>
 
@@ -258,11 +306,11 @@ function WorkspaceShell() {
 
 export function AgentsIndex() {
   const navigate = useNavigate();
-  const { organizationId } = useAuth();
-  const activeOrgId = organizationId ?? null;
-  const agents = useQuery(api.agents.list, { orgId: activeOrgId });
-  const canCreateAgent = useQuery(api.agents.canCreate, { orgId: activeOrgId });
+  const agents = useQuery(api.agents.list);
+  const canCreateAgent = useQuery(api.agents.canCreate);
   const removeAgent = useMutation(api.agents.remove);
+  const { can } = usePermissions();
+  const { activeTeam } = useActiveTeam();
 
   const [deletingId, setDeletingId] = useState<Id<'agents'> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -294,11 +342,19 @@ export function AgentsIndex() {
   return (
     <div className="mt-4">
       <div className="mb-9 flex items-center justify-between gap-4">
-        <h1 className="m-0 text-3xl font-semibold tracking-tight">Agents</h1>
-        <Button type="button" size="lg" onClick={handleNewAgent}>
-          <Plus className="size-4" />
-          New AI agent
-        </Button>
+        {activeTeam === undefined ? (
+          <div className="h-9 w-48 rounded bg-muted/40 animate-pulse" />
+        ) : (
+          <h1 className="m-0 text-3xl font-semibold tracking-tight">
+            {activeTeam.type === 'personal' ? 'Personal' : activeTeam.name}
+          </h1>
+        )}
+        {can(Permission.AGENTS_CREATE) && (
+          <Button type="button" size="lg" onClick={handleNewAgent}>
+            <Plus className="size-4" />
+            New AI agent
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -308,8 +364,10 @@ export function AgentsIndex() {
       )}
 
       {agents === undefined ? (
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
-          <Spinner className="size-6" />
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+          <AgentCardSkeleton />
+          <AgentCardSkeleton />
+          <AgentCardSkeleton />
         </div>
       ) : agents.length === 0 ? (
         <div className="flex h-72 max-w-xl flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-center">
@@ -327,6 +385,7 @@ export function AgentsIndex() {
               agent={agent}
               deletingId={deletingId}
               onDelete={handleDelete}
+              canDelete={can(Permission.AGENTS_MANAGE)}
             />
           ))}
         </div>
@@ -339,13 +398,22 @@ export function AgentsIndex() {
 
 export default function WorkspacePage() {
   const { isLoading: workosLoading, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const authUser = useQuery(
     api.users.getAuthUser,
     workosLoading ? 'skip' : {},
   );
+
   useEffect(() => {
     if (workosLoading) return;
   }, [workosLoading, user, authUser]);
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success('Payment successful. Your plan is being updated.');
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   // Keep showing a spinner while WorkOS is restoring the session (e.g. after
   // a page refresh). Without this guard the Convex <Unauthenticated> block
   // could fire before AuthKit has had a chance to validate the stored tokens,

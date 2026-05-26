@@ -26,7 +26,6 @@ import {
   createTopUpEntry,
   deductFromCreditEntries,
   getCreditPeriodKey,
-  scopeFromOrg,
   scopeFromUser,
   syncDenormalizedCreditFields,
   type CreditScope,
@@ -125,31 +124,16 @@ export const getBalance = query({
     orgId: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
-    if (!orgId || orgId === "personal") {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-        .unique();
-      if (user === null) {
-        return null;
-      }
-      const stripeInfo = await getPlanFromStripe(ctx, userId);
-      const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
-      return {
-        credits: billing.effectiveCredits,
-        monthlyAllowance: billing.monthlyAllowance,
-      };
-    }
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+    const { userId } = await getAuthContext(ctx, args.orgId);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
       .unique();
-    if (org === null) {
+    if (user === null) {
       return null;
     }
-    const stripeInfo = await getPlanFromStripe(ctx, orgId);
-    const { billing } = await syncCreditBilling(ctx, org, stripeInfo);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
     return {
       credits: billing.effectiveCredits,
       monthlyAllowance: billing.monthlyAllowance,
@@ -159,9 +143,8 @@ export const getBalance = query({
 
 export const internalCheckCredits = internalQuery({
   args: {
-    orgId: v.string(),
+    workosUserId: v.string(),
     modelId: v.string(),
-    workosUserId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const pricing = getModelPricing(args.modelId);
@@ -169,41 +152,15 @@ export const internalCheckCredits = internalQuery({
       return { ok: false as const, reason: "model_disabled" as const };
     }
 
-    if (!args.orgId || args.orgId === "personal") {
-      if (!args.workosUserId) {
-        return { ok: false as const, reason: "user_not_found" as const };
-      }
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId!))
-        .unique();
-      if (user === null) {
-        return { ok: false as const, reason: "user_not_found" as const };
-      }
-      const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
-      const balance = getTotalCreditBalance(currentUserDoc);
-      const cost = pricing.creditCost;
-      if (balance < cost) {
-        return {
-          ok: false as const,
-          reason: "insufficient_credits" as const,
-          balance,
-          cost,
-        };
-      }
-      return { ok: true as const, balance, cost };
-    }
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
       .unique();
-    if (org === null) {
-      return { ok: false as const, reason: "org_not_found" as const };
+    if (user === null) {
+      return { ok: false as const, reason: "user_not_found" as const };
     }
-
-    const simulatedOrg = (await lazyResetCreditsIfNeeded(ctx, org)) as Doc<"organizations">;
-    const balance = getTotalCreditBalance(simulatedOrg);
+    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
+    const balance = getTotalCreditBalance(currentUserDoc);
     const cost = pricing.creditCost;
     if (balance < cost) {
       return {
@@ -213,16 +170,14 @@ export const internalCheckCredits = internalQuery({
         cost,
       };
     }
-
     return { ok: true as const, balance, cost };
   },
 });
 
 export const internalDeductCredits = internalMutation({
   args: {
-    orgId: v.string(),
+    workosUserId: v.string(),
     modelId: v.string(),
-    workosUserId: v.optional(v.string()),
     skipDeduction: v.optional(v.boolean()),
     conversationId: v.optional(v.id("conversations")),
     agentId: v.optional(v.id("agents")),
@@ -249,73 +204,16 @@ export const internalDeductCredits = internalMutation({
       agentName = agent?.name;
     }
 
-    if (!args.orgId || args.orgId === "personal") {
-      if (!args.workosUserId) {
-        throw new Error("User ID is required for personal workspace deductions");
-      }
-      let user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId!))
-        .unique();
-      if (user === null) {
-        throw new Error("User not found");
-      }
-
-      user = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
-      const before = snapshotCreditBalances(user);
-      let balanceAfter = before.balanceBefore;
-
-      if (!skipDeduction) {
-        if (before.balanceBefore < pricing.creditCost) {
-          throw new Error("Insufficient credits");
-        }
-        balanceAfter = await applyUsageDeduction(ctx, {
-          entity: user,
-          scope: scopeFromUser(user),
-          stripeEntityId: user.workosUserId,
-          creditsCharged,
-          before,
-          log: {
-            orgId: "",
-            userId: user._id,
-            modelId: args.modelId,
-            agentId,
-            agentName,
-            conversationId: args.conversationId,
-            reason: args.reason ?? `AI reply using ${args.modelId}`,
-          },
-        });
-      }
-
-      return {
-        llmModel: args.modelId,
-        creditsCharged,
-        balanceAfter,
-      };
-    }
-
-    let org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
+    let user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
       .unique();
-    if (org === null) {
-      throw new Error("Organization not found");
+    if (user === null) {
+      throw new Error("User not found");
     }
 
-    let userDbId = undefined;
-    const workosUserId = args.workosUserId;
-    if (workosUserId) {
-      const userObj = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
-        .unique();
-      if (userObj) {
-        userDbId = userObj._id;
-      }
-    }
-
-    org = (await lazyResetCreditsIfNeeded(ctx, org)) as Doc<"organizations">;
-    const before = snapshotCreditBalances(org);
+    user = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
+    const before = snapshotCreditBalances(user);
     let balanceAfter = before.balanceBefore;
 
     if (!skipDeduction) {
@@ -323,14 +221,14 @@ export const internalDeductCredits = internalMutation({
         throw new Error("Insufficient credits");
       }
       balanceAfter = await applyUsageDeduction(ctx, {
-        entity: org,
-        scope: scopeFromOrg(org),
-        stripeEntityId: org.workosOrgId,
+        entity: user,
+        scope: scopeFromUser(user),
+        stripeEntityId: user.workosUserId,
         creditsCharged,
         before,
         log: {
-          orgId: org.workosOrgId,
-          userId: userDbId,
+          orgId: "",
+          userId: user._id,
           modelId: args.modelId,
           agentId,
           agentName,
@@ -353,8 +251,8 @@ export const topUp = mutation({
     orgId: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx, args.orgId);
-    
+    const { userId } = await getAuthContext(ctx, args.orgId);
+
     const userObj = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
@@ -363,71 +261,25 @@ export const topUp = mutation({
       throw new Error("User not found");
     }
 
-    if (!orgId || orgId === "personal") {
-      const scope = scopeFromUser(userObj);
-      const stripeInfo = await getPlanFromStripe(ctx, userId);
-      const periodKey = getCreditPeriodKey(stripeInfo);
-      const before = snapshotCreditBalances(userObj);
-      const topUpEntryId = await createTopUpEntry(ctx, scope, {
-        amount: 500,
-        label: buildTopUpLabel(500),
-      });
-      const synced = await syncDenormalizedCreditFields(
-        ctx,
-        userObj._id,
-        scope,
-        periodKey,
-        userObj,
-      );
-      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
-
-      await insertCreditLog(ctx, {
-        orgId: "",
-        userId: userObj._id,
-        eventType: "top_up",
-        label: buildTopUpLabel(500),
-        amount: 500,
-        balanceBefore: before.balanceBefore,
-        balanceAfter,
-        monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: synced.monthlyCredits,
-        purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: synced.purchasedCredits,
-        creditCost: 500,
-        topUpEntryId,
-        reason: "User topped up credits (manual/test)",
-      });
-
-      return { success: true, newCredits: balanceAfter };
-    }
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-      .unique();
-    if (org === null) {
-      throw new Error("Organization not found");
-    }
-
-    const scope = scopeFromOrg(org);
-    const stripeInfo = await getPlanFromStripe(ctx, orgId);
+    const scope = scopeFromUser(userObj);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
     const periodKey = getCreditPeriodKey(stripeInfo);
-    const before = snapshotCreditBalances(org);
+    const before = snapshotCreditBalances(userObj);
     const topUpEntryId = await createTopUpEntry(ctx, scope, {
       amount: 500,
       label: buildTopUpLabel(500),
     });
     const synced = await syncDenormalizedCreditFields(
       ctx,
-      org._id,
+      userObj._id,
       scope,
       periodKey,
-      org,
+      userObj,
     );
     const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 
     await insertCreditLog(ctx, {
-      orgId: org.workosOrgId,
+      orgId: "",
       userId: userObj._id,
       eventType: "top_up",
       label: buildTopUpLabel(500),
@@ -440,7 +292,7 @@ export const topUp = mutation({
       purchasedCreditsAfter: synced.purchasedCredits,
       creditCost: 500,
       topUpEntryId,
-      reason: "Organization topped up credits (manual/test)",
+      reason: "User topped up credits (manual/test)",
     });
 
     return { success: true, newCredits: balanceAfter };
@@ -500,38 +352,18 @@ export const getUsageDashboard = query({
   handler: async (ctx, args) => {
     const { userId, orgId } = await getAuthContext(ctx, args.orgId);
     const isPersonal = !orgId || orgId === "personal";
-    const logOrgId = isPersonal ? "" : orgId;
 
-    let userDoc: Doc<"users"> | null = null;
-    let orgDoc: Doc<"organizations"> | null = null;
-    let stripeEntityId = userId;
-    let periodEndMs: number | undefined;
-
-    if (isPersonal) {
-      userDoc = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-        .unique();
-      if (!userDoc) {
-        return null;
-      }
-      periodEndMs = userDoc.stripeSubscriptionCurrentPeriodEnd;
-    } else {
-      orgDoc = await ctx.db
-        .query("organizations")
-        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-        .unique();
-      if (!orgDoc) {
-        return null;
-      }
-      stripeEntityId = orgId;
-      periodEndMs = orgDoc.stripeSubscriptionCurrentPeriodEnd;
+    const userDoc = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
+      .unique();
+    if (!userDoc) {
+      return null;
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, stripeEntityId);
-    const entity = (userDoc ?? orgDoc)!;
-    const { billing } = await syncCreditBilling(ctx, entity, stripeInfo);
-    const periodStartMs = getUsagePeriodStartMs(periodEndMs);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
+    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
     const agents = isPersonal
       ? await ctx.db
@@ -549,21 +381,12 @@ export const getUsageDashboard = query({
 
     const agentNameById = new Map(agents.map((agent) => [agent._id, agent.name]));
 
-    const logs = isPersonal
-      ? userDoc
-        ? await ctx.db
-            .query("creditLogs")
-            .withIndex("by_userId_and_createdAt", (q) =>
-              q.eq("userId", userDoc!._id).gte("createdAt", periodStartMs),
-            )
-            .collect()
-        : []
-      : await ctx.db
-          .query("creditLogs")
-          .withIndex("by_orgId_and_createdAt", (q) =>
-            q.eq("orgId", logOrgId).gte("createdAt", periodStartMs),
-          )
-          .collect();
+    const logs = await ctx.db
+      .query("creditLogs")
+      .withIndex("by_userId_and_createdAt", (q) =>
+        q.eq("userId", userDoc._id).gte("createdAt", periodStartMs),
+      )
+      .collect();
 
     const conversationAgentCache = new Map<Id<"conversations">, Id<"agents"> | undefined>();
     const usageByAgent = new Map<string, number>();
@@ -633,7 +456,8 @@ export const getUsageDashboard = query({
       0,
     );
 
-    const periodEndBoundMs = periodEndMs ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const periodEndBoundMs =
+      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
     const dateKeys = getDateKeysInRange(periodStartMs, periodEndBoundMs);
 
     const chartSeries = combinedAgentUsage
@@ -683,7 +507,7 @@ export const getUsageDashboard = query({
     ];
 
     return {
-      orgName: isPersonal ? "Personal Workspace" : orgDoc!.name,
+      orgName: "Your account",
       credits: billing.effectiveCredits,
       monthlyAllowance: billing.monthlyAllowance,
       plan: stripeInfo.plan,
@@ -705,59 +529,28 @@ export const getCreditHistory = query({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
-    const isPersonal = !orgId || orgId === "personal";
-    const logOrgId = isPersonal ? "" : orgId;
+    const { userId } = await getAuthContext(ctx, args.orgId);
     const limit = Math.min(Math.max(args.limit ?? 100, 1), 200);
 
-    let userDoc: Doc<"users"> | null = null;
-    let orgDoc: Doc<"organizations"> | null = null;
-    let stripeEntityId = userId;
-    let periodEndMs: number | undefined;
-
-    if (isPersonal) {
-      userDoc = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-        .unique();
-      if (!userDoc) {
-        return null;
-      }
-      periodEndMs = userDoc.stripeSubscriptionCurrentPeriodEnd;
-    } else {
-      orgDoc = await ctx.db
-        .query("organizations")
-        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-        .unique();
-      if (!orgDoc) {
-        return null;
-      }
-      stripeEntityId = orgId;
-      periodEndMs = orgDoc.stripeSubscriptionCurrentPeriodEnd;
+    const userDoc = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
+      .unique();
+    if (!userDoc) {
+      return null;
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, stripeEntityId);
-    const entity = (userDoc ?? orgDoc)!;
-    const { billing } = await syncCreditBilling(ctx, entity, stripeInfo);
-    const periodStartMs = getUsagePeriodStartMs(periodEndMs);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
+    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
-    const logs = isPersonal
-      ? userDoc
-        ? await ctx.db
-            .query("creditLogs")
-            .withIndex("by_userId_and_createdAt", (q) =>
-              q.eq("userId", userDoc!._id).gte("createdAt", periodStartMs),
-            )
-            .order("desc")
-            .take(limit * 2)
-        : []
-      : await ctx.db
-          .query("creditLogs")
-          .withIndex("by_orgId_and_createdAt", (q) =>
-            q.eq("orgId", logOrgId).gte("createdAt", periodStartMs),
-          )
-          .order("desc")
-          .take(limit * 2);
+    const logs = await ctx.db
+      .query("creditLogs")
+      .withIndex("by_userId_and_createdAt", (q) =>
+        q.eq("userId", userDoc._id).gte("createdAt", periodStartMs),
+      )
+      .order("desc")
+      .take(limit * 2);
 
     const filteredLogs = args.agentId
       ? logs.filter((log) => {
@@ -801,7 +594,8 @@ export const getCreditHistory = query({
       credits: billing.effectiveCredits,
       monthlyAllowance: billing.monthlyAllowance,
       periodStartMs,
-      periodEndMs: periodEndMs ?? periodStartMs + MONTHLY_PERIOD_MS,
+      periodEndMs:
+        userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS,
       entries,
     };
   },

@@ -356,85 +356,37 @@ export const persistCreditPeriodReset = internalMutation({
 });
 
 export const getPlanAndUsage = query({
-  args: {
-    orgId: v.optional(v.union(v.string(), v.null())),
-  },
-  handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx, args.orgId);
-    if (!orgId || orgId === "personal") {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-        .unique();
-      if (!user) {
-        return null;
-      }
-      const stripeInfo = await getPlanFromStripe(ctx, userId);
-      const { entity, billing } = await syncCreditBilling(ctx, user, stripeInfo);
-      const planConfig = getPlan(stripeInfo.plan);
-      const scope = scopeFromUser(entity);
-      const periodKey = getCreditPeriodKey(stripeInfo);
-      const periodSummary = await getCreditPeriodSummary(ctx, scope, periodKey);
-      const topUpSummary = await getTopUpSummary(ctx, scope);
-      const purchasedCredits =
-        topUpSummary.purchasedCredits || getPurchasedCredits(entity);
-      const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(
-        ctx,
-        entity,
-        { orgId: "", userId: user._id },
-      );
-      const monthlyCredits =
-        periodSummary.monthlyCredits || getMonthlyCredits(entity);
-      const monthlyAllowance =
-        periodSummary.monthlyAllowance || billing.monthlyAllowance;
-
-      return {
-        orgName: "Personal Workspace",
-        plan: stripeInfo.plan,
-        planConfig,
-        credits: monthlyCredits + purchasedCredits,
-        monthlyCredits,
-        purchasedCredits,
-        purchasedCreditsGranted,
-        monthlyAllowance,
-        stripeSubscriptionStatus: stripeInfo.status,
-        stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
-        memberCount: 1,
-        allPlans: PLANS,
-        extraCreditsPriceId: EXTRA_CREDITS_PRICE_ID,
-      };
-    }
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+  args: {},
+  handler: async (ctx) => {
+    const { userId } = await getAuthContext(ctx);
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
       .unique();
-
-    if (!org) {
+    if (!user) {
       return null;
     }
-
-    const stripeInfo = await getPlanFromStripe(ctx, orgId);
-    const { entity, billing } = await syncCreditBilling(ctx, org, stripeInfo);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
     const planConfig = getPlan(stripeInfo.plan);
-    const scope = scopeFromOrg(entity);
+    const scope = scopeFromUser(user);
     const periodKey = getCreditPeriodKey(stripeInfo);
     const periodSummary = await getCreditPeriodSummary(ctx, scope, periodKey);
     const topUpSummary = await getTopUpSummary(ctx, scope);
     const purchasedCredits =
-      topUpSummary.purchasedCredits || getPurchasedCredits(entity);
+      topUpSummary.purchasedCredits || getPurchasedCredits(user);
     const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(
       ctx,
-      entity,
-      { orgId },
+      user,
+      { orgId: "", userId: user._id },
     );
     const monthlyCredits =
-      periodSummary.monthlyCredits || getMonthlyCredits(entity);
+      periodSummary.monthlyCredits || getMonthlyCredits(user);
     const monthlyAllowance =
       periodSummary.monthlyAllowance || billing.monthlyAllowance;
 
     return {
-      orgName: org.name,
+      orgName: "Your account",
       plan: stripeInfo.plan,
       planConfig,
       credits: monthlyCredits + purchasedCredits,
@@ -444,7 +396,7 @@ export const getPlanAndUsage = query({
       monthlyAllowance,
       stripeSubscriptionStatus: stripeInfo.status,
       stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
-      memberCount: org.members.length,
+      memberCount: 1,
       allPlans: PLANS,
       extraCreditsPriceId: EXTRA_CREDITS_PRICE_ID,
     };

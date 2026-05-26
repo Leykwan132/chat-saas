@@ -24,6 +24,8 @@ import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
 import { ImageSection } from '@/components/knowledge-base/ImageSection';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Permission } from '../../shared/permissions';
 import {
   Tooltip,
   TooltipContent,
@@ -53,6 +55,8 @@ export default function KnowledgeBasePage() {
   const navigate = useNavigate();
   const type = (rawType && ['web', 'file', 'text', 'qa', 'media'].includes(rawType) ? rawType : 'web') as KnowledgeType;
   const selectedAgentId = agentId as Id<'agents'> | undefined;
+  const { can } = usePermissions();
+  const canManageKnowledgeBase = can(Permission.KB_MANAGE);
 
   const textEntries = useQuery(api.knowledgeBase.listTextEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
   const fileEntries = useQuery(api.knowledgeBase.listFileEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
@@ -242,7 +246,7 @@ export default function KnowledgeBasePage() {
                   </p>
                 </div>
 
-                {type === 'file' && (
+                {type === 'file' && canManageKnowledgeBase && (
                   <button
                     type="button"
                     onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/media`)}
@@ -261,11 +265,48 @@ export default function KnowledgeBasePage() {
 
               <Separator className="mt-4" />
             </div>
-            {type === 'web' && <WebSection entries={webEntries} agentId={selectedAgentId} openDeleteDialog={openDeleteDialog} />}
-            {type === 'file' && <FileSection entries={fileEntries} agentId={selectedAgentId} openDeleteDialog={openDeleteDialog} maxFileSize={maxFileSize} />}
-            {type === 'text' && <TextSection entries={textEntries} agentId={selectedAgentId} openDeleteDialog={openDeleteDialog} />}
-            {type === 'qa' && <QASection entries={qaEntries} agentId={selectedAgentId} openDeleteDialog={openDeleteDialog} />}
-            {type === 'media' && <ImageSection agentId={selectedAgentId} openDeleteDialog={openDeleteDialog} maxFileSize={maxFileSize} type="media" />}
+            {type === 'web' && (
+              <WebSection
+                entries={webEntries}
+                agentId={selectedAgentId}
+                openDeleteDialog={openDeleteDialog}
+                canManage={canManageKnowledgeBase}
+              />
+            )}
+            {type === 'file' && (
+              <FileSection
+                entries={fileEntries}
+                agentId={selectedAgentId}
+                openDeleteDialog={openDeleteDialog}
+                maxFileSize={maxFileSize}
+                canManage={canManageKnowledgeBase}
+              />
+            )}
+            {type === 'text' && (
+              <TextSection
+                entries={textEntries}
+                agentId={selectedAgentId}
+                openDeleteDialog={openDeleteDialog}
+                canManage={canManageKnowledgeBase}
+              />
+            )}
+            {type === 'qa' && (
+              <QASection
+                entries={qaEntries}
+                agentId={selectedAgentId}
+                openDeleteDialog={openDeleteDialog}
+                canManage={canManageKnowledgeBase}
+              />
+            )}
+            {type === 'media' && (
+              <ImageSection
+                agentId={selectedAgentId}
+                openDeleteDialog={openDeleteDialog}
+                maxFileSize={maxFileSize}
+                type="media"
+                canManage={canManageKnowledgeBase}
+              />
+            )}
           </div>
 
           {/* RIGHT: Storage limit + stats */}

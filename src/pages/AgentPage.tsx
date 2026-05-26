@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { Link, useParams } from 'react-router';
-import { useAuth } from '@workos-inc/authkit-react';
 
 import {
   ChevronDown,
@@ -43,13 +42,12 @@ import { ModelPicker } from "@/components/ModelPicker";
 
 export default function AgentPage() {
   const { agentId, threadId } = useParams();
-  const { organizationId } = useAuth();
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const agent = useQuery(
     api.agents.get,
     selectedAgentId ? { agentId: selectedAgentId } : 'skip',
   );
-  const enabledModels = useQuery(api.llm.modelPricing.listEnabled, { orgId: organizationId });
+  const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
   const [model, setModel] = useState('');

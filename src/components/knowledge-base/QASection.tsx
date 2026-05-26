@@ -25,6 +25,7 @@ import {
   formatFileSize,
   StatusBadge,
   isInProgress,
+  KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
 
@@ -32,9 +33,10 @@ interface QASectionProps {
   entries: any[] | undefined;
   agentId: Id<'agents'> | undefined;
   openDeleteDialog: OpenDeleteDialog;
+  canManage?: boolean;
 }
 
-export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps) {
+export function QASection({ entries, agentId, openDeleteDialog, canManage = true }: QASectionProps) {
   const enqueueQAUpload = useAction(api.cloudflare.enqueueQAUpload);
   const updateQAEntry = useAction(api.cloudflare.updateQAEntry);
 
@@ -84,10 +86,15 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
 
   const inProgressEntries = (entries ?? []).filter(e => isInProgress(e.status));
   const completedEntries = (entries ?? []).filter(e => !isInProgress(e.status));
+  const hasEntries = (entries ?? []).length > 0;
+
+  if (!canManage && !hasEntries) {
+    return <KnowledgeBaseEmptyState />;
+  }
 
   return (
     <>
-      {/* ── Add Q&A ── */}
+      {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Q&A</h2>
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
@@ -111,14 +118,14 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
           </div>
         </div>
       </div>
+      ) : null}
 
-      {/* ── Your Q&A ── */}
-      {(entries ?? []).length > 0 && (
+      {hasEntries && (
         <div>
-          <h2 className="text-sm font-semibold text-foreground mb-3">Your Q&A</h2>
+          <h2 className="text-sm font-semibold text-foreground mb-3">{canManage ? 'Your Q&A' : 'Sources'}</h2>
           <div className="space-y-2">
             {inProgressEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => openEditQA(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => openEditQA(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <Spinner className="size-4 shrink-0 text-yellow-500" />
                   <span className={`text-sm truncate ${entry.status === "deleting" ? "line-through opacity-50" : ""}`}>Q: {entry.question}</span>
@@ -126,12 +133,14 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   {entry.fileSize > 0 && <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>}
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('qa', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
             {completedEntries.map((entry: any) => (
-              <div key={entry._id} onClick={() => openEditQA(entry)} className="group flex items-center justify-between rounded-md bg-muted px-4 py-3 cursor-pointer hover:bg-muted/80 transition-colors">
+              <div key={entry._id} onClick={canManage ? () => openEditQA(entry) : undefined} className={`group flex items-center justify-between rounded-md bg-muted px-4 py-3 ${canManage ? 'cursor-pointer hover:bg-muted/80' : ''} transition-colors`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"><Check className="size-2.5 text-white" /></div>
                   <span className="text-sm truncate">Q: {entry.question}</span>
@@ -139,7 +148,9 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground tabular-nums min-w-[4.5rem] text-right">{formatFileSize(entry.fileSize)}</span>
+                  {canManage ? (
                   <button type="button" onClick={(e) => { e.stopPropagation(); openDeleteDialog('qa', entry._id, entry.cfItemId); }} className="rounded p-1 text-muted-foreground hover:bg-background hover:text-destructive transition-colors"><Trash2 className="size-3.5" /></button>
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -147,7 +158,7 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
         </div>
       )}
 
-      {/* ── Edit Q&A Sheet ── */}
+      {canManage && editingQAEntry !== null ? (
       <Sheet open={editingQAEntry !== null} onOpenChange={(open) => { if (!open) setEditingQAEntry(null); }}>
         <SheetContent>
           <SheetHeader>
@@ -179,6 +190,7 @@ export function QASection({ entries, agentId, openDeleteDialog }: QASectionProps
           </SheetFooter>
         </SheetContent>
       </Sheet>
+      ) : null}
     </>
   );
 }

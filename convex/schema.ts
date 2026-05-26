@@ -53,6 +53,7 @@ export default defineSchema({
         channels: v.array(v.string()),
       })
     ),
+    activeTeamId: v.optional(v.id("teams")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -83,6 +84,86 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   }).index("by_workosOrgId", ["workosOrgId"]),
+  teams: defineTable({
+    type: v.union(v.literal("personal"), v.literal("organizational")),
+    name: v.string(),
+    ownerId: v.id("users"),
+    workosOrgId: v.optional(v.string()),
+    industry: v.optional(v.string()),
+    companySize: v.optional(v.string()),
+    domain: v.optional(v.string()),
+    memberFeatureAccess: v.optional(
+      v.object({
+        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+      }),
+    ),
+    adminFeatureAccess: v.optional(
+      v.object({
+        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+      }),
+    ),
+    ownerFeatureAccess: v.optional(
+      v.object({
+        agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        chats: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        team: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        invitations: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+        billing: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),
+      }),
+    ),
+    memberAccessSlugs: v.optional(v.array(v.string())),
+    ownerPermissions: v.optional(v.array(v.string())),
+    adminPermissions: v.optional(v.array(v.string())),
+    memberPermissions: v.optional(v.array(v.string())),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_ownerId", ["ownerId"])
+    .index("by_workosOrgId", ["workosOrgId"])
+    .index("by_ownerId_and_type", ["ownerId", "type"]),
+  teamMemberships: defineTable({
+    teamId: v.id("teams"),
+    userId: v.id("users"),
+    role: v.union(v.literal("owner"), v.literal("admin"), v.literal("member")),
+    createdAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_teamId", ["teamId"])
+    .index("by_userId_and_teamId", ["userId", "teamId"]),
+  // Local cache of WorkOS invitations, kept in sync via webhooks and API actions.
+  teamInvitationRecords: defineTable({
+    workosInvitationId: v.string(),
+    email: v.string(),
+    workosOrgId: v.optional(v.string()),
+    state: v.union(
+      v.literal("pending"),
+      v.literal("accepted"),
+      v.literal("expired"),
+      v.literal("revoked"),
+    ),
+    roleSlug: v.optional(v.string()),
+    inviterWorkosUserId: v.optional(v.string()),
+    acceptedWorkosUserId: v.optional(v.string()),
+    acceptedAt: v.optional(v.number()),
+    revokedAt: v.optional(v.number()),
+    expiresAt: v.optional(v.number()),
+    workosCreatedAt: v.string(),
+    workosUpdatedAt: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workosInvitationId", ["workosInvitationId"])
+    .index("by_workosOrgId", ["workosOrgId"])
+    .index("by_email", ["email"])
+    .index("by_email_and_state", ["email", "state"]),
   // Used for webhook idempotency. WorkOS may retry deliveries; dedupe on event.id.
   processedEvents: defineTable({
     eventId: v.string(),

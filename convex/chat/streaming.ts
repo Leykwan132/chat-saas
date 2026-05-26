@@ -89,14 +89,13 @@ export const sendMessage = mutation({
     enableCitations: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId } = await getAuthContext(ctx);
+    const { userId } = await getAuthContext(ctx);
     const agentDoc = await ctx.db.get(args.agentId);
     if (agentDoc === null) {
       throw new Error("Agent not found");
     }
 
-    const entityId = !orgId || orgId === "personal" ? userId : orgId;
-    const stripeInfo = await getPlanFromStripe(ctx, entityId);
+    const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
 
     if (!checkModelAccess(plan, agentDoc.model)) {
@@ -106,15 +105,14 @@ export const sendMessage = mutation({
     const deductCredits = isPlaygroundCreditsEnabled();
     if (deductCredits) {
       const creditCheck = await ctx.runQuery(internal.credits.internalCheckCredits, {
-        orgId: orgId,
-        modelId: agentDoc.model,
         workosUserId: userId,
+        modelId: agentDoc.model,
       });
       if (!creditCheck.ok) {
         if (creditCheck.reason === "insufficient_credits") {
           throw new Error("Insufficient credits to send this message");
         }
-        if (creditCheck.reason === "org_not_found" || creditCheck.reason === "user_not_found") {
+        if (creditCheck.reason === "user_not_found") {
           throw new Error("Billing account not found");
         }
         throw new Error("Selected model is not available");
@@ -200,9 +198,8 @@ export const generatePlaygroundResponseAsync = internalAction({
     );
 
     const usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
-      orgId: agent.orgId,
-      modelId: agent.model,
       workosUserId: args.billingUserId,
+      modelId: agent.model,
       skipDeduction: !args.deductCredits,
       conversationId: conv?._id,
       agentId: args.agentId,

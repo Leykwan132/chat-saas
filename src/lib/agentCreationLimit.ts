@@ -7,7 +7,7 @@ export function showAgentLimitToast(navigate: NavigateFunction) {
     icon: null,
     action: {
       label: 'Upgrade',
-      onClick: () => navigate('/workspace/account?section=plan'),
+      onClick: () => navigate('/workspace/settings?section=plan'),
     },
   });
 }

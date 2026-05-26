@@ -8,6 +8,7 @@ import {
   ensureActiveCreditPeriod,
   scopeFromUser,
 } from "./creditEntries";
+import { ensureUserAccount } from "./teamHelpers";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -52,6 +53,33 @@ export const currentUser = query({
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", identity.subject))
       .unique();
     if (!user) return null;
+
+    const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
+    return {
+      ...user,
+      plan: stripeInfo.plan,
+      stripeSubscriptionStatus: stripeInfo.status,
+    };
+  },
+});
+
+/** Creates the app user row on first login if webhooks haven't run yet. */
+export const ensureCurrentUser = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (identity === null) {
+      throw new Error("Not authenticated");
+    }
+
+    const userId = await ensureUserAccount(ctx, {
+      workosUserId: identity.subject,
+      email: identity.email ?? undefined,
+    });
+    const user = await ctx.db.get(userId);
+    if (user === null) {
+      throw new Error("User not found in database");
+    }
 
     const stripeInfo = await getPlanFromStripe(ctx, identity.subject);
     return {

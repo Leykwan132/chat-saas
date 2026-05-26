@@ -204,11 +204,10 @@ function BalanceCardSkeleton() {
 export function CreditUsageChart() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { organizationId, isLoading: isAuthLoading } = useAuth();
-  const billingOrgId = organizationId ?? null;
+  const { isLoading: isAuthLoading } = useAuth();
   const planAndUsage = useQuery(
     api.plans.getPlanAndUsage,
-    isAuthLoading ? 'skip' : { orgId: billingOrgId },
+    isAuthLoading ? 'skip' : {},
   );
 
   const [groupBy, setGroupBy] = useState<UsageGroupBy>('model');

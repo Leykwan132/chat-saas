@@ -1,114 +1,357 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalMutation, type ActionCtx } from "./_generated/server";
+import { api, internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import {
+  ensureOrganizationalTeam,
+  ensureTeamMembership,
+  getPersonalTeamForUser,
+  getTeamByWorkosOrgId,
+  getUserByWorkosId,
+  setActiveTeamForUser,
+} from "./teamHelpers";
+import { provisionOrganizationRoles } from "./orgRoles";
+import { WORKOS_OWNER_ROLE_SLUG } from "../shared/teamRoleCatalog";
+import {
+  type WorkOSOrganization,
+  workosRequest,
+} from "./workosClient";
 
-// Public action invoked from the post-signup onboarding screen.
-//
-// Creates a WorkOS Organization (the source of truth) and immediately attaches
-// the current user as an `admin` membership, then returns the new
-// organization id so the client can call `switchToOrganization` to mint a
-// fresh access token whose `org_id` claim points at the new org.
-//
-// The local Convex `organizations` and `users.members/admins` rows are NOT
-// written here — they're populated by `convex/workosWebhook.ts` when WorkOS
-// fires the `organization.created` and `organization_membership.created`
-// events. That keeps WorkOS as the single source of truth and avoids the
-// "primary write succeeded but webhook never arrived" drift class.
+function validateTeamName(name: string) {
+  const trimmedName = name.trim();
+  if (trimmedName.length === 0) {
+    throw new Error("Team name is required");
+  }
+  if (trimmedName.length > 80) {
+    throw new Error("Team name must be 80 characters or fewer");
+  }
+  return trimmedName;
+}
+
+function validateOptionalDomain(domain: string | undefined) {
+  const trimmedDomain = domain?.trim().toLowerCase();
+  if (trimmedDomain === undefined || trimmedDomain.length === 0) {
+    return undefined;
+  }
+
+  const isValidDomain = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(
+    trimmedDomain,
+  );
+  if (!isValidDomain) {
+    throw new Error(
+      "Domain looks invalid. Use a hostname like example.com (no protocol or path).",
+    );
+  }
+
+  return trimmedDomain;
+}
+
+async function assertCanManageOrganization(
+  ctx: ActionCtx,
+  teamId: Id<"teams">,
+) {
+  const team = await ctx.runQuery(api.teams.getTeamDetail, { teamId });
+  if (team === null) {
+    throw new Error("Team not found.");
+  }
+  if (team.type !== "organizational" || !team.workosOrgId) {
+    throw new Error("Only shared teams can be managed here.");
+  }
+  if (!team.isOwner) {
+    throw new Error("Only team owners can manage this organization.");
+  }
+  return team;
+}
+
+function primaryOrganizationDomain(org: WorkOSOrganization) {
+  return org.domains?.[0]?.domain ?? null;
+}
+
+async function createWorkOSTeam(
+  userId: string,
+  args: { name: string; domain?: string },
+): Promise<{ organizationId: string; name: string; domain?: string }> {
+  const trimmedName = validateTeamName(args.name);
+  const trimmedDomain = validateOptionalDomain(args.domain);
+
+  const orgBody: Record<string, unknown> = { name: trimmedName };
+  if (trimmedDomain) {
+    orgBody.domain_data = [{ domain: trimmedDomain, state: "pending" }];
+  }
+
+  const orgPayload = await workosRequest<WorkOSOrganization>("/organizations", {
+    method: "POST",
+    body: JSON.stringify(orgBody),
+  });
+  if (!orgPayload.id) {
+    throw new Error("Failed to create team.");
+  }
+  const organizationId = orgPayload.id;
+
+  await provisionOrganizationRoles(organizationId);
+
+  await workosRequest("/user_management/organization_memberships", {
+    method: "POST",
+    body: JSON.stringify({
+      user_id: userId,
+      organization_id: organizationId,
+      role_slug: WORKOS_OWNER_ROLE_SLUG,
+    }),
+  });
+
+  return {
+    organizationId,
+    name: orgPayload.name ?? trimmedName,
+    domain: trimmedDomain,
+  };
+}
+
+async function createTeamHandler(
+  ctx: ActionCtx,
+  args: {
+    name: string;
+    domain?: string;
+    industry?: string;
+    companySize?: string;
+  },
+): Promise<{ organizationId: string; name: string; teamId: string }> {
+  const { userId } = await getAuthContext(ctx);
+
+  const gate = await ctx.runQuery(api.teams.canCreateOrgTeam, {});
+  if (!gate.allowed) {
+    throw new Error(gate.reason ?? "You cannot create a team on your current plan.");
+  }
+
+  const result = await createWorkOSTeam(userId, args);
+
+  const teamId = await ctx.runMutation(internal.organizationsAdmin.persistCreatedTeam, {
+    workosOrgId: result.organizationId,
+    name: result.name,
+    workosUserId: userId,
+    industry: args.industry,
+    companySize: args.companySize,
+    domain: result.domain,
+  });
+
+  return { ...result, teamId };
+}
+
+export const persistCreatedTeam = internalMutation({
+  args: {
+    workosOrgId: v.string(),
+    name: v.string(),
+    workosUserId: v.string(),
+    industry: v.optional(v.string()),
+    companySize: v.optional(v.string()),
+    domain: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getUserByWorkosId(ctx, args.workosUserId);
+    if (user === null) {
+      throw new Error("User not found");
+    }
+
+    const now = Date.now();
+    let org = await ctx.db
+      .query("organizations")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
+      .unique();
+
+    if (org === null) {
+      const orgId = await ctx.db.insert("organizations", {
+        workosOrgId: args.workosOrgId,
+        name: args.name,
+        members: [user._id],
+        admins: [user._id],
+        plan: "free",
+        credits: 500,
+        createdAt: now,
+        updatedAt: now,
+      });
+      org = (await ctx.db.get(orgId))!;
+    } else {
+      const members = org.members.includes(user._id)
+        ? org.members
+        : [...org.members, user._id];
+      const admins = org.admins.includes(user._id)
+        ? org.admins
+        : [...org.admins, user._id];
+      await ctx.db.patch(org._id, {
+        name: args.name,
+        members,
+        admins,
+        updatedAt: now,
+      });
+      org = (await ctx.db.get(org._id))!;
+    }
+
+    const teamId = await ensureOrganizationalTeam(ctx, {
+      workosOrgId: args.workosOrgId,
+      name: args.name,
+      ownerUserId: user._id,
+    });
+
+    await ctx.db.patch(teamId, {
+      industry: args.industry,
+      companySize: args.companySize,
+      domain: args.domain,
+      updatedAt: now,
+    });
+
+    await ensureTeamMembership(ctx, {
+      teamId,
+      userId: user._id,
+      role: "owner",
+    });
+
+    await setActiveTeamForUser(ctx, user, teamId);
+
+    return teamId;
+  },
+});
+
+export const createTeamForCurrentUser = action({
+  args: {
+    name: v.string(),
+    domain: v.optional(v.string()),
+    industry: v.optional(v.string()),
+    companySize: v.optional(v.string()),
+  },
+  handler: createTeamHandler,
+});
+
+/** @deprecated Use createTeamForCurrentUser */
 export const createOrganizationForCurrentUser = action({
   args: {
     name: v.string(),
     domain: v.optional(v.string()),
   },
-  handler: async (ctx, args): Promise<{ organizationId: string; name: string }> => {
-    const { userId } = await getAuthContext(ctx);
+  handler: createTeamHandler,
+});
 
-    const apiKey = process.env.WORKOS_API_KEY;
-    if (!apiKey) {
-      throw new Error(
-        "WORKOS_API_KEY is not configured. Set it with `bunx convex env set WORKOS_API_KEY <value>`.",
-      );
+export const getOrganizationForTeam = action({
+  args: {
+    teamId: v.id("teams"),
+  },
+  handler: async (ctx, args) => {
+    const team = await assertCanManageOrganization(ctx, args.teamId);
+    const org = await workosRequest<WorkOSOrganization>(
+      `/organizations/${team.workosOrgId}`,
+    );
+
+    return {
+      name: org.name,
+      domain: team.domain ?? primaryOrganizationDomain(org) ?? "",
+    };
+  },
+});
+
+export const updateOrganizationForTeam = action({
+  args: {
+    teamId: v.id("teams"),
+    name: v.string(),
+    domain: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const team = await assertCanManageOrganization(ctx, args.teamId);
+    const trimmedName = validateTeamName(args.name);
+    const trimmedDomain = validateOptionalDomain(args.domain);
+
+    const body: Record<string, unknown> = { name: trimmedName };
+    if (trimmedDomain) {
+      body.domain_data = [{ domain: trimmedDomain, state: "pending" }];
     }
 
-    const trimmedName = args.name.trim();
-    if (trimmedName.length === 0) {
-      throw new Error("Organization name is required");
-    }
-    if (trimmedName.length > 80) {
-      throw new Error("Organization name must be 80 characters or fewer");
-    }
-
-    const trimmedDomain = args.domain?.trim().toLowerCase();
-    if (trimmedDomain !== undefined && trimmedDomain.length > 0) {
-      const isValidDomain = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(
-        trimmedDomain,
-      );
-      if (!isValidDomain) {
-        throw new Error(
-          "Domain looks invalid. Use a hostname like example.com (no protocol or path).",
-        );
-      }
-    }
-
-    const orgBody: Record<string, unknown> = { name: trimmedName };
-    if (trimmedDomain && trimmedDomain.length > 0) {
-      orgBody.domain_data = [{ domain: trimmedDomain, state: "pending" }];
-    }
-
-    const orgRes = await fetch("https://api.workos.com/organizations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(orgBody),
-    });
-
-    const orgText = await orgRes.text();
-    let orgPayload: { id?: string; name?: string; message?: string };
-    try {
-      orgPayload = orgText.length ? JSON.parse(orgText) : {};
-    } catch {
-      throw new Error(
-        `WorkOS createOrganization returned non-JSON (status ${orgRes.status}): ${orgText.slice(0, 200)}`,
-      );
-    }
-    if (!orgRes.ok || !orgPayload.id) {
-      const reason = orgPayload.message ?? `HTTP ${orgRes.status}`;
-      throw new Error(`Failed to create WorkOS organization: ${reason}`);
-    }
-    const organizationId = orgPayload.id;
-
-    const membershipRes = await fetch(
-      "https://api.workos.com/user_management/organization_memberships",
+    const org = await workosRequest<WorkOSOrganization>(
+      `/organizations/${team.workosOrgId}`,
       {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          organization_id: organizationId,
-          role_slug: "admin",
-        }),
+        method: "PUT",
+        body: JSON.stringify(body),
       },
     );
 
-    if (!membershipRes.ok) {
-      const text = await membershipRes.text();
-      let parsed: { message?: string } = {};
-      try {
-        parsed = text.length ? JSON.parse(text) : {};
-      } catch {
-        // ignore
-      }
-      const reason = parsed.message ?? `HTTP ${membershipRes.status}`;
-      // The org exists in WorkOS but the user couldn't be attached. Surface
-      // the failure so the UI can show an actionable error; the org will
-      // appear in the admin's WorkOS dashboard and can be cleaned up there.
-      throw new Error(`Created organization but failed to add you as admin: ${reason}`);
+    await ctx.runMutation(internal.organizationsAdmin.persistUpdatedOrganization, {
+      workosOrgId: team.workosOrgId!,
+      name: org.name ?? trimmedName,
+      domain: trimmedDomain ?? null,
+    });
+
+    return {
+      name: org.name ?? trimmedName,
+      domain: trimmedDomain ?? "",
+    };
+  },
+});
+
+export const persistUpdatedOrganization = internalMutation({
+  args: {
+    workosOrgId: v.string(),
+    name: v.string(),
+    domain: v.union(v.string(), v.null()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const org = await ctx.db
+      .query("organizations")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
+      .unique();
+
+    if (org !== null) {
+      await ctx.db.patch(org._id, {
+        name: args.name,
+        updatedAt: now,
+      });
     }
 
-    return { organizationId, name: orgPayload.name ?? trimmedName };
+    const team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);
+    if (team !== null) {
+      await ctx.db.patch(team._id, {
+        name: args.name,
+        domain: args.domain ?? undefined,
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+export const removeOrganizationLocally = internalMutation({
+  args: {
+    workosOrgId: v.string(),
+    workosUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await getUserByWorkosId(ctx, args.workosUserId);
+    if (user === null) {
+      throw new Error("User not found");
+    }
+
+    const org = await ctx.db
+      .query("organizations")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
+      .unique();
+
+    if (org !== null) {
+      await ctx.db.delete(org._id);
+    }
+
+    const team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);
+    if (team !== null) {
+      const memberships = await ctx.db
+        .query("teamMemberships")
+        .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+        .collect();
+      for (const membership of memberships) {
+        await ctx.db.delete(membership._id);
+      }
+      await ctx.db.delete(team._id);
+
+      if (user.activeTeamId === team._id) {
+        const personalTeam = await getPersonalTeamForUser(ctx, user._id);
+        if (personalTeam !== null) {
+          await setActiveTeamForUser(ctx, user, personalTeam._id);
+        }
+      }
+    }
   },
 });

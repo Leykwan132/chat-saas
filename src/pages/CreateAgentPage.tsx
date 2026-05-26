@@ -110,10 +110,8 @@ export default function CreateAgentPage() {
 
 function CreateAgentForm() {
   const navigate = useNavigate();
-  const { organizationId } = useAuth();
-  const activeOrgId = organizationId ?? null;
   const createAgent = useMutation(api.agents.create);
-  const enabledModels = useQuery(api.llm.modelPricing.listEnabled, { orgId: activeOrgId });
+  const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');
@@ -154,7 +152,6 @@ function CreateAgentForm() {
               model,
               systemPrompt: AGENT_TEMPLATES[templateKey].prompt,
               templateKey,
-              orgId: activeOrgId,
             });
             setCreatedAgentId(agentId);
             setCreatingPhase(3);
