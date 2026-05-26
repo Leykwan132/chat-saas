@@ -26,14 +26,9 @@ export default function AutomationsIndexPage() {
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
       <header className="border-b border-border pb-6">
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Automations
         </h1>
-        <p className="m-0 mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Choose an automation to configure. Broadcast sends WhatsApp template
-          messages to your audience; Follow up will support scheduled nudges in
-          a future release.
-        </p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2">

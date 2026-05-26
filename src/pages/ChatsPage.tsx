@@ -27,12 +27,12 @@ import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { ChatRow, type ConversationPlatform } from '@/components/ChatRow';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -174,7 +174,8 @@ export default function ChatsPage() {
   const demoSeedWhatsappRef = useRef(false);
 
   const markRead = useMutation(api.conversations.markRead);
-  const updateConversationAssignee = useMutation(api.conversations.setAssignee);
+  const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
+  const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
   const addConversationTag = useMutation(api.conversations.addConversationTag);
   const removeConversationTag = useMutation(api.conversations.removeConversationTag);
   const teamUsers = useQuery(api.users.getUsers, {});
@@ -387,21 +388,29 @@ export default function ChatsPage() {
 
 
 
-  const handleAssignConversation = async (next: { kind: 'ai' } | { kind: 'user'; workosUserId: string }) => {
+  const handleAiToggle = async (enabled: boolean) => {
     if (!selectedConversationId) return;
     setAssigneeSaving(true);
     try {
-      if (next.kind === 'ai') {
-        await updateConversationAssignee({
-          conversationId: selectedConversationId,
-          assignee: { kind: 'ai' },
-        });
-      } else {
-        await updateConversationAssignee({
-          conversationId: selectedConversationId,
-          assignee: { kind: 'user', workosUserId: next.workosUserId },
-        });
-      }
+      await setConversationAiEnabled({
+        conversationId: selectedConversationId,
+        enabled,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update AI replies');
+    } finally {
+      setAssigneeSaving(false);
+    }
+  };
+
+  const handleLeadOwnerChange = async (workosUserId: string) => {
+    if (!selectedConversationId) return;
+    setAssigneeSaving(true);
+    try {
+      await setConversationLeadOwner({
+        conversationId: selectedConversationId,
+        workosUserId,
+      });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not update assignee');
     } finally {
@@ -846,94 +855,74 @@ export default function ChatsPage() {
                     <div className="px-4 pb-3 pt-4">
                       <div className="mb-2 flex items-center gap-2">
                         <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="text-sm font-semibold text-foreground">Assignee</span>
+                        <span className="text-sm font-semibold text-foreground">Assignment</span>
                       </div>
-                      {can(Permission.CHATS_ASSIGN) ? (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              disabled={assigneeSaving}
-                              className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40 disabled:cursor-not-allowed"
-                              aria-label="Who responds in this conversation"
-                            >
-                              <span className="flex min-w-0 flex-1 items-center gap-2">
-                                {selectedConversation.assignToAiAgent ? (
-                                  <>
-                                    <Bot className="size-4 shrink-0 text-muted-foreground" />
-                                    <span className="truncate text-foreground">AI Agent</span>
-                                  </>
-                                ) : (
-                                  <>
+                      {selectedConversation.leadAssignmentFallback ? (
+                        <p className="mb-2 text-xs text-amber-600 dark:text-amber-500">
+                          Outside schedule
+                        </p>
+                      ) : null}
+                      <div className="flex flex-col gap-3">
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
+                          <label htmlFor="ai-replies-switch-chat" className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
+                            <Bot className="size-4 text-muted-foreground" />
+                            AI replies
+                          </label>
+                          <Switch
+                            id="ai-replies-switch-chat"
+                            checked={selectedConversation.assignToAiAgent}
+                            onCheckedChange={(checked) => void handleAiToggle(checked)}
+                            disabled={assigneeSaving || !can(Permission.CHATS_ASSIGN)}
+                          />
+                        </div>
+                        <div>
+                          <p className="mb-1.5 text-xs text-muted-foreground">Assigned to</p>
+                          {can(Permission.CHATS_ASSIGN) ? (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  disabled={assigneeSaving}
+                                  className="h-auto min-h-10 w-full cursor-pointer justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none hover:bg-muted/40"
+                                >
+                                  <span className="flex min-w-0 flex-1 items-center gap-2">
                                     <User className="size-4 shrink-0 text-muted-foreground" />
                                     <span className="truncate text-foreground">
-                                      {assignedMemberLabel ?? 'Teammate'}
+                                      {assignedMemberLabel ?? 'Select teammate'}
                                     </span>
-                                  </>
-                                )}
-                              </span>
-                              <ChevronDown className="size-4 shrink-0 opacity-60" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="start" className="min-w-[12rem] max-w-[calc(100vw-3rem)]">
-                            <DropdownMenuGroup>
-                              <DropdownMenuItem
-                                className="cursor-pointer gap-2"
-                                onSelect={() => void handleAssignConversation({ kind: 'ai' })}
-                              >
-                                <Bot className="size-4 shrink-0" />
-                                AI Agent
-                              </DropdownMenuItem>
-                            </DropdownMenuGroup>
-                            {teamUsers !== undefined && teamUsers.length > 0 ? (
-                              <>
-                                <DropdownMenuSeparator />
+                                  </span>
+                                  <ChevronDown className="size-4 shrink-0 opacity-60" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start" className="min-w-[12rem]">
                                 <DropdownMenuGroup>
-                                  {teamUsers.map((u) => (
+                                  {(teamUsers ?? []).map((u) => (
                                     <DropdownMenuItem
                                       key={u._id}
                                       className="cursor-pointer gap-2"
-                                      onSelect={() =>
-                                        void handleAssignConversation({
-                                          kind: 'user',
-                                          workosUserId: u.workosUserId,
-                                        })
-                                      }
+                                      onSelect={() => void handleLeadOwnerChange(u.workosUserId)}
                                     >
                                       <User className="size-4 shrink-0 text-muted-foreground" />
                                       {formatOrgMemberDisplayName(u)}
                                     </DropdownMenuItem>
                                   ))}
                                 </DropdownMenuGroup>
-                              </>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled
-                          className="h-auto min-h-10 w-full cursor-default justify-between gap-2 rounded-md border-border bg-background px-3 py-2.5 text-left text-sm font-normal shadow-none disabled:opacity-100"
-                        >
-                          <span className="flex min-w-0 flex-1 items-center gap-2">
-                            {selectedConversation.assignToAiAgent ? (
-                              <>
-                                <Bot className="size-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate text-foreground">AI Agent</span>
-                              </>
-                            ) : (
-                              <>
-                                <User className="size-4 shrink-0 text-muted-foreground" />
-                                <span className="truncate text-foreground">
-                                  {assignedMemberLabel ?? 'Teammate'}
-                                </span>
-                              </>
-                            )}
-                          </span>
-                        </Button>
-                      )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              disabled
+                              className="h-auto min-h-10 w-full justify-start gap-2 px-3 py-2.5 text-sm font-normal"
+                            >
+                              <User className="size-4 shrink-0 text-muted-foreground" />
+                              {assignedMemberLabel ?? 'Teammate'}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
                     <Separator />
@@ -1220,12 +1209,9 @@ function ChatsPageHeader({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-start justify-between', className)}>
       <div>
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Messages
         </h1>
-        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-foreground-muted)' }}>
-          Conversations from your connected channels
-        </p>
       </div>
     </div>
   );

@@ -27,6 +27,9 @@ import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.t
 import AutomationsIndexPage from './pages/AutomationsIndexPage.tsx'
 import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
 import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
+import SchedulePage from './pages/SchedulePage.tsx'
+import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
+import InstructionsPage from './pages/InstructionsPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
@@ -165,6 +168,9 @@ function RootLayout() {
               <Route path="automations/follow-up" element={<AutomationsFollowUpPage />} />
               <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
+              <Route path="schedule" element={<SchedulePage />} />
+              <Route path="lead-assignment" element={<LeadAssignmentPage />} />
+              <Route path="instructions" element={<InstructionsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="account" element={<Navigate to="../settings" replace />} />

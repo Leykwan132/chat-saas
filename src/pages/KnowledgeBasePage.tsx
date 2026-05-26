@@ -142,8 +142,7 @@ export default function KnowledgeBasePage() {
       <div className="flex w-full flex-col gap-6">
         <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
           <div>
-            <h1 className="m-0 text-3xl font-semibold tracking-tight">Knowledge Base</h1>
-            <p className="m-0 mt-1 text-sm text-muted-foreground">Add and manage knowledge sources for your agent.</p>
+            <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Knowledge Base</h1>
           </div>
           <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
             Test in playground
@@ -151,13 +150,12 @@ export default function KnowledgeBasePage() {
           </Button>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[220px_1fr_220px]">
+        <div className="grid gap-6 lg:grid-cols-[252px_1fr_220px]">
           {/* LEFT: Nav tabs */}
-          <div className="flex flex-col gap-6">
-            {/* Reference Knowledge container */}
-            <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-semibold text-muted-foreground px-3">
-                Reference Knowledge
+          <div className="flex flex-col gap-8">
+            <div className="flex flex-col gap-2.5">
+              <span className="px-3 text-base font-semibold text-muted-foreground">
+                Sources
               </span>
               <nav className="flex flex-col gap-1">
                 {KNOWLEDGE_TABS.map(({ type: tabType, label, icon: Icon }) => {
@@ -167,13 +165,13 @@ export default function KnowledgeBasePage() {
                       key={tabType}
                       onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/${tabType}`)}
                       className={cn(
-                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left w-full',
+                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-medium transition-colors',
                         isActive
-                          ? 'bg-secondary text-secondary-foreground font-semibold'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                          ? 'bg-secondary font-semibold text-secondary-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                       )}
                     >
-                      <Icon className="size-4 shrink-0" />
+                      <Icon className="size-[18px] shrink-0" />
                       {label}
                     </button>
                   );
@@ -181,9 +179,8 @@ export default function KnowledgeBasePage() {
               </nav>
             </div>
 
-            {/* Send media section */}
-            <div className="flex flex-col gap-2 mt-2">
-              <span className="text-[11px] font-semibold text-muted-foreground px-3">
+            <div className="flex flex-col gap-2.5">
+              <span className="px-3 text-base font-semibold text-muted-foreground">
                 Send Media
               </span>
               <nav className="flex flex-col gap-1">
@@ -194,13 +191,13 @@ export default function KnowledgeBasePage() {
                       key={tabType}
                       onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/${tabType}`)}
                       className={cn(
-                        'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors text-left w-full',
+                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-medium transition-colors',
                         isActive
-                          ? 'bg-secondary text-secondary-foreground font-semibold'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+                          ? 'bg-secondary font-semibold text-secondary-foreground'
+                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
                       )}
                     >
-                      <Icon className="size-4 shrink-0" />
+                      <Icon className="size-[18px] shrink-0" />
                       {label}
                     </button>
                   );

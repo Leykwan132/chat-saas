@@ -32,12 +32,9 @@ export default function AnalyticsPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', width: '100%' }}>
       {/* Header */}
       <div>
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Analytics
         </h1>
-        <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-foreground-muted)' }}>
-          Monitor sentiment trends and discover common conversation topics
-        </p>
       </div>
 
       {/* Overview cards */}

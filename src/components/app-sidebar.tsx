@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen, CalendarDays, UserRoundCheck, Gamepad2 } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,7 @@ type NavItem = {
 
 function getNavItems(agentId: string): {
   engagement: NavItem[];
+  people: NavItem[];
   configuration: NavItem[];
   insights: NavItem[];
 } {
@@ -38,8 +39,13 @@ function getNavItems(agentId: string): {
       { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true, requiredPermission: Permission.CHATS_READ },
       { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers', requiredPermission: Permission.CUSTOMERS_READ },
     ],
+    people: [
+      { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
+      { to: `/dashboard/${agentId}/schedule`, icon: CalendarDays, label: 'Schedule', requiredPermission: Permission.ROUTING_READ },
+    ],
     configuration: [
-      { to: `/dashboard/${agentId}/playground`, icon: Bot, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
+      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
+      { to: `/dashboard/${agentId}/instructions`, icon: Bot, label: 'Instructions', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
       { to: `/dashboard/${agentId}/automations`, icon: Zap, label: 'Automations', requiredPermission: Permission.AUTOMATION_READ },
@@ -65,6 +71,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   };
 
   const engagementItems = filterItems(navItems.engagement);
+  const peopleItems = filterItems(navItems.people);
   const configurationItems = filterItems(navItems.configuration);
   const insightsItems = filterItems(navItems.insights);
 
@@ -142,6 +149,34 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                 {configurationItems.map((item) => (
                   <SidebarMenuItem key={item.to}>
                     <NavLink to={item.to} end={item.label === 'Playground'}>
+                      {({ isActive }) => (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                        >
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {peopleItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>People</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {peopleItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to} end>
                       {({ isActive }) => (
                         <SidebarMenuButton
                           asChild

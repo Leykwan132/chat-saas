@@ -307,6 +307,7 @@ export default defineSchema({
     ),
     lastError: v.optional(v.string()),
     connectedByUserId: v.string(),
+    defaultAgentId: v.optional(v.id("agents")),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -359,6 +360,7 @@ export default defineSchema({
     assignedAgentId: v.optional(v.id("agents")),
     assignedUserId: v.optional(v.string()),
     assignToAiAgent: v.boolean(),
+    leadAssignmentFallback: v.optional(v.boolean()),
     threadId: v.string(),
     lastMessageAt: v.number(),
     /** Last inbound (customer) message time — used for Meta messaging window checks. */
@@ -545,4 +547,51 @@ export default defineSchema({
     creditsGranted: v.number(),
     processedAt: v.number(),
   }).index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
+  leadAssignmentSettings: defineTable({
+    agentId: v.id("agents"),
+    method: v.union(
+      v.literal("balanced"),
+      v.literal("round_robin"),
+      v.literal("priority"),
+      v.literal("tags"),
+    ),
+    aiEnabledOnInbound: v.boolean(),
+    aiWhenOutsideSchedule: v.optional(v.boolean()),
+    tagRules: v.optional(
+      v.array(
+        v.object({
+          tag: v.string(),
+          workosUserId: v.string(),
+        }),
+      ),
+    ),
+    lastAssignedWorkosUserId: v.optional(v.string()),
+    lastAssignedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  }).index("by_agentId", ["agentId"]),
+  userSchedules: defineTable({
+    agentId: v.id("agents"),
+    workosUserId: v.string(),
+    mode: v.union(v.literal("manual"), v.literal("scheduled")),
+    manualStatus: v.union(v.literal("available"), v.literal("away")),
+    timezone: v.string(),
+    enabled: v.boolean(),
+    assignmentPriority: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_agentId_and_workosUserId", ["agentId", "workosUserId"]),
+  userShifts: defineTable({
+    userScheduleId: v.id("userSchedules"),
+    dayOfWeek: v.number(),
+    startMinutes: v.number(),
+    endMinutes: v.number(),
+  }).index("by_userScheduleId", ["userScheduleId"]),
+  userTimeOff: defineTable({
+    userScheduleId: v.id("userSchedules"),
+    startAt: v.number(),
+    endAt: v.number(),
+    label: v.optional(v.string()),
+  }).index("by_userScheduleId", ["userScheduleId"]),
 });

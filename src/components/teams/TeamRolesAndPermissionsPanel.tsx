@@ -266,6 +266,7 @@ function PermissionsListEditor({
       'Chats & Customers': [],
       'AI Agent': [],
       'Team & Billing': [],
+      People: [],
       'WorkOS Widgets': [],
     };
     CONSOLIDATED_ITEMS.forEach((item) => {

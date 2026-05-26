@@ -16,6 +16,8 @@ import {
   INBOX_ORDER_SPACER_TEXT,
   type InboxOutboundMeta,
 } from "./inboxMessageMapping";
+import { applyInboundLeadRouting, isAnyoneOnSchedule } from "../leadRouting/assign";
+import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -580,6 +582,7 @@ async function upsertInboxConversation(
     .unique();
 
   const now = Date.now();
+  const channel = await ctx.db.get(args.channelId);
 
   if (existing === null) {
     const threadId = await createThreadForConversation(ctx, {
@@ -588,6 +591,26 @@ async function upsertInboxConversation(
       contactAddress: args.contactAddress,
       service: args.service,
     });
+
+    let routingAgentId = channel?.defaultAgentId ?? args.assignedAgentId;
+    if (routingAgentId === undefined) {
+      const agents = await ctx.db
+        .query("agents")
+        .withIndex("by_orgId", (q) => q.eq("orgId", args.orgId))
+        .collect();
+      if (agents.length === 1) {
+        routingAgentId = agents[0]!._id;
+      }
+    }
+
+    let assignToAiAgent = true;
+    if (routingAgentId !== undefined) {
+      const settings = await getOrCreateLeadAssignmentSettings(ctx, routingAgentId);
+      assignToAiAgent = settings.aiEnabledOnInbound;
+      if (settings.aiWhenOutsideSchedule && !(await isAnyoneOnSchedule(ctx, routingAgentId, now))) {
+        assignToAiAgent = true;
+      }
+    }
 
     const conversationId = await ctx.db.insert("conversations", {
       orgId: args.orgId,
@@ -599,8 +622,8 @@ async function upsertInboxConversation(
       customerId: args.customerId,
       status: "open",
       tags: [],
-      assignToAiAgent: true,
-      assignedAgentId: args.assignedAgentId,
+      assignToAiAgent,
+      assignedAgentId: routingAgentId,
       threadId,
       lastMessageAt: args.lastMessageAt,
       lastMessagePreview: args.preview,
@@ -609,6 +632,22 @@ async function upsertInboxConversation(
       createdAt: now,
       updatedAt: now,
     });
+
+    if (routingAgentId !== undefined && channel !== null) {
+      await applyInboundLeadRouting(ctx, {
+        conversationId,
+        orgId: args.orgId,
+        agentId: routingAgentId,
+        service: args.service,
+        channelConnectedByUserId: channel.connectedByUserId,
+      });
+    } else if (channel !== null) {
+      await ctx.db.patch(conversationId, {
+        assignedUserId: channel.connectedByUserId,
+        leadAssignmentFallback: true,
+        updatedAt: now,
+      });
+    }
 
     return { conversationId, threadId, isNew: true };
   }

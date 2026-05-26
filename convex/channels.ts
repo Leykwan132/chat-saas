@@ -43,6 +43,55 @@ export const listForCurrentOrg = query({
   },
 });
 
+export const setDefaultAgentId = mutation({
+  args: {
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
+    const channel = await ctx.db.get(args.channelId);
+    if (channel === null || channel.orgId !== channelOrgId) {
+      throw new Error("Channel not found");
+    }
+    const agent = await ctx.db.get(args.agentId);
+    if (agent === null || agent.orgId !== channelOrgId) {
+      throw new Error("Agent not found");
+    }
+    await ctx.db.patch(args.channelId, {
+      defaultAgentId: args.agentId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const ensureDefaultAgentId = mutation({
+  args: {
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
+    const channel = await ctx.db.get(args.channelId);
+    if (channel === null || channel.orgId !== channelOrgId) {
+      return;
+    }
+    if (channel.defaultAgentId !== undefined) {
+      return;
+    }
+    const agent = await ctx.db.get(args.agentId);
+    if (agent === null || agent.orgId !== channelOrgId) {
+      return;
+    }
+    await ctx.db.patch(args.channelId, {
+      defaultAgentId: args.agentId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 // Returns only currently-connected channel rows. Used by the Chats page to
 // decide whether to render the "no channels connected" empty state.
 export const getConnectedForCurrentOrg = query({

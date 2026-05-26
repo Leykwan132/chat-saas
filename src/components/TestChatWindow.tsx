@@ -2,7 +2,8 @@ import { useEffect, useState, useRef, useCallback, isValidElement, cloneElement 
 import { useMutation, useQuery } from 'convex/react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { Bot, RotateCw, Maximize2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Bot, RotateCw, Maximize2, RefreshCw } from 'lucide-react';
 import {
   extractMediaKeys,
   stripMediaMarkers,
@@ -250,9 +251,17 @@ function AnimatedBotIcon({ isAnimating }: { isAnimating: boolean }) {
 export function TestChatWindow({
   agentId,
   threadId,
+  agentName,
+  indexingStatus,
+  isCheckingStatus,
+  onCheckStatus,
 }: {
   agentId: Id<"agents">;
   threadId: string | undefined;
+  agentName?: string;
+  indexingStatus?: { isIndexing: boolean; queued: number; running: number } | null;
+  isCheckingStatus?: boolean;
+  onCheckStatus?: () => void;
 }) {
   const navigate = useNavigate();
   const [, setConversationId] =
@@ -373,6 +382,7 @@ export function TestChatWindow({
   };
 
   const isConversationLoading = !threadId || status === "LoadingFirstPage";
+  const displayName = agentName?.trim() || "your agent";
 
   const renderMessages = () => {
     if (isConversationLoading) {
@@ -392,8 +402,8 @@ export function TestChatWindow({
         <ConversationContent>
           {messages.length === 0 ? (
             <ConversationEmptyState
-              title="Chat with your agent"
-              description="Send a message to test your agent."
+              title={`Chat with ${displayName}`}
+              description={`Send a message to test ${displayName}.`}
             />
           ) : (
             messages.map((message) => {
@@ -491,12 +501,48 @@ export function TestChatWindow({
   return (
     <>
       <div className="w-full min-w-0 max-w-full">
-        <div className="flex h-[694px] w-full min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm mt-4">
+        <div className="flex h-[calc(100vh-220px)] min-h-[600px] w-full min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm mt-4">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold">Test your agent</span>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[280px]">
+                {agentName?.trim() || "Test your agent"}
+              </span>
+
+              {/* Minimal Status Indicator */}
+              {onCheckStatus && (
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium bg-muted/40 border border-border/50 px-2.5 py-0.5 rounded-full select-none">
+                  {isCheckingStatus ? (
+                    <>
+                      <span className="size-1.5 rounded-full bg-zinc-400 animate-pulse"></span>
+                      <span>Updating…</span>
+                    </>
+                  ) : indexingStatus?.isIndexing ? (
+                    <>
+                      <span className="relative flex size-1.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full size-1.5 bg-amber-500"></span>
+                      </span>
+                      <span>Training ({indexingStatus.queued})</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="size-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span>Ready</span>
+                    </>
+                  )}
+                  <button
+                    onClick={() => onCheckStatus()}
+                    disabled={isCheckingStatus}
+                    className="ml-1 cursor-pointer text-muted-foreground/60 hover:text-muted-foreground disabled:opacity-50 flex items-center justify-center"
+                    title="Refresh training status"
+                  >
+                    <RefreshCw className={cn("size-2.5", isCheckingStatus && "animate-spin")} />
+                  </button>
+                </div>
+              )}
             </div>
+
             <div className="flex items-center gap-1">
               <Button
                 type="button"
@@ -562,7 +608,7 @@ export function TestChatWindow({
         >
           <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
             <DialogTitle className="text-sm font-semibold">
-              Test your agent
+              {agentName?.trim() || "Test your agent"}
             </DialogTitle>
           </div>
           <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">

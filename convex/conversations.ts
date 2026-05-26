@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { internalQuery, mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query, type MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { updateThreadMetadata, getThreadMetadata } from "@convex-dev/agent";
@@ -119,7 +119,7 @@ export const ensureAssignedAgent = mutation({
   },
 });
 
-// Who owns outbound replies: `assignToAiAgent` + optional human on `assignedUserId`.
+// Legacy shim — prefer setConversationAiEnabled / setConversationLeadOwner.
 export const setAssignee = mutation({
   args: {
     conversationId: v.id("conversations"),
@@ -129,46 +129,82 @@ export const setAssignee = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    const conv = await ctx.db.get(args.conversationId);
-    if (conv === null || conv.orgId !== orgId) {
-      throw new Error("Conversation not found");
-    }
-
     if (args.assignee.kind === "ai") {
-      await ctx.db.patch(args.conversationId, {
-        assignToAiAgent: true,
-        assignedUserId: undefined,
-        updatedAt: Date.now(),
-      });
+      await setConversationAiEnabledHandler(ctx, args.conversationId, true);
       return;
     }
-
-    const { workosUserId } = args.assignee;
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-      .unique();
-    if (org === null) {
-      throw new Error("Organization not found");
-    }
-
-    const userRow = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
-      .unique();
-    if (userRow === null || !org.members.includes(userRow._id)) {
-      throw new Error("User is not a member of this organization");
-    }
-
-    await ctx.db.patch(args.conversationId, {
-      assignToAiAgent: false,
-      assignedUserId: workosUserId,
-      updatedAt: Date.now(),
-    });
+    await setConversationLeadOwnerHandler(ctx, args.conversationId, args.assignee.workosUserId);
   },
 });
+
+export const setConversationAiEnabled = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    enabled: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await setConversationAiEnabledHandler(ctx, args.conversationId, args.enabled);
+  },
+});
+
+export const setConversationLeadOwner = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    workosUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await setConversationLeadOwnerHandler(ctx, args.conversationId, args.workosUserId);
+  },
+});
+
+async function setConversationAiEnabledHandler(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+  enabled: boolean,
+) {
+  const { orgId } = await getAuthContext(ctx);
+  const conv = await ctx.db.get(conversationId);
+  if (conv === null || conv.orgId !== orgId) {
+    throw new Error("Conversation not found");
+  }
+  await ctx.db.patch(conversationId, {
+    assignToAiAgent: enabled,
+    updatedAt: Date.now(),
+  });
+}
+
+async function setConversationLeadOwnerHandler(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+  workosUserId: string,
+) {
+  const { orgId } = await getAuthContext(ctx);
+  const conv = await ctx.db.get(conversationId);
+  if (conv === null || conv.orgId !== orgId) {
+    throw new Error("Conversation not found");
+  }
+
+  const org = await ctx.db
+    .query("organizations")
+    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+    .unique();
+  if (org === null) {
+    throw new Error("Organization not found");
+  }
+
+  const userRow = await ctx.db
+    .query("users")
+    .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+    .unique();
+  if (userRow === null || !org.members.includes(userRow._id)) {
+    throw new Error("User is not a member of this organization");
+  }
+
+  await ctx.db.patch(conversationId, {
+    assignedUserId: workosUserId,
+    updatedAt: Date.now(),
+  });
+}
 
 export const internalResolveAgentId = internalQuery({
   args: {

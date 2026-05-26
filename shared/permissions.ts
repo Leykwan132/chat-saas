@@ -20,6 +20,9 @@ export const Permission = {
   CHATS_REPLY: 'chats:reply',
   CHATS_ASSIGN: 'chats:assign',
   CHATS_TAG: 'chats:tag',
+  // People routing (schedule + lead assignment)
+  ROUTING_READ: 'routing:read',
+  ROUTING_MANAGE: 'routing:manage',
   // Customers
   CUSTOMERS_READ: 'customers:read',
   CUSTOMERS_MANAGE: 'customers:manage',
@@ -59,6 +62,8 @@ export const PERMISSION_NAMES: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Reply to Chats',
   [Permission.CHATS_ASSIGN]: 'Assign Chats',
   [Permission.CHATS_TAG]: 'Tag Chats & Labels',
+  [Permission.ROUTING_READ]: 'View Schedule & Lead Assignment',
+  [Permission.ROUTING_MANAGE]: 'Manage Schedule & Lead Assignment',
   [Permission.CUSTOMERS_READ]: 'View Customer List',
   [Permission.CUSTOMERS_MANAGE]: 'Manage Customer Details',
   [Permission.TEAM_READ]: 'View Team Members',
@@ -87,6 +92,8 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Access to send replies to customer chats.',
   [Permission.CHATS_ASSIGN]: 'Access to reassign conversations to team members.',
   [Permission.CHATS_TAG]: 'Access to add or remove tags and labels on conversations.',
+  [Permission.ROUTING_READ]: 'Access to view schedule and lead assignment settings.',
+  [Permission.ROUTING_MANAGE]: 'Access to edit schedule and lead assignment settings.',
   [Permission.CUSTOMERS_READ]: 'Access to view the customer directory.',
   [Permission.CUSTOMERS_MANAGE]: 'Access to create, edit, or delete customer information.',
   [Permission.TEAM_READ]: 'Access to view organization members and roles.',
@@ -102,7 +109,7 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionSlug, string> = {
 };
 
 /** Permission category mappings to group them nicely in the UI */
-export type PermissionCategory = 'AI Agent' | 'Chats & Customers' | 'Team & Billing' | 'WorkOS Widgets';
+export type PermissionCategory = 'AI Agent' | 'Chats & Customers' | 'Team & Billing' | 'People' | 'WorkOS Widgets';
 
 export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> = {
   [Permission.KB_READ]: 'AI Agent',
@@ -122,6 +129,9 @@ export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> =
   [Permission.CHATS_TAG]: 'Chats & Customers',
   [Permission.CUSTOMERS_READ]: 'Chats & Customers',
   [Permission.CUSTOMERS_MANAGE]: 'Chats & Customers',
+
+  [Permission.ROUTING_READ]: 'People',
+  [Permission.ROUTING_MANAGE]: 'People',
   
   [Permission.TEAM_READ]: 'Team & Billing',
   [Permission.TEAM_MANAGE]: 'Team & Billing',
@@ -184,10 +194,12 @@ export function mapFeatureAccessToPermissions(
     if (role !== 'member') {
       permissions.push(Permission.CHATS_ASSIGN);
     }
+    permissions.push(Permission.ROUTING_READ);
   } else if (access.chats === 'view') {
     permissions.push(
       Permission.CHATS_READ,
       Permission.CUSTOMERS_READ,
+      Permission.ROUTING_READ,
     );
   }
 
@@ -196,6 +208,7 @@ export function mapFeatureAccessToPermissions(
     permissions.push(
       Permission.TEAM_READ,
       Permission.TEAM_MANAGE,
+      Permission.ROUTING_MANAGE,
     );
   } else if (access.team === 'view') {
     permissions.push(
@@ -234,6 +247,8 @@ export const ROLE_PERMISSIONS: Record<'owner' | 'admin' | 'member', readonly Per
     Permission.CHATS_REPLY,
     Permission.CHATS_ASSIGN,
     Permission.CHATS_TAG,
+    Permission.ROUTING_READ,
+    Permission.ROUTING_MANAGE,
     Permission.CUSTOMERS_READ,
     Permission.CUSTOMERS_MANAGE,
     Permission.TEAM_READ,
