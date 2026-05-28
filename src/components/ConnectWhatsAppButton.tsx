@@ -108,7 +108,7 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
   // progressStep into the connecting state and to display the phone number
   // in the success state.
   const whatsappChannel = useMemo(
-    () => channels?.find((c) => c.service === 'whatsapp'),
+    () => channels?.find((c: any) => c.service === 'whatsapp'),
     [channels],
   );
 

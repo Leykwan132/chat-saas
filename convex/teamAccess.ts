@@ -15,7 +15,6 @@ import {
 } from "../shared/teamRoleCatalog";
 import {
   ALL_PERMISSION_SLUGS,
-  Permission,
   ROLE_PERMISSIONS,
   resolvePermissionsForRole,
   type PermissionSlug,
@@ -190,12 +189,13 @@ export const getCurrentUserAccess = query({
           ? "admin"
           : "member";
 
-    const stored: PermissionSlug[] =
+    const stored: PermissionSlug[] = (
       roleKey === "owner"
         ? (access.team.ownerPermissions ?? [...ROLE_PERMISSIONS.owner])
         : roleKey === "admin"
           ? (access.team.adminPermissions ?? [...ROLE_PERMISSIONS.admin])
-          : (access.team.memberPermissions ?? [...ROLE_PERMISSIONS.member]);
+          : (access.team.memberPermissions ?? [...ROLE_PERMISSIONS.member])
+    ) as PermissionSlug[];
 
     const permissions = resolvePermissionsForRole(roleKey, stored);
 

@@ -182,7 +182,7 @@ export default function ScheduleUserDetailPage() {
   const isLoading = permissionsLoading || detail === undefined || currentUser === undefined;
 
   const isOwnProfile =
-    currentUser !== undefined && decodedWorkosUserId === currentUser.workosUserId;
+    currentUser ? decodedWorkosUserId === currentUser.workosUserId : false;
   const canEditAvailability = canManage || isOwnProfile;
 
   if (!permissionsLoading && currentUser !== undefined && !canManage && !isOwnProfile) {
@@ -327,7 +327,7 @@ export default function ScheduleUserDetailPage() {
           <div className="rounded-xl border border-border bg-card p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0 space-y-1.5">
-                <p className="text-base font-semibold text-foreground">Receive leads</p>
+                <p className="text-base font-semibold text-foreground">Accepting leads</p>
                 <p className="text-sm text-muted-foreground">
                   Include this teammate when assigning new leads.
                 </p>

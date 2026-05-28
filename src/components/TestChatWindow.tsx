@@ -3,7 +3,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Bot, RotateCw, Maximize2, RefreshCw } from 'lucide-react';
+import { Bot, RotateCw, RefreshCw } from 'lucide-react';
 import {
   extractMediaKeys,
   stripMediaMarkers,
@@ -269,9 +269,7 @@ export function TestChatWindow({
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  const [expandOpen, setExpandOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const inputDialogRef = useRef<HTMLTextAreaElement>(null);
   const threadInitRef = useRef(false);
   const shouldFocusAfterSend = useRef(false);
 
@@ -334,7 +332,6 @@ export function TestChatWindow({
   useEffect(() => {
     if (!isSending && shouldFocusAfterSend.current) {
       inputRef.current?.focus();
-      inputDialogRef.current?.focus();
       shouldFocusAfterSend.current = false;
     }
   }, [isSending]);
@@ -543,28 +540,16 @@ export function TestChatWindow({
               )}
             </div>
 
-            <div className="flex items-center gap-1">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setExpandOpen(true)}
-                disabled={!threadId}
-                title="Expand"
-              >
-                <Maximize2 className="size-4" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleReset}
-                disabled={!threadId}
-                title="Reset conversation"
-              >
-                <RotateCw className="size-4" />
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleReset}
+              disabled={!threadId}
+              title="Reset conversation"
+            >
+              <RotateCw className="size-4" />
+            </Button>
           </div>
 
           <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -599,31 +584,6 @@ export function TestChatWindow({
               Reset
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={expandOpen} onOpenChange={setExpandOpen}>
-        <DialogContent
-          className="flex h-[90vh] min-w-0 w-[85vw] max-w-[85vw] flex-col gap-0 overflow-hidden p-0"
-        >
-          <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-            <DialogTitle className="text-sm font-semibold">
-              {agentName?.trim() || "Test your agent"}
-            </DialogTitle>
-          </div>
-          <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
-            {renderMessages()}
-          </Conversation>
-          {messages.length === 0 && (
-            <div className="px-4 pt-3">
-              <Suggestions>
-                {CHAT_SUGGESTIONS.map((s) => (
-                  <Suggestion key={s} suggestion={s} onClick={handleSuggestionClick} />
-                ))}
-              </Suggestions>
-            </div>
-          )}
-          {renderInput(inputDialogRef)}
         </DialogContent>
       </Dialog>
     </>

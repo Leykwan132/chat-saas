@@ -343,7 +343,7 @@ export function ImageSection({ agentId, openDeleteDialog, maxFileSize, canManage
                 </CollapsibleTrigger>
                 <CollapsibleContent className="px-4 pb-4">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                    {groupEntries.map((entry) => {
+                    {groupEntries.map((entry: any) => {
                       const preview = imagePreviewUrl(entry);
                       const inProgress = isKbImageInProgress(entry.status);
                       const isImg = entry.mediaType?.startsWith("image/");

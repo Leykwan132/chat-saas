@@ -56,7 +56,7 @@ export default function AutomationsBroadcastPage() {
   const whatsappReady = useMemo(() => {
     if (!channels) return [];
     return channels.filter(
-      (c) =>
+      (c: any) =>
         c.service === 'whatsapp' &&
         c.status === 'connected' &&
         Boolean(c.wabaId?.trim()) &&
@@ -95,7 +95,7 @@ export default function AutomationsBroadcastPage() {
 
   useEffect(() => {
     if (!candidates) return;
-    setSelectedPhones(new Set(candidates.map((c) => c.phone)));
+    setSelectedPhones(new Set(candidates.map((c: any) => c.phone)));
   }, [candidates]);
 
   const loadTemplates = useCallback(async () => {
@@ -111,7 +111,7 @@ export default function AutomationsBroadcastPage() {
         channelId: channelId as Id<'channels'>,
       });
       setTemplates(rows);
-      const approved = rows.find((t) => t.status === 'APPROVED');
+      const approved = rows.find((t: any) => t.status === 'APPROVED');
       if (approved) {
         setTemplateKey(`${approved.name}\t${approved.language}`);
       } else if (rows[0]) {
@@ -155,7 +155,7 @@ export default function AutomationsBroadcastPage() {
     if (selectedPhones.size === candidates.length) {
       setSelectedPhones(new Set());
     } else {
-      setSelectedPhones(new Set(candidates.map((c) => c.phone)));
+      setSelectedPhones(new Set(candidates.map((c: any) => c.phone)));
     }
   };
 
@@ -213,9 +213,9 @@ export default function AutomationsBroadcastPage() {
       } else {
         toast.message(`Completed with errors: ${okCount} ok, ${failCount} failed`, {
           description: results
-            .filter((r) => !r.ok)
+            .filter((r: any) => !r.ok)
             .slice(0, 3)
-            .map((r) => `${r.phone}: ${r.error ?? 'error'}`)
+            .map((r: any) => `${r.phone}: ${r.error ?? 'error'}`)
             .join('\n'),
         });
       }
@@ -306,7 +306,7 @@ export default function AutomationsBroadcastPage() {
           value={channelId}
           onChange={(e) => setChannelId(e.target.value as Id<'channels'> | '')}
         >
-          {whatsappReady.map((ch) => (
+          {whatsappReady.map((ch: any) => (
             <option key={ch._id} value={ch._id}>
               {channelLabel(ch)}
             </option>
@@ -450,7 +450,7 @@ export default function AutomationsBroadcastPage() {
                 </tr>
               </thead>
               <tbody>
-                {candidates.map((row) => (
+                {candidates.map((row: any) => (
                   <tr
                     key={row.phone}
                     className="border-t border-border transition-colors hover:bg-accent/40"

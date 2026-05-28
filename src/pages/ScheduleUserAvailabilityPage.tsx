@@ -125,7 +125,7 @@ export default function ScheduleUserAvailabilityPage() {
   if (!typedAgentId || !decodedWorkosUserId) return null;
 
   const isOwnSchedule =
-    currentUser !== undefined && decodedWorkosUserId === currentUser.workosUserId;
+    currentUser ? decodedWorkosUserId === currentUser.workosUserId : false;
   const canEditAvailability = canManage || isOwnSchedule;
 
   if (!permissionsLoading && !canReadSchedule) {

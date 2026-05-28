@@ -13,7 +13,7 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 
-type TeamListItem = {
+export type TeamListItem = {
   _id: string;
   type: "personal" | "organizational";
   name: string;

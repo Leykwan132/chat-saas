@@ -3,7 +3,7 @@ import { api } from '../../convex/_generated/api';
 import { type PermissionSlug } from '../../shared/permissions';
 
 export function usePermissions() {
-  const userAccess = useQuery(api.teamAccess.getCurrentUserAccess);
+  const userAccess = useQuery(api.teamAccess.getCurrentUserAccess, {});
 
   const isLoading = userAccess === undefined;
   const permissions = userAccess?.permissions ?? [];

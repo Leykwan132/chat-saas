@@ -41,7 +41,7 @@ export default function ChannelWhatsAppTemplatesPage() {
   const [bodyText, setBodyText] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_BODY);
   const [rawExpanded, setRawExpanded] = useState(false);
 
-  const channel = channels?.find((c) => c._id === (channelId as Id<'channels'> | undefined));
+  const channel = channels?.find((c: any) => c._id === (channelId as Id<'channels'> | undefined));
 
   const load = useCallback(async () => {
     if (!channelId) return;

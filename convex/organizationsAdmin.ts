@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { action, internalMutation, type ActionCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import type { TeamListItem } from "./teams";
 import { getAuthContext } from "./authUtils";
 import {
   ensureOrganizationalTeam,
@@ -50,8 +51,8 @@ function validateOptionalDomain(domain: string | undefined) {
 async function assertCanManageOrganization(
   ctx: ActionCtx,
   teamId: Id<"teams">,
-) {
-  const team = await ctx.runQuery(api.teams.getTeamDetail, { teamId });
+): Promise<TeamListItem> {
+  const team: TeamListItem | null = await ctx.runQuery(api.teams.getTeamDetail, { teamId });
   if (team === null) {
     throw new Error("Team not found.");
   }
@@ -234,9 +235,9 @@ export const getOrganizationForTeam = action({
   args: {
     teamId: v.id("teams"),
   },
-  handler: async (ctx, args) => {
-    const team = await assertCanManageOrganization(ctx, args.teamId);
-    const org = await workosRequest<WorkOSOrganization>(
+  handler: async (ctx, args): Promise<{ name: string; domain: string }> => {
+    const team: TeamListItem = await assertCanManageOrganization(ctx, args.teamId);
+    const org: WorkOSOrganization = await workosRequest<WorkOSOrganization>(
       `/organizations/${team.workosOrgId}`,
     );
 

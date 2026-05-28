@@ -646,7 +646,7 @@ export const summarizeThreadWorker = internalAction({
     }
 
     const transcript = messages
-      .map((m) => {
+      .map((m: Doc<"messages">) => {
         const sender =
           m.direction === "incoming"
             ? "Customer"

@@ -56,9 +56,9 @@ export const sendReply = action({
           })
         : [];
 
-    const imageUrls = readyUploads.map((u) => u.publicUrl);
+    const imageUrls = readyUploads.map((u: { publicUrl: string }) => u.publicUrl);
     const channelSendOptions = { allowHumanAgentTag: true as const };
-    const persistImages = readyUploads.map((u) => ({
+    const persistImages = readyUploads.map((u: { publicUrl: string; mediaType: string }) => ({
       publicUrl: u.publicUrl,
       mediaType: u.mediaType,
     }));

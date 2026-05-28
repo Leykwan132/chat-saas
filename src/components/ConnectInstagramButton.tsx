@@ -25,7 +25,7 @@ export function ConnectInstagramButton() {
   const [busy, setBusy] = useState(false);
 
   const instagramChannel = useMemo(
-    () => channels?.find((c) => c.service === 'instagram'),
+    () => channels?.find((c: any) => c.service === 'instagram'),
     [channels],
   );
 

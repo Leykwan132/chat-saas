@@ -46,7 +46,7 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
     if (!teams) return [];
     const query = search.trim().toLowerCase();
     if (!query) return teams;
-    return teams.filter((team) => getTeamDisplayName(team).toLowerCase().includes(query));
+    return teams.filter((team: any) => getTeamDisplayName(team).toLowerCase().includes(query));
   }, [search, teams]);
 
   const handleCreateTeam = () => {
@@ -108,7 +108,7 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
                 </tr>
               </thead>
               <tbody>
-                {filteredTeams.map((team) => (
+                {filteredTeams.map((team: any) => (
                   <tr
                     key={team._id}
                     className="cursor-pointer border-b border-border last:border-b-0 hover:bg-muted/30"

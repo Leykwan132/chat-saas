@@ -62,7 +62,7 @@ export function ConnectMessengerButton({
   const fbSession = useFacebookSession({ appId, version: graphVersion });
 
   const messengerChannel = useMemo(
-    () => channels?.find((c) => c.service === 'messenger'),
+    () => channels?.find((c: any) => c.service === 'messenger'),
     [channels],
   );
 

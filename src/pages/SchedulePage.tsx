@@ -37,9 +37,9 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
   const currentUser = useQuery(api.users.currentUser);
 
   const workosUserIdsForLeadCounts = useMemo(() => {
-    if (currentUser === undefined) return undefined;
+    if (currentUser === undefined || currentUser === null) return undefined;
     if (showTeamRoster) {
-      return (teamUsers ?? []).map((u) => u.workosUserId);
+      return (teamUsers ?? []).map((u: any) => u.workosUserId);
     }
     return [currentUser.workosUserId];
   }, [showTeamRoster, teamUsers, currentUser]);
@@ -84,7 +84,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     if (!teamUsers || !currentUser) return [];
     const teammates = showTeamRoster
       ? teamUsers
-      : teamUsers.filter((u) => u.workosUserId === currentUser.workosUserId);
+      : teamUsers.filter((u: any) => u.workosUserId === currentUser.workosUserId);
     if (teammates.length === 0) return [];
 
     return [...teammates].sort((a, b) => {
@@ -227,7 +227,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
                   note: '',
                 };
                 const timeOff = existing?.timeOff ?? [];
-                const isSelf = currentUser.workosUserId === teammate.workosUserId;
+                const isSelf = currentUser?.workosUserId === teammate.workosUserId;
                 const label = memberLabel(teammate) + (isSelf ? ' (You)' : '');
 
                 return (
@@ -451,7 +451,7 @@ function UserScheduleCard({
           onClick={(e) => e.preventDefault()}
           onKeyDown={(e) => e.stopPropagation()}
         >
-          <span className="text-sm text-muted-foreground">Receive leads</span>
+          <span className="text-sm text-muted-foreground">Accepting leads</span>
           <Switch
             checked={scheduleEnabled}
             onCheckedChange={onToggleEnabled}

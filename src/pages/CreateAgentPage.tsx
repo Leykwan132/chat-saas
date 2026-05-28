@@ -123,7 +123,7 @@ function CreateAgentForm() {
   const createStartedRef = useRef(false);
   useEffect(() => {
     if (!enabledModels || enabledModels.length === 0 || model) return;
-    const recommended = enabledModels.find((m) => m.value === RECOMMENDED_MODEL);
+    const recommended = enabledModels.find((m: any) => m.value === RECOMMENDED_MODEL);
     setModel(recommended?.value ?? enabledModels[0].value);
   }, [enabledModels, model]);
 
@@ -193,7 +193,7 @@ function CreateAgentForm() {
         : 'cursor-not-allowed bg-secondary text-muted-foreground',
     );
 
-  const recommendedModel = enabledModels?.find((m) => m.value === RECOMMENDED_MODEL);
+  const recommendedModel = enabledModels?.find((m: any) => m.value === RECOMMENDED_MODEL);
 
   const goToNextStep = () => {
     if (step === 1 && name.trim()) setStep(2);

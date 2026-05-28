@@ -140,7 +140,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
               className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/80 transition-colors outline-none"
               aria-label="Workspace menu"
             >
-              {activeTeam === undefined ? (
+              {!activeTeam ? (
                 <span className="inline-block h-4 w-4 rounded-full bg-muted/40 animate-pulse shrink-0" />
               ) : activeTeam.type === 'personal' ? (
                 <User className="size-4 text-muted-foreground shrink-0" />
@@ -148,7 +148,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
                 <Building2 className="size-4 text-muted-foreground shrink-0" />
               )}
               <BreadcrumbPage>
-                {activeTeam === undefined ? (
+                {!activeTeam ? (
                   <span className="inline-block h-4 w-20 rounded bg-muted/40 animate-pulse" />
                 ) : (
                   activeTeam.type === 'personal' ? 'Personal' : activeTeam.name

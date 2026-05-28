@@ -230,7 +230,7 @@ export function useCreateAgentKnowledgeCounts(agentId: Id<'agents'> | null) {
   );
 
   return {
-    web: webEntries?.filter((entry) => !entry.parentId).length ?? 0,
+    web: webEntries?.filter((entry: any) => !entry.parentId).length ?? 0,
     file: fileEntries?.length ?? 0,
     text: textEntries?.length ?? 0,
     qa: qaEntries?.length ?? 0,

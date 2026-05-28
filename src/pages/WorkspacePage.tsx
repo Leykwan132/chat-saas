@@ -342,7 +342,7 @@ export function AgentsIndex() {
   return (
     <div className="mt-4">
       <div className="mb-9 flex items-center justify-between gap-4">
-        {activeTeam === undefined ? (
+        {!activeTeam ? (
           <div className="h-9 w-48 rounded bg-muted/40 animate-pulse" />
         ) : (
           <h1 className="m-0 text-3xl font-semibold tracking-tight">

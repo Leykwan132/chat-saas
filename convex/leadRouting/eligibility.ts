@@ -57,5 +57,8 @@ export function isUserEligible(
 ): boolean {
   if (!schedule.enabled) return false;
   if (hasActiveTimeOff(now, timeOffRows)) return false;
-  return true;
+  if (schedule.mode === "manual") {
+    return schedule.manualStatus === "available";
+  }
+  return isOnShift(now, schedule.timezone, shifts);
 }

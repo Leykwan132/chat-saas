@@ -274,7 +274,7 @@ export default function ChatsPage() {
 
   const chatItems = useMemo(() => {
     if (!linkedConversations) return [];
-    return linkedConversations.map((conv) => ({
+    return linkedConversations.map((conv: any) => ({
       id: conv._id,
       name: conv.contactName ?? conv.contactAddress ?? 'Unknown contact',
       message: conv.lastMessagePreview ?? '',
@@ -291,16 +291,16 @@ export default function ChatsPage() {
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       list = list.filter(
-        (c) =>
+        (c: any) =>
           c.name.toLowerCase().includes(q) ||
           c.message.toLowerCase().includes(q),
       );
     }
     if (platformFilter !== 'all') {
-      list = list.filter((c) => c.platform === platformFilter);
+      list = list.filter((c: any) => c.platform === platformFilter);
     }
     if (labelFilter !== 'all') {
-      list = list.filter((c) => c.conversationStatus === labelFilter);
+      list = list.filter((c: any) => c.conversationStatus === labelFilter);
     }
     return list;
   }, [chatItems, searchQuery, platformFilter, labelFilter]);
@@ -308,7 +308,7 @@ export default function ChatsPage() {
   useEffect(() => {
     if (
       selectedConversationId &&
-      !filteredChats.some((c) => c.id === selectedConversationId)
+      !filteredChats.some((c: any) => c.id === selectedConversationId)
     ) {
       setSelectedConversationId(null);
     }
@@ -324,8 +324,8 @@ export default function ChatsPage() {
     });
   };
 
-  const pinnedChats = filteredChats.filter((c) => pinnedIds.has(c.id as string));
-  const unpinnedChats = filteredChats.filter((c) => !pinnedIds.has(c.id as string));
+  const pinnedChats = filteredChats.filter((c: any) => pinnedIds.has(c.id as string));
+  const unpinnedChats = filteredChats.filter((c: any) => !pinnedIds.has(c.id as string));
 
   const selectedName =
     selectedConversation?.contactName ??
@@ -335,7 +335,7 @@ export default function ChatsPage() {
   const selectedListItem = useMemo(
     () =>
       selectedConversationId
-        ? chatItems.find((c) => c.id === selectedConversationId)
+        ? chatItems.find((c: any) => c.id === selectedConversationId)
         : undefined,
     [chatItems, selectedConversationId],
   );
@@ -382,7 +382,7 @@ export default function ChatsPage() {
   const assignedMemberLabel = useMemo(() => {
     const wid = selectedConversation?.assignedUserId;
     if (!wid || !teamUsers) return null;
-    const u = teamUsers.find((m) => m.workosUserId === wid);
+    const u = teamUsers.find((m: any) => m.workosUserId === wid);
     return u ? formatOrgMemberDisplayName(u) : 'Teammate';
   }, [selectedConversation?.assignedUserId, teamUsers]);
 
@@ -745,7 +745,7 @@ export default function ChatsPage() {
                       <Pin size={11} color="var(--color-foreground-subtle)" />
                       <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pinned</span>
                     </div>
-                    {pinnedChats.map((chat, index) => (
+                    {pinnedChats.map((chat: any, index: number) => (
                       <ChatRow key={chat.id} chat={chat} index={index} total={pinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned onSelect={setSelectedConversationId} onTogglePin={togglePin} />
                     ))}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)', borderTop: '1px solid var(--color-border)' }}>
@@ -755,7 +755,7 @@ export default function ChatsPage() {
                   </>
                 )}
 
-                {unpinnedChats.map((chat, index) => (
+                {unpinnedChats.map((chat: any, index: number) => (
                   <ChatRow key={chat.id} chat={chat} index={index} total={unpinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned={false} onSelect={setSelectedConversationId} onTogglePin={togglePin} />
                 ))}
               </>
@@ -897,7 +897,7 @@ export default function ChatsPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start" className="min-w-[12rem]">
                                 <DropdownMenuGroup>
-                                  {(teamUsers ?? []).map((u) => (
+                                  {(teamUsers ?? []).map((u: any) => (
                                     <DropdownMenuItem
                                       key={u._id}
                                       className="cursor-pointer gap-2"
@@ -999,7 +999,7 @@ export default function ChatsPage() {
                         <div className="px-4 pb-3">
                           {(selectedConversation.tags ?? []).length > 0 ? (
                             <ul className="m-0 list-none divide-y divide-border border-y border-border p-0">
-                              {(selectedConversation.tags ?? []).map((tag) => (
+                              {(selectedConversation.tags ?? []).map((tag: any) => (
                                 <li key={tag}>
                                   <div className="flex items-center justify-between gap-3 py-2.5 font-mono text-sm text-foreground">
                                     <span className="min-w-0 flex-1 truncate" title={tag}>
