@@ -6,6 +6,7 @@ import {
   ALL_PERMISSION_SLUGS,
   Permission,
   ROLE_PERMISSIONS,
+  resolvePermissionsForRole,
   type PermissionSlug,
 } from "../../shared/permissions";
 
@@ -56,17 +57,26 @@ async function permissionsForCurrentUser(ctx: DbCtx): Promise<PermissionSlug[]> 
         ? "admin"
         : "member";
 
-  const dbPermissions: PermissionSlug[] =
+  const stored: PermissionSlug[] =
     roleKey === "owner"
       ? ((team.ownerPermissions ?? [...ROLE_PERMISSIONS.owner]) as PermissionSlug[])
       : roleKey === "admin"
         ? ((team.adminPermissions ?? [...ROLE_PERMISSIONS.admin]) as PermissionSlug[])
         : ((team.memberPermissions ?? [...ROLE_PERMISSIONS.member]) as PermissionSlug[]);
 
-  if (roleKey === "owner" && !dbPermissions.includes(Permission.FULL_CONTROL)) {
-    return [...dbPermissions, Permission.FULL_CONTROL];
+  return resolvePermissionsForRole(roleKey, stored);
+}
+
+export async function assertScheduleRead(ctx: DbCtx, agentId: Id<"agents">) {
+  const agent = await getOwnedAgent(ctx, agentId);
+  if (agent === null) {
+    throw new Error("Agent not found");
   }
-  return dbPermissions;
+  const permissions = await permissionsForCurrentUser(ctx);
+  if (!permissions.includes(Permission.SCHEDULE_READ)) {
+    throw new Error("Forbidden");
+  }
+  return agent;
 }
 
 export async function assertRoutingRead(ctx: DbCtx, agentId: Id<"agents">) {

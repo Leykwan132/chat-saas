@@ -20,7 +20,8 @@ export const Permission = {
   CHATS_REPLY: 'chats:reply',
   CHATS_ASSIGN: 'chats:assign',
   CHATS_TAG: 'chats:tag',
-  // People routing (schedule + lead assignment)
+  // People routing
+  SCHEDULE_READ: 'schedule:read',
   ROUTING_READ: 'routing:read',
   ROUTING_MANAGE: 'routing:manage',
   // Customers
@@ -62,7 +63,8 @@ export const PERMISSION_NAMES: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Reply to Chats',
   [Permission.CHATS_ASSIGN]: 'Assign Chats',
   [Permission.CHATS_TAG]: 'Tag Chats & Labels',
-  [Permission.ROUTING_READ]: 'View Schedule & Lead Assignment',
+  [Permission.SCHEDULE_READ]: 'View Schedule',
+  [Permission.ROUTING_READ]: 'View Lead Assignment',
   [Permission.ROUTING_MANAGE]: 'Manage Schedule & Lead Assignment',
   [Permission.CUSTOMERS_READ]: 'View Customer List',
   [Permission.CUSTOMERS_MANAGE]: 'Manage Customer Details',
@@ -92,7 +94,8 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Access to send replies to customer chats.',
   [Permission.CHATS_ASSIGN]: 'Access to reassign conversations to team members.',
   [Permission.CHATS_TAG]: 'Access to add or remove tags and labels on conversations.',
-  [Permission.ROUTING_READ]: 'Access to view schedule and lead assignment settings.',
+  [Permission.SCHEDULE_READ]: 'Access to view the team schedule.',
+  [Permission.ROUTING_READ]: 'Access to view lead assignment settings.',
   [Permission.ROUTING_MANAGE]: 'Access to edit schedule and lead assignment settings.',
   [Permission.CUSTOMERS_READ]: 'Access to view the customer directory.',
   [Permission.CUSTOMERS_MANAGE]: 'Access to create, edit, or delete customer information.',
@@ -130,6 +133,7 @@ export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> =
   [Permission.CUSTOMERS_READ]: 'Chats & Customers',
   [Permission.CUSTOMERS_MANAGE]: 'Chats & Customers',
 
+  [Permission.SCHEDULE_READ]: 'People',
   [Permission.ROUTING_READ]: 'People',
   [Permission.ROUTING_MANAGE]: 'People',
   
@@ -194,12 +198,12 @@ export function mapFeatureAccessToPermissions(
     if (role !== 'member') {
       permissions.push(Permission.CHATS_ASSIGN);
     }
-    permissions.push(Permission.ROUTING_READ);
+    permissions.push(Permission.SCHEDULE_READ);
   } else if (access.chats === 'view') {
     permissions.push(
       Permission.CHATS_READ,
       Permission.CUSTOMERS_READ,
-      Permission.ROUTING_READ,
+      Permission.SCHEDULE_READ,
     );
   }
 
@@ -247,6 +251,7 @@ export const ROLE_PERMISSIONS: Record<'owner' | 'admin' | 'member', readonly Per
     Permission.CHATS_REPLY,
     Permission.CHATS_ASSIGN,
     Permission.CHATS_TAG,
+    Permission.SCHEDULE_READ,
     Permission.ROUTING_READ,
     Permission.ROUTING_MANAGE,
     Permission.CUSTOMERS_READ,
@@ -261,4 +266,40 @@ export const ROLE_PERMISSIONS: Record<'owner' | 'admin' | 'member', readonly Per
 
 export function hasPermission(permissions: string[], required: PermissionSlug): boolean {
   return permissions.includes(required);
+}
+
+/** Applies role defaults and migrates legacy member routing grants. */
+export function resolvePermissionsForRole(
+  role: 'owner' | 'admin' | 'member',
+  stored: readonly PermissionSlug[],
+): PermissionSlug[] {
+  if (role === 'owner') {
+    const permissions = [...stored];
+    if (!permissions.includes(Permission.FULL_CONTROL)) {
+      permissions.push(Permission.FULL_CONTROL);
+    }
+    if (!permissions.includes(Permission.SCHEDULE_READ)) {
+      permissions.push(Permission.SCHEDULE_READ);
+    }
+    return permissions;
+  }
+
+  if (role === 'admin') {
+    const permissions = [...stored];
+    if (!permissions.includes(Permission.SCHEDULE_READ)) {
+      permissions.push(Permission.SCHEDULE_READ);
+    }
+    return permissions;
+  }
+
+  const permissions = stored.filter(
+    (slug) => slug !== Permission.ROUTING_READ && slug !== Permission.ROUTING_MANAGE,
+  );
+  const hasChats =
+    permissions.includes(Permission.CHATS_READ) ||
+    permissions.includes(Permission.CHATS_REPLY);
+  if (hasChats && !permissions.includes(Permission.SCHEDULE_READ)) {
+    permissions.push(Permission.SCHEDULE_READ);
+  }
+  return permissions;
 }

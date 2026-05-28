@@ -39,6 +39,7 @@ export default defineSchema({
         v.literal("ultra"),
       )
     ),
+    lastActiveAt: v.optional(v.number()),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
@@ -554,6 +555,7 @@ export default defineSchema({
       v.literal("round_robin"),
       v.literal("priority"),
       v.literal("tags"),
+      v.literal("manual"),
     ),
     aiEnabledOnInbound: v.boolean(),
     aiWhenOutsideSchedule: v.optional(v.boolean()),
@@ -577,6 +579,7 @@ export default defineSchema({
     timezone: v.string(),
     enabled: v.boolean(),
     assignmentPriority: v.optional(v.number()),
+    note: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

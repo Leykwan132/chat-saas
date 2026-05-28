@@ -3,21 +3,25 @@ import { query, mutation } from "../_generated/server";
 import {
   assertRoutingManage,
   assertRoutingRead,
+  assertScheduleRead,
   getOrCreateLeadAssignmentSettings,
 } from "./helpers";
 import { isUserEligible } from "./eligibility";
 import { getAuthContext } from "../authUtils";
 
 const assignmentMethodValidator = v.union(
+  v.literal("balanced"),
   v.literal("round_robin"),
-  v.literal("priority"),
-  v.literal("tags"),
+  v.literal("manual"),
 );
 
-const tagRuleValidator = v.object({
-  tag: v.string(),
-  workosUserId: v.string(),
-});
+function normalizeAssignmentMethod(
+  method: string,
+): "balanced" | "round_robin" | "manual" {
+  if (method === "balanced" || method === "priority") return "balanced";
+  if (method === "manual") return "manual";
+  return "round_robin";
+}
 
 export const getForAgent = query({
   args: { agentId: v.id("agents") },
@@ -40,10 +44,7 @@ export const getForAgent = query({
     }
     return {
       ...row,
-      method:
-        row.method === "balanced"
-          ? ("priority" as const)
-          : row.method,
+      method: normalizeAssignmentMethod(row.method),
       tagRules: row.tagRules ?? [],
     };
   },
@@ -55,7 +56,6 @@ export const updateForAgent = mutation({
     method: v.optional(assignmentMethodValidator),
     aiEnabledOnInbound: v.optional(v.boolean()),
     aiWhenOutsideSchedule: v.optional(v.boolean()),
-    tagRules: v.optional(v.array(tagRuleValidator)),
   },
   handler: async (ctx, args) => {
     await assertRoutingManage(ctx, args.agentId);
@@ -67,14 +67,6 @@ export const updateForAgent = mutation({
     }
     if (args.aiWhenOutsideSchedule !== undefined) {
       patch.aiWhenOutsideSchedule = args.aiWhenOutsideSchedule;
-    }
-    if (args.tagRules !== undefined) {
-      patch.tagRules = args.tagRules
-        .map((rule) => ({
-          tag: rule.tag.trim().toLowerCase(),
-          workosUserId: rule.workosUserId.trim(),
-        }))
-        .filter((rule) => rule.tag.length > 0 && rule.workosUserId.length > 0);
     }
     await ctx.db.patch(row._id, patch);
   },
@@ -121,23 +113,21 @@ export const rosterCount = query({
 });
 
 export const getRosterOpenLeadCounts = query({
-  args: { agentId: v.id("agents") },
+  args: {
+    agentId: v.id("agents"),
+    workosUserIds: v.array(v.string()),
+  },
   handler: async (ctx, args) => {
-    await assertRoutingRead(ctx, args.agentId);
+    await assertScheduleRead(ctx, args.agentId);
     const { orgId } = await getAuthContext(ctx);
     if (!orgId) {
       throw new Error("Organization required");
     }
 
-    const schedules = await ctx.db
-      .query("userSchedules")
-      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
-      .collect();
-
     const services = ["playground", "whatsapp", "instagram", "messenger"] as const;
     const counts: Record<string, number> = {};
 
-    for (const schedule of schedules) {
+    for (const workosUserId of args.workosUserIds) {
       let openCount = 0;
       for (const service of services) {
         const rows = await ctx.db
@@ -147,12 +137,12 @@ export const getRosterOpenLeadCounts = query({
               .eq("orgId", orgId)
               .eq("service", service)
               .eq("assignedAgentId", args.agentId)
-              .eq("assignedUserId", schedule.workosUserId),
+              .eq("assignedUserId", workosUserId),
           )
           .collect();
         openCount += rows.filter((row) => row.status === "open").length;
       }
-      counts[schedule.workosUserId] = openCount;
+      counts[workosUserId] = openCount;
     }
     return counts;
   },

@@ -1,11 +1,82 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
-import { assertRoutingManage, assertRoutingRead } from "./helpers";
+import { assertRoutingManage, assertScheduleRead } from "./helpers";
 
-const DEFAULT_TIMEZONE = "UTC";
+const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
+const MINUTES_PER_DAY = 24 * 60;
+const DEFAULT_SHIFT_START_MINUTES = 9 * 60;
+const DEFAULT_SHIFT_END_MINUTES = 17 * 60;
 
-async function assertOrgMember(ctx: Parameters<typeof assertRoutingRead>[0], workosUserId: string) {
+function normalizeShift(shift: {
+  dayOfWeek: number;
+  startMinutes: number;
+  endMinutes: number;
+}) {
+  if (shift.startMinutes === 0 && shift.endMinutes === MINUTES_PER_DAY) {
+    return {
+      dayOfWeek: shift.dayOfWeek,
+      startMinutes: DEFAULT_SHIFT_START_MINUTES,
+      endMinutes: DEFAULT_SHIFT_END_MINUTES,
+    };
+  }
+  return shift;
+}
+
+const DEFAULT_WEEKLY_SHIFTS = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+  dayOfWeek,
+  startMinutes: DEFAULT_SHIFT_START_MINUTES,
+  endMinutes: DEFAULT_SHIFT_END_MINUTES,
+}));
+
+async function insertDefaultShifts(ctx: MutationCtx, userScheduleId: Id<"userSchedules">) {
+  for (const shift of DEFAULT_WEEKLY_SHIFTS) {
+    await ctx.db.insert("userShifts", {
+      userScheduleId,
+      dayOfWeek: shift.dayOfWeek,
+      startMinutes: shift.startMinutes,
+      endMinutes: shift.endMinutes,
+    });
+  }
+}
+
+export async function ensureUserScheduleForAgent(
+  ctx: MutationCtx,
+  args: {
+    agentId: Id<"agents">;
+    workosUserId: string;
+    timezone?: string;
+    enabled?: boolean;
+  },
+): Promise<Id<"userSchedules">> {
+  const existing = await ctx.db
+    .query("userSchedules")
+    .withIndex("by_agentId_and_workosUserId", (q) =>
+      q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
+    )
+    .unique();
+  if (existing !== null) {
+    return existing._id;
+  }
+
+  const now = Date.now();
+  const userScheduleId = await ctx.db.insert("userSchedules", {
+    agentId: args.agentId,
+    workosUserId: args.workosUserId,
+    mode: "scheduled",
+    manualStatus: "available",
+    timezone: args.timezone?.trim() || DEFAULT_TIMEZONE,
+    enabled: args.enabled ?? false,
+    createdAt: now,
+    updatedAt: now,
+  });
+  await insertDefaultShifts(ctx, userScheduleId);
+  return userScheduleId;
+}
+
+async function assertOrgMember(ctx: Parameters<typeof assertScheduleRead>[0], workosUserId: string) {
   const { orgId } = await getAuthContext(ctx);
   if (!orgId || orgId === "personal") {
     throw new Error("Organization required");
@@ -29,7 +100,7 @@ async function assertOrgMember(ctx: Parameters<typeof assertRoutingRead>[0], wor
 export const listForAgent = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
-    await assertRoutingRead(ctx, args.agentId);
+    await assertScheduleRead(ctx, args.agentId);
     const schedules = await ctx.db
       .query("userSchedules")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
@@ -51,6 +122,82 @@ export const listForAgent = query({
   },
 });
 
+export const getForAgentUser = query({
+  args: {
+    agentId: v.id("agents"),
+    workosUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await assertScheduleRead(ctx, args.agentId);
+    await assertOrgMember(ctx, args.workosUserId);
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
+      .unique();
+    if (user === null) {
+      return null;
+    }
+
+    const { orgId } = await getAuthContext(ctx);
+    const org =
+      orgId && orgId !== "personal"
+        ? await ctx.db
+            .query("organizations")
+            .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
+            .unique()
+        : null;
+    const isAdmin = org?.admins.includes(user._id) ?? false;
+
+    const schedule = await ctx.db
+      .query("userSchedules")
+      .withIndex("by_agentId_and_workosUserId", (q) =>
+        q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
+      )
+      .unique();
+
+    if (schedule === null) {
+      return {
+        user: {
+          workosUserId: user.workosUserId,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          isAdmin,
+        },
+        schedule: null,
+        shifts: [],
+        timeOff: [],
+      };
+    }
+
+    const shifts = await ctx.db
+      .query("userShifts")
+      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
+      .collect();
+    const timeOff = await ctx.db
+      .query("userTimeOff")
+      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
+      .collect();
+
+    return {
+      user: {
+        workosUserId: user.workosUserId,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isAdmin,
+      },
+      schedule: {
+        ...schedule,
+        timezone: schedule.timezone.trim() || DEFAULT_TIMEZONE,
+      },
+      shifts: shifts.map((shift) => normalizeShift(shift)),
+      timeOff,
+    };
+  },
+});
+
 export const addUser = mutation({
   args: {
     agentId: v.id("agents"),
@@ -58,29 +205,19 @@ export const addUser = mutation({
     timezone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    await assertRoutingManage(ctx, args.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== args.workosUserId) {
+      await assertRoutingManage(ctx, args.agentId);
+    } else {
+      await assertScheduleRead(ctx, args.agentId);
+    }
     await assertOrgMember(ctx, args.workosUserId);
 
-    const existing = await ctx.db
-      .query("userSchedules")
-      .withIndex("by_agentId_and_workosUserId", (q) =>
-        q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
-      )
-      .unique();
-    if (existing !== null) {
-      return existing._id;
-    }
-
-    const now = Date.now();
-    return await ctx.db.insert("userSchedules", {
+    return await ensureUserScheduleForAgent(ctx, {
       agentId: args.agentId,
       workosUserId: args.workosUserId,
-      mode: "manual",
-      manualStatus: "available",
-      timezone: args.timezone?.trim() || DEFAULT_TIMEZONE,
-      enabled: true,
-      createdAt: now,
-      updatedAt: now,
+      timezone: args.timezone,
+      enabled: false,
     });
   },
 });
@@ -93,13 +230,23 @@ export const updateUser = mutation({
     timezone: v.optional(v.string()),
     enabled: v.optional(v.boolean()),
     assignmentPriority: v.optional(v.number()),
+    note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const schedule = await ctx.db.get(args.userScheduleId);
     if (schedule === null) {
       throw new Error("Schedule not found");
     }
-    await assertRoutingManage(ctx, schedule.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== schedule.workosUserId) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    } else {
+      await assertScheduleRead(ctx, schedule.agentId);
+    }
+
+    if (args.enabled !== undefined) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    }
 
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.mode !== undefined) patch.mode = args.mode;
@@ -108,6 +255,9 @@ export const updateUser = mutation({
     if (args.enabled !== undefined) patch.enabled = args.enabled;
     if (args.assignmentPriority !== undefined) {
       patch.assignmentPriority = Math.max(1, Math.floor(args.assignmentPriority));
+    }
+    if (args.note !== undefined) {
+      patch.note = args.note.trim();
     }
     await ctx.db.patch(args.userScheduleId, patch);
   },
@@ -118,7 +268,12 @@ export const removeUser = mutation({
   handler: async (ctx, args) => {
     const schedule = await ctx.db.get(args.userScheduleId);
     if (schedule === null) return;
-    await assertRoutingManage(ctx, schedule.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== schedule.workosUserId) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    } else {
+      await assertScheduleRead(ctx, schedule.agentId);
+    }
 
     const shifts = await ctx.db
       .query("userShifts")
@@ -154,7 +309,12 @@ export const setShifts = mutation({
     if (schedule === null) {
       throw new Error("Schedule not found");
     }
-    await assertRoutingManage(ctx, schedule.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== schedule.workosUserId) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    } else {
+      await assertScheduleRead(ctx, schedule.agentId);
+    }
 
     // Validate overlaps
     const sorted = [...args.shifts].sort((a, b) => {
@@ -200,7 +360,12 @@ export const addTimeOff = mutation({
     if (schedule === null) {
       throw new Error("Schedule not found");
     }
-    await assertRoutingManage(ctx, schedule.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== schedule.workosUserId) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    } else {
+      await assertScheduleRead(ctx, schedule.agentId);
+    }
     if (args.endAt <= args.startAt) {
       throw new Error("Invalid time off range");
     }
@@ -220,7 +385,12 @@ export const removeTimeOff = mutation({
     if (row === null) return;
     const schedule = await ctx.db.get(row.userScheduleId);
     if (schedule === null) return;
-    await assertRoutingManage(ctx, schedule.agentId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== schedule.workosUserId) {
+      await assertRoutingManage(ctx, schedule.agentId);
+    } else {
+      await assertScheduleRead(ctx, schedule.agentId);
+    }
     await ctx.db.delete(args.timeOffId);
   },
 });

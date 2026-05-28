@@ -4,6 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
+import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 
 const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
@@ -194,6 +195,10 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+
+    if (orgId && orgId !== "personal") {
+      await provisionOrgMemberSchedulesForAgent(ctx, agentId, orgId);
+    }
 
     return agentId;
   },

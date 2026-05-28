@@ -43,6 +43,7 @@ import type * as knowledgeBaseImages from "../knowledgeBaseImages.js";
 import type * as leadRouting_assign from "../leadRouting/assign.js";
 import type * as leadRouting_eligibility from "../leadRouting/eligibility.js";
 import type * as leadRouting_helpers from "../leadRouting/helpers.js";
+import type * as leadRouting_provision from "../leadRouting/provision.js";
 import type * as leadRouting_schedules from "../leadRouting/schedules.js";
 import type * as leadRouting_settings from "../leadRouting/settings.js";
 import type * as llm_modelPricing from "../llm/modelPricing.js";
@@ -128,6 +129,7 @@ declare const fullApi: ApiFromModules<{
   "leadRouting/assign": typeof leadRouting_assign;
   "leadRouting/eligibility": typeof leadRouting_eligibility;
   "leadRouting/helpers": typeof leadRouting_helpers;
+  "leadRouting/provision": typeof leadRouting_provision;
   "leadRouting/schedules": typeof leadRouting_schedules;
   "leadRouting/settings": typeof leadRouting_settings;
   "llm/modelPricing": typeof llm_modelPricing;

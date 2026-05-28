@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen, CalendarDays, UserRoundCheck, Gamepad2 } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, CalendarDays } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,7 @@ function getNavItems(agentId: string): {
     ],
     people: [
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
-      { to: `/dashboard/${agentId}/schedule`, icon: CalendarDays, label: 'Schedule', requiredPermission: Permission.ROUTING_READ },
+      { to: `/dashboard/${agentId}/schedule`, icon: CalendarDays, label: 'Schedule', requiredPermission: Permission.SCHEDULE_READ },
     ],
     configuration: [
       { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },

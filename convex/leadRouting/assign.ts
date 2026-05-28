@@ -9,7 +9,15 @@ type RosterEntry = {
   timeOff: Doc<"userTimeOff">[];
 };
 
-type AssignmentMethod = "round_robin" | "priority" | "tags";
+type AssignmentMethod = "balanced" | "round_robin" | "manual";
+
+function normalizeAssignmentMethod(
+  method: Doc<"leadAssignmentSettings">["method"],
+): AssignmentMethod {
+  if (method === "balanced" || method === "priority") return "balanced";
+  if (method === "manual") return "manual";
+  return "round_robin";
+}
 
 async function loadRoster(
   ctx: MutationCtx,
@@ -75,13 +83,6 @@ async function countOpenLeads(
   return rows.filter((row) => row.status === "open").length;
 }
 
-function normalizeMethod(
-  method: Doc<"leadAssignmentSettings">["method"],
-): AssignmentMethod {
-  if (method === "balanced") return "priority";
-  return method;
-}
-
 function pickRoundRobin(
   pool: RosterEntry[],
   lastAssignedWorkosUserId: string | undefined,
@@ -103,7 +104,7 @@ function pickRoundRobin(
   return ids[(lastIndex + 1) % ids.length]!;
 }
 
-async function pickPriority(
+async function pickBalanced(
   ctx: MutationCtx,
   pool: RosterEntry[],
   orgId: string,
@@ -123,66 +124,15 @@ async function pickPriority(
   }
 
   const sorted = [...pool].sort((a, b) => {
-    const priorityA = a.schedule.assignmentPriority ?? 1;
-    const priorityB = b.schedule.assignmentPriority ?? 1;
-    if (priorityA !== priorityB) {
-      return priorityA - priorityB;
-    }
     const countA = counts.get(a.schedule.workosUserId) ?? 0;
     const countB = counts.get(b.schedule.workosUserId) ?? 0;
-    return countA - countB;
+    if (countA !== countB) {
+      return countA - countB;
+    }
+    return a.schedule.createdAt - b.schedule.createdAt;
   });
 
   return sorted[0]!.schedule.workosUserId;
-}
-
-async function collectConversationTags(
-  ctx: MutationCtx,
-  conversationId: Id<"conversations">,
-): Promise<Set<string>> {
-  const tags = new Set<string>();
-  const conv = await ctx.db.get(conversationId);
-  if (conv === null) return tags;
-
-  for (const tag of conv.tags ?? []) {
-    const normalized = tag.trim().toLowerCase();
-    if (normalized.length > 0) tags.add(normalized);
-  }
-
-  if (conv.customerId !== undefined) {
-    const customer = await ctx.db.get(conv.customerId);
-    if (customer !== null) {
-      for (const tag of customer.tags) {
-        const normalized = tag.trim().toLowerCase();
-        if (normalized.length > 0) tags.add(normalized);
-      }
-    }
-  }
-
-  return tags;
-}
-
-async function pickByTags(
-  ctx: MutationCtx,
-  pool: RosterEntry[],
-  conversationId: Id<"conversations">,
-  tagRules: Array<{ tag: string; workosUserId: string }>,
-): Promise<string | null> {
-  if (tagRules.length === 0) return null;
-
-  const tags = await collectConversationTags(ctx, conversationId);
-  if (tags.size === 0) return null;
-
-  const poolIds = new Set(pool.map((entry) => entry.schedule.workosUserId));
-  for (const rule of tagRules) {
-    const normalizedTag = rule.tag.trim().toLowerCase();
-    if (normalizedTag.length === 0) continue;
-    if (tags.has(normalizedTag) && poolIds.has(rule.workosUserId)) {
-      return rule.workosUserId;
-    }
-  }
-
-  return null;
 }
 
 export async function isAnyoneOnSchedule(
@@ -209,24 +159,23 @@ export async function applyInboundLeadRouting(
   const settings = await getOrCreateLeadAssignmentSettings(ctx, args.agentId);
   const roster = await loadRoster(ctx, args.agentId);
   const now = Date.now();
-  const method = normalizeMethod(settings.method);
-  const tagRules = settings.tagRules ?? [];
+  const method = normalizeAssignmentMethod(settings.method);
 
-  const primaryPool = roster.filter((entry) =>
-    isUserEligible(now, entry.schedule, entry.shifts, entry.timeOff),
-  );
-  const fallbackPool = roster.filter((entry) => entry.schedule.enabled);
-
-  let pool = primaryPool;
-  let usedFallback = false;
-
-  if (pool.length === 0 && fallbackPool.length > 0) {
-    pool = fallbackPool;
-    usedFallback = true;
+  if (method === "manual") {
+    await ctx.db.patch(args.conversationId, {
+      assignedAgentId: args.agentId,
+      assignedUserId: undefined,
+      updatedAt: now,
+    });
+    return;
   }
 
+  const pool = roster.filter((entry) =>
+    isUserEligible(now, entry.schedule, entry.shifts, entry.timeOff),
+  );
+
   let workosUserId: string;
-  let usedRoundRobinFallback = false;
+  let usedFallback = false;
 
   if (pool.length === 0) {
     workosUserId = await resolveLastResortUserId(
@@ -236,18 +185,16 @@ export async function applyInboundLeadRouting(
       args.channelConnectedByUserId,
     );
     usedFallback = true;
-  } else if (method === "tags") {
-    const taggedUserId = await pickByTags(ctx, pool, args.conversationId, tagRules);
-    if (taggedUserId !== null) {
-      workosUserId = taggedUserId;
-    } else {
-      workosUserId = pickRoundRobin(pool, settings.lastAssignedWorkosUserId);
-      usedRoundRobinFallback = true;
-    }
   } else if (method === "round_robin") {
     workosUserId = pickRoundRobin(pool, settings.lastAssignedWorkosUserId);
   } else {
-    workosUserId = await pickPriority(ctx, pool, args.orgId, args.service, args.agentId);
+    workosUserId = await pickBalanced(
+      ctx,
+      pool,
+      args.orgId,
+      args.service,
+      args.agentId,
+    );
   }
 
   await ctx.db.patch(args.conversationId, {
@@ -257,7 +204,7 @@ export async function applyInboundLeadRouting(
     updatedAt: now,
   });
 
-  if ((method === "round_robin" || usedRoundRobinFallback) && pool.length > 0) {
+  if (method === "round_robin" && pool.length > 0) {
     await ctx.db.patch(settings._id, {
       lastAssignedWorkosUserId: workosUserId,
       lastAssignedAt: now,

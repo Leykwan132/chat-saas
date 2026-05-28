@@ -13,6 +13,7 @@ import {
   removeTeamMembership,
   syncOrgTeamMembershipsFromOrganization,
 } from "./teamHelpers";
+import { provisionMemberSchedulesForOrg } from "./leadRouting/provision";
 import { isWorkosOrgAdminRole } from "../shared/teamRoleCatalog";
 import {
   parseWorkosInvitationPayload,
@@ -248,6 +249,7 @@ async function applyMembership(ctx: MutationCtx, data: any) {
   const org = await ctx.db.get(orgId);
   if (org === null) return;
 
+  const isNewMember = !org.members.includes(userId);
   const isAdmin = isWorkosOrgAdminRole(roleSlug);
   const members = dedupeAppend(org.members, userId);
   const admins = isAdmin
@@ -258,6 +260,13 @@ async function applyMembership(ctx: MutationCtx, data: any) {
   const updatedOrg = await ctx.db.get(orgId);
   if (updatedOrg !== null) {
     await syncOrgTeamMembershipsFromOrganization(ctx, updatedOrg);
+  }
+
+  if (isNewMember) {
+    const user = await ctx.db.get(userId);
+    if (user !== null) {
+      await provisionMemberSchedulesForOrg(ctx, workosOrgId, user.workosUserId);
+    }
   }
 }
 

@@ -13,7 +13,13 @@ import {
   type TeamRoleFeatureAccessSettings,
   getFeatureAccessForOrgRole,
 } from "../shared/teamRoleCatalog";
-import { ALL_PERMISSION_SLUGS, Permission, ROLE_PERMISSIONS } from "../shared/permissions";
+import {
+  ALL_PERMISSION_SLUGS,
+  Permission,
+  ROLE_PERMISSIONS,
+  resolvePermissionsForRole,
+  type PermissionSlug,
+} from "../shared/permissions";
 
 const orgRoleKeyValidator = v.union(
   v.literal("owner"),
@@ -184,17 +190,14 @@ export const getCurrentUserAccess = query({
           ? "admin"
           : "member";
 
-    const dbPermissions =
+    const stored: PermissionSlug[] =
       roleKey === "owner"
         ? (access.team.ownerPermissions ?? [...ROLE_PERMISSIONS.owner])
         : roleKey === "admin"
           ? (access.team.adminPermissions ?? [...ROLE_PERMISSIONS.admin])
           : (access.team.memberPermissions ?? [...ROLE_PERMISSIONS.member]);
 
-    const permissions =
-      roleKey === "owner" && !dbPermissions.includes(Permission.FULL_CONTROL)
-        ? [...dbPermissions, Permission.FULL_CONTROL]
-        : dbPermissions;
+    const permissions = resolvePermissionsForRole(roleKey, stored);
 
     const settings = teamRoleAccessSettings(access.team);
     return {

@@ -27,8 +27,10 @@ import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.t
 import AutomationsIndexPage from './pages/AutomationsIndexPage.tsx'
 import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
 import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
-import SchedulePage from './pages/SchedulePage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
+import SchedulePage from './pages/SchedulePage.tsx'
+import ScheduleUserDetailPage from './pages/ScheduleUserDetailPage.tsx'
+import ScheduleUserAvailabilityPage from './pages/ScheduleUserAvailabilityPage.tsx'
 import InstructionsPage from './pages/InstructionsPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
@@ -58,6 +60,8 @@ function KnowledgeBaseIndex() {
   const { agentId } = useParams()
   return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
 }
+
+
 
 /** Legacy sidebar URL; templates now live under Channels → channel. */
 function WhatsappDemoTemplateRedirect() {
@@ -169,6 +173,11 @@ function RootLayout() {
               <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="schedule" element={<SchedulePage />} />
+              <Route
+                path="schedule/:workosUserId/availability"
+                element={<ScheduleUserAvailabilityPage />}
+              />
+              <Route path="schedule/:workosUserId" element={<ScheduleUserDetailPage />} />
               <Route path="lead-assignment" element={<LeadAssignmentPage />} />
               <Route path="instructions" element={<InstructionsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />

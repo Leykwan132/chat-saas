@@ -478,6 +478,11 @@ export default function InstructionsPage() {
                           >
                             <span className="block text-base font-semibold leading-tight text-foreground">
                               {option.label}
+                              {option.value === 'automatic' ? (
+                                <span className="ml-1.5 font-normal text-muted-foreground">
+                                  [default]
+                                </span>
+                              ) : null}
                             </span>
                             <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
                               {option.description}
