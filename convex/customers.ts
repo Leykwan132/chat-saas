@@ -153,11 +153,84 @@ export const listForCurrentOrg = query({
     if (orgId === "personal" || !orgId) {
       return { page: [], isDone: true, continueCursor: "" };
     }
-    return await ctx.db
+    const result = await ctx.db
       .query("customers")
       .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", orgId))
       .order("desc")
       .paginate(args.paginationOpts);
+
+    const page = await Promise.all(
+      result.page.map(async (customer) => {
+        let assignedUserId: string | undefined = undefined;
+        let assignedAgentId: string | undefined = undefined;
+        let assignedAgentName: string | undefined = undefined;
+        let assignToAiAgent: boolean | undefined = undefined;
+
+        if (customer.lastConversationId) {
+          const conv = await ctx.db.get(customer.lastConversationId);
+          if (conv) {
+            assignedUserId = conv.assignedUserId;
+            assignedAgentId = conv.assignedAgentId;
+            assignToAiAgent = conv.assignToAiAgent;
+            if (conv.assignedAgentId) {
+              const agent = await ctx.db.get(conv.assignedAgentId);
+              if (agent) {
+                assignedAgentName = agent.name;
+              }
+            }
+          }
+        }
+        return {
+          ...customer,
+          assignedUserId,
+          assignedAgentId,
+          assignedAgentName,
+          assignToAiAgent,
+        };
+      })
+    );
+
+    return {
+      ...result,
+      page,
+    };
+  },
+});
+
+export const getById = query({
+  args: { customerId: v.id("customers") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const customer = await ctx.db.get(args.customerId);
+    if (customer === null || customer.orgId !== orgId) {
+      return null;
+    }
+    let assignedUserId: string | undefined = undefined;
+    let assignedAgentId: string | undefined = undefined;
+    let assignedAgentName: string | undefined = undefined;
+    let assignToAiAgent: boolean | undefined = undefined;
+
+    if (customer.lastConversationId) {
+      const conv = await ctx.db.get(customer.lastConversationId);
+      if (conv) {
+        assignedUserId = conv.assignedUserId;
+        assignedAgentId = conv.assignedAgentId;
+        assignToAiAgent = conv.assignToAiAgent;
+        if (conv.assignedAgentId) {
+          const agent = await ctx.db.get(conv.assignedAgentId);
+          if (agent) {
+            assignedAgentName = agent.name;
+          }
+        }
+      }
+    }
+    return {
+      ...customer,
+      assignedUserId,
+      assignedAgentId,
+      assignedAgentName,
+      assignToAiAgent,
+    };
   },
 });
 

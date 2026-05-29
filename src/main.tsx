@@ -17,6 +17,7 @@ import AgentPage from './pages/AgentPage.tsx'
 import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
 import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
+import CustomerDetailPage from './pages/CustomerDetailPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
 import CreateTeamPage from './pages/CreateTeamPage.tsx'
@@ -172,6 +173,7 @@ function RootLayout() {
               <Route path="automations/follow-up" element={<AutomationsFollowUpPage />} />
               <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
+              <Route path="customers/:customerId" element={<CustomerDetailPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route
                 path="schedule/:workosUserId/availability"

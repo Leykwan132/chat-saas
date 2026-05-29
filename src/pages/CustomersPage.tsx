@@ -1,11 +1,23 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { Users, Search, Plus, Phone, Mail, BadgeCheck, Loader2 } from 'lucide-react';
+import { usePaginatedQuery } from 'convex-helpers/react';
+import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown } from 'lucide-react';
+import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
+import { cn } from '@/lib/utils';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Dialog,
   DialogContent,
@@ -17,15 +29,42 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 
-type Customer = Doc<'customers'>;
+type Customer = Doc<'customers'> & {
+  assignedUserId?: string;
+  assignedAgentId?: string;
+  assignedAgentName?: string;
+  assignToAiAgent?: boolean;
+};
+
+function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % 6;
+  const dotColors = [
+    'bg-blue-500 dark:bg-blue-400',
+    'bg-emerald-500 dark:bg-emerald-400',
+    'bg-violet-500 dark:bg-violet-400',
+    'bg-amber-500 dark:bg-amber-400',
+    'bg-rose-500 dark:bg-rose-400',
+    'bg-cyan-500 dark:bg-cyan-400',
+  ];
+  return {
+    bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
+    text: 'text-zinc-800 dark:text-zinc-200',
+    dot: dotColors[index],
+  };
+}
 
 const sourceBadgeInfo = {
-  WhatsApp: { icon: BadgeCheck },
-  Instagram: { icon: BadgeCheck },
-  Messenger: { icon: BadgeCheck },
-  Manual: { icon: BadgeCheck },
+  WhatsApp: { icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
+  Instagram: { icon: SiInstagram, colorClass: 'text-[#E4405F]' },
+  Messenger: { icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+  Manual: { icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
 } as const;
 
 function serviceLabel(service: Customer['service']): keyof typeof sourceBadgeInfo {
@@ -56,21 +95,49 @@ function formatRelative(timestamp: number): string {
 }
 
 export default function CustomersPage() {
+  const { agentId } = useParams();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [serviceFilter, setServiceFilter] = useState<'all' | Customer['service']>(
-    'all',
-  );
+  const [combinedFilter, setCombinedFilter] = useState<string>('all');
+  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
+  const [filterSearchInput, setFilterSearchInput] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const result = useQuery(api.customers.listForCurrentOrg, {
-    paginationOpts: { numItems: 100, cursor: null },
-  });
-  const customers: Customer[] = result?.page ?? [];
+  const teamUsers = useQuery(api.users.getUsers, {});
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { results: customers, status, loadMore } = usePaginatedQuery(
+    api.customers.listForCurrentOrg,
+    {},
+    { initialNumItems: ITEMS_PER_PAGE },
+  );
+
+  const allExistingTags = useMemo(() => {
+    const tagsSet = new Set<string>();
+    for (const c of customers) {
+      if (c.tags) {
+        for (const tag of c.tags) {
+          tagsSet.add(tag);
+        }
+      }
+    }
+    return Array.from(tagsSet).sort();
+  }, [customers]);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
     return customers.filter((c) => {
-      if (serviceFilter !== 'all' && c.service !== serviceFilter) return false;
+      if (combinedFilter !== 'all') {
+        if (combinedFilter.startsWith('platform:')) {
+          const platform = combinedFilter.slice(9);
+          if (c.service !== platform) return false;
+        } else if (combinedFilter.startsWith('tag:')) {
+          const tag = combinedFilter.slice(4);
+          if (!c.tags.includes(tag)) return false;
+        }
+      }
       if (!q) return true;
       const haystack = [c.name, c.email, c.phone, c.contactAddress]
         .filter(Boolean)
@@ -78,7 +145,32 @@ export default function CustomersPage() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [customers, search, serviceFilter]);
+  }, [customers, search, combinedFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, combinedFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
+  const hasNextPage = status === 'CanLoadMore' || (currentPage * ITEMS_PER_PAGE < visible.length);
+
+  const handleNextPage = () => {
+    if (!hasNextPage) return;
+    const nextIndex = currentPage * ITEMS_PER_PAGE;
+    if (nextIndex >= customers.length && status === 'CanLoadMore') {
+      void loadMore(ITEMS_PER_PAGE);
+    }
+    setCurrentPage((prev) => prev + 1);
+  };
+
+  const handlePrevPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const pageCustomers = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return visible.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [visible, currentPage]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
@@ -92,7 +184,7 @@ export default function CustomersPage() {
         <AddCustomerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       </div>
 
-      {result === undefined ? (
+      {status === 'LoadingFirstPage' ? (
         <div className="flex items-center justify-center py-20">
           <Spinner className="size-6 text-muted-foreground" />
         </div>
@@ -138,21 +230,128 @@ export default function CustomersPage() {
                 className="bg-white dark:bg-zinc-950"
               />
             </div>
-            <Select
-              value={serviceFilter}
-              onValueChange={(val) => setServiceFilter(val as 'all' | Customer['service'])}
-            >
-              <SelectTrigger className="h-[38px] w-[140px] text-xs border border-border rounded-lg bg-white dark:bg-zinc-950 text-foreground shadow-none">
-                <SelectValue placeholder="All Sources" />
-              </SelectTrigger>
-              <SelectContent position="popper" align="end" className="rounded-2xl bg-popover text-popover-foreground border border-border shadow-lg">
-                <SelectItem value="all">All Sources</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="messenger">Messenger</SelectItem>
-                <SelectItem value="manual">Manual</SelectItem>
-              </SelectContent>
-            </Select>
+            <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-[38px] min-w-[140px] text-xs border border-border rounded-lg bg-white dark:bg-zinc-950 text-foreground shadow-none font-normal justify-between gap-1.5 px-3"
+                >
+                  <span className="truncate text-left flex items-center gap-1.5">
+                    {combinedFilter === 'all' ? (
+                      <span className="text-muted-foreground">Filter</span>
+                    ) : combinedFilter.startsWith('platform:') ? (
+                      (() => {
+                        const key = combinedFilter.slice(9);
+                        const platform = [
+                          { key: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
+                          { key: 'instagram', label: 'Instagram', icon: SiInstagram, colorClass: 'text-[#E4405F]' },
+                          { key: 'messenger', label: 'Messenger', icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+                          { key: 'manual', label: 'Manual', icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
+                        ].find((p) => p.key === key);
+                        if (!platform) return <span className="text-muted-foreground">Filter</span>;
+                        const Icon = platform.icon;
+                        return (
+                          <>
+                            <Icon className={cn("size-3.5 shrink-0", platform.colorClass)} />
+                            <span>{platform.label}</span>
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <>
+                        <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(combinedFilter.slice(4)).dot)} />
+                        <span className="truncate">{combinedFilter.slice(4)}</span>
+                      </>
+                    )}
+                  </span>
+                  <ChevronDown className="size-3.5 shrink-0 opacity-50 ml-1" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[200px] rounded-2xl shadow-lg border border-border bg-popover" align="end">
+                <Command className="p-1">
+                  <CommandInput
+                    placeholder="Search filters..."
+                    value={filterSearchInput}
+                    onValueChange={setFilterSearchInput}
+                  />
+                  <CommandList className="max-h-60 overflow-y-auto no-scrollbar">
+                    <CommandEmpty className="py-2 text-center text-xs text-muted-foreground">No filters found.</CommandEmpty>
+                    
+                    <CommandGroup heading="All">
+                      <CommandItem
+                        value="all All Customers"
+                        onSelect={() => {
+                          setCombinedFilter('all');
+                          setFilterSearchInput('');
+                          setFilterPopoverOpen(false);
+                        }}
+                        className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                      >
+                        <span>All Customers</span>
+                        {combinedFilter === 'all' && <Check className="size-3 text-foreground shrink-0" />}
+                      </CommandItem>
+                    </CommandGroup>
+                    
+                    <CommandGroup heading="Platform">
+                      {([
+                        { key: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
+                        { key: 'instagram', label: 'Instagram', icon: SiInstagram, colorClass: 'text-[#E4405F]' },
+                        { key: 'messenger', label: 'Messenger', icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+                        { key: 'manual', label: 'Manual', icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
+                      ] as const).map((platform) => {
+                        const isSelected = combinedFilter === `platform:${platform.key}`;
+                        const Icon = platform.icon;
+                        return (
+                          <CommandItem
+                            key={platform.key}
+                            value={`platform:${platform.key} ${platform.label}`}
+                            onSelect={() => {
+                              setCombinedFilter(`platform:${platform.key}`);
+                              setFilterSearchInput('');
+                              setFilterPopoverOpen(false);
+                            }}
+                            className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Icon className={cn("size-3.5 shrink-0", platform.colorClass)} />
+                              <span>{platform.label}</span>
+                            </div>
+                            {isSelected && <Check className="size-3 text-foreground shrink-0" />}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                    
+                    {allExistingTags.length > 0 && (
+                      <CommandGroup heading="Tags">
+                        {allExistingTags.map((tag) => {
+                          const isSelected = combinedFilter === `tag:${tag}`;
+                          return (
+                            <CommandItem
+                              key={tag}
+                              value={`tag:${tag}`}
+                              onSelect={() => {
+                                setCombinedFilter(`tag:${tag}`);
+                                setFilterSearchInput('');
+                                setFilterPopoverOpen(false);
+                              }}
+                              className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                            >
+                              <div className="flex items-center gap-2 truncate">
+                                <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(tag).dot)} />
+                                <span className="truncate">{tag}</span>
+                              </div>
+                              {isSelected && <Check className="size-3 text-foreground shrink-0" />}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Table */}
@@ -160,7 +359,7 @@ export default function CustomersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr className="bg-zinc-50 dark:bg-zinc-900/50">
-                  {['Customer', 'Phone', 'Source', 'Tags', 'Last Active'].map((h) => (
+                  {['Customer', 'Assignee', 'Source', 'Tags', 'Last Active'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -177,19 +376,20 @@ export default function CustomersPage() {
                 </tr>
               </thead>
               <tbody>
-                {visible.map((customer, index) => {
+                {pageCustomers.map((customer, index) => {
                   const label = serviceLabel(customer.service);
                   const SourceIcon = sourceBadgeInfo[label].icon;
                   return (
                     <tr
                       key={customer._id}
                       style={{
-                        borderBottom: index !== visible.length - 1 ? '1px solid var(--color-border)' : 'none',
+                        borderBottom: index !== pageCustomers.length - 1 ? '1px solid var(--color-border)' : 'none',
                         cursor: 'pointer',
                         transition: 'background 0.12s',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-surface-hover)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      onClick={() => navigate(`/dashboard/${agentId}/customers/${customer._id}`)}
                     >
                       <td style={{ padding: '13px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
@@ -209,27 +409,55 @@ export default function CustomersPage() {
                         </div>
                       </td>
                       <td style={{ padding: '13px 20px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-foreground)' }}>
-                          <Phone size={13} color="var(--color-foreground-subtle)" />
-                          {customer.phone || '—'}
-                        </div>
+                        {customer.assignedUserId ? (
+                          (() => {
+                            const u = teamUsers?.find((m) => m.workosUserId === customer.assignedUserId);
+                            const label = u
+                              ? [u.firstName, u.lastName].filter(Boolean).join(' ') || u.email
+                              : 'Teammate';
+                            return (
+                              <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
+                                <User className="size-3.5 text-[#6366f1] shrink-0" />
+                                <span className="truncate max-w-[120px]" title={label}>{label}</span>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          <span className="text-muted-foreground/60 text-xs font-normal">Unassigned</span>
+                        )}
                       </td>
                       <td style={{ padding: '13px 20px' }}>
                         <Badge variant="outline">
-                          <SourceIcon data-icon="inline-start" />
+                          <SourceIcon
+                            data-icon="inline-start"
+                            className={sourceBadgeInfo[label].colorClass}
+                          />
                           {label}
                         </Badge>
                       </td>
-                      <td style={{ padding: '13px 20px' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      <td style={{ padding: '13px 20px', maxWidth: '280px' }}>
+                        <div className="flex flex-wrap gap-1.5">
                           {customer.tags.length === 0 ? (
                             <span style={{ color: 'var(--color-foreground-muted)' }}>—</span>
                           ) : (
-                            customer.tags.map((tag) => (
-                              <Badge key={tag} variant="secondary">
-                                {tag}
-                              </Badge>
-                            ))
+                            customer.tags.map((tag) => {
+                              const colors = getTagColorClass(tag);
+                              return (
+                                <span
+                                  key={tag}
+                                  className={cn(
+                                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
+                                    colors.bg,
+                                    colors.text
+                                  )}
+                                >
+                                  <span className={cn("size-1.5 rounded-full shrink-0", colors.dot)} />
+                                  <span className="max-w-[120px] truncate" title={tag}>
+                                    {tag}
+                                  </span>
+                                </span>
+                              );
+                            })
                           )}
                         </div>
                       </td>
@@ -239,7 +467,7 @@ export default function CustomersPage() {
                     </tr>
                   );
                 })}
-                {visible.length === 0 ? (
+                {pageCustomers.length === 0 ? (
                   <tr>
                     <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-foreground-muted)' }}>
                       No customers match your filters.
@@ -248,15 +476,68 @@ export default function CustomersPage() {
                 ) : null}
               </tbody>
             </table>
-          </div>
 
-          {/* Footer */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontSize: '12px', color: 'var(--color-foreground-subtle)' }}>
-            <Users size={14} />
-            <span>
-              {customers.length} customer{customers.length === 1 ? '' : 's'} —
-              new ones are added automatically when they message you.
-            </span>
+            {/* Pagination Controls */}
+            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4 border-t border-border px-6 py-4 bg-zinc-50/50 dark:bg-zinc-900/10 min-h-[58px]">
+              <div className="flex justify-center">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (currentPage > 1) {
+                            handlePrevPage();
+                          }
+                        }}
+                        className={cn(
+                          currentPage === 1 && "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+                    
+                    {Array.from({ length: totalPages }).map((_, index) => {
+                      const pageNumber = index + 1;
+                      return (
+                        <PaginationItem key={pageNumber}>
+                          <PaginationLink
+                            href="#"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setCurrentPage(pageNumber);
+                            }}
+                            isActive={currentPage === pageNumber}
+                          >
+                            {pageNumber}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    })}
+
+                    <PaginationItem>
+                      <PaginationNext
+                        href="#"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          if (hasNextPage) {
+                            handleNextPage();
+                          }
+                        }}
+                        className={cn(
+                          !hasNextPage && "pointer-events-none opacity-50"
+                        )}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+              
+              <p className="text-xs text-muted-foreground font-medium text-center sm:text-right sm:absolute sm:right-6">
+                Showing {visible.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} to{" "}
+                {Math.min(currentPage * ITEMS_PER_PAGE, visible.length)} of {visible.length} customers
+              </p>
+            </div>
           </div>
         </>
       )}

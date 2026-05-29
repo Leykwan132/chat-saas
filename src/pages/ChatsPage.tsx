@@ -740,11 +740,7 @@ export default function ChatsPage() {
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 text-foreground truncate">
-                          {allExistingTags.includes(combinedFilter.slice(4)) ? (
-                            <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(combinedFilter.slice(4)).dot)} />
-                          ) : (
-                            <span className="size-1.5 rounded-full shrink-0 bg-neutral-400 dark:bg-neutral-500" />
-                          )}
+                          <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(combinedFilter.slice(4)).dot)} />
                           <span className="truncate">{combinedFilter.slice(4)}</span>
                         </span>
                       )}
@@ -833,7 +829,7 @@ export default function ChatsPage() {
                                   className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                 >
                                   <div className="flex items-center gap-2">
-                                    <span className="size-1.5 rounded-full shrink-0 bg-neutral-400 dark:bg-neutral-500" />
+                                    <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(entry.title).dot)} />
                                     <span>{entry.title}</span>
                                   </div>
                                   {isSelected && <Check className="size-3 text-foreground shrink-0" />}
@@ -1252,7 +1248,7 @@ export default function ChatsPage() {
                                                 className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                               >
                                                 <div className="flex items-center gap-2">
-                                                  <span className="size-1.5 rounded-full shrink-0 bg-neutral-400 dark:bg-neutral-500" />
+                                                  <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(entry.title).dot)} />
                                                   <span>{entry.title}</span>
                                                 </div>
                                                 {isSelected && <Check className="size-3 text-foreground shrink-0" />}
