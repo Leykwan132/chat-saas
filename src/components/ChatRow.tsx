@@ -1,4 +1,5 @@
 import { Pin, PinOff } from 'lucide-react';
+import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
   ContextMenu,
@@ -127,6 +128,25 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {chat.tags.map((tag: string) => {
+                    if (isLeadTemperatureTag(tag)) {
+                      const style = getLeadTemperatureStyle(tag);
+                      const Icon = style.icon;
+                      return (
+                        <span
+                          key={tag}
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.2 text-[10px] font-medium transition-all shadow-none",
+                            style.bg,
+                            style.text
+                          )}
+                        >
+                          <Icon className={cn("size-2.5 shrink-0", style.iconClass)} />
+                          <span className="max-w-[70px] truncate" title={tag}>
+                            {tag}
+                          </span>
+                        </span>
+                      );
+                    }
                     const colors = getTagColorClass(tag);
                     return (
                       <span

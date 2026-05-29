@@ -32,6 +32,7 @@ import {
   scopeFromOrg,
   scopeFromUser,
 } from "./creditEntries";
+import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 export type { PlanKey, PlanCatalogEntry, PlanFeatureFlags };
 
@@ -70,7 +71,8 @@ export async function getPlanFromStripe(
     components.stripe.public.getSubscriptionByOrgId,
     { orgId: entityId }
   );
-
+  console.log("subscription", subscription);
+  
   if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
     let plan: PlanKey = "free";
     try {
@@ -403,9 +405,112 @@ export const getPlanAndUsage = query({
   },
 });
 
+export async function getTeamStripePlanHelper(
+  ctx: QueryCtx | MutationCtx,
+  args: { workosOrgId: string; userId?: string }
+): Promise<{
+  plan: PlanKey;
+  status?: string;
+  currentPeriodEnd?: number;
+}> {
+  const isPersonal = !args.workosOrgId || args.workosOrgId === "personal" || args.workosOrgId.startsWith("user_");
+
+  if (isPersonal) {
+    let workosUserId = args.userId;
+    if (!workosUserId && args.workosOrgId.startsWith("user_")) {
+      workosUserId = args.workosOrgId;
+    }
+    if (!workosUserId) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (identity) {
+        workosUserId = identity.subject;
+      }
+    }
+
+    if (!workosUserId) {
+      return { plan: "free" };
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId!))
+      .unique();
+
+    if (!user || !user.stripeSubscriptionId) {
+      return { plan: "free" };
+    }
+
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscription,
+      { stripeSubscriptionId: user.stripeSubscriptionId }
+    );
+
+    if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
+      let plan: PlanKey = "free";
+      try {
+        plan = resolvePlanKeyFromStripePriceId(subscription.priceId);
+      } catch {
+        plan = "free";
+      }
+      return {
+        plan,
+        status: subscription.status,
+        currentPeriodEnd: subscription.currentPeriodEnd * 1000,
+      };
+    }
+
+    return { plan: "free" };
+  } else {
+    const team = await ctx.db
+      .query("teams")
+      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
+      .unique();
+
+    if (!team) {
+      throw new Error(`Team not found for organization ${args.workosOrgId}`);
+    }
+
+    if (!team.stripeSubscriptionId) {
+      throw new Error(`No Stripe subscription found for team ${team.name}`);
+    }
+
+    const subscription = await ctx.runQuery(
+      components.stripe.public.getSubscription,
+      { stripeSubscriptionId: team.stripeSubscriptionId }
+    );
+
+    if (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) {
+      throw new Error(`Stripe subscription ${team.stripeSubscriptionId} is not active or trialing for team ${team.name}`);
+    }
+
+    let plan: PlanKey;
+    try {
+      plan = resolvePlanKeyFromStripePriceId(subscription.priceId);
+    } catch {
+      throw new Error(`Unsupported Stripe price ID: ${subscription.priceId}`);
+    }
+
+    return {
+      plan,
+      status: subscription.status,
+      currentPeriodEnd: subscription.currentPeriodEnd * 1000,
+    };
+  }
+}
+
+export const getTeamStripePlan = internalQuery({
+  args: {
+    workosOrgId: v.string(),
+    userId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    return await getTeamStripePlanHelper(ctx, args);
+  },
+});
+
 export const internalGetPlanFromStripe = internalQuery({
   args: { entityId: v.string() },
   handler: async (ctx, args) => {
-    return await getPlanFromStripe(ctx, args.entityId);
+    return await getTeamStripePlanHelper(ctx, { workosOrgId: args.entityId });
   },
 });

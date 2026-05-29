@@ -90,6 +90,7 @@ export default defineSchema({
     name: v.string(),
     ownerId: v.id("users"),
     workosOrgId: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
     industry: v.optional(v.string()),
     companySize: v.optional(v.string()),
     domain: v.optional(v.string()),

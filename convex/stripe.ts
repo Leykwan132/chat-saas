@@ -22,6 +22,7 @@ import {
   syncDenormalizedCreditFields,
 } from "./creditEntries";
 import { getPlanFromStripe } from "./plans";
+import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
@@ -208,6 +209,15 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
         throw new Error("User not found");
       }
 
+      // Assign the Stripe subscription ID to the personal team in the teams table
+      const personalTeam = await getPersonalTeamForUser(ctx, user._id);
+      if (personalTeam) {
+        await ctx.db.patch(personalTeam._id, {
+          stripeSubscriptionId: args.stripeSubscriptionId,
+          updatedAt: Date.now(),
+        });
+      }
+
       const isPlanChanged = user.stripePriceId !== args.priceId;
       const isNewPeriod = user.stripeSubscriptionCurrentPeriodEnd !== newPeriodEndMs;
 
@@ -256,6 +266,15 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
         .unique();
       if (!org) {
         throw new Error("Organization not found");
+      }
+
+      // Assign the Stripe subscription ID to the organizational team in the teams table
+      const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
+      if (orgTeam) {
+        await ctx.db.patch(orgTeam._id, {
+          stripeSubscriptionId: args.stripeSubscriptionId,
+          updatedAt: Date.now(),
+        });
       }
 
       const isPlanChanged = org.stripePriceId !== args.priceId;
@@ -320,6 +339,14 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         throw new Error("User not found");
       }
 
+      const personalTeam = await getPersonalTeamForUser(ctx, user._id);
+      if (personalTeam) {
+        await ctx.db.patch(personalTeam._id, {
+          stripeSubscriptionId: undefined,
+          updatedAt: Date.now(),
+        });
+      }
+
       const before = snapshotCreditBalances(user);
       const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
       const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
@@ -354,6 +381,14 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         .unique();
       if (!org) {
         throw new Error("Organization not found");
+      }
+
+      const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
+      if (orgTeam) {
+        await ctx.db.patch(orgTeam._id, {
+          stripeSubscriptionId: undefined,
+          updatedAt: Date.now(),
+        });
       }
 
       const before = snapshotCreditBalances(org);

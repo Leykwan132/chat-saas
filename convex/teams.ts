@@ -35,8 +35,12 @@ async function resolveOrgPlan(
   ctx: Parameters<typeof getPlanFromStripe>[0],
   org: { plan?: PlanKey; workosOrgId: string },
 ): Promise<PlanKey> {
-  const stripeInfo = await getPlanFromStripe(ctx, org.workosOrgId);
-  if (stripeInfo.plan !== "free") return stripeInfo.plan;
+  try {
+    const stripeInfo = await getPlanFromStripe(ctx, org.workosOrgId);
+    if (stripeInfo.plan !== "free") return stripeInfo.plan;
+  } catch (err) {
+    console.warn(`Failed to resolve Stripe plan for org ${org.workosOrgId}:`, err);
+  }
   return org.plan ?? "free";
 }
 

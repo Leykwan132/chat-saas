@@ -151,7 +151,6 @@ function useMetaChannelCallbackParams() {
 export default function ChannelsPage() {
   const { agentId } = useParams();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const agents = useQuery(api.agents.list, {});
   const ensureDefaultAgentId = useMutation(api.channels.ensureDefaultAgentId);
   useMetaChannelCallbackParams();
 
@@ -234,7 +233,6 @@ export default function ChannelsPage() {
                 key={channel._id}
                 agentId={agentId}
                 channel={channel}
-                agents={agents ?? []}
                 onDisconnectBegin={() => {
                   setDisconnectingChannelIds((s) =>
                     new Set(s).add(channel._id as string),
@@ -491,13 +489,11 @@ function formatConnectedSince(ts: number): string {
 function ConnectedChannelRow({
   agentId,
   channel,
-  agents,
   onDisconnectBegin,
   onDisconnectUndone,
 }: {
   agentId?: string;
   channel: ChannelDoc;
-  agents: Array<{ _id: Id<'agents'>; name: string }>;
   onDisconnectBegin: () => void;
   onDisconnectUndone: () => void;
 }) {
@@ -505,13 +501,11 @@ function ConnectedChannelRow({
   const Icon = meta.icon;
   const status = STATUS_META[channel.status];
   const disconnect = useMutation(api.channels.disconnect);
-  const setDefaultAgentId = useMutation(api.channels.setDefaultAgentId);
   const enqueueSyncConversations = useAction(
     api.channels.enqueueSyncConversations,
   );
   const [busy, setBusy] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
-  const [agentBusy, setAgentBusy] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
 
   const channelName = channelIdentifier(channel);
@@ -618,42 +612,6 @@ function ConnectedChannelRow({
             <div className="flex min-w-0 flex-1 gap-3">{mainBlock}</div>
           )}
         </div>
-        {channel.status === 'connected' && agents.length > 0 ? (
-          <div className="flex max-w-sm flex-col gap-1 pl-[52px]">
-            <label className="text-xs text-muted-foreground">Routing agent</label>
-            <Select
-              value={channel.defaultAgentId ?? ''}
-              disabled={agentBusy}
-              onValueChange={(value) => {
-                void (async () => {
-                  setAgentBusy(true);
-                  try {
-                    await setDefaultAgentId({
-                      channelId: channel._id,
-                      agentId: value as Id<'agents'>,
-                    });
-                    toast.success('Routing agent updated');
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : String(err));
-                  } finally {
-                    setAgentBusy(false);
-                  }
-                })();
-              }}
-            >
-              <SelectTrigger className="h-8">
-                <SelectValue placeholder="Select agent" />
-              </SelectTrigger>
-              <SelectContent>
-                {agents.map((agent) => (
-                  <SelectItem key={agent._id} value={agent._id}>
-                    {agent.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
       </div>
       <div className="flex shrink-0 items-center justify-end gap-2 self-start sm:pt-0.5">
         {channel.status !== 'connected' ? (

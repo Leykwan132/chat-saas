@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check } from 'lucide-react';
+import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -290,7 +291,9 @@ export default function CustomerDetailPage() {
                   )}
                 </CommandList>
                 
-                {tagSearchInput.trim() && !allExistingTags.some(t => t.toLowerCase() === tagSearchInput.trim().toLowerCase()) && (
+                {tagSearchInput.trim() &&
+                  !isReservedTemperatureTag(tagSearchInput) &&
+                  !allExistingTags.some(t => t.toLowerCase() === tagSearchInput.trim().toLowerCase()) && (
                   <div className="p-1 border-t border-border/50">
                     <button
                       type="button"
@@ -317,6 +320,25 @@ export default function CustomerDetailPage() {
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex flex-wrap gap-2">
               {customer.tags.map((tag) => {
+                if (isLeadTemperatureTag(tag)) {
+                  const style = getLeadTemperatureStyle(tag);
+                  const Icon = style.icon;
+                  return (
+                    <span
+                      key={tag}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
+                        style.bg,
+                        style.text
+                      )}
+                    >
+                      <Icon className={cn("size-3 shrink-0", style.iconClass)} />
+                      <span className="max-w-[150px] truncate" title={tag}>
+                        {tag}
+                      </span>
+                    </span>
+                  );
+                }
                 const colors = getTagColorClass(tag);
                 return (
                   <span

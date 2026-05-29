@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import {
   query,
+  mutation,
   internalMutation,
   internalAction,
   internalQuery,
@@ -203,12 +204,15 @@ export const internalPersistHumanReply = internalMutation({
           ? "Image"
           : "";
 
-    await ctx.db.patch(conv._id, {
+    const patch: Record<string, any> = {
       lastMessageAt: now,
-      lastMessagePreview: preview,
       unreadCount: 0,
       updatedAt: now,
-    });
+    };
+    if (preview && preview.trim() !== "") {
+      patch.lastMessagePreview = preview;
+    }
+    await ctx.db.patch(conv._id, patch);
 
     const stripeInfo = await getPlanFromStripe(ctx, args.authorUserId);
     if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
@@ -278,12 +282,16 @@ export const internalPersistAiReply = internalMutation({
       createdAt: now,
     });
 
-    await ctx.db.patch(conv._id, {
+    const patch: Record<string, any> = {
       lastMessageAt: now,
-      lastMessagePreview: trimmed.slice(0, 140),
       unreadCount: 0,
       updatedAt: now,
-    });
+    };
+    const preview = trimmed.slice(0, 140);
+    if (preview && preview.trim() !== "") {
+      patch.lastMessagePreview = preview;
+    }
+    await ctx.db.patch(conv._id, patch);
 
     return agentMessageId;
   },
@@ -369,8 +377,9 @@ export const generateAiReplyWorker = internalAction({
     });
     if (!agent) return;
 
-    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
-      entityId: agent.userId,
+    const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
+      workosOrgId: agent.orgId,
+      userId: agent.userId,
     });
 
     if (!checkAiFeature(stripeInfo.plan, "auto_reply")) {
@@ -606,6 +615,23 @@ export const internalEnqueueSummarization = internalMutation({
   },
 });
 
+export const triggerSummarization = mutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+
+    await threadSummarizerPool.enqueueAction(
+      ctx,
+      internal.chat.inbox.summarizeThreadWorker,
+      { conversationId: args.conversationId },
+    );
+  },
+});
+
 export const summarizeThreadWorker = internalAction({
   args: {
     conversationId: v.id("conversations"),
@@ -623,10 +649,11 @@ export const summarizeThreadWorker = internalAction({
     );
     if (messages.length === 0) return;
 
-    const stripeInfo = await ctx.runQuery(internal.plans.internalGetPlanFromStripe, {
-      entityId: conv.orgId,
+    const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
+      workosOrgId: conv.orgId,
+      userId: conv.assignedUserId ?? undefined,
     });
-
+    console.log("stripeInfo", stripeInfo);
     if (!checkAiFeature(stripeInfo.plan, "thread_summary")) {
       console.warn("Thread summary skipped: feature disabled for plan tier", {
         orgId: conv.orgId,
@@ -658,12 +685,20 @@ export const summarizeThreadWorker = internalAction({
       .join("\n");
 
     const systemPrompt = `You are a helpful assistant that summarizes chat transcripts between a customer and a business agent.
-Generate a very simple, clear, and easy-to-understand summary of 1-2 sentences.
-Use plain English, avoid formal business speak or jargon, and explain:
-1. What product the user is interested in (identify the specific product or topic if mentioned).
-2. The current stage of the conversation (e.g., asking for details, waiting for support, pricing question, finalized purchase, etc.).
-Make it readable at a single glance.`;
-    const prompt = `Please summarize the following chat transcript clearly and simply in 1-2 sentences:\n\n${transcript}`;
+You have two jobs:
+1. Generate a very simple, clear, and easy-to-understand summary of precisely 3-4 lines.
+   Keep it short, sweet, and focused specifically on the customer and their status. Use plain English, avoid formal business speak or jargon, and explain:
+   - The customer's primary inquiry, need, or concern (what they are looking for or trying to resolve).
+   - The current status, sentiment, or next steps from the customer's perspective (e.g. they are waiting for a support response, frustrated with pricing, happy after a successful purchase, ready to book a demo).
+   Make it highly customer-centric and readable at a single glance.
+2. Classify the lead temperature as one of: "hot", "warm", or "cold".
+   - Hot: Customer shows strong buying intent — asking about pricing, requesting a demo, ready to purchase, comparing specific options, asking about availability/delivery, or has already made a purchase.
+   - Warm: Customer is interested but still exploring — asking general questions, requesting information, showing curiosity but not yet committed.
+   - Cold: Customer is disengaged, unresponsive, just browsing, filing a complaint with no purchase intent, or conversation is a dead-end support ticket.
+
+You MUST respond with ONLY a JSON object in this exact format, no other text:
+{"summary": "your summary here", "leadTemperature": "hot" or "warm" or "cold"}`;
+    const prompt = `Please summarize the following chat transcript and classify the lead temperature. Respond with ONLY a JSON object:\n\n${transcript}`;
 
     try {
       const { text } = await generateText({
@@ -671,13 +706,44 @@ Make it readable at a single glance.`;
         prompt,
         system: systemPrompt,
       });
-      const summary = text.trim();
+      const raw = text.trim();
+      // Parse the JSON response — strip markdown fences if present.
+      const jsonStr = raw.startsWith("{")
+        ? raw
+        : raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+      let summary = "";
+      let leadTemperature: "hot" | "warm" | "cold" | undefined;
+      try {
+        const parsed = JSON.parse(jsonStr) as {
+          summary?: string;
+          leadTemperature?: string;
+        };
+        summary = (parsed.summary ?? "").trim();
+        const temp = (parsed.leadTemperature ?? "").toLowerCase();
+        if (temp === "hot" || temp === "warm" || temp === "cold") {
+          leadTemperature = temp;
+        }
+      } catch {
+        // If JSON parsing fails, treat the entire response as a plain summary.
+        summary = raw;
+      }
       if (summary) {
         await ctx.runMutation(
           internal.chat.inbox.internalUpdateThreadSummary,
           {
             conversationId: args.conversationId,
             summary,
+          },
+        );
+      }
+      // Update the customer's lead temperature tag.
+      if (conv.customerId && leadTemperature) {
+        const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
+        await ctx.runMutation(
+          internal.customers.internalSetLeadTemperature,
+          {
+            customerId: conv.customerId,
+            temperature: temperatureMap[leadTemperature],
           },
         );
       }

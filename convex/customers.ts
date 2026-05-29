@@ -22,6 +22,13 @@ const channelServiceValidator = v.union(
   v.literal("messenger"),
 );
 
+function assertNotLeadTemperatureTag(tag: string) {
+  const normalized = tag.trim().toLowerCase();
+  if (["hot", "warm", "cold"].includes(normalized)) {
+    throw new Error(`Tag name "${tag}" is reserved for lead temperature status.`);
+  }
+}
+
 // Distinct WhatsApp contacts that have a conversation on this channel
 // (used for template broadcast recipient pickers).
 export const listWhatsAppBroadcastCandidates = query({
@@ -254,6 +261,10 @@ export const addManually = mutation({
       throw new Error("Customer name is required");
     }
     const now = Date.now();
+    const tags = args.tags ?? [];
+    for (const tag of tags) {
+      assertNotLeadTemperatureTag(tag);
+    }
     return await ctx.db.insert("customers", {
       orgId,
       service: "manual",
@@ -261,7 +272,7 @@ export const addManually = mutation({
       name,
       email: args.email?.trim() || undefined,
       phone: args.phone?.trim() || undefined,
-      tags: args.tags ?? [],
+      tags: tags.map((t) => t.trim()).filter(Boolean),
       source: "manual",
       firstSeenAt: now,
       lastSeenAt: now,
@@ -289,7 +300,12 @@ export const update = mutation({
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
     if (args.name !== undefined) patch.name = args.name.trim() || undefined;
     if (args.email !== undefined) patch.email = args.email.trim() || undefined;
-    if (args.tags !== undefined) patch.tags = args.tags;
+    if (args.tags !== undefined) {
+      for (const tag of args.tags) {
+        assertNotLeadTemperatureTag(tag);
+      }
+      patch.tags = args.tags.map((t) => t.trim()).filter(Boolean);
+    }
     if (args.notes !== undefined) patch.notes = args.notes;
     await ctx.db.patch(args.customerId, patch);
   },
@@ -402,6 +418,7 @@ export const addCustomerTag = mutation({
     if (normalized.length === 0) {
       throw new Error("Tag cannot be empty");
     }
+    assertNotLeadTemperatureTag(normalized);
     const current = customer.tags ?? [];
     if (current.includes(normalized)) {
       return;
@@ -427,6 +444,30 @@ export const removeCustomerTag = mutation({
     const current = customer.tags ?? [];
     await ctx.db.patch(args.customerId, {
       tags: current.filter((t) => t !== args.tag),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+// Lead temperature tags managed by the AI summarizer.
+export const LEAD_TEMPERATURE_TAGS = ["Hot", "Warm", "Cold"] as const;
+export type LeadTemperature = (typeof LEAD_TEMPERATURE_TAGS)[number];
+
+export const internalSetLeadTemperature = internalMutation({
+  args: {
+    customerId: v.id("customers"),
+    temperature: v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
+  },
+  handler: async (ctx, args) => {
+    const customer = await ctx.db.get(args.customerId);
+    if (!customer) return;
+    // Remove any existing lead temperature tags, then add the new one.
+    const filtered = (customer.tags ?? []).filter(
+      (t) => !(LEAD_TEMPERATURE_TAGS as readonly string[]).includes(t),
+    );
+    filtered.push(args.temperature);
+    await ctx.db.patch(args.customerId, {
+      tags: filtered,
       updatedAt: Date.now(),
     });
   },

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
 import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown } from 'lucide-react';
+import { isLeadTemperatureTag, getLeadTemperatureStyle, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -30,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 
 type Customer = Doc<'customers'> & {
   assignedUserId?: string;
@@ -98,10 +99,20 @@ export default function CustomersPage() {
   const { agentId } = useParams();
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [combinedFilter, setCombinedFilter] = useState<string>('all');
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [filterSearchInput, setFilterSearchInput] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleToggleFilter = (filterKey: string) => {
+    setSelectedFilters((prev) => {
+      if (prev.includes(filterKey)) {
+        return prev.filter((x) => x !== filterKey);
+      } else {
+        return [...prev, filterKey];
+      }
+    });
+  };
 
   const teamUsers = useQuery(api.users.getUsers, {});
 
@@ -128,15 +139,19 @@ export default function CustomersPage() {
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const activePlatforms = selectedFilters.filter(f => f.startsWith('platform:')).map(f => f.slice(9));
+    const activeTags = selectedFilters.filter(f => f.startsWith('tag:')).map(f => f.slice(4));
+    const activeLeads = selectedFilters.filter(f => f.startsWith('lead:')).map(f => f.slice(5));
+
     return customers.filter((c) => {
-      if (combinedFilter !== 'all') {
-        if (combinedFilter.startsWith('platform:')) {
-          const platform = combinedFilter.slice(9);
-          if (c.service !== platform) return false;
-        } else if (combinedFilter.startsWith('tag:')) {
-          const tag = combinedFilter.slice(4);
-          if (!c.tags.includes(tag)) return false;
-        }
+      if (activePlatforms.length > 0) {
+        if (!activePlatforms.includes(c.service)) return false;
+      }
+      if (activeTags.length > 0) {
+        if (!c.tags || !c.tags.some(t => activeTags.includes(t))) return false;
+      }
+      if (activeLeads.length > 0) {
+        if (!c.tags || !c.tags.some(t => activeLeads.includes(t))) return false;
       }
       if (!q) return true;
       const haystack = [c.name, c.email, c.phone, c.contactAddress]
@@ -145,11 +160,11 @@ export default function CustomersPage() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [customers, search, combinedFilter]);
+  }, [customers, search, selectedFilters]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, combinedFilter]);
+  }, [search, selectedFilters]);
 
   const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
   const hasNextPage = status === 'CanLoadMore' || (currentPage * ITEMS_PER_PAGE < visible.length);
@@ -238,31 +253,51 @@ export default function CustomersPage() {
                   className="h-[38px] min-w-[140px] text-xs border border-border rounded-lg bg-white dark:bg-zinc-950 text-foreground shadow-none font-normal justify-between gap-1.5 px-3"
                 >
                   <span className="truncate text-left flex items-center gap-1.5">
-                    {combinedFilter === 'all' ? (
+                    {selectedFilters.length === 0 ? (
                       <span className="text-muted-foreground">Filter</span>
-                    ) : combinedFilter.startsWith('platform:') ? (
+                    ) : selectedFilters.length === 1 ? (
                       (() => {
-                        const key = combinedFilter.slice(9);
-                        const platform = [
-                          { key: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
-                          { key: 'instagram', label: 'Instagram', icon: SiInstagram, colorClass: 'text-[#E4405F]' },
-                          { key: 'messenger', label: 'Messenger', icon: SiMessenger, colorClass: 'text-[#0866FF]' },
-                          { key: 'manual', label: 'Manual', icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
-                        ].find((p) => p.key === key);
-                        if (!platform) return <span className="text-muted-foreground">Filter</span>;
-                        const Icon = platform.icon;
-                        return (
-                          <>
-                            <Icon className={cn("size-3.5 shrink-0", platform.colorClass)} />
-                            <span>{platform.label}</span>
-                          </>
-                        );
+                        const filter = selectedFilters[0];
+                        if (filter.startsWith('platform:')) {
+                          const key = filter.slice(9);
+                          const platform = [
+                            { key: 'whatsapp', label: 'WhatsApp', icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
+                            { key: 'instagram', label: 'Instagram', icon: SiInstagram, colorClass: 'text-[#E4405F]' },
+                            { key: 'messenger', label: 'Messenger', icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+                            { key: 'manual', label: 'Manual', icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
+                          ].find((p) => p.key === key);
+                          if (!platform) return <span className="text-muted-foreground">Filter</span>;
+                          const Icon = platform.icon;
+                          return (
+                            <>
+                              <Icon className={cn("size-3.5 shrink-0", platform.colorClass)} />
+                              <span>{platform.label}</span>
+                            </>
+                          );
+                        } else if (filter.startsWith('lead:')) {
+                          const tag = filter.slice(5) as LeadTemperature;
+                          const style = getLeadTemperatureStyle(tag);
+                          const Icon = style.icon;
+                          return (
+                            <>
+                              <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
+                              <span>{tag}</span>
+                            </>
+                          );
+                        } else {
+                          const name = filter.slice(4);
+                          return (
+                            <>
+                              <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(name).dot)} />
+                              <span className="truncate">{name}</span>
+                            </>
+                          );
+                        }
                       })()
                     ) : (
-                      <>
-                        <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(combinedFilter.slice(4)).dot)} />
-                        <span className="truncate">{combinedFilter.slice(4)}</span>
-                      </>
+                      <span className="text-foreground font-medium">
+                        {selectedFilters.length} filters active
+                      </span>
                     )}
                   </span>
                   <ChevronDown className="size-3.5 shrink-0 opacity-50 ml-1" />
@@ -282,14 +317,13 @@ export default function CustomersPage() {
                       <CommandItem
                         value="all All Customers"
                         onSelect={() => {
-                          setCombinedFilter('all');
+                          setSelectedFilters([]);
                           setFilterSearchInput('');
-                          setFilterPopoverOpen(false);
                         }}
                         className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                       >
                         <span>All Customers</span>
-                        {combinedFilter === 'all' && <Check className="size-3 text-foreground shrink-0" />}
+                        {selectedFilters.length === 0 && <Check className="size-3 text-foreground shrink-0" />}
                       </CommandItem>
                     </CommandGroup>
                     
@@ -300,16 +334,14 @@ export default function CustomersPage() {
                         { key: 'messenger', label: 'Messenger', icon: SiMessenger, colorClass: 'text-[#0866FF]' },
                         { key: 'manual', label: 'Manual', icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
                       ] as const).map((platform) => {
-                        const isSelected = combinedFilter === `platform:${platform.key}`;
+                        const isSelected = selectedFilters.includes(`platform:${platform.key}`);
                         const Icon = platform.icon;
                         return (
                           <CommandItem
                             key={platform.key}
                             value={`platform:${platform.key} ${platform.label}`}
                             onSelect={() => {
-                              setCombinedFilter(`platform:${platform.key}`);
-                              setFilterSearchInput('');
-                              setFilterPopoverOpen(false);
+                              handleToggleFilter(`platform:${platform.key}`);
                             }}
                             className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                           >
@@ -323,18 +355,41 @@ export default function CustomersPage() {
                       })}
                     </CommandGroup>
                     
-                    {allExistingTags.length > 0 && (
+                    <CommandSeparator />
+                    <CommandGroup heading="Lead Status">
+                      {(['Hot', 'Warm', 'Cold'] as const).map((status) => {
+                        const isSelected = selectedFilters.includes(`lead:${status}`);
+                        const style = getLeadTemperatureStyle(status);
+                        const Icon = style.icon;
+                        return (
+                          <CommandItem
+                            key={status}
+                            value={`lead:${status}`}
+                            onSelect={() => {
+                              handleToggleFilter(`lead:${status}`);
+                            }}
+                            className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                          >
+                            <div className="flex items-center gap-2">
+                              <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
+                              <span>{status}</span>
+                            </div>
+                            {isSelected && <Check className="size-3 text-foreground shrink-0" />}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+
+                    {allExistingTags.filter(t => !isLeadTemperatureTag(t)).length > 0 && (
                       <CommandGroup heading="Tags">
-                        {allExistingTags.map((tag) => {
-                          const isSelected = combinedFilter === `tag:${tag}`;
+                        {allExistingTags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
+                          const isSelected = selectedFilters.includes(`tag:${tag}`);
                           return (
                             <CommandItem
                               key={tag}
                               value={`tag:${tag}`}
                               onSelect={() => {
-                                setCombinedFilter(`tag:${tag}`);
-                                setFilterSearchInput('');
-                                setFilterPopoverOpen(false);
+                                handleToggleFilter(`tag:${tag}`);
                               }}
                               className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                             >
@@ -441,6 +496,25 @@ export default function CustomersPage() {
                             <span style={{ color: 'var(--color-foreground-muted)' }}>—</span>
                           ) : (
                             customer.tags.map((tag) => {
+                              if (isLeadTemperatureTag(tag)) {
+                                const style = getLeadTemperatureStyle(tag);
+                                const Icon = style.icon;
+                                return (
+                                  <span
+                                    key={tag}
+                                    className={cn(
+                                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
+                                      style.bg,
+                                      style.text
+                                    )}
+                                  >
+                                    <Icon className={cn("size-3 shrink-0", style.iconClass)} />
+                                    <span className="max-w-[120px] truncate" title={tag}>
+                                      {tag}
+                                    </span>
+                                  </span>
+                                );
+                              }
                               const colors = getTagColorClass(tag);
                               return (
                                 <span

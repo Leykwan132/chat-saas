@@ -504,6 +504,7 @@ export async function ingestChannelMessage(
     isIncoming: args.direction === "incoming",
     assignedAgentId: args.assignedAgentId,
     metaConversationId: args.metaConversationId,
+    isHistorical: args.isHistorical,
   });
 
   let agentMessageId: string | undefined;
@@ -574,6 +575,7 @@ async function upsertInboxConversation(
     isIncoming: boolean;
     assignedAgentId?: Id<"agents">;
     metaConversationId?: string;
+    isHistorical?: boolean;
   },
 ): Promise<{ conversationId: Id<"conversations">; threadId: string; isNew: boolean }> {
   const existing = await ctx.db
@@ -630,9 +632,9 @@ async function upsertInboxConversation(
       assignedAgentId: routingAgentId,
       threadId,
       lastMessageAt: args.lastMessageAt,
-      lastMessagePreview: args.preview,
+      lastMessagePreview: args.preview && args.preview.trim() !== "" ? args.preview : undefined,
       lastCustomerMessageAt: args.isIncoming ? args.lastMessageAt : undefined,
-      unreadCount: args.isIncoming ? 1 : 0,
+      unreadCount: args.isHistorical ? 0 : (args.isIncoming ? 1 : 0),
       metaConversationId: args.metaConversationId,
       createdAt: now,
       updatedAt: now,
@@ -659,10 +661,12 @@ async function upsertInboxConversation(
 
   const patch: Record<string, unknown> = {
     lastMessageAt: args.lastMessageAt,
-    lastMessagePreview: args.preview,
-    unreadCount: args.isIncoming ? existing.unreadCount + 1 : existing.unreadCount,
+    unreadCount: args.isHistorical ? 0 : (args.isIncoming ? existing.unreadCount + 1 : existing.unreadCount),
     updatedAt: now,
   };
+  if (args.preview && args.preview.trim() !== "") {
+    patch.lastMessagePreview = args.preview;
+  }
   if (args.isIncoming) {
     patch.lastCustomerMessageAt = args.lastMessageAt;
   }

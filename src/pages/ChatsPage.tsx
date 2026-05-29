@@ -19,6 +19,7 @@ import {
   Users,
   Check,
 } from 'lucide-react';
+import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { ChatRow, type ConversationPlatform } from '@/components/ChatRow';
@@ -160,23 +161,37 @@ export default function ChatsPage() {
     Id<'conversations'> | null
   >(null);
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
-  const [combinedFilter, setCombinedFilter] = useState<string>('all');
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [filterSearchInput, setFilterSearchInput] = useState('');
 
-  const chatFilter = useMemo(() => {
-    if (combinedFilter.startsWith('status:')) {
-      return combinedFilter.slice(7) as InboxChatFilter;
-    }
-    return 'all';
-  }, [combinedFilter]);
+  const handleToggleFilter = (filterKey: string) => {
+    setSelectedFilters((prev) => {
+      if (prev.includes(filterKey)) {
+        return prev.filter((x) => x !== filterKey);
+      } else {
+        return [...prev, filterKey];
+      }
+    });
+  };
 
-  const tagFilter = useMemo(() => {
-    if (combinedFilter.startsWith('tag:')) {
-      return combinedFilter.slice(4);
-    }
-    return 'all';
-  }, [combinedFilter]);
+  const activeStatuses = useMemo(() => {
+    return selectedFilters
+      .filter((f) => f.startsWith('status:'))
+      .map((f) => f.slice(7)) as InboxChatFilter[];
+  }, [selectedFilters]);
+
+  const activeTags = useMemo(() => {
+    return selectedFilters
+      .filter((f) => f.startsWith('tag:'))
+      .map((f) => f.slice(4));
+  }, [selectedFilters]);
+
+  const activeLeads = useMemo(() => {
+    return selectedFilters
+      .filter((f) => f.startsWith('lead:'))
+      .map((f) => f.slice(5));
+  }, [selectedFilters]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [draftReply, setDraftReply] = useState('');
@@ -318,7 +333,9 @@ export default function ChatsPage() {
     return linkedConversations.map((conv: any) => ({
       id: conv._id,
       name: conv.contactName ?? 'Unknown contact',
-      message: conv.lastMessagePreview ?? '',
+      message: conv.lastMessagePreview && conv.lastMessagePreview.trim() !== ''
+        ? conv.lastMessagePreview
+        : 'Click to view the conversation...',
       time: formatRelative(conv.lastMessageAt),
       unread: conv.unreadCount,
       platform: conv.service as ConversationPlatform,
@@ -355,20 +372,21 @@ export default function ChatsPage() {
     if (platformFilter !== 'all') {
       list = list.filter((c: any) => c.platform === platformFilter);
     }
-    if (chatFilter !== 'all') {
-      if (chatFilter === 'assigned_me') {
+    if (activeStatuses.length > 0) {
+      if (activeStatuses.includes('assigned_me')) {
         list = list.filter(
           (c: any) => c.assignedUserId === currentUser?.workosUserId,
         );
-      } else {
-        list = list.filter((c: any) => c.conversationStatus === chatFilter);
       }
     }
-    if (tagFilter !== 'all') {
-      list = list.filter((c: any) => c.tags.includes(tagFilter));
+    if (activeTags.length > 0) {
+      list = list.filter((c: any) => c.tags && c.tags.some((t: string) => activeTags.includes(t)));
+    }
+    if (activeLeads.length > 0) {
+      list = list.filter((c: any) => c.tags && c.tags.some((t: string) => activeLeads.includes(t)));
     }
     return list;
-  }, [chatItems, searchQuery, platformFilter, chatFilter, tagFilter, currentUser?.workosUserId]);
+  }, [chatItems, searchQuery, platformFilter, activeStatuses, activeTags, activeLeads, currentUser?.workosUserId]);
 
   useEffect(() => {
     if (
@@ -731,17 +749,41 @@ export default function ChatsPage() {
                     className="h-8 gap-1 px-3 font-normal text-xs"
                   >
                     <span className="truncate text-left">
-                      {combinedFilter === 'all' ? (
+                      {selectedFilters.length === 0 ? (
                         <span className="text-muted-foreground">Filter</span>
-                      ) : combinedFilter === 'status:assigned_me' ? (
-                        <span className="flex items-center gap-1.5 text-foreground">
-                          <User className="size-3.5 shrink-0 text-[#6366f1]" />
-                          <span>Assigned to me</span>
-                        </span>
+                      ) : selectedFilters.length === 1 ? (
+                        (() => {
+                          const filter = selectedFilters[0];
+                          if (filter === 'status:assigned_me') {
+                            return (
+                              <span className="flex items-center gap-1.5 text-foreground">
+                                <User className="size-3.5 shrink-0 text-[#6366f1]" />
+                                <span>Assigned to me</span>
+                              </span>
+                            );
+                          } else if (filter.startsWith('lead:')) {
+                            const tag = filter.slice(5) as LeadTemperature;
+                            const style = getLeadTemperatureStyle(tag);
+                            const Icon = style.icon;
+                            return (
+                              <span className="flex items-center gap-1.5 text-foreground truncate">
+                                <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
+                                <span className="truncate">{tag}</span>
+                              </span>
+                            );
+                          } else {
+                            const name = filter.slice(4);
+                            return (
+                              <span className="flex items-center gap-1.5 text-foreground truncate">
+                                <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(name).dot)} />
+                                <span className="truncate">{name}</span>
+                              </span>
+                            );
+                          }
+                        })()
                       ) : (
-                        <span className="flex items-center gap-1.5 text-foreground truncate">
-                          <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(combinedFilter.slice(4)).dot)} />
-                          <span className="truncate">{combinedFilter.slice(4)}</span>
+                        <span className="text-foreground font-medium">
+                          {selectedFilters.length} filters active
                         </span>
                       )}
                     </span>
@@ -762,22 +804,19 @@ export default function ChatsPage() {
                         <CommandItem
                           value="all"
                           onSelect={() => {
-                            setCombinedFilter('all');
+                            setSelectedFilters([]);
                             setFilterSearchInput('');
-                            setFilterPopoverOpen(false);
                           }}
                           className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                         >
                           <span>All</span>
-                          {combinedFilter === 'all' && <Check className="size-3 text-foreground shrink-0" />}
+                          {selectedFilters.length === 0 && <Check className="size-3 text-foreground shrink-0" />}
                         </CommandItem>
                         
                         <CommandItem
                           value="assigned_me"
                           onSelect={() => {
-                            setCombinedFilter('status:assigned_me');
-                            setFilterSearchInput('');
-                            setFilterPopoverOpen(false);
+                            handleToggleFilter('status:assigned_me');
                           }}
                           className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                         >
@@ -785,24 +824,47 @@ export default function ChatsPage() {
                             <User className="size-3.5 shrink-0 text-[#6366f1]" />
                             <span>Assigned to me</span>
                           </div>
-                          {combinedFilter === 'status:assigned_me' && <Check className="size-3 text-foreground shrink-0" />}
+                          {selectedFilters.includes('status:assigned_me') && <Check className="size-3 text-foreground shrink-0" />}
                         </CommandItem>
                       </CommandGroup>
                       
-                      {(allExistingTags.length > 0 || (textEntries && textEntries.length > 0)) && (
+                      <CommandSeparator />
+                      <CommandGroup heading="Lead Status">
+                        {(['Hot', 'Warm', 'Cold'] as const).map((status) => {
+                          const isSelected = selectedFilters.includes(`lead:${status}`);
+                          const style = getLeadTemperatureStyle(status);
+                          const Icon = style.icon;
+                          return (
+                            <CommandItem
+                              key={status}
+                              value={`lead:${status}`}
+                              onSelect={() => {
+                                handleToggleFilter(`lead:${status}`);
+                              }}
+                              className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
+                                <span>{status}</span>
+                              </div>
+                              {isSelected && <Check className="size-3 text-foreground shrink-0" />}
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+
+                      {(allExistingTags.filter(t => !isLeadTemperatureTag(t)).length > 0 || (textEntries && textEntries.length > 0)) && (
                         <>
                           <CommandSeparator />
                           <CommandGroup heading="Tags">
-                            {allExistingTags.map((tag) => {
-                              const isSelected = combinedFilter === `tag:${tag}`;
+                            {allExistingTags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
+                              const isSelected = selectedFilters.includes(`tag:${tag}`);
                               return (
                                 <CommandItem
                                   key={tag}
                                   value={tag}
                                   onSelect={() => {
-                                    setCombinedFilter(`tag:${tag}`);
-                                    setFilterSearchInput('');
-                                    setFilterPopoverOpen(false);
+                                    handleToggleFilter(`tag:${tag}`);
                                   }}
                                   className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                 >
@@ -816,15 +878,13 @@ export default function ChatsPage() {
                             })}
                             
                             {textEntries && textEntries.map((entry) => {
-                              const isSelected = combinedFilter === `tag:${entry.title}`;
+                              const isSelected = selectedFilters.includes(`tag:${entry.title}`);
                               return (
                                 <CommandItem
                                   key={entry._id}
                                   value={entry.title}
                                   onSelect={() => {
-                                    setCombinedFilter(`tag:${entry.title}`);
-                                    setFilterSearchInput('');
-                                    setFilterPopoverOpen(false);
+                                    handleToggleFilter(`tag:${entry.title}`);
                                   }}
                                   className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                 >
@@ -894,9 +954,29 @@ export default function ChatsPage() {
               <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
                 <div className="flex min-w-0 flex-1 items-center">
                   {displayHeaderName ? (
-                    <h2 className="m-0 truncate text-lg font-semibold text-foreground">
-                      {displayHeaderName}
-                    </h2>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <h2 className="m-0 truncate text-lg font-semibold text-foreground">
+                        {displayHeaderName}
+                      </h2>
+                      {(() => {
+                        const tempTag = selectedConversation?.tags?.find(isLeadTemperatureTag);
+                        if (!tempTag) return null;
+                        const style = getLeadTemperatureStyle(tempTag);
+                        const Icon = style.icon;
+                        return (
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-medium transition-all shadow-none shrink-0",
+                              style.bg,
+                              style.text
+                            )}
+                          >
+                            <Icon className={cn("size-2.5 shrink-0", style.iconClass)} />
+                            <span>{tempTag}</span>
+                          </span>
+                        );
+                      })()}
+                    </div>
                   ) : (
                     <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
                   )}
@@ -1141,6 +1221,25 @@ export default function ChatsPage() {
                           {(selectedConversation.tags ?? []).length > 0 ? (
                             <div className="flex flex-wrap gap-1.5 py-1.5">
                               {(selectedConversation.tags ?? []).map((tag: any) => {
+                                if (isLeadTemperatureTag(tag)) {
+                                  const style = getLeadTemperatureStyle(tag);
+                                  const Icon = style.icon;
+                                  return (
+                                    <span
+                                      key={tag}
+                                      className={cn(
+                                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
+                                        style.bg,
+                                        style.text
+                                      )}
+                                    >
+                                      <Icon className={cn("size-3 shrink-0", style.iconClass)} />
+                                      <span className="max-w-[120px] truncate" title={tag}>
+                                        {tag}
+                                      </span>
+                                    </span>
+                                  );
+                                }
                                 const colors = getTagColorClass(tag);
                                 return (
                                   <span
@@ -1259,7 +1358,9 @@ export default function ChatsPage() {
                                       )}
                                     </CommandList>
                                     
-                                    {tagSearchInput.trim() && !allExistingTags.some(t => t.toLowerCase() === tagSearchInput.trim().toLowerCase()) && (
+                                    {tagSearchInput.trim() &&
+                                       !isReservedTemperatureTag(tagSearchInput) &&
+                                       !allExistingTags.some(t => t.toLowerCase() === tagSearchInput.trim().toLowerCase()) && (
                                       <div className="p-1 border-t border-border/50">
                                         <button
                                           type="button"
@@ -1295,7 +1396,7 @@ export default function ChatsPage() {
                       >
                         <FileText className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="text-sm font-semibold text-foreground">
-                          Interaction summary
+                          Summary
                         </span>
                         <div className="flex items-center gap-1 rounded-full bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-600 dark:bg-violet-500/20 dark:text-violet-400">
                           <Sparkles className="size-2.5 animate-pulse" />
@@ -1311,23 +1412,17 @@ export default function ChatsPage() {
                       </button>
                       {interactionSummaryOpen ? (
                         <div className="px-4 pb-3 space-y-2">
-                          {threadSummary ? (
-                            <div className="pl-4 border-l border-violet-200 dark:border-violet-800">
-                              <Shimmer
-                                duration={3}
-                                spread={2}
-                                className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap block w-full"
-                              >
+                          <div className="pl-4 border-l border-violet-200 dark:border-violet-800 space-y-2.5">
+                            {threadSummary ? (
+                              <p className="text-sm text-foreground/90 font-normal leading-relaxed whitespace-pre-wrap block w-full">
                                 {threadSummary}
-                              </Shimmer>
-                            </div>
-                          ) : (
-                            <div className="pl-4 border-l border-violet-200 dark:border-violet-800">
+                              </p>
+                            ) : (
                               <Shimmer duration={1.5} spread={2} className="text-xs text-muted-foreground font-normal italic">
                                 Generating summary in background…
                               </Shimmer>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       ) : null}
                     </div>
