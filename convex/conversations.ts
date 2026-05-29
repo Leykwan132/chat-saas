@@ -37,12 +37,28 @@ export const listLinkedForCurrentOrg = query({
       .order("desc")
       .take(400);
 
-    return recent.filter(
+    const filtered = recent.filter(
       (c) =>
         c.service !== "playground" &&
         c.channelId !== undefined &&
         connectedIds.has(c.channelId),
     );
+
+    const out = [];
+    for (const c of filtered) {
+      let tags: string[] = [];
+      if (c.customerId !== undefined) {
+        const cust = await ctx.db.get(c.customerId);
+        if (cust !== null) {
+          tags = cust.tags ?? [];
+        }
+      }
+      out.push({
+        ...c,
+        tags,
+      });
+    }
+    return out;
   },
 });
 
@@ -76,7 +92,17 @@ export const get = query({
     const { orgId } = await getAuthContext(ctx);
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== orgId) return null;
-    return conv;
+    let tags: string[] = [];
+    if (conv.customerId !== undefined) {
+      const cust = await ctx.db.get(conv.customerId);
+      if (cust !== null) {
+        tags = cust.tags ?? [];
+      }
+    }
+    return {
+      ...conv,
+      tags,
+    };
   },
 });
 

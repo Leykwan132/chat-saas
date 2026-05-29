@@ -418,6 +418,7 @@ export const ingestChannelMessageArgs = {
   assignedAgentId: v.optional(v.id("agents")),
   authorUserId: v.optional(v.string()),
   humanAgentName: v.optional(v.string()),
+  metaConversationId: v.optional(v.string()),
 };
 
 export type IngestChannelMessageArgs = {
@@ -435,6 +436,7 @@ export type IngestChannelMessageArgs = {
   assignedAgentId?: Id<"agents">;
   authorUserId?: string;
   humanAgentName?: string;
+  metaConversationId?: string;
 };
 
 export async function ingestChannelMessage(
@@ -501,6 +503,7 @@ export async function ingestChannelMessage(
     preview: args.content.slice(0, 140),
     isIncoming: args.direction === "incoming",
     assignedAgentId: args.assignedAgentId,
+    metaConversationId: args.metaConversationId,
   });
 
   let agentMessageId: string | undefined;
@@ -570,6 +573,7 @@ async function upsertInboxConversation(
     preview: string;
     isIncoming: boolean;
     assignedAgentId?: Id<"agents">;
+    metaConversationId?: string;
   },
 ): Promise<{ conversationId: Id<"conversations">; threadId: string; isNew: boolean }> {
   const existing = await ctx.db
@@ -629,6 +633,7 @@ async function upsertInboxConversation(
       lastMessagePreview: args.preview,
       lastCustomerMessageAt: args.isIncoming ? args.lastMessageAt : undefined,
       unreadCount: args.isIncoming ? 1 : 0,
+      metaConversationId: args.metaConversationId,
       createdAt: now,
       updatedAt: now,
     });
@@ -670,6 +675,9 @@ async function upsertInboxConversation(
   if (existing.status === "closed") patch.status = "open";
   if (!existing.assignedAgentId && args.assignedAgentId) {
     patch.assignedAgentId = args.assignedAgentId;
+  }
+  if (args.metaConversationId && !existing.metaConversationId) {
+    patch.metaConversationId = args.metaConversationId;
   }
   await ctx.db.patch(existing._id, patch);
 

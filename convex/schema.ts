@@ -362,6 +362,7 @@ export default defineSchema({
     assignedUserId: v.optional(v.string()),
     assignToAiAgent: v.boolean(),
     leadAssignmentFallback: v.optional(v.boolean()),
+    metaConversationId: v.optional(v.string()),
     threadId: v.string(),
     lastMessageAt: v.number(),
     /** Last inbound (customer) message time — used for Meta messaging window checks. */

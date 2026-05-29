@@ -253,6 +253,7 @@ async function ingestConversationMessages(
       direction: isOutgoing ? "outgoing" : "incoming",
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
+      metaConversationId: detail.id,
     });
     if (res?.conversationId) {
       conversationId = res.conversationId;
@@ -275,6 +276,7 @@ export const internalIngestMessage = internalMutation({
     direction: v.union(v.literal("incoming"), v.literal("outgoing")),
     content: v.string(),
     timestampMs: v.number(),
+    metaConversationId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
@@ -293,6 +295,7 @@ export const internalIngestMessage = internalMutation({
       isHistorical: true,
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
+      metaConversationId: args.metaConversationId,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Customer = Doc<'customers'>;
 
@@ -130,35 +131,35 @@ export default function CustomersPage() {
                   width: '100%', height: '38px', paddingLeft: '36px', paddingRight: '14px',
                   fontSize: '13px', borderRadius: '8px',
                   border: '1px solid var(--color-border)',
-                  background: 'var(--color-surface)',
+                  background: 'var(--color-background)',
                   color: 'var(--color-foreground)',
                   outline: 'none', boxSizing: 'border-box',
                 }}
+                className="bg-white dark:bg-zinc-950"
               />
             </div>
-            <select
+            <Select
               value={serviceFilter}
-              onChange={(e) => setServiceFilter(e.target.value as 'all' | Customer['service'])}
-              style={{
-                height: '38px', padding: '0 12px', fontSize: '13px',
-                borderRadius: '8px', border: '1px solid var(--color-border)',
-                background: 'var(--color-surface)', color: 'var(--color-foreground)',
-                cursor: 'pointer', outline: 'none',
-              }}
+              onValueChange={(val) => setServiceFilter(val as 'all' | Customer['service'])}
             >
-              <option value="all">All Sources</option>
-              <option value="whatsapp">WhatsApp</option>
-              <option value="instagram">Instagram</option>
-              <option value="messenger">Messenger</option>
-              <option value="manual">Manual</option>
-            </select>
+              <SelectTrigger className="h-[38px] w-[140px] text-xs border border-border rounded-lg bg-white dark:bg-zinc-950 text-foreground shadow-none">
+                <SelectValue placeholder="All Sources" />
+              </SelectTrigger>
+              <SelectContent position="popper" align="end" className="rounded-2xl bg-popover text-popover-foreground border border-border shadow-lg">
+                <SelectItem value="all">All Sources</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="messenger">Messenger</SelectItem>
+                <SelectItem value="manual">Manual</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Table */}
-          <div style={{ background: 'var(--color-surface)', borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+          <div className="bg-white dark:bg-zinc-950 rounded-xl border border-border overflow-hidden">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
-                <tr style={{ background: 'var(--color-surface-hover)' }}>
+                <tr className="bg-zinc-50 dark:bg-zinc-900/50">
                   {['Customer', 'Phone', 'Source', 'Tags', 'Last Active'].map((h) => (
                     <th
                       key={h}
@@ -196,7 +197,7 @@ export default function CustomersPage() {
                             <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-foreground)' }}>
                               {customer.name?.trim() || 'Unnamed customer'}
                             </p>
-                            {customer.email ? (
+                            {customer.email && !customer.email.toLowerCase().endsWith('@facebook.com') ? (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
                                 <Mail size={11} color="var(--color-foreground-subtle)" />
                                 <span style={{ fontSize: '12px', color: 'var(--color-foreground-muted)' }}>
@@ -210,7 +211,7 @@ export default function CustomersPage() {
                       <td style={{ padding: '13px 20px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-foreground)' }}>
                           <Phone size={13} color="var(--color-foreground-subtle)" />
-                          {customer.phone || customer.contactAddress || '—'}
+                          {customer.phone || '—'}
                         </div>
                       </td>
                       <td style={{ padding: '13px 20px' }}>

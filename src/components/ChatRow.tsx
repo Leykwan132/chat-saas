@@ -6,7 +6,29 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
+import { cn } from '@/lib/utils';
 import type { Id } from '../../convex/_generated/dataModel';
+
+function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
+  let hash = 0;
+  for (let i = 0; i < tag.length; i++) {
+    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % 6;
+  const dotColors = [
+    'bg-blue-500 dark:bg-blue-400',
+    'bg-emerald-500 dark:bg-emerald-400',
+    'bg-violet-500 dark:bg-violet-400',
+    'bg-amber-500 dark:bg-amber-400',
+    'bg-rose-500 dark:bg-rose-400',
+    'bg-cyan-500 dark:bg-cyan-400',
+  ];
+  return {
+    bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
+    text: 'text-zinc-800 dark:text-zinc-200',
+    dot: dotColors[index],
+  };
+}
 
 export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger';
 
@@ -20,6 +42,7 @@ export type Chat = {
   requiresAction: boolean;
   /** Inbox row status; used for label filter on Chats page. */
   conversationStatus: 'open' | 'snoozed' | 'closed';
+  tags?: string[];
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -100,6 +123,30 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
+            {chat.tags && chat.tags.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {chat.tags.map((tag: string) => {
+                    const colors = getTagColorClass(tag);
+                    return (
+                      <span
+                        key={tag}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.2 text-[10px] font-medium transition-all shadow-none",
+                          colors.bg,
+                          colors.text
+                        )}
+                      >
+                        <span className={cn("size-1 rounded-full shrink-0", colors.dot)} />
+                        <span className="max-w-[70px] truncate" title={tag}>
+                          {tag}
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </ContextMenuTrigger>

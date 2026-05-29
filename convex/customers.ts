@@ -120,8 +120,7 @@ export const getSidebarDetailsForConversation = query({
     const name =
       fromCustName ||
       fromConvName ||
-      conv.contactAddress.trim() ||
-      "Unknown";
+      "Unnamed customer";
 
     let phone: string | null = null;
     const custPhone = customer?.phone?.trim();
@@ -142,7 +141,7 @@ export const getSidebarDetailsForConversation = query({
               ? "Playground"
               : conv.service;
 
-    return { name, platformLabel, phone };
+    return { name, platformLabel, phone, tags: customer?.tags ?? [] };
   },
 });
 
@@ -310,6 +309,51 @@ export const internalSetLastConversation = internalMutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.customerId, {
       lastConversationId: args.conversationId,
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const addCustomerTag = mutation({
+  args: {
+    customerId: v.id("customers"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const customer = await ctx.db.get(args.customerId);
+    if (customer === null || customer.orgId !== orgId) {
+      throw new Error("Customer not found");
+    }
+    const normalized = args.tag.trim();
+    if (normalized.length === 0) {
+      throw new Error("Tag cannot be empty");
+    }
+    const current = customer.tags ?? [];
+    if (current.includes(normalized)) {
+      return;
+    }
+    await ctx.db.patch(args.customerId, {
+      tags: [...current, normalized],
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const removeCustomerTag = mutation({
+  args: {
+    customerId: v.id("customers"),
+    tag: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const customer = await ctx.db.get(args.customerId);
+    if (customer === null || customer.orgId !== orgId) {
+      throw new Error("Customer not found");
+    }
+    const current = customer.tags ?? [];
+    await ctx.db.patch(args.customerId, {
+      tags: current.filter((t) => t !== args.tag),
       updatedAt: Date.now(),
     });
   },
