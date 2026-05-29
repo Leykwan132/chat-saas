@@ -87,7 +87,6 @@ export const backfillConversations = internalAction({
       const list = await graphFetch<{
         data?: Array<{ id: string }>;
       }>(url.toString(), "Messenger conversations list");
-      console.log('msg list', list);
       for (const conv of list.data ?? []) {
         if (!conv.id) continue;
         await messengerSyncPool.enqueueAction(
@@ -140,7 +139,6 @@ export const syncMessages = internalAction({
         url.toString(),
         "Messenger conversation fetch",
       );
-      console.log('msg detail', detail);
       const conversationId = await ingestConversationMessages(ctx, channel, detail);
       if (conversationId) {
         await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {

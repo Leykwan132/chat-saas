@@ -52,8 +52,6 @@ export const createCheckout = action({
       email,
       name,
     });
-
-    console.log("customer", customer);
     
     let priceId = "";
     if (args.mode === "payment") {

@@ -25,13 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
 import { Separator } from '@/components/ui/separator';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';

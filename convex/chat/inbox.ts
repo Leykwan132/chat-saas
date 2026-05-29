@@ -653,7 +653,6 @@ export const summarizeThreadWorker = internalAction({
       workosOrgId: conv.orgId,
       userId: conv.assignedUserId ?? undefined,
     });
-    console.log("stripeInfo", stripeInfo);
     if (!checkAiFeature(stripeInfo.plan, "thread_summary")) {
       console.warn("Thread summary skipped: feature disabled for plan tier", {
         orgId: conv.orgId,

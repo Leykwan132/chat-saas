@@ -32,7 +32,6 @@ import {
   scopeFromOrg,
   scopeFromUser,
 } from "./creditEntries";
-import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 export type { PlanKey, PlanCatalogEntry, PlanFeatureFlags };
 
@@ -71,7 +70,6 @@ export async function getPlanFromStripe(
     components.stripe.public.getSubscriptionByOrgId,
     { orgId: entityId }
   );
-  console.log("subscription", subscription);
   
   if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
     let plan: PlanKey = "free";
