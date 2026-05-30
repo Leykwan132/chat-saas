@@ -292,7 +292,7 @@ export type ChatPromptInputProps = {
 
 /** Shared layout for playground + inbox (attachment UI is optional). */
 const PROMPT_TEXTAREA_CLASS =
-  "field-sizing-fixed box-border min-h-0 w-full max-w-full min-w-0 max-h-48 overflow-x-hidden overflow-y-auto no-scrollbar px-4 pt-4 pb-2 wrap-break-word [overflow-wrap:anywhere]";
+  "box-border min-h-0 w-full max-w-full min-w-0 max-h-48 overflow-x-hidden overflow-y-auto px-4 pt-4 pb-2 wrap-break-word [overflow-wrap:anywhere]";
 const PROMPT_FOOTER_CLASS = "px-4 pb-3";
 
 export function ChatPromptInput({

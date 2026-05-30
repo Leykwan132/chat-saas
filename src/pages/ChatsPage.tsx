@@ -47,7 +47,7 @@ import { Conversation } from '@/components/ai-elements/conversation';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
-import type { PromptInputMessage } from '@/components/ai-elements/prompt-input';
+import { usePromptInputAttachments, type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 
@@ -236,9 +236,37 @@ export default function ChatsPage() {
     }
   };
 
+  const handleSelectQuickReply = async (reply: any) => {
+    if (!reply.text) return;
+    setDraftReply(reply.text);
+
+    if (reply.imageUrl) {
+      setQuickReplyLoadingId(reply._id);
+      try {
+        const res = await fetch(reply.imageUrl);
+        const blob = await res.blob();
+        const filename = 'quick_reply_image.png';
+        const file = new File([blob], filename, { type: blob.type });
+        promptAttachments.add([file]);
+        toast.success('Quick reply template and image loaded.');
+      } catch (err) {
+        console.error('Failed to download quick reply image:', err);
+        toast.error('Failed to attach quick reply image.');
+      } finally {
+        setQuickReplyLoadingId(null);
+      }
+    } else {
+      toast.success('Quick reply template applied.');
+    }
+  };
+
   const [interactionSummaryOpen, setInteractionSummaryOpen] = useState(false);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
+  const [quickRepliesOpen, setQuickRepliesOpen] = useState(false);
+  const [quickReplyLoadingId, setQuickReplyLoadingId] = useState<string | null>(null);
+  const quickRepliesList = useQuery(api.quickReplies.list);
+  const promptAttachments = usePromptInputAttachments();
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
   const dashboardAgent = useQuery(
@@ -1190,6 +1218,69 @@ export default function ChatsPage() {
                                     : '—'}
                                 </span>
                               </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setQuickRepliesOpen((o) => !o)}
+                        aria-expanded={quickRepliesOpen}
+                      >
+                        <MessageSquare className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="flex-1 text-sm font-semibold text-foreground">
+                          Quick replies
+                        </span>
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !quickRepliesOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {quickRepliesOpen ? (
+                        <div className="px-4 pb-3">
+                          {quickRepliesList === undefined ? (
+                            <p className="m-0 text-xs text-muted-foreground">Loading…</p>
+                          ) : quickRepliesList.length === 0 ? (
+                            <p className="m-0 text-xs text-muted-foreground">No quick replies configured.</p>
+                          ) : (
+                            <div className="flex flex-col gap-2 max-h-60 overflow-y-auto no-scrollbar">
+                              {quickRepliesList.map((reply) => {
+                                const isLoading = quickReplyLoadingId === reply._id;
+                                return (
+                                  <button
+                                    key={reply._id}
+                                    type="button"
+                                    onClick={() => void handleSelectQuickReply(reply)}
+                                    disabled={isLoading}
+                                    className="flex items-start gap-2.5 w-full text-left p-2 rounded-lg border border-border/80 bg-card hover:bg-muted/50 active:scale-[0.98] transition-all disabled:opacity-75 disabled:cursor-not-allowed group/item"
+                                  >
+                                    {reply.imageUrl && (
+                                      <div className="relative size-8 rounded overflow-hidden bg-muted border border-border/80 shrink-0 mt-0.5">
+                                        <img src={reply.imageUrl} alt="" className="size-full object-cover" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <span className="font-semibold text-xs text-foreground truncate block">
+                                          {reply.title}
+                                        </span>
+                                        {isLoading && <Spinner className="size-3 text-muted-foreground" />}
+                                      </div>
+                                      <span className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 leading-relaxed">
+                                        {reply.text}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
                         </div>

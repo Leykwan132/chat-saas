@@ -264,3 +264,10 @@ export const mediaDeleteComplete = internalMutation({
     }
   },
 });
+
+export const getPublicUrl = query({
+  args: { r2Key: v.string() },
+  handler: async (_ctx, args) => {
+    return getPublicMediaUrl(args.r2Key);
+  },
+});

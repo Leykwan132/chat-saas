@@ -41,6 +41,8 @@ import { OnboardingFlow } from '@/components/OnboardingFlow'
 import PricingPage from './pages/PricingPage.tsx'
 import { usePermissions } from './hooks/usePermissions'
 import { Permission } from '../shared/permissions'
+import { PromptInputProvider } from '@/components/ai-elements/prompt-input'
+import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
@@ -161,7 +163,8 @@ function RootLayout() {
             <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
             <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
               <Route index element={<DashboardIndexRedirect />} />
-              <Route path="chats" element={<ChatsPage />} />
+              <Route path="chats" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
+              <Route path="quick-replies" element={<QuickRepliesPage />} />
               <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
               <Route path="playground/:threadId?" element={<AgentPage />} />
               <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />

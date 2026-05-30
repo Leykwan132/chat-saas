@@ -599,4 +599,13 @@ export default defineSchema({
     endAt: v.number(),
     label: v.optional(v.string()),
   }).index("by_userScheduleId", ["userScheduleId"]),
+  quickReplies: defineTable({
+    teamId: v.id("teams"),
+    title: v.string(),
+    text: v.string(),
+    r2Key: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_teamId", ["teamId"]),
 });
