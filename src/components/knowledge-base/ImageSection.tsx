@@ -28,7 +28,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getPublicMediaUrl } from '@/lib/mediaUrl';
 import {
   formatFileSize,
   normalizeUploaderFiles,
@@ -54,17 +53,10 @@ type PendingImage = {
 
 function imagePreviewUrl(entry: {
   publicUrl?: string;
-  r2Key?: string;
   status?: string;
 }): string | null {
-  if (entry.publicUrl) return entry.publicUrl;
-  if (entry.r2Key && entry.status === "ready") {
-    try {
-      return getPublicMediaUrl(entry.r2Key);
-    } catch {
-      return null;
-    }
-  }
+  // publicUrl is stored by the backend on upload completion
+  if (entry.publicUrl && entry.status === "ready") return entry.publicUrl;
   return null;
 }
 

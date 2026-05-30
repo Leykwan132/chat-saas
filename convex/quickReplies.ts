@@ -19,13 +19,18 @@ export const list = query({
       .collect();
 
     return replies.map((reply) => {
-      let imageUrl: string | null = null;
-      if (reply.r2Key) {
-        imageUrl = getPublicMediaUrl(reply.r2Key);
+      const imageUrls: string[] = [];
+      if (reply.r2Keys && reply.r2Keys.length > 0) {
+        for (const key of reply.r2Keys) {
+          imageUrls.push(getPublicMediaUrl(key));
+        }
+      } else if (reply.r2Key) {
+        imageUrls.push(getPublicMediaUrl(reply.r2Key));
       }
       return {
         ...reply,
-        imageUrl: imageUrl ?? undefined,
+        imageUrl: imageUrls[0] ?? undefined,
+        imageUrls,
       };
     });
   },
@@ -35,10 +40,21 @@ export const create = mutation({
   args: {
     title: v.string(),
     text: v.string(),
-    imageClientId: v.optional(v.string()),
+    imageClientIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const auth = await getAuthContext(ctx);
+
+    const membership = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId_and_teamId", (q) =>
+        q.eq("userId", auth.userDbId).eq("teamId", auth.activeTeamId)
+      )
+      .unique();
+    if (membership === null || (membership.role !== "owner" && membership.role !== "admin")) {
+      throw new Error("Only admins or owners can manage quick replies");
+    }
+
     const title = args.title.trim();
     const text = args.text.trim();
     if (!title) {
@@ -48,20 +64,22 @@ export const create = mutation({
       throw new Error("Text is required");
     }
 
-    let r2Key: string | undefined;
-    if (args.imageClientId) {
-      const uploadRow = await ctx.db
-        .query("mediaUploads")
-        .withIndex("by_orgId_userId_clientId", (q) =>
-          q
-            .eq("orgId", auth.orgId)
-            .eq("userId", auth.userId)
-            .eq("clientId", args.imageClientId!)
-        )
-        .unique();
+    const r2Keys: string[] = [];
+    if (args.imageClientIds && args.imageClientIds.length > 0) {
+      for (const clientId of args.imageClientIds) {
+        const uploadRow = await ctx.db
+          .query("mediaUploads")
+          .withIndex("by_orgId_userId_clientId", (q) =>
+            q
+              .eq("orgId", auth.orgId)
+              .eq("userId", auth.userId)
+              .eq("clientId", clientId)
+          )
+          .unique();
 
-      if (uploadRow && uploadRow.status === "ready" && uploadRow.r2Key) {
-        r2Key = uploadRow.r2Key;
+        if (uploadRow && uploadRow.status === "ready" && uploadRow.r2Key) {
+          r2Keys.push(uploadRow.r2Key);
+        }
       }
     }
 
@@ -70,7 +88,8 @@ export const create = mutation({
       teamId: auth.activeTeamId,
       title,
       text,
-      r2Key,
+      r2Key: r2Keys[0] ?? undefined,
+      r2Keys: r2Keys.length > 0 ? r2Keys : undefined,
       createdAt: now,
       updatedAt: now,
     });
@@ -82,13 +101,24 @@ export const update = mutation({
     id: v.id("quickReplies"),
     title: v.optional(v.string()),
     text: v.optional(v.string()),
-    imageClientId: v.optional(v.union(v.string(), v.null())),
+    imageClientIds: v.optional(v.array(v.string())),
+    r2Keys: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const auth = await getAuthContext(ctx);
     const reply = await ctx.db.get(args.id);
     if (reply === null || reply.teamId !== auth.activeTeamId) {
       throw new Error("Quick reply not found");
+    }
+
+    const membership = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId_and_teamId", (q) =>
+        q.eq("userId", auth.userDbId).eq("teamId", auth.activeTeamId)
+      )
+      .unique();
+    if (membership === null || (membership.role !== "owner" && membership.role !== "admin")) {
+      throw new Error("Only admins or owners can manage quick replies");
     }
 
     const patch: Record<string, any> = { updatedAt: Date.now() };
@@ -105,45 +135,54 @@ export const update = mutation({
       patch.text = text;
     }
 
-    if (args.imageClientId !== undefined) {
-      if (args.imageClientId === null) {
-        // Remove image
-        if (reply.r2Key) {
-          await mediaDeletePool.enqueueAction(
-            ctx,
-            internal.workpool.mediaDeleteWorker,
-            { r2Key: reply.r2Key },
-            { retry: true }
-          );
-        }
-        patch.r2Key = undefined;
-      } else {
-        // Lookup new image
-        const uploadRow = await ctx.db
-          .query("mediaUploads")
-          .withIndex("by_orgId_userId_clientId", (q) =>
-            q
-              .eq("orgId", auth.orgId)
-              .eq("userId", auth.userId)
-              .eq("clientId", args.imageClientId!)
-          )
-          .unique();
+    if (args.imageClientIds !== undefined || args.r2Keys !== undefined) {
+      const nextR2Keys: string[] = [];
 
-        if (!uploadRow || uploadRow.status !== "ready" || !uploadRow.r2Key) {
-          throw new Error("Attached image is not uploaded or ready yet.");
-        }
-
-        // Delete old image if it exists
-        if (reply.r2Key && reply.r2Key !== uploadRow.r2Key) {
-          await mediaDeletePool.enqueueAction(
-            ctx,
-            internal.workpool.mediaDeleteWorker,
-            { r2Key: reply.r2Key },
-            { retry: true }
-          );
-        }
-        patch.r2Key = uploadRow.r2Key;
+      if (args.r2Keys) {
+        nextR2Keys.push(...args.r2Keys);
       }
+
+      if (args.imageClientIds) {
+        for (const clientId of args.imageClientIds) {
+          const uploadRow = await ctx.db
+            .query("mediaUploads")
+            .withIndex("by_orgId_userId_clientId", (q) =>
+              q
+                .eq("orgId", auth.orgId)
+                .eq("userId", auth.userId)
+                .eq("clientId", clientId)
+            )
+            .unique();
+
+          if (uploadRow && uploadRow.status === "ready" && uploadRow.r2Key) {
+            nextR2Keys.push(uploadRow.r2Key);
+          }
+        }
+      }
+
+      // Track old keys to see which ones are deleted
+      const oldKeys = new Set<string>();
+      if (reply.r2Key) oldKeys.add(reply.r2Key);
+      if (reply.r2Keys) {
+        for (const k of reply.r2Keys) {
+          oldKeys.add(k);
+        }
+      }
+
+      const nextKeysSet = new Set(nextR2Keys);
+      for (const k of oldKeys) {
+        if (!nextKeysSet.has(k)) {
+          await mediaDeletePool.enqueueAction(
+            ctx,
+            internal.workpool.mediaDeleteWorker,
+            { r2Key: k },
+            { retry: true }
+          );
+        }
+      }
+
+      patch.r2Keys = nextR2Keys.length > 0 ? nextR2Keys : undefined;
+      patch.r2Key = nextR2Keys.length > 0 ? nextR2Keys[0] : undefined;
     }
 
     await ctx.db.patch(args.id, patch);
@@ -159,11 +198,29 @@ export const remove = mutation({
       throw new Error("Quick reply not found");
     }
 
-    if (reply.r2Key) {
+    const membership = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId_and_teamId", (q) =>
+        q.eq("userId", auth.userDbId).eq("teamId", auth.activeTeamId)
+      )
+      .unique();
+    if (membership === null || (membership.role !== "owner" && membership.role !== "admin")) {
+      throw new Error("Only admins or owners can manage quick replies");
+    }
+
+    const keysToDelete = new Set<string>();
+    if (reply.r2Key) keysToDelete.add(reply.r2Key);
+    if (reply.r2Keys) {
+      for (const k of reply.r2Keys) {
+        keysToDelete.add(k);
+      }
+    }
+
+    for (const key of keysToDelete) {
       await mediaDeletePool.enqueueAction(
         ctx,
         internal.workpool.mediaDeleteWorker,
-        { r2Key: reply.r2Key },
+        { r2Key: key },
         { retry: true }
       );
     }

@@ -1,7 +1,6 @@
 "use client";
 
 import { usePromptInputAttachments } from "@/components/ai-elements/prompt-input";
-import { getPublicMediaUrl } from "@/lib/mediaUrl";
 import { uploadWithProgress } from "@/lib/r2Upload";
 import { api } from "../../convex/_generated/api";
 import { useAction, useMutation, useQuery } from "convex/react";
@@ -126,6 +125,7 @@ function useMediaAttachmentUploadsInner(): MediaAttachmentUploadContextValue {
 
       // Initialise progress at 0 so getUploadProgress returns a number immediately
       progressRef.current.set(file.id, 0);
+      console.log("[useMediaAttachmentUploads] Beginning R2 upload for file:", { id: file.id, filename: file.filename, size: blobFile.size });
 
       try {
         await uploadToR2(blobFile, file.id, (pct) => {
@@ -134,8 +134,10 @@ function useMediaAttachmentUploadsInner(): MediaAttachmentUploadContextValue {
         // Upload complete — clear progress entry
         progressRef.current.delete(file.id);
         cancelledRef.current.delete(file.id);
+        console.log("[useMediaAttachmentUploads] R2 upload succeeded for file:", file.id);
       } catch (e) {
         progressRef.current.delete(file.id);
+        console.error("[useMediaAttachmentUploads] R2 upload failed for file:", file.id, e);
         if (!cancelledRef.current.has(file.id)) {
           await markUploadFailed({
             clientId: file.id,
@@ -163,23 +165,24 @@ function useMediaAttachmentUploadsInner(): MediaAttachmentUploadContextValue {
     for (const row of uploads ?? []) {
       map.set(row.clientId, row.status as MediaUploadStatus);
     }
-    for (const id of clientIds) {
-      if (!map.has(id) && startedRef.current.has(id)) {
-        map.set(id, "uploading");
+    for (const file of attachments.files) {
+      if (!map.has(file.id)) {
+        if (file.url && !file.url.startsWith("blob:")) {
+          map.set(file.id, "ready");
+        } else if (startedRef.current.has(file.id)) {
+          map.set(file.id, "uploading");
+        }
       }
     }
     return map;
-  }, [uploads, clientIds]);
+  }, [uploads, attachments.files]);
 
   const publicUrlByClientId = useMemo(() => {
     const map = new Map<string, string>();
     for (const row of uploads ?? []) {
-      if (row.r2Key && row.status === "ready") {
-        try {
-          map.set(row.clientId, getPublicMediaUrl(row.r2Key));
-        } catch {
-          // CDN base not configured in dev
-        }
+      // publicUrl is resolved server-side by the backend using MEDIA_CDN_BASE_URL
+      if (row.publicUrl && row.status === "ready") {
+        map.set(row.clientId, row.publicUrl);
       }
     }
     return map;
@@ -224,6 +227,9 @@ function useMediaAttachmentUploadsInner(): MediaAttachmentUploadContextValue {
 
   const getPreviewUrl = useCallback(
     (clientId: string, blobUrl: string | undefined) => {
+      if (blobUrl?.startsWith("blob:")) {
+        return blobUrl;
+      }
       return publicUrlByClientId.get(clientId) ?? blobUrl;
     },
     [publicUrlByClientId],

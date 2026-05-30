@@ -491,6 +491,8 @@ export function TestChatWindow({
         submitStatus={isSending ? "submitted" : undefined}
         textareaRef={ref}
         value={input}
+        allowImageAttachments
+        enableMediaUpload
       />
     </div>
   );

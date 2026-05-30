@@ -16,6 +16,7 @@ import {
   PromptInputTools,
   type PromptInputMessage,
   usePromptInputAttachments,
+  useOptionalPromptInputController,
 } from "@/components/ai-elements/prompt-input";
 import { cn } from "@/lib/utils";
 import type { ChatStatus } from "ai";
@@ -31,9 +32,18 @@ import {
   useCallback,
   useLayoutEffect,
   useRef,
+  useState,
   type ChangeEvent,
   type Ref,
 } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { ReplyAll, ChevronDown, ChevronUp, Image as ImageIcon } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Link, useParams } from "react-router";
+import { Avatar, AvatarImage, AvatarFallback, AvatarGroup } from "@/components/ui/avatar";
 
 const PROMPT_TEXTAREA_MAX_HEIGHT_PX = 192;
 
@@ -186,9 +196,140 @@ function ChatPromptInputAttachButton({ disabled }: { disabled?: boolean }) {
       onClick={() => attachments.openFileDialog()}
       tooltip={{ content: "Attach image" }}
       type="button"
+      size="icon-sm"
+      className="bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground size-8 rounded-lg flex items-center justify-center border border-border/40"
     >
       <PlusIcon className="size-4" />
     </PromptInputButton>
+  );
+}
+
+function ChatPromptInputQuickRepliesButton({
+  disabled,
+  onChange,
+  textareaRef,
+}: {
+  disabled?: boolean;
+  onChange: (value: string) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+}) {
+  const { agentId } = useParams();
+  const quickRepliesList = useQuery(api.quickReplies.list);
+  const attachments = usePromptInputAttachments();
+  const controller = useOptionalPromptInputController();
+  const [open, setOpen] = useState(false);
+
+  const handleSelectQuickReply = (reply: any) => {
+    // 1. Clear existing text and attachments instantly
+    attachments.clear();
+
+    if (textareaRef.current) {
+      textareaRef.current.value = reply.text;
+      autoResizeTextarea(textareaRef.current);
+      textareaRef.current.focus();
+    }
+    controller?.textInput.setInput(reply.text);
+    onChange(reply.text);
+    setOpen(false);
+
+    // 2. Attach images if present via public URLs directly
+    if (reply.imageUrls && reply.imageUrls.length > 0) {
+      reply.imageUrls.forEach((url: string, index: number) => {
+        const filename = `quick_reply_image_${index + 1}.png`;
+        attachments.addUrl(url, filename, "image/png");
+      });
+    }
+  };
+
+  if (quickRepliesList === undefined) {
+    return null;
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          disabled={disabled}
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground h-8 px-2 gap-1.5 flex items-center shadow-none border-none bg-transparent hover:bg-muted/50"
+        >
+          <ReplyAll className="size-3.5" />
+          <span className="text-xs font-semibold">Quick replies</span>
+          {open ? (
+            <ChevronDown className="size-3.5 opacity-60 ml-0.5" />
+          ) : (
+            <ChevronUp className="size-3.5 opacity-60 ml-0.5" />
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-80 px-2 py-0 rounded-xl shadow-lg border border-border bg-popover z-50 flex flex-col gap-1.5">
+        <div className="flex items-center justify-between px-1 pt-2 pb-1 border-b border-border/40">
+          <span className="text-xs font-medium text-muted-foreground">Quick replies</span>
+          <Link
+            to={`/dashboard/${agentId}/quick-replies`}
+            onClick={() => setOpen(false)}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-500 transition-colors"
+          >
+            Edit
+          </Link>
+        </div>
+        <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto no-scrollbar">
+          {quickRepliesList.length === 0 ? (
+            <div className="text-center py-4 px-2 text-xs text-muted-foreground font-medium">
+              No quick replies set yet.
+            </div>
+          ) : (
+            quickRepliesList.map((reply, index) => {
+              const isLast = index === quickRepliesList.length - 1;
+              
+              const itemNode = (
+                <button
+                  type="button"
+                  onClick={() => handleSelectQuickReply(reply)}
+                  className="w-full flex items-center justify-between gap-3 px-2 py-1.5 rounded-lg hover:bg-muted/60 transition-all text-left focus:outline-none active:scale-[0.99]"
+                >
+                  {/* Left: Text Selection */}
+                  <div className="flex-1 min-w-0 flex flex-col">
+                    <span className="font-semibold text-xs text-foreground truncate block">
+                      {reply.title}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5 leading-relaxed truncate block w-full">
+                      {reply.imageUrls && reply.imageUrls.length > 0 && (
+                        <ImageIcon className="size-3 text-muted-foreground/80 shrink-0" />
+                      )}
+                      <span className="truncate flex-1">{reply.text}</span>
+                    </span>
+                  </div>
+
+                  {/* Right: Small avatar group button to attach images */}
+                  {reply.imageUrls && reply.imageUrls.length > 0 && (
+                    <div className="relative shrink-0 flex items-center justify-center">
+                      <AvatarGroup className="-space-x-1.5">
+                        {reply.imageUrls.map((url: string, idx: number) => (
+                          <Avatar key={idx} size="sm" className="size-6 border border-background">
+                            <AvatarImage src={url} alt="" />
+                            <AvatarFallback className="text-[8px] font-semibold bg-muted">CN</AvatarFallback>
+                          </Avatar>
+                        ))}
+                      </AvatarGroup>
+                    </div>
+                  )}
+                </button>
+              );
+
+              return (
+                <div key={reply._id} className="flex flex-col gap-0.5">
+                  {itemNode}
+                  {!isLast && <Separator className="bg-border/30 my-0.5 shrink-0" />}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -354,17 +495,17 @@ export function ChatPromptInput({
           value={value}
         />
       </PromptInputBody>
-      <PromptInputFooter
-        className={cn(
-          PROMPT_FOOTER_CLASS,
-          !allowImageAttachments && "justify-end",
-        )}
-      >
-        {allowImageAttachments ? (
-          <PromptInputTools>
+      <PromptInputFooter className={PROMPT_FOOTER_CLASS}>
+        <PromptInputTools className="flex items-center gap-1.5">
+          {allowImageAttachments && (
             <ChatPromptInputAttachButton disabled={disabled} />
-          </PromptInputTools>
-        ) : null}
+          )}
+          <ChatPromptInputQuickRepliesButton
+            disabled={disabled}
+            onChange={onChange}
+            textareaRef={internalTextareaRef}
+          />
+        </PromptInputTools>
         <ChatPromptInputSubmitWithUploads
           allowAttachments={allowImageAttachments}
           disabled={submitDisabled}

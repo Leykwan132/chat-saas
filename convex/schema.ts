@@ -604,6 +604,7 @@ export default defineSchema({
     title: v.string(),
     text: v.string(),
     r2Key: v.optional(v.string()),
+    r2Keys: v.optional(v.array(v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

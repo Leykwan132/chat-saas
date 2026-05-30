@@ -181,6 +181,7 @@ const captureScreenshot = async (): Promise<File | null> => {
 export interface AttachmentsContext {
   files: (FileUIPart & { id: string })[];
   add: (files: File[] | FileList) => void;
+  addUrl: (url: string, filename?: string, mediaType?: string) => void;
   remove: (id: string) => void;
   clear: () => void;
   openFileDialog: () => void;
@@ -221,7 +222,7 @@ export const usePromptInputController = () => {
 };
 
 // Optional variants (do NOT throw). Useful for dual-mode components.
-const useOptionalPromptInputController = () =>
+export const useOptionalPromptInputController = () =>
   useContext(PromptInputController);
 
 export const useProviderAttachments = () => {
@@ -266,6 +267,7 @@ export const PromptInputProvider = ({
     if (incoming.length === 0) {
       return;
     }
+    console.log("[PromptInputProvider] Attaching local files manually:", incoming.map(f => ({ name: f.name, type: f.type, size: f.size })));
 
     setAttachmentFiles((prev) => [
       ...prev,
@@ -276,6 +278,20 @@ export const PromptInputProvider = ({
         type: "file" as const,
         url: URL.createObjectURL(file),
       })),
+    ]);
+  }, []);
+
+  const addUrl = useCallback((url: string, filename?: string, mediaType?: string) => {
+    console.log("[PromptInputProvider] Attaching public URL image:", { url, filename, mediaType });
+    setAttachmentFiles((prev) => [
+      ...prev,
+      {
+        filename: filename ?? url.split("/").pop()?.split("?")[0] ?? "file",
+        id: nanoid(),
+        mediaType: mediaType ?? "image/png",
+        type: "file" as const,
+        url,
+      },
     ]);
   }, []);
 
@@ -326,13 +342,14 @@ export const PromptInputProvider = ({
   const attachments = useMemo<AttachmentsContext>(
     () => ({
       add,
+      addUrl,
       clear,
       fileInputRef,
       files: attachmentFiles,
       openFileDialog,
       remove,
     }),
-    [attachmentFiles, add, remove, clear, openFileDialog]
+    [attachmentFiles, add, addUrl, remove, clear, openFileDialog]
   );
 
   const __registerFileInput = useCallback(
@@ -610,6 +627,7 @@ export const PromptInput = ({
             message: "Too many files. Some were not added.",
           });
         }
+        console.log("[PromptInput] Attaching local files manually (local state):", capped.map(f => ({ name: f.name, type: f.type, size: f.size })));
         const next: (FileUIPart & { id: string })[] = [];
         for (const file of capped) {
           next.push({
@@ -682,6 +700,47 @@ export const PromptInput = ({
     [matchesAccept, maxFileSize, maxFiles, onError, files.length, controller]
   );
 
+  const addUrlLocal = useCallback(
+    (url: string, filename?: string, mediaType?: string) => {
+      console.log("[PromptInput] Attaching public URL image (local state):", { url, filename, mediaType });
+      setItems((prev) => {
+        if (typeof maxFiles === "number" && prev.length >= maxFiles) {
+          onError?.({
+            code: "max_files",
+            message: "Too many files. Some were not added.",
+          });
+          return prev;
+        }
+        return [
+          ...prev,
+          {
+            filename: filename ?? url.split("/").pop()?.split("?")[0] ?? "file",
+            id: nanoid(),
+            mediaType: mediaType ?? "image/png",
+            type: "file" as const,
+            url,
+          },
+        ];
+      });
+    },
+    [maxFiles, onError]
+  );
+
+  const addUrlWithProviderValidation = useCallback(
+    (url: string, filename?: string, mediaType?: string) => {
+      const currentCount = files.length;
+      if (typeof maxFiles === "number" && currentCount >= maxFiles) {
+        onError?.({
+          code: "max_files",
+          message: "Too many files. Some were not added.",
+        });
+        return;
+      }
+      controller?.attachments.addUrl(url, filename, mediaType);
+    },
+    [maxFiles, onError, files.length, controller]
+  );
+
   const clearAttachments = useCallback(
     () =>
       usingProvider
@@ -703,6 +762,7 @@ export const PromptInput = ({
   );
 
   const add = usingProvider ? addWithProviderValidation : addLocal;
+  const addUrl = usingProvider ? addUrlWithProviderValidation : addUrlLocal;
   const remove = usingProvider ? controller.attachments.remove : removeLocal;
   const openFileDialog = usingProvider
     ? controller.attachments.openFileDialog
@@ -814,13 +874,14 @@ export const PromptInput = ({
   const attachmentsCtx = useMemo<AttachmentsContext>(
     () => ({
       add,
+      addUrl,
       clear: clearAttachments,
       fileInputRef: inputRef,
       files: files.map((item) => ({ ...item, id: item.id })),
       openFileDialog,
       remove,
     }),
-    [files, add, remove, clearAttachments, openFileDialog]
+    [files, add, addUrl, remove, clearAttachments, openFileDialog]
   );
 
   const refsCtx = useMemo<ReferencedSourcesContext>(

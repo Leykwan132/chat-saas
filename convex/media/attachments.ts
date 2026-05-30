@@ -107,6 +107,7 @@ export const getUploadsByClientIds = query({
       clientId: string;
       status: string;
       r2Key?: string;
+      publicUrl?: string;
       error?: string;
     }> = [];
 
@@ -122,10 +123,23 @@ export const getUploadsByClientIds = query({
         .unique();
 
       if (row === null) continue;
+
+      // Resolve publicUrl server-side: prefer stored publicUrl, fall back to
+      // computing from r2Key so the frontend never needs VITE_MEDIA_CDN_BASE_URL.
+      let publicUrl: string | undefined = (row as any).publicUrl;
+      if (!publicUrl && row.r2Key && row.status === "ready") {
+        try {
+          publicUrl = getPublicMediaUrl(row.r2Key);
+        } catch {
+          // MEDIA_CDN_BASE_URL not configured; publicUrl stays undefined
+        }
+      }
+
       results.push({
         clientId,
         status: row.status,
         r2Key: row.r2Key,
+        publicUrl,
         error: row.error,
       });
     }
