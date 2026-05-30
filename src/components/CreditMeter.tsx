@@ -5,6 +5,7 @@ import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 function topUpProgressValue(remaining: number, granted: number) {
@@ -52,7 +53,17 @@ export function CreditMeter() {
       <div className="rounded-lg border border-border/60 bg-sidebar-accent/40 px-3 py-2.5 space-y-3">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Credits</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-medium text-muted-foreground">Credits</span>
+              {!isLoading && planAndUsage?.isTeam && (
+                <Badge
+                  variant="secondary"
+                  className="h-4 rounded px-1 text-[9px] font-semibold uppercase bg-primary/10 text-primary border-none select-none tracking-wider"
+                >
+                  {planAndUsage.plan}
+                </Badge>
+              )}
+            </div>
             <span
               className={cn(
                 'text-xs font-semibold tabular-nums',

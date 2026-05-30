@@ -355,6 +355,23 @@ export const persistCreditPeriodReset = internalMutation({
   },
 });
 
+export async function getBillingEntityForUser(
+  ctx: QueryCtx | MutationCtx,
+  user: Doc<"users">
+): Promise<{ billingUser: Doc<"users">; isTeam: boolean; teamName?: string }> {
+  // This is referring to the user current team. 
+  if (user.activeTeamId) {
+    const team = await ctx.db.get(user.activeTeamId);
+    if (team && team.type === "organizational") {
+      const owner = await ctx.db.get(team.ownerId);
+      if (owner) {
+        return { billingUser: owner, isTeam: true, teamName: team.name };
+      }
+    }
+  }
+  return { billingUser: user, isTeam: false };
+}
+
 export const getPlanAndUsage = query({
   args: {},
   handler: async (ctx) => {
@@ -366,27 +383,31 @@ export const getPlanAndUsage = query({
     if (!user) {
       return null;
     }
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
-    const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
+
+    const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);
+
+    const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
+    const { billing } = await syncCreditBilling(ctx, billingUser, stripeInfo);
     const planConfig = getPlan(stripeInfo.plan);
-    const scope = scopeFromUser(user);
+    const scope = scopeFromUser(billingUser);
     const periodKey = getCreditPeriodKey(stripeInfo);
     const periodSummary = await getCreditPeriodSummary(ctx, scope, periodKey);
     const topUpSummary = await getTopUpSummary(ctx, scope);
     const purchasedCredits =
-      topUpSummary.purchasedCredits || getPurchasedCredits(user);
+      topUpSummary.purchasedCredits || getPurchasedCredits(billingUser);
     const purchasedCreditsGranted = await resolvePurchasedCreditsGranted(
       ctx,
-      user,
-      { orgId: "", userId: user._id },
+      billingUser,
+      { orgId: "", userId: billingUser._id },
     );
     const monthlyCredits =
-      periodSummary.monthlyCredits || getMonthlyCredits(user);
+      periodSummary.monthlyCredits || getMonthlyCredits(billingUser);
     const monthlyAllowance =
       periodSummary.monthlyAllowance || billing.monthlyAllowance;
 
     return {
-      orgName: "Your account",
+      orgName: isTeam && teamName ? teamName : "Your account",
+      isTeam,
       plan: stripeInfo.plan,
       planConfig,
       credits: monthlyCredits + purchasedCredits,

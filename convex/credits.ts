@@ -12,6 +12,7 @@ import {
   lazyResetCreditsIfNeeded,
   getPlanFromStripe,
   syncCreditBilling,
+  getBillingEntityForUser,
 } from "./plans";
 import { getTotalCreditBalance } from "./creditBalance";
 import {
@@ -132,8 +133,9 @@ export const getBalance = query({
     if (user === null) {
       return null;
     }
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
-    const { billing } = await syncCreditBilling(ctx, user, stripeInfo);
+    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
+    const { billing } = await syncCreditBilling(ctx, billingUser, stripeInfo);
     return {
       credits: billing.effectiveCredits,
       monthlyAllowance: billing.monthlyAllowance,
@@ -159,7 +161,8 @@ export const internalCheckCredits = internalQuery({
     if (user === null) {
       return { ok: false as const, reason: "user_not_found" as const };
     }
-    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
+    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, billingUser)) as Doc<"users">;
     const balance = getTotalCreditBalance(currentUserDoc);
     const cost = pricing.creditCost;
     if (balance < cost) {
@@ -204,7 +207,7 @@ export const internalDeductCredits = internalMutation({
       agentName = agent?.name;
     }
 
-    let user = await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
       .unique();
@@ -212,8 +215,9 @@ export const internalDeductCredits = internalMutation({
       throw new Error("User not found");
     }
 
-    user = (await lazyResetCreditsIfNeeded(ctx, user)) as Doc<"users">;
-    const before = snapshotCreditBalances(user);
+    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, billingUser)) as Doc<"users">;
+    const before = snapshotCreditBalances(currentUserDoc);
     let balanceAfter = before.balanceBefore;
 
     if (!skipDeduction) {
@@ -221,14 +225,14 @@ export const internalDeductCredits = internalMutation({
         throw new Error("Insufficient credits");
       }
       balanceAfter = await applyUsageDeduction(ctx, {
-        entity: user,
-        scope: scopeFromUser(user),
-        stripeEntityId: user.workosUserId,
+        entity: currentUserDoc,
+        scope: scopeFromUser(currentUserDoc),
+        stripeEntityId: currentUserDoc.workosUserId,
         creditsCharged,
         before,
         log: {
           orgId: "",
-          userId: user._id,
+          userId: currentUserDoc._id,
           modelId: args.modelId,
           agentId,
           agentName,
@@ -353,15 +357,17 @@ export const getUsageDashboard = query({
     const { userId, orgId } = await getAuthContext(ctx, args.orgId);
     const isPersonal = !orgId || orgId === "personal";
 
-    const userDoc = await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
       .unique();
-    if (!userDoc) {
+    if (!user) {
       return null;
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
+
+    const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
     const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
     const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
@@ -532,15 +538,17 @@ export const getCreditHistory = query({
     const { userId } = await getAuthContext(ctx, args.orgId);
     const limit = Math.min(Math.max(args.limit ?? 100, 1), 200);
 
-    const userDoc = await ctx.db
+    const user = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
       .unique();
-    if (!userDoc) {
+    if (!user) {
       return null;
     }
 
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
+    const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
+
+    const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
     const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
     const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
