@@ -11,6 +11,17 @@ export function buildWhatsAppOnboardUrl(appId: string, configId: string): string
   const url = new URL(`${WHATSAPP_ONBOARD_ORIGIN}/messaging/whatsapp/onboard/`);
   url.searchParams.set('app_id', appId);
   url.searchParams.set('config_id', configId);
+  
+  const extras = {
+    version: 'v4',
+    sessionInfoVersion: '3',
+    featureType: 'whatsapp_business_app_onboarding',
+  };
+  url.searchParams.set('extras', JSON.stringify(extras));
+  
+  const siteUrl = (import.meta.env.VITE_CONVEX_SITE_URL as string | undefined) || 'https://outstanding-rabbit-215.convex.site';
+  url.searchParams.set('redirect_uri', `${siteUrl}/auth/messenger/callback`);
+  
   return url.toString();
 }
 
