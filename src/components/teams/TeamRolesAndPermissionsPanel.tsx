@@ -54,7 +54,10 @@ type UiPermissionKey =
   | 'billing'
   | 'permissions'
   | 'widgets_dsync'
-  | 'widgets_users_table';
+  | 'widgets_users_table'
+  | 'routing'
+  | 'followups'
+  | 'broadcast';
 
 type UiPermissionItem = {
   key: UiPermissionKey;
@@ -77,6 +80,20 @@ const CONSOLIDATED_ITEMS: UiPermissionItem[] = [
     key: 'customers',
     label: 'Customer List',
     description: 'Access to view, create, or modify customer records.',
+    category: 'Chats & Customers',
+    type: 'edit-view',
+  },
+  {
+    key: 'followups',
+    label: 'Follow-ups',
+    description: 'Access to view or configure automated customer follow-up rules.',
+    category: 'Chats & Customers',
+    type: 'edit-view',
+  },
+  {
+    key: 'broadcast',
+    label: 'Broadcasts & Templates',
+    description: 'Access to view, create, or dispatch broadcast campaigns and message templates.',
     category: 'Chats & Customers',
     type: 'edit-view',
   },
@@ -145,6 +162,14 @@ const CONSOLIDATED_ITEMS: UiPermissionItem[] = [
     category: 'Team & Billing',
     type: 'edit',
   },
+  // People category
+  {
+    key: 'routing',
+    label: 'Schedules & Lead Assignment',
+    description: 'Access to view teammate schedules and configure automated lead routing.',
+    category: 'People',
+    type: 'edit-view',
+  },
 ];
 
 const ITEM_PERMISSIONS: Record<UiPermissionKey, { read: PermissionSlug[]; manage: PermissionSlug[] }> = {
@@ -199,6 +224,18 @@ const ITEM_PERMISSIONS: Record<UiPermissionKey, { read: PermissionSlug[]; manage
   widgets_users_table: {
     read: [],
     manage: [Permission.WIDGETS_USERS_TABLE_MANAGE],
+  },
+  routing: {
+    read: [Permission.SCHEDULE_READ, Permission.ROUTING_READ],
+    manage: [Permission.ROUTING_MANAGE],
+  },
+  followups: {
+    read: [Permission.FOLLOWUPS_READ],
+    manage: [Permission.FOLLOWUPS_MANAGE],
+  },
+  broadcast: {
+    read: [Permission.BROADCAST_READ],
+    manage: [Permission.BROADCAST_MANAGE],
   },
 };
 

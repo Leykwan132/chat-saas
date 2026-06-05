@@ -248,11 +248,13 @@ export function mapFeatureAccessToPermissions(
     permissions.push(
       Permission.TEAM_READ,
       Permission.TEAM_MANAGE,
+      Permission.ROUTING_READ,
       Permission.ROUTING_MANAGE,
     );
   } else if (access.team === 'view') {
     permissions.push(
       Permission.TEAM_READ,
+      Permission.ROUTING_READ,
     );
   }
 
@@ -329,6 +331,12 @@ export function resolvePermissionsForRole(
     if (!permissions.includes(Permission.SCHEDULE_READ)) {
       permissions.push(Permission.SCHEDULE_READ);
     }
+    if (!permissions.includes(Permission.ROUTING_READ)) {
+      permissions.push(Permission.ROUTING_READ);
+    }
+    if (!permissions.includes(Permission.ROUTING_MANAGE)) {
+      permissions.push(Permission.ROUTING_MANAGE);
+    }
     if (!permissions.includes(Permission.FOLLOWUPS_READ)) {
       permissions.push(Permission.FOLLOWUPS_READ);
     }
@@ -348,6 +356,12 @@ export function resolvePermissionsForRole(
     const permissions = [...stored];
     if (!permissions.includes(Permission.SCHEDULE_READ)) {
       permissions.push(Permission.SCHEDULE_READ);
+    }
+    if (!permissions.includes(Permission.ROUTING_READ)) {
+      permissions.push(Permission.ROUTING_READ);
+    }
+    if (!permissions.includes(Permission.ROUTING_MANAGE)) {
+      permissions.push(Permission.ROUTING_MANAGE);
     }
     if (!permissions.includes(Permission.FOLLOWUPS_READ)) {
       permissions.push(Permission.FOLLOWUPS_READ);
