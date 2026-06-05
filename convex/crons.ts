@@ -16,4 +16,12 @@ crons.interval(
   {},
 );
 
+// Scan and schedule pending follow-ups once daily.
+crons.interval(
+  "automated follow-up check scan",
+  { hours: 24 },
+  internal.whatsappFollowUp.runDailyFollowUpScan,
+  {},
+);
+
 export default crons;

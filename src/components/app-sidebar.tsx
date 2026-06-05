@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, Zap, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, CalendarDays, ReplyAll } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, CalendarDays, ReplyAll, Megaphone, MessageCircleReply, FileText } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
@@ -30,26 +30,31 @@ type NavItem = {
 
 function getNavItems(agentId: string): {
   engagement: NavItem[];
-  people: NavItem[];
+  customers: NavItem[];
+  team: NavItem[];
   configuration: NavItem[];
   insights: NavItem[];
 } {
   return {
     engagement: [
       { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Customers', requiredPermission: Permission.CUSTOMERS_READ },
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
     ],
-    people: [
+    customers: [
+      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
+      { to: `/dashboard/${agentId}/follow-ups`, icon: MessageCircleReply, label: 'Follow-ups', requiredPermission: Permission.FOLLOWUPS_READ },
+      { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
+      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
+    ],
+    team: [
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
       { to: `/dashboard/${agentId}/schedule`, icon: CalendarDays, label: 'Schedule', requiredPermission: Permission.SCHEDULE_READ },
     ],
     configuration: [
-      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
       { to: `/dashboard/${agentId}/instructions`, icon: Bot, label: 'Instructions', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
+      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
-      { to: `/dashboard/${agentId}/automations`, icon: Zap, label: 'Automations', requiredPermission: Permission.AUTOMATION_READ },
     ],
     insights: [
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
@@ -72,7 +77,8 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   };
 
   const engagementItems = filterItems(navItems.engagement);
-  const peopleItems = filterItems(navItems.people);
+  const customersItems = filterItems(navItems.customers);
+  const teamItems = filterItems(navItems.team);
   const configurationItems = filterItems(navItems.configuration);
   const insightsItems = filterItems(navItems.insights);
 
@@ -170,12 +176,40 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {peopleItems.length > 0 && (
+        {customersItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>People</SidebarGroupLabel>
+            <SidebarGroupLabel>Customers</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {peopleItems.map((item) => (
+                {customersItems.map((item) => (
+                  <SidebarMenuItem key={item.to}>
+                    <NavLink to={item.to} end>
+                      {({ isActive }) => (
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={item.label}
+                        >
+                          <span>
+                            <item.icon />
+                            <span>{item.label}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      )}
+                    </NavLink>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {teamItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Team</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {teamItems.map((item) => (
                   <SidebarMenuItem key={item.to}>
                     <NavLink to={item.to} end>
                       {({ isActive }) => (

@@ -21,6 +21,8 @@ app.use(workpool, { name: "messengerSyncWorkpool" });
 app.use(workpool, { name: "inboxAiReplyWorkpool" });
 app.use(workpool, { name: "mediaDeleteWorkpool" });
 app.use(workpool, { name: "threadSummarizerWorkpool" });
+app.use(workpool, { name: "broadcastWorkpool" });
+app.use(workpool, { name: "followUpWorkpool" });
 app.use(workOSAuthKit);
 app.use(crons);
 export default app;

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check } from 'lucide-react';
-import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag } from '@/lib/leadTemperature';
+import { isLeadTemperatureTag, isReservedTemperatureTag } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -12,6 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
   let hash = 0;
@@ -74,6 +81,20 @@ export default function CustomerDetailPage() {
 
   const addTag = useMutation(api.customers.addCustomerTag);
   const removeTag = useMutation(api.customers.removeCustomerTag);
+  const updateCustomer = useMutation(api.customers.update);
+
+  const handleUpdateLeadTemperature = async (value: string) => {
+    if (!typedCustomerId) return;
+    try {
+      await updateCustomer({
+        customerId: typedCustomerId,
+        leadTemperature: value === 'None' ? null : (value as any),
+      });
+      toast.success('Lead status updated');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update lead status');
+    }
+  };
 
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearchInput, setTagSearchInput] = useState('');
@@ -226,6 +247,26 @@ export default function CustomerDetailPage() {
             </div>
 
             <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Lead Status</span>
+              <div className="flex items-center gap-2 mt-0.5">
+                <Select
+                  value={customer.leadTemperature || 'None'}
+                  onValueChange={handleUpdateLeadTemperature}
+                >
+                  <SelectTrigger className="w-[140px] h-8 bg-background border-border text-xs">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="None">None</SelectItem>
+                    <SelectItem value="Hot">Hot</SelectItem>
+                    <SelectItem value="Warm">Warm</SelectItem>
+                    <SelectItem value="Cold">Cold</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">First Seen</span>
               <span className="text-foreground flex items-center gap-2">
                 <Calendar className="size-3.5 text-muted-foreground/75" />
@@ -268,9 +309,9 @@ export default function CustomerDetailPage() {
                     No tags found.
                   </CommandEmpty>
                   
-                  {allExistingTags.length > 0 && (
+                  {allExistingTags.filter(t => !isLeadTemperatureTag(t)).length > 0 && (
                     <CommandGroup heading="Existing tags">
-                      {allExistingTags.map((tag) => {
+                      {allExistingTags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
                         const isSelected = customer.tags.includes(tag);
                         return (
                           <CommandItem
@@ -312,33 +353,14 @@ export default function CustomerDetailPage() {
           </Popover>
         </div>
 
-        {customer.tags.length === 0 ? (
+        {customer.tags.filter(t => !isLeadTemperatureTag(t)).length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
             <p className="text-sm text-muted-foreground">No tags applied to this customer.</p>
           </div>
         ) : (
           <div className="rounded-xl border border-border bg-card p-5">
             <div className="flex flex-wrap gap-2">
-              {customer.tags.map((tag) => {
-                if (isLeadTemperatureTag(tag)) {
-                  const style = getLeadTemperatureStyle(tag);
-                  const Icon = style.icon;
-                  return (
-                    <span
-                      key={tag}
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
-                        style.bg,
-                        style.text
-                      )}
-                    >
-                      <Icon className={cn("size-3 shrink-0", style.iconClass)} />
-                      <span className="max-w-[150px] truncate" title={tag}>
-                        {tag}
-                      </span>
-                    </span>
-                  );
-                }
+              {customer.tags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
                 const colors = getTagColorClass(tag);
                 return (
                   <span

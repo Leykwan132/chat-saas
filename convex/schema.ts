@@ -328,11 +328,18 @@ export default defineSchema({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     tags: v.array(v.string()),
+    leadTemperature: v.optional(
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
+    ),
     notes: v.optional(v.string()),
     source: customerServiceValidator,
     firstSeenAt: v.number(),
     lastSeenAt: v.number(),
     lastConversationId: v.optional(v.id("conversations")),
+    followUpPending: v.optional(v.boolean()),
+    followUpAttempt: v.optional(v.number()),
+    followUpPendingRuleId: v.optional(v.id("followUpRules")),
+    followUpScheduledAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -609,4 +616,91 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_teamId", ["teamId"]),
+  whatsappBroadcastSchedules: defineTable({
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    channelId: v.id("channels"),
+    templateName: v.string(),
+    templateLanguage: v.string(),
+    scheduledAt: v.number(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+      v.literal("cancelled"),
+    ),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    totalCount: v.number(),
+    processedAt: v.optional(v.number()),
+    okCount: v.optional(v.number()),
+    failCount: v.optional(v.number()),
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_agentId_and_scheduledAt", ["agentId", "scheduledAt"])
+    .index("by_orgId_and_status", ["orgId", "status"]),
+  whatsappBroadcastRecipients: defineTable({
+    scheduleId: v.id("whatsappBroadcastSchedules"),
+    orgId: v.string(),
+    customerId: v.id("customers"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    processedAt: v.optional(v.number()),
+    errorMessage: v.optional(v.string()),
+    messageId: v.optional(v.id("messages")),
+  })
+    .index("by_scheduleId", ["scheduleId"])
+    .index("by_scheduleId_and_status", ["scheduleId", "status"])
+    .index("by_orgId", ["orgId"]),
+  followUpRules: defineTable({
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    channelId: v.id("channels"),
+    name: v.string(),
+    attempts: v.array(
+      v.object({
+        attemptNumber: v.number(),
+        templateName: v.string(),
+        templateLanguage: v.string(),
+      })
+    ),
+    maxAttempts: v.number(),
+    triggerDelayHours: v.number(),
+    intervalHours: v.number(),
+    audienceLeadTemperatures: v.array(
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
+    ),
+    audienceTags: v.optional(v.array(v.string())),
+    isActive: v.boolean(),
+    messagesSentCount: v.optional(v.number()),
+    repliesReceivedCount: v.optional(v.number()),
+    estimatedCostPerCustomer: v.optional(v.number()),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId_and_isActive", ["orgId", "isActive"]),
+  followUpSends: defineTable({
+    ruleId: v.id("followUpRules"),
+    orgId: v.string(),
+    recipientPhone: v.string(),
+    recipientName: v.optional(v.string()),
+    attemptNumber: v.number(),
+    templateName: v.string(),
+    templateLanguage: v.string(),
+    sentAt: v.number(),
+    status: v.union(
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("failed"),
+    ),
+    estCostMyr: v.number(),
+    errorMessage: v.optional(v.string()),
+  }).index("by_ruleId_and_sentAt", ["ruleId", "sentAt"]),
 });

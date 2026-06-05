@@ -241,22 +241,21 @@ export default function QuickRepliesPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-8 overflow-y-auto max-h-[calc(100svh-6rem)] no-scrollbar bg-background">
+    <div className="flex w-full flex-col gap-6 max-w-none">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/40 pb-6">
+      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Quick Replies</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Pre-configure text and images for fast access and messaging workflows.
-          </p>
+          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Quick Replies</h1>
         </div>
-        {canManage && (
-          <Button onClick={openCreateDialog} className="gap-2 shadow-sm">
-            <Plus className="size-4" />
-            New Reply
-          </Button>
-        )}
-      </div>
+        <div className="flex shrink-0">
+          {canManage && (
+            <Button onClick={openCreateDialog} className="gap-2">
+              <Plus className="size-4" />
+              New Reply
+            </Button>
+          )}
+        </div>
+      </header>
 
       {/* Filters & Search */}
       <div className="flex items-center w-full max-w-md relative">
@@ -265,18 +264,17 @@ export default function QuickRepliesPage() {
           placeholder="Search replies by title or text..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9 h-10 w-full rounded-lg bg-card shadow-sm border-border/80 focus-visible:ring-1 focus-visible:ring-ring"
+          className="pl-9 h-10 w-full rounded-lg bg-card border-border/80 focus-visible:ring-1 focus-visible:ring-ring"
         />
       </div>
 
       {/* Main List Grid */}
       {quickReplies === undefined ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-          {[1, 2, 3].map((n) => (
-            <div key={n} className="rounded-xl border border-border bg-card p-5 min-h-[130px] animate-pulse">
-              <div className="h-5 w-1/3 bg-muted rounded mb-3" />
-              <div className="h-4 w-5/6 bg-muted rounded mb-2" />
-              <div className="h-4 w-4/6 bg-muted rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-2">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className="rounded-xl border border-border bg-card p-4 min-h-[90px] animate-pulse">
+              <div className="h-4 w-1/3 bg-muted rounded mb-2" />
+              <div className="h-3 w-5/6 bg-muted rounded" />
             </div>
           ))}
         </div>
@@ -297,11 +295,11 @@ export default function QuickRepliesPage() {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pt-2">
           {filteredReplies.map((reply) => (
             <div
               key={reply._id}
-              className="group relative flex items-center justify-between gap-4 rounded-xl border border-border bg-card hover:bg-card/80 hover:shadow-md hover:border-border/100 transition-all duration-200 p-4 h-fit"
+              className="group relative flex items-center justify-between gap-3 rounded-xl border border-border bg-card hover:bg-card/80 hover:border-border/100 transition-all duration-200 p-3 h-fit"
             >
               <div className="flex flex-col gap-1 min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -419,7 +417,7 @@ export default function QuickRepliesPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveAttachment(att.id)}
-                          className="absolute top-1 right-1 rounded-full bg-black/65 hover:bg-black/85 p-0.5 text-white shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 rounded-full bg-black/65 hover:bg-black/85 p-0.5 text-white opacity-0 group-hover:opacity-100 transition-opacity"
                           aria-label="Remove image"
                         >
                           <X className="size-3" />

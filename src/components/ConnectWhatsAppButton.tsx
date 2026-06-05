@@ -19,6 +19,10 @@ import {
   useFacebookSession,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
+import {
+  buildWhatsAppOnboardUrl,
+  resolveWhatsAppEmbeddedSignupIds,
+} from '@/lib/whatsappEmbeddedSignup';
 
 type SessionInfoMessage = {
   type: 'WA_EMBEDDED_SIGNUP';
@@ -59,9 +63,15 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
   const [busy, setBusy] = useState(false);
   const [dialogState, setDialogState] = useState<DialogState>({ kind: 'closed' });
   const sessionInfoRef = useRef<{ wabaId?: string; phoneNumberId?: string }>({});
+  const authCodeRef = useRef<string | undefined>(undefined);
+  const completingRef = useRef(false);
 
-  const appId = import.meta.env.VITE_META_APP_ID as string | undefined;
-  const configId = import.meta.env.VITE_META_EMBEDDED_SIGNUP_CONFIG_ID as string | undefined;
+  const signupIds = resolveWhatsAppEmbeddedSignupIds({
+    appId: import.meta.env.VITE_META_APP_ID as string | undefined,
+    configId: import.meta.env.VITE_META_EMBEDDED_SIGNUP_CONFIG_ID as string | undefined,
+  });
+  const appId = signupIds?.appId;
+  const configId = signupIds?.configId;
   const graphVersion =
     (import.meta.env.VITE_META_GRAPH_API_VERSION as string | undefined) || 'v22.0';
 
@@ -71,9 +81,76 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
   // once per page.
   const fbSession = useFacebookSession({ appId, version: graphVersion });
 
-  // Listen for the session info postMessage from the Embedded Signup popup.
-  // Meta sends this when the user finishes the flow; the payload carries the
-  // waba_id + phone_number_id we need to forward to the backend action.
+  // Live whatsapp channel row from Convex. Used both to pull the active
+  // progressStep into the connecting state and to display the phone number
+  // in the success state.
+  const whatsappChannel = useMemo(
+    () => channels?.find((c: any) => c.service === 'whatsapp'),
+    [channels],
+  );
+
+  const tryCompleteSignup = useCallback(async () => {
+    if (completingRef.current) return;
+
+    const code = authCodeRef.current;
+    const { wabaId, phoneNumberId } = sessionInfoRef.current;
+    if (!code || !wabaId || !phoneNumberId) return;
+
+    completingRef.current = true;
+    setDialogState({ kind: 'connecting' });
+
+    try {
+      await completeSignup({ code, wabaId, phoneNumberId });
+      setDialogState({ kind: 'success' });
+      onConnected?.();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setDialogState({ kind: 'error', message: msg });
+    } finally {
+      completingRef.current = false;
+      setBusy(false);
+    }
+  }, [completeSignup, onConnected]);
+
+  const requestAuthCodeAndComplete = useCallback(() => {
+    if (!appId || !configId) return;
+
+    if (!fbSession.ready || !window.FB) {
+      toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
+      setBusy(false);
+      return;
+    }
+
+    window.FB.login(
+      (response: FBLoginResponse) => {
+        refreshFacebookLoginStatus();
+        const code = response.authResponse?.code;
+        if (!code) {
+          const message =
+            response.status === 'unknown'
+              ? 'Signup cancelled before completion.'
+              : 'Did not receive an authorisation code.';
+          toast.error(message);
+          setBusy(false);
+          return;
+        }
+
+        authCodeRef.current = code;
+        void tryCompleteSignup();
+      },
+      {
+        config_id: configId,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: {
+          featureType: 'whatsapp_business_app_onboarding',
+          sessionInfoVersion: '3',
+        },
+      },
+    );
+  }, [appId, configId, fbSession.ready, tryCompleteSignup]);
+
+  // Meta posts WA_EMBEDDED_SIGNUP to the opener when the hosted onboard flow finishes.
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       let payload: SessionInfoMessage | null = null;
@@ -93,24 +170,19 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
           wabaId: payload.data.waba_id,
           phoneNumberId: payload.data.phone_number_id,
         };
+        requestAuthCodeAndComplete();
       } else if (payload.event === 'CANCEL') {
+        setBusy(false);
         toast.message('WhatsApp connection cancelled');
       } else if (payload.event === 'ERROR' && payload.data?.error_message) {
+        setBusy(false);
         toast.error(`Embedded Signup error: ${payload.data.error_message}`);
       }
     }
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
-  // Live whatsapp channel row from Convex. Used both to pull the active
-  // progressStep into the connecting state and to display the phone number
-  // in the success state.
-  const whatsappChannel = useMemo(
-    () => channels?.find((c: any) => c.service === 'whatsapp'),
-    [channels],
-  );
+  }, [requestAuthCodeAndComplete]);
 
   const launchSignup = useCallback(() => {
     if (!appId || !configId) {
@@ -126,63 +198,22 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
     }
 
     setBusy(true);
+    completingRef.current = false;
     sessionInfoRef.current = {};
+    authCodeRef.current = undefined;
 
-    window.FB.login(
-      (response: FBLoginResponse) => {
-        // Pull the freshest login state into the cache. auth.statusChange
-        // also fires on its own, this is just belt-and-braces.
-        refreshFacebookLoginStatus();
-        void (async () => {
-          try {
-            const code = response.authResponse?.code;
-            if (!code) {
-              const message =
-                response.status === 'unknown'
-                  ? 'Signup cancelled before completion.'
-                  : 'Did not receive an authorisation code.';
-              toast.error(message);
-              setBusy(false);
-              return;
-            }
-
-            const { wabaId, phoneNumberId } = sessionInfoRef.current;
-            if (!wabaId || !phoneNumberId) {
-              const message =
-                'Signup completed but WhatsApp Business Account info was not received.';
-              toast.error(message);
-              setBusy(false);
-              return;
-            }
-
-            // Open the dialog only once we have something real to wait on
-            // (the FB.login popup itself was already in front of the user).
-            setDialogState({ kind: 'connecting' });
-
-            try {
-              await completeSignup({ code, wabaId, phoneNumberId });
-              setDialogState({ kind: 'success' });
-              onConnected?.();
-            } catch (err) {
-              const msg = err instanceof Error ? err.message : String(err);
-              setDialogState({ kind: 'error', message: msg });
-            }
-          } finally {
-            setBusy(false);
-          }
-        })();
-      },
-      {
-        config_id: configId,
-        response_type: 'code',
-        override_default_response_type: true,
-        extras: {
-          featureType: 'whatsapp_business_app_onboarding',
-          sessionInfoVersion: '3',
-        },
-      },
+    const onboardUrl = buildWhatsAppOnboardUrl(appId, configId);
+    const popup = window.open(
+      onboardUrl,
+      'whatsapp_embedded_signup',
+      'width=960,height=720,menubar=no,toolbar=no,location=no,status=no',
     );
-  }, [appId, configId, completeSignup, onConnected, fbSession.ready]);
+
+    if (!popup) {
+      window.open(onboardUrl, '_blank', 'noopener,noreferrer');
+      toast.message('Complete WhatsApp setup in the new tab, then return here.');
+    }
+  }, [appId, configId, fbSession.ready]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {

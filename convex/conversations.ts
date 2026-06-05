@@ -47,15 +47,18 @@ export const listLinkedForCurrentOrg = query({
     const out = [];
     for (const c of filtered) {
       let tags: string[] = [];
+      let leadTemperature: "Hot" | "Warm" | "Cold" | undefined = undefined;
       if (c.customerId !== undefined) {
         const cust = await ctx.db.get(c.customerId);
         if (cust !== null) {
           tags = cust.tags ?? [];
+          leadTemperature = cust.leadTemperature;
         }
       }
       out.push({
         ...c,
         tags,
+        leadTemperature,
       });
     }
     return out;
@@ -93,15 +96,18 @@ export const get = query({
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== orgId) return null;
     let tags: string[] = [];
+    let leadTemperature: "Hot" | "Warm" | "Cold" | undefined = undefined;
     if (conv.customerId !== undefined) {
       const cust = await ctx.db.get(conv.customerId);
       if (cust !== null) {
         tags = cust.tags ?? [];
+        leadTemperature = cust.leadTemperature;
       }
     }
     return {
       ...conv,
       tags,
+      leadTemperature,
     };
   },
 });

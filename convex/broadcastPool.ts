@@ -1,0 +1,220 @@
+import { v } from "convex/values";
+import { Workpool } from "@convex-dev/workpool";
+import { components } from "./_generated/api";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
+import { internal } from "./_generated/api";
+import type { Doc, Id } from "./_generated/dataModel";
+import { ingestChannelMessage } from "./chat/threads";
+
+export const broadcastPool = new Workpool(
+  components.broadcastWorkpool,
+  { maxParallelism: 3 }, // Rate-limiting safety for Meta Graph API
+);
+
+const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
+const DEFAULT_GRAPH_VERSION = "v22.0";
+
+function graphBase(): string {
+  const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
+  return `https://graph.facebook.com/${version}`;
+}
+
+function resolveAccessToken(channel: Doc<"channels">): string {
+  const isDemo = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
+  const token = isDemo
+    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
+    : (channel.accessToken ?? "").trim();
+  if (!token) {
+    throw new Error(
+      isDemo
+        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to use the demo WhatsApp channel."
+        : "WhatsApp channel has no access token. Reconnect in Channels.",
+    );
+  }
+  return token;
+}
+
+export const getBroadcastWorkerContext = internalQuery({
+  args: {
+    recipientId: v.id("whatsappBroadcastRecipients"),
+  },
+  handler: async (ctx, args) => {
+    const recipient = await ctx.db.get(args.recipientId);
+    if (recipient === null) return null;
+    const schedule = await ctx.db.get(recipient.scheduleId);
+    if (schedule === null) return null;
+    const customer = await ctx.db.get(recipient.customerId);
+    if (customer === null) return null;
+    const channel = await ctx.db.get(schedule.channelId);
+    if (channel === null) return null;
+    return {
+      recipient,
+      schedule,
+      customer,
+      channel,
+    };
+  },
+});
+
+export const broadcastWorker = internalAction({
+  args: {
+    recipientId: v.id("whatsappBroadcastRecipients"),
+  },
+  handler: async (ctx, args) => {
+    const context = await ctx.runQuery(
+      internal.broadcastPool.getBroadcastWorkerContext,
+      { recipientId: args.recipientId },
+    );
+    if (context === null) {
+      throw new Error(`Broadcast worker context not found for recipient: ${args.recipientId}`);
+    }
+    const { recipient, schedule, customer, channel } = context;
+
+    if (recipient.status === "completed") {
+      return { skipped: true, msg: "Already sent" };
+    }
+
+    const token = resolveAccessToken(channel);
+    const phoneNumberId = channel.phoneNumberId?.trim();
+    if (!phoneNumberId) {
+      throw new Error("Phone number ID is missing for this channel.");
+    }
+    const to = customer.contactAddress.trim();
+    if (!to) {
+      throw new Error(`Customer ${customer._id} has no contactAddress`);
+    }
+
+    const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
+    if (skipSend) {
+      return {
+        ok: true,
+        externalId: "demo-id-" + Math.random().toString(36).slice(2, 9),
+      };
+    }
+
+    const url = `${graphBase()}/${phoneNumberId}/messages`;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "template",
+        template: {
+          name: schedule.templateName.trim(),
+          language: { code: schedule.templateLanguage.trim() },
+        },
+      }),
+    });
+
+    const text = await res.text();
+    let body: any = null;
+    try {
+      body = text.length ? JSON.parse(text) : null;
+    } catch {}
+
+    if (!res.ok) {
+      const errMsg = body?.error?.message ?? `HTTP ${res.status}: ${text}`;
+      throw new Error(errMsg);
+    }
+
+    const externalId = body?.messages?.[0]?.id;
+    return { ok: true, externalId };
+  },
+});
+
+export const broadcastComplete = internalMutation({
+  args: {
+    workId: v.string(),
+    context: v.object({
+      recipientId: v.id("whatsappBroadcastRecipients"),
+    }),
+    result: v.union(
+      v.object({ kind: v.literal("success"), returnValue: v.any() }),
+      v.object({ kind: v.literal("failed"), error: v.string() }),
+      v.object({ kind: v.literal("canceled") }),
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { recipientId } = args.context;
+    const recipient = await ctx.db.get(recipientId);
+    if (recipient === null) return;
+
+    const schedule = await ctx.db.get(recipient.scheduleId);
+    if (schedule === null) return;
+
+    const customer = await ctx.db.get(recipient.customerId);
+    if (customer === null) return;
+
+    const isSuccess = args.result.kind === "success" && args.result.returnValue?.ok;
+    const errorMsg = args.result.kind === "failed" ? args.result.error : (args.result.kind === "canceled" ? "Canceled" : undefined);
+
+    let messageId: Id<"messages"> | undefined;
+
+    if (isSuccess && args.result.kind === "success") {
+      const returnValue = args.result.returnValue;
+      try {
+        const ingestResult = await ingestChannelMessage(ctx, {
+          channelId: schedule.channelId,
+          externalId: returnValue.externalId,
+          contactAddress: customer.contactAddress,
+          contactName: customer.name ?? undefined,
+          direction: "outgoing",
+          content: `Broadcast Template: ${schedule.templateName}`,
+          contentType: "text",
+          timestampMs: Date.now(),
+          assignedAgentId: schedule.agentId,
+          authorUserId: schedule.createdBy,
+        });
+
+        // Resolve message ID
+        if (returnValue.externalId) {
+          const msg = await ctx.db
+            .query("messages")
+            .withIndex("by_externalId", (q) => q.eq("externalId", returnValue.externalId))
+            .unique();
+          if (msg) {
+            messageId = msg._id;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to ingest outgoing broadcast message record:", err);
+      }
+    }
+
+    // Update recipient status
+    await ctx.db.patch(recipientId, {
+      status: isSuccess ? "completed" : "failed",
+      processedAt: Date.now(),
+      errorMessage: errorMsg,
+      messageId,
+    });
+
+    // Update parent schedule counts
+    const currentOk = schedule.okCount ?? 0;
+    const currentFail = schedule.failCount ?? 0;
+    const newOk = isSuccess ? currentOk + 1 : currentOk;
+    const newFail = isSuccess ? currentFail : currentFail + 1;
+
+    const patch: any = {
+      okCount: newOk,
+      failCount: newFail,
+    };
+
+    if (newOk + newFail >= schedule.totalCount) {
+      if (schedule.status === "processing") {
+        patch.status = "completed";
+        patch.processedAt = Date.now();
+      }
+    }
+
+    await ctx.db.patch(schedule._id, patch);
+  },
+});

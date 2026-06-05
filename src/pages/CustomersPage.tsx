@@ -32,6 +32,13 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Customer = Doc<'customers'> & {
   assignedUserId?: string;
@@ -79,6 +86,16 @@ function serviceLabel(service: Customer['service']): keyof typeof sourceBadgeInf
     default:
       return 'Manual';
   }
+}
+
+function customerPhone(customer: Customer): string | null {
+  const phone = customer.phone?.trim();
+  if (phone) return phone;
+  if (customer.service === 'whatsapp') {
+    const addr = customer.contactAddress?.trim();
+    if (addr) return addr;
+  }
+  return null;
 }
 
 function formatRelative(timestamp: number): string {
@@ -151,7 +168,7 @@ export default function CustomersPage() {
         if (!c.tags || !c.tags.some(t => activeTags.includes(t))) return false;
       }
       if (activeLeads.length > 0) {
-        if (!c.tags || !c.tags.some(t => activeLeads.includes(t))) return false;
+        if (!c.leadTemperature || !activeLeads.includes(c.leadTemperature)) return false;
       }
       if (!q) return true;
       const haystack = [c.name, c.email, c.phone, c.contactAddress]
@@ -161,6 +178,13 @@ export default function CustomersPage() {
       return haystack.includes(q);
     });
   }, [customers, search, selectedFilters]);
+
+  const runBackfill = useMutation(api.customers.backfillLeadTemperature);
+  useEffect(() => {
+    runBackfill()
+      .then((res) => console.log('Successfully completed lead temperature backfill:', res))
+      .catch((err) => console.error('Failed backfill:', err));
+  }, [runBackfill]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -380,9 +404,9 @@ export default function CustomersPage() {
                       })}
                     </CommandGroup>
 
-                    {allExistingTags.filter(t => !isLeadTemperatureTag(t)).length > 0 && (
+                    {allExistingTags.length > 0 && (
                       <CommandGroup heading="Tags">
-                        {allExistingTags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
+                        {allExistingTags.map((tag) => {
                           const isSelected = selectedFilters.includes(`tag:${tag}`);
                           return (
                             <CommandItem
@@ -414,7 +438,7 @@ export default function CustomersPage() {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr className="bg-zinc-50 dark:bg-zinc-900/50">
-                  {['Customer', 'Assignee', 'Source', 'Tags', 'Last Active'].map((h) => (
+                  {['Customer', 'Assignee', 'Phone', 'Source', 'Tags', 'Last Active'].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -434,6 +458,7 @@ export default function CustomersPage() {
                 {pageCustomers.map((customer, index) => {
                   const label = serviceLabel(customer.service);
                   const SourceIcon = sourceBadgeInfo[label].icon;
+                  const phone = customerPhone(customer);
                   return (
                     <tr
                       key={customer._id}
@@ -482,6 +507,18 @@ export default function CustomersPage() {
                         )}
                       </td>
                       <td style={{ padding: '13px 20px' }}>
+                        {phone ? (
+                          <span
+                            className="font-mono text-xs text-muted-foreground"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {phone}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/60">—</span>
+                        )}
+                      </td>
+                      <td style={{ padding: '13px 20px' }}>
                         <Badge variant="outline">
                           <SourceIcon
                             data-icon="inline-start"
@@ -492,16 +529,16 @@ export default function CustomersPage() {
                       </td>
                       <td style={{ padding: '13px 20px', maxWidth: '280px' }}>
                         <div className="flex flex-wrap gap-1.5">
-                          {customer.tags.length === 0 ? (
+                          {!customer.leadTemperature && (!customer.tags || customer.tags.length === 0) ? (
                             <span style={{ color: 'var(--color-foreground-muted)' }}>—</span>
                           ) : (
-                            customer.tags.map((tag) => {
-                              if (isLeadTemperatureTag(tag)) {
-                                const style = getLeadTemperatureStyle(tag);
+                            <>
+                              {customer.leadTemperature && (() => {
+                                const style = getLeadTemperatureStyle(customer.leadTemperature);
                                 const Icon = style.icon;
                                 return (
                                   <span
-                                    key={tag}
+                                    key={customer.leadTemperature}
                                     className={cn(
                                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
                                       style.bg,
@@ -509,29 +546,33 @@ export default function CustomersPage() {
                                     )}
                                   >
                                     <Icon className={cn("size-3 shrink-0", style.iconClass)} />
-                                    <span className="max-w-[120px] truncate" title={tag}>
-                                      {tag}
+                                    <span className="max-w-[120px] truncate" title={customer.leadTemperature}>
+                                      {customer.leadTemperature}
                                     </span>
                                   </span>
                                 );
-                              }
-                              const colors = getTagColorClass(tag);
-                              return (
-                                <span
-                                  key={tag}
-                                  className={cn(
-                                    "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
-                                    colors.bg,
-                                    colors.text
-                                  )}
-                                >
-                                  <span className={cn("size-1.5 rounded-full shrink-0", colors.dot)} />
-                                  <span className="max-w-[120px] truncate" title={tag}>
-                                    {tag}
-                                  </span>
-                                </span>
-                              );
-                            })
+                              })()}
+                              {customer.tags && customer.tags
+                                .filter((tag) => !isLeadTemperatureTag(tag))
+                                .map((tag) => {
+                                  const colors = getTagColorClass(tag);
+                                  return (
+                                    <span
+                                      key={tag}
+                                      className={cn(
+                                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
+                                        colors.bg,
+                                        colors.text
+                                      )}
+                                    >
+                                      <span className={cn("size-1.5 rounded-full shrink-0", colors.dot)} />
+                                      <span className="max-w-[120px] truncate" title={tag}>
+                                        {tag}
+                                      </span>
+                                    </span>
+                                  );
+                                })}
+                            </>
                           )}
                         </div>
                       </td>
@@ -543,7 +584,7 @@ export default function CustomersPage() {
                 })}
                 {pageCustomers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-foreground-muted)' }}>
+                    <td colSpan={6} style={{ padding: '24px', textAlign: 'center', color: 'var(--color-foreground-muted)' }}>
                       No customers match your filters.
                     </td>
                   </tr>
@@ -631,6 +672,7 @@ function AddCustomerDialog({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [tagsRaw, setTagsRaw] = useState('');
+  const [leadTemperature, setLeadTemperature] = useState<'Hot' | 'Warm' | 'Cold' | 'None'>('None');
   const [busy, setBusy] = useState(false);
 
   const reset = () => {
@@ -638,6 +680,7 @@ function AddCustomerDialog({
     setPhone('');
     setEmail('');
     setTagsRaw('');
+    setLeadTemperature('None');
   };
 
   const handleSubmit = async () => {
@@ -652,6 +695,7 @@ function AddCustomerDialog({
         name: trimmedName,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
+        leadTemperature: leadTemperature === 'None' ? undefined : leadTemperature,
         tags: tagsRaw
           .split(',')
           .map((t) => t.trim())
@@ -723,6 +767,24 @@ function AddCustomerDialog({
               placeholder="VIP, Lead"
               disabled={busy}
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-muted-foreground">Lead Status</label>
+            <Select
+              value={leadTemperature}
+              onValueChange={(val: any) => setLeadTemperature(val)}
+              disabled={busy}
+            >
+              <SelectTrigger className="w-full bg-background border-border">
+                <SelectValue placeholder="Select lead temperature" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="None">None</SelectItem>
+                <SelectItem value="Hot">Hot</SelectItem>
+                <SelectItem value="Warm">Warm</SelectItem>
+                <SelectItem value="Cold">Cold</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
         <DialogFooter>

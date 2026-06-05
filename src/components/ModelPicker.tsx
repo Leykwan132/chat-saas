@@ -45,7 +45,7 @@ const ModelPickerItem = memo(function ModelPickerItem({
     <ModelSelectorItem
       value={option.value}
       onSelect={handleSelect}
-      className={cn(selected && 'bg-primary/8 text-primary')}
+      className={cn('!rounded-md', selected && 'bg-primary/8 text-primary')}
       data-checked={selected}
     >
       <ModelSelectorLogo provider={option.chefSlug} />
@@ -54,7 +54,7 @@ const ModelPickerItem = memo(function ModelPickerItem({
           {option.label}
         </ModelSelectorName>
         {option.isPopular && (
-          <span className="shrink-0 rounded-full bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-500 dark:bg-amber-400/20 dark:text-amber-400">
+          <span className="shrink-0 rounded-md bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-500 dark:bg-amber-400/20 dark:text-amber-400">
             Popular
           </span>
         )}
@@ -108,20 +108,28 @@ export function ModelPicker({
         asChild
       >
         <Button
+          type="button"
           variant="outline"
-          className={cn('w-full justify-start gap-2 rounded-lg font-normal px-3', className)}
+          className={cn(
+            'h-9 min-h-9 w-full justify-start gap-2 rounded-md border border-transparent bg-input/50 px-3.5 py-0 text-sm font-normal shadow-none',
+            'hover:bg-input/50 hover:text-foreground',
+            'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30',
+            className,
+          )}
         >
           {selectedModel ? (
             <>
-              <ModelSelectorLogo provider={selectedModel.chefSlug} className="size-4" />
-              <ModelSelectorName className="text-left font-medium">{selectedModel.label}</ModelSelectorName>
+              <ModelSelectorLogo provider={selectedModel.chefSlug} className="size-4 shrink-0" />
+              <ModelSelectorName className="min-w-0 flex-1 truncate text-left font-normal">
+                {selectedModel.label}
+              </ModelSelectorName>
             </>
           ) : (
-            <ModelSelectorName className="text-muted-foreground text-left">
+            <ModelSelectorName className="min-w-0 flex-1 truncate text-left text-muted-foreground">
               Select a model
             </ModelSelectorName>
           )}
-          <ChevronDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
+          <ChevronDown className="ml-auto size-4 shrink-0 text-muted-foreground opacity-60" />
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent className="p-0 sm:max-w-[627px]">

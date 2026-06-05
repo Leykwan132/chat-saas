@@ -1,8 +1,8 @@
 import { Flame, Sun, Snowflake, type LucideIcon } from 'lucide-react';
 
 /**
- * Lead temperature tags set by AI during conversation summarization.
- * These are stored as plain strings ("Hot", "Warm", "Cold") in the customer tags array.
+ * Lead temperature values set by AI during conversation summarization.
+ * These are stored in the dedicated `leadTemperature` field on the customer document.
  */
 export const LEAD_TEMPERATURE_TAGS = ['Hot', 'Warm', 'Cold'] as const;
 export type LeadTemperature = (typeof LEAD_TEMPERATURE_TAGS)[number];

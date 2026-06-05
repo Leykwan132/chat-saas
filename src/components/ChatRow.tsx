@@ -44,6 +44,7 @@ export type Chat = {
   /** Inbox row status; used for label filter on Chats page. */
   conversationStatus: 'open' | 'snoozed' | 'closed';
   tags?: string[];
+  leadTemperature?: 'Hot' | 'Warm' | 'Cold';
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -124,46 +125,48 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
-            {chat.tags && chat.tags.length > 0 && (
+            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0)) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                  {chat.tags.map((tag: string) => {
-                    if (isLeadTemperatureTag(tag)) {
-                      const style = getLeadTemperatureStyle(tag);
-                      const Icon = style.icon;
+                  {chat.leadTemperature && (() => {
+                    const style = getLeadTemperatureStyle(chat.leadTemperature);
+                    const Icon = style.icon;
+                    return (
+                      <span
+                        key={chat.leadTemperature}
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.2 text-[10px] font-medium transition-all shadow-none",
+                          style.bg,
+                          style.text
+                        )}
+                      >
+                        <Icon className={cn("size-2.5 shrink-0", style.iconClass)} />
+                        <span className="max-w-[70px] truncate" title={chat.leadTemperature}>
+                          {chat.leadTemperature}
+                        </span>
+                      </span>
+                    );
+                  })()}
+                  {chat.tags && chat.tags
+                    .filter((tag: string) => !isLeadTemperatureTag(tag))
+                    .map((tag: string) => {
+                      const colors = getTagColorClass(tag);
                       return (
                         <span
                           key={tag}
                           className={cn(
                             "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.2 text-[10px] font-medium transition-all shadow-none",
-                            style.bg,
-                            style.text
+                            colors.bg,
+                            colors.text
                           )}
                         >
-                          <Icon className={cn("size-2.5 shrink-0", style.iconClass)} />
+                          <span className={cn("size-1 rounded-full shrink-0", colors.dot)} />
                           <span className="max-w-[70px] truncate" title={tag}>
                             {tag}
                           </span>
                         </span>
                       );
-                    }
-                    const colors = getTagColorClass(tag);
-                    return (
-                      <span
-                        key={tag}
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full border px-1.5 py-0.2 text-[10px] font-medium transition-all shadow-none",
-                          colors.bg,
-                          colors.text
-                        )}
-                      >
-                        <span className={cn("size-1 rounded-full shrink-0", colors.dot)} />
-                        <span className="max-w-[70px] truncate" title={tag}>
-                          {tag}
-                        </span>
-                      </span>
-                    );
-                  })}
+                    })}
                 </div>
               </div>
             )}

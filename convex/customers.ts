@@ -5,9 +5,10 @@ import {
   mutation,
   query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -28,6 +29,131 @@ function assertNotLeadTemperatureTag(tag: string) {
     throw new Error(`Tag name "${tag}" is reserved for lead temperature status.`);
   }
 }
+
+async function getAgentForBroadcast(
+  ctx: QueryCtx,
+  agentId: Id<"agents">,
+) {
+  const { userId, orgId } = await getAuthContext(ctx);
+  const agent = await ctx.db.get(agentId);
+  if (agent === null) {
+    return null;
+  }
+
+  const normalizedOrgId =
+    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
+  const agentOrgId =
+    !agent.orgId || agent.orgId === "personal"
+      ? PERSONAL_ORG_FALLBACK
+      : agent.orgId;
+
+  if (agentOrgId !== PERSONAL_ORG_FALLBACK) {
+    if (agentOrgId === normalizedOrgId) {
+      return agent;
+    }
+    return null;
+  }
+
+  if (agent.userId !== userId) {
+    return null;
+  }
+
+  return agent;
+}
+
+function resolveBroadcastPhone(customer: Doc<"customers">): string | null {
+  const phone = customer.phone?.trim();
+  if (phone) {
+    return phone;
+  }
+  if (customer.service === "whatsapp") {
+    const addr = customer.contactAddress.trim();
+    if (addr) {
+      return addr;
+    }
+  }
+  return null;
+}
+
+// Org customer list for WhatsApp broadcast recipient pickers (scoped via agent auth).
+export const listForAgentBroadcast = query({
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (orgId === "personal" || !orgId) {
+      return [];
+    }
+
+    const agent = await getAgentForBroadcast(ctx, args.agentId);
+    if (agent === null) {
+      throw new Error("Agent not found");
+    }
+
+    const rows = await ctx.db
+      .query("customers")
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", orgId))
+      .order("desc")
+      .collect();
+
+    const out: Array<{
+      customerId: Id<"customers">;
+      name: string | undefined;
+      phone: string;
+      tags: string[];
+      leadTemperature: "Hot" | "Warm" | "Cold" | undefined;
+      service: Doc<"customers">["service"];
+      email: string | undefined;
+      assignedUserId: string | undefined;
+      assignToAiAgent: boolean | undefined;
+      assignedAgentName: string | undefined;
+    }> = [];
+
+    for (const cust of rows) {
+      const phone = resolveBroadcastPhone(cust);
+      if (!phone) {
+        continue;
+      }
+
+      let assignedUserId: string | undefined = undefined;
+      let assignToAiAgent: boolean | undefined = undefined;
+      let assignedAgentName: string | undefined = undefined;
+
+      if (cust.lastConversationId !== undefined) {
+        const conv = await ctx.db.get(cust.lastConversationId);
+        if (conv !== null && conv.orgId === orgId) {
+          assignedUserId = conv.assignedUserId;
+          assignToAiAgent = conv.assignToAiAgent;
+          if (conv.assignedAgentId !== undefined) {
+            const assignedAgent = await ctx.db.get(conv.assignedAgentId);
+            if (assignedAgent !== null) {
+              assignedAgentName = assignedAgent.name;
+            }
+          }
+        }
+      }
+
+      out.push({
+        customerId: cust._id,
+        name: cust.name?.trim() || undefined,
+        phone,
+        tags: cust.tags ?? [],
+        leadTemperature: cust.leadTemperature,
+        service: cust.service,
+        email: cust.email?.trim() || undefined,
+        assignedUserId,
+        assignToAiAgent,
+        assignedAgentName,
+      });
+    }
+
+    out.sort((a, b) =>
+      (a.name ?? a.phone ?? "").localeCompare(b.name ?? b.phone ?? "", undefined, {
+        sensitivity: "base",
+      }),
+    );
+    return out;
+  },
+});
 
 // Distinct WhatsApp contacts that have a conversation on this channel
 // (used for template broadcast recipient pickers).
@@ -72,6 +198,7 @@ export const listWhatsAppBroadcastCandidates = query({
       customerId: Id<"customers"> | undefined;
       name: string | undefined;
       phone: string;
+      tags: string[];
     }> = [];
 
     for (const c of bestByPhone.values()) {
@@ -83,6 +210,7 @@ export const listWhatsAppBroadcastCandidates = query({
             customerId: cust._id,
             name: cust.name?.trim() || c.contactName,
             phone: (cust.phone?.trim() || phone) as string,
+            tags: cust.tags ?? [],
           });
           continue;
         }
@@ -91,6 +219,7 @@ export const listWhatsAppBroadcastCandidates = query({
         customerId: undefined,
         name: c.contactName,
         phone,
+        tags: [],
       });
     }
 
@@ -148,7 +277,7 @@ export const getSidebarDetailsForConversation = query({
               ? "Playground"
               : conv.service;
 
-    return { name, platformLabel, phone, tags: customer?.tags ?? [] };
+    return { name, platformLabel, phone, tags: customer?.tags ?? [], leadTemperature: customer?.leadTemperature };
   },
 });
 
@@ -250,6 +379,7 @@ export const addManually = mutation({
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
+    leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))),
   },
   handler: async (ctx, args) => {
     const { orgId } = await getAuthContext(ctx);
@@ -273,6 +403,7 @@ export const addManually = mutation({
       email: args.email?.trim() || undefined,
       phone: args.phone?.trim() || undefined,
       tags: tags.map((t) => t.trim()).filter(Boolean),
+      leadTemperature: args.leadTemperature,
       source: "manual",
       firstSeenAt: now,
       lastSeenAt: now,
@@ -290,6 +421,7 @@ export const update = mutation({
     email: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
+    leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"), v.null())),
   },
   handler: async (ctx, args) => {
     const { orgId } = await getAuthContext(ctx);
@@ -307,6 +439,9 @@ export const update = mutation({
       patch.tags = args.tags.map((t) => t.trim()).filter(Boolean);
     }
     if (args.notes !== undefined) patch.notes = args.notes;
+    if (args.leadTemperature !== undefined) {
+      patch.leadTemperature = args.leadTemperature === null ? undefined : args.leadTemperature;
+    }
     await ctx.db.patch(args.customerId, patch);
   },
 });
@@ -461,15 +596,46 @@ export const internalSetLeadTemperature = internalMutation({
   handler: async (ctx, args) => {
     const customer = await ctx.db.get(args.customerId);
     if (!customer) return;
-    // Remove any existing lead temperature tags, then add the new one.
+    // Remove any existing lead temperature tags.
     const filtered = (customer.tags ?? []).filter(
       (t) => !(LEAD_TEMPERATURE_TAGS as readonly string[]).includes(t),
     );
-    filtered.push(args.temperature);
     await ctx.db.patch(args.customerId, {
+      leadTemperature: args.temperature,
       tags: filtered,
       updatedAt: Date.now(),
     });
+  },
+});
+
+export const backfillLeadTemperature = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const customers = await ctx.db.query("customers").collect();
+    let updatedCount = 0;
+    for (const customer of customers) {
+      const tags = customer.tags ?? [];
+      const tempTag = tags.find((t) =>
+        (LEAD_TEMPERATURE_TAGS as readonly string[]).includes(t)
+      ) as LeadTemperature | undefined;
+
+      if (tempTag || customer.leadTemperature === undefined) {
+        const newTemp = tempTag || customer.leadTemperature;
+        const filteredTags = tags.filter(
+          (t) => !(LEAD_TEMPERATURE_TAGS as readonly string[]).includes(t)
+        );
+        
+        if (newTemp !== customer.leadTemperature || filteredTags.length !== tags.length) {
+          await ctx.db.patch(customer._id, {
+            leadTemperature: newTemp,
+            tags: filteredTags,
+            updatedAt: Date.now(),
+          });
+          updatedCount++;
+        }
+      }
+    }
+    return { processed: customers.length, updated: updatedCount };
   },
 });
 

@@ -25,9 +25,14 @@ import SettingsPage from './pages/SettingsPage.tsx'
 import InvitationsPage from './pages/InvitationsPage.tsx'
 import ChannelsPage from './pages/ChannelsPage.tsx'
 import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.tsx'
-import AutomationsIndexPage from './pages/AutomationsIndexPage.tsx'
+import TemplatesPage from './pages/TemplatesPage.tsx'
+import TemplateDetailPage from './pages/TemplateDetailPage.tsx'
 import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
 import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
+import BroadcastPage from './pages/BroadcastPage.tsx'
+import BroadcastDetailPage from './pages/BroadcastDetailPage.tsx'
+import FollowUpPage from './pages/FollowUpPage.tsx'
+import FollowUpDetailPage from './pages/FollowUpDetailPage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
 import SchedulePage from './pages/SchedulePage.tsx'
 import ScheduleUserDetailPage from './pages/ScheduleUserDetailPage.tsx'
@@ -99,9 +104,6 @@ function DashboardIndexRedirect() {
   if (can(Permission.CHANNELS_READ)) {
     return <Navigate to={`/dashboard/${agentId}/channels`} replace />
   }
-  if (can(Permission.AUTOMATION_READ)) {
-    return <Navigate to={`/dashboard/${agentId}/automations`} replace />
-  }
   if (can(Permission.ANALYTICS_READ)) {
     return <Navigate to={`/dashboard/${agentId}/analytics`} replace />
   }
@@ -171,12 +173,17 @@ function RootLayout() {
               <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
               <Route path="channels" element={<ChannelsPage />} />
               <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
-              <Route path="automations" element={<AutomationsIndexPage />} />
-              <Route path="automations/broadcast" element={<AutomationsBroadcastPage />} />
-              <Route path="automations/follow-up" element={<AutomationsFollowUpPage />} />
               <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="customers/:customerId" element={<CustomerDetailPage />} />
+              <Route path="follow-ups" element={<FollowUpPage />} />
+              <Route path="follow-ups/new" element={<AutomationsFollowUpPage />} />
+              <Route path="follow-ups/:ruleId" element={<FollowUpDetailPage />} />
+              <Route path="broadcast" element={<BroadcastPage />} />
+              <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
+              <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />
+              <Route path="templates" element={<TemplatesPage />} />
+              <Route path="templates/:templateName" element={<TemplateDetailPage />} />
               <Route path="schedule" element={<SchedulePage />} />
               <Route
                 path="schedule/:workosUserId/availability"

@@ -11,7 +11,6 @@ import {
   MessageSquare,
   Pin,
   Plug,
-  RotateCcw,
   Search,
   Sparkles,
   Tag,
@@ -32,6 +31,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -50,6 +56,9 @@ import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
+
+const INBOX_FILTER_TRIGGER_CLASS =
+  'h-8 w-fit shrink-0 justify-between gap-1.5 rounded-md border border-border bg-background px-2.5 font-normal text-[11px] shadow-none hover:bg-accent/50';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -343,6 +352,7 @@ export default function ChatsPage() {
       conversationStatus: conv.status,
       assignedUserId: conv.assignedUserId,
       tags: conv.tags ?? [],
+      leadTemperature: conv.leadTemperature,
     }));
   }, [linkedConversations]);
 
@@ -383,7 +393,7 @@ export default function ChatsPage() {
       list = list.filter((c: any) => c.tags && c.tags.some((t: string) => activeTags.includes(t)));
     }
     if (activeLeads.length > 0) {
-      list = list.filter((c: any) => c.tags && c.tags.some((t: string) => activeLeads.includes(t)));
+      list = list.filter((c: any) => c.leadTemperature && activeLeads.includes(c.leadTemperature));
     }
     return list;
   }, [chatItems, searchQuery, platformFilter, activeStatuses, activeTags, activeLeads, currentUser?.workosUserId]);
@@ -694,59 +704,45 @@ export default function ChatsPage() {
               />
             </div>            {/* Platform + Status + Tag: row layout, wrapping if needed */}
             <div className="flex w-full flex-wrap items-center gap-1.5">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="h-8 gap-1 px-3 font-normal text-xs"
-                  >
-                    <span className="truncate text-left">
+              <Select
+                value={platformFilter}
+                onValueChange={(value) =>
+                  setPlatformFilter(value as 'all' | ConversationPlatform)
+                }
+              >
+                <SelectTrigger className="bg-background border-border">
+                  <SelectValue asChild>
+                    <span className="flex items-center gap-1.5 min-w-0">
                       {platformFilter === 'all' ? (
                         <span className="text-muted-foreground">Platform</span>
                       ) : (
-                        <span className="text-foreground">{PLATFORM_LABEL[platformFilter]}</span>
+                        <>
+                          <PlatformMenuIcon platform={platformFilter} size={14} />
+                          <span className="truncate">{PLATFORM_LABEL[platformFilter]}</span>
+                        </>
                       )}
                     </span>
-                    <ChevronDown className="size-3.5 shrink-0 opacity-50" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-[11rem] p-0">
-                  <div className="flex items-center justify-between gap-1 border-b border-border/60 px-2 py-2">
-                    <span className="pl-1 text-xs font-medium text-muted-foreground">
-                      Platform
-                    </span>
-                    <DropdownMenuItem
-                      className="h-7 w-7 shrink-0 justify-center rounded-md p-0"
-                      onSelect={() => setPlatformFilter('all')}
-                      aria-label="Reset platform filter"
-                    >
-                      <RotateCcw className="size-3.5 text-muted-foreground" />
-                    </DropdownMenuItem>
-                  </div>
-                  <div className="p-1.5">
-                    <DropdownMenuGroup>
-                      {connectedPlatforms.map((p) => (
-                        <DropdownMenuItem
-                          key={p}
-                          className="cursor-pointer gap-2.5"
-                          onSelect={() => setPlatformFilter(p)}
-                        >
-                          <PlatformMenuIcon platform={p} size={16} />
-                          {PLATFORM_LABEL[p]}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuGroup>
-                  </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">All platforms</SelectItem>
+                  {connectedPlatforms.map((p) => (
+                    <SelectItem key={p} value={p}>
+                      <span className="flex items-center gap-1.5">
+                        <PlatformMenuIcon platform={p} size={14} />
+                        {PLATFORM_LABEL[p]}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-8 gap-1 px-3 font-normal text-xs"
+                    className={INBOX_FILTER_TRIGGER_CLASS}
                   >
                     <span className="truncate text-left">
                       {selectedFilters.length === 0 ? (
@@ -790,12 +786,16 @@ export default function ChatsPage() {
                     <ChevronDown className="size-3.5 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-[200px] rounded-2xl shadow-lg border border-border bg-popover" align="end">
-                  <Command className="p-1">
+                <PopoverContent
+                  className="w-[200px] rounded-lg border border-border bg-popover p-1 shadow-lg"
+                  align="end"
+                >
+                  <Command className="rounded-lg bg-transparent p-0">
                     <CommandInput
                       placeholder="Search filters..."
                       value={filterSearchInput}
                       onValueChange={setFilterSearchInput}
+                      className="text-[11px]"
                     />
                     <CommandList className="max-h-60 overflow-y-auto no-scrollbar">
                       <CommandEmpty>No filters found.</CommandEmpty>
@@ -807,7 +807,7 @@ export default function ChatsPage() {
                             setSelectedFilters([]);
                             setFilterSearchInput('');
                           }}
-                          className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
                         >
                           <span>All</span>
                           {selectedFilters.length === 0 && <Check className="size-3 text-foreground shrink-0" />}
@@ -818,7 +818,7 @@ export default function ChatsPage() {
                           onSelect={() => {
                             handleToggleFilter('status:assigned_me');
                           }}
-                          className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
                         >
                           <div className="flex items-center gap-2">
                             <User className="size-3.5 shrink-0 text-[#6366f1]" />
@@ -841,7 +841,7 @@ export default function ChatsPage() {
                               onSelect={() => {
                                 handleToggleFilter(`lead:${status}`);
                               }}
-                              className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                              className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
                             >
                               <div className="flex items-center gap-2">
                                 <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
@@ -866,7 +866,7 @@ export default function ChatsPage() {
                                   onSelect={() => {
                                     handleToggleFilter(`tag:${tag}`);
                                   }}
-                                  className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                                  className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
                                 >
                                   <div className="flex items-center gap-2">
                                     <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(tag).dot)} />
@@ -886,7 +886,7 @@ export default function ChatsPage() {
                                   onSelect={() => {
                                     handleToggleFilter(`tag:${entry.title}`);
                                   }}
-                                  className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
+                                  className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
                                 >
                                   <div className="flex items-center gap-2">
                                     <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(entry.title).dot)} />
@@ -959,9 +959,9 @@ export default function ChatsPage() {
                         {displayHeaderName}
                       </h2>
                       {(() => {
-                        const tempTag = selectedConversation?.tags?.find(isLeadTemperatureTag);
-                        if (!tempTag) return null;
-                        const style = getLeadTemperatureStyle(tempTag);
+                        const leadTemp = customerSidebarDetails?.leadTemperature;
+                        if (!leadTemp) return null;
+                        const style = getLeadTemperatureStyle(leadTemp);
                         const Icon = style.icon;
                         return (
                           <span
@@ -972,7 +972,7 @@ export default function ChatsPage() {
                             )}
                           >
                             <Icon className={cn("size-2.5 shrink-0", style.iconClass)} />
-                            <span>{tempTag}</span>
+                            <span>{leadTemp}</span>
                           </span>
                         );
                       })()}
@@ -1177,6 +1177,25 @@ export default function ChatsPage() {
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
+                                <span className="shrink-0 text-muted-foreground">Lead Status</span>
+                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                  {customerSidebarDetails?.leadTemperature ? (
+                                    (() => {
+                                      const style = getLeadTemperatureStyle(customerSidebarDetails.leadTemperature);
+                                      const Icon = style.icon;
+                                      return (
+                                        <span className={cn("inline-flex items-center gap-1 font-medium", style.text)}>
+                                          <Icon className={cn("size-3 shrink-0", style.iconClass)} />
+                                          {customerSidebarDetails.leadTemperature}
+                                        </span>
+                                      );
+                                    })()
+                                  ) : (
+                                    '—'
+                                  )}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4">
                                 <span className="shrink-0 text-muted-foreground">Platform</span>
                                 <span className="min-w-0 truncate text-right font-medium text-foreground">
                                   {customerSidebarDetails?.platformLabel ?? '—'}
@@ -1209,7 +1228,7 @@ export default function ChatsPage() {
                       >
                         <Tag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="flex-1 text-sm font-semibold text-foreground">
-                          Tags ({(selectedConversation.tags ?? []).length})
+                          Tags ({((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length})
                         </span>
                         <ChevronDown
                           className={cn(
@@ -1220,28 +1239,9 @@ export default function ChatsPage() {
                       </button>
                       {tagsSectionOpen ? (
                         <div className="px-4 pb-3">
-                          {(selectedConversation.tags ?? []).length > 0 ? (
+                          {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length > 0 ? (
                             <div className="flex flex-wrap gap-1.5 py-1.5">
-                              {(selectedConversation.tags ?? []).map((tag: any) => {
-                                if (isLeadTemperatureTag(tag)) {
-                                  const style = getLeadTemperatureStyle(tag);
-                                  const Icon = style.icon;
-                                  return (
-                                    <span
-                                      key={tag}
-                                      className={cn(
-                                        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all shadow-none",
-                                        style.bg,
-                                        style.text
-                                      )}
-                                    >
-                                      <Icon className={cn("size-3 shrink-0", style.iconClass)} />
-                                      <span className="max-w-[120px] truncate" title={tag}>
-                                        {tag}
-                                      </span>
-                                    </span>
-                                  );
-                                }
+                              {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).map((tag: any) => {
                                 const colors = getTagColorClass(tag);
                                 return (
                                   <span
