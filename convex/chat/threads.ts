@@ -447,6 +447,7 @@ export async function ingestChannelMessage(
   skipped: boolean;
   shouldEnqueueAi?: boolean;
   isNew?: boolean;
+  agentMessageId?: string;
 }> {
   if (args.externalId) {
     const existingLedger = await ctx.db
@@ -557,6 +558,7 @@ export async function ingestChannelMessage(
       args.direction === "incoming" &&
       Boolean(agentMessageId && trimmedContent.length > 0),
     isNew,
+    agentMessageId,
   };
 }
 

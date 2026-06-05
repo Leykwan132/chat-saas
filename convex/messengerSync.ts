@@ -290,6 +290,7 @@ export const internalIngestMessage = internalMutation({
       {
         conversationId: result.conversationId,
         promptContent: args.content.trim(),
+        promptMessageId: result.agentMessageId,
       },
     );
     return result;

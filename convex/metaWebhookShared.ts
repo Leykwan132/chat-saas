@@ -10,10 +10,11 @@ export type MetaWebhookEnvelope = {
 export async function verifyMetaSignature(
   req: Request,
   rawBody: string,
+  appSecretOverride?: string,
 ): Promise<{ ok: true } | { ok: false; status: number; message: string }> {
-  const appSecret = process.env.META_APP_SECRET;
+  const appSecret = appSecretOverride ?? process.env.META_APP_SECRET;
   if (!appSecret) {
-    console.error("META_APP_SECRET is not configured");
+    console.error("Meta app secret is not configured");
     return { ok: false, status: 500, message: "server misconfigured" };
   }
   const sigHeader = req.headers.get("x-hub-signature-256");
@@ -21,7 +22,9 @@ export async function verifyMetaSignature(
     return { ok: false, status: 400, message: "missing signature" };
   }
   const providedHex = sigHeader.slice("sha256=".length);
+  console.log("providedHex", providedHex);
   const valid = await verifyHmac(appSecret, rawBody, providedHex);
+  console.log("valid", valid);
   if (!valid) {
     return { ok: false, status: 401, message: "invalid signature" };
   }
@@ -33,6 +36,7 @@ async function verifyHmac(
   body: string,
   providedHex: string,
 ): Promise<boolean> {
+  console.log("secret", secret);
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     "raw",
@@ -42,9 +46,13 @@ async function verifyHmac(
     ["sign"],
   );
   const sig = await crypto.subtle.sign("HMAC", key, enc.encode(body));
+  console.log("sig", sig);
+  console.log("providedHex", providedHex);
   const expectedHex = Array.from(new Uint8Array(sig))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
+  console.log("expectedHex", expectedHex);
+
   return timingSafeEqualHex(expectedHex, providedHex.toLowerCase());
 }
 

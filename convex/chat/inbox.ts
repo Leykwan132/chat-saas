@@ -92,6 +92,7 @@ export const internalIngestChannelMessage = internalMutation({
       {
         conversationId: result.conversationId,
         promptContent: args.content.trim(),
+        promptMessageId: result.agentMessageId,
       },
     );
 
@@ -358,9 +359,13 @@ export const internalPersistAiMediaReply = internalMutation({
 export const generateAiReplyWorker = internalAction({
   args: {
     conversationId: v.id("conversations"),
-    promptContent: v.string(),
+    promptContent: v.optional(v.string()),
+    promptMessageId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if (!args.promptMessageId && !args.promptContent) {
+      throw new Error("Either promptMessageId or promptContent must be provided");
+    }
     const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
       conversationId: args.conversationId,
     });
@@ -416,7 +421,10 @@ export const generateAiReplyWorker = internalAction({
     const result = await configuredAgent.generateText(
       ctx,
       { threadId: conv.threadId },
-      { prompt: args.promptContent },
+      args.promptMessageId
+        ? { promptMessageId: args.promptMessageId }
+        : { prompt: args.promptContent },
+      { storageOptions: { saveMessages: "none" } },
     );
 
     const replyText = result.text.trim();

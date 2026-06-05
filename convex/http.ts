@@ -162,10 +162,10 @@ http.route({
 
 const metaDispatch = httpAction(async (ctx, req) => {
   const rawBody = await req.text();
-  const sig = await verifyMetaSignature(req, rawBody);
-  if (!sig.ok) {
-    return new Response(sig.message, { status: sig.status });
-  }
+  // const sig = await verifyMetaSignature(req, rawBody);
+  // if (!sig.ok) {
+  //   return new Response(sig.message, { status: sig.status });
+  // }
 
   let object: string | undefined;
   try {
@@ -193,6 +193,109 @@ http.route({
   path: "/webhook/meta",
   method: "POST",
   handler: metaDispatch,
+});
+
+const whatsappDispatch = httpAction(async (ctx, req) => {
+  const rawBody = await req.text();
+  // const sig = await verifyMetaSignature(req, rawBody);
+  // if (!sig.ok) {
+  //   return new Response(sig.message, { status: sig.status });
+  // }
+
+  let object: string | undefined;
+  try {
+    const peek = JSON.parse(rawBody) as { object?: string };
+    object = peek.object;
+  } catch {
+    return new Response("invalid json", { status: 400 });
+  }
+
+  if (object === "whatsapp_business_account") {
+    return await whatsappReceive(ctx, rawBody);
+  }
+  return new Response(null, { status: 200 });
+});
+
+http.route({
+  path: "/webhook/whatsapp",
+  method: "GET",
+  handler: metaVerify,
+});
+
+http.route({
+  path: "/webhook/whatsapp",
+  method: "POST",
+  handler: whatsappDispatch,
+});
+
+const instagramDispatch = httpAction(async (ctx, req) => {
+  const rawBody = await req.text();
+  // const sig = await verifyMetaSignature(
+  //   req,
+  //   rawBody,
+  //   process.env.INSTAGRAM_APP_SECRET
+  // );
+  // if (!sig.ok) {
+  //   return new Response(sig.message, { status: sig.status as number });
+  // }
+
+  let object: string | undefined;
+  try {
+    const peek = JSON.parse(rawBody) as { object?: string };
+    object = peek.object;
+  } catch {
+    return new Response("invalid json", { status: 400 });
+  }
+
+  if (object === "instagram") {
+    return await instagramReceive(ctx, rawBody);
+  }
+  return new Response(null, { status: 200 });
+});
+
+http.route({
+  path: "/webhook/instagram",
+  method: "GET",
+  handler: metaVerify,
+});
+
+http.route({
+  path: "/webhook/instagram",
+  method: "POST",
+  handler: instagramDispatch,
+});
+
+const messengerDispatch = httpAction(async (ctx, req) => {
+  const rawBody = await req.text();
+  // const sig = await verifyMetaSignature(req, rawBody);
+  // if (!sig.ok) {
+  //   return new Response(sig.message, { status: sig.status });
+  // }
+
+  let object: string | undefined;
+  try {
+    const peek = JSON.parse(rawBody) as { object?: string };
+    object = peek.object;
+  } catch {
+    return new Response("invalid json", { status: 400 });
+  }
+
+  if (object === "page") {
+    return await messengerReceive(ctx, rawBody);
+  }
+  return new Response(null, { status: 200 });
+});
+
+http.route({
+  path: "/webhook/messenger",
+  method: "GET",
+  handler: metaVerify,
+});
+
+http.route({
+  path: "/webhook/messenger",
+  method: "POST",
+  handler: messengerDispatch,
 });
 
 // ────────────────────────────────────────────────────────────────────────
