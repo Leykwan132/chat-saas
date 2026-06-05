@@ -8,7 +8,6 @@ import {
 } from "./whatsappWebhook";
 import { receive as instagramReceive } from "./instagramWebhook";
 import { receive as messengerReceive } from "./messengerWebhook";
-import { verifyMetaSignature } from "./metaWebhookShared";
 import { authKit } from "./auth";
 import { decodeOAuthState, redirectResponse } from "./oauthShared";
 import {

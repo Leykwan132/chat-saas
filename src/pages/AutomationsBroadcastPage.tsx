@@ -1688,7 +1688,7 @@ export default function AutomationsBroadcastPage() {
       <Dialog open={sendBusy} onOpenChange={() => {}}>
         <DialogContent 
           className="max-w-md pointer-events-none" 
-          interactOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e: Event) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onKeyDown={(e) => e.preventDefault()}
         >

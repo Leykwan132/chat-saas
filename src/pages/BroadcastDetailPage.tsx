@@ -19,7 +19,6 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
-import { formatReplyRate } from '@/lib/whatsappAutomationMetrics';
 import {
   Dialog,
   DialogContent,

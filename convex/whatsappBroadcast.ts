@@ -1,9 +1,6 @@
 import { v } from "convex/values";
 import {
   action,
-  internalAction,
-  internalMutation,
-  internalQuery,
   mutation,
   query,
   type ActionCtx,
@@ -52,33 +49,6 @@ type BatchSendResult = {
   okCount: number;
   failCount: number;
 };
-
-const recipientResultValidator = v.object({
-  phone: v.string(),
-  ok: v.boolean(),
-  error: v.optional(v.string()),
-  sentAt: v.number(),
-});
-
-async function customerNameForPhone(
-  ctx: QueryCtx,
-  orgId: string,
-  phone: string,
-): Promise<string | undefined> {
-  const normalized = phone.trim();
-  if (!normalized) return undefined;
-
-  const byContact = await ctx.db
-    .query("customers")
-    .withIndex("by_orgId_and_service_and_contactAddress", (q) =>
-      q
-        .eq("orgId", orgId)
-        .eq("service", "whatsapp")
-        .eq("contactAddress", normalized),
-    )
-    .unique();
-  return byContact?.name?.trim() || undefined;
-}
 
 async function sendTemplateBatchToPhones(
   ctx: ActionCtx,

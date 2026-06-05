@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate } from 'react-router';
 import { useAction, useQuery } from 'convex/react';
 import {
   Loader2,
-  Megaphone,
   Plus,
   Search,
   X,

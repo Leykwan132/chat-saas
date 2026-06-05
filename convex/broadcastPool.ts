@@ -161,7 +161,7 @@ export const broadcastComplete = internalMutation({
     if (isSuccess && args.result.kind === "success") {
       const returnValue = args.result.returnValue;
       try {
-        const ingestResult = await ingestChannelMessage(ctx, {
+        await ingestChannelMessage(ctx, {
           channelId: schedule.channelId,
           externalId: returnValue.externalId,
           contactAddress: customer.contactAddress,

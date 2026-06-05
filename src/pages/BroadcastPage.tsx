@@ -270,7 +270,7 @@ export default function BroadcastPage() {
                   </tr>
                 ) : (
                   schedules.map((bc) => {
-                    const totalRecipients = bc.toPhones.length;
+                    const totalRecipients = bc.totalCount;
                     const dateFormatted = new Date(bc.scheduledAt).toLocaleString([], {
                       dateStyle: 'medium',
                       timeStyle: 'short',
