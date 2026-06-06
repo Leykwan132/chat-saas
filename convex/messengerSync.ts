@@ -242,6 +242,24 @@ async function ingestConversationMessages(
       })
       .filter(Boolean) as Array<{ url: string; mimeType: string }>;
 
+    const audioAttachments = attachments
+      .filter(
+        (a) =>
+          a.mime_type?.startsWith("audio/") ||
+          a.name?.endsWith(".aac") ||
+          a.name?.endsWith(".mp3") ||
+          a.name?.endsWith(".m4a") ||
+          a.name?.endsWith(".ogg"),
+      )
+      .map((a) => {
+        const url = a.file_url;
+        const mimeType = a.mime_type ?? "audio/ogg";
+        return url ? { url, mimeType } : null;
+      })
+      .filter(Boolean) as Array<{ url: string; mimeType: string }>;
+
+    const isAudioMessage = audioAttachments.length > 0;
+
     const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
@@ -251,18 +269,38 @@ async function ingestConversationMessages(
       : message.from?.name) || customerParticipant?.name;
     if (!contactAddress) continue;
 
-    const res = await ctx.runMutation(internal.messengerSync.internalIngestMessage, {
+    const ingestArgs = {
       channelId: channel._id,
       externalId: message.id,
       contactAddress,
       contactName,
       contactEmail: customerParticipant?.email,
-      direction: isOutgoing ? "outgoing" : "incoming",
+      direction: isOutgoing ? ("outgoing" as const) : ("incoming" as const),
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
       metaConversationId: detail.id,
       images: imageAttachments.length > 0 ? imageAttachments : undefined,
-    });
+      audios: audioAttachments.length > 0 ? audioAttachments : undefined,
+    };
+
+    if (isAudioMessage) {
+      console.log("[messengerSync.ingestConversationMessages] audio message", {
+        messageId: message.id,
+        conversationExternalId: detail.id,
+        direction: ingestArgs.direction,
+        isOutgoing,
+        textContent: message.message ?? "",
+        rawAttachments: attachments,
+        audioAttachments,
+        imageAttachments,
+        ingestArgs,
+      });
+    }
+
+    const res = await ctx.runMutation(
+      internal.messengerSync.internalIngestMessage,
+      ingestArgs,
+    );
     if (res?.conversationId) {
       conversationId = res.conversationId;
     }
@@ -290,10 +328,25 @@ export const internalIngestMessage = internalMutation({
         })
       )
     ),
+    audios: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
     if (channel === null) return null;
+
+    let contentType: Doc<"messages">["contentType"] = "text";
+    if (args.audios && args.audios.length > 0) {
+      contentType = "audio";
+    } else if (args.images && args.images.length > 0) {
+      contentType = "image";
+    }
 
     const result = await ingestChannelMessage(ctx, {
       channelId: args.channelId,
@@ -303,13 +356,14 @@ export const internalIngestMessage = internalMutation({
       contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
-      contentType: args.images && args.images.length > 0 ? "image" : "text",
+      contentType,
       timestampMs: args.timestampMs,
       isHistorical: true,
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
       metaConversationId: args.metaConversationId,
       images: args.images,
+      audios: args.audios,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;

@@ -70,21 +70,40 @@ export async function saveUserMessage(
   content: string,
   sentAt: number = Date.now(),
   images?: Array<{ url: string; mimeType: string }>,
+  audios?: Array<{ url: string; mimeType: string }>,
 ): Promise<string> {
-  const messageContent: any =
-    images && images.length > 0
-      ? [
-          ...images.map((img) => ({
-            type: "image" as const,
-            image: img.url,
-            mediaType: img.mimeType,
-            mimeType: img.mimeType,
-          })),
-          ...(content.trim().length > 0
-            ? [{ type: "text" as const, text: content.trim() }]
-            : []),
-        ]
-      : content;
+  const hasImages = images && images.length > 0;
+  const hasAudios = audios && audios.length > 0;
+
+  let messageContent: any = content;
+
+  if (hasImages || hasAudios) {
+    const parts: any[] = [];
+    if (hasImages) {
+      parts.push(
+        ...images.map((img) => ({
+          type: "image" as const,
+          image: img.url,
+          mediaType: img.mimeType,
+          mimeType: img.mimeType,
+        }))
+      );
+    }
+    if (hasAudios) {
+      parts.push(
+        ...audios.map((aud) => ({
+          type: "file" as const,
+          data: aud.url,
+          mediaType: aud.mimeType,
+          mimeType: aud.mimeType,
+        }))
+      );
+    }
+    if (content.trim().length > 0) {
+      parts.push({ type: "text" as const, text: content.trim() });
+    }
+    messageContent = parts;
+  }
 
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId,
@@ -130,6 +149,7 @@ function buildHumanReplyTextAndImagesContent(
 function buildHumanReplyContent(
   text: string,
   images: HumanReplyImage[],
+  audios: Array<{ url: string; mimeType: string }> = [],
 ): string | HumanReplyMultimodalContent {
   const trimmed = text.trim();
   const imageParts = images.map((img) => ({
@@ -137,12 +157,19 @@ function buildHumanReplyContent(
     data: img.url,
     mediaType: img.mimeType,
   }));
+  const audioParts = audios.map((aud) => ({
+    type: "file" as const,
+    data: aud.url,
+    mediaType: aud.mimeType,
+  }));
 
-  if (imageParts.length === 0) {
+  const fileParts = [...imageParts, ...audioParts];
+
+  if (fileParts.length === 0) {
     return trimmed;
   }
   if (trimmed.length === 0) {
-    return imageParts;
+    return fileParts;
   }
   return buildHumanReplyTextAndImagesContent(trimmed, images);
 }
@@ -189,10 +216,11 @@ export async function saveHumanReply(
     authorUserId?: string;
     sentAt?: number;
     images?: HumanReplyImage[];
+    audios?: Array<{ url: string; mimeType: string }>;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
-  const replyContent = buildHumanReplyContent(content, opts.images ?? []);
+  const replyContent = buildHumanReplyContent(content, opts.images ?? [], opts.audios ?? []);
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
     content: replyContent,
@@ -464,6 +492,14 @@ export const ingestChannelMessageArgs = {
       })
     )
   ),
+  audios: v.optional(
+    v.array(
+      v.object({
+        url: v.string(),
+        mimeType: v.string(),
+      })
+    )
+  ),
 };
 
 export type IngestChannelMessageArgs = {
@@ -483,6 +519,7 @@ export type IngestChannelMessageArgs = {
   humanAgentName?: string;
   metaConversationId?: string;
   images?: Array<{ url: string; mimeType: string }>;
+  audios?: Array<{ url: string; mimeType: string }>;
 };
 
 export async function ingestChannelMessage(
@@ -540,12 +577,15 @@ export async function ingestChannelMessage(
 
   const trimmedContent = args.content.trim();
   const images = args.images ?? [];
+  const audios = args.audios ?? [];
   const preview =
     trimmedContent.length > 0
       ? trimmedContent.slice(0, 140)
       : images.length > 0
         ? "Image"
-        : "";
+        : audios.length > 0
+          ? "Audio"
+          : "";
 
   const { conversationId, threadId, isNew } = await upsertInboxConversation(ctx, {
     orgId: channel.orgId,
@@ -564,7 +604,7 @@ export async function ingestChannelMessage(
   });
 
   let agentMessageId: string | undefined;
-  if (trimmedContent.length > 0 || images.length > 0) {
+  if (trimmedContent.length > 0 || images.length > 0 || audios.length > 0) {
     if (args.direction === "incoming") {
       agentMessageId = await saveUserMessage(
         ctx,
@@ -572,6 +612,7 @@ export async function ingestChannelMessage(
         trimmedContent,
         args.timestampMs,
         images,
+        audios,
       );
     } else {
       const conv = await ctx.db.get(conversationId);
@@ -580,6 +621,7 @@ export async function ingestChannelMessage(
         authorUserId: args.authorUserId,
         sentAt: args.timestampMs,
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
+        audios: audios.map(aud => ({ url: aud.url, mimeType: aud.mimeType })),
       });
     }
   }
@@ -607,7 +649,29 @@ export async function ingestChannelMessage(
     }
   }
 
-  if (trimmedContent.length > 0 || images.length === 0) {
+  if (audios.length > 0) {
+    for (const aud of audios) {
+      await ctx.db.insert("messages", {
+        orgId: channel.orgId,
+        conversationId,
+        channelId: channel._id,
+        service,
+        externalId: args.externalId,
+        orgAddress,
+        contactAddress: args.contactAddress,
+        direction: args.direction,
+        authorUserId: args.authorUserId,
+        contentType: "audio",
+        content: aud.url,
+        mediaUrl: aud.url,
+        agentMessageId,
+        status: args.direction === "outgoing" ? "sent" : undefined,
+        createdAt: now,
+      });
+    }
+  }
+
+  if (trimmedContent.length > 0 || (images.length === 0 && audios.length === 0)) {
     await ctx.db.insert("messages", {
       orgId: channel.orgId,
       conversationId,
@@ -637,7 +701,7 @@ export async function ingestChannelMessage(
     shouldEnqueueAi:
       !args.isHistorical &&
       args.direction === "incoming" &&
-      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0)),
+      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0 || audios.length > 0)),
     isNew,
     agentMessageId,
   };

@@ -10,6 +10,19 @@ import {
   type AttachmentData,
 } from '@/components/ai-elements/attachments';
 import {
+  AudioPlayer,
+  AudioPlayerControlBar,
+  AudioPlayerDurationDisplay,
+  AudioPlayerElement,
+  AudioPlayerMuteButton,
+  AudioPlayerPlayButton,
+  AudioPlayerSeekBackwardButton,
+  AudioPlayerSeekForwardButton,
+  AudioPlayerTimeDisplay,
+  AudioPlayerTimeRange,
+  AudioPlayerVolumeRange,
+} from '@/components/ai-elements/audio-player';
+import {
   Dialog,
   DialogContent,
   DialogTitle,
@@ -202,14 +215,42 @@ function InboxMessageBody({
   isPending: boolean;
 }) {
   const files = useMemo(() => getInboxMessageFileParts(message), [message]);
+  const audioFiles = useMemo(
+    () => files.filter((f) => f.type === 'file' && getMediaCategory(f) === 'audio'),
+    [files],
+  );
+  const otherFiles = useMemo(
+    () => files.filter((f) => !(f.type === 'file' && getMediaCategory(f) === 'audio')),
+    [files],
+  );
   const text = message.text?.trim() ?? '';
   const showText = text.length > 0;
-  const showFiles = files.length > 0;
 
   return (
     <>
-      {showFiles ? (
-        <InboxMessageAttachments files={files} isCustomer={isCustomer} />
+      {audioFiles.map((file) => (
+        <AudioPlayer
+          key={file.id}
+          className={cn(
+            'w-[320px] max-w-full my-1',
+            isCustomer ? 'self-start' : 'self-end',
+          )}
+        >
+          <AudioPlayerElement src={file.type === 'file' ? file.url! : ''} />
+          <AudioPlayerControlBar>
+            <AudioPlayerPlayButton />
+            <AudioPlayerSeekBackwardButton seekOffset={10} />
+            <AudioPlayerSeekForwardButton seekOffset={10} />
+            <AudioPlayerTimeDisplay />
+            <AudioPlayerTimeRange />
+            <AudioPlayerDurationDisplay />
+            <AudioPlayerMuteButton />
+            <AudioPlayerVolumeRange />
+          </AudioPlayerControlBar>
+        </AudioPlayer>
+      ))}
+      {otherFiles.length > 0 ? (
+        <InboxMessageAttachments files={otherFiles} isCustomer={isCustomer} />
       ) : null}
       {showText ? (
         <div

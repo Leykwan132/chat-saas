@@ -1,4 +1,4 @@
-import { Pin, PinOff, Image as ImageIcon } from 'lucide-react';
+import { Pin, PinOff, Image as ImageIcon, Volume2 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
@@ -116,6 +116,9 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
               }}>
                 {(chat.message === 'Image' || chat.message?.toLowerCase() === 'image' || chat.message?.startsWith('<image>')) && (
                   <ImageIcon size={12} className="shrink-0 text-muted-foreground" style={{ display: 'inline-block' }} />
+                )}
+                {(chat.message === 'Audio' || chat.message?.toLowerCase() === 'audio' || chat.message?.startsWith('<audio>')) && (
+                  <Volume2 size={12} className="shrink-0 text-muted-foreground" style={{ display: 'inline-block' }} />
                 )}
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.message}</span>
               </p>

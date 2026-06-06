@@ -166,6 +166,12 @@ export const syncMessages = internalAction({
         url.toString(),
         "Instagram conversation fetch",
       );
+      console.log("[instagramSync.syncMessages] conversation fetched", {
+        conversationExternalId: args.conversationExternalId,
+        channelId: args.channelId,
+        messageCount: detail.messages?.data?.length ?? 0,
+        messages: detail.messages?.data,
+      });
       const conversationId = await ingestConversationMessages(ctx, channel, detail);
       if (conversationId) {
         await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
@@ -261,6 +267,38 @@ async function ingestConversationMessages(
       })
       .filter(Boolean) as Array<{ url: string; mimeType: string }>;
 
+    const audioAttachments = attachments
+      .filter(
+        (a) =>
+          a.mime_type?.startsWith("audio/") ||
+          a.name?.endsWith(".aac") ||
+          a.name?.endsWith(".mp3") ||
+          a.name?.endsWith(".m4a") ||
+          a.name?.endsWith(".ogg"),
+      )
+      .map((a) => {
+        const url = a.file_url;
+        const mimeType = a.mime_type ?? "audio/ogg";
+        return url ? { url, mimeType } : null;
+      })
+      .filter(Boolean) as Array<{ url: string; mimeType: string }>;
+
+    const hasImageAttachment = imageAttachments.length > 0;
+    const hasAudioAttachment = audioAttachments.length > 0;
+    if (attachments.length > 0 || !message.message) {
+      console.log("[instagramSync.ingestConversationMessages] message", {
+        messageId: message.id,
+        text: message.message ?? null,
+        attachmentCount: attachments.length,
+        hasImageAttachment,
+        hasAudioAttachment,
+        attachments,
+        from: message.from,
+        to: message.to,
+        created_time: message.created_time,
+      });
+    }
+
     const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
@@ -280,6 +318,7 @@ async function ingestConversationMessages(
       timestampMs: parseTimestamp(message.created_time),
       metaConversationId: detail.id,
       images: imageAttachments.length > 0 ? imageAttachments : undefined,
+      audios: audioAttachments.length > 0 ? audioAttachments : undefined,
     });
     if (res?.conversationId) {
       conversationId = res.conversationId;
@@ -311,10 +350,25 @@ export const internalIngestMessage = internalMutation({
         })
       )
     ),
+    audios: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
     if (channel === null) return null;
+
+    let contentType: Doc<"messages">["contentType"] = "text";
+    if (args.audios && args.audios.length > 0) {
+      contentType = "audio";
+    } else if (args.images && args.images.length > 0) {
+      contentType = "image";
+    }
 
     const result = await ingestChannelMessage(ctx, {
       channelId: args.channelId,
@@ -324,13 +378,14 @@ export const internalIngestMessage = internalMutation({
       contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
-      contentType: args.images && args.images.length > 0 ? "image" : "text",
+      contentType,
       timestampMs: args.timestampMs,
       isHistorical: true,
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
       metaConversationId: args.metaConversationId,
       images: args.images,
+      audios: args.audios,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;

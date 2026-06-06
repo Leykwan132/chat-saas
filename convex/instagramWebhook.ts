@@ -43,12 +43,24 @@ export async function receive(
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
 
+      console.log("[instagramWebhook.receive] message event received:", {
+        recipientId,
+        senderId,
+        message,
+      });
+
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
         .filter((a: any) => a.type === "image" && a.payload?.url)
         .map((a: any) => ({
           url: a.payload.url as string,
           mimeType: "image/jpeg", // webhook payloads don't explicitly specify mimeType, default to image/jpeg
+        }));
+      const audioAttachments = webhookAttachments
+        .filter((a: any) => a.type === "audio" && a.payload?.url)
+        .map((a: any) => ({
+          url: a.payload.url as string,
+          mimeType: "audio/ogg", // webhook payloads don't explicitly specify mimeType, default to audio/ogg
         }));
 
       try {
@@ -62,6 +74,7 @@ export async function receive(
               ? event.timestamp
               : Date.now(),
           images: imageAttachments.length > 0 ? imageAttachments : undefined,
+          audios: audioAttachments.length > 0 ? audioAttachments : undefined,
         });
       } catch (err) {
         console.error("Failed to persist Instagram message", err);
@@ -86,6 +99,14 @@ export const handleIncoming = internalMutation({
     text: v.optional(v.string()),
     timestampMs: v.number(),
     images: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
+    audios: v.optional(
       v.array(
         v.object({
           url: v.string(),
@@ -136,16 +157,24 @@ export const handleIncoming = internalMutation({
       );
     }
 
+    let contentType: "text" | "image" | "audio" | "video" | "document" | "unknown" = "text";
+    if (args.audios && args.audios.length > 0) {
+      contentType = "audio";
+    } else if (args.images && args.images.length > 0) {
+      contentType = "image";
+    }
+
     await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
       externalId: args.externalId,
       contactAddress,
       direction: "incoming",
       content: args.text ?? "",
-      contentType: args.images && args.images.length > 0 ? "image" : "text",
+      contentType,
       timestampMs: args.timestampMs,
       isHistorical: false,
       images: args.images,
+      audios: args.audios,
     });
   },
 });

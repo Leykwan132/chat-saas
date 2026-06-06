@@ -11,7 +11,7 @@ export type ModelPricingEntry = {
 
 /** OpenRouter model catalog and per-message credit costs. Edit here to add or change models. */
 export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
-  "nvidia/nemotron-3-super-120b-a12b": {
+  "nvidia/nemotron-3-super-120b-a12b:free": {
     label: "NVIDIA Nemotron 3",
     creditCost: 1,
     enabled: true,
@@ -54,21 +54,21 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     chef: "MiniMax",
     chefSlug: "minimax",
   },
-  "google/gemma-4-31b-it": {
+  "google/gemma-4-31b-it:free": {
     label: "Google Gemma 4",
     creditCost: 1,
     enabled: true,
     chef: "Google",
     chefSlug: "google",
   },
-  "qwen/qwen3-next-80b-a3b-instruct": {
+  "qwen/qwen3-next-80b-a3b-instruct:free": {
     label: "Qwen 3 Next 80B",
     creditCost: 1,
     enabled: true,
     chef: "Alibaba",
     chefSlug: "alibaba",
   },
-  "meta-llama/llama-3.3-70b-instruct": {
+  "meta-llama/llama-3.3-70b-instruct:free": {
     label: "Meta Llama 3.3 70B Instruct",
     creditCost: 1,
     enabled: true,
