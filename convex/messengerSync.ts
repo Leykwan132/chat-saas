@@ -149,12 +149,6 @@ export const syncMessages = internalAction({
         url.toString(),
         "Messenger conversation fetch",
       );
-      console.log("[messengerSync.syncMessages] conversation fetched", {
-        conversationExternalId: args.conversationExternalId,
-        channelId: args.channelId,
-        messageCount: detail.messages?.data?.length ?? 0,
-        messages: detail.messages?.data,
-      });
       const conversationId = await ingestConversationMessages(ctx, channel, detail);
       if (conversationId) {
         await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
@@ -248,19 +242,6 @@ async function ingestConversationMessages(
       })
       .filter(Boolean) as Array<{ url: string; mimeType: string }>;
 
-    const hasImageAttachment = imageAttachments.length > 0;
-    if (attachments.length > 0 || !message.message) {
-      console.log("[messengerSync.ingestConversationMessages] message", {
-        messageId: message.id,
-        text: message.message ?? null,
-        attachmentCount: attachments.length,
-        hasImageAttachment,
-        attachments,
-        from: message.from,
-        to: message.to,
-        created_time: message.created_time,
-      });
-    }
     const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
