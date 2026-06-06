@@ -7,6 +7,7 @@ import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import stripePlanSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
+import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 beforeAll(() => {
   // Mock Stripe price env vars required by resolvePlanKeyFromStripePriceId
@@ -87,6 +88,14 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
 
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -188,6 +197,14 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
 
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {

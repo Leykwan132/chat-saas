@@ -9,7 +9,7 @@ import {
 import { internal } from "../_generated/api";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
-import { messageDocsToInboxUIMessages, listMessages } from "./inboxMessageMapping";
+import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
 import { paginationOptsValidator } from "convex/server";
 import { getAuthContext } from "../authUtils";
 import {
@@ -149,6 +149,7 @@ export const internalPersistHumanReply = internalMutation({
               authorUserId: args.authorUserId,
               sentAt,
               clientIds: args.clientIds,
+              channelName: channel ? getChannelName(channel) : undefined,
             },
           )
         : await saveHumanReply(ctx, conv.threadId, trimmed, {
@@ -156,6 +157,7 @@ export const internalPersistHumanReply = internalMutation({
             authorUserId: args.authorUserId,
             sentAt,
             images: humanReplyImages,
+            channelName: channel ? getChannelName(channel) : undefined,
           });
 
     const now = Date.now();

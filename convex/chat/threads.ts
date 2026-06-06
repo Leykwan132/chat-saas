@@ -18,6 +18,7 @@ import {
 } from "./inboxMessageMapping";
 import { applyInboundLeadRouting, isAnyoneOnSchedule } from "../leadRouting/assign";
 import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
+import { getUserByWorkosId } from "../teamHelpers";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -193,6 +194,23 @@ async function saveAssistantWithOwnOrder(
     >,
   });
 
+  const provider = args.outbound.sentByAi
+    ? "ai"
+    : args.outbound.authorUserId
+      ? "human"
+      : "channel";
+
+  const providerMetadata = args.outbound.sentByAi
+    ? { ai: { agentName: args.outbound.agentName } }
+    : args.outbound.authorUserId
+      ? {
+          human: {
+            userId: args.outbound.authorUserId,
+            username: args.outbound.authorName,
+          },
+        }
+      : { channel: { name: args.outbound.channelName ?? args.outbound.agentName } };
+
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId: args.threadId,
     agentName: args.outbound.agentName,
@@ -201,6 +219,8 @@ async function saveAssistantWithOwnOrder(
     metadata: {
       sentAt: args.sentAt,
       inboxOutbound: args.outbound,
+      provider,
+      providerMetadata,
       ...args.messageMetadata,
     } as Record<string, unknown>,
   });
@@ -217,10 +237,21 @@ export async function saveHumanReply(
     sentAt?: number;
     images?: HumanReplyImage[];
     audios?: Array<{ url: string; mimeType: string }>;
+    authorName?: string;
+    channelName?: string;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
   const replyContent = buildHumanReplyContent(content, opts.images ?? [], opts.audios ?? []);
+
+  let authorName = opts.authorName;
+  if (authorName === undefined && opts.authorUserId !== undefined) {
+    const user = await getUserByWorkosId(ctx, opts.authorUserId);
+    if (user) {
+      authorName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+    }
+  }
+
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
     content: replyContent,
@@ -231,6 +262,8 @@ export async function saveHumanReply(
       ...(opts.authorUserId !== undefined
         ? { authorUserId: opts.authorUserId }
         : {}),
+      ...(authorName !== undefined ? { authorName } : {}),
+      ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
     },
   });
 }
@@ -246,11 +279,21 @@ export async function saveHumanReplyTextAndImages(
     authorUserId?: string;
     sentAt?: number;
     clientIds?: string[];
+    authorName?: string;
+    channelName?: string;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
   const replyContent = buildHumanReplyTextAndImagesContent(text, images);
   const sentAt = opts.sentAt ?? Date.now();
+
+  let authorName = opts.authorName;
+  if (authorName === undefined && opts.authorUserId !== undefined) {
+    const user = await getUserByWorkosId(ctx, opts.authorUserId);
+    if (user) {
+      authorName = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+    }
+  }
 
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
@@ -262,6 +305,8 @@ export async function saveHumanReplyTextAndImages(
       ...(opts.authorUserId !== undefined
         ? { authorUserId: opts.authorUserId }
         : {}),
+      ...(authorName !== undefined ? { authorName } : {}),
+      ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
     },
     messageMetadata:
       opts.clientIds !== undefined && opts.clientIds.length > 0
@@ -622,6 +667,7 @@ export async function ingestChannelMessage(
         sentAt: args.timestampMs,
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
         audios: audios.map(aud => ({ url: aud.url, mimeType: aud.mimeType })),
+        channelName: args.humanAgentName,
       });
     }
   }

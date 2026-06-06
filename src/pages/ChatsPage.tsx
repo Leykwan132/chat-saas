@@ -250,15 +250,10 @@ export default function ChatsPage() {
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
-  const dashboardAgent = useQuery(
-    api.agents.get,
-    agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
-  );
   const textEntries = useQuery(
     api.knowledgeBase.listTextEntries,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
   );
-  const productAgentName = dashboardAgent?.name?.trim() || 'Unknown agent';
 
   useEffect(() => {
     if (connectedChannels === undefined) return;
@@ -581,7 +576,7 @@ export default function ChatsPage() {
       {
         clientId,
         text: trimmed,
-        agentName: productAgentName,
+        agentName: currentUser ? formatOrgMemberDisplayName(currentUser) : '',
         createdAt: Date.now(),
       },
     ]);

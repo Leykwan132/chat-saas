@@ -1,18 +1,31 @@
-import { listMessages } from "@convex-dev/agent";
-import { toUIMessages } from "@convex-dev/agent";
-import { sorted } from "@convex-dev/agent";
+import { listMessages, toUIMessages, sorted } from "@convex-dev/agent";
 import type { MessageDoc } from "@convex-dev/agent";
 import type { UIMessage } from "@convex-dev/agent/react";
-import type { Id } from "../_generated/dataModel";
+import type { Id, Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
 
+export type HumanProviderMetadata = {
+  userId?: string;
+  username?: string;
+};
+
+export type AIProviderMetadata = {
+  agentName: string;
+};
+
+export type ChannelProviderMetadata = {
+  name: string;
+};
+
 export type InboxOutboundMeta = {
   agentName: string;
   sentByAi: boolean;
   authorUserId?: string;
+  authorName?: string;
+  channelName?: string;
 };
 
 export type InboxMessageMetadata = {
@@ -20,6 +33,12 @@ export type InboxMessageMetadata = {
   /** When the message was sent on the channel (not thread upload time). */
   sentAt?: number;
   inboxOutbound?: InboxOutboundMeta;
+  provider?: "human" | "ai" | "channel";
+  providerMetadata?: {
+    human?: HumanProviderMetadata;
+    ai?: AIProviderMetadata;
+    channel?: ChannelProviderMetadata;
+  };
   llmModel?: string;
   creditsCharged?: number;
 };
@@ -28,45 +47,69 @@ export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
 };
 
-type MessageDocWithMeta = MessageDoc & {
-  metadata?: InboxMessageMetadata;
-  agentName?: string;
-};
-
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
-  const meta = (doc as MessageDocWithMeta).metadata;
-  if (meta?.inboxOrderSpacer === true) return true;
   const text = doc.text?.trim() ?? "";
   return text === INBOX_ORDER_SPACER_TEXT;
 }
 
-function legacySentByAi(
-  doc: MessageDocWithMeta,
+export function getChannelName(channel: Doc<"channels">): string {
+  if (channel.service === "whatsapp") {
+    return (
+      channel.displayPhoneNumber ??
+      channel.phoneNumberId ??
+      channel.wabaId ??
+      "WhatsApp"
+    );
+  }
+  return (
+    channel.displayUsername ??
+    channel.pageId ??
+    channel.igUserId ??
+    (channel.service === "instagram" ? "Instagram" : "Messenger")
+  );
+}
+
+function resolveSentByAi(
+  doc: MessageDoc,
   uiRole: UIMessage["role"],
 ): boolean | undefined {
   if (uiRole !== "assistant") return undefined;
-  const meta = doc.metadata?.inboxOutbound;
-  if (meta !== undefined) return meta.sentByAi;
+  if (doc.provider !== undefined) {
+    return doc.provider === "ai";
+  }
   const legacyName = doc.agentName?.trim();
   if (!legacyName) return true;
   return undefined;
 }
 
 function resolveAgentName(
-  doc: MessageDocWithMeta,
+  doc: MessageDoc,
   uiRole: UIMessage["role"],
   fallbackChannelName: string,
+  userIdToName: Map<string, string>,
 ): string | undefined {
   if (uiRole !== "assistant") return undefined;
-  const outbound = doc.metadata?.inboxOutbound;
-  if (outbound) {
-    const isAi = outbound.sentByAi === true;
-    const isUser = !!outbound.authorUserId;
-    if (isAi || isUser) {
-      return outbound.agentName?.trim() || "Unknown agent";
+
+  const providerMetadata = doc.providerMetadata as InboxMessageMetadata["providerMetadata"];
+
+  // 1. Check new metadata format
+  if (doc.provider !== undefined) {
+    if (doc.provider === "human") {
+      const human = providerMetadata?.human;
+      if (human?.userId && userIdToName.has(human.userId)) {
+        return userIdToName.get(human.userId);
+      }
+      return human?.username ?? fallbackChannelName;
     }
-    return fallbackChannelName;
+    if (doc.provider === "ai") {
+      return providerMetadata?.ai?.agentName ?? doc.agentName?.trim() ?? "Unknown agent";
+    }
+    if (doc.provider === "channel") {
+      return providerMetadata?.channel?.name ?? fallbackChannelName;
+    }
   }
+
+  // 2. Legacy fallback to agentName field
   const legacy = doc.agentName?.trim();
   if (legacy && legacy !== "Unknown agent") return legacy;
   return fallbackChannelName;
@@ -78,11 +121,9 @@ function agentMessageDocId(doc: MessageDoc): string | undefined {
 }
 
 function resolveSentAt(
-  doc: MessageDocWithMeta,
+  doc: MessageDoc,
   sentAtByAgentMessageId: Map<string, number>,
 ): number {
-  const metaSentAt = doc.metadata?.sentAt;
-  if (metaSentAt !== undefined) return metaSentAt;
   const docId = agentMessageDocId(doc);
   if (docId !== undefined) {
     const fromLedger = sentAtByAgentMessageId.get(docId);
@@ -118,30 +159,39 @@ export async function messageDocsToInboxUIMessages(
 
   let fallbackChannelName = "Unknown agent";
   if (channel) {
-    if (channel.service === "whatsapp") {
-      fallbackChannelName =
-        channel.displayPhoneNumber ??
-        channel.phoneNumberId ??
-        channel.wabaId ??
-        "WhatsApp";
-    } else {
-      fallbackChannelName =
-        channel.displayUsername ??
-        channel.pageId ??
-        channel.igUserId ??
-        (channel.service === "instagram" ? "Instagram" : "Messenger");
+    fallbackChannelName = getChannelName(channel);
+  }
+
+  // Gather user IDs to look up team member names
+  const workosUserIds = new Set<string>();
+  for (const doc of docs) {
+    const providerMetadata = doc.providerMetadata as InboxMessageMetadata["providerMetadata"];
+    const providerUserId = providerMetadata?.human?.userId;
+    if (providerUserId) {
+      workosUserIds.add(providerUserId);
+    }
+  }
+
+  const userIdToName = new Map<string, string>();
+  for (const workosUserId of workosUserIds) {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
+      .unique();
+    if (user) {
+      const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+      userIdToName.set(workosUserId, name);
     }
   }
 
   return sorted(docs)
     .filter((doc) => !isInboxOrderSpacerDoc(doc))
     .flatMap((doc) => {
-      const withMeta = doc as MessageDocWithMeta;
       const [ui] = toUIMessages([doc]);
       if (!ui) return [];
-      const sentByAi = legacySentByAi(withMeta, ui.role);
-      const agentName = resolveAgentName(withMeta, ui.role, fallbackChannelName);
-      const sentAt = resolveSentAt(withMeta, sentAtByAgentMessageId);
+      const sentByAi = resolveSentByAi(doc, ui.role);
+      const agentName = resolveAgentName(doc, ui.role, fallbackChannelName, userIdToName);
+      const sentAt = resolveSentAt(doc, sentAtByAgentMessageId);
       return [
         {
           ...ui,
