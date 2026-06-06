@@ -5,8 +5,8 @@ import workpool from "@convex-dev/workpool/convex.config.js";
 import workOSAuthKit from "@convex-dev/workos-authkit/convex.config";
 import crons from "@convex-dev/crons/convex.config.js";
 import r2 from "@convex-dev/r2/convex.config.js";
-
 import stripe from "@convex-dev/stripe/convex.config.js";
+import aggregate from "@convex-dev/aggregate/convex.config";
 
 const app = defineApp();
 app.use(stripe);
@@ -25,4 +25,7 @@ app.use(workpool, { name: "broadcastWorkpool" });
 app.use(workpool, { name: "followUpWorkpool" });
 app.use(workOSAuthKit);
 app.use(crons);
+app.use(aggregate, { name: "modelLifetimeUsage" });
+app.use(aggregate, { name: "modelMonthlyUsage" });
+app.use(aggregate, { name: "agentMonthlyUsage" });
 export default app;

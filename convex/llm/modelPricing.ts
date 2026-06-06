@@ -18,7 +18,14 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     chef: "NVIDIA",
     chefSlug: "nvidia",
   },
-  "openai/gpt-oss-120b": {
+  // "openai/gpt-oss-120b": {
+  //   label: "OpenAI GPT-OSS 120B",
+  //   creditCost: 1,
+  //   enabled: true,
+  //   chef: "OpenAI",
+  //   chefSlug: "openai",
+  // },
+  "openai/gpt-oss-120b:free": {
     label: "OpenAI GPT-OSS 120B",
     creditCost: 1,
     enabled: true,

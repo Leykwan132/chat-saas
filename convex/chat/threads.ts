@@ -358,6 +358,34 @@ ${toolSteps}${toneBlock}${groundingBlock}
       // console.log("request", request);
       // console.log("response", response);
     },
+    usageHandler: async (ctx, args) => {
+      const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;
+      console.log("usage", usage);
+      console.log("userId", userId);
+      console.log("threadId", threadId);
+      console.log("agentName", agentName);
+      console.log("model", model);
+      console.log("provider", provider);
+      console.log("providerMetadata", providerMetadata);
+      const u = usage as any;
+      const normalizedUsage = {
+        promptTokens: u.promptTokens ?? u.inputTokens ?? 0,
+        completionTokens: u.completionTokens ?? u.outputTokens ?? 0,
+        totalTokens: u.totalTokens ?? 0,
+        reasoningTokens: u.reasoningTokens ?? undefined,
+        cachedInputTokens: u.cachedInputTokens ?? undefined,
+      };
+      await ctx.runMutation(internal.agentUsage.insertRawUsage, {
+        userId: userId ?? undefined,
+        threadId: threadId ?? undefined,
+        agentId,
+        agentName: agentName ?? undefined,
+        model,
+        provider,
+        usage: normalizedUsage,
+        providerMetadata,
+      });
+    },
   });
 }
 

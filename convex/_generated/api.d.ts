@@ -9,7 +9,9 @@
  */
 
 import type * as agentRuntime from "../agentRuntime.js";
+import type * as agentUsage from "../agentUsage.js";
 import type * as agents from "../agents.js";
+import type * as aggregates from "../aggregates.js";
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as billingScope from "../billingScope.js";
@@ -81,6 +83,8 @@ import type * as teamInvitations from "../teamInvitations.js";
 import type * as teamMembers from "../teamMembers.js";
 import type * as teamRoles from "../teamRoles.js";
 import type * as teams from "../teams.js";
+import type * as triggers from "../triggers.js";
+import type * as usageMonthKey from "../usageMonthKey.js";
 import type * as users from "../users.js";
 import type * as whatsappBroadcast from "../whatsappBroadcast.js";
 import type * as whatsappDemo from "../whatsappDemo.js";
@@ -101,7 +105,9 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agentRuntime: typeof agentRuntime;
+  agentUsage: typeof agentUsage;
   agents: typeof agents;
+  aggregates: typeof aggregates;
   auth: typeof auth;
   authUtils: typeof authUtils;
   billingScope: typeof billingScope;
@@ -173,6 +179,8 @@ declare const fullApi: ApiFromModules<{
   teamMembers: typeof teamMembers;
   teamRoles: typeof teamRoles;
   teams: typeof teams;
+  triggers: typeof triggers;
+  usageMonthKey: typeof usageMonthKey;
   users: typeof users;
   whatsappBroadcast: typeof whatsappBroadcast;
   whatsappDemo: typeof whatsappDemo;
@@ -229,4 +237,7 @@ export declare const components: {
   followUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"followUpWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
+  modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
+  modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
+  agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
 };

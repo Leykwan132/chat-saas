@@ -39,7 +39,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "Playground access",
     ],
     actionLabel: "Start for Free",
-    models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it"],
+    models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it", "openai/gpt-oss-120b:free"],
     platforms: [],
     features: {
       thread_summary: false,
@@ -67,6 +67,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "google/gemma-4-31b-it",
       "meta-llama/llama-3.3-70b-instruct",
       "qwen/qwen3-next-80b-a3b-instruct",
+      "openai/gpt-oss-120b:free",
     ],
     platforms: ["whatsapp"],
     features: {
@@ -100,6 +101,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "nvidia/nemotron-3-super-120b-a12b",
       "minimax/minimax-m2.5",
       "z-ai/glm-4.5-air",
+      "openai/gpt-oss-120b:free",
     ],
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
@@ -134,6 +136,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "minimax/minimax-m2.5",
       "z-ai/glm-4.5-air",
       "openai/gpt-oss-120b",
+      "openai/gpt-oss-120b:free",
     ],
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {

@@ -81,8 +81,14 @@ export default function PricingPage() {
             Kilobot
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
-            <Link to="/pricing" className="transition-colors text-zinc-900 dark:text-white font-medium">
+            <Link to="/" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
+              Home
+            </Link>
+            <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
               Pricing
+            </Link>
+            <Link to="/leaderboard" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
+              Leaderboard
             </Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">

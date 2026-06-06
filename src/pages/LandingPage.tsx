@@ -107,8 +107,14 @@ function Nav({
           Kilobot
         </Link>
         <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
+          <Link to="/" className="transition-colors text-zinc-900 dark:text-white font-medium">
+            Home
+          </Link>
           <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
             Pricing
+          </Link>
+          <Link to="/leaderboard" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
+            Leaderboard
           </Link>
         </nav>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -725,8 +731,11 @@ function ModelEcosystem() {
         <div className="space-y-4">
           <BlurFade inView delay={0.05}>
             <Card size="sm" className={landingCardClass}>
-              <CardHeader className="px-4 pb-0 pt-4">
+              <CardHeader className="px-4 pb-0 pt-4 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-normal text-zinc-500 dark:text-zinc-400">Supported</CardTitle>
+                <Link to="/leaderboard" className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center gap-1">
+                  View Live Leaderboard <ArrowRight className="size-3" />
+                </Link>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2 pb-4">
                 {models.map((model, index) => (

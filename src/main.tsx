@@ -19,6 +19,7 @@ import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import CustomerDetailPage from './pages/CustomerDetailPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
+import LeaderboardPage from './pages/LeaderboardPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
 import CreateTeamPage from './pages/CreateTeamPage.tsx'
 import SettingsPage from './pages/SettingsPage.tsx'
@@ -153,6 +154,7 @@ function RootLayout() {
             <Route path="/" element={<HomePage />} />
             <Route path="/sign-in" element={<SignInPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route path="/onboarding" element={<OnboardingFlow />} />
             <Route path="/workspace" element={<WorkspacePage />}>
               <Route index element={<AgentsIndex />} />

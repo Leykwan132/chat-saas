@@ -60,7 +60,7 @@ const ModelPickerItem = memo(function ModelPickerItem({
         )}
       </div>
       <span className={cn('shrink-0 text-xs', selected ? 'text-primary/70' : 'text-muted-foreground')}>
-        {option.creditCost === 1 ? '1 credit' : `${option.creditCost} credits`} / msg
+        {option.creditCost === 0 ? 'Free' : `${option.creditCost === 1 ? '1 credit' : `${option.creditCost} credits`} / msg`}
       </span>
     </ModelSelectorItem>
   );

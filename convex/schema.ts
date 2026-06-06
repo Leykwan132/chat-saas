@@ -703,4 +703,21 @@ export default defineSchema({
     estCostMyr: v.number(),
     errorMessage: v.optional(v.string()),
   }).index("by_ruleId_and_sentAt", ["ruleId", "sentAt"]),
+  rawAgentUsage: defineTable({
+    userId: v.optional(v.string()),
+    threadId: v.optional(v.string()),
+    agentId: v.optional(v.id("agents")),
+    agentName: v.optional(v.string()),
+    model: v.string(),
+    provider: v.string(),
+    usage: v.object({
+      promptTokens: v.number(),
+      completionTokens: v.number(),
+      totalTokens: v.number(),
+      reasoningTokens: v.optional(v.number()),
+      cachedInputTokens: v.optional(v.number()),
+    }),
+    providerMetadata: v.optional(v.any()),
+    createdAt: v.number(),
+  }),
 });
