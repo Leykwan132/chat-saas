@@ -69,10 +69,26 @@ export async function saveUserMessage(
   threadId: string,
   content: string,
   sentAt: number = Date.now(),
+  images?: Array<{ url: string; mimeType: string }>,
 ): Promise<string> {
+  const messageContent: any =
+    images && images.length > 0
+      ? [
+          ...images.map((img) => ({
+            type: "image" as const,
+            image: img.url,
+            mediaType: img.mimeType,
+            mimeType: img.mimeType,
+          })),
+          ...(content.trim().length > 0
+            ? [{ type: "text" as const, text: content.trim() }]
+            : []),
+        ]
+      : content;
+
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId,
-    message: { role: "user", content },
+    message: { role: "user", content: messageContent },
     metadata: { sentAt } as Record<string, unknown>,
   });
   return messageId;
@@ -360,13 +376,6 @@ ${toolSteps}${toneBlock}${groundingBlock}
     },
     usageHandler: async (ctx, args) => {
       const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;
-      console.log("usage", usage);
-      console.log("userId", userId);
-      console.log("threadId", threadId);
-      console.log("agentName", agentName);
-      console.log("model", model);
-      console.log("provider", provider);
-      console.log("providerMetadata", providerMetadata);
       const u = usage as any;
       const normalizedUsage = {
         promptTokens: u.promptTokens ?? u.inputTokens ?? 0,
@@ -447,6 +456,14 @@ export const ingestChannelMessageArgs = {
   authorUserId: v.optional(v.string()),
   humanAgentName: v.optional(v.string()),
   metaConversationId: v.optional(v.string()),
+  images: v.optional(
+    v.array(
+      v.object({
+        url: v.string(),
+        mimeType: v.string(),
+      })
+    )
+  ),
 };
 
 export type IngestChannelMessageArgs = {
@@ -465,6 +482,7 @@ export type IngestChannelMessageArgs = {
   authorUserId?: string;
   humanAgentName?: string;
   metaConversationId?: string;
+  images?: Array<{ url: string; mimeType: string }>;
 };
 
 export async function ingestChannelMessage(
@@ -520,6 +538,15 @@ export async function ingestChannelMessage(
   const orgAddress =
     channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? "";
 
+  const trimmedContent = args.content.trim();
+  const images = args.images ?? [];
+  const preview =
+    trimmedContent.length > 0
+      ? trimmedContent.slice(0, 140)
+      : images.length > 0
+        ? "Image"
+        : "";
+
   const { conversationId, threadId, isNew } = await upsertInboxConversation(ctx, {
     orgId: channel.orgId,
     channelId: channel._id,
@@ -529,7 +556,7 @@ export async function ingestChannelMessage(
     contactName: args.contactName,
     customerId,
     lastMessageAt: args.timestampMs,
-    preview: args.content.slice(0, 140),
+    preview,
     isIncoming: args.direction === "incoming",
     assignedAgentId: args.assignedAgentId,
     metaConversationId: args.metaConversationId,
@@ -537,14 +564,14 @@ export async function ingestChannelMessage(
   });
 
   let agentMessageId: string | undefined;
-  const trimmedContent = args.content.trim();
-  if (trimmedContent.length > 0) {
+  if (trimmedContent.length > 0 || images.length > 0) {
     if (args.direction === "incoming") {
       agentMessageId = await saveUserMessage(
         ctx,
         threadId,
         trimmedContent,
         args.timestampMs,
+        images,
       );
     } else {
       const conv = await ctx.db.get(conversationId);
@@ -552,26 +579,52 @@ export async function ingestChannelMessage(
         assignedAgentId: conv?.assignedAgentId ?? args.assignedAgentId,
         authorUserId: args.authorUserId,
         sentAt: args.timestampMs,
+        images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
       });
     }
   }
 
-  await ctx.db.insert("messages", {
-    orgId: channel.orgId,
-    conversationId,
-    channelId: channel._id,
-    service,
-    externalId: args.externalId,
-    orgAddress,
-    contactAddress: args.contactAddress,
-    direction: args.direction,
-    authorUserId: args.authorUserId,
-    contentType: args.contentType ?? "text",
-    content: args.content,
-    agentMessageId,
-    status: args.direction === "outgoing" ? "sent" : undefined,
-    createdAt: args.timestampMs,
-  });
+  const now = args.timestampMs;
+  if (images.length > 0) {
+    for (const img of images) {
+      await ctx.db.insert("messages", {
+        orgId: channel.orgId,
+        conversationId,
+        channelId: channel._id,
+        service,
+        externalId: args.externalId,
+        orgAddress,
+        contactAddress: args.contactAddress,
+        direction: args.direction,
+        authorUserId: args.authorUserId,
+        contentType: "image",
+        content: img.url,
+        mediaUrl: img.url,
+        agentMessageId,
+        status: args.direction === "outgoing" ? "sent" : undefined,
+        createdAt: now,
+      });
+    }
+  }
+
+  if (trimmedContent.length > 0 || images.length === 0) {
+    await ctx.db.insert("messages", {
+      orgId: channel.orgId,
+      conversationId,
+      channelId: channel._id,
+      service,
+      externalId: args.externalId,
+      orgAddress,
+      contactAddress: args.contactAddress,
+      direction: args.direction,
+      authorUserId: args.authorUserId,
+      contentType: args.contentType ?? "text",
+      content: args.content,
+      agentMessageId,
+      status: args.direction === "outgoing" ? "sent" : undefined,
+      createdAt: now,
+    });
+  }
 
   await ctx.runMutation(internal.customers.internalSetLastConversation, {
     customerId,
@@ -584,7 +637,7 @@ export async function ingestChannelMessage(
     shouldEnqueueAi:
       !args.isHistorical &&
       args.direction === "incoming" &&
-      Boolean(agentMessageId && trimmedContent.length > 0),
+      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0)),
     isNew,
     agentMessageId,
   };

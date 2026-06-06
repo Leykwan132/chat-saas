@@ -57,12 +57,23 @@ type ConversationDetailResponse = {
   };
 };
 
+type InstagramAttachment = {
+  id?: string;
+  mime_type?: string;
+  name?: string;
+  size?: number;
+  image_data?: { url?: string; width?: number; height?: number };
+  video_data?: { url?: string };
+  file_url?: string;
+};
+
 type InstagramMessage = {
   id: string;
   from?: InstagramParticipant;
   to?: { data?: InstagramParticipant[] };
   message?: string;
   created_time?: string;
+  attachments?: { data?: InstagramAttachment[] };
 };
 
 // One-time backfill of the latest `limit` conversations for a freshly-connected
@@ -148,7 +159,7 @@ export const syncMessages = internalAction({
       );
       url.searchParams.set(
         "fields",
-        "participants{id,username,name},messages{id,from,to,message,created_time}",
+        "participants{id,username,name},messages{id,from,to,message,created_time,attachments}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const detail = await graphFetch<ConversationDetailResponse>(
@@ -199,7 +210,7 @@ export const hydrateConversationByParticipant = internalAction({
       listUrl.searchParams.set("user_id", args.participantUserId);
       listUrl.searchParams.set(
         "fields",
-        "id,participants{id,username,name},messages{id,from,to,message,created_time}",
+        "id,participants{id,username,name},messages{id,from,to,message,created_time,attachments}",
       );
       listUrl.searchParams.set("access_token", channel.accessToken);
       const list = await graphFetch<{
@@ -236,6 +247,20 @@ async function ingestConversationMessages(
   // Graph returns newest first; ingest oldest-first for natural ordering.
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
+    const attachments = message.attachments?.data ?? [];
+    const imageAttachments = attachments
+      .filter(
+        (a) =>
+          a.mime_type?.startsWith("image/") ||
+          a.image_data !== undefined
+      )
+      .map((a) => {
+        const url = a.image_data?.url ?? a.file_url;
+        const mimeType = a.mime_type ?? "image/jpeg";
+        return url ? { url, mimeType } : null;
+      })
+      .filter(Boolean) as Array<{ url: string; mimeType: string }>;
+
     const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
@@ -254,6 +279,7 @@ async function ingestConversationMessages(
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
       metaConversationId: detail.id,
+      images: imageAttachments.length > 0 ? imageAttachments : undefined,
     });
     if (res?.conversationId) {
       conversationId = res.conversationId;
@@ -277,6 +303,14 @@ export const internalIngestMessage = internalMutation({
     content: v.string(),
     timestampMs: v.number(),
     metaConversationId: v.optional(v.string()),
+    images: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
@@ -290,12 +324,13 @@ export const internalIngestMessage = internalMutation({
       contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
-      contentType: "text",
+      contentType: args.images && args.images.length > 0 ? "image" : "text",
       timestampMs: args.timestampMs,
       isHistorical: true,
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
       metaConversationId: args.metaConversationId,
+      images: args.images,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;

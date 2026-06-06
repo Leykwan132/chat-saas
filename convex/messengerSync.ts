@@ -44,12 +44,22 @@ async function graphFetch<T>(url: string, context: string): Promise<T> {
 }
 
 type MessengerParticipant = { id?: string; name?: string; email?: string };
+type MessengerAttachment = {
+  id?: string;
+  mime_type?: string;
+  name?: string;
+  size?: number;
+  image_data?: { url?: string; width?: number; height?: number };
+  video_data?: { url?: string };
+  file_url?: string;
+};
 type MessengerMessage = {
   id: string;
   from?: MessengerParticipant;
   to?: { data?: MessengerParticipant[] };
   message?: string;
   created_time?: string;
+  attachments?: { data?: MessengerAttachment[] };
 };
 type ConversationDetailResponse = {
   id?: string;
@@ -132,13 +142,19 @@ export const syncMessages = internalAction({
       );
       url.searchParams.set(
         "fields",
-        "participants{id,name,email},messages{id,from,to,message,created_time}",
+        "participants{id,name,email},messages{id,from,to,message,created_time,attachments}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const detail = await graphFetch<ConversationDetailResponse>(
         url.toString(),
         "Messenger conversation fetch",
       );
+      console.log("[messengerSync.syncMessages] conversation fetched", {
+        conversationExternalId: args.conversationExternalId,
+        channelId: args.channelId,
+        messageCount: detail.messages?.data?.length ?? 0,
+        messages: detail.messages?.data,
+      });
       const conversationId = await ingestConversationMessages(ctx, channel, detail);
       if (conversationId) {
         await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
@@ -182,7 +198,7 @@ export const hydrateConversationByParticipant = internalAction({
       url.searchParams.set("user_id", args.participantUserId);
       url.searchParams.set(
         "fields",
-        "id,participants{id,name,email},messages{id,from,to,message,created_time}",
+        "id,participants{id,name,email},messages{id,from,to,message,created_time,attachments}",
       );
       url.searchParams.set("access_token", channel.accessToken);
       const list = await graphFetch<{
@@ -218,6 +234,33 @@ async function ingestConversationMessages(
 
   for (const message of [...messages].reverse()) {
     if (!message.id) continue;
+    const attachments = message.attachments?.data ?? [];
+    const imageAttachments = attachments
+      .filter(
+        (a) =>
+          a.mime_type?.startsWith("image/") ||
+          a.image_data !== undefined
+      )
+      .map((a) => {
+        const url = a.image_data?.url ?? a.file_url;
+        const mimeType = a.mime_type ?? "image/jpeg";
+        return url ? { url, mimeType } : null;
+      })
+      .filter(Boolean) as Array<{ url: string; mimeType: string }>;
+
+    const hasImageAttachment = imageAttachments.length > 0;
+    if (attachments.length > 0 || !message.message) {
+      console.log("[messengerSync.ingestConversationMessages] message", {
+        messageId: message.id,
+        text: message.message ?? null,
+        attachmentCount: attachments.length,
+        hasImageAttachment,
+        attachments,
+        from: message.from,
+        to: message.to,
+        created_time: message.created_time,
+      });
+    }
     const isOutgoing = resolveSyncMessageDirection(channel, message);
     const contactAddress = (isOutgoing
       ? message.to?.data?.[0]?.id
@@ -237,6 +280,7 @@ async function ingestConversationMessages(
       content: message.message ?? "",
       timestampMs: parseTimestamp(message.created_time),
       metaConversationId: detail.id,
+      images: imageAttachments.length > 0 ? imageAttachments : undefined,
     });
     if (res?.conversationId) {
       conversationId = res.conversationId;
@@ -257,6 +301,14 @@ export const internalIngestMessage = internalMutation({
     content: v.string(),
     timestampMs: v.number(),
     metaConversationId: v.optional(v.string()),
+    images: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const channel = await ctx.db.get(args.channelId);
@@ -270,12 +322,13 @@ export const internalIngestMessage = internalMutation({
       contactEmail: args.contactEmail,
       direction: args.direction,
       content: args.content,
-      contentType: "text",
+      contentType: args.images && args.images.length > 0 ? "image" : "text",
       timestampMs: args.timestampMs,
       isHistorical: true,
       humanAgentName:
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
       metaConversationId: args.metaConversationId,
+      images: args.images,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;

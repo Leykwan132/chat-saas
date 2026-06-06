@@ -42,6 +42,15 @@ export async function receive(
       const senderId = event.sender?.id;
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
+
+      const webhookAttachments = message.attachments ?? [];
+      const imageAttachments = webhookAttachments
+        .filter((a: any) => a.type === "image" && a.payload?.url)
+        .map((a: any) => ({
+          url: a.payload.url as string,
+          mimeType: "image/jpeg", // webhook payloads don't explicitly specify mimeType, default to image/jpeg
+        }));
+
       try {
         await ctx.runMutation(internal.instagramWebhook.handleIncoming, {
           recipientIgUserId: recipientId,
@@ -52,6 +61,7 @@ export async function receive(
             typeof event.timestamp === "number"
               ? event.timestamp
               : Date.now(),
+          images: imageAttachments.length > 0 ? imageAttachments : undefined,
         });
       } catch (err) {
         console.error("Failed to persist Instagram message", err);
@@ -75,6 +85,14 @@ export const handleIncoming = internalMutation({
     externalId: v.string(),
     text: v.optional(v.string()),
     timestampMs: v.number(),
+    images: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        })
+      )
+    ),
   },
   handler: async (ctx, args) => {
     const existingMsg = await ctx.db
@@ -124,9 +142,10 @@ export const handleIncoming = internalMutation({
       contactAddress,
       direction: "incoming",
       content: args.text ?? "",
-      contentType: "text",
+      contentType: args.images && args.images.length > 0 ? "image" : "text",
       timestampMs: args.timestampMs,
       isHistorical: false,
+      images: args.images,
     });
   },
 });
@@ -140,7 +159,11 @@ type InstagramWebhookEnvelope = {
       sender?: { id?: string };
       recipient?: { id?: string };
       timestamp?: number;
-      message?: { mid?: string; text?: string };
+      message?: {
+        mid?: string;
+        text?: string;
+        attachments?: Array<{ type: string; payload?: { url?: string } }>;
+      };
     }>;
   }>;
 };

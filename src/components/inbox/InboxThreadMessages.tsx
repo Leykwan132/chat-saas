@@ -141,11 +141,19 @@ function InboxMessageAttachments({
             getMediaCategory(file) === 'image' &&
             Boolean(file.url);
 
+          const sizeClass =
+            files.length === 1
+              ? 'size-48'
+              : files.length === 2
+                ? 'size-32'
+                : 'size-24';
+
           return (
             <Attachment
               key={file.id}
               className={cn(
-                'size-48 max-w-[min(240px,100%)]',
+                sizeClass,
+                'max-w-[min(240px,100%)]',
                 isImage && 'cursor-zoom-in',
               )}
               data={file}
