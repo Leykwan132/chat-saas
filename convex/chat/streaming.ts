@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query, internalAction, internalMutation, internalQuery } from "../_generated/server";
 import { internal } from "../_generated/api";
-import type { Doc } from "../_generated/dataModel";
 import { components } from "../_generated/api";
 import {
   saveMessage,
@@ -161,11 +160,17 @@ export const generatePlaygroundResponseAsync = internalAction({
       { agentId: args.agentId },
     );
 
+    const conv = await ctx.runQuery(
+      internal.chat.streaming.internalGetConversationByThreadId,
+      { threadId: args.threadId },
+    );
+
     const configuredAgent = buildAgent(
       agent,
       args.agentId,
       args.enableCitations ?? false,
       mediaCollections,
+      conv?._id ?? undefined,
     );
     const result = await configuredAgent.streamText(
       ctx,
@@ -191,11 +196,6 @@ export const generatePlaygroundResponseAsync = internalAction({
       .at(-1);
 
     if (!savedAssistant) return;
-
-    const conv: Doc<"conversations"> | null = await ctx.runQuery(
-      internal.chat.streaming.internalGetConversationByThreadId,
-      { threadId: args.threadId },
-    );
 
     const usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
       workosUserId: args.billingUserId,

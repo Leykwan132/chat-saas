@@ -39,6 +39,12 @@ import {
 } from '@/lib/formatMessageTime';
 import type { InboxUIMessage } from '@/lib/inboxOptimistic';
 import { inboxMessageFrom } from '@/lib/inboxOptimistic';
+import {
+  getInboxAudioAttachments,
+  getInboxImageAttachments,
+  isInboxAudioPlaceholder,
+  isInboxImagePlaceholder,
+} from '../../../shared/inboxAttachments';
 import { cn } from '@/lib/utils';
 
 function getInboxMessageFileParts(
@@ -215,16 +221,50 @@ function InboxMessageBody({
   isPending: boolean;
 }) {
   const files = useMemo(() => getInboxMessageFileParts(message), [message]);
+  const audioAttachments = useMemo(
+    () => getInboxAudioAttachments(message),
+    [message],
+  );
+  const imageAttachments = useMemo(
+    () => getInboxImageAttachments(message),
+    [message],
+  );
   const audioFiles = useMemo(
-    () => files.filter((f) => f.type === 'file' && getMediaCategory(f) === 'audio'),
-    [files],
+    () =>
+      audioAttachments.map((file, index) => ({
+        type: 'file' as const,
+        url: file.url,
+        mediaType: file.mediaType,
+        id: `${message.key}-audio-${index}`,
+      })),
+    [audioAttachments, message.key],
+  );
+  const imageFiles = useMemo(
+    () =>
+      imageAttachments.map((file, index) => ({
+        type: 'file' as const,
+        url: file.url,
+        mediaType: file.mediaType,
+        id: `${message.key}-image-${index}`,
+      })),
+    [imageAttachments, message.key],
   );
   const otherFiles = useMemo(
-    () => files.filter((f) => !(f.type === 'file' && getMediaCategory(f) === 'audio')),
+    () =>
+      files.filter((f) => {
+        if (f.type !== 'file') return true;
+        const category = getMediaCategory(f);
+        return category !== 'audio' && category !== 'image';
+      }),
     [files],
   );
   const text = message.text?.trim() ?? '';
-  const showText = text.length > 0;
+  const isAudioPlaceholder = isInboxAudioPlaceholder(text);
+  const isImagePlaceholder = isInboxImagePlaceholder(text);
+  const showText =
+    text.length > 0 &&
+    !(isAudioPlaceholder && audioFiles.length > 0) &&
+    !(isImagePlaceholder && imageFiles.length > 0);
 
   return (
     <>
@@ -249,6 +289,9 @@ function InboxMessageBody({
           </AudioPlayerControlBar>
         </AudioPlayer>
       ))}
+      {imageFiles.length > 0 ? (
+        <InboxMessageAttachments files={imageFiles} isCustomer={isCustomer} />
+      ) : null}
       {otherFiles.length > 0 ? (
         <InboxMessageAttachments files={otherFiles} isCustomer={isCustomer} />
       ) : null}

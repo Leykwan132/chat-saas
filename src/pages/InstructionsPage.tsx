@@ -10,6 +10,7 @@ import {
   Check,
   Maximize2,
   Zap,
+  AlertTriangle,
 } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -20,6 +21,8 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Spinner } from '@/components/ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import {
   HoverCard,
   HoverCardContent,
@@ -161,8 +164,12 @@ export default function InstructionsPage() {
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
   const [model, setModel] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
+  const [escalationEnabled, setEscalationEnabled] = useState(false);
+  const [sendEscalationMsg, setSendEscalationMsg] = useState(false);
+  const [escalationMessage, setEscalationMessage] = useState('');
 
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingEscalation, setIsSavingEscalation] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isGoalExpanded, setIsGoalExpanded] = useState(false);
   const [replyMode, setReplyMode] = useState<ReplyMode>('automatic');
@@ -177,6 +184,9 @@ export default function InstructionsPage() {
     setTemplateKey(agent.templateKey);
     setModel(agent.model);
     setSystemPrompt(agent.systemPrompt);
+    setEscalationEnabled(agent.escalationEnabled ?? false);
+    setSendEscalationMsg(!!agent.escalationMessage);
+    setEscalationMessage(agent.escalationMessage ?? '');
   }, [agent]);
 
   useEffect(() => {
@@ -195,6 +205,8 @@ export default function InstructionsPage() {
         model,
         systemPrompt,
         templateKey,
+        escalationEnabled,
+        escalationMessage: sendEscalationMsg ? escalationMessage : undefined,
       });
       toast.success('Agent saved successfully');
     } catch (err) {
@@ -235,6 +247,36 @@ export default function InstructionsPage() {
     setReplyMode(routingSettings.aiEnabledOnInbound ? 'automatic' : 'manual');
   };
 
+  const handleSaveEscalation = async () => {
+    if (!selectedAgentId || !agent) return;
+    setIsSavingEscalation(true);
+    setError(null);
+    try {
+      await updateAgent({
+        agentId: selectedAgentId,
+        name,
+        model,
+        systemPrompt,
+        templateKey,
+        escalationEnabled,
+        escalationMessage: sendEscalationMsg ? escalationMessage : undefined,
+      });
+      toast.success('Escalation settings saved successfully');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to save escalation settings');
+      toast.error('Failed to save escalation settings');
+    } finally {
+      setIsSavingEscalation(false);
+    }
+  };
+
+  const handleResetEscalation = () => {
+    if (!agent) return;
+    setEscalationEnabled(agent.escalationEnabled ?? false);
+    setSendEscalationMsg(!!agent.escalationMessage);
+    setEscalationMessage(agent.escalationMessage ?? '');
+  };
+
   const handleReset = () => {
     if (!agent) return;
     setName(agent.name);
@@ -268,11 +310,16 @@ export default function InstructionsPage() {
     );
   }
 
-  const hasChanges =
+  const hasBasicChanges =
     name !== agent.name ||
     model !== agent.model ||
     templateKey !== agent.templateKey ||
     systemPrompt !== agent.systemPrompt;
+
+  const hasEscalationChanges =
+    escalationEnabled !== (agent.escalationEnabled ?? false) ||
+    sendEscalationMsg !== (!!agent.escalationMessage) ||
+    (sendEscalationMsg && escalationMessage !== (agent.escalationMessage ?? ''));
 
   const savedReplyMode: ReplyMode | null = routingSettings
     ? routingSettings.aiEnabledOnInbound
@@ -384,6 +431,7 @@ export default function InstructionsPage() {
                     })}
                   </div>
                 </div>
+                <Separator className="my-2" />
 
                 <div className="flex flex-col gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">
@@ -409,7 +457,7 @@ export default function InstructionsPage() {
                   </div>
                 </div>
 
-                {hasChanges && (
+                {hasBasicChanges && (
                   <div className="flex items-center justify-end gap-3 pt-2">
                     <Button
                       type="button"
@@ -435,96 +483,184 @@ export default function InstructionsPage() {
           </div>
         </div>
 
-        {/* Right Column: Triggers */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Zap className="size-4" />
-            <span>Triggers</span>
+        {/* Right Column: Triggers & Escalation */}
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Zap className="size-4" />
+              <span>Triggers</span>
+            </div>
+
+            {canReadRouting ? (
+              isRoutingSettingsLoading ? (
+                <div className="rounded-xl border border-border bg-card px-5 py-5">
+                  <div className="flex flex-col gap-4">
+                    <Skeleton className="h-12 w-full" />
+                    <Skeleton className="h-12 w-full" />
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border bg-card">
+                  <div className="px-5 py-5">
+                    <RadioGroup
+                      value={replyMode}
+                      onValueChange={(value) => setReplyMode(value as ReplyMode)}
+                      disabled={!canManageRouting || isSavingReplyMode}
+                      className="gap-4"
+                    >
+                      {REPLY_MODE_OPTIONS.map((option) => (
+                        <div key={option.value} className="flex items-start gap-3">
+                          <RadioGroupItem
+                            value={option.value}
+                            id={`reply-mode-${option.value}`}
+                            className="mt-1"
+                            disabled={!canManageRouting || isSavingReplyMode}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <label
+                              htmlFor={`reply-mode-${option.value}`}
+                              className={cn(
+                                'block cursor-pointer',
+                                (!canManageRouting || isSavingReplyMode) &&
+                                  'cursor-not-allowed opacity-60',
+                              )}
+                            >
+                              <span className="block text-base font-semibold leading-tight text-foreground">
+                                {option.label}
+                                {option.value === 'automatic' ? (
+                                  <span className="ml-1.5 font-normal text-muted-foreground">
+                                    [default]
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
+                                {option.description}
+                              </span>
+                            </label>
+                            <WhenToUseHoverCard useCases={option.whenToUse} />
+                          </div>
+                        </div>
+                      ))}
+                    </RadioGroup>
+
+                    {hasReplyModeChanges && canManageRouting ? (
+                      <div className="mt-4 flex items-center justify-end gap-3 border-t border-border/60 pt-4">
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto px-0 text-muted-foreground"
+                          disabled={isSavingReplyMode}
+                          onClick={handleResetReplyMode}
+                        >
+                          Reset
+                        </Button>
+                        <Button
+                          type="button"
+                          disabled={isSavingReplyMode}
+                          onClick={() => void handleSaveReplyMode()}
+                          className="px-5"
+                        >
+                          {isSavingReplyMode ? <Spinner className="size-4" /> : 'Save'}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              )
+            ) : (
+              <div className="rounded-xl border border-border bg-card px-5 py-5">
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  You don&apos;t have permission to view trigger settings for this agent.
+                </p>
+              </div>
+            )}
           </div>
 
-          {canReadRouting ? (
-            isRoutingSettingsLoading ? (
-              <div className="rounded-xl border border-border bg-card px-5 py-5">
-                <div className="flex flex-col gap-4">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border bg-card">
-                <div className="px-5 py-5">
-                  <RadioGroup
-                    value={replyMode}
-                    onValueChange={(value) => setReplyMode(value as ReplyMode)}
-                    disabled={!canManageRouting || isSavingReplyMode}
-                    className="gap-4"
-                  >
-                    {REPLY_MODE_OPTIONS.map((option) => (
-                      <div key={option.value} className="flex items-start gap-3">
-                        <RadioGroupItem
-                          value={option.value}
-                          id={`reply-mode-${option.value}`}
-                          className="mt-1"
-                          disabled={!canManageRouting || isSavingReplyMode}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <label
-                            htmlFor={`reply-mode-${option.value}`}
-                            className={cn(
-                              'block cursor-pointer',
-                              (!canManageRouting || isSavingReplyMode) &&
-                                'cursor-not-allowed opacity-60',
-                            )}
-                          >
-                            <span className="block text-base font-semibold leading-tight text-foreground">
-                              {option.label}
-                              {option.value === 'automatic' ? (
-                                <span className="ml-1.5 font-normal text-muted-foreground">
-                                  [default]
-                                </span>
-                              ) : null}
-                            </span>
-                            <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
-                              {option.description}
-                            </span>
-                          </label>
-                          <WhenToUseHoverCard useCases={option.whenToUse} />
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
+          {/* Human Escalation Category */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <AlertTriangle className="size-4" />
+              <span>Human Escalation</span>
+            </div>
 
-                  {hasReplyModeChanges && canManageRouting ? (
+            <div className="rounded-xl border border-border bg-card">
+              <div className="px-5 py-5">
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-sm font-semibold text-foreground">
+                        Smart Escalate
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Pause AI and alert your team when a human is requested or the AI is unsure.
+                      </span>
+                    </div>
+                    <Switch
+                      checked={escalationEnabled}
+                      onCheckedChange={setEscalationEnabled}
+                      className="data-[state=checked]:bg-emerald-600"
+                    />
+                  </div>
+
+                  {escalationEnabled && (
+                    <div className="space-y-4 pl-4 border-l-2 border-border/80">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-xs font-semibold text-foreground">
+                            Send automated message
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            Send a response to the customer when handoff is triggered.
+                          </span>
+                        </div>
+                        <Switch
+                          checked={sendEscalationMsg}
+                          onCheckedChange={setSendEscalationMsg}
+                          className="data-[state=checked]:bg-emerald-600"
+                        />
+                      </div>
+
+                      {sendEscalationMsg && (
+                        <div className="flex flex-col gap-2">
+                          <span className="text-xs font-semibold text-muted-foreground">
+                            Escalation Message
+                          </span>
+                          <textarea
+                            value={escalationMessage}
+                            onChange={(e) => setEscalationMessage(e.target.value)}
+                            placeholder="e.g., We've notified our support team and a human agent will be with you shortly."
+                            className="min-h-[4rem] resize-none rounded-lg border border-border bg-background px-3 py-2 text-xs leading-normal outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/30"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {hasEscalationChanges && (
                     <div className="mt-4 flex items-center justify-end gap-3 border-t border-border/60 pt-4">
                       <Button
                         type="button"
                         variant="link"
                         className="h-auto px-0 text-muted-foreground"
-                        disabled={isSavingReplyMode}
-                        onClick={handleResetReplyMode}
+                        disabled={isSavingEscalation}
+                        onClick={handleResetEscalation}
                       >
                         Reset
                       </Button>
                       <Button
                         type="button"
-                        disabled={isSavingReplyMode}
-                        onClick={() => void handleSaveReplyMode()}
+                        disabled={isSavingEscalation || (sendEscalationMsg && !escalationMessage.trim())}
+                        onClick={() => void handleSaveEscalation()}
                         className="px-5"
                       >
-                        {isSavingReplyMode ? <Spinner className="size-4" /> : 'Save'}
+                        {isSavingEscalation ? <Spinner className="size-4" /> : 'Save'}
                       </Button>
                     </div>
-                  ) : null}
+                  )}
                 </div>
               </div>
-            )
-          ) : (
-            <div className="rounded-xl border border-border bg-card px-5 py-5">
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                You don&apos;t have permission to view trigger settings for this agent.
-              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
 

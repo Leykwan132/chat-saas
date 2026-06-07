@@ -1,4 +1,4 @@
-import { Pin, PinOff, Image as ImageIcon, Volume2 } from 'lucide-react';
+import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
@@ -42,9 +42,10 @@ export type Chat = {
   platform: ConversationPlatform;
   requiresAction: boolean;
   /** Inbox row status; used for label filter on Chats page. */
-  conversationStatus: 'open' | 'snoozed' | 'closed';
+  conversationStatus: 'open' | 'snoozed' | 'closed' | 'requires_user_input';
   tags?: string[];
   leadTemperature?: 'Hot' | 'Warm' | 'Cold';
+  escalation?: { question: string; context: string; escalatedAt: number };
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
@@ -132,9 +133,19 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
-            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0)) && (
+            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0) || chat.escalation) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {chat.escalation && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-semibold text-amber-700 dark:text-amber-400 transition-all shadow-none"
+                    >
+                      <AlertCircle className="size-2.5 shrink-0 text-amber-500" />
+                      <span className="max-w-[70px] truncate" title="Escalated to human">
+                        Escalated
+                      </span>
+                    </span>
+                  )}
                   {chat.leadTemperature && (() => {
                     const style = getLeadTemperatureStyle(chat.leadTemperature);
                     const Icon = style.icon;

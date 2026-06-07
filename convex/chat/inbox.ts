@@ -7,6 +7,7 @@ import {
   internalQuery,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
+import { inboxPromptContent } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
@@ -91,7 +92,11 @@ export const internalIngestChannelMessage = internalMutation({
       internal.chat.inbox.generateAiReplyWorker,
       {
         conversationId: result.conversationId,
-        promptContent: args.content.trim(),
+        promptContent: inboxPromptContent(
+          args.content,
+          args.images,
+          args.files,
+        ),
         promptMessageId: result.agentMessageId,
       },
     );
@@ -214,6 +219,10 @@ export const internalPersistHumanReply = internalMutation({
     };
     if (preview && preview.trim() !== "") {
       patch.lastMessagePreview = preview;
+    }
+    if (conv.status === "requires_user_input") {
+      patch.status = "open";
+      patch.escalation = undefined;
     }
     await ctx.db.patch(conv._id, patch);
 
@@ -358,6 +367,45 @@ export const internalPersistAiMediaReply = internalMutation({
   },
 });
 
+export const internalEscalateConversation = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    question: v.string(),
+    context: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv?.assignedAgentId) return;
+
+    const agent = await ctx.db.get(conv.assignedAgentId);
+    const escalationMessage = agent?.escalationMessage?.trim();
+    if (!agent?.escalationEnabled || !escalationMessage) {
+      return;
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(args.conversationId, {
+      status: "requires_user_input",
+      assignToAiAgent: false,
+      escalation: {
+        question: args.question,
+        context: args.context,
+        escalatedAt: now,
+      },
+      updatedAt: now,
+    });
+
+    await ctx.scheduler.runAfter(
+      0,
+      internal.chat.inboxActions.internalSendEscalationMessage,
+      {
+        conversationId: args.conversationId,
+        content: escalationMessage,
+      },
+    );
+  },
+});
+
 export const generateAiReplyWorker = internalAction({
   args: {
     conversationId: v.id("conversations"),
@@ -419,6 +467,7 @@ export const generateAiReplyWorker = internalAction({
       conv.assignedAgentId,
       false,
       mediaCollections,
+      conv._id,
     );
     const result = await configuredAgent.generateText(
       ctx,
@@ -428,6 +477,17 @@ export const generateAiReplyWorker = internalAction({
         : { prompt: args.promptContent },
       { storageOptions: { saveMessages: "none" } },
     );
+
+    const convAfterGeneration = await ctx.runQuery(
+      internal.chat.inbox.internalGetConversation,
+      { conversationId: args.conversationId },
+    );
+    if (
+      convAfterGeneration?.status === "requires_user_input" &&
+      convAfterGeneration.escalation
+    ) {
+      return;
+    }
 
     const replyText = result.text.trim();
     if (!replyText) return;
@@ -604,12 +664,42 @@ export const internalUpdateThreadSummary = internalMutation({
 
     await ctx.db.patch(args.conversationId, {
       interactionSummary: args.summary,
+      summaryGenerationError: undefined,
       updatedAt: Date.now(),
     });
 
     await updateThreadMetadata(ctx, components.agent, {
       threadId: conv.threadId,
       patch: { summary: args.summary },
+    });
+  },
+});
+
+export const internalSetThreadSummaryError = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    error: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) return;
+
+    await ctx.db.patch(args.conversationId, {
+      summaryGenerationError: args.error.trim(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
+export const internalClearThreadSummaryError = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) return;
+
+    await ctx.db.patch(args.conversationId, {
+      summaryGenerationError: undefined,
+      updatedAt: Date.now(),
     });
   },
 });
@@ -634,6 +724,10 @@ export const triggerSummarization = mutation({
       throw new Error("Conversation not found");
     }
 
+    await ctx.runMutation(internal.chat.inbox.internalClearThreadSummaryError, {
+      conversationId: args.conversationId,
+    });
+
     await threadSummarizerPool.enqueueAction(
       ctx,
       internal.chat.inbox.summarizeThreadWorker,
@@ -653,11 +747,21 @@ export const summarizeThreadWorker = internalAction({
     );
     if (conv === null) return;
 
+    const failSummary = async (error: string) => {
+      await ctx.runMutation(internal.chat.inbox.internalSetThreadSummaryError, {
+        conversationId: args.conversationId,
+        error,
+      });
+    };
+
     const messages = await ctx.runQuery(
       internal.chat.inbox.internalGetMessagesForSummary,
       { conversationId: args.conversationId },
     );
-    if (messages.length === 0) return;
+    if (messages.length === 0) {
+      await failSummary("Not enough messages to generate a summary.");
+      return;
+    }
 
     const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
       workosOrgId: conv.orgId,
@@ -668,6 +772,7 @@ export const summarizeThreadWorker = internalAction({
         orgId: conv.orgId,
         plan: stripeInfo.plan,
       });
+      await failSummary("Thread summary is not available on your plan.");
       return;
     }
 
@@ -744,6 +849,8 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
             summary,
           },
         );
+      } else {
+        await failSummary("Could not generate a summary from this conversation.");
       }
       // Update the customer's lead temperature tag.
       if (conv.customerId && leadTemperature) {
@@ -758,6 +865,7 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
       }
     } catch (error) {
       console.error("Failed to generate thread summary:", error);
+      await failSummary("Failed to generate summary. Please try again.");
     }
   },
 });

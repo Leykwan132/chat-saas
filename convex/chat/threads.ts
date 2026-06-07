@@ -13,6 +13,13 @@ import { openRouterModel } from "../llm/openRouter";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import {
+  INBOX_AUDIO_PLACEHOLDER,
+  INBOX_IMAGE_PLACEHOLDER,
+  inboxAttachmentsProviderMetadata,
+  toInboxAttachments,
+  type InboxAttachment,
+} from "../../shared/inboxAttachments";
+import {
   INBOX_ORDER_SPACER_TEXT,
   type InboxOutboundMeta,
 } from "./inboxMessageMapping";
@@ -71,45 +78,40 @@ export async function saveUserMessage(
   content: string,
   sentAt: number = Date.now(),
   images?: Array<{ url: string; mimeType: string }>,
-  audios?: Array<{ url: string; mimeType: string }>,
+  files?: Array<{ url: string; mimeType: string }>,
 ): Promise<string> {
-  const hasImages = images && images.length > 0;
-  const hasAudios = audios && audios.length > 0;
+  const audioFiles = files ?? [];
+  const hasImages = images !== undefined && images.length > 0;
+  const hasAudio = audioFiles.length > 0;
+  const trimmed = content.trim();
 
-  let messageContent: any = content;
+  let messageContent = trimmed;
+  const metadata: Record<string, unknown> = { sentAt };
 
-  if (hasImages || hasAudios) {
-    const parts: any[] = [];
-    if (hasImages) {
-      parts.push(
-        ...images.map((img) => ({
-          type: "image" as const,
-          image: img.url,
-          mediaType: img.mimeType,
-          mimeType: img.mimeType,
-        }))
-      );
+  if (hasImages || hasAudio) {
+    if (trimmed.length > 0) {
+      messageContent = trimmed;
+    } else if (hasImages && hasAudio) {
+      messageContent = `${INBOX_IMAGE_PLACEHOLDER}\n${INBOX_AUDIO_PLACEHOLDER}`;
+    } else if (hasImages) {
+      messageContent = INBOX_IMAGE_PLACEHOLDER;
+    } else {
+      messageContent = INBOX_AUDIO_PLACEHOLDER;
     }
-    if (hasAudios) {
-      parts.push(
-        ...audios.map((aud) => ({
-          type: "file" as const,
-          data: aud.url,
-          mediaType: aud.mimeType,
-          mimeType: aud.mimeType,
-        }))
-      );
-    }
-    if (content.trim().length > 0) {
-      parts.push({ type: "text" as const, text: content.trim() });
-    }
-    messageContent = parts;
+  }
+
+  const attachmentMetadata = inboxAttachmentsProviderMetadata({
+    audio: hasAudio ? audioFiles : undefined,
+    images: hasImages ? images : undefined,
+  });
+  if (attachmentMetadata) {
+    metadata.providerMetadata = attachmentMetadata;
   }
 
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId,
     message: { role: "user", content: messageContent },
-    metadata: { sentAt } as Record<string, unknown>,
+    metadata,
   });
   return messageId;
 }
@@ -122,66 +124,35 @@ export async function saveUserMessage(
  */
 type HumanReplyImage = { url: string; mimeType: string };
 
-type HumanReplyMultimodalContent = Array<
-  { type: "text"; text: string } | { type: "file"; data: string; mediaType: string }
->;
-
-function buildHumanReplyTextAndImagesContent(
-  text: string,
-  images: HumanReplyImage[],
-): HumanReplyMultimodalContent {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    throw new Error("Text is required when saving text and images together");
-  }
-  if (images.length === 0) {
-    throw new Error("At least one image is required when saving text and images together");
-  }
-
-  const imageParts = images.map((img) => ({
-    type: "file" as const,
-    data: img.url,
-    mediaType: img.mimeType,
-  }));
-
-  return [{ type: "text" as const, text: trimmed }, ...imageParts];
-}
-
 function buildHumanReplyContent(
   text: string,
   images: HumanReplyImage[],
-  audios: Array<{ url: string; mimeType: string }> = [],
-): string | HumanReplyMultimodalContent {
+  files: Array<{ url: string; mimeType: string }> = [],
+): string {
   const trimmed = text.trim();
-  const imageParts = images.map((img) => ({
-    type: "file" as const,
-    data: img.url,
-    mediaType: img.mimeType,
-  }));
-  const audioParts = audios.map((aud) => ({
-    type: "file" as const,
-    data: aud.url,
-    mediaType: aud.mimeType,
-  }));
-
-  const fileParts = [...imageParts, ...audioParts];
-
-  if (fileParts.length === 0) {
+  if (images.length === 0 && files.length === 0) {
     return trimmed;
   }
-  if (trimmed.length === 0) {
-    return fileParts;
+  if (trimmed.length > 0) {
+    return trimmed;
   }
-  return buildHumanReplyTextAndImagesContent(trimmed, images);
+  if (images.length > 0 && files.length > 0) {
+    return `${INBOX_IMAGE_PLACEHOLDER}\n${INBOX_AUDIO_PLACEHOLDER}`;
+  }
+  if (images.length > 0) {
+    return INBOX_IMAGE_PLACEHOLDER;
+  }
+  return INBOX_AUDIO_PLACEHOLDER;
 }
 
 async function saveAssistantWithOwnOrder(
   ctx: MutationCtx,
   args: {
     threadId: string;
-    content: string | HumanReplyMultimodalContent;
+    content: string;
     sentAt: number;
     outbound: InboxOutboundMeta;
+    inboxAttachments?: InboxAttachment[];
     messageMetadata?: Record<string, unknown>;
   },
 ): Promise<string> {
@@ -200,16 +171,21 @@ async function saveAssistantWithOwnOrder(
       ? "human"
       : "channel";
 
-  const providerMetadata = args.outbound.sentByAi
-    ? { ai: { agentName: args.outbound.agentName } }
-    : args.outbound.authorUserId
-      ? {
-          human: {
-            userId: args.outbound.authorUserId,
-            username: args.outbound.authorName,
-          },
-        }
-      : { channel: { name: args.outbound.channelName ?? args.outbound.agentName } };
+  const providerMetadata = {
+    ...(args.outbound.sentByAi
+      ? { ai: { agentName: args.outbound.agentName } }
+      : args.outbound.authorUserId
+        ? {
+            human: {
+              userId: args.outbound.authorUserId,
+              username: args.outbound.authorName,
+            },
+          }
+        : { channel: { name: args.outbound.channelName ?? args.outbound.agentName } }),
+    ...(args.inboxAttachments?.length
+      ? { inbox: { attachments: args.inboxAttachments } }
+      : {}),
+  };
 
   const { messageId } = await saveMessage(ctx, components.agent, {
     threadId: args.threadId,
@@ -221,7 +197,7 @@ async function saveAssistantWithOwnOrder(
       inboxOutbound: args.outbound,
       provider,
       providerMetadata,
-      ...args.messageMetadata,
+      ...(args.messageMetadata ?? {}),
     } as Record<string, unknown>,
   });
   return messageId;
@@ -236,13 +212,13 @@ export async function saveHumanReply(
     authorUserId?: string;
     sentAt?: number;
     images?: HumanReplyImage[];
-    audios?: Array<{ url: string; mimeType: string }>;
+    files?: Array<{ url: string; mimeType: string }>;
     authorName?: string;
     channelName?: string;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
-  const replyContent = buildHumanReplyContent(content, opts.images ?? [], opts.audios ?? []);
+  const replyContent = buildHumanReplyContent(content, opts.images ?? [], opts.files ?? []);
 
   let authorName = opts.authorName;
   if (authorName === undefined && opts.authorUserId !== undefined) {
@@ -265,10 +241,17 @@ export async function saveHumanReply(
       ...(authorName !== undefined ? { authorName } : {}),
       ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
     },
+    inboxAttachments:
+      (opts.files?.length ?? 0) > 0 || (opts.images?.length ?? 0) > 0
+        ? toInboxAttachments({
+            audio: opts.files,
+            images: opts.images,
+          })
+        : undefined,
   });
 }
 
-/** One agent-thread message with image file part(s) and text (inbox caption + attachments). */
+/** Outbound human reply with caption text and image attachments in inbox metadata. */
 export async function saveHumanReplyTextAndImages(
   ctx: MutationCtx,
   threadId: string,
@@ -284,7 +267,13 @@ export async function saveHumanReplyTextAndImages(
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
-  const replyContent = buildHumanReplyTextAndImagesContent(text, images);
+  const trimmed = text.trim();
+  if (!trimmed) {
+    throw new Error("Text is required when saving text and images together");
+  }
+  if (images.length === 0) {
+    throw new Error("At least one image is required when saving text and images together");
+  }
   const sentAt = opts.sentAt ?? Date.now();
 
   let authorName = opts.authorName;
@@ -297,7 +286,7 @@ export async function saveHumanReplyTextAndImages(
 
   return await saveAssistantWithOwnOrder(ctx, {
     threadId,
-    content: replyContent,
+    content: trimmed,
     sentAt,
     outbound: {
       agentName,
@@ -308,6 +297,7 @@ export async function saveHumanReplyTextAndImages(
       ...(authorName !== undefined ? { authorName } : {}),
       ...(opts.channelName !== undefined ? { channelName: opts.channelName } : {}),
     },
+    inboxAttachments: toInboxAttachments({ images }),
     messageMetadata:
       opts.clientIds !== undefined && opts.clientIds.length > 0
         ? { clientIds: opts.clientIds }
@@ -341,12 +331,18 @@ export async function saveAiReply(
 export { inferMediaMimeType } from "./mediaUrlExtractor";
 
 export function buildAgent(
-  agent: { name: string; model: string; systemPrompt: string },
+  agent: { name: string; model: string; systemPrompt: string; escalationEnabled?: boolean; escalationMessage?: string },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
   mediaCollections: string[] = [],
+  conversationId?: Id<"conversations">,
 ) {
-  const tools = {
+  const escalationConfigured =
+    agent.escalationEnabled === true &&
+    typeof agent.escalationMessage === "string" &&
+    agent.escalationMessage.trim().length > 0;
+
+  const tools: Record<string, any> = {
     fetchContext: createTool({
       description:
         "MUST be called before answering ANY user question. Searches the knowledge base (uploaded documents, Q&A pairs, web references) for relevant context. Always call this first — even if you think you know the answer.",
@@ -377,6 +373,27 @@ export function buildAgent(
     }),
   };
 
+  if (escalationConfigured) {
+    tools.escalateToHuman = createTool({
+      description:
+        "Call this tool if you lack confidence in answering the user's question, do not have enough details to answer, or if the user explicitly requests a human agent. Do NOT send any message to the user when escalating — call this tool only. This will pause your automated responses and alert a human teammate to take over.",
+      inputSchema: z.object({
+        question: z.string().describe("The exact user question or issue you are unsure of or lack detail to answer."),
+        context: z.string().describe("The reason or context explaining why you are unsure, what detail is missing, or why the conversation needs a human."),
+      }),
+      execute: async (ctx, { question, context }) => {
+        if (conversationId) {
+          await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
+            conversationId,
+            question,
+            context,
+          });
+        }
+        return { success: true, message: "Escalated to human. Automated responses are paused." };
+      },
+    });
+  }
+
   const citationBlock = enableCitations
     ? `\n\nWhen responding, include:
 - A comprehensive paragraph with inline citations marked as [1], [2], etc.
@@ -402,13 +419,27 @@ Do NOT fabricate clientIds or URLs. Only use clientIds returned by the \`sendMed
 If \`sendMedia\` returns assets for a matching collection, that counts as a successful answer — never say you couldn't find anything.`
     : "";
 
-  const toneBlock = `\n\n## Tone
+  const toneBlock = escalationConfigured
+    ? `\n\n## Tone
+- Be warm, friendly, and conversational — like a helpful colleague, not a robot or search engine.
+- Use natural, approachable phrasing. Brief is fine, but never sound cold, stiff, or overly formal.
+- When you can help, sound glad to assist.
+- Friendliness comes from how you say things, not from adding extra facts you don't have.`
+    : `\n\n## Tone
 - Be warm, friendly, and conversational — like a helpful colleague, not a robot or search engine.
 - Use natural, approachable phrasing. Brief is fine, but never sound cold, stiff, or overly formal.
 - When you can help, sound glad to assist. When you can't, say so kindly (e.g. "Sorry, I'm not sure about that" or "I don't have that info — let me know if there's something else I can help with").
 - Friendliness comes from how you say things, not from adding extra facts you don't have.`;
 
-  const groundingBlock = `\n\n## Grounding — REQUIRED
+  const groundingBlock = escalationConfigured
+    ? `\n\n## Grounding — REQUIRED
+- Only state facts that come directly from \`fetchContext\` results or explicit tool metadata (collection name, filename, etc.).
+- Do NOT invent details, generic explanations, or filler about attachments or topics.
+- Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
+- Do NOT pad responses with obvious or generic statements. Prefer short, direct replies.
+- Never mention internal tools, searches, or a "knowledge base" to the user.
+- If tools returned nothing useful for the user's question, do NOT reply to the user. Call \`escalateToHuman\` instead. Never tell the user you don't know or ask if there is something else you can help with.`
+    : `\n\n## Grounding — REQUIRED
 - Only state facts that come directly from \`fetchContext\` results or explicit tool metadata (collection name, filename, etc.).
 - Do NOT invent details, generic explanations, or filler about attachments or topics.
 - Do NOT describe media contents, room layouts, dimensions, benefits, or implications unless \`fetchContext\` provided that information.
@@ -416,18 +447,28 @@ If \`sendMedia\` returns assets for a matching collection, that counts as a succ
 - Never mention internal tools, searches, or a "knowledge base" to the user.
 - If tools returned nothing useful, reply briefly and honestly — but stay friendly. Do not guess or elaborate.`;
 
+  const escalationBlock = escalationConfigured
+    ? `\n\n## Escalating to a Human Teammate
+You have an \`escalateToHuman\` tool. If you lack confidence, do not have enough detail in your knowledge base to answer, or if the user specifically asks to speak to a human, you MUST call this tool instead of replying to the user. Explain exactly what the user is asking and why you cannot answer it in the tool parameters. This will pause your automated responses and notify a teammate.
+NEVER respond with phrases like "I don't have that information", "I'm not sure", or "let me know if there's something else I can help with" when you cannot answer. Escalate instead and send no user-facing reply.`
+    : "";
+
+  const noContextFallback = escalationConfigured
+    ? "call \`escalateToHuman\` with the user's question and explain what information was missing. Do NOT send any message to the user."
+    : "give a short, natural reply that you don't have that information";
+
   const toolSteps = mediaCollections.length > 0
     ? `  ### Steps for every response:
   1. Call \`fetchContext\` with the user's original query
   2. If the question matches an available media collection, call \`sendMedia\` with the exact collection name
   3. Read the returned context and any media assets carefully
   4. Reply using ONLY what the tools returned. If only media was found, send it with a brief, friendly label — nothing more.
-  5. Only if BOTH \`fetchContext\` returned nothing relevant AND \`sendMedia\` returned no matching assets: give a short, natural reply that you don't have that information`
+  5. Only if BOTH \`fetchContext\` returned nothing relevant AND \`sendMedia\` returned no matching assets: ${noContextFallback}`
     : `  ### Steps for every response:
   1. Call \`fetchContext\` with the user's original query
   2. Read the returned context carefully
   3. If relevant context is found: answer using only that context
-  4. If no relevant context is found: give a short, natural reply that you don't have that information. Do not guess or add filler`;
+  4. If no relevant context is found: ${noContextFallback}. Do not guess or add filler`;
 
   const instructions = `${agent.systemPrompt}
 
@@ -435,7 +476,7 @@ If \`sendMedia\` returns assets for a matching collection, that counts as a succ
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
 
 ${toolSteps}${toneBlock}${groundingBlock}
-  ${citationBlock}${mediaBlock}`;
+  ${citationBlock}${mediaBlock}${escalationBlock}`;
 
   return new Agent(components.agent, {
     name: agent.name,
@@ -503,6 +544,7 @@ const contentTypeValidator = v.union(
   v.literal("text"),
   v.literal("image"),
   v.literal("audio"),
+  v.literal("file"),
   v.literal("video"),
   v.literal("document"),
   v.literal("unknown"),
@@ -537,7 +579,7 @@ export const ingestChannelMessageArgs = {
       })
     )
   ),
-  audios: v.optional(
+  files: v.optional(
     v.array(
       v.object({
         url: v.string(),
@@ -564,7 +606,7 @@ export type IngestChannelMessageArgs = {
   humanAgentName?: string;
   metaConversationId?: string;
   images?: Array<{ url: string; mimeType: string }>;
-  audios?: Array<{ url: string; mimeType: string }>;
+  files?: Array<{ url: string; mimeType: string }>;
 };
 
 export async function ingestChannelMessage(
@@ -622,13 +664,13 @@ export async function ingestChannelMessage(
 
   const trimmedContent = args.content.trim();
   const images = args.images ?? [];
-  const audios = args.audios ?? [];
+  const files = args.files ?? [];
   const preview =
     trimmedContent.length > 0
       ? trimmedContent.slice(0, 140)
       : images.length > 0
         ? "Image"
-        : audios.length > 0
+        : files.length > 0
           ? "Audio"
           : "";
 
@@ -649,7 +691,7 @@ export async function ingestChannelMessage(
   });
 
   let agentMessageId: string | undefined;
-  if (trimmedContent.length > 0 || images.length > 0 || audios.length > 0) {
+  if (trimmedContent.length > 0 || images.length > 0 || files.length > 0) {
     if (args.direction === "incoming") {
       agentMessageId = await saveUserMessage(
         ctx,
@@ -657,7 +699,7 @@ export async function ingestChannelMessage(
         trimmedContent,
         args.timestampMs,
         images,
-        audios,
+        files,
       );
     } else {
       const conv = await ctx.db.get(conversationId);
@@ -666,7 +708,7 @@ export async function ingestChannelMessage(
         authorUserId: args.authorUserId,
         sentAt: args.timestampMs,
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
-        audios: audios.map(aud => ({ url: aud.url, mimeType: aud.mimeType })),
+        files: files.map(file => ({ url: file.url, mimeType: file.mimeType })),
         channelName: args.humanAgentName,
       });
     }
@@ -695,8 +737,8 @@ export async function ingestChannelMessage(
     }
   }
 
-  if (audios.length > 0) {
-    for (const aud of audios) {
+  if (files.length > 0) {
+    for (const file of files) {
       await ctx.db.insert("messages", {
         orgId: channel.orgId,
         conversationId,
@@ -707,9 +749,9 @@ export async function ingestChannelMessage(
         contactAddress: args.contactAddress,
         direction: args.direction,
         authorUserId: args.authorUserId,
-        contentType: "audio",
-        content: aud.url,
-        mediaUrl: aud.url,
+        contentType: "file",
+        content: file.url,
+        mediaUrl: file.url,
         agentMessageId,
         status: args.direction === "outgoing" ? "sent" : undefined,
         createdAt: now,
@@ -717,7 +759,7 @@ export async function ingestChannelMessage(
     }
   }
 
-  if (trimmedContent.length > 0 || (images.length === 0 && audios.length === 0)) {
+  if (trimmedContent.length > 0 || (images.length === 0 && files.length === 0)) {
     await ctx.db.insert("messages", {
       orgId: channel.orgId,
       conversationId,
@@ -747,7 +789,7 @@ export async function ingestChannelMessage(
     shouldEnqueueAi:
       !args.isHistorical &&
       args.direction === "incoming" &&
-      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0 || audios.length > 0)),
+      Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0 || files.length > 0)),
     isNew,
     agentMessageId,
   };

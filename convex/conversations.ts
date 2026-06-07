@@ -199,10 +199,15 @@ async function setConversationAiEnabledHandler(
   if (conv === null || conv.orgId !== orgId) {
     throw new Error("Conversation not found");
   }
-  await ctx.db.patch(conversationId, {
+  const patch: Record<string, any> = {
     assignToAiAgent: enabled,
     updatedAt: Date.now(),
-  });
+  };
+  if (enabled && conv.status === "requires_user_input") {
+    patch.status = "open";
+    patch.escalation = undefined;
+  }
+  await ctx.db.patch(conversationId, patch);
 }
 
 async function setConversationLeadOwnerHandler(
@@ -326,6 +331,7 @@ export const setInteractionSummary = mutation({
     const trimmed = args.summary.trim().slice(0, MAX_INTERACTION_SUMMARY_LENGTH);
     await ctx.db.patch(args.conversationId, {
       interactionSummary: trimmed.length > 0 ? trimmed : undefined,
+      summaryGenerationError: undefined,
       updatedAt: Date.now(),
     });
     await updateThreadMetadata(ctx, components.agent, {
@@ -341,16 +347,47 @@ export const getThreadSummary = query({
     const { orgId } = await getAuthContext(ctx);
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== orgId) {
-      return null;
+      return { summary: null, error: null };
     }
     try {
       const metadata = await getThreadMetadata(ctx, components.agent, {
         threadId: conv.threadId,
       });
-      return metadata.summary ?? null;
+      const summary =
+        (typeof metadata.summary === "string" ? metadata.summary : null) ??
+        conv.interactionSummary ??
+        null;
+      const error = conv.summaryGenerationError?.trim() || null;
+      return { summary, error };
     } catch (e) {
       console.error("Failed to fetch thread metadata summary", e);
-      return conv.interactionSummary ?? null;
+      return {
+        summary: conv.interactionSummary ?? null,
+        error: conv.summaryGenerationError?.trim() || null,
+      };
     }
+  },
+});
+
+export const resolveEscalation = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+
+    if (conv.status !== "requires_user_input" && !conv.escalation) {
+      return;
+    }
+
+    await ctx.db.patch(args.conversationId, {
+      status: "open",
+      escalation: undefined,
+      updatedAt: Date.now(),
+    });
   },
 });

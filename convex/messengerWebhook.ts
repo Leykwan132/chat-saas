@@ -2,6 +2,10 @@ import { v } from "convex/values";
 import { internalMutation, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { messengerSyncPool } from "./channelSyncPools";
+import {
+  resolveInboxLedgerContentType,
+  resolveWebhookAudioFiles,
+} from "./chat/inboxAudioIngest";
 
 // POST handler for the `object: "page"` branch of /webhook/meta.
 //
@@ -50,12 +54,7 @@ export async function receive(
           url: a.payload.url as string,
           mimeType: "image/jpeg", // webhook payloads don't explicitly specify mimeType, default to image/jpeg
         }));
-      const audioAttachments = webhookAttachments
-        .filter((a: any) => a.type === "audio" && a.payload?.url)
-        .map((a: any) => ({
-          url: a.payload.url as string,
-          mimeType: "audio/ogg", // webhook payloads don't explicitly specify mimeType, default to audio/ogg
-        }));
+      const audioAttachments = resolveWebhookAudioFiles(webhookAttachments);
 
       try {
         await ctx.runMutation(internal.messengerWebhook.handleIncoming, {
@@ -69,7 +68,7 @@ export async function receive(
               ? event.timestamp
               : Date.now(),
           images: imageAttachments.length > 0 ? imageAttachments : undefined,
-          audios: audioAttachments.length > 0 ? audioAttachments : undefined,
+          files: audioAttachments.length > 0 ? audioAttachments : undefined,
         });
       } catch (err) {
         console.error("Failed to persist Messenger message", err);
@@ -100,7 +99,7 @@ export const handleIncoming = internalMutation({
         })
       )
     ),
-    audios: v.optional(
+    files: v.optional(
       v.array(
         v.object({
           url: v.string(),
@@ -155,24 +154,24 @@ export const handleIncoming = internalMutation({
       );
     }
 
-    let contentType: "text" | "image" | "audio" | "video" | "document" | "unknown" = "text";
-    if (args.audios && args.audios.length > 0) {
-      contentType = "audio";
-    } else if (args.images && args.images.length > 0) {
-      contentType = "image";
-    }
+    const content = args.text ?? "";
+    const contentType = resolveInboxLedgerContentType(
+      content,
+      args.images,
+      args.files,
+    );
 
     await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
       externalId: args.externalId,
       contactAddress,
       direction: "incoming",
-      content: args.text ?? "",
+      content,
       contentType,
       timestampMs: args.timestampMs,
       isHistorical: false,
       images: args.images,
-      audios: args.audios,
+      files: args.files,
     });
   },
 });

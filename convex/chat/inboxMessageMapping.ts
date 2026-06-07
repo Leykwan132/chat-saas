@@ -3,6 +3,8 @@ import type { MessageDoc } from "@convex-dev/agent";
 import type { UIMessage } from "@convex-dev/agent/react";
 import type { Id, Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
+import type { InboxAttachment } from "../../shared/inboxAttachments";
+import { readInboxAttachmentsFromProviderMetadata } from "../../shared/inboxAttachments";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -38,6 +40,9 @@ export type InboxMessageMetadata = {
     human?: HumanProviderMetadata;
     ai?: AIProviderMetadata;
     channel?: ChannelProviderMetadata;
+    inbox?: {
+      attachments: InboxAttachment[];
+    };
   };
   llmModel?: string;
   creditsCharged?: number;
@@ -45,6 +50,7 @@ export type InboxMessageMetadata = {
 
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
+  inboxAttachments?: InboxAttachment[];
 };
 
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
@@ -132,6 +138,10 @@ function resolveSentAt(
   return doc._creationTime;
 }
 
+function readInboxAttachments(doc: MessageDoc): InboxAttachment[] | undefined {
+  return readInboxAttachmentsFromProviderMetadata(doc.providerMetadata);
+}
+
 /** One MessageDoc → one UIMessage (avoids merging consecutive assistant rows). */
 export async function messageDocsToInboxUIMessages(
   ctx: QueryCtx,
@@ -192,12 +202,14 @@ export async function messageDocsToInboxUIMessages(
       const sentByAi = resolveSentByAi(doc, ui.role);
       const agentName = resolveAgentName(doc, ui.role, fallbackChannelName, userIdToName);
       const sentAt = resolveSentAt(doc, sentAtByAgentMessageId);
+      const inboxAttachments = readInboxAttachments(doc);
       return [
         {
           ...ui,
           _creationTime: sentAt,
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
+          ...(inboxAttachments !== undefined ? { inboxAttachments } : {}),
         },
       ];
     });

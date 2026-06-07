@@ -1,14 +1,25 @@
 import type { UIMessage } from '@convex-dev/agent/react';
-import { isFileUIPart } from 'ai';
+import {
+  getInboxAudioAttachments,
+  getInboxImageAttachments,
+  isInboxAudioPlaceholder,
+  isInboxImagePlaceholder,
+  type InboxAttachment,
+} from '../../shared/inboxAttachments';
 
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
+  inboxAttachments?: InboxAttachment[];
 };
 
 export function hasVisibleInboxContent(message: InboxUIMessage): boolean {
-  if ((message.text?.trim() ?? '').length > 0) return true;
-  return (message.parts ?? []).some(
-    (part) => isFileUIPart(part) && Boolean(part.url),
+  if (getInboxAudioAttachments(message).length > 0) return true;
+  if (getInboxImageAttachments(message).length > 0) return true;
+  const text = message.text?.trim() ?? '';
+  return (
+    text.length > 0 &&
+    !isInboxAudioPlaceholder(text) &&
+    !isInboxImagePlaceholder(text)
   );
 }
 import type { OptimisticLocalStore } from 'convex/browser';

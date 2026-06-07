@@ -150,6 +150,8 @@ export const create = mutation({
     templateKey: templateKeyValidator,
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
+    escalationEnabled: v.optional(v.boolean()),
+    escalationMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { userId, orgId, permissions } = await getAuthContext(ctx);
@@ -192,6 +194,8 @@ export const create = mutation({
       fileSize: 0,
       userId,
       orgId,
+      escalationEnabled: args.escalationEnabled ?? false,
+      escalationMessage: args.escalationMessage,
       createdAt: now,
       updatedAt: now,
     });
@@ -213,6 +217,8 @@ export const update = mutation({
     templateKey: templateKeyValidator,
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
+    escalationEnabled: v.optional(v.boolean()),
+    escalationMessage: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { orgId, permissions } = await getAuthContext(ctx);
@@ -248,7 +254,7 @@ export const update = mutation({
       throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
     }
 
-    await ctx.db.patch(args.agentId, {
+    const patch: any = {
       name,
       model,
       systemPrompt,
@@ -256,7 +262,13 @@ export const update = mutation({
       websiteUrls: args.websiteUrls ?? [],
       contacts: args.contacts?.trim() || undefined,
       updatedAt: Date.now(),
-    });
+    };
+    if (args.escalationEnabled !== undefined) {
+      patch.escalationEnabled = args.escalationEnabled;
+      patch.escalationMessage = args.escalationMessage ?? undefined;
+    }
+
+    await ctx.db.patch(args.agentId, patch);
 
     return args.agentId;
   },

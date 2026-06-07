@@ -611,6 +611,18 @@ export const internalGetChannelByPageId = internalQuery({
   },
 });
 
+export const internalGetChannelByPhoneNumberId = internalQuery({
+  args: { phoneNumberId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) =>
+        q.eq("phoneNumberId", args.phoneNumberId),
+      )
+      .unique();
+  },
+});
+
 // Internal accessor used by sync actions to retrieve the persisted access
 // token (kept off the public API surface).
 export const internalGetChannel = internalQuery({

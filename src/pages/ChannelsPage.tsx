@@ -27,6 +27,7 @@ import {
 } from '@/components/ui/dialog';
 
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
@@ -501,8 +502,16 @@ function ConnectedChannelRow({
   const [busy, setBusy] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [acknowledgedDataLoss, setAcknowledgedDataLoss] = useState(false);
 
   const channelName = channelIdentifier(channel);
+
+  const handleDisconnectOpenChange = useCallback((open: boolean) => {
+    setDisconnectOpen(open);
+    if (!open) {
+      setAcknowledgedDataLoss(false);
+    }
+  }, []);
 
   const confirmDisconnect = useCallback(async () => {
     onDisconnectBegin();
@@ -510,7 +519,7 @@ function ConnectedChannelRow({
     try {
       await disconnect({ channelId: channel._id });
       toast.success('Channel disconnected');
-      setDisconnectOpen(false);
+      handleDisconnectOpenChange(false);
     } catch (err) {
       onDisconnectUndone();
       const msg = err instanceof Error ? err.message : String(err);
@@ -518,7 +527,7 @@ function ConnectedChannelRow({
     } finally {
       setBusy(false);
     }
-  }, [disconnect, channel._id, onDisconnectBegin, onDisconnectUndone]);
+  }, [disconnect, channel._id, onDisconnectBegin, onDisconnectUndone, handleDisconnectOpenChange]);
 
   const canSyncConversations =
     channel.status === 'connected' &&
@@ -642,32 +651,50 @@ function ConnectedChannelRow({
               size="icon-sm"
               className="text-muted-foreground hover:text-destructive"
               disabled={busy || syncBusy}
-              onClick={() => setDisconnectOpen(true)}
+              onClick={() => handleDisconnectOpenChange(true)}
               aria-label={`Disconnect ${channelName}`}
             >
               <Trash2 className="size-4" />
             </Button>
-            <Dialog open={disconnectOpen} onOpenChange={setDisconnectOpen}>
+            <Dialog open={disconnectOpen} onOpenChange={handleDisconnectOpenChange}>
               <DialogContent showCloseButton={false}>
                 <DialogHeader>
                   <DialogTitle className="text-lg sm:text-xl font-semibold">Disconnect {channelName}?</DialogTitle>
                   <DialogDescription>
-                    Disconnecting {channelName} ({meta.label}) will stop new messages from arriving.
+                    All conversations will be deleted and new messages will stop.
                   </DialogDescription>
                 </DialogHeader>
+                <label
+                  htmlFor={`disconnect-ack-${channel._id}`}
+                  className={cn(
+                    'flex cursor-pointer items-start gap-3 rounded-lg border border-border px-3 py-3 text-sm leading-snug',
+                    'hover:bg-muted/40',
+                  )}
+                >
+                  <input
+                    id={`disconnect-ack-${channel._id}`}
+                    type="checkbox"
+                    checked={acknowledgedDataLoss}
+                    onChange={(e) => setAcknowledgedDataLoss(e.target.checked)}
+                    className="mt-0.5 size-4 shrink-0 rounded border-border accent-destructive"
+                  />
+                  <span className="text-foreground">
+                    I understand that disconnecting this channel will permanently delete all of its conversations.
+                  </span>
+                </label>
                 <DialogFooter>
                   <Button
                     type="button"
                     variant="outline"
                     disabled={busy}
-                    onClick={() => setDisconnectOpen(false)}
+                    onClick={() => handleDisconnectOpenChange(false)}
                   >
                     Cancel
                   </Button>
                   <Button
                     type="button"
                     variant="destructive"
-                    disabled={busy}
+                    disabled={busy || !acknowledgedDataLoss}
                     onClick={() => void confirmDisconnect()}
                   >
                     {busy ? (

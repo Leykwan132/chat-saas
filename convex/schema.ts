@@ -186,6 +186,8 @@ export default defineSchema({
     fileSize: v.number(),
     userId: v.string(),
     orgId: v.string(),
+    escalationEnabled: v.optional(v.boolean()),
+    escalationMessage: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -363,9 +365,18 @@ export default defineSchema({
       v.literal("open"),
       v.literal("snoozed"),
       v.literal("closed"),
+      v.literal("requires_user_input"),
+    ),
+    escalation: v.optional(
+      v.object({
+        question: v.string(),
+        context: v.string(),
+        escalatedAt: v.number(),
+      })
     ),
     tags: v.optional(v.array(v.string())),
     interactionSummary: v.optional(v.string()),
+    summaryGenerationError: v.optional(v.string()),
     assignedAgentId: v.optional(v.id("agents")),
     assignedUserId: v.optional(v.string()),
     assignToAiAgent: v.boolean(),
@@ -405,6 +416,7 @@ export default defineSchema({
       v.literal("text"),
       v.literal("image"),
       v.literal("audio"),
+      v.literal("file"),
       v.literal("video"),
       v.literal("document"),
       v.literal("unknown"),

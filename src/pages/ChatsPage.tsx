@@ -17,6 +17,7 @@ import {
   User,
   Users,
   Check,
+  AlertCircle,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
@@ -66,7 +67,7 @@ const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   messenger: 'Messenger',
 };
 
-type InboxChatFilter = 'all' | 'open' | 'snoozed' | 'closed' | 'assigned_me';
+type InboxChatFilter = 'all' | 'open' | 'snoozed' | 'closed' | 'assigned_me' | 'escalated';
 
 
 
@@ -218,6 +219,7 @@ export default function ChatsPage() {
   const markRead = useMutation(api.conversations.markRead);
   const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
   const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
+  const resolveEscalation = useMutation(api.conversations.resolveEscalation);
   const addCustomerTag = useMutation(api.customers.addCustomerTag);
   const removeCustomerTag = useMutation(api.customers.removeCustomerTag);
   const teamUsers = useQuery(api.users.getUsers, {});
@@ -246,6 +248,7 @@ export default function ChatsPage() {
   };
 
   const [interactionSummaryOpen, setInteractionSummaryOpen] = useState(false);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
@@ -276,10 +279,13 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
-  const threadSummary = useQuery(
+  const threadSummaryState = useQuery(
     api.conversations.getThreadSummary,
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
+  const threadSummary = threadSummaryState?.summary ?? null;
+  const threadSummaryError = threadSummaryState?.error ?? null;
+  const triggerSummarization = useMutation(api.chat.inbox.triggerSummarization);
 
   const threadId = selectedConversation?.threadId;
 
@@ -330,6 +336,42 @@ export default function ChatsPage() {
     setPendingOutbound([]);
   }, [selectedConversationId]);
 
+  useEffect(() => {
+    setIsGeneratingSummary(false);
+  }, [selectedConversationId]);
+
+  useEffect(() => {
+    if (threadSummary) {
+      setIsGeneratingSummary(false);
+    }
+  }, [threadSummary]);
+
+  useEffect(() => {
+    if (threadSummaryError && isGeneratingSummary) {
+      setIsGeneratingSummary(false);
+    }
+  }, [threadSummaryError, isGeneratingSummary]);
+
+  useEffect(() => {
+    if (!isGeneratingSummary || !selectedConversationId) return;
+    const timeoutId = window.setTimeout(() => {
+      setIsGeneratingSummary(false);
+      toast.error('Summary generation timed out. Please try again.');
+    }, 60_000);
+    return () => window.clearTimeout(timeoutId);
+  }, [isGeneratingSummary, selectedConversationId]);
+
+  const handleGenerateSummary = async () => {
+    if (!selectedConversationId || isGeneratingSummary) return;
+    setIsGeneratingSummary(true);
+    try {
+      await triggerSummarization({ conversationId: selectedConversationId });
+    } catch (e) {
+      setIsGeneratingSummary(false);
+      toast.error(e instanceof Error ? e.message : 'Could not generate summary');
+    }
+  };
+
 
 
   const chatItems = useMemo(() => {
@@ -348,6 +390,7 @@ export default function ChatsPage() {
       assignedUserId: conv.assignedUserId,
       tags: conv.tags ?? [],
       leadTemperature: conv.leadTemperature,
+      escalation: conv.escalation,
     }));
   }, [linkedConversations]);
 
@@ -381,6 +424,11 @@ export default function ChatsPage() {
       if (activeStatuses.includes('assigned_me')) {
         list = list.filter(
           (c: any) => c.assignedUserId === currentUser?.workosUserId,
+        );
+      }
+      if (activeStatuses.includes('escalated')) {
+        list = list.filter(
+          (c: any) => c.conversationStatus === 'requires_user_input',
         );
       }
     }
@@ -533,6 +581,16 @@ export default function ChatsPage() {
       toast.error(e instanceof Error ? e.message : 'Could not remove tag');
     } finally {
       setTagMutationBusy(false);
+    }
+  };
+
+  const handleResolveEscalation = async () => {
+    if (!selectedConversationId) return;
+    try {
+      await resolveEscalation({ conversationId: selectedConversationId });
+      toast.success('Conversation marked as resolved');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not resolve escalation');
     }
   };
 
@@ -821,6 +879,20 @@ export default function ChatsPage() {
                           </div>
                           {selectedFilters.includes('status:assigned_me') && <Check className="size-3 text-foreground shrink-0" />}
                         </CommandItem>
+
+                        <CommandItem
+                          value="escalated"
+                          onSelect={() => {
+                            handleToggleFilter('status:escalated');
+                          }}
+                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
+                        >
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="size-3.5 shrink-0 text-amber-500" />
+                            <span>Escalated</span>
+                          </div>
+                          {selectedFilters.includes('status:escalated') && <Check className="size-3 text-foreground shrink-0" />}
+                        </CommandItem>
                       </CommandGroup>
                       
                       <CommandSeparator />
@@ -1007,7 +1079,28 @@ export default function ChatsPage() {
               </div>
 
               {/* Chat Input */}
-              <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4">
+              <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4 flex flex-col gap-3">
+                {selectedConversation?.escalation && (
+                  <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs shadow-none">
+                    <div className="flex items-start gap-2.5 min-w-0">
+                      <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-semibold text-amber-800 dark:text-amber-400">Escalated: AI replies paused</span>
+                        <span className="text-muted-foreground truncate" title={selectedConversation.escalation.question}>
+                          Question: {selectedConversation.escalation.question}
+                        </span>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-medium shadow-none transition-colors cursor-pointer shrink-0"
+                      onClick={handleResolveEscalation}
+                    >
+                      Mark as Resolved
+                    </Button>
+                  </div>
+                )}
                 <InboxReplyInput
                   busy={sendBusy}
                   disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
@@ -1051,6 +1144,34 @@ export default function ChatsPage() {
                 selectedConversation && (
                   <div className="flex flex-col">
                     <div className="px-4 pb-3 pt-4">
+                      {selectedConversation.escalation && (
+                        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs space-y-2.5 shadow-none">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="size-4 text-amber-500 shrink-0" />
+                            <span className="font-semibold text-amber-800 dark:text-amber-400">AI Escalation Details</span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-amber-900/70 dark:text-amber-400/70">Unsure Question:</span>
+                            <p className="mt-0.5 text-foreground leading-relaxed break-words">
+                              {selectedConversation.escalation.question}
+                            </p>
+                          </div>
+                          <div>
+                            <span className="font-medium text-amber-900/70 dark:text-amber-400/70">AI Context:</span>
+                            <p className="mt-0.5 text-foreground leading-relaxed break-words">
+                              {selectedConversation.escalation.context}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium shadow-none transition-colors cursor-pointer"
+                            onClick={handleResolveEscalation}
+                          >
+                            Mark as Resolved
+                          </Button>
+                        </div>
+                      )}
                       <div className="mb-2 flex items-center gap-2">
                         <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="text-sm font-semibold text-foreground">Assignment</span>
@@ -1414,10 +1535,37 @@ export default function ChatsPage() {
                               <p className="text-sm text-foreground/90 font-normal leading-relaxed whitespace-pre-wrap block w-full">
                                 {threadSummary}
                               </p>
-                            ) : (
-                              <Shimmer duration={1.5} spread={2} className="text-xs text-muted-foreground font-normal italic">
-                                Generating summary in background…
+                            ) : isGeneratingSummary ? (
+                              <Shimmer
+                                duration={1.5}
+                                spread={3}
+                                className="text-sm font-normal italic"
+                                aria-busy
+                                aria-live="polite"
+                              >
+                                Generating summary…
                               </Shimmer>
+                            ) : threadSummaryError ? (
+                              <div className="space-y-2">
+                                <p className="text-sm text-destructive">{threadSummaryError}</p>
+                                <button
+                                  type="button"
+                                  onClick={() => void handleGenerateSummary()}
+                                  disabled={isGeneratingSummary}
+                                  className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                                >
+                                  Generate AI summary
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => void handleGenerateSummary()}
+                                disabled={isGeneratingSummary}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-500 hover:underline cursor-pointer disabled:opacity-50 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                Generate AI summary
+                              </button>
                             )}
                           </div>
                         </div>

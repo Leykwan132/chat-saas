@@ -52,6 +52,14 @@ const mediaCategoryIcons: Record<AttachmentMediaCategory, typeof ImageIcon> = {
 // Utility Functions
 // ============================================================================
 
+const AUDIO_FILE_EXTENSIONS = /\.(aac|m4a|mp3|ogg|opus|wav|webm)$/i;
+
+function mediaTypeFromDataUrl(url: string | undefined): string | undefined {
+  if (!url?.startsWith("data:")) return undefined;
+  const match = url.match(/^data:([^;,]+)/);
+  return match?.[1];
+}
+
 export const getMediaCategory = (
   data: AttachmentData
 ): AttachmentMediaCategory => {
@@ -59,7 +67,11 @@ export const getMediaCategory = (
     return "source";
   }
 
-  const mediaType = data.mediaType ?? "";
+  const url = data.type === "file" ? data.url : undefined;
+  const mediaType =
+    data.mediaType ??
+    mediaTypeFromDataUrl(url) ??
+    "";
 
   if (mediaType.startsWith("image/")) {
     return "image";
@@ -72,6 +84,14 @@ export const getMediaCategory = (
   }
   if (mediaType.startsWith("application/") || mediaType.startsWith("text/")) {
     return "document";
+  }
+
+  const filename = data.type === "file" ? data.filename : undefined;
+  if (filename && AUDIO_FILE_EXTENSIONS.test(filename)) {
+    return "audio";
+  }
+  if (url && AUDIO_FILE_EXTENSIONS.test(url.split("?")[0] ?? "")) {
+    return "audio";
   }
 
   return "unknown";

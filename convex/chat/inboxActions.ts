@@ -214,3 +214,40 @@ export const internalSendAiReply = internalAction({
   },
 });
 
+export const internalSendEscalationMessage = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const sendResult = await ctx.runAction(
+      internal.chat.inboxActions.internalSendAiReply,
+      {
+        conversationId: args.conversationId,
+        content: args.content,
+        mediaUrls: [],
+        allowHumanAgentTag: false,
+      },
+    );
+
+    if (!sendResult.ok) {
+      console.error("Failed to send escalation message to channel:", sendResult.error);
+      return;
+    }
+
+    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
+      conversationId: args.conversationId,
+    });
+    if (!conv) return;
+
+    await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
+      conversationId: args.conversationId,
+      threadId: conv.threadId,
+      content: args.content,
+      externalId: sendResult.textExternalId,
+      llmModel: "escalation",
+      creditsCharged: 0,
+    });
+  },
+});
+

@@ -1,15 +1,10 @@
 import { v } from "convex/values";
 import { httpAction, internalMutation, type ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
-
-const contentTypeValidator = v.union(
-  v.literal("text"),
-  v.literal("image"),
-  v.literal("audio"),
-  v.literal("video"),
-  v.literal("document"),
-  v.literal("unknown"),
-);
+import {
+  resolveInboxLedgerContentType,
+  resolveWhatsAppAudioFiles,
+} from "./chat/inboxAudioIngest";
 
 const messageStatusValidator = v.union(
   v.literal("queued"),
@@ -75,14 +70,34 @@ export async function receive(
 
       for (const message of value.messages ?? []) {
         try {
+          let files:
+            | Array<{ url: string; mimeType: string }>
+            | undefined;
+          if (message.type === "audio" && message.audio?.id) {
+            const channel = await ctx.runQuery(
+              internal.channels.internalGetChannelByPhoneNumberId,
+              { phoneNumberId },
+            );
+            if (channel?.accessToken) {
+              try {
+                files = await resolveWhatsAppAudioFiles(
+                  message.audio.id,
+                  channel.accessToken,
+                );
+              } catch (err) {
+                console.error("Failed to fetch WhatsApp audio media", err);
+              }
+            }
+          }
+
           await ctx.runMutation(internal.whatsappWebhook.handleIncoming, {
             phoneNumberId,
             externalId: message.id,
             from: message.from,
             timestampMs: parseTimestamp(message.timestamp),
-            contentType: mapContentType(message.type),
             content: extractContent(message),
             profileName: nameByWaId.get(message.from),
+            files,
           });
         } catch (err) {
           console.error("Failed to persist incoming WhatsApp message", err);
@@ -114,9 +129,16 @@ export const handleIncoming = internalMutation({
     externalId: v.string(),
     from: v.string(),
     timestampMs: v.number(),
-    contentType: contentTypeValidator,
     content: v.string(),
     profileName: v.optional(v.string()),
+    files: v.optional(
+      v.array(
+        v.object({
+          url: v.string(),
+          mimeType: v.string(),
+        }),
+      ),
+    ),
   },
   handler: async (ctx, args) => {
     // Dedupe — if Meta retries the same delivery we'll have already saved it.
@@ -139,6 +161,12 @@ export const handleIncoming = internalMutation({
       return;
     }
 
+    const contentType = resolveInboxLedgerContentType(
+      args.content,
+      undefined,
+      args.files,
+    );
+
     await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
       channelId: channel._id,
       externalId: args.externalId,
@@ -146,9 +174,10 @@ export const handleIncoming = internalMutation({
       contactName: args.profileName,
       direction: "incoming",
       content: args.content,
-      contentType: args.contentType,
+      contentType,
       timestampMs: args.timestampMs,
       isHistorical: false,
+      files: args.files,
     });
   },
 });
@@ -183,23 +212,6 @@ function parseTimestamp(ts?: string): number {
   return n * 1000;
 }
 
-function mapContentType(type?: string) {
-  switch (type) {
-    case "text":
-      return "text" as const;
-    case "image":
-      return "image" as const;
-    case "audio":
-      return "audio" as const;
-    case "video":
-      return "video" as const;
-    case "document":
-      return "document" as const;
-    default:
-      return "unknown" as const;
-  }
-}
-
 function extractContent(msg: WhatsAppIncomingMessage): string {
   if (msg.text?.body) return msg.text.body;
   if (msg.image?.caption) return msg.image.caption;
@@ -210,6 +222,7 @@ function extractContent(msg: WhatsAppIncomingMessage): string {
     return msg.interactive.button_reply.title;
   if (msg.interactive?.list_reply?.title)
     return msg.interactive.list_reply.title;
+  if (msg.type === "audio") return "";
   return `<${msg.type ?? "unknown"}>`;
 }
 

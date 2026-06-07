@@ -4,6 +4,11 @@ import {
   internalMutation,
   type ActionCtx,
 } from "./_generated/server";
+import {
+  resolveInboxLedgerContentType,
+  resolveSyncAudioFiles,
+} from "./chat/inboxAudioIngest";
+import { inboxPromptContent } from "../shared/inboxAttachments";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { messengerSyncPool } from "./channelSyncPools";
@@ -242,21 +247,10 @@ async function ingestConversationMessages(
       })
       .filter(Boolean) as Array<{ url: string; mimeType: string }>;
 
-    const audioAttachments = attachments
-      .filter(
-        (a) =>
-          a.mime_type?.startsWith("audio/") ||
-          a.name?.endsWith(".aac") ||
-          a.name?.endsWith(".mp3") ||
-          a.name?.endsWith(".m4a") ||
-          a.name?.endsWith(".ogg"),
-      )
-      .map((a) => {
-        const url = a.file_url;
-        const mimeType = a.mime_type ?? "audio/ogg";
-        return url ? { url, mimeType } : null;
-      })
-      .filter(Boolean) as Array<{ url: string; mimeType: string }>;
+    const audioAttachments = resolveSyncAudioFiles(
+      attachments,
+      channel.accessToken,
+    );
 
     const isAudioMessage = audioAttachments.length > 0;
 
@@ -280,7 +274,7 @@ async function ingestConversationMessages(
       timestampMs: parseTimestamp(message.created_time),
       metaConversationId: detail.id,
       images: imageAttachments.length > 0 ? imageAttachments : undefined,
-      audios: audioAttachments.length > 0 ? audioAttachments : undefined,
+      files: audioAttachments.length > 0 ? audioAttachments : undefined,
     };
 
     if (isAudioMessage) {
@@ -328,7 +322,7 @@ export const internalIngestMessage = internalMutation({
         })
       )
     ),
-    audios: v.optional(
+    files: v.optional(
       v.array(
         v.object({
           url: v.string(),
@@ -341,12 +335,11 @@ export const internalIngestMessage = internalMutation({
     const channel = await ctx.db.get(args.channelId);
     if (channel === null) return null;
 
-    let contentType: Doc<"messages">["contentType"] = "text";
-    if (args.audios && args.audios.length > 0) {
-      contentType = "audio";
-    } else if (args.images && args.images.length > 0) {
-      contentType = "image";
-    }
+    let contentType = resolveInboxLedgerContentType(
+      args.content,
+      args.images,
+      args.files,
+    );
 
     const result = await ingestChannelMessage(ctx, {
       channelId: args.channelId,
@@ -363,7 +356,7 @@ export const internalIngestMessage = internalMutation({
         args.direction === "outgoing" ? businessAgentName(channel) : undefined,
       metaConversationId: args.metaConversationId,
       images: args.images,
-      audios: args.audios,
+      files: args.files,
     });
     if (result.skipped || !result.shouldEnqueueAi) {
       return result;
@@ -377,7 +370,11 @@ export const internalIngestMessage = internalMutation({
       internal.chat.inbox.generateAiReplyWorker,
       {
         conversationId: result.conversationId,
-        promptContent: args.content.trim(),
+        promptContent: inboxPromptContent(
+          args.content,
+          args.images,
+          args.files,
+        ),
         promptMessageId: result.agentMessageId,
       },
     );
