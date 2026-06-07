@@ -9,15 +9,17 @@ import {
   FileText,
   Lock,
   MessageSquare,
+  PanelRightClose,
+  PanelRightOpen,
   Pin,
   Plug,
   Search,
   Sparkles,
   Tag,
   User,
-  Users,
   Check,
   AlertCircle,
+  type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
@@ -40,6 +42,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
@@ -146,6 +149,36 @@ function ChatThreadLoading() {
   );
 }
 
+function DetailsPanelRailButton({
+  label,
+  icon: Icon,
+  iconClassName,
+  onClick,
+}: {
+  label: string;
+  icon: LucideIcon;
+  iconClassName?: string;
+  onClick: () => void;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={onClick}
+          className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+          aria-label={label}
+        >
+          <Icon className={cn('size-4', iconClassName)} />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="left">{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 function DetailsPanelSkeleton() {
   return (
     <div className="flex flex-1 flex-col gap-3 px-4 py-4 motion-safe:animate-pulse" aria-hidden>
@@ -222,10 +255,12 @@ export default function ChatsPage() {
   const resolveEscalation = useMutation(api.conversations.resolveEscalation);
   const addCustomerTag = useMutation(api.customers.addCustomerTag);
   const removeCustomerTag = useMutation(api.customers.removeCustomerTag);
+  const updateCustomer = useMutation(api.customers.update);
   const teamUsers = useQuery(api.users.getUsers, {});
   const [assigneeSaving, setAssigneeSaving] = useState(false);
 
   const [tagMutationBusy, setTagMutationBusy] = useState(false);
+  const [leadStatusSaving, setLeadStatusSaving] = useState(false);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearchInput, setTagSearchInput] = useState('');
 
@@ -253,6 +288,7 @@ export default function ChatsPage() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
+  const [detailsPanelOpen, setDetailsPanelOpen] = useState(true);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
   const textEntries = useQuery(
@@ -547,6 +583,32 @@ export default function ChatsPage() {
   };
 
 
+
+  const handleExpandDetailsSection = (
+    section?: 'assignee' | 'customer' | 'tags' | 'summary',
+  ) => {
+    setDetailsPanelOpen(true);
+    if (section === 'customer') setCustomerDetailsOpen(true);
+    if (section === 'tags') setTagsSectionOpen(true);
+    if (section === 'summary') setInteractionSummaryOpen(true);
+  };
+
+  const handleLeadStatusChange = async (value: string) => {
+    const customerId = selectedConversation?.customerId;
+    if (!customerId) return;
+    setLeadStatusSaving(true);
+    try {
+      await updateCustomer({
+        customerId,
+        leadTemperature: value === 'None' ? null : (value as LeadTemperature),
+      });
+      toast.success('Lead status updated');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update lead status');
+    } finally {
+      setLeadStatusSaving(false);
+    }
+  };
 
   const handleRemoveConversationTag = async (tag: string) => {
     const customerId = selectedConversation?.customerId;
@@ -1029,7 +1091,28 @@ export default function ChatsPage() {
                     <div className="h-6 max-w-[200px] flex-1 rounded-md bg-muted motion-safe:animate-pulse" aria-hidden />
                   )}
                 </div>
-                <div className="flex items-center gap-2.5 text-muted-foreground">
+                <div className="flex shrink-0 items-center gap-2.5">
+                  {selectedConversation ? (
+                    <div className="inline-flex h-8 w-fit shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 shadow-none">
+                      <label
+                        htmlFor="ai-replies-switch-chat"
+                        className={cn(
+                          'inline-flex cursor-pointer select-none items-center gap-1.5 text-xs font-normal text-muted-foreground',
+                          (assigneeSaving || !can(Permission.CHATS_ASSIGN)) && 'cursor-not-allowed',
+                        )}
+                      >
+                        <Bot className="size-3.5 shrink-0" />
+                        AI replies
+                      </label>
+                      <Switch
+                        id="ai-replies-switch-chat"
+                        checked={selectedConversation.assignToAiAgent}
+                        onCheckedChange={(checked) => void handleAiToggle(checked)}
+                        disabled={assigneeSaving || !can(Permission.CHATS_ASSIGN)}
+                        className="shrink-0 data-[state=checked]:bg-emerald-600"
+                      />
+                    </div>
+                  ) : null}
                   {selectedConversation?.service === 'whatsapp' &&
                     selectedConversation.channelId &&
                     agentId ? (
@@ -1113,11 +1196,78 @@ export default function ChatsPage() {
 
         {/* RIGHT COLUMN: Details */}
         {selectedConversationId && (
-          <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
-            <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--color-border)' }}>
-              <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--color-foreground)' }}>Details</h2>
+          <div
+            className={cn(
+              'flex h-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-[width] duration-200 ease-out',
+              detailsPanelOpen ? 'w-[300px]' : 'w-12',
+            )}
+          >
+            <div
+              className={cn(
+                'flex shrink-0 items-center border-b border-border',
+                detailsPanelOpen ? 'justify-between px-5 py-4' : 'justify-center px-2 py-4',
+              )}
+            >
+              {detailsPanelOpen ? (
+                <>
+                  <h2 className="m-0 text-base font-bold text-foreground">Details</h2>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setDetailsPanelOpen(false)}
+                    className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                    aria-label="Collapse details"
+                  >
+                    <PanelRightClose className="size-4" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDetailsPanelOpen(true)}
+                  className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  aria-label="Expand details"
+                >
+                  <PanelRightOpen className="size-4" />
+                </Button>
+              )}
             </div>
 
+            {!detailsPanelOpen ? (
+              <div className="flex flex-1 flex-col items-center gap-0.5 py-2">
+                {selectedConversation?.escalation ? (
+                  <DetailsPanelRailButton
+                    label="Escalation"
+                    icon={AlertCircle}
+                    iconClassName="text-amber-500"
+                    onClick={() => handleExpandDetailsSection('assignee')}
+                  />
+                ) : null}
+                <DetailsPanelRailButton
+                  label="Assignee"
+                  icon={User}
+                  onClick={() => handleExpandDetailsSection('assignee')}
+                />
+                <DetailsPanelRailButton
+                  label="Customer details"
+                  icon={Contact}
+                  onClick={() => handleExpandDetailsSection('customer')}
+                />
+                <DetailsPanelRailButton
+                  label="Tags"
+                  icon={Tag}
+                  onClick={() => handleExpandDetailsSection('tags')}
+                />
+                <DetailsPanelRailButton
+                  label="Summary"
+                  icon={FileText}
+                  onClick={() => handleExpandDetailsSection('summary')}
+                />
+              </div>
+            ) : (
             <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
               {detailsPanelLoading ? (
                 <DetailsPanelSkeleton />
@@ -1153,26 +1303,9 @@ export default function ChatsPage() {
                           </Button>
                         </div>
                       )}
-                      <div className="mb-2 flex items-center gap-2">
-                        <Users className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-                        <span className="text-sm font-semibold text-foreground">Assignment</span>
-                      </div>
                       <div className="flex flex-col gap-3">
-                        <div className="flex items-center justify-between gap-2 rounded-md border border-border px-3 py-2">
-                          <label htmlFor="ai-replies-switch-chat" className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                            <Bot className="size-4 text-muted-foreground" />
-                            AI replies
-                          </label>
-                          <Switch
-                            id="ai-replies-switch-chat"
-                            checked={selectedConversation.assignToAiAgent}
-                            onCheckedChange={(checked) => void handleAiToggle(checked)}
-                            disabled={assigneeSaving || !can(Permission.CHATS_ASSIGN)}
-                            className="shrink-0 data-[state=checked]:bg-emerald-600"
-                          />
-                        </div>
                         <div>
-                          <div className="flex items-center justify-between mb-1.5">
+                          <div className="mb-1.5 flex items-center justify-between">
                             <p className="text-xs text-muted-foreground">Assignee</p>
                             {selectedConversation.assignedUserId !== currentWorkosUserId && currentWorkosUserId ? (
                               <button
@@ -1238,6 +1371,60 @@ export default function ChatsPage() {
                             </Button>
                           )}
                         </div>
+                        <div className="flex flex-col gap-2.5 text-sm">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="shrink-0 text-muted-foreground">Lead Status</span>
+                            {selectedConversation?.customerId ? (
+                              <Select
+                                value={customerSidebarDetails?.leadTemperature ?? 'None'}
+                                onValueChange={(value) => void handleLeadStatusChange(value)}
+                                disabled={leadStatusSaving || customerSidebarDetails === undefined}
+                              >
+                                <SelectTrigger className="h-8 border-border bg-background text-xs font-medium shadow-none">
+                                  <SelectValue asChild>
+                                    <span className="flex items-center gap-1.5">
+                                      {customerSidebarDetails?.leadTemperature ? (
+                                        (() => {
+                                          const style = getLeadTemperatureStyle(
+                                            customerSidebarDetails.leadTemperature,
+                                          );
+                                          const Icon = style.icon;
+                                          return (
+                                            <Icon
+                                              className={cn('size-3 shrink-0', style.iconClass)}
+                                            />
+                                          );
+                                        })()
+                                      ) : null}
+                                      <span>
+                                        {customerSidebarDetails?.leadTemperature ?? 'None'}
+                                      </span>
+                                    </span>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent align="end">
+                                  <SelectItem value="None">None</SelectItem>
+                                  {(['Hot', 'Warm', 'Cold'] as const).map((status) => {
+                                    const style = getLeadTemperatureStyle(status);
+                                    const Icon = style.icon;
+                                    return (
+                                      <SelectItem key={status} value={status}>
+                                        <span className="flex items-center gap-1.5">
+                                          <Icon className={cn('size-3 shrink-0', style.iconClass)} />
+                                          {status}
+                                        </span>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                —
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -1274,27 +1461,16 @@ export default function ChatsPage() {
                                 </span>
                               </div>
                               <div className="flex justify-between gap-4">
-                                <span className="shrink-0 text-muted-foreground">Lead Status</span>
-                                <span className="min-w-0 truncate text-right font-medium text-foreground">
-                                  {customerSidebarDetails?.leadTemperature ? (
-                                    (() => {
-                                      const style = getLeadTemperatureStyle(customerSidebarDetails.leadTemperature);
-                                      const Icon = style.icon;
-                                      return (
-                                        <span className={cn("inline-flex items-center gap-1 font-medium", style.text)}>
-                                          <Icon className={cn("size-3 shrink-0", style.iconClass)} />
-                                          {customerSidebarDetails.leadTemperature}
-                                        </span>
-                                      );
-                                    })()
-                                  ) : (
-                                    '—'
-                                  )}
-                                </span>
-                              </div>
-                              <div className="flex justify-between gap-4">
                                 <span className="shrink-0 text-muted-foreground">Platform</span>
-                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                <span className="inline-flex min-w-0 items-center justify-end gap-1.5 truncate text-right font-medium text-foreground">
+                                  {selectedConversation?.service === 'whatsapp' ||
+                                  selectedConversation?.service === 'instagram' ||
+                                  selectedConversation?.service === 'messenger' ? (
+                                    <PlatformMenuIcon
+                                      platform={selectedConversation.service}
+                                      size={14}
+                                    />
+                                  ) : null}
                                   {customerSidebarDetails?.platformLabel ?? '—'}
                                 </span>
                               </div>
@@ -1557,6 +1733,7 @@ export default function ChatsPage() {
                 )
               )}
             </div>
+            )}
           </div>
         )}
 
