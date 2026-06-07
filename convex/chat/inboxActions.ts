@@ -4,6 +4,11 @@ import { v } from "convex/values";
 import { action, internalAction } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
+import { generateText } from "ai";
+import { openRouterModel } from "../llm/openRouter";
+import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
+import { checkAiFeature } from "../plans";
+import type { Doc } from "../_generated/dataModel";
 import {
   sendTextToChannel,
   sendMediaToChannel,
@@ -251,3 +256,116 @@ export const internalSendEscalationMessage = internalAction({
   },
 });
 
+export const generateThreadSummary = action({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args): Promise<{ summary: string }> => {
+    const { orgId } = await getAuthContext(ctx);
+    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
+      conversationId: args.conversationId,
+    });
+    if (conv === null || conv.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+
+    const messages = await ctx.runQuery(
+      internal.chat.inbox.internalGetMessagesForSummary,
+      { conversationId: args.conversationId },
+    );
+    if (messages.length === 0) {
+      throw new Error("Not enough messages to generate a summary.");
+    }
+
+    const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
+      workosOrgId: conv.orgId,
+      userId: conv.assignedUserId ?? undefined,
+    });
+    if (!checkAiFeature(stripeInfo.plan, "thread_summary")) {
+      throw new Error("Thread summary is not available on your plan.");
+    }
+
+    let modelId = DEFAULT_OPENROUTER_MODEL;
+    if (conv.assignedAgentId) {
+      const agent = await ctx.runQuery(internal.agents.internalGet, {
+        agentId: conv.assignedAgentId,
+      });
+      if (agent) {
+        modelId = agent.model;
+      }
+    }
+
+    const transcript = messages
+      .map((m: Doc<"messages">) => {
+        const sender =
+          m.direction === "incoming"
+            ? "Customer"
+            : m.authorUserId
+              ? "Agent (User)"
+              : "Agent (AI)";
+        return `${sender}: ${m.content}`;
+      })
+      .join("\n");
+
+    const systemPrompt = `You are a helpful assistant that summarizes chat transcripts between a customer and a business agent.
+You have two jobs:
+1. Generate a very simple, clear, and easy-to-understand summary of precisely 3-4 lines.
+   Keep it short, sweet, and focused specifically on the customer and their status. Use plain English, avoid formal business speak or jargon, and explain:
+   - The customer's primary inquiry, need, or concern (what they are looking for or trying to resolve).
+   - The current status, sentiment, or next steps from the customer's perspective (e.g. they are waiting for a support response, frustrated with pricing, happy after a successful purchase, ready to book a demo).
+   Make it highly customer-centric and readable at a single glance.
+2. Classify the lead temperature as one of: "hot", "warm", or "cold".
+   - Hot: Customer shows strong buying intent — asking about pricing, requesting a demo, ready to purchase, comparing specific options, asking about availability/delivery, or has already made a purchase.
+   - Warm: Customer is interested but still exploring — asking general questions, requesting information, showing curiosity but not yet committed.
+   - Cold: Customer is disengaged, unresponsive, just browsing, filing a complaint with no purchase intent, or conversation is a dead-end support ticket.
+
+You MUST respond with ONLY a JSON object in this exact format, no other text:
+{"summary": "your summary here", "leadTemperature": "hot" or "warm" or "cold"}`;
+    const prompt = `Please summarize the following chat transcript and classify the lead temperature. Respond with ONLY a JSON object:\n\n${transcript}`;
+
+    try {
+      const { text } = await generateText({
+        model: openRouterModel(modelId),
+        prompt,
+        system: systemPrompt,
+      });
+      const raw = text.trim();
+      const jsonStr = raw.startsWith("{")
+        ? raw
+        : raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+      let summary = "";
+      let leadTemperature: "hot" | "warm" | "cold" | undefined;
+      try {
+        const parsed = JSON.parse(jsonStr) as {
+          summary?: string;
+          leadTemperature?: string;
+        };
+        summary = (parsed.summary ?? "").trim();
+        const temp = (parsed.leadTemperature ?? "").toLowerCase();
+        if (temp === "hot" || temp === "warm" || temp === "cold") {
+          leadTemperature = temp;
+        }
+      } catch {
+        summary = raw;
+      }
+
+      if (!summary) {
+        throw new Error("Could not generate a summary from this conversation.");
+      }
+
+      if (conv.customerId && leadTemperature) {
+        const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
+        await ctx.runMutation(internal.customers.internalSetLeadTemperature, {
+          customerId: conv.customerId,
+          temperature: temperatureMap[leadTemperature],
+        });
+      }
+
+      return { summary };
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      console.error("Failed to generate thread summary:", error);
+      throw new Error("Failed to generate summary. Please try again.");
+    }
+  },
+});

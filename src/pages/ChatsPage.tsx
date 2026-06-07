@@ -249,6 +249,8 @@ export default function ChatsPage() {
 
   const [interactionSummaryOpen, setInteractionSummaryOpen] = useState(false);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [generatedSummary, setGeneratedSummary] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
@@ -279,13 +281,7 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
-  const threadSummaryState = useQuery(
-    api.conversations.getThreadSummary,
-    selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
-  );
-  const threadSummary = threadSummaryState?.summary ?? null;
-  const threadSummaryError = threadSummaryState?.error ?? null;
-  const triggerSummarization = useMutation(api.chat.inbox.triggerSummarization);
+  const generateThreadSummary = useAction(api.chat.inboxActions.generateThreadSummary);
 
   const threadId = selectedConversation?.threadId;
 
@@ -334,41 +330,26 @@ export default function ChatsPage() {
 
   useEffect(() => {
     setPendingOutbound([]);
-  }, [selectedConversationId]);
-
-  useEffect(() => {
+    setGeneratedSummary(null);
+    setSummaryError(null);
     setIsGeneratingSummary(false);
   }, [selectedConversationId]);
-
-  useEffect(() => {
-    if (threadSummary) {
-      setIsGeneratingSummary(false);
-    }
-  }, [threadSummary]);
-
-  useEffect(() => {
-    if (threadSummaryError && isGeneratingSummary) {
-      setIsGeneratingSummary(false);
-    }
-  }, [threadSummaryError, isGeneratingSummary]);
-
-  useEffect(() => {
-    if (!isGeneratingSummary || !selectedConversationId) return;
-    const timeoutId = window.setTimeout(() => {
-      setIsGeneratingSummary(false);
-      toast.error('Summary generation timed out. Please try again.');
-    }, 60_000);
-    return () => window.clearTimeout(timeoutId);
-  }, [isGeneratingSummary, selectedConversationId]);
 
   const handleGenerateSummary = async () => {
     if (!selectedConversationId || isGeneratingSummary) return;
     setIsGeneratingSummary(true);
+    setSummaryError(null);
     try {
-      await triggerSummarization({ conversationId: selectedConversationId });
+      const result = await generateThreadSummary({
+        conversationId: selectedConversationId,
+      });
+      setGeneratedSummary(result.summary);
     } catch (e) {
+      const message = e instanceof Error ? e.message : 'Could not generate summary';
+      setSummaryError(message);
+      toast.error(message);
+    } finally {
       setIsGeneratingSummary(false);
-      toast.error(e instanceof Error ? e.message : 'Could not generate summary');
     }
   };
 
@@ -1531,9 +1512,9 @@ export default function ChatsPage() {
                       {interactionSummaryOpen ? (
                         <div className="px-4 pb-3 space-y-2">
                           <div className="pl-4 border-l border-violet-200 dark:border-violet-800 space-y-2.5">
-                            {threadSummary ? (
+                            {generatedSummary ? (
                               <p className="text-sm text-foreground/90 font-normal leading-relaxed whitespace-pre-wrap block w-full">
-                                {threadSummary}
+                                {generatedSummary}
                               </p>
                             ) : isGeneratingSummary ? (
                               <Shimmer
@@ -1545,9 +1526,9 @@ export default function ChatsPage() {
                               >
                                 Generating summary…
                               </Shimmer>
-                            ) : threadSummaryError ? (
+                            ) : summaryError ? (
                               <div className="space-y-2">
-                                <p className="text-sm text-destructive">{threadSummaryError}</p>
+                                <p className="text-sm text-destructive">{summaryError}</p>
                                 <button
                                   type="button"
                                   onClick={() => void handleGenerateSummary()}

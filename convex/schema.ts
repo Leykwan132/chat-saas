@@ -375,8 +375,6 @@ export default defineSchema({
       })
     ),
     tags: v.optional(v.array(v.string())),
-    interactionSummary: v.optional(v.string()),
-    summaryGenerationError: v.optional(v.string()),
     assignedAgentId: v.optional(v.id("agents")),
     assignedUserId: v.optional(v.string()),
     assignToAiAgent: v.boolean(),

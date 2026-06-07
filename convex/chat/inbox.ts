@@ -21,34 +21,9 @@ import {
   buildAgent,
   saveAiReply,
 } from "./threads";
-import { inboxAiReplyPool, threadSummarizerPool } from "../inboxPools";
+import { inboxAiReplyPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
-import { generateText } from "ai";
-import { openRouterModel } from "../llm/openRouter";
-import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
-import { updateThreadMetadata } from "@convex-dev/agent";
-import { checkAiFeature, getPlanFromStripe } from "../plans";
-import type { Doc } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
-
-async function getConversationBillingUserId(
-  ctx: Pick<MutationCtx, "db">,
-  conv: Doc<"conversations">,
-): Promise<string | null> {
-  if (conv.assignedAgentId) {
-    const agent = await ctx.db.get(conv.assignedAgentId);
-    if (agent) {
-      return agent.userId;
-    }
-  }
-  if (conv.channelId) {
-    const channel = await ctx.db.get(conv.channelId);
-    if (channel) {
-      return channel.connectedByUserId;
-    }
-  }
-  return null;
-}
+import { checkAiFeature } from "../plans";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -59,21 +34,6 @@ export const internalIngestChannelMessage = internalMutation({
     }
 
     const conv = await ctx.db.get(result.conversationId);
-    if (conv) {
-      const billingUserId = await getConversationBillingUserId(ctx, conv);
-      if (billingUserId) {
-        const stripeInfo = await getPlanFromStripe(ctx, billingUserId);
-        if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
-          if (result.isNew || (!args.isHistorical && args.direction === "outgoing")) {
-            await threadSummarizerPool.enqueueAction(
-              ctx,
-              internal.chat.inbox.summarizeThreadWorker,
-              { conversationId: result.conversationId },
-            );
-          }
-        }
-      }
-    }
 
     if (!result.shouldEnqueueAi) {
       return result;
@@ -225,15 +185,6 @@ export const internalPersistHumanReply = internalMutation({
       patch.escalation = undefined;
     }
     await ctx.db.patch(conv._id, patch);
-
-    const stripeInfo = await getPlanFromStripe(ctx, args.authorUserId);
-    if (checkAiFeature(stripeInfo.plan, "thread_summary")) {
-      await threadSummarizerPool.enqueueAction(
-        ctx,
-        internal.chat.inbox.summarizeThreadWorker,
-        { conversationId: conv._id },
-      );
-    }
 
     return agentMessageId;
   },
@@ -568,10 +519,6 @@ export const generateAiReplyWorker = internalAction({
         },
       );
     }
-
-    await ctx.runMutation(internal.chat.inbox.internalEnqueueSummarization, {
-      conversationId: conv._id,
-    });
   },
 });
 
@@ -650,222 +597,5 @@ export const internalGetMessagesForSummary = internalQuery({
       )
       .order("asc")
       .take(100);
-  },
-});
-
-export const internalUpdateThreadSummary = internalMutation({
-  args: {
-    conversationId: v.id("conversations"),
-    summary: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const conv = await ctx.db.get(args.conversationId);
-    if (!conv) return;
-
-    await ctx.db.patch(args.conversationId, {
-      interactionSummary: args.summary,
-      summaryGenerationError: undefined,
-      updatedAt: Date.now(),
-    });
-
-    await updateThreadMetadata(ctx, components.agent, {
-      threadId: conv.threadId,
-      patch: { summary: args.summary },
-    });
-  },
-});
-
-export const internalSetThreadSummaryError = internalMutation({
-  args: {
-    conversationId: v.id("conversations"),
-    error: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const conv = await ctx.db.get(args.conversationId);
-    if (!conv) return;
-
-    await ctx.db.patch(args.conversationId, {
-      summaryGenerationError: args.error.trim(),
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-export const internalClearThreadSummaryError = internalMutation({
-  args: { conversationId: v.id("conversations") },
-  handler: async (ctx, args) => {
-    const conv = await ctx.db.get(args.conversationId);
-    if (!conv) return;
-
-    await ctx.db.patch(args.conversationId, {
-      summaryGenerationError: undefined,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-export const internalEnqueueSummarization = internalMutation({
-  args: { conversationId: v.id("conversations") },
-  handler: async (ctx, args) => {
-    await threadSummarizerPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.summarizeThreadWorker,
-      { conversationId: args.conversationId },
-    );
-  },
-});
-
-export const triggerSummarization = mutation({
-  args: { conversationId: v.id("conversations") },
-  handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    const conv = await ctx.db.get(args.conversationId);
-    if (conv === null || conv.orgId !== orgId) {
-      throw new Error("Conversation not found");
-    }
-
-    await ctx.runMutation(internal.chat.inbox.internalClearThreadSummaryError, {
-      conversationId: args.conversationId,
-    });
-
-    await threadSummarizerPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.summarizeThreadWorker,
-      { conversationId: args.conversationId },
-    );
-  },
-});
-
-export const summarizeThreadWorker = internalAction({
-  args: {
-    conversationId: v.id("conversations"),
-  },
-  handler: async (ctx, args) => {
-    const conv = await ctx.runQuery(
-      internal.chat.inbox.internalGetConversation,
-      { conversationId: args.conversationId },
-    );
-    if (conv === null) return;
-
-    const failSummary = async (error: string) => {
-      await ctx.runMutation(internal.chat.inbox.internalSetThreadSummaryError, {
-        conversationId: args.conversationId,
-        error,
-      });
-    };
-
-    const messages = await ctx.runQuery(
-      internal.chat.inbox.internalGetMessagesForSummary,
-      { conversationId: args.conversationId },
-    );
-    if (messages.length === 0) {
-      await failSummary("Not enough messages to generate a summary.");
-      return;
-    }
-
-    const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
-      workosOrgId: conv.orgId,
-      userId: conv.assignedUserId ?? undefined,
-    });
-    if (!checkAiFeature(stripeInfo.plan, "thread_summary")) {
-      console.warn("Thread summary skipped: feature disabled for plan tier", {
-        orgId: conv.orgId,
-        plan: stripeInfo.plan,
-      });
-      await failSummary("Thread summary is not available on your plan.");
-      return;
-    }
-
-    let modelId = DEFAULT_OPENROUTER_MODEL;
-    if (conv.assignedAgentId) {
-      const agent = await ctx.runQuery(internal.agents.internalGet, {
-        agentId: conv.assignedAgentId,
-      });
-      if (agent) {
-        modelId = agent.model;
-      }
-    }
-
-    const transcript = messages
-      .map((m: Doc<"messages">) => {
-        const sender =
-          m.direction === "incoming"
-            ? "Customer"
-            : m.authorUserId
-              ? "Agent (User)"
-              : "Agent (AI)";
-        return `${sender}: ${m.content}`;
-      })
-      .join("\n");
-
-    const systemPrompt = `You are a helpful assistant that summarizes chat transcripts between a customer and a business agent.
-You have two jobs:
-1. Generate a very simple, clear, and easy-to-understand summary of precisely 3-4 lines.
-   Keep it short, sweet, and focused specifically on the customer and their status. Use plain English, avoid formal business speak or jargon, and explain:
-   - The customer's primary inquiry, need, or concern (what they are looking for or trying to resolve).
-   - The current status, sentiment, or next steps from the customer's perspective (e.g. they are waiting for a support response, frustrated with pricing, happy after a successful purchase, ready to book a demo).
-   Make it highly customer-centric and readable at a single glance.
-2. Classify the lead temperature as one of: "hot", "warm", or "cold".
-   - Hot: Customer shows strong buying intent — asking about pricing, requesting a demo, ready to purchase, comparing specific options, asking about availability/delivery, or has already made a purchase.
-   - Warm: Customer is interested but still exploring — asking general questions, requesting information, showing curiosity but not yet committed.
-   - Cold: Customer is disengaged, unresponsive, just browsing, filing a complaint with no purchase intent, or conversation is a dead-end support ticket.
-
-You MUST respond with ONLY a JSON object in this exact format, no other text:
-{"summary": "your summary here", "leadTemperature": "hot" or "warm" or "cold"}`;
-    const prompt = `Please summarize the following chat transcript and classify the lead temperature. Respond with ONLY a JSON object:\n\n${transcript}`;
-
-    try {
-      const { text } = await generateText({
-        model: openRouterModel(modelId),
-        prompt,
-        system: systemPrompt,
-      });
-      const raw = text.trim();
-      // Parse the JSON response — strip markdown fences if present.
-      const jsonStr = raw.startsWith("{")
-        ? raw
-        : raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-      let summary = "";
-      let leadTemperature: "hot" | "warm" | "cold" | undefined;
-      try {
-        const parsed = JSON.parse(jsonStr) as {
-          summary?: string;
-          leadTemperature?: string;
-        };
-        summary = (parsed.summary ?? "").trim();
-        const temp = (parsed.leadTemperature ?? "").toLowerCase();
-        if (temp === "hot" || temp === "warm" || temp === "cold") {
-          leadTemperature = temp;
-        }
-      } catch {
-        // If JSON parsing fails, treat the entire response as a plain summary.
-        summary = raw;
-      }
-      if (summary) {
-        await ctx.runMutation(
-          internal.chat.inbox.internalUpdateThreadSummary,
-          {
-            conversationId: args.conversationId,
-            summary,
-          },
-        );
-      } else {
-        await failSummary("Could not generate a summary from this conversation.");
-      }
-      // Update the customer's lead temperature tag.
-      if (conv.customerId && leadTemperature) {
-        const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
-        await ctx.runMutation(
-          internal.customers.internalSetLeadTemperature,
-          {
-            customerId: conv.customerId,
-            temperature: temperatureMap[leadTemperature],
-          },
-        );
-      }
-    } catch (error) {
-      console.error("Failed to generate thread summary:", error);
-      await failSummary("Failed to generate summary. Please try again.");
-    }
   },
 });
