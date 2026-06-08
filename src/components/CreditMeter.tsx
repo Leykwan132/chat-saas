@@ -103,7 +103,7 @@ export function CreditMeter() {
           </div>
         ) : null}
 
-        {!isLoading && planAndUsage ? (
+        {!isLoading && planAndUsage?.canManageBilling ? (
           <Button
             type="button"
             variant="outline"

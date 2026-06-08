@@ -408,6 +408,7 @@ export const getPlanAndUsage = query({
     return {
       orgName: isTeam && teamName ? teamName : "Your account",
       isTeam,
+      canManageBilling: user._id === billingUser._id,
       plan: stripeInfo.plan,
       planConfig,
       credits: monthlyCredits + purchasedCredits,
