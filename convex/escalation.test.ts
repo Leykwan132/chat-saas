@@ -236,3 +236,132 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   expect(conv!.escalation).toBeUndefined();
   expect(conv!.assignToAiAgent).toBe(true);
 });
+
+test("escalates without sending a customer message when escalationMessage is unset", async () => {
+  const t = convexTest(schema, modules);
+
+  t.registerComponent("stripe", stripeSchema, {
+    "public": () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+    "private": () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  });
+
+  const mockWorkpool = {
+    "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
+    "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
+    "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
+    "danger": () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
+    "kick": () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
+    "lib": () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
+    "logging": () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
+    "loop": () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
+    "recovery": () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
+    "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
+    "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+
+  t.registerComponent("agent", agentSchema, {
+    "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
+    "files": () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
+    "messages": () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
+    "streams": () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
+    "threads": () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
+    "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  });
+
+  const workosUserId = "workos-user-test-no-msg";
+  const orgId = "org-test-no-msg";
+
+  await t.run(async (ctx) => {
+    const { ensureUserAccount, ensureOrganizationalTeam, setActiveTeamForUser } = await import("./teamHelpers");
+    const userDbId = await ensureUserAccount(ctx, {
+      workosUserId,
+      email: "nomsg@example.com",
+      firstName: "No",
+      lastName: "Message",
+    });
+
+    await ctx.db.insert("organizations", {
+      workosOrgId: orgId,
+      name: "Test Org",
+      members: [userDbId],
+      admins: [userDbId],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+
+    const teamId = await ensureOrganizationalTeam(ctx, {
+      workosOrgId: orgId,
+      name: "Test Org Team",
+      ownerUserId: userDbId,
+    });
+
+    const user = (await ctx.db.get(userDbId))!;
+    await setActiveTeamForUser(ctx, user, teamId);
+  });
+
+  const agentId = await t.run(async (ctx) => {
+    return await ctx.db.insert("agents", {
+      name: "Support Bot",
+      provider: "openrouter",
+      model: "google/gemini-2.5-flash",
+      systemPrompt: "You are a support agent.",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: workosUserId,
+      orgId,
+      escalationEnabled: true,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  const channelId = await t.run(async (ctx) => {
+    return await ctx.db.insert("channels", {
+      orgId,
+      service: "whatsapp",
+      phoneNumberId: "phone-test-no-msg",
+      displayPhoneNumber: "+15553334444",
+      accessToken: "token-test",
+      status: "connected",
+      connectedByUserId: workosUserId,
+      defaultAgentId: agentId,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  const ingestResult = await t.mutation(internal.chat.inbox.internalIngestChannelMessage, {
+    channelId,
+    externalId: "ext-no-msg",
+    contactAddress: "+60111111111",
+    contactName: "Jane Customer",
+    direction: "incoming",
+    content: "Can you help me?",
+    contentType: "text",
+    timestampMs: Date.now(),
+    isHistorical: true,
+  });
+
+  await t.mutation(internal.chat.inbox.internalEscalateConversation, {
+    conversationId: ingestResult.conversationId,
+    question: "Can you help me?",
+    context: "No knowledge base coverage for this request.",
+  });
+
+  const conv = await t.run(async (ctx) => {
+    return await ctx.db.get(ingestResult.conversationId);
+  });
+
+  expect(conv!.status).toBe("requires_user_input");
+  expect(conv!.assignToAiAgent).toBe(false);
+  expect(conv!.escalation).toEqual({
+    question: "Can you help me?",
+    context: "No knowledge base coverage for this request.",
+    escalatedAt: expect.any(Number),
+  });
+});

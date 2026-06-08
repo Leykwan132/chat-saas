@@ -44,7 +44,16 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
+import { ShineBorder } from '@/components/ui/shine-border';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -263,6 +272,8 @@ export default function ChatsPage() {
   const [leadStatusSaving, setLeadStatusSaving] = useState(false);
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearchInput, setTagSearchInput] = useState('');
+  const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
+  const [resolveBusy, setResolveBusy] = useState(false);
 
   const handleAddSpecificTag = async (tag: string) => {
     const raw = tag.trim();
@@ -629,11 +640,15 @@ export default function ChatsPage() {
 
   const handleResolveEscalation = async () => {
     if (!selectedConversationId) return;
+    setResolveBusy(true);
     try {
       await resolveEscalation({ conversationId: selectedConversationId });
       toast.success('Conversation marked as resolved');
+      setResolveConfirmOpen(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not resolve escalation');
+    } finally {
+      setResolveBusy(false);
     }
   };
 
@@ -1068,6 +1083,12 @@ export default function ChatsPage() {
                       <h2 className="m-0 truncate text-lg font-semibold text-foreground">
                         {displayHeaderName}
                       </h2>
+                      {selectedConversation?.escalation && (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 transition-all shadow-none dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400">
+                          <AlertCircle className="size-2.5 shrink-0 text-amber-500" />
+                          <span>Escalated</span>
+                        </span>
+                      )}
                       {(() => {
                         const leadTemp = customerSidebarDetails?.leadTemperature;
                         if (!leadTemp) return null;
@@ -1145,11 +1166,12 @@ export default function ChatsPage() {
               {/* Chat Input */}
               <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4 flex flex-col gap-3">
                 {selectedConversation?.escalation && (
-                  <div className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs shadow-none">
+                  <div className="relative flex items-center justify-between gap-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-none">
+                    <ShineBorder shineColor={['#DC2626', '#EF4444', '#F87171']} />
                     <div className="flex items-start gap-2.5 min-w-0">
-                      <AlertCircle className="size-4 text-amber-500 shrink-0 mt-0.5" />
+                      <AlertCircle className="size-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="font-semibold text-amber-800 dark:text-amber-400">Escalated: AI replies paused</span>
+                        <span className="font-semibold text-foreground">Human Escalation</span>
                         <span className="text-muted-foreground truncate" title={selectedConversation.escalation.question}>
                           Question: {selectedConversation.escalation.question}
                         </span>
@@ -1158,10 +1180,10 @@ export default function ChatsPage() {
                     <Button
                       type="button"
                       size="sm"
-                      className="bg-amber-600 hover:bg-amber-500 text-white font-medium shadow-none transition-colors cursor-pointer shrink-0"
-                      onClick={handleResolveEscalation}
+                      className="bg-foreground hover:bg-foreground/90 text-background font-medium shadow-none transition-colors cursor-pointer shrink-0"
+                      onClick={() => setResolveConfirmOpen(true)}
                     >
-                      Mark as Resolved
+                      Resolve
                     </Button>
                   </div>
                 )}
@@ -1242,7 +1264,6 @@ export default function ChatsPage() {
                   <DetailsPanelRailButton
                     label="Escalation"
                     icon={AlertCircle}
-                    iconClassName="text-amber-500"
                     onClick={() => handleExpandDetailsSection('assignee')}
                   />
                 ) : null}
@@ -1276,30 +1297,31 @@ export default function ChatsPage() {
                   <div className="flex flex-col">
                     <div className="px-4 pb-3 pt-4">
                       {selectedConversation.escalation && (
-                        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20 text-xs space-y-2.5 shadow-none">
+                        <div className="relative mb-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2.5 shadow-none">
+                          <ShineBorder shineColor={['#DC2626', '#EF4444', '#F87171']} />
                           <div className="flex items-center gap-2">
-                            <AlertCircle className="size-4 text-amber-500 shrink-0" />
-                            <span className="font-semibold text-amber-800 dark:text-amber-400">AI Escalation Details</span>
+                            <AlertCircle className="size-4 text-muted-foreground shrink-0" />
+                            <span className="text-base font-semibold text-foreground">Human Escalation</span>
                           </div>
                           <div>
-                            <span className="font-medium text-amber-900/70 dark:text-amber-400/70">Unsure Question:</span>
-                            <p className="mt-0.5 text-foreground leading-relaxed break-words">
+                            <span className="font-medium text-muted-foreground">Unsure Question:</span>
+                            <p className="mt-0.5 text-sm text-foreground leading-relaxed break-words">
                               {selectedConversation.escalation.question}
                             </p>
                           </div>
                           <div>
-                            <span className="font-medium text-amber-900/70 dark:text-amber-400/70">AI Context:</span>
-                            <p className="mt-0.5 text-foreground leading-relaxed break-words">
+                            <span className="font-medium text-muted-foreground">AI Context:</span>
+                            <p className="mt-0.5 text-sm text-foreground leading-relaxed break-words">
                               {selectedConversation.escalation.context}
                             </p>
                           </div>
                           <Button
                             type="button"
                             size="sm"
-                            className="w-full bg-amber-600 hover:bg-amber-500 text-white font-medium shadow-none transition-colors cursor-pointer"
-                            onClick={handleResolveEscalation}
+                            className="w-full bg-foreground hover:bg-foreground/90 text-background font-medium shadow-none transition-colors cursor-pointer"
+                            onClick={() => setResolveConfirmOpen(true)}
                           >
-                            Mark as Resolved
+                            Resolve
                           </Button>
                         </div>
                       )}
@@ -1738,6 +1760,35 @@ export default function ChatsPage() {
         )}
 
       </div>
+
+      <Dialog open={resolveConfirmOpen} onOpenChange={setResolveConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Resolve escalation?</DialogTitle>
+            <DialogDescription>
+              This will clear the human escalation and resume AI replies for this conversation.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={resolveBusy}
+              onClick={() => setResolveConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={resolveBusy}
+              className="bg-foreground hover:bg-foreground/90 text-background font-medium shadow-none"
+              onClick={() => void handleResolveEscalation()}
+            >
+              {resolveBusy ? <Spinner className="size-4" /> : 'Resolve'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

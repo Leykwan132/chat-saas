@@ -337,10 +337,7 @@ export function buildAgent(
   mediaCollections: string[] = [],
   conversationId?: Id<"conversations">,
 ) {
-  const escalationConfigured =
-    agent.escalationEnabled === true &&
-    typeof agent.escalationMessage === "string" &&
-    agent.escalationMessage.trim().length > 0;
+  const escalationConfigured = agent.escalationEnabled === true;
 
   const tools: Record<string, any> = {
     fetchContext: createTool({

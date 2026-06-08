@@ -328,11 +328,11 @@ export const internalEscalateConversation = internalMutation({
     if (!conv?.assignedAgentId) return;
 
     const agent = await ctx.db.get(conv.assignedAgentId);
-    const escalationMessage = agent?.escalationMessage?.trim();
-    if (!agent?.escalationEnabled || !escalationMessage) {
+    if (!agent?.escalationEnabled) {
       return;
     }
 
+    const escalationMessage = agent.escalationMessage?.trim();
     const now = Date.now();
     await ctx.db.patch(args.conversationId, {
       status: "requires_user_input",
@@ -345,14 +345,16 @@ export const internalEscalateConversation = internalMutation({
       updatedAt: now,
     });
 
-    await ctx.scheduler.runAfter(
-      0,
-      internal.chat.inboxActions.internalSendEscalationMessage,
-      {
-        conversationId: args.conversationId,
-        content: escalationMessage,
-      },
-    );
+    if (escalationMessage) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.chat.inboxActions.internalSendEscalationMessage,
+        {
+          conversationId: args.conversationId,
+          content: escalationMessage,
+        },
+      );
+    }
   },
 });
 
