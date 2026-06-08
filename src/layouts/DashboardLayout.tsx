@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { api } from '../../convex/_generated/api';
 import type { Id, Doc } from '../../convex/_generated/dataModel';
+import { cn } from '@/lib/utils';
 
 type DashboardHeaderProps = {
   agent: { _id: Id<'agents'>; name: string };
@@ -46,7 +47,7 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background px-4">
       <Breadcrumb>
         <BreadcrumbList>
           <TeamSwitcher settingsPath={settingsPath} onTeamSwitch={handleTeamSwitch} />
@@ -107,6 +108,8 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
 
 function DashboardContent() {
   const { agentId } = useParams();
+  const location = useLocation();
+  const isChatsPage = /\/chats\/?$/.test(location.pathname);
   const agent = useQuery(
     api.agents.get,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
@@ -130,16 +133,28 @@ function DashboardContent() {
 
   return (
     <TooltipProvider delayDuration={0}>
-      <SidebarProvider>
+      <SidebarProvider
+        className={cn(isChatsPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
+      >
         <AppSidebar agent={agent} />
 
-        <SidebarInset>
+        <SidebarInset
+          className={cn(
+            isChatsPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
+          )}
+        >
           {/* Top header with breadcrumb */}
           <DashboardHeader agent={agent} />
 
           {/* Page content */}
-          <main className="flex-1 px-14 py-8 md:px-12 lg:px-28 overflow-auto">
-            <div className="animate-fade-in">
+          <main
+            className={
+              isChatsPage
+                ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0'
+                : 'flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28'
+            }
+          >
+            <div className={cn('animate-fade-in', isChatsPage && 'flex h-full min-h-0 flex-1 flex-col')}>
               <Outlet />
             </div>
           </main>

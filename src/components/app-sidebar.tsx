@@ -3,6 +3,7 @@ import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, P
 import type { Doc } from '../../convex/_generated/dataModel';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   Sidebar,
   SidebarContent,
@@ -91,28 +92,42 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="group/logo-toggle relative size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            aria-label="Expand sidebar"
           >
-            <PanelLeftOpen className="size-5" />
+            <img
+              src="/icon.svg"
+              alt=""
+              className={cn(
+                'size-[1.35rem] dark:invert transition-opacity duration-150',
+                'group-hover/logo-toggle:opacity-0',
+              )}
+            />
+            <PanelLeftOpen
+              className={cn(
+                'absolute size-[1.125rem] opacity-0 transition-opacity duration-150',
+                'group-hover/logo-toggle:opacity-100',
+              )}
+            />
             <span className="sr-only">Expand Sidebar</span>
           </Button>
         </SidebarHeader>
       ) : (
-        <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
-          <a href="/workspace" className="flex items-center gap-3">
-            <img src="/icon.svg" className="size-6 dark:invert" />
-            <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-              <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
-              <span className="truncate text-xs text-sidebar-foreground/60">{agent.name}</span>
+        <SidebarHeader className="flex flex-row items-center justify-between px-[0.9rem] py-[0.7875rem]">
+          <a href="/workspace" className="flex items-center gap-[0.675rem]">
+            <img src="/icon.svg" className="size-[1.35rem] dark:invert" alt="" />
+            <div className="flex min-w-0 flex-col gap-[0.1125rem] leading-none">
+              <span className="text-[13.5px] font-semibold tracking-tight">Kilobot</span>
+              <span className="truncate text-[0.675rem] text-sidebar-foreground/60">{agent.name}</span>
             </div>
           </a>
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           >
-            <PanelLeftClose className="size-5" />
+            <PanelLeftClose className="size-[1.125rem]" />
             <span className="sr-only">Collapse Sidebar</span>
           </Button>
         </SidebarHeader>
@@ -270,4 +285,3 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     </Sidebar>
   );
 }
-

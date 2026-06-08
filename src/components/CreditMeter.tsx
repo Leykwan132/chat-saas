@@ -49,16 +49,16 @@ export function CreditMeter() {
   };
 
   return (
-    <div className="group-data-[collapsible=icon]:hidden px-3 py-2">
-      <div className="rounded-lg border border-border/60 bg-sidebar-accent/40 px-3 py-2.5 space-y-3">
-        <div className="space-y-2">
+    <div className="group-data-[collapsible=icon]:hidden px-[0.675rem] py-[0.45rem]">
+      <div className="rounded-lg border border-border/60 bg-sidebar-accent/40 px-[0.675rem] py-[0.5625rem] space-y-[0.675rem]">
+        <div className="space-y-[0.45rem]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-muted-foreground">Credits</span>
+            <div className="flex items-center gap-[0.3375rem]">
+              <span className="text-[0.675rem] font-medium text-muted-foreground">Credits</span>
               {!isLoading && planAndUsage?.isTeam && (
                 <Badge
                   variant="secondary"
-                  className="h-4 rounded px-1 text-[9px] font-semibold uppercase bg-primary/10 text-primary border-none select-none tracking-wider"
+                  className="h-[0.9rem] rounded px-[0.225rem] text-[8.1px] font-semibold uppercase bg-primary/10 text-primary border-none select-none tracking-wider"
                 >
                   {planAndUsage.plan}
                 </Badge>
@@ -66,7 +66,7 @@ export function CreditMeter() {
             </div>
             <span
               className={cn(
-                'text-xs font-semibold tabular-nums',
+                'text-[0.675rem] font-semibold tabular-nums',
                 !isLoading && monthlyPct <= 10 && 'text-red-500',
                 !isLoading && monthlyPct > 10 && monthlyPct <= 30 && 'text-amber-500',
                 (isLoading || monthlyPct > 30) && 'text-muted-foreground',
@@ -80,7 +80,7 @@ export function CreditMeter() {
           <Progress
             value={isLoading ? 0 : monthlyPct}
             className={cn(
-              'h-1.5',
+              'h-[0.3375rem]',
               !isLoading && monthlyPct <= 10 && '[&>[data-slot=progress-indicator]]:bg-red-500',
               !isLoading && monthlyPct > 10 && monthlyPct <= 30 && '[&>[data-slot=progress-indicator]]:bg-amber-400',
               !isLoading && monthlyPct > 30 && '[&>[data-slot=progress-indicator]]:bg-primary',
@@ -89,16 +89,16 @@ export function CreditMeter() {
         </div>
 
         {!isLoading && hasTopUps ? (
-          <div className="space-y-2">
+          <div className="space-y-[0.45rem]">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-muted-foreground">Top ups</span>
-              <span className="text-xs font-medium tabular-nums text-muted-foreground">
+              <span className="text-[0.675rem] font-medium text-muted-foreground">Top ups</span>
+              <span className="text-[0.675rem] font-medium tabular-nums text-muted-foreground">
                 {purchasedCredits.toLocaleString()} / {purchasedCreditsGranted.toLocaleString()}
               </span>
             </div>
             <Progress
               value={topUpPct}
-              className={cn('h-1.5', TOP_UP_PROGRESS_CLASS)}
+              className={cn('h-[0.3375rem]', TOP_UP_PROGRESS_CLASS)}
             />
           </div>
         ) : null}
@@ -108,10 +108,10 @@ export function CreditMeter() {
             type="button"
             variant="outline"
             size="xs"
-            className="w-full text-[10px] h-6 gap-0.5"
+            className="w-full text-[9px] h-[1.35rem] gap-[0.1125rem]"
             onClick={goToTopUp}
           >
-            <Plus className="size-2.5" />
+            <Plus className="size-[0.5625rem]" />
             <span>Top up</span>
           </Button>
         ) : null}

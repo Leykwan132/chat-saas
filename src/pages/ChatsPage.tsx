@@ -11,12 +11,11 @@ import {
   MessageSquare,
   PanelRightClose,
   PanelRightOpen,
-  Pin,
   Plug,
-  Search,
   Sparkles,
   Tag,
   User,
+  UserX,
   Check,
   AlertCircle,
   type LucideIcon,
@@ -24,7 +23,7 @@ import {
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
-import { ChatRow, type ConversationPlatform } from '@/components/ChatRow';
+import { type Chat, type ConversationPlatform } from '@/components/ChatRow';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -54,7 +53,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
@@ -64,25 +63,64 @@ import {
 } from '@/lib/inboxOptimistic';
 import { Conversation } from '@/components/ai-elements/conversation';
 import { Shimmer } from '@/components/ai-elements/shimmer';
+import {
+  InboxConversationList,
+  type InboxConversationSort,
+} from '@/components/inbox/InboxConversationList';
+import type { InboxActiveFilter } from '@/components/inbox/InboxActiveFilterChips';
+import {
+  InboxChatAreaSkeleton,
+  InboxFilterSidebarSkeleton,
+  InboxPageSkeleton,
+} from '@/components/inbox/InboxPageSkeleton';
+import {
+  InboxFilterSidebar,
+  type AssignmentFilter,
+} from '@/components/inbox/InboxFilterSidebar';
+import {
+  inboxChatGridClassName,
+  inboxColumnClassName,
+  inboxColumnHeaderClassName,
+  inboxColumnScrollClassName,
+} from '@/components/inbox/inboxLayout';
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 
-const INBOX_FILTER_TRIGGER_CLASS =
-  'h-8 w-fit shrink-0 justify-between gap-1.5 rounded-md border border-border bg-background px-2.5 font-normal text-[11px] shadow-none hover:bg-accent/50';
+const FILTER_SIDEBAR_STORAGE_KEY = 'inbox-filter-sidebar-open';
 
-const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
+const INBOX_PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
   instagram: 'Instagram',
   messenger: 'Messenger',
 };
 
-type InboxChatFilter = 'all' | 'open' | 'snoozed' | 'closed' | 'assigned_me' | 'escalated';
+type InboxChatListItem = Chat & {
+  assignedUserId?: string;
+  lastMessageAt: number;
+};
 
+function sortInboxChats(
+  chats: InboxChatListItem[],
+  order: InboxConversationSort,
+): InboxChatListItem[] {
+  return [...chats].sort((a, b) =>
+    order === 'newest'
+      ? b.lastMessageAt - a.lastMessageAt
+      : a.lastMessageAt - b.lastMessageAt,
+  );
+}
 
-
+function readFilterSidebarOpen(): boolean {
+  try {
+    const value = localStorage.getItem(FILTER_SIDEBAR_STORAGE_KEY);
+    return value === null ? true : value === 'true';
+  } catch {
+    return true;
+  }
+}
 
 function formatRelative(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -213,39 +251,35 @@ export default function ChatsPage() {
     Id<'conversations'> | null
   >(null);
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
-  const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
-  const [filterSearchInput, setFilterSearchInput] = useState('');
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
+  const [escalatedActive, setEscalatedActive] = useState(false);
+  const [activeLeads, setActiveLeads] = useState<LeadTemperature[]>([]);
+  const [activeTags, setActiveTags] = useState<string[]>([]);
+  const [filterSidebarOpen, setFilterSidebarOpen] = useState(readFilterSidebarOpen);
 
-  const handleToggleFilter = (filterKey: string) => {
-    setSelectedFilters((prev) => {
-      if (prev.includes(filterKey)) {
-        return prev.filter((x) => x !== filterKey);
-      } else {
-        return [...prev, filterKey];
-      }
-    });
+  const handleToggleLead = (lead: LeadTemperature) => {
+    setActiveLeads((prev) =>
+      prev.includes(lead) ? prev.filter((item) => item !== lead) : [...prev, lead],
+    );
   };
 
-  const activeStatuses = useMemo(() => {
-    return selectedFilters
-      .filter((f) => f.startsWith('status:'))
-      .map((f) => f.slice(7)) as InboxChatFilter[];
-  }, [selectedFilters]);
+  const handleToggleTag = (tag: string) => {
+    setActiveTags((prev) =>
+      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag],
+    );
+  };
 
-  const activeTags = useMemo(() => {
-    return selectedFilters
-      .filter((f) => f.startsWith('tag:'))
-      .map((f) => f.slice(4));
-  }, [selectedFilters]);
-
-  const activeLeads = useMemo(() => {
-    return selectedFilters
-      .filter((f) => f.startsWith('lead:'))
-      .map((f) => f.slice(5));
-  }, [selectedFilters]);
+  useEffect(() => {
+    try {
+      localStorage.setItem(FILTER_SIDEBAR_STORAGE_KEY, String(filterSidebarOpen));
+    } catch {
+      // ignore storage errors
+    }
+  }, [filterSidebarOpen]);
   const [pinnedIds, setPinnedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [conversationSort, setConversationSort] =
+    useState<InboxConversationSort>('newest');
   const [draftReply, setDraftReply] = useState('');
   const [sendBusy, setSendBusy] = useState(false);
   const [pendingOutbound, setPendingOutbound] = useState<
@@ -402,15 +436,16 @@ export default function ChatsPage() {
 
 
 
-  const chatItems = useMemo(() => {
+  const chatItems = useMemo((): InboxChatListItem[] => {
     if (!linkedConversations) return [];
-    return linkedConversations.map((conv: any) => ({
+    return linkedConversations.map((conv) => ({
       id: conv._id,
       name: conv.contactName ?? 'Unknown contact',
       message: conv.lastMessagePreview && conv.lastMessagePreview.trim() !== ''
         ? conv.lastMessagePreview
         : 'Click to view the conversation...',
       time: formatRelative(conv.lastMessageAt),
+      lastMessageAt: conv.lastMessageAt,
       unread: conv.unreadCount,
       platform: conv.service as ConversationPlatform,
       requiresAction: conv.unreadCount > 0,
@@ -435,39 +470,82 @@ export default function ChatsPage() {
     return Array.from(tagsSet).sort();
   }, [linkedConversations]);
 
+  const filterCounts = useMemo(() => {
+    const counts = {
+      all: chatItems.length,
+      assigned_me: 0,
+      unassigned: 0,
+      escalated: 0,
+      byPlatform: {} as Partial<Record<ConversationPlatform, number>>,
+      byLead: {} as Partial<Record<LeadTemperature, number>>,
+      byTag: {} as Record<string, number>,
+    };
+    for (const chat of chatItems) {
+      if (chat.assignedUserId === currentUser?.workosUserId) {
+        counts.assigned_me += 1;
+      }
+      if (!chat.assignedUserId) {
+        counts.unassigned += 1;
+      }
+      if (chat.conversationStatus === 'requires_user_input') {
+        counts.escalated += 1;
+      }
+      counts.byPlatform[chat.platform] = (counts.byPlatform[chat.platform] ?? 0) + 1;
+      if (chat.leadTemperature) {
+        counts.byLead[chat.leadTemperature] =
+          (counts.byLead[chat.leadTemperature] ?? 0) + 1;
+      }
+      for (const tag of chat.tags ?? []) {
+        counts.byTag[tag] = (counts.byTag[tag] ?? 0) + 1;
+      }
+    }
+    return counts;
+  }, [chatItems, currentUser?.workosUserId]);
+
   const filteredChats = useMemo(() => {
     let list = chatItems;
     const q = searchQuery.trim().toLowerCase();
     if (q) {
       list = list.filter(
-        (c: any) =>
+        (c) =>
           c.name.toLowerCase().includes(q) ||
           c.message.toLowerCase().includes(q),
       );
     }
     if (platformFilter !== 'all') {
-      list = list.filter((c: any) => c.platform === platformFilter);
+      list = list.filter((c) => c.platform === platformFilter);
     }
-    if (activeStatuses.length > 0) {
-      if (activeStatuses.includes('assigned_me')) {
-        list = list.filter(
-          (c: any) => c.assignedUserId === currentUser?.workosUserId,
-        );
-      }
-      if (activeStatuses.includes('escalated')) {
-        list = list.filter(
-          (c: any) => c.conversationStatus === 'requires_user_input',
-        );
-      }
+    if (assignmentFilter === 'assigned_me') {
+      list = list.filter((c) => c.assignedUserId === currentUser?.workosUserId);
+    } else if (assignmentFilter === 'unassigned') {
+      list = list.filter((c) => !c.assignedUserId);
+    }
+    if (escalatedActive) {
+      list = list.filter((c) => c.conversationStatus === 'requires_user_input');
     }
     if (activeTags.length > 0) {
-      list = list.filter((c: any) => c.tags && c.tags.some((t: string) => activeTags.includes(t)));
+      list = list.filter(
+        (c) => c.tags && activeTags.every((tag) => c.tags!.includes(tag)),
+      );
     }
     if (activeLeads.length > 0) {
-      list = list.filter((c: any) => c.leadTemperature && activeLeads.includes(c.leadTemperature));
+      list = list.filter(
+        (c) =>
+          c.leadTemperature &&
+          activeLeads.every((lead) => c.leadTemperature === lead),
+      );
     }
     return list;
-  }, [chatItems, searchQuery, platformFilter, activeStatuses, activeTags, activeLeads, currentUser?.workosUserId]);
+  }, [
+    chatItems,
+    searchQuery,
+    platformFilter,
+    assignmentFilter,
+    escalatedActive,
+    activeTags,
+    activeLeads,
+    currentUser?.workosUserId,
+  ]);
 
   useEffect(() => {
     if (
@@ -488,8 +566,112 @@ export default function ChatsPage() {
     });
   };
 
-  const pinnedChats = filteredChats.filter((c: any) => pinnedIds.has(c.id as string));
-  const unpinnedChats = filteredChats.filter((c: any) => !pinnedIds.has(c.id as string));
+  const pinnedChats = useMemo(
+    () =>
+      sortInboxChats(
+        filteredChats.filter((c) => pinnedIds.has(c.id as string)),
+        conversationSort,
+      ),
+    [filteredChats, pinnedIds, conversationSort],
+  );
+  const unpinnedChats = useMemo(
+    () =>
+      sortInboxChats(
+        filteredChats.filter((c) => !pinnedIds.has(c.id as string)),
+        conversationSort,
+      ),
+    [filteredChats, pinnedIds, conversationSort],
+  );
+
+  const activeInboxFilters = useMemo((): InboxActiveFilter[] => {
+    const filters: InboxActiveFilter[] = [];
+    if (assignmentFilter === 'assigned_me') {
+      filters.push({
+        id: 'assignment:assigned_me',
+        label: 'Assigned to me',
+        icon: <User className="text-[#6366f1]" />,
+      });
+    } else if (assignmentFilter === 'unassigned') {
+      filters.push({
+        id: 'assignment:unassigned',
+        label: 'Unassigned',
+        icon: <UserX className="text-muted-foreground" />,
+      });
+    }
+    if (platformFilter !== 'all') {
+      const platformIconClass =
+        platformFilter === 'whatsapp'
+          ? 'text-[#25D366]'
+          : platformFilter === 'instagram'
+            ? 'text-[#E4405F]'
+            : 'text-[#0866FF]';
+      const PlatformIcon =
+        platformFilter === 'whatsapp'
+          ? SiWhatsapp
+          : platformFilter === 'instagram'
+            ? SiInstagram
+            : SiMessenger;
+      filters.push({
+        id: `platform:${platformFilter}`,
+        label: INBOX_PLATFORM_LABEL[platformFilter],
+        icon: <PlatformIcon className={platformIconClass} />,
+      });
+    }
+    if (escalatedActive) {
+      filters.push({
+        id: 'status:escalated',
+        label: 'Escalated',
+        icon: <AlertCircle className="text-amber-500" />,
+      });
+    }
+    for (const lead of activeLeads) {
+      const style = getLeadTemperatureStyle(lead);
+      const LeadIcon = style.icon;
+      filters.push({
+        id: `lead:${lead}`,
+        label: lead,
+        icon: <LeadIcon className={style.iconClass} />,
+      });
+    }
+    for (const tag of activeTags) {
+      filters.push({
+        id: `tag:${tag}`,
+        label: tag,
+        icon: <Tag className="text-muted-foreground" />,
+      });
+    }
+    return filters;
+  }, [
+    assignmentFilter,
+    platformFilter,
+    escalatedActive,
+    activeLeads,
+    activeTags,
+  ]);
+
+  const handleRemoveInboxFilter = (id: string) => {
+    if (id === 'assignment:assigned_me' || id === 'assignment:unassigned') {
+      setAssignmentFilter('all');
+      return;
+    }
+    if (id.startsWith('platform:')) {
+      setPlatformFilter('all');
+      return;
+    }
+    if (id === 'status:escalated') {
+      setEscalatedActive(false);
+      return;
+    }
+    if (id.startsWith('lead:')) {
+      const lead = id.slice('lead:'.length) as LeadTemperature;
+      setActiveLeads((prev) => prev.filter((item) => item !== lead));
+      return;
+    }
+    if (id.startsWith('tag:')) {
+      const tag = id.slice('tag:'.length);
+      setActiveTags((prev) => prev.filter((item) => item !== tag));
+    }
+  };
 
   const selectedName =
     selectedConversation?.contactName ??
@@ -604,6 +786,19 @@ export default function ChatsPage() {
     if (section === 'summary') setInteractionSummaryOpen(true);
   };
 
+  const handleCreateTagFromFilters = () => {
+    if (!can(Permission.CHATS_TAG)) {
+      toast.error('You do not have permission to add tags.');
+      return;
+    }
+    if (!selectedConversationId) {
+      toast.info('Select a conversation first to create a tag.');
+      return;
+    }
+    handleExpandDetailsSection('tags');
+    setTagPopoverOpen(true);
+  };
+
   const handleLeadStatusChange = async (value: string) => {
     const customerId = selectedConversation?.customerId;
     if (!customerId) return;
@@ -715,20 +910,33 @@ export default function ChatsPage() {
 
   const conversationsStillLoading = linkedConversations === undefined;
 
+  const kbTagTitles = useMemo(
+    () => (textEntries ?? []).map((entry) => entry.title),
+    [textEntries],
+  );
+
+  const userTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    for (const tag of allExistingTags) {
+      if (!isLeadTemperatureTag(tag)) {
+        tagSet.add(tag);
+      }
+    }
+    for (const title of kbTagTitles) {
+      if (!isLeadTemperatureTag(title)) {
+        tagSet.add(title);
+      }
+    }
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
+  }, [allExistingTags, kbTagTitles]);
+
   if (isLoading || connectedChannels === undefined) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-        <ChatsPageHeader />
-        <div className="flex items-center justify-center py-20">
-          <Spinner className="size-6 text-muted-foreground" />
-        </div>
-      </div>
-    );
+    return <InboxPageSkeleton />;
   }
 
   if (!can(Permission.CHATS_READ)) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+      <div className="flex h-full flex-col gap-6 px-8 py-8">
         <ChatsPageHeader />
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -747,20 +955,9 @@ export default function ChatsPage() {
     );
   }
 
-  if (connectedChannels === undefined) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-        <ChatsPageHeader />
-        <div className="flex items-center justify-center py-20">
-          <Spinner className="size-6 text-muted-foreground" />
-        </div>
-      </div>
-    );
-  }
-
   if (connectedChannels.length === 0) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
+      <div className="flex h-full flex-col gap-6 px-8 py-8">
         <ChatsPageHeader />
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
@@ -784,303 +981,58 @@ export default function ChatsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100svh-6rem)] min-h-0 w-full flex-col gap-6 overflow-hidden">
-      <ChatsPageHeader className="shrink-0" />
+    <div className="flex h-full max-h-full min-h-0 w-full overflow-hidden">
+      {conversationsStillLoading ? (
+        <InboxFilterSidebarSkeleton />
+      ) : (
+        <InboxFilterSidebar
+          open={filterSidebarOpen}
+          onOpenChange={setFilterSidebarOpen}
+          assignmentFilter={assignmentFilter}
+          onAssignmentFilterChange={setAssignmentFilter}
+          platformFilter={platformFilter}
+          onPlatformFilterChange={setPlatformFilter}
+          escalatedActive={escalatedActive}
+          onEscalatedActiveChange={setEscalatedActive}
+          activeLeads={activeLeads}
+          onToggleLead={handleToggleLead}
+          activeTags={activeTags}
+          onToggleTag={handleToggleTag}
+          connectedPlatforms={connectedPlatforms}
+          userTags={userTags}
+          counts={filterCounts}
+          canCreateTag={can(Permission.CHATS_TAG)}
+          onCreateTagClick={handleCreateTagFromFilters}
+        />
+      )}
 
-      <div className="flex min-h-0 flex-1 gap-6 overflow-hidden">
+      <InboxConversationList
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        conversationSort={conversationSort}
+        onConversationSortChange={setConversationSort}
+        loading={conversationsStillLoading}
+        filteredChats={filteredChats}
+        pinnedChats={pinnedChats}
+        unpinnedChats={unpinnedChats}
+        totalConversationCount={chatItems.length}
+        selectedConversationId={selectedConversationId}
+        onSelectConversation={setSelectedConversationId}
+        onTogglePin={togglePin}
+        activeFilters={activeInboxFilters}
+        onRemoveActiveFilter={handleRemoveInboxFilter}
+      />
 
-        {/* LEFT COLUMN: Chat List */}
-        <div className="flex h-full w-[300px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card">
-
-          {/* Search & Filters */}
-          <div style={{ padding: '16px 16px 12px', borderBottom: '1px solid var(--color-border)' }}>
-            <div style={{ position: 'relative', marginBottom: '12px' }}>
-              <Search
-                size={15}
-                style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--color-foreground-subtle)' }}
-              />
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{
-                  width: '100%', height: '38px', paddingLeft: '36px', paddingRight: '14px',
-                  fontSize: '13px', borderRadius: '8px',
-                  border: '1px solid var(--color-border)',
-                  background: 'var(--color-background)',
-                  color: 'var(--color-foreground)',
-                  outline: 'none', boxSizing: 'border-box',
-                }}
-              />
-            </div>            {/* Platform + Status + Tag: row layout, wrapping if needed */}
-            <div className="flex w-full flex-wrap items-center gap-1.5">
-              <Select
-                value={platformFilter}
-                onValueChange={(value) =>
-                  setPlatformFilter(value as 'all' | ConversationPlatform)
-                }
-              >
-                <SelectTrigger className="bg-background border-border">
-                  <SelectValue asChild>
-                    <span className="flex items-center gap-1.5 min-w-0">
-                      {platformFilter === 'all' ? (
-                        <span className="text-muted-foreground">Platform</span>
-                      ) : (
-                        <>
-                          <PlatformMenuIcon platform={platformFilter} size={14} />
-                          <span className="truncate">{PLATFORM_LABEL[platformFilter]}</span>
-                        </>
-                      )}
-                    </span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent align="start">
-                  <SelectItem value="all">All platforms</SelectItem>
-                  {connectedPlatforms.map((p) => (
-                    <SelectItem key={p} value={p}>
-                      <span className="flex items-center gap-1.5">
-                        <PlatformMenuIcon platform={p} size={14} />
-                        {PLATFORM_LABEL[p]}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Popover open={filterPopoverOpen} onOpenChange={setFilterPopoverOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={INBOX_FILTER_TRIGGER_CLASS}
-                  >
-                    <span className="truncate text-left">
-                      {selectedFilters.length === 0 ? (
-                        <span className="text-muted-foreground">Filter</span>
-                      ) : selectedFilters.length === 1 ? (
-                        (() => {
-                          const filter = selectedFilters[0];
-                          if (filter === 'status:assigned_me') {
-                            return (
-                              <span className="flex items-center gap-1.5 text-foreground">
-                                <User className="size-3.5 shrink-0 text-[#6366f1]" />
-                                <span>Assigned to me</span>
-                              </span>
-                            );
-                          } else if (filter.startsWith('lead:')) {
-                            const tag = filter.slice(5) as LeadTemperature;
-                            const style = getLeadTemperatureStyle(tag);
-                            const Icon = style.icon;
-                            return (
-                              <span className="flex items-center gap-1.5 text-foreground truncate">
-                                <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
-                                <span className="truncate">{tag}</span>
-                              </span>
-                            );
-                          } else {
-                            const name = filter.slice(4);
-                            return (
-                              <span className="flex items-center gap-1.5 text-foreground truncate">
-                                <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(name).dot)} />
-                                <span className="truncate">{name}</span>
-                              </span>
-                            );
-                          }
-                        })()
-                      ) : (
-                        <span className="text-foreground font-medium">
-                          {selectedFilters.length} filters active
-                        </span>
-                      )}
-                    </span>
-                    <ChevronDown className="size-3.5 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-[200px] rounded-lg border border-border bg-popover p-1 shadow-lg"
-                  align="end"
-                >
-                  <Command className="rounded-lg bg-transparent p-0">
-                    <CommandInput
-                      placeholder="Search filters..."
-                      value={filterSearchInput}
-                      onValueChange={setFilterSearchInput}
-                      className="text-[11px]"
-                    />
-                    <CommandList className="max-h-60 overflow-y-auto no-scrollbar">
-                      <CommandEmpty>No filters found.</CommandEmpty>
-                      
-                      <CommandGroup heading="Filter">
-                        <CommandItem
-                          value="all"
-                          onSelect={() => {
-                            setSelectedFilters([]);
-                            setFilterSearchInput('');
-                          }}
-                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                        >
-                          <span>All</span>
-                          {selectedFilters.length === 0 && <Check className="size-3 text-foreground shrink-0" />}
-                        </CommandItem>
-                        
-                        <CommandItem
-                          value="assigned_me"
-                          onSelect={() => {
-                            handleToggleFilter('status:assigned_me');
-                          }}
-                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                        >
-                          <div className="flex items-center gap-2">
-                            <User className="size-3.5 shrink-0 text-[#6366f1]" />
-                            <span>Assigned to me</span>
-                          </div>
-                          {selectedFilters.includes('status:assigned_me') && <Check className="size-3 text-foreground shrink-0" />}
-                        </CommandItem>
-
-                        <CommandItem
-                          value="escalated"
-                          onSelect={() => {
-                            handleToggleFilter('status:escalated');
-                          }}
-                          className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                        >
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="size-3.5 shrink-0 text-amber-500" />
-                            <span>Escalated</span>
-                          </div>
-                          {selectedFilters.includes('status:escalated') && <Check className="size-3 text-foreground shrink-0" />}
-                        </CommandItem>
-                      </CommandGroup>
-                      
-                      <CommandSeparator />
-                      <CommandGroup heading="Lead Status">
-                        {(['Hot', 'Warm', 'Cold'] as const).map((status) => {
-                          const isSelected = selectedFilters.includes(`lead:${status}`);
-                          const style = getLeadTemperatureStyle(status);
-                          const Icon = style.icon;
-                          return (
-                            <CommandItem
-                              key={status}
-                              value={`lead:${status}`}
-                              onSelect={() => {
-                                handleToggleFilter(`lead:${status}`);
-                              }}
-                              className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                            >
-                              <div className="flex items-center gap-2">
-                                <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
-                                <span>{status}</span>
-                              </div>
-                              {isSelected && <Check className="size-3 text-foreground shrink-0" />}
-                            </CommandItem>
-                          );
-                        })}
-                      </CommandGroup>
-
-                      {(allExistingTags.filter(t => !isLeadTemperatureTag(t)).length > 0 || (textEntries && textEntries.length > 0)) && (
-                        <>
-                          <CommandSeparator />
-                          <CommandGroup heading="Tags">
-                            {allExistingTags.filter(t => !isLeadTemperatureTag(t)).map((tag) => {
-                              const isSelected = selectedFilters.includes(`tag:${tag}`);
-                              return (
-                                <CommandItem
-                                  key={tag}
-                                  value={tag}
-                                  onSelect={() => {
-                                    handleToggleFilter(`tag:${tag}`);
-                                  }}
-                                  className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(tag).dot)} />
-                                    <span>{tag}</span>
-                                  </div>
-                                  {isSelected && <Check className="size-3 text-foreground shrink-0" />}
-                                </CommandItem>
-                              );
-                            })}
-                            
-                            {textEntries && textEntries.map((entry) => {
-                              const isSelected = selectedFilters.includes(`tag:${entry.title}`);
-                              return (
-                                <CommandItem
-                                  key={entry._id}
-                                  value={entry.title}
-                                  onSelect={() => {
-                                    handleToggleFilter(`tag:${entry.title}`);
-                                  }}
-                                  className="flex items-center justify-between cursor-pointer rounded-md py-1.5 pl-2.5 pr-2.5 text-[11px] data-[selected=true]:bg-muted"
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(entry.title).dot)} />
-                                    <span>{entry.title}</span>
-                                  </div>
-                                  {isSelected && <Check className="size-3 text-foreground shrink-0" />}
-                                </CommandItem>
-                              );
-                            })}
-                          </CommandGroup>
-                        </>
-                      )}
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-
-          {/* List */}
-          <div className="no-scrollbar relative min-h-0 flex-1 overflow-y-auto">
-            {conversationsStillLoading ? (
-              <div className="flex items-center justify-center py-16">
-                <Spinner className="size-6 text-muted-foreground" />
-              </div>
-            ) : filteredChats.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-muted-foreground">
-                <MessageSquare className="size-8 opacity-40" />
-                <p className="m-0 font-medium text-foreground">No conversations yet</p>
-                <p className="m-0 text-xs leading-relaxed">
-                  When customers message your connected channels, threads appear here.
-                </p>
-              </div>
-            ) : (
-              <>
-                {pinnedChats.length > 0 && (
-                  <>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)' }}>
-                      <Pin size={11} color="var(--color-foreground-subtle)" />
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Pinned</span>
-                    </div>
-                    {pinnedChats.map((chat: any, index: number) => (
-                      <ChatRow key={chat.id} chat={chat} index={index} total={pinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned onSelect={setSelectedConversationId} onTogglePin={togglePin} />
-                    ))}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px 6px', borderBottom: '1px solid var(--color-border)', borderTop: '1px solid var(--color-border)' }}>
-                      <MessageSquare size={11} color="var(--color-foreground-subtle)" />
-                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--color-foreground-subtle)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>All</span>
-                    </div>
-                  </>
-                )}
-
-                {unpinnedChats.map((chat: any, index: number) => (
-                  <ChatRow key={chat.id} chat={chat} index={index} total={unpinnedChats.length} isSelected={selectedConversationId === chat.id} isPinned={false} onSelect={setSelectedConversationId} onTogglePin={togglePin} />
-                ))}
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* MIDDLE COLUMN: Chat Window (layout matches TestChatWindow) */}
-        <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card">
+      {/* Chat Window */}
+      <div className={cn(inboxColumnClassName, 'min-h-0 min-w-0 flex-1 bg-background')}>
           {selectedConversationId ? (
-            <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto]">
+            <div className={cn(inboxChatGridClassName, 'min-w-0')}>
               {/* Chat Header */}
-              <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
+              <div className={cn(inboxColumnHeaderClassName, 'row-start-1 justify-between px-4')}>
                 <div className="flex min-w-0 flex-1 items-center">
                   {displayHeaderName ? (
-                    <div className="flex items-center gap-2 min-w-0">
-                      <h2 className="m-0 truncate text-lg font-semibold text-foreground">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <h2 className="m-0 truncate text-sm font-semibold text-foreground">
                         {displayHeaderName}
                       </h2>
                       {selectedConversation?.escalation && (
@@ -1149,8 +1101,8 @@ export default function ChatsPage() {
                 </div>
               </div>
 
-              <div className="relative min-h-0 overflow-hidden">
-                <Conversation className="no-scrollbar size-full min-h-0">
+              <div className="relative row-start-2 min-h-0 overflow-hidden">
+                <Conversation className="absolute inset-0 min-h-0">
                   {threadDataLoading ? (
                     <ChatThreadLoading />
                   ) : (
@@ -1163,10 +1115,10 @@ export default function ChatsPage() {
                 </Conversation>
               </div>
 
-              {/* Chat Input */}
-              <div className="w-full min-w-0 shrink-0 border-t border-border bg-card p-4 flex flex-col gap-3">
+              {/* Chat Input — pinned to bottom of the chat column */}
+              <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
                 {selectedConversation?.escalation && (
-                  <div className="relative flex items-center justify-between gap-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-none">
+                  <div className="relative flex max-h-28 items-start justify-between gap-4 overflow-y-auto rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-none">
                     <ShineBorder shineColor={['#DC2626', '#EF4444', '#F87171']} />
                     <div className="flex items-start gap-2.5 min-w-0">
                       <AlertCircle className="size-4 text-muted-foreground shrink-0 mt-0.5" />
@@ -1205,13 +1157,15 @@ export default function ChatsPage() {
                 />
               </div>
             </div>
+          ) : conversationsStillLoading ? (
+            <InboxChatAreaSkeleton />
           ) : (
             <div className="flex h-full flex-1 flex-col items-center justify-center bg-background text-muted-foreground">
               <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--color-surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '16px', border: '1px solid var(--color-border)' }}>
                 <MessageSquare size={28} />
               </div>
               <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--color-foreground)' }}>No chat selected</h3>
-              <p style={{ margin: '8px 0 0', fontSize: '13px' }}>Select a conversation from the left to start replying</p>
+              <p style={{ margin: '8px 0 0', fontSize: '13px' }}>Select a conversation from the list to start replying</p>
             </div>
           )}
         </div>
@@ -1220,19 +1174,21 @@ export default function ChatsPage() {
         {selectedConversationId && (
           <div
             className={cn(
-              'flex h-full shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card transition-[width] duration-200 ease-out',
+              inboxColumnClassName,
+              'min-h-0 shrink-0 border-l border-border bg-background transition-[width] duration-200 ease-out',
               detailsPanelOpen ? 'w-[300px]' : 'w-12',
             )}
           >
             <div
               className={cn(
-                'flex shrink-0 items-center border-b border-border',
-                detailsPanelOpen ? 'justify-between px-5 py-4' : 'justify-center px-2 py-4',
+                inboxColumnHeaderClassName,
+                'shrink-0',
+                detailsPanelOpen ? 'justify-between px-3' : 'justify-center px-2',
               )}
             >
               {detailsPanelOpen ? (
                 <>
-                  <h2 className="m-0 text-base font-bold text-foreground">Details</h2>
+                  <h2 className="m-0 text-sm font-semibold text-foreground">Details</h2>
                   <Button
                     type="button"
                     variant="ghost"
@@ -1289,12 +1245,12 @@ export default function ChatsPage() {
                 />
               </div>
             ) : (
-            <div className="no-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
+            <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
               {detailsPanelLoading ? (
                 <DetailsPanelSkeleton />
               ) : (
                 selectedConversation && (
-                  <div className="flex flex-col">
+                  <div className="flex min-h-0 flex-col pb-4">
                     <div className="px-4 pb-3 pt-4">
                       {selectedConversation.escalation && (
                         <div className="relative mb-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2.5 shadow-none">
@@ -1758,8 +1714,6 @@ export default function ChatsPage() {
             )}
           </div>
         )}
-
-      </div>
 
       <Dialog open={resolveConfirmOpen} onOpenChange={setResolveConfirmOpen}>
         <DialogContent className="sm:max-w-md">
