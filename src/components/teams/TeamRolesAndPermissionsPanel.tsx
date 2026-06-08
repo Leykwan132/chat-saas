@@ -68,33 +68,33 @@ type UiPermissionItem = {
 };
 
 const CONSOLIDATED_ITEMS: UiPermissionItem[] = [
-  // Chats & Customers category
+  // Inbox & Customers category
   {
     key: 'chats',
-    label: 'Chats',
+    label: 'Inbox',
     description: 'Access to read, reply, tag, or reassign conversation threads.',
-    category: 'Chats & Customers',
+    category: 'Inbox & Customers',
     type: 'edit-view',
   },
   {
     key: 'customers',
     label: 'Customer List',
     description: 'Access to view, create, or modify customer records.',
-    category: 'Chats & Customers',
+    category: 'Inbox & Customers',
     type: 'edit-view',
   },
   {
     key: 'followups',
     label: 'Follow-ups',
     description: 'Access to view or configure automated customer follow-up rules.',
-    category: 'Chats & Customers',
+    category: 'Inbox & Customers',
     type: 'edit-view',
   },
   {
     key: 'broadcast',
     label: 'Broadcasts & Templates',
     description: 'Access to view, create, or dispatch broadcast campaigns and message templates.',
-    category: 'Chats & Customers',
+    category: 'Inbox & Customers',
     type: 'edit-view',
   },
   // AI Agent category
@@ -300,7 +300,7 @@ function PermissionsListEditor({
 }) {
   const groupedItems = useMemo(() => {
     const groups: Record<PermissionCategory, UiPermissionItem[]> = {
-      'Chats & Customers': [],
+      'Inbox & Customers': [],
       'AI Agent': [],
       'Team & Billing': [],
       People: [],

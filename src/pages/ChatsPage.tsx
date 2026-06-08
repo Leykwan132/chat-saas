@@ -9,6 +9,7 @@ import {
   FileText,
   Lock,
   MessageSquare,
+  MessageSquareDot,
   PanelRightClose,
   PanelRightOpen,
   Plug,
@@ -57,6 +58,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
+import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import {
   hasVisibleInboxContent,
   type InboxUIMessage,
@@ -142,24 +144,11 @@ function formatOrgMemberDisplayName(u: Doc<'users'>): string {
   return u.email;
 }
 
-function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % 6;
-  const dotColors = [
-    'bg-blue-500 dark:bg-blue-400',
-    'bg-emerald-500 dark:bg-emerald-400',
-    'bg-violet-500 dark:bg-violet-400',
-    'bg-amber-500 dark:bg-amber-400',
-    'bg-rose-500 dark:bg-rose-400',
-    'bg-cyan-500 dark:bg-cyan-400',
-  ];
+function getTagColorClass(_tag: string): { bg: string; text: string; dot: string } {
   return {
     bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
-    text: 'text-zinc-800 dark:text-zinc-200',
-    dot: dotColors[index],
+    text: 'text-zinc-600 dark:text-zinc-400',
+    dot: 'bg-zinc-400 dark:bg-zinc-500',
   };
 }
 
@@ -170,14 +159,17 @@ function PlatformMenuIcon({
   platform: ConversationPlatform;
   size?: number;
 }) {
-  const common = { size } as const;
+  const common = {
+    size,
+    className: cn('shrink-0', getPlatformIconClassName(platform)),
+  } as const;
   switch (platform) {
     case 'whatsapp':
-      return <SiWhatsapp {...common} className="shrink-0 text-[#25D366]" />;
+      return <SiWhatsapp {...common} />;
     case 'instagram':
-      return <SiInstagram {...common} className="shrink-0 text-[#E4405F]" />;
+      return <SiInstagram {...common} />;
     case 'messenger':
-      return <SiMessenger {...common} className="shrink-0 text-[#0866FF]" />;
+      return <SiMessenger {...common} />;
   }
 }
 
@@ -473,6 +465,7 @@ export default function ChatsPage() {
   const filterCounts = useMemo(() => {
     const counts = {
       all: chatItems.length,
+      unread: 0,
       assigned_me: 0,
       unassigned: 0,
       escalated: 0,
@@ -481,6 +474,9 @@ export default function ChatsPage() {
       byTag: {} as Record<string, number>,
     };
     for (const chat of chatItems) {
+      if (chat.unread > 0) {
+        counts.unread += 1;
+      }
       if (chat.assignedUserId === currentUser?.workosUserId) {
         counts.assigned_me += 1;
       }
@@ -515,7 +511,9 @@ export default function ChatsPage() {
     if (platformFilter !== 'all') {
       list = list.filter((c) => c.platform === platformFilter);
     }
-    if (assignmentFilter === 'assigned_me') {
+    if (assignmentFilter === 'unread') {
+      list = list.filter((c) => c.unread > 0);
+    } else if (assignmentFilter === 'assigned_me') {
       list = list.filter((c) => c.assignedUserId === currentUser?.workosUserId);
     } else if (assignmentFilter === 'unassigned') {
       list = list.filter((c) => !c.assignedUserId);
@@ -589,7 +587,13 @@ export default function ChatsPage() {
       filters.push({
         id: 'assignment:assigned_me',
         label: 'Assigned to me',
-        icon: <User className="text-[#6366f1]" />,
+        icon: <User className="text-muted-foreground" />,
+      });
+    } else if (assignmentFilter === 'unread') {
+      filters.push({
+        id: 'assignment:unread',
+        label: 'Unread',
+        icon: <MessageSquareDot className="text-muted-foreground" />,
       });
     } else if (assignmentFilter === 'unassigned') {
       filters.push({
@@ -599,12 +603,6 @@ export default function ChatsPage() {
       });
     }
     if (platformFilter !== 'all') {
-      const platformIconClass =
-        platformFilter === 'whatsapp'
-          ? 'text-[#25D366]'
-          : platformFilter === 'instagram'
-            ? 'text-[#E4405F]'
-            : 'text-[#0866FF]';
       const PlatformIcon =
         platformFilter === 'whatsapp'
           ? SiWhatsapp
@@ -614,7 +612,9 @@ export default function ChatsPage() {
       filters.push({
         id: `platform:${platformFilter}`,
         label: INBOX_PLATFORM_LABEL[platformFilter],
-        icon: <PlatformIcon className={platformIconClass} />,
+        icon: (
+          <PlatformIcon className={cn('shrink-0', getPlatformIconClassName(platformFilter))} />
+        ),
       });
     }
     if (escalatedActive) {
@@ -650,7 +650,11 @@ export default function ChatsPage() {
   ]);
 
   const handleRemoveInboxFilter = (id: string) => {
-    if (id === 'assignment:assigned_me' || id === 'assignment:unassigned') {
+    if (
+      id === 'assignment:assigned_me' ||
+      id === 'assignment:unassigned' ||
+      id === 'assignment:unread'
+    ) {
       setAssignmentFilter('all');
       return;
     }

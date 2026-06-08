@@ -1,8 +1,58 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { internalQuery, mutation, query, type MutationCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+
+async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
+  const channelRows = await ctx.db
+    .query("channels")
+    .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+    .collect();
+
+  const connectedChannelById = new Map(
+    channelRows
+      .filter((c) => c.status === "connected")
+      .map((c) => [c._id, c] as const),
+  );
+
+  if (connectedChannelById.size === 0) {
+    return {
+      connectedChannelById,
+      conversations: [] as Doc<"conversations">[],
+    };
+  }
+
+  const recent = await ctx.db
+    .query("conversations")
+    .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
+    .order("desc")
+    .take(400);
+
+  const conversations = recent.filter(
+    (c) =>
+      c.service !== "playground" &&
+      c.channelId !== undefined &&
+      connectedChannelById.has(c.channelId),
+  );
+
+  return { connectedChannelById, conversations };
+}
+
+function conversationBelongsToAgent(
+  conv: Doc<"conversations">,
+  connectedChannelById: Map<Id<"channels">, Doc<"channels">>,
+  agentId: Id<"agents">,
+): boolean {
+  if (conv.assignedAgentId === agentId) {
+    return true;
+  }
+  if (conv.channelId === undefined) {
+    return false;
+  }
+  const channel = connectedChannelById.get(conv.channelId);
+  return channel?.defaultAgentId === agentId;
+}
 
 // Latest inbox threads tied to channels that are still connected. Omits the AI
 // playground and orphaned rows left after disconnect (channel no longer linked).
@@ -14,36 +64,13 @@ export const listLinkedForCurrentOrg = query({
       return [];
     }
 
-    const channelRows = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
-      .collect();
-
-    const connectedIds = new Set(
-      channelRows
-        .filter((c) => c.status === "connected")
-        .map((c) => c._id),
-    );
-
-    if (connectedIds.size === 0) {
+    const { conversations } = await getLinkedInboxConversationDocs(ctx, orgId);
+    if (conversations.length === 0) {
       return [];
     }
 
-    const recent = await ctx.db
-      .query("conversations")
-      .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
-      .order("desc")
-      .take(400);
-
-    const filtered = recent.filter(
-      (c) =>
-        c.service !== "playground" &&
-        c.channelId !== undefined &&
-        connectedIds.has(c.channelId),
-    );
-
     const out = [];
-    for (const c of filtered) {
+    for (const c of conversations) {
       let tags: string[] = [];
       let leadTemperature: "Hot" | "Warm" | "Cold" | undefined = undefined;
       if (c.customerId !== undefined) {
@@ -60,6 +87,35 @@ export const listLinkedForCurrentOrg = query({
       });
     }
     return out;
+  },
+});
+
+export const getTotalUnreadForAgent = query({
+  args: {
+    agentId: v.id("agents"),
+  },
+  handler: async (ctx, args) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (orgId === "personal" || !orgId) {
+      return 0;
+    }
+
+    const agent = await ctx.db.get(args.agentId);
+    if (agent === null || agent.orgId !== orgId) {
+      return 0;
+    }
+
+    const { connectedChannelById, conversations } =
+      await getLinkedInboxConversationDocs(ctx, orgId);
+
+    let totalUnread = 0;
+    for (const conv of conversations) {
+      if (!conversationBelongsToAgent(conv, connectedChannelById, args.agentId)) {
+        continue;
+      }
+      totalUnread += conv.unreadCount;
+    }
+    return totalUnread;
   },
 });
 

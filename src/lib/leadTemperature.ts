@@ -7,6 +7,13 @@ import { Flame, Sun, Snowflake, type LucideIcon } from 'lucide-react';
 export const LEAD_TEMPERATURE_TAGS = ['Hot', 'Warm', 'Cold'] as const;
 export type LeadTemperature = (typeof LEAD_TEMPERATURE_TAGS)[number];
 
+/** Short explanations for lead temperature filters. */
+export const LEAD_TEMPERATURE_DESCRIPTIONS: Record<LeadTemperature, string> = {
+  Hot: 'Ready to buy — pricing, demo, or next steps.',
+  Warm: 'Interested, still exploring.',
+  Cold: 'Not looking to buy or disengaged.',
+};
+
 export function isLeadTemperatureTag(tag: string): tag is LeadTemperature {
   return (LEAD_TEMPERATURE_TAGS as readonly string[]).includes(tag);
 }

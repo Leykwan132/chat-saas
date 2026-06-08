@@ -67,10 +67,10 @@ export const PERMISSION_NAMES: Record<PermissionSlug, string> = {
   [Permission.AUTOMATION_MANAGE]: 'Manage Automations',
   [Permission.PLAYGROUND_ACCESS]: 'Use AI Playground',
   [Permission.ANALYTICS_READ]: 'View Analytics',
-  [Permission.CHATS_READ]: 'View Chats & Conversations',
-  [Permission.CHATS_REPLY]: 'Reply to Chats',
-  [Permission.CHATS_ASSIGN]: 'Assign Chats',
-  [Permission.CHATS_TAG]: 'Tag Chats & Labels',
+  [Permission.CHATS_READ]: 'View Inbox & Conversations',
+  [Permission.CHATS_REPLY]: 'Reply in Inbox',
+  [Permission.CHATS_ASSIGN]: 'Assign Inbox Conversations',
+  [Permission.CHATS_TAG]: 'Tag Inbox Conversations & Labels',
   [Permission.SCHEDULE_READ]: 'View Schedule',
   [Permission.ROUTING_READ]: 'View Lead Assignment',
   [Permission.ROUTING_MANAGE]: 'Manage Schedule & Lead Assignment',
@@ -128,7 +128,7 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionSlug, string> = {
 };
 
 /** Permission category mappings to group them nicely in the UI */
-export type PermissionCategory = 'AI Agent' | 'Chats & Customers' | 'Team & Billing' | 'People' | 'WorkOS Widgets';
+export type PermissionCategory = 'AI Agent' | 'Inbox & Customers' | 'Team & Billing' | 'People' | 'WorkOS Widgets';
 
 export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> = {
   [Permission.KB_READ]: 'AI Agent',
@@ -142,12 +142,12 @@ export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> =
   [Permission.AGENTS_CREATE]: 'AI Agent',
   [Permission.AGENTS_MANAGE]: 'AI Agent',
   
-  [Permission.CHATS_READ]: 'Chats & Customers',
-  [Permission.CHATS_REPLY]: 'Chats & Customers',
-  [Permission.CHATS_ASSIGN]: 'Chats & Customers',
-  [Permission.CHATS_TAG]: 'Chats & Customers',
-  [Permission.CUSTOMERS_READ]: 'Chats & Customers',
-  [Permission.CUSTOMERS_MANAGE]: 'Chats & Customers',
+  [Permission.CHATS_READ]: 'Inbox & Customers',
+  [Permission.CHATS_REPLY]: 'Inbox & Customers',
+  [Permission.CHATS_ASSIGN]: 'Inbox & Customers',
+  [Permission.CHATS_TAG]: 'Inbox & Customers',
+  [Permission.CUSTOMERS_READ]: 'Inbox & Customers',
+  [Permission.CUSTOMERS_MANAGE]: 'Inbox & Customers',
 
   [Permission.SCHEDULE_READ]: 'People',
   [Permission.ROUTING_READ]: 'People',
@@ -163,10 +163,10 @@ export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> =
   [Permission.WIDGETS_DSYNC_MANAGE]: 'WorkOS Widgets',
   [Permission.WIDGETS_USERS_TABLE_MANAGE]: 'WorkOS Widgets',
   
-  [Permission.FOLLOWUPS_READ]: 'Chats & Customers',
-  [Permission.FOLLOWUPS_MANAGE]: 'Chats & Customers',
-  [Permission.BROADCAST_READ]: 'Chats & Customers',
-  [Permission.BROADCAST_MANAGE]: 'Chats & Customers',
+  [Permission.FOLLOWUPS_READ]: 'Inbox & Customers',
+  [Permission.FOLLOWUPS_MANAGE]: 'Inbox & Customers',
+  [Permission.BROADCAST_READ]: 'Inbox & Customers',
+  [Permission.BROADCAST_MANAGE]: 'Inbox & Customers',
 };
 
 export type FeatureAccessLevel = 'none' | 'view' | 'edit';

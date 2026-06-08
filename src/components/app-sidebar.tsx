@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router';
+import { useQuery } from 'convex/react';
 import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, CalendarDays, ReplyAll, Megaphone, MessageCircleReply, FileText } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
+import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -21,6 +23,10 @@ import {
 import { usePermissions } from '../hooks/usePermissions';
 import { Permission, type PermissionSlug } from '../../shared/permissions';
 
+function formatUnreadBadgeCount(count: number): string {
+  return count > 99 ? '99+' : String(count);
+}
+
 type NavItem = {
   to: string;
   icon: any;
@@ -38,7 +44,7 @@ function getNavItems(agentId: string): {
 } {
   return {
     engagement: [
-      { to: `/dashboard/${agentId}`, icon: MessageSquare, label: 'Chats', end: true, requiredPermission: Permission.CHATS_READ },
+      { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
     ],
     customers: [
@@ -67,10 +73,66 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   agent: Doc<'agents'>;
 };
 
+type SidebarNavMenuItemProps = {
+  to: string;
+  end?: boolean;
+  tooltip?: string;
+  icon: NavItem['icon'];
+  label: string;
+  badge?: React.ReactNode;
+};
+
+function SidebarNavMenuItem({
+  to,
+  end,
+  tooltip,
+  icon: Icon,
+  label,
+  badge,
+}: SidebarNavMenuItemProps) {
+  const { state, setOpen } = useSidebar();
+
+  return (
+    <SidebarMenuItem>
+      <NavLink
+        to={to}
+        end={end}
+        onClick={() => {
+          if (state === 'collapsed') {
+            setOpen(true);
+          }
+        }}
+      >
+        {({ isActive }) => (
+          <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
+            {badge ? (
+              <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
+                <Icon />
+                <span className="min-w-0 flex-1 truncate">{label}</span>
+                {badge}
+              </span>
+            ) : (
+              <span>
+                <Icon />
+                <span>{label}</span>
+              </span>
+            )}
+          </SidebarMenuButton>
+        )}
+      </NavLink>
+    </SidebarMenuItem>
+  );
+}
+
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const { can, isLoading } = usePermissions();
   const navItems = getNavItems(agent._id);
+  const canReadChats = !isLoading && can(Permission.CHATS_READ);
+  const totalUnread = useQuery(
+    api.conversations.getTotalUnreadForAgent,
+    canReadChats ? { agentId: agent._id } : 'skip',
+  );
 
   const filterItems = (items: NavItem[]) => {
     if (isLoading) return [];
@@ -140,24 +202,34 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>Engagement</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {engagementItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <NavLink to={item.to} end={item.end}>
-                      {({ isActive }) => (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                        >
-                          <span>
-                            <item.icon />
-                            <span>{item.label}</span>
+                {engagementItems.map((item) => {
+                  const showUnreadBadge =
+                    item.label === 'Inbox' &&
+                    totalUnread !== undefined &&
+                    totalUnread > 0;
+                  const tooltip =
+                    showUnreadBadge
+                      ? `${item.label} (${formatUnreadBadgeCount(totalUnread)})`
+                      : item.label;
+
+                  return (
+                    <SidebarNavMenuItem
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      tooltip={tooltip}
+                      icon={item.icon}
+                      label={item.label}
+                      badge={
+                        showUnreadBadge ? (
+                          <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
+                            {formatUnreadBadgeCount(totalUnread)}
                           </span>
-                        </SidebarMenuButton>
-                      )}
-                    </NavLink>
-                  </SidebarMenuItem>
-                ))}
+                        ) : undefined
+                      }
+                    />
+                  );
+                })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -169,22 +241,14 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {configurationItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <NavLink to={item.to} end={item.label === 'Playground'}>
-                      {({ isActive }) => (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                        >
-                          <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
-                        </SidebarMenuButton>
-                      )}
-                    </NavLink>
-                  </SidebarMenuItem>
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end={item.label === 'Playground'}
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -197,22 +261,14 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {customersItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <NavLink to={item.to} end>
-                      {({ isActive }) => (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                        >
-                          <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
-                        </SidebarMenuButton>
-                      )}
-                    </NavLink>
-                  </SidebarMenuItem>
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -225,22 +281,14 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {teamItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <NavLink to={item.to} end>
-                      {({ isActive }) => (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                        >
-                          <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
-                        </SidebarMenuButton>
-                      )}
-                    </NavLink>
-                  </SidebarMenuItem>
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -253,22 +301,14 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {insightsItems.map((item) => (
-                  <SidebarMenuItem key={item.to}>
-                    <NavLink to={item.to} end>
-                      {({ isActive }) => (
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={item.label}
-                        >
-                          <span>
-                            <item.icon />
-                            <span>{item.label}</span>
-                          </span>
-                        </SidebarMenuButton>
-                      )}
-                    </NavLink>
-                  </SidebarMenuItem>
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>

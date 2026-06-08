@@ -8,26 +8,14 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
+import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import type { Id } from '../../convex/_generated/dataModel';
 
-function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
-  let hash = 0;
-  for (let i = 0; i < tag.length; i++) {
-    hash = tag.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % 6;
-  const dotColors = [
-    'bg-blue-500 dark:bg-blue-400',
-    'bg-emerald-500 dark:bg-emerald-400',
-    'bg-violet-500 dark:bg-violet-400',
-    'bg-amber-500 dark:bg-amber-400',
-    'bg-rose-500 dark:bg-rose-400',
-    'bg-cyan-500 dark:bg-cyan-400',
-  ];
+function getTagColorClass(_tag: string): { bg: string; text: string; dot: string } {
   return {
     bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
-    text: 'text-zinc-800 dark:text-zinc-200',
-    dot: dotColors[index],
+    text: 'text-zinc-600 dark:text-zinc-400',
+    dot: 'bg-zinc-400 dark:bg-zinc-500',
   };
 }
 
@@ -49,18 +37,18 @@ export type Chat = {
 };
 
 function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
-  const common = { size: 14, style: { flexShrink: 0 } as const };
+  const common = {
+    size: 14,
+    style: { flexShrink: 0 } as const,
+    className: getPlatformIconClassName(platform),
+  };
   switch (platform) {
     case 'whatsapp':
-      return <SiWhatsapp {...common} className="text-[#25D366]" title="WhatsApp" />;
+      return <SiWhatsapp {...common} title="WhatsApp" />;
     case 'instagram':
-      return (
-        <SiInstagram {...common} className="text-[#E4405F]" title="Instagram" />
-      );
+      return <SiInstagram {...common} title="Instagram" />;
     case 'messenger':
-      return (
-        <SiMessenger {...common} className="text-[#0866FF]" title="Messenger" />
-      );
+      return <SiMessenger {...common} title="Messenger" />;
   }
 }
 
@@ -124,11 +112,7 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{chat.message}</span>
               </p>
               {chat.unread > 0 && (
-                <span style={{
-                  width: 18, height: 18, borderRadius: '50%', background: '#ef4444',
-                  color: 'white', fontSize: '10px', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
+                <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                   {chat.unread}
                 </span>
               )}

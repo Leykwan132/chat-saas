@@ -278,7 +278,7 @@ function ProductMockup() {
                   Engagement
                 </p>
                 <div className="space-y-0.5">
-                  <MockSidebarNavItem icon={MessageSquare} label="Chats" active />
+                  <MockSidebarNavItem icon={MessageSquare} label="Inbox" active />
                   <MockSidebarNavItem icon={Users} label="Customers" />
                 </div>
               </div>

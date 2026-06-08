@@ -24,7 +24,7 @@ export const TEAM_FEATURES: ReadonlyArray<{
   },
   {
     key: 'chats',
-    label: 'Chats',
+    label: 'Inbox',
     description: 'View, assign, and reply in the inbox.',
   },
   {

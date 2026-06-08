@@ -39,7 +39,7 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
   const location = useLocation();
   const allAgents = useQuery(api.agents.list);
 
-  const subPath = location.pathname.replace(/^\/dashboard\/[^/]+\/?/, '') || 'chats';
+  const subPath = location.pathname.replace(/^\/dashboard\/[^/]+\/?/, '') || 'inbox';
   const settingsPath = `/dashboard/${agent._id}/settings`;
 
   const handleTeamSwitch = () => {
@@ -109,7 +109,7 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
 function DashboardContent() {
   const { agentId } = useParams();
   const location = useLocation();
-  const isChatsPage = /\/chats\/?$/.test(location.pathname);
+  const isInboxPage = /\/inbox\/?$/.test(location.pathname);
   const agent = useQuery(
     api.agents.get,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
@@ -134,13 +134,13 @@ function DashboardContent() {
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider
-        className={cn(isChatsPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
+        className={cn(isInboxPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
       >
         <AppSidebar agent={agent} />
 
         <SidebarInset
           className={cn(
-            isChatsPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
+            isInboxPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
           )}
         >
           {/* Top header with breadcrumb */}
@@ -149,12 +149,12 @@ function DashboardContent() {
           {/* Page content */}
           <main
             className={
-              isChatsPage
+              isInboxPage
                 ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0'
                 : 'flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28'
             }
           >
-            <div className={cn('animate-fade-in', isChatsPage && 'flex h-full min-h-0 flex-1 flex-col')}>
+            <div className={cn('animate-fade-in', isInboxPage && 'flex h-full min-h-0 flex-1 flex-col')}>
               <Outlet />
             </div>
           </main>

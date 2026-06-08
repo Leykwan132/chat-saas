@@ -2,6 +2,7 @@ import {
   AlertCircle,
   Inbox,
   LayoutGrid,
+  MessageSquareDot,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -40,13 +41,15 @@ import {
   inboxSidebarToggleIconClassName,
 } from '@/lib/sidebarNavStyles';
 import type { ConversationPlatform } from '@/components/ChatRow';
+import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import {
   inboxColumnClassName,
   inboxColumnHeaderClassName,
   inboxColumnScrollClassName,
 } from '@/components/inbox/inboxLayout';
+import { LeadTemperatureInfo } from '@/components/inbox/LeadTemperatureInfo';
 
-export type AssignmentFilter = 'all' | 'assigned_me' | 'unassigned';
+export type AssignmentFilter = 'all' | 'unread' | 'assigned_me' | 'unassigned';
 
 const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
@@ -55,14 +58,15 @@ const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
 };
 
 function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
-  const common = { size: 18, className: 'shrink-0' } as const;
+  const className = cn('shrink-0', getPlatformIconClassName(platform));
+  const common = { size: 18, className } as const;
   switch (platform) {
     case 'whatsapp':
-      return <SiWhatsapp {...common} className="shrink-0 text-[#25D366]" />;
+      return <SiWhatsapp {...common} />;
     case 'instagram':
-      return <SiInstagram {...common} className="shrink-0 text-[#E4405F]" />;
+      return <SiInstagram {...common} />;
     case 'messenger':
-      return <SiMessenger {...common} className="shrink-0 text-[#0866FF]" />;
+      return <SiMessenger {...common} />;
   }
 }
 
@@ -104,14 +108,21 @@ function FilterRow({
 
 function FilterSection({
   title,
+  info,
   children,
 }: {
   title: string;
+  info?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className={inboxSidebarSectionClassName}>
-      <p className={inboxSidebarGroupLabelClassName}>{title}</p>
+      <div className={inboxSidebarGroupLabelClassName}>
+        <span className="inline-flex min-w-0 items-center gap-0.5">
+          <span className="truncate">{title}</span>
+          {info}
+        </span>
+      </div>
       <div className="flex flex-col gap-[0.1125rem]">{children}</div>
     </div>
   );
@@ -154,6 +165,7 @@ function RailButton({
 
 export type InboxFilterCounts = {
   all: number;
+  unread: number;
   assigned_me: number;
   unassigned: number;
   escalated: number;
@@ -250,7 +262,17 @@ export function InboxFilterSidebar({
           <RailButton
             label="All conversations"
             icon={Inbox}
-            isActive={assignmentFilter === 'all' && platformFilter === 'all' && !escalatedActive}
+            isActive={
+              assignmentFilter === 'all' &&
+              platformFilter === 'all' &&
+              !escalatedActive
+            }
+            onClick={() => onOpenChange(true)}
+          />
+          <RailButton
+            label="Unread"
+            icon={MessageSquareDot}
+            isActive={assignmentFilter === 'unread'}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
@@ -298,8 +320,15 @@ export function InboxFilterSidebar({
               onClick={() => onAssignmentFilterChange('all')}
             />
             <FilterRow
+              label="Unread"
+              icon={<MessageSquareDot className="text-muted-foreground" />}
+              isActive={assignmentFilter === 'unread'}
+              count={counts.unread}
+              onClick={() => onAssignmentFilterChange('unread')}
+            />
+            <FilterRow
               label="Assigned to me"
-              icon={<User className="text-[#6366f1]" />}
+              icon={<User className="text-muted-foreground" />}
               isActive={assignmentFilter === 'assigned_me'}
               count={counts.assigned_me}
               onClick={() => onAssignmentFilterChange('assigned_me')}
@@ -343,7 +372,7 @@ export function InboxFilterSidebar({
             />
           </FilterSection>
 
-          <FilterSection title="Lead">
+          <FilterSection title="Lead Temperature" info={<LeadTemperatureInfo />}>
             {(['Hot', 'Warm', 'Cold'] as const).map((lead) => {
               const style = getLeadTemperatureStyle(lead);
               const Icon = style.icon;

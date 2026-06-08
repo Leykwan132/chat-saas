@@ -81,6 +81,11 @@ function WhatsappDemoTemplateRedirect() {
   return <Navigate to={`/dashboard/${agentId}/channels`} replace />
 }
 
+function ChatsToInboxRedirect() {
+  const { agentId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
+}
+
 function DashboardIndexRedirect() {
   const { agentId } = useParams()
   const { can, isLoading } = usePermissions()
@@ -94,7 +99,7 @@ function DashboardIndexRedirect() {
   }
 
   if (can(Permission.CHATS_READ)) {
-    return <Navigate to={`/dashboard/${agentId}/chats`} replace />
+    return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
   }
   if (can(Permission.PLAYGROUND_ACCESS)) {
     return <Navigate to={`/dashboard/${agentId}/playground`} replace />
@@ -112,7 +117,7 @@ function DashboardIndexRedirect() {
     return <Navigate to={`/dashboard/${agentId}/analytics`} replace />
   }
 
-  return <Navigate to={`/dashboard/${agentId}/chats`} replace />
+  return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
 }
 
 // Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
@@ -173,7 +178,8 @@ function RootLayout() {
             <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
             <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
               <Route index element={<DashboardIndexRedirect />} />
-              <Route path="chats" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
+              <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
+              <Route path="chats" element={<ChatsToInboxRedirect />} />
               <Route path="quick-replies" element={<QuickRepliesPage />} />
               <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
               <Route path="playground/:threadId?" element={<AgentPage />} />
