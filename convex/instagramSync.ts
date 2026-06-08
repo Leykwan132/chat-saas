@@ -177,7 +177,12 @@ export const syncMessages = internalAction({
         messageCount: detail.messages?.data?.length ?? 0,
         messages: detail.messages?.data,
       });
-      await ingestConversationMessages(ctx, channel, detail);
+      const conversationId = await ingestConversationMessages(ctx, channel, detail);
+      if (conversationId) {
+        await ctx.runAction(internal.chat.inboxActions.internalLabelLeadOnSync, {
+          conversationId,
+        });
+      }
     } catch (err) {
       console.error(
         `Instagram syncMessages failed for ${args.conversationExternalId}`,
@@ -223,7 +228,12 @@ export const hydrateConversationByParticipant = internalAction({
         data?: Array<ConversationDetailResponse>;
       }>(listUrl.toString(), "Instagram conversation lookup by user_id");
       for (const conv of list.data ?? []) {
-        await ingestConversationMessages(ctx, channel, conv);
+        const conversationId = await ingestConversationMessages(ctx, channel, conv);
+        if (conversationId) {
+          await ctx.runAction(internal.chat.inboxActions.internalLabelLeadOnSync, {
+            conversationId,
+          });
+        }
       }
     } catch (err) {
       console.error(

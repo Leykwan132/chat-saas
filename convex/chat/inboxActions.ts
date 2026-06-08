@@ -2,6 +2,7 @@
 
 import { v } from "convex/values";
 import { action, internalAction } from "../_generated/server";
+import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import { generateText } from "ai";
@@ -256,6 +257,117 @@ export const internalSendEscalationMessage = internalAction({
   },
 });
 
+function buildSummaryTranscript(messages: Doc<"messages">[]): string {
+  return messages
+    .map((m) => {
+      const sender =
+        m.direction === "incoming"
+          ? "Customer"
+          : m.authorUserId
+            ? "Agent (User)"
+            : "Agent (AI)";
+      return `${sender}: ${m.content}`;
+    })
+    .join("\n");
+}
+
+async function resolveConversationModelId(
+  ctx: ActionCtx,
+  conv: Doc<"conversations">,
+): Promise<string> {
+  if (!conv.assignedAgentId) {
+    return DEFAULT_OPENROUTER_MODEL;
+  }
+  const agent = await ctx.runQuery(internal.agents.internalGet, {
+    agentId: conv.assignedAgentId,
+  });
+  return agent?.model ?? DEFAULT_OPENROUTER_MODEL;
+}
+
+function parseLeadTemperature(
+  raw: string,
+): "hot" | "warm" | "cold" | undefined {
+  const jsonStr = raw.startsWith("{")
+    ? raw
+    : raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
+  try {
+    const parsed = JSON.parse(jsonStr) as { leadTemperature?: string };
+    const temp = (parsed.leadTemperature ?? "").toLowerCase();
+    if (temp === "hot" || temp === "warm" || temp === "cold") {
+      return temp;
+    }
+  } catch {
+    // Fall through.
+  }
+  return undefined;
+}
+
+export const internalLabelLeadOnSync = internalAction({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const conv = await ctx.runQuery(internal.chat.inbox.internalGetConversation, {
+      conversationId: args.conversationId,
+    });
+    if (conv === null || conv.syncLeadLabeledAt !== undefined || !conv.customerId) {
+      return;
+    }
+
+    const stripeInfo = await ctx.runQuery(internal.plans.getTeamStripePlan, {
+      workosOrgId: conv.orgId,
+      userId: conv.assignedUserId ?? undefined,
+    });
+    if (!checkAiFeature(stripeInfo.plan, "sync_lead_labeling")) {
+      return;
+    }
+
+    const messages = await ctx.runQuery(
+      internal.chat.inbox.internalGetMessagesForSummary,
+      { conversationId: args.conversationId },
+    );
+    if (messages.length === 0) {
+      return;
+    }
+
+    const modelId = await resolveConversationModelId(ctx, conv);
+    const transcript = buildSummaryTranscript(messages);
+    const systemPrompt = `You classify sales leads from chat transcripts between a customer and a business agent.
+Classify the lead temperature as one of: "hot", "warm", or "cold".
+- Hot: Customer shows strong buying intent — asking about pricing, requesting a demo, ready to purchase, comparing specific options, asking about availability/delivery, or has already made a purchase.
+- Warm: Customer is interested but still exploring — asking general questions, requesting information, showing curiosity but not yet committed.
+- Cold: Customer is disengaged, unresponsive, just browsing, filing a complaint with no purchase intent, or conversation is a dead-end support ticket.
+
+You MUST respond with ONLY a JSON object in this exact format, no other text:
+{"leadTemperature": "hot" or "warm" or "cold"}`;
+    const prompt = `Classify the lead temperature for this chat transcript. Respond with ONLY a JSON object:\n\n${transcript}`;
+
+    try {
+      const { text } = await generateText({
+        model: openRouterModel(modelId),
+        prompt,
+        system: systemPrompt,
+      });
+      const leadTemperature = parseLeadTemperature(text.trim());
+      if (!leadTemperature) {
+        console.error("Sync lead labeling returned no temperature", {
+          conversationId: args.conversationId,
+        });
+        return;
+      }
+
+      const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
+      await ctx.runMutation(internal.customers.internalSetLeadTemperature, {
+        customerId: conv.customerId,
+        temperature: temperatureMap[leadTemperature],
+      });
+      await ctx.runMutation(internal.chat.inbox.internalMarkSyncLeadLabeled, {
+        conversationId: args.conversationId,
+      });
+    } catch (error) {
+      console.error("Failed to label lead during conversation sync:", error);
+    }
+  },
+});
+
 export const generateThreadSummary = action({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args): Promise<{ summary: string }> => {
@@ -283,43 +395,16 @@ export const generateThreadSummary = action({
       throw new Error("Thread summary is not available on your plan.");
     }
 
-    let modelId = DEFAULT_OPENROUTER_MODEL;
-    if (conv.assignedAgentId) {
-      const agent = await ctx.runQuery(internal.agents.internalGet, {
-        agentId: conv.assignedAgentId,
-      });
-      if (agent) {
-        modelId = agent.model;
-      }
-    }
-
-    const transcript = messages
-      .map((m: Doc<"messages">) => {
-        const sender =
-          m.direction === "incoming"
-            ? "Customer"
-            : m.authorUserId
-              ? "Agent (User)"
-              : "Agent (AI)";
-        return `${sender}: ${m.content}`;
-      })
-      .join("\n");
+    const modelId = await resolveConversationModelId(ctx, conv);
+    const transcript = buildSummaryTranscript(messages);
 
     const systemPrompt = `You are a helpful assistant that summarizes chat transcripts between a customer and a business agent.
-You have two jobs:
-1. Generate a very simple, clear, and easy-to-understand summary of precisely 3-4 lines.
-   Keep it short, sweet, and focused specifically on the customer and their status. Use plain English, avoid formal business speak or jargon, and explain:
-   - The customer's primary inquiry, need, or concern (what they are looking for or trying to resolve).
-   - The current status, sentiment, or next steps from the customer's perspective (e.g. they are waiting for a support response, frustrated with pricing, happy after a successful purchase, ready to book a demo).
-   Make it highly customer-centric and readable at a single glance.
-2. Classify the lead temperature as one of: "hot", "warm", or "cold".
-   - Hot: Customer shows strong buying intent — asking about pricing, requesting a demo, ready to purchase, comparing specific options, asking about availability/delivery, or has already made a purchase.
-   - Warm: Customer is interested but still exploring — asking general questions, requesting information, showing curiosity but not yet committed.
-   - Cold: Customer is disengaged, unresponsive, just browsing, filing a complaint with no purchase intent, or conversation is a dead-end support ticket.
-
-You MUST respond with ONLY a JSON object in this exact format, no other text:
-{"summary": "your summary here", "leadTemperature": "hot" or "warm" or "cold"}`;
-    const prompt = `Please summarize the following chat transcript and classify the lead temperature. Respond with ONLY a JSON object:\n\n${transcript}`;
+Generate a very simple, clear, and easy-to-understand summary of precisely 3-4 lines.
+Keep it short, sweet, and focused specifically on the customer and their status. Use plain English, avoid formal business speak or jargon, and explain:
+- The customer's primary inquiry, need, or concern (what they are looking for or trying to resolve).
+- The current status, sentiment, or next steps from the customer's perspective (e.g. they are waiting for a support response, frustrated with pricing, happy after a successful purchase, ready to book a demo).
+Make it highly customer-centric and readable at a single glance.`;
+    const prompt = `Please summarize the following chat transcript:\n\n${transcript}`;
 
     try {
       const { text } = await generateText({
@@ -327,36 +412,9 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         prompt,
         system: systemPrompt,
       });
-      const raw = text.trim();
-      const jsonStr = raw.startsWith("{")
-        ? raw
-        : raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "");
-      let summary = "";
-      let leadTemperature: "hot" | "warm" | "cold" | undefined;
-      try {
-        const parsed = JSON.parse(jsonStr) as {
-          summary?: string;
-          leadTemperature?: string;
-        };
-        summary = (parsed.summary ?? "").trim();
-        const temp = (parsed.leadTemperature ?? "").toLowerCase();
-        if (temp === "hot" || temp === "warm" || temp === "cold") {
-          leadTemperature = temp;
-        }
-      } catch {
-        summary = raw;
-      }
-
+      const summary = text.trim();
       if (!summary) {
         throw new Error("Could not generate a summary from this conversation.");
-      }
-
-      if (conv.customerId && leadTemperature) {
-        const temperatureMap = { hot: "Hot", warm: "Warm", cold: "Cold" } as const;
-        await ctx.runMutation(internal.customers.internalSetLeadTemperature, {
-          customerId: conv.customerId,
-          temperature: temperatureMap[leadTemperature],
-        });
       }
 
       return { summary };

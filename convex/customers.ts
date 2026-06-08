@@ -584,7 +584,7 @@ export const removeCustomerTag = mutation({
   },
 });
 
-// Lead temperature tags managed by the AI summarizer.
+// Lead temperature tags managed by AI sync labeling or manual edits.
 export const LEAD_TEMPERATURE_TAGS = ["Hot", "Warm", "Cold"] as const;
 export type LeadTemperature = (typeof LEAD_TEMPERATURE_TAGS)[number];
 

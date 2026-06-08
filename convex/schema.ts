@@ -386,6 +386,8 @@ export default defineSchema({
     lastCustomerMessageAt: v.optional(v.number()),
     lastMessagePreview: v.optional(v.string()),
     unreadCount: v.number(),
+    /** Set after AI lead labeling runs during initial Meta conversation sync. */
+    syncLeadLabeledAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

@@ -549,6 +549,20 @@ export const internalGetConversation = internalQuery({
   },
 });
 
+export const internalMarkSyncLeadLabeled = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null || conv.syncLeadLabeledAt !== undefined) {
+      return;
+    }
+    await ctx.db.patch(args.conversationId, {
+      syncLeadLabeledAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 export const listThreadMessagesForInbox = query({
   args: {
     threadId: v.string(),

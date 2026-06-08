@@ -2,6 +2,7 @@ export type PlanKey = "free" | "standard" | "pro" | "ultra";
 
 export type PlanFeatureFlags = {
   thread_summary: boolean;
+  sync_lead_labeling: boolean;
   auto_reply: boolean;
   custom_agents: boolean;
 };
@@ -43,6 +44,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     platforms: [],
     features: {
       thread_summary: false,
+      sync_lead_labeling: false,
       auto_reply: false,
       custom_agents: false,
     },
@@ -72,6 +74,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     platforms: ["whatsapp"],
     features: {
       thread_summary: true,
+      sync_lead_labeling: true,
       auto_reply: false,
       custom_agents: false,
     },
@@ -106,6 +109,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       thread_summary: true,
+      sync_lead_labeling: true,
       auto_reply: true,
       custom_agents: true,
     },
@@ -141,6 +145,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       thread_summary: true,
+      sync_lead_labeling: true,
       auto_reply: true,
       custom_agents: true,
     },
