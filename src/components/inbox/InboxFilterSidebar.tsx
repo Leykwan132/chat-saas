@@ -246,7 +246,7 @@ export function InboxFilterSidebar({
       </div>
 
       {!open ? (
-        <div className="flex flex-1 flex-col items-center gap-[0.1125rem] py-[0.45rem]">
+        <div className="flex flex-1 flex-col items-center gap-[0.225rem] py-[0.225rem]">
           <RailButton
             label="All conversations"
             icon={Inbox}
