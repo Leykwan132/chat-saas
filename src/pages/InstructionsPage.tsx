@@ -586,19 +586,19 @@ export default function InstructionsPage() {
             <div className="rounded-xl border border-border bg-card">
               <div className="px-5 py-5">
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-semibold text-foreground">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <span className="block text-base font-semibold leading-tight text-foreground">
                         Smart Escalate
                       </span>
-                      <span className="text-xs text-muted-foreground">
+                      <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
                         Pause AI and alert your team when a human is requested or the AI is unsure.
                       </span>
                     </div>
                     <Switch
                       checked={escalationEnabled}
                       onCheckedChange={setEscalationEnabled}
-                      className="data-[state=checked]:bg-emerald-600"
+                      className="mt-1 shrink-0 data-[state=checked]:bg-emerald-600"
                     />
                   </div>
 

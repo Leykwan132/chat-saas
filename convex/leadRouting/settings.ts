@@ -1,9 +1,9 @@
 import { v } from "convex/values";
 import { query, mutation } from "../_generated/server";
 import {
+  assertAvailabilityRead,
   assertRoutingManage,
   assertRoutingRead,
-  assertScheduleRead,
   getOrCreateLeadAssignmentSettings,
 } from "./helpers";
 import { isUserEligible } from "./eligibility";
@@ -118,7 +118,7 @@ export const getRosterOpenLeadCounts = query({
     workosUserIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    await assertScheduleRead(ctx, args.agentId);
+    await assertAvailabilityRead(ctx, args.agentId);
     const { orgId } = await getAuthContext(ctx);
     if (!orgId) {
       throw new Error("Organization required");

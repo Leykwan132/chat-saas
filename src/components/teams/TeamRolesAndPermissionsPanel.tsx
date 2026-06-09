@@ -226,7 +226,7 @@ const ITEM_PERMISSIONS: Record<UiPermissionKey, { read: PermissionSlug[]; manage
     manage: [Permission.WIDGETS_USERS_TABLE_MANAGE],
   },
   routing: {
-    read: [Permission.SCHEDULE_READ, Permission.ROUTING_READ],
+    read: [Permission.AVAILABILITY_READ, Permission.ROUTING_READ],
     manage: [Permission.ROUTING_MANAGE],
   },
   followups: {

@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, CalendarDays, ReplyAll, Megaphone, MessageCircleReply, FileText } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -37,34 +37,35 @@ type NavItem = {
 
 function getNavItems(agentId: string): {
   engagement: NavItem[];
-  customers: NavItem[];
+  tools: NavItem[];
   team: NavItem[];
   configuration: NavItem[];
-  insights: NavItem[];
+  more: NavItem[];
 } {
   return {
     engagement: [
       { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
-    ],
-    customers: [
       { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
+      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
+    ],
+    tools: [
+      { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
       { to: `/dashboard/${agentId}/follow-ups`, icon: MessageCircleReply, label: 'Follow-ups', requiredPermission: Permission.FOLLOWUPS_READ },
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
-      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
     team: [
+      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
-      { to: `/dashboard/${agentId}/schedule`, icon: CalendarDays, label: 'Schedule', requiredPermission: Permission.SCHEDULE_READ },
+      { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
+      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
     configuration: [
       { to: `/dashboard/${agentId}/instructions`, icon: Bot, label: 'Instructions', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
-      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
-      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
+      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', end: true, requiredPermission: Permission.PLAYGROUND_ACCESS },
     ],
-    insights: [
-      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
+    more: [
+      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
   };
 }
@@ -140,10 +141,10 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   };
 
   const engagementItems = filterItems(navItems.engagement);
-  const customersItems = filterItems(navItems.customers);
+  const toolsItems = filterItems(navItems.tools);
   const teamItems = filterItems(navItems.team);
   const configurationItems = filterItems(navItems.configuration);
-  const insightsItems = filterItems(navItems.insights);
+  const moreItems = filterItems(navItems.more);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -196,7 +197,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       )}
 
       {/* Nav */}
-      <SidebarContent>
+      <SidebarContent className="gap-0">
         {engagementItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Engagement</SidebarGroupLabel>
@@ -244,27 +245,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                   <SidebarNavMenuItem
                     key={item.to}
                     to={item.to}
-                    end={item.label === 'Playground'}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                  />
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {customersItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>Customers</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {customersItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end
+                    end={item.end}
                     tooltip={item.label}
                     icon={item.icon}
                     label={item.label}
@@ -295,16 +276,36 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {insightsItems.length > 0 && (
+        {toolsItems.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Insights</SidebarGroupLabel>
+            <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {insightsItems.map((item) => (
+                {toolsItems.map((item) => (
                   <SidebarNavMenuItem
                     key={item.to}
                     to={item.to}
-                    end
+                    end={item.end}
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {moreItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>More</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {moreItems.map((item) => (
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
                     tooltip={item.label}
                     icon={item.icon}
                     label={item.label}

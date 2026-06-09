@@ -110,6 +110,8 @@ function DashboardContent() {
   const { agentId } = useParams();
   const location = useLocation();
   const isInboxPage = /\/inbox\/?$/.test(location.pathname);
+  const isCalendarPage = /\/calendar\/?$/.test(location.pathname);
+  const isFullHeightPage = isInboxPage || isCalendarPage;
   const agent = useQuery(
     api.agents.get,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
@@ -134,13 +136,13 @@ function DashboardContent() {
   return (
     <TooltipProvider delayDuration={0}>
       <SidebarProvider
-        className={cn(isInboxPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
+        className={cn(isFullHeightPage && 'h-svh max-h-svh min-h-0 overflow-hidden')}
       >
         <AppSidebar agent={agent} />
 
         <SidebarInset
           className={cn(
-            isInboxPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
+            isFullHeightPage && 'h-svh max-h-svh min-h-0 overflow-hidden',
           )}
         >
           {/* Top header with breadcrumb */}
@@ -149,12 +151,12 @@ function DashboardContent() {
           {/* Page content */}
           <main
             className={
-              isInboxPage
+              isFullHeightPage
                 ? 'flex min-h-0 flex-1 flex-col overflow-hidden p-0'
                 : 'flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28'
             }
           >
-            <div className={cn('animate-fade-in', isInboxPage && 'flex h-full min-h-0 flex-1 flex-col')}>
+            <div className={cn('animate-fade-in', isFullHeightPage && 'flex h-full min-h-0 flex-1 flex-col')}>
               <Outlet />
             </div>
           </main>

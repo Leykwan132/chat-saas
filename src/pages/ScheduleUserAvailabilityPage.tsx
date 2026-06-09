@@ -33,7 +33,7 @@ export default function ScheduleUserAvailabilityPage() {
     : undefined;
 
   const { can, isLoading: permissionsLoading } = usePermissions();
-  const canReadSchedule = can(Permission.SCHEDULE_READ);
+  const canReadSchedule = can(Permission.AVAILABILITY_READ);
   const canManage = can(Permission.ROUTING_MANAGE);
 
   const currentUser = useQuery(api.users.currentUser);
@@ -82,7 +82,7 @@ export default function ScheduleUserAvailabilityPage() {
 
   const detailPath =
     typedAgentId && decodedWorkosUserId
-      ? `/dashboard/${typedAgentId}/schedule/${encodeURIComponent(decodedWorkosUserId)}`
+      ? `/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}`
       : null;
 
   const ensureSchedule = async (): Promise<Id<'userSchedules'>> => {
@@ -139,7 +139,7 @@ export default function ScheduleUserAvailabilityPage() {
   ) {
     return (
       <Navigate
-        to={`/dashboard/${typedAgentId}/schedule/${encodeURIComponent(decodedWorkosUserId)}`}
+        to={`/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}`}
         replace
       />
     );
@@ -156,7 +156,7 @@ export default function ScheduleUserAvailabilityPage() {
     return (
       <div className="flex w-full max-w-3xl flex-col gap-4">
         <Link
-          to={`/dashboard/${typedAgentId}/schedule`}
+          to={`/dashboard/${typedAgentId}/availability`}
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />

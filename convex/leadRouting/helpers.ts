@@ -67,13 +67,13 @@ async function permissionsForCurrentUser(ctx: DbCtx): Promise<PermissionSlug[]> 
   return resolvePermissionsForRole(roleKey, stored);
 }
 
-export async function assertScheduleRead(ctx: DbCtx, agentId: Id<"agents">) {
+export async function assertAvailabilityRead(ctx: DbCtx, agentId: Id<"agents">) {
   const agent = await getOwnedAgent(ctx, agentId);
   if (agent === null) {
     throw new Error("Agent not found");
   }
   const permissions = await permissionsForCurrentUser(ctx);
-  if (!permissions.includes(Permission.SCHEDULE_READ)) {
+  if (!permissions.includes(Permission.AVAILABILITY_READ)) {
     throw new Error("Forbidden");
   }
   return agent;

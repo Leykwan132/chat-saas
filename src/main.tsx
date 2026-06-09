@@ -35,6 +35,7 @@ import BroadcastDetailPage from './pages/BroadcastDetailPage.tsx'
 import FollowUpPage from './pages/FollowUpPage.tsx'
 import FollowUpDetailPage from './pages/FollowUpDetailPage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
+import CalendarPage from './pages/CalendarPage.tsx'
 import SchedulePage from './pages/SchedulePage.tsx'
 import ScheduleUserDetailPage from './pages/ScheduleUserDetailPage.tsx'
 import ScheduleUserAvailabilityPage from './pages/ScheduleUserAvailabilityPage.tsx'
@@ -198,12 +199,13 @@ function RootLayout() {
               <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />
               <Route path="templates" element={<TemplatesPage />} />
               <Route path="templates/:templateName" element={<TemplateDetailPage />} />
-              <Route path="schedule" element={<SchedulePage />} />
+              <Route path="availability" element={<SchedulePage />} />
               <Route
-                path="schedule/:workosUserId/availability"
+                path="availability/:workosUserId/edit"
                 element={<ScheduleUserAvailabilityPage />}
               />
-              <Route path="schedule/:workosUserId" element={<ScheduleUserDetailPage />} />
+              <Route path="availability/:workosUserId" element={<ScheduleUserDetailPage />} />
+              <Route path="calendar" element={<CalendarPage />} />
               <Route path="lead-assignment" element={<LeadAssignmentPage />} />
               <Route path="instructions" element={<InstructionsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />

@@ -25,7 +25,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
   const { agentId } = useParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
-  const canReadSchedule = can(Permission.SCHEDULE_READ);
+  const canReadSchedule = can(Permission.AVAILABILITY_READ);
   const canManage = can(Permission.ROUTING_MANAGE);
   const showTeamRoster = canManage;
 
@@ -159,7 +159,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     <div className="flex w-full max-w-5xl flex-col gap-6">
       {!hideHeader && (
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Schedule</h1>
+          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Availability</h1>
         </div>
       )}
 
@@ -369,7 +369,7 @@ function UserScheduleCard({
   const isActive = scheduleEnabled && !isTimeOff;
 
   const statusLabel = !scheduleEnabled ? 'Inactive' : isTimeOff ? 'Away' : 'Active';
-  const detailPath = `/dashboard/${agentId}/schedule/${encodeURIComponent(workosUserId)}`;
+  const detailPath = `/dashboard/${agentId}/availability/${encodeURIComponent(workosUserId)}`;
 
   return (
     <div

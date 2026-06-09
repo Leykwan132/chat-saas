@@ -24,9 +24,12 @@ export const Permission = {
   CHATS_ASSIGN: 'chats:assign',
   CHATS_TAG: 'chats:tag',
   // People routing
-  SCHEDULE_READ: 'schedule:read',
+  AVAILABILITY_READ: 'availability:read',
   ROUTING_READ: 'routing:read',
   ROUTING_MANAGE: 'routing:manage',
+  // Calendar
+  CALENDAR_READ: 'calendar:read',
+  CALENDAR_MANAGE: 'calendar:manage',
   // Customers
   CUSTOMERS_READ: 'customers:read',
   CUSTOMERS_MANAGE: 'customers:manage',
@@ -71,9 +74,11 @@ export const PERMISSION_NAMES: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Reply in Inbox',
   [Permission.CHATS_ASSIGN]: 'Assign Inbox Conversations',
   [Permission.CHATS_TAG]: 'Tag Inbox Conversations & Labels',
-  [Permission.SCHEDULE_READ]: 'View Schedule',
+  [Permission.AVAILABILITY_READ]: 'View Availability',
   [Permission.ROUTING_READ]: 'View Lead Assignment',
-  [Permission.ROUTING_MANAGE]: 'Manage Schedule & Lead Assignment',
+  [Permission.ROUTING_MANAGE]: 'Manage Availability & Lead Assignment',
+  [Permission.CALENDAR_READ]: 'View Calendar',
+  [Permission.CALENDAR_MANAGE]: 'Manage Calendar Events',
   [Permission.CUSTOMERS_READ]: 'View Customer List',
   [Permission.CUSTOMERS_MANAGE]: 'Manage Customer Details',
   [Permission.TEAM_READ]: 'View Team Members',
@@ -106,9 +111,11 @@ export const PERMISSION_DESCRIPTIONS: Record<PermissionSlug, string> = {
   [Permission.CHATS_REPLY]: 'Access to send replies to customer chats.',
   [Permission.CHATS_ASSIGN]: 'Access to reassign conversations to team members.',
   [Permission.CHATS_TAG]: 'Access to add or remove tags and labels on conversations.',
-  [Permission.SCHEDULE_READ]: 'Access to view the team schedule.',
+  [Permission.AVAILABILITY_READ]: 'Access to view team availability.',
   [Permission.ROUTING_READ]: 'Access to view lead assignment settings.',
-  [Permission.ROUTING_MANAGE]: 'Access to edit schedule and lead assignment settings.',
+  [Permission.ROUTING_MANAGE]: 'Access to edit availability and lead assignment settings.',
+  [Permission.CALENDAR_READ]: 'Access to view shared team calendar events.',
+  [Permission.CALENDAR_MANAGE]: 'Access to create, edit, or delete shared team calendar events.',
   [Permission.CUSTOMERS_READ]: 'Access to view the customer directory.',
   [Permission.CUSTOMERS_MANAGE]: 'Access to create, edit, or delete customer information.',
   [Permission.TEAM_READ]: 'Access to view organization members and roles.',
@@ -149,9 +156,11 @@ export const PERMISSION_CATEGORIES: Record<PermissionSlug, PermissionCategory> =
   [Permission.CUSTOMERS_READ]: 'Inbox & Customers',
   [Permission.CUSTOMERS_MANAGE]: 'Inbox & Customers',
 
-  [Permission.SCHEDULE_READ]: 'People',
+  [Permission.AVAILABILITY_READ]: 'People',
   [Permission.ROUTING_READ]: 'People',
   [Permission.ROUTING_MANAGE]: 'People',
+  [Permission.CALENDAR_READ]: 'People',
+  [Permission.CALENDAR_MANAGE]: 'People',
   
   [Permission.TEAM_READ]: 'Team & Billing',
   [Permission.TEAM_MANAGE]: 'Team & Billing',
@@ -228,12 +237,13 @@ export function mapFeatureAccessToPermissions(
         Permission.BROADCAST_MANAGE,
       );
     }
-    permissions.push(Permission.SCHEDULE_READ);
+    permissions.push(Permission.AVAILABILITY_READ, Permission.CALENDAR_READ);
   } else if (access.chats === 'view') {
     permissions.push(
       Permission.CHATS_READ,
       Permission.CUSTOMERS_READ,
-      Permission.SCHEDULE_READ,
+      Permission.AVAILABILITY_READ,
+      Permission.CALENDAR_READ,
     );
     if (role !== 'member') {
       permissions.push(
@@ -297,9 +307,11 @@ export const ROLE_PERMISSIONS: Record<'owner' | 'admin' | 'member', readonly Per
     Permission.CHATS_REPLY,
     Permission.CHATS_ASSIGN,
     Permission.CHATS_TAG,
-    Permission.SCHEDULE_READ,
+    Permission.AVAILABILITY_READ,
     Permission.ROUTING_READ,
     Permission.ROUTING_MANAGE,
+    Permission.CALENDAR_READ,
+    Permission.CALENDAR_MANAGE,
     Permission.CUSTOMERS_READ,
     Permission.CUSTOMERS_MANAGE,
     Permission.FOLLOWUPS_READ,
@@ -328,14 +340,20 @@ export function resolvePermissionsForRole(
     if (!permissions.includes(Permission.FULL_CONTROL)) {
       permissions.push(Permission.FULL_CONTROL);
     }
-    if (!permissions.includes(Permission.SCHEDULE_READ)) {
-      permissions.push(Permission.SCHEDULE_READ);
+    if (!permissions.includes(Permission.AVAILABILITY_READ)) {
+      permissions.push(Permission.AVAILABILITY_READ);
     }
     if (!permissions.includes(Permission.ROUTING_READ)) {
       permissions.push(Permission.ROUTING_READ);
     }
     if (!permissions.includes(Permission.ROUTING_MANAGE)) {
       permissions.push(Permission.ROUTING_MANAGE);
+    }
+    if (!permissions.includes(Permission.CALENDAR_READ)) {
+      permissions.push(Permission.CALENDAR_READ);
+    }
+    if (!permissions.includes(Permission.CALENDAR_MANAGE)) {
+      permissions.push(Permission.CALENDAR_MANAGE);
     }
     if (!permissions.includes(Permission.FOLLOWUPS_READ)) {
       permissions.push(Permission.FOLLOWUPS_READ);
@@ -354,14 +372,20 @@ export function resolvePermissionsForRole(
 
   if (role === 'admin') {
     const permissions = [...stored];
-    if (!permissions.includes(Permission.SCHEDULE_READ)) {
-      permissions.push(Permission.SCHEDULE_READ);
+    if (!permissions.includes(Permission.AVAILABILITY_READ)) {
+      permissions.push(Permission.AVAILABILITY_READ);
     }
     if (!permissions.includes(Permission.ROUTING_READ)) {
       permissions.push(Permission.ROUTING_READ);
     }
     if (!permissions.includes(Permission.ROUTING_MANAGE)) {
       permissions.push(Permission.ROUTING_MANAGE);
+    }
+    if (!permissions.includes(Permission.CALENDAR_READ)) {
+      permissions.push(Permission.CALENDAR_READ);
+    }
+    if (!permissions.includes(Permission.CALENDAR_MANAGE)) {
+      permissions.push(Permission.CALENDAR_MANAGE);
     }
     if (!permissions.includes(Permission.FOLLOWUPS_READ)) {
       permissions.push(Permission.FOLLOWUPS_READ);
@@ -382,6 +406,7 @@ export function resolvePermissionsForRole(
     (slug) =>
       slug !== Permission.ROUTING_READ &&
       slug !== Permission.ROUTING_MANAGE &&
+      slug !== Permission.CALENDAR_MANAGE &&
       slug !== Permission.FOLLOWUPS_READ &&
       slug !== Permission.FOLLOWUPS_MANAGE &&
       slug !== Permission.BROADCAST_READ &&
@@ -390,8 +415,11 @@ export function resolvePermissionsForRole(
   const hasChats =
     permissions.includes(Permission.CHATS_READ) ||
     permissions.includes(Permission.CHATS_REPLY);
-  if (hasChats && !permissions.includes(Permission.SCHEDULE_READ)) {
-    permissions.push(Permission.SCHEDULE_READ);
+  if (hasChats && !permissions.includes(Permission.AVAILABILITY_READ)) {
+    permissions.push(Permission.AVAILABILITY_READ);
+  }
+  if (hasChats && !permissions.includes(Permission.CALENDAR_READ)) {
+    permissions.push(Permission.CALENDAR_READ);
   }
   return permissions;
 }

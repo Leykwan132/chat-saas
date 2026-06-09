@@ -16,6 +16,7 @@ import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as billingScope from "../billingScope.js";
 import type * as broadcastPool from "../broadcastPool.js";
+import type * as calendarEvents from "../calendarEvents.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
 import type * as chat_audioUtils from "../chat/audioUtils.js";
@@ -114,6 +115,7 @@ declare const fullApi: ApiFromModules<{
   authUtils: typeof authUtils;
   billingScope: typeof billingScope;
   broadcastPool: typeof broadcastPool;
+  calendarEvents: typeof calendarEvents;
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
   "chat/audioUtils": typeof chat_audioUtils;

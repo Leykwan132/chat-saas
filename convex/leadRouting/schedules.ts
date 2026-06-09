@@ -3,7 +3,7 @@ import { query, mutation } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
-import { assertRoutingManage, assertScheduleRead } from "./helpers";
+import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
 
 const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
 const MINUTES_PER_DAY = 24 * 60;
@@ -76,7 +76,7 @@ export async function ensureUserScheduleForAgent(
   return userScheduleId;
 }
 
-async function assertOrgMember(ctx: Parameters<typeof assertScheduleRead>[0], workosUserId: string) {
+async function assertOrgMember(ctx: Parameters<typeof assertAvailabilityRead>[0], workosUserId: string) {
   const { orgId } = await getAuthContext(ctx);
   if (!orgId || orgId === "personal") {
     throw new Error("Organization required");
@@ -100,7 +100,7 @@ async function assertOrgMember(ctx: Parameters<typeof assertScheduleRead>[0], wo
 export const listForAgent = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
-    await assertScheduleRead(ctx, args.agentId);
+    await assertAvailabilityRead(ctx, args.agentId);
     const schedules = await ctx.db
       .query("userSchedules")
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
@@ -128,7 +128,7 @@ export const getForAgentUser = query({
     workosUserId: v.string(),
   },
   handler: async (ctx, args) => {
-    await assertScheduleRead(ctx, args.agentId);
+    await assertAvailabilityRead(ctx, args.agentId);
     await assertOrgMember(ctx, args.workosUserId);
 
     const user = await ctx.db
@@ -209,7 +209,7 @@ export const addUser = mutation({
     if (userId !== args.workosUserId) {
       await assertRoutingManage(ctx, args.agentId);
     } else {
-      await assertScheduleRead(ctx, args.agentId);
+      await assertAvailabilityRead(ctx, args.agentId);
     }
     await assertOrgMember(ctx, args.workosUserId);
 
@@ -241,7 +241,7 @@ export const updateUser = mutation({
     if (userId !== schedule.workosUserId) {
       await assertRoutingManage(ctx, schedule.agentId);
     } else {
-      await assertScheduleRead(ctx, schedule.agentId);
+      await assertAvailabilityRead(ctx, schedule.agentId);
     }
 
     if (args.enabled !== undefined) {
@@ -272,7 +272,7 @@ export const removeUser = mutation({
     if (userId !== schedule.workosUserId) {
       await assertRoutingManage(ctx, schedule.agentId);
     } else {
-      await assertScheduleRead(ctx, schedule.agentId);
+      await assertAvailabilityRead(ctx, schedule.agentId);
     }
 
     const shifts = await ctx.db
@@ -313,7 +313,7 @@ export const setShifts = mutation({
     if (userId !== schedule.workosUserId) {
       await assertRoutingManage(ctx, schedule.agentId);
     } else {
-      await assertScheduleRead(ctx, schedule.agentId);
+      await assertAvailabilityRead(ctx, schedule.agentId);
     }
 
     // Validate overlaps
@@ -364,7 +364,7 @@ export const addTimeOff = mutation({
     if (userId !== schedule.workosUserId) {
       await assertRoutingManage(ctx, schedule.agentId);
     } else {
-      await assertScheduleRead(ctx, schedule.agentId);
+      await assertAvailabilityRead(ctx, schedule.agentId);
     }
     if (args.endAt <= args.startAt) {
       throw new Error("Invalid time off range");
@@ -389,7 +389,7 @@ export const removeTimeOff = mutation({
     if (userId !== schedule.workosUserId) {
       await assertRoutingManage(ctx, schedule.agentId);
     } else {
-      await assertScheduleRead(ctx, schedule.agentId);
+      await assertAvailabilityRead(ctx, schedule.agentId);
     }
     await ctx.db.delete(args.timeOffId);
   },

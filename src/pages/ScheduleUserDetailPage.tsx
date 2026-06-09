@@ -48,7 +48,7 @@ export default function ScheduleUserDetailPage() {
     : undefined;
 
   const { can, isLoading: permissionsLoading } = usePermissions();
-  const canReadSchedule = can(Permission.SCHEDULE_READ);
+  const canReadSchedule = can(Permission.AVAILABILITY_READ);
   const canManage = can(Permission.ROUTING_MANAGE);
 
   const detail = useQuery(
@@ -186,7 +186,7 @@ export default function ScheduleUserDetailPage() {
   const canEditAvailability = canManage || isOwnProfile;
 
   if (!permissionsLoading && currentUser !== undefined && !canManage && !isOwnProfile) {
-    return <Navigate to={`/dashboard/${typedAgentId}/schedule`} replace />;
+    return <Navigate to={`/dashboard/${typedAgentId}/availability`} replace />;
   }
 
   if (isLoading) {
@@ -202,7 +202,7 @@ export default function ScheduleUserDetailPage() {
     return (
       <div className="flex w-full max-w-3xl flex-col gap-4">
         <Link
-          to={`/dashboard/${typedAgentId}/schedule`}
+          to={`/dashboard/${typedAgentId}/availability`}
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
@@ -213,8 +213,8 @@ export default function ScheduleUserDetailPage() {
     );
   }
 
-  const schedulePath = `/dashboard/${typedAgentId}/schedule`;
-  const availabilityPath = `/dashboard/${typedAgentId}/schedule/${encodeURIComponent(decodedWorkosUserId)}/availability`;
+  const schedulePath = `/dashboard/${typedAgentId}/availability`;
+  const availabilityPath = `/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}/edit`;
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-8">

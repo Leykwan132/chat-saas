@@ -628,6 +628,89 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_teamId", ["teamId"]),
+  calendarEvents: defineTable({
+    teamId: v.id("teams"),
+    title: v.string(),
+    description: v.optional(v.string()),
+    location: v.optional(v.string()),
+    link: v.optional(v.string()),
+    startAt: v.number(),
+    endAt: v.number(),
+    timeZone: v.string(),
+    allDay: v.optional(v.boolean()),
+    startDate: v.optional(v.string()),
+    endDate: v.optional(v.string()),
+    status: v.union(
+      v.literal("confirmed"),
+      v.literal("tentative"),
+      v.literal("cancelled"),
+    ),
+    createdBy: v.id("users"),
+    updatedBy: v.optional(v.id("users")),
+    externalProvider: v.optional(v.literal("google")),
+    externalCalendarId: v.optional(v.string()),
+    externalEventId: v.optional(v.string()),
+    externalICalUID: v.optional(v.string()),
+    externalEtag: v.optional(v.string()),
+    externalHtmlLink: v.optional(v.string()),
+    externalUpdatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_teamId_and_startAt", ["teamId", "startAt"])
+    .index("by_teamId_and_externalProvider_and_externalEventId", [
+      "teamId",
+      "externalProvider",
+      "externalEventId",
+    ]),
+  calendarEventParticipants: defineTable({
+    eventId: v.id("calendarEvents"),
+    teamId: v.id("teams"),
+    participantType: v.union(v.literal("teamUser"), v.literal("customer")),
+    role: v.union(
+      v.literal("assigned"),
+      v.literal("customer"),
+      v.literal("attendee"),
+    ),
+    userId: v.optional(v.id("users")),
+    customerId: v.optional(v.id("customers")),
+    email: v.string(),
+    displayName: v.optional(v.string()),
+    eventStartAt: v.number(),
+    responseStatus: v.optional(
+      v.union(
+        v.literal("needsAction"),
+        v.literal("declined"),
+        v.literal("tentative"),
+        v.literal("accepted"),
+      ),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_teamId_and_userId_and_eventStartAt", [
+      "teamId",
+      "userId",
+      "eventStartAt",
+    ])
+    .index("by_teamId_and_customerId_and_eventStartAt", [
+      "teamId",
+      "customerId",
+      "eventStartAt",
+    ])
+    .index("by_teamId_and_role_and_userId_and_eventStartAt", [
+      "teamId",
+      "role",
+      "userId",
+      "eventStartAt",
+    ])
+    .index("by_teamId_and_role_and_customerId_and_eventStartAt", [
+      "teamId",
+      "role",
+      "customerId",
+      "eventStartAt",
+    ]),
   whatsappBroadcastSchedules: defineTable({
     agentId: v.id("agents"),
     orgId: v.string(),
