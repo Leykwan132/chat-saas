@@ -43,6 +43,19 @@ type SidebarContextProps = {
 
 const SidebarContext = React.createContext<SidebarContextProps | null>(null)
 
+function useOptionalSidebar() {
+  return React.useContext(SidebarContext)
+}
+
+function getSidebarContentInsetLeft(
+  state: SidebarContextProps["state"],
+  isMobile: boolean,
+) {
+  if (isMobile) return undefined
+  if (state === "collapsed") return `calc(${SIDEBAR_WIDTH_ICON} + 1rem)`
+  return SIDEBAR_WIDTH
+}
+
 function useSidebar() {
   const context = React.useContext(SidebarContext)
   if (!context) {
@@ -710,5 +723,7 @@ export {
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
+  getSidebarContentInsetLeft,
+  useOptionalSidebar,
   useSidebar,
 }

@@ -64,6 +64,7 @@ import {
   type InboxUIMessage,
 } from '@/lib/inboxOptimistic';
 import { Conversation } from '@/components/ai-elements/conversation';
+import { PageDescription } from '@/components/PageDescription';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import {
   InboxConversationList,
@@ -1758,6 +1759,9 @@ function ChatsPageHeader({ className }: { className?: string }) {
         <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Messages
         </h1>
+        <PageDescription>
+          View and reply to all your customer conversations in one place.
+        </PageDescription>
       </div>
     </div>
   );

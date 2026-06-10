@@ -15,6 +15,7 @@ import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { PageDescription } from '@/components/PageDescription';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -410,6 +411,9 @@ function PageHeader() {
     <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
       <div>
         <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Channels</h1>
+        <PageDescription>
+          Connect WhatsApp, Instagram, and Messenger to start receiving messages.
+        </PageDescription>
       </div>
     </header>
   );

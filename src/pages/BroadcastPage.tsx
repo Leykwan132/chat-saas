@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
 import { Plus, Check, ChevronRight, X, Equal, Loader2, Trash2, MoreHorizontal } from 'lucide-react';
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -185,13 +186,16 @@ export default function BroadcastPage() {
       {/* Page Header */}
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Broadcast</h1>
-          <div className="flex items-center gap-1.5 mt-2">
+          <div className="mb-2 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
               <SiWhatsapp className="size-3 text-[#25D366]" />
               WhatsApp only
             </span>
           </div>
+          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Broadcast</h1>
+          <PageDescription>
+            Send one WhatsApp message to many customers at once.
+          </PageDescription>
         </div>
         {canManage && (
           <div className="flex shrink-0">

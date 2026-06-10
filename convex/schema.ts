@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { autoBookingSessionStatusValidator } from "./autoBookingSessionStatus";
 
 const serviceValidator = v.union(
   v.literal("whatsapp"),
@@ -20,6 +21,56 @@ const customerServiceValidator = v.union(
   v.literal("messenger"),
   v.literal("manual"),
 );
+
+const autoBookingFieldTypeValidator = v.union(
+  v.literal("text"),
+  v.literal("number"),
+  v.literal("select"),
+  v.literal("boolean"),
+  v.literal("date"),
+  v.literal("time"),
+  v.literal("phone"),
+);
+
+const autoBookingTimeSlotPolicyValidator = v.union(
+  v.literal("offer_slots"),
+  v.literal("customer_suggests"),
+);
+
+const autoBookingSalesStyleValidator = v.union(
+  v.literal("proactive"),
+  v.literal("neutral"),
+  v.literal("gentle"),
+);
+
+const autoBookingAssignmentStrategyValidator = v.union(
+  v.literal("conversation_owner"),
+  v.literal("balanced"),
+  v.literal("round_robin"),
+  v.literal("specific_user"),
+);
+
+const autoBookingCollectedValueValidator = v.union(
+  v.string(),
+  v.number(),
+  v.boolean(),
+  v.null(),
+);
+
+const autoBookingServiceFieldValidator = v.object({
+  key: v.string(),
+  label: v.string(),
+  type: autoBookingFieldTypeValidator,
+  options: v.optional(v.array(v.string())),
+});
+
+const autoBookingSlotValidator = v.object({
+  startAt: v.number(),
+  endAt: v.number(),
+  assignedUserId: v.id("users"),
+  assignedWorkosUserId: v.string(),
+  assignedDisplayName: v.optional(v.string()),
+});
 
 export default defineSchema({
   users: defineTable({
@@ -618,6 +669,49 @@ export default defineSchema({
     endAt: v.number(),
     label: v.optional(v.string()),
   }).index("by_userScheduleId", ["userScheduleId"]),
+  autoBookingSettings: defineTable({
+    agentId: v.id("agents"),
+    enabled: v.boolean(),
+    defaultTimeZone: v.string(),
+    updatedAt: v.number(),
+  }).index("by_agentId", ["agentId"]),
+  autoBookingServices: defineTable({
+    agentId: v.id("agents"),
+    name: v.string(),
+    description: v.optional(v.string()),
+    isActive: v.boolean(),
+    archivedAt: v.optional(v.number()),
+    sortOrder: v.number(),
+    durationMinutes: v.number(),
+    bufferMinutes: v.optional(v.number()),
+    timeZone: v.optional(v.string()),
+    fields: v.array(autoBookingServiceFieldValidator),
+    timeSlotPolicy: autoBookingTimeSlotPolicyValidator,
+    preferredTimeMinutes: v.optional(v.array(v.number())),
+    salesStyle: autoBookingSalesStyleValidator,
+    assignmentStrategy: autoBookingAssignmentStrategyValidator,
+    specificWorkosUserId: v.optional(v.string()),
+    lastAssignedWorkosUserId: v.optional(v.string()),
+    lastAssignedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId_and_sortOrder", ["agentId", "sortOrder"])
+    .index("by_agentId_and_isActive", ["agentId", "isActive"]),
+  autoBookingSessions: defineTable({
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+    serviceId: v.optional(v.id("autoBookingServices")),
+    status: autoBookingSessionStatusValidator,
+    collectedFields: v.record(v.string(), autoBookingCollectedValueValidator),
+    proposedSlots: v.optional(v.array(autoBookingSlotValidator)),
+    selectedSlot: v.optional(autoBookingSlotValidator),
+    calendarEventId: v.optional(v.id("calendarEvents")),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
   quickReplies: defineTable({
     teamId: v.id("teams"),
     title: v.string(),
@@ -654,10 +748,20 @@ export default defineSchema({
     externalEtag: v.optional(v.string()),
     externalHtmlLink: v.optional(v.string()),
     externalUpdatedAt: v.optional(v.number()),
+    agentId: v.optional(v.id("agents")),
+    conversationId: v.optional(v.id("conversations")),
+    autoBookingServiceId: v.optional(v.id("autoBookingServices")),
+    bookingSource: v.optional(v.union(v.literal("manual"), v.literal("ai"))),
+    customFieldResponses: v.optional(v.record(v.string(), autoBookingCollectedValueValidator)),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_teamId_and_startAt", ["teamId", "startAt"])
+    .index("by_agentId_and_bookingSource_and_startAt", [
+      "agentId",
+      "bookingSource",
+      "startAt",
+    ])
     .index("by_teamId_and_externalProvider_and_externalEventId", [
       "teamId",
       "externalProvider",

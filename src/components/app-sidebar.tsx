@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
+import { AiBadge } from '@/components/AiBadge';
 import { cn } from '@/lib/utils';
 import {
   Sidebar,
@@ -33,6 +34,7 @@ type NavItem = {
   label: string;
   end?: boolean;
   requiredPermission: PermissionSlug;
+  badge?: React.ReactNode;
 };
 
 function getNavItems(agentId: string): {
@@ -62,7 +64,15 @@ function getNavItems(agentId: string): {
     configuration: [
       { to: `/dashboard/${agentId}/instructions`, icon: Bot, label: 'Instructions', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
-      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', end: true, requiredPermission: Permission.PLAYGROUND_ACCESS },
+      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
+      {
+        to: `/dashboard/${agentId}/auto-booking`,
+        icon: CalendarCheck,
+        label: 'Auto Booking',
+        end: true,
+        requiredPermission: Permission.AUTOMATION_READ,
+        badge: <AiBadge />,
+      },
     ],
     more: [
       { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
@@ -109,8 +119,10 @@ function SidebarNavMenuItem({
             {badge ? (
               <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
                 <Icon />
-                <span className="min-w-0 flex-1 truncate">{label}</span>
-                {badge}
+                <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <span className="truncate">{label}</span>
+                  {badge}
+                </span>
               </span>
             ) : (
               <span>
@@ -249,6 +261,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     tooltip={item.label}
                     icon={item.icon}
                     label={item.label}
+                    badge={item.badge}
                   />
                 ))}
               </SidebarMenu>

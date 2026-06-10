@@ -25,7 +25,7 @@ export const getAuthUser = query({
 export const getUsers = query({
   args: {},
   handler: async (ctx) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, activeTeamId } = await getAuthContext(ctx);
     const org = await ctx.db
       .query("organizations")
       .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
@@ -33,11 +33,24 @@ export const getUsers = query({
     if (org === null) return [];
 
     const adminSet = new Set<string>(org.admins.map((id: string) => id));
-    const users: Array<Doc<"users"> & { isAdmin: boolean }> = [];
+    const users: Array<
+      Doc<"users"> & { isAdmin: boolean; role: Doc<"teamMemberships">["role"] }
+    > = [];
     for (const memberId of org.members) {
       const user = await ctx.db.get(memberId);
       if (user === null) continue;
-      users.push({ ...user, isAdmin: adminSet.has(memberId) });
+
+      const membership = await ctx.db
+        .query("teamMemberships")
+        .withIndex("by_userId_and_teamId", (q) =>
+          q.eq("userId", memberId).eq("teamId", activeTeamId),
+        )
+        .unique();
+
+      const role: Doc<"teamMemberships">["role"] = membership?.role
+        ?? (adminSet.has(memberId) ? "admin" : "member");
+
+      users.push({ ...user, isAdmin: adminSet.has(memberId), role });
     }
     return users;
   },

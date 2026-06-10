@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { Bot } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { TestChatWindow } from '@/components/TestChatWindow';
@@ -75,9 +76,14 @@ export default function AgentPage() {
     <div className="flex w-full flex-col gap-6 max-w-none">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 sm:flex-row sm:items-center">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
-            Playground
-          </h1>
+          <div>
+            <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
+              Playground
+            </h1>
+            <PageDescription>
+              Test how your AI responds before customers see it.
+            </PageDescription>
+          </div>
         </div>
       </header>
 

@@ -16,6 +16,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { toast } from 'sonner';
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -334,9 +335,14 @@ export default function InstructionsPage() {
   return (
     <div className="flex w-full flex-col gap-6 max-w-6xl">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
-        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
-          Instructions
-        </h1>
+        <div>
+          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
+            Instructions
+          </h1>
+          <PageDescription>
+            Tell your AI agent how to talk to and help your customers.
+          </PageDescription>
+        </div>
         <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
           Test in playground
           <ArrowRight className="size-4" />

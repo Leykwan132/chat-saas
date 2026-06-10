@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
+import { PageDescription } from '@/components/PageDescription';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -219,6 +220,9 @@ export default function CustomersPage() {
           <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
             Customers
           </h1>
+          <PageDescription>
+            Keep track of everyone who messages your business.
+          </PageDescription>
         </div>
         <AddCustomerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
       </div>

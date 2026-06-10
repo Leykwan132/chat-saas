@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from "sonner";
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Progress } from '@/components/ui/progress';
@@ -143,6 +144,9 @@ export default function KnowledgeBasePage() {
         <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
           <div>
             <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Knowledge Base</h1>
+            <PageDescription>
+              Add content your AI can reference when answering customer questions.
+            </PageDescription>
           </div>
           <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
             Test in playground

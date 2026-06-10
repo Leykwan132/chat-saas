@@ -336,6 +336,7 @@ export function buildAgent(
   enableCitations: boolean = false,
   mediaCollections: string[] = [],
   conversationId?: Id<"conversations">,
+  autoBookingEnabled: boolean = false,
 ) {
   const escalationConfigured = agent.escalationEnabled === true;
 
@@ -387,6 +388,98 @@ export function buildAgent(
           });
         }
         return { success: true, message: "Escalated to human. Automated responses are paused." };
+      },
+    });
+  }
+
+  if (conversationId && autoBookingEnabled) {
+    const collectedFieldsSchema = z.record(
+      z.string(),
+      z.union([z.string(), z.number(), z.boolean(), z.null()]),
+    );
+
+    tools.listActiveBookingServices = createTool({
+      description:
+        "Lists the active services that customers can book. Call this when a customer wants to book an appointment and you need to know which service they want.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runQuery(internal.autoBooking.listActiveServices, {
+          agentId,
+        });
+      },
+    });
+
+    tools.checkAvailability = createTool({
+      description:
+        "Checks available appointment slots for the selected Auto Booking service. Use this after you know the service and have collected the configured required details. For customer-suggested times, pass preferredTimeIso.",
+      inputSchema: z.object({
+        serviceId: z.string().optional().describe("The selected Auto Booking service ID."),
+        preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp."),
+        rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp."),
+        rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp."),
+        collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer, keyed by field name."),
+      }),
+      execute: async (ctx, input) => {
+        const args: {
+          conversationId: Id<"conversations">;
+          serviceId?: Id<"autoBookingServices">;
+          preferredStartAt?: number;
+          rangeStartAt?: number;
+          rangeEndAt?: number;
+          collectedFields?: Record<string, string | number | boolean | null>;
+        } = { conversationId };
+        if (input.serviceId) {
+          args.serviceId = input.serviceId as Id<"autoBookingServices">;
+        }
+        const preferredStartAt = input.preferredTimeIso ? Date.parse(input.preferredTimeIso) : NaN;
+        if (Number.isFinite(preferredStartAt)) {
+          args.preferredStartAt = preferredStartAt;
+        }
+        const rangeStartAt = input.rangeStartIso ? Date.parse(input.rangeStartIso) : NaN;
+        if (Number.isFinite(rangeStartAt)) {
+          args.rangeStartAt = rangeStartAt;
+        }
+        const rangeEndAt = input.rangeEndIso ? Date.parse(input.rangeEndIso) : NaN;
+        if (Number.isFinite(rangeEndAt)) {
+          args.rangeEndAt = rangeEndAt;
+        }
+        if (input.collectedFields) {
+          args.collectedFields = input.collectedFields;
+        }
+        return await ctx.runMutation(internal.autoBooking.checkAvailability, args);
+      },
+    });
+
+    tools.bookAppointment = createTool({
+      description:
+        "Creates a confirmed calendar appointment for the selected Auto Booking service. Call this only after the customer explicitly confirms the service and selected slot.",
+      inputSchema: z.object({
+        serviceId: z.string().describe("The selected Auto Booking service ID."),
+        startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
+        collectedFields: collectedFieldsSchema.optional().describe("Final booking details collected from the customer."),
+      }),
+      execute: async (ctx, input) => {
+        const startAt = Date.parse(input.startTimeIso);
+        if (!Number.isFinite(startAt)) {
+          return { success: false, message: "Invalid appointment start time." };
+        }
+        return await ctx.runMutation(internal.autoBooking.bookAppointment, {
+          conversationId,
+          serviceId: input.serviceId as Id<"autoBookingServices">,
+          startAt,
+          ...(input.collectedFields ? { collectedFields: input.collectedFields } : {}),
+        });
+      },
+    });
+
+    tools.cancelBooking = createTool({
+      description:
+        "Cancels the customer's in-progress Auto Booking session. Call this when the customer declines a slot, changes their mind, or asks to stop booking.",
+      inputSchema: z.object({}),
+      execute: async (toolCtx) => {
+        return await toolCtx.runMutation(internal.autoBooking.cancelBookingSession, {
+          conversationId,
+        });
       },
     });
   }
@@ -450,6 +543,20 @@ You have an \`escalateToHuman\` tool. If you lack confidence, do not have enough
 NEVER respond with phrases like "I don't have that information", "I'm not sure", or "let me know if there's something else I can help with" when you cannot answer. Escalate instead and send no user-facing reply.`
     : "";
 
+  const bookingBlock = conversationId && autoBookingEnabled
+    ? `\n\n## Auto Booking
+If the customer wants to book, schedule, reserve, or create an appointment:
+- Call \`listActiveBookingServices\` first to see whether Auto Booking is enabled and which services can be booked.
+- If multiple services are available and the customer has not chosen one, ask which service they want.
+- Collect every field listed for the selected service before checking availability. Fields are configured as a single list (for example date, time, name, phone, and any custom fields).
+- Name and phone may already be available from the customer's contact profile — use those when present and only ask in chat if still missing.
+- Use \`checkAvailability\` to get valid slots and present them in order — matches for \`preferredTimeMinutes\` are listed first, then other open slots.
+- Do NOT say the appointment is booked until \`bookAppointment\` succeeds.
+- Only call \`bookAppointment\` after the customer clearly confirms the selected service and time.
+- If the customer declines a slot, changes their mind, or asks to stop booking, call \`cancelBooking\` before replying.
+- When \`bookAppointment\` succeeds, summarize the booking time, service, assigned teammate if returned, and booking ID.`
+    : "";
+
   const noContextFallback = escalationConfigured
     ? "call \`escalateToHuman\` with the user's question and explain what information was missing. Do NOT send any message to the user."
     : "give a short, natural reply that you don't have that information";
@@ -473,13 +580,13 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
 
 ${toolSteps}${toneBlock}${groundingBlock}
-  ${citationBlock}${mediaBlock}${escalationBlock}`;
+  ${citationBlock}${mediaBlock}${escalationBlock}${bookingBlock}`;
 
   return new Agent(components.agent, {
     name: agent.name,
     languageModel: openRouterModel(agent.model),
     instructions,
-    stopWhen: stepCountIs(6),
+    stopWhen: stepCountIs(8),
     tools,
     rawRequestResponseHandler: async () => {
       // console.log("request", request);

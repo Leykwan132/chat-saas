@@ -1,4 +1,5 @@
 import { BarChart3, TrendingUp, TrendingDown, MessageSquare, SmilePlus, Meh, Frown, Hash } from 'lucide-react';
+import { PageDescription } from '@/components/PageDescription';
 
 const sentimentData = [
   { label: 'Positive', percentage: 62, icon: SmilePlus, color: '#16a34a', bg: '#16a34a', barBg: '#dcfce7' },
@@ -35,6 +36,9 @@ export default function AnalyticsPage() {
         <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Analytics
         </h1>
+        <PageDescription>
+          See how your team and AI are performing over time.
+        </PageDescription>
       </div>
 
       {/* Overview cards */}

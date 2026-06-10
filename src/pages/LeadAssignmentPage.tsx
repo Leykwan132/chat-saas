@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { RefreshCw, Scale, UserRoundCheck } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -109,6 +110,9 @@ export default function LeadAssignmentPage() {
         <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
           Lead Assignment
         </h1>
+        <PageDescription>
+          Choose how new conversations get assigned to your team.
+        </PageDescription>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-8 lg:gap-16 items-start mt-2">

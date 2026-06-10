@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Navigate, useParams } from 'react-router';
+import { useMemo, useState } from 'react';
+import { Link, Navigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
@@ -16,6 +16,7 @@ import {
   subMonths,
 } from 'date-fns';
 import {
+  ArrowRight,
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -24,6 +25,7 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
+import { AiBadge } from '@/components/AiBadge';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -45,6 +47,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { SearchableSelect } from '@/components/ui/searchable-select';
+import { TimeSelectInput } from '@/components/TimeSelectInput';
+import { parseCalendarTimeLabel } from '@/lib/calendarTimeUtils';
 import {
   Popover,
   PopoverContent,
@@ -57,7 +62,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -154,49 +158,8 @@ function dateKey(date: Date | number) {
   return format(date, 'yyyy-MM-dd');
 }
 
-function formatTimeOption(totalMinutes: number) {
-  const hours24 = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  const period = hours24 >= 12 ? 'PM' : 'AM';
-  const hours12 = hours24 % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
-}
-
-const TIME_OPTIONS = Array.from({ length: 48 }, (_, index) =>
-  formatTimeOption(index * 30),
-);
-
-function parseTimeInput(value: string) {
-  const normalized = value.trim().toUpperCase().replace(/\s+/g, ' ');
-  const match = normalized.match(/^(\d{1,2})(?::?(\d{2}))?\s*(AM|PM)?$/);
-  if (!match) return null;
-
-  const rawHour = Number(match[1]);
-  const minutes = match[2] === undefined ? 0 : Number(match[2]);
-  const period = match[3];
-
-  if (!Number.isInteger(rawHour) || !Number.isInteger(minutes) || minutes > 59) {
-    return null;
-  }
-
-  let hours24 = rawHour;
-  if (period) {
-    if (rawHour < 1 || rawHour > 12) return null;
-    hours24 = rawHour % 12;
-    if (period === 'PM') hours24 += 12;
-  } else if (rawHour > 23) {
-    return null;
-  }
-
-  return {
-    hours24,
-    minutes,
-    label: formatTimeOption(hours24 * 60 + minutes),
-  };
-}
-
 function combineDateTime(date: string, time: string) {
-  const parsed = parseTimeInput(time);
+  const parsed = parseCalendarTimeLabel(time);
   if (!parsed) return null;
 
   return new Date(
@@ -933,6 +896,33 @@ export default function CalendarPage() {
               disabled={!currentUser}
             />
           </CalendarSidebarFilterSection>
+
+          <div className="px-3 pt-2">
+            <Link
+              to={`/dashboard/${agentId}/auto-booking`}
+              className="group block overflow-hidden rounded-xl border border-border bg-card"
+            >
+              <div className="overflow-hidden border-b border-border">
+                <img
+                  src="https://storage.kilobot.app/grad.webp"
+                  alt=""
+                  className="block h-32 w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5 p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <span className="text-sm font-semibold text-foreground">Auto-Booking</span>
+                    <AiBadge size="sm" />
+                  </div>
+                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5" />
+                </div>
+                <p className="text-sm leading-normal text-muted-foreground decoration-foreground/40 underline-offset-4 transition-[text-decoration-color] duration-300 group-hover:underline">
+                  Let AI book your appointments?
+                </p>
+              </div>
+            </Link>
+          </div>
         </div>
       </aside>
 
@@ -1275,33 +1265,6 @@ export default function CalendarPage() {
   );
 }
 
-function TimeSelectInput({
-  label,
-  value,
-  onChange,
-  disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="grid gap-2">
-      <Label>{label}</Label>
-      <SearchableSelect
-        value={value}
-        placeholder="Select time"
-        searchPlaceholder="Search times..."
-        emptyText="No times found."
-        options={TIME_OPTIONS.map((time) => ({ value: time, label: time }))}
-        onChange={onChange}
-        disabled={disabled}
-      />
-    </div>
-  );
-}
-
 function DatePickerField({
   value,
   onChange,
@@ -1349,146 +1312,3 @@ function DatePickerField({
   );
 }
 
-type SearchableSelectOption = {
-  value: string;
-  label: string;
-  searchValue?: string;
-};
-
-function SearchableSelectSearch({
-  value,
-  placeholder,
-  onChange,
-}: {
-  value: string;
-  placeholder: string;
-  onChange: (value: string) => void;
-}) {
-  return (
-    <div className="shrink-0 p-2">
-      <div className="relative">
-        <Search
-          size={15}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-        />
-        <Input
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          className="h-9 pl-9"
-        />
-      </div>
-    </div>
-  );
-}
-
-function SearchableSelectList({
-  options,
-  selectedValue,
-  emptyText,
-  onSelect,
-}: {
-  options: SearchableSelectOption[];
-  selectedValue?: string;
-  emptyText: string;
-  onSelect: (value: string) => void;
-}) {
-  return (
-    <div className="p-1">
-      {options.length === 0 ? (
-        <div className="px-3 py-6 text-center text-sm text-muted-foreground">{emptyText}</div>
-      ) : (
-        options.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            onClick={() => onSelect(option.value)}
-            className={cn(
-              'flex w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
-              option.value === selectedValue && 'bg-muted text-foreground',
-            )}
-          >
-            <span className="truncate">{option.label}</span>
-          </button>
-        ))
-      )}
-    </div>
-  );
-}
-
-function SearchableSelect({
-  value,
-  placeholder,
-  searchPlaceholder,
-  emptyText,
-  options,
-  onChange,
-  disabled = false,
-}: {
-  value?: string;
-  placeholder: string;
-  searchPlaceholder: string;
-  emptyText: string;
-  options: SearchableSelectOption[];
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const selectedOption = options.find((option) => option.value === value);
-
-  const filteredOptions = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
-    if (!query) return options;
-
-    return options.filter((option) =>
-      `${option.label} ${option.searchValue ?? ''}`.toLowerCase().includes(query),
-    );
-  }, [options, searchQuery]);
-
-  useEffect(() => {
-    if (!open) setSearchQuery('');
-  }, [open]);
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className="h-10 w-full justify-between border-input bg-background text-left font-normal"
-          disabled={disabled}
-        >
-          <span className={cn('truncate', !selectedOption && 'text-muted-foreground')}>
-            {selectedOption?.label ?? placeholder}
-          </span>
-          <ChevronRight className="size-4 rotate-90 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="flex w-[var(--radix-popover-trigger-width)] flex-col gap-0 overflow-hidden rounded-xl p-0"
-        align="start"
-        onWheel={(event) => event.stopPropagation()}
-      >
-        <SearchableSelectSearch
-          value={searchQuery}
-          placeholder={searchPlaceholder}
-          onChange={setSearchQuery}
-        />
-        <ScrollArea className="h-60 overflow-hidden">
-          <SearchableSelectList
-            options={filteredOptions}
-            selectedValue={value}
-            emptyText={emptyText}
-            onSelect={(nextValue) => {
-              onChange(nextValue);
-              setOpen(false);
-            }}
-          />
-        </ScrollArea>
-      </PopoverContent>
-    </Popover>
-  );
-}

@@ -13,6 +13,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -246,6 +247,9 @@ export default function QuickRepliesPage() {
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Quick Replies</h1>
+          <PageDescription>
+            Save shortcuts for messages your team sends again and again.
+          </PageDescription>
         </div>
         <div className="flex shrink-0">
           {canManage && (
