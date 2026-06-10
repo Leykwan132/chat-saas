@@ -205,7 +205,10 @@ export default function AutoBookingPage() {
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Your Services</h2>
             {services.length > 0 ? (
-              <span className="rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                {activeServiceCount > 0 ? (
+                  <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+                ) : null}
                 {activeServiceCount} active
               </span>
             ) : null}
@@ -357,35 +360,43 @@ function ServiceCard({
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{service.name}</h3>
-
-          <div
-            className="relative z-10 shrink-0"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-            }}
-            onKeyDown={(event) => event.stopPropagation()}
-          >
-            <Switch
-              checked={service.isActive}
-              onCheckedChange={onToggleActive}
-              disabled={!canManage}
-              aria-label={`${service.isActive ? 'Turn off' : 'Turn on'} ${service.name}`}
-              className="scale-90 data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-input"
-            />
-          </div>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            {service.isActive ? (
+              <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+            ) : null}
+            {service.isActive ? 'Active' : 'Inactive'}
+          </span>
         </div>
 
         {service.description?.trim() ? (
-          <p className="mt-1.5 line-clamp-2 text-xs leading-snug text-muted-foreground">
+          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
             {service.description.trim()}
           </p>
         ) : null}
       </div>
 
-      <p className="mt-auto pt-3 text-xs text-muted-foreground">
-        {formatBookingCount(service.bookingCount ?? 0)}
-      </p>
+      <div className="mt-auto flex items-end justify-between gap-2 pt-3">
+        <p className="text-xs text-muted-foreground">
+          {formatBookingCount(service.bookingCount ?? 0)}
+        </p>
+
+        <div
+          className="relative z-10 shrink-0"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <Switch
+            checked={service.isActive}
+            onCheckedChange={onToggleActive}
+            disabled={!canManage}
+            aria-label={`${service.isActive ? 'Turn off' : 'Turn on'} ${service.name}`}
+            className="scale-90 data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-input"
+          />
+        </div>
+      </div>
     </Link>
   );
 }
