@@ -28,6 +28,7 @@ import type * as chat_inboxActions from "../chat/inboxActions.js";
 import type * as chat_inboxAudioIngest from "../chat/inboxAudioIngest.js";
 import type * as chat_inboxMessageMapping from "../chat/inboxMessageMapping.js";
 import type * as chat_mediaUrlExtractor from "../chat/mediaUrlExtractor.js";
+import type * as chat_reactions from "../chat/reactions.js";
 import type * as chat_streaming from "../chat/streaming.js";
 import type * as chat_threads from "../chat/threads.js";
 import type * as cloudflare from "../cloudflare.js";
@@ -129,6 +130,7 @@ declare const fullApi: ApiFromModules<{
   "chat/inboxAudioIngest": typeof chat_inboxAudioIngest;
   "chat/inboxMessageMapping": typeof chat_inboxMessageMapping;
   "chat/mediaUrlExtractor": typeof chat_mediaUrlExtractor;
+  "chat/reactions": typeof chat_reactions;
   "chat/streaming": typeof chat_streaming;
   "chat/threads": typeof chat_threads;
   cloudflare: typeof cloudflare;
@@ -241,6 +243,8 @@ export declare const components: {
   instagramSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"instagramSyncWorkpool">;
   messengerSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"messengerSyncWorkpool">;
   inboxAiReplyWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"inboxAiReplyWorkpool">;
+  metaIndicatorWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaIndicatorWorkpool">;
+  metaReactionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaReactionWorkpool">;
   mediaDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"mediaDeleteWorkpool">;
   threadSummarizerWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"threadSummarizerWorkpool">;
   broadcastWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"broadcastWorkpool">;

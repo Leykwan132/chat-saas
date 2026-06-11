@@ -285,7 +285,7 @@ export default function ChatsPage() {
   >([]);
   const demoSeedWhatsappRef = useRef(false);
 
-  const markRead = useMutation(api.conversations.markRead);
+  const markRead = useAction(api.conversations.markReadAndSendSeen);
   const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
   const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
   const resolveEscalation = useMutation(api.conversations.resolveEscalation);
@@ -360,6 +360,8 @@ export default function ChatsPage() {
   const threadId = selectedConversation?.threadId;
 
   const sendReply = useAction(api.chat.inboxActions.sendReply);
+  const reactToMessage = useAction(api.chat.inboxActions.reactToMessage);
+  const removeReactionFromMessage = useAction(api.chat.inboxActions.removeReactionFromMessage);
 
   const { results: threadMessages, status: threadMessagesStatus } = usePaginatedQuery(
     api.chat.inbox.listThreadMessagesForInbox,
@@ -913,6 +915,29 @@ export default function ChatsPage() {
     }
   };
 
+  const handleReactToMessage = async (message: InboxUIMessage, emoji: string) => {
+    if (!selectedConversationId || !message.ledgerMessageId) {
+      throw new Error('This message cannot be reacted to yet');
+    }
+    await reactToMessage({
+      conversationId: selectedConversationId,
+      messageId: message.ledgerMessageId as Id<'messages'>,
+      emoji: emoji as '👍' | '❤️' | '🙏' | '✅' | '🤝',
+    });
+  };
+
+  const handleRemoveReactionFromMessage = async (message: InboxUIMessage) => {
+    if (!selectedConversationId || !message.ledgerMessageId) return;
+    try {
+      await removeReactionFromMessage({
+        conversationId: selectedConversationId,
+        messageId: message.ledgerMessageId as Id<'messages'>,
+      });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not remove reaction');
+    }
+  };
+
   const conversationsStillLoading = linkedConversations === undefined;
 
   const kbTagTitles = useMemo(
@@ -1115,6 +1140,8 @@ export default function ChatsPage() {
                       messages={visibleThreadMessages}
                       emptyTitle="No messages in this conversation yet."
                       emptyDescription="When customers message you, the thread appears here."
+                      onReact={handleReactToMessage}
+                      onRemoveReaction={handleRemoveReactionFromMessage}
                     />
                   )}
                 </Conversation>

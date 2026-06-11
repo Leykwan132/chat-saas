@@ -77,6 +77,114 @@ export type TextAndImageSendResult = {
   textResult: ChannelSendResult;
 };
 
+export type MetaIndicatorResult =
+  | { ok: true }
+  | { ok: false; error: string; errorCode?: number };
+
+export type MetaMarkSeenOptions = {
+  /** Required by WhatsApp read receipts. Ignored for Messenger/Instagram. */
+  messageExternalId?: string;
+};
+
+export type MetaTypingOptions = MetaMarkSeenOptions;
+
+export type MetaReactionOptions = {
+  targetExternalId: string;
+  emoji: string;
+};
+
+type MetaSenderAction = "mark_seen" | "typing_on" | "typing_off";
+
+export async function sendMetaMarkSeen(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaMarkSeenOptions = {},
+): Promise<MetaIndicatorResult> {
+  switch (conversation.service) {
+    case "whatsapp":
+      return sendWhatsAppReadReceipt(conversation, channel, {
+        messageExternalId: options.messageExternalId,
+        includeTypingIndicator: false,
+      });
+    case "instagram":
+      return sendInstagramSenderAction(conversation, channel, "mark_seen");
+    case "messenger":
+      return sendMessengerSenderAction(conversation, channel, "mark_seen");
+    default:
+      return { ok: true };
+  }
+}
+
+export async function sendMetaTypingOn(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaTypingOptions = {},
+): Promise<MetaIndicatorResult> {
+  switch (conversation.service) {
+    case "whatsapp":
+      return sendWhatsAppReadReceipt(conversation, channel, {
+        messageExternalId: options.messageExternalId,
+        includeTypingIndicator: true,
+      });
+    case "instagram":
+      return sendInstagramSenderAction(conversation, channel, "typing_on");
+    case "messenger":
+      return sendMessengerSenderAction(conversation, channel, "typing_on");
+    default:
+      return { ok: true };
+  }
+}
+
+export async function sendMetaTypingOff(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+): Promise<MetaIndicatorResult> {
+  switch (conversation.service) {
+    case "whatsapp":
+      // WhatsApp Cloud API typing indicators clear when the response is sent.
+      return { ok: true };
+    case "instagram":
+      return sendInstagramSenderAction(conversation, channel, "typing_off");
+    case "messenger":
+      return sendMessengerSenderAction(conversation, channel, "typing_off");
+    default:
+      return { ok: true };
+  }
+}
+
+export async function sendMetaReaction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaReactionOptions,
+): Promise<ChannelSendResult> {
+  switch (conversation.service) {
+    case "whatsapp":
+      return sendWhatsAppReaction(conversation, channel, options);
+    case "messenger":
+      return sendMessengerReaction(conversation, channel, options);
+    default:
+      return { ok: false, error: "Reactions are not supported for this channel", policy: "generic" };
+  }
+}
+
+export async function removeMetaReaction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: Omit<MetaReactionOptions, "emoji">,
+): Promise<ChannelSendResult> {
+  switch (conversation.service) {
+    case "whatsapp":
+      return sendWhatsAppReaction(conversation, channel, {
+        targetExternalId: options.targetExternalId,
+        emoji: "",
+      });
+    case "messenger":
+      return sendMessengerUnreact(conversation, channel, options);
+    default:
+      return { ok: false, error: "Reactions are not supported for this channel", policy: "generic" };
+  }
+}
+
 /** Instagram/Messenger: media first, then text (two channel messages). */
 export async function sendTextAndImage(
   conversation: Doc<"conversations">,
@@ -245,6 +353,126 @@ function messagingWindowState(
   return "blocked";
 }
 
+function resolveWhatsAppAccessToken(channel: Doc<"channels">): {
+  accessToken: string;
+  error?: string;
+} {
+  const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
+  const accessToken = isDemoChannel
+    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
+    : (channel.accessToken ?? "").trim();
+  return {
+    accessToken,
+    error: accessToken
+      ? undefined
+      : isDemoChannel
+        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment"
+        : "WhatsApp channel is not connected",
+  };
+}
+
+async function sendWhatsAppReadReceipt(
+  _conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: {
+    messageExternalId?: string;
+    includeTypingIndicator: boolean;
+  },
+): Promise<MetaIndicatorResult> {
+  if (channel.status !== "connected" || !channel.phoneNumberId) {
+    return { ok: false, error: "WhatsApp channel is not connected" };
+  }
+  if (!options.messageExternalId) {
+    return { ok: false, error: "WhatsApp message id is required" };
+  }
+
+  const { accessToken, error } = resolveWhatsAppAccessToken(channel);
+  if (!accessToken) {
+    return { ok: false, error: error ?? "WhatsApp channel is not connected" };
+  }
+
+  const body: Record<string, unknown> = {
+    messaging_product: "whatsapp",
+    status: "read",
+    message_id: options.messageExternalId,
+  };
+  if (options.includeTypingIndicator) {
+    body.typing_indicator = { type: "text" };
+  }
+
+  const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  return parseMetaIndicatorResponse(res);
+}
+
+async function sendInstagramSenderAction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  senderAction: MetaSenderAction,
+): Promise<MetaIndicatorResult> {
+  if (channel.status !== "connected" || !channel.igUserId) {
+    return { ok: false, error: "Instagram channel is not connected" };
+  }
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Instagram channel is not connected" };
+  }
+  return sendMetaSenderAction(
+    `${fbGraphBase()}/me/messages`,
+    accessToken,
+    conversation.contactAddress,
+    senderAction,
+  );
+}
+
+async function sendMessengerSenderAction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  senderAction: MetaSenderAction,
+): Promise<MetaIndicatorResult> {
+  if (channel.status !== "connected" || !channel.pageId) {
+    return { ok: false, error: "Messenger channel is not connected" };
+  }
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Messenger channel is not connected" };
+  }
+  return sendMetaSenderAction(
+    `${fbGraphBase()}/${channel.pageId}/messages`,
+    accessToken,
+    conversation.contactAddress,
+    senderAction,
+  );
+}
+
+async function sendMetaSenderAction(
+  url: string,
+  accessToken: string,
+  recipientId: string,
+  senderAction: MetaSenderAction,
+): Promise<MetaIndicatorResult> {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      recipient: { id: recipientId },
+      sender_action: senderAction,
+    }),
+  });
+
+  return parseMetaIndicatorResponse(res);
+}
+
 async function sendWhatsApp(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -254,16 +482,11 @@ async function sendWhatsApp(
     return { ok: false, error: "WhatsApp channel is not connected", policy: "generic" };
   }
 
-  const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-  const accessToken = isDemoChannel
-    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-    : (channel.accessToken ?? "").trim();
+  const { accessToken, error } = resolveWhatsAppAccessToken(channel);
   if (!accessToken) {
     return {
       ok: false,
-      error: isDemoChannel
-        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment"
-        : "WhatsApp channel is not connected",
+      error: error ?? "WhatsApp channel is not connected",
       policy: "generic",
     };
   }
@@ -281,6 +504,45 @@ async function sendWhatsApp(
       to: conversation.contactAddress,
       type: "text",
       text: { body: trimmed },
+    }),
+  });
+
+  return parseGraphResponse(res);
+}
+
+async function sendWhatsAppReaction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaReactionOptions,
+): Promise<ChannelSendResult> {
+  if (channel.status !== "connected" || !channel.phoneNumberId) {
+    return { ok: false, error: "WhatsApp channel is not connected", policy: "generic" };
+  }
+
+  const { accessToken, error } = resolveWhatsAppAccessToken(channel);
+  if (!accessToken) {
+    return {
+      ok: false,
+      error: error ?? "WhatsApp channel is not connected",
+      policy: "generic",
+    };
+  }
+
+  const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: conversation.contactAddress,
+      type: "reaction",
+      reaction: {
+        message_id: options.targetExternalId,
+        emoji: options.emoji,
+      },
     }),
   });
 
@@ -508,6 +770,67 @@ async function sendMessenger(
   return parsed;
 }
 
+async function sendMessengerReaction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: MetaReactionOptions,
+): Promise<ChannelSendResult> {
+  return sendMessengerReactionAction(conversation, channel, {
+    senderAction: "react",
+    targetExternalId: options.targetExternalId,
+    emoji: options.emoji,
+  });
+}
+
+async function sendMessengerUnreact(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: Omit<MetaReactionOptions, "emoji">,
+): Promise<ChannelSendResult> {
+  return sendMessengerReactionAction(conversation, channel, {
+    senderAction: "unreact",
+    targetExternalId: options.targetExternalId,
+  });
+}
+
+async function sendMessengerReactionAction(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  options: {
+    senderAction: "react" | "unreact";
+    targetExternalId: string;
+    emoji?: string;
+  },
+): Promise<ChannelSendResult> {
+  if (channel.status !== "connected" || !channel.pageId) {
+    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+  }
+  const accessToken = normalizeMetaAccessToken(channel.accessToken);
+  if (!accessToken) {
+    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+  }
+
+  const payload: Record<string, unknown> = {
+    recipient: { id: conversation.contactAddress },
+    sender_action: options.senderAction,
+    payload: {
+      message_id: options.targetExternalId,
+      ...(options.senderAction === "react" ? { reaction: options.emoji } : {}),
+    },
+  };
+
+  const res = await fetch(`${fbGraphBase()}/me/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  return parseGraphResponse(res);
+}
+
 async function sendMessengerMedia(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -578,6 +901,30 @@ async function sendMessengerMedia(
     });
   }
   return parsed;
+}
+
+async function parseMetaIndicatorResponse(
+  res: Response,
+): Promise<MetaIndicatorResult> {
+  const text = await res.text();
+  let body: {
+    error?: { message?: string; code?: number; error_subcode?: number };
+  } | null = null;
+  try {
+    body = text.length ? JSON.parse(text) : null;
+  } catch {
+    body = null;
+  }
+
+  if (!res.ok) {
+    return {
+      ok: false,
+      error: body?.error?.message ?? `HTTP ${res.status}`,
+      errorCode: body?.error?.code,
+    };
+  }
+
+  return { ok: true };
 }
 
 async function parseGraphResponse(res: Response): Promise<ChannelSendResult> {

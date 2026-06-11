@@ -19,6 +19,7 @@ import {
   toInboxAttachments,
   type InboxAttachment,
 } from "../../shared/inboxAttachments";
+import { INBOX_REACTION_EMOJIS } from "../../shared/messageReactions";
 import {
   INBOX_ORDER_SPACER_TEXT,
   type InboxOutboundMeta,
@@ -435,8 +436,8 @@ Use the Active Booking Services listed above — service IDs, fields, and tone a
 1. **Start session** — When the customer wants to book, call \`startBookingSession\` with the matching service ID. If they have already shared details, include them in \`collectedFields\`.
 2. **Collect details** — Read \`missingFields\` from the tool response and ask only for what is still missing. Always ask in chat for name, phone, date, and time for the person being booked — do not use the chatter's contact details. Call \`startBookingSession\` again with new \`collectedFields\` until \`readyForAvailability\` is true.
 3. **Check slots** — Call \`checkAvailability\` only after the session is ready. Present the returned slots to the customer.
-4. **Book** — After the customer clearly confirms a slot, call \`bookAppointment\`.
-5. **Confirm** — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it.
+4. **Book** — After the customer clearly confirms a slot, call \`giveReaction\` on their confirmation message, then call \`bookAppointment\`.
+5. **Confirm** — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it. Do not send the confirmation message before \`giveReaction\` on the customer's confirmation.
 
 ## Editing an existing booking
 If the customer wants to change their booking (time, name, phone, or any other detail):
@@ -444,8 +445,8 @@ If the customer wants to change their booking (time, name, phone, or any other d
 2. **Start edit** — Call \`beginBookingEdit\` to open an edit session for that booking.
 3. **Update details** — Call \`startBookingSession\` with the changed \`collectedFields\`. Ask in chat for any details they want to change.
 4. **Check slots** — If the time is changing, call \`checkAvailability\` after \`readyForAvailability\` is true and present the new slots.
-5. **Apply changes** — After the customer confirms, call \`updateBookingAppointment\` with the service ID and confirmed \`startTimeIso\`. If only non-time details changed, use the current booking time from \`getCurrentBooking\`.
-6. **Confirm update** — Call \`sendBookingUpdateConfirmation\` and send the returned \`confirmationMessage\` exactly as written.
+5. **Apply changes** — After the customer confirms, call \`giveReaction\` on their confirmation message first, then call \`updateBookingAppointment\` with the service ID and confirmed \`startTimeIso\`. If only non-time details changed, use the current booking time from \`getCurrentBooking\`.
+6. **Confirm update** — Call \`sendBookingUpdateConfirmation\` and send the returned \`confirmationMessage\` exactly as written. Do not send the confirmation message before \`giveReaction\` on the customer's confirmation.
 
 Additional rules:
 - For services with Tone \`proactive\`, also open with a booking offer when the customer's message is relevant — even if they have not asked to book yet.
@@ -517,6 +518,28 @@ export function buildAgent(
           });
         }
         return { success: true, message: "Escalated to human. Automated responses are paused." };
+      },
+    });
+  }
+
+  if (conversationId) {
+    tools.giveReaction = createTool({
+      description:
+        "Give a small assurance reaction to the customer's latest message. REQUIRED when the customer confirms a booking slot or approves booking changes: call this on their confirmation message before \`sendBookingConfirmation\` or \`sendBookingUpdateConfirmation\`, and before sending that confirmation text. Also use after you have fulfilled other requests or answered one concrete question. Do not use for greetings, jokes, unclear requests, complaints that need escalation, or before the customer has clearly confirmed when a confirmation message is next.",
+      inputSchema: z.object({
+        target: z.literal("latest_user_message").describe("Always react to the latest customer message."),
+        emoji: z.enum(INBOX_REACTION_EMOJIS).describe("Use one assurance-oriented emoji."),
+      }),
+      execute: async (ctx, { emoji }) => {
+        return await ctx.runAction(
+          internal.chat.inboxActions.internalReactToLatestCustomerMessage,
+          {
+            conversationId,
+            emoji,
+            actorAgentId: agentId,
+            actorName: agent.name,
+          },
+        );
       },
     });
   }
@@ -652,7 +675,7 @@ export function buildAgent(
 
     tools.sendBookingConfirmation = createTool({
       description:
-        "Builds the final booking confirmation message after bookAppointment succeeds. Call immediately after booking. Send the returned confirmationMessage to the customer exactly as written.",
+        "Builds the final booking confirmation message after bookAppointment succeeds. Call only after \`giveReaction\` on the customer's slot confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         return await ctx.runMutation(internal.autoBooking.sendBookingConfirmation, {
@@ -663,7 +686,7 @@ export function buildAgent(
 
     tools.sendBookingUpdateConfirmation = createTool({
       description:
-        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Send the returned confirmationMessage to the customer exactly as written.",
+        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Call only after \`giveReaction\` on the customer's change confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         return await ctx.runMutation(internal.autoBooking.sendBookingUpdateConfirmation, {

@@ -1,4 +1,4 @@
-import { mutation, query } from "./_generated/server";
+import { internalQuery, mutation, query } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
@@ -73,6 +73,16 @@ export const currentUser = query({
       plan: stripeInfo.plan,
       stripeSubscriptionStatus: stripeInfo.status,
     };
+  },
+});
+
+export const internalGetByWorkosUserId = internalQuery({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
+      .unique();
   },
 });
 

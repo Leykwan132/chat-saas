@@ -38,6 +38,22 @@ export async function receive(
     for (const event of entry.messaging ?? []) {
       const recipientId = event.recipient?.id;
       const senderId = event.sender?.id;
+      const reaction = event.reaction;
+      if (recipientId && senderId && reaction?.mid) {
+        try {
+          await ctx.runMutation(internal.messengerWebhook.handleReaction, {
+            pageId: recipientId,
+            senderPsid: senderId,
+            targetExternalId: reaction.mid,
+            emoji: reaction.emoji,
+            action: reaction.action,
+          });
+        } catch (err) {
+          console.error("Failed to persist Messenger reaction", err);
+        }
+        continue;
+      }
+
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
 
@@ -176,6 +192,56 @@ export const handleIncoming = internalMutation({
   },
 });
 
+export const handleReaction = internalMutation({
+  args: {
+    pageId: v.string(),
+    senderPsid: v.string(),
+    targetExternalId: v.string(),
+    emoji: v.optional(v.string()),
+    action: v.optional(v.union(v.literal("react"), v.literal("unreact"))),
+  },
+  handler: async (ctx, args) => {
+    const channel = await ctx.db
+      .query("channels")
+      .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
+      .unique();
+    if (channel === null) {
+      console.warn(
+        `Messenger reaction for unknown page_id=${args.pageId}; skipping`,
+      );
+      return;
+    }
+    if (args.senderPsid === args.pageId) {
+      return;
+    }
+    const target = await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
+      .unique();
+    if (target === null || target.channelId !== channel._id) {
+      return;
+    }
+
+    if (args.action === "unreact" || args.emoji === undefined || args.emoji.trim() === "") {
+      await ctx.runMutation(internal.chat.reactions.internalRemoveReaction, {
+        conversationId: target.conversationId,
+        messageId: target._id,
+        source: "customer",
+        fallbackActorKey: args.senderPsid,
+      });
+      return;
+    }
+
+    await ctx.runMutation(internal.chat.reactions.internalUpsertReaction, {
+      conversationId: target.conversationId,
+      messageId: target._id,
+      emoji: args.emoji,
+      source: "customer",
+      actorName: args.senderPsid,
+    });
+  },
+});
+
 type MessengerWebhookEnvelope = {
   object?: string;
   entry?: Array<{
@@ -185,6 +251,12 @@ type MessengerWebhookEnvelope = {
       sender?: { id?: string };
       recipient?: { id?: string };
       timestamp?: number;
+      reaction?: {
+        reaction?: string;
+        emoji?: string;
+        action?: "react" | "unreact";
+        mid?: string;
+      };
       message?: {
         mid?: string;
         text?: string;

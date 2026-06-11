@@ -19,6 +19,8 @@ app.use(workpool, { name: "linkDiscovererWorkpool" });
 app.use(workpool, { name: "instagramSyncWorkpool" });
 app.use(workpool, { name: "messengerSyncWorkpool" });
 app.use(workpool, { name: "inboxAiReplyWorkpool" });
+app.use(workpool, { name: "metaIndicatorWorkpool" });
+app.use(workpool, { name: "metaReactionWorkpool" });
 app.use(workpool, { name: "mediaDeleteWorkpool" });
 app.use(workpool, { name: "threadSummarizerWorkpool" });
 app.use(workpool, { name: "broadcastWorkpool" });

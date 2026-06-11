@@ -5,6 +5,7 @@ import { action, internalAction } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
+import { metaIndicatorPool, metaReactionPool } from "../inboxPools";
 import { generateText } from "ai";
 import { openRouterModel } from "../llm/openRouter";
 import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
@@ -14,10 +15,75 @@ import {
   sendTextToChannel,
   sendMediaToChannel,
   sendTextAndImage,
+  sendMetaMarkSeen,
+  sendMetaTypingOn,
+  sendMetaTypingOff,
+  sendMetaReaction,
+  removeMetaReaction,
   throwIfChannelSendFailed,
   type ChannelSendResult,
   type ChannelSendPolicy,
+  type MetaIndicatorResult,
 } from "./channelSend";
+import {
+  INBOX_REACTION_EMOJIS,
+  isAllowedInboxReactionEmoji,
+} from "../../shared/messageReactions";
+
+type MetaIndicatorActionResult =
+  | { ok: true; skipped?: string }
+  | { ok: false; error: string };
+
+type ReplyPersistResult = {
+  agentMessageId: string;
+  markedRead: boolean;
+  latestInboundExternalId?: string;
+};
+
+const reactionEmojiValidator = v.union(
+  ...INBOX_REACTION_EMOJIS.map((emoji) => v.literal(emoji)),
+);
+
+function isChannelConversation(conversation: Doc<"conversations">): boolean {
+  return (
+    conversation.service === "whatsapp" ||
+    conversation.service === "instagram" ||
+    conversation.service === "messenger"
+  );
+}
+
+function metaIndicatorActionResult(
+  result: MetaIndicatorResult,
+): MetaIndicatorActionResult {
+  if (result.ok) return { ok: true };
+  return { ok: false, error: result.error };
+}
+
+function skippedMetaIndicator(reason: string): MetaIndicatorActionResult {
+  return { ok: true, skipped: reason };
+}
+
+function formatUserDisplayName(user: Doc<"users"> | null, fallback: string): string {
+  if (user === null) return fallback;
+  const name = [user.firstName, user.lastName].filter(Boolean).join(" ").trim();
+  return name || user.email || fallback;
+}
+
+async function enqueueMetaMarkSeenIfRead(
+  ctx: ActionCtx,
+  conversationId: Doc<"conversations">["_id"],
+  result: Pick<ReplyPersistResult, "markedRead" | "latestInboundExternalId"> | null,
+) {
+  if (!result?.markedRead) return;
+  await metaIndicatorPool.enqueueAction(
+    ctx,
+    internal.chat.inboxActions.internalSendMetaMarkSeen,
+    {
+      conversationId,
+      messageExternalId: result.latestInboundExternalId,
+    },
+  );
+}
 
 export const sendReply = action({
   args: {
@@ -89,7 +155,7 @@ export const sendReply = action({
       throwIfChannelSendFailed(imageResult);
       throwIfChannelSendFailed(textResult);
 
-      const agentMessageId: string = await ctx.runMutation(
+      const persistResult: ReplyPersistResult = await ctx.runMutation(
         internal.chat.inbox.internalPersistHumanReply,
         {
           conversationId: args.conversationId,
@@ -100,8 +166,13 @@ export const sendReply = action({
           clientIds,
         },
       );
+      await enqueueMetaMarkSeenIfRead(
+        ctx,
+        args.conversationId,
+        persistResult,
+      );
 
-      return { agentMessageId };
+      return { agentMessageId: persistResult.agentMessageId };
     }
 
     const result =
@@ -115,7 +186,7 @@ export const sendReply = action({
 
     throwIfChannelSendFailed(result);
 
-    const agentMessageId: string = await ctx.runMutation(
+    const persistResult: ReplyPersistResult = await ctx.runMutation(
       internal.chat.inbox.internalPersistHumanReply,
       {
         conversationId: args.conversationId,
@@ -125,8 +196,9 @@ export const sendReply = action({
         images: persistImages,
       },
     );
+    await enqueueMetaMarkSeenIfRead(ctx, args.conversationId, persistResult);
 
-    return { agentMessageId };
+    return { agentMessageId: persistResult.agentMessageId };
   },
 });
 
@@ -150,6 +222,334 @@ export const internalSendText = internalAction({
       args.content,
       { allowHumanAgentTag: args.allowHumanAgentTag ?? false },
     );
+  },
+});
+
+export const internalSendMetaMarkSeen = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    messageExternalId: v.optional(v.string()),
+    requireAiHandled: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<MetaIndicatorActionResult> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return skippedMetaIndicator("conversation_not_found");
+    }
+
+    const { conversation, channel } = ctxData;
+    if (!isChannelConversation(conversation)) {
+      return skippedMetaIndicator("not_channel_conversation");
+    }
+    if (
+      args.requireAiHandled === true &&
+      (!conversation.assignToAiAgent || !conversation.assignedAgentId)
+    ) {
+      return skippedMetaIndicator("not_ai_handled");
+    }
+
+    const result = await sendMetaMarkSeen(conversation, channel, {
+      messageExternalId: args.messageExternalId,
+    });
+    if (!result.ok) {
+      console.warn("Failed to send Meta mark-seen indicator", {
+        conversationId: args.conversationId,
+        service: conversation.service,
+        error: result.error,
+      });
+    }
+    return metaIndicatorActionResult(result);
+  },
+});
+
+export const internalSendMetaTypingOn = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    messageExternalId: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<MetaIndicatorActionResult> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return skippedMetaIndicator("conversation_not_found");
+    }
+
+    const { conversation, channel } = ctxData;
+    if (!isChannelConversation(conversation)) {
+      return skippedMetaIndicator("not_channel_conversation");
+    }
+
+    const result = await sendMetaTypingOn(conversation, channel, {
+      messageExternalId: args.messageExternalId,
+    });
+    if (!result.ok) {
+      console.warn("Failed to send Meta typing-on indicator", {
+        conversationId: args.conversationId,
+        service: conversation.service,
+        error: result.error,
+      });
+    }
+    return metaIndicatorActionResult(result);
+  },
+});
+
+export const internalSendMetaTypingOff = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args): Promise<MetaIndicatorActionResult> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return skippedMetaIndicator("conversation_not_found");
+    }
+
+    const { conversation, channel } = ctxData;
+    if (!isChannelConversation(conversation)) {
+      return skippedMetaIndicator("not_channel_conversation");
+    }
+
+    const result = await sendMetaTypingOff(conversation, channel);
+    if (!result.ok) {
+      console.warn("Failed to send Meta typing-off indicator", {
+        conversationId: args.conversationId,
+        service: conversation.service,
+        error: result.error,
+      });
+    }
+    return metaIndicatorActionResult(result);
+  },
+});
+
+export const reactToMessage = action({
+  args: {
+    conversationId: v.id("conversations"),
+    messageId: v.optional(v.id("messages")),
+    agentMessageId: v.optional(v.string()),
+    emoji: reactionEmojiValidator,
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null || ctxData.conversation.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    if (
+      ctxData.conversation.service !== "whatsapp" &&
+      ctxData.conversation.service !== "messenger"
+    ) {
+      throw new Error("Reactions are only supported for WhatsApp and Messenger");
+    }
+    const target = await ctx.runQuery(
+      internal.chat.reactions.internalResolveReactionTarget,
+      {
+        conversationId: args.conversationId,
+        messageId: args.messageId,
+        agentMessageId: args.agentMessageId,
+      },
+    );
+    if (target === null || !target.externalId) {
+      throw new Error("This message cannot be reacted to yet");
+    }
+    const currentUser = await ctx.runQuery(internal.users.internalGetByWorkosUserId, {
+      workosUserId: userId,
+    });
+    await metaReactionPool.enqueueAction(
+      ctx,
+      internal.chat.inboxActions.internalSendAndPersistReaction,
+      {
+        conversationId: args.conversationId,
+        messageId: target.messageId,
+        targetExternalId: target.externalId,
+        emoji: args.emoji,
+        source: "human",
+        actorUserId: userId,
+        actorName: formatUserDisplayName(currentUser, "Team member"),
+      },
+    );
+  },
+});
+
+export const removeReactionFromMessage = action({
+  args: {
+    conversationId: v.id("conversations"),
+    messageId: v.id("messages"),
+  },
+  handler: async (ctx, args): Promise<void> => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null || ctxData.conversation.orgId !== orgId) {
+      throw new Error("Conversation not found");
+    }
+    const target = await ctx.runQuery(
+      internal.chat.reactions.internalResolveReactionTarget,
+      {
+        conversationId: args.conversationId,
+        messageId: args.messageId,
+      },
+    );
+    if (target === null || !target.externalId) {
+      throw new Error("This reaction cannot be removed");
+    }
+    await metaReactionPool.enqueueAction(
+      ctx,
+      internal.chat.inboxActions.internalRemoveAndPersistReaction,
+      {
+        conversationId: args.conversationId,
+        messageId: target.messageId,
+        targetExternalId: target.externalId,
+        source: "human",
+        actorUserId: userId,
+      },
+    );
+  },
+});
+
+export const internalReactToLatestCustomerMessage = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    emoji: reactionEmojiValidator,
+    actorAgentId: v.optional(v.id("agents")),
+    actorName: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
+    const target = await ctx.runQuery(
+      internal.chat.reactions.internalGetLatestIncomingReactionTarget,
+      { conversationId: args.conversationId },
+    );
+    if (target === null || !target.externalId) {
+      return { ok: false, error: "No customer message available to react to" };
+    }
+    await metaReactionPool.enqueueAction(
+      ctx,
+      internal.chat.inboxActions.internalSendAndPersistReaction,
+      {
+        conversationId: args.conversationId,
+        messageId: target.messageId,
+        targetExternalId: target.externalId,
+        emoji: args.emoji,
+        source: "ai",
+        actorAgentId: args.actorAgentId,
+        actorName: args.actorName ?? "AI",
+      },
+    );
+    return { ok: true };
+  },
+});
+
+export const internalSendAndPersistReaction = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    messageId: v.id("messages"),
+    targetExternalId: v.string(),
+    emoji: v.string(),
+    source: v.union(v.literal("human"), v.literal("ai")),
+    actorUserId: v.optional(v.string()),
+    actorAgentId: v.optional(v.id("agents")),
+    actorName: v.optional(v.string()),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
+    if (!isAllowedInboxReactionEmoji(args.emoji)) {
+      return { ok: false, error: "Unsupported reaction emoji" };
+    }
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return { ok: false, error: "Conversation not found" };
+    }
+    const sendResult = await sendMetaReaction(
+      ctxData.conversation,
+      ctxData.channel,
+      {
+        targetExternalId: args.targetExternalId,
+        emoji: args.emoji,
+      },
+    );
+    if (!sendResult.ok) {
+      console.warn("Failed to send Meta reaction", {
+        conversationId: args.conversationId,
+        service: ctxData.conversation.service,
+        error: sendResult.error,
+      });
+      return { ok: false, error: sendResult.error };
+    }
+    const persistResult = await ctx.runMutation(
+      internal.chat.reactions.internalUpsertReaction,
+      {
+        conversationId: args.conversationId,
+        messageId: args.messageId,
+        emoji: args.emoji,
+        source: args.source,
+        actorUserId: args.actorUserId,
+        actorAgentId: args.actorAgentId,
+        actorName: args.actorName,
+        externalReactionMessageId: sendResult.externalId,
+      },
+    );
+    return persistResult.ok
+      ? { ok: true }
+      : { ok: false, error: persistResult.error };
+  },
+});
+
+export const internalRemoveAndPersistReaction = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    messageId: v.id("messages"),
+    targetExternalId: v.string(),
+    source: v.union(v.literal("human"), v.literal("ai")),
+    actorUserId: v.optional(v.string()),
+    actorAgentId: v.optional(v.id("agents")),
+  },
+  handler: async (ctx, args): Promise<{ ok: boolean; error?: string }> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
+      return { ok: false, error: "Conversation not found" };
+    }
+    const sendResult = await removeMetaReaction(
+      ctxData.conversation,
+      ctxData.channel,
+      { targetExternalId: args.targetExternalId },
+    );
+    if (!sendResult.ok) {
+      console.warn("Failed to remove Meta reaction", {
+        conversationId: args.conversationId,
+        service: ctxData.conversation.service,
+        error: sendResult.error,
+      });
+      return { ok: false, error: sendResult.error };
+    }
+    const persistResult = await ctx.runMutation(
+      internal.chat.reactions.internalRemoveReaction,
+      {
+        conversationId: args.conversationId,
+        messageId: args.messageId,
+        source: args.source,
+        actorUserId: args.actorUserId,
+        actorAgentId: args.actorAgentId,
+      },
+    );
+    return persistResult.ok
+      ? { ok: true }
+      : { ok: false, error: persistResult.error };
   },
 });
 
@@ -246,14 +646,18 @@ export const internalSendEscalationMessage = internalAction({
     });
     if (!conv) return;
 
-    await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
-      conversationId: args.conversationId,
-      threadId: conv.threadId,
-      content: args.content,
-      externalId: sendResult.textExternalId,
-      llmModel: "escalation",
-      creditsCharged: 0,
-    });
+    const persistResult: ReplyPersistResult | null = await ctx.runMutation(
+      internal.chat.inbox.internalPersistAiReply,
+      {
+        conversationId: args.conversationId,
+        threadId: conv.threadId,
+        content: args.content,
+        externalId: sendResult.textExternalId,
+        llmModel: "escalation",
+        creditsCharged: 0,
+      },
+    );
+    await enqueueMetaMarkSeenIfRead(ctx, args.conversationId, persistResult);
   },
 });
 

@@ -70,6 +70,17 @@ export async function receive(
 
       for (const message of value.messages ?? []) {
         try {
+          if (message.type === "reaction" && message.reaction?.message_id) {
+            await ctx.runMutation(internal.whatsappWebhook.handleReaction, {
+              phoneNumberId,
+              from: message.from,
+              profileName: nameByWaId.get(message.from),
+              targetExternalId: message.reaction.message_id,
+              emoji: message.reaction.emoji,
+            });
+            continue;
+          }
+
           let files:
             | Array<{ url: string; mimeType: string }>
             | undefined;
@@ -203,6 +214,55 @@ export const handleStatus = internalMutation({
   },
 });
 
+export const handleReaction = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    from: v.string(),
+    profileName: v.optional(v.string()),
+    targetExternalId: v.string(),
+    emoji: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const channel = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) =>
+        q.eq("phoneNumberId", args.phoneNumberId),
+      )
+      .unique();
+    if (channel === null) {
+      console.warn(
+        `WhatsApp reaction for unknown phone_number_id=${args.phoneNumberId}; skipping`,
+      );
+      return;
+    }
+    const target = await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
+      .unique();
+    if (target === null || target.channelId !== channel._id) {
+      return;
+    }
+
+    if (args.emoji === undefined || args.emoji.trim() === "") {
+      await ctx.runMutation(internal.chat.reactions.internalRemoveReaction, {
+        conversationId: target.conversationId,
+        messageId: target._id,
+        source: "customer",
+        fallbackActorKey: args.from,
+      });
+      return;
+    }
+
+    await ctx.runMutation(internal.chat.reactions.internalUpsertReaction, {
+      conversationId: target.conversationId,
+      messageId: target._id,
+      emoji: args.emoji,
+      source: "customer",
+      actorName: args.profileName ?? args.from,
+    });
+  },
+});
+
 // --- Helpers ---
 
 function parseTimestamp(ts?: string): number {
@@ -278,6 +338,7 @@ type WhatsAppIncomingMessage = {
   video?: { caption?: string; id?: string };
   audio?: { id?: string };
   document?: { caption?: string; id?: string; filename?: string };
+  reaction?: { message_id?: string; emoji?: string };
   button?: { text?: string };
   interactive?: {
     button_reply?: { id?: string; title?: string };

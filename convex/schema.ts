@@ -488,6 +488,25 @@ export default defineSchema({
     agentMessageId: v.optional(v.string()),
     llmModel: v.optional(v.string()),
     creditsCharged: v.optional(v.number()),
+    reactions: v.optional(
+      v.array(
+        v.object({
+          emoji: v.string(),
+          source: v.union(
+            v.literal("customer"),
+            v.literal("human"),
+            v.literal("ai"),
+          ),
+          actorKey: v.string(),
+          actorUserId: v.optional(v.string()),
+          actorAgentId: v.optional(v.id("agents")),
+          actorName: v.optional(v.string()),
+          externalReactionMessageId: v.optional(v.string()),
+          createdAt: v.number(),
+          updatedAt: v.number(),
+        }),
+      ),
+    ),
     createdAt: v.number(),
   })
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])

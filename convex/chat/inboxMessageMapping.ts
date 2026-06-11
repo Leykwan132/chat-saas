@@ -5,6 +5,7 @@ import type { Id, Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import type { InboxAttachment } from "../../shared/inboxAttachments";
 import { readInboxAttachmentsFromProviderMetadata } from "../../shared/inboxAttachments";
+import type { InboxMessageReaction } from "../../shared/messageReactions";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -51,6 +52,9 @@ export type InboxMessageMetadata = {
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
   inboxAttachments?: InboxAttachment[];
+  ledgerMessageId?: string;
+  externalId?: string;
+  reactions?: InboxMessageReaction[];
 };
 
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
@@ -156,9 +160,11 @@ export async function messageDocsToInboxUIMessages(
     .collect();
 
   const sentAtByAgentMessageId = new Map<string, number>();
+  const ledgerByAgentMessageId = new Map<string, Doc<"messages">>();
   for (const row of ledgerRows) {
     if (row.agentMessageId) {
       sentAtByAgentMessageId.set(row.agentMessageId, row.createdAt);
+      ledgerByAgentMessageId.set(row.agentMessageId, row);
     }
   }
 
@@ -203,10 +209,19 @@ export async function messageDocsToInboxUIMessages(
       const agentName = resolveAgentName(doc, ui.role, fallbackChannelName, userIdToName);
       const sentAt = resolveSentAt(doc, sentAtByAgentMessageId);
       const inboxAttachments = readInboxAttachments(doc);
+      const docId = agentMessageDocId(doc);
+      const ledger = docId ? ledgerByAgentMessageId.get(docId) : undefined;
       return [
         {
           ...ui,
           _creationTime: sentAt,
+          ...(ledger !== undefined
+            ? {
+                ledgerMessageId: ledger._id,
+                externalId: ledger.externalId,
+                reactions: ledger.reactions,
+              }
+            : {}),
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
           ...(inboxAttachments !== undefined ? { inboxAttachments } : {}),

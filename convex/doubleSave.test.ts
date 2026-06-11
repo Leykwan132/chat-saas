@@ -55,6 +55,19 @@ vi.mock("./chat/inboxActions", () => {
         };
       },
     }),
+    internalSendMetaTypingOn: internalAction({
+      args: {
+        conversationId: v.id("conversations"),
+        messageExternalId: v.optional(v.string()),
+      },
+      handler: async () => ({ ok: true }),
+    }),
+    internalSendMetaTypingOff: internalAction({
+      args: {
+        conversationId: v.id("conversations"),
+      },
+      handler: async () => ({ ok: true }),
+    }),
   };
 });
 

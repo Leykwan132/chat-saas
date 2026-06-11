@@ -4,8 +4,10 @@ import {
   internalMutation,
   internalAction,
   internalQuery,
+  type MutationCtx,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
+import type { Id } from "../_generated/dataModel";
 import { inboxPromptContent } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
@@ -20,7 +22,7 @@ import {
   buildAgent,
   saveAiReply,
 } from "./threads";
-import { inboxAiReplyPool } from "../inboxPools";
+import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
 import { checkAiFeature } from "../plans";
 
@@ -46,6 +48,16 @@ export const internalIngestChannelMessage = internalMutation({
       return result;
     }
 
+    await metaIndicatorPool.enqueueAction(
+      ctx,
+      internal.chat.inboxActions.internalSendMetaMarkSeen,
+      {
+        conversationId: result.conversationId,
+        messageExternalId: args.externalId,
+        requireAiHandled: true,
+      },
+    );
+
     await inboxAiReplyPool.enqueueAction(
       ctx,
       internal.chat.inbox.generateAiReplyWorker,
@@ -57,12 +69,38 @@ export const internalIngestChannelMessage = internalMutation({
           args.files,
         ),
         promptMessageId: result.agentMessageId,
+        inboundExternalId: args.externalId,
       },
     );
 
     return result;
   },
 });
+
+async function latestIncomingExternalId(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+): Promise<string | undefined> {
+  const recent = await ctx.db
+    .query("messages")
+    .withIndex("by_conversationId_and_createdAt", (q) =>
+      q.eq("conversationId", conversationId),
+    )
+    .order("desc")
+    .take(50);
+  return recent.find((m) => m.direction === "incoming" && m.externalId)
+    ?.externalId;
+}
+
+function replyPersistResult(
+  agentMessageId: string,
+  markedRead: boolean,
+  latestInboundExternalId?: string,
+) {
+  return latestInboundExternalId
+    ? { agentMessageId, markedRead, latestInboundExternalId }
+    : { agentMessageId, markedRead };
+}
 
 export const internalPersistHumanReply = internalMutation({
   args: {
@@ -171,6 +209,7 @@ export const internalPersistHumanReply = internalMutation({
           ? "Image"
           : "";
 
+    const markedRead = conv.unreadCount > 0;
     const patch: Record<string, any> = {
       lastMessageAt: now,
       unreadCount: 0,
@@ -185,7 +224,11 @@ export const internalPersistHumanReply = internalMutation({
     }
     await ctx.db.patch(conv._id, patch);
 
-    return agentMessageId;
+    return replyPersistResult(
+      agentMessageId,
+      markedRead,
+      markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
+    );
   },
 });
 
@@ -244,6 +287,7 @@ export const internalPersistAiReply = internalMutation({
       createdAt: now,
     });
 
+    const markedRead = conv.unreadCount > 0;
     const patch: Record<string, any> = {
       lastMessageAt: now,
       unreadCount: 0,
@@ -255,7 +299,11 @@ export const internalPersistAiReply = internalMutation({
     }
     await ctx.db.patch(conv._id, patch);
 
-    return agentMessageId;
+    return replyPersistResult(
+      agentMessageId,
+      markedRead,
+      markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
+    );
   },
 });
 
@@ -306,6 +354,7 @@ export const internalPersistAiMediaReply = internalMutation({
       });
     }
 
+    const markedRead = conv.unreadCount > 0;
     await ctx.db.patch(conv._id, {
       lastMessageAt: now,
       lastMessagePreview: "📎 Media",
@@ -313,7 +362,11 @@ export const internalPersistAiMediaReply = internalMutation({
       updatedAt: now,
     });
 
-    return agentMessageId;
+    return replyPersistResult(
+      agentMessageId,
+      markedRead,
+      markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
+    );
   },
 });
 
@@ -363,6 +416,7 @@ export const generateAiReplyWorker = internalAction({
     conversationId: v.id("conversations"),
     promptContent: v.optional(v.string()),
     promptMessageId: v.optional(v.string()),
+    inboundExternalId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.promptMessageId && !args.promptContent) {
@@ -425,104 +479,172 @@ export const generateAiReplyWorker = internalAction({
       conv._id,
       activeBooking.services,
     );
-    const result = await configuredAgent.generateText(
-      ctx,
-      { threadId: conv.threadId },
-      args.promptMessageId
-        ? { promptMessageId: args.promptMessageId }
-        : { prompt: args.promptContent },
-      { storageOptions: { saveMessages: "none" } },
-    );
 
-    const convAfterGeneration = await ctx.runQuery(
-      internal.chat.inbox.internalGetConversation,
-      { conversationId: args.conversationId },
-    );
-    if (
-      convAfterGeneration?.status === "requires_user_input" &&
-      convAfterGeneration.escalation
-    ) {
-      return;
-    }
+    let typingActive = false;
+    const turnTypingOff = async () => {
+      if (!typingActive) return;
+      try {
+        await ctx.runAction(
+          internal.chat.inboxActions.internalSendMetaTypingOff,
+          { conversationId: conv._id },
+        );
+      } catch (error) {
+        console.warn("Failed to turn off Meta typing indicator", {
+          conversationId: conv._id,
+          service: conv.service,
+          error,
+        });
+      } finally {
+        typingActive = false;
+      }
+    };
 
-    const replyText = result.text.trim();
-    if (!replyText) return;
-
-    const { text: cleanText, mediaUrls, mediaClientIds } =
-      extractMediaFromText(replyText);
-    const urlsFromClientIds: string[] =
-      mediaClientIds.length > 0
-        ? await ctx.runQuery(
-            internal.knowledgeBaseImages.internalResolveClientIdsToPublicUrls,
-            { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
-          )
-        : [];
-    const allMediaUrls = [...mediaUrls, ...urlsFromClientIds];
-    if (!cleanText && allMediaUrls.length === 0) return;
-
-    let usage: { llmModel: string; creditsCharged: number };
     try {
-      usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
-        workosUserId: agent.userId,
-        modelId: agent.model,
-        conversationId: conv._id,
-        agentId: conv.assignedAgentId,
-        reason: `AI reply in ${conv.service} conversation`,
-      });
-    } catch (error) {
-      console.error("AI reply skipped: credit deduction failed", {
-        conversationId: args.conversationId,
-        error,
-      });
-      return;
-    }
+      try {
+        const typingOnResult: { ok: boolean } = await ctx.runAction(
+          internal.chat.inboxActions.internalSendMetaTypingOn,
+          {
+            conversationId: conv._id,
+            messageExternalId: args.inboundExternalId,
+          },
+        );
+        typingActive = typingOnResult.ok;
+      } catch (error) {
+        console.warn("Failed to turn on Meta typing indicator", {
+          conversationId: conv._id,
+          service: conv.service,
+          error,
+        });
+      }
 
-    const sendResult: {
-      ok: boolean;
-      error?: string;
-      policy?: string;
-      textExternalId?: string;
-      mediaExternalIds?: string[];
-    } = await ctx.runAction(
-      internal.chat.inboxActions.internalSendAiReply,
-      {
-        conversationId: conv._id,
-        content: cleanText,
-        mediaUrls: allMediaUrls,
-        allowHumanAgentTag: false,
-      },
-    );
-
-    if (!sendResult.ok) {
-      console.error(
-        "AI reply not sent to channel:",
-        sendResult.error,
-        { conversationId: conv._id, service: conv.service },
+      const result = await configuredAgent.generateText(
+        ctx,
+        { threadId: conv.threadId },
+        args.promptMessageId
+          ? { promptMessageId: args.promptMessageId }
+          : { prompt: args.promptContent },
+        { storageOptions: { saveMessages: "none" } },
       );
-      return;
-    }
 
-    if (cleanText) {
-      await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
-        conversationId: conv._id,
-        threadId: conv.threadId,
-        content: cleanText,
-        externalId: sendResult.textExternalId,
-        llmModel: usage.llmModel,
-        creditsCharged: usage.creditsCharged,
-      });
-    }
+      const convAfterGeneration = await ctx.runQuery(
+        internal.chat.inbox.internalGetConversation,
+        { conversationId: args.conversationId },
+      );
+      if (
+        convAfterGeneration?.status === "requires_user_input" &&
+        convAfterGeneration.escalation
+      ) {
+        return;
+      }
 
-    if (allMediaUrls.length > 0) {
-      await ctx.runMutation(
-        internal.chat.inbox.internalPersistAiMediaReply,
+      const replyText = result.text.trim();
+      if (!replyText) return;
+
+      const { text: cleanText, mediaUrls, mediaClientIds } =
+        extractMediaFromText(replyText);
+      const urlsFromClientIds: string[] =
+        mediaClientIds.length > 0
+          ? await ctx.runQuery(
+              internal.knowledgeBaseImages.internalResolveClientIdsToPublicUrls,
+              { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
+            )
+          : [];
+      const allMediaUrls = [...mediaUrls, ...urlsFromClientIds];
+      if (!cleanText && allMediaUrls.length === 0) return;
+
+      let usage: { llmModel: string; creditsCharged: number };
+      try {
+        usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
+          workosUserId: agent.userId,
+          modelId: agent.model,
+          conversationId: conv._id,
+          agentId: conv.assignedAgentId,
+          reason: `AI reply in ${conv.service} conversation`,
+        });
+      } catch (error) {
+        console.error("AI reply skipped: credit deduction failed", {
+          conversationId: args.conversationId,
+          error,
+        });
+        return;
+      }
+
+      await turnTypingOff();
+
+      const sendResult: {
+        ok: boolean;
+        error?: string;
+        policy?: string;
+        textExternalId?: string;
+        mediaExternalIds?: string[];
+      } = await ctx.runAction(
+        internal.chat.inboxActions.internalSendAiReply,
         {
           conversationId: conv._id,
-          threadId: conv.threadId,
+          content: cleanText,
           mediaUrls: allMediaUrls,
-          externalIds: sendResult.mediaExternalIds ?? [],
+          allowHumanAgentTag: false,
         },
       );
+
+      if (!sendResult.ok) {
+        console.error(
+          "AI reply not sent to channel:",
+          sendResult.error,
+          { conversationId: conv._id, service: conv.service },
+        );
+        return;
+      }
+
+      const enqueueMetaMarkSeenIfRead = async (
+        persistResult: {
+          markedRead: boolean;
+          latestInboundExternalId?: string;
+        } | null,
+      ) => {
+        if (!persistResult?.markedRead) return;
+        await metaIndicatorPool.enqueueAction(
+          ctx,
+          internal.chat.inboxActions.internalSendMetaMarkSeen,
+          {
+            conversationId: conv._id,
+            messageExternalId: persistResult.latestInboundExternalId,
+          },
+        );
+      };
+
+      if (cleanText) {
+        const persistResult: {
+          markedRead: boolean;
+          latestInboundExternalId?: string;
+        } | null = await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
+          conversationId: conv._id,
+          threadId: conv.threadId,
+          content: cleanText,
+          externalId: sendResult.textExternalId,
+          llmModel: usage.llmModel,
+          creditsCharged: usage.creditsCharged,
+        });
+        await enqueueMetaMarkSeenIfRead(persistResult);
+      }
+
+      if (allMediaUrls.length > 0) {
+        const persistResult: {
+          markedRead: boolean;
+          latestInboundExternalId?: string;
+        } | null = await ctx.runMutation(
+          internal.chat.inbox.internalPersistAiMediaReply,
+          {
+            conversationId: conv._id,
+            threadId: conv.threadId,
+            mediaUrls: allMediaUrls,
+            externalIds: sendResult.mediaExternalIds ?? [],
+          },
+        );
+        await enqueueMetaMarkSeenIfRead(persistResult);
+      }
+    } finally {
+      await turnTypingOff();
     }
   },
 });

@@ -1,8 +1,10 @@
 import { v } from "convex/values";
 import { paginationOptsValidator } from "convex/server";
-import { internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { action, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { metaIndicatorPool } from "./inboxPools";
 
 async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
   const channelRows = await ctx.db
@@ -166,19 +168,81 @@ export const get = query({
   },
 });
 
+type MarkReadResult = {
+  markedRead: boolean;
+  service: Doc<"conversations">["service"];
+  latestInboundExternalId?: string;
+};
+
+async function latestIncomingExternalId(
+  ctx: MutationCtx,
+  conversationId: Id<"conversations">,
+): Promise<string | undefined> {
+  const recent = await ctx.db
+    .query("messages")
+    .withIndex("by_conversationId_and_createdAt", (q) =>
+      q.eq("conversationId", conversationId),
+    )
+    .order("desc")
+    .take(50);
+  return recent.find((m) => m.direction === "incoming" && m.externalId)
+    ?.externalId;
+}
+
+function markReadResult(
+  markedRead: boolean,
+  service: Doc<"conversations">["service"],
+  latestInboundExternalId?: string,
+): MarkReadResult {
+  return latestInboundExternalId
+    ? { markedRead, service, latestInboundExternalId }
+    : { markedRead, service };
+}
+
 export const markRead = mutation({
   args: { conversationId: v.id("conversations") },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<MarkReadResult> => {
     const { orgId } = await getAuthContext(ctx);
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null || conv.orgId !== orgId) {
       throw new Error("Conversation not found");
     }
-    if (conv.unreadCount === 0) return;
+    if (conv.unreadCount === 0) {
+      return markReadResult(false, conv.service);
+    }
     await ctx.db.patch(args.conversationId, {
       unreadCount: 0,
       updatedAt: Date.now(),
     });
+    return markReadResult(
+      true,
+      conv.service,
+      await latestIncomingExternalId(ctx, args.conversationId),
+    );
+  },
+});
+
+export const markReadAndSendSeen = action({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args): Promise<void> => {
+    const result: MarkReadResult = await ctx.runMutation(
+      api.conversations.markRead,
+      { conversationId: args.conversationId },
+    );
+    if (!result.markedRead || result.service === "playground") {
+      return;
+    }
+    if (result.service === "whatsapp" && !result.latestInboundExternalId) {
+      return;
+    }
+    await metaIndicatorPool.enqueueAction(
+      ctx,
+      internal.chat.inboxActions.internalSendMetaMarkSeen,
+      {
+        conversationId: args.conversationId,
+        messageExternalId: result.latestInboundExternalId,
+      },
+    );
   },
 });
 
