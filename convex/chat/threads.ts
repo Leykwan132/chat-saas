@@ -801,9 +801,9 @@ ${toolSteps}${toneBlock}${groundingBlock}
     instructions,
     stopWhen: stepCountIs(8),
     tools,
-    rawRequestResponseHandler: async (request, response) => {
-      console.log("request", request);
-      console.log("response", response);
+    rawRequestResponseHandler: async (_request, _response) => {
+      // console.log("request", _request);
+      // console.log("response", _response);
     },
     usageHandler: async (ctx, args) => {
       const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;

@@ -77,33 +77,31 @@ function getCleanModelName(model: string, supportedModels?: any[]): string {
   return baseName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
 }
 
-// Utility: Return premium brand colors for each provider
-function getModelColor(model: string): string {
-  const lowercase = model.toLowerCase();
-  
-  if (lowercase.includes('gemini') || lowercase.includes('google')) {
-    return '#06b6d4'; // Bright Cyan
-  }
-  if (lowercase.includes('claude') || lowercase.includes('anthropic')) {
-    return '#f97316'; // Bright Orange
-  }
-  if (lowercase.includes('deepseek')) {
-    return '#3b82f6'; // Bright Blue
-  }
-  if (lowercase.includes('llama') || lowercase.includes('meta')) {
-    return '#d946ef'; // Bright Fuchsia
-  }
-  if (lowercase.includes('openai') || lowercase.includes('gpt')) {
-    return '#22c55e'; // Bright Green
-  }
-  if (lowercase.includes('glm') || lowercase.includes('zai')) {
-    return '#a855f7'; // Bright Purple
-  }
-  return '#a1a1aa'; // Bright Zinc / Gray
+const MODEL_CHART_COLORS = [
+  '#06b6d4',
+  '#f97316',
+  '#3b82f6',
+  '#d946ef',
+  '#22c55e',
+  '#a855f7',
+  '#eab308',
+  '#ef4444',
+  '#14b8a6',
+  '#6366f1',
+  '#84cc16',
+  '#ec4899',
+] as const;
+
+function buildModelColorMap(models: string[]): Map<string, string> {
+  const colorMap = new Map<string, string>();
+  models.forEach((model, index) => {
+    colorMap.set(model, MODEL_CHART_COLORS[index % MODEL_CHART_COLORS.length]);
+  });
+  return colorMap;
 }
 
 // Custom tooltip matching mockup: lists model names, token counts (sorted desc), and a total
-const CustomTooltip = ({ active, payload, label, topModels, supportedModels }: any) => {
+const CustomTooltip = ({ active, payload, label, topModels, supportedModels, modelColorMap }: any) => {
   if (!active || !payload || !payload.length) {
     return null;
   }
@@ -124,7 +122,7 @@ const CustomTooltip = ({ active, payload, label, topModels, supportedModels }: a
           key: m,
           name: getCleanModelName(m, supportedModels),
           value: tokens,
-          color: getModelColor(m),
+          color: modelColorMap.get(m) ?? '#71717a',
         });
       }
     }
@@ -269,6 +267,7 @@ export default function LeaderboardPage() {
   // Extract topModels keys and data list
   const chartData = monthlyAggregates?.data || [];
   const topModels = monthlyAggregates?.topModels || [];
+  const modelColorMap = buildModelColorMap(topModels);
 
   // Prepare chart config dynamically based on topModels
   const chartConfig = {
@@ -281,7 +280,7 @@ export default function LeaderboardPage() {
         model,
         {
           label: getCleanModelName(model, supportedModels),
-          color: getModelColor(model),
+          color: modelColorMap.get(model) ?? '#71717a',
         },
       ])
     ),
@@ -454,14 +453,14 @@ export default function LeaderboardPage() {
                           tickMargin={8}
                           tickFormatter={(value) => formatTokens(value as number, false)}
                         />
-                        <ChartTooltip cursor={false} content={<CustomTooltip topModels={topModels} supportedModels={supportedModels} />} />
+                        <ChartTooltip cursor={false} content={<CustomTooltip topModels={topModels} supportedModels={supportedModels} modelColorMap={modelColorMap} />} />
                         {topModels.map((model) => (
                           <Bar 
                             key={model}
                             name={getCleanModelName(model, supportedModels)} 
                             dataKey={model} 
                             stackId="a" 
-                            fill={getModelColor(model)} 
+                            fill={modelColorMap.get(model) ?? '#71717a'} 
                             barSize={24}
                           />
                         ))}

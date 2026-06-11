@@ -23,6 +23,32 @@ export function usageMonthLabel(sortKey: string): string {
   return `${MONTH_NAMES[parseInt(month, 10) - 1]} ${year}`;
 }
 
+export function getCalendarMonthsFromEarliestToLatest(
+  earliestMs: number,
+  latestMs: number,
+) {
+  const start = new Date(earliestMs);
+  const end = new Date(latestMs);
+  const months: Array<{ sortKey: string; label: string }> = [];
+
+  let current = new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), 1),
+  );
+  const endMonth = new Date(
+    Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), 1),
+  );
+
+  while (current <= endMonth) {
+    const sortKey = usageMonthKeyFromTimestamp(current.getTime());
+    months.push({ sortKey, label: usageMonthLabel(sortKey) });
+    current = new Date(
+      Date.UTC(current.getUTCFullYear(), current.getUTCMonth() + 1, 1),
+    );
+  }
+
+  return months;
+}
+
 export function getLast6CalendarMonths(referenceMs: number) {
   const reference = new Date(referenceMs);
   const months: Array<{ sortKey: string; label: string }> = [];

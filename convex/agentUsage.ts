@@ -3,7 +3,7 @@ import type { QueryCtx } from "./_generated/server";
 import { query } from "./_generated/server";
 import { internalMutation } from "./triggers";
 import { lifetimeAggregator, monthlyAggregator } from "./aggregates";
-import { getLast6CalendarMonths } from "./usageMonthKey";
+import { getCalendarMonthsFromEarliestToLatest } from "./usageMonthKey";
 
 type LifetimeModelRow = {
   model: string;
@@ -113,15 +113,21 @@ export const getMonthlyUsageAggregates = query({
     const topModelSet = new Set(topModels);
     const allModels = lifetimeRows.map((row) => row.model);
 
-    const latestLog = await ctx.db.query("rawAgentUsage").order("desc").first();
-    if (latestLog === null) {
+    const [earliestLog, latestLog] = await Promise.all([
+      ctx.db.query("rawAgentUsage").order("asc").first(),
+      ctx.db.query("rawAgentUsage").order("desc").first(),
+    ]);
+    if (latestLog === null || earliestLog === null) {
       return {
         topModels,
         data: [],
       };
     }
 
-    const sortedMonths = getLast6CalendarMonths(latestLog.createdAt);
+    const sortedMonths = getCalendarMonthsFromEarliestToLatest(
+      earliestLog.createdAt,
+      latestLog.createdAt,
+    );
 
     const batchRequests: Array<{ namespace: string }> = [];
     for (const month of sortedMonths) {
@@ -159,7 +165,7 @@ export const getMonthlyUsageAggregates = query({
       item.prompt = monthlyTotal;
 
       return item;
-    });
+    }).filter((item) => (item.prompt as number) > 0);
 
     return {
       topModels,
