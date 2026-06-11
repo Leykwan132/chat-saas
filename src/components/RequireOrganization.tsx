@@ -4,6 +4,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Navigate } from 'react-router';
+import { getClientTimeZone } from '@/lib/calendarTimeUtils';
 
 type RequireOrganizationProps = {
   children: ReactNode;
@@ -28,7 +29,7 @@ export function RequireOrganization({ children }: RequireOrganizationProps) {
       return;
     }
     provisioningRef.current = true;
-    void ensureCurrentUser({}).finally(() => {
+    void ensureCurrentUser({ timeZone: getClientTimeZone() }).finally(() => {
       provisioningRef.current = false;
     });
   }, [authUser, currentUser, ensureCurrentUser, isAuthLoading]);

@@ -1,9 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
-  addDays,
   endOfMonth,
   endOfWeek,
   eachDayOfInterval,
@@ -49,7 +48,16 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchableSelect } from '@/components/ui/searchable-select';
 import { TimeSelectInput } from '@/components/TimeSelectInput';
-import { parseCalendarTimeLabel } from '@/lib/calendarTimeUtils';
+import { TimeZoneSelect } from '@/components/TimeZoneSelect';
+import {
+  CALENDAR_TIMEZONE_OPTIONS,
+  combineDateTimeInTimeZone,
+  dateKeyInTimeZone,
+  formatTimestampInTimeZone,
+  getClientTimeZone,
+  normalizeCalendarTimeZone,
+} from '@/lib/calendarTimeUtils';
+import { formatOrgRoleLabel } from '../../shared/teamRoleCatalog';
 import {
   Popover,
   PopoverContent,
@@ -158,23 +166,21 @@ function dateKey(date: Date | number) {
   return format(date, 'yyyy-MM-dd');
 }
 
-function combineDateTime(date: string, time: string) {
-  const parsed = parseCalendarTimeLabel(time);
-  if (!parsed) return null;
-
-  return new Date(
-    `${date}T${parsed.hours24.toString().padStart(2, '0')}:${parsed.minutes
-      .toString()
-      .padStart(2, '0')}:00`,
-  ).getTime();
+function combineDateTime(date: string, time: string, timeZone: string) {
+  return combineDateTimeInTimeZone(date, time, timeZone);
 }
 
-function getAllDayBounds(date: string) {
-  const start = new Date(`${date}T00:00:00`);
-  return {
-    startAt: start.getTime(),
-    endAt: addDays(start, 1).getTime(),
-  };
+function getAllDayBounds(date: string, timeZone: string) {
+  const startAt = combineDateTimeInTimeZone(date, '12:00 AM', timeZone);
+  if (startAt === null) {
+    return { startAt: null, endAt: null };
+  }
+  const endAt = combineDateTimeInTimeZone(
+    dateKeyInTimeZone(startAt + 36 * 60 * 60 * 1000, timeZone),
+    '12:00 AM',
+    timeZone,
+  );
+  return { startAt, endAt };
 }
 
 const ASSIGNEE_STRIPE_COLORS = [
@@ -209,15 +215,20 @@ function isEventPast(event: CalendarEvent) {
   return event.endAt < Date.now();
 }
 
-function formatCompactEventTime(event: CalendarEvent) {
+function formatCompactEventTime(event: CalendarEvent, timeZone: string) {
   if (event.allDay) return 'All day';
-  const minutes = new Date(event.startAt).getMinutes();
-  return minutes === 0
-    ? format(event.startAt, 'h a')
-    : format(event.startAt, 'h:mm a');
+  const label = formatTimestampInTimeZone(event.startAt, timeZone, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  return label.includes(':00 ') ? label.replace(':00 ', ' ') : label;
 }
 
-function formatEventListTimeRange(event: CalendarEvent): {
+function formatEventListTimeRange(
+  event: CalendarEvent,
+  timeZone: string,
+): {
   range: string;
   duration: string | null;
 } {
@@ -225,12 +236,24 @@ function formatEventListTimeRange(event: CalendarEvent): {
     return { range: 'All day', duration: null };
   }
 
-  const startPeriod = format(event.startAt, 'a');
-  const endPeriod = format(event.endAt, 'a');
+  const startLabel = formatTimestampInTimeZone(event.startAt, timeZone, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const endLabel = formatTimestampInTimeZone(event.endAt, timeZone, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  });
+  const startPeriod = startLabel.split(' ').at(-1) ?? '';
+  const endPeriod = endLabel.split(' ').at(-1) ?? '';
+  const startTime = startLabel.replace(` ${startPeriod}`, '');
+  const endTime = endLabel.replace(` ${endPeriod}`, '');
   const range =
     startPeriod === endPeriod
-      ? `${format(event.startAt, 'h')}\u2013${format(event.endAt, 'h a')}`
-      : `${format(event.startAt, 'h a')}\u2013${format(event.endAt, 'h a')}`;
+      ? `${startTime}\u2013${endTime} ${endPeriod}`
+      : `${startLabel}\u2013${endLabel}`;
 
   const totalMinutes = Math.round(Math.max(0, event.endAt - event.startAt) / 60_000);
   let duration: string | null = null;
@@ -257,10 +280,12 @@ function formatEventDurationDisplay(duration: string | null) {
 function CalendarGridEventItem({
   event,
   isSelected,
+  timeZone,
   onClick,
 }: {
   event: CalendarEvent;
   isSelected: boolean;
+  timeZone: string;
   onClick: (clickEvent: React.MouseEvent<HTMLButtonElement>) => void;
 }) {
   const assigneeColor = getEventAssigneeColor(event);
@@ -287,7 +312,7 @@ function CalendarGridEventItem({
           isPast ? 'text-muted-foreground' : 'text-foreground',
         )}
       >
-        {formatCompactEventTime(event)}
+        {formatCompactEventTime(event, timeZone)}
       </span>
     </button>
   );
@@ -300,6 +325,8 @@ function CalendarDayGridCell({
   selectedEventId,
   visibleMonth,
   canManageCalendar,
+  timeZone,
+  todayKey,
   onSelectDate,
   onSelectEvent,
   onCreateEvent,
@@ -310,6 +337,8 @@ function CalendarDayGridCell({
   selectedEventId: string | null;
   visibleMonth: Date;
   canManageCalendar: boolean;
+  timeZone: string;
+  todayKey: string;
   onSelectDate: (day: Date) => void;
   onSelectEvent: (day: Date, eventId: string) => void;
   onCreateEvent: (day: Date) => void;
@@ -339,7 +368,7 @@ function CalendarDayGridCell({
       <span
         className={cn(
           'mb-1 flex size-6 shrink-0 items-center justify-center self-end rounded-full text-xs font-medium',
-          isSameDay(day, new Date()) && 'bg-red-500 text-white',
+          dateKey(day) === todayKey && 'bg-red-500 text-white',
         )}
       >
         {format(day, 'd')}
@@ -349,6 +378,7 @@ function CalendarDayGridCell({
           <CalendarGridEventItem
             key={event._id}
             event={event}
+            timeZone={timeZone}
             isSelected={selectedEventId === event._id}
             onClick={(clickEvent) => {
               clickEvent.stopPropagation();
@@ -381,6 +411,7 @@ function CalendarDayGridCell({
                   <CalendarGridEventItem
                     key={event._id}
                     event={event}
+                    timeZone={timeZone}
                     isSelected={selectedEventId === event._id}
                     onClick={(clickEvent) => {
                       clickEvent.stopPropagation();
@@ -419,13 +450,15 @@ function CalendarDayGridCell({
 function CalendarDayEventRow({
   event,
   stripeColor,
+  timeZone,
   onSelect,
 }: {
   event: CalendarEvent;
   stripeColor: string;
+  timeZone: string;
   onSelect: () => void;
 }) {
-  const { range, duration } = formatEventListTimeRange(event);
+  const { range, duration } = formatEventListTimeRange(event, timeZone);
   const durationLabel = formatEventDurationDisplay(duration);
   const isPast = isEventPast(event);
 
@@ -464,8 +497,11 @@ function findAssignedUser(event: CalendarEvent) {
   return event.participants.find((participant) => participant.role === 'assigned');
 }
 
-function createInitialFormState(date: Date, currentUserId?: Id<'users'>): EventFormState {
-  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+function createInitialFormState(
+  date: Date,
+  timeZone: string,
+  currentUserId?: Id<'users'>,
+): EventFormState {
   return {
     title: '',
     customerId: '',
@@ -481,9 +517,10 @@ function createInitialFormState(date: Date, currentUserId?: Id<'users'>): EventF
   };
 }
 
-function formStateFromEvent(event: CalendarEvent): EventFormState {
+function formStateFromEvent(event: CalendarEvent, displayTimeZone: string): EventFormState {
   const customer = findEventCustomer(event);
   const assigned = findAssignedUser(event);
+  const timeZone = event.timeZone || displayTimeZone;
   return {
     title: event.title,
     customerId: customer?.customerId ?? '',
@@ -491,11 +528,19 @@ function formStateFromEvent(event: CalendarEvent): EventFormState {
     attendeeUserIds: event.participants
       .filter((participant) => participant.role === 'attendee' && participant.userId)
       .map((participant) => participant.userId!),
-    date: dateKey(event.startAt),
-    startTime: format(event.startAt, 'h:mm a'),
-    endTime: format(event.endAt, 'h:mm a'),
+    date: dateKeyInTimeZone(event.startAt, timeZone),
+    startTime: formatTimestampInTimeZone(event.startAt, timeZone, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
+    endTime: formatTimestampInTimeZone(event.endAt, timeZone, {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }),
     allDay: event.allDay ?? false,
-    timeZone: event.timeZone,
+    timeZone,
     description: event.description ?? '',
     link: event.link ?? '',
   };
@@ -575,17 +620,23 @@ export default function CalendarPage() {
   const canManageCalendar = can(Permission.CALENDAR_MANAGE);
 
   const currentUser = useQuery(api.users.currentUser);
+  const activeTeam = useQuery(api.teams.getActiveTeam);
   const teamUsers = useQuery(api.users.getUsers, {});
   const customerOptions = useQuery(calendarApi.listCustomerOptions, {});
 
+  const initialClientTimeZone = useMemo(() => normalizeCalendarTimeZone(getClientTimeZone()), []);
+  const [displayTimeZone, setDisplayTimeZone] = useState(initialClientTimeZone);
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
+  const [selectedDayKey, setSelectedDayKey] = useState(() =>
+    dateKeyInTimeZone(Date.now(), initialClientTimeZone),
+  );
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [formState, setFormState] = useState<EventFormState>(() =>
-    createInitialFormState(new Date()),
+    createInitialFormState(new Date(), initialClientTimeZone),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -615,16 +666,29 @@ export default function CalendarPage() {
   const createEvent = useMutation(calendarApi.create);
   const updateEvent = useMutation(calendarApi.update);
   const removeEvent = useMutation(calendarApi.remove);
+  const updateTeamTimeZone = useMutation(api.teams.updateActiveTeamTimeZone);
+
+  useEffect(() => {
+    if (activeTeam === undefined) return;
+    const nextTimeZone = normalizeCalendarTimeZone(activeTeam?.timeZone);
+    setDisplayTimeZone(nextTimeZone);
+    setSelectedDayKey(dateKey(selectedDate));
+  }, [activeTeam?.timeZone, selectedDate]);
 
   const days = useMemo(
     () => eachDayOfInterval({ start: monthRange.start, end: monthRange.end }),
     [monthRange],
   );
 
+  const todayKey = useMemo(
+    () => dateKeyInTimeZone(Date.now(), displayTimeZone),
+    [displayTimeZone],
+  );
+
   const eventsByDay = useMemo(() => {
     const map = new Map<string, CalendarEvent[]>();
     for (const event of events ?? []) {
-      const key = dateKey(event.startAt);
+      const key = dateKeyInTimeZone(event.startAt, displayTimeZone);
       const list = map.get(key) ?? [];
       list.push(event);
       map.set(key, list);
@@ -638,16 +702,16 @@ export default function CalendarPage() {
       });
     }
     return map;
-  }, [events]);
+  }, [displayTimeZone, events]);
 
   const selectedDayEvents = useMemo(
-    () => eventsByDay.get(dateKey(selectedDate)) ?? [],
-    [eventsByDay, selectedDate],
+    () => eventsByDay.get(selectedDayKey) ?? [],
+    [eventsByDay, selectedDayKey],
   );
 
   const savedFormState = useMemo(
-    () => (editingEvent ? formStateFromEvent(editingEvent) : null),
-    [editingEvent],
+    () => (editingEvent ? formStateFromEvent(editingEvent, displayTimeZone) : null),
+    [displayTimeZone, editingEvent],
   );
 
   const isFormDirty = useMemo(() => {
@@ -665,7 +729,7 @@ export default function CalendarPage() {
     return selectedDayEvents.filter((event) => {
       const customer = findEventCustomer(event);
       const assigned = findAssignedUser(event);
-      const { range } = formatEventListTimeRange(event);
+      const { range } = formatEventListTimeRange(event, displayTimeZone);
       const haystack = [
         event.title,
         event.location,
@@ -683,7 +747,7 @@ export default function CalendarPage() {
 
       return haystack.includes(query);
     });
-  }, [dayEventSearchQuery, selectedDayEvents]);
+  }, [dayEventSearchQuery, displayTimeZone, selectedDayEvents]);
 
   const eventFilterCounts = useMemo(() => {
     if (events === undefined) return undefined;
@@ -709,20 +773,43 @@ export default function CalendarPage() {
     if (!date) return;
     const nextDate = startOfDay(date);
     setSelectedDate(nextDate);
+    setSelectedDayKey(dateKey(nextDate));
     setVisibleMonth(startOfMonth(nextDate));
     setSelectedEventId(null);
     setDayEventSearchQuery('');
   };
 
+  const handleChangeTimeZone = async (timeZone: string) => {
+    const nextTimeZone = normalizeCalendarTimeZone(timeZone);
+    const previousTimeZone = displayTimeZone;
+    setDisplayTimeZone(nextTimeZone);
+    setSelectedDayKey(dateKey(selectedDate));
+    setFormState((current) => ({ ...current, timeZone: nextTimeZone }));
+    try {
+      await updateTeamTimeZone({ timeZone: nextTimeZone });
+    } catch (err) {
+      setDisplayTimeZone(previousTimeZone);
+      setSelectedDayKey(dateKey(selectedDate));
+      setFormState((current) => ({ ...current, timeZone: previousTimeZone }));
+      toast.error(err instanceof Error ? err.message : 'Could not update time zone');
+    }
+  };
+
   const openCreateSheet = (date = selectedDate) => {
     setEditingEvent(null);
-    setFormState(createInitialFormState(date, currentUser?._id as Id<'users'> | undefined));
+    setFormState(
+      createInitialFormState(
+        date,
+        displayTimeZone,
+        currentUser?._id as Id<'users'> | undefined,
+      ),
+    );
     setEventSheetOpen(true);
   };
 
   const openEditSheet = (event: CalendarEvent) => {
     setEditingEvent(event);
-    setFormState(formStateFromEvent(event));
+    setFormState(formStateFromEvent(event, displayTimeZone));
     setEventSheetOpen(true);
   };
 
@@ -755,11 +842,12 @@ export default function CalendarPage() {
       toast.error('Select a customer and assigned team member');
       return;
     }
+    const eventTimeZone = formState.timeZone || displayTimeZone;
     const timeRange = formState.allDay
-      ? getAllDayBounds(formState.date)
+      ? getAllDayBounds(formState.date, eventTimeZone)
       : {
-          startAt: combineDateTime(formState.date, formState.startTime),
-          endAt: combineDateTime(formState.date, formState.endTime),
+          startAt: combineDateTime(formState.date, formState.startTime, eventTimeZone),
+          endAt: combineDateTime(formState.date, formState.endTime, eventTimeZone),
         };
     const { startAt, endAt } = timeRange;
     if (startAt === null || endAt === null) {
@@ -779,7 +867,7 @@ export default function CalendarPage() {
         link: formState.link || undefined,
         startAt,
         endAt,
-        timeZone: formState.timeZone,
+        timeZone: eventTimeZone,
         allDay: formState.allDay,
         startDate: formState.allDay ? formState.date : undefined,
         endDate: formState.allDay ? formState.date : undefined,
@@ -801,8 +889,10 @@ export default function CalendarPage() {
         toast.success('Event created');
       }
 
-      const nextDate = startOfDay(new Date(startAt));
+      const nextDayKey = dateKeyInTimeZone(startAt, eventTimeZone);
+      const nextDate = startOfDay(new Date(`${nextDayKey}T00:00:00`));
       setSelectedDate(nextDate);
+      setSelectedDayKey(nextDayKey);
       setVisibleMonth(startOfMonth(nextDate));
       setEventSheetOpen(false);
     } catch (err) {
@@ -934,32 +1024,42 @@ export default function CalendarPage() {
             </h2>
           </div>
           <div className="flex items-center gap-1.5">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => handleChangeMonth(subMonths(visibleMonth, 1))}
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="size-4" />
-            </Button>
+            <TimeZoneSelect
+              value={displayTimeZone}
+              options={CALENDAR_TIMEZONE_OPTIONS}
+              onChange={handleChangeTimeZone}
+              showGlobe
+              triggerAriaLabel="Calendar time zone"
+              triggerClassName="w-fit border-transparent bg-input/50 px-2.5 py-1.5 hover:bg-input/50"
+            />
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => handleSelectDate(new Date())}
+              onClick={() => handleSelectDate(new Date(`${todayKey}T00:00:00`))}
             >
               Today
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => handleChangeMonth(addMonths(visibleMonth, 1))}
-              aria-label="Next month"
-            >
-              <ChevronRight className="size-4" />
-            </Button>
+            <div className="flex items-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => handleChangeMonth(subMonths(visibleMonth, 1))}
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => handleChangeMonth(addMonths(visibleMonth, 1))}
+                aria-label="Next month"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -987,6 +1087,8 @@ export default function CalendarPage() {
               selectedEventId={selectedEventId}
               visibleMonth={visibleMonth}
               canManageCalendar={canManageCalendar}
+              timeZone={displayTimeZone}
+              todayKey={todayKey}
               onSelectDate={(nextDay) => handleSelectDate(nextDay)}
               onSelectEvent={(nextDay, eventId) => {
                 setSelectedDate(startOfDay(nextDay));
@@ -1005,7 +1107,7 @@ export default function CalendarPage() {
       <aside className={inboxColumnClassName}>
         <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>
           <div className="flex min-w-0 items-center gap-2">
-            {isSameDay(selectedDate, new Date()) ? (
+            {selectedDayKey === todayKey ? (
               <div className="flex min-w-0 items-center gap-2">
                 <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
                 <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
@@ -1047,6 +1149,7 @@ export default function CalendarPage() {
                     <CalendarDayEventRow
                       key={event._id}
                       event={event}
+                      timeZone={displayTimeZone}
                       stripeColor={getEventAssigneeColor(event)}
                       onSelect={() => handleSelectEvent(event)}
                     />
@@ -1166,11 +1269,15 @@ export default function CalendarPage() {
                     placeholder="Select team member"
                     searchPlaceholder="Search team members..."
                     emptyText="No team members found."
-                    options={teamUserRows.map((user: Doc<'users'>) => ({
-                      value: user._id,
-                      label: memberLabel(user),
-                      searchValue: `${memberLabel(user)} ${user.email}`,
-                    }))}
+                    options={teamUserRows.map((user) => {
+                      const role = 'role' in user ? formatOrgRoleLabel(user.role) : 'Member';
+                      return {
+                        value: user._id,
+                        label: memberLabel(user),
+                        tag: role,
+                        searchValue: `${memberLabel(user)} ${user.email} ${role}`,
+                      };
+                    })}
                     onChange={(value) => updateForm({ assignedUserId: value })}
                     disabled={!canEditEventSheet}
                   />

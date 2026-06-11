@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { getClientTimeZone } from '@/lib/calendarTimeUtils';
 import { showTeamCreationUpgradeToast } from '@/lib/teamCreationGate';
 import { Button } from '@/components/ui/button';
 import {
@@ -83,6 +84,7 @@ export function CreateTeamDialog({
       const result = await createTeam({
         name: trimmedName,
         domain: trimmedDomain.length > 0 ? trimmedDomain : undefined,
+        timeZone: getClientTimeZone(),
       });
       toast.success(`Created ${result.name}. Switching…`);
       await switchTeam({

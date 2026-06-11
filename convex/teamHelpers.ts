@@ -6,6 +6,11 @@ import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 export const PERSONAL_ORG_ID = "";
 
 export const PERSONAL_TEAM_NAME = "Personal";
+export const DEFAULT_TEAM_TIME_ZONE = "Asia/Kuala_Lumpur";
+
+export function normalizeTimeZone(timeZone: string | undefined | null) {
+  return timeZone?.trim() || DEFAULT_TEAM_TIME_ZONE;
+}
 
 export function getMemberLimitForPlan(plan: PlanKey | undefined): number {
   const key = plan ?? "free";
@@ -172,9 +177,16 @@ export async function setActiveTeamForUser(
 export async function createPersonalTeamForUser(
   ctx: MutationCtx,
   userId: Id<"users">,
+  timeZone?: string,
 ) {
   const existing = await getPersonalTeamForUser(ctx, userId);
   if (existing !== null) {
+    if (existing.timeZone === undefined && timeZone !== undefined) {
+      await ctx.db.patch(existing._id, {
+        timeZone: normalizeTimeZone(timeZone),
+        updatedAt: Date.now(),
+      });
+    }
     return existing._id;
   }
 
@@ -183,6 +195,7 @@ export async function createPersonalTeamForUser(
     type: "personal",
     name: PERSONAL_TEAM_NAME,
     ownerId: userId,
+    timeZone: normalizeTimeZone(timeZone),
     createdAt: now,
     updatedAt: now,
   });
@@ -211,6 +224,7 @@ export type EnsureUserAccountArgs = {
   firstName?: string;
   lastName?: string;
   profilePictureUrl?: string;
+  timeZone?: string;
 };
 
 /** Creates or updates the app user row and always ensures a personal team exists. */
@@ -257,7 +271,7 @@ export async function ensureUserAccount(
     }
 
     if ((await getPersonalTeamForUser(ctx, existing._id)) === null) {
-      await createPersonalTeamForUser(ctx, existing._id);
+      await createPersonalTeamForUser(ctx, existing._id, args.timeZone);
     }
 
     return existing._id;
@@ -273,7 +287,7 @@ export async function ensureUserAccount(
     createdAt: now,
     updatedAt: now,
   });
-  await createPersonalTeamForUser(ctx, userId);
+  await createPersonalTeamForUser(ctx, userId, args.timeZone);
   return userId;
 }
 
@@ -283,6 +297,7 @@ export async function ensureOrganizationalTeam(
     workosOrgId: string;
     name: string;
     ownerUserId: Id<"users">;
+    timeZone?: string;
   },
 ) {
   const now = Date.now();
@@ -293,12 +308,17 @@ export async function ensureOrganizationalTeam(
       name: args.name,
       ownerId: args.ownerUserId,
       workosOrgId: args.workosOrgId,
+      timeZone: normalizeTimeZone(args.timeZone),
       createdAt: now,
       updatedAt: now,
     });
     team = (await ctx.db.get(teamId))!;
-  } else if (team.name !== args.name) {
-    await ctx.db.patch(team._id, { name: args.name, updatedAt: now });
+  } else if (team.name !== args.name || (team.timeZone === undefined && args.timeZone !== undefined)) {
+    await ctx.db.patch(team._id, {
+      name: args.name,
+      timeZone: team.timeZone ?? normalizeTimeZone(args.timeZone),
+      updatedAt: now,
+    });
   }
 
   await ensureTeamMembership(ctx, {

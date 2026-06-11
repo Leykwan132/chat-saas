@@ -78,8 +78,10 @@ export const currentUser = query({
 
 /** Creates the app user row on first login if webhooks haven't run yet. */
 export const ensureCurrentUser = mutation({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    timeZone: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
       throw new Error("Not authenticated");
@@ -88,6 +90,7 @@ export const ensureCurrentUser = mutation({
     const userId = await ensureUserAccount(ctx, {
       workosUserId: identity.subject,
       email: identity.email ?? undefined,
+      timeZone: args.timeZone,
     });
     const user = await ctx.db.get(userId);
     if (user === null) {

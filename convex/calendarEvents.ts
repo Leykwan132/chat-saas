@@ -8,6 +8,7 @@ import {
   resolvePermissionsForRole,
   type PermissionSlug,
 } from "../shared/permissions";
+import { normalizeTimeZone } from "./teamHelpers";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -349,7 +350,7 @@ export const create = mutation({
       link: args.link?.trim() || undefined,
       startAt: args.startAt,
       endAt: args.endAt,
-      timeZone: args.timeZone.trim() || "UTC",
+      timeZone: normalizeTimeZone(args.timeZone),
       allDay: args.allDay,
       startDate: args.startDate,
       endDate: args.endDate,
@@ -424,7 +425,7 @@ export const update = mutation({
     if (args.link !== undefined) patch.link = args.link.trim() || undefined;
     if (args.startAt !== undefined) patch.startAt = args.startAt;
     if (args.endAt !== undefined) patch.endAt = args.endAt;
-    if (args.timeZone !== undefined) patch.timeZone = args.timeZone.trim() || "UTC";
+    if (args.timeZone !== undefined) patch.timeZone = normalizeTimeZone(args.timeZone);
     if (args.allDay !== undefined) patch.allDay = args.allDay;
     if (args.startDate !== undefined) patch.startDate = args.startDate;
     if (args.endDate !== undefined) patch.endDate = args.endDate;

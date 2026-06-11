@@ -2,7 +2,13 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
-import { getActiveTeamForUser, getTeamByWorkosOrgId, getUserByWorkosId } from "./teamHelpers";
+import {
+  DEFAULT_TEAM_TIME_ZONE,
+  getActiveTeamForUser,
+  getTeamByWorkosOrgId,
+  getUserByWorkosId,
+  normalizeTimeZone,
+} from "./teamHelpers";
 import { getOwnedAgent } from "./leadRouting/helpers";
 import { getZonedDayAndMinutes } from "./leadRouting/eligibility";
 import {
@@ -73,15 +79,6 @@ function displayNameForUser(user: Doc<"users">) {
   return fullName || user.email;
 }
 
-function displayNameForCustomer(customer: Doc<"customers">) {
-  return (
-    customer.name?.trim() ||
-    customer.email?.trim() ||
-    customer.phone?.trim() ||
-    customer.contactAddress
-  );
-}
-
 function slugifyKey(input: string) {
   const slug = input
     .trim()
@@ -129,30 +126,21 @@ function isCollectedFieldValuePresent(value: string | number | boolean | null | 
   return true;
 }
 
-async function enrichCollectedFieldsFromConversation(
-  ctx: DbCtx,
-  conversation: Doc<"conversations">,
-  fields: CollectedFields,
-) {
-  const enriched: CollectedFields = { ...fields };
+function mergeCollectedFields(
+  sessionFields: CollectedFields,
+  incomingFields?: CollectedFields,
+): CollectedFields {
+  return {
+    ...sessionFields,
+    ...(incomingFields ?? {}),
+  };
+}
 
-  if (conversation.customerId !== undefined) {
-    const customer = await ctx.db.get(conversation.customerId);
-    if (customer !== null) {
-      if (!isCollectedFieldValuePresent(enriched.name) && customer.name?.trim()) {
-        enriched.name = customer.name.trim();
-      }
-      if (!isCollectedFieldValuePresent(enriched.phone) && customer.phone?.trim()) {
-        enriched.phone = customer.phone.trim();
-      }
-    }
+function bookingDisplayName(fields: CollectedFields) {
+  if (typeof fields.name === "string" && fields.name.trim()) {
+    return fields.name.trim();
   }
-
-  if (!isCollectedFieldValuePresent(enriched.name) && conversation.contactName?.trim()) {
-    enriched.name = conversation.contactName.trim();
-  }
-
-  return enriched;
+  return "Customer";
 }
 
 function missingServiceFields(service: Doc<"autoBookingServices">, fields: CollectedFields) {
@@ -163,6 +151,133 @@ function missingServiceFields(service: Doc<"autoBookingServices">, fields: Colle
     }
   }
   return missing;
+}
+
+function formatCollectedFieldValue(value: string | number | boolean | null | undefined) {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "boolean") return value ? "Yes" : "No";
+  return String(value).trim();
+}
+
+function formatBookingDateTime(startAt: number, endAt: number, timeZone: string) {
+  const tz = normalizeTimeZone(timeZone);
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return {
+    date: dateFormatter.format(new Date(startAt)),
+    timeRange: `${timeFormatter.format(new Date(startAt))} - ${timeFormatter.format(new Date(endAt))}`,
+  };
+}
+
+function serviceSnapshot(service: Doc<"autoBookingServices">) {
+  return {
+    serviceId: service._id,
+    name: service.name,
+    description: service.description,
+    durationMinutes: service.durationMinutes,
+    fields: service.fields,
+    preferredTimeMinutes: service.preferredTimeMinutes,
+    salesStyle: service.salesStyle,
+    timeZone: service.timeZone?.trim() || DEFAULT_TEAM_TIME_ZONE,
+  };
+}
+
+async function getActiveSession(ctx: MutationCtx, conversationId: Id<"conversations">) {
+  const sessions = await ctx.db
+    .query("autoBookingSessions")
+    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .collect();
+  return sessions.find((session) => isActiveAutoBookingSessionStatus(session.status));
+}
+
+async function getLatestBookedSession(ctx: DbCtx, conversationId: Id<"conversations">) {
+  const sessions = await ctx.db
+    .query("autoBookingSessions")
+    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .collect();
+  return sessions
+    .filter(
+      (session) =>
+        session.status === AutoBookingSessionStatus.Booked &&
+        session.calendarEventId !== undefined,
+    )
+    .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+}
+
+async function listActiveBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents">) {
+  return (await listServices(ctx, agentId)).filter(
+    (service) => service.isActive && service.archivedAt === undefined,
+  );
+}
+
+async function resolveBookingService(
+  ctx: DbCtx,
+  agentId: Id<"agents">,
+  serviceId?: Id<"autoBookingServices">,
+) {
+  const services = await listActiveBookingServicesForAgent(ctx, agentId);
+  if (services.length === 0) {
+    return { services, service: undefined as Doc<"autoBookingServices"> | undefined };
+  }
+  const service = serviceId
+    ? services.find((row) => row._id === serviceId)
+    : services.length === 1
+      ? services[0]
+      : undefined;
+  return { services, service };
+}
+
+function serviceTimeZone(service: Pick<Doc<"autoBookingServices">, "timeZone">, team?: Pick<Doc<"teams">, "timeZone">) {
+  return service.timeZone?.trim() || normalizeTimeZone(team?.timeZone);
+}
+
+function buildBookingConfirmationMessage(args: {
+  service: Doc<"autoBookingServices">;
+  collectedFields: CollectedFields;
+  startAt: number;
+  endAt: number;
+  timeZone?: string;
+  assignedTo?: string;
+  bookingId: Id<"calendarEvents">;
+  updated?: boolean;
+}) {
+  const { date, timeRange } = formatBookingDateTime(
+    args.startAt,
+    args.endAt,
+    args.timeZone ?? args.service.timeZone ?? DEFAULT_TEAM_TIME_ZONE,
+  );
+  const detailLines = args.service.fields
+    .map((field) => {
+      const value = formatCollectedFieldValue(args.collectedFields[field.key]);
+      if (!value) return undefined;
+      return `${field.label}: ${value}`;
+    })
+    .filter((line): line is string => line !== undefined);
+
+  const lines = [
+    args.updated ? "Your booking has been updated!" : "Your booking is confirmed!",
+    "",
+    `Service: ${args.service.name}`,
+    `Date: ${date}`,
+    `Time: ${timeRange}`,
+    ...detailLines.filter((line) => !line.startsWith("Booking Date:") && !line.startsWith("Booking Time:")),
+    args.assignedTo ? `Team Member: ${args.assignedTo}` : undefined,
+    `Booking reference: ${args.bookingId}`,
+    "",
+    "Thank you — we look forward to seeing you!",
+  ].filter((line): line is string => line !== undefined);
+
+  return lines.join("\n");
 }
 
 async function permissionsForCurrentUser(ctx: DbCtx): Promise<PermissionSlug[]> {
@@ -230,7 +345,7 @@ async function getOrCreateSettings(ctx: MutationCtx, agentId: Id<"agents">) {
   const id = await ctx.db.insert("autoBookingSettings", {
     agentId,
     enabled: false,
-    defaultTimeZone: "UTC",
+    defaultTimeZone: DEFAULT_TEAM_TIME_ZONE,
     updatedAt: now,
   });
   const row = await ctx.db.get(id);
@@ -248,7 +363,7 @@ async function getSettingsOrDefault(ctx: QueryCtx, agentId: Id<"agents">) {
   return existing ?? {
     agentId,
     enabled: false,
-    defaultTimeZone: "UTC",
+    defaultTimeZone: DEFAULT_TEAM_TIME_ZONE,
     updatedAt: 0,
   };
 }
@@ -350,6 +465,7 @@ async function hasCalendarConflict(
     userId: Id<"users">;
     startAt: number;
     endAt: number;
+    excludeEventId?: Id<"calendarEvents">;
   },
 ) {
   const participants = await ctx.db
@@ -365,7 +481,12 @@ async function hasCalendarConflict(
     .take(100);
   for (const participant of participants) {
     const event = await ctx.db.get(participant.eventId);
-    if (event !== null && event.status !== "cancelled" && overlaps(args.startAt, args.endAt, event.startAt, event.endAt)) {
+    if (
+      event !== null &&
+      event._id !== args.excludeEventId &&
+      event.status !== "cancelled" &&
+      overlaps(args.startAt, args.endAt, event.startAt, event.endAt)
+    ) {
       return true;
     }
   }
@@ -378,6 +499,7 @@ async function entryAvailableForSlot(
   entry: RosterEntry,
   startAt: number,
   endAt: number,
+  excludeEventId?: Id<"calendarEvents">,
 ) {
   if (entry.user === null) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
@@ -387,6 +509,7 @@ async function entryAvailableForSlot(
     userId: entry.user._id,
     startAt,
     endAt,
+    excludeEventId,
   }));
 }
 
@@ -413,11 +536,21 @@ async function chooseAssigneeForSlot(
     entries: RosterEntry[];
     startAt: number;
     endAt: number;
+    excludeEventId?: Id<"calendarEvents">;
   },
 ): Promise<RosterEntry | null> {
   const available: RosterEntry[] = [];
   for (const entry of args.entries) {
-    if (await entryAvailableForSlot(ctx, args.teamId, entry, args.startAt, args.endAt)) {
+    if (
+      await entryAvailableForSlot(
+        ctx,
+        args.teamId,
+        entry,
+        args.startAt,
+        args.endAt,
+        args.excludeEventId,
+      )
+    ) {
       available.push(entry);
     }
   }
@@ -470,7 +603,7 @@ function sortSlotsWithPreferredTime(
     return slots;
   }
 
-  const timeZone = service.timeZone?.trim() || "UTC";
+  const timeZone = serviceTimeZone(service);
   const used = new Set<number>();
   const sorted: BookingSlot[] = [];
 
@@ -503,6 +636,7 @@ async function generateSlots(
     rangeStartAt: number;
     rangeEndAt: number;
     limit: number;
+    excludeEventId?: Id<"calendarEvents">;
   },
 ): Promise<BookingSlot[]> {
   const roster = await loadRoster(ctx, args.service.agentId);
@@ -523,6 +657,7 @@ async function generateSlots(
       entries: roster,
       startAt: startAt - bufferMs,
       endAt: endAt + bufferMs,
+      excludeEventId: args.excludeEventId,
     });
     if (assignee?.user) {
       slots.push({
@@ -574,16 +709,6 @@ async function resolveCustomerForConversation(
     if (customer === null) {
       throw new Error("Customer not found");
     }
-    const patch: Partial<Doc<"customers">> = { updatedAt: Date.now() };
-    if (!customer.name && typeof fields.name === "string" && fields.name.trim()) {
-      patch.name = fields.name.trim();
-    }
-    if (!customer.phone && typeof fields.phone === "string" && fields.phone.trim()) {
-      patch.phone = fields.phone.trim();
-    }
-    if (Object.keys(patch).length > 1) {
-      await ctx.db.patch(customer._id, patch);
-    }
     return customer;
   }
 
@@ -593,7 +718,7 @@ async function resolveCustomerForConversation(
     orgId: conversation.orgId,
     service,
     contactAddress: conversation.contactAddress,
-    name: typeof fields.name === "string" ? fields.name.trim() || undefined : conversation.contactName,
+    name: typeof fields.name === "string" ? fields.name.trim() || undefined : undefined,
     email: undefined,
     phone: typeof fields.phone === "string" ? fields.phone.trim() || undefined : undefined,
     tags: [],
@@ -619,6 +744,7 @@ async function insertCalendarParticipants(
     teamId: Id<"teams">;
     customer: Doc<"customers">;
     assignedUser: Doc<"users">;
+    bookingDisplayName: string;
     eventStartAt: number;
     now: number;
   },
@@ -630,7 +756,7 @@ async function insertCalendarParticipants(
     role: "customer",
     customerId: args.customer._id,
     email: args.customer.email?.trim() || args.customer.contactAddress,
-    displayName: displayNameForCustomer(args.customer),
+    displayName: args.bookingDisplayName,
     eventStartAt: args.eventStartAt,
     responseStatus: "needsAction",
     createdAt: args.now,
@@ -649,6 +775,73 @@ async function insertCalendarParticipants(
     createdAt: args.now,
     updatedAt: args.now,
   });
+}
+
+async function deleteCalendarParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents">) {
+  const participants = await ctx.db
+    .query("calendarEventParticipants")
+    .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
+    .take(100);
+  for (const participant of participants) {
+    await ctx.db.delete(participant._id);
+  }
+}
+
+async function replaceCalendarParticipants(
+  ctx: MutationCtx,
+  args: {
+    eventId: Id<"calendarEvents">;
+    teamId: Id<"teams">;
+    customer: Doc<"customers">;
+    assignedUser: Doc<"users">;
+    bookingDisplayName: string;
+    eventStartAt: number;
+    now: number;
+  },
+) {
+  await deleteCalendarParticipants(ctx, args.eventId);
+  await insertCalendarParticipants(ctx, args);
+}
+
+async function getExistingBookingSession(ctx: DbCtx, conversationId: Id<"conversations">) {
+  const sessions = await ctx.db
+    .query("autoBookingSessions")
+    .withIndex("by_conversationId", (q) => q.eq("conversationId", conversationId))
+    .collect();
+  return sessions
+    .filter(
+      (session) =>
+        session.calendarEventId !== undefined &&
+        (session.status === AutoBookingSessionStatus.Booked ||
+          session.status === AutoBookingSessionStatus.Editing),
+    )
+    .sort((a, b) => b.updatedAt - a.updatedAt)[0];
+}
+
+function formatBookingDetailsResponse(args: {
+  session: Doc<"autoBookingSessions">;
+  service: Doc<"autoBookingServices">;
+  event: Doc<"calendarEvents">;
+  timeZone?: string;
+  assignedTo?: string;
+}) {
+  const { date, timeRange } = formatBookingDateTime(
+    args.event.startAt,
+    args.event.endAt,
+    args.timeZone ?? args.service.timeZone ?? DEFAULT_TEAM_TIME_ZONE,
+  );
+  return {
+    bookingId: args.event._id,
+    sessionId: args.session._id,
+    status: args.session.status,
+    service: serviceSnapshot(args.service),
+    collectedFields: args.session.collectedFields,
+    startAt: args.event.startAt,
+    endAt: args.event.endAt,
+    date,
+    timeRange,
+    teamMember: args.assignedTo,
+  };
 }
 
 export const getOverview = query({
@@ -736,7 +929,7 @@ export const updateSettings = mutation({
     await assertAutoBookingManage(ctx, args.agentId);
     const settings = await getOrCreateSettings(ctx, args.agentId);
     const patch: Partial<Doc<"autoBookingSettings">> = { updatedAt: Date.now() };
-    if (args.defaultTimeZone !== undefined) patch.defaultTimeZone = args.defaultTimeZone.trim() || "UTC";
+    if (args.defaultTimeZone !== undefined) patch.defaultTimeZone = normalizeTimeZone(args.defaultTimeZone);
     await ctx.db.patch(settings._id, patch);
   },
 });
@@ -852,6 +1045,8 @@ export const internalIsEnabled = internalQuery({
 export const listActiveServices = internalQuery({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
+    const agent = await ctx.db.get(args.agentId);
+    const team = agent ? await resolveTeamForAgent(ctx, agent) : undefined;
     const services = await ctx.db
       .query("autoBookingServices")
       .withIndex("by_agentId_and_isActive", (q) => q.eq("agentId", args.agentId).eq("isActive", true))
@@ -870,7 +1065,178 @@ export const listActiveServices = internalQuery({
           fields: service.fields,
           preferredTimeMinutes: service.preferredTimeMinutes,
           salesStyle: service.salesStyle,
+          timeZone: serviceTimeZone(service, team),
         })),
+    };
+  },
+});
+
+export const getCurrentBooking = internalQuery({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const session = await getExistingBookingSession(ctx, args.conversationId);
+    if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
+      return { success: false, message: "No booking found for this conversation." };
+    }
+
+    const [event, service] = await Promise.all([
+      ctx.db.get(session.calendarEventId),
+      ctx.db.get(session.serviceId),
+    ]);
+    if (event === null || service === null || event.status === "cancelled") {
+      return { success: false, message: "No active booking found for this conversation." };
+    }
+
+    const team = await ctx.db.get(event.teamId);
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(20);
+    const assigned = participants.find((row) => row.role === "assigned");
+
+    return {
+      success: true,
+      ...formatBookingDetailsResponse({
+        session,
+        service,
+        event,
+        timeZone: serviceTimeZone(service, team ?? undefined),
+        assignedTo: assigned?.displayName ?? assigned?.email,
+      }),
+    };
+  },
+});
+
+export const beginBookingEdit = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const active = await getActiveSession(ctx, args.conversationId);
+    if (active !== undefined) {
+      if (active.calendarEventId !== undefined) {
+        return {
+          success: true,
+          sessionId: active._id,
+          status: active.status,
+          bookingId: active.calendarEventId,
+          collectedFields: active.collectedFields,
+          message: "Booking edit is already in progress.",
+        };
+      }
+      return {
+        success: false,
+        message: "A new booking is already in progress. Cancel it first or finish it before editing an existing booking.",
+      };
+    }
+
+    const session = await getExistingBookingSession(ctx, args.conversationId);
+    if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
+      return { success: false, message: "No booking found to edit." };
+    }
+
+    const [event, service] = await Promise.all([
+      ctx.db.get(session.calendarEventId),
+      ctx.db.get(session.serviceId),
+    ]);
+    if (event === null || service === null || event.status === "cancelled") {
+      return { success: false, message: "No active booking found to edit." };
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(session._id, {
+      status: AutoBookingSessionStatus.Editing,
+      updatedAt: now,
+    });
+
+    const team = await ctx.db.get(event.teamId);
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(20);
+    const assigned = participants.find((row) => row.role === "assigned");
+
+    return {
+      success: true,
+      ...formatBookingDetailsResponse({
+        session: { ...session, status: AutoBookingSessionStatus.Editing },
+        service,
+        event,
+        timeZone: serviceTimeZone(service, team ?? undefined),
+        assignedTo: assigned?.displayName ?? assigned?.email,
+      }),
+      message: "Booking edit started. Update details with startBookingSession, then checkAvailability if the time is changing, and call updateBookingAppointment after the customer confirms.",
+    };
+  },
+});
+
+export const startBookingSession = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    serviceId: v.optional(v.id("autoBookingServices")),
+    collectedFields: v.optional(collectedFieldsValidator),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (conversation === null || conversation.assignedAgentId === undefined) {
+      throw new Error("Conversation is not assigned to an agent");
+    }
+
+    const { services, service } = await resolveBookingService(
+      ctx,
+      conversation.assignedAgentId,
+      args.serviceId,
+    );
+    if (services.length === 0) {
+      return {
+        success: false,
+        message: "No active auto-booking services are configured.",
+      };
+    }
+    if (!service) {
+      return {
+        success: false,
+        requiresServiceSelection: true,
+        services: services.map((row) => ({
+          serviceId: row._id,
+          name: row.name,
+          description: row.description,
+          durationMinutes: row.durationMinutes,
+        })),
+        message: "Ask the customer which service they want before starting the booking session.",
+      };
+    }
+
+    const now = Date.now();
+    const session = await getOrCreateSession(ctx, conversation._id, conversation.assignedAgentId);
+    const collectedFields = mergeCollectedFields(session.collectedFields, args.collectedFields);
+    const missing = missingServiceFields(service, collectedFields);
+    const isEditing = session.calendarEventId !== undefined;
+    const nextStatus = isEditing
+      ? AutoBookingSessionStatus.Editing
+      : AutoBookingSessionStatus.Collecting;
+
+    await ctx.db.patch(session._id, {
+      serviceId: service._id,
+      collectedFields,
+      status: nextStatus,
+      updatedAt: now,
+    });
+
+    return {
+      success: true,
+      sessionId: session._id,
+      status: nextStatus,
+      isEditing,
+      bookingId: session.calendarEventId,
+      service: serviceSnapshot(service),
+      collectedFields,
+      missingFields: missing,
+      readyForAvailability: missing.length === 0,
+      message:
+        missing.length > 0
+          ? `${isEditing ? "Booking edit in progress" : "Booking session started"}. Still collecting: ${missing.join(", ")}`
+          : isEditing
+            ? "Booking details updated. Check availability if the time changed, then call updateBookingAppointment after the customer confirms."
+            : "Booking session started. All required details are collected — you can check availability next.",
     };
   },
 });
@@ -882,7 +1248,6 @@ export const checkAvailability = internalMutation({
     preferredStartAt: v.optional(v.number()),
     rangeStartAt: v.optional(v.number()),
     rangeEndAt: v.optional(v.number()),
-    collectedFields: v.optional(collectedFieldsValidator),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -894,20 +1259,26 @@ export const checkAvailability = internalMutation({
       throw new Error("Agent not found");
     }
 
-    const services = (await listServices(ctx, conversation.assignedAgentId)).filter(
-      (service) => service.isActive && service.archivedAt === undefined,
+    const session = await getActiveSession(ctx, conversation._id);
+    if (session === undefined) {
+      return {
+        success: false,
+        message: "No active booking session. Call startBookingSession first when the customer wants to book.",
+        slots: [],
+      };
+    }
+
+    const { services, service } = await resolveBookingService(
+      ctx,
+      conversation.assignedAgentId,
+      args.serviceId ?? session.serviceId,
     );
     if (services.length === 0) {
-      return { enabled: false, slots: [], message: "No active auto-booking services are configured." };
+      return { success: false, slots: [], message: "No active auto-booking services are configured." };
     }
-    const service = args.serviceId
-      ? services.find((row) => row._id === args.serviceId)
-      : services.length === 1
-        ? services[0]
-        : undefined;
     if (!service) {
       return {
-        enabled: true,
+        success: false,
         requiresServiceSelection: true,
         services: services.map((row) => ({
           serviceId: row._id,
@@ -916,46 +1287,39 @@ export const checkAvailability = internalMutation({
           durationMinutes: row.durationMinutes,
         })),
         slots: [],
+        message: "The booking session does not have a selected service yet.",
+      };
+    }
+    if (session.serviceId !== undefined && session.serviceId !== service._id) {
+      return {
+        success: false,
+        message: "The active booking session is for a different service. Cancel it or continue with the same service.",
+        slots: [],
+      };
+    }
+
+    const collectedFields = session.collectedFields;
+    const missing = missingServiceFields(service, collectedFields);
+    if (missing.length > 0) {
+      return {
+        success: false,
+        status: AutoBookingSessionStatus.Collecting,
+        service: serviceSnapshot(service),
+        missingFields: missing,
+        slots: [],
+        message: `Still collecting booking details: ${missing.join(", ")}. Call startBookingSession with the new details.`,
       };
     }
 
     const team = await resolveTeamForAgent(ctx, agent);
     const now = Date.now();
-    const session = await getOrCreateSession(ctx, conversation._id, conversation.assignedAgentId);
-    const collectedFields = await enrichCollectedFieldsFromConversation(ctx, conversation, {
-      ...session.collectedFields,
-      ...(args.collectedFields ?? {}),
-    });
-    const missing = missingServiceFields(service, collectedFields);
-    if (missing.length > 0) {
-      await ctx.db.patch(session._id, {
-        serviceId: service._id,
-        collectedFields,
-        status: AutoBookingSessionStatus.Collecting,
-        updatedAt: now,
-      });
-      return {
-        enabled: true,
-        status: AutoBookingSessionStatus.Collecting,
-        service: {
-          serviceId: service._id,
-          name: service.name,
-          durationMinutes: service.durationMinutes,
-          preferredTimeMinutes: service.preferredTimeMinutes,
-          salesStyle: service.salesStyle,
-        },
-        missingFields: missing,
-        slots: [],
-        message: `Still collecting booking details: ${missing.join(", ")}`,
-      };
-    }
-
     const rangeStartAt = Math.max(args.rangeStartAt ?? now + 60 * 60 * 1000, now);
     const rangeEndAt = args.preferredStartAt
       ? args.preferredStartAt + service.durationMinutes * 60 * 1000
       : args.rangeEndAt ?? rangeStartAt + 14 * 24 * 60 * 60 * 1000;
     const startAt = args.preferredStartAt ?? rangeStartAt;
     const limit = args.preferredStartAt ? 1 : 5;
+    const isEditing = session.calendarEventId !== undefined;
     const slots = await generateSlots(ctx, {
       service,
       conversation,
@@ -963,6 +1327,7 @@ export const checkAvailability = internalMutation({
       rangeStartAt: startAt,
       rangeEndAt,
       limit,
+      excludeEventId: session.calendarEventId,
     });
 
     await ctx.db.patch(session._id, {
@@ -974,16 +1339,116 @@ export const checkAvailability = internalMutation({
     });
 
     return {
-      enabled: true,
+      success: true,
+      isEditing,
+      bookingId: session.calendarEventId,
       status: AutoBookingSessionStatus.Confirming,
-      service: {
-        serviceId: service._id,
-        name: service.name,
-        durationMinutes: service.durationMinutes,
-        preferredTimeMinutes: service.preferredTimeMinutes,
-        salesStyle: service.salesStyle,
-      },
+      service: serviceSnapshot(service),
       slots,
+      message: isEditing
+        ? "Slots ready for the booking update. Call updateBookingAppointment after the customer confirms."
+        : undefined,
+    };
+  },
+});
+
+export const sendBookingConfirmation = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const session = await getLatestBookedSession(ctx, args.conversationId);
+    if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
+      return {
+        success: false,
+        message: "No completed booking found. Call bookAppointment first.",
+      };
+    }
+
+    const [event, service] = await Promise.all([
+      ctx.db.get(session.calendarEventId),
+      ctx.db.get(session.serviceId),
+    ]);
+    if (event === null || service === null) {
+      return {
+        success: false,
+        message: "Booking details could not be found.",
+      };
+    }
+
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(20);
+    const assigned = participants.find((row) => row.role === "assigned");
+
+    const team = await ctx.db.get(event.teamId);
+    const confirmationMessage = buildBookingConfirmationMessage({
+      service,
+      collectedFields: session.collectedFields,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      timeZone: serviceTimeZone(service, team ?? undefined),
+      assignedTo: assigned?.displayName ?? assigned?.email,
+      bookingId: event._id,
+    });
+
+    return {
+      success: true,
+      confirmationMessage,
+      bookingId: event._id,
+      serviceName: service.name,
+      startAt: event.startAt,
+      endAt: event.endAt,
+    };
+  },
+});
+
+export const sendBookingUpdateConfirmation = internalMutation({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const session = await getLatestBookedSession(ctx, args.conversationId);
+    if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
+      return {
+        success: false,
+        message: "No updated booking found. Call updateBookingAppointment first.",
+      };
+    }
+
+    const [event, service] = await Promise.all([
+      ctx.db.get(session.calendarEventId),
+      ctx.db.get(session.serviceId),
+    ]);
+    if (event === null || service === null) {
+      return {
+        success: false,
+        message: "Booking details could not be found.",
+      };
+    }
+
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(20);
+    const assigned = participants.find((row) => row.role === "assigned");
+
+    const team = await ctx.db.get(event.teamId);
+    const confirmationMessage = buildBookingConfirmationMessage({
+      service,
+      collectedFields: session.collectedFields,
+      startAt: event.startAt,
+      endAt: event.endAt,
+      timeZone: serviceTimeZone(service, team ?? undefined),
+      assignedTo: assigned?.displayName ?? assigned?.email,
+      bookingId: event._id,
+      updated: true,
+    });
+
+    return {
+      success: true,
+      confirmationMessage,
+      bookingId: event._id,
+      serviceName: service.name,
+      startAt: event.startAt,
+      endAt: event.endAt,
     };
   },
 });
@@ -1000,6 +1465,21 @@ export const cancelBookingSession = internalMutation({
       return { success: false, message: "No active booking to cancel." };
     }
 
+    if (
+      active.calendarEventId !== undefined &&
+      (active.status === AutoBookingSessionStatus.Editing ||
+        active.status === AutoBookingSessionStatus.Confirming)
+    ) {
+      await ctx.db.patch(active._id, {
+        status: AutoBookingSessionStatus.Booked,
+        updatedAt: Date.now(),
+      });
+      return {
+        success: true,
+        message: "Booking edit cancelled. The original booking is unchanged.",
+      };
+    }
+
     await ctx.db.patch(active._id, {
       status: AutoBookingSessionStatus.Cancelled,
       updatedAt: Date.now(),
@@ -1008,12 +1488,11 @@ export const cancelBookingSession = internalMutation({
   },
 });
 
-export const bookAppointment = internalMutation({
+export const updateBookingAppointment = internalMutation({
   args: {
     conversationId: v.id("conversations"),
     serviceId: v.id("autoBookingServices"),
     startAt: v.number(),
-    collectedFields: v.optional(collectedFieldsValidator),
   },
   handler: async (ctx, args) => {
     const conversation = await ctx.db.get(args.conversationId);
@@ -1028,17 +1507,151 @@ export const bookAppointment = internalMutation({
     if (service.agentId !== conversation.assignedAgentId || !service.isActive) {
       throw new Error("Selected service is not available");
     }
-    const session = await getOrCreateSession(ctx, conversation._id, conversation.assignedAgentId);
-    const collectedFields = await enrichCollectedFieldsFromConversation(ctx, conversation, {
-      ...session.collectedFields,
-      ...(args.collectedFields ?? {}),
-    });
+    const session = await getActiveSession(ctx, conversation._id);
+    if (session === undefined || session.calendarEventId === undefined) {
+      return {
+        success: false,
+        message: "No booking edit in progress. Call beginBookingEdit first.",
+      };
+    }
+    if (session.serviceId !== undefined && session.serviceId !== service._id) {
+      return {
+        success: false,
+        message: "The active booking edit is for a different service.",
+      };
+    }
+
+    const event = await ctx.db.get(session.calendarEventId);
+    if (event === null || event.status === "cancelled") {
+      return { success: false, message: "The booking to update could not be found." };
+    }
+
+    const collectedFields = session.collectedFields;
     const missing = missingServiceFields(service, collectedFields);
     if (missing.length > 0) {
       return {
         success: false,
         missingFields: missing,
-        message: `Missing required booking details: ${missing.join(", ")}`,
+        message: `Missing required booking details: ${missing.join(", ")}. Call startBookingSession with the missing details.`,
+      };
+    }
+
+    const team = await resolveTeamForAgent(ctx, agent);
+    const slots = await generateSlots(ctx, {
+      service,
+      conversation,
+      teamId: team._id,
+      rangeStartAt: args.startAt,
+      rangeEndAt: args.startAt + service.durationMinutes * 60 * 1000,
+      limit: 1,
+      excludeEventId: session.calendarEventId,
+    });
+    const selectedSlot = slots.find((slot) => slot.startAt === args.startAt);
+    if (!selectedSlot) {
+      return {
+        success: false,
+        message: "That slot is no longer available. Please check availability again.",
+      };
+    }
+    const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
+    if (assignedUser === null) {
+      throw new Error("Assigned teammate not found");
+    }
+
+    const customer = await resolveCustomerForConversation(ctx, conversation, collectedFields);
+    const now = Date.now();
+    const attendeeName = bookingDisplayName(collectedFields);
+    const bookingTimeZone = serviceTimeZone(service, team);
+    await ctx.db.patch(event._id, {
+      title: `${service.name} - ${attendeeName}`,
+      description: service.description,
+      startAt: selectedSlot.startAt,
+      endAt: selectedSlot.endAt,
+      timeZone: bookingTimeZone,
+      customFieldResponses: collectedFields,
+      updatedAt: now,
+    });
+    await replaceCalendarParticipants(ctx, {
+      eventId: event._id,
+      teamId: team._id,
+      customer,
+      assignedUser,
+      bookingDisplayName: attendeeName,
+      eventStartAt: selectedSlot.startAt,
+      now,
+    });
+    await ctx.db.patch(session._id, {
+      serviceId: service._id,
+      status: AutoBookingSessionStatus.Booked,
+      collectedFields,
+      selectedSlot,
+      calendarEventId: event._id,
+      updatedAt: now,
+    });
+    if (service.assignmentStrategy === "round_robin") {
+      await ctx.db.patch(service._id, {
+        lastAssignedWorkosUserId: selectedSlot.assignedWorkosUserId,
+        lastAssignedAt: now,
+        updatedAt: now,
+      });
+    }
+    return {
+      success: true,
+      bookingId: event._id,
+      serviceName: service.name,
+      startAt: selectedSlot.startAt,
+      endAt: selectedSlot.endAt,
+      assignedTo: selectedSlot.assignedDisplayName ?? assignedUser.email,
+      message: "Booking updated. Call sendBookingUpdateConfirmation next and send the returned confirmation message to the customer.",
+    };
+  },
+});
+
+export const bookAppointment = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    serviceId: v.id("autoBookingServices"),
+    startAt: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const conversation = await ctx.db.get(args.conversationId);
+    if (conversation === null || conversation.assignedAgentId === undefined) {
+      throw new Error("Conversation is not assigned to an agent");
+    }
+    const agent = await ctx.db.get(conversation.assignedAgentId);
+    if (agent === null) {
+      throw new Error("Agent not found");
+    }
+    const service = await loadService(ctx, args.serviceId);
+    if (service.agentId !== conversation.assignedAgentId || !service.isActive) {
+      throw new Error("Selected service is not available");
+    }
+    const session = await getActiveSession(ctx, conversation._id);
+    if (session === undefined) {
+      return {
+        success: false,
+        message: "No active booking session. Call startBookingSession first.",
+      };
+    }
+    if (session.calendarEventId !== undefined) {
+      return {
+        success: false,
+        message: "This session is editing an existing booking. Call updateBookingAppointment instead of bookAppointment.",
+      };
+    }
+    if (session.serviceId !== undefined && session.serviceId !== service._id) {
+      return {
+        success: false,
+        message: "The active booking session is for a different service.",
+      };
+    }
+    const collectedFields = session.collectedFields;
+    const missing = missingServiceFields(service, collectedFields);
+    if (missing.length > 0) {
+      return {
+        success: false,
+        missingFields: missing,
+        message: `Missing required booking details: ${missing.join(", ")}. Call startBookingSession with the missing details.`,
       };
     }
 
@@ -1064,14 +1677,15 @@ export const bookAppointment = internalMutation({
     }
     const customer = await resolveCustomerForConversation(ctx, conversation, collectedFields);
     const now = Date.now();
-    const customerName = displayNameForCustomer(customer);
+    const attendeeName = bookingDisplayName(collectedFields);
+    const bookingTimeZone = serviceTimeZone(service, team);
     const eventId = await ctx.db.insert("calendarEvents", {
       teamId: team._id,
-      title: `${service.name} - ${customerName}`,
+      title: `${service.name} - ${attendeeName}`,
       description: service.description,
       startAt: selectedSlot.startAt,
       endAt: selectedSlot.endAt,
-      timeZone: service.timeZone ?? "UTC",
+      timeZone: bookingTimeZone,
       status: "confirmed",
       createdBy: assignedUser._id,
       agentId: service.agentId,
@@ -1087,6 +1701,7 @@ export const bookAppointment = internalMutation({
       teamId: team._id,
       customer,
       assignedUser,
+      bookingDisplayName: attendeeName,
       eventStartAt: selectedSlot.startAt,
       now,
     });
@@ -1112,6 +1727,7 @@ export const bookAppointment = internalMutation({
       startAt: selectedSlot.startAt,
       endAt: selectedSlot.endAt,
       assignedTo: selectedSlot.assignedDisplayName ?? assignedUser.email,
+      message: "Booking created. Call sendBookingConfirmation next and send the returned confirmation message to the customer.",
     };
   },
 });

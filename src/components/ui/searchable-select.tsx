@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ChevronRight, Search } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -10,6 +11,7 @@ export type SearchableSelectOption = {
   value: string;
   label: string;
   searchValue?: string;
+  tag?: string;
 };
 
 function SearchableSelectSearch({
@@ -61,11 +63,16 @@ function SearchableSelectList({
             type="button"
             onClick={() => onSelect(option.value)}
             className={cn(
-              'flex w-full rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
+              'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
               option.value === selectedValue && 'bg-muted text-foreground',
             )}
           >
-            <span className="truncate">{option.label}</span>
+            <span className="min-w-0 truncate">{option.label}</span>
+            {option.tag ? (
+              <Badge variant="outline" className="shrink-0 font-normal">
+                {option.tag}
+              </Badge>
+            ) : null}
           </button>
         ))
       )}
@@ -86,6 +93,8 @@ export function SearchableSelect({
   triggerLabel,
   hideChevron = false,
   contentClassName,
+  triggerId,
+  triggerAriaLabel,
 }: {
   value?: string;
   placeholder: string;
@@ -99,6 +108,8 @@ export function SearchableSelect({
   triggerLabel?: ReactNode;
   hideChevron?: boolean;
   contentClassName?: string;
+  triggerId?: string;
+  triggerAriaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -124,6 +135,8 @@ export function SearchableSelect({
           type="button"
           variant={triggerVariant}
           role="combobox"
+          id={triggerId}
+          aria-label={triggerAriaLabel}
           aria-expanded={open}
           className={cn(
             triggerVariant === 'outline' &&
@@ -135,8 +148,18 @@ export function SearchableSelect({
           {triggerLabel ? (
             triggerLabel
           ) : (
-            <span className={cn('truncate', !selectedOption && 'text-muted-foreground')}>
-              {selectedOption?.label ?? placeholder}
+            <span
+              className={cn(
+                'flex min-w-0 flex-1 items-center gap-2',
+                !selectedOption && 'text-muted-foreground',
+              )}
+            >
+              <span className="truncate">{selectedOption?.label ?? placeholder}</span>
+              {selectedOption?.tag ? (
+                <Badge variant="outline" className="shrink-0 font-normal">
+                  {selectedOption.tag}
+                </Badge>
+              ) : null}
             </span>
           )}
           {!hideChevron && triggerVariant === 'outline' ? (

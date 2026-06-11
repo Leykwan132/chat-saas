@@ -9,6 +9,7 @@ import {
   getMemberLimitForPlan,
   getPersonalTeamForUser,
   getUserByWorkosId,
+  normalizeTimeZone,
   setActiveTeamForUser,
   teamToOrgId,
 } from "./teamHelpers";
@@ -29,6 +30,7 @@ export type TeamListItem = {
   industry: string | null;
   companySize: string | null;
   domain: string | null;
+  timeZone: string;
 };
 
 async function resolveOrgPlan(
@@ -54,6 +56,7 @@ function buildTeamListItem(args: {
     industry?: string;
     companySize?: string;
     domain?: string;
+    timeZone?: string;
   };
   isActive: boolean;
   memberCount: number;
@@ -78,6 +81,7 @@ function buildTeamListItem(args: {
     industry: args.team.industry ?? null,
     companySize: args.team.companySize ?? null,
     domain: args.team.domain ?? null,
+    timeZone: normalizeTimeZone(args.team.timeZone),
   };
 }
 
@@ -193,6 +197,27 @@ export const switchActiveTeam = mutation({
       workosOrgId: team.workosOrgId ?? null,
       orgId: teamToOrgId(team),
     };
+  },
+});
+
+export const updateActiveTeamTimeZone = mutation({
+  args: {
+    timeZone: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await getAuthContext(ctx);
+    const userRow = await getUserByWorkosId(ctx, userId);
+    if (userRow === null) {
+      throw new Error("User not found");
+    }
+
+    const activeTeam = await getActiveTeamForUser(ctx, userRow);
+    const timeZone = normalizeTimeZone(args.timeZone);
+    await ctx.db.patch(activeTeam._id, {
+      timeZone,
+      updatedAt: Date.now(),
+    });
+    return { teamId: activeTeam._id, timeZone };
   },
 });
 

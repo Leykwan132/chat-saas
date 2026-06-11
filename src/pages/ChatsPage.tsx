@@ -1731,9 +1731,10 @@ export default function ChatsPage() {
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               disabled={resolveBusy}
               onClick={() => setResolveConfirmOpen(false)}
+              className="text-muted-foreground hover:text-foreground"
             >
               Cancel
             </Button>

@@ -115,6 +115,7 @@ async function createTeamHandler(
     domain?: string;
     industry?: string;
     companySize?: string;
+    timeZone?: string;
   },
 ): Promise<{ organizationId: string; name: string; teamId: string }> {
   const { userId } = await getAuthContext(ctx);
@@ -133,6 +134,7 @@ async function createTeamHandler(
     industry: args.industry,
     companySize: args.companySize,
     domain: result.domain,
+    timeZone: args.timeZone,
   });
 
   return { ...result, teamId };
@@ -146,6 +148,7 @@ export const persistCreatedTeam = internalMutation({
     industry: v.optional(v.string()),
     companySize: v.optional(v.string()),
     domain: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getUserByWorkosId(ctx, args.workosUserId);
@@ -191,6 +194,7 @@ export const persistCreatedTeam = internalMutation({
       workosOrgId: args.workosOrgId,
       name: args.name,
       ownerUserId: user._id,
+      timeZone: args.timeZone,
     });
 
     await ctx.db.patch(teamId, {
@@ -218,6 +222,7 @@ export const createTeamForCurrentUser = action({
     domain: v.optional(v.string()),
     industry: v.optional(v.string()),
     companySize: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   },
   handler: createTeamHandler,
 });
@@ -227,6 +232,7 @@ export const createOrganizationForCurrentUser = action({
   args: {
     name: v.string(),
     domain: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
   },
   handler: createTeamHandler,
 });

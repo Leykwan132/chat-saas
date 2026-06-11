@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { TimeZoneSelect } from '@/components/TimeZoneSelect';
 import { cn } from '@/lib/utils';
 import {
   DEFAULT_SHIFT_END_MINUTES,
@@ -232,18 +233,13 @@ export function WeeklyAvailabilityEditor({
         <Label htmlFor="schedule-timezone" className="text-sm font-medium">
           Timezone
         </Label>
-        <Select value={timezone} onValueChange={onTimezoneChange}>
-          <SelectTrigger id="schedule-timezone" className="w-auto min-w-[14rem]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SCHEDULE_TIMEZONE_OPTIONS.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <TimeZoneSelect
+          value={timezone}
+          options={SCHEDULE_TIMEZONE_OPTIONS}
+          onChange={onTimezoneChange}
+          triggerId="schedule-timezone"
+          triggerClassName="w-fit border-input bg-background"
+        />
       </div>
     </div>
   );

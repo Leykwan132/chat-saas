@@ -1,3 +1,5 @@
+import { formatTimeZoneDisplayLabel } from '@/lib/calendarTimeUtils';
+
 export const SCHEDULE_DAYS = [
   { dayOfWeek: 0, label: 'Sunday' },
   { dayOfWeek: 1, label: 'Monday' },
@@ -157,20 +159,25 @@ export function resolveScheduleTimezone(timezone: string | undefined | null): st
   return trimmed || DEFAULT_SCHEDULE_TIMEZONE;
 }
 
-export const SCHEDULE_TIMEZONE_OPTIONS = [
-  { value: 'Asia/Kuala_Lumpur', label: 'Asia/Kuala Lumpur' },
-  { value: 'Asia/Singapore', label: 'Asia/Singapore' },
-  { value: 'Asia/Bangkok', label: 'Asia/Bangkok' },
-  { value: 'Asia/Jakarta', label: 'Asia/Jakarta' },
-  { value: 'Asia/Manila', label: 'Asia/Manila' },
-  { value: 'Asia/Hong_Kong', label: 'Asia/Hong Kong' },
-  { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
-  { value: 'Australia/Sydney', label: 'Australia/Sydney' },
-  { value: 'Europe/London', label: 'Europe/London' },
-  { value: 'America/New_York', label: 'America/New York' },
-  { value: 'America/Los_Angeles', label: 'America/Los Angeles' },
-  { value: 'UTC', label: 'UTC' },
+const SCHEDULE_TIMEZONE_IDS = [
+  DEFAULT_SCHEDULE_TIMEZONE,
+  'Asia/Singapore',
+  'Asia/Bangkok',
+  'Asia/Jakarta',
+  'Asia/Manila',
+  'Asia/Hong_Kong',
+  'Asia/Tokyo',
+  'Australia/Sydney',
+  'Europe/London',
+  'America/New_York',
+  'America/Los_Angeles',
+  'UTC',
 ] as const;
+
+export const SCHEDULE_TIMEZONE_OPTIONS = SCHEDULE_TIMEZONE_IDS.map((value) => ({
+  value,
+  label: formatTimeZoneDisplayLabel(value),
+}));
 
 export function formatMinutesCalLabel(minutes: number) {
   return formatMinutesAmPm(minutes).replace(' AM', 'am').replace(' PM', 'pm');

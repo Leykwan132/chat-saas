@@ -4,6 +4,7 @@ import { v } from "convex/values";
 export const AutoBookingSessionStatus = {
   Collecting: "collecting",
   Confirming: "confirming",
+  Editing: "editing",
   Booked: "booked",
   Cancelled: "cancelled",
 } as const;
@@ -14,6 +15,7 @@ export type AutoBookingSessionStatus =
 export const autoBookingSessionStatusValidator = v.union(
   v.literal(AutoBookingSessionStatus.Collecting),
   v.literal(AutoBookingSessionStatus.Confirming),
+  v.literal(AutoBookingSessionStatus.Editing),
   v.literal(AutoBookingSessionStatus.Booked),
   v.literal(AutoBookingSessionStatus.Cancelled),
 );
@@ -21,6 +23,7 @@ export const autoBookingSessionStatusValidator = v.union(
 const ACTIVE_AUTO_BOOKING_SESSION_STATUSES: readonly AutoBookingSessionStatus[] = [
   AutoBookingSessionStatus.Collecting,
   AutoBookingSessionStatus.Confirming,
+  AutoBookingSessionStatus.Editing,
 ];
 
 export function isActiveAutoBookingSessionStatus(
@@ -36,6 +39,7 @@ export function createEmptyAutoBookingSessionStatusCounts(): Record<
   return {
     [AutoBookingSessionStatus.Collecting]: 0,
     [AutoBookingSessionStatus.Confirming]: 0,
+    [AutoBookingSessionStatus.Editing]: 0,
     [AutoBookingSessionStatus.Booked]: 0,
     [AutoBookingSessionStatus.Cancelled]: 0,
   };

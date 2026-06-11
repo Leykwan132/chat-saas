@@ -42,6 +42,7 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { PixelImage } from '@/registry/magicui/pixel-image';
 import { cn } from '@/lib/utils';
+import { getClientTimeZone } from '@/lib/calendarTimeUtils';
 import type { Id } from '../../convex/_generated/dataModel';
 
 type Step = 1 | 2 | 3 | 4;
@@ -151,6 +152,7 @@ function CreateTeamFlow() {
         domain: trimmedDomain.length > 0 ? trimmedDomain : undefined,
         industry,
         companySize,
+        timeZone: getClientTimeZone(),
       });
       await switchTeam({
         teamId: result.teamId as Id<'teams'>,

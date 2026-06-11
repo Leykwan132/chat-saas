@@ -23,6 +23,7 @@ import {
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { cn } from '@/lib/utils';
+import { formatTimeZoneDisplayLabel } from '@/lib/calendarTimeUtils';
 import {
   calendarDaysForTimeOff,
   DEFAULT_SCHEDULE_TIMEZONE,
@@ -86,7 +87,8 @@ export default function ScheduleUserDetailPage() {
   const timezoneLabel = useMemo(() => {
     const value = resolveScheduleTimezone(detail?.schedule?.timezone);
     return (
-      SCHEDULE_TIMEZONE_OPTIONS.find((option) => option.value === value)?.label ?? value
+      SCHEDULE_TIMEZONE_OPTIONS.find((option) => option.value === value)?.label
+      ?? formatTimeZoneDisplayLabel(value)
     );
   }, [detail?.schedule?.timezone]);
 

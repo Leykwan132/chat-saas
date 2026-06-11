@@ -25,7 +25,7 @@ import {
 } from "./inboxMessageMapping";
 import { applyInboundLeadRouting, isAnyoneOnSchedule } from "../leadRouting/assign";
 import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
-import { getUserByWorkosId } from "../teamHelpers";
+import { DEFAULT_TEAM_TIME_ZONE, getUserByWorkosId, normalizeTimeZone } from "../teamHelpers";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -330,14 +330,143 @@ export async function saveAiReply(
 
 export { inferMediaMimeType } from "./mediaUrlExtractor";
 
+export type ActiveBookingServiceForPrompt = {
+  serviceId: Id<"autoBookingServices">;
+  name: string;
+  description?: string;
+  durationMinutes: number;
+  fields: Array<{
+    key: string;
+    label: string;
+    type: string;
+    options?: string[];
+  }>;
+  preferredTimeMinutes?: number[];
+  salesStyle: "proactive" | "neutral" | "gentle";
+  timeZone: string;
+};
+
+function salesStyleBehavior(style: ActiveBookingServiceForPrompt["salesStyle"]) {
+  switch (style) {
+    case "proactive":
+      return "Act as a sales representative for this service. When the conversation is relevant, proactively ask if the customer would like to book. Highlight the service's value and guide them toward scheduling — do not wait for them to ask.";
+    case "gentle":
+      return "Act as a sales representative for this service. Only mention booking softly when directly relevant. Wait for the customer to express clear interest before offering to book or collecting details.";
+    default:
+      return "Act as a sales representative for this service. When the topic fits, naturally mention that booking is available. Help when the customer shows interest; do not be pushy or repeat offers.";
+  }
+}
+
+function formatPreferredTimeLabels(minutes: number[]) {
+  return minutes
+    .map((value) => {
+      const hours24 = Math.floor(value / 60);
+      const mins = value % 60;
+      const period = hours24 >= 12 ? "PM" : "AM";
+      const hours12 = hours24 % 12 || 12;
+      return `${hours12}:${mins.toString().padStart(2, "0")} ${period}`;
+    })
+    .join(", ");
+}
+
+function buildActiveBookingServicesBlock(services: ActiveBookingServiceForPrompt[]) {
+  const serviceSections = services
+    .map((service, index) => {
+      const lines = [
+        `### ${index + 1}. ${service.name}`,
+        `- Service ID: ${service.serviceId}`,
+        service.description ? `- Description: ${service.description}` : undefined,
+        `- Duration: ${service.durationMinutes} minutes`,
+        `- Time zone: ${service.timeZone}`,
+        `- Tone: ${service.salesStyle}`,
+        `- Sales approach: ${salesStyleBehavior(service.salesStyle)}`,
+        `- Required booking fields: ${service.fields.map((field) => `${field.label} (key: \`${field.key}\`)`).join(", ")}`,
+        service.preferredTimeMinutes && service.preferredTimeMinutes.length > 0
+          ? `- Preferred times (offer these first): ${formatPreferredTimeLabels(service.preferredTimeMinutes)}`
+          : undefined,
+      ].filter((line): line is string => line !== undefined);
+      return lines.join("\n");
+    })
+    .join("\n\n");
+
+  return `\n\n## Active Booking Services
+The following bookable services are active right now. For each service, adopt the sales approach above — you are the sales representative for that service and should promote it according to its tone.
+
+${serviceSections}`;
+}
+
+function getCurrentDateInfo(timeZone: string) {
+  const tz = normalizeTimeZone(timeZone);
+  const now = new Date();
+  const dateFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  const timeFormatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    timeZoneName: "short",
+  });
+  const dateIsoFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  return {
+    timeZone: tz,
+    isoTimestamp: now.toISOString(),
+    dateIso: dateIsoFormatter.format(now),
+    date: dateFormatter.format(now),
+    time: timeFormatter.format(now),
+  };
+}
+
+function buildBookingFlowBlock() {
+  return `\n\n## Booking Flow
+Use the Active Booking Services listed above — service IDs, fields, and tone are already in your instructions.
+
+- Call \`getTodayDate\` whenever you need today's date or current time — for example when interpreting "today", "tomorrow", "next week", or validating booking dates. Do not guess the current date.
+1. **Start session** — When the customer wants to book, call \`startBookingSession\` with the matching service ID. If they have already shared details, include them in \`collectedFields\`.
+2. **Collect details** — Read \`missingFields\` from the tool response and ask only for what is still missing. Always ask in chat for name, phone, date, and time for the person being booked — do not use the chatter's contact details. Call \`startBookingSession\` again with new \`collectedFields\` until \`readyForAvailability\` is true.
+3. **Check slots** — Call \`checkAvailability\` only after the session is ready. Present the returned slots to the customer.
+4. **Book** — After the customer clearly confirms a slot, call \`bookAppointment\`.
+5. **Confirm** — Immediately after \`bookAppointment\` succeeds, call \`sendBookingConfirmation\` and send the returned \`confirmationMessage\` to the customer exactly as written. Do not rewrite it.
+
+## Editing an existing booking
+If the customer wants to change their booking (time, name, phone, or any other detail):
+1. **View booking** — Call \`getCurrentBooking\` to show what is currently booked.
+2. **Start edit** — Call \`beginBookingEdit\` to open an edit session for that booking.
+3. **Update details** — Call \`startBookingSession\` with the changed \`collectedFields\`. Ask in chat for any details they want to change.
+4. **Check slots** — If the time is changing, call \`checkAvailability\` after \`readyForAvailability\` is true and present the new slots.
+5. **Apply changes** — After the customer confirms, call \`updateBookingAppointment\` with the service ID and confirmed \`startTimeIso\`. If only non-time details changed, use the current booking time from \`getCurrentBooking\`.
+6. **Confirm update** — Call \`sendBookingUpdateConfirmation\` and send the returned \`confirmationMessage\` exactly as written.
+
+Additional rules:
+- For services with Tone \`proactive\`, also open with a booking offer when the customer's message is relevant — even if they have not asked to book yet.
+- For services with Tone \`neutral\`, offer booking when it naturally fits the conversation.
+- For services with Tone \`gentle\`, wait for clear customer interest before calling \`startBookingSession\`.
+- If multiple services could apply and the customer has not chosen one, ask which service they want before starting the session.
+- Do NOT say the appointment is booked until \`bookAppointment\` succeeds.
+- If the customer declines a slot, changes their mind, or asks to stop booking, call \`cancelBooking\` before replying.
+- During a booking edit, \`cancelBooking\` discards the changes and keeps the original booking.`;
+}
+
 export function buildAgent(
   agent: { name: string; model: string; systemPrompt: string; escalationEnabled?: boolean; escalationMessage?: string },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
   mediaCollections: string[] = [],
   conversationId?: Id<"conversations">,
-  autoBookingEnabled: boolean = false,
+  activeBookingServices: ActiveBookingServiceForPrompt[] = [],
 ) {
+  const autoBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
+  const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
   const escalationConfigured = agent.escalationEnabled === true;
 
   const tools: Record<string, any> = {
@@ -398,26 +527,61 @@ export function buildAgent(
       z.union([z.string(), z.number(), z.boolean(), z.null()]),
     );
 
-    tools.listActiveBookingServices = createTool({
+    tools.getTodayDate = createTool({
       description:
-        "Lists the active services that customers can book. Call this when a customer wants to book an appointment and you need to know which service they want.",
+        "Returns today's date and current time from the server. Call this whenever you need the current date or time for booking, scheduling, or interpreting relative dates like 'today', 'tomorrow', or 'next Tuesday'. Do not guess — use this tool.",
+      inputSchema: z.object({
+        timeZone: z.string().optional().describe("IANA timezone for the date, e.g. Asia/Kuala_Lumpur. Defaults to the booking service time zone."),
+      }),
+      execute: async (_ctx, { timeZone }) => getCurrentDateInfo(timeZone ?? defaultBookingTimeZone ?? DEFAULT_TEAM_TIME_ZONE),
+    });
+
+    tools.getCurrentBooking = createTool({
+      description:
+        "Returns the customer's current booked appointment for this conversation, including service, collected details, date, time, and team member. Call when the customer asks about or wants to change an existing booking.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
-        return await ctx.runQuery(internal.autoBooking.listActiveServices, {
-          agentId,
+        return await ctx.runQuery(internal.autoBooking.getCurrentBooking, {
+          conversationId,
+        });
+      },
+    });
+
+    tools.beginBookingEdit = createTool({
+      description:
+        "Starts editing an existing booked appointment. Call when the customer wants to change their booking. After this, use startBookingSession to update details and updateBookingAppointment to save changes to the calendar.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runMutation(internal.autoBooking.beginBookingEdit, {
+          conversationId,
+        });
+      },
+    });
+
+    tools.startBookingSession = createTool({
+      description:
+        "Starts or updates the Auto Booking session when the customer wants to book, or updates collected details during a booking edit. Returns which required fields are still missing. Call this first for new bookings, or after beginBookingEdit when changing details.",
+      inputSchema: z.object({
+        serviceId: z.string().optional().describe("The selected Auto Booking service ID."),
+        collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer so far, keyed by field key."),
+      }),
+      execute: async (ctx, input) => {
+        return await ctx.runMutation(internal.autoBooking.startBookingSession, {
+          conversationId,
+          ...(input.serviceId ? { serviceId: input.serviceId as Id<"autoBookingServices"> } : {}),
+          ...(input.collectedFields ? { collectedFields: input.collectedFields } : {}),
         });
       },
     });
 
     tools.checkAvailability = createTool({
       description:
-        "Checks available appointment slots for the selected Auto Booking service. Use this after you know the service and have collected the configured required details. For customer-suggested times, pass preferredTimeIso.",
+        "Checks available appointment slots for the active booking or booking-edit session. Call only after startBookingSession returns readyForAvailability true. For customer-suggested times, pass preferredTimeIso.",
       inputSchema: z.object({
         serviceId: z.string().optional().describe("The selected Auto Booking service ID."),
         preferredTimeIso: z.string().optional().describe("Customer's preferred appointment start time as an ISO timestamp."),
         rangeStartIso: z.string().optional().describe("Start of the search range as an ISO timestamp."),
         rangeEndIso: z.string().optional().describe("End of the search range as an ISO timestamp."),
-        collectedFields: collectedFieldsSchema.optional().describe("Booking details collected from the customer, keyed by field name."),
       }),
       execute: async (ctx, input) => {
         const args: {
@@ -426,7 +590,6 @@ export function buildAgent(
           preferredStartAt?: number;
           rangeStartAt?: number;
           rangeEndAt?: number;
-          collectedFields?: Record<string, string | number | boolean | null>;
         } = { conversationId };
         if (input.serviceId) {
           args.serviceId = input.serviceId as Id<"autoBookingServices">;
@@ -443,20 +606,16 @@ export function buildAgent(
         if (Number.isFinite(rangeEndAt)) {
           args.rangeEndAt = rangeEndAt;
         }
-        if (input.collectedFields) {
-          args.collectedFields = input.collectedFields;
-        }
         return await ctx.runMutation(internal.autoBooking.checkAvailability, args);
       },
     });
 
     tools.bookAppointment = createTool({
       description:
-        "Creates a confirmed calendar appointment for the selected Auto Booking service. Call this only after the customer explicitly confirms the service and selected slot.",
+        "Creates the official calendar appointment for the active booking session. Call only after the customer explicitly confirms the selected service and slot from checkAvailability.",
       inputSchema: z.object({
         serviceId: z.string().describe("The selected Auto Booking service ID."),
         startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp from checkAvailability."),
-        collectedFields: collectedFieldsSchema.optional().describe("Final booking details collected from the customer."),
       }),
       execute: async (ctx, input) => {
         const startAt = Date.parse(input.startTimeIso);
@@ -467,14 +626,55 @@ export function buildAgent(
           conversationId,
           serviceId: input.serviceId as Id<"autoBookingServices">,
           startAt,
-          ...(input.collectedFields ? { collectedFields: input.collectedFields } : {}),
+        });
+      },
+    });
+
+    tools.updateBookingAppointment = createTool({
+      description:
+        "Updates the existing calendar booking after a booking edit. Call after beginBookingEdit and once the customer confirms the final details and time. Use the service ID and confirmed startTimeIso from checkAvailability, or the current booking time if only other details changed.",
+      inputSchema: z.object({
+        serviceId: z.string().describe("The Auto Booking service ID."),
+        startTimeIso: z.string().describe("Confirmed appointment start time as an ISO timestamp."),
+      }),
+      execute: async (ctx, input) => {
+        const startAt = Date.parse(input.startTimeIso);
+        if (!Number.isFinite(startAt)) {
+          return { success: false, message: "Invalid appointment start time." };
+        }
+        return await ctx.runMutation(internal.autoBooking.updateBookingAppointment, {
+          conversationId,
+          serviceId: input.serviceId as Id<"autoBookingServices">,
+          startAt,
+        });
+      },
+    });
+
+    tools.sendBookingConfirmation = createTool({
+      description:
+        "Builds the final booking confirmation message after bookAppointment succeeds. Call immediately after booking. Send the returned confirmationMessage to the customer exactly as written.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runMutation(internal.autoBooking.sendBookingConfirmation, {
+          conversationId,
+        });
+      },
+    });
+
+    tools.sendBookingUpdateConfirmation = createTool({
+      description:
+        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Send the returned confirmationMessage to the customer exactly as written.",
+      inputSchema: z.object({}),
+      execute: async (ctx) => {
+        return await ctx.runMutation(internal.autoBooking.sendBookingUpdateConfirmation, {
+          conversationId,
         });
       },
     });
 
     tools.cancelBooking = createTool({
       description:
-        "Cancels the customer's in-progress Auto Booking session. Call this when the customer declines a slot, changes their mind, or asks to stop booking.",
+        "Cancels the customer's in-progress booking session or discards a booking edit. During an edit, this keeps the original booking unchanged.",
       inputSchema: z.object({}),
       execute: async (toolCtx) => {
         return await toolCtx.runMutation(internal.autoBooking.cancelBookingSession, {
@@ -489,7 +689,7 @@ export function buildAgent(
 - A comprehensive paragraph with inline citations marked as [1], [2], etc.
 - 2-3 citations with realistic source information
 - Each citation MUST have a {title: "", url: "", description: ""} JSON object. If ANY of them doesn't exist, leave it as empty string "" for that key. 
-- If it's a file, the URL value must start with https://kilobot.app/{{fileName}}
+- If it's a file, the URL value must start with https://storage.kilobot.app/{{fileName}}
 - The description key MUST contain a short summary of the content from the source. 
 - Make the content informative and the sources credible
 Format citations as numbered references within the text. Use only sources found via \`fetchContext\` — do not fabricate sources.
@@ -543,18 +743,8 @@ You have an \`escalateToHuman\` tool. If you lack confidence, do not have enough
 NEVER respond with phrases like "I don't have that information", "I'm not sure", or "let me know if there's something else I can help with" when you cannot answer. Escalate instead and send no user-facing reply.`
     : "";
 
-  const bookingBlock = conversationId && autoBookingEnabled
-    ? `\n\n## Auto Booking
-If the customer wants to book, schedule, reserve, or create an appointment:
-- Call \`listActiveBookingServices\` first to see whether Auto Booking is enabled and which services can be booked.
-- If multiple services are available and the customer has not chosen one, ask which service they want.
-- Collect every field listed for the selected service before checking availability. Fields are configured as a single list (for example date, time, name, phone, and any custom fields).
-- Name and phone may already be available from the customer's contact profile — use those when present and only ask in chat if still missing.
-- Use \`checkAvailability\` to get valid slots and present them in order — matches for \`preferredTimeMinutes\` are listed first, then other open slots.
-- Do NOT say the appointment is booked until \`bookAppointment\` succeeds.
-- Only call \`bookAppointment\` after the customer clearly confirms the selected service and time.
-- If the customer declines a slot, changes their mind, or asks to stop booking, call \`cancelBooking\` before replying.
-- When \`bookAppointment\` succeeds, summarize the booking time, service, assigned teammate if returned, and booking ID.`
+  const bookingBlock = autoBookingEnabled
+    ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock()}`
     : "";
 
   const noContextFallback = escalationConfigured
@@ -588,9 +778,9 @@ ${toolSteps}${toneBlock}${groundingBlock}
     instructions,
     stopWhen: stepCountIs(8),
     tools,
-    rawRequestResponseHandler: async () => {
-      // console.log("request", request);
-      // console.log("response", response);
+    rawRequestResponseHandler: async (request, response) => {
+      console.log("request", request);
+      console.log("response", response);
     },
     usageHandler: async (ctx, args) => {
       const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;

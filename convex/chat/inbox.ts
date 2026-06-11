@@ -414,17 +414,16 @@ export const generateAiReplyWorker = internalAction({
       internal.knowledgeBaseImages.internalListCollectionNames,
       { agentId: conv.assignedAgentId },
     );
-    const autoBookingEnabled: boolean = await ctx.runQuery(
-      internal.autoBooking.internalIsEnabled,
-      { agentId: conv.assignedAgentId },
-    );
+    const activeBooking = await ctx.runQuery(internal.autoBooking.listActiveServices, {
+      agentId: conv.assignedAgentId,
+    });
     const configuredAgent = buildAgent(
       agent,
       conv.assignedAgentId,
       false,
       mediaCollections,
       conv._id,
-      autoBookingEnabled,
+      activeBooking.services,
     );
     const result = await configuredAgent.generateText(
       ctx,

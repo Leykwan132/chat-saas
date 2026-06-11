@@ -145,6 +145,7 @@ export default defineSchema({
     industry: v.optional(v.string()),
     companySize: v.optional(v.string()),
     domain: v.optional(v.string()),
+    timeZone: v.optional(v.string()),
     memberFeatureAccess: v.optional(
       v.object({
         agents: v.union(v.literal("none"), v.literal("view"), v.literal("edit")),

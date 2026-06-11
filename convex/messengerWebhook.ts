@@ -41,11 +41,11 @@ export async function receive(
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
 
-      console.log("[messengerWebhook.receive] message event received:", {
-        recipientId,
-        senderId,
-        message,
-      });
+      // console.log("[messengerWebhook.receive] message event received:", {
+      //   recipientId,
+      //   senderId,
+      //   message,
+      // });
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
