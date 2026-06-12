@@ -151,64 +151,87 @@ async function completeMessengerFromUserAccessToken(
   | { needsPagePicker: true; pages: Array<{ id: string; name?: string }> }
 > {
   const { orgId, userId, userAccessToken } = args;
-  const pages = await listUserPages(userAccessToken);
-  if (pages.length === 0) {
-    throw new Error(
-      "No Facebook Pages were returned. Make sure the connecting account manages at least one Page.",
-    );
-  }
+  let pageId: string | undefined = args.pageId;
 
-  if (!args.pageId && pages.length > 1) {
-    return {
-      needsPagePicker: true,
-      pages: pages.map((p) => ({ id: p.id, name: p.name })),
-    };
-  }
+  try {
+    const pages = await listUserPages(userAccessToken);
+    if (pages.length === 0) {
+      throw new Error(
+        "No Facebook Pages were returned. Make sure the connecting account manages at least one Page.",
+      );
+    }
 
-  const selected = args.pageId
-    ? pages.find((p) => p.id === args.pageId)
-    : pages[0];
-  if (!selected || !selected.access_token) {
-    throw new Error(
-      "Selected Page is unavailable or did not return an access token.",
-    );
-  }
+    if (!pageId && pages.length > 1) {
+      return {
+        needsPagePicker: true,
+        pages: pages.map((p) => ({ id: p.id, name: p.name })),
+      };
+    }
 
-  await ctx.runMutation(internal.channels.internalSetProgress, {
-    orgId,
-    service: "messenger",
-    progressStep: "subscribing",
-  });
+    const selected = pageId
+      ? pages.find((p) => p.id === pageId)
+      : pages[0];
+    if (!selected || !selected.access_token) {
+      throw new Error(
+        "Selected Page is unavailable or did not return an access token.",
+      );
+    }
+    pageId = selected.id;
 
-  await subscribePage(selected);
-
-  await ctx.runMutation(internal.channels.internalSetProgress, {
-    orgId,
-    service: "messenger",
-    progressStep: "backfilling",
-  });
-
-  const fbUserId = await fetchFbUserId(userAccessToken);
-
-  const channelId: Id<"channels"> = await ctx.runMutation(
-    internal.channels.internalUpsertMessenger,
-    {
+    await ctx.runMutation(internal.channels.internalStartMessengerPending, {
       orgId,
-      pageId: selected.id,
-      fbUserId,
-      displayUsername: selected.name,
-      accessToken: selected.access_token,
       connectedByUserId: userId,
-    },
-  );
+      pageId,
+    });
 
-  await messengerSyncPool.enqueueAction(
-    ctx,
-    internal.messengerSync.backfillConversations,
-    { channelId, limit: 10 },
-  );
+    await ctx.runMutation(internal.channels.internalSetProgress, {
+      orgId,
+      service: "messenger",
+      progressStep: "subscribing",
+      pageId,
+    });
 
-  return { channelId, displayUsername: selected.name };
+    await subscribePage(selected);
+
+    await ctx.runMutation(internal.channels.internalSetProgress, {
+      orgId,
+      service: "messenger",
+      progressStep: "backfilling",
+      pageId,
+    });
+
+    const fbUserId = await fetchFbUserId(userAccessToken);
+
+    const channelId: Id<"channels"> = await ctx.runMutation(
+      internal.channels.internalUpsertMessenger,
+      {
+        orgId,
+        pageId,
+        fbUserId,
+        displayUsername: selected.name,
+        accessToken: selected.access_token,
+        connectedByUserId: userId,
+      },
+    );
+
+    await messengerSyncPool.enqueueAction(
+      ctx,
+      internal.messengerSync.backfillConversations,
+      { channelId, limit: 10 },
+    );
+
+    return { channelId, displayUsername: selected.name };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await ctx.runMutation(internal.channels.internalRecordError, {
+      orgId,
+      service: "messenger",
+      error: message,
+      connectedByUserId: userId,
+      pageId,
+    });
+    throw err;
+  }
 }
 
 export const listPages = action({
@@ -276,11 +299,6 @@ export const completeSignup = action({
     }
 
     try {
-      await ctx.runMutation(internal.channels.internalStartMessengerPending, {
-        orgId: channelOrgId,
-        connectedByUserId: userId,
-      });
-
       const userToken = await exchangeCodeForUserToken(
         args.code,
         appId,
@@ -320,6 +338,7 @@ export const completeSignup = action({
         service: "messenger",
         error: message,
         connectedByUserId: userId,
+        pageId: args.pageId,
       });
       throw err;
     }
@@ -362,11 +381,6 @@ export const internalOAuthCallback = internalAction({
     }
 
     try {
-      await ctx.runMutation(internal.channels.internalStartMessengerPending, {
-        orgId,
-        connectedByUserId: userId,
-      });
-
       const userToken = await exchangeCodeForUserToken(
         args.code,
         appId,
@@ -417,10 +431,6 @@ export const internalFinalizeMessengerPagePick = internalAction({
     args,
   ): Promise<{ channelId: Id<"channels">; displayUsername?: string }> => {
     try {
-      await ctx.runMutation(internal.channels.internalStartMessengerPending, {
-        orgId: args.orgId,
-        connectedByUserId: args.userId,
-      });
       const result = await completeMessengerFromUserAccessToken(ctx, {
         orgId: args.orgId,
         userId: args.userId,
@@ -438,6 +448,7 @@ export const internalFinalizeMessengerPagePick = internalAction({
         service: "messenger",
         error: message,
         connectedByUserId: args.userId,
+        pageId: args.pageId,
       });
       throw err;
     }

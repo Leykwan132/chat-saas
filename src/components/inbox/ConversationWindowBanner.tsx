@@ -148,7 +148,7 @@ function ConversationWindowBannerInner({
         <TooltipContent side="top" className="max-w-72 p-3 bg-popover text-popover-foreground border border-border shadow-md z-50 text-xs rounded-xl leading-relaxed">
           <div className="flex flex-col gap-2">
             <p>
-              Meta allows free-form replies within 24 hours of the customer's last message. After that, you must use template messages.{' '}
+              Meta allows free-form replies within 24 hours of the customer's last message. Once the window closes, <span className="font-semibold text-foreground">messages will not be sent</span> — you must use template messages instead.{' '}
               <a
                 href="https://developers.facebook.com/documentation/business-messaging/whatsapp/messages/send-messages"
                 target="_blank"

@@ -35,8 +35,14 @@ import {
 
 export function ConnectMessengerButton({
   onConnected,
+  forceAllowConnect,
+  disabled,
+  children,
 }: {
   onConnected?: () => void;
+  forceAllowConnect?: boolean;
+  disabled?: boolean;
+  children?: React.ReactNode;
 }) {
   const completeSignup = useAction(api.messengerConnect.completeSignup);
   const channels = useQuery(api.channels.listForCurrentOrg, {});
@@ -61,10 +67,15 @@ export function ConnectMessengerButton({
 
   const fbSession = useFacebookSession({ appId, version: graphVersion });
 
-  const messengerChannel = useMemo(
-    () => channels?.find((c: any) => c.service === 'messenger'),
-    [channels],
-  );
+  const [activeChannelId, setActiveChannelId] = useState<Id<'channels'> | undefined>(undefined);
+
+  const messengerChannel = useMemo(() => {
+    if (!channels) return undefined;
+    if (activeChannelId) {
+      return channels.find((c: any) => c._id === activeChannelId);
+    }
+    return channels.find((c: any) => c.service === 'messenger');
+  }, [channels, activeChannelId]);
 
   const [, setSearchParams] = useSearchParams();
 
@@ -95,6 +106,7 @@ export function ConnectMessengerButton({
 
     setBusy(true);
     setDialogState({ kind: 'closed' });
+    setActiveChannelId(undefined);
 
     window.FB.login(
       (response: FBLoginResponse) => {
@@ -128,6 +140,7 @@ export function ConnectMessengerButton({
               return;
             }
 
+            setActiveChannelId(result.channelId);
             setDialogState({ kind: 'success' });
             onConnected?.();
           } catch (err) {
@@ -163,12 +176,57 @@ export function ConnectMessengerButton({
     [dialogState.kind],
   );
 
-  if (messengerChannel?.status === 'connected') {
+  if (!forceAllowConnect && messengerChannel?.status === 'connected') {
     return (
       <Button type="button" variant="outline" disabled>
         <CheckCircle2 className="size-4" />
         Connected
       </Button>
+    );
+  }
+
+  if (children) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={launchSignup}
+          disabled={busy || disabled}
+          className={`group size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
+            busy || disabled
+              ? 'opacity-40 cursor-not-allowed'
+              : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
+          }`}
+        >
+          {children}
+        </button>
+
+        <Dialog open={dialogState.kind !== 'closed'} onOpenChange={handleDialogOpenChange}>
+          <DialogContent
+            showCloseButton={dialogState.kind !== 'connecting'}
+            onInteractOutside={(e) => {
+              if (dialogState.kind === 'connecting') e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              if (dialogState.kind === 'connecting') e.preventDefault();
+            }}
+          >
+            {dialogState.kind === 'connecting' ? (
+              <ConnectingState channel={messengerChannel} />
+            ) : dialogState.kind === 'success' ? (
+              <SuccessState channel={messengerChannel} />
+            ) : dialogState.kind === 'error' ? (
+              <ErrorState
+                message={dialogState.message}
+                onRetry={() => {
+                  setDialogState({ kind: 'closed' });
+                  launchSignup();
+                }}
+              />
+            ) : null}
+          </DialogContent>
+        </Dialog>
+      </>
     );
   }
 
@@ -222,11 +280,11 @@ const PROGRESS_LABELS: Record<
   NonNullable<Doc<'channels'>['progressStep']>,
   string
 > = {
-  linking: 'Linking your account',
-  subscribing: 'Subscribing to Page webhooks',
-  registering: 'Finishing setup',
-  exchanging: 'Exchanging your code for an access token',
-  backfilling: 'Loading your recent conversations',
+  linking: 'High-fiving the Meta servers...',
+  subscribing: 'Plugging in the tin-can phone line...',
+  registering: 'Engaging hyperdrive...',
+  exchanging: 'Exchanging top-secret handshakes...',
+  backfilling: 'Rescuing historical chats...',
 };
 
 function ConnectingState({

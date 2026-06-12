@@ -88,12 +88,8 @@ export const internalCompleteSignup = internalAction({
       );
     }
 
+    let igUserId: string | undefined;
     try {
-      await ctx.runMutation(internal.channels.internalStartInstagramPending, {
-        orgId,
-        connectedByUserId: userId,
-      });
-
       // 1. Short-lived token. The Instagram Graph endpoint expects
       //    application/x-www-form-urlencoded; the docs show form fields.
       const tokenForm = new URLSearchParams({
@@ -126,18 +122,24 @@ export const internalCompleteSignup = internalAction({
       );
       const shortPick = shortRaw.data?.[0] ?? shortRaw;
       const shortToken = shortPick.access_token;
-      const igUserId =
-        shortPick.user_id !== undefined ? String(shortPick.user_id) : undefined;
+      igUserId = shortPick.user_id !== undefined ? String(shortPick.user_id) : undefined;
       if (!shortToken || !igUserId) {
         throw new Error(
           "Instagram code exchange returned no access_token or user_id",
         );
       }
 
+      await ctx.runMutation(internal.channels.internalStartInstagramPending, {
+        orgId,
+        connectedByUserId: userId,
+        igUserId,
+      });
+
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId,
         service: "instagram",
         progressStep: "subscribing",
+        igUserId,
       });
 
       // 2. Long-lived token (60 days). NOTE: long-lived exchange does NOT use
@@ -174,6 +176,7 @@ export const internalCompleteSignup = internalAction({
         orgId,
         service: "instagram",
         progressStep: "backfilling",
+        igUserId,
       });
 
       // 4. Persist as connected.
@@ -205,6 +208,7 @@ export const internalCompleteSignup = internalAction({
         service: "instagram",
         error: message,
         connectedByUserId: userId,
+        igUserId,
       });
       throw err;
     }

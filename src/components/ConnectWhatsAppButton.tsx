@@ -37,6 +37,9 @@ type SessionInfoMessage = {
 
 type ConnectWhatsAppButtonProps = {
   onConnected?: () => void;
+  forceAllowConnect?: boolean;
+  disabled?: boolean;
+  children?: React.ReactNode;
 };
 
 type DialogState =
@@ -46,24 +49,23 @@ type DialogState =
   | { kind: 'error'; message: string };
 
 const PROGRESS_LABELS: Record<NonNullable<Doc<'channels'>['progressStep']>, string> = {
-  linking: 'Linking your WhatsApp Business account',
-  subscribing: 'Connecting realtime updates',
-  registering: 'Activating your phone number',
-  // WhatsApp does not use these two — they exist on the shared progressStep
-  // union for Instagram / Messenger. Mapped here so the type stays exhaustive.
-  exchanging: 'Exchanging your code for an access token',
-  backfilling: 'Loading your recent conversations',
+  linking: 'Forming a digital handshake...',
+  subscribing: 'Tuning the frequencies...',
+  registering: 'Whispering to the WhatsApp servers...',
+  exchanging: 'Swapping secret decoder rings...',
+  backfilling: 'Gathering the conversational gossip...',
 };
 
 const PAYMENT_METHOD_URL = 'https://business.facebook.com/wa/manage/home/';
 
-export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProps) {
+export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled, children }: ConnectWhatsAppButtonProps) {
   const completeSignup = useAction(api.whatsappEmbeddedSignup.completeSignup);
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
   const [dialogState, setDialogState] = useState<DialogState>({ kind: 'closed' });
   const sessionInfoRef = useRef<{ wabaId?: string; phoneNumberId?: string }>({});
   const authCodeRef = useRef<string | undefined>(undefined);
+  const [activePhoneNumberId, setActivePhoneNumberId] = useState<string | undefined>(undefined);
   const completingRef = useRef(false);
 
   const signupIds = resolveWhatsAppEmbeddedSignupIds({
@@ -84,10 +86,15 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
   // Live whatsapp channel row from Convex. Used both to pull the active
   // progressStep into the connecting state and to display the phone number
   // in the success state.
-  const whatsappChannel = useMemo(
-    () => channels?.find((c: any) => c.service === 'whatsapp'),
-    [channels],
-  );
+  const whatsappChannel = useMemo(() => {
+    if (!channels) return undefined;
+    if (activePhoneNumberId) {
+      return channels.find(
+        (c: any) => c.service === 'whatsapp' && c.phoneNumberId === activePhoneNumberId,
+      );
+    }
+    return channels.find((c: any) => c.service === 'whatsapp');
+  }, [channels, activePhoneNumberId]);
 
   const tryCompleteSignup = useCallback(async () => {
     if (completingRef.current) return;
@@ -170,6 +177,7 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
           wabaId: payload.data.waba_id,
           phoneNumberId: payload.data.phone_number_id,
         };
+        setActivePhoneNumberId(payload.data.phone_number_id);
         requestAuthCodeAndComplete();
       } else if (payload.event === 'CANCEL') {
         setBusy(false);
@@ -201,6 +209,7 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
     completingRef.current = false;
     sessionInfoRef.current = {};
     authCodeRef.current = undefined;
+    setActivePhoneNumberId(undefined);
 
     const onboardUrl = buildWhatsAppOnboardUrl(appId, configId);
     const popup = window.open(
@@ -225,6 +234,63 @@ export function ConnectWhatsAppButton({ onConnected }: ConnectWhatsAppButtonProp
     },
     [dialogState.kind],
   );
+
+  if (!forceAllowConnect && whatsappChannel?.status === 'connected') {
+    return (
+      <Button type="button" variant="outline" disabled>
+        <CheckCircle2 className="size-4" />
+        Connected
+      </Button>
+    );
+  }
+
+  if (children) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={launchSignup}
+          disabled={busy || disabled}
+          className={`group size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
+            busy || disabled
+              ? 'opacity-40 cursor-not-allowed'
+              : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
+          }`}
+        >
+          {children}
+        </button>
+
+        <Dialog
+          open={dialogState.kind !== 'closed'}
+          onOpenChange={handleDialogOpenChange}
+        >
+          <DialogContent
+            showCloseButton={dialogState.kind !== 'connecting'}
+            onInteractOutside={(e) => {
+              if (dialogState.kind === 'connecting') e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              if (dialogState.kind === 'connecting') e.preventDefault();
+            }}
+          >
+            {dialogState.kind === 'connecting' ? (
+              <ConnectingState channel={whatsappChannel} />
+            ) : dialogState.kind === 'success' ? (
+              <SuccessState channel={whatsappChannel} />
+            ) : dialogState.kind === 'error' ? (
+              <ErrorState
+                message={dialogState.message}
+                onRetry={() => {
+                  setDialogState({ kind: 'closed' });
+                  launchSignup();
+                }}
+              />
+            ) : null}
+          </DialogContent>
+        </Dialog>
+      </>
+    );
+  }
 
   return (
     <>

@@ -19,7 +19,7 @@ import { Spinner } from '@/components/ui/spinner';
 // On successful completion the static callback 302-redirects the browser
 // back to `returnPath?instagram=connected`, where ChannelsPage shows a
 // toast. There is no `?code=` handling on the frontend anymore.
-export function ConnectInstagramButton() {
+export function ConnectInstagramButton({ forceAllowConnect, disabled, children }: { forceAllowConnect?: boolean; disabled?: boolean; children?: React.ReactNode }) {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const startInstagramAuth = useAction(api.instagramAuth.start);
   const [busy, setBusy] = useState(false);
@@ -44,12 +44,29 @@ export function ConnectInstagramButton() {
     })();
   }, [startInstagramAuth]);
 
-  if (instagramChannel?.status === 'connected') {
+  if (!forceAllowConnect && instagramChannel?.status === 'connected') {
     return (
       <Button type="button" variant="outline" disabled>
         <CheckCircle2 className="size-4" />
         Connected
       </Button>
+    );
+  }
+
+  if (children) {
+    return (
+      <button
+        type="button"
+        onClick={launchSignup}
+        disabled={busy || disabled}
+        className={`group size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
+          busy || disabled
+            ? 'opacity-40 cursor-not-allowed'
+            : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
+        }`}
+      >
+        {children}
+      </button>
     );
   }
 

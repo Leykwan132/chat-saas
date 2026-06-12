@@ -57,8 +57,8 @@ export const ensureInbox = mutation({
 
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", orgId).eq("service", "whatsapp"),
+      .withIndex("by_phoneNumberId", (q) =>
+        q.eq("phoneNumberId", WHATSAPP_DEMO_PHONE_NUMBER_ID),
       )
       .unique();
 

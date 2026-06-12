@@ -107,6 +107,7 @@ export const completeSignup = action({
         orgId: channelOrgId,
         service: "whatsapp",
         progressStep: "subscribing",
+        phoneNumberId: args.phoneNumberId,
       });
 
       // 2. Subscribe our app to the WABA. This is required before Meta will
@@ -124,6 +125,7 @@ export const completeSignup = action({
         orgId: channelOrgId,
         service: "whatsapp",
         progressStep: "registering",
+        phoneNumberId: args.phoneNumberId,
       });
 
       // 3. Register the phone number with Cloud API. PIN can be anything
@@ -180,6 +182,7 @@ export const completeSignup = action({
         service: "whatsapp",
         error: message,
         connectedByUserId: userId,
+        phoneNumberId: args.phoneNumberId,
       });
       throw err;
     }

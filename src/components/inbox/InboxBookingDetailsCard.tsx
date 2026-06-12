@@ -3,7 +3,6 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import {
   Calendar,
   Clock,
-  Hash,
   MessageSquare,
   Phone,
   User,
@@ -129,11 +128,7 @@ export function InboxBookingDetailsCard({
   if (booking.timeRange) {
     bookingDetailRows.push({ label: 'Time', value: booking.timeRange, icon: Clock });
   }
-  bookingDetailRows.push({
-    label: 'Booking reference',
-    value: booking.bookingId,
-    icon: Hash,
-  });
+
   bookingDetailRows.push(...extraFieldRows);
 
   const customerDetailRows: BookingDetailItem[] = [];

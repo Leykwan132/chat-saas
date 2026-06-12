@@ -933,6 +933,19 @@ export default function ChatsPage() {
       );
       return;
     }
+    // Guard: Meta 24-hour conversation window
+    const lastCustomerMessageAt = selectedConversation?.lastCustomerMessageAt;
+    const WINDOW_MS = 24 * 60 * 60 * 1000;
+    const windowClosed =
+      lastCustomerMessageAt === undefined ||
+      Date.now() - lastCustomerMessageAt >= WINDOW_MS;
+    if (windowClosed) {
+      toast.error(
+        'Conversation window closed. Sending outside the window violates Meta policy — your account could be banned. Use a template message to re-open the conversation.',
+        { duration: 6000 },
+      );
+      return;
+    }
     const clientId =
       typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
         ? crypto.randomUUID()

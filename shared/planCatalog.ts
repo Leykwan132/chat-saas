@@ -15,6 +15,7 @@ export type PlanCatalogEntry = {
   monthlyCredits: number;
   maxMembers: number;
   maxAgents: number | "unlimited";
+  maxChannels: number | "unlimited";
   /** Shown in onboarding cards and other plan pickers — edit here to update UI copy. */
   displayFeatures: string[];
   actionLabel: string;
@@ -33,6 +34,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 500,
     maxMembers: 1,
     maxAgents: 1,
+    maxChannels: 1,
     displayFeatures: [
       "1 AI Agent",
       "500 credits / mo",
@@ -41,7 +43,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     ],
     actionLabel: "Start for Free",
     models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it:free", "openai/gpt-oss-120b:free"],
-    platforms: [],
+    platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       thread_summary: false,
       sync_lead_labeling: false,
@@ -57,6 +59,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 2000,
     maxMembers: 3,
     maxAgents: 1,
+    maxChannels: 2,
     displayFeatures: [
       "Everything in Free, plus:",
       "2,000 credits / mo",
@@ -71,7 +74,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "qwen/qwen3-next-80b-a3b-instruct:free",
       "openai/gpt-oss-120b:free",
     ],
-    platforms: ["whatsapp"],
+    platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       thread_summary: true,
       sync_lead_labeling: true,
@@ -87,6 +90,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 10000,
     maxMembers: 10,
     maxAgents: 5,
+    maxChannels: 5,
     displayFeatures: [
       "Everything in Standard, plus:",
       "5 AI Agents",
@@ -122,6 +126,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 50000,
     maxMembers: 20,
     maxAgents: "unlimited",
+    maxChannels: "unlimited",
     displayFeatures: [
       "Everything in Pro, plus:",
       "Unlimited agents",

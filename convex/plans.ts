@@ -4,6 +4,10 @@ import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import {
+  getActiveTeamForUser,
+  teamToOrgId,
+} from "./teamHelpers";
+import {
   EXTRA_CREDITS_PRICE_ID,
   PLAN_CATALOG,
   PLAN_ORDER,
@@ -372,6 +376,16 @@ export async function getBillingEntityForUser(
   return { billingUser: user, isTeam: false };
 }
 
+export async function getChannelLimitForOrg(
+  ctx: QueryCtx | MutationCtx,
+  orgId: string,
+  userId?: string,
+): Promise<number> {
+  const stripeInfo = await getTeamStripePlanHelper(ctx, { workosOrgId: orgId, userId });
+  const planConfig = PLAN_CATALOG[stripeInfo.plan] || PLAN_CATALOG.free;
+  return planConfig.maxChannels === "unlimited" ? 999999 : planConfig.maxChannels;
+}
+
 export const getPlanAndUsage = query({
   args: {},
   handler: async (ctx) => {
@@ -405,6 +419,10 @@ export const getPlanAndUsage = query({
     const monthlyAllowance =
       periodSummary.monthlyAllowance || billing.monthlyAllowance;
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const orgId = teamToOrgId(activeTeam);
+    const channelLimit = await getChannelLimitForOrg(ctx, orgId, user.workosUserId);
+
     return {
       orgName: isTeam && teamName ? teamName : "Your account",
       isTeam,
@@ -421,6 +439,7 @@ export const getPlanAndUsage = query({
       memberCount: 1,
       allPlans: PLANS,
       extraCreditsPriceId: EXTRA_CREDITS_PRICE_ID,
+      channelLimit,
     };
   },
 });

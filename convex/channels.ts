@@ -11,7 +11,28 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
-import { checkPlatformSupport, getPlanFromStripe } from "./plans";
+import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
+
+async function enforceChannelLimit(
+  ctx: MutationCtx,
+  orgId: string,
+  connectedByUserId: string,
+  incomingChannelId?: Id<"channels">,
+) {
+  const limit = await getChannelLimitForOrg(ctx, orgId, connectedByUserId);
+  const currentChannels = await ctx.db
+    .query("channels")
+    .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+    .collect();
+  
+  const activeChannels = currentChannels.filter(
+    (c) => c.status !== "disconnected" && c._id !== incomingChannelId
+  );
+  
+  if (activeChannels.length >= limit) {
+    throw new Error(`Channel limit reached. Your plan allows up to ${limit} channel(s).`);
+  }
+}
 
 /** Matches initial connect backfill; re-sync uses the same Graph list window. */
 const META_SYNC_CONVERSATIONS_LIMIT = 10;
@@ -29,17 +50,28 @@ const statusValidator = v.union(
   v.literal("error"),
 );
 
-// Returns every channel row (any status) for the caller's org.
-// Used by the Channels page to render both connected and pending/error rows.
 export const listForCurrentOrg = query({
   args: {},
   handler: async (ctx) => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
-    return await ctx.db
+    const channels = await ctx.db
       .query("channels")
       .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
       .collect();
+
+    return await Promise.all(
+      channels.map(async (channel) => {
+        const conversations = await ctx.db
+          .query("conversations")
+          .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
+          .collect();
+        return {
+          ...channel,
+          conversationCount: conversations.length,
+        };
+      })
+    );
   },
 });
 
@@ -206,9 +238,7 @@ async function upsertWhatsAppChannel(
   const now = Date.now();
   const existing = await ctx.db
     .query("channels")
-    .withIndex("by_orgId_and_service", (q) =>
-      q.eq("orgId", args.orgId).eq("service", "whatsapp"),
-    )
+    .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
     .unique();
 
   const patch = {
@@ -258,10 +288,24 @@ export const internalStartPending = internalMutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "whatsapp"),
-      )
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
       .unique();
+
+    if (existing !== null && existing.status !== "disconnected") {
+      if (existing.orgId !== args.orgId) {
+        throw new Error("This WhatsApp phone number is already connected to another workspace.");
+      }
+      if (existing.status === "connected") {
+        throw new Error("This WhatsApp phone number is already connected to this workspace.");
+      }
+    }
+    
+    if (existing === null) {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId);
+    } else if (existing.status === "disconnected") {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId, existing._id);
+    }
+
     if (existing === null) {
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
@@ -276,6 +320,7 @@ export const internalStartPending = internalMutation({
       });
     }
     await ctx.db.patch(existing._id, {
+      orgId: args.orgId,
       wabaId: args.wabaId,
       phoneNumberId: args.phoneNumberId,
       status: "pending",
@@ -302,14 +347,35 @@ export const internalSetProgress = internalMutation({
       v.literal("exchanging"),
       v.literal("backfilling"),
     ),
+    igUserId: v.optional(v.string()),
+    pageId: v.optional(v.string()),
+    phoneNumberId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", args.service),
-      )
-      .unique();
+    let existing = null;
+    if (args.igUserId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId!))
+        .unique();
+    } else if (args.pageId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId!))
+        .unique();
+    } else if (args.phoneNumberId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId!))
+        .unique();
+    } else {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_orgId_and_service", (q) =>
+          q.eq("orgId", args.orgId).eq("service", args.service),
+        )
+        .unique();
+    }
     if (existing === null) return;
     await ctx.db.patch(existing._id, {
       progressStep: args.progressStep,
@@ -327,19 +393,44 @@ export const internalRecordError = internalMutation({
     service: serviceValidator,
     error: v.string(),
     connectedByUserId: v.string(),
+    igUserId: v.optional(v.string()),
+    pageId: v.optional(v.string()),
+    phoneNumberId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const existing = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", args.service),
-      )
-      .unique();
+    let existing = null;
+    if (args.igUserId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId!))
+        .unique();
+    } else if (args.pageId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId!))
+        .unique();
+    } else if (args.phoneNumberId) {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId!))
+        .unique();
+    } else {
+      existing = await ctx.db
+        .query("channels")
+        .withIndex("by_orgId_and_service", (q) =>
+          q.eq("orgId", args.orgId).eq("service", args.service),
+        )
+        .unique();
+    }
+    
     if (existing === null) {
       await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: args.service,
+        igUserId: args.igUserId,
+        pageId: args.pageId,
+        phoneNumberId: args.phoneNumberId,
         status: "error",
         lastError: args.error,
         connectedByUserId: args.connectedByUserId,
@@ -366,6 +457,7 @@ export const internalStartInstagramPending = internalMutation({
   args: {
     orgId: v.string(),
     connectedByUserId: v.string(),
+    igUserId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
@@ -375,14 +467,29 @@ export const internalStartInstagramPending = internalMutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "instagram"),
-      )
+      .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId))
       .unique();
+
+    if (existing !== null && existing.status !== "disconnected") {
+      if (existing.orgId !== args.orgId) {
+        throw new Error("This Instagram account is already connected to another workspace.");
+      }
+      if (existing.status === "connected") {
+        throw new Error("This Instagram account is already connected to this workspace.");
+      }
+    }
+    
+    if (existing === null) {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId);
+    } else if (existing.status === "disconnected") {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId, existing._id);
+    }
+
     if (existing === null) {
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "instagram",
+        igUserId: args.igUserId,
         status: "pending",
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
@@ -391,6 +498,7 @@ export const internalStartInstagramPending = internalMutation({
       });
     }
     await ctx.db.patch(existing._id, {
+      orgId: args.orgId,
       status: "pending",
       progressStep: "exchanging",
       lastError: undefined,
@@ -416,9 +524,7 @@ export const internalUpsertInstagram = internalMutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "instagram"),
-      )
+      .withIndex("by_igUserId", (q) => q.eq("igUserId", args.igUserId))
       .unique();
 
     const patch = {
@@ -443,6 +549,7 @@ export const internalUpsertInstagram = internalMutation({
     }
     await ctx.db.patch(existing._id, {
       ...patch,
+      orgId: args.orgId,
       connectedByUserId: args.connectedByUserId,
     });
     return existing._id;
@@ -497,6 +604,7 @@ export const internalStartMessengerPending = internalMutation({
   args: {
     orgId: v.string(),
     connectedByUserId: v.string(),
+    pageId: v.string(),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
@@ -506,14 +614,29 @@ export const internalStartMessengerPending = internalMutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "messenger"),
-      )
+      .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
       .unique();
+
+    if (existing !== null && existing.status !== "disconnected") {
+      if (existing.orgId !== args.orgId) {
+        throw new Error("This Facebook Page is already connected to another workspace.");
+      }
+      if (existing.status === "connected") {
+        throw new Error("This Facebook Page is already connected to this workspace.");
+      }
+    }
+    
+    if (existing === null) {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId);
+    } else if (existing.status === "disconnected") {
+      await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId, existing._id);
+    }
+
     if (existing === null) {
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "messenger",
+        pageId: args.pageId,
         status: "pending",
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
@@ -522,6 +645,7 @@ export const internalStartMessengerPending = internalMutation({
       });
     }
     await ctx.db.patch(existing._id, {
+      orgId: args.orgId,
       status: "pending",
       progressStep: "exchanging",
       lastError: undefined,
@@ -551,9 +675,7 @@ export const internalUpsertMessenger = internalMutation({
     const now = Date.now();
     const existing = await ctx.db
       .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", args.orgId).eq("service", "messenger"),
-      )
+      .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
       .unique();
 
     const patch = {
@@ -579,6 +701,7 @@ export const internalUpsertMessenger = internalMutation({
     }
     await ctx.db.patch(existing._id, {
       ...patch,
+      orgId: args.orgId,
       connectedByUserId: args.connectedByUserId,
     });
     return existing._id;

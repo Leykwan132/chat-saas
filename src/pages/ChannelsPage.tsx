@@ -10,6 +10,8 @@ import {
   RefreshCw,
   Send,
   Trash2,
+  Plus,
+  MoreHorizontal,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -26,12 +28,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
+import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import {
   WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
   WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
@@ -147,12 +156,16 @@ function useMetaChannelCallbackParams() {
 export default function ChannelsPage() {
   const { agentId } = useParams();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
   const ensureDefaultAgentId = useMutation(api.channels.ensureDefaultAgentId);
   useMetaChannelCallbackParams();
 
+  const [openAddDialog, setOpenAddDialog] = useState(false);
   const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
     Set<string>
   >(new Set());
+  const [isLifecycleGuideOpen, setIsLifecycleGuideOpen] = useState(false);
+  const [isCoexistenceGuideOpen, setIsCoexistenceGuideOpen] = useState(false);
 
   const connectedChannelsList = useMemo(
     () =>
@@ -163,6 +176,10 @@ export default function ChannelsPage() {
       ),
     [channels, disconnectingChannelIds],
   );
+
+  const activeCount = connectedChannelsList.length;
+  const channelLimit = planAndUsage?.channelLimit ?? 1;
+  const limitReached = activeCount >= channelLimit;
 
   useEffect(() => {
     if (!channels) return;
@@ -190,64 +207,414 @@ export default function ChannelsPage() {
 
   return (
     <div className="flex w-full flex-col gap-8">
-      <PageHeader />
-
-      <section className="flex flex-col gap-4">
-        <SectionTitle
-          title="Available channels"
-          description="Pick a channel to connect to your workspace."
-        />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <AvailableChannelCard
-            service="whatsapp"
-            cta={<ConnectWhatsAppButton />}
-          />
-          <AvailableChannelCard
-            service="instagram"
-            cta={<ConnectInstagramButton />}
-          />
-          <AvailableChannelCard
-            service="messenger"
-            cta={<ConnectMessengerButton />}
-          />
+      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+        <div>
+          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Channels</h1>
+          <PageDescription>
+            Connect WhatsApp, Instagram, and Messenger to start receiving messages.
+          </PageDescription>
         </div>
-      </section>
+        <Button
+          type="button"
+          onClick={() => setOpenAddDialog(true)}
+          className="gap-2 shrink-0 rounded-xl"
+        >
+          <Plus className="size-4" />
+          Add new channel
+        </Button>
+      </header>
 
       {SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO ? (
         <WhatsAppCloudApiDemo channels={channels ?? []} />
       ) : null}
 
-      {channels !== undefined && connectedChannelsList.length > 0 ? (
-        <section className="flex flex-col gap-4">
-          <SectionTitle
-            title="Connected channels"
-            description="Channels currently linked to your workspace."
+      {/* Guides section styled exactly like BroadcastPage */}
+      <section className="flex flex-col gap-4 animate-fade-in">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
+        <div className="flex flex-wrap items-end gap-6 max-w-[920px]">
+          <BookCard
+            tag="Channels"
+            title="How channels work"
+            onClick={() => setIsLifecycleGuideOpen(true)}
           />
-          <ul className="flex flex-col divide-y divide-border rounded-xl border border-border bg-card">
-            {connectedChannelsList.map((channel: ChannelDoc) => (
-              <ConnectedChannelRow
-                key={channel._id}
-                agentId={agentId}
-                channel={channel}
-                onDisconnectBegin={() => {
-                  setDisconnectingChannelIds((s) =>
-                    new Set(s).add(channel._id as string),
-                  );
-                }}
-                onDisconnectUndone={() => {
-                  setDisconnectingChannelIds((s) => {
-                    const next = new Set(s);
-                    next.delete(channel._id as string);
-                    return next;
-                  });
-                }}
+
+          <BookCard
+            tag="WhatsApp"
+            title="Mobile coexistence"
+            onClick={() => setIsCoexistenceGuideOpen(true)}
+          />
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4 animate-fade-in">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Connected channels</h2>
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
+              {activeCount}
+            </span>
+          </div>
+          <Separator className="mt-3" />
+        </div>
+
+        <div className="flex flex-wrap gap-2 mt-2">
+          {connectedChannelsList.map((channel: ChannelDoc) => (
+            <ConnectedChannelCard
+              key={channel._id}
+              agentId={agentId}
+              channel={channel}
+              onDisconnectBegin={() => {
+                setDisconnectingChannelIds((s) =>
+                  new Set(s).add(channel._id as string),
+                );
+              }}
+              onDisconnectUndone={() => {
+                setDisconnectingChannelIds((s) => {
+                  const next = new Set(s);
+                  next.delete(channel._id as string);
+                  return next;
+                });
+              }}
+            />
+          ))}
+
+          {/* Add channel placeholder card */}
+          <button
+            type="button"
+            onClick={() => setOpenAddDialog(true)}
+            className={cn(
+              'flex size-56 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
+              'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
+            )}
+            aria-label="Connect another channel"
+          >
+            <Plus className="size-6" strokeWidth={1.75} />
+            <span className="text-xs font-medium">Connect another channel</span>
+          </button>
+        </div>
+      </section>
+
+      <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
+        <DialogContent className="sm:!max-w-[544px] md:!max-w-xl p-8 md:p-12">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">Connect a New Channel</DialogTitle>
+            <DialogDescription className="sr-only">
+              Select a platform to link with your workspace.
+            </DialogDescription>
+          </DialogHeader>
+
+          {limitReached ? (
+            <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-destructive text-sm leading-relaxed mb-2">
+              <CircleAlert className="size-5 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold">Channel limit reached</p>
+                <p className="text-destructive/80 mt-0.5">
+                  Your workspace has connected {activeCount} of {channelLimit} allowed channels. Please upgrade your plan to connect more channels.
+                </p>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="flex flex-wrap justify-center gap-6 mt-4">
+            <ConnectWhatsAppButton
+              forceAllowConnect
+              disabled={limitReached}
+              onConnected={() => setOpenAddDialog(false)}
+            >
+              <PlatformOptionCard
+                service="whatsapp"
+                description="Business number"
+                disabled={limitReached}
               />
-            ))}
-          </ul>
-        </section>
-      ) : null}
+            </ConnectWhatsAppButton>
+            <ConnectInstagramButton
+              forceAllowConnect
+              disabled={limitReached}
+            >
+              <PlatformOptionCard
+                service="instagram"
+                description="Business, Creator, or Personal"
+                disabled={limitReached}
+              />
+            </ConnectInstagramButton>
+            <ConnectMessengerButton
+              forceAllowConnect
+              disabled={limitReached}
+              onConnected={() => setOpenAddDialog(false)}
+            >
+              <PlatformOptionCard
+                service="messenger"
+                description="Page or Profile"
+                disabled={limitReached}
+              />
+            </ConnectMessengerButton>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Guide Dialogs */}
+      <ChannelLifecycleGuideDialog
+        open={isLifecycleGuideOpen}
+        onOpenChange={setIsLifecycleGuideOpen}
+      />
+
+      <WhatsAppCoexistenceGuideDialog
+        open={isCoexistenceGuideOpen}
+        onOpenChange={setIsCoexistenceGuideOpen}
+      />
     </div>
   );
+}
+
+function PlatformOptionCard({
+  service,
+  description,
+}: {
+  service: ChannelDoc['service'];
+  description: string;
+  disabled?: boolean;
+}) {
+  const meta = SERVICE_META[service];
+  const Icon = meta.icon;
+
+  return (
+    <div className="flex flex-col items-center gap-2 pointer-events-none w-full">
+      <Icon className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
+      <div className="space-y-0.5">
+        <h3 className="text-sm font-semibold text-foreground leading-none">{meta.label}</h3>
+        <p className="text-[10px] text-muted-foreground max-w-[120px] leading-relaxed mx-auto">
+          {description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ConnectedChannelCard({
+  channel,
+  onDisconnectBegin,
+  onDisconnectUndone,
+}: {
+  agentId?: string;
+  channel: ChannelDoc;
+  onDisconnectBegin: () => void;
+  onDisconnectUndone: () => void;
+}) {
+  const meta = SERVICE_META[channel.service];
+  const Icon = meta.icon;
+  const status = STATUS_META[channel.status];
+  
+  const iconColors: Record<ChannelDoc['service'], string> = {
+    whatsapp: 'text-emerald-600 dark:text-emerald-400',
+    instagram: 'text-pink-600 dark:text-pink-400',
+    messenger: 'text-blue-600 dark:text-blue-400',
+  };
+  const currentIconColor = iconColors[channel.service];
+
+  const disconnect = useMutation(api.channels.disconnect);
+  const enqueueSyncConversations = useAction(
+    api.channels.enqueueSyncConversations,
+  );
+  const [busy, setBusy] = useState(false);
+  const [syncBusy, setSyncBusy] = useState(false);
+  const [disconnectOpen, setDisconnectOpen] = useState(false);
+  const [acknowledgedDataLoss, setAcknowledgedDataLoss] = useState(false);
+
+  const channelName = channelIdentifier(channel);
+
+  const handleDisconnectOpenChange = useCallback((open: boolean) => {
+    setDisconnectOpen(open);
+    if (!open) {
+      setAcknowledgedDataLoss(false);
+    }
+  }, []);
+
+  const confirmDisconnect = useCallback(async () => {
+    onDisconnectBegin();
+    setBusy(true);
+    try {
+      await disconnect({ channelId: channel._id });
+      toast.success('Channel disconnected');
+      handleDisconnectOpenChange(false);
+    } catch (err) {
+      onDisconnectUndone();
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setBusy(false);
+    }
+  }, [disconnect, channel._id, onDisconnectBegin, onDisconnectUndone, handleDisconnectOpenChange]);
+
+  const canSyncConversations =
+    channel.status === 'connected' &&
+    (channel.service === 'instagram' || channel.service === 'messenger');
+
+  const handleSyncConversations = useCallback(async () => {
+    setSyncBusy(true);
+    try {
+      await enqueueSyncConversations({ channelId: channel._id });
+      toast.success('Conversation sync queued');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast.error(msg);
+    } finally {
+      setSyncBusy(false);
+    }
+  }, [enqueueSyncConversations, channel._id]);
+
+  return (
+    <div
+      className={cn(
+        'group flex size-56 flex-col rounded-lg border border-border bg-card p-3.5 transition-colors relative',
+        'hover:border-foreground/20 hover:bg-muted/30',
+      )}
+    >
+      <div className="flex min-h-0 flex-1 flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <Icon className={cn("size-4 shrink-0", currentIconColor)} />
+            <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground" title={channelName}>
+              {channelName}
+            </h3>
+          </div>
+
+          {/* Subtitle / Description / Status */}
+          <div className="mt-1">
+            {channel.status === 'connected' ? (
+              <p className="text-[11px] leading-snug text-muted-foreground">
+                Since {formatConnectedSince(channel.createdAt)}
+              </p>
+            ) : (
+              <div className="flex items-start justify-between gap-2 mt-1.5">
+                <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  {channel.status === 'pending' ? (
+                    <Loader2 className="size-1.5 shrink-0 animate-spin text-amber-500" aria-hidden />
+                  ) : (
+                    <span className="size-1.5 shrink-0 rounded-full bg-red-500" aria-hidden />
+                  )}
+                  {status.label}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Bottom Details */}
+        <div className="mt-auto flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            {channel.status === 'connected' ? (
+              <p className="text-[11px] leading-snug text-muted-foreground font-medium truncate">
+                {(channel as any).conversationCount ?? 0} conversations saved
+              </p>
+            ) : channel.status === 'error' && channel.lastError ? (
+              <p className="text-[11px] leading-snug text-destructive line-clamp-2" title={channel.lastError}>
+                {channel.lastError}
+              </p>
+            ) : (
+              <p className="text-[11px] leading-snug text-muted-foreground truncate">
+                Setting up connection...
+              </p>
+            )}
+          </div>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-xs"
+                className="text-muted-foreground hover:text-foreground h-6 w-6 rounded-md p-0 shrink-0"
+                disabled={busy || syncBusy}
+                aria-label="Channel actions"
+              >
+                <MoreHorizontal className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-[140px]">
+              {canSyncConversations && (
+                <DropdownMenuItem
+                  onClick={() => void handleSyncConversations()}
+                  disabled={syncBusy}
+                >
+                  <RefreshCw className={cn("size-3.5 mr-2", syncBusy && 'animate-spin')} />
+                  <span>Refresh</span>
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => handleDisconnectOpenChange(true)}
+              >
+                <Trash2 className="size-3.5 mr-2" />
+                <span>Delete</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+
+      <Dialog open={disconnectOpen} onOpenChange={handleDisconnectOpenChange}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="text-lg sm:text-xl font-semibold">Disconnect {channelName}?</DialogTitle>
+            <DialogDescription>
+              All conversations will be deleted and new messages will stop.
+            </DialogDescription>
+          </DialogHeader>
+          <label
+            htmlFor={`disconnect-ack-${channel._id}`}
+            className={cn(
+              'flex cursor-pointer items-start gap-3 rounded-lg border border-border px-3 py-3 text-sm leading-snug',
+              'hover:bg-muted/40',
+            )}
+          >
+            <input
+              id={`disconnect-ack-${channel._id}`}
+              type="checkbox"
+              checked={acknowledgedDataLoss}
+              onChange={(e) => setAcknowledgedDataLoss(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 rounded border-border accent-destructive"
+            />
+            <span className="text-foreground">
+              I understand that disconnecting this channel will permanently delete all of its conversations.
+            </span>
+          </label>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busy}
+              onClick={() => handleDisconnectOpenChange(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={busy || !acknowledgedDataLoss}
+              onClick={() => void confirmDisconnect()}
+            >
+              {busy ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Disconnecting…
+                </>
+              ) : (
+                'Disconnect'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function formatConnectedSince(ts: number): string {
+  return new Date(ts).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
 function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {
@@ -406,340 +773,275 @@ function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {
   );
 }
 
-function PageHeader() {
-  return (
-    <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
-      <div>
-        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Channels</h1>
-        <PageDescription>
-          Connect WhatsApp, Instagram, and Messenger to start receiving messages.
-        </PageDescription>
-      </div>
-    </header>
-  );
+// ──────────────────────────────────────────────────────────────────────────
+// Guides Helper Components (BookCard & Guide Dialogs)
+// ──────────────────────────────────────────────────────────────────────────
+
+interface BookCardProps {
+  tag: string;
+  title: React.ReactNode;
+  onClick?: () => void;
+  to?: string;
+  disabled?: boolean;
+  isDark?: boolean;
 }
 
-function SectionTitle({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div>
-      <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      <Separator className="mt-3" />
-    </div>
-  );
-}
-
-function AvailableChannelCard({
-  service,
-  cta,
-  comingSoon = false,
-}: {
-  service: ChannelDoc['service'];
-  cta?: React.ReactNode;
-  comingSoon?: boolean;
-}) {
-  const meta = SERVICE_META[service];
-  const Icon = meta.icon;
-  return (
-    <div className="flex h-full flex-col gap-4 rounded-xl border border-border bg-card p-5">
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-muted text-foreground">
-          <Icon className="size-5" />
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <p className="text-sm font-semibold">{meta.label}</p>
-          {comingSoon ? (
-            <Badge variant="outline" className="w-fit text-[10px]">
-              Coming soon
-            </Badge>
-          ) : null}
-        </div>
-      </div>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        {meta.description}
-      </p>
-      <div className="mt-auto flex w-full justify-end">
-        {comingSoon ? (
-          <Button type="button" variant="outline" disabled>
-            Coming soon
-          </Button>
-        ) : (
-          cta
-        )}
-      </div>
-    </div>
-  );
-}
-
-function formatConnectedSince(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-function ConnectedChannelRow({
-  agentId,
-  channel,
-  onDisconnectBegin,
-  onDisconnectUndone,
-}: {
-  agentId?: string;
-  channel: ChannelDoc;
-  onDisconnectBegin: () => void;
-  onDisconnectUndone: () => void;
-}) {
-  const meta = SERVICE_META[channel.service];
-  const Icon = meta.icon;
-  const status = STATUS_META[channel.status];
-  const disconnect = useMutation(api.channels.disconnect);
-  const enqueueSyncConversations = useAction(
-    api.channels.enqueueSyncConversations,
-  );
-  const [busy, setBusy] = useState(false);
-  const [syncBusy, setSyncBusy] = useState(false);
-  const [disconnectOpen, setDisconnectOpen] = useState(false);
-  const [acknowledgedDataLoss, setAcknowledgedDataLoss] = useState(false);
-
-  const channelName = channelIdentifier(channel);
-
-  const handleDisconnectOpenChange = useCallback((open: boolean) => {
-    setDisconnectOpen(open);
-    if (!open) {
-      setAcknowledgedDataLoss(false);
-    }
-  }, []);
-
-  const confirmDisconnect = useCallback(async () => {
-    onDisconnectBegin();
-    setBusy(true);
-    try {
-      await disconnect({ channelId: channel._id });
-      toast.success('Channel disconnected');
-      handleDisconnectOpenChange(false);
-    } catch (err) {
-      onDisconnectUndone();
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error(msg);
-    } finally {
-      setBusy(false);
-    }
-  }, [disconnect, channel._id, onDisconnectBegin, onDisconnectUndone, handleDisconnectOpenChange]);
-
-  const canSyncConversations =
-    channel.status === 'connected' &&
-    (channel.service === 'instagram' || channel.service === 'messenger');
-
-  const handleSyncConversations = useCallback(async () => {
-    setSyncBusy(true);
-    try {
-      await enqueueSyncConversations({ channelId: channel._id });
-      toast.success('Conversation sync queued');
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast.error(msg);
-    } finally {
-      setSyncBusy(false);
-    }
-  }, [enqueueSyncConversations, channel._id]);
-
-  const canOpenTemplates =
-    Boolean(agentId) &&
-    channel.service === 'whatsapp' &&
-    channel.status === 'connected' &&
-    Boolean(channel.wabaId?.trim());
-
-  const templatesTo =
-    canOpenTemplates && agentId
-      ? `/dashboard/${agentId}/channels/${channel._id}/templates`
-      : null;
-
-  const mainBlock = (
+function BookCard({ tag, title, onClick, to, disabled, isDark }: BookCardProps) {
+  const cardContent = (
     <>
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-foreground">
-        <Icon className="size-5" />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col gap-0">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <p className="min-w-0 truncate text-base font-semibold tracking-tight text-foreground">
-            {channelName}
-          </p>
-          {channel.status === 'connected' ? (
-            <span
-              className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-700 text-white dark:bg-emerald-600"
-              title="Connected"
-              aria-label="Connected"
-            >
-              <Check className="size-2 stroke-[2.75]" aria-hidden />
-            </span>
-          ) : null}
+      {/* Book Body (Inside Pages/Back) */}
+      <div className="absolute inset-0 rounded-r-[14px] rounded-l-sm bg-white dark:bg-[#1a1a1a] border border-neutral-200/80 dark:border-neutral-800/80 shadow-inner z-0 transition-transform duration-500 ease-out group-hover:translate-x-1.5" />
+
+      {/* Front Cover */}
+      <div 
+        style={{ transformOrigin: 'left center', transformStyle: 'preserve-3d' }}
+        className={`absolute inset-0 rounded-r-[14px] rounded-l-sm border pl-[25px] pr-3.5 py-3.5 flex flex-col justify-between transition-transform duration-500 ease-out group-hover:[transform:rotateY(-24deg)] z-20 shadow-md group-hover:shadow-lg origin-left ${
+          isDark 
+            ? 'bg-neutral-950 dark:bg-black border-neutral-900 text-white' 
+            : 'bg-[#fafafa] dark:bg-[#202020] border-neutral-200/80 dark:border-neutral-800/80 text-neutral-800 dark:text-neutral-100'
+        }`}
+      >
+        <div className="flex flex-col gap-2">
+          {/* App Logo */}
+          <img 
+            src="/icon.svg" 
+            className={`size-5 shrink-0 ${isDark ? 'invert' : 'dark:invert'}`} 
+            alt="App Logo" 
+          />
+          <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[9px] font-semibold border ${
+            isDark 
+              ? 'bg-neutral-900 text-neutral-400 border-neutral-800/50' 
+              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border-neutral-200/30 dark:border-neutral-700/30'
+          }`}>
+            {tag}
+          </span>
         </div>
-        {channel.status === 'connected' ? (
-          <p className="text-xs text-muted-foreground">
-            Connected since {formatConnectedSince(channel.createdAt)}
-            {templatesTo ? (
-              <span className="text-muted-foreground"> · </span>
-            ) : null}
-            {templatesTo ? (
-              <span className="text-xs text-muted-foreground">
-                Click the row to manage message templates
-              </span>
-            ) : null}
-          </p>
-        ) : null}
-        {channel.status === 'error' && channel.lastError ? (
-          <p className="flex items-start gap-1.5 text-xs text-destructive">
-            <CircleAlert className="mt-0.5 size-3.5 shrink-0" />
-            <span>{channel.lastError}</span>
-          </p>
-        ) : null}
+        <h3 className={`text-xs font-semibold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-neutral-850 dark:text-neutral-100'}`}>
+          {title}
+        </h3>
+
+        {/* Binder / spine crease */}
+        <div className={`absolute left-0 top-0 bottom-0 w-[17px] rounded-l-sm bg-gradient-to-r pointer-events-none ${
+          isDark 
+            ? 'from-white/[0.04] via-transparent to-black/[0.3]' 
+            : 'from-black/[0.08] via-transparent to-black/[0.12] dark:from-white/[0.03] dark:to-black/[0.2]'
+        }`} />
+        <div className={`absolute left-[17px] top-0 bottom-0 w-[1px] pointer-events-none ${
+          isDark ? 'bg-neutral-800/80' : 'bg-neutral-300/60 dark:bg-neutral-800/60'
+        }`} />
+        <div className={`absolute left-[18px] top-0 bottom-0 w-[1px] pointer-events-none ${
+          isDark ? 'bg-white/[0.02]' : 'bg-white/50 dark:bg-white/[0.02]'
+        }`} />
       </div>
     </>
   );
 
+  if (to) {
+    return (
+      <Link 
+        to={to} 
+        className={`group relative select-none w-[125px] h-[162px] [perspective:1000px] block ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+      >
+        {cardContent}
+      </Link>
+    );
+  }
+
   return (
-    <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-      <div className="flex min-w-0 flex-1 flex-col gap-3">
-        <div className="flex min-w-0 gap-3">
-          {templatesTo ? (
-            <Link
-              to={templatesTo}
-              className="flex min-w-0 flex-1 items-start gap-3 rounded-lg outline-none ring-offset-background transition-colors hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {mainBlock}
-            </Link>
-          ) : (
-            <div className="flex min-w-0 flex-1 gap-3">{mainBlock}</div>
-          )}
-        </div>
-      </div>
-      <div className="flex shrink-0 items-center justify-end gap-2 self-start sm:pt-0.5">
-        {channel.status !== 'connected' ? (
-          <StatusBadge tone={status.tone}>
-            {channel.status === 'pending' ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : channel.status === 'error' ? (
-              <CircleAlert className="size-3.5" />
-            ) : null}
-            {status.label}
-          </StatusBadge>
-        ) : null}
-        {channel.status === 'connected' || channel.status === 'error' ? (
-          <>
-            {canSyncConversations ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                className="text-muted-foreground hover:text-foreground"
-                disabled={busy || syncBusy}
-                onClick={() => void handleSyncConversations()}
-                aria-label={`Sync conversations for ${channelName}`}
-                title="Sync conversations"
-              >
-                <RefreshCw
-                  className={`size-4 ${syncBusy ? 'animate-spin' : ''}`}
-                />
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              className="text-muted-foreground hover:text-destructive"
-              disabled={busy || syncBusy}
-              onClick={() => handleDisconnectOpenChange(true)}
-              aria-label={`Disconnect ${channelName}`}
-            >
-              <Trash2 className="size-4" />
-            </Button>
-            <Dialog open={disconnectOpen} onOpenChange={handleDisconnectOpenChange}>
-              <DialogContent showCloseButton={false}>
-                <DialogHeader>
-                  <DialogTitle className="text-lg sm:text-xl font-semibold">Disconnect {channelName}?</DialogTitle>
-                  <DialogDescription>
-                    All conversations will be deleted and new messages will stop.
-                  </DialogDescription>
-                </DialogHeader>
-                <label
-                  htmlFor={`disconnect-ack-${channel._id}`}
-                  className={cn(
-                    'flex cursor-pointer items-start gap-3 rounded-lg border border-border px-3 py-3 text-sm leading-snug',
-                    'hover:bg-muted/40',
-                  )}
-                >
-                  <input
-                    id={`disconnect-ack-${channel._id}`}
-                    type="checkbox"
-                    checked={acknowledgedDataLoss}
-                    onChange={(e) => setAcknowledgedDataLoss(e.target.checked)}
-                    className="mt-0.5 size-4 shrink-0 rounded border-border accent-destructive"
-                  />
-                  <span className="text-foreground">
-                    I understand that disconnecting this channel will permanently delete all of its conversations.
-                  </span>
-                </label>
-                <DialogFooter>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => handleDisconnectOpenChange(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    disabled={busy || !acknowledgedDataLoss}
-                    onClick={() => void confirmDisconnect()}
-                  >
-                    {busy ? (
-                      <>
-                        <Loader2 className="size-3.5 animate-spin" />
-                        Disconnecting…
-                      </>
-                    ) : (
-                      'Disconnect'
-                    )}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </>
-        ) : null}
-      </div>
-    </li>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`group relative select-none w-[125px] h-[162px] [perspective:1000px] text-left block ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
+    >
+      {cardContent}
+    </button>
   );
 }
 
-function StatusBadge({
-  tone,
-  children,
-}: {
-  tone: 'success' | 'warning' | 'muted' | 'danger';
-  children: React.ReactNode;
-}) {
-  const cls =
-    tone === 'success'
-      ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
-      : tone === 'warning'
-        ? 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
-        : tone === 'danger'
-          ? 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400'
-          : 'border-border bg-muted text-muted-foreground';
+interface ChannelLifecycleGuideDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function ChannelLifecycleGuideDialog({ open, onOpenChange }: ChannelLifecycleGuideDialogProps) {
+  const points = [
+    'Secure Token Exchange: Long-lived platform credentials are encrypted and stored safely.',
+    'Webhook Handlers: Real-time subscriptions deliver customer messages instantly to our servers.',
+    'AI Auto-Response: Inbound messages trigger agent prompt processing to reply instantly.',
+  ];
+
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${cls}`}
-    >
-      {children}
-    </span>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[min(90vh,640px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[880px]">
+        <DialogTitle className="sr-only">How channels work</DialogTitle>
+        <div className="w-full flex flex-col h-[min(440px,calc(90vh-5.5rem))] min-h-[400px]">
+          <div className="flex h-full w-full flex-col overflow-hidden md:flex-row md:items-stretch">
+            <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-y-auto px-6 py-6 sm:px-10 md:overflow-visible md:py-10">
+              <div className="flex flex-col gap-2.5">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  How channels work
+                </h2>
+                <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                  Our system establishes a direct, real-time integration with Meta platforms (WhatsApp, Instagram, and Messenger) to power your workspace inbox.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Under the hood
+                </h3>
+                <ul className="flex flex-col gap-2.5">
+                  {points.map((point, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2.5 text-sm leading-snug text-foreground/90"
+                    >
+                      <Check
+                        className="mt-0.5 size-4 shrink-0 text-emerald-500"
+                        strokeWidth={2.5}
+                      />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="relative h-[min(240px,38vh)] shrink-0 overflow-hidden border-t border-border/40 bg-muted/15 md:h-full md:border-t-0 md:border-l md:w-[48%] flex items-center justify-center">
+              <div className="pointer-events-none absolute inset-0 size-full">
+                <AnimatedGridPattern
+                  width={40}
+                  height={40}
+                  maxOpacity={0.18}
+                  numSquares={72}
+                  className="size-full opacity-40 dark:opacity-20"
+                />
+              </div>
+              <div className="relative z-10 flex size-full items-center justify-center p-6 md:p-8">
+                <svg className="w-full h-auto max-w-[220px]" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="15" y="20" width="35" height="35" rx="8" fill="#e8f5e9" className="dark:fill-emerald-950/20" />
+                  <path d="M32.5 30 V45 M25 37.5 H40" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
+                  
+                  <rect x="150" y="20" width="35" height="35" rx="8" fill="#e3f2fd" className="dark:fill-blue-950/20" />
+                  <path d="M167.5 30 V45 M160 37.5 H175" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
+                  
+                  <rect x="82.5" y="125" width="35" height="35" rx="8" fill="#fdf2f8" className="dark:fill-pink-950/20" />
+                  <circle cx="100" cy="142.5" r="8" stroke="#ec4899" strokeWidth="2.5" />
+                  
+                  <path d="M58 37.5 H142" stroke="currentColor" className="text-border" strokeWidth="2" strokeDasharray="4 4" />
+                  <path d="M142 37.5 L135 33.5 M142 37.5 L135 41.5" stroke="currentColor" className="text-border" strokeWidth="2" />
+                  
+                  <path d="M167.5 63 V142.5 H125" stroke="currentColor" className="text-border" strokeWidth="2" strokeDasharray="4 4" />
+                  <path d="M125 142.5 L132 138.5 M125 142.5 L132 146.5" stroke="currentColor" className="text-border" strokeWidth="2" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-4 border-t border-border/40 px-6 py-4 sm:px-8">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="min-w-[4.5rem] font-semibold"
+            onClick={() => onOpenChange(false)}
+          >
+            Got it
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface WhatsAppCoexistenceGuideDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function WhatsAppCoexistenceGuideDialog({ open, onOpenChange }: WhatsAppCoexistenceGuideDialogProps) {
+  const points = [
+    'Cloud-Hosted Number: Once registered, Meta virtualizes your number in their cloud infrastructure.',
+    'Mobile App Disconnection: The standard WhatsApp & WhatsApp Business mobile applications are disabled for this number.',
+    'Reverting back: You can easily restore mobile use by deleting the number from Meta WhatsApp Manager first.',
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex max-h-[min(90vh,640px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[880px]">
+        <DialogTitle className="sr-only">Mobile app coexistence</DialogTitle>
+        <div className="w-full flex flex-col h-[min(440px,calc(90vh-5.5rem))] min-h-[400px]">
+          <div className="flex h-full w-full flex-col overflow-hidden md:flex-row md:items-stretch">
+            <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-y-auto px-6 py-6 sm:px-10 md:overflow-visible md:py-10">
+              <div className="flex flex-col gap-2.5">
+                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                  Mobile app coexistence
+                </h2>
+                <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
+                  Because Meta virtualizes your phone number for Cloud API operations, standard mobile messaging apps cannot run in parallel.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <h3 className="text-sm font-semibold text-foreground">
+                  Key rules
+                </h3>
+                <ul className="flex flex-col gap-2.5">
+                  {points.map((point, idx) => (
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2.5 text-sm leading-snug text-foreground/90"
+                    >
+                      <CircleAlert
+                        className="mt-0.5 size-4 shrink-0 text-amber-500"
+                        strokeWidth={2.5}
+                      />
+                      <span>{point}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="relative h-[min(240px,38vh)] shrink-0 overflow-hidden border-t border-border/40 bg-muted/15 md:h-full md:border-t-0 md:border-l md:w-[48%]">
+              <div className="pointer-events-none absolute inset-0 size-full">
+                <AnimatedGridPattern
+                  width={40}
+                  height={40}
+                  maxOpacity={0.18}
+                  numSquares={72}
+                  className="size-full opacity-40 dark:opacity-20"
+                />
+              </div>
+              <div className="relative z-10 flex size-full items-center justify-center p-6 md:p-8">
+                <div className="w-full">
+                  <div className="flex size-full max-h-full w-full items-center justify-center">
+                    <img
+                      src="/restricted.png"
+                      alt="WhatsApp Cloud API hosting active status screenshot"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-4 border-t border-border/40 px-6 py-4 sm:px-8">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            className="min-w-[4.5rem] font-semibold"
+            onClick={() => onOpenChange(false)}
+          >
+            Got it
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
