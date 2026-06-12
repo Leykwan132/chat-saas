@@ -1,4 +1,4 @@
-import { Check, Loader2, SmilePlus } from 'lucide-react';
+import { AlertCircle, Check, CheckCheck, Loader2, SmilePlus } from 'lucide-react';
 import { isFileUIPart } from 'ai';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -75,6 +75,63 @@ function getInboxMessageFileParts(
       ...part,
       id: `${message.key}-file-${index}`,
     }));
+}
+
+function OutgoingReceiptIcon({
+  message,
+  isPending,
+}: {
+  message: InboxUIMessage;
+  isPending: boolean;
+}) {
+  if (isPending) {
+    return (
+      <Loader2
+        className="size-2.5 shrink-0 animate-spin opacity-80"
+        aria-label="Sending"
+      />
+    );
+  }
+
+  switch (message.channelStatus) {
+    case 'read':
+      return (
+        <CheckCheck
+          className="size-2.5 shrink-0 text-blue-500"
+          aria-label="Read"
+        />
+      );
+    case 'delivered':
+      return (
+        <CheckCheck
+          className="size-2.5 shrink-0 opacity-80"
+          aria-label="Delivered"
+        />
+      );
+    case 'failed':
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <AlertCircle
+              className="size-2.5 shrink-0 text-destructive"
+              aria-label="Failed to send"
+            />
+          </TooltipTrigger>
+          <TooltipContent>
+            {message.failureReason ?? 'Failed to send'}
+          </TooltipContent>
+        </Tooltip>
+      );
+    case 'queued':
+    case 'sent':
+    default:
+      return (
+        <Check
+          className="size-2.5 shrink-0 opacity-80"
+          aria-label="Sent"
+        />
+      );
+  }
 }
 
 export type InboxThreadMessagesProps = {
@@ -642,17 +699,7 @@ export function InboxThreadMessages({
                         />
                       </div>
                       <span className="flex items-center justify-end gap-0.5 pr-0.5 text-xs text-muted-foreground">
-                        {isPending ? (
-                          <Loader2
-                            className="size-2.5 shrink-0 animate-spin opacity-80"
-                            aria-label="Sending"
-                          />
-                        ) : (
-                          <Check
-                            className="size-2.5 shrink-0 opacity-80"
-                            aria-hidden
-                          />
-                        )}
+                        <OutgoingReceiptIcon message={m} isPending={isPending} />
                         <span>{formatMessageTime(m._creationTime)}</span>
                       </span>
                     </div>

@@ -6,6 +6,7 @@ import {
   resolveInboxLedgerContentType,
   resolveWebhookAudioFiles,
 } from "./chat/inboxAudioIngest";
+import { markOutboundReadThroughTimestamp } from "./chat/readReceipts";
 
 // POST handler for the `object: "page"` branch of /webhook/meta.
 //
@@ -54,6 +55,29 @@ export async function receive(
         continue;
       }
 
+      const readWatermark = parseMetaTimestamp(event.read?.watermark);
+      if (recipientId && senderId && readWatermark !== undefined) {
+        console.log("[messengerWebhook.receive] read receipt event received:", {
+          recipientId,
+          senderId,
+          watermark: event.read?.watermark,
+          watermarkMs: readWatermark,
+          timestamp: event.timestamp,
+        });
+
+        try {
+          await ctx.runMutation(internal.messengerWebhook.handleReadReceipt, {
+            pageId: recipientId,
+            senderPsid: senderId,
+            watermarkMs: readWatermark,
+            timestampMs: parseMetaTimestamp(event.timestamp),
+          });
+        } catch (err) {
+          console.error("Failed to apply Messenger read receipt", err);
+        }
+        continue;
+      }
+
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
 
@@ -65,9 +89,11 @@ export async function receive(
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
-        .filter((a: any) => a.type === "image" && a.payload?.url)
-        .map((a: any) => ({
-          url: a.payload.url as string,
+        .filter((a): a is WebhookAttachment & { payload: { url: string } } =>
+          a.type === "image" && typeof a.payload?.url === "string",
+        )
+        .map((a) => ({
+          url: a.payload.url,
           mimeType: "image/jpeg", // webhook payloads don't explicitly specify mimeType, default to image/jpeg
         }));
       const audioAttachments = resolveWebhookAudioFiles(webhookAttachments);
@@ -242,6 +268,51 @@ export const handleReaction = internalMutation({
   },
 });
 
+export const handleReadReceipt = internalMutation({
+  args: {
+    pageId: v.string(),
+    senderPsid: v.string(),
+    watermarkMs: v.number(),
+    timestampMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const channel = await ctx.db
+      .query("channels")
+      .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
+      .unique();
+    if (channel === null) {
+      console.warn(
+        `Messenger read receipt for unknown page_id=${args.pageId}; skipping`,
+      );
+      return;
+    }
+    if (args.senderPsid === args.pageId) return;
+
+    const conversation = await ctx.db
+      .query("conversations")
+      .withIndex("by_channel_and_contactAddress", (q) =>
+        q.eq("channelId", channel._id).eq("contactAddress", args.senderPsid),
+      )
+      .unique();
+    if (conversation === null) return;
+
+    await markOutboundReadThroughTimestamp(ctx, {
+      conversationId: conversation._id,
+      channelId: channel._id,
+      watermarkMs: args.watermarkMs,
+      source: "messenger_read",
+      timestampMs: args.timestampMs ?? args.watermarkMs,
+    });
+  },
+});
+
+function parseMetaTimestamp(timestamp: number | string | undefined): number | undefined {
+  if (timestamp === undefined) return undefined;
+  const n = Number(timestamp);
+  if (!Number.isFinite(n)) return undefined;
+  return n < 1_000_000_000_000 ? n * 1000 : n;
+}
+
 type MessengerWebhookEnvelope = {
   object?: string;
   entry?: Array<{
@@ -251,6 +322,9 @@ type MessengerWebhookEnvelope = {
       sender?: { id?: string };
       recipient?: { id?: string };
       timestamp?: number;
+      read?: {
+        watermark?: number | string;
+      };
       reaction?: {
         reaction?: string;
         emoji?: string;
@@ -265,4 +339,9 @@ type MessengerWebhookEnvelope = {
       };
     }>;
   }>;
+};
+
+type WebhookAttachment = {
+  type: string;
+  payload?: { url?: string };
 };

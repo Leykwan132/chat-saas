@@ -54,6 +54,10 @@ export type InboxUIMessage = UIMessage & {
   inboxAttachments?: InboxAttachment[];
   ledgerMessageId?: string;
   externalId?: string;
+  channelStatus?: Doc<"messages">["status"];
+  channelStatusUpdatedAt?: number;
+  readAt?: number;
+  failureReason?: string;
   reactions?: InboxMessageReaction[];
 };
 
@@ -219,6 +223,10 @@ export async function messageDocsToInboxUIMessages(
             ? {
                 ledgerMessageId: ledger._id,
                 externalId: ledger.externalId,
+                channelStatus: ledger.status,
+                channelStatusUpdatedAt: ledger.statusUpdatedAt,
+                readAt: ledger.readAt,
+                failureReason: ledger.failureReason,
                 reactions: ledger.reactions,
               }
             : {}),

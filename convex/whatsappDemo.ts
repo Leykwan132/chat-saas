@@ -9,7 +9,7 @@ import {
 
 const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
 const WHATSAPP_DEMO_CONVERSATION_TAG = "whatsapp_demo";
-const WHATSAPP_DEMO_PHONE_NUMBER_ID = "1121402084386768";
+export const WHATSAPP_DEMO_PHONE_NUMBER_ID = "1121402084386768";
 const WHATSAPP_DEMO_WABA_ID = "1457383175576319";
 const WHATSAPP_DEMO_RECIPIENT = "60129499394";
 const WHATSAPP_DEMO_TEMPLATE_LANGUAGE = "en_US";
@@ -55,12 +55,14 @@ export const ensureInbox = mutation({
       return { status: "no_organization" };
     }
 
-    const existing = await ctx.db
-      .query("channels")
-      .withIndex("by_phoneNumberId", (q) =>
-        q.eq("phoneNumberId", WHATSAPP_DEMO_PHONE_NUMBER_ID),
-      )
-      .unique();
+    const existing = (
+      await ctx.db
+        .query("channels")
+        .withIndex("by_orgId_and_service", (q) =>
+          q.eq("orgId", orgId).eq("service", "whatsapp"),
+        )
+        .collect()
+    ).find((c) => c.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID) ?? null;
 
     if (existing !== null) {
       const token = existing.accessToken?.trim() ?? "";

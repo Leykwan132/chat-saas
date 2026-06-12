@@ -6,6 +6,7 @@ import {
   resolveInboxLedgerContentType,
   resolveWebhookAudioFiles,
 } from "./chat/inboxAudioIngest";
+import { markOutboundReadThroughExternalId } from "./chat/readReceipts";
 
 // POST handler for the `object: "instagram"` branch of /webhook/meta.
 // The caller (convex/http.ts) has already validated the HMAC and parsed JSON.
@@ -41,9 +42,60 @@ export async function receive(
   }
 
   for (const entry of payload.entry ?? []) {
+    for (const change of entry.changes ?? []) {
+      if (change.field !== "messaging_seen") continue;
+      const value = change.value;
+      const recipientId = value.recipient?.id;
+      const senderId = value.sender?.id;
+      const readMid = value.read?.mid;
+      if (!recipientId || !senderId || !readMid) continue;
+
+      console.log("[instagramWebhook.receive] seen receipt event received:", {
+        source: "changes",
+        recipientId,
+        senderId,
+        readMid,
+        timestamp: value.timestamp,
+      });
+
+      try {
+        await ctx.runMutation(internal.instagramWebhook.handleSeenReceipt, {
+          recipientIgUserId: recipientId,
+          senderIgUserId: senderId,
+          externalId: readMid,
+          timestampMs: parseMetaTimestamp(value.timestamp),
+        });
+      } catch (err) {
+        console.error("Failed to apply Instagram seen receipt", err);
+      }
+    }
+
     for (const event of entry.messaging ?? []) {
       const recipientId = event.recipient?.id;
       const senderId = event.sender?.id;
+      const readMid = event.read?.mid;
+      if (recipientId && senderId && readMid) {
+        console.log("[instagramWebhook.receive] seen receipt event received:", {
+          source: "messaging",
+          recipientId,
+          senderId,
+          readMid,
+          timestamp: event.timestamp,
+        });
+
+        try {
+          await ctx.runMutation(internal.instagramWebhook.handleSeenReceipt, {
+            recipientIgUserId: recipientId,
+            senderIgUserId: senderId,
+            externalId: readMid,
+            timestampMs: parseMetaTimestamp(event.timestamp),
+          });
+        } catch (err) {
+          console.error("Failed to apply Instagram seen receipt", err);
+        }
+        continue;
+      }
+
       const message = event.message;
       if (!recipientId || !senderId || !message?.mid) continue;
 
@@ -55,9 +107,11 @@ export async function receive(
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
-        .filter((a: any) => a.type === "image" && a.payload?.url)
-        .map((a: any) => ({
-          url: a.payload.url as string,
+        .filter((a): a is WebhookAttachment & { payload: { url: string } } =>
+          a.type === "image" && typeof a.payload?.url === "string",
+        )
+        .map((a) => ({
+          url: a.payload.url,
           mimeType: "image/jpeg", // webhook payloads don't explicitly specify mimeType, default to image/jpeg
         }));
       const audioAttachments = resolveWebhookAudioFiles(webhookAttachments);
@@ -178,15 +232,73 @@ export const handleIncoming = internalMutation({
   },
 });
 
+export const handleSeenReceipt = internalMutation({
+  args: {
+    recipientIgUserId: v.string(),
+    senderIgUserId: v.string(),
+    externalId: v.string(),
+    timestampMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const channel = await ctx.db
+      .query("channels")
+      .withIndex("by_igUserId", (q) =>
+        q.eq("igUserId", args.recipientIgUserId),
+      )
+      .unique();
+    if (channel === null) {
+      console.warn(
+        `Instagram seen receipt for unknown ig_user_id=${args.recipientIgUserId}; skipping`,
+      );
+      return;
+    }
+
+    const conversation = await ctx.db
+      .query("conversations")
+      .withIndex("by_channel_and_contactAddress", (q) =>
+        q.eq("channelId", channel._id).eq("contactAddress", args.senderIgUserId),
+      )
+      .unique();
+    if (conversation === null) return;
+
+    await markOutboundReadThroughExternalId(ctx, {
+      conversationId: conversation._id,
+      channelId: channel._id,
+      externalId: args.externalId,
+      source: "instagram_seen",
+      timestampMs: args.timestampMs,
+    });
+  },
+});
+
+function parseMetaTimestamp(timestamp: number | string | undefined): number | undefined {
+  if (timestamp === undefined) return undefined;
+  const n = Number(timestamp);
+  if (!Number.isFinite(n)) return undefined;
+  return n < 1_000_000_000_000 ? n * 1000 : n;
+}
+
 type InstagramWebhookEnvelope = {
   object?: string;
   entry?: Array<{
     id?: string;
     time?: number;
+    changes?: Array<{
+      field?: string;
+      value: {
+        sender?: { id?: string };
+        recipient?: { id?: string };
+        timestamp?: number | string;
+        read?: { mid?: string };
+      };
+    }>;
     messaging?: Array<{
       sender?: { id?: string };
       recipient?: { id?: string };
       timestamp?: number;
+      read?: {
+        mid?: string;
+      };
       message?: {
         mid?: string;
         text?: string;
@@ -194,4 +306,9 @@ type InstagramWebhookEnvelope = {
       };
     }>;
   }>;
+};
+
+type WebhookAttachment = {
+  type: string;
+  payload?: { url?: string };
 };

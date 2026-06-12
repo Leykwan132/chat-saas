@@ -5,6 +5,8 @@ import {
   resolveInboxLedgerContentType,
   resolveWhatsAppAudioFiles,
 } from "./chat/inboxAudioIngest";
+import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
+import { WHATSAPP_DEMO_PHONE_NUMBER_ID } from "./whatsappDemo";
 
 const messageStatusValidator = v.union(
   v.literal("queued"),
@@ -87,7 +89,7 @@ export async function receive(
           if (message.type === "audio" && message.audio?.id) {
             const channel = await ctx.runQuery(
               internal.channels.internalGetChannelByPhoneNumberId,
-              { phoneNumberId },
+              { phoneNumberId, contactAddress: message.from },
             );
             if (channel?.accessToken) {
               try {
@@ -116,10 +118,19 @@ export async function receive(
       }
 
       for (const status of value.statuses ?? []) {
+        console.log("[whatsappWebhook.receive] status event received:", {
+          phoneNumberId,
+          externalId: status.id,
+          status: status.status,
+          timestamp: status.timestamp,
+          recipientId: status.recipient_id,
+        });
         try {
           await ctx.runMutation(internal.whatsappWebhook.handleStatus, {
+            phoneNumberId,
             externalId: status.id,
             status: mapStatus(status.status),
+            timestampMs: parseOptionalTimestamp(status.timestamp),
             failureReason: status.errors?.[0]?.title,
           });
         } catch (err) {
@@ -159,12 +170,34 @@ export const handleIncoming = internalMutation({
       .unique();
     if (existingMsg !== null) return;
 
-    const channel = await ctx.db
+    const channels = await ctx.db
       .query("channels")
       .withIndex("by_phoneNumberId", (q) =>
         q.eq("phoneNumberId", args.phoneNumberId),
       )
-      .unique();
+      .collect();
+
+    let channel = null;
+    if (channels.length === 1) {
+      channel = channels[0];
+    } else if (channels.length > 1) {
+      for (const c of channels) {
+        const conv = await ctx.db
+          .query("conversations")
+          .withIndex("by_channel_and_contactAddress", (q) =>
+            q.eq("channelId", c._id).eq("contactAddress", args.from),
+          )
+          .unique();
+        if (conv !== null) {
+          channel = c;
+          break;
+        }
+      }
+      if (channel === null) {
+        channel = channels.find((c) => c.status === "connected") ?? channels[0];
+      }
+    }
+
     if (channel === null) {
       console.warn(
         `Webhook for unknown phone_number_id=${args.phoneNumberId}; skipping`,
@@ -198,19 +231,48 @@ export const handleIncoming = internalMutation({
 // different platform).
 export const handleStatus = internalMutation({
   args: {
+    phoneNumberId: v.optional(v.string()),
     externalId: v.string(),
     status: messageStatusValidator,
+    timestampMs: v.optional(v.number()),
     failureReason: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const msg = await ctx.db
+    const message = await ctx.db
       .query("messages")
       .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
-      .unique();
-    if (msg === null) return;
-    const patch: Record<string, unknown> = { status: args.status };
-    if (args.failureReason) patch.failureReason = args.failureReason;
-    await ctx.db.patch(msg._id, patch);
+      .first();
+
+    let channel = null;
+    if (message !== null && message.channelId !== undefined) {
+      channel = await ctx.db.get(message.channelId);
+    }
+
+    if (channel === null && args.phoneNumberId !== undefined) {
+      const channels = await ctx.db
+        .query("channels")
+        .withIndex("by_phoneNumberId", (q) =>
+          q.eq("phoneNumberId", args.phoneNumberId!),
+        )
+        .collect();
+
+      if (channels.length === 1) {
+        channel = channels[0];
+      } else if (channels.length > 1) {
+        channel = channels.find((c) => c.status === "connected") ?? channels[0];
+      }
+    }
+
+    if (args.phoneNumberId !== undefined && channel === null) return;
+
+    await applyOutboundStatusByExternalId(ctx, {
+      externalId: args.externalId,
+      status: args.status,
+      source: "whatsapp_status",
+      timestampMs: args.timestampMs,
+      channelId: channel?._id,
+      failureReason: args.failureReason,
+    });
   },
 });
 
@@ -223,23 +285,19 @@ export const handleReaction = internalMutation({
     emoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const channel = await ctx.db
-      .query("channels")
-      .withIndex("by_phoneNumberId", (q) =>
-        q.eq("phoneNumberId", args.phoneNumberId),
-      )
-      .unique();
-    if (channel === null) {
-      console.warn(
-        `WhatsApp reaction for unknown phone_number_id=${args.phoneNumberId}; skipping`,
-      );
-      return;
-    }
     const target = await ctx.db
       .query("messages")
       .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
-      .unique();
-    if (target === null || target.channelId !== channel._id) {
+      .first();
+    if (target === null) {
+      return;
+    }
+
+    const channel = await ctx.db.get(target.channelId);
+    if (channel === null || channel.phoneNumberId !== args.phoneNumberId) {
+      console.warn(
+        `WhatsApp reaction for unknown phone_number_id=${args.phoneNumberId} or mismatched channel; skipping`,
+      );
       return;
     }
 
@@ -270,6 +328,13 @@ function parseTimestamp(ts?: string): number {
   const n = Number(ts);
   if (!Number.isFinite(n)) return Date.now();
   return n * 1000;
+}
+
+function parseOptionalTimestamp(ts?: string): number | undefined {
+  if (!ts) return undefined;
+  const n = Number(ts);
+  if (!Number.isFinite(n)) return undefined;
+  return n < 1_000_000_000_000 ? n * 1000 : n;
 }
 
 function extractContent(msg: WhatsAppIncomingMessage): string {

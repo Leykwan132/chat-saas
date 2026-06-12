@@ -12,6 +12,7 @@ import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
+import { WHATSAPP_DEMO_PHONE_NUMBER_ID } from "./whatsappDemo";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -236,10 +237,11 @@ async function upsertWhatsAppChannel(
   },
 ): Promise<Id<"channels">> {
   const now = Date.now();
-  const existing = await ctx.db
+  const channels = await ctx.db
     .query("channels")
     .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
-    .unique();
+    .collect();
+  const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
 
   const patch = {
     wabaId: args.wabaId,
@@ -286,15 +288,22 @@ export const internalStartPending = internalMutation({
       throw new Error(`WhatsApp is not supported on the ${stripeInfo.plan} plan.`);
     }
     const now = Date.now();
-    const existing = await ctx.db
+    const channels = await ctx.db
       .query("channels")
       .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
-      .unique();
+      .collect();
 
-    if (existing !== null && existing.status !== "disconnected") {
-      if (existing.orgId !== args.orgId) {
+    const isDemo = args.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID;
+    const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
+
+    if (!isDemo) {
+      const otherConnected = channels.find((c) => c.orgId !== args.orgId && c.status !== "disconnected");
+      if (otherConnected) {
         throw new Error("This WhatsApp phone number is already connected to another workspace.");
       }
+    }
+
+    if (existing !== null && existing.status !== "disconnected") {
       if (existing.status === "connected") {
         throw new Error("This WhatsApp phone number is already connected to this workspace.");
       }
@@ -364,10 +373,11 @@ export const internalSetProgress = internalMutation({
         .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId!))
         .unique();
     } else if (args.phoneNumberId) {
-      existing = await ctx.db
+      const channels = await ctx.db
         .query("channels")
         .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId!))
-        .unique();
+        .collect();
+      existing = channels.find((c) => c.orgId === args.orgId) ?? null;
     } else {
       existing = await ctx.db
         .query("channels")
@@ -411,10 +421,11 @@ export const internalRecordError = internalMutation({
         .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId!))
         .unique();
     } else if (args.phoneNumberId) {
-      existing = await ctx.db
+      const channels = await ctx.db
         .query("channels")
         .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId!))
-        .unique();
+        .collect();
+      existing = channels.find((c) => c.orgId === args.orgId) ?? null;
     } else {
       existing = await ctx.db
         .query("channels")
@@ -735,14 +746,37 @@ export const internalGetChannelByPageId = internalQuery({
 });
 
 export const internalGetChannelByPhoneNumberId = internalQuery({
-  args: { phoneNumberId: v.string() },
+  args: { phoneNumberId: v.string(), contactAddress: v.optional(v.string()) },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const channels = await ctx.db
       .query("channels")
       .withIndex("by_phoneNumberId", (q) =>
         q.eq("phoneNumberId", args.phoneNumberId),
       )
-      .unique();
+      .collect();
+
+    if (channels.length === 0) {
+      return null;
+    }
+    if (channels.length === 1) {
+      return channels[0];
+    }
+
+    if (args.contactAddress) {
+      for (const channel of channels) {
+        const conversation = await ctx.db
+          .query("conversations")
+          .withIndex("by_channel_and_contactAddress", (q) =>
+            q.eq("channelId", channel._id).eq("contactAddress", args.contactAddress!),
+          )
+          .unique();
+        if (conversation !== null) {
+          return channel;
+        }
+      }
+    }
+
+    return channels.find((c) => c.status === "connected") ?? channels[0];
   },
 });
 

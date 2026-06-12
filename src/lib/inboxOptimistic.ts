@@ -13,6 +13,10 @@ export type InboxUIMessage = UIMessage & {
   inboxAttachments?: InboxAttachment[];
   ledgerMessageId?: string;
   externalId?: string;
+  channelStatus?: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
+  channelStatusUpdatedAt?: number;
+  readAt?: number;
+  failureReason?: string;
   reactions?: InboxMessageReaction[];
 };
 

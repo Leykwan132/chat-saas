@@ -484,6 +484,20 @@ export default defineSchema({
         v.literal("failed"),
       ),
     ),
+    statusUpdatedAt: v.optional(v.number()),
+    readAt: v.optional(v.number()),
+    receiptMetadata: v.optional(
+      v.object({
+        source: v.union(
+          v.literal("whatsapp_status"),
+          v.literal("instagram_seen"),
+          v.literal("messenger_read"),
+        ),
+        providerMessageId: v.optional(v.string()),
+        providerTimestamp: v.optional(v.number()),
+        watermark: v.optional(v.number()),
+      }),
+    ),
     failureReason: v.optional(v.string()),
     agentMessageId: v.optional(v.string()),
     llmModel: v.optional(v.string()),
