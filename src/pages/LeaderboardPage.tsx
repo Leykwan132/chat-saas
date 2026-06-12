@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from 'convex/react';
-import { useAuth } from '@workos-inc/authkit-react';
-import { Link } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
-import { ModeToggle } from '@/components/mode-toggle';
+import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { Highlighter } from '@/components/ui/highlighter';
-import { POST_LOGIN_REDIRECT } from '../constants';
-import { Trophy, ArrowRight, Astroid } from 'lucide-react';
+import { Trophy, Astroid } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -243,16 +240,9 @@ const LeaderboardSkeleton = () => {
 };
 
 export default function LeaderboardPage() {
-  const { user, signIn, signUp } = useAuth();
-  const hasSession = Boolean(user);
-  
   const aggregates = useQuery(api.agentUsage.getLifetimeModelUsage);
   const monthlyAggregates = useQuery(api.agentUsage.getMonthlyUsageAggregates);
   const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
-
-  const returnTo = { state: { returnTo: POST_LOGIN_REDIRECT } };
-  const onSignIn = () => void signIn(returnTo);
-  const onSignUp = () => void signUp(returnTo);
 
   // Calculate totals
   const totalTokens = aggregates ? aggregates.reduce((sum, item) => sum + item.totalTokens, 0) : 0;
@@ -325,58 +315,8 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-[100svh] bg-zinc-50 dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-black/10 dark:selection:bg-white/20 selection:text-zinc-950 dark:selection:text-white flex flex-col justify-between">
-      
-      {/* ─── NAVIGATION BAR ─── */}
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-950 dark:text-white">
-            <img src="/icon.svg" className="size-6 dark:invert" />
-            Kilobot
-          </Link>
-          <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
-            <Link to="/" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Home
-            </Link>
-            <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-              Pricing
-            </Link>
-            <Link to="/leaderboard" className="transition-colors text-zinc-950 dark:text-white font-medium">
-              Leaderboard
-            </Link>
-          </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <ModeToggle />
-            {hasSession ? (
-              <Link
-                to={POST_LOGIN_REDIRECT}
-                className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90"
-              >
-                Dashboard
-                <ArrowRight className="size-4" />
-              </Link>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={onSignIn}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  onClick={onSignUp}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90"
-                >
-                  Get started
-                  <ArrowRight className="size-4" />
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </header>
+    <div className="min-h-[100svh] bg-zinc-50 dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 dark:selection:text-zinc-50 flex flex-col justify-between">
+      <SiteHeader />
  
       {/* ─── LEADERBOARD CONTENT ─── */}
       <main className="flex-1 max-w-5xl mx-auto w-full px-5 pt-20 pb-12 sm:px-6 sm:pt-24 sm:pb-16">

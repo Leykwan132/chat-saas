@@ -1,12 +1,13 @@
 import { Link } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import type { LucideIcon } from 'lucide-react';
 import {
   ArrowRight,
   BarChart3,
   BookOpen,
   Bot,
-  BrainCircuit,
   Check,
   ChevronDown,
   CircleDot,
@@ -17,139 +18,25 @@ import {
   Plug,
   Search,
   Users,
-  Workflow,
   Zap,
 } from 'lucide-react';
 import { SiInstagram, SiWhatsapp } from 'react-icons/si';
 import { POST_LOGIN_REDIRECT } from '@/constants';
-import { ModeToggle } from '@/components/mode-toggle';
+import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { Highlighter } from '@/components/ui/highlighter';
-import { NumberTicker } from '@/components/ui/number-ticker';
-import {
-  AnimatedSpan,
-  Terminal,
-  TypingAnimation,
-} from '@/components/ui/terminal';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 const landingCardClass =
   'gap-0 rounded-xl border-zinc-200 bg-white py-0 shadow-none ring-0 dark:border-white/[0.08] dark:bg-white/[0.02]';
 
-const teams = ['Aster Labs', 'Nvidia Growth', 'OpenAI Ops', 'Stripe GTM', 'Linear Sales', 'Vercel CX'];
 
-const features = [
-  {
-    icon: MessageSquare,
-    title: 'Qualify in thread',
-    body: 'Spot intent, urgency, and deal size.',
-  },
-  {
-    icon: BrainCircuit,
-    title: 'Answer from context',
-    body: 'Catalog, policy, and CRM in every reply.',
-  },
-  {
-    icon: Workflow,
-    title: 'Route work',
-    body: 'Escalate with a summary when needed.',
-  },
-  {
-    icon: Zap,
-    title: 'Move faster',
-    body: 'Drafts before the buyer goes cold.',
-  },
-] as const;
-
-const models = ['GPT-5', 'Claude', 'Gemini', 'Grok'];
-
-const testimonials = [
-  {
-    quote: 'Like ten senior reps who know when to hand off.',
-    name: 'Maya Tan',
-    title: 'Head of Growth, Luma Commerce',
-  },
-  {
-    quote: 'WhatsApp became our highest-intent channel.',
-    name: 'Jon Bell',
-    title: 'Founder, Northstar Supply',
-  },
-  {
-    quote: 'Full context without digging through tabs.',
-    name: 'Priya Rao',
-    title: 'RevOps Lead, Orbit Markets',
-  },
-];
-
-function Nav({
-  hasSession,
-  onSignIn,
-  onSignUp,
-}: {
-  hasSession: boolean;
-  onSignIn: () => void;
-  onSignUp: () => void;
-}) {
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-900 dark:text-white">
-          <img src="/icon.svg" className="size-6 dark:invert" />
-          Kilobot
-        </Link>
-        <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
-          <Link to="/" className="transition-colors text-zinc-900 dark:text-white font-medium">
-            Home
-          </Link>
-          <Link to="/pricing" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-            Pricing
-          </Link>
-          <Link to="/leaderboard" className="transition-colors hover:text-zinc-900 dark:hover:text-white">
-            Leaderboard
-          </Link>
-        </nav>
-        <div className="flex items-center gap-2 sm:gap-3">
-          <ModeToggle />
-          {hasSession ? (
-            <Link
-              to={POST_LOGIN_REDIRECT}
-              className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90"
-            >
-              Dashboard
-              <ArrowRight className="size-4" />
-            </Link>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={onSignIn}
-                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                onClick={onSignUp}
-                className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90"
-              >
-                Get started
-                <ArrowRight className="size-4" />
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-}
 
 function PrimaryCta({
   hasSession,
@@ -332,7 +219,7 @@ function ProductMockup() {
 
               <div className="flex min-h-0 flex-1 gap-3 overflow-hidden">
                 {/* Inbox list */}
-                <div className="flex h-full w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card lg:w-[240px]">
+                <div className="hidden sm:flex h-full w-[220px] shrink-0 flex-col overflow-hidden rounded-xl border border-border bg-card lg:w-[240px]">
                   <div className="border-b border-border p-3">
                     <div className="relative mb-2.5">
                       <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -519,7 +406,7 @@ function Hero({
   return (
     <section className="relative isolate overflow-hidden px-5 pb-24 pt-32 sm:px-6 sm:pb-32 sm:pt-40">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute inset-0 bg-zinc-50 dark:bg-[#060606]" />
+        <div className="absolute inset-0 bg-white dark:bg-[#060606]" />
       </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
         <h1 className="text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950 dark:text-white sm:text-6xl md:text-7xl lg:text-7xl">
@@ -535,9 +422,8 @@ function Hero({
             5 minutes
           </Highlighter>
         </h1>
-        <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
-          Kilobot keeps your inbox moving 24/7. It qualifies leads, answers questions, and pushes deals
-          forward—all while you sleep.
+        <p className="mx-auto mt-6 max-w-2xl text-pretty text-sm sm:text-base md:text-lg leading-relaxed text-zinc-700 dark:text-zinc-300">
+          Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
@@ -557,20 +443,6 @@ function Hero({
   );
 }
 
-function SocialProof() {
-  return (
-    <section className="border-y border-zinc-200 dark:border-white/[0.06] px-5 py-12 sm:px-6">
-      <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 text-center">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Trusted by sales teams</p>
-        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm font-medium text-zinc-400 dark:text-zinc-500">
-          {teams.map((team) => (
-            <span key={team}>{team}</span>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function SectionHeading({
   label,
@@ -598,111 +470,105 @@ function SectionHeading({
   );
 }
 
-function FeatureCard({
-  icon: Icon,
-  title,
-  body,
-  delay = 0,
-}: {
-  icon: LucideIcon;
-  title: string;
-  body: string;
-  delay?: number;
-}) {
-  return (
-    <BlurFade inView delay={delay}>
-      <Card size="sm" className={landingCardClass}>
-        <CardContent className="flex gap-3 py-4">
-          <Icon className="mt-0.5 size-5 shrink-0 text-zinc-400 dark:text-zinc-500" strokeWidth={1.75} />
-          <div className="min-w-0">
-            <CardTitle className="text-zinc-900 dark:text-white">{title}</CardTitle>
-            <CardDescription className="mt-1 text-zinc-600 dark:text-zinc-400">{body}</CardDescription>
-          </div>
-        </CardContent>
-      </Card>
-    </BlurFade>
-  );
+
+function getCleanModelName(model: string, supportedModels?: any[]): string {
+  if (supportedModels) {
+    const found = supportedModels.find(m => m.value === model);
+    if (found) return found.label;
+  }
+  const baseName = model.split('/').pop() || model;
+  return baseName.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+}
+function formatTokens(num: number, decimals = true): string {
+  if (num >= 1e12) {
+    const val = num / 1e12;
+    return (decimals ? val.toFixed(2) : val.toFixed(0)) + 'T';
+  }
+  if (num >= 1e9) {
+    const val = num / 1e9;
+    return (decimals ? val.toFixed(2) : val.toFixed(0)) + 'B';
+  }
+  if (num >= 1e6) {
+    const val = num / 1e6;
+    return (decimals ? val.toFixed(2) : val.toFixed(0)) + 'M';
+  }
+  if (num >= 1e3) {
+    const val = num / 1e3;
+    return (decimals && val % 1 !== 0 ? val.toFixed(1) : val.toFixed(0)) + 'K';
+  }
+  return num.toLocaleString();
 }
 
-function AgenticShowcase() {
+function ModelEcosystem() {
+  const aggregates = useQuery(api.agentUsage.getLifetimeModelUsage);
+  const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
+
   return (
-    <section className="scroll-mt-16 px-5 py-24 sm:px-6">
+    <section className="scroll-mt-16 border-t border-zinc-200 px-5 py-24 dark:border-white/[0.06] sm:px-6">
       <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-start">
-        <SectionHeading
-          label="Product"
-          title="Every message drives sales."
-          body="Context in. Reply out. Handoff when it matters."
-        />
-        <div className="space-y-4">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {features.map((feature, index) => (
-              <FeatureCard key={feature.title} {...feature} delay={index * 0.05} />
-            ))}
-          </div>
-          <BlurFade inView delay={0.2}>
-            <Card size="sm" className={landingCardClass}>
-              <CardContent className="flex flex-wrap gap-x-6 gap-y-1 py-4 text-sm text-zinc-500 dark:text-zinc-400">
-                <span>Slack handoffs</span>
-                <span>CRM events</span>
-                <span>Webhooks</span>
-              </CardContent>
-            </Card>
-          </BlurFade>
+        <div className="flex flex-col items-start gap-6">
+          <SectionHeading
+            label="Models"
+            title="Choose Your AI Model"
+            body="Select any models that you want."
+          />
+          <Link 
+            to="/leaderboard" 
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-white dark:text-zinc-950 bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 px-4.5 py-2.5 rounded-lg transition-colors group cursor-pointer"
+          >
+            View Leaderboard
+            <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </Link>
         </div>
-      </div>
-    </section>
-  );
-}
+        <BlurFade inView delay={0.05} className="w-full">
+          <Card className={cn(landingCardClass, "overflow-hidden flex flex-col w-full")}>
+            {/* Text & Entry Action Content */}
+            <CardContent className="p-6 flex flex-col">
 
-function StatsStrip() {
-  const stats = [
-    { label: 'Reply time', value: 18, suffix: 's' },
-    { label: 'Qualified', value: 76, suffix: '%' },
-    { label: 'Pipeline', value: 84, suffix: 'k', prefix: '$' },
-  ] as const;
 
-  return (
-    <section className="border-y border-zinc-200 dark:border-white/[0.06] px-5 py-16 sm:px-6">
-      <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-3">
-        {stats.map((stat, index) => (
-          <BlurFade key={stat.label} inView delay={index * 0.05}>
-            <Card size="sm" className={landingCardClass}>
-              <CardContent className="py-5 text-center sm:text-left">
-                <p className="text-4xl font-semibold tracking-tight text-zinc-950 dark:text-white">
-                  {'prefix' in stat ? stat.prefix : ''}
-                  <NumberTicker value={stat.value} />
-                  {stat.suffix}
-                </p>
-                <CardDescription className="mt-2">{stat.label}</CardDescription>
-              </CardContent>
-            </Card>
-          </BlurFade>
-        ))}
-      </div>
-    </section>
-  );
-}
+              {/* Clean minimalist table */}
+              <div className="w-full">
+                <div className="grid grid-cols-[48px_1fr_96px] text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 pb-2 border-b border-zinc-200 dark:border-white/[0.06] mb-1">
+                  <div>Rank</div>
+                  <div>Model</div>
+                  <div className="text-right">Tokens</div>
+                </div>
 
-function ReplyDemo() {
-  return (
-    <section className="px-5 py-24 sm:px-6">
-      <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center">
-        <SectionHeading
-          label="Drafts"
-          title="Replies ready before send."
-          body="Suggested answers you can edit and send."
-        />
-        <BlurFade inView delay={0.1}>
-          <Card className={cn(landingCardClass, 'overflow-hidden p-0')}>
-            <Terminal className="rounded-none border-0 bg-transparent shadow-none">
-              <TypingAnimation>&gt; compose</TypingAnimation>
-              <AnimatedSpan className="text-zinc-500">// draft</AnimatedSpan>
-              <AnimatedSpan className="text-zinc-900 dark:text-zinc-100">
-                Launch Bundle reserved. Ships tomorrow.
-              </AnimatedSpan>
-              <AnimatedSpan className="text-zinc-500">+ upsell · payment link</AnimatedSpan>
-              <TypingAnimation className="text-zinc-400">Ready.</TypingAnimation>
-            </Terminal>
+                {aggregates === undefined || supportedModels === undefined ? (
+                  // Loading skeleton rows
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="grid grid-cols-[48px_1fr_96px] py-3.5 border-b border-zinc-100/50 dark:border-white/[0.03] items-center">
+                      <Skeleton className="h-4 w-4 rounded bg-zinc-200 dark:bg-white/[0.08]" />
+                      <Skeleton className="h-4 w-28 rounded bg-zinc-200 dark:bg-white/[0.08]" />
+                      <Skeleton className="h-4 w-16 rounded ml-auto bg-zinc-200 dark:bg-white/[0.08]" />
+                    </div>
+                  ))
+                ) : aggregates.length === 0 ? (
+                  <div className="text-xs text-zinc-500 py-6 text-center">No usage recorded yet.</div>
+                ) : (
+                  // Real data rows (top 5)
+                  aggregates.slice(0, 5).map((item, index) => {
+                    const cleanName = getCleanModelName(item.model, supportedModels);
+                    return (
+                      <div 
+                        key={item.model} 
+                        className="grid grid-cols-[48px_1fr_96px] py-3.5 border-b border-zinc-100 dark:border-white/[0.04] last:border-0 items-center text-sm"
+                      >
+                        <span className="font-mono text-zinc-400 dark:text-zinc-500 font-medium">
+                          #{index + 1}
+                        </span>
+                        <span className="font-semibold text-zinc-900 dark:text-white truncate">
+                          {cleanName}
+                        </span>
+                        <span className="text-zinc-500 dark:text-zinc-400 font-light text-right tabular-nums">
+                          {formatTokens(item.totalTokens)}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </CardContent>
           </Card>
         </BlurFade>
       </div>
@@ -710,174 +576,41 @@ function ReplyDemo() {
   );
 }
 
-function ModelEcosystem() {
-  return (
-    <section className="scroll-mt-16 border-t border-zinc-200 px-5 py-24 dark:border-white/[0.06] sm:px-6">
-      <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-start">
-        <SectionHeading
-          label="Models"
-          title="Right model, every task."
-          body="Fast for triage. Deep for complex quotes."
-        />
-        <div className="space-y-4">
-          <BlurFade inView delay={0.05}>
-            <Card size="sm" className={landingCardClass}>
-              <CardHeader className="px-4 pb-0 pt-4 flex flex-row items-center justify-between">
-                <CardTitle className="text-sm font-normal text-zinc-500 dark:text-zinc-400">Supported</CardTitle>
-                <Link to="/leaderboard" className="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300 font-medium flex items-center gap-1">
-                  View Live Leaderboard <ArrowRight className="size-3" />
-                </Link>
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2 pb-4">
-                {models.map((model, index) => (
-                  <span
-                    key={model}
-                    className={cn(
-                      'rounded-full border px-3.5 py-1.5 text-sm font-medium',
-                      index === 0
-                        ? 'border-zinc-900 bg-zinc-900 text-white dark:border-white dark:bg-white dark:text-zinc-950'
-                        : 'border-zinc-200 text-zinc-600 dark:border-white/[0.1] dark:text-zinc-400',
-                    )}
-                  >
-                    {model}
-                  </span>
-                ))}
-              </CardContent>
-            </Card>
-          </BlurFade>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <FeatureCard
-              icon={BrainCircuit}
-              title="Guardrails"
-              body="Discounts and claims stay on-policy."
-              delay={0.1}
-            />
-            <FeatureCard
-              icon={Workflow}
-              title="Cloud agents"
-              body="Follow-ups run while you're offline."
-              delay={0.15}
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ContextTimeline() {
-  const items = [
-    ['Inbox', 'WhatsApp, Instagram, Messenger — one place.'],
-    ['Knowledge', 'Catalog, policy, and chat history.'],
-    ['Handoffs', 'Your team gets full context.'],
-    ['Pipeline', 'Qualification tracked automatically.'],
-  ] as const;
-
-  return (
-    <section className="px-5 py-24 sm:px-6">
-      <div className="mx-auto grid max-w-6xl gap-16 lg:grid-cols-2 lg:items-start">
-        <SectionHeading
-          label="Context"
-          title="Everything stays indexed."
-          body="What they asked last week still matters."
-        />
-        <div className="grid gap-3 sm:grid-cols-2">
-          {items.map(([title, body], index) => (
-            <BlurFade key={title} inView delay={index * 0.05}>
-              <Card size="sm" className={cn(landingCardClass, 'h-full')}>
-                <CardHeader className="px-4 pb-0 pt-4">
-                  <CardTitle className="text-zinc-900 dark:text-white">{title}</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4">
-                  <CardDescription>{body}</CardDescription>
-                </CardContent>
-              </Card>
-            </BlurFade>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Testimonials() {
-  return (
-    <section className="border-t border-zinc-200 px-5 py-24 dark:border-white/[0.06] sm:px-6">
-      <div className="mx-auto max-w-6xl">
-        <BlurFade inView className="mx-auto max-w-2xl text-center">
-          <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">Customers</p>
-          <h2 className="text-balance text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl md:text-5xl">
-            Built for inbox teams.
-          </h2>
-        </BlurFade>
-        <div className="mt-16 grid gap-4 md:grid-cols-3">
-          {testimonials.map((testimonial, index) => (
-            <BlurFade key={testimonial.name} inView delay={index * 0.08}>
-              <Card size="sm" className={cn(landingCardClass, 'h-full')}>
-                <CardContent className="flex h-full flex-col justify-between py-5">
-                  <blockquote className="text-base leading-7 text-zinc-700 dark:text-zinc-300">
-                    &ldquo;{testimonial.quote}&rdquo;
-                  </blockquote>
-                  <footer className="mt-6 border-t border-zinc-100 pt-4 dark:border-white/[0.06]">
-                    <p className="text-sm font-medium text-zinc-900 dark:text-white">{testimonial.name}</p>
-                    <CardDescription className="mt-0.5">{testimonial.title}</CardDescription>
-                  </footer>
-                </CardContent>
-              </Card>
-            </BlurFade>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function FinalCta({ hasSession, onSignUp }: { hasSession: boolean; onSignUp: () => void }) {
+  if (hasSession) return null;
+
   return (
-    <section className="px-5 pb-32 pt-8 sm:px-6">
-      <BlurFade inView className="mx-auto max-w-2xl">
-        <Card className={landingCardClass}>
-          <CardContent className="py-10 text-center sm:py-12">
-            <h2 className="text-balance text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
-              Scale your best rep.
-            </h2>
-            <CardDescription className="mx-auto mt-4 max-w-md text-base leading-7">
-              Launch an agent and start closing from your inbox.
-            </CardDescription>
-            <div className="mt-8 flex justify-center">
-              <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
-            </div>
-          </CardContent>
-        </Card>
-      </BlurFade>
+    <section className="bg-white dark:bg-[#060606] border-t border-zinc-200 dark:border-white/[0.06] w-full px-6 py-16 sm:px-12 sm:py-20">
+      <div className="mx-auto max-w-6xl flex justify-center">
+        <div className="shrink-0">
+          <button
+            onClick={onSignUp}
+            className="inline-flex h-11 items-center justify-center rounded-lg bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 px-6 text-sm font-semibold transition-colors cursor-pointer"
+          >
+            Request a Demo
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
 
 export default function LandingPage() {
-  const { user, signIn, signUp } = useAuth();
+  const { user, signUp } = useAuth();
   const hasSession = Boolean(user);
 
   const returnTo = { returnTo: POST_LOGIN_REDIRECT };
-  const onSignIn = () => {
-    void signIn({ state: returnTo });
-  };
   const onSignUp = () => {
     void signUp({ state: returnTo });
   };
 
   return (
-    <div className="min-h-[100svh] bg-zinc-50 dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-black/10 dark:selection:bg-white/20 selection:text-zinc-950 dark:selection:text-white">
-      <Nav hasSession={hasSession} onSignIn={onSignIn} onSignUp={onSignUp} />
+    <div className="min-h-[100svh] bg-white dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 dark:selection:text-zinc-50">
+      <SiteHeader />
       <main>
         <Hero hasSession={hasSession} onSignUp={onSignUp} />
-        <SocialProof />
-        <AgenticShowcase />
-        <StatsStrip />
-        <ReplyDemo />
         <ModelEcosystem />
-        <ContextTimeline />
-        <Testimonials />
         <FinalCta hasSession={hasSession} onSignUp={onSignUp} />
       </main>
       <SiteFooter />

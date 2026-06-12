@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Info, Timer } from 'lucide-react';
+import { Info, Timer, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -164,18 +164,20 @@ function ConversationWindowBannerInner({
                   <span className="text-muted-foreground font-normal">Need to send a follow-up?</span>
                   <Link
                     to={`/dashboard/${agentId}/follow-ups`}
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit inline-flex items-center gap-1"
                   >
-                    Go to Follow-ups
+                    Try Follow-ups
+                    <ArrowRight className="size-3" />
                   </Link>
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-muted-foreground font-normal">Need to send marketing material?</span>
                   <Link
                     to={`/dashboard/${agentId}/broadcast`}
-                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit"
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit inline-flex items-center gap-1"
                   >
-                    Go to Broadcast
+                    Try Broadcast
+                    <ArrowRight className="size-3" />
                   </Link>
                 </div>
               </div>
