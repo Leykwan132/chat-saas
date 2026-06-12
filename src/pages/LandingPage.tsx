@@ -25,7 +25,6 @@ import { POST_LOGIN_REDIRECT } from '@/constants';
 import { ModeToggle } from '@/components/mode-toggle';
 import { SiteFooter } from '@/components/SiteFooter';
 import { BlurFade } from '@/components/ui/blur-fade';
-import { DotPattern } from '@/components/ui/dot-pattern';
 import { Highlighter } from '@/components/ui/highlighter';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import {
@@ -521,28 +520,20 @@ function Hero({
     <section className="relative isolate overflow-hidden px-5 pb-24 pt-32 sm:px-6 sm:pb-32 sm:pt-40">
       <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
         <div className="absolute inset-0 bg-zinc-50 dark:bg-[#060606]" />
-        <div
-          className={cn(
-            'absolute inset-x-0 inset-y-[-30%] h-[200%] w-full skew-y-12',
-            '[mask-image:radial-gradient(700px_circle_at_50%_25%,black,transparent)]',
-            '[-webkit-mask-image:radial-gradient(700px_circle_at_50%_25%,black,transparent)]',
-          )}
-        >
-          <DotPattern
-            width={20}
-            height={20}
-            cr={1.25}
-            className="text-zinc-400/70 dark:text-white/30"
-          />
-        </div>
       </div>
       <div className="relative z-10 mx-auto max-w-5xl text-center">
-        <h1 className="text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950 dark:text-white sm:text-6xl md:text-7xl lg:text-[5.25rem]">
-          1000x your inbox{' '}
-          <Highlighter action="highlight" color="#FACC15" isView>
-            sales
+        <h1 className="text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-zinc-950 dark:text-white sm:text-6xl md:text-7xl lg:text-7xl">
+          AI Agent for your inbox <br />
+          in{' '}
+          <Highlighter
+            action="highlight"
+            color="#FACC15"
+            isView
+            padding={[2, 2, 2, 0] as const}
+            className="ml-[0.2em]"
+          >
+            5 minutes
           </Highlighter>
-          {' '}with Kilobot.
         </h1>
         <p className="mx-auto mt-6 max-w-2xl text-pretty text-base leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-lg">
           Kilobot keeps your inbox moving 24/7. It qualifies leads, answers questions, and pushes deals

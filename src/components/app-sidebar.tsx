@@ -1,6 +1,6 @@
-import { NavLink } from 'react-router';
+import { NavLink, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Astroid, Shuffle } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -18,9 +18,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { usePermissions } from '../hooks/usePermissions';
 import { Permission, type PermissionSlug } from '../../shared/permissions';
 
@@ -40,9 +47,9 @@ type NavItem = {
 function getNavItems(agentId: string): {
   engagement: NavItem[];
   tools: NavItem[];
+  outreach: NavItem[];
   team: NavItem[];
   configuration: NavItem[];
-  more: NavItem[];
 } {
   return {
     engagement: [
@@ -52,12 +59,15 @@ function getNavItems(agentId: string): {
     ],
     tools: [
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/follow-ups`, icon: MessageCircleReply, label: 'Follow-ups', requiredPermission: Permission.FOLLOWUPS_READ },
+    ],
+    outreach: [
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
+      { to: `/dashboard/${agentId}/follow-ups`, icon: MessageCircleReply, label: 'Follow-ups', requiredPermission: Permission.FOLLOWUPS_READ },
+      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
     team: [
-      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
+      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
@@ -73,9 +83,6 @@ function getNavItems(agentId: string): {
         requiredPermission: Permission.AUTOMATION_READ,
         badge: <AiBadge />,
       },
-    ],
-    more: [
-      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
   };
 }
@@ -152,11 +159,24 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     return items.filter((item) => can(item.requiredPermission));
   };
 
+  const location = useLocation();
   const engagementItems = filterItems(navItems.engagement);
   const toolsItems = filterItems(navItems.tools);
+  const outreachItems = filterItems(navItems.outreach);
   const teamItems = filterItems(navItems.team);
   const configurationItems = filterItems(navItems.configuration);
-  const moreItems = filterItems(navItems.more);
+
+  const isOutreachActive = outreachItems.some((item) =>
+    location.pathname.startsWith(item.to),
+  );
+
+  const isAgentSetupActive = configurationItems
+    .filter((item) => item.label !== 'Playground')
+    .some((item) => location.pathname.startsWith(item.to));
+
+  const isAssignmentActive = teamItems
+    .filter((item) => item.label === 'Availability' || item.label === 'Lead Assignment')
+    .some((item) => location.pathname.startsWith(item.to));
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -253,17 +273,74 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {configurationItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                  />
-                ))}
+                {(() => {
+                  const playgroundItem = configurationItems.find((item) => item.label === 'Playground');
+                  const configGroupItems = configurationItems.filter((item) => item.label !== 'Playground');
+
+                  return (
+                    <>
+                      {/* Agent Setup collapsible submenu */}
+                      {configGroupItems.length > 0 && (
+                        <Collapsible
+                          asChild
+                          defaultOpen={isAgentSetupActive}
+                          className="group/collapsible"
+                        >
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton tooltip="Agent Setup">
+                                <Astroid />
+                                <span>Agent Setup</span>
+                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenuSub className="border-l-0 pl-2">
+                                {configGroupItems.map((item) => (
+                                  <SidebarMenuSubItem key={item.to}>
+                                    <NavLink to={item.to} end={item.end}>
+                                      {({ isActive }) => (
+                                        <SidebarMenuButton asChild isActive={isActive}>
+                                          {item.badge ? (
+                                            <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
+                                              <item.icon />
+                                              <span className="flex min-w-0 flex-1 items-center gap-1.5">
+                                                <span className="truncate">{item.label}</span>
+                                                {item.badge}
+                                              </span>
+                                            </span>
+                                          ) : (
+                                            <span>
+                                              <item.icon />
+                                              <span>{item.label}</span>
+                                            </span>
+                                          )}
+                                        </SidebarMenuButton>
+                                      )}
+                                    </NavLink>
+                                  </SidebarMenuSubItem>
+                                ))}
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
+                      )}
+
+                      {/* Playground */}
+                      {playgroundItem && (
+                        <SidebarNavMenuItem
+                          key={playgroundItem.to}
+                          to={playgroundItem.to}
+                          end={playgroundItem.end}
+                          tooltip={playgroundItem.label}
+                          icon={playgroundItem.icon}
+                          label={playgroundItem.label}
+                          badge={playgroundItem.badge}
+                        />
+                      )}
+                    </>
+                  );
+                })()}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -274,22 +351,73 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>Team</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {teamItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                  />
-                ))}
+                {(() => {
+                  const assignmentGroupItems = teamItems.filter(
+                    (item) => item.label === 'Availability' || item.label === 'Lead Assignment'
+                  );
+                  const otherTeamItems = teamItems.filter(
+                    (item) => item.label !== 'Availability' && item.label !== 'Lead Assignment'
+                  );
+
+                  return (
+                    <>
+                      {/* Assignment collapsible submenu */}
+                      {assignmentGroupItems.length > 0 && (
+                        <Collapsible
+                          asChild
+                          defaultOpen={isAssignmentActive}
+                          className="group/collapsible"
+                        >
+                          <SidebarMenuItem>
+                            <CollapsibleTrigger asChild>
+                              <SidebarMenuButton tooltip="Assignment">
+                                <Shuffle />
+                                <span>Assignment</span>
+                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                              </SidebarMenuButton>
+                            </CollapsibleTrigger>
+                            <CollapsibleContent>
+                              <SidebarMenuSub className="border-l-0 pl-2">
+                                {assignmentGroupItems.map((item) => (
+                                  <SidebarMenuSubItem key={item.to}>
+                                    <NavLink to={item.to} end>
+                                      {({ isActive }) => (
+                                        <SidebarMenuButton asChild isActive={isActive}>
+                                          <span>
+                                            <item.icon />
+                                            <span>{item.label}</span>
+                                          </span>
+                                        </SidebarMenuButton>
+                                      )}
+                                    </NavLink>
+                                  </SidebarMenuSubItem>
+                                ))}
+                              </SidebarMenuSub>
+                            </CollapsibleContent>
+                          </SidebarMenuItem>
+                        </Collapsible>
+                      )}
+
+                      {/* Other Team Items (Channels, Analytics, etc.) */}
+                      {otherTeamItems.map((item) => (
+                        <SidebarNavMenuItem
+                          key={item.to}
+                          to={item.to}
+                          end
+                          tooltip={item.label}
+                          icon={item.icon}
+                          label={item.label}
+                        />
+                      ))}
+                    </>
+                  );
+                })()}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
 
-        {toolsItems.length > 0 && (
+        {(toolsItems.length > 0 || outreachItems.length > 0) && (
           <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -304,26 +432,43 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     label={item.label}
                   />
                 ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
 
-        {moreItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>More</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {moreItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                  />
-                ))}
+                {/* Outreach collapsible submenu */}
+                {outreachItems.length > 0 && (
+                  <Collapsible
+                    asChild
+                    defaultOpen={isOutreachActive}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip="Outreach">
+                          <Send />
+                          <span>Outreach</span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub className="border-l-0 pl-2">
+                          {outreachItems.map((item) => (
+                            <SidebarMenuSubItem key={item.to}>
+                              <NavLink to={item.to}>
+                                {({ isActive }) => (
+                                  <SidebarMenuButton asChild isActive={isActive}>
+                                    <span>
+                                      <item.icon />
+                                      <span>{item.label}</span>
+                                    </span>
+                                  </SidebarMenuButton>
+                                )}
+                              </NavLink>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

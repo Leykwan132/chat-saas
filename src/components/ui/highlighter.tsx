@@ -2,7 +2,10 @@ import { useLayoutEffect, useRef } from "react"
 import type React from "react"
 import { useInView } from "motion/react"
 import { annotate } from "rough-notation"
-import { type RoughAnnotation } from "rough-notation/lib/model"
+import {
+  type RoughAnnotation,
+  type RoughPadding,
+} from "rough-notation/lib/model"
 
 type AnnotationAction =
   | "highlight"
@@ -20,9 +23,10 @@ interface HighlighterProps {
   strokeWidth?: number
   animationDuration?: number
   iterations?: number
-  padding?: number
+  padding?: RoughPadding
   multiline?: boolean
   isView?: boolean
+  className?: string
 }
 
 export function Highlighter({
@@ -35,6 +39,7 @@ export function Highlighter({
   padding = 2,
   multiline = true,
   isView = false,
+  className,
 }: HighlighterProps) {
   const elementRef = useRef<HTMLSpanElement>(null)
 
@@ -92,7 +97,10 @@ export function Highlighter({
   ])
 
   return (
-    <span ref={elementRef} className="relative inline-block bg-transparent">
+    <span
+      ref={elementRef}
+      className={`relative inline-block bg-transparent ${className || ""}`}
+    >
       {children}
     </span>
   )

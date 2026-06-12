@@ -91,6 +91,7 @@ import {
   inboxColumnScrollClassName,
 } from '@/components/inbox/inboxLayout';
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
+import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -1228,22 +1229,32 @@ export default function ChatsPage() {
                     </Button>
                   </div>
                 )}
-                <InboxReplyInput
-                  busy={sendBusy}
-                  disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
-                  onChange={setDraftReply}
-                  onSubmit={(message) => void handleSendReply(message)}
-                  placeholder={
-                    threadDataLoading
-                      ? 'Loading conversation…'
-                      : !can(Permission.CHATS_REPLY)
-                        ? 'You do not have permission to reply to chats'
-                        : canReplyFromInbox
-                          ? `Reply to ${displayHeaderName ?? 'customer'}…`
-                          : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
-                  }
-                  value={draftReply}
-                />
+                <div className={cn(
+                  'flex flex-col w-full',
+                  canReplyFromInbox && 'rounded-2xl border border-border bg-input/50 focus-within:border-ring overflow-hidden [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0'
+                )}>
+                  <ConversationWindowBanner
+                    lastCustomerMessageAt={selectedConversation?.lastCustomerMessageAt}
+                    service={selectedConversation?.service ?? ''}
+                    agentId={agentId}
+                  />
+                  <InboxReplyInput
+                    busy={sendBusy}
+                    disabled={threadDataLoading || !canReplyFromInbox || !can(Permission.CHATS_REPLY)}
+                    onChange={setDraftReply}
+                    onSubmit={(message) => void handleSendReply(message)}
+                    placeholder={
+                      threadDataLoading
+                        ? 'Loading conversation…'
+                        : !can(Permission.CHATS_REPLY)
+                          ? 'You do not have permission to reply to chats'
+                          : canReplyFromInbox
+                            ? `Reply to ${displayHeaderName ?? 'customer'}…`
+                            : 'Replies from the inbox are supported on WhatsApp, Instagram, and Messenger only'
+                    }
+                    value={draftReply}
+                  />
+                </div>
               </div>
             </div>
           ) : conversationsStillLoading ? (
