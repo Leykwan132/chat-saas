@@ -18,7 +18,7 @@ export const inboxSidebarItemInactiveClassName =
   'text-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground';
 
 export const inboxSidebarIconSlotClassName =
-  'flex size-[1.125rem] shrink-0 items-center justify-center [&_svg]:size-[1.125rem]';
+  'flex size-[1.125rem] shrink-0 items-center justify-center [&>svg]:size-[1.125rem]';
 
 export const inboxSidebarCountClassName =
   'pointer-events-none shrink-0 rounded-xl px-[0.225rem] text-[0.675rem] font-medium tabular-nums text-muted-foreground';

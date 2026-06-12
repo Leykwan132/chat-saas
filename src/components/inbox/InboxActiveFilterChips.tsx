@@ -29,7 +29,7 @@ export function InboxActiveFilterChips({
           className="inline-flex max-w-full items-center gap-1 rounded-md bg-muted px-2 py-0.5 text-[11px] font-medium text-foreground"
         >
           {filter.icon ? (
-            <span className="flex shrink-0 items-center [&_svg]:size-3">{filter.icon}</span>
+            <span className="flex shrink-0 items-center [&>svg]:size-3">{filter.icon}</span>
           ) : null}
           <span className="truncate">{filter.label}</span>
           <button

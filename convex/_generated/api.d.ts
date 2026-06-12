@@ -19,6 +19,7 @@ import type * as autoBookingSessionStatus from "../autoBookingSessionStatus.js";
 import type * as billingScope from "../billingScope.js";
 import type * as broadcastPool from "../broadcastPool.js";
 import type * as calendarEvents from "../calendarEvents.js";
+import type * as calendarFormatUtils from "../calendarFormatUtils.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
 import type * as chat_audioUtils from "../chat/audioUtils.js";
@@ -121,6 +122,7 @@ declare const fullApi: ApiFromModules<{
   billingScope: typeof billingScope;
   broadcastPool: typeof broadcastPool;
   calendarEvents: typeof calendarEvents;
+  calendarFormatUtils: typeof calendarFormatUtils;
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
   "chat/audioUtils": typeof chat_audioUtils;

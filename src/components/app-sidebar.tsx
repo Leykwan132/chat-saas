@@ -47,8 +47,8 @@ function getNavItems(agentId: string): {
   return {
     engagement: [
       { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
       { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
+      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
     ],
     tools: [
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },

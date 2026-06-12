@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/context-menu';
 import { cn } from '@/lib/utils';
 import { getPlatformIconClassName } from '@/lib/platformIconStyles';
+import { BookedListLabel } from '@/components/booking/BookingDetailsPanel';
 import type { Id } from '../../convex/_generated/dataModel';
 
 function getTagColorClass(_tag: string): { bg: string; text: string; dot: string } {
@@ -33,6 +34,7 @@ export type Chat = {
   conversationStatus: 'open' | 'snoozed' | 'closed' | 'requires_user_input';
   tags?: string[];
   leadTemperature?: 'Hot' | 'Warm' | 'Cold';
+  hasBooking?: boolean;
   escalation?: { question: string; context: string; escalatedAt: number };
 };
 
@@ -117,9 +119,10 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
-            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0) || chat.escalation) && (
+            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0) || chat.escalation || chat.hasBooking) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {chat.hasBooking ? <BookedListLabel /> : null}
                   {chat.escalation && (
                     <span
                       className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-semibold text-amber-700 dark:text-amber-400 transition-all shadow-none"

@@ -773,6 +773,7 @@ export default defineSchema({
     autoBookingServiceId: v.optional(v.id("autoBookingServices")),
     bookingSource: v.optional(v.union(v.literal("manual"), v.literal("ai"))),
     customFieldResponses: v.optional(v.record(v.string(), autoBookingCollectedValueValidator)),
+    remarks: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

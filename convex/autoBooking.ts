@@ -9,7 +9,9 @@ import {
   getUserByWorkosId,
   normalizeTimeZone,
 } from "./teamHelpers";
+import { formatCalendarDateTime } from "./calendarFormatUtils";
 import { getOwnedAgent } from "./leadRouting/helpers";
+import { getLinkedInboxConversationDocs } from "./conversations";
 import { getZonedDayAndMinutes } from "./leadRouting/eligibility";
 import {
   ALL_PERMISSION_SLUGS,
@@ -160,23 +162,7 @@ function formatCollectedFieldValue(value: string | number | boolean | null | und
 }
 
 function formatBookingDateTime(startAt: number, endAt: number, timeZone: string) {
-  const tz = normalizeTimeZone(timeZone);
-  const dateFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  const timeFormatter = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz,
-    hour: "numeric",
-    minute: "2-digit",
-  });
-  return {
-    date: dateFormatter.format(new Date(startAt)),
-    timeRange: `${timeFormatter.format(new Date(startAt))} - ${timeFormatter.format(new Date(endAt))}`,
-  };
+  return formatCalendarDateTime(startAt, endAt, timeZone);
 }
 
 function serviceSnapshot(service: Doc<"autoBookingServices">) {
@@ -841,6 +827,7 @@ function formatBookingDetailsResponse(args: {
     date,
     timeRange,
     teamMember: args.assignedTo,
+    remarks: args.event.remarks,
   };
 }
 
@@ -1071,38 +1058,112 @@ export const listActiveServices = internalQuery({
   },
 });
 
+async function loadActiveBookingDetailsForConversation(
+  ctx: DbCtx,
+  conversationId: Id<"conversations">,
+) {
+  const session = await getExistingBookingSession(ctx, conversationId);
+  if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
+    return null;
+  }
+
+  const [event, service] = await Promise.all([
+    ctx.db.get(session.calendarEventId),
+    ctx.db.get(session.serviceId),
+  ]);
+  if (event === null || service === null || event.status === "cancelled") {
+    return null;
+  }
+
+  const team = await ctx.db.get(event.teamId);
+  const participants = await ctx.db
+    .query("calendarEventParticipants")
+    .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+    .take(20);
+  const assigned = participants.find((row) => row.role === "assigned");
+
+  return formatBookingDetailsResponse({
+    session,
+    service,
+    event,
+    timeZone: serviceTimeZone(service, team ?? undefined),
+    assignedTo: assigned?.displayName ?? assigned?.email,
+  });
+}
+
+async function assertConversationBookingRead(
+  ctx: QueryCtx,
+  conversationId: Id<"conversations">,
+) {
+  const { orgId } = await getAuthContext(ctx);
+  const conv = await ctx.db.get(conversationId);
+  if (conv === null || conv.orgId !== orgId) {
+    return null;
+  }
+  const permissions = await permissionsForCurrentUser(ctx);
+  if (!permissions.includes(Permission.CHATS_READ)) {
+    throw new Error("Forbidden");
+  }
+  return conv;
+}
+
+async function conversationHasActiveBooking(
+  ctx: QueryCtx,
+  conversationId: Id<"conversations">,
+) {
+  const session = await getExistingBookingSession(ctx, conversationId);
+  if (session === undefined || session.calendarEventId === undefined) {
+    return false;
+  }
+  const event = await ctx.db.get(session.calendarEventId);
+  return event !== null && event.status !== "cancelled";
+}
+
+export const listActiveBookingConversationIdsForCurrentOrg = query({
+  args: {},
+  handler: async (ctx) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (orgId === "personal" || !orgId) {
+      return [];
+    }
+    const permissions = await permissionsForCurrentUser(ctx);
+    if (!permissions.includes(Permission.CHATS_READ)) {
+      throw new Error("Forbidden");
+    }
+
+    const { conversations } = await getLinkedInboxConversationDocs(ctx, orgId);
+    const ids: Id<"conversations">[] = [];
+    for (const conv of conversations) {
+      if (await conversationHasActiveBooking(ctx, conv._id)) {
+        ids.push(conv._id);
+      }
+    }
+    return ids;
+  },
+});
+
+export const getCurrentBookingForConversation = query({
+  args: { conversationId: v.id("conversations") },
+  handler: async (ctx, args) => {
+    const conv = await assertConversationBookingRead(ctx, args.conversationId);
+    if (conv === null) {
+      return null;
+    }
+    return await loadActiveBookingDetailsForConversation(ctx, args.conversationId);
+  },
+});
+
 export const getCurrentBooking = internalQuery({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
-    const session = await getExistingBookingSession(ctx, args.conversationId);
-    if (session === undefined || session.calendarEventId === undefined || session.serviceId === undefined) {
-      return { success: false, message: "No booking found for this conversation." };
-    }
-
-    const [event, service] = await Promise.all([
-      ctx.db.get(session.calendarEventId),
-      ctx.db.get(session.serviceId),
-    ]);
-    if (event === null || service === null || event.status === "cancelled") {
+    const booking = await loadActiveBookingDetailsForConversation(ctx, args.conversationId);
+    if (booking === null) {
       return { success: false, message: "No active booking found for this conversation." };
     }
 
-    const team = await ctx.db.get(event.teamId);
-    const participants = await ctx.db
-      .query("calendarEventParticipants")
-      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
-      .take(20);
-    const assigned = participants.find((row) => row.role === "assigned");
-
     return {
       success: true,
-      ...formatBookingDetailsResponse({
-        session,
-        service,
-        event,
-        timeZone: serviceTimeZone(service, team ?? undefined),
-        assignedTo: assigned?.displayName ?? assigned?.email,
-      }),
+      ...booking,
     };
   },
 });

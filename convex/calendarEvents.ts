@@ -9,12 +9,33 @@ import {
   type PermissionSlug,
 } from "../shared/permissions";
 import { normalizeTimeZone } from "./teamHelpers";
+import {
+  formatCalendarAllDayDate,
+  formatCalendarDateTime,
+} from "./calendarFormatUtils";
+import { AutoBookingSessionStatus } from "./autoBookingSessionStatus";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
   v.literal("tentative"),
   v.literal("cancelled"),
 );
+
+const collectedValueValidator = v.union(
+  v.string(),
+  v.number(),
+  v.boolean(),
+  v.null(),
+);
+
+type CollectedFields = Record<string, string | number | boolean | null>;
+
+function bookingDisplayName(fields: CollectedFields) {
+  if (typeof fields.name === "string" && fields.name.trim()) {
+    return fields.name.trim();
+  }
+  return "Customer";
+}
 
 type DbCtx = QueryCtx | MutationCtx;
 type ParticipantInput = {
@@ -212,6 +233,64 @@ async function loadEventWithParticipants(
   };
 }
 
+function formatEventDateTime(event: Doc<"calendarEvents">) {
+  if (event.allDay) {
+    return {
+      date: formatCalendarAllDayDate(event.startAt, event.timeZone),
+      timeRange: "All day",
+    };
+  }
+
+  return formatCalendarDateTime(event.startAt, event.endAt, event.timeZone);
+}
+
+export const getAppointmentDetails = query({
+  args: { eventId: v.id("calendarEvents") },
+  handler: async (ctx, args) => {
+    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
+    const event = await ctx.db.get(args.eventId);
+    if (event === null || event.teamId !== auth.activeTeamId) {
+      return null;
+    }
+
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(50);
+    const assigned = participants.find((participant) => participant.role === "assigned");
+    const customer = participants.find((participant) => participant.role === "customer");
+    const attendees = participants
+      .filter((participant) => participant.role === "attendee")
+      .map((participant) => participant.displayName ?? participant.email);
+
+    const service = event.autoBookingServiceId
+      ? await ctx.db.get(event.autoBookingServiceId)
+      : null;
+    const { date, timeRange } = formatEventDateTime(event);
+    const collectedFields = event.customFieldResponses ?? {};
+
+    return {
+      eventId: event._id,
+      title: event.title,
+      status: event.status,
+      bookingSource: event.bookingSource,
+      isAutoBooking: event.bookingSource === "ai" || event.autoBookingServiceId !== undefined,
+      serviceName: service?.name ?? event.title,
+      serviceFields: service?.fields ?? [],
+      collectedFields,
+      date,
+      timeRange,
+      teamMember: assigned?.displayName ?? assigned?.email,
+      customerName: customer?.displayName ?? customer?.email,
+      attendeeNames: attendees,
+      description: event.description,
+      link: event.link,
+      conversationId: event.conversationId,
+      remarks: event.remarks,
+    };
+  },
+});
+
 export const listForRange = query({
   args: {
     startAt: v.number(),
@@ -391,6 +470,8 @@ export const update = mutation({
     customerId: v.optional(v.id("customers")),
     assignedUserId: v.optional(v.id("users")),
     attendeeUserIds: v.optional(v.array(v.id("users"))),
+    customFieldResponses: v.optional(v.record(v.string(), collectedValueValidator)),
+    remarks: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
@@ -430,8 +511,73 @@ export const update = mutation({
     if (args.startDate !== undefined) patch.startDate = args.startDate;
     if (args.endDate !== undefined) patch.endDate = args.endDate;
     if (args.status !== undefined) patch.status = args.status;
+    if (args.remarks !== undefined) patch.remarks = args.remarks.trim() || undefined;
+
+    let mergedCollectedFields: CollectedFields | undefined;
+    if (args.customFieldResponses !== undefined) {
+      mergedCollectedFields = {
+        ...(event.customFieldResponses ?? {}),
+        ...args.customFieldResponses,
+      };
+      patch.customFieldResponses = mergedCollectedFields;
+
+      if (event.autoBookingServiceId !== undefined) {
+        const service = await ctx.db.get(event.autoBookingServiceId);
+        if (service !== null) {
+          patch.title = `${service.name} - ${bookingDisplayName(mergedCollectedFields)}`;
+        }
+      }
+    }
 
     await ctx.db.patch(args.eventId, patch);
+
+    if (mergedCollectedFields !== undefined) {
+      const participants = await ctx.db
+        .query("calendarEventParticipants")
+        .withIndex("by_eventId", (q) => q.eq("eventId", args.eventId))
+        .take(50);
+      const customerParticipant = participants.find((row) => row.role === "customer");
+      const displayName = bookingDisplayName(mergedCollectedFields);
+      if (customerParticipant !== undefined) {
+        await ctx.db.patch(customerParticipant._id, {
+          displayName,
+          updatedAt: Date.now(),
+        });
+      }
+      if (customerParticipant?.customerId !== undefined) {
+        const customer = await ctx.db.get(customerParticipant.customerId);
+        if (customer !== null) {
+          const customerPatch: Partial<Doc<"customers">> = {
+            updatedAt: Date.now(),
+          };
+          if (typeof mergedCollectedFields.name === "string") {
+            customerPatch.name = mergedCollectedFields.name.trim() || undefined;
+          }
+          if (typeof mergedCollectedFields.phone === "string") {
+            customerPatch.phone = mergedCollectedFields.phone.trim() || undefined;
+          }
+          await ctx.db.patch(customer._id, customerPatch);
+        }
+      }
+      if (event.conversationId !== undefined) {
+        const sessions = await ctx.db
+          .query("autoBookingSessions")
+          .withIndex("by_conversationId", (q) => q.eq("conversationId", event.conversationId!))
+          .collect();
+        const session = sessions.find(
+          (row) =>
+            row.calendarEventId === args.eventId &&
+            (row.status === AutoBookingSessionStatus.Booked ||
+              row.status === AutoBookingSessionStatus.Editing),
+        );
+        if (session !== undefined) {
+          await ctx.db.patch(session._id, {
+            collectedFields: mergedCollectedFields,
+            updatedAt: Date.now(),
+          });
+        }
+      }
+    }
 
     const shouldReplaceParticipants =
       args.customerId !== undefined ||
@@ -491,3 +637,23 @@ export const remove = mutation({
     await ctx.db.delete(args.eventId);
   },
 });
+
+export const getEventForEditing = query({
+  args: { eventId: v.id("calendarEvents") },
+  handler: async (ctx, args) => {
+    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
+    const event = await ctx.db.get(args.eventId);
+    if (event === null || event.teamId !== auth.activeTeamId) {
+      return null;
+    }
+    const participants = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+      .take(50);
+    return {
+      ...event,
+      participants,
+    };
+  },
+});
+

@@ -77,6 +77,10 @@ import {
   InboxPageSkeleton,
 } from '@/components/inbox/InboxPageSkeleton';
 import {
+  InboxBookingDetailsCard,
+} from '@/components/inbox/InboxBookingDetailsCard';
+import { BookedCheckIcon } from '@/components/booking/BookingDetailsPanel';
+import {
   InboxFilterSidebar,
   type AssignmentFilter,
 } from '@/components/inbox/InboxFilterSidebar';
@@ -192,11 +196,13 @@ function ChatThreadLoading() {
 function DetailsPanelRailButton({
   label,
   icon: Icon,
+  marker,
   iconClassName,
   onClick,
 }: {
   label: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
+  marker?: boolean;
   iconClassName?: string;
   onClick: () => void;
 }) {
@@ -211,7 +217,11 @@ function DetailsPanelRailButton({
           className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
           aria-label={label}
         >
-          <Icon className={cn('size-4', iconClassName)} />
+          {marker ? (
+            <BookedCheckIcon />
+          ) : Icon ? (
+            <Icon className={cn('size-4', iconClassName)} />
+          ) : null}
         </Button>
       </TooltipTrigger>
       <TooltipContent side="left">{label}</TooltipContent>
@@ -238,6 +248,10 @@ export default function ChatsPage() {
     api.conversations.listLinkedForCurrentOrg,
     connectedChannels !== undefined ? {} : 'skip',
   );
+  const bookingConversationIds = useQuery(
+    api.autoBooking.listActiveBookingConversationIdsForCurrentOrg,
+    connectedChannels !== undefined ? {} : 'skip',
+  );
   const currentUser = useQuery(api.users.currentUser);
 
   const [selectedConversationId, setSelectedConversationId] = useState<
@@ -246,6 +260,7 @@ export default function ChatsPage() {
   const [platformFilter, setPlatformFilter] = useState<'all' | ConversationPlatform>('all');
   const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>('all');
   const [escalatedActive, setEscalatedActive] = useState(false);
+  const [bookingActive, setBookingActive] = useState(false);
   const [activeLeads, setActiveLeads] = useState<LeadTemperature[]>([]);
   const [activeTags, setActiveTags] = useState<string[]>([]);
   const [filterSidebarOpen, setFilterSidebarOpen] = useState(readFilterSidebarOpen);
@@ -376,6 +391,11 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
+  const conversationBooking = useQuery(
+    api.autoBooking.getCurrentBookingForConversation,
+    selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
+  );
+
   const connectedPlatforms = useMemo(() => {
     const seen = new Set<ConversationPlatform>();
     const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger'];
@@ -431,6 +451,11 @@ export default function ChatsPage() {
 
 
 
+  const bookingConversationIdSet = useMemo(() => {
+    if (!bookingConversationIds) return new Set<string>();
+    return new Set(bookingConversationIds.map((id) => id as string));
+  }, [bookingConversationIds]);
+
   const chatItems = useMemo((): InboxChatListItem[] => {
     if (!linkedConversations) return [];
     return linkedConversations.map((conv) => ({
@@ -448,9 +473,10 @@ export default function ChatsPage() {
       assignedUserId: conv.assignedUserId,
       tags: conv.tags ?? [],
       leadTemperature: conv.leadTemperature,
+      hasBooking: bookingConversationIdSet.has(conv._id as string),
       escalation: conv.escalation,
     }));
-  }, [linkedConversations]);
+  }, [linkedConversations, bookingConversationIdSet]);
 
   const allExistingTags = useMemo(() => {
     if (!linkedConversations) return [];
@@ -472,6 +498,7 @@ export default function ChatsPage() {
       assigned_me: 0,
       unassigned: 0,
       escalated: 0,
+      booking: 0,
       byPlatform: {} as Partial<Record<ConversationPlatform, number>>,
       byLead: {} as Partial<Record<LeadTemperature, number>>,
       byTag: {} as Record<string, number>,
@@ -489,6 +516,9 @@ export default function ChatsPage() {
       if (chat.conversationStatus === 'requires_user_input') {
         counts.escalated += 1;
       }
+      if (bookingConversationIdSet.has(chat.id as string)) {
+        counts.booking += 1;
+      }
       counts.byPlatform[chat.platform] = (counts.byPlatform[chat.platform] ?? 0) + 1;
       if (chat.leadTemperature) {
         counts.byLead[chat.leadTemperature] =
@@ -499,7 +529,7 @@ export default function ChatsPage() {
       }
     }
     return counts;
-  }, [chatItems, currentUser?.workosUserId]);
+  }, [chatItems, currentUser?.workosUserId, bookingConversationIdSet]);
 
   const filteredChats = useMemo(() => {
     let list = chatItems;
@@ -524,6 +554,9 @@ export default function ChatsPage() {
     if (escalatedActive) {
       list = list.filter((c) => c.conversationStatus === 'requires_user_input');
     }
+    if (bookingActive) {
+      list = list.filter((c) => bookingConversationIdSet.has(c.id as string));
+    }
     if (activeTags.length > 0) {
       list = list.filter(
         (c) => c.tags && activeTags.every((tag) => c.tags!.includes(tag)),
@@ -543,9 +576,11 @@ export default function ChatsPage() {
     platformFilter,
     assignmentFilter,
     escalatedActive,
+    bookingActive,
     activeTags,
     activeLeads,
     currentUser?.workosUserId,
+    bookingConversationIdSet,
   ]);
 
   useEffect(() => {
@@ -627,6 +662,13 @@ export default function ChatsPage() {
         icon: <AlertCircle className="text-amber-500" />,
       });
     }
+    if (bookingActive) {
+      filters.push({
+        id: 'status:booking',
+        label: 'Booked',
+        icon: <BookedCheckIcon size="xs" />,
+      });
+    }
     for (const lead of activeLeads) {
       const style = getLeadTemperatureStyle(lead);
       const LeadIcon = style.icon;
@@ -648,6 +690,7 @@ export default function ChatsPage() {
     assignmentFilter,
     platformFilter,
     escalatedActive,
+    bookingActive,
     activeLeads,
     activeTags,
   ]);
@@ -667,6 +710,10 @@ export default function ChatsPage() {
     }
     if (id === 'status:escalated') {
       setEscalatedActive(false);
+      return;
+    }
+    if (id === 'status:booking') {
+      setBookingActive(false);
       return;
     }
     if (id.startsWith('lead:')) {
@@ -1024,6 +1071,8 @@ export default function ChatsPage() {
           onPlatformFilterChange={setPlatformFilter}
           escalatedActive={escalatedActive}
           onEscalatedActiveChange={setEscalatedActive}
+          bookingActive={bookingActive}
+          onBookingActiveChange={setBookingActive}
           activeLeads={activeLeads}
           onToggleLead={handleToggleLead}
           activeTags={activeTags}
@@ -1149,6 +1198,14 @@ export default function ChatsPage() {
 
               {/* Chat Input — pinned to bottom of the chat column */}
               <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
+                {conversationBooking ? (
+                  <InboxBookingDetailsCard
+                    booking={conversationBooking}
+                    variant="compact"
+                    canManage={can(Permission.CALENDAR_MANAGE)}
+                    agentId={agentId}
+                  />
+                ) : null}
                 {selectedConversation?.escalation && (
                   <div className="relative flex max-h-28 items-start justify-between gap-4 overflow-y-auto rounded-lg border border-border bg-muted/40 p-3 text-xs shadow-none">
                     <ShineBorder shineColor={['#DC2626', '#EF4444', '#F87171']} />
@@ -1275,6 +1332,13 @@ export default function ChatsPage() {
                   icon={FileText}
                   onClick={() => handleExpandDetailsSection('summary')}
                 />
+                {conversationBooking ? (
+                  <DetailsPanelRailButton
+                    label="Booked"
+                    marker
+                    onClick={() => setDetailsPanelOpen(true)}
+                  />
+                ) : null}
               </div>
             ) : (
             <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
@@ -1738,6 +1802,16 @@ export default function ChatsPage() {
                         </div>
                       ) : null}
                     </div>
+
+                    {conversationBooking ? (
+                      <div className="mt-5 px-4 pb-3">
+                        <InboxBookingDetailsCard
+                          booking={conversationBooking}
+                          canManage={can(Permission.CALENDAR_MANAGE)}
+                          agentId={agentId}
+                        />
+                      </div>
+                    ) : null}
 
                   </div>
                 )

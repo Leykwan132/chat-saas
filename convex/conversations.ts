@@ -6,7 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { metaIndicatorPool } from "./inboxPools";
 
-async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
+export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
   const channelRows = await ctx.db
     .query("channels")
     .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))

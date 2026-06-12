@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useParams } from 'react-router';
+import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
@@ -71,6 +71,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -80,7 +81,7 @@ import {
 } from '@/components/inbox/inboxLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
-import { cn } from '@/lib/utils';
+import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import {
   inboxSidebarCountClassName,
   inboxSidebarGroupLabelClassName,
@@ -91,6 +92,7 @@ import {
   inboxSidebarItemInactiveClassName,
   inboxSidebarSectionClassName,
 } from '@/lib/sidebarNavStyles';
+import { cn } from '@/lib/utils';
 
 const calendarApi = api.calendarEvents;
 
@@ -122,6 +124,10 @@ type CalendarEvent = {
   startDate?: string;
   endDate?: string;
   status: 'confirmed' | 'tentative' | 'cancelled';
+  bookingSource?: 'manual' | 'ai';
+  autoBookingServiceId?: Id<'autoBookingServices'>;
+  customFieldResponses?: Record<string, string | number | boolean | null>;
+  remarks?: string;
   participants: CalendarParticipant[];
 };
 
@@ -146,7 +152,108 @@ type EventFormState = {
   timeZone: string;
   description: string;
   link: string;
+  remarks: string;
+  collectedFields: Record<string, string>;
 };
+
+const DEFAULT_COLLECTED_FIELD_KEYS = new Set(['date', 'time', 'name', 'phone']);
+
+type ServiceFieldDefinition = {
+  key: string;
+  label: string;
+  type: string;
+  options?: string[];
+};
+
+function collectedFieldsToFormValues(
+  fields: Record<string, string | number | boolean | null | undefined>,
+): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    if (value === null || value === undefined) {
+      result[key] = '';
+    } else if (typeof value === 'boolean') {
+      result[key] = value ? 'Yes' : 'No';
+    } else {
+      result[key] = String(value);
+    }
+  }
+  return result;
+}
+
+function parseCollectedFieldFormValue(
+  raw: string,
+  field?: ServiceFieldDefinition,
+): string | number | boolean | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (field?.type === 'number') {
+    const parsed = Number(trimmed);
+    return Number.isFinite(parsed) ? parsed : trimmed;
+  }
+  if (field?.type === 'boolean') {
+    return trimmed.toLowerCase() === 'yes' || trimmed.toLowerCase() === 'true';
+  }
+  return trimmed;
+}
+
+function buildCustomFieldResponses(
+  formValues: Record<string, string>,
+  serviceFields: ServiceFieldDefinition[],
+): Record<string, string | number | boolean | null> {
+  const result: Record<string, string | number | boolean | null> = {};
+  const serviceFieldByKey = new Map(serviceFields.map((field) => [field.key, field]));
+
+  for (const key of ['name', 'phone']) {
+    if (key in formValues) {
+      result[key] = parseCollectedFieldFormValue(formValues[key] ?? '');
+    }
+  }
+
+  for (const field of serviceFields) {
+    if (DEFAULT_COLLECTED_FIELD_KEYS.has(field.key.toLowerCase())) continue;
+    if (!(field.key in formValues)) continue;
+    result[field.key] = parseCollectedFieldFormValue(formValues[field.key] ?? '', field);
+  }
+
+  for (const [key, value] of Object.entries(formValues)) {
+    if (key in result) continue;
+    if (DEFAULT_COLLECTED_FIELD_KEYS.has(key.toLowerCase()) && key !== 'name' && key !== 'phone') {
+      continue;
+    }
+    result[key] = parseCollectedFieldFormValue(value, serviceFieldByKey.get(key));
+  }
+
+  return result;
+}
+
+function collectedFieldsEqual(a: Record<string, string>, b: Record<string, string>) {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  for (const key of keys) {
+    if ((a[key] ?? '') !== (b[key] ?? '')) return false;
+  }
+  return true;
+}
+
+function customerDetailServiceFields(serviceFields: ServiceFieldDefinition[]) {
+  return serviceFields.filter(
+    (field) => !DEFAULT_COLLECTED_FIELD_KEYS.has(field.key.toLowerCase()),
+  );
+}
+
+function CustomerDetailFormSkeleton() {
+  return (
+    <div className="grid gap-4 rounded-xl border border-border bg-card p-4">
+      <Skeleton className="h-3 w-24 rounded-md" />
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="grid gap-2">
+          <Skeleton className="h-4 w-24 rounded-md" />
+          <Skeleton className="h-9 w-full rounded-md" />
+        </div>
+      ))}
+    </div>
+  );
+}
 
 function memberLabel(user: Pick<Doc<'users'>, 'firstName' | 'lastName' | 'email'>) {
   const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
@@ -514,6 +621,8 @@ function createInitialFormState(
     timeZone,
     description: '',
     link: '',
+    remarks: '',
+    collectedFields: {},
   };
 }
 
@@ -543,6 +652,8 @@ function formStateFromEvent(event: CalendarEvent, displayTimeZone: string): Even
     timeZone,
     description: event.description ?? '',
     link: event.link ?? '',
+    remarks: event.remarks ?? '',
+    collectedFields: collectedFieldsToFormValues(event.customFieldResponses ?? {}),
   };
 }
 
@@ -559,7 +670,9 @@ function formStatesEqual(a: EventFormState, b: EventFormState) {
     a.allDay === b.allDay &&
     a.timeZone === b.timeZone &&
     a.description === b.description &&
-    a.link === b.link
+    a.link === b.link &&
+    a.remarks === b.remarks &&
+    collectedFieldsEqual(a.collectedFields, b.collectedFields)
   );
 }
 
@@ -615,6 +728,7 @@ function CalendarSidebarFilterSection({
 
 export default function CalendarPage() {
   const { agentId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canReadCalendar = can(Permission.CALENDAR_READ);
   const canManageCalendar = can(Permission.CALENDAR_MANAGE);
@@ -642,6 +756,8 @@ export default function CalendarPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dayEventSearchQuery, setDayEventSearchQuery] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editDialogEventId, setEditDialogEventId] = useState<Id<'calendarEvents'> | null>(null);
 
   const monthRange = useMemo(() => {
     const start = startOfWeek(startOfMonth(visibleMonth));
@@ -667,6 +783,22 @@ export default function CalendarPage() {
   const updateEvent = useMutation(calendarApi.update);
   const removeEvent = useMutation(calendarApi.remove);
   const updateTeamTimeZone = useMutation(api.teams.updateActiveTeamTimeZone);
+
+  const editingAppointmentDetails = useQuery(
+    calendarApi.getAppointmentDetails,
+    eventSheetOpen && editingEvent ? { eventId: editingEvent._id } : 'skip',
+  );
+
+  const isEditingAutoBooking = Boolean(
+    editingAppointmentDetails?.isAutoBooking ??
+      editingEvent?.autoBookingServiceId ??
+      editingEvent?.bookingSource === 'ai',
+  );
+  const isLoadingEditingAppointmentDetails =
+    eventSheetOpen && editingEvent !== null && editingAppointmentDetails === undefined;
+  const customerServiceFields = customerDetailServiceFields(
+    editingAppointmentDetails?.serviceFields ?? [],
+  );
 
   useEffect(() => {
     if (activeTeam === undefined) return;
@@ -807,16 +939,29 @@ export default function CalendarPage() {
     setEventSheetOpen(true);
   };
 
-  const openEditSheet = (event: CalendarEvent) => {
-    setEditingEvent(event);
-    setFormState(formStateFromEvent(event, displayTimeZone));
-    setEventSheetOpen(true);
-  };
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEventId(event._id);
-    openEditSheet(event);
+    setEditDialogEventId(event._id);
+    setEditDialogOpen(true);
   };
+
+
+
+  useEffect(() => {
+    const editEventId = searchParams.get('editEvent');
+    if (!editEventId || events === undefined || !canManageCalendar) return;
+
+    const event = events.find((item) => item._id === editEventId);
+    if (!event) return;
+
+    setEditDialogEventId(event._id);
+    setEditDialogOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('editEvent');
+    setSearchParams(nextParams, { replace: true });
+  }, [canManageCalendar, events, searchParams, setSearchParams]);
 
   const handleChangeMonth = (date: Date) => {
     const nextMonth = startOfMonth(date);
@@ -829,6 +974,16 @@ export default function CalendarPage() {
 
   const updateForm = (patch: Partial<EventFormState>) => {
     setFormState((current) => ({ ...current, ...patch }));
+  };
+
+  const updateCollectedField = (key: string, value: string) => {
+    setFormState((current) => ({
+      ...current,
+      collectedFields: {
+        ...current.collectedFields,
+        [key]: value,
+      },
+    }));
   };
 
   const handleSaveEvent = async (event: React.FormEvent) => {
@@ -880,6 +1035,15 @@ export default function CalendarPage() {
         await updateEvent({
           eventId: editingEvent._id,
           ...payload,
+          ...(isEditingAutoBooking
+            ? {
+                customFieldResponses: buildCustomFieldResponses(
+                  formState.collectedFields,
+                  editingAppointmentDetails?.serviceFields ?? [],
+                ),
+                remarks: formState.remarks.trim(),
+              }
+            : {}),
         });
         setSelectedEventId(editingEvent._id);
         toast.success('Event updated');
@@ -1262,6 +1426,115 @@ export default function CalendarPage() {
                   />
                 </div>
 
+                {isEditingAutoBooking ? (
+                  isLoadingEditingAppointmentDetails ? (
+                    <CustomerDetailFormSkeleton />
+                  ) : (
+                  <div className="grid gap-4 rounded-xl border border-border bg-card p-4">
+                    <p className="text-xs font-semibold text-muted-foreground">Customer detail</p>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="booking-customer-name">Customer name</Label>
+                      <Input
+                        id="booking-customer-name"
+                        value={formState.collectedFields.name ?? ''}
+                        onChange={(event) => updateCollectedField('name', event.target.value)}
+                        placeholder="Customer name"
+                        disabled={!canEditEventSheet}
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label htmlFor="booking-customer-phone">Phone</Label>
+                      <Input
+                        id="booking-customer-phone"
+                        value={formState.collectedFields.phone ?? ''}
+                        onChange={(event) => updateCollectedField('phone', event.target.value)}
+                        placeholder="Phone number"
+                        disabled={!canEditEventSheet}
+                      />
+                    </div>
+
+                    {customerServiceFields.map((field) => {
+                      const fieldId = `booking-field-${field.key}`;
+                      const value = formState.collectedFields[field.key] ?? '';
+
+                      if (field.type === 'boolean') {
+                        return (
+                          <div
+                            key={field.key}
+                            className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 px-3 py-2.5"
+                          >
+                            <Label htmlFor={fieldId} className="text-sm">
+                              {field.label}
+                            </Label>
+                            <Switch
+                              id={fieldId}
+                              checked={value.toLowerCase() === 'yes' || value.toLowerCase() === 'true'}
+                              onCheckedChange={(checked) =>
+                                updateCollectedField(field.key, checked ? 'Yes' : 'No')
+                              }
+                              disabled={!canEditEventSheet}
+                            />
+                          </div>
+                        );
+                      }
+
+                      if (field.type === 'select' && field.options && field.options.length > 0) {
+                        return (
+                          <div key={field.key} className="grid gap-2">
+                            <Label>{field.label}</Label>
+                            <SearchableSelect
+                              value={value || undefined}
+                              placeholder={`Select ${field.label.toLowerCase()}`}
+                              searchPlaceholder={`Search ${field.label.toLowerCase()}...`}
+                              emptyText="No options found."
+                              options={field.options.map((option) => ({
+                                value: option,
+                                label: option,
+                                searchValue: option,
+                              }))}
+                              onChange={(nextValue) => updateCollectedField(field.key, nextValue)}
+                              disabled={!canEditEventSheet}
+                            />
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div key={field.key} className="grid gap-2">
+                          <Label htmlFor={fieldId}>{field.label}</Label>
+                          <Input
+                            id={fieldId}
+                            type={field.type === 'number' ? 'number' : 'text'}
+                            value={value}
+                            onChange={(event) =>
+                              updateCollectedField(field.key, event.target.value)
+                            }
+                            placeholder={field.label}
+                            disabled={!canEditEventSheet}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  )
+                ) : null}
+
+                {isEditingAutoBooking && !isLoadingEditingAppointmentDetails ? (
+                  <div className="grid gap-2">
+                    <Label htmlFor="event-remarks">Remarks</Label>
+                    <Textarea
+                      id="event-remarks"
+                      value={formState.remarks}
+                      onChange={(event) => updateForm({ remarks: event.target.value })}
+                      placeholder="Add internal notes for this booking"
+                      className="min-h-24"
+                      disabled={!canEditEventSheet}
+                    />
+                  </div>
+                ) : null}
+
                 <div className="grid gap-2">
                   <Label>Team member</Label>
                   <SearchableSelect
@@ -1330,7 +1603,7 @@ export default function CalendarPage() {
               ) : null}
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => setEventSheetOpen(false)}
               >
                 {!canEditEventSheet || (editingEvent && !isFormDirty) ? 'Close' : 'Cancel'}
@@ -1339,6 +1612,17 @@ export default function CalendarPage() {
           </form>
         </SheetContent>
       </Sheet>
+
+
+      {editDialogOpen && editDialogEventId && (
+        <EditBookingDialog
+          eventId={editDialogEventId}
+          open={editDialogOpen}
+          onOpenChange={setEditDialogOpen}
+          agentId={agentId}
+          onDeleteSuccess={() => setSelectedEventId(null)}
+        />
+      )}
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>

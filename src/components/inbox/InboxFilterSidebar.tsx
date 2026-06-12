@@ -48,6 +48,11 @@ import {
   inboxColumnScrollClassName,
 } from '@/components/inbox/inboxLayout';
 import { LeadTemperatureInfo } from '@/components/inbox/LeadTemperatureInfo';
+import { BookedCheckIcon } from '@/components/booking/BookingDetailsPanel';
+
+function BookedCheckIconSlot({ className }: { className?: string }) {
+  return <BookedCheckIcon size="sm" className={className} />;
+}
 
 export type AssignmentFilter = 'all' | 'unread' | 'assigned_me' | 'unassigned';
 
@@ -169,6 +174,7 @@ export type InboxFilterCounts = {
   assigned_me: number;
   unassigned: number;
   escalated: number;
+  booking: number;
   byPlatform: Partial<Record<ConversationPlatform, number>>;
   byLead: Partial<Record<LeadTemperature, number>>;
   byTag: Record<string, number>;
@@ -183,6 +189,8 @@ export type InboxFilterSidebarProps = {
   onPlatformFilterChange: (platform: 'all' | ConversationPlatform) => void;
   escalatedActive: boolean;
   onEscalatedActiveChange: (active: boolean) => void;
+  bookingActive: boolean;
+  onBookingActiveChange: (active: boolean) => void;
   activeLeads: LeadTemperature[];
   onToggleLead: (lead: LeadTemperature) => void;
   activeTags: string[];
@@ -203,6 +211,8 @@ export function InboxFilterSidebar({
   onPlatformFilterChange,
   escalatedActive,
   onEscalatedActiveChange,
+  bookingActive,
+  onBookingActiveChange,
   activeLeads,
   onToggleLead,
   activeTags,
@@ -265,7 +275,8 @@ export function InboxFilterSidebar({
             isActive={
               assignmentFilter === 'all' &&
               platformFilter === 'all' &&
-              !escalatedActive
+              !escalatedActive &&
+              !bookingActive
             }
             onClick={() => onOpenChange(true)}
           />
@@ -292,6 +303,12 @@ export function InboxFilterSidebar({
             icon={AlertCircle}
             iconClassName="text-amber-500"
             isActive={escalatedActive}
+            onClick={() => onOpenChange(true)}
+          />
+          <RailButton
+            label="Booked"
+            icon={BookedCheckIconSlot}
+            isActive={bookingActive}
             onClick={() => onOpenChange(true)}
           />
           <RailButton
@@ -369,6 +386,13 @@ export function InboxFilterSidebar({
               isActive={escalatedActive}
               count={counts.escalated}
               onClick={() => onEscalatedActiveChange(!escalatedActive)}
+            />
+            <FilterRow
+              label="Booked"
+              icon={<BookedCheckIcon size="sm" />}
+              isActive={bookingActive}
+              count={counts.booking}
+              onClick={() => onBookingActiveChange(!bookingActive)}
             />
           </FilterSection>
 
