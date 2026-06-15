@@ -7,6 +7,8 @@ import {
 } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
+import { getUserByWorkosId } from "./teamHelpers";
+import { logConversationEvent } from "./conversationLogs";
 
 export const followUpPool = new Workpool(
   components.followUpWorkpool,
@@ -227,7 +229,7 @@ export const followUpComplete = internalMutation({
       });
 
       try {
-        await ingestChannelMessage(ctx, {
+        const ingestResult = await ingestChannelMessage(ctx, {
           channelId: rule.channelId,
           externalId,
           contactAddress: customer.contactAddress,
@@ -239,8 +241,31 @@ export const followUpComplete = internalMutation({
           assignedAgentId: rule.agentId,
           authorUserId: rule.createdBy,
         });
+
+        // Log the followup_sent event
+        const userDoc = rule.createdBy ? await getUserByWorkosId(ctx, rule.createdBy) : null;
+        let actorName: string | undefined;
+        if (userDoc) {
+          const nameParts = [userDoc.firstName, userDoc.lastName].filter(Boolean);
+          actorName = nameParts.length > 0 ? nameParts.join(" ") : userDoc.email;
+        }
+
+        await logConversationEvent(ctx, {
+          conversationId: ingestResult.conversationId,
+          action: "followup_sent",
+          actor: {
+            type: "user",
+            userId: rule.createdBy,
+            name: actorName,
+          },
+          metadata: {
+            templateName,
+            ruleId: rule._id,
+            attemptNumber,
+          },
+        });
       } catch (err) {
-        console.error("Failed to ingest outgoing follow-up message record:", err);
+        console.error("Failed to ingest outgoing follow-up message record / log event:", err);
       }
 
       const nextAttempt = attemptNumber;

@@ -5,6 +5,7 @@ import { usePaginatedQuery } from 'convex-helpers/react';
 import {
   Bot,
   ChevronDown,
+  Clock,
   Contact,
   FileText,
   Lock,
@@ -19,6 +20,16 @@ import {
   UserX,
   Check,
   AlertCircle,
+  Megaphone,
+  UserCheck,
+  CheckCircle2,
+  Flame,
+  MessageSquarePlus,
+  Eraser,
+  CalendarCheck,
+  CalendarClock,
+  CalendarX,
+  Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
@@ -143,6 +154,240 @@ function formatRelative(timestamp: number): string {
   if (day < 30) return `${day}d ago`;
   return new Date(timestamp).toLocaleDateString();
 }
+
+function formatTimelineRelative(timestamp: number): string {
+  const diffMs = Date.now() - timestamp;
+  if (diffMs < 60000) return 'now';
+  const sec = Math.floor(diffMs / 1000);
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h`;
+  const day = Math.floor(hr / 24);
+  if (day < 30) return `${day}d`;
+  const d = new Date(timestamp);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+const formatLogActionText = (action: string, metadata: any): React.ReactNode => {
+  switch (action) {
+    case 'thread_created': {
+      const serviceName = metadata?.service
+        ? metadata.service.charAt(0).toUpperCase() + metadata.service.slice(1)
+        : 'chat';
+      return (
+        <span>
+          Conversation started via <span className="font-semibold text-foreground dark:text-white">{serviceName}</span>
+        </span>
+      );
+    }
+    case 'broadcast_sent':
+      return (
+        <span>
+          Broadcast sent: <span className="font-semibold text-foreground dark:text-white">"{metadata?.templateName || 'Template'}"</span>
+        </span>
+      );
+    case 'followup_sent':
+      return (
+        <span>
+          Follow-up sent: <span className="font-semibold text-foreground dark:text-white">"{metadata?.templateName || 'Template'}"</span> <span className="text-muted-foreground/80 dark:text-muted-foreground/60 font-normal">(attempt #{metadata?.attemptNumber || 1})</span>
+        </span>
+      );
+    case 'user_details_changed': {
+      const changes = metadata?.changes;
+      if (!changes) return <span>Updated user details</span>;
+      const parts: React.ReactNode[] = [];
+      if (changes.name) {
+        parts.push(
+          <span key="name">
+            name from <span className="font-semibold text-foreground dark:text-white">"{changes.name.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.name.to ?? ''}"</span>
+          </span>
+        );
+      }
+      if (changes.phone) {
+        if (parts.length > 0) parts.push(<span key="p-sep">, </span>);
+        parts.push(
+          <span key="phone">
+            phone from <span className="font-semibold text-foreground dark:text-white">"{changes.phone.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.phone.to ?? ''}"</span>
+          </span>
+        );
+      }
+      if (changes.email) {
+        if (parts.length > 0) parts.push(<span key="e-sep">, </span>);
+        parts.push(
+          <span key="email">
+            email from <span className="font-semibold text-foreground dark:text-white">"{changes.email.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.email.to ?? ''}"</span>
+          </span>
+        );
+      }
+      return (
+        <span>
+          Updated user details: {parts}
+        </span>
+      );
+    }
+    case 'ai_enabled':
+      return (
+        <span>
+          AI replies <span className="font-semibold text-foreground dark:text-white">turned on</span>
+        </span>
+      );
+    case 'ai_disabled':
+      return (
+        <span>
+          AI replies <span className="font-semibold text-foreground dark:text-white">turned off</span>
+        </span>
+      );
+    case 'assignee_changed':
+      return (
+        <span>
+          Assigned to <span className="font-semibold text-foreground dark:text-white">{metadata?.assigneeName || 'someone'}</span>
+        </span>
+      );
+    case 'escalation_raised':
+      return (
+        <span>
+          Human escalation <span className="font-semibold text-foreground dark:text-white">raised</span>
+        </span>
+      );
+    case 'escalation_resolved':
+      return (
+        <span>
+          Human escalation <span className="font-semibold text-foreground dark:text-white">resolved</span>
+        </span>
+      );
+    case 'tag_added':
+      return (
+        <span>
+          Tag added: <span className="font-semibold text-foreground dark:text-white">"{metadata?.tag}"</span>
+        </span>
+      );
+    case 'tag_removed':
+      return (
+        <span>
+          Tag removed: <span className="font-semibold text-foreground dark:text-white">"{metadata?.tag}"</span>
+        </span>
+      );
+    case 'event_booked':
+      return (
+        <span>
+          Event booked: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
+        </span>
+      );
+    case 'event_updated':
+      return (
+        <span>
+          Event updated: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
+        </span>
+      );
+    case 'event_cancelled':
+      return (
+        <span>
+          Event cancelled: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
+        </span>
+      );
+    case 'event_deleted':
+      return (
+        <span>
+          Event deleted: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
+        </span>
+      );
+    case 'lead_status_changed':
+      return (
+        <span>
+          Lead status: <span className="font-medium text-muted-foreground">{metadata?.from || 'None'}</span> to <span className="font-semibold text-foreground dark:text-white">{metadata?.to || 'None'}</span>
+        </span>
+      );
+    default:
+      return <span>{action}</span>;
+  }
+};
+
+const getLogActionStyle = (action: string): { icon: LucideIcon; classes: string } => {
+  switch (action) {
+    case 'thread_created':
+      return {
+        icon: MessageSquarePlus,
+        classes: 'text-white bg-slate-800 border-slate-800 dark:bg-slate-900 dark:border-slate-900',
+      };
+    case 'broadcast_sent':
+      return {
+        icon: Megaphone,
+        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
+      };
+    case 'followup_sent':
+      return {
+        icon: Clock,
+        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
+      };
+    case 'ai_enabled':
+    case 'ai_disabled':
+      return {
+        icon: Bot,
+        classes: 'text-white bg-violet-900 border-violet-900 dark:bg-violet-950 dark:border-violet-950',
+      };
+    case 'assignee_changed':
+      return {
+        icon: UserCheck,
+        classes: 'text-white bg-slate-800 border-slate-800 dark:bg-slate-900 dark:border-slate-900',
+      };
+    case 'escalation_raised':
+      return {
+        icon: AlertCircle,
+        classes: 'text-white bg-amber-800 border-amber-800 dark:bg-amber-950 dark:border-amber-950',
+      };
+    case 'escalation_resolved':
+      return {
+        icon: CheckCircle2,
+        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
+      };
+    case 'tag_added':
+      return {
+        icon: Tag,
+        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
+      };
+    case 'tag_removed':
+      return {
+        icon: Eraser,
+        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
+      };
+    case 'event_booked':
+      return {
+        icon: CalendarCheck,
+        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
+      };
+    case 'event_updated':
+      return {
+        icon: CalendarClock,
+        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
+      };
+    case 'event_cancelled':
+      return {
+        icon: CalendarX,
+        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
+      };
+    case 'event_deleted':
+      return {
+        icon: Trash2,
+        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
+      };
+    case 'lead_status_changed':
+      return {
+        icon: Flame,
+        classes: 'text-white bg-amber-800 border-amber-800 dark:bg-amber-950 dark:border-amber-950',
+      };
+    case 'user_details_changed':
+      return {
+        icon: Contact,
+        classes: 'text-white bg-zinc-700 border-zinc-700 dark:bg-zinc-800 dark:border-zinc-800',
+      };
+    default:
+      return {
+        icon: Clock,
+        classes: 'text-white bg-zinc-700 border-zinc-700 dark:bg-zinc-800 dark:border-zinc-800',
+      };
+  }
+};
 
 function formatOrgMemberDisplayName(u: Doc<'users'>): string {
   const parts = [u.firstName, u.lastName].filter(Boolean);
@@ -318,6 +563,12 @@ export default function ChatsPage() {
   const [resolveConfirmOpen, setResolveConfirmOpen] = useState(false);
   const [resolveBusy, setResolveBusy] = useState(false);
 
+  const [isEditingCustomerDetails, setIsEditingCustomerDetails] = useState(false);
+  const [editCustomerName, setEditCustomerName] = useState('');
+  const [editCustomerPhone, setEditCustomerPhone] = useState('');
+  const [editCustomerEmail, setEditCustomerEmail] = useState('');
+  const [isSavingCustomerDetails, setIsSavingCustomerDetails] = useState(false);
+
   const handleAddSpecificTag = async (tag: string) => {
     const raw = tag.trim();
     const customerId = selectedConversation?.customerId;
@@ -327,6 +578,7 @@ export default function ChatsPage() {
       await addCustomerTag({
         customerId,
         tag: raw,
+        conversationId: selectedConversation._id,
       });
       toast.success(`Tag "${raw}" added`);
     } catch (e) {
@@ -343,6 +595,7 @@ export default function ChatsPage() {
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(true);
+  const [logSectionOpen, setLogSectionOpen] = useState(false);
   const ensureWhatsappDemoInbox = useMutation(api.whatsappDemo.ensureInbox);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
   const textEntries = useQuery(
@@ -397,6 +650,11 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
+  const conversationLogs = useQuery(
+    api.conversationLogs.listByConversation,
+    selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
+  );
+
   const connectedPlatforms = useMemo(() => {
     const seen = new Set<ConversationPlatform>();
     const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger'];
@@ -430,6 +688,7 @@ export default function ChatsPage() {
     setGeneratedSummary(null);
     setSummaryError(null);
     setIsGeneratingSummary(false);
+    setIsEditingCustomerDetails(false);
   }, [selectedConversationId]);
 
   const handleGenerateSummary = async () => {
@@ -798,13 +1057,19 @@ export default function ChatsPage() {
   const handleAiToggle = async (enabled: boolean) => {
     if (!selectedConversationId) return;
     setAssigneeSaving(true);
+    const promise = setConversationAiEnabled({
+      conversationId: selectedConversationId,
+      enabled,
+    });
+    toast.promise(promise, {
+      loading: enabled ? 'Enabling AI replies…' : 'Disabling AI replies…',
+      success: enabled ? 'AI replies enabled' : 'AI replies disabled',
+      error: (e) => e instanceof Error ? e.message : 'Could not update AI replies',
+    });
     try {
-      await setConversationAiEnabled({
-        conversationId: selectedConversationId,
-        enabled,
-      });
+      await promise;
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update AI replies');
+      // Ignored here as toast.promise handles display
     } finally {
       setAssigneeSaving(false);
     }
@@ -833,12 +1098,13 @@ export default function ChatsPage() {
 
 
   const handleExpandDetailsSection = (
-    section?: 'assignee' | 'customer' | 'tags' | 'summary',
+    section?: 'assignee' | 'customer' | 'tags' | 'summary' | 'log',
   ) => {
     setDetailsPanelOpen(true);
     if (section === 'customer') setCustomerDetailsOpen(true);
     if (section === 'tags') setTagsSectionOpen(true);
     if (section === 'summary') setInteractionSummaryOpen(true);
+    if (section === 'log') setLogSectionOpen(true);
   };
 
   const handleCreateTagFromFilters = () => {
@@ -862,6 +1128,7 @@ export default function ChatsPage() {
       await updateCustomer({
         customerId,
         leadTemperature: value === 'None' ? null : (value as LeadTemperature),
+        conversationId: selectedConversation._id,
       });
       toast.success('Lead status updated');
     } catch (e) {
@@ -879,12 +1146,41 @@ export default function ChatsPage() {
       await removeCustomerTag({
         customerId,
         tag,
+        conversationId: selectedConversation._id,
       });
       toast.success('Tag removed');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Could not remove tag');
     } finally {
       setTagMutationBusy(false);
+    }
+  };
+
+  const handleStartEditCustomerDetails = () => {
+    setEditCustomerName(customerSidebarDetails?.name ?? '');
+    setEditCustomerPhone(customerSidebarDetails?.phone ?? '');
+    setEditCustomerEmail(customerSidebarDetails?.email ?? '');
+    setIsEditingCustomerDetails(true);
+  };
+
+  const handleSaveCustomerDetails = async () => {
+    const customerId = customerSidebarDetails?.customerId;
+    if (!customerId) return;
+    setIsSavingCustomerDetails(true);
+    try {
+      await updateCustomer({
+        customerId,
+        name: editCustomerName,
+        phone: editCustomerPhone,
+        email: editCustomerEmail,
+        conversationId: selectedConversation?._id,
+      });
+      toast.success('Customer details updated');
+      setIsEditingCustomerDetails(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update customer details');
+    } finally {
+      setIsSavingCustomerDetails(false);
     }
   };
 
@@ -1356,6 +1652,11 @@ export default function ChatsPage() {
                   icon={FileText}
                   onClick={() => handleExpandDetailsSection('summary')}
                 />
+                <DetailsPanelRailButton
+                  label="Action History"
+                  icon={Clock}
+                  onClick={() => handleExpandDetailsSection('log')}
+                />
                 {conversationBooking ? (
                   <DetailsPanelRailButton
                     label="Booked"
@@ -1550,6 +1851,58 @@ export default function ChatsPage() {
                         <div className="px-4 pb-3">
                           {customerSidebarDetails === undefined ? (
                             <p className="m-0 text-xs text-muted-foreground">Loading…</p>
+                          ) : isEditingCustomerDetails ? (
+                            <div className="flex flex-col gap-3 text-sm">
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-muted-foreground">Name</label>
+                                <input
+                                  type="text"
+                                  value={editCustomerName}
+                                  onChange={(e) => setEditCustomerName(e.target.value)}
+                                  className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                  placeholder="Name"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-muted-foreground">Phone number</label>
+                                <input
+                                  type="text"
+                                  value={editCustomerPhone}
+                                  onChange={(e) => setEditCustomerPhone(e.target.value)}
+                                  className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                  placeholder="Phone number"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <label className="text-[11px] font-medium text-muted-foreground">Email</label>
+                                <input
+                                  type="email"
+                                  value={editCustomerEmail}
+                                  onChange={(e) => setEditCustomerEmail(e.target.value)}
+                                  className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                  placeholder="Email"
+                                />
+                              </div>
+                              <div className="flex gap-2 justify-end pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => setIsEditingCustomerDetails(false)}
+                                  className="rounded px-2.5 py-1 text-xs font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                  disabled={isSavingCustomerDetails}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleSaveCustomerDetails}
+                                  className="rounded px-2.5 py-1 text-xs font-medium bg-black hover:bg-black/90 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-950 flex items-center gap-1 cursor-pointer disabled:opacity-50 border border-zinc-900 dark:border-zinc-100"
+                                  disabled={isSavingCustomerDetails}
+                                >
+                                  <Check className="size-3 shrink-0" />
+                                  {isSavingCustomerDetails ? 'Saving…' : 'Save'}
+                                </button>
+                              </div>
+                            </div>
                           ) : (
                             <div className="flex flex-col gap-2.5 text-sm">
                               <div className="flex justify-between gap-4">
@@ -1579,6 +1932,23 @@ export default function ChatsPage() {
                                     ? customerSidebarDetails.phone
                                     : '—'}
                                 </span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="shrink-0 text-muted-foreground">Email</span>
+                                <span className="min-w-0 truncate text-right font-medium text-foreground">
+                                  {customerSidebarDetails?.email?.trim()
+                                    ? customerSidebarDetails.email
+                                    : '—'}
+                                </span>
+                              </div>
+                              <div className="flex justify-end pt-1">
+                                <button
+                                  type="button"
+                                  onClick={handleStartEditCustomerDetails}
+                                  className="rounded px-2.5 py-1 text-xs font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                                >
+                                  Edit details
+                                </button>
                               </div>
                             </div>
                           )}
@@ -1752,6 +2122,95 @@ export default function ChatsPage() {
                                   </Command>
                                 </PopoverContent>
                               </Popover>
+                            </div>
+                          )}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <Separator />
+
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
+                        onClick={() => setLogSectionOpen((o) => !o)}
+                        aria-expanded={logSectionOpen}
+                      >
+                        <Clock className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                        <span className="text-sm font-semibold text-foreground">
+                          Action History
+                        </span>
+                        <div className="flex-1" />
+                        <ChevronDown
+                          className={cn(
+                            'size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                            !logSectionOpen && '-rotate-90',
+                          )}
+                        />
+                      </button>
+                      {logSectionOpen ? (
+                        <div className="px-4 pb-3">
+                          {conversationLogs === undefined ? (
+                            <div className="text-xs text-muted-foreground py-2 pl-4 border-l border-zinc-200 dark:border-zinc-800">
+                              Loading action history…
+                            </div>
+                          ) : conversationLogs.length === 0 ? (
+                            <div className="text-xs text-muted-foreground py-2 pl-4 border-l border-zinc-200 dark:border-zinc-800">
+                              No action history logged yet.
+                            </div>
+                          ) : (
+                            <div className="pl-2 pr-1 space-y-0">
+                              {conversationLogs.map((log, index) => (
+                                <div key={log._id} className="flex gap-3 text-xs">
+                                  {/* Left: Time */}
+                                  <div className="w-8 text-right text-muted-foreground/80 select-none shrink-0 pt-0.5 font-medium tabular-nums text-[11px]">
+                                    {formatTimelineRelative(log.performedAt)}
+                                  </div>
+
+                                  {/* Middle: Dot and Connecting Line */}
+                                  {(() => {
+                                    const styleInfo = getLogActionStyle(log.action);
+                                    return (
+                                      <div className="flex flex-col items-center shrink-0">
+                                        <div className={cn(
+                                          "size-6 rounded-full border flex items-center justify-center shrink-0 mt-0.5 shadow-none",
+                                          styleInfo.classes
+                                        )}>
+                                          <styleInfo.icon className="size-3 shrink-0" />
+                                        </div>
+                                        {index < conversationLogs.length - 1 && (
+                                          <div className="w-[1px] flex-1 bg-zinc-200 dark:bg-zinc-800 my-1" />
+                                        )}
+                                      </div>
+                                    );
+                                  })()}
+
+                                  {/* Right: Content */}
+                                  <div className="flex-1 pb-4 pt-0.5">
+                                    <div className="font-normal text-muted-foreground text-[13px] leading-snug">
+                                      {formatLogActionText(log.action, log.metadata)}
+                                    </div>
+                                    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
+                                      <span>by</span>
+                                      {log.actorType === 'user' ? (
+                                        <span className="inline-flex items-center gap-1 rounded bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 text-[10px] font-medium text-zinc-700 dark:text-zinc-300">
+                                          <User className="size-2.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
+                                          <span>{log.actorName ?? 'User'}</span>
+                                        </span>
+                                      ) : log.actorType === 'ai' ? (
+                                        <span className="font-semibold text-violet-600 dark:text-violet-400">
+                                          {log.actorName ?? 'AI'}
+                                        </span>
+                                      ) : (
+                                        <span className="font-semibold text-muted-foreground">
+                                          System
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>

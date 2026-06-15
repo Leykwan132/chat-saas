@@ -34,6 +34,7 @@ import type * as chat_readReceipts from "../chat/readReceipts.js";
 import type * as chat_streaming from "../chat/streaming.js";
 import type * as chat_threads from "../chat/threads.js";
 import type * as cloudflare from "../cloudflare.js";
+import type * as conversationLogs from "../conversationLogs.js";
 import type * as conversations from "../conversations.js";
 import type * as creditBalance from "../creditBalance.js";
 import type * as creditEntries from "../creditEntries.js";
@@ -138,6 +139,7 @@ declare const fullApi: ApiFromModules<{
   "chat/streaming": typeof chat_streaming;
   "chat/threads": typeof chat_threads;
   cloudflare: typeof cloudflare;
+  conversationLogs: typeof conversationLogs;
   conversations: typeof conversations;
   creditBalance: typeof creditBalance;
   creditEntries: typeof creditEntries;
@@ -253,6 +255,7 @@ export declare const components: {
   threadSummarizerWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"threadSummarizerWorkpool">;
   broadcastWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"broadcastWorkpool">;
   followUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"followUpWorkpool">;
+  conversationLogWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"conversationLogWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;

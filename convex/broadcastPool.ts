@@ -9,6 +9,8 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
+import { getUserByWorkosId } from "./teamHelpers";
+import { logConversationEvent } from "./conversationLogs";
 
 export const broadcastPool = new Workpool(
   components.broadcastWorkpool,
@@ -161,7 +163,7 @@ export const broadcastComplete = internalMutation({
     if (isSuccess && args.result.kind === "success") {
       const returnValue = args.result.returnValue;
       try {
-        await ingestChannelMessage(ctx, {
+        const ingestResult = await ingestChannelMessage(ctx, {
           channelId: schedule.channelId,
           externalId: returnValue.externalId,
           contactAddress: customer.contactAddress,
@@ -184,8 +186,30 @@ export const broadcastComplete = internalMutation({
             messageId = msg._id;
           }
         }
+
+        // Log the broadcast_sent event
+        const userDoc = schedule.createdBy ? await getUserByWorkosId(ctx, schedule.createdBy) : null;
+        let actorName: string | undefined;
+        if (userDoc) {
+          const nameParts = [userDoc.firstName, userDoc.lastName].filter(Boolean);
+          actorName = nameParts.length > 0 ? nameParts.join(" ") : userDoc.email;
+        }
+
+        await logConversationEvent(ctx, {
+          conversationId: ingestResult.conversationId,
+          action: "broadcast_sent",
+          actor: {
+            type: "user",
+            userId: schedule.createdBy,
+            name: actorName,
+          },
+          metadata: {
+            templateName: schedule.templateName,
+            scheduleId: schedule._id,
+          },
+        });
       } catch (err) {
-        console.error("Failed to ingest outgoing broadcast message record:", err);
+        console.error("Failed to ingest outgoing broadcast message record / log event:", err);
       }
     }
 

@@ -27,6 +27,7 @@ import {
 import { applyInboundLeadRouting, isAnyoneOnSchedule } from "../leadRouting/assign";
 import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
 import { DEFAULT_TEAM_TIME_ZONE, getUserByWorkosId, normalizeTimeZone } from "../teamHelpers";
+import { logConversationEvent } from "../conversationLogs";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -1191,6 +1192,16 @@ async function upsertInboxConversation(
       createdAt: now,
       updatedAt: now,
     });
+
+    if (!args.isHistorical) {
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: "thread_created",
+        metadata: {
+          service: args.service,
+        },
+      });
+    }
 
     if (routingAgentId !== undefined && channel !== null) {
       await applyInboundLeadRouting(ctx, {

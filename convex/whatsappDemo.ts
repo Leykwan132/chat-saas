@@ -6,6 +6,7 @@ import {
   createThreadForConversation,
   saveUserMessage,
 } from "./chat/threads";
+import { logConversationEvent } from "./conversationLogs";
 
 const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
 const WHATSAPP_DEMO_CONVERSATION_TAG = "whatsapp_demo";
@@ -148,6 +149,18 @@ export const ensureInbox = mutation({
       unreadCount: 0,
       createdAt: now,
       updatedAt: now,
+    });
+
+    await logConversationEvent(ctx, {
+      conversationId,
+      action: "thread_created",
+      actor: {
+        type: "user",
+        userId,
+      },
+      metadata: {
+        service: "whatsapp",
+      },
     });
 
     await ctx.db.insert("messages", {

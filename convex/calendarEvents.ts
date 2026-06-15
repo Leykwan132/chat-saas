@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { logConversationEvent } from "./conversationLogs";
 import {
   Permission,
   ROLE_PERMISSIONS,
@@ -394,6 +395,35 @@ export const listCustomerOptions = query({
   },
 });
 
+async function getConversationIdByCustomerId(
+  ctx: MutationCtx,
+  customerId: Id<"customers">
+): Promise<Id<"conversations"> | undefined> {
+  const conversation = await ctx.db
+    .query("conversations")
+    .withIndex("by_customerId", (q) => q.eq("customerId", customerId))
+    .first();
+  return conversation?._id;
+}
+
+async function getConversationIdForEvent(
+  ctx: MutationCtx,
+  event: Doc<"calendarEvents">
+): Promise<Id<"conversations"> | undefined> {
+  if (event.conversationId) {
+    return event.conversationId;
+  }
+  const participants = await ctx.db
+    .query("calendarEventParticipants")
+    .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
+    .take(50);
+  const customerPart = participants.find((p) => p.role === "customer");
+  if (customerPart?.customerId) {
+    return await getConversationIdByCustomerId(ctx, customerPart.customerId);
+  }
+  return undefined;
+}
+
 export const create = mutation({
   args: {
     title: v.string(),
@@ -448,6 +478,19 @@ export const create = mutation({
       eventStartAt: args.startAt,
       now,
     });
+
+    const conversationId = await getConversationIdByCustomerId(ctx, args.customerId);
+    if (conversationId) {
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: "event_booked",
+        metadata: {
+          eventId,
+          eventTitle: title,
+          startAt: args.startAt,
+        },
+      });
+    }
 
     return eventId;
   },
@@ -622,6 +665,20 @@ export const update = mutation({
         });
       }
     }
+
+    const conversationId = await getConversationIdForEvent(ctx, event);
+    if (conversationId) {
+      const isCancelled = args.status === "cancelled";
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: isCancelled ? "event_cancelled" : "event_updated",
+        metadata: {
+          eventId: args.eventId,
+          eventTitle: args.title ?? event.title,
+          startAt: args.startAt ?? event.startAt,
+        },
+      });
+    }
   },
 });
 
@@ -633,8 +690,19 @@ export const remove = mutation({
     if (event === null || event.teamId !== auth.activeTeamId) {
       throw new Error("Calendar event not found");
     }
+    const conversationId = await getConversationIdForEvent(ctx, event);
     await deleteParticipants(ctx, args.eventId);
     await ctx.db.delete(args.eventId);
+    if (conversationId) {
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: "event_deleted",
+        metadata: {
+          eventId: args.eventId,
+          eventTitle: event.title,
+        },
+      });
+    }
   },
 });
 

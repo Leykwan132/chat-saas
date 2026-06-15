@@ -20,6 +20,7 @@ import {
 } from "./mediaUrlExtractor";
 import { isPlaygroundCreditsEnabled } from "../credits";
 import { checkModelAccess, getPlanFromStripe } from "../plans";
+import { logConversationEvent } from "../conversationLogs";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -74,6 +75,18 @@ export const resetThread = mutation({
       unreadCount: 0,
       createdAt: now,
       updatedAt: now,
+    });
+
+    await logConversationEvent(ctx, {
+      conversationId,
+      action: "thread_created",
+      actor: {
+        type: "user",
+        userId,
+      },
+      metadata: {
+        service: "playground",
+      },
     });
 
     return { threadId, conversationId };

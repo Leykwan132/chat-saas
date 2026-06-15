@@ -954,4 +954,40 @@ export default defineSchema({
     providerMetadata: v.optional(v.any()),
     createdAt: v.number(),
   }),
+  conversationLogs: defineTable({
+    conversationId: v.id("conversations"),
+    orgId: v.string(),
+    action: v.union(
+      // Conversation lifecycle
+      v.literal("thread_created"),
+      v.literal("broadcast_sent"),
+      v.literal("followup_sent"),
+      v.literal("ai_enabled"),
+      v.literal("ai_disabled"),
+      v.literal("assignee_changed"),
+      v.literal("escalation_raised"),
+      v.literal("escalation_resolved"),
+      // Tags
+      v.literal("tag_added"),
+      v.literal("tag_removed"),
+      // Calendar / Booking
+      v.literal("event_booked"),
+      v.literal("event_updated"),
+      v.literal("event_cancelled"),
+      v.literal("event_deleted"),
+      // Lead
+      v.literal("lead_status_changed"),
+      v.literal("user_details_changed"),
+    ),
+    // Who performed the action
+    actorType: v.union(v.literal("user"), v.literal("ai"), v.literal("system")),
+    actorName: v.optional(v.string()),     // Display name (user name or agent name)
+    actorUserId: v.optional(v.string()),   // workosUserId if user
+    actorAgentId: v.optional(v.id("agents")),
+    // What changed (flexible metadata)
+    metadata: v.optional(v.any()),  // e.g. { tag: "VIP" }, { assigneeName: "John" }, { eventTitle: "Consultation" }
+    performedAt: v.number(),
+  })
+    .index("by_conversationId_and_performedAt", ["conversationId", "performedAt"])
+    .index("by_orgId_and_performedAt", ["orgId", "performedAt"]),
 });

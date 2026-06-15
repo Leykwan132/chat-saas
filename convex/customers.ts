@@ -9,6 +9,7 @@ import {
 } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
+import { logConversationEvent } from "./conversationLogs";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -277,7 +278,15 @@ export const getSidebarDetailsForConversation = query({
               ? "Playground"
               : conv.service;
 
-    return { name, platformLabel, phone, tags: customer?.tags ?? [], leadTemperature: customer?.leadTemperature };
+    return {
+      customerId: customer?._id ?? null,
+      name,
+      platformLabel,
+      phone,
+      email: customer?.email ?? null,
+      tags: customer?.tags ?? [],
+      leadTemperature: customer?.leadTemperature,
+    };
   },
 });
 
@@ -419,9 +428,11 @@ export const update = mutation({
     customerId: v.id("customers"),
     name: v.optional(v.string()),
     email: v.optional(v.string()),
+    phone: v.optional(v.string()),
     tags: v.optional(v.array(v.string())),
     notes: v.optional(v.string()),
     leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"), v.null())),
+    conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
     const { orgId } = await getAuthContext(ctx);
@@ -430,8 +441,44 @@ export const update = mutation({
       throw new Error("Customer not found");
     }
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
-    if (args.name !== undefined) patch.name = args.name.trim() || undefined;
-    if (args.email !== undefined) patch.email = args.email.trim() || undefined;
+    const changes: Record<string, { from: string | null; to: string | null }> = {};
+
+    if (args.name !== undefined) {
+      const trimmedName = args.name.trim();
+      const currentName = customer.name?.trim() ?? "";
+      if (trimmedName !== currentName) {
+        changes.name = {
+          from: customer.name ?? null,
+          to: trimmedName || null,
+        };
+        patch.name = trimmedName || undefined;
+      }
+    }
+
+    if (args.email !== undefined) {
+      const trimmedEmail = args.email.trim();
+      const currentEmail = customer.email?.trim() ?? "";
+      if (trimmedEmail !== currentEmail) {
+        changes.email = {
+          from: customer.email ?? null,
+          to: trimmedEmail || null,
+        };
+        patch.email = trimmedEmail || undefined;
+      }
+    }
+
+    if (args.phone !== undefined) {
+      const trimmedPhone = args.phone.trim();
+      const currentPhone = customer.phone?.trim() ?? "";
+      if (trimmedPhone !== currentPhone) {
+        changes.phone = {
+          from: customer.phone ?? null,
+          to: trimmedPhone || null,
+        };
+        patch.phone = trimmedPhone || undefined;
+      }
+    }
+
     if (args.tags !== undefined) {
       for (const tag of args.tags) {
         assertNotLeadTemperatureTag(tag);
@@ -443,6 +490,39 @@ export const update = mutation({
       patch.leadTemperature = args.leadTemperature === null ? undefined : args.leadTemperature;
     }
     await ctx.db.patch(args.customerId, patch);
+
+    // Get conversationId for logging if not provided
+    let conversationId = args.conversationId;
+    if ((Object.keys(changes).length > 0 || (args.leadTemperature !== undefined && args.leadTemperature !== customer.leadTemperature)) && !conversationId) {
+      const conv = await ctx.db
+        .query("conversations")
+        .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+        .first();
+      conversationId = conv?._id;
+    }
+
+    if (conversationId) {
+      if (Object.keys(changes).length > 0) {
+        await logConversationEvent(ctx, {
+          conversationId,
+          action: "user_details_changed",
+          metadata: {
+            changes,
+          },
+        });
+      }
+
+      if (args.leadTemperature !== undefined && args.leadTemperature !== customer.leadTemperature) {
+        await logConversationEvent(ctx, {
+          conversationId,
+          action: "lead_status_changed",
+          metadata: {
+            from: customer.leadTemperature ?? null,
+            to: args.leadTemperature ?? null,
+          },
+        });
+      }
+    }
   },
 });
 
@@ -463,6 +543,12 @@ export const internalUpsertFromWebhook = internalMutation({
     return await upsertCustomer(ctx, args);
   },
 });
+
+function isSyntheticEmail(email?: string): boolean {
+  if (!email) return false;
+  const lower = email.toLowerCase().trim();
+  return lower.endsWith("@facebook.com") || lower.endsWith("@instagram.com");
+}
 
 async function upsertCustomer(
   ctx: MutationCtx,
@@ -486,13 +572,15 @@ async function upsertCustomer(
     )
     .unique();
 
+  const inputEmail = args.email && !isSyntheticEmail(args.email) ? args.email.trim() : undefined;
+
   if (existing === null) {
     return await ctx.db.insert("customers", {
       orgId: args.orgId,
       service: args.service,
       contactAddress: args.contactAddress,
       name: args.profileName,
-      email: args.email?.trim() || undefined,
+      email: inputEmail,
       phone:
         args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined),
       tags: [],
@@ -513,8 +601,8 @@ async function upsertCustomer(
     patch.name = args.profileName;
   }
   // Only refresh email/phone if we never had them — preserve user edits.
-  if (!existing.email && args.email) {
-    patch.email = args.email.trim();
+  if (!existing.email && inputEmail) {
+    patch.email = inputEmail;
   }
   if (!existing.phone && args.phone) {
     patch.phone = args.phone.trim();
@@ -542,6 +630,7 @@ export const addCustomerTag = mutation({
   args: {
     customerId: v.id("customers"),
     tag: v.string(),
+    conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
     const { orgId } = await getAuthContext(ctx);
@@ -562,6 +651,22 @@ export const addCustomerTag = mutation({
       tags: [...current, normalized],
       updatedAt: Date.now(),
     });
+
+    let conversationId = args.conversationId;
+    if (!conversationId) {
+      const conv = await ctx.db
+        .query("conversations")
+        .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+        .first();
+      conversationId = conv?._id;
+    }
+    if (conversationId) {
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: "tag_added",
+        metadata: { tag: normalized },
+      });
+    }
   },
 });
 
@@ -569,6 +674,7 @@ export const removeCustomerTag = mutation({
   args: {
     customerId: v.id("customers"),
     tag: v.string(),
+    conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
     const { orgId } = await getAuthContext(ctx);
@@ -581,6 +687,22 @@ export const removeCustomerTag = mutation({
       tags: current.filter((t) => t !== args.tag),
       updatedAt: Date.now(),
     });
+
+    let conversationId = args.conversationId;
+    if (!conversationId) {
+      const conv = await ctx.db
+        .query("conversations")
+        .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+        .first();
+      conversationId = conv?._id;
+    }
+    if (conversationId) {
+      await logConversationEvent(ctx, {
+        conversationId,
+        action: "tag_removed",
+        metadata: { tag: args.tag },
+      });
+    }
   },
 });
 

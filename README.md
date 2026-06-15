@@ -72,3 +72,28 @@ export default defineConfig([
 ])
 ```
 # chat-saas
+
+## Conversation History Logging
+
+All key user and AI actions taken in a conversation are audited and stored in the `conversationLogs` table. The frontend displays these events chronologically in the **Action History** collapsible section within the conversation details panel.
+
+### Actions Logged
+
+The following actions are logged and displayed:
+
+| Action | Log Trigger | Actor | Metadata Logged |
+|---|---|---|---|
+| **Thread Created** | New conversation / thread initialized | System / User | `service` |
+| **Broadcast Sent** | WhatsApp broadcast campaign sent successfully | User (creator) | `templateName`, `scheduleId` |
+| **Follow-up Sent** | Automated follow-up sent successfully | User (creator) | `templateName`, `ruleId`, `attemptNumber` |
+| **AI Replies Enabled** | AI replies turned on | User | - |
+| **AI Replies Disabled** | AI replies turned off | User | - |
+| **Assignee Changed** | Conversation assigned / reassigned | User | `assigneeUserId`, `assigneeName` |
+| **Escalation Resolved** | Human escalation resolved | User | - |
+| **Tag Added** | Tag added to conversation | User | `tag` |
+| **Tag Removed** | Tag removed from conversation | User | `tag` |
+| **Event Booked** | Calendar appointment booked (manual or AI-agent) | User / AI | `eventId`, `eventTitle`, `startAt` |
+| **Event Updated** | Calendar appointment details modified | User / AI | `eventId`, `eventTitle`, `startAt` |
+| **Event Cancelled** | Calendar appointment cancelled | User / AI | `eventId` |
+| **Event Deleted** | Calendar appointment deleted | User | `eventId`, `eventTitle` |
+| **Lead Status Changed** | Lead temperature changed (e.g. Hot, Warm, Cold) | User | `from`, `to` |

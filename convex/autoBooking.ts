@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery, mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { logConversationEvent } from "./conversationLogs";
 import {
   DEFAULT_TEAM_TIME_ZONE,
   getActiveTeamForUser,
@@ -1541,6 +1542,30 @@ export const cancelBookingSession = internalMutation({
       };
     }
 
+    const conversation = await ctx.db.get(args.conversationId);
+    const agent = conversation?.assignedAgentId 
+      ? await ctx.db.get(conversation.assignedAgentId) 
+      : null;
+
+    if (active.calendarEventId !== undefined) {
+      await ctx.db.patch(active.calendarEventId, {
+        status: "cancelled",
+        updatedAt: Date.now(),
+      });
+      await logConversationEvent(ctx, {
+        conversationId: args.conversationId,
+        action: "event_cancelled",
+        actor: {
+          type: "ai",
+          name: agent?.name,
+          agentId: agent?._id,
+        },
+        metadata: {
+          eventId: active.calendarEventId,
+        },
+      });
+    }
+
     await ctx.db.patch(active._id, {
       status: AutoBookingSessionStatus.Cancelled,
       updatedAt: Date.now(),
@@ -1648,6 +1673,20 @@ export const updateBookingAppointment = internalMutation({
       selectedSlot,
       calendarEventId: event._id,
       updatedAt: now,
+    });
+    await logConversationEvent(ctx, {
+      conversationId: conversation._id,
+      action: "event_updated",
+      actor: {
+        type: "ai",
+        name: agent.name,
+        agentId: agent._id,
+      },
+      metadata: {
+        eventId: event._id,
+        eventTitle: `${service.name} - ${attendeeName}`,
+        startAt: selectedSlot.startAt,
+      },
     });
     if (service.assignmentStrategy === "round_robin") {
       await ctx.db.patch(service._id, {
@@ -1773,6 +1812,20 @@ export const bookAppointment = internalMutation({
       selectedSlot,
       calendarEventId: eventId,
       updatedAt: now,
+    });
+    await logConversationEvent(ctx, {
+      conversationId: conversation._id,
+      action: "event_booked",
+      actor: {
+        type: "ai",
+        name: agent.name,
+        agentId: agent._id,
+      },
+      metadata: {
+        eventId,
+        eventTitle: `${service.name} - ${attendeeName}`,
+        startAt: selectedSlot.startAt,
+      },
     });
     if (service.assignmentStrategy === "round_robin") {
       await ctx.db.patch(service._id, {

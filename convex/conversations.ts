@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { metaIndicatorPool } from "./inboxPools";
+import { logConversationEvent } from "./conversationLogs";
 
 export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
   const channelRows = await ctx.db
@@ -326,6 +327,10 @@ async function setConversationAiEnabledHandler(
     patch.escalation = undefined;
   }
   await ctx.db.patch(conversationId, patch);
+  await logConversationEvent(ctx, {
+    conversationId,
+    action: enabled ? "ai_enabled" : "ai_disabled",
+  });
 }
 
 async function setConversationLeadOwnerHandler(
@@ -358,6 +363,17 @@ async function setConversationLeadOwnerHandler(
   await ctx.db.patch(conversationId, {
     assignedUserId: workosUserId,
     updatedAt: Date.now(),
+  });
+  const nameParts = [userRow.firstName, userRow.lastName].filter(Boolean);
+  const assigneeName = nameParts.length > 0 ? nameParts.join(" ") : userRow.email;
+
+  await logConversationEvent(ctx, {
+    conversationId,
+    action: "assignee_changed",
+    metadata: {
+      assigneeUserId: workosUserId,
+      assigneeName,
+    },
   });
 }
 
@@ -411,6 +427,11 @@ export const addConversationTag = mutation({
       tags: [...current, normalized],
       updatedAt: Date.now(),
     });
+    await logConversationEvent(ctx, {
+      conversationId: args.conversationId,
+      action: "tag_added",
+      metadata: { tag: normalized },
+    });
   },
 });
 
@@ -429,6 +450,11 @@ export const removeConversationTag = mutation({
     await ctx.db.patch(args.conversationId, {
       tags: current.filter((t) => t !== args.tag),
       updatedAt: Date.now(),
+    });
+    await logConversationEvent(ctx, {
+      conversationId: args.conversationId,
+      action: "tag_removed",
+      metadata: { tag: args.tag },
     });
   },
 });
@@ -452,6 +478,10 @@ export const resolveEscalation = mutation({
       status: "open",
       escalation: undefined,
       updatedAt: Date.now(),
+    });
+    await logConversationEvent(ctx, {
+      conversationId: args.conversationId,
+      action: "escalation_resolved",
     });
   },
 });

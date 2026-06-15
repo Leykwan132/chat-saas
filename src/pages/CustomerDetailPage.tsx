@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check, Save } from 'lucide-react';
 import { isLeadTemperatureTag, isReservedTemperatureTag } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -99,6 +99,41 @@ export default function CustomerDetailPage() {
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
   const [tagSearchInput, setTagSearchInput] = useState('');
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleStartEdit = () => {
+    setEditName(customer?.name ?? '');
+    setEditEmail(customer?.email ?? '');
+    setEditPhone(customer?.phone ?? '');
+    setEditNotes(customer?.notes ?? '');
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    if (!typedCustomerId) return;
+    setIsSaving(true);
+    try {
+      await updateCustomer({
+        customerId: typedCustomerId,
+        name: editName,
+        email: editEmail,
+        phone: editPhone,
+        notes: editNotes,
+      });
+      toast.success('Customer details updated');
+      setIsEditing(false);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not update customer details');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const isLoading = customer === undefined || teamUsers === undefined || customersResult === undefined;
 
   const label = customer ? serviceLabel(customer.service) : 'Manual';
@@ -174,25 +209,59 @@ export default function CustomerDetailPage() {
     <div className="flex w-full max-w-3xl flex-col gap-8">
       {/* Back link & header */}
       <div className="flex flex-col gap-4">
-        <Link
-          to={`/dashboard/${typedAgentId}/customers`}
-          className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeft className="size-4" />
-          Back to Customers
-        </Link>
+        <div className="flex items-center justify-between gap-4">
+          <Link
+            to={`/dashboard/${typedAgentId}/customers`}
+            className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" />
+            Back to Customers
+          </Link>
+          <div>
+            {isEditing ? (
+              <div className="flex gap-2">
+                 <Button variant="ghost" onClick={() => setIsEditing(false)} disabled={isSaving} className="h-8 text-xs text-muted-foreground hover:text-foreground hover:bg-transparent px-2 rounded-lg">
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={isSaving} className="h-8 text-xs rounded-lg bg-black hover:bg-black/90 text-white dark:bg-zinc-100 dark:hover:bg-zinc-200 dark:text-zinc-950 flex items-center gap-1.5 border border-zinc-900 dark:border-zinc-100">
+                  <Save className="size-3.5 shrink-0" />
+                  {isSaving ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+            ) : (
+              <Button variant="outline" size="sm" onClick={handleStartEdit} className="h-8 text-xs rounded-lg">
+                Edit Profile
+              </Button>
+            )}
+          </div>
+        </div>
 
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0 space-y-1">
-            <div className="flex flex-col gap-1">
-              <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
-                {customer.name?.trim() || 'Unnamed Customer'}
-              </h1>
-              {customer.email && !customer.email.toLowerCase().endsWith('@facebook.com') && (
-                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                  <Mail className="size-3.5 text-muted-foreground/75" />
-                  {customer.email}
-                </p>
+          <div className="min-w-0 w-full space-y-1">
+            <div className="flex flex-col gap-1 w-full">
+              {isEditing ? (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full max-w-md rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    placeholder="Customer Name"
+                  />
+                </div>
+              ) : (
+                <>
+                  <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+                    {customer.name?.trim() || 'Unnamed Customer'}
+                  </h1>
+                  {customer.email && !customer.email.toLowerCase().endsWith('@facebook.com') && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1">
+                      <Mail className="size-3.5 text-muted-foreground/75" />
+                      {customer.email}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -240,10 +309,38 @@ export default function CustomerDetailPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Phone</span>
-              <span className="text-foreground flex items-center gap-2">
-                <Phone className="size-3.5 text-muted-foreground/75" />
-                {customer.phone || '—'}
-              </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="Phone number"
+                />
+              ) : (
+                <span className="text-foreground flex items-center gap-2">
+                  <Phone className="size-3.5 text-muted-foreground/75" />
+                  {customer.phone || '—'}
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Email</span>
+              {isEditing ? (
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  placeholder="Email"
+                />
+              ) : (
+                <span className="text-foreground flex items-center gap-2">
+                  <Mail className="size-3.5 text-muted-foreground/75" />
+                  {customer.email || '—'}
+                </span>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -252,6 +349,7 @@ export default function CustomerDetailPage() {
                 <Select
                   value={customer.leadTemperature || 'None'}
                   onValueChange={handleUpdateLeadTemperature}
+                  disabled={isEditing}
                 >
                   <SelectTrigger className="w-[140px] h-8 bg-background border-border text-xs">
                     <SelectValue placeholder="Select status" />
@@ -395,7 +493,14 @@ export default function CustomerDetailPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Notes</h2>
         <div className="rounded-xl border border-border bg-card p-5">
-          {customer.notes?.trim() ? (
+          {isEditing ? (
+            <textarea
+              value={editNotes}
+              onChange={(e) => setEditNotes(e.target.value)}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[120px]"
+              placeholder="Add notes about this customer..."
+            />
+          ) : customer.notes?.trim() ? (
             <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{customer.notes}</p>
           ) : (
             <p className="text-sm text-muted-foreground/70 italic">No notes created for this customer.</p>
