@@ -286,7 +286,9 @@ function WorkspaceShell() {
             </BreadcrumbList>
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-3">
-            <ModeToggle />
+            <div className="hidden md:block">
+              <ModeToggle />
+            </div>
             <UserProfileButton settingsPath="/workspace/settings" />
           </div>
         </header>

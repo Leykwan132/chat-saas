@@ -99,7 +99,9 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-3">
-        <ModeToggle />
+        <div className="hidden md:block">
+          <ModeToggle />
+        </div>
         <UserProfileButton settingsPath={settingsPath} />
       </div>
     </header>

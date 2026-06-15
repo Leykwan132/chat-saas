@@ -88,7 +88,9 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 sm:gap-3">
-          <ModeToggle />
+          <div className="hidden md:block">
+            <ModeToggle transparent={isHeaderTransparent} />
+          </div>
 
           {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center gap-2 sm:gap-3">
@@ -142,7 +144,12 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/[0.06]"
+                className={cn(
+                  "md:hidden hover:bg-zinc-100 dark:hover:bg-white/[0.06]",
+                  isHeaderTransparent
+                    ? "text-white hover:bg-white/10"
+                    : "text-zinc-600 dark:text-zinc-400"
+                )}
               >
                 <Menu className="size-5" />
                 <span className="sr-only">Toggle menu</span>
@@ -152,6 +159,9 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               side="right" 
               className="flex flex-col justify-between w-full sm:max-w-sm h-full p-8 pt-16 bg-white dark:bg-[#060606] border-l border-zinc-200 dark:border-white/[0.06] text-zinc-950 dark:text-zinc-50"
             >
+              <div className="absolute top-4 left-4">
+                <ModeToggle />
+              </div>
               <div className="flex flex-col gap-6">
                 <nav className="flex flex-col">
                   {navLinks.map((link) => (
