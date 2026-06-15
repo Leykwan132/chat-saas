@@ -224,7 +224,7 @@ function RootLayout() {
               <Route path="auto-booking/:serviceId" element={<AutoBookingServicePage />} />
               <Route path="auto-booking" element={<AutoBookingPage />} />
               <Route path="lead-assignment" element={<LeadAssignmentPage />} />
-              <Route path="instructions" element={<InstructionsPage />} />
+              <Route path="agent-setup" element={<InstructionsPage />} />
               <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="account" element={<Navigate to="../settings" replace />} />

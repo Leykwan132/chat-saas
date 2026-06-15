@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Astroid, Shuffle } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -72,7 +72,7 @@ function getNavItems(agentId: string): {
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
     configuration: [
-      { to: `/dashboard/${agentId}/instructions`, icon: Bot, label: 'Instructions', requiredPermission: Permission.AGENTS_MANAGE },
+      { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
       { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
       {
@@ -169,10 +169,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const isOutreachActive = outreachItems.some((item) =>
     location.pathname.startsWith(item.to),
   );
-
-  const isAgentSetupActive = configurationItems
-    .filter((item) => item.label !== 'Playground')
-    .some((item) => location.pathname.startsWith(item.to));
 
   const isAssignmentActive = teamItems
     .filter((item) => item.label === 'Availability' || item.label === 'Lead Assignment')
@@ -273,74 +269,17 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {(() => {
-                  const playgroundItem = configurationItems.find((item) => item.label === 'Playground');
-                  const configGroupItems = configurationItems.filter((item) => item.label !== 'Playground');
-
-                  return (
-                    <>
-                      {/* Agent Setup collapsible submenu */}
-                      {configGroupItems.length > 0 && (
-                        <Collapsible
-                          asChild
-                          defaultOpen={isAgentSetupActive}
-                          className="group/collapsible"
-                        >
-                          <SidebarMenuItem>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton tooltip="Agent Setup">
-                                <Astroid />
-                                <span>Agent Setup</span>
-                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub className="border-l-0 pl-2">
-                                {configGroupItems.map((item) => (
-                                  <SidebarMenuSubItem key={item.to}>
-                                    <NavLink to={item.to} end={item.end}>
-                                      {({ isActive }) => (
-                                        <SidebarMenuButton asChild isActive={isActive}>
-                                          {item.badge ? (
-                                            <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
-                                              <item.icon />
-                                              <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                                                <span className="truncate">{item.label}</span>
-                                                {item.badge}
-                                              </span>
-                                            </span>
-                                          ) : (
-                                            <span>
-                                              <item.icon />
-                                              <span>{item.label}</span>
-                                            </span>
-                                          )}
-                                        </SidebarMenuButton>
-                                      )}
-                                    </NavLink>
-                                  </SidebarMenuSubItem>
-                                ))}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </SidebarMenuItem>
-                        </Collapsible>
-                      )}
-
-                      {/* Playground */}
-                      {playgroundItem && (
-                        <SidebarNavMenuItem
-                          key={playgroundItem.to}
-                          to={playgroundItem.to}
-                          end={playgroundItem.end}
-                          tooltip={playgroundItem.label}
-                          icon={playgroundItem.icon}
-                          label={playgroundItem.label}
-                          badge={playgroundItem.badge}
-                        />
-                      )}
-                    </>
-                  );
-                })()}
+                {configurationItems.map((item) => (
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                    badge={item.badge}
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

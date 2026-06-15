@@ -337,7 +337,7 @@ export default function InstructionsPage() {
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
-            Instructions
+            Agent Setup
           </h1>
           <PageDescription>
             Tell your AI agent how to talk to and help your customers.
@@ -674,7 +674,7 @@ export default function InstructionsPage() {
       <Dialog open={isGoalExpanded} onOpenChange={setIsGoalExpanded}>
         <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col gap-4">
           <DialogHeader>
-            <DialogTitle>Edit Goal & Instructions</DialogTitle>
+            <DialogTitle>Edit Goal & Agent Setup</DialogTitle>
             <DialogDescription>
               Write detailed rules, tone settings, and goals for the AI Agent.
             </DialogDescription>
