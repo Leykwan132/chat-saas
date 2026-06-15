@@ -247,10 +247,10 @@ export function OnboardingFlow() {
         <div className="mx-auto flex h-14 max-w-7xl items-center px-5 sm:px-6">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-900 transition-opacity hover:opacity-80 dark:text-white"
+            className="flex items-center gap-2 text-[15px] text-zinc-900 transition-opacity hover:opacity-80 dark:text-white"
           >
             <img src="/icon.svg" className="size-6 dark:invert" alt="Kilobot" />
-            Kilobot
+            <span className="font-title font-semibold text-[16px] tracking-normal">Kilobot</span>
           </Link>
         </div>
       </header>

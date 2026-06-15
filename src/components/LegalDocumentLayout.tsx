@@ -26,10 +26,10 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
           <Link
             to="/"
-            className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-900 dark:text-white"
+            className="flex items-center gap-2 text-[15px] text-zinc-900 dark:text-white"
           >
             <img src="/icon.svg" className="size-6 dark:invert" alt="" />
-            Kilobot
+            <span className="font-title font-semibold text-[16px] tracking-normal">Kilobot</span>
           </Link>
           <nav className="hidden items-center gap-7 text-sm text-zinc-600 dark:text-zinc-400 md:flex">
             <Link to="/" className="transition-colors hover:text-zinc-900 dark:hover:text-white">

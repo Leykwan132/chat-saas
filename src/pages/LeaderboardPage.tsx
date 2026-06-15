@@ -324,7 +324,7 @@ export default function LeaderboardPage() {
  
           {/* Header Description */}
           <div className="animate-fade-in text-center flex flex-col items-center justify-center gap-2 py-32">
-            <h1 className="m-0 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+            <h1 className="m-0 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl font-title">
               Model Leaderboard
             </h1>
             <div className="flex items-center justify-center gap-1.5 text-sm sm:text-base font-medium text-zinc-500 dark:text-zinc-400 mt-1 min-h-[28px]">

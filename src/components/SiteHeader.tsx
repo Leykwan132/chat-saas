@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
 import { ArrowRight, Menu, User, LogIn, UserPlus } from 'lucide-react';
@@ -8,11 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
-export function SiteHeader() {
+export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
   const { user, signIn, signUp } = useAuth();
   const hasSession = Boolean(user);
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const isHeaderTransparent = transparent && !isScrolled;
 
   const returnTo = { state: { returnTo: POST_LOGIN_REDIRECT } };
   const onSignIn = () => {
@@ -38,24 +49,37 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl">
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
-        <Link to="/" className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-950 dark:text-white">
-          <img src="/icon.svg" className="size-6 dark:invert" alt="" />
-          Kilobot
+    <header className={cn(
+      'fixed inset-x-0 top-0 z-50 transition-all duration-300',
+      isHeaderTransparent
+        ? 'border-transparent bg-transparent py-2'
+        : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'
+    )}>
+      <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
+        <Link to="/" className={cn(
+          'flex items-center gap-2 text-[15px] transition-colors duration-300',
+          isHeaderTransparent ? 'text-white' : 'text-zinc-950 dark:text-white'
+        )}>
+          <img src="/icon.svg" className={cn('size-6 transition-all duration-300', isHeaderTransparent ? 'invert' : 'dark:invert')} alt="" />
+          <span className="font-title font-semibold text-[16px] tracking-normal">Kilobot</span>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden items-center gap-7 text-sm md:flex">
+        <nav className="absolute left-1/2 -translate-x-1/2 hidden items-center gap-7 text-sm md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={
+              className={cn(
+                'transition-colors duration-300',
                 isActive(link.to)
-                  ? 'transition-colors text-zinc-950 dark:text-white font-medium'
-                  : 'transition-colors text-zinc-650 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
-              }
+                  ? isHeaderTransparent
+                    ? 'text-white font-medium'
+                    : 'text-zinc-950 dark:text-white font-medium'
+                  : isHeaderTransparent
+                    ? 'text-zinc-300 hover:text-white'
+                    : 'text-zinc-650 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white'
+              )}
             >
               {link.label}
             </Link>
@@ -71,7 +95,12 @@ export function SiteHeader() {
             {hasSession ? (
               <Link
                 to={POST_LOGIN_REDIRECT}
-                className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90"
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90',
+                  isHeaderTransparent
+                    ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
+                    : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
+                )}
               >
                 Dashboard
                 <ArrowRight className="size-4" />
@@ -81,14 +110,24 @@ export function SiteHeader() {
                 <button
                   type="button"
                   onClick={onSignIn}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-zinc-650 transition-colors hover:text-zinc-900 dark:text-zinc-350 dark:hover:text-white cursor-pointer"
+                  className={cn(
+                    'rounded-md px-3 py-2 text-sm font-medium transition-colors duration-300 cursor-pointer',
+                    isHeaderTransparent
+                      ? 'text-zinc-300 hover:text-white'
+                      : 'text-zinc-650 hover:text-zinc-900 dark:text-zinc-350 dark:hover:text-white'
+                  )}
                 >
                   Sign in
                 </button>
                 <button
                   type="button"
                   onClick={onSignUp}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white px-3.5 py-2 text-sm font-medium dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)] transition-opacity hover:opacity-90 cursor-pointer"
+                  className={cn(
+                    'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-300 cursor-pointer',
+                    isHeaderTransparent
+                      ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
+                      : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
+                  )}
                 >
                   Get started
                   <ArrowRight className="size-4" />

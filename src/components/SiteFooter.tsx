@@ -3,13 +3,6 @@ import { useAuth } from '@workos-inc/authkit-react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { cn } from '@/lib/utils';
 
-const footerLinks = [
-  { label: 'Pricing', to: '/pricing' },
-  { label: 'Leaderboard', to: '/leaderboard' },
-  { label: 'Privacy', to: '/privacy' },
-  { label: 'Terms', to: '/terms' },
-] as const;
-
 type SiteFooterProps = {
   className?: string;
 };
@@ -25,45 +18,101 @@ export function SiteFooter({ className }: SiteFooterProps) {
   return (
     <footer
       className={cn(
-        'border-t border-zinc-200 px-5 py-12 dark:border-white/[0.06] sm:px-6',
+        'border-t border-zinc-200 bg-white px-6 py-16 dark:border-white/[0.06] dark:bg-[#060606] sm:px-8 sm:py-24',
         className,
       )}
     >
       <div className="mx-auto max-w-7xl">
-        <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-12 md:flex-row md:justify-between md:items-start">
+          {/* Left Side: Logo & Copyright */}
+          <div className="flex flex-col items-start gap-3">
             <Link
               to="/"
-              className="flex items-center gap-2 text-[15px] font-medium tracking-tight text-zinc-900 dark:text-white"
+              className="flex items-center gap-2 text-[15px] text-zinc-900 dark:text-white"
             >
               <img src="/icon.svg" className="size-6 dark:invert" alt="" />
-              Kilobot
+              <span className="font-title font-semibold text-[16px] tracking-normal">Kilobot</span>
             </Link>
-          <nav className="flex flex-wrap gap-x-8 gap-y-3">
-            {footerLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="text-sm text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-500 dark:hover:text-white"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-zinc-500 dark:text-zinc-400 sm:justify-start">
-            <span>Copyright {new Date().getFullYear()} Kilobot</span>
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">
+              Copyright &copy; {new Date().getFullYear()} Kilobot. All rights reserved.
+            </span>
           </div>
-          {!hasSession && (
-            <button
-              type="button"
-              onClick={onSignIn}
-              className="text-sm text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white cursor-pointer"
-            >
-              Sign in
-            </button>
-          )}
+
+          {/* Right Side: Columns Grouped */}
+          <div className="flex flex-wrap gap-x-16 gap-y-12 sm:gap-x-24 md:gap-x-32">
+            {/* Column 1: Product & Connect */}
+            <div className="flex flex-col gap-10">
+              {/* Product Group */}
+              <div className="flex flex-col gap-4">
+                <span className="font-title text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+                  Product
+                </span>
+                <nav className="flex flex-col gap-3">
+                  <Link
+                    to="/pricing"
+                    className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    Pricing
+                  </Link>
+                  <Link
+                    to="/leaderboard"
+                    className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    Leaderboard
+                  </Link>
+                </nav>
+              </div>
+
+              {/* Connect Group */}
+              <div className="flex flex-col gap-4">
+                <span className="font-title text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+                  Connect
+                </span>
+                <nav className="flex flex-col gap-3">
+                  {!hasSession ? (
+                    <button
+                      type="button"
+                      onClick={onSignIn}
+                      className="w-fit text-left text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white cursor-pointer font-normal"
+                    >
+                      Sign in
+                    </button>
+                  ) : (
+                    <Link
+                      to={POST_LOGIN_REDIRECT}
+                      className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                    >
+                      Dashboard
+                    </Link>
+                  )}
+                </nav>
+              </div>
+            </div>
+
+            {/* Column 2: About */}
+            <div className="flex flex-col gap-4">
+              <span className="font-title text-lg font-semibold text-zinc-950 dark:text-zinc-50">
+                About
+              </span>
+              <nav className="flex flex-col gap-3">
+                <Link
+                  to="/privacy"
+                  className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                >
+                  Privacy
+                </Link>
+                <Link
+                  to="/terms"
+                  className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                >
+                  Terms
+                </Link>
+              </nav>
+            </div>
+          </div>
         </div>
+
+
       </div>
     </footer>
   );

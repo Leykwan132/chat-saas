@@ -1,6 +1,6 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Routes, Route, useParams } from 'react-router'
+import { BrowserRouter, Navigate, Routes, Route, useParams, useLocation } from 'react-router'
 import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
 import { ConvexProviderWithAuthKit } from '@convex-dev/workos'
 import { ConvexReactClient } from 'convex/react'
@@ -58,6 +58,16 @@ import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+}
 const WORKOS_REDIRECT_URI = import.meta.env.VITE_WORKOS_REDIRECT_URI as
   | string
   | undefined
@@ -159,7 +169,8 @@ function RootLayout() {
       >
         <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
           <TooltipProvider>
-          <Routes>
+            <ScrollToTop />
+            <Routes>
             <Route path="/login" element={<LoginRoute />} />
             <Route path="/callback" element={<CallbackRoute />} />
             <Route path="/" element={<HomePage />} />

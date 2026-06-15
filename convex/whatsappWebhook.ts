@@ -6,7 +6,7 @@ import {
   resolveWhatsAppAudioFiles,
 } from "./chat/inboxAudioIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
-import { WHATSAPP_DEMO_PHONE_NUMBER_ID } from "./whatsappDemo";
+
 
 const messageStatusValidator = v.union(
   v.literal("queued"),
@@ -290,6 +290,10 @@ export const handleReaction = internalMutation({
       .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
       .first();
     if (target === null) {
+      return;
+    }
+
+    if (target.channelId === undefined) {
       return;
     }
 

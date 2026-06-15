@@ -123,7 +123,7 @@ function AgentsSidebar() {
           <Link to="/workspace" className="flex items-center gap-3">
             <img src="/icon.svg" className="size-6 dark:invert" />
             <div className="flex min-w-0 flex-col gap-0.5 leading-none">
-              <span className="font-semibold text-[15px] tracking-tight">Kilobot</span>
+              <span className="font-semibold text-[16px] tracking-normal font-title">Kilobot</span>
               <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
             </div>
           </Link>
