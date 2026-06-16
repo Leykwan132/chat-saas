@@ -81,14 +81,12 @@ function AppDemoSection() {
     <section id="product-demo" className="bg-white dark:bg-[#060606] pt-16 pb-10 px-6 sm:pt-20 sm:pb-14 sm:px-8 scroll-mt-14 flex flex-col gap-10 sm:gap-12">
       <div className="mx-auto max-w-6xl w-full">
         <BlurFade inView>
-          <div className="relative mx-auto overflow-hidden rounded-2xl border-[6px] sm:border-[8px] border-white bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)]">
-            <div className="relative aspect-[9/16] w-full max-w-sm mx-auto md:hidden">
-              <img
-                src={LANDING_MOBILE_IMAGE}
-                alt="Kilobot Inbox on mobile"
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.01]"
-              />
-            </div>
+          <div className="relative mx-auto w-fit max-w-full overflow-hidden rounded-2xl border-[3px] md:w-full md:border-[8px] border-white bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)]">
+            <img
+              src={LANDING_MOBILE_IMAGE}
+              alt="Kilobot Inbox on mobile"
+              className="block w-[min(calc(100vw-3rem),360px)] h-auto md:hidden"
+            />
             <div className="relative aspect-[16/10] w-full hidden md:block">
               <img
                 src={LANDING_DESKTOP_IMAGE}
