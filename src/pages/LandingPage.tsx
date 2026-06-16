@@ -73,25 +73,28 @@ const COMPANY_LOGOS = [
   { name: 'Shopify', icon: SiShopify },
 ];
 
+const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.svg';
+const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
+
 function AppDemoSection() {
   return (
-    <section className="bg-white dark:bg-[#060606] pt-16 pb-10 px-6 sm:pt-20 sm:pb-14 sm:px-8 scroll-mt-14 flex flex-col gap-10 sm:gap-12">
+    <section id="product-demo" className="bg-white dark:bg-[#060606] pt-16 pb-10 px-6 sm:pt-20 sm:pb-14 sm:px-8 scroll-mt-14 flex flex-col gap-10 sm:gap-12">
       <div className="mx-auto max-w-6xl w-full">
         <BlurFade inView>
           <div className="relative mx-auto overflow-hidden rounded-2xl border-[6px] sm:border-[8px] border-white bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)]">
-            {/* Aspect ratio container */}
-            <div className="relative aspect-[16/10] w-full">
+            <div className="relative aspect-[9/16] w-full max-w-sm mx-auto md:hidden">
               <img
-                src="/video_placeholder.png"
+                src={LANDING_MOBILE_IMAGE}
+                alt="Kilobot Inbox on mobile"
+                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.01]"
+              />
+            </div>
+            <div className="relative aspect-[16/10] w-full hidden md:block">
+              <img
+                src={LANDING_DESKTOP_IMAGE}
                 alt="Kilobot Inbox Sales Interface Demonstration"
                 className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.01]"
               />
-              {/* Subtle play button overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition-colors hover:bg-black/20 group cursor-pointer">
-                <div className="flex size-16 items-center justify-center rounded-full bg-white/90 text-zinc-900 shadow-lg backdrop-blur-sm transition-transform duration-300 group-hover:scale-110">
-                  <Play className="size-6 fill-current ml-0.5" />
-                </div>
-              </div>
             </div>
           </div>
         </BlurFade>
