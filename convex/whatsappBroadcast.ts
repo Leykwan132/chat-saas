@@ -7,7 +7,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { broadcastPool } from "./broadcastPool";
@@ -203,23 +203,67 @@ export const listTemplates = action({
     const channel = await getOrgWhatsAppChannel(ctx, args.channelId, orgId);
     const token = resolveAccessToken(channel);
     const wabaId = channel.wabaId!.trim();
-    const res = await fetch(
-      `${graphBase()}/${wabaId}/message_templates?fields=name,status,language,category,components&limit=200`,
-      { headers: { Authorization: `Bearer ${token}` } },
-    );
-    const body = (await readGraphJson(res)) as { data?: MetaTemplateRow[] };
-    const rows = body.data ?? [];
-    return {
-      templates: rows
-        .map((r) => ({
-          name: (r.name ?? "").trim(),
-          language: normalizeLanguage(r.language),
-          status: r.status ?? "UNKNOWN",
-          category: r.category ?? "",
-          components: r.components ?? [],
-        }))
-        .filter((r) => r.name.length > 0 && r.language.length > 0),
-    };
+
+    // 1. Fetch remote templates from Meta
+    let rows: MetaTemplateRow[] = [];
+    try {
+      const res = await fetch(
+        `${graphBase()}/${wabaId}/message_templates?fields=name,status,language,category,components&limit=200`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const body = (await readGraphJson(res)) as { data?: MetaTemplateRow[] };
+      rows = body.data ?? [];
+    } catch (e) {
+      console.error("Failed to list templates from Meta:", e);
+    }
+
+    const remoteTemplates = rows
+      .map((r) => ({
+        name: (r.name ?? "").trim(),
+        language: normalizeLanguage(r.language),
+        status: r.status ?? "UNKNOWN",
+        category: r.category ?? "",
+        components: r.components ?? [],
+      }))
+      .filter((r) => r.name.length > 0 && r.language.length > 0);
+
+    // 2. Query local templates for this channel
+    const localTemplates = await ctx.runQuery(api.whatsappTemplates.listLocalTemplates, {
+      channelId: args.channelId,
+    });
+
+    const finalTemplates: typeof remoteTemplates = [...remoteTemplates];
+
+    for (const local of localTemplates) {
+      const match = remoteTemplates.find(
+        (r) => r.name === local.name && r.language === local.language
+      );
+      if (match) {
+        // Safe-heal: template is now on Meta, so clean up local record
+        await ctx.runMutation(internal.whatsappTemplates.deleteLocalTemplate, {
+          templateId: local._id,
+        });
+      } else {
+        // Not on Meta yet (or failed, or submitting)
+        let statusString = "SUBMITTING";
+        if (local.status === "failed") {
+          statusString = "SUBMISSION_FAILED";
+        }
+        
+        // Add to list so user can see it
+        finalTemplates.push({
+          name: local.name,
+          language: local.language,
+          status: statusString,
+          category: local.category,
+          components: local.components,
+          // Attach error if it exists
+          ...((local as any).error ? { error: (local as any).error } : {}),
+        });
+      }
+    }
+
+    return { templates: finalTemplates };
   },
 });
 

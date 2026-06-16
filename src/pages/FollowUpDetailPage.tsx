@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -1175,50 +1176,13 @@ export default function FollowUpDetailPage() {
               </div>
 
               <div className="w-full lg:justify-self-end lg:border-l lg:border-border lg:pl-8">
-                <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm min-h-[532px]">
-                  <div className="flex items-center gap-3 bg-[#075e54] px-4 py-3 text-white">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-white/20">
-                      <MessagesSquare className="size-4" />
-                    </div>
-                    <div>
-                      <span className="block text-xs font-bold leading-tight">Follow-up Preview</span>
-                      <span className="block text-[10px] leading-tight text-white/70">
-                        {useSameMessage
-                          ? 'WhatsApp Message Preview'
-                          : `Attempt ${activePreviewIndex + 1} · WhatsApp Template`}
-                      </span>
-                    </div>
-                  </div>
-                  <div
-                    className="relative flex min-h-[392px] flex-1 flex-col justify-start bg-[#efeae2] p-4"
-                    style={{
-                      backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-                      backgroundSize: 'contain',
-                      backgroundRepeat: 'repeat',
-                    }}
-                  >
-                    {templatesLoading ? (
-                      <div className="flex justify-center py-12">
-                        <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : selectedAttemptTemplate ? (
-                      <div className="relative mt-2 max-w-[90%] self-start rounded-lg rounded-tl-none border border-black/5 bg-white p-3.5 shadow-xs">
-                        <p className="m-0 break-words text-xs font-normal leading-relaxed whitespace-pre-wrap text-slate-800">
-                          {previewBodyText}
-                        </p>
-                        <div className="mt-2 text-right text-[9px] text-slate-400">
-                          Preview · {selectedAttemptTemplate.name}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-1 items-center justify-center p-4">
-                        <p className="rounded-lg border border-black/5 bg-white/80 px-3 py-2 text-xs font-medium text-muted-foreground backdrop-blur-xs dark:bg-black/60">
-                          Select a message template to view preview
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <WhatsAppTemplatePreview
+                  templateName={selectedAttemptTemplate?.name}
+                  components={selectedAttemptTemplate?.components}
+                  isLoading={templatesLoading}
+                  emptyMessage="Select a message template to view preview"
+                  className="max-w-sm"
+                />
               </div>
             </div>
           )}
@@ -1476,49 +1440,14 @@ export default function FollowUpDetailPage() {
               </div>
             </div>
 
-            <div className="flex h-full min-h-0 flex-col items-center justify-start md:col-span-4">
-              <div className="flex min-h-0 w-full max-w-[360px] flex-1 flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-                <div className="flex shrink-0 items-center gap-2 bg-[#075e54] px-3.5 py-2.5 text-white">
-                  <div className="flex size-7 items-center justify-center rounded-full bg-white/20">
-                    <Megaphone className="size-3.5" />
-                  </div>
-                  <div>
-                    <span className="block text-2xs font-semibold leading-tight">
-                      {useSameMessage
-                        ? 'Message Preview'
-                        : `Attempt ${activePreviewIndex + 1} Preview`}
-                    </span>
-                    <span className="block text-[9px] leading-tight text-white/70">
-                      WhatsApp Message Preview
-                    </span>
-                  </div>
-                </div>
-                <div
-                  className="relative flex min-h-[220px] flex-1 flex-col justify-start overflow-y-auto bg-[#efeae2] p-3"
-                  style={{
-                    backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'repeat',
-                  }}
-                >
-                  {selectedAttemptTemplate ? (
-                    <div className="relative mt-2 max-w-[90%] animate-fade-in self-start rounded-lg rounded-tl-none border border-black/5 bg-white p-3 shadow-xs">
-                      <p className="m-0 break-words text-[11px] font-normal leading-relaxed whitespace-pre-wrap text-slate-800">
-                        {previewBodyText}
-                      </p>
-                      <div className="mt-1.5 block select-none text-right text-[8px] text-slate-400">
-                        Preview · {selectedAttemptTemplate.name}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex flex-1 items-center justify-center p-4 text-center">
-                      <p className="rounded-lg border border-black/5 bg-white/80 px-3 py-2 text-xs font-medium text-muted-foreground backdrop-blur-xs dark:bg-black/60">
-                        Select a message template to view preview
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <div className="flex h-full min-h-0 flex-col items-center justify-start md:col-span-4 w-full">
+              <WhatsAppTemplatePreview
+                templateName={selectedAttemptTemplate?.name}
+                components={selectedAttemptTemplate?.components}
+                isLoading={templatesLoading}
+                emptyMessage="Select a message template to view preview"
+                className="max-w-[360px]"
+              />
             </div>
           </div>
 

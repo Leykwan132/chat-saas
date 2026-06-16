@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -315,6 +316,7 @@ export default function AutomationsBroadcastPage() {
   const [balanceChecked, setBalanceChecked] = useState(false);
   const [insufficientBalanceUnderstood, setInsufficientBalanceUnderstood] = useState(false);
   const [showChecklistError, setShowChecklistError] = useState(false);
+  const [showRecipientError, setShowRecipientError] = useState(false);
   const [scheduleMode, setScheduleMode] = useState<BroadcastScheduleMode>('now');
   const [scheduledDate, setScheduledDate] = useState<Date | undefined>(
     () => getDefaultScheduleParts().date,
@@ -523,6 +525,30 @@ export default function AutomationsBroadcastPage() {
     } finally {
       setCreateBusy(false);
     }
+  };
+
+  useEffect(() => {
+    if (selectedCount > 0) {
+      setShowRecipientError(false);
+    }
+  }, [selectedCount]);
+
+  useEffect(() => {
+    if (step !== 2) {
+      setShowRecipientError(false);
+    }
+  }, [step]);
+
+  const handleRecipientsNext = () => {
+    if (selectedCount === 0) {
+      setShowRecipientError(true);
+      return;
+    }
+    if (overLimit) {
+      return;
+    }
+    setShowRecipientError(false);
+    setStep(3);
   };
 
   const handleSend = async () => {
@@ -931,51 +957,14 @@ export default function AutomationsBroadcastPage() {
                   )}
                 </div>
 
-                {/* Right Column: WhatsApp Speech Preview (lg:col-span-5) */}
+                {/* Right Column: WhatsApp Preview (lg:col-span-5) */}
                 <div className="flex h-full min-h-0 flex-col lg:col-span-5">
-                  <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                    <div className="bg-[#075e54] text-white px-3.5 py-2.5 flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-white/20">
-                        <Megaphone className="size-3.5" />
-                      </div>
-                      <div>
-                        <span className="text-2xs font-semibold block leading-tight">Broadcast Preview</span>
-                        <span className="text-[9px] text-white/70 block leading-tight">WhatsApp Template Message</span>
-                      </div>
-                    </div>
-
-                    <div
-                      className="flex-1 p-3 flex flex-col justify-start bg-[#efeae2] relative overflow-hidden"
-                      style={{
-                        backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'repeat',
-                      }}
-                    >
-                      {templatesLoading ? (
-                        <BroadcastPreviewSkeleton />
-                      ) : selectedTemplate ? (
-                        <div className="max-w-[90%] bg-white rounded-lg rounded-tl-none p-3 shadow-xs border border-black/5 relative self-start mt-2 animate-fade-in">
-                          {/* Arrow tail */}
-                          <div className="absolute left-0 top-0 -translate-x-1.5 border-r-[8px] border-r-white border-b-[8px] border-b-transparent border-t-[8px] border-t-transparent" />
-
-                          <p className="m-0 text-[11px] font-normal text-slate-800 whitespace-pre-wrap leading-relaxed break-words">
-                            {selectedTemplateBodyText}
-                          </p>
-
-                          <div className="text-[8px] text-slate-400 text-right mt-1.5 block select-none">
-                            Preview · template
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex-1 flex items-center justify-center text-center p-4">
-                          <p className="text-xs text-muted-foreground font-medium bg-white/80 dark:bg-black/60 rounded-lg px-3 py-2 border border-black/5 backdrop-blur-xs">
-                            Select a template to view preview
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                  <WhatsAppTemplatePreview
+                    templateName={selectedTemplate?.name}
+                    components={selectedTemplate?.components}
+                    isLoading={templatesLoading}
+                    emptyMessage="Select a template to view preview"
+                  />
                 </div>
               </div>
 
@@ -1239,7 +1228,13 @@ export default function AutomationsBroadcastPage() {
               </div>
 
               {/* Wizard Controls */}
-              <div className="flex justify-between pt-5 border-t border-border mt-4">
+              <div className="mt-4 flex flex-col gap-2 border-t border-border pt-5">
+                {showRecipientError && (
+                  <p className="text-right text-[11px] font-semibold text-destructive animate-fade-in">
+                    Please select at least one customer.
+                  </p>
+                )}
+                <div className="flex justify-between">
                 <Button
                   type="button"
                   variant="outline"
@@ -1251,21 +1246,23 @@ export default function AutomationsBroadcastPage() {
                 </Button>
                 <Button
                   type="button"
-                  disabled={selectedCount === 0 || overLimit}
-                  onClick={() => setStep(3)}
+                  disabled={overLimit}
+                  onClick={handleRecipientsNext}
                   className="gap-2 cursor-pointer h-10 px-5 font-bold transition-all active:scale-[0.98]"
                 >
                   Next
                   <ChevronRight className="size-4" />
                 </Button>
+                </div>
               </div>
             </div>
           )}
 
           {/* STEP 3 FORM — Schedule */}
           {step === 3 && (
-            <div className="flex flex-col gap-5 animate-fade-in flex-1 justify-between">
-              <div className="max-w-2xl flex flex-col gap-5">
+            <div className="flex min-h-0 flex-1 flex-col justify-between overflow-hidden animate-fade-in">
+              <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+                <div className="flex max-w-2xl flex-col gap-5">
                 <RadioGroup
                   value={scheduleMode}
                   onValueChange={(value) => setScheduleMode(value as BroadcastScheduleMode)}
@@ -1330,16 +1327,11 @@ export default function AutomationsBroadcastPage() {
                           {/* Date/Time pickers: nested inside the card container when selected */}
                           {scheduleMode === 'later' && (
                             <div
-                              className="mt-4.5 pt-4.5 border-t border-dashed border-border/80 flex flex-col gap-4 animate-in fade-in slide-in-from-top-2 duration-200"
+                              className="mt-4.5 flex flex-col gap-4 border-t border-dashed border-border/80 pt-4.5 animate-in fade-in slide-in-from-top-2 duration-200"
                               onClick={(e) => {
-                                // Stop event propagation so calendar interaction doesn't re-trigger label selection
                                 e.stopPropagation();
                               }}
                             >
-                              <h5 className="font-bold text-xs text-muted-foreground tracking-wider flex items-center gap-1.5">
-                                <CalendarClock className="size-4 text-primary" />
-                                Set your time
-                              </h5>
                               <div className="flex flex-wrap items-start gap-6">
                                 <div className="w-fit overflow-hidden rounded-xl border border-border bg-card shadow-2xs">
                                   <Calendar
@@ -1409,9 +1401,10 @@ export default function AutomationsBroadcastPage() {
                     </span>
                   </div>
                 )}
+                </div>
               </div>
 
-              <div className="flex justify-between pt-5 border-t border-border mt-4">
+              <div className="mt-4 flex shrink-0 justify-between border-t border-border pt-5">
                 <Button
                   type="button"
                   variant="outline"
@@ -1436,63 +1429,47 @@ export default function AutomationsBroadcastPage() {
 
           {/* STEP 4 FORM — Review & send */}
           {step === 4 && (
-            <div className="flex flex-col gap-6 animate-fade-in flex-1 justify-between">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch w-full flex-1 min-h-0">
-                {/* Left Column: Summary & Confirmation (lg:col-span-7) */}
-                <div className="flex flex-col lg:col-span-7 justify-between h-full">
-                  <div className="flex flex-col gap-4">
-                    <h3 className="m-0 text-xs font-bold text-muted-foreground border-b border-border pb-2.5">
+            <div className="flex min-h-0 flex-1 flex-col justify-between gap-4 overflow-hidden animate-fade-in">
+              <div className="no-scrollbar grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-y-auto lg:grid-cols-[3fr_2fr] lg:items-start">
+                <div className="flex flex-col gap-10">
+                  <section className="flex flex-col gap-3">
+                    <h3 className="m-0 border-b border-border pb-2 text-xs font-bold text-muted-foreground">
                       Summary
                     </h3>
-
-                    <div className="grid gap-3.5 text-sm">
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-muted-foreground">Sender</span>
-                        <span className="text-foreground truncate max-w-[240px]">
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/60 pb-1.5">
+                        <span className="shrink-0 text-muted-foreground">Sender</span>
+                        <span className="flex items-center gap-1.5 truncate text-foreground">
+                          <SiWhatsapp className="size-3.5 shrink-0 text-[#25D366]" />
                           {whatsappReady.find((c) => c._id === channelId)
                             ? channelLabel(whatsappReady.find((c) => c._id === channelId)!)
                             : '—'}
                         </span>
                       </div>
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-muted-foreground">Template</span>
-                        <span className="text-foreground truncate max-w-[240px]">
-                          {selectedTemplate?.name ?? '—'}
-                        </span>
+                      <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/60 pb-1.5">
+                        <span className="shrink-0 text-muted-foreground">Total recipients</span>
+                        <span className="text-foreground">{selectedCount}</span>
                       </div>
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-muted-foreground">Total recipients</span>
-                        <span className="text-foreground">
-                          {selectedCount}
-                        </span>
+                      <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/60 pb-1.5">
+                        <span className="shrink-0 text-muted-foreground">Schedule</span>
+                        <span className="truncate text-right text-foreground">{scheduleSummaryLabel}</span>
                       </div>
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-muted-foreground">Schedule</span>
-                        <span className="text-foreground text-right max-w-[240px] truncate">
-                          {scheduleSummaryLabel}
-                        </span>
+                      <div className="flex items-baseline justify-between gap-4 border-b border-dashed border-border/60 pb-1.5">
+                        <span className="shrink-0 text-muted-foreground">Rate per message</span>
+                        <span className="text-foreground">RM {Number(currentMessageRate.toFixed(4))}</span>
                       </div>
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-muted-foreground">Rate per message</span>
-                        <span className="text-foreground">
-                          RM {Number(currentMessageRate.toFixed(4))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-baseline border-b border-dashed border-border/60 pb-2">
-                        <span className="text-foreground font-bold">Estimated final cost</span>
-                        <span className="font-bold text-foreground">
-                          RM {estimatedCostRm.toFixed(2)}
-                        </span>
+                      <div className="flex items-baseline justify-between gap-4 pt-0.5">
+                        <span className="font-semibold text-foreground">Est. final cost</span>
+                        <span className="font-semibold text-foreground">RM {estimatedCostRm.toFixed(2)}</span>
                       </div>
                     </div>
-                  </div>
+                  </section>
 
-                  {/* Balance Checklist */}
-                  <div className="flex flex-col gap-4 mt-6">
-                    <h3 className="m-0 text-xs font-bold text-muted-foreground border-b border-border pb-2.5">
+                  <section className="flex flex-col gap-3">
+                    <h3 className="m-0 border-b border-border pb-2 text-xs font-bold text-muted-foreground">
                       Pre-Flight Checklist
                     </h3>
-                    <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-2">
                       <div
                         onClick={() => {
                           const nextVal = !balanceChecked;
@@ -1501,19 +1478,19 @@ export default function AutomationsBroadcastPage() {
                             setShowChecklistError(false);
                           }
                         }}
-                        className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex cursor-pointer select-none items-center gap-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        <div className={cn(
-                          "flex size-3.5 items-center justify-center rounded-sm border transition-all duration-150 shrink-0",
-                          balanceChecked
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-neutral-300 dark:border-neutral-700 bg-background"
-                        )}>
+                        <div
+                          className={cn(
+                            'flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-all duration-150',
+                            balanceChecked
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-neutral-300 bg-background dark:border-neutral-700',
+                          )}
+                        >
                           {balanceChecked && <Check className="size-2.5 stroke-[3]" />}
                         </div>
-                        <span>
-                          My Meta billing balance has sufficient funds.
-                        </span>
+                        <span>My Meta billing balance has sufficient funds.</span>
                       </div>
 
                       <div
@@ -1524,81 +1501,53 @@ export default function AutomationsBroadcastPage() {
                             setShowChecklistError(false);
                           }
                         }}
-                        className="flex items-center gap-2 cursor-pointer select-none text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex cursor-pointer select-none items-center gap-2 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                       >
-                        <div className={cn(
-                          "flex size-3.5 items-center justify-center rounded-sm border transition-all duration-150 shrink-0",
-                          insufficientBalanceUnderstood
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : "border-neutral-300 dark:border-neutral-700 bg-background"
-                        )}>
+                        <div
+                          className={cn(
+                            'flex size-3.5 shrink-0 items-center justify-center rounded-sm border transition-all duration-150',
+                            insufficientBalanceUnderstood
+                              ? 'border-primary bg-primary text-primary-foreground'
+                              : 'border-neutral-300 bg-background dark:border-neutral-700',
+                          )}
+                        >
                           {insufficientBalanceUnderstood && <Check className="size-2.5 stroke-[3]" />}
                         </div>
-                        <span>
-                          I acknowledge that insufficient funds will cause delivery failure.
-                        </span>
+                        <span>I acknowledge that insufficient funds will cause delivery failure.</span>
                       </div>
                     </div>
                     {showChecklistError && (
-                      <p className="text-[11px] text-destructive font-semibold mt-1 animate-fade-in">
+                      <p className="text-[11px] font-semibold text-destructive animate-fade-in">
                         {scheduleMode === 'later'
                           ? 'Please confirm all checklist items before scheduling.'
                           : 'Please confirm all checklist items before sending.'}
                       </p>
                     )}
-                  </div>
+                  </section>
                 </div>
 
-                {/* Right Column: Sample Message Preview (lg:col-span-5) */}
-                <div className="flex flex-col gap-4 lg:col-span-5 w-full h-full">
-                  <h3 className="m-0 text-xs font-bold text-muted-foreground border-b border-border pb-2.5">
+                <section className="flex min-h-0 flex-col gap-3">
+                  <h3 className="m-0 border-b border-border pb-2 text-xs font-bold text-muted-foreground">
                     Message Preview
                   </h3>
-
-                  <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-xs flex-1 h-full">
-                    <div className="bg-[#075e54] text-white px-3.5 py-2.5 flex items-center gap-2">
-                      <div className="flex size-7 items-center justify-center rounded-full bg-white/20">
-                        <Megaphone className="size-3.5" />
-                      </div>
-                      <div>
-                        <span className="text-2xs font-semibold block leading-tight">Sample Preview</span>
-                        <span className="text-[9px] text-white/70 block leading-tight">{selectedTemplate?.name}</span>
-                      </div>
-                    </div>
-
-                    <div
-                      className="p-4 flex flex-col justify-start bg-[#efeae2] relative flex-1 overflow-hidden"
-                      style={{
-                        backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-                        backgroundSize: 'contain',
-                        backgroundRepeat: 'repeat',
-                      }}
-                    >
-                      <div className="max-w-[90%] bg-white rounded-lg rounded-tl-none p-3 shadow-xs border border-black/5 relative self-start mt-2 animate-fade-in">
-                        {/* Arrow tail */}
-                        <div className="absolute left-0 top-0 -translate-x-1.5 border-r-[8px] border-r-white border-b-[8px] border-b-transparent border-t-[8px] border-t-transparent" />
-
-                        <p className="m-0 text-[11px] font-normal text-slate-800 whitespace-pre-wrap leading-relaxed break-words">
-                          {selectedTemplateBodyText}
-                        </p>
-
-                        <div className="text-[8px] text-slate-400 text-right mt-1.5 block select-none">
-                          Preview · template
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                  <WhatsAppTemplatePreview
+                    templateName={selectedTemplate?.name}
+                    components={selectedTemplate?.components}
+                    isLoading={templatesLoading}
+                    emptyMessage="Select a template to view preview"
+                    fillWidth
+                    className="w-full"
+                  />
+                </section>
               </div>
 
-              {/* Wizard Control Actions */}
-              <div className="flex justify-between pt-5 border-t border-border mt-4">
+              <div className="flex shrink-0 justify-between border-t border-border pt-5">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setStep(3)}
                   disabled={sendBusy}
-                  className="gap-2 cursor-pointer h-10 px-4 font-bold"
+                  className="h-10 gap-2 px-4 font-bold transition-all active:scale-[0.98] cursor-pointer"
                 >
                   <ChevronLeft className="size-4" />
                   Back
@@ -1608,8 +1557,8 @@ export default function AutomationsBroadcastPage() {
                   disabled={sendBusy || selectedCount === 0 || overLimit}
                   onClick={() => void handleSend()}
                   className={cn(
-                    "gap-2 cursor-pointer h-10 px-6 font-bold bg-primary hover:bg-primary-hover text-primary-foreground shadow-md transition-all active:scale-[0.98]",
-                    (!balanceChecked || !insufficientBalanceUnderstood) && "opacity-50 cursor-not-allowed hover:bg-primary"
+                    'h-10 gap-2 px-6 font-bold bg-primary text-primary-foreground shadow-md transition-all active:scale-[0.98] hover:bg-primary-hover cursor-pointer',
+                    (!balanceChecked || !insufficientBalanceUnderstood) && 'cursor-not-allowed opacity-50 hover:bg-primary',
                   )}
                 >
                   {sendBusy ? <Loader2 className="size-4 animate-spin" /> : null}

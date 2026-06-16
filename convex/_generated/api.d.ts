@@ -100,6 +100,8 @@ import type * as whatsappDemo from "../whatsappDemo.js";
 import type * as whatsappEmbeddedSignup from "../whatsappEmbeddedSignup.js";
 import type * as whatsappFollowUp from "../whatsappFollowUp.js";
 import type * as whatsappSend from "../whatsappSend.js";
+import type * as whatsappTemplates from "../whatsappTemplates.js";
+import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
 import type * as whatsappWebhook from "../whatsappWebhook.js";
 import type * as workosClient from "../workosClient.js";
 import type * as workosOrganizationActions from "../workosOrganizationActions.js";
@@ -205,6 +207,8 @@ declare const fullApi: ApiFromModules<{
   whatsappEmbeddedSignup: typeof whatsappEmbeddedSignup;
   whatsappFollowUp: typeof whatsappFollowUp;
   whatsappSend: typeof whatsappSend;
+  whatsappTemplates: typeof whatsappTemplates;
+  whatsappTemplatesAction: typeof whatsappTemplatesAction;
   whatsappWebhook: typeof whatsappWebhook;
   workosClient: typeof workosClient;
   workosOrganizationActions: typeof workosOrganizationActions;

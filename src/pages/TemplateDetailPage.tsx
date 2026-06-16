@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 
 type TemplateRow = {
   name: string;
@@ -266,41 +267,14 @@ export default function TemplateDetailPage() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: WHATSAPP speech bubble preview (lg:col-span-5) */}
+            {/* RIGHT COLUMN: WhatsApp Preview (lg:col-span-5) */}
             <div className="lg:col-span-5 flex flex-col">
-              <div className="rounded-xl border border-border bg-card shadow-sm flex flex-col h-full overflow-hidden min-h-[380px]">
-                <div className="bg-[#075e54] text-white px-4 py-3 flex items-center gap-3">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-white/20">
-                    <Megaphone className="size-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold block leading-tight">Broadcast Preview</span>
-                    <span className="text-[10px] text-white/70 block leading-tight">WhatsApp Template Message</span>
-                  </div>
-                </div>
-
-                <div
-                  className="flex-1 p-4 flex flex-col justify-start bg-[#efeae2] relative"
-                  style={{
-                    backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'repeat',
-                  }}
-                >
-                  <div className="max-w-[90%] bg-white rounded-lg rounded-tl-none p-3.5 shadow-xs border border-black/5 relative self-start mt-2">
-                    {/* Arrow tail */}
-                    <div className="absolute left-0 top-0 -translate-x-1.5 border-r-[8px] border-r-white border-b-[8px] border-b-transparent border-t-[8px] border-t-transparent" />
-
-                    <p className="m-0 text-xs font-normal text-slate-800 whitespace-pre-wrap leading-relaxed break-words">
-                      {bodyText}
-                    </p>
-
-                    <div className="text-[9px] text-slate-400 text-right mt-2 block select-none">
-                      Preview · WhatsApp
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <WhatsAppTemplatePreview
+                templateName={template?.name}
+                components={template?.components as any}
+                isLoading={loading}
+                emptyMessage="Template preview unavailable."
+              />
             </div>
           </div>
         </>

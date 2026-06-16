@@ -17,8 +17,6 @@ import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -34,20 +32,8 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
-  WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
-  WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-} from '@/lib/whatsappCloudDemo';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
+import { cn } from '@/lib/utils';
 type TemplateRow = {
   name: string;
   language: string;
@@ -66,7 +52,7 @@ function TemplatesTableSkeleton() {
               <th className="px-4 py-3.5 font-semibold text-foreground/85">Template name</th>
               <th className="px-4 py-3.5 font-semibold text-foreground/85">Category</th>
               <th className="px-4 py-3.5 font-semibold text-foreground/85">Language & Preview</th>
-              <th className="px-4 py-3.5 font-semibold text-foreground/85">Status</th>
+              <th className="px-4 py-3.5 font-semibold text-foreground/85 text-center">Status</th>
               <th className="px-4 py-3.5 font-semibold text-foreground/85 text-center">
                 <span className="flex items-center justify-center gap-1">
                   Message sent
@@ -96,8 +82,10 @@ function TemplatesTableSkeleton() {
                     <Skeleton className="h-3 w-56" />
                   </div>
                 </td>
-                <td className="px-4 py-4.5">
-                  <Skeleton className="h-6 w-20 rounded-full" />
+                <td className="px-4 py-4.5 text-center">
+                  <div className="flex justify-center">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
                 </td>
                 <td className="px-4 py-4.5 text-center">
                   <div className="flex justify-center">
@@ -126,7 +114,6 @@ export default function TemplatesPage() {
   const navigate = useNavigate();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
-  const createTemplate = useAction(api.whatsappBroadcast.createTemplate);
 
   const [channelId, setChannelId] = useState<Id<'channels'> | ''>('');
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -134,14 +121,6 @@ export default function TemplatesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
-
-  // Create template dialog state
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createBusy, setCreateBusy] = useState(false);
-  const [tplName, setTplName] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_NAME);
-  const [tplLang, setTplLang] = useState(WHATSAPP_DEMO_TEMPLATE_LANGUAGE);
-  const [tplCategory, setTplCategory] = useState('UTILITY');
-  const [tplBody, setTplBody] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_BODY);
 
   const whatsappReady = useMemo(() => {
     if (!channels) return [];
@@ -188,42 +167,19 @@ export default function TemplatesPage() {
     return templates.filter((t) => {
       const nameMatch = t.name.toLowerCase().includes(searchQuery.toLowerCase());
       const catMatch = selectedCategory === 'ALL' || t.category === selectedCategory;
-      const statusMatch =
-        selectedStatus === 'ALL' ||
-        (selectedStatus === 'APPROVED' && t.status === 'APPROVED') ||
-        (selectedStatus === 'IN_REVIEW' && t.status !== 'APPROVED');
+      
+      let statusMatch = true;
+      if (selectedStatus !== 'ALL') {
+        if (selectedStatus === 'APPROVED') {
+          statusMatch = t.status === 'APPROVED';
+        } else if (selectedStatus === 'IN_REVIEW') {
+          statusMatch = t.status !== 'APPROVED' && t.status !== 'SUBMISSION_FAILED';
+        }
+      }
 
       return nameMatch && catMatch && statusMatch;
     });
   }, [templates, searchQuery, selectedCategory, selectedStatus]);
-
-  const handleCreateTemplate = async () => {
-    if (!channelId) return;
-    const n = tplName.trim();
-    const b = tplBody.trim();
-    if (!n || !b) {
-      toast.error('Template name and body are required.');
-      return;
-    }
-    setCreateBusy(true);
-    try {
-      await createTemplate({
-        channelId: channelId as Id<'channels'>,
-        name: n,
-        language: tplLang.trim() || WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-        category: tplCategory.trim() || 'UTILITY',
-        bodyText: b,
-      });
-      toast.success('Template submitted to Meta for review.');
-      setCreateOpen(false);
-      await loadTemplates();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-    } finally {
-      setCreateBusy(false);
-    }
-  };
 
   // Unique categories for the dropdown
   const categories = useMemo(() => {
@@ -266,7 +222,7 @@ export default function TemplatesPage() {
             Refresh
           </Button>
           <Button
-            onClick={() => setCreateOpen(true)}
+            onClick={() => navigate(`/dashboard/${agentId}/templates/new`)}
             className="h-9 px-4 gap-1.5 font-semibold text-sm shadow-sm"
           >
             <Plus className="size-4" />
@@ -360,7 +316,7 @@ export default function TemplatesPage() {
             <EmptyContent>
               <Button
                 type="button"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => navigate(`/dashboard/${agentId}/templates/new`)}
                 className="h-9 text-xs px-4 gap-1.5"
               >
                 <Plus className="size-3.5" />
@@ -378,7 +334,7 @@ export default function TemplatesPage() {
                   <th className="px-4 py-3.5 font-semibold text-foreground/85">Template name</th>
                   <th className="px-4 py-3.5 font-semibold text-foreground/85">Category</th>
                   <th className="px-4 py-3.5 font-semibold text-foreground/85">Language & Preview</th>
-                  <th className="px-4 py-3.5 font-semibold text-foreground/85">Status</th>
+                  <th className="px-4 py-3.5 font-semibold text-foreground/85 text-center">Status</th>
                   <th className="px-4 py-3.5 font-semibold text-foreground/85 text-center">
                     <span className="flex items-center justify-center gap-1">
                       Message sent
@@ -397,16 +353,27 @@ export default function TemplatesPage() {
                 {filteredTemplates.map((t, index) => {
                   const bodyPreview = t.components?.find((c) => c.type === 'BODY')?.text ?? '';
                   const isApproved = t.status === 'APPROVED';
+                  const isSubmitting = t.status === 'SUBMITTING';
+                  const isFailed = t.status === 'SUBMISSION_FAILED';
 
-                  // Simulated stats: matching the mockup's 0 count, but clean and ready.
                   const sentCount = 0;
                   const openedCount = 0;
 
                   return (
                     <tr
                       key={`${t.name}-${t.language}-${index}`}
-                      onClick={() => navigate(`/dashboard/${agentId}/templates/${t.name}?lang=${t.language}`)}
-                      className="hover:bg-accent/25 transition-colors cursor-pointer group"
+                      onClick={() => {
+                        if (isSubmitting) {
+                          toast.info('Template is being submitted to Meta in the background.');
+                          return;
+                        }
+                        if (isFailed) {
+                          toast.error(`Submission failed: ${(t as any).error || 'Unknown error'}`);
+                          return;
+                        }
+                        navigate(`/dashboard/${agentId}/templates/${t.name}?lang=${t.language}`);
+                      }}
+                      className={`hover:bg-accent/25 transition-colors cursor-pointer group ${isSubmitting || isFailed ? 'opacity-80' : ''}`}
                     >
                       <td className="px-4 py-4 font-semibold text-foreground text-sm max-w-[200px] truncate">
                         {t.name}
@@ -422,11 +389,24 @@ export default function TemplatesPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="px-4 py-4">
-                        <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-800/40 px-2.5 py-0.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium">
-                          <span className={`size-1.5 rounded-full shrink-0 ${isApproved ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`} />
+                      <td className="px-4 py-4 text-center">
+                        <div
+                          className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-800/40 px-2.5 py-0.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium"
+                          title={isFailed ? ((t as any).error || 'Submission failed') : undefined}
+                          style={{ cursor: isFailed ? 'help' : 'default' }}
+                        >
+                          {isSubmitting ? (
+                            <span className="size-1.5 rounded-full shrink-0 bg-amber-500 animate-pulse" />
+                          ) : isFailed ? (
+                            <span className="size-1.5 rounded-full shrink-0 bg-rose-500" />
+                          ) : (
+                            <span className={cn(
+                              "size-1.5 rounded-full shrink-0",
+                              isApproved ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
+                            )} />
+                          )}
                           <span>
-                            {isApproved ? 'Approved' : 'In review'}
+                            {isSubmitting ? 'Submitting' : isFailed ? 'Failed' : isApproved ? 'Approved' : 'In review'}
                           </span>
                         </div>
                       </td>
@@ -449,69 +429,6 @@ export default function TemplatesPage() {
           </div>
         </div>
       )}
-
-      {/* CREATE TEMPLATE DIALOG */}
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create message template</DialogTitle>
-            <DialogDescription>
-              Submits a utility-style template to Meta for review. Category and
-              content must comply with WhatsApp policies.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 py-2 text-left">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tpl-name">Name</Label>
-              <Input
-                id="tpl-name"
-                value={tplName}
-                onChange={(e) => setTplName(e.target.value)}
-                disabled={createBusy}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tpl-lang">Language</Label>
-                <Input
-                  id="tpl-lang"
-                  value={tplLang}
-                  onChange={(e) => setTplLang(e.target.value)}
-                  disabled={createBusy}
-                />
-              </div>
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="tpl-cat">Category</Label>
-                <Input
-                  id="tpl-cat"
-                  value={tplCategory}
-                  onChange={(e) => setTplCategory(e.target.value)}
-                  disabled={createBusy}
-                />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="tpl-body">Body</Label>
-              <Textarea
-                id="tpl-body"
-                rows={4}
-                value={tplBody}
-                onChange={(e) => setTplBody(e.target.value)}
-                disabled={createBusy}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={createBusy}>
-              Cancel
-            </Button>
-            <Button onClick={() => void handleCreateTemplate()} disabled={createBusy} className="gap-2">
-              {createBusy ? <Loader2 className="size-4 animate-spin" /> : null}
-              Submit to Meta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
     </WhatsAppFeatureGate>
   );

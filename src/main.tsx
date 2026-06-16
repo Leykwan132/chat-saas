@@ -27,6 +27,7 @@ import InvitationsPage from './pages/InvitationsPage.tsx'
 import ChannelsPage from './pages/ChannelsPage.tsx'
 import ChannelWhatsAppTemplatesPage from './pages/ChannelWhatsAppTemplatesPage.tsx'
 import TemplatesPage from './pages/TemplatesPage.tsx'
+import CreateTemplatePage from './pages/CreateTemplatePage.tsx'
 import TemplateDetailPage from './pages/TemplateDetailPage.tsx'
 import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
 import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
@@ -211,6 +212,7 @@ function RootLayout() {
               <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
               <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />
               <Route path="templates" element={<TemplatesPage />} />
+              <Route path="templates/new" element={<CreateTemplatePage />} />
               <Route path="templates/:templateName" element={<TemplateDetailPage />} />
               <Route path="availability" element={<SchedulePage />} />
               <Route

@@ -990,4 +990,22 @@ export default defineSchema({
   })
     .index("by_conversationId_and_performedAt", ["conversationId", "performedAt"])
     .index("by_orgId_and_performedAt", ["orgId", "performedAt"]),
+  whatsappTemplates: defineTable({
+    orgId: v.string(),
+    channelId: v.id("channels"),
+    name: v.string(),
+    language: v.string(),
+    purpose: v.union(v.literal("broadcasting"), v.literal("follow_up")),
+    category: v.union(v.literal("MARKETING"), v.literal("UTILITY")),
+    components: v.any(), // Array of components
+    status: v.union(
+      v.literal("submitting"),
+      v.literal("submitted"),
+      v.literal("failed"),
+    ),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_channelId", ["channelId"])
+    .index("by_orgId_and_channelId", ["orgId", "channelId"]),
 });

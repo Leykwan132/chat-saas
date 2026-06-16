@@ -90,7 +90,7 @@ function MultiSelect({
         >
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {value.length === 0 ? (
-              <span className="text-muted-foreground font-normal">{placeholder}</span>
+              <span className="text-muted-foreground/50 font-normal">{placeholder}</span>
             ) : (
               value.map((item) => (
                 <span

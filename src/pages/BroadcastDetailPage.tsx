@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
@@ -239,38 +240,13 @@ export default function BroadcastDetailPage() {
   };
 
   const whatsAppPreview = (
-    <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm min-h-[532px]">
-      <div className="bg-[#075e54] text-white px-4 py-3 flex items-center gap-3">
-        <div className="flex size-8 items-center justify-center rounded-full bg-white/20">
-          <Megaphone className="size-4" />
-        </div>
-        <div>
-          <span className="text-xs font-bold block leading-tight">Broadcast Preview</span>
-          <span className="text-[10px] text-white/70 block leading-tight">WhatsApp Template Message</span>
-        </div>
-      </div>
-      <div
-        className="flex-1 p-4 flex flex-col justify-start bg-[#efeae2] relative min-h-[392px]"
-        style={{
-          backgroundImage: `url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')`,
-          backgroundSize: 'contain',
-          backgroundRepeat: 'repeat',
-        }}
-      >
-        {templatesLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="size-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <div className="max-w-[90%] bg-white rounded-lg rounded-tl-none p-3.5 shadow-xs border border-black/5 relative self-start mt-2">
-            <p className="m-0 text-xs font-normal text-slate-800 whitespace-pre-wrap leading-relaxed break-words">
-              {bodyText}
-            </p>
-            <div className="text-[9px] text-slate-400 text-right mt-2">Preview · WhatsApp</div>
-          </div>
-        )}
-      </div>
-    </div>
+    <WhatsAppTemplatePreview
+      templateName={template?.name}
+      components={template?.components}
+      isLoading={templatesLoading}
+      emptyMessage="Template preview unavailable."
+      className="max-w-sm"
+    />
   );
 
   return (

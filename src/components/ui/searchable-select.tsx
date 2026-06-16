@@ -151,7 +151,7 @@ export function SearchableSelect({
             <span
               className={cn(
                 'flex min-w-0 flex-1 items-center gap-2',
-                !selectedOption && 'text-muted-foreground',
+                !selectedOption && 'text-muted-foreground/50',
               )}
             >
               <span className="truncate">{selectedOption?.label ?? placeholder}</span>
