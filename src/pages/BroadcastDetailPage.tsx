@@ -4,7 +4,6 @@ import { useAction, useMutation, useQuery } from 'convex/react';
 import {
   ArrowLeft,
   Loader2,
-  Megaphone,
   Trash2,
   Users,
   AlertCircle,
@@ -165,12 +164,6 @@ export default function BroadcastDetailPage() {
       ) ?? null
     );
   }, [templates, schedule]);
-
-  const bodyText = useMemo(() => {
-    if (!template) return 'Template preview unavailable.';
-    const bodyComp = template.components?.find((c) => c.type === 'BODY');
-    return bodyComp?.text ?? 'No body text content available.';
-  }, [template]);
 
   if (!typedAgentId || !typedScheduleId) {
     return <Navigate to="/workspace" replace />;

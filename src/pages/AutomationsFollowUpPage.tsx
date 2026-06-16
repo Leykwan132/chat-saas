@@ -331,14 +331,6 @@ export default function AutomationsFollowUpPage() {
     );
   }, [activePreviewIndex, templates, useSameMessage, singleTemplateKey, attempts]);
 
-  const selectedTemplateBodyText = useMemo(() => {
-    if (!selectedAttemptTemplate) return '';
-    const bodyComp = selectedAttemptTemplate.components?.find((c: any) => c.type === 'BODY');
-    return bodyComp?.text ?? 'No body text content preview available.';
-  }, [selectedAttemptTemplate]);
-
-
-
   // Live count matching leads
   // Extract unique customer tags for filtering
   const allTags = useMemo(() => {

@@ -220,17 +220,6 @@ function TemplateListSkeleton() {
   );
 }
 
-function BroadcastPreviewSkeleton() {
-  return (
-    <div className="max-w-[90%] self-start mt-2 rounded-lg rounded-tl-none border border-black/5 bg-white p-3 shadow-xs">
-      <Skeleton className="mb-2 h-3 w-full" />
-      <Skeleton className="mb-2 h-3 w-[92%]" />
-      <Skeleton className="h-3 w-[70%]" />
-      <Skeleton className="mt-2 ml-auto h-2 w-16" />
-    </div>
-  );
-}
-
 function RecipientListSkeleton() {
   return (
     <div className="overflow-hidden rounded-xl border border-border">
@@ -624,12 +613,6 @@ export default function AutomationsBroadcastPage() {
         t.name.toLowerCase().includes(templateSearchQuery.toLowerCase())
     );
   }, [templates, templateSearchQuery]);
-
-  const selectedTemplateBodyText = useMemo(() => {
-    if (!selectedTemplate) return '';
-    const bodyComp = selectedTemplate.components?.find((c: any) => c.type === 'BODY');
-    return bodyComp?.text ?? 'No body text content preview available.';
-  }, [selectedTemplate]);
 
   if (channels === undefined) {
     return (

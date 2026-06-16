@@ -86,12 +86,6 @@ export default function TemplateDetailPage() {
     );
   }, [templates, templateName, targetLanguage]);
 
-  const bodyText = useMemo(() => {
-    if (!template) return '';
-    const bodyComp = template.components?.find((c: any) => c.type === 'BODY');
-    return bodyComp?.text ?? 'No body text content available.';
-  }, [template]);
-
   const isApproved = template?.status === 'APPROVED';
 
   if (channels === undefined || (loading && templates.length === 0)) {

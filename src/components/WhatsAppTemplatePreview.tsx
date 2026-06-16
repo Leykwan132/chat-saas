@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ interface ButtonType {
   example?: string;
 }
 
-interface TemplateComponent {
+export interface TemplateComponent {
   type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
   format?: 'TEXT' | 'IMAGE' | 'VIDEO' | 'DOCUMENT';
   text?: string;
@@ -28,9 +28,17 @@ interface TemplateComponent {
   buttons?: ButtonType[];
 }
 
+type TemplateComponentInput = {
+  type: string;
+  format?: string;
+  text?: string;
+  r2Key?: string;
+  buttons?: ButtonType[];
+};
+
 interface WhatsAppTemplatePreviewProps {
   templateName?: string;
-  components?: TemplateComponent[] | null;
+  components?: TemplateComponentInput[] | null;
   isLoading?: boolean;
   emptyMessage?: string;
   overrideBodyText?: string;

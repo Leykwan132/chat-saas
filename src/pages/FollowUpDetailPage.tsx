@@ -5,14 +5,12 @@ import {
   ArrowLeft,
   Loader2,
   AlertCircle,
-  MessagesSquare,
   Pencil,
   LayoutList,
   History,
   Plus,
   Search,
   X,
-  Megaphone,
 } from 'lucide-react';
 import { SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -538,16 +536,6 @@ export default function FollowUpDetailPage() {
         t.language === activeAttempt.templateLanguage,
     );
   }, [activePreviewIndex, approvedTemplates, useSameMessage, singleTemplateKey, attempts]);
-
-  const previewBodyText = useMemo(() => {
-    if (!selectedAttemptTemplate) {
-      return 'Select a message template to view preview';
-    }
-    const bodyComp = selectedAttemptTemplate.components?.find(
-      (c: { type: string }) => c.type === 'BODY',
-    );
-    return bodyComp?.text ?? 'No body text content available.';
-  }, [selectedAttemptTemplate]);
 
   const requestActiveChange = (next: boolean) => {
     if (!canManage || next === isActive) return;

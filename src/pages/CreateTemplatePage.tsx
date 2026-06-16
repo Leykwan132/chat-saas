@@ -13,7 +13,6 @@ import {
   Copy,
   Type,
   Image,
-  User,
   ChevronLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
