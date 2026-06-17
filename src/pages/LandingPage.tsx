@@ -68,9 +68,9 @@ const COMPANY_LOGOS = [
 
 const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.svg';
 const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
-const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent.png';
-const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB.png';
-const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models.png';
+const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent-3.png';
+const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB-3.png';
+const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
 
 function LogoMarquee({ logos }: { logos?: Array<{ name: string; icon: React.ComponentType<{ className?: string }> }> }) {
   if (!logos || logos.length === 0) return null;
@@ -114,8 +114,8 @@ function FeaturesSection() {
         {/* 3 Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Card 1: AI Lead Temperature */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
-            <div>
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40">
+            <div className='pt-8 px-8 pb-4'>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 AI Agent
               </h3>
@@ -127,13 +127,13 @@ function FeaturesSection() {
             <img
               src={FEATURE_AI_AGENT_IMAGE}
               alt="AI Agent feature"
-              className="mt-8 w-full h-auto"
+              className="w-full h-auto"
             />
           </div>
 
           {/* Card 2: Knowledge Base Sync */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
-            <div>
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40">
+            <div className='pt-8 px-8'>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 Knowledge Base
               </h3>
@@ -145,13 +145,13 @@ function FeaturesSection() {
             <img
               src={FEATURE_KB_IMAGE}
               alt="Knowledge base feature"
-              className="mt-8 w-full h-auto"
+              className=" w-full h-auto"
             />
           </div>
 
           {/* Card 3: Custom LLM Routing */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
-            <div>
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40">
+            <div className='pt-8 px-8'>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 Custom Models
               </h3>
@@ -163,7 +163,7 @@ function FeaturesSection() {
             <img
               src={FEATURE_MODELS_IMAGE}
               alt="Custom models feature"
-              className="mt-8 w-full h-auto"
+              className=" w-full h-auto"
             />
           </div>
         </div>
