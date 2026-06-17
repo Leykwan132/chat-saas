@@ -5,7 +5,6 @@ import { useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import {
   ArrowRight,
-  Play,
   Check,
   X,
 } from 'lucide-react';
@@ -45,7 +44,6 @@ function PrimaryCta({
   return (
     <button type="button" onClick={onSignUp} className={className}>
       {label}
-      <ArrowRight className="size-4" />
     </button>
   );
 }
@@ -351,13 +349,12 @@ function Hero({
             Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
+            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started for free" />
             <a
               href="#product-demo"
-              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
             >
-              <Play className="size-4 fill-current" />
-              Schedule Demo
+              Schedule a demo
             </a>
           </div>
         </div>
@@ -606,19 +603,17 @@ function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
             <button
               type="button"
               onClick={onSignUp}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-white hover:bg-white/90 text-zinc-950 px-6 text-sm font-semibold transition-colors cursor-pointer shadow-sm"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white hover:bg-white/90 text-zinc-950 px-6 text-sm font-semibold transition-colors cursor-pointer shadow-sm sm:w-auto"
             >
-              Get Started
-              <ArrowRight className="size-4" />
+              Get started for free
             </button>
 
-            <button
-              type="button"
-              onClick={onSignUp}
-              className="inline-flex h-11 items-center justify-center text-white/85 hover:text-white transition-colors text-sm font-semibold cursor-pointer px-4"
+            <a
+              href="#product-demo"
+              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-white/20 bg-transparent px-6 text-sm font-semibold text-white transition-all hover:bg-white/5 sm:w-auto"
             >
               Schedule a demo
-            </button>
+            </a>
           </div>
         </div>
       </div>

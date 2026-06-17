@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { ArrowRight, Menu, User, LogIn, UserPlus } from 'lucide-react';
+import { ArrowRight, Menu, User, LogIn } from 'lucide-react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Button } from '@/components/ui/button';
@@ -131,8 +131,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                       : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
                   )}
                 >
-                  Get started
-                  <ArrowRight className="size-4" />
+                  Get started for free
                 </button>
               </>
             )}
@@ -205,10 +204,9 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                     <button
                       type="button"
                       onClick={onSignUp}
-                      className="flex items-center gap-3 w-full py-2 text-left text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white transition-colors cursor-pointer"
+                      className="flex w-full py-2 text-left text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white transition-colors cursor-pointer"
                     >
-                      <UserPlus className="size-4.5 text-zinc-400 dark:text-zinc-500" />
-                      <span>Get started</span>
+                      Get started for free
                     </button>
                   </div>
                 )}

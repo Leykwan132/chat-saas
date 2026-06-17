@@ -68,8 +68,7 @@ export function LegalDocumentLayout({ title, lastUpdated, children }: LegalDocum
                   onClick={onSignUp}
                   className="inline-flex items-center gap-1.5 rounded-md bg-zinc-900 px-3.5 py-2 text-sm font-medium text-white transition-opacity hover:bg-zinc-800 hover:opacity-90 dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]"
                 >
-                  Get started
-                  <ArrowRight className="size-4" />
+                  Get started for free
                 </button>
               </>
             )}
