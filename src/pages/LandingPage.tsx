@@ -8,9 +8,6 @@ import {
   Play,
   Users,
   Calendar,
-  FileText,
-  Database,
-  Globe,
   Check,
   X,
   Target,
@@ -40,12 +37,12 @@ function PrimaryCta({
   onSignUp: () => void;
   label: string;
 }) {
+  const className =
+    'inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 px-6 text-sm font-semibold transition-colors sm:w-auto';
+
   if (hasSession) {
     return (
-      <Link
-        to={POST_LOGIN_REDIRECT}
-        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white hover:bg-zinc-100 text-zinc-950 px-6 text-sm font-semibold transition-colors sm:w-auto shadow-md"
-      >
+      <Link to={POST_LOGIN_REDIRECT} className={className}>
         Go to dashboard
         <ArrowRight className="size-4" />
       </Link>
@@ -53,11 +50,7 @@ function PrimaryCta({
   }
 
   return (
-    <button
-      type="button"
-      onClick={onSignUp}
-      className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-white hover:bg-zinc-100 text-zinc-950 px-6 text-sm font-semibold transition-colors sm:w-auto shadow-md"
-    >
+    <button type="button" onClick={onSignUp} className={className}>
       {label}
       <ArrowRight className="size-4" />
     </button>
@@ -75,40 +68,16 @@ const COMPANY_LOGOS = [
 
 const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.svg';
 const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
-
-function AppDemoSection() {
-  return (
-    <section id="product-demo" className="bg-white dark:bg-[#060606] pt-16 pb-10 px-6 sm:pt-20 sm:pb-14 sm:px-8 scroll-mt-14 flex flex-col gap-10 sm:gap-12">
-      <div className="mx-auto max-w-6xl w-full">
-        <BlurFade inView>
-          <div className="relative mx-auto w-fit max-w-full overflow-hidden rounded-2xl border-[3px] md:w-full md:border-[8px] border-white bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)]">
-            <img
-              src={LANDING_MOBILE_IMAGE}
-              alt="Kilobot Inbox on mobile"
-              className="block w-[min(calc(100vw-3rem),360px)] h-auto md:hidden"
-            />
-            <div className="relative aspect-[16/10] w-full hidden md:block">
-              <img
-                src={LANDING_DESKTOP_IMAGE}
-                alt="Kilobot Inbox Sales Interface Demonstration"
-                className="w-full h-full object-cover transition-transform duration-700 hover:scale-[1.01]"
-              />
-            </div>
-          </div>
-        </BlurFade>
-      </div>
-      <LogoMarquee logos={COMPANY_LOGOS} />
-    </section>
-  );
-}
+const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent.png';
+const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB.png';
+const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models.png';
 
 function LogoMarquee({ logos }: { logos?: Array<{ name: string; icon: React.ComponentType<{ className?: string }> }> }) {
   if (!logos || logos.length === 0) return null;
 
   return (
     <div className="w-full overflow-hidden py-0 bg-transparent">
-      <div className="mx-auto max-w-6xl px-6">
-        <div className="relative w-full overflow-hidden">
+      <div className="relative w-full overflow-hidden">
           {/* Gradients to fade out edges */}
           <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 md:w-16 bg-gradient-to-r from-white dark:from-[#060606] to-transparent" />
           <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 md:w-16 bg-gradient-to-l from-white dark:from-[#060606] to-transparent" />
@@ -125,7 +94,6 @@ function LogoMarquee({ logos }: { logos?: Array<{ name: string; icon: React.Comp
               );
             })}
           </Marquee>
-        </div>
       </div>
     </div>
   );
@@ -146,7 +114,7 @@ function FeaturesSection() {
         {/* 3 Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Card 1: AI Lead Temperature */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8 min-h-[440px]">
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
             <div>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 AI Agent
@@ -156,50 +124,15 @@ function FeaturesSection() {
               </p>
             </div>
             
-            {/* Graphic 1: Lead Temperature Benchmark */}
-            <div className="mt-8 flex flex-col gap-4 w-full px-1">
-              {/* Hot Lead */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-1.5 font-semibold text-orange-600 dark:text-orange-400">
-                    <span className="size-2 rounded-full bg-orange-500 animate-ping" />
-                    Hot Lead 🔥
-                  </span>
-                  <span className="text-orange-600 dark:text-orange-400 font-bold">95°C</span>
-                </div>
-                <div className="flex gap-[3px]">
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="h-4 w-1.5 bg-orange-500 rounded-sm" />
-                  ))}
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-4 w-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-sm" />
-                  ))}
-                </div>
-              </div>
-
-              {/* Cold Lead */}
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="flex items-center gap-1.5 text-blue-500 dark:text-blue-400 font-semibold">
-                    <span className="size-2 rounded-full bg-blue-500" />
-                    Cold Lead ❄️
-                  </span>
-                  <span className="text-blue-500 dark:text-blue-400 font-mono">15°C</span>
-                </div>
-                <div className="flex gap-[3px]">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="h-4 w-1.5 bg-blue-400 rounded-sm" />
-                  ))}
-                  {Array.from({ length: 24 }).map((_, i) => (
-                    <div key={i} className="h-4 w-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-sm" />
-                  ))}
-                </div>
-              </div>
-            </div>
+            <img
+              src={FEATURE_AI_AGENT_IMAGE}
+              alt="AI Agent feature"
+              className="mt-8 w-full h-auto"
+            />
           </div>
 
           {/* Card 2: Knowledge Base Sync */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8 min-h-[440px]">
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
             <div>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 Knowledge Base
@@ -209,37 +142,15 @@ function FeaturesSection() {
               </p>
             </div>
 
-            {/* Graphic 2: Knowledge base source connections */}
-            <div className="mt-8 relative flex items-center justify-center h-40 w-full">
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Left line */}
-                <path d="M 15 15 C 15 50, 50 50, 50 75" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-zinc-200 dark:text-zinc-800" strokeDasharray="2 2" />
-                {/* Middle line */}
-                <path d="M 50 15 L 50 75" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-zinc-200 dark:text-zinc-800" strokeDasharray="2 2" />
-                {/* Right line */}
-                <path d="M 85 15 C 85 50, 50 50, 50 75" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-zinc-200 dark:text-zinc-800" strokeDasharray="2 2" />
-              </svg>
-
-              {/* Chips */}
-              <div className="absolute left-[15%] top-0 -translate-x-1/2 z-10 flex size-12 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.08] shadow-md transition-transform hover:-translate-y-1">
-                <FileText className="text-blue-500 size-6" />
-              </div>
-              <div className="absolute left-[50%] top-0 -translate-x-1/2 z-10 flex size-12 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.08] shadow-md transition-transform hover:-translate-y-1">
-                <Database className="text-emerald-500 size-6" />
-              </div>
-              <div className="absolute left-[85%] top-0 -translate-x-1/2 z-10 flex size-12 items-center justify-center rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.08] shadow-md transition-transform hover:-translate-y-1">
-                <Globe className="text-violet-500 size-6" />
-              </div>
-
-              {/* Center receiver (Kilobot core logo) */}
-              <div className="absolute left-[50%] bottom-4 -translate-x-1/2 z-10 flex size-10 items-center justify-center rounded-full bg-zinc-950 dark:bg-white border border-zinc-800 dark:border-zinc-200 shadow-md">
-                <img src="/icon.svg" className="size-5 invert dark:invert-0" alt="" />
-              </div>
-            </div>
+            <img
+              src={FEATURE_KB_IMAGE}
+              alt="Knowledge base feature"
+              className="mt-8 w-full h-auto"
+            />
           </div>
 
           {/* Card 3: Custom LLM Routing */}
-          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8 min-h-[440px]">
+          <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8">
             <div>
               <h3 className="text-lg font-semibold text-zinc-950 dark:text-white mb-2">
                 Custom Models
@@ -249,39 +160,11 @@ function FeaturesSection() {
               </p>
             </div>
 
-            {/* Graphic 3: Custom model routing chart */}
-            <div className="mt-8 flex flex-col w-full px-1">
-              <div className="relative h-28 w-full">
-                {/* Y Axis line / Grid lines */}
-                <div className="absolute inset-y-0 left-0 w-px bg-zinc-200 dark:bg-zinc-800" />
-                <div className="absolute bottom-0 inset-x-0 h-px bg-zinc-200 dark:bg-zinc-800" />
-                
-                {/* Chart curves */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                  {/* Top Line (GPT-4o) */}
-                  <path d="M 0 90 Q 45 70 85 10" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-300 dark:text-zinc-700" />
-                  {/* Middle Line (Claude 3.5) */}
-                  <path d="M 0 90 Q 45 80 85 35" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-400 dark:text-zinc-600" strokeDasharray="3 3" />
-                  {/* Bottom Line (Custom Model) */}
-                  <path d="M 0 90 Q 45 88 85 60" fill="none" stroke="currentColor" strokeWidth="2" className="text-emerald-500" />
-                  
-                  {/* Ending point indicators */}
-                  <circle cx="85" cy="10" r="2" className="fill-zinc-400 dark:fill-zinc-600" />
-                  <circle cx="85" cy="35" r="2" className="fill-zinc-500" />
-                  <circle cx="85" cy="60" r="2" className="fill-emerald-500" />
-                </svg>
-
-                {/* Legend badges at ends of lines */}
-                <div className="absolute left-[88%] top-[10%] text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 rounded -translate-y-1/2">GPT-4o</div>
-                <div className="absolute left-[88%] top-[35%] text-[9px] font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900 px-1.5 py-0.5 rounded -translate-y-1/2">Claude 3.5</div>
-                <div className="absolute left-[88%] top-[60%] text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded -translate-y-1/2">Custom LLM</div>
-              </div>
-              <div className="flex justify-between items-center mt-2.5 text-[9px] font-semibold tracking-wider text-zinc-400 dark:text-zinc-550 uppercase">
-                <span>100 chats</span>
-                <span>1k chats</span>
-                <span>10k chats</span>
-              </div>
-            </div>
+            <img
+              src={FEATURE_MODELS_IMAGE}
+              alt="Custom models feature"
+              className="mt-8 w-full h-auto"
+            />
           </div>
         </div>
       </div>
@@ -664,39 +547,45 @@ function Hero({
   onSignUp: () => void;
 }) {
   return (
-    <section className="relative isolate min-h-screen w-full flex flex-col justify-center items-center px-5 py-24 sm:px-6 overflow-hidden bg-black">
-      {/* Background Video with Dark Overlay */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="h-full w-full object-cover"
-        >
-          <source src="https://storage.kilobot.app/5665074-hd_1920_1080_25fps.mp4" type="video/mp4" />
-        </video>
-        {/* Dark overlay to make the white text stand out */}
-        <div className="absolute inset-0 bg-black/55" />
-      </div>
+    <section className="w-full bg-white dark:bg-[#060606] px-5 pt-28 pb-16 sm:px-6 sm:pt-32 sm:pb-20">
+      <div className="mx-auto max-w-7xl">
+        <div className="mx-auto flex max-w-3xl flex-col items-center text-center py-24">
+          <h1 className="font-title text-balance text-3xl font-semibold leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-4xl md:text-[52px]">
+            AI Agent for your inbox <br />
+            in 5 minutes
+          </h1>
+          <p className="mx-auto mt-6 max-w-xl text-pretty text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-sm md:text-base">
+            Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
+          </p>
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
+            <a
+              href="#product-demo"
+              className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
+            >
+              <Play className="size-4 fill-current" />
+              Schedule Demo
+            </a>
+          </div>
+        </div>
 
-      <div className="relative z-10 mx-auto max-w-5xl text-center flex flex-col items-center">
-        <h1 className="font-title text-balance text-3xl sm:text-4xl md:text-[52px] font-semibold leading-tight tracking-normal text-white">
-          AI Agent for your inbox <br />
-          in 5 minutes
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-pretty text-xs sm:text-sm md:text-base leading-relaxed text-zinc-300/90">
-          Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
-        </p>
-        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-          <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started" />
-          <a
-            href="#product-demo"
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-white/20 bg-white/5 backdrop-blur-sm px-6 text-sm font-semibold text-white transition-all hover:bg-white/10 hover:border-white/30 sm:w-auto"
-          >
-            <Play className="size-4 fill-current" />
-            See demo
-          </a>
+        <div id="product-demo" className="mt-14 w-full scroll-mt-14 sm:mt-16">
+          <BlurFade inView>
+            <img
+              src={LANDING_MOBILE_IMAGE}
+              alt="Kilobot Inbox Sales Interface Demonstration"
+              className="w-full h-auto rounded-lg bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white/10 dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)] md:hidden"
+            />
+            <img
+              src={LANDING_DESKTOP_IMAGE}
+              alt="Kilobot Inbox Sales Interface Demonstration"
+              className="hidden w-full h-auto rounded-lg bg-white shadow-[0_0_15px_rgba(0,0,0,0.07)] dark:border-white/10 dark:bg-white dark:shadow-[0_0_15px_rgba(0,0,0,0.35)] md:block"
+            />
+          </BlurFade>
+        </div>
+
+        <div className="mt-12 w-full sm:mt-14">
+          <LogoMarquee logos={COMPANY_LOGOS} />
         </div>
       </div>
     </section>
@@ -966,10 +855,9 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-[100svh] bg-white dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 dark:selection:text-zinc-50">
-      <SiteHeader transparent />
+      <SiteHeader />
       <main>
         <Hero hasSession={hasSession} onSignUp={onSignUp} />
-        <AppDemoSection />
         <FeaturesSection />
         <FeatureShowcaseSection />
         <ComparisonSection />
