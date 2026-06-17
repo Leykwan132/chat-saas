@@ -63,10 +63,13 @@ export const createCheckout = action({
       priceId = getStripePriceId(args.plan as any, args.interval);
     }
 
-    const frontendUrl = process.env.APP_BASE_URL || "http://localhost:5173";
+    const frontendUrl = (process.env.APP_BASE_URL || "http://localhost:5173").replace(
+      /\/+$/,
+      "",
+    );
     const successUrl = `${frontendUrl}/workspace?success=true`;
     const cancelUrl = args.cancelPath
-      ? `${frontendUrl}${args.cancelPath}`
+      ? `${frontendUrl}${args.cancelPath.startsWith("/") ? args.cancelPath : `/${args.cancelPath}`}`
       : `${frontendUrl}/onboarding`;
 
     const creditMetadata = {
@@ -110,7 +113,11 @@ export const createPortal = action({
       throw new Error("No Stripe billing customer found.");
     }
 
-    const frontendUrl = process.env.APP_BASE_URL || process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = (
+      process.env.APP_BASE_URL ||
+      process.env.FRONTEND_URL ||
+      "http://localhost:5173"
+    ).replace(/\/+$/, "");
     const returnPath = args.returnPath ?? "/workspace/settings?section=plan";
     const returnUrl = `${frontendUrl}${returnPath.startsWith("/") ? returnPath : `/${returnPath}`}`;
 
