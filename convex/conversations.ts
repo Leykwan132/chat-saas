@@ -6,6 +6,10 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { metaIndicatorPool } from "./inboxPools";
 import { logConversationEvent } from "./conversationLogs";
+import {
+  isDemoInboxChannel,
+  isDemoInboxConversation,
+} from "./whatsappDemo";
 
 export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
   const channelRows = await ctx.db
@@ -15,7 +19,7 @@ export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: strin
 
   const connectedChannelById = new Map(
     channelRows
-      .filter((c) => c.status === "connected")
+      .filter((c) => c.status === "connected" && !isDemoInboxChannel(c))
       .map((c) => [c._id, c] as const),
   );
 
@@ -35,6 +39,7 @@ export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: strin
   const conversations = recent.filter(
     (c) =>
       c.service !== "playground" &&
+      !isDemoInboxConversation(c) &&
       c.channelId !== undefined &&
       connectedChannelById.has(c.channelId),
   );
@@ -140,7 +145,9 @@ export const listForCurrentOrg = query({
       .paginate(args.paginationOpts);
     return {
       ...result,
-      page: result.page.filter((c) => c.service !== "playground"),
+      page: result.page.filter(
+        (c) => c.service !== "playground" && !isDemoInboxConversation(c),
+      ),
     };
   },
 });

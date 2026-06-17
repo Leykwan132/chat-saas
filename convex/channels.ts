@@ -12,7 +12,10 @@ import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
-import { WHATSAPP_DEMO_PHONE_NUMBER_ID } from "./whatsappDemo";
+import {
+  isDemoInboxChannel,
+  WHATSAPP_DEMO_PHONE_NUMBER_ID,
+} from "./whatsappDemo";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -61,8 +64,10 @@ export const listForCurrentOrg = query({
       .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
       .collect();
 
+    const visibleChannels = channels.filter((channel) => !isDemoInboxChannel(channel));
+
     return await Promise.all(
-      channels.map(async (channel) => {
+      visibleChannels.map(async (channel) => {
         const conversations = await ctx.db
           .query("conversations")
           .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
@@ -136,7 +141,7 @@ export const getConnectedForCurrentOrg = query({
       .query("channels")
       .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
       .collect();
-    return rows.filter((r) => r.status === "connected");
+    return rows.filter((r) => r.status === "connected" && !isDemoInboxChannel(r));
   },
 });
 

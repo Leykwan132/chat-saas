@@ -1,15 +1,10 @@
 import { v } from "convex/values";
 import { action, mutation } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
-import type { Id } from "./_generated/dataModel";
-import {
-  createThreadForConversation,
-  saveUserMessage,
-} from "./chat/threads";
-import { logConversationEvent } from "./conversationLogs";
+import type { Doc } from "./_generated/dataModel";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
-const WHATSAPP_DEMO_CONVERSATION_TAG = "whatsapp_demo";
+export const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
+export const WHATSAPP_DEMO_CONVERSATION_TAG = "whatsapp_demo";
 export const WHATSAPP_DEMO_PHONE_NUMBER_ID = "1121402084386768";
 const WHATSAPP_DEMO_WABA_ID = "1457383175576319";
 const WHATSAPP_DEMO_RECIPIENT = "60129499394";
@@ -36,149 +31,80 @@ function requireDemoAccessToken(): string {
   return token;
 }
 
-const WELCOME_COPY =
-  "This is a demo WhatsApp thread for the Cloud API sample number. Outbound messages from the composer use WHATSAPP_DEMO_ACCESS_TOKEN on Convex (freeform text inside Meta’s customer-care window). Open Channels, click your connected WhatsApp number, then Message templates to create templates via Convex (token never leaves the server).";
+export function isDemoInboxChannel(
+  channel: Pick<Doc<"channels">, "accessToken" | "phoneNumberId">,
+): boolean {
+  return (
+    channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL ||
+    channel.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID
+  );
+}
 
-// Idempotent: ensures one demo WhatsApp channel + one demo conversation for
-// review / Meta approval flows. Skips if the org already has a non-demo
-// WhatsApp channel connected with a real system user token.
-export const ensureInbox = mutation({
+export function isDemoInboxConversation(
+  conversation: Pick<Doc<"conversations">, "tags">,
+): boolean {
+  return (conversation.tags ?? []).includes(WHATSAPP_DEMO_CONVERSATION_TAG);
+}
+
+// Idempotent: removes seeded WhatsApp demo channel rows and their inbox threads.
+export const clearInboxSampleData = mutation({
   args: {},
-  handler: async (
-    ctx,
-  ): Promise<
-    | { status: "ready"; channelId: Id<"channels">; conversationId: Id<"conversations"> }
-    | { status: "skipped_real_whatsapp" }
-    | { status: "no_organization" }
-  > => {
-    const { orgId, userId } = await getAuthContext(ctx);
-    if (!orgId) {
-      return { status: "no_organization" };
+  handler: async (ctx) => {
+    const { orgId } = await getAuthContext(ctx);
+    if (!orgId || orgId === "personal") {
+      return { deletedConversations: 0, deletedChannels: 0 };
     }
 
-    const existing = (
-      await ctx.db
-        .query("channels")
-        .withIndex("by_orgId_and_service", (q) =>
-          q.eq("orgId", orgId).eq("service", "whatsapp"),
-        )
-        .collect()
-    ).find((c) => c.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID) ?? null;
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+      .collect();
+    const demoChannels = channels.filter(isDemoInboxChannel);
+    const demoChannelIds = new Set(demoChannels.map((channel) => channel._id));
 
-    if (existing !== null) {
-      const token = existing.accessToken?.trim() ?? "";
-      const hasNonDemoCredentials =
-        token.length > 0 && token !== WHATSAPP_DEMO_ACCESS_SENTINEL;
-      if (hasNonDemoCredentials) {
-        return { status: "skipped_real_whatsapp" };
-      }
-    }
-
-    const now = Date.now();
-    const channelPatch = {
-      wabaId: WHATSAPP_DEMO_WABA_ID,
-      phoneNumberId: WHATSAPP_DEMO_PHONE_NUMBER_ID,
-      displayPhoneNumber: "Demo — WhatsApp Cloud API",
-      accessToken: WHATSAPP_DEMO_ACCESS_SENTINEL,
-      tokenExpiresAt: undefined,
-      status: "connected" as const,
-      progressStep: undefined,
-      lastError: undefined,
-      connectedByUserId: userId,
-      updatedAt: now,
-    };
-
-    let channelId: Id<"channels">;
-    if (existing === null) {
-      channelId = await ctx.db.insert("channels", {
-        orgId,
-        service: "whatsapp",
-        ...channelPatch,
-        createdAt: now,
-      });
-    } else {
-      channelId = existing._id;
-      await ctx.db.patch(channelId, channelPatch);
-    }
-
-    const existingConv = await ctx.db
+    const conversations = await ctx.db
       .query("conversations")
-      .withIndex("by_channel_and_contactAddress", (q) =>
-        q.eq("channelId", channelId).eq("contactAddress", WHATSAPP_DEMO_RECIPIENT),
-      )
-      .unique();
+      .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
+      .collect();
+    const demoConversations = conversations.filter(
+      (conversation) =>
+        isDemoInboxConversation(conversation) ||
+        (conversation.channelId !== undefined &&
+          demoChannelIds.has(conversation.channelId)),
+    );
 
-    if (existingConv !== null) {
-      const tags = existingConv.tags ?? [];
-      if (!tags.includes(WHATSAPP_DEMO_CONVERSATION_TAG)) {
-        await ctx.db.patch(existingConv._id, {
-          tags: [...tags, WHATSAPP_DEMO_CONVERSATION_TAG],
-          updatedAt: now,
-        });
+    for (const conversation of demoConversations) {
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_conversationId_and_createdAt", (q) =>
+          q.eq("conversationId", conversation._id),
+        )
+        .collect();
+      for (const message of messages) {
+        await ctx.db.delete(message._id);
       }
-      return {
-        status: "ready",
-        channelId,
-        conversationId: existingConv._id,
-      };
+
+      const logs = await ctx.db
+        .query("conversationLogs")
+        .withIndex("by_conversationId", (q) =>
+          q.eq("conversationId", conversation._id),
+        )
+        .collect();
+      for (const log of logs) {
+        await ctx.db.delete(log._id);
+      }
+
+      await ctx.db.delete(conversation._id);
     }
 
-    const threadId = await createThreadForConversation(ctx, {
-      orgId,
-      contactName: "Demo customer",
-      contactAddress: WHATSAPP_DEMO_RECIPIENT,
-      service: "whatsapp",
-      userId,
-    });
+    for (const channel of demoChannels) {
+      await ctx.db.delete(channel._id);
+    }
 
-    const agentMessageId = await saveUserMessage(ctx, threadId, WELCOME_COPY, now);
-
-    const conversationId = await ctx.db.insert("conversations", {
-      orgId,
-      channelId,
-      service: "whatsapp",
-      orgAddress: WHATSAPP_DEMO_PHONE_NUMBER_ID,
-      contactAddress: WHATSAPP_DEMO_RECIPIENT,
-      contactName: "Demo customer",
-      status: "open",
-      tags: [WHATSAPP_DEMO_CONVERSATION_TAG],
-      assignToAiAgent: true,
-      threadId,
-      lastMessageAt: now,
-      lastMessagePreview: WELCOME_COPY.slice(0, 140),
-      unreadCount: 0,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await logConversationEvent(ctx, {
-      conversationId,
-      action: "thread_created",
-      actor: {
-        type: "user",
-        userId,
-      },
-      metadata: {
-        service: "whatsapp",
-      },
-    });
-
-    await ctx.db.insert("messages", {
-      orgId,
-      conversationId,
-      channelId,
-      service: "whatsapp",
-      externalId: undefined,
-      orgAddress: WHATSAPP_DEMO_PHONE_NUMBER_ID,
-      contactAddress: WHATSAPP_DEMO_RECIPIENT,
-      direction: "incoming",
-      contentType: "text",
-      content: WELCOME_COPY,
-      agentMessageId,
-      createdAt: now,
-    });
-
-    return { status: "ready", channelId, conversationId };
+    return {
+      deletedConversations: demoConversations.length,
+      deletedChannels: demoChannels.length,
+    };
   },
 });
 

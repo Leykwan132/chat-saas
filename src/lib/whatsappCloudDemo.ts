@@ -12,5 +12,5 @@ export const WHATSAPP_DEMO_NEW_TEMPLATE_NAME = 'jaspers_market_demo_text_v2';
 export const WHATSAPP_DEMO_NEW_TEMPLATE_BODY =
   "Thank you for reaching out to Jasper's Market. We'll reply as soon as we can.";
 
-/** Matches Convex seed `tags` entry on the demo conversation row. */
+/** Legacy tag on seeded demo inbox conversations (removed on inbox load). */
 export const WHATSAPP_DEMO_CONVERSATION_TAG = 'whatsapp_demo';

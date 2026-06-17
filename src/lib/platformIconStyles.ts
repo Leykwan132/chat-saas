@@ -7,6 +7,6 @@ export function getPlatformIconClassName(platform: ConversationPlatform): string
     case 'messenger':
       return 'text-[#0866FF]';
     case 'instagram':
-      return 'text-muted-foreground';
+      return 'text-[#E4405F]';
   }
 }
