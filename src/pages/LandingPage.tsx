@@ -6,15 +6,8 @@ import { api } from '../../convex/_generated/api';
 import {
   ArrowRight,
   Play,
-  Users,
-  Calendar,
   Check,
   X,
-  Target,
-  UserPlus,
-  Megaphone,
-  Shield,
-  MessageCircle,
 } from 'lucide-react';
 import { SiGoogle, SiMeta, SiStripe, SiSlack, SiAirbnb, SiShopify } from 'react-icons/si';
 import { POST_LOGIN_REDIRECT } from '@/constants';
@@ -66,11 +59,21 @@ const COMPANY_LOGOS = [
   { name: 'Shopify', icon: SiShopify },
 ];
 
-const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.svg';
+const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.png';
 const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
 const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent-3.png';
 const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB-3.png';
 const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
+
+const FEATURE_SHOWCASE_IMAGES = {
+  autoBooking: 'https://storage.kilobot.app/AB.png',
+  autoLeadAssign: 'https://storage.kilobot.app/ALA.png',
+  broadcast: 'https://storage.kilobot.app/BC.png',
+  humanEscalation: 'https://storage.kilobot.app/HA.png',
+  autoLeadAnalysis: 'https://storage.kilobot.app/CLD.png',
+  roleBasedInteraction: 'https://storage.kilobot.app/RBAC.png',
+  naturalInteraction: 'https://storage.kilobot.app/NI.png',
+} as const;
 
 function LogoMarquee({ logos }: { logos?: Array<{ name: string; icon: React.ComponentType<{ className?: string }> }> }) {
   if (!logos || logos.length === 0) return null;
@@ -175,263 +178,78 @@ function FeaturesSection() {
 type FeatureItem = {
   id: string;
   tabLabel: string;
-  icon: React.ComponentType<{ className?: string }>;
-  heading: string;
   description: string;
-  visual: React.ReactNode;
+  image: string;
 };
 
 const FEATURE_ITEMS: FeatureItem[] = [
   {
     id: 'humanLike',
-    tabLabel: 'Human Like Response',
-    icon: MessageCircle,
-    heading: 'Human Response',
+    tabLabel: 'Natural Interaction',
     description: 'Warm, natural replies that match your brand tone perfectly.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-4 font-sans">
-        <div className="flex flex-col flex-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] overflow-hidden">
-          <div className="bg-[#075e54] text-white px-4 py-2 text-xs font-semibold flex items-center justify-between">
-            <span>Customer Chat</span>
-            <span className="size-2 rounded-full bg-emerald-400" />
-          </div>
-          <div className="p-3 space-y-3 flex-1 overflow-y-auto text-xs leading-normal">
-            <div className="bg-white dark:bg-zinc-850 p-2.5 rounded-lg max-w-[80%] border border-zinc-200/50 dark:border-zinc-800">
-              Hey, do you have the Voyager Jacket in Medium? Also wondering about shipping times.
-            </div>
-            <div className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-200 p-2.5 rounded-lg max-w-[80%] ml-auto border border-emerald-100 dark:border-emerald-900/30">
-              <p className="font-semibold text-[10px] mb-0.5 text-emerald-700 dark:text-emerald-400">Kilobot</p>
-              Hi! Yes, we have 4 in Medium right now. Standard shipping is 3–5 days, or express in 1–2. Want me to hold one for you?
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'scoring',
-    tabLabel: 'Lead Scoring',
-    icon: Target,
-    heading: 'Lead Scoring',
-    description: 'Real-time analysis to score customer intent, budget, and urgency.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-5 font-sans text-xs">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] p-4 justify-center gap-4">
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5 font-semibold text-orange-600 dark:text-orange-400">
-                <span className="size-2 rounded-full bg-orange-500 animate-ping" />
-                Hot Lead
-              </span>
-              <span className="text-orange-600 dark:text-orange-400 font-bold">Score 92</span>
-            </div>
-            <div className="flex gap-[3px]">
-              {Array.from({ length: 22 }).map((_, i) => (
-                <div key={i} className="h-3.5 w-1.5 bg-orange-500 rounded-sm" />
-              ))}
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-3.5 w-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-sm" />
-              ))}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center">
-              <span className="font-semibold text-blue-500 dark:text-blue-400">Warm Lead</span>
-              <span className="text-blue-500 dark:text-blue-400 font-mono">Score 54</span>
-            </div>
-            <div className="flex gap-[3px]">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="h-3.5 w-1.5 bg-blue-400 rounded-sm" />
-              ))}
-              {Array.from({ length: 16 }).map((_, i) => (
-                <div key={i} className="h-3.5 w-1.5 bg-zinc-200 dark:bg-zinc-800 rounded-sm" />
-              ))}
-            </div>
-          </div>
-          <div className="bg-orange-50 dark:bg-orange-950/20 p-2 rounded-lg border border-orange-100/50 dark:border-orange-900/20 text-[10px] text-orange-700 dark:text-orange-400">
-            <strong>Signals:</strong> Budget confirmed · Demo requested · Replied within 5 min
-          </div>
-        </div>
-      </div>
-    ),
-  },
-  {
-    id: 'assignment',
-    tabLabel: 'Lead Assignment',
-    icon: Users,
-    heading: 'Lead Assignment',
-    description: 'Route leads instantly based on territory, workload, or skills.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-6 font-sans">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] p-4 shadow-sm text-xs justify-between">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center pb-2.5 border-b border-zinc-100 dark:border-white/[0.04]">
-              <span className="font-bold text-zinc-900 dark:text-white">Lead Profile</span>
-              <span className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-full text-[10px] font-bold">Qualified</span>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between"><span className="text-zinc-400">Prospect:</span><span className="font-medium">Lena Chen</span></div>
-              <div className="flex justify-between"><span className="text-zinc-400">Region:</span><span className="font-medium">APAC</span></div>
-              <div className="flex justify-between"><span className="text-zinc-400">Rule:</span><span className="font-medium text-blue-600">Territory → Workpool #2</span></div>
-            </div>
-          </div>
-          <div className="bg-zinc-50 dark:bg-zinc-800/40 p-3 rounded-lg border border-zinc-100 dark:border-white/[0.04] flex items-center justify-between mt-4">
-            <div className="flex items-center gap-2">
-              <div className="size-2 rounded-full bg-blue-500 animate-ping" />
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">Assigning to Alex Tan...</span>
-            </div>
-            <span className="text-[10px] font-mono bg-zinc-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded">Round-robin</span>
-          </div>
-        </div>
-      </div>
-    ),
+    image: FEATURE_SHOWCASE_IMAGES.naturalInteraction,
   },
   {
     id: 'calendar',
     tabLabel: 'Auto Booking',
-    icon: Calendar,
-    heading: 'Auto Booking',
     description: 'Share availability and let customers book meetings instantly in-chat.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-4 font-sans text-xs">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] overflow-hidden">
-          <div className="border-b border-zinc-150 dark:border-white/[0.04] bg-zinc-50 dark:bg-zinc-800/50 p-3 flex justify-between items-center">
-            <span className="font-bold text-zinc-900 dark:text-white">Auto-book a Demo Slot</span>
-            <span className="text-[10px] text-zinc-400">GMT+8</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2 p-3.5 flex-1 items-center">
-            {['9:30 AM', '11:00 AM', '2:30 PM'].map((time, idx) => (
-              <div
-                key={time}
-                className={cn(
-                  'border rounded-lg p-2.5 text-center transition-all cursor-pointer font-medium',
-                  idx === 1
-                    ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300 shadow-sm'
-                    : 'border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-800'
-                )}
-              >
-                {time}
-                {idx === 1 && <div className="text-[8px] mt-0.5 font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Booked</div>}
-              </div>
-            ))}
-          </div>
-          <div className="bg-zinc-50 dark:bg-zinc-800/50 p-2.5 border-t border-zinc-150 dark:border-white/[0.04] text-center text-[10px] text-zinc-500">
-            Calendar invite sent · Reminder scheduled for 1 hour before
-          </div>
-        </div>
-      </div>
-    ),
+    image: FEATURE_SHOWCASE_IMAGES.autoBooking,
   },
   {
-    id: 'escalation',
-    tabLabel: 'Human Escalation',
-    icon: UserPlus,
-    heading: 'Human Escalation',
-    description: 'Detect when a human is needed and escalate with full conversation context.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-5 font-sans text-xs">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] p-4 justify-center gap-3">
-          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 rounded-lg p-3">
-            <p className="font-semibold text-amber-800 dark:text-amber-300 text-[11px] mb-1">Escalation triggered</p>
-            <p className="text-[10px] text-amber-700/80 dark:text-amber-400/80">Customer asked for pricing on enterprise plan</p>
-          </div>
-          <div className="flex items-center justify-center gap-2 py-1">
-            <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-            <ArrowRight className="size-3.5 text-zinc-400 rotate-90" />
-            <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/50 dark:bg-emerald-950/20">
-            <div className="size-8 rounded-full bg-emerald-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0">SR</div>
-            <div>
-              <p className="font-semibold text-zinc-900 dark:text-white">Sarah Reyes joined the chat</p>
-              <p className="text-[10px] text-zinc-500">Full conversation history attached</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    ),
+    id: 'assignment',
+    tabLabel: 'Auto Lead Assign',
+    description: 'Route leads instantly based on territory, workload, or skills.',
+    image: FEATURE_SHOWCASE_IMAGES.autoLeadAssign,
+  },
+  {
+    id: 'scoring',
+    tabLabel: 'Auto Lead Analysis',
+    description: 'Real-time analysis to score customer intent, budget, and urgency.',
+    image: FEATURE_SHOWCASE_IMAGES.autoLeadAnalysis,
   },
   {
     id: 'outreach',
     tabLabel: 'Broadcast',
-    icon: Megaphone,
-    heading: 'Broadcast Outreach',
     description: 'Send broadcast campaigns and schedule proactive follow-up messages.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-5 font-sans text-xs">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] p-4 justify-between">
-          <div className="space-y-3.5">
-            <div className="flex items-center gap-2">
-              <span className="size-5 rounded-md bg-violet-100 dark:bg-violet-950/50 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">1</span>
-              <div>
-                <p className="font-semibold text-zinc-900 dark:text-white">Broadcast: Summer Promo</p>
-                <p className="text-[10px] text-zinc-500">Sent to 1,240 qualified leads</p>
-              </div>
-            </div>
-            <div className="h-4 w-px bg-zinc-200 dark:bg-zinc-800 ml-2.5" />
-            <div className="flex items-center gap-2">
-              <span className="size-5 rounded-md bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">2</span>
-              <div>
-                <p className="font-semibold text-zinc-900 dark:text-white">Follow-up: No reply in 48h</p>
-                <p className="text-[10px] text-zinc-500">Auto-send reminder template</p>
-              </div>
-            </div>
-          </div>
-          <div className="bg-emerald-50 dark:bg-emerald-950/20 p-2.5 rounded-lg border border-emerald-100/40 dark:border-emerald-900/20 mt-4 text-[10px] text-emerald-700 dark:text-emerald-400">
-            <strong>Results:</strong> 38% open rate · 42% re-engagement · 12 deals closed
-          </div>
-        </div>
-      </div>
-    ),
+    image: FEATURE_SHOWCASE_IMAGES.broadcast,
+  },
+  {
+    id: 'escalation',
+    tabLabel: 'Human Escalation',
+    description: 'Detect when a human is needed and escalate with full conversation context.',
+    image: FEATURE_SHOWCASE_IMAGES.humanEscalation,
   },
   {
     id: 'access',
     tabLabel: 'Role Based Access Control',
-    icon: Shield,
-    heading: 'Role Based Access Control',
     description: 'Control team access with custom roles and channel permissions.',
-    visual: (
-      <div className="flex flex-col h-full bg-slate-50 dark:bg-zinc-950 p-5 font-sans text-xs">
-        <div className="flex flex-col flex-1 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-white/[0.05] p-4 justify-center gap-2">
-          {[
-            { role: 'Owner', access: 'Full access', active: true },
-            { role: 'Manager', access: 'Inbox · Analytics · Assign', active: false },
-            { role: 'Agent', access: 'Assigned chats only', active: false },
-          ].map((item) => (
-            <div
-              key={item.role}
-              className={cn(
-                'flex items-center justify-between p-2.5 rounded-lg border text-[11px]',
-                item.active
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 text-blue-950 dark:text-blue-200 font-semibold'
-                  : 'border-zinc-150 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <Shield className="size-3.5 shrink-0" />
-                <span>{item.role}</span>
-              </div>
-              <span className="text-[10px] text-zinc-500 dark:text-zinc-400">{item.access}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    ),
+    image: FEATURE_SHOWCASE_IMAGES.roleBasedInteraction,
   },
 ];
 
 const FEATURE_COLORS: Record<string, string> = {
-  humanLike: 'bg-emerald-500 dark:bg-emerald-400',
-  scoring: 'bg-orange-500 dark:bg-orange-400',
-  assignment: 'bg-blue-500 dark:bg-blue-400',
-  escalation: 'bg-amber-500 dark:bg-amber-400',
-  outreach: 'bg-violet-500 dark:bg-violet-400',
   calendar: 'bg-indigo-500 dark:bg-indigo-400',
+  assignment: 'bg-blue-500 dark:bg-blue-400',
+  outreach: 'bg-violet-500 dark:bg-violet-400',
+  escalation: 'bg-amber-500 dark:bg-amber-400',
+  scoring: 'bg-orange-500 dark:bg-orange-400',
   access: 'bg-slate-500 dark:bg-slate-400',
+  humanLike: 'bg-emerald-500 dark:bg-emerald-400',
 };
+
+function FeatureShowcaseImage({ src, alt }: { src: string; alt: string }) {
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="w-full h-auto"
+    />
+  );
+}
 
 function FeatureShowcaseSection() {
   const [activeTab, setActiveTab] = useState(FEATURE_ITEMS[0].id);
+  const activeItem = FEATURE_ITEMS.find((item) => item.id === activeTab) ?? FEATURE_ITEMS[0];
 
   return (
     <section className="bg-white dark:bg-[#060606] py-24 px-6 sm:py-32 sm:px-8">
@@ -488,21 +306,10 @@ function FeatureShowcaseSection() {
                           </p>
                         </motion.div>
 
-                        {/* Mobile Diagram (only visible on mobile below md) */}
+                        {/* Mobile image */}
                         <div className="md:hidden w-full mt-2">
                           <BlurFade key={`${item.id}-diagram`} inView>
-                            <div className="relative rounded-xl border border-zinc-200 dark:border-white/[0.08] overflow-hidden bg-white dark:bg-zinc-900/60 shadow-lg h-[240px] flex flex-col justify-between">
-                              {/* Browser bar */}
-                              <div className="bg-zinc-100/80 dark:bg-zinc-900 px-3 py-1.5 border-b border-zinc-200/60 dark:border-white/[0.05] flex gap-1 shrink-0">
-                                <div className="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                                <div className="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                                <div className="size-1.5 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                              </div>
-                              {/* Visual content container */}
-                              <div className="flex-1 overflow-hidden relative bg-zinc-50/50 dark:bg-zinc-950/20 p-3">
-                                <div className="w-full h-full border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-100/10 dark:bg-zinc-900/10" />
-                              </div>
-                            </div>
+                            <FeatureShowcaseImage src={item.image} alt={item.tabLabel} />
                           </BlurFade>
                         </div>
                       </div>
@@ -513,24 +320,10 @@ function FeatureShowcaseSection() {
             </div>
           </div>
 
-          {/* Right Side: Container with Selected Feature Details (Desktop only) - Just Diagram */}
+          {/* Right Side: Feature image (Desktop only) */}
           <div className="hidden md:block">
             <BlurFade key={activeTab} inView>
-              <div className="flex flex-col justify-between rounded-2xl bg-zinc-100/70 dark:bg-zinc-900/40 p-8 h-[500px] w-[600px] shrink-0">
-                {/* Simulated UI Window Mockup */}
-                <div className="relative rounded-xl border border-zinc-200 dark:border-white/[0.08] overflow-hidden bg-white dark:bg-zinc-900/60 shadow-lg h-full flex flex-col justify-between">
-                  {/* Browser bar */}
-                  <div className="bg-zinc-100/80 dark:bg-zinc-900 px-4 py-2 border-b border-zinc-200/60 dark:border-white/[0.05] flex gap-1.5 shrink-0">
-                    <div className="size-2 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                    <div className="size-2 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                    <div className="size-2 rounded-full bg-zinc-300 dark:bg-zinc-700" />
-                  </div>
-                  {/* Visual content container */}
-                  <div className="flex-1 overflow-hidden relative bg-zinc-50/50 dark:bg-zinc-950/20 p-4">
-                    <div className="w-full h-full border border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-100/10 dark:bg-zinc-900/10" />
-                  </div>
-                </div>
-              </div>
+              <FeatureShowcaseImage src={activeItem.image} alt={activeItem.tabLabel} />
             </BlurFade>
           </div>
         </div>
@@ -622,57 +415,55 @@ function SectionHeading({
 function ComparisonSection() {
   const kilobotItems = [
     {
-      title: 'Brand-Matched AI Replies',
-      description:
-        'Kilobot matches your brand tone perfectly with warm, natural replies. Customers receive instant, helpful answers that feel naturally human instead of robotic.',
+      title: 'Go Live Within 5 Minutes',
+      description: 'Set up on your own in minutes—no sales calls or implementation team.',
     },
     {
-      title: 'Real-Time Lead Scoring',
-      description:
-        'AI analyzes every conversation in real-time to score customer intent, budget, and urgency, allowing your team to always prioritize the hottest leads first.',
+      title: 'Natural, Human-Like Replies',
+      description: 'Scene-reactive typing and context-aware replies—conversations that feel real.',
     },
     {
-      title: 'Smart Lead Assignment',
-      description:
-        'Automatically route qualified leads to the right sales reps instantly using round-robin rules based on territory, product interest, workload, or skills.',
+      title: 'AI That Actually Thinks',
+      description: 'AI that understands context—not rigid decision trees.',
     },
     {
-      title: 'Auto-Booking & Hand-Off',
-      description:
-        'Enable customers to book meetings instantly in-chat via live calendar integrations, and seamlessly escalate complex queries to human reps with full conversation history.',
+      title: 'Transparent Agent Setup',
+      description: "See and configure your agent's prompts, knowledge, and behavior.",
     },
     {
-      title: 'Targeted Broadcast Outreach',
-      description:
-        'Launch proactive messaging campaigns to targeted lead segments and set up automated follow-ups to re-engage prospects and boost close rates.',
+      title: 'Customize Every Feature Yourself',
+      description: 'Tweak everything on the platform on your own—no going through their team.',
+    },
+    {
+      title: 'Role-Based Access Control Built-In',
+      description: 'Role-based permissions for your team—ready out of the box.',
     },
   ];
 
   const alternativesItems = [
     {
-      title: 'Rigid Template Responses',
-      description:
-        'Standard chatbots rely on rigid, pre-defined templates that sound mechanical and robotic, often frustrating users and hurting your brand perception.',
+      title: 'Slow to Set Up',
+      description: "You often need to hop on a call before you're live.",
     },
     {
-      title: 'No Intent Analysis',
-      description:
-        'Traditional bots treat all conversations equally, failing to analyze user intent or budget signals. Your reps have to manually sift through hundreds of low-quality leads.',
+      title: 'Fixed Template Replies',
+      description: 'Canned answers to preset questions—no natural back-and-forth.',
     },
     {
-      title: 'Manual Routing Bottlenecks',
-      description:
-        'Without automated workpools or routing logic, conversations sit in a queue waiting for manual delegation, leading to slow response times and lost opportunities.',
+      title: 'Rule-Based Instead of AI-Powered',
+      description: 'Decision trees and scripts—not AI that understands context.',
     },
     {
-      title: 'Friction-Heavy Scheduling',
-      description:
-        'Bots require users to click out of the chat to external booking pages, introducing friction that drops conversions. Handoffs to human reps lack history and context.',
+      title: 'Black Box AI',
+      description: "You can't see or configure how your AI agent thinks and responds.",
     },
     {
-      title: 'Passive FAQ Responding',
-      description:
-        'Traditional tools only respond when spoken to, missing the opportunity to run outbound campaigns or schedule proactive follow-up messaging to drive conversions.',
+      title: 'Limited Customization',
+      description: "You need their team to change or set up features—you can't do it yourself.",
+    },
+    {
+      title: 'No Built-In Access Control',
+      description: "Managing team roles and permissions isn't part of the platform.",
     },
   ];
 
@@ -682,7 +473,7 @@ function ComparisonSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
           <SectionHeading
-            title="Kilobot vs. the competition"
+            title="Kilobot vs The Others"
             className="mx-auto text-center items-center"
           />
         </div>
@@ -748,30 +539,22 @@ function StatsSection() {
   const aggregates = useQuery(api.agentUsage.getLifetimeModelUsage);
   const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
 
-  const totalTokens = aggregates?.reduce((sum, item) => sum + item.totalTokens, 0) || 0;
-  
-  const tokensCountNum = aggregates === undefined 
-    ? 12485900 
-    : 12485900 + totalTokens;
-
-  const modelsCountNum = supportedModels === undefined 
-    ? 8 
-    : supportedModels.length + 4;
-
-  const businessCountNum = 250;
+  const totalTokens = aggregates?.reduce((sum, item) => sum + item.totalTokens, 0) ?? 0;
+  const modelsCount = supportedModels?.length ?? 0;
+  const businessesOnboarded = 10;
 
   const stats = [
     {
-      value: modelsCountNum,
-      label: "Models Supported",
+      value: modelsCount,
+      label: 'Models Supported',
     },
     {
-      value: tokensCountNum,
-      label: "Total Token Used",
+      value: totalTokens,
+      label: 'Total Token Used',
     },
     {
-      value: businessCountNum,
-      label: "Businesses Onboarded",
+      value: businessesOnboarded,
+      label: 'Businesses Onboarded',
     },
   ];
 
@@ -793,7 +576,7 @@ function StatsSection() {
               className="flex flex-col items-center gap-6 animate-fade-in"
             >
               <div className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tighter text-zinc-950 dark:text-white font-title select-none leading-none flex items-center justify-center">
-                <NumberTicker value={stat.value} className="text-zinc-950 dark:text-white font-semibold font-title" />+
+                <NumberTicker value={stat.value} className="text-zinc-950 dark:text-white font-semibold font-title" />
               </div>
               <div className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans max-w-xs mx-auto">
                 {stat.label}
