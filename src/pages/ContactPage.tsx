@@ -1,7 +1,7 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation } from 'convex/react';
-import { useSearchParams } from 'react-router';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router';
+import { ArrowRight } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +18,8 @@ import { SiteHeader } from '@/components/SiteHeader';
 import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { pricingTableShellClass } from '@/components/pricing/pricingStyles';
+import { pricingTableShellClass, pricingViewAllLinkClass } from '@/components/pricing/pricingStyles';
+import { isValidEmailFormat } from '../../shared/emailValidation';
 
 type ContactIntent = 'enterprise' | 'support' | 'demo';
 
@@ -80,13 +81,11 @@ function OptionalLabel({ children }: { children: ReactNode }) {
 
 export default function ContactPage() {
   const [searchParams] = useSearchParams();
-  const initialIntent = useMemo(
-    () => normalizeIntent(searchParams.get('intent')),
-    [searchParams],
-  );
   const submitContactRequest = useMutation(api.contactRequests.submit);
 
-  const [intent, setIntent] = useState<ContactIntent>(initialIntent);
+  const [intent, setIntent] = useState<ContactIntent>(() =>
+    normalizeIntent(searchParams.get('intent')),
+  );
   const [email, setEmail] = useState('');
   const [contactName, setContactName] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -96,11 +95,19 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  useEffect(() => {
+    setIntent(normalizeIntent(searchParams.get('intent')));
+  }, [searchParams]);
+
   const showBusinessFields = intent === 'enterprise' || intent === 'demo';
 
   const handleSubmit = async () => {
     if (!email.trim()) {
       toast.error('Please enter your email.');
+      return;
+    }
+    if (!isValidEmailFormat(email)) {
+      toast.error('Please enter a valid email address.');
       return;
     }
 
@@ -117,7 +124,7 @@ export default function ContactPage() {
         toast.error('Please enter a phone number.');
         return;
       }
-      if (intent === 'enterprise' && !numberOfUsers) {
+      if (!numberOfUsers) {
         toast.error('Please select company size.');
         return;
       }
@@ -164,18 +171,18 @@ export default function ContactPage() {
             )}
           >
             {submitted ? (
-              <div className="flex min-h-80 flex-col items-center justify-center gap-5 text-center">
-                <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600">
-                  <CheckCircle2 className="size-7" />
-                </div>
-                <div className="space-y-2">
+              <div className="flex min-h-80 flex-col justify-between py-4">
+                <div className="space-y-3">
                   <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-white">
                     Request received
                   </h2>
-                  <p className="mx-auto max-w-sm text-sm leading-6 text-zinc-500 dark:text-zinc-400">
+                  <p className="max-w-md text-sm leading-6 text-zinc-500 dark:text-zinc-400">
                     Thanks for reaching out. The founder will contact you personally soon.
                   </p>
                 </div>
+                <Link to="/" className={pricingViewAllLinkClass()}>
+                  Back to home
+                </Link>
               </div>
             ) : (
               <div className="space-y-5 sm:space-y-6">
@@ -254,11 +261,7 @@ export default function ContactPage() {
                           />
                         </label>
                         <label className="block space-y-2">
-                          {intent === 'enterprise' ? (
-                            <RequiredLabel>Company size</RequiredLabel>
-                          ) : (
-                            <OptionalLabel>Company size</OptionalLabel>
-                          )}
+                          <RequiredLabel>Company size</RequiredLabel>
                           <Select
                             value={numberOfUsers || undefined}
                             onValueChange={setNumberOfUsers}

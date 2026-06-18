@@ -29,13 +29,11 @@ type PricingFeatureListProps = {
 
 function FeatureRowItem({
   row,
-  index,
   planId,
   isEnterprise,
   showRowUnderline,
 }: {
   row: PlanCardFeatureRow;
-  index: number;
   planId?: PlanKey;
   isEnterprise: boolean;
   showRowUnderline: boolean;
@@ -134,7 +132,6 @@ export function PricingFeatureList({
                     <FeatureRowItem
                       key={`${group.title ?? 'group'}-${row.text}-${index}`}
                       row={row}
-                      index={index}
                       planId={planId}
                       isEnterprise={isEnterprise}
                       showRowUnderline={showRowUnderline}
@@ -151,7 +148,6 @@ export function PricingFeatureList({
               <FeatureRowItem
                 key={`${row.text}-${index}`}
                 row={row}
-                index={index}
                 planId={planId}
                 isEnterprise={isEnterprise}
                 showRowUnderline={showRowUnderline}

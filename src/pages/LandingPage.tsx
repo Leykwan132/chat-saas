@@ -351,7 +351,7 @@ function Hero({
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started for free" />
             <Link
-              to="/contact?intent=enterprise"
+              to="/contact?intent=demo"
               className="inline-flex h-11 w-full items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
             >
               Schedule a demo
@@ -609,7 +609,7 @@ function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
             </button>
 
             <Link
-              to="/contact?intent=enterprise"
+              to="/contact?intent=demo"
               className="inline-flex h-11 w-full items-center justify-center rounded-full border border-white/20 bg-transparent px-6 text-sm font-semibold text-white transition-all hover:bg-white/5 sm:w-auto"
             >
               Schedule a demo

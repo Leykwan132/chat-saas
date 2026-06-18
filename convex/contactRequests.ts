@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
+import { assertValidEmailFormat } from "../shared/emailValidation";
 
 const contactIntentValidator = v.union(
   v.literal("enterprise"),
@@ -29,55 +31,62 @@ export const submit = mutation({
     additionalDetails: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const email = requireTrimmed(args.email, "Email");
+    const email = assertValidEmailFormat(args.email);
     const now = Date.now();
     const additionalDetails = args.additionalDetails?.trim() || undefined;
 
+    let requestId;
+
     if (args.intent === "support") {
-      return await ctx.db.insert("contactRequests", {
+      requestId = await ctx.db.insert("contactRequests", {
         intent: args.intent,
         email,
-        status: "new",
+        status: "unread",
         supportDescription: additionalDetails,
         additionalDetails,
         createdAt: now,
         updatedAt: now,
       });
+    } else {
+      const companyName = requireTrimmed(args.companyName, "Company");
+      const contactName = requireTrimmed(args.contactName, "Contact name");
+      const contactNumber = requireTrimmed(args.contactNumber, "Phone number");
+      const numberOfUsers = requireTrimmed(args.numberOfUsers, "Company size");
+
+      if (args.intent === "demo") {
+        requestId = await ctx.db.insert("contactRequests", {
+          intent: args.intent,
+          email,
+          status: "unread",
+          companyName,
+          contactName,
+          contactNumber,
+          numberOfUsers,
+          additionalDetails,
+          createdAt: now,
+          updatedAt: now,
+        });
+      } else {
+        requestId = await ctx.db.insert("contactRequests", {
+          intent: args.intent,
+          email,
+          status: "unread",
+          companyName,
+          contactName,
+          contactNumber,
+          company: companyName,
+          numberOfUsers,
+          additionalDetails,
+          createdAt: now,
+          updatedAt: now,
+        });
+      }
     }
 
-    const companyName = requireTrimmed(args.companyName, "Company");
-    const contactName = requireTrimmed(args.contactName, "Contact name");
-    const contactNumber = requireTrimmed(args.contactNumber, "Phone number");
-
-    if (args.intent === "demo") {
-      return await ctx.db.insert("contactRequests", {
-        intent: args.intent,
-        email,
-        status: "new",
-        companyName,
-        contactName,
-        contactNumber,
-        numberOfUsers: args.numberOfUsers?.trim() || undefined,
-        additionalDetails,
-        createdAt: now,
-        updatedAt: now,
-      });
-    }
-
-    const numberOfUsers = requireTrimmed(args.numberOfUsers, "Company size");
-
-    return await ctx.db.insert("contactRequests", {
-      intent: args.intent,
-      email,
-      status: "new",
-      companyName,
-      contactName,
-      contactNumber,
-      company: companyName,
-      numberOfUsers,
-      additionalDetails,
-      createdAt: now,
-      updatedAt: now,
+    await ctx.scheduler.runAfter(0, internal.contactAdminNotify.sendNewRequestAlert, {
+      requestId,
     });
+
+    return requestId;
   },
 });

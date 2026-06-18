@@ -230,7 +230,14 @@ export default defineSchema({
       v.literal("demo"),
     ),
     email: v.string(),
-    status: v.union(v.literal("new"), v.literal("reviewed"), v.literal("closed")),
+    status: v.union(
+      v.literal("new"),
+      v.literal("reviewed"),
+      v.literal("closed"),
+      v.literal("unread"),
+      v.literal("seen"),
+      v.literal("replied"),
+    ),
     supportDescription: v.optional(v.string()),
     companyName: v.optional(v.string()),
     contactNumber: v.optional(v.string()),
@@ -243,7 +250,14 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_intent", ["intent"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_createdAt", ["createdAt"]),
+  adminSessions: defineTable({
+    token: v.string(),
+    email: v.string(),
+    expiresAt: v.number(),
+    createdAt: v.number(),
+  }).index("by_token", ["token"]),
   agents: defineTable({
     name: v.string(),
     provider: v.union(v.literal("google"), v.literal("openrouter")),

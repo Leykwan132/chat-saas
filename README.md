@@ -73,6 +73,25 @@ export default defineConfig([
 ```
 # chat-saas
 
+## Admin contact dashboard
+
+The private admin dashboard lives at `/admin/contact`. It reads contact submissions from Convex and can send Telegram alerts when new requests arrive.
+
+Set these Convex environment variables with `npx convex env set`:
+
+```bash
+npx convex env set ALLOWED_ADMIN_EMAIL '["leykwan132@gmail.com"]'
+npx convex env set ADMIN_CODE '123456'
+npx convex env set BOT_TOKEN '<telegram-bot-token>'
+npx convex env set ADMIN_TELEGRAM_CHAT_ID '<your-chat-id>'
+```
+
+If you have existing contact requests with legacy statuses (`new`, `reviewed`), run the one-off migration:
+
+```bash
+npx convex run contactAdminMigration:migrateContactRequestStatuses
+```
+
 ## Conversation History Logging
 
 All key user and AI actions taken in a conversation are audited and stored in the `conversationLogs` table. The frontend displays these events chronologically in the **Action History** collapsible section within the conversation details panel.
