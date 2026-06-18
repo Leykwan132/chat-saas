@@ -12,6 +12,7 @@ import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
+import { PlanFeatureGate } from '@/components/PlanFeatureGate';
 import {
   Dialog,
   DialogContent,
@@ -186,7 +187,7 @@ export default function FollowUpPage() {
     try {
       await deleteRule({ id });
       toast.success('Follow-up rule deleted successfully.');
-    } catch (e) {
+    } catch {
       toast.error('Failed to delete follow-up rule.');
     } finally {
       setDeletingIds((prev) => prev.filter((dId) => dId !== id));
@@ -197,7 +198,7 @@ export default function FollowUpPage() {
     try {
       await setRuleActive({ id, isActive });
       toast.success(isActive ? 'Follow-up turned on' : 'Follow-up turned off');
-    } catch (e) {
+    } catch {
       toast.error('Failed to update follow-up.');
     }
   };
@@ -221,8 +222,9 @@ export default function FollowUpPage() {
   }
 
   return (
-    <WhatsAppFeatureGate feature="Follow-ups">
-    <div className="flex w-full flex-col gap-8">
+    <PlanFeatureGate featureKey="follow_ups" featureName="Follow-ups">
+      <WhatsAppFeatureGate feature="Follow-ups">
+        <div className="flex w-full flex-col gap-8">
       {/* Page Header */}
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
@@ -637,7 +639,8 @@ export default function FollowUpPage() {
           animation: row-delete 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
       `}</style>
-    </div>
-    </WhatsAppFeatureGate>
+        </div>
+      </WhatsAppFeatureGate>
+    </PlanFeatureGate>
   );
 }

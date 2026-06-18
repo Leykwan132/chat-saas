@@ -26,6 +26,7 @@ import {
   createEmptyAutoBookingSessionStatusCounts,
   isActiveAutoBookingSessionStatus,
 } from "./autoBookingSessionStatus";
+import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
 
 const serviceFieldValidator = v.object({
   key: v.string(),
@@ -201,7 +202,26 @@ async function getLatestBookedSession(ctx: DbCtx, conversationId: Id<"conversati
     .sort((a, b) => b.updatedAt - a.updatedAt)[0];
 }
 
+async function isAutoBookingAvailableForAgent(
+  ctx: DbCtx,
+  agent: Doc<"agents">,
+) {
+  try {
+    const stripeInfo = await getTeamStripePlanHelper(ctx, {
+      workosOrgId: agent.orgId,
+      userId: agent.userId,
+    });
+    return checkAiFeature(stripeInfo.plan, "auto_booking");
+  } catch {
+    return false;
+  }
+}
+
 async function listActiveBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents">) {
+  const agent = await ctx.db.get(agentId);
+  if (agent === null || !(await isAutoBookingAvailableForAgent(ctx, agent))) {
+    return [];
+  }
   return (await listServices(ctx, agentId)).filter(
     (service) => service.isActive && service.archivedAt === undefined,
   );
@@ -318,6 +338,9 @@ async function assertAutoBookingManage(ctx: DbCtx, agentId: Id<"agents">) {
   const permissions = await permissionsForCurrentUser(ctx);
   if (!permissions.includes(Permission.AUTOMATION_MANAGE) && !permissions.includes(Permission.CALENDAR_MANAGE)) {
     throw new Error("Forbidden");
+  }
+  if (!(await isAutoBookingAvailableForAgent(ctx, agent))) {
+    throw new Error("Auto booking is not available on your plan.");
   }
   return agent;
 }

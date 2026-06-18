@@ -2,6 +2,86 @@ import { v } from "convex/values";
 import { mutation, query, internalMutation, internalQuery } from "./_generated/server";
 import { internal, api } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
+import { getPlan, getPlanFromStripe } from "./plans";
+import type { Id } from "./_generated/dataModel";
+
+type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
+
+async function getKnowledgeBaseLimitForCurrentUser(
+  ctx: Parameters<typeof getPlanFromStripe>[0],
+) {
+  const { userId } = await getAuthContext(ctx);
+  const stripeInfo = await getPlanFromStripe(ctx, userId);
+  return getPlan(stripeInfo.plan).knowledgeBaseBytesPerAgent;
+}
+
+async function getKnowledgeBaseBytesForAgent(
+  ctx: Parameters<typeof getPlanFromStripe>[0],
+  agentId: Id<"agents">,
+  exclude?: { table: KnowledgeEntryTable; id: Id<KnowledgeEntryTable> },
+) {
+  const textEntries = await ctx.db
+    .query("textEntries")
+    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .take(500);
+  const fileEntries = await ctx.db
+    .query("fileEntries")
+    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .take(500);
+  const webEntries = await ctx.db
+    .query("webEntries")
+    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .take(500);
+  const qaEntries = await ctx.db
+    .query("qaEntries")
+    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .take(500);
+  const mediaUploads = await ctx.db
+    .query("mediaUploads")
+    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .take(500);
+
+  const sumRows = <T extends { _id: string; fileSize?: number }>(
+    table: KnowledgeEntryTable,
+    rows: T[],
+  ) =>
+    rows.reduce((sum, row) => {
+      if (exclude?.table === table && row._id === exclude.id) return sum;
+      return sum + (row.fileSize ?? 0);
+    }, 0);
+
+  return (
+    sumRows("textEntries", textEntries) +
+    sumRows("fileEntries", fileEntries) +
+    sumRows("webEntries", webEntries) +
+    sumRows("qaEntries", qaEntries) +
+    mediaUploads.reduce((sum, row) => {
+      if (
+        row.purpose !== "knowledgeBase" ||
+        row.status === "deleting" ||
+        row.status === "cancelled"
+      ) {
+        return sum;
+      }
+      return sum + (row.fileSize ?? 0);
+    }, 0)
+  );
+}
+
+async function assertKnowledgeBaseLimit(
+  ctx: Parameters<typeof getPlanFromStripe>[0],
+  agentId: Id<"agents">,
+  incomingBytes: number,
+  exclude?: { table: KnowledgeEntryTable; id: Id<KnowledgeEntryTable> },
+) {
+  const limit = await getKnowledgeBaseLimitForCurrentUser(ctx);
+  const currentBytes = await getKnowledgeBaseBytesForAgent(ctx, agentId, exclude);
+  if (currentBytes + incomingBytes > limit) {
+    throw new Error(
+      `Knowledge base limit reached. Your plan allows up to ${Math.round(limit / 1024).toLocaleString()} KB per agent.`,
+    );
+  }
+}
 
 // ─── Text Entries ──────────────────────────────────────────
 
@@ -28,6 +108,7 @@ export const addTextEntry = mutation({
     const content = args.content.trim();
     if (!title || !content) throw new Error("Title and content are required");
     const fileSize = new Blob([title + content]).size;
+    await assertKnowledgeBaseLimit(ctx, args.agentId, fileSize);
     return await ctx.db.insert("textEntries", {
       agentId: args.agentId,
       title,
@@ -51,6 +132,12 @@ export const updateTextEntry = mutation({
     const content = args.content.trim();
     if (!title || !content) throw new Error("Title and content are required");
     const fileSize = new Blob([title + content]).size;
+    const existing = await ctx.db.get(args.entryId);
+    if (!existing) throw new Error("Text entry not found");
+    await assertKnowledgeBaseLimit(ctx, existing.agentId, fileSize, {
+      table: "textEntries",
+      id: args.entryId,
+    });
     await ctx.db.patch(args.entryId, { title, content, fileSize });
   },
 });
@@ -86,6 +173,7 @@ export const addFileEntry = mutation({
     const { userId, orgId } = await getAuthContext(ctx);
     const fileName = args.fileName.trim();
     if (!fileName) throw new Error("File name is required");
+    await assertKnowledgeBaseLimit(ctx, args.agentId, args.fileSize);
     return await ctx.db.insert("fileEntries", {
       agentId: args.agentId,
       title: args.title?.trim() || fileName,
@@ -141,6 +229,7 @@ export const addWebEntry = mutation({
     const url = args.url.trim();
     if (!url) throw new Error("URL is required");
     const fileSize = new Blob([url]).size;
+    await assertKnowledgeBaseLimit(ctx, args.agentId, fileSize);
     return await ctx.db.insert("webEntries", {
       agentId: args.agentId,
       url,
@@ -161,6 +250,12 @@ export const updateWebEntry = mutation({
     const url = args.url.trim();
     if (!url) throw new Error("URL is required");
     const fileSize = new Blob([url]).size;
+    const existing = await ctx.db.get(args.entryId);
+    if (!existing) throw new Error("Web entry not found");
+    await assertKnowledgeBaseLimit(ctx, existing.agentId, fileSize, {
+      table: "webEntries",
+      id: args.entryId,
+    });
     await ctx.db.patch(args.entryId, { url, fileSize });
   },
 });
@@ -198,6 +293,7 @@ export const addQAEntry = mutation({
     if (!question || !answer)
       throw new Error("Question and answer are required");
     const fileSize = new Blob([question + answer]).size;
+    await assertKnowledgeBaseLimit(ctx, args.agentId, fileSize);
     return await ctx.db.insert("qaEntries", {
       agentId: args.agentId,
       question,
@@ -222,6 +318,12 @@ export const updateQAEntry = mutation({
     if (!question || !answer)
       throw new Error("Question and answer are required");
     const fileSize = new Blob([question + answer]).size;
+    const existing = await ctx.db.get(args.entryId);
+    if (!existing) throw new Error("Q&A entry not found");
+    await assertKnowledgeBaseLimit(ctx, existing.agentId, fileSize, {
+      table: "qaEntries",
+      id: args.entryId,
+    });
     await ctx.db.patch(args.entryId, { question, answer, fileSize });
   },
 });
@@ -307,8 +409,16 @@ export const internalGetAgentStorageUsed = internalQuery({
 
 export const getStorageLimit = query({
   args: {},
-  handler: async (_ctx, _args) => {
-    return { maxFileSize: 4 * 1024 * 1024, maxTotalSize: 4 * 1024 * 1024 };
+  handler: async (ctx) => {
+    const maxTotalSize = await getKnowledgeBaseLimitForCurrentUser(ctx);
+    return { maxFileSize: maxTotalSize, maxTotalSize };
+  },
+});
+
+export const internalGetKnowledgeBaseBytesForAgent = internalQuery({
+  args: { agentId: v.id("agents") },
+  handler: async (ctx, args) => {
+    return await getKnowledgeBaseBytesForAgent(ctx, args.agentId);
   },
 });
 

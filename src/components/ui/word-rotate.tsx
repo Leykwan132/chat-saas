@@ -3,6 +3,13 @@ import { AnimatePresence, motion, type MotionProps } from "motion/react"
 
 import { cn } from "@/lib/utils"
 
+const defaultMotionProps: MotionProps = {
+  initial: { opacity: 0, y: -50 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: 50 },
+  transition: { duration: 0.25, ease: "easeOut" },
+}
+
 interface WordRotateProps {
   words: string[]
   duration?: number
@@ -17,12 +24,7 @@ export function WordRotate({
   words,
   duration = 2500,
   activeIndex,
-  motionProps = {
-    initial: { opacity: 0, y: -50 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 50 },
-    transition: { duration: 0.25, ease: "easeOut" },
-  },
+  motionProps = defaultMotionProps,
   className,
   inline = false,
 }: WordRotateProps) {
@@ -47,11 +49,11 @@ export function WordRotate({
     <Wrapper
       className={cn(
         inline
-          ? "inline-block align-baseline overflow-x-hidden pb-1"
+          ? "inline-block min-w-[3.25rem] h-12 overflow-hidden align-baseline"
           : "overflow-hidden py-2",
       )}
     >
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait" initial={false}>
         <MotionTag
           key={word}
           className={cn(inline && "inline-block", className)}

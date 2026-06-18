@@ -86,7 +86,7 @@ export const clearInboxSampleData = mutation({
 
       const logs = await ctx.db
         .query("conversationLogs")
-        .withIndex("by_conversationId", (q) =>
+        .withIndex("by_conversationId_and_performedAt", (q) =>
           q.eq("conversationId", conversation._id),
         )
         .collect();

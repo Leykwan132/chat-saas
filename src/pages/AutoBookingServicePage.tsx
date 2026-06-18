@@ -37,6 +37,7 @@ import {
   AUTO_BOOKING_SESSION_METRIC_STATUSES,
   AUTO_BOOKING_SESSION_STATUS_LABELS,
 } from '@/lib/autoBookingSessionStatus';
+import { PlanFeatureGate } from '@/components/PlanFeatureGate';
 
 type TeamUser = Doc<'users'> & { isAdmin: boolean; role: TeamMemberRole };
 
@@ -131,7 +132,9 @@ export default function AutoBookingServicePage() {
 
   if (!isEditMode) {
     return (
-      <CreateAutoBookingServiceWizard agentId={typedAgentId} teamUserOptions={teamUserOptions} />
+      <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
+        <CreateAutoBookingServiceWizard agentId={typedAgentId} teamUserOptions={teamUserOptions} />
+      </PlanFeatureGate>
     );
   }
 
@@ -185,10 +188,11 @@ export default function AutoBookingServicePage() {
   const showSaveFooter = canManage && isDirty;
 
   return (
-    <div
-      className="mx-auto flex w-full max-w-3xl flex-col gap-8"
-      style={showSaveFooter ? { paddingBottom: '4.5rem' } : undefined}
-    >
+    <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
+      <div
+        className="mx-auto flex w-full max-w-3xl flex-col gap-8"
+        style={showSaveFooter ? { paddingBottom: '4.5rem' } : undefined}
+      >
       <header className="flex flex-col gap-4 border-b border-border pb-6">
         <Button asChild variant="ghost" className="w-fit gap-2 px-0 text-muted-foreground hover:text-foreground">
           <Link to={backHref}>
@@ -300,7 +304,8 @@ export default function AutoBookingServicePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PlanFeatureGate>
   );
 }
 

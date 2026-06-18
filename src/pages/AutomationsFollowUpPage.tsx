@@ -36,6 +36,7 @@ import { getWhatsAppRateForCategory } from '@/lib/whatsappRates';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { MultiSelect, type MultiSelectGroup } from '@/components/ui/multi-select';
+import { PlanFeatureGate } from '@/components/PlanFeatureGate';
 
 const DELAY_OPTIONS = [
   { label: '1 day', value: 24 },
@@ -515,7 +516,8 @@ export default function AutomationsFollowUpPage() {
   // Beautiful Broadcast-style empty state when no connected WhatsApp channels
   if (whatsappChannels.length === 0) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+      <PlanFeatureGate featureKey="follow_ups" featureName="Follow-ups">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit gap-1 text-muted-foreground hover:text-foreground" asChild>
           <Link to={`/dashboard/${agentId}/follow-ups`}>
             <ArrowLeft className="size-4" />
@@ -535,12 +537,14 @@ export default function AutomationsFollowUpPage() {
             <Link to={`/dashboard/${agentId}/channels`}>Open Channels</Link>
           </Button>
         </div>
-      </div>
+        </div>
+      </PlanFeatureGate>
     );
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-6 overflow-hidden animate-fade-in px-2 sm:px-4 md:px-6">
+    <PlanFeatureGate featureKey="follow_ups" featureName="Follow-ups">
+      <div className="mx-auto flex h-[calc(100vh-120px)] max-h-[calc(100vh-120px)] w-full max-w-7xl flex-col gap-6 overflow-hidden animate-fade-in px-2 sm:px-4 md:px-6">
       <div className="shrink-0">
         <Button variant="ghost" size="sm" className="-ml-2 gap-1 text-muted-foreground hover:text-foreground" asChild>
           <Link to={`/dashboard/${agentId}/follow-ups`}>
@@ -1249,6 +1253,7 @@ export default function AutomationsFollowUpPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </PlanFeatureGate>
   );
 }

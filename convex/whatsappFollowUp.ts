@@ -10,6 +10,23 @@ import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { followUpPool } from "./followUpPool";
+import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
+
+async function assertFollowUpsAvailable(
+  ctx: QueryCtx | MutationCtx,
+  orgId: string,
+  userId: string,
+) {
+  try {
+    const stripeInfo = await getTeamStripePlanHelper(ctx, { workosOrgId: orgId, userId });
+    if (checkAiFeature(stripeInfo.plan, "follow_ups")) {
+      return;
+    }
+  } catch {
+    // Fall through to the plan error below for missing or inactive billing.
+  }
+  throw new Error("Follow-ups are not available on your plan.");
+}
 
 async function assertAgentInOrg(
   ctx: QueryCtx | MutationCtx,
@@ -66,6 +83,7 @@ export const createFollowUpRule = mutation({
     if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    await assertFollowUpsAvailable(ctx, orgId, userId);
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
 
     const name = args.name.trim();
@@ -159,13 +177,16 @@ export const updateFollowUpRule = mutation({
     estimatedCostPerCustomer: v.number(),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId) {
+    const { orgId, userId } = await getAuthContext(ctx);
+    if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
     const rule = await ctx.db.get(args.id);
     if (rule === null || rule.orgId !== orgId) {
       throw new Error("Follow-up rule not found");
+    }
+    if (args.isActive) {
+      await assertFollowUpsAvailable(ctx, orgId, userId);
     }
 
     const name = args.name.trim();
@@ -233,13 +254,16 @@ export const setFollowUpRuleActive = mutation({
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId) {
+    const { orgId, userId } = await getAuthContext(ctx);
+    if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
     const rule = await ctx.db.get(args.id);
     if (rule === null || rule.orgId !== orgId) {
       throw new Error("Follow-up rule not found");
+    }
+    if (args.isActive) {
+      await assertFollowUpsAvailable(ctx, orgId, userId);
     }
     await ctx.db.patch(args.id, {
       isActive: args.isActive,

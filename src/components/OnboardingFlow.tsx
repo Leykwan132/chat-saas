@@ -280,7 +280,10 @@ export function OnboardingFlow() {
                   billingInterval={billingInterval}
                   onBillingIntervalChange={setBillingInterval}
                   disabled={submitting}
-                  renderPlanAction={(p) => (
+                  renderPlanAction={(p) => {
+                    if (p.isEnterprise) return null;
+
+                    return (
                     <SubscriptionPlanActionButton
                       planId={p.id}
                       disabled={submitting}
@@ -297,7 +300,8 @@ export function OnboardingFlow() {
                         void handleComplete(p.id);
                       }}
                     />
-                  )}
+                    );
+                  }}
                 />
                 </div>
 

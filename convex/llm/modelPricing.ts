@@ -1,4 +1,7 @@
 import { query } from "../_generated/server";
+import type { PlanKey } from "../planCatalog";
+
+export type ModelAccessLabel = "basic" | "advanced" | "popular" | "latest";
 
 export type ModelPricingEntry = {
   label: string;
@@ -6,6 +9,8 @@ export type ModelPricingEntry = {
   enabled: boolean;
   chef: string;
   chefSlug: string;
+  requiredPlan: PlanKey;
+  labels: ModelAccessLabel[];
   isPopular?: boolean;
 };
 
@@ -17,6 +22,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "NVIDIA",
     chefSlug: "nvidia",
+    requiredPlan: "pro",
+    labels: ["advanced", "latest"],
   },
   // "openai/gpt-oss-120b": {
   //   label: "OpenAI GPT-OSS 120B",
@@ -31,6 +38,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "OpenAI",
     chefSlug: "openai",
+    requiredPlan: "free",
+    labels: ["basic"],
   },
   "z-ai/glm-4.5-air": {
     label: "GLM 4.5 Air",
@@ -38,6 +47,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Z.AI",
     chefSlug: "zai",
+    requiredPlan: "pro",
+    labels: ["advanced", "latest"],
   },
   "deepseek/deepseek-v4-flash": {
     label: "DeepSeek V4 Flash",
@@ -45,6 +56,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "DeepSeek",
     chefSlug: "deepseek",
+    requiredPlan: "free",
+    labels: ["basic", "popular"],
     isPopular: true,
   },
   "minimax/minimax-m2.5": {
@@ -53,6 +66,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "MiniMax",
     chefSlug: "minimax",
+    requiredPlan: "pro",
+    labels: ["advanced", "latest"],
   },
   "google/gemma-4-31b-it:free": {
     label: "Google Gemma 4",
@@ -60,6 +75,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Google",
     chefSlug: "google",
+    requiredPlan: "free",
+    labels: ["basic"],
   },
   "qwen/qwen3-next-80b-a3b-instruct:free": {
     label: "Qwen 3 Next 80B",
@@ -67,6 +84,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Alibaba",
     chefSlug: "alibaba",
+    requiredPlan: "standard",
+    labels: ["advanced"],
   },
   "meta-llama/llama-3.3-70b-instruct:free": {
     label: "Meta Llama 3.3 70B Instruct",
@@ -74,6 +93,8 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Meta",
     chefSlug: "llama",
+    requiredPlan: "standard",
+    labels: ["advanced", "popular"],
     isPopular: true,
   },
 };
@@ -101,6 +122,8 @@ export function listEnabledModels() {
       creditCost: entry.creditCost,
       chef: entry.chef,
       chefSlug: entry.chefSlug,
+      requiredPlan: entry.requiredPlan,
+      labels: entry.labels,
       isPopular: entry.isPopular ?? false,
     }));
 }
@@ -118,13 +141,13 @@ export const listEnabled = query({
       const userId = await getBillingWorkosUserId(ctx);
       const stripeInfo = await getPlanFromStripe(ctx, userId);
       activePlan = stripeInfo.plan;
-    } catch (e) {
+    } catch {
       // Ignore auth/db errors for anonymous access or fallback
     }
 
-    if (activePlan !== undefined) {
-      return models.filter((m) => checkModelAccess(activePlan, m.value));
-    }
-    return models;
+    return models.map((model) => ({
+      ...model,
+      accessible: activePlan === undefined ? true : checkModelAccess(activePlan, model.value),
+    }));
   },
 });

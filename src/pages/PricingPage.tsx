@@ -13,6 +13,7 @@ import {
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
+import { PlanComparisonTable } from '@/components/pricing/PlanComparisonTable';
 import { SiteFooter } from '@/components/SiteFooter';
 import { POST_LOGIN_REDIRECT } from '../constants';
 
@@ -30,7 +31,7 @@ export default function PricingPage() {
 
   const handlePlanSelect = async (plan: PlanKey) => {
     if (submitting) return;
-    
+
     if (!hasSession) {
       void signUp(returnTo);
       return;
@@ -65,39 +66,49 @@ export default function PricingPage() {
     }
   };
 
-
-
   return (
     <div className="min-h-[100svh] bg-zinc-50 dark:bg-[#060606] font-sans text-zinc-900 dark:text-zinc-100 antialiased selection:bg-zinc-200 dark:selection:bg-zinc-800 selection:text-zinc-900 dark:selection:text-zinc-50 flex flex-col justify-between">
       <SiteHeader />
 
-      {/* ─── PRICING MAIN CONTAINER ─── */}
-      <main className="flex flex-1 flex-col items-center justify-center px-5 py-32 sm:px-6 sm:py-40">
-        <div className="flex w-full max-w-6xl flex-col gap-8">
-          <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl font-title">
-            Choose your plan
-          </h1>
+      <main className="flex flex-1 flex-col items-center px-5 py-32 sm:px-6 sm:py-40">
+        <div className="flex w-full max-w-[90rem] flex-col gap-28 sm:gap-32">
+          <div className="flex flex-col gap-10">
+            <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl font-title">
+              Choose your plan
+            </h1>
 
-          <SubscriptionPlanPicker
-            billingInterval={billingInterval}
-            onBillingIntervalChange={setBillingInterval}
-            disabled={submitting}
-            renderPlanAction={(p) => (
-              <SubscriptionPlanActionButton
-                planId={p.id}
-                emphasizeRecommended={false}
-                disabled={submitting}
-                loading={submitting && selectedPlan === p.id}
-                label={
-                  submitting && selectedPlan === p.id ? (
-                    <Spinner className="size-3.5" />
-                  ) : (
-                    p.actionLabel
-                  )
-                }
-                onClick={() => void handlePlanSelect(p.id)}
-              />
-            )}
+            <SubscriptionPlanPicker
+              variant="pricing"
+              includeEnterprise
+              billingInterval={billingInterval}
+              onBillingIntervalChange={setBillingInterval}
+              disabled={submitting}
+              renderPlanAction={(p) => {
+                if (p.isEnterprise) return null;
+
+                return (
+                  <SubscriptionPlanActionButton
+                    planId={p.id}
+                    emphasizeRecommended={p.id === 'pro'}
+                    disabled={submitting}
+                    loading={submitting && selectedPlan === p.id}
+                    label={
+                      submitting && selectedPlan === p.id ? (
+                        <Spinner className="size-3.5" />
+                      ) : (
+                        p.actionLabel
+                      )
+                    }
+                    onClick={() => void handlePlanSelect(p.id)}
+                  />
+                );
+              }}
+            />
+          </div>
+
+          <PlanComparisonTable
+            id="pricing-comparison"
+            className="scroll-mt-28"
           />
         </div>
       </main>

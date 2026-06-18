@@ -10,8 +10,8 @@ import { getAuthContext } from "./authUtils";
 import { cfUploadPool } from "./workpool";
 import { api } from "./_generated/api";
 import { buildKnowledgeBaseImageFileName } from "./media/r2";
-
-const MAX_FILE_SIZE = 4 * 1024 * 1024;
+import { getBillingPlanFromStripe } from "./billingScope";
+import { getPlan } from "./plans";
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -205,6 +205,13 @@ export const enqueueImageUpload = action({
       throw new Error("At least one image is required");
     }
 
+    const stripeInfo = await getBillingPlanFromStripe(ctx);
+    const knowledgeBaseLimit = getPlan(stripeInfo.plan).knowledgeBaseBytesPerAgent;
+    let queuedBytes = await ctx.runQuery(
+      internal.knowledgeBase.internalGetKnowledgeBaseBytesForAgent,
+      { agentId: args.agentId },
+    );
+
     for (const file of args.files) {
       const originalFileName = file.fileName.trim();
       if (!originalFileName) {
@@ -215,11 +222,18 @@ export const enqueueImageUpload = action({
         originalFileName,
       );
       assertAllowedImageType(file.mimeType, originalFileName);
-      if (file.fileBytes.byteLength > MAX_FILE_SIZE) {
-        throw new Error(`${originalFileName} exceeds the 4 MB limit`);
+      if (file.fileBytes.byteLength > knowledgeBaseLimit) {
+        throw new Error(
+          `${originalFileName} exceeds your knowledge base limit for this plan`,
+        );
       }
 
       const fileSize = file.fileBytes.byteLength;
+      if (queuedBytes + fileSize > knowledgeBaseLimit) {
+        throw new Error("Knowledge base limit reached for this agent.");
+      }
+      queuedBytes += fileSize;
+
       const uploadId = await ctx.runMutation(
         internal.knowledgeBaseImages.internalCreateKbImageUpload,
         {

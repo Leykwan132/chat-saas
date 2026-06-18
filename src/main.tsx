@@ -49,6 +49,7 @@ import { Spinner } from "@/components/ui/spinner"
 import { ThemeProvider } from '@/components/theme-provider'
 import { OnboardingFlow } from '@/components/OnboardingFlow'
 import PricingPage from './pages/PricingPage.tsx'
+import ContactPage from './pages/ContactPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
@@ -177,6 +178,7 @@ function RootLayout() {
             <Route path="/" element={<HomePage />} />
             <Route path="/sign-in" element={<SignInPage />} />
             <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/contact" element={<ContactPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />
             <Route path="/terms" element={<TermsPage />} />

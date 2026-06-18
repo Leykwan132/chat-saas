@@ -223,6 +223,27 @@ export default defineSchema({
     eventId: v.string(),
     processedAt: v.number(),
   }).index("by_eventId", ["eventId"]),
+  contactRequests: defineTable({
+    intent: v.union(
+      v.literal("enterprise"),
+      v.literal("support"),
+      v.literal("demo"),
+    ),
+    email: v.string(),
+    status: v.union(v.literal("new"), v.literal("reviewed"), v.literal("closed")),
+    supportDescription: v.optional(v.string()),
+    companyName: v.optional(v.string()),
+    contactNumber: v.optional(v.string()),
+    contactName: v.optional(v.string()),
+    company: v.optional(v.string()),
+    industry: v.optional(v.string()),
+    numberOfUsers: v.optional(v.string()),
+    additionalDetails: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_intent", ["intent"])
+    .index("by_status", ["status"]),
   agents: defineTable({
     name: v.string(),
     provider: v.union(v.literal("google"), v.literal("openrouter")),

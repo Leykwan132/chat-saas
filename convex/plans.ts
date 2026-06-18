@@ -62,6 +62,14 @@ export function getPlan(planName: string | undefined): PlanConfig {
   return PLANS[key] || PLANS.free;
 }
 
+function safelyResolvePlanKeyFromStripePriceId(priceId: string): PlanKey {
+  try {
+    return resolvePlanKeyFromStripePriceId(priceId);
+  } catch {
+    return "free";
+  }
+}
+
 export async function getPlanFromStripe(
   ctx: QueryCtx | MutationCtx,
   entityId: string,
@@ -76,12 +84,7 @@ export async function getPlanFromStripe(
   );
   
   if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
-    let plan: PlanKey = "free";
-    try {
-      plan = resolvePlanKeyFromStripePriceId(subscription.priceId);
-    } catch {
-      plan = "free";
-    }
+    const plan = safelyResolvePlanKeyFromStripePriceId(subscription.priceId);
     return {
       plan,
       status: subscription.status,
@@ -113,6 +116,31 @@ export function checkAiFeature(
 ): boolean {
   const plan = getPlan(planName);
   return plan.features[featureKey] ?? false;
+}
+
+export function getRequiredPlanForFeature(
+  featureKey: keyof PlanFeatureFlags,
+): PlanKey | null {
+  for (const planKey of PLAN_ORDER) {
+    if (PLAN_CATALOG[planKey].features[featureKey]) {
+      return planKey;
+    }
+  }
+  return null;
+}
+
+export function getPlanEntitlements(planName: string | undefined) {
+  const plan = getPlan(planName);
+  return {
+    features: plan.features,
+    limits: {
+      monthlyCredits: plan.monthlyCredits,
+      maxAgents: plan.maxAgents,
+      maxChannels: plan.maxChannels,
+      maxMembers: plan.maxMembers,
+      knowledgeBaseBytesPerAgent: plan.knowledgeBaseBytesPerAgent,
+    },
+  };
 }
 
 export function checkAgentCreationLimit(
@@ -242,7 +270,11 @@ async function persistCreditPeriodResetOnEntity(
     patch.creditsPeriodMonthKey = monthKey;
   }
 
-  await ctx.db.patch(entity._id as any, patch);
+  if ("workosOrgId" in entity) {
+    await ctx.db.patch(entity._id, patch);
+  } else {
+    await ctx.db.patch(entity._id, patch);
+  }
   await insertCreditLog(ctx, {
     orgId: isOrg ? entity.workosOrgId : "",
     userId: isOrg ? undefined : entity._id,
@@ -259,7 +291,10 @@ async function persistCreditPeriodResetOnEntity(
     reason: billing.resetReason,
   });
 
-  const updated = await ctx.db.get(entity._id as any);
+  const updated =
+    "workosOrgId" in entity
+      ? await ctx.db.get(entity._id)
+      : await ctx.db.get(entity._id);
   return updated as Doc<"organizations"> | Doc<"users">;
 }
 
@@ -296,7 +331,10 @@ export async function syncCreditBilling(
       periodKey,
       billing.monthlyAllowance,
     );
-    const updated = await ctx.db.get(entity._id as any);
+    const updated =
+      "workosOrgId" in entity
+        ? await ctx.db.get(entity._id)
+        : await ctx.db.get(entity._id);
     const syncedEntity = (updated ?? entity) as Doc<"organizations"> | Doc<"users">;
     return {
       entity: syncedEntity,
@@ -429,6 +467,7 @@ export const getPlanAndUsage = query({
       canManageBilling: user._id === billingUser._id,
       plan: stripeInfo.plan,
       planConfig,
+      entitlements: getPlanEntitlements(stripeInfo.plan),
       credits: monthlyCredits + purchasedCredits,
       monthlyCredits,
       purchasedCredits,
@@ -485,12 +524,7 @@ export async function getTeamStripePlanHelper(
     );
 
     if (subscription && (subscription.status === "active" || subscription.status === "trialing")) {
-      let plan: PlanKey = "free";
-      try {
-        plan = resolvePlanKeyFromStripePriceId(subscription.priceId);
-      } catch {
-        plan = "free";
-      }
+      const plan = safelyResolvePlanKeyFromStripePriceId(subscription.priceId);
       return {
         plan,
         status: subscription.status,

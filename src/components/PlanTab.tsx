@@ -32,6 +32,7 @@ import {
   type PlanKey,
 } from '../../shared/planCatalog';
 import {
+  EnterprisePlanAction,
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
@@ -228,7 +229,7 @@ export function PlanTab() {
       <Dialog open={plansDialogOpen} onOpenChange={setPlansDialogOpen}>
         <DialogContent
           showCloseButton={false}
-          className="flex max-h-[min(90vh,920px)] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden px-6 py-8 sm:max-w-6xl sm:px-10 sm:py-10"
+          className="flex max-h-[min(90vh,920px)] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden px-6 py-8 sm:max-w-[90rem] sm:px-10 sm:py-10"
         >
           <DialogHeader className="shrink-0 items-center text-center">
             <DialogTitle className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -238,11 +239,16 @@ export function PlanTab() {
 
           <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
             <SubscriptionPlanPicker
+              includeEnterprise
               billingInterval={billingInterval}
               onBillingIntervalChange={setBillingInterval}
               currentPlanId={plan as PlanKey}
               disabled={loadingPlanKey !== null || isPortalLoading}
               renderPlanAction={(planCard) => {
+                if (planCard.isEnterprise) {
+                  return <EnterprisePlanAction label={planCard.actionLabel} />;
+                }
+
                 const isCurrent = plan === planCard.id;
                 const isFreeDowngrade = planCard.id === 'free';
                 const isLoading = isFreeDowngrade

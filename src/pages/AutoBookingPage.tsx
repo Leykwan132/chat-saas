@@ -24,6 +24,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { type ServiceRow } from '@/lib/autoBookingServiceForm';
 import { cn } from '@/lib/utils';
 import { Permission } from '../../shared/permissions';
+import { PlanFeatureGate } from '@/components/PlanFeatureGate';
 
 function formatBookingCount(count: number) {
   if (count === 1) return '1 booking';
@@ -165,7 +166,8 @@ export default function AutoBookingPage() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-8">
+    <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
+      <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 flex items-center gap-2.5 text-4xl font-semibold tracking-tight text-foreground">
@@ -318,7 +320,8 @@ export default function AutoBookingPage() {
         onAddService={canManage ? () => navigate(createServiceHref) : undefined}
       />
 
-    </div>
+      </div>
+    </PlanFeatureGate>
   );
 }
 

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, LockKeyhole } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +14,23 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from '@/components/ai-elements/model-selector';
+import { PLAN_CATALOG, type PlanKey } from '../../shared/planCatalog';
+
+type ModelAccessLabel = 'basic' | 'advanced' | 'popular' | 'latest';
+
+const modelLabelText: Record<ModelAccessLabel, string> = {
+  basic: 'Basic',
+  advanced: 'Advanced',
+  popular: 'Popular',
+  latest: 'Latest',
+};
+
+const modelLabelClassName: Record<ModelAccessLabel, string> = {
+  basic: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+  advanced: 'bg-violet-500/10 text-violet-700 dark:text-violet-300',
+  popular: 'bg-amber-400/15 text-amber-600 dark:text-amber-300',
+  latest: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300',
+};
 
 export type ModelPickerOption = {
   value: string;
@@ -22,6 +39,9 @@ export type ModelPickerOption = {
   chef: string;
   chefSlug: string;
   isPopular: boolean;
+  labels?: ModelAccessLabel[];
+  requiredPlan?: PlanKey;
+  accessible?: boolean;
 };
 
 
@@ -37,15 +57,24 @@ const ModelPickerItem = memo(function ModelPickerItem({
   onSelect,
 }: ModelPickerItemProps) {
   const handleSelect = useCallback(
-    () => onSelect(option.value),
-    [onSelect, option.value],
+    () => {
+      if (option.accessible === false) return;
+      onSelect(option.value);
+    },
+    [onSelect, option.accessible, option.value],
   );
+  const requiredPlanName = option.requiredPlan ? PLAN_CATALOG[option.requiredPlan]?.name : null;
 
   return (
     <ModelSelectorItem
       value={option.value}
       onSelect={handleSelect}
-      className={cn('!rounded-md', selected && 'bg-primary/8 text-primary')}
+      disabled={option.accessible === false}
+      className={cn(
+        '!rounded-md',
+        selected && 'bg-primary/8 text-primary',
+        option.accessible === false && 'opacity-70',
+      )}
       data-checked={selected}
     >
       <ModelSelectorLogo provider={option.chefSlug} />
@@ -53,12 +82,24 @@ const ModelPickerItem = memo(function ModelPickerItem({
         <ModelSelectorName className={cn('truncate flex-initial min-w-0', selected && 'font-semibold')}>
           {option.label}
         </ModelSelectorName>
-        {option.isPopular && (
-          <span className="shrink-0 rounded-md bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-500 dark:bg-amber-400/20 dark:text-amber-400">
-            Popular
+        {(option.labels ?? (option.isPopular ? ['popular'] : [])).map((label) => (
+          <span
+            key={label}
+            className={cn(
+              'shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+              modelLabelClassName[label],
+            )}
+          >
+            {modelLabelText[label]}
           </span>
-        )}
+        ))}
       </div>
+      {option.accessible === false && requiredPlanName && (
+        <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+          <LockKeyhole className="size-3" />
+          {requiredPlanName}
+        </span>
+      )}
       <span className={cn('shrink-0 text-xs', selected ? 'text-primary/70' : 'text-muted-foreground')}>
         {option.creditCost === 0 ? 'Free' : `${option.creditCost === 1 ? '1 credit' : `${option.creditCost} credits`} / msg`}
       </span>
