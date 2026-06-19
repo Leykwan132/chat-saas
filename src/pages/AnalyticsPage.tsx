@@ -36,7 +36,13 @@ import {
   TopicsAnalyticsSkeleton,
 } from '@/components/analytics/AnalyticsUi';
 import { pricingTableShellClass, pricingSectionBorderClass } from '@/components/pricing/pricingStyles';
-import { ModelLeaderboardPanel } from '@/components/analytics/ModelLeaderboardPanel';
+import { PlanUsageCard } from '@/components/analytics/PlanUsageCard';
+import {
+  CreditUsagePanel,
+  CreditUsagePanelSkeleton,
+  type CreditTimeRange,
+} from '@/components/analytics/CreditUsagePanel';
+import { CreditSpendTable, CreditSpendTableSkeleton } from '@/components/analytics/CreditSpendTable';
 import { cn } from '@/lib/utils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
@@ -535,19 +541,31 @@ function TopicsAnalyticsContent({ range }: { range: AnalyticsRange }) {
 
 function UsageAnalyticsContent({ agentId }: { agentId: string }) {
   const typedAgentId = agentId as Id<'agents'>;
-  const usage = useQuery(api.agentUsage.getAgentModelUsage, { agentId: typedAgentId });
-  const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
+  const [timeRange, setTimeRange] = useState<CreditTimeRange>('period');
 
   return (
     <PlanFeatureGate featureKey="agent_usage" featureName="AI Agent Usage">
-      <ModelLeaderboardPanel
-        aggregates={usage?.lifetime}
-        monthlyAggregates={usage?.monthly}
-        supportedModels={supportedModels}
-        isLoading={usage === undefined}
-        compactHeader
-      />
+      <div className="flex flex-col gap-4">
+        <PlanUsageCard />
+        <div className="flex flex-col gap-6">
+          <CreditUsagePanel
+            agentId={typedAgentId}
+            timeRange={timeRange}
+            onTimeRangeChange={setTimeRange}
+          />
+          <CreditSpendTable agentId={typedAgentId} timeRange={timeRange} />
+        </div>
+      </div>
     </PlanFeatureGate>
+  );
+}
+
+function UsageAnalyticsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <CreditUsagePanelSkeleton />
+      <CreditSpendTableSkeleton />
+    </div>
   );
 }
 
@@ -656,7 +674,7 @@ export default function AnalyticsPage() {
               ) : section === 'topics' ? (
                 <TopicsAnalyticsSkeleton />
               ) : (
-                <ModelLeaderboardPanel isLoading />
+                <UsageAnalyticsSkeleton />
               )}
             </>
           ) : (

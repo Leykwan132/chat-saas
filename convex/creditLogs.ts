@@ -129,7 +129,8 @@ export async function insertCreditLog(
   ctx: MutationCtx,
   entry: CreditLogInsert,
 ) {
-  await ctx.db.insert("creditLogs", {
+  const createdAt = Date.now();
+  const creditLogId = await ctx.db.insert("creditLogs", {
     orgId: entry.orgId,
     userId: entry.userId,
     type: legacyTypeForEvent(entry.eventType),
@@ -152,8 +153,29 @@ export async function insertCreditLog(
     creditPeriodId: entry.creditPeriodId,
     topUpEntryId: entry.topUpEntryId,
     deductionSource: entry.deductionSource,
-    createdAt: Date.now(),
+    createdAt,
   });
+
+  if (entry.eventType === "usage" && entry.userId) {
+    const credits = entry.creditCost ?? Math.abs(entry.amount);
+    if (credits > 0) {
+      const existing = await ctx.db
+        .query("creditUsageEvents")
+        .withIndex("by_creditLogId", (q) => q.eq("creditLogId", creditLogId))
+        .unique();
+      if (!existing) {
+        await ctx.db.insert("creditUsageEvents", {
+          userId: entry.userId,
+          agentId: entry.agentId,
+          modelId: entry.modelId,
+          credits,
+          conversationId: entry.conversationId,
+          creditLogId,
+          createdAt,
+        });
+      }
+    }
+  }
 }
 
 export function formatCreditLogLabel(log: Doc<"creditLogs">): string {

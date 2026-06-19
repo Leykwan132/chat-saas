@@ -15,8 +15,10 @@ import {
 } from '@/components/ui/chart';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NumberTicker } from '@/components/ui/number-ticker';
-import { Highlighter } from '@/components/ui/highlighter';
+import {
+  MODEL_USAGE_OTHERS_COLOR,
+  modelUsageChartColor,
+} from '../../../shared/modelUsageChartColors';
 import { cn } from '@/lib/utils';
 
 export type LifetimeModelUsageRow = {
@@ -34,21 +36,6 @@ type SupportedModelOption = {
   label: string;
   chef?: string;
 };
-
-const MODEL_CHART_COLORS = [
-  '#06b6d4',
-  '#f97316',
-  '#3b82f6',
-  '#d946ef',
-  '#22c55e',
-  '#a855f7',
-  '#eab308',
-  '#ef4444',
-  '#14b8a6',
-  '#6366f1',
-  '#84cc16',
-  '#ec4899',
-] as const;
 
 function formatTokens(num: number, decimals = true): string {
   if (num >= 1e12) {
@@ -97,7 +84,7 @@ function ModelLogo({ model, size = 18 }: { model: string; size?: number }) {
 function buildModelColorMap(models: string[]): Map<string, string> {
   const colorMap = new Map<string, string>();
   models.forEach((model, index) => {
-    colorMap.set(model, MODEL_CHART_COLORS[index % MODEL_CHART_COLORS.length]);
+    colorMap.set(model, modelUsageChartColor(index));
   });
   return colorMap;
 }
@@ -131,7 +118,7 @@ function ModelUsageTooltip({
         key: model,
         name: getCleanModelName(model, supportedModels),
         value: tokens,
-        color: modelColorMap.get(model) ?? '#71717a',
+        color: modelColorMap.get(model) ?? MODEL_USAGE_OTHERS_COLOR,
       });
     }
   }
@@ -142,7 +129,7 @@ function ModelUsageTooltip({
       key: 'others',
       name: 'Others',
       value: othersTokens,
-      color: '#71717a',
+      color: MODEL_USAGE_OTHERS_COLOR,
     });
   }
 
@@ -208,7 +195,6 @@ type ModelLeaderboardPanelProps = {
   monthlyAggregates?: MonthlyModelUsageAggregates;
   supportedModels?: SupportedModelOption[];
   isLoading?: boolean;
-  compactHeader?: boolean;
   className?: string;
 };
 
@@ -217,7 +203,6 @@ export function ModelLeaderboardPanel({
   monthlyAggregates,
   supportedModels,
   isLoading = false,
-  compactHeader = false,
   className,
 }: ModelLeaderboardPanelProps) {
   const [showAll, setShowAll] = useState(false);
@@ -226,7 +211,6 @@ export function ModelLeaderboardPanel({
     return <ModelLeaderboardSkeleton className={className} />;
   }
 
-  const totalTokens = aggregates.reduce((sum, item) => sum + item.totalTokens, 0);
   const displayList = showAll ? aggregates : aggregates.slice(0, 10);
   const firstHalf = displayList.slice(0, Math.ceil(displayList.length / 2));
   const secondHalf = displayList.slice(Math.ceil(displayList.length / 2));
@@ -236,14 +220,14 @@ export function ModelLeaderboardPanel({
   const chartConfig = {
     others: {
       label: 'Others',
-      color: '#71717a',
+      color: MODEL_USAGE_OTHERS_COLOR,
     },
     ...Object.fromEntries(
       topModels.map((model) => [
         model,
         {
           label: getCleanModelName(model, supportedModels),
-          color: modelColorMap.get(model) ?? '#71717a',
+          color: modelColorMap.get(model) ?? MODEL_USAGE_OTHERS_COLOR,
         },
       ]),
     ),
@@ -284,34 +268,6 @@ export function ModelLeaderboardPanel({
 
   return (
     <div className={cn('flex flex-col gap-6', className)}>
-      <div
-        className={cn(
-          'flex flex-col gap-2',
-          compactHeader ? 'items-start' : 'items-center justify-center py-8 text-center',
-        )}
-      >
-        <div
-          className={cn(
-            'flex min-h-[28px] items-center gap-1.5 text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:text-base',
-            compactHeader ? 'justify-start' : 'justify-center',
-          )}
-        >
-          <span>Total token spend:</span>
-          <Highlighter
-            action="underline"
-            color="#6366f1"
-            strokeWidth={2}
-            animationDuration={1200}
-            padding={2}
-          >
-            <span className="text-base font-bold text-zinc-950 tabular-nums dark:text-white sm:text-lg">
-              <NumberTicker value={totalTokens} />
-            </span>
-          </Highlighter>
-          <span>tokens</span>
-        </div>
-      </div>
-
       <Card className="animate-fade-in overflow-hidden rounded-xl border border-zinc-200 bg-white py-0 shadow-none dark:border-white/[0.08] dark:bg-white/[0.02]">
         <CardHeader className="flex flex-row items-center gap-2.5 border-b border-zinc-200 bg-zinc-50/50 px-5 py-4! dark:border-white/[0.06] dark:bg-white/[0.01]">
           <Astroid className="size-5 shrink-0 text-zinc-950 dark:text-white" />
@@ -365,7 +321,7 @@ export function ModelLeaderboardPanel({
                     name={getCleanModelName(model, supportedModels)}
                     dataKey={model}
                     stackId="a"
-                    fill={modelColorMap.get(model) ?? '#71717a'}
+                    fill={modelColorMap.get(model) ?? MODEL_USAGE_OTHERS_COLOR}
                     maxBarSize={24}
                   />
                 ))}
@@ -373,7 +329,7 @@ export function ModelLeaderboardPanel({
                   name="Others"
                   dataKey="others"
                   stackId="a"
-                  fill="#71717a"
+                  fill={MODEL_USAGE_OTHERS_COLOR}
                   radius={[4, 4, 0, 0]}
                   maxBarSize={24}
                 />

@@ -49,6 +49,7 @@ import type * as conversations from "../conversations.js";
 import type * as creditBalance from "../creditBalance.js";
 import type * as creditEntries from "../creditEntries.js";
 import type * as creditLogs from "../creditLogs.js";
+import type * as creditUsageAnalytics from "../creditUsageAnalytics.js";
 import type * as credits from "../credits.js";
 import type * as crons from "../crons.js";
 import type * as customers from "../customers.js";
@@ -166,6 +167,7 @@ declare const fullApi: ApiFromModules<{
   creditBalance: typeof creditBalance;
   creditEntries: typeof creditEntries;
   creditLogs: typeof creditLogs;
+  creditUsageAnalytics: typeof creditUsageAnalytics;
   credits: typeof credits;
   crons: typeof crons;
   customers: typeof customers;
@@ -285,5 +287,6 @@ export declare const components: {
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
   modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
   agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
+  creditDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditDailyUsage">;
   analyticsMetrics: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"analyticsMetrics">;
 };

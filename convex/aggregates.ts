@@ -1,7 +1,7 @@
 import { TableAggregate } from "@convex-dev/aggregate";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
-import { usageMonthKeyFromTimestamp } from "./usageMonthKey";
+import { usageMonthKeyFromTimestamp, creditDailyUsageNamespace, toUtcDateKey } from "./usageMonthKey";
 
 export const lifetimeAggregator = new TableAggregate<{
   Key: number;
@@ -36,6 +36,22 @@ export const agentMonthlyAggregator = new TableAggregate<{
   sumValue: (doc) => doc.usage.totalTokens,
   namespace: (doc) =>
     `${usageMonthKeyFromTimestamp(doc.createdAt)}:${doc.agentId ?? "unassigned"}`,
+});
+
+export const creditDailyUsageAggregator = new TableAggregate<{
+  Key: number;
+  DataModel: DataModel;
+  TableName: "creditUsageEvents";
+  Namespace: string;
+}>(components.creditDailyUsage, {
+  sortKey: (doc) => doc.credits,
+  sumValue: (doc) => doc.credits,
+  namespace: (doc) =>
+    creditDailyUsageNamespace(
+      doc.userId,
+      toUtcDateKey(doc.createdAt),
+      doc.agentId ?? "unassigned",
+    ),
 });
 
 export const analyticsMetrics = new TableAggregate<{

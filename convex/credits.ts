@@ -32,6 +32,11 @@ import {
   type CreditScope,
 } from "./creditEntries";
 import type { Doc, Id } from "./_generated/dataModel";
+import { getDailyCreditUsageForAgents } from "./creditUsageAnalytics";
+import {
+  DAY_MS,
+  getUsagePeriodStartMs,
+} from "./usageMonthKey";
 
 export function getDefaultUserCredits(): number {
   const raw = process.env.DEFAULT_USER_CREDITS?.trim();
@@ -303,8 +308,7 @@ export const topUp = mutation({
   },
 });
 
-const MONTHLY_PERIOD_MS = 30 * 24 * 60 * 60 * 1000;
-const DAY_MS = 24 * 60 * 60 * 1000;
+const MONTHLY_PERIOD_MS = 30 * DAY_MS;
 const CHART_AGENT_COLORS = [
   "var(--chart-1)",
   "var(--chart-2)",
@@ -312,27 +316,6 @@ const CHART_AGENT_COLORS = [
   "var(--chart-4)",
   "var(--chart-5)",
 ] as const;
-
-function getUsagePeriodStartMs(stripePeriodEndMs?: number): number {
-  if (stripePeriodEndMs && stripePeriodEndMs > Date.now()) {
-    return stripePeriodEndMs - MONTHLY_PERIOD_MS;
-  }
-  const now = new Date();
-  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
-}
-
-function toUtcDateKey(ms: number): string {
-  return new Date(ms).toISOString().slice(0, 10);
-}
-
-function getDateKeysInRange(startMs: number, endMs: number): string[] {
-  const keys: string[] = [];
-  const rangeEndMs = Math.min(endMs, Date.now());
-  for (let t = startMs; t <= rangeEndMs; t += DAY_MS) {
-    keys.push(toUtcDateKey(t));
-  }
-  return keys;
-}
 
 function resolveLogAgentId(
   log: Doc<"creditLogs">,
@@ -389,21 +372,27 @@ export const getUsageDashboard = query({
 
     const logs = await ctx.db
       .query("creditLogs")
-      .withIndex("by_userId_and_createdAt", (q) =>
-        q.eq("userId", userDoc._id).gte("createdAt", periodStartMs),
+      .withIndex("by_userId_and_eventType_and_createdAt", (q) =>
+        q.eq("userId", userDoc._id).eq("eventType", "usage").gte("createdAt", periodStartMs),
       )
       .collect();
 
+    const usageLogs =
+      logs.length > 0
+        ? logs
+        : (
+            await ctx.db
+              .query("creditLogs")
+              .withIndex("by_userId_and_createdAt", (q) =>
+                q.eq("userId", userDoc._id).gte("createdAt", periodStartMs),
+              )
+              .collect()
+          ).filter((log) => formatCreditLogEventType(log) === "usage");
+
     const conversationAgentCache = new Map<Id<"conversations">, Id<"agents"> | undefined>();
     const usageByAgent = new Map<string, number>();
-    const dailyUsageByAgent = new Map<string, Map<string, number>>();
 
-    for (const log of logs) {
-      const eventType = formatCreditLogEventType(log);
-      if (eventType !== "usage" && log.type !== "deduction") {
-        continue;
-      }
-
+    for (const log of usageLogs) {
       if (log.conversationId && !log.agentId && !conversationAgentCache.has(log.conversationId)) {
         const conversation = await ctx.db.get(log.conversationId);
         conversationAgentCache.set(log.conversationId, conversation?.assignedAgentId);
@@ -412,13 +401,6 @@ export const getUsageDashboard = query({
       const key = resolveLogAgentId(log, conversationAgentCache);
       const amount = log.creditCost ?? Math.abs(log.amount);
       usageByAgent.set(key, (usageByAgent.get(key) ?? 0) + amount);
-
-      const dateKey = toUtcDateKey(log.createdAt);
-      if (!dailyUsageByAgent.has(dateKey)) {
-        dailyUsageByAgent.set(dateKey, new Map());
-      }
-      const dayMap = dailyUsageByAgent.get(dateKey)!;
-      dayMap.set(key, (dayMap.get(key) ?? 0) + amount);
     }
 
     const agentUsage = Array.from(usageByAgent.entries())
@@ -464,7 +446,6 @@ export const getUsageDashboard = query({
 
     const periodEndBoundMs =
       userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
-    const dateKeys = getDateKeysInRange(periodStartMs, periodEndBoundMs);
 
     const chartSeries = combinedAgentUsage
       .filter((row) => row.creditsUsed > 0)
@@ -478,30 +459,40 @@ export const getUsageDashboard = query({
         };
       });
 
-    const chartSeriesKeys = new Set(chartSeries.map((series) => series.key));
-    const dailyUsage = dateKeys.map((date) => {
-      const dayMap = dailyUsageByAgent.get(date) ?? new Map<string, number>();
-      const row: Record<string, number | string> = { date, total: 0 };
+    const chartAgentKeys = chartSeries.map((series) => series.key);
+    const { dailyUsage: aggregateDailyUsage } = await getDailyCreditUsageForAgents(
+      ctx,
+      {
+        billingUserId: userDoc._id,
+        periodStartMs,
+        periodEndMs: periodEndBoundMs,
+        agentKeys: chartAgentKeys.length > 0 ? chartAgentKeys : ["unassigned"],
+      },
+    );
 
-      for (const [agentKey, amount] of dayMap.entries()) {
-        row.total = (row.total as number) + amount;
-        if (chartSeriesKeys.has(agentKey)) {
-          row[agentKey] = amount;
-        } else if (amount > 0) {
-          row.other = ((row.other as number | undefined) ?? 0) + amount;
-        }
-      }
+    const chartSeriesKeys = new Set(chartSeries.map((series) => series.key));
+    const dailyUsage = aggregateDailyUsage.map((row) => {
+      const nextRow: Record<string, number | string> = {
+        date: row.date,
+        total: row.total ?? 0,
+      };
 
       for (const series of chartSeries) {
-        if (row[series.key] === undefined) {
-          row[series.key] = 0;
-        }
-      }
-      if (chartSeries.length > 0 && row.other === undefined) {
-        row.other = 0;
+        nextRow[series.key] = (row[series.key] as number | undefined) ?? 0;
       }
 
-      return row;
+      let otherTotal = 0;
+      for (const [key, amount] of Object.entries(row)) {
+        if (key === "date" || key === "total" || chartSeriesKeys.has(key)) {
+          continue;
+        }
+        otherTotal += (amount as number) ?? 0;
+      }
+      if (chartSeries.length > 0) {
+        nextRow.other = otherTotal;
+      }
+
+      return nextRow;
     });
 
     const chartConfig = [

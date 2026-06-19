@@ -6,6 +6,7 @@ import {
   lifetimeAggregator,
   monthlyAggregator,
   agentMonthlyAggregator,
+  creditDailyUsageAggregator,
   analyticsMetrics,
 } from "./aggregates";
 
@@ -16,6 +17,7 @@ export const triggers = new Triggers<DataModel>();
 triggers.register("rawAgentUsage", lifetimeAggregator.trigger());
 triggers.register("rawAgentUsage", monthlyAggregator.trigger());
 triggers.register("rawAgentUsage", agentMonthlyAggregator.trigger());
+triggers.register("creditUsageEvents", creditDailyUsageAggregator.trigger());
 triggers.register("analyticsMetricEntries", analyticsMetrics.trigger());
 
 // Export trigger-wrapped mutations to automatically keep aggregates in sync

@@ -97,7 +97,7 @@ function buildMonthlyUsageAggregates(
   return { topModels, data };
 }
 
-async function assertAgentAccess(ctx: QueryCtx, agentId: Id<"agents">) {
+export async function assertAgentAccess(ctx: QueryCtx, agentId: Id<"agents">) {
   const { userId, orgId } = await getAuthContext(ctx);
   const agent = await ctx.db.get(agentId);
   if (agent === null) {

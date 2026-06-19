@@ -63,3 +63,35 @@ export function getLast6CalendarMonths(referenceMs: number) {
 
   return months;
 }
+
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function toUtcDateKey(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+export function getDateKeysInRange(startMs: number, endMs: number): string[] {
+  const keys: string[] = [];
+  const rangeEndMs = Math.min(endMs, Date.now());
+  for (let t = startMs; t <= rangeEndMs; t += DAY_MS) {
+    keys.push(toUtcDateKey(t));
+  }
+  return keys;
+}
+
+export function getUsagePeriodStartMs(stripePeriodEndMs?: number): number {
+  const MONTHLY_PERIOD_MS = 30 * DAY_MS;
+  if (stripePeriodEndMs && stripePeriodEndMs > Date.now()) {
+    return stripePeriodEndMs - MONTHLY_PERIOD_MS;
+  }
+  const now = new Date();
+  return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+}
+
+export function creditDailyUsageNamespace(
+  userId: string,
+  dateKey: string,
+  agentId: string,
+): string {
+  return `${userId}:${dateKey}:${agentId}`;
+}

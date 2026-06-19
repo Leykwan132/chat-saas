@@ -1,9 +1,8 @@
 import { useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { Building2, CreditCard, BarChart3, User } from 'lucide-react';
+import { Building2, CreditCard, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTab } from '@/components/PlanTab';
-import { UsageTab } from '@/components/UsageTab';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { TeamDetailSection } from '@/components/teams/TeamDetailSection';
@@ -12,13 +11,12 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 
-type AccountSection = 'profile' | 'teams' | 'plan' | 'usage';
+type AccountSection = 'profile' | 'teams' | 'plan';
 
 const NAV_ITEMS: { key: AccountSection; label: string; icon: React.ElementType }[] = [
   { key: 'profile', label: 'Profile', icon: User },
   { key: 'teams', label: 'Teams', icon: Building2 },
   { key: 'plan', label: 'Plan', icon: CreditCard },
-  { key: 'usage', label: 'Usage', icon: BarChart3 },
 ];
 
 function FieldRow({ label, value }: { label: string; value: string | null | undefined }) {
@@ -125,11 +123,9 @@ export default function SettingsPage() {
       ? 'teams'
       : rawSection === 'plan'
       ? 'plan'
-      : rawSection === 'usage'
-      ? 'usage'
       : 'profile';
 
-  if ((section === 'plan' || section === 'usage') && !isLoading && !can(Permission.BILLING_READ)) {
+  if (section === 'plan' && !isLoading && !can(Permission.BILLING_READ)) {
     section = 'profile';
   }
 
@@ -147,10 +143,10 @@ export default function SettingsPage() {
           : 'Teams'
         : section === 'plan'
           ? 'Plan'
-          : 'Usage';
+          : 'Profile';
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
-    if (item.key === 'plan' || item.key === 'usage') {
+    if (item.key === 'plan') {
       return can(Permission.BILLING_READ);
     }
     return true;
@@ -202,7 +198,7 @@ export default function SettingsPage() {
           ) : section === 'plan' ? (
             <PlanTab />
           ) : (
-            <UsageTab />
+            <ProfileContent />
           )}
         </div>
       </div>

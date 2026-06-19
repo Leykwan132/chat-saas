@@ -127,6 +127,15 @@ function dropOffRateYAxisMax(dataMax: number) {
   return Math.min(100, Math.max(25, Math.ceil((dataMax * 1.15) / 25) * 25));
 }
 
+function dropOffRateYAxisTicks(max: number) {
+  const step = max <= 25 ? 5 : 25;
+  const ticks: number[] = [];
+  for (let value = 0; value <= max; value += step) {
+    ticks.push(value);
+  }
+  return ticks;
+}
+
 export function AnalyticsDropOffRateLineChart({
   rows,
   className,
@@ -143,6 +152,11 @@ export function AnalyticsDropOffRateLineChart({
     return null;
   }
 
+  const yAxisMax = dropOffRateYAxisMax(
+    Math.max(...rows.map((row) => row.dropOffRate)),
+  );
+  const yAxisTicks = dropOffRateYAxisTicks(yAxisMax);
+
   return (
     <ChartContainer
       config={DROP_OFF_RATE_CHART_CONFIG}
@@ -151,27 +165,28 @@ export function AnalyticsDropOffRateLineChart({
       <LineChart
         accessibilityLayer
         data={rows}
-        margin={{ left: 0, right: 20, top: 4, bottom: 4 }}
+        margin={{ left: 4, right: 16, top: 12, bottom: 20 }}
       >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="month"
           tickLine={false}
           axisLine={false}
-          tickMargin={8}
+          tickMargin={12}
           interval={0}
-          padding={{ left: 16, right: 16 }}
+          padding={{ left: 24, right: 24 }}
           tick={{ textAnchor: 'middle', fontSize: 11 }}
           tickFormatter={(value) => formatAnalyticsMonthLabel(String(value))}
         />
         <YAxis
           tickLine={false}
           axisLine={false}
-          tickMargin={8}
-          width={40}
+          tickMargin={6}
+          width={52}
           allowDecimals={false}
-          domain={[0, dropOffRateYAxisMax]}
-          tickCount={5}
+          domain={[0, yAxisMax]}
+          ticks={yAxisTicks}
+          tick={{ fontSize: 11 }}
           tickFormatter={(value) => formatAnalyticsRate(Number(value))}
         />
         <ChartTooltip
