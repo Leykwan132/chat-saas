@@ -24,4 +24,20 @@ crons.interval(
   {},
 );
 
+// Detect common conversation topics for Growth plan workspaces and above.
+crons.interval(
+  "conversation topic detection",
+  { hours: 24 },
+  internal.analyticsTopics.runDailyTopicDetection,
+  {},
+);
+
+// Analyze customer sentiment for Growth plan workspaces and above.
+crons.interval(
+  "conversation sentiment analysis",
+  { hours: 24 },
+  internal.analyticsSentiment.runDailySentimentAnalysis,
+  {},
+);
+
 export default crons;

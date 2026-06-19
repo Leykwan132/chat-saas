@@ -1,3 +1,4 @@
+import { PlanAdvancedAnalyticsHoverHint } from './PlanAdvancedAnalyticsHoverHint';
 import { PlanAutoLeadTaggingHoverHint } from './PlanAutoLeadTaggingHoverHint';
 import { PlanChannelsHoverHint } from './PlanChannelsHoverHint';
 import { PlanDescriptionHoverHint } from './PlanDescriptionHoverHint';
@@ -10,6 +11,7 @@ import {
   isKnowledgeBaseLimitLabel,
   isPlanFeatureDescriptionHoverLabel,
   isPlanModelAccessLabel,
+  isTopicAnalyticsLabel,
   type PlanKey,
 } from '../../../shared/planCatalog';
 import { pricingFeatureTextClass } from './pricingStyles';
@@ -41,6 +43,10 @@ export function renderPricingFeatureLabel(
     return <PlanChannelsHoverHint label={text} className={className} />;
   }
 
+  if (isTopicAnalyticsLabel(text)) {
+    return <PlanAdvancedAnalyticsHoverHint label={text} className={className} />;
+  }
+
   return text;
 }
 
@@ -57,6 +63,10 @@ export function renderPricingComparisonRowLabel(label: string) {
 
   if (isChannelsComparisonLabel(label)) {
     return <PlanChannelsHoverHint label={label} className={className} />;
+  }
+
+  if (isTopicAnalyticsLabel(label)) {
+    return <PlanAdvancedAnalyticsHoverHint label={label} className={className} />;
   }
 
   return <span className="leading-snug">{label}</span>;

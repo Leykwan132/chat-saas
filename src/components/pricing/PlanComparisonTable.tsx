@@ -1,15 +1,18 @@
+import { Fragment } from 'react';
 import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanModelsHoverHint } from './PlanModelsHoverHint';
 import { PlanKnowledgeBaseHoverHint } from './PlanKnowledgeBaseHoverHint';
+import { PricingAiFeatureLabel } from './PricingAiFeatureLabel';
 import { renderPricingComparisonRowLabel } from './pricingFeatureHover';
 import {
+  pricingFeatureGroupTitleClass,
   pricingSectionBorderClass,
   pricingTableShellClass,
 } from './pricingStyles';
 import {
   getComparisonPlanName,
-  getPlanComparisonRows,
+  getGroupedPlanComparisonRows,
   isKnowledgeBaseLimitLabel,
   isPlanModelAccessLabel,
   PLAN_ORDER,
@@ -70,7 +73,7 @@ export function PlanComparisonTable({
   currentPlanId,
   className,
 }: PlanComparisonTableProps) {
-  const rows = getPlanComparisonRows();
+  const groups = getGroupedPlanComparisonRows();
 
   return (
     <section id={id} className={cn('w-full', className)}>
@@ -108,32 +111,49 @@ export function PlanComparisonTable({
             </thead>
 
             <tbody>
-              {rows.map((row) => (
-                <tr
-                  key={row.label}
-                  className={cn('border-b border-dotted', pricingSectionBorderClass())}
-                >
-                  <th
-                    scope="row"
-                    className="px-8 py-4 text-center align-middle text-sm font-medium text-muted-foreground"
-                  >
-                    <ComparisonRowLabel label={row.label} />
-                  </th>
-                  {PLAN_ORDER.map((planId) => (
-                    <td
-                      key={`${row.label}-${planId}`}
-                      className={cn(
-                        'border-l px-8 py-4 text-center align-middle',
-                        pricingSectionBorderClass(),
-                        currentPlanId === planId && 'bg-muted/20',
-                      )}
+              {groups.map((group) => (
+                <Fragment key={group.title ?? group.rows[0]?.label ?? 'group'}>
+                  {group.title ? (
+                    <tr className={cn('border-b', pricingSectionBorderClass())}>
+                      <th
+                        colSpan={PLAN_ORDER.length + 1}
+                        scope="colgroup"
+                        className="px-8 py-3 text-left"
+                      >
+                        <p className={pricingFeatureGroupTitleClass()}>{group.title}</p>
+                      </th>
+                    </tr>
+                  ) : null}
+                  {group.rows.map((row) => (
+                    <tr
+                      key={row.label}
+                      className={cn('border-b border-dotted', pricingSectionBorderClass())}
                     >
-                      <div className="flex justify-center">
-                        <ComparisonCell value={row.values[planId]} planId={planId} />
-                      </div>
-                    </td>
+                      <th
+                        scope="row"
+                        className="px-8 py-4 text-center align-middle text-sm font-medium text-muted-foreground"
+                      >
+                        <PricingAiFeatureLabel label={row.label}>
+                          <ComparisonRowLabel label={row.label} />
+                        </PricingAiFeatureLabel>
+                      </th>
+                      {PLAN_ORDER.map((planId) => (
+                        <td
+                          key={`${row.label}-${planId}`}
+                          className={cn(
+                            'border-l px-8 py-4 text-center align-middle',
+                            pricingSectionBorderClass(),
+                            currentPlanId === planId && 'bg-muted/20',
+                          )}
+                        >
+                          <div className="flex justify-center">
+                            <ComparisonCell value={row.values[planId]} planId={planId} />
+                          </div>
+                        </td>
+                      ))}
+                    </tr>
                   ))}
-                </tr>
+                </Fragment>
               ))}
             </tbody>
           </table>

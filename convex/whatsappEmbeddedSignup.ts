@@ -5,6 +5,18 @@ import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
+const LOG_PREFIX = "[whatsapp-connect]";
+
+function logWhatsAppConnect(
+  step: string,
+  data?: Record<string, unknown>,
+) {
+  if (data === undefined) {
+    console.log(`${LOG_PREFIX}:completeSignup`, step);
+    return;
+  }
+  console.log(`${LOG_PREFIX}:completeSignup`, step, data);
+}
 
 function graphVersion() {
   return process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
@@ -40,6 +52,14 @@ async function graphFetch<T>(
   if (!res.ok) {
     const err = (body as GraphError).error;
     const msg = err?.message ?? `HTTP ${res.status}`;
+    console.warn(`${LOG_PREFIX}:graphFetch`, context, {
+      status: res.status,
+      message: msg,
+      type: err?.type,
+      code: err?.code,
+      errorSubcode: err?.error_subcode,
+      fbtraceId: err?.fbtrace_id,
+    });
     throw new Error(`${context} failed: ${msg}`);
   }
   return body as T;
@@ -67,6 +87,13 @@ export const completeSignup = action({
   ): Promise<{ channelId: Id<"channels">; displayPhoneNumber?: string }> => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
+    logWhatsAppConnect("started", {
+      orgId: channelOrgId,
+      userId,
+      wabaId: args.wabaId,
+      phoneNumberId: args.phoneNumberId,
+      codeLength: args.code.length,
+    });
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
@@ -79,6 +106,7 @@ export const completeSignup = action({
     try {
       // 0. Seed a `pending` channel row with progressStep="linking" so the
       //    connecting dialog has something to subscribe to immediately.
+      logWhatsAppConnect("step", { progressStep: "linking" });
       await ctx.runMutation(internal.channels.internalStartPending, {
         orgId: channelOrgId,
         wabaId: args.wabaId,
@@ -89,6 +117,7 @@ export const completeSignup = action({
       // 1. Exchange code for access token. Embedded Signup returns a token
       //    already scoped to the selected WABA; no redirect_uri is needed
       //    when the token type is `code` from the embedded flow.
+      logWhatsAppConnect("step", { progressStep: "exchanging-token" });
       const tokenUrl = new URL(`${graphBase()}/oauth/access_token`);
       tokenUrl.searchParams.set("client_id", appId);
       tokenUrl.searchParams.set("client_secret", appSecret);
@@ -102,6 +131,11 @@ export const completeSignup = action({
       const tokenExpiresAt = tokenRes.expires_in
         ? Date.now() + tokenRes.expires_in * 1000
         : undefined;
+      logWhatsAppConnect("token-exchange-succeeded", {
+        tokenType: tokenRes.token_type,
+        expiresIn: tokenRes.expires_in,
+        hasAccessToken: Boolean(accessToken),
+      });
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
         orgId: channelOrgId,
@@ -112,6 +146,7 @@ export const completeSignup = action({
 
       // 2. Subscribe our app to the WABA. This is required before Meta will
       //    deliver webhook events for messages sent to this WABA's numbers.
+      logWhatsAppConnect("step", { progressStep: "subscribing" });
       await graphFetch(
         `${graphBase()}/${args.wabaId}/subscribed_apps`,
         {
@@ -130,6 +165,7 @@ export const completeSignup = action({
 
       // 3. Register the phone number with Cloud API. PIN can be anything
       //    when the number was migrated via Embedded Signup; we generate one.
+      logWhatsAppConnect("step", { progressStep: "registering" });
       const pin = String(Math.floor(100000 + Math.random() * 900000));
       await graphFetch(
         `${graphBase()}/${args.phoneNumberId}/register`,
@@ -150,17 +186,20 @@ export const completeSignup = action({
       // 4. Read display metadata so we can show a friendly number in the UI.
       let displayPhoneNumber: string | undefined;
       try {
+        logWhatsAppConnect("step", { progressStep: "fetching-display-number" });
         const meta = await graphFetch<{ display_phone_number?: string }>(
           `${graphBase()}/${args.phoneNumberId}?fields=display_phone_number`,
           { headers: { Authorization: `Bearer ${accessToken}` } },
           "Phone number fetch",
         );
         displayPhoneNumber = meta.display_phone_number;
+        logWhatsAppConnect("display-number-fetched", { displayPhoneNumber });
       } catch (err) {
-        console.warn("Failed to fetch display_phone_number", err);
+        console.warn(`${LOG_PREFIX}:completeSignup`, "display number fetch failed", err);
       }
 
       // 5. Persist.
+      logWhatsAppConnect("step", { progressStep: "persisting-channel" });
       const channelId: Id<"channels"> = await ctx.runMutation(
         internal.channels.internalUpsertWhatsApp,
         {
@@ -174,9 +213,18 @@ export const completeSignup = action({
         },
       );
 
+      logWhatsAppConnect("completed", {
+        channelId,
+        displayPhoneNumber,
+      });
       return { channelId, displayPhoneNumber };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      logWhatsAppConnect("failed", {
+        error: message,
+        wabaId: args.wabaId,
+        phoneNumberId: args.phoneNumberId,
+      });
       await ctx.runMutation(internal.channels.internalRecordError, {
         orgId: channelOrgId,
         service: "whatsapp",

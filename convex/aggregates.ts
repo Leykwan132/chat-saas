@@ -37,3 +37,14 @@ export const agentMonthlyAggregator = new TableAggregate<{
   namespace: (doc) =>
     `${usageMonthKeyFromTimestamp(doc.createdAt)}:${doc.agentId ?? "unassigned"}`,
 });
+
+export const analyticsMetrics = new TableAggregate<{
+  Key: number;
+  DataModel: DataModel;
+  TableName: "analyticsMetricEntries";
+  Namespace: string;
+}>(components.analyticsMetrics, {
+  sortKey: (doc) => doc.sortKey,
+  sumValue: (doc) => doc.value,
+  namespace: (doc) => doc.namespace,
+});

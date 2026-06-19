@@ -309,7 +309,7 @@ export function SubscriptionPlanActionButton({
     );
   }
 
-  const useProHighlight = emphasizeRecommended && planId === 'pro';
+  const useProHighlight = emphasizeRecommended && planId === 'growth';
 
   return (
     <Button

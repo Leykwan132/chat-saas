@@ -54,9 +54,12 @@ import AdminContactPage from './pages/AdminContactPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
+import { useQuery } from 'convex/react'
+import { api } from '../convex/_generated/api'
+import { getDefaultAnalyticsSection, type PlanKey } from '../shared/planCatalog'
 import { usePermissions } from './hooks/usePermissions'
-import { Permission } from '../shared/permissions'
 import { PromptInputProvider } from '@/components/ai-elements/prompt-input'
+import { Permission } from '../shared/permissions'
 import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
@@ -89,6 +92,22 @@ function KnowledgeBaseIndex() {
   return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
 }
 
+function AnalyticsIndex() {
+  const { agentId } = useParams()
+  const planAndUsage = useQuery(api.plans.getPlanAndUsage, {})
+
+  if (planAndUsage === undefined) {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center">
+        <Spinner className="size-6 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  const section = getDefaultAnalyticsSection((planAndUsage?.plan ?? 'free') as PlanKey)
+  return <Navigate to={`/dashboard/${agentId}/analytics/${section}`} replace />
+}
+
 
 
 /** Legacy sidebar URL; templates now live under Channels → channel. */
@@ -105,8 +124,9 @@ function ChatsToInboxRedirect() {
 function DashboardIndexRedirect() {
   const { agentId } = useParams()
   const { can, isLoading } = usePermissions()
+  const planAndUsage = useQuery(api.plans.getPlanAndUsage, {})
 
-  if (isLoading) {
+  if (isLoading || planAndUsage === undefined) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-background text-foreground">
         <Spinner className="h-8 w-8 text-zinc-500" />
@@ -130,7 +150,8 @@ function DashboardIndexRedirect() {
     return <Navigate to={`/dashboard/${agentId}/channels`} replace />
   }
   if (can(Permission.ANALYTICS_READ)) {
-    return <Navigate to={`/dashboard/${agentId}/analytics`} replace />
+    const section = getDefaultAnalyticsSection((planAndUsage?.plan ?? 'free') as PlanKey)
+    return <Navigate to={`/dashboard/${agentId}/analytics/${section}`} replace />
   }
 
   return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
@@ -231,7 +252,8 @@ function RootLayout() {
               <Route path="auto-booking" element={<AutoBookingPage />} />
               <Route path="lead-assignment" element={<LeadAssignmentPage />} />
               <Route path="agent-setup" element={<InstructionsPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="analytics" element={<AnalyticsIndex />} />
+              <Route path="analytics/:section" element={<AnalyticsPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="account" element={<Navigate to="../settings" replace />} />
             </Route>

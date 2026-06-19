@@ -22,7 +22,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "NVIDIA",
     chefSlug: "nvidia",
-    requiredPlan: "pro",
+    requiredPlan: "growth",
     labels: ["advanced", "latest"],
   },
   // "openai/gpt-oss-120b": {
@@ -47,7 +47,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Z.AI",
     chefSlug: "zai",
-    requiredPlan: "pro",
+    requiredPlan: "growth",
     labels: ["advanced", "latest"],
   },
   "deepseek/deepseek-v4-flash": {
@@ -66,7 +66,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "MiniMax",
     chefSlug: "minimax",
-    requiredPlan: "pro",
+    requiredPlan: "growth",
     labels: ["advanced", "latest"],
   },
   "google/gemma-4-31b-it:free": {
@@ -84,7 +84,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Alibaba",
     chefSlug: "alibaba",
-    requiredPlan: "standard",
+    requiredPlan: "starter",
     labels: ["advanced"],
   },
   "meta-llama/llama-3.3-70b-instruct:free": {
@@ -93,7 +93,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     enabled: true,
     chef: "Meta",
     chefSlug: "llama",
-    requiredPlan: "standard",
+    requiredPlan: "starter",
     labels: ["advanced", "popular"],
     isPopular: true,
   },

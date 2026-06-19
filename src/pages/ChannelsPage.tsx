@@ -57,23 +57,19 @@ const SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO = false;
 
 const SERVICE_META: Record<
   ChannelDoc['service'],
-  { label: string; icon: React.ElementType; description: string }
+  { label: string; icon: React.ElementType }
 > = {
   whatsapp: {
     label: 'WhatsApp',
     icon: SiWhatsapp,
-    description:
-      'Connect your WhatsApp Business number to receive and reply to customer chats.',
   },
   instagram: {
     label: 'Instagram',
     icon: SiInstagram,
-    description: 'Reply to Instagram DMs from the same inbox.',
   },
   messenger: {
     label: 'Messenger',
     icon: SiMessenger,
-    description: 'Connect Facebook Page Messenger conversations.',
   },
 };
 
@@ -321,32 +317,20 @@ export default function ChannelsPage() {
               disabled={limitReached}
               onConnected={() => setOpenAddDialog(false)}
             >
-              <PlatformOptionCard
-                service="whatsapp"
-                description="Business number"
-                disabled={limitReached}
-              />
+              <PlatformOptionCard service="whatsapp" disabled={limitReached} />
             </ConnectWhatsAppButton>
             <ConnectInstagramButton
               forceAllowConnect
               disabled={limitReached}
             >
-              <PlatformOptionCard
-                service="instagram"
-                description="Business, Creator, or Personal"
-                disabled={limitReached}
-              />
+              <PlatformOptionCard service="instagram" disabled={limitReached} />
             </ConnectInstagramButton>
             <ConnectMessengerButton
               forceAllowConnect
               disabled={limitReached}
               onConnected={() => setOpenAddDialog(false)}
             >
-              <PlatformOptionCard
-                service="messenger"
-                description="Page or Profile"
-                disabled={limitReached}
-              />
+              <PlatformOptionCard service="messenger" disabled={limitReached} />
             </ConnectMessengerButton>
           </div>
         </DialogContent>
@@ -368,24 +352,17 @@ export default function ChannelsPage() {
 
 function PlatformOptionCard({
   service,
-  description,
 }: {
   service: ChannelDoc['service'];
-  description: string;
   disabled?: boolean;
 }) {
   const meta = SERVICE_META[service];
   const Icon = meta.icon;
 
   return (
-    <div className="flex flex-col items-center gap-2 pointer-events-none w-full">
+    <div className="flex flex-col items-center gap-4 pointer-events-none w-full">
       <Icon className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
-      <div className="space-y-0.5">
-        <h3 className="text-sm font-semibold text-foreground leading-none">{meta.label}</h3>
-        <p className="text-[10px] text-muted-foreground max-w-[120px] leading-relaxed mx-auto">
-          {description}
-        </p>
-      </div>
+      <h3 className="text-sm font-semibold text-foreground leading-none">{meta.label}</h3>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export type PlanKey = "free" | "standard" | "pro" | "ultra";
+export type PlanKey = "free" | "starter" | "growth" | "business";
 export type ComparisonPlanKey = PlanKey | "enterprise";
 
 export type PlanFeatureFlags = {
@@ -11,6 +11,9 @@ export type PlanFeatureFlags = {
   sync_lead_labeling: boolean;
   auto_reply: boolean;
   custom_agents: boolean;
+  agent_usage: boolean;
+  team_analytics: boolean;
+  topic_analytics: boolean;
 };
 
 export type PlanCatalogEntry = {
@@ -49,7 +52,10 @@ export type EnterprisePlanEntry = {
     | "conversation_summaries"
     | "follow_ups"
     | "auto_booking"
-    | "ai_agent_customization",
+    | "ai_agent_customization"
+    | "agent_usage"
+    | "team_analytics"
+    | "topic_analytics",
     boolean
   >;
   aiModelAccessLabel: string;
@@ -108,6 +114,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "100 credits / mo",
       BASIC_LIMITED_MODELS_LABEL,
       "400KB per agent",
+      "AI agent usage",
     ],
     actionLabel: "Start for Free",
     models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it:free", "openai/gpt-oss-120b:free"],
@@ -122,9 +129,12 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       sync_lead_labeling: false,
       auto_reply: false,
       custom_agents: false,
+      agent_usage: true,
+      team_analytics: false,
+      topic_analytics: false,
     },
   },
-  standard: {
+  starter: {
     name: "Starter",
     priceMonthlyRm: 149,
     priceAnnualRm: 1490,
@@ -139,6 +149,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "3 AI Agents",
       "1,000 credits / mo",
       ADVANCED_MODELS_LABEL,
+      "Team analytics",
       "10 team members",
     ],
     actionLabel: "Get Starter",
@@ -160,9 +171,12 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       sync_lead_labeling: true,
       auto_reply: false,
       custom_agents: false,
+      agent_usage: true,
+      team_analytics: true,
+      topic_analytics: false,
     },
   },
-  pro: {
+  growth: {
     name: "Growth",
     priceMonthlyRm: 399,
     priceAnnualRm: 3990,
@@ -177,6 +191,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "10 AI Agents",
       "5,000 credits / mo",
       "Auto booking",
+      "Advanced Analytics",
       "20 team members",
     ],
     actionLabel: "Get Growth",
@@ -202,9 +217,12 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       sync_lead_labeling: true,
       auto_reply: true,
       custom_agents: true,
+      agent_usage: true,
+      team_analytics: true,
+      topic_analytics: true,
     },
   },
-  ultra: {
+  business: {
     name: "Business",
     priceMonthlyRm: 899,
     priceAnnualRm: 8990,
@@ -244,24 +262,43 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       sync_lead_labeling: true,
       auto_reply: true,
       custom_agents: true,
+      agent_usage: true,
+      team_analytics: true,
+      topic_analytics: true,
     },
   },
 };
 
-export const PLAN_ORDER: PlanKey[] = ["free", "standard", "pro", "ultra"];
+export function getDefaultAnalyticsSection(_plan: PlanKey): "usage" {
+  return "usage";
+}
+
+export const PLAN_ORDER: PlanKey[] = ["free", "starter", "growth", "business"];
+export const ADVANCED_ANALYTICS_MIN_PLAN: PlanKey = "growth";
+
+export function isPlanAtLeast(planKey: PlanKey, minimumPlan: PlanKey): boolean {
+  const planIndex = PLAN_ORDER.indexOf(planKey);
+  const minimumIndex = PLAN_ORDER.indexOf(minimumPlan);
+  return planIndex >= 0 && minimumIndex >= 0 && planIndex >= minimumIndex;
+}
+
+export function isAdvancedAnalyticsPlan(planKey: PlanKey): boolean {
+  return isPlanAtLeast(planKey, ADVANCED_ANALYTICS_MIN_PLAN);
+}
+
 export const COMPARISON_PLAN_ORDER: ComparisonPlanKey[] = [
   "free",
-  "standard",
-  "pro",
-  "ultra",
+  "starter",
+  "growth",
+  "business",
   "enterprise",
 ];
 
 export const PLAN_KEY_FEATURE_HEADERS: Record<ComparisonPlanKey, string> = {
   free: "Key features include",
-  standard: "Every essential feature, plus",
-  pro: "Every advanced feature, plus",
-  ultra: "Every growth feature, plus",
+  starter: "Every essential feature, plus",
+  growth: "Every advanced feature, plus",
+  business: "Every growth feature, plus",
   enterprise: "Features include",
 };
 
@@ -299,6 +336,9 @@ export const ENTERPRISE_PLAN: EnterprisePlanEntry = {
     follow_ups: true,
     auto_booking: true,
     ai_agent_customization: true,
+    agent_usage: true,
+    team_analytics: true,
+    topic_analytics: true,
   },
   aiModelAccessLabel: "Custom / Fine-Tuned",
 };
@@ -352,6 +392,13 @@ export function isKnowledgeBaseLimitLabel(label: string): boolean {
 export const AUTO_LEAD_TAGGING_LABEL = "Auto lead tagging";
 export const CHAT_SUMMARY_LABEL = "Chat summary";
 export const AUTO_BOOKING_LABEL = "Auto booking";
+export const AGENT_USAGE_LABEL = "AI agent usage";
+export const TEAM_ANALYTICS_LABEL = "Team analytics";
+export const TOPIC_ANALYTICS_LABEL = "Advanced Analytics";
+export const ADVANCED_ANALYTICS_INCLUDES = [
+  "Common Topic Detection",
+  "Customer Sentiment",
+] as const;
 export const CREDITS_COMPARISON_LABEL = "Credits / mo";
 export const CHANNELS_COMPARISON_LABEL = "Channels";
 
@@ -365,6 +412,7 @@ export const AI_TAGGED_PLAN_FEATURE_LABELS = [
   AUTO_LEAD_TAGGING_LABEL,
   CHAT_SUMMARY_LABEL,
   AUTO_BOOKING_LABEL,
+  TOPIC_ANALYTICS_LABEL,
 ] as const;
 
 export function isAiTaggedPlanFeature(label: string): boolean {
@@ -395,6 +443,10 @@ export const CHANNELS_HOVER_TITLE = "Supported channels";
 export const CHANNELS_HOVER_DESCRIPTION =
   "Each connected channel counts toward your plan limit. You can connect:";
 
+export const ADVANCED_ANALYTICS_HOVER_TITLE = "Advanced Analytics";
+export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
+  "AI-powered conversation insights to help you understand what customers talk about and how they feel.";
+
 export function isAutoLeadTaggingLabel(label: string): boolean {
   return label === AUTO_LEAD_TAGGING_LABEL;
 }
@@ -405,6 +457,18 @@ export function isAutoBookingLabel(label: string): boolean {
 
 export function isChatSummaryLabel(label: string): boolean {
   return label === CHAT_SUMMARY_LABEL;
+}
+
+export function isTopicAnalyticsLabel(label: string): boolean {
+  return label === TOPIC_ANALYTICS_LABEL;
+}
+
+export function isAgentUsageLabel(label: string): boolean {
+  return label === AGENT_USAGE_LABEL;
+}
+
+export function isTeamAnalyticsLabel(label: string): boolean {
+  return label === TEAM_ANALYTICS_LABEL;
 }
 
 export function isPlanCreditsLabel(label: string): boolean {
@@ -452,12 +516,18 @@ export type PlanCardFeatureRow = {
   included: boolean;
 };
 
-type PlanFeatureGroupKey = "channel_support" | "ai_agent" | "ai_features" | "team_support";
+type PlanFeatureGroupKey =
+  | "channel_support"
+  | "ai_agent"
+  | "ai_features"
+  | "analytics"
+  | "team_support";
 
 export const PLAN_FEATURE_GROUP_LABELS: Record<PlanFeatureGroupKey, string | null> = {
   channel_support: "Channel support",
   ai_agent: "AI agent",
   ai_features: "AI",
+  analytics: "Analytics",
   team_support: "Team support",
 };
 
@@ -465,6 +535,7 @@ const PLAN_FEATURE_GROUP_ORDER: PlanFeatureGroupKey[] = [
   "channel_support",
   "ai_agent",
   "ai_features",
+  "analytics",
   "team_support",
 ];
 
@@ -488,7 +559,7 @@ function teamMemberCardRow(planId: PlanKey): PlanCardFeatureRow {
   };
 }
 
-/** Channel support → AI agent platform → flagship AI features → team. */
+/** Channel support → AI agent → flagship AI features → analytics → team. */
 const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
   {
     group: "channel_support",
@@ -629,6 +700,45 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
       included: true,
     }),
     getComparisonValue: (planId) => PLAN_CATALOG[planId].features.auto_booking,
+  },
+  {
+    group: "analytics",
+    comparisonLabel: AGENT_USAGE_LABEL,
+    getSelfServeCardRow: (planId) => ({
+      text: AGENT_USAGE_LABEL,
+      included: PLAN_CATALOG[planId].features.agent_usage,
+    }),
+    getEnterpriseCardRow: () => ({
+      text: AGENT_USAGE_LABEL,
+      included: true,
+    }),
+    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.agent_usage,
+  },
+  {
+    group: "analytics",
+    comparisonLabel: TEAM_ANALYTICS_LABEL,
+    getSelfServeCardRow: (planId) => ({
+      text: TEAM_ANALYTICS_LABEL,
+      included: PLAN_CATALOG[planId].features.team_analytics,
+    }),
+    getEnterpriseCardRow: () => ({
+      text: TEAM_ANALYTICS_LABEL,
+      included: true,
+    }),
+    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.team_analytics,
+  },
+  {
+    group: "analytics",
+    comparisonLabel: TOPIC_ANALYTICS_LABEL,
+    getSelfServeCardRow: (planId) => ({
+      text: TOPIC_ANALYTICS_LABEL,
+      included: PLAN_CATALOG[planId].features.topic_analytics,
+    }),
+    getEnterpriseCardRow: () => ({
+      text: TOPIC_ANALYTICS_LABEL,
+      included: true,
+    }),
+    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.topic_analytics,
   },
   {
     group: "team_support",

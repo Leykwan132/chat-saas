@@ -7,6 +7,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
+import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { logConversationEvent } from "./conversationLogs";
@@ -522,6 +523,9 @@ export const update = mutation({
           },
         });
       }
+      await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+        conversationId,
+      });
     }
   },
 });
@@ -727,6 +731,22 @@ export const internalSetLeadTemperature = internalMutation({
       tags: filtered,
       updatedAt: Date.now(),
     });
+    if (customer.lastConversationId !== undefined) {
+      if (customer.leadTemperature !== args.temperature) {
+        await logConversationEvent(ctx, {
+          conversationId: customer.lastConversationId,
+          action: "lead_status_changed",
+          metadata: {
+            from: customer.leadTemperature ?? null,
+            to: args.temperature,
+            source: "ai_sync_labeling",
+          },
+        });
+      }
+      await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+        conversationId: customer.lastConversationId,
+      });
+    }
   },
 });
 

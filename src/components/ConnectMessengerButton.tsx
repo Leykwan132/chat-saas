@@ -186,19 +186,27 @@ export function ConnectMessengerButton({
   }
 
   if (children) {
+    const isConnecting = busy || dialogState.kind === 'connecting';
+
     return (
       <>
         <button
           type="button"
           onClick={launchSignup}
-          disabled={busy || disabled}
-          className={`group size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
-            busy || disabled
-              ? 'opacity-40 cursor-not-allowed'
-              : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
+          disabled={isConnecting || disabled}
+          className={`group relative size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
+            isConnecting
+              ? 'cursor-wait'
+              : busy || disabled
+                ? 'opacity-40 cursor-not-allowed'
+                : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
           }`}
         >
-          {children}
+          {isConnecting ? (
+            <Spinner className="size-6 text-muted-foreground" />
+          ) : (
+            children
+          )}
         </button>
 
         <Dialog open={dialogState.kind !== 'closed'} onOpenChange={handleDialogOpenChange}>

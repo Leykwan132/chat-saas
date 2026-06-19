@@ -23,6 +23,7 @@ import {
   buildWhatsAppOnboardUrl,
   resolveWhatsAppEmbeddedSignupIds,
 } from '@/lib/whatsappEmbeddedSignup';
+import { logWhatsAppConnect } from '@/lib/whatsappConnectDebug';
 
 type SessionInfoMessage = {
   type: 'WA_EMBEDDED_SIGNUP';
@@ -97,21 +98,38 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   }, [channels, activePhoneNumberId]);
 
   const tryCompleteSignup = useCallback(async () => {
-    if (completingRef.current) return;
+    if (completingRef.current) {
+      logWhatsAppConnect('complete', 'skipped — already completing');
+      return;
+    }
 
     const code = authCodeRef.current;
     const { wabaId, phoneNumberId } = sessionInfoRef.current;
-    if (!code || !wabaId || !phoneNumberId) return;
+    if (!code || !wabaId || !phoneNumberId) {
+      logWhatsAppConnect('complete', 'skipped — missing prerequisites', {
+        hasCode: Boolean(code),
+        hasWabaId: Boolean(wabaId),
+        hasPhoneNumberId: Boolean(phoneNumberId),
+      });
+      return;
+    }
 
     completingRef.current = true;
     setDialogState({ kind: 'connecting' });
+    logWhatsAppConnect('complete', 'starting backend completeSignup', {
+      wabaId,
+      phoneNumberId,
+      codeLength: code.length,
+    });
 
     try {
       await completeSignup({ code, wabaId, phoneNumberId });
+      logWhatsAppConnect('complete', 'backend completeSignup succeeded');
       setDialogState({ kind: 'success' });
       onConnected?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      logWhatsAppConnect('complete', 'backend completeSignup failed', { error: msg });
       setDialogState({ kind: 'error', message: msg });
     } finally {
       completingRef.current = false;
@@ -120,29 +138,51 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   }, [completeSignup, onConnected]);
 
   const requestAuthCodeAndComplete = useCallback(() => {
-    if (!appId || !configId) return;
+    logWhatsAppConnect('auth-code', 'requestAuthCodeAndComplete called', {
+      hasAppId: Boolean(appId),
+      hasConfigId: Boolean(configId),
+      fbReady: fbSession.ready,
+      hasFbSdk: Boolean(window.FB),
+      wabaId: sessionInfoRef.current.wabaId,
+      phoneNumberId: sessionInfoRef.current.phoneNumberId,
+    });
+
+    if (!appId || !configId) {
+      logWhatsAppConnect('auth-code', 'aborted — missing appId or configId');
+      return;
+    }
 
     if (!fbSession.ready || !window.FB) {
+      logWhatsAppConnect('auth-code', 'aborted — Facebook SDK not ready');
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       setBusy(false);
       return;
     }
 
+    logWhatsAppConnect('auth-code', 'calling FB.login');
     window.FB.login(
       (response: FBLoginResponse) => {
         refreshFacebookLoginStatus();
+        logWhatsAppConnect('auth-code', 'FB.login callback', {
+          status: response.status,
+          hasCode: Boolean(response.authResponse?.code),
+          userId: response.authResponse?.userID,
+        });
+
         const code = response.authResponse?.code;
         if (!code) {
           const message =
             response.status === 'unknown'
               ? 'Signup cancelled before completion.'
               : 'Did not receive an authorisation code.';
+          logWhatsAppConnect('auth-code', 'no auth code received', { message });
           toast.error(message);
           setBusy(false);
           return;
         }
 
         authCodeRef.current = code;
+        logWhatsAppConnect('auth-code', 'auth code stored — proceeding to completeSignup');
         void tryCompleteSignup();
       },
       {
@@ -172,6 +212,14 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       }
       if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
 
+      logWhatsAppConnect('message', `WA_EMBEDDED_SIGNUP:${payload.event}`, {
+        origin: event.origin,
+        wabaId: payload.data?.waba_id,
+        phoneNumberId: payload.data?.phone_number_id,
+        currentStep: payload.data?.current_step,
+        errorMessage: payload.data?.error_message,
+      });
+
       if (payload.event === 'FINISH' && payload.data) {
         sessionInfoRef.current = {
           wabaId: payload.data.waba_id,
@@ -180,9 +228,13 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         setActivePhoneNumberId(payload.data.phone_number_id);
         requestAuthCodeAndComplete();
       } else if (payload.event === 'CANCEL') {
+        logWhatsAppConnect('message', 'signup cancelled by user');
         setBusy(false);
         toast.message('WhatsApp connection cancelled');
       } else if (payload.event === 'ERROR' && payload.data?.error_message) {
+        logWhatsAppConnect('message', 'embedded signup error', {
+          error: payload.data.error_message,
+        });
         setBusy(false);
         toast.error(`Embedded Signup error: ${payload.data.error_message}`);
       }
@@ -194,6 +246,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
   const launchSignup = useCallback(() => {
     if (!appId || !configId) {
+      logWhatsAppConnect('launch', 'aborted — missing appId or configId');
       toast.error(
         'WhatsApp is not configured. Set VITE_META_APP_ID and VITE_META_EMBEDDED_SIGNUP_CONFIG_ID.',
       );
@@ -201,6 +254,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     }
 
     if (!fbSession.ready || !window.FB) {
+      logWhatsAppConnect('launch', 'aborted — Facebook SDK not ready');
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       return;
     }
@@ -212,6 +266,12 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     setActivePhoneNumberId(undefined);
 
     const onboardUrl = buildWhatsAppOnboardUrl(appId, configId);
+    logWhatsAppConnect('launch', 'opening embedded signup', {
+      appId,
+      configId,
+      onboardUrl,
+    });
+
     const popup = window.open(
       onboardUrl,
       'whatsapp_embedded_signup',
@@ -219,9 +279,17 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     );
 
     if (!popup) {
+      logWhatsAppConnect('fallback', 'popup blocked — opening new tab', {
+        onboardUrl,
+        note:
+          'postMessage from the hosted flow may not reach this window; watch for redirect_uri callback instead',
+      });
       window.open(onboardUrl, '_blank', 'noopener,noreferrer');
       toast.message('Complete WhatsApp setup in the new tab, then return here.');
+      return;
     }
+
+    logWhatsAppConnect('launch', 'popup opened — waiting for WA_EMBEDDED_SIGNUP postMessage');
   }, [appId, configId, fbSession.ready]);
 
   const handleDialogOpenChange = useCallback(
@@ -245,19 +313,27 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   }
 
   if (children) {
+    const isConnecting = busy || dialogState.kind === 'connecting';
+
     return (
       <>
         <button
           type="button"
           onClick={launchSignup}
-          disabled={busy || disabled}
-          className={`group size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
-            busy || disabled
-              ? 'opacity-40 cursor-not-allowed'
-              : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
+          disabled={isConnecting || disabled}
+          className={`group relative size-36 flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-3 text-center transition-all shadow-sm focus:outline-none ${
+            isConnecting
+              ? 'cursor-wait'
+              : busy || disabled
+                ? 'opacity-40 cursor-not-allowed'
+                : 'hover:border-foreground/20 hover:bg-muted/30 cursor-pointer'
           }`}
         >
-          {children}
+          {isConnecting ? (
+            <Spinner className="size-6 text-muted-foreground" />
+          ) : (
+            children
+          )}
         </button>
 
         <Dialog

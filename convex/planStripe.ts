@@ -12,15 +12,15 @@ export const STRIPE_PRICE_IDS: Record<
   Exclude<PlanKey, "free">,
   Record<BillingInterval, string>
 > = {
-  standard: {
+  starter: {
     monthly: requireEnvVar("STRIPE_PRICE_STANDARD_MONTHLY"),
     annual: requireEnvVar("STRIPE_PRICE_STANDARD_ANNUAL"),
   },
-  pro: {
+  growth: {
     monthly: requireEnvVar("STRIPE_PRICE_PRO_MONTHLY"),
     annual: requireEnvVar("STRIPE_PRICE_PRO_ANNUAL"),
   },
-  ultra: {
+  business: {
     monthly: requireEnvVar("STRIPE_PRICE_ULTRA_MONTHLY"),
     annual: requireEnvVar("STRIPE_PRICE_ULTRA_ANNUAL"),
   },
@@ -36,7 +36,7 @@ export function getStripePriceId(
 }
 
 export function resolvePlanKeyFromStripePriceId(priceId: string): Exclude<PlanKey, "free"> {
-  for (const plan of ["standard", "pro", "ultra"] as const) {
+  for (const plan of ["starter", "growth", "business"] as const) {
     if (
       STRIPE_PRICE_IDS[plan].monthly === priceId ||
       STRIPE_PRICE_IDS[plan].annual === priceId

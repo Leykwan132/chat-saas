@@ -8,6 +8,19 @@ import {
 } from "./chat/inboxAudioIngest";
 import { markOutboundReadThroughTimestamp } from "./chat/readReceipts";
 
+const LOG_PREFIX = "[messenger-webhook]";
+
+function logMessengerWebhook(
+  step: string,
+  data?: Record<string, unknown>,
+) {
+  if (data === undefined) {
+    console.log(`${LOG_PREFIX}`, step);
+    return;
+  }
+  console.log(`${LOG_PREFIX}`, step, data);
+}
+
 // POST handler for the `object: "page"` branch of /webhook/meta.
 //
 // Payload shape (Messenger Platform):
@@ -32,15 +45,36 @@ export async function receive(
   try {
     payload = JSON.parse(rawBody) as MessengerWebhookEnvelope;
   } catch {
+    logMessengerWebhook("receive:invalid-json");
     return new Response("invalid json", { status: 400 });
   }
 
-  for (const entry of payload.entry ?? []) {
-    for (const event of entry.messaging ?? []) {
+  const entries = payload.entry ?? [];
+  logMessengerWebhook("receive:started", {
+    object: payload.object,
+    entryCount: entries.length,
+  });
+
+  for (const entry of entries) {
+    const messaging = entry.messaging ?? [];
+    logMessengerWebhook("receive:entry", {
+      entryId: entry.id,
+      eventCount: messaging.length,
+    });
+
+    for (const event of messaging) {
       const recipientId = event.recipient?.id;
       const senderId = event.sender?.id;
       const reaction = event.reaction;
       if (recipientId && senderId && reaction?.mid) {
+        logMessengerWebhook("receive:reaction-event", {
+          recipientId,
+          senderId,
+          targetExternalId: reaction.mid,
+          emoji: reaction.emoji,
+          action: reaction.action,
+        });
+
         try {
           await ctx.runMutation(internal.messengerWebhook.handleReaction, {
             pageId: recipientId,
@@ -50,14 +84,14 @@ export async function receive(
             action: reaction.action,
           });
         } catch (err) {
-          console.error("Failed to persist Messenger reaction", err);
+          console.error(`${LOG_PREFIX} Failed to persist Messenger reaction`, err);
         }
         continue;
       }
 
       const readWatermark = parseMetaTimestamp(event.read?.watermark);
       if (recipientId && senderId && readWatermark !== undefined) {
-        console.log("[messengerWebhook.receive] read receipt event received:", {
+        logMessengerWebhook("receive:read-receipt-event", {
           recipientId,
           senderId,
           watermark: event.read?.watermark,
@@ -73,19 +107,30 @@ export async function receive(
             timestampMs: parseMetaTimestamp(event.timestamp),
           });
         } catch (err) {
-          console.error("Failed to apply Messenger read receipt", err);
+          console.error(`${LOG_PREFIX} Failed to apply Messenger read receipt`, err);
         }
         continue;
       }
 
       const message = event.message;
-      if (!recipientId || !senderId || !message?.mid) continue;
+      if (!recipientId || !senderId || !message?.mid) {
+        logMessengerWebhook("receive:skipped-event", {
+          recipientId,
+          senderId,
+          hasMessage: Boolean(message),
+          messageMid: message?.mid,
+        });
+        continue;
+      }
 
-      // console.log("[messengerWebhook.receive] message event received:", {
-      //   recipientId,
-      //   senderId,
-      //   message,
-      // });
+      logMessengerWebhook("receive:message-event", {
+        recipientId,
+        senderId,
+        externalId: message.mid,
+        isEcho: message.is_echo === true,
+        hasText: Boolean(message.text?.trim()),
+        attachmentCount: message.attachments?.length ?? 0,
+      });
 
       const webhookAttachments = message.attachments ?? [];
       const imageAttachments = webhookAttachments
@@ -112,12 +157,18 @@ export async function receive(
           images: imageAttachments.length > 0 ? imageAttachments : undefined,
           files: audioAttachments.length > 0 ? audioAttachments : undefined,
         });
+        logMessengerWebhook("receive:message-persisted", {
+          pageId: recipientId,
+          senderPsid: senderId,
+          externalId: message.mid,
+        });
       } catch (err) {
-        console.error("Failed to persist Messenger message", err);
+        console.error(`${LOG_PREFIX} Failed to persist Messenger message`, err);
       }
     }
   }
 
+  logMessengerWebhook("receive:completed");
   return new Response(null, { status: 200 });
 }
 
@@ -155,16 +206,21 @@ export const handleIncoming = internalMutation({
       .query("messages")
       .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
       .unique();
-    if (existingMsg !== null) return;
+    if (existingMsg !== null) {
+      logMessengerWebhook("handleIncoming:duplicate-skip", {
+        externalId: args.externalId,
+      });
+      return;
+    }
 
     const channel = await ctx.db
       .query("channels")
       .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
       .unique();
     if (channel === null) {
-      console.warn(
-        `Messenger webhook for unknown page_id=${args.pageId}; skipping`,
-      );
+      logMessengerWebhook("handleIncoming:unknown-page", {
+        pageId: args.pageId,
+      });
       return;
     }
 
@@ -180,7 +236,14 @@ export const handleIncoming = internalMutation({
     // the customer PSID without the recipient field. In practice we drop
     // echo events here and rely on outgoing rows being inserted by the
     // sending action.
-    if (isOutgoing) return;
+    if (isOutgoing) {
+      logMessengerWebhook("handleIncoming:echo-skip", {
+        pageId: args.pageId,
+        senderPsid: args.senderPsid,
+        externalId: args.externalId,
+      });
+      return;
+    }
 
     const existingConversation = await ctx.db
       .query("conversations")
@@ -189,6 +252,10 @@ export const handleIncoming = internalMutation({
       )
       .unique();
     if (existingConversation === null) {
+      logMessengerWebhook("handleIncoming:enqueue-hydrate", {
+        channelId: channel._id,
+        contactAddress,
+      });
       await messengerSyncPool.enqueueAction(
         ctx,
         internal.messengerSync.hydrateConversationByParticipant,
@@ -215,6 +282,13 @@ export const handleIncoming = internalMutation({
       images: args.images,
       files: args.files,
     });
+
+    logMessengerWebhook("handleIncoming:ingested", {
+      channelId: channel._id,
+      contactAddress,
+      externalId: args.externalId,
+      contentType,
+    });
   },
 });
 
@@ -232,12 +306,16 @@ export const handleReaction = internalMutation({
       .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
       .unique();
     if (channel === null) {
-      console.warn(
-        `Messenger reaction for unknown page_id=${args.pageId}; skipping`,
-      );
+      logMessengerWebhook("handleReaction:unknown-page", {
+        pageId: args.pageId,
+      });
       return;
     }
     if (args.senderPsid === args.pageId) {
+      logMessengerWebhook("handleReaction:page-echo-skip", {
+        pageId: args.pageId,
+        targetExternalId: args.targetExternalId,
+      });
       return;
     }
     const target = await ctx.db
@@ -245,10 +323,20 @@ export const handleReaction = internalMutation({
       .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
       .unique();
     if (target === null || target.channelId !== channel._id) {
+      logMessengerWebhook("handleReaction:target-not-found", {
+        pageId: args.pageId,
+        targetExternalId: args.targetExternalId,
+        hasTarget: target !== null,
+      });
       return;
     }
 
     if (args.action === "unreact" || args.emoji === undefined || args.emoji.trim() === "") {
+      logMessengerWebhook("handleReaction:remove", {
+        conversationId: target.conversationId,
+        messageId: target._id,
+        senderPsid: args.senderPsid,
+      });
       await ctx.runMutation(internal.chat.reactions.internalRemoveReaction, {
         conversationId: target.conversationId,
         messageId: target._id,
@@ -258,6 +346,12 @@ export const handleReaction = internalMutation({
       return;
     }
 
+    logMessengerWebhook("handleReaction:upsert", {
+      conversationId: target.conversationId,
+      messageId: target._id,
+      senderPsid: args.senderPsid,
+      emoji: args.emoji,
+    });
     await ctx.runMutation(internal.chat.reactions.internalUpsertReaction, {
       conversationId: target.conversationId,
       messageId: target._id,
@@ -281,12 +375,17 @@ export const handleReadReceipt = internalMutation({
       .withIndex("by_pageId", (q) => q.eq("pageId", args.pageId))
       .unique();
     if (channel === null) {
-      console.warn(
-        `Messenger read receipt for unknown page_id=${args.pageId}; skipping`,
-      );
+      logMessengerWebhook("handleReadReceipt:unknown-page", {
+        pageId: args.pageId,
+      });
       return;
     }
-    if (args.senderPsid === args.pageId) return;
+    if (args.senderPsid === args.pageId) {
+      logMessengerWebhook("handleReadReceipt:page-echo-skip", {
+        pageId: args.pageId,
+      });
+      return;
+    }
 
     const conversation = await ctx.db
       .query("conversations")
@@ -294,7 +393,20 @@ export const handleReadReceipt = internalMutation({
         q.eq("channelId", channel._id).eq("contactAddress", args.senderPsid),
       )
       .unique();
-    if (conversation === null) return;
+    if (conversation === null) {
+      logMessengerWebhook("handleReadReceipt:conversation-not-found", {
+        pageId: args.pageId,
+        senderPsid: args.senderPsid,
+      });
+      return;
+    }
+
+    logMessengerWebhook("handleReadReceipt:apply", {
+      conversationId: conversation._id,
+      channelId: channel._id,
+      senderPsid: args.senderPsid,
+      watermarkMs: args.watermarkMs,
+    });
 
     await markOutboundReadThroughTimestamp(ctx, {
       conversationId: conversation._id,

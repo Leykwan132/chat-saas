@@ -1100,6 +1100,9 @@ export async function ingestChannelMessage(
     customerId,
     conversationId,
   });
+  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    conversationId,
+  });
 
   return {
     conversationId,

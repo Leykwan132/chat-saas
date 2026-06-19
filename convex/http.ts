@@ -180,6 +180,11 @@ const metaDispatch = httpAction(async (ctx, req) => {
     case "instagram":
       return await instagramReceive(ctx, rawBody);
     case "page":
+      console.log("[messenger-webhook] dispatch", {
+        route: "/webhook/meta",
+        object,
+        bodyBytes: rawBody.length,
+      });
       return await messengerReceive(ctx, rawBody);
     default:
       // Webhook subscribed for a product we don't currently model (or a
@@ -280,8 +285,14 @@ const messengerDispatch = httpAction(async (ctx, req) => {
   }
 
   if (object === "page") {
+    console.log("[messenger-webhook] dispatch", {
+      route: "/webhook/messenger",
+      object,
+      bodyBytes: rawBody.length,
+    });
     return await messengerReceive(ctx, rawBody);
   }
+  console.log("[messenger-webhook] dispatch:ignored", { object });
   return new Response(null, { status: 200 });
 });
 

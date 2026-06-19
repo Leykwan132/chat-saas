@@ -116,3 +116,45 @@ The following actions are logged and displayed:
 | **Event Cancelled** | Calendar appointment cancelled | User / AI | `eventId` |
 | **Event Deleted** | Calendar appointment deleted | User | `eventId`, `eventTitle` |
 | **Lead Status Changed** | Lead temperature changed (e.g. Hot, Warm, Cold) | User | `from`, `to` |
+
+## Team Analytics
+
+Team analytics use Convex aggregate data for fast counts and sums across conversations, members, channels, and topics.
+
+### Aggregate Design
+
+- `analyticsMetricEntries` is the normal Convex source table. Each row stores one aggregate-able value such as `convertedCount`, `firstReplyDurationMs`, or `messageSentCount`.
+- `analyticsMetrics` is the `@convex-dev/aggregate` component instance that listens to `analyticsMetricEntries`.
+- `convex/triggers.ts` registers `triggers.register("analyticsMetricEntries", analyticsMetrics.trigger())`, so inserts, updates, and deletes in the source table update the aggregate component.
+- The aggregate component groups by `namespace`, not by arbitrary fields. Every analytics namespace includes both scope and metric, for example:
+  - `team:<orgId>:metric:firstReplyCount`
+  - `member:<orgId>:<workosUserId>:metric:messageSentCount`
+  - `channel:<orgId>:service:whatsapp:metric:channelConvertedCount`
+  - `topic:<orgId>:<topicId>:metric:topicMentionCount`
+- The `metric` field is still stored on `analyticsMetricEntries` for debugging, indexes, and idempotent replacement, but aggregate reads request metric-specific namespaces.
+
+### Metric Facts
+
+`conversationAnalyticsFacts` stores one derived row per inbox conversation. It caches values such as:
+
+- `firstCustomerMessageAt`: earliest incoming customer message.
+- `firstOutgoingAt`: earliest outgoing reply after the first customer message.
+- `firstHumanOutgoingAt`: earliest human-authored outgoing reply after the first customer message.
+- `convertedAt`: when the `converted` tag is first added.
+- `droppedAt`: when the linked customer's lead temperature is `Cold`.
+
+Duration metrics are stored as per-conversation aggregate source rows:
+
+- `firstReplyDurationMs = firstOutgoingAt - firstCustomerMessageAt`
+- `conversionDurationMs = convertedAt - firstCustomerMessageAt`
+
+Average metrics are computed at query time:
+
+- Average first reply time = sum of `firstReplyDurationMs` / sum of `firstReplyCount`
+- Average time to conversion = sum of `conversionDurationMs` / sum of `convertedCount`
+
+Drop rate is based on lead outcome: a conversation counts as dropped when its linked customer lead temperature is `Cold`.
+
+### Topic Detection
+
+A daily Convex cron runs topic detection over recent conversations that are missing a topic or have new messages since their last topic assignment. The detector sends a bounded transcript plus existing org topics to the LLM, reuses an existing topic when possible, and stores the result in `conversationTopics` and `conversationTopicAssignments`.

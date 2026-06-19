@@ -12,6 +12,10 @@ import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
 import type * as agents from "../agents.js";
 import type * as aggregates from "../aggregates.js";
+import type * as analytics from "../analytics.js";
+import type * as analyticsSentiment from "../analyticsSentiment.js";
+import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
+import type * as analyticsTopics from "../analyticsTopics.js";
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as autoBooking from "../autoBooking.js";
@@ -125,6 +129,10 @@ declare const fullApi: ApiFromModules<{
   agentUsage: typeof agentUsage;
   agents: typeof agents;
   aggregates: typeof aggregates;
+  analytics: typeof analytics;
+  analyticsSentiment: typeof analyticsSentiment;
+  analyticsTopicRecords: typeof analyticsTopicRecords;
+  analyticsTopics: typeof analyticsTopics;
   auth: typeof auth;
   authUtils: typeof authUtils;
   autoBooking: typeof autoBooking;
@@ -277,4 +285,5 @@ export declare const components: {
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
   modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
   agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
+  analyticsMetrics: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"analyticsMetrics">;
 };

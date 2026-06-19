@@ -1,6 +1,11 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { autoBookingSessionStatusValidator } from "./autoBookingSessionStatus";
+import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
+
+const customerSentimentValidator = v.union(
+  ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
+);
 
 const serviceValidator = v.union(
   v.literal("whatsapp"),
@@ -13,6 +18,24 @@ const conversationServiceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+);
+
+const analyticsMetricValidator = v.union(
+  v.literal("conversationCount"),
+  v.literal("activeConversationCount"),
+  v.literal("convertedCount"),
+  v.literal("droppedCount"),
+  v.literal("conversionDurationMs"),
+  v.literal("firstReplyDurationMs"),
+  v.literal("firstReplyCount"),
+  v.literal("firstHumanReplyDurationMs"),
+  v.literal("firstHumanReplyCount"),
+  v.literal("assignedConversationCount"),
+  v.literal("messageSentCount"),
+  v.literal("avgMessagesPerConversationDenominator"),
+  v.literal("channelConversationCount"),
+  v.literal("channelConvertedCount"),
+  v.literal("topicMentionCount"),
 );
 
 const customerServiceValidator = v.union(
@@ -85,9 +108,9 @@ export default defineSchema({
     plan: v.optional(
       v.union(
         v.literal("free"),
-        v.literal("standard"),
-        v.literal("pro"),
-        v.literal("ultra"),
+        v.literal("starter"),
+        v.literal("growth"),
+        v.literal("business"),
       )
     ),
     lastActiveAt: v.optional(v.number()),
@@ -119,9 +142,9 @@ export default defineSchema({
     plan: v.optional(
       v.union(
         v.literal("free"),
-        v.literal("standard"),
-        v.literal("pro"),
-        v.literal("ultra"),
+        v.literal("starter"),
+        v.literal("growth"),
+        v.literal("business"),
       )
     ),
     credits: v.optional(v.number()),
@@ -475,10 +498,15 @@ export default defineSchema({
     unreadCount: v.number(),
     /** Set after AI lead labeling runs during initial Meta conversation sync. */
     syncLeadLabeledAt: v.optional(v.number()),
+    /** Overall customer sentiment from the latest AI sentiment analysis run. */
+    customerSentiment: v.optional(customerSentimentValidator),
+    sentimentAnalyzedAt: v.optional(v.number()),
+    sentimentSourceMessageMaxCreatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
+    .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_channel_and_contactAddress", ["channelId", "contactAddress"])
     .index("by_threadId", ["threadId"])
     .index("by_customerId", ["customerId"])
@@ -561,7 +589,86 @@ export default defineSchema({
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
     .index("by_agentMessageId", ["agentMessageId"])
     .index("by_externalId", ["externalId"])
-    .index("by_orgId", ["orgId"]),
+    .index("by_orgId", ["orgId"])
+    .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
+  conversationAnalyticsFacts: defineTable({
+    orgId: v.string(),
+    conversationId: v.id("conversations"),
+    service: conversationServiceValidator,
+    channelId: v.optional(v.id("channels")),
+    assignedUserId: v.optional(v.string()),
+    customerId: v.optional(v.id("customers")),
+    firstCustomerMessageAt: v.optional(v.number()),
+    firstOutgoingAt: v.optional(v.number()),
+    firstHumanOutgoingAt: v.optional(v.number()),
+    conversionDurationMs: v.optional(v.number()),
+    firstReplyDurationMs: v.optional(v.number()),
+    firstHumanReplyDurationMs: v.optional(v.number()),
+    incomingMessageCount: v.number(),
+    outgoingMessageCount: v.number(),
+    humanMessageCount: v.number(),
+    aiMessageCount: v.number(),
+    convertedAt: v.optional(v.number()),
+    droppedAt: v.optional(v.number()),
+    topicId: v.optional(v.id("conversationTopics")),
+    sourceMessageMaxCreatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_orgId_and_updatedAt", ["orgId", "updatedAt"])
+    .index("by_orgId_and_conversationId", ["orgId", "conversationId"]),
+  analyticsMetricEntries: defineTable({
+    namespace: v.string(),
+    sortKey: v.number(),
+    value: v.number(),
+    metric: analyticsMetricValidator,
+    orgId: v.string(),
+    memberUserId: v.optional(v.string()),
+    service: v.optional(conversationServiceValidator),
+    channelId: v.optional(v.id("channels")),
+    topicId: v.optional(v.id("conversationTopics")),
+    sourceConversationId: v.optional(v.id("conversations")),
+    sourceMessageId: v.optional(v.id("messages")),
+    sourceKey: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_sourceKey", ["sourceKey"])
+    .index("by_sourceConversationId", ["sourceConversationId"])
+    .index("by_orgId_and_metric_and_sortKey", ["orgId", "metric", "sortKey"]),
+  conversationTopics: defineTable({
+    orgId: v.string(),
+    name: v.string(),
+    slug: v.string(),
+    aliases: v.optional(v.array(v.string())),
+    totalCount: v.number(),
+    weekCount: v.number(),
+    lastSeenAt: v.number(),
+    description: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_slug", ["orgId", "slug"])
+    .index("by_orgId_and_totalCount", ["orgId", "totalCount"])
+    .index("by_orgId_and_weekCount", ["orgId", "weekCount"]),
+  conversationTopicAssignments: defineTable({
+    orgId: v.string(),
+    conversationId: v.id("conversations"),
+    topicId: v.id("conversationTopics"),
+    confidence: v.number(),
+    summary: v.optional(v.string()),
+    rank: v.optional(v.number()),
+    detectedAt: v.number(),
+    sourceMessageMaxCreatedAt: v.optional(v.number()),
+    customerSentiment: v.optional(customerSentimentValidator),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_conversationId_and_topicId", ["conversationId", "topicId"])
+    .index("by_orgId_and_detectedAt", ["orgId", "detectedAt"])
+    .index("by_topicId", ["topicId"]),
   // Short-lived one-time sessions used to tie a third-party OAuth callback
   // (e.g. Instagram) back to the authenticated user/org that started it.
   // The row is created when the user clicks "Connect" and consumed once the
@@ -988,7 +1095,7 @@ export default defineSchema({
     }),
     providerMetadata: v.optional(v.any()),
     createdAt: v.number(),
-  }),
+  }).index("by_agentId", ["agentId"]),
   conversationLogs: defineTable({
     conversationId: v.id("conversations"),
     orgId: v.string(),

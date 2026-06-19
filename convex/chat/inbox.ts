@@ -25,6 +25,7 @@ import {
 import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
 import { checkAiFeature } from "../plans";
+import { logConversationEvent } from "../conversationLogs";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -223,6 +224,9 @@ export const internalPersistHumanReply = internalMutation({
       patch.escalation = undefined;
     }
     await ctx.db.patch(conv._id, patch);
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: conv._id,
+    });
 
     return replyPersistResult(
       agentMessageId,
@@ -298,6 +302,9 @@ export const internalPersistAiReply = internalMutation({
       patch.lastMessagePreview = preview;
     }
     await ctx.db.patch(conv._id, patch);
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: conv._id,
+    });
 
     return replyPersistResult(
       agentMessageId,
@@ -361,6 +368,9 @@ export const internalPersistAiMediaReply = internalMutation({
       unreadCount: 0,
       updatedAt: now,
     });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: conv._id,
+    });
 
     return replyPersistResult(
       agentMessageId,
@@ -396,6 +406,21 @@ export const internalEscalateConversation = internalMutation({
         escalatedAt: now,
       },
       updatedAt: now,
+    });
+    await logConversationEvent(ctx, {
+      conversationId: args.conversationId,
+      action: "escalation_raised",
+      actor: {
+        type: "ai",
+        name: agent.name,
+        agentId: agent._id,
+      },
+      metadata: {
+        question: args.question,
+      },
+    });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: args.conversationId,
     });
 
     if (escalationMessage) {

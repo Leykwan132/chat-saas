@@ -31,4 +31,5 @@ app.use(crons);
 app.use(aggregate, { name: "modelLifetimeUsage" });
 app.use(aggregate, { name: "modelMonthlyUsage" });
 app.use(aggregate, { name: "agentMonthlyUsage" });
+app.use(aggregate, { name: "analyticsMetrics" });
 export default app;

@@ -44,7 +44,7 @@ export default function PricingPage() {
       if (plan === 'free') {
         toast.loading('Setting up billing account…');
         await createStripeCustomer({ orgId: 'personal' });
-        window.location.href = '/workspace';
+        window.location.assign('/workspace');
       } else {
         const session = await createCheckoutSession({
           plan,
@@ -54,7 +54,7 @@ export default function PricingPage() {
           cancelPath: '/pricing',
         });
         if (session?.url) {
-          window.location.href = session.url;
+          window.location.assign(session.url);
         } else {
           throw new Error('Failed to start checkout');
         }
@@ -89,7 +89,7 @@ export default function PricingPage() {
                 return (
                   <SubscriptionPlanActionButton
                     planId={p.id}
-                    emphasizeRecommended={p.id === 'pro'}
+                    emphasizeRecommended={p.id === 'growth'}
                     disabled={submitting}
                     loading={submitting && selectedPlan === p.id}
                     label={

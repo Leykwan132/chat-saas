@@ -274,6 +274,9 @@ export const ensureAssignedAgent = mutation({
       assignedAgentId: args.agentId,
       updatedAt: Date.now(),
     });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: args.conversationId,
+    });
   },
 });
 
@@ -338,6 +341,9 @@ async function setConversationAiEnabledHandler(
     conversationId,
     action: enabled ? "ai_enabled" : "ai_disabled",
   });
+  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    conversationId,
+  });
 }
 
 async function setConversationLeadOwnerHandler(
@@ -381,6 +387,9 @@ async function setConversationLeadOwnerHandler(
       assigneeUserId: workosUserId,
       assigneeName,
     },
+  });
+  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    conversationId,
   });
 }
 
@@ -439,6 +448,9 @@ export const addConversationTag = mutation({
       action: "tag_added",
       metadata: { tag: normalized },
     });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: args.conversationId,
+    });
   },
 });
 
@@ -462,6 +474,9 @@ export const removeConversationTag = mutation({
       conversationId: args.conversationId,
       action: "tag_removed",
       metadata: { tag: args.tag },
+    });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: args.conversationId,
     });
   },
 });
@@ -489,6 +504,9 @@ export const resolveEscalation = mutation({
     await logConversationEvent(ctx, {
       conversationId: args.conversationId,
       action: "escalation_resolved",
+    });
+    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+      conversationId: args.conversationId,
     });
   },
 });

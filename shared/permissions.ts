@@ -182,6 +182,10 @@ export type FeatureAccessLevel = 'none' | 'view' | 'edit';
 export type TeamFeatureKey = 'agents' | 'chats' | 'team' | 'invitations' | 'billing';
 export type TeamFeatureAccess = Record<TeamFeatureKey, FeatureAccessLevel>;
 
+const ADMIN_AND_OWNER_ONLY_PERMISSIONS: PermissionSlug[] = [
+  Permission.ANALYTICS_READ,
+];
+
 const OWNER_ONLY_PERMISSIONS: PermissionSlug[] = [
   Permission.FULL_CONTROL,
   Permission.PERMISSIONS_MANAGE,
@@ -206,7 +210,6 @@ export function mapFeatureAccessToPermissions(
       Permission.AUTOMATION_READ,
       Permission.AUTOMATION_MANAGE,
       Permission.PLAYGROUND_ACCESS,
-      Permission.ANALYTICS_READ,
       Permission.AGENTS_MANAGE,
     );
   } else if (access.agents === 'view') {
@@ -214,8 +217,13 @@ export function mapFeatureAccessToPermissions(
       Permission.KB_READ,
       Permission.CHANNELS_READ,
       Permission.AUTOMATION_READ,
-      Permission.ANALYTICS_READ,
     );
+  }
+
+  if (access.agents !== 'none' && role !== 'member') {
+    for (const slug of ADMIN_AND_OWNER_ONLY_PERMISSIONS) {
+      permissions.push(slug);
+    }
   }
 
   // 2. Chats feature (Chats, Customers)
@@ -410,7 +418,8 @@ export function resolvePermissionsForRole(
       slug !== Permission.FOLLOWUPS_READ &&
       slug !== Permission.FOLLOWUPS_MANAGE &&
       slug !== Permission.BROADCAST_READ &&
-      slug !== Permission.BROADCAST_MANAGE,
+      slug !== Permission.BROADCAST_MANAGE &&
+      slug !== Permission.ANALYTICS_READ,
   );
   const hasChats =
     permissions.includes(Permission.CHATS_READ) ||

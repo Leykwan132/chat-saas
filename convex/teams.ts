@@ -313,9 +313,9 @@ export const canInviteMembers = query({
 export const getMemberLimitForPlanQuery = query({
   args: { planKey: v.union(
     v.literal("free"),
-    v.literal("standard"),
-    v.literal("pro"),
-    v.literal("ultra"),
+    v.literal("starter"),
+    v.literal("growth"),
+    v.literal("business"),
   ) },
   handler: async (_ctx, args) => {
     return {
