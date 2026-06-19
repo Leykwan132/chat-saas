@@ -8,7 +8,6 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { SiGoogle, SiMeta, SiStripe, SiSlack, SiAirbnb, SiShopify } from 'react-icons/si';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -16,7 +15,6 @@ import { BlurFade } from '@/components/ui/blur-fade';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
 import { NumberTicker } from '@/components/ui/number-ticker';
-import { Marquee } from '@/components/ui/marquee';
 
 
 
@@ -48,15 +46,6 @@ function PrimaryCta({
   );
 }
 
-const COMPANY_LOGOS = [
-  { name: 'Google', icon: SiGoogle },
-  { name: 'Meta', icon: SiMeta },
-  { name: 'Stripe', icon: SiStripe },
-  { name: 'Slack', icon: SiSlack },
-  { name: 'Airbnb', icon: SiAirbnb },
-  { name: 'Shopify', icon: SiShopify },
-];
-
 const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.png';
 const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
 const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent-3.png';
@@ -70,35 +59,9 @@ const FEATURE_SHOWCASE_IMAGES = {
   humanEscalation: 'https://storage.kilobot.app/HA.png',
   autoLeadAnalysis: 'https://storage.kilobot.app/CLD.png',
   roleBasedInteraction: 'https://storage.kilobot.app/RBAC.png',
+  advancedAnalytics: 'https://storage.kilobot.app/Analytics%20(2).png',
   naturalInteraction: 'https://storage.kilobot.app/NI.png',
 } as const;
-
-function LogoMarquee({ logos }: { logos?: Array<{ name: string; icon: React.ComponentType<{ className?: string }> }> }) {
-  if (!logos || logos.length === 0) return null;
-
-  return (
-    <div className="w-full overflow-hidden py-0 bg-transparent">
-      <div className="relative w-full overflow-hidden">
-          {/* Gradients to fade out edges */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 md:w-16 bg-gradient-to-r from-white dark:from-[#060606] to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 md:w-16 bg-gradient-to-l from-white dark:from-[#060606] to-transparent" />
-
-          {/* Marquee component */}
-          <Marquee className="[--duration:40s] [--gap:4rem] p-0">
-            {logos.map((logo, index) => {
-              const Icon = logo.icon;
-              return (
-                <div key={index} className="flex items-center gap-2.5 text-zinc-400 dark:text-zinc-500 hover:text-zinc-650 dark:hover:text-zinc-350 transition-colors">
-                  <Icon className="size-5 md:size-7" />
-                  <span className="text-sm md:text-lg font-bold tracking-tight">{logo.name}</span>
-                </div>
-              );
-            })}
-          </Marquee>
-      </div>
-    </div>
-  );
-}
 
 function FeaturesSection() {
   return (
@@ -184,31 +147,36 @@ const FEATURE_ITEMS: FeatureItem[] = [
   {
     id: 'humanLike',
     tabLabel: 'Natural Interaction',
-    description: 'Warm, natural replies that match your brand tone perfectly.',
+    description:
+      'AI that reacts in real time—customers see typing indicators and messages that feel natural, not scripted.',
     image: FEATURE_SHOWCASE_IMAGES.naturalInteraction,
   },
   {
     id: 'calendar',
     tabLabel: 'Auto Booking',
-    description: 'Share availability and let customers book meetings instantly in-chat.',
+    description:
+      'End-to-end booking in chat—check the calendar, confirm the slot, and collect the details you need.',
     image: FEATURE_SHOWCASE_IMAGES.autoBooking,
   },
   {
     id: 'assignment',
     tabLabel: 'Auto Lead Assign',
-    description: 'Route leads instantly based on territory, workload, or skills.',
+    description:
+      'Assign leads automatically using round robin or load balancing across your team.',
     image: FEATURE_SHOWCASE_IMAGES.autoLeadAssign,
   },
   {
     id: 'scoring',
     tabLabel: 'Auto Lead Analysis',
-    description: 'Real-time analysis to score customer intent, budget, and urgency.',
+    description:
+      'Analyze customer quality from the conversation—intent, fit, and readiness in real time.',
     image: FEATURE_SHOWCASE_IMAGES.autoLeadAnalysis,
   },
   {
     id: 'outreach',
     tabLabel: 'Broadcast',
-    description: 'Send broadcast campaigns and schedule proactive follow-up messages.',
+    description:
+      'Send broadcast campaigns and schedule messages to reach customers at the right time.',
     image: FEATURE_SHOWCASE_IMAGES.broadcast,
   },
   {
@@ -223,6 +191,13 @@ const FEATURE_ITEMS: FeatureItem[] = [
     description: 'Control team access with custom roles and channel permissions.',
     image: FEATURE_SHOWCASE_IMAGES.roleBasedInteraction,
   },
+  {
+    id: 'advancedAnalytics',
+    tabLabel: 'Advanced Analytics',
+    description:
+      'Understand customer sentiment and discover the most common topics across your conversations.',
+    image: FEATURE_SHOWCASE_IMAGES.advancedAnalytics,
+  },
 ];
 
 const FEATURE_COLORS: Record<string, string> = {
@@ -232,6 +207,7 @@ const FEATURE_COLORS: Record<string, string> = {
   escalation: 'bg-amber-500 dark:bg-amber-400',
   scoring: 'bg-orange-500 dark:bg-orange-400',
   access: 'bg-slate-500 dark:bg-slate-400',
+  advancedAnalytics: 'bg-cyan-500 dark:bg-cyan-400',
   humanLike: 'bg-emerald-500 dark:bg-emerald-400',
 };
 
@@ -373,10 +349,6 @@ function Hero({
             />
           </BlurFade>
         </div>
-
-        <div className="mt-12 w-full sm:mt-14">
-          <LogoMarquee logos={COMPANY_LOGOS} />
-        </div>
       </div>
     </section>
   );
@@ -413,23 +385,20 @@ function ComparisonSection() {
   const kilobotItems = [
     {
       title: 'Go Live Within 5 Minutes',
-      description: 'Set up on your own in minutes—no sales calls or implementation team.',
+      description: 'Go live in minutes on your own—with support if you need it.',
     },
     {
       title: 'Natural, Human-Like Replies',
-      description: 'Scene-reactive typing and context-aware replies—conversations that feel real.',
+      description:
+        'AI that sees incoming messages, shows typing indicators, and reacts naturally in real time.',
     },
     {
-      title: 'AI That Actually Thinks',
-      description: 'AI that understands context—not rigid decision trees.',
+      title: 'Context-Aware AI',
+      description: 'AI powered entirely by a large language model—not rigid decision trees or scripts.',
     },
     {
       title: 'Transparent Agent Setup',
       description: "See and configure your agent's prompts, knowledge, and behavior.",
-    },
-    {
-      title: 'Customize Every Feature Yourself',
-      description: 'Tweak everything on the platform on your own—no going through their team.',
     },
     {
       title: 'Role-Based Access Control Built-In',
@@ -440,23 +409,19 @@ function ComparisonSection() {
   const alternativesItems = [
     {
       title: 'Slow to Set Up',
-      description: "You often need to hop on a call before you're live.",
+        description: "You often need to go through a sales rep and hop on a call before you're live.",
     },
     {
       title: 'Fixed Template Replies',
       description: 'Canned answers to preset questions—no natural back-and-forth.',
     },
     {
-      title: 'Rule-Based Instead of AI-Powered',
+      title: 'Rule-Based Conversations',
       description: 'Decision trees and scripts—not AI that understands context.',
     },
     {
       title: 'Black Box AI',
       description: "You can't see or configure how your AI agent thinks and responds.",
-    },
-    {
-      title: 'Limited Customization',
-      description: "You need their team to change or set up features—you can't do it yourself.",
     },
     {
       title: 'No Built-In Access Control',
