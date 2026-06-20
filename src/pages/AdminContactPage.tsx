@@ -42,7 +42,7 @@ type AdminSession = {
 const intentLabels: Record<ContactIntent, string> = {
   enterprise: 'Enterprise plan',
   support: 'Support',
-  demo: 'Schedule a demo',
+  demo: 'Book a demo',
 };
 
 const statusLabels: Record<ContactStatus, string> = {
@@ -64,7 +64,7 @@ const intentFilterLabels: Record<IntentFilter, string> = {
   all: 'All intents',
   enterprise: 'Enterprise plan',
   support: 'Support',
-  demo: 'Schedule a demo',
+  demo: 'Book a demo',
 };
 
 const fieldClass =

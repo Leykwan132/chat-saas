@@ -4,25 +4,25 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import {
-  CHANNELS_HOVER_DESCRIPTION,
-  CHANNELS_HOVER_TITLE,
-  isChannelLimitLabel,
-  isChannelsComparisonLabel,
-  SUPPORTED_CHANNEL_DISPLAY_NAMES,
+  getWhatsAppPlanFeatureHover,
+  isWhatsAppPlanFeatureLabel,
+  WHATSAPP_ONLY_CHANNEL_DISPLAY_NAMES,
 } from '../../../shared/planCatalog';
 import { PricingSupportedPlatformSection } from './PricingSupportedPlatformSection';
 import { pricingFeatureHoverTriggerClass } from './pricingStyles';
 
-type PlanChannelsHoverHintProps = {
+type PlanWhatsAppFeatureHoverHintProps = {
   label: string;
   className?: string;
 };
 
-export function PlanChannelsHoverHint({
+export function PlanWhatsAppFeatureHoverHint({
   label,
   className,
-}: PlanChannelsHoverHintProps) {
-  if (!isChannelLimitLabel(label) && !isChannelsComparisonLabel(label)) {
+}: PlanWhatsAppFeatureHoverHintProps) {
+  const hover = getWhatsAppPlanFeatureHover(label);
+
+  if (!hover || !isWhatsAppPlanFeatureLabel(label)) {
     return <span className={className}>{label}</span>;
   }
 
@@ -37,11 +37,11 @@ export function PlanChannelsHoverHint({
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-64">
-        <p className="font-medium text-foreground">{CHANNELS_HOVER_TITLE}</p>
+        <p className="font-medium text-foreground">{hover.title}</p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {CHANNELS_HOVER_DESCRIPTION}
+          {hover.description}
         </p>
-        <PricingSupportedPlatformSection platforms={SUPPORTED_CHANNEL_DISPLAY_NAMES} />
+        <PricingSupportedPlatformSection platforms={WHATSAPP_ONLY_CHANNEL_DISPLAY_NAMES} />
       </HoverCardContent>
     </HoverCard>
   );

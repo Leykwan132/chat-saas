@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   HoverCard,
   HoverCardContent,
@@ -9,7 +8,7 @@ import {
   isPlanModelAccessLabel,
   type PlanKey,
 } from '../../../shared/planCatalog';
-import { pricingSquareBulletClass } from './pricingStyles';
+import { pricingFeatureHoverTriggerClass, pricingSquareBulletClass } from './pricingStyles';
 
 type PlanModelsHoverHintProps = {
   planId: PlanKey;
@@ -33,10 +32,7 @@ export function PlanModelsHoverHint({
       <HoverCardTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'cursor-help text-left underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80',
-            className,
-          )}
+          className={pricingFeatureHoverTriggerClass(className)}
         >
           {label}
         </button>

@@ -325,12 +325,12 @@ function Hero({
             Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
-            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Get started for free" />
+            <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
             <Link
               to="/contact?intent=demo"
               className="inline-flex h-11 w-full items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
             >
-              Schedule a demo
+              Book a demo
             </Link>
           </div>
         </div>
@@ -570,14 +570,14 @@ function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
               onClick={onSignUp}
               className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white hover:bg-white/90 text-zinc-950 px-6 text-sm font-semibold transition-colors cursor-pointer shadow-sm sm:w-auto"
             >
-              Get started for free
+              Start for free
             </button>
 
             <Link
               to="/contact?intent=demo"
               className="inline-flex h-11 w-full items-center justify-center rounded-full border border-white/20 bg-transparent px-6 text-sm font-semibold text-white transition-all hover:bg-white/5 sm:w-auto"
             >
-              Schedule a demo
+              Book a demo
             </Link>
           </div>
         </div>

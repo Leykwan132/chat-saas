@@ -1,5 +1,7 @@
 import { cn } from '@/lib/utils';
 
+export type PlanPickerDensity = 'default' | 'compact';
+
 /** Shared shell for pricing cards, add-ons, and comparison tables. */
 export const pricingTableShellClass =
   'overflow-hidden rounded-xl border border-border/70 bg-card shadow-none';
@@ -18,13 +20,17 @@ export function pricingColumnDividerClass(isEnterprise?: boolean) {
   );
 }
 
-export function pricingFeatureTextClass(isEnterprise?: boolean) {
-  return cn('text-base leading-snug', isEnterprise ? 'text-zinc-200' : 'text-foreground');
+export function pricingFeatureTextClass(isEnterprise?: boolean, isCompact?: boolean) {
+  return cn(
+    isCompact ? 'text-sm leading-snug' : 'text-base leading-snug',
+    isEnterprise ? 'text-zinc-200' : 'text-foreground',
+  );
 }
 
-export function pricingDottedUnderlineClass(isEnterprise?: boolean) {
+export function pricingDottedUnderlineClass(isEnterprise?: boolean, isCompact?: boolean) {
   return cn(
-    'mt-1.5 block w-full border-b border-dotted',
+    'block w-full border-b border-dotted',
+    isCompact ? 'mt-1' : 'mt-1.5',
     isEnterprise ? 'border-white/20' : 'border-border/80',
   );
 }
@@ -36,6 +42,13 @@ export function pricingSectionBorderClass(isEnterprise?: boolean) {
 export const pricingSquareBulletClass =
   'mt-1.5 size-1.5 shrink-0 rounded-[1px] bg-muted-foreground/35';
 
+export function pricingFeatureHoverTriggerClass(className?: string) {
+  return cn(
+    'cursor-default text-left underline decoration-dotted underline-offset-4 transition-opacity hover:opacity-80',
+    className,
+  );
+}
+
 export function pricingViewAllLinkClass(isEnterprise?: boolean) {
   return cn(
     'text-sm font-medium underline underline-offset-4 transition-colors',
@@ -45,11 +58,18 @@ export function pricingViewAllLinkClass(isEnterprise?: boolean) {
   );
 }
 
-export function pricingFeatureGroupTitleClass(isEnterprise?: boolean) {
+export function pricingFeatureGroupTitleClass(isEnterprise?: boolean, isCompact?: boolean) {
   return cn(
-    'text-sm font-medium',
+    isCompact ? 'text-xs leading-none' : 'text-sm',
+    'font-medium',
     isEnterprise ? 'text-zinc-400' : 'text-muted-foreground',
   );
 }
 
-export const pricingFeatureRowClass = 'py-2.5';
+export function pricingFeatureRowClass(isCompact?: boolean) {
+  return isCompact ? 'h-6 py-0' : 'py-2.5';
+}
+
+export function pricingFeatureGroupSpacerClass(isCompact?: boolean) {
+  return isCompact ? 'h-6' : undefined;
+}

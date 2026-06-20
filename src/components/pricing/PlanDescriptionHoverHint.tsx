@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   HoverCard,
   HoverCardContent,
@@ -8,6 +7,7 @@ import {
   getPlanFeatureDescriptionHover,
   isPlanFeatureDescriptionHoverLabel,
 } from '../../../shared/planCatalog';
+import { pricingFeatureHoverTriggerClass } from './pricingStyles';
 
 type PlanDescriptionHoverHintProps = {
   label: string;
@@ -29,10 +29,7 @@ export function PlanDescriptionHoverHint({
       <HoverCardTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'cursor-help text-left underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80',
-            className,
-          )}
+          className={pricingFeatureHoverTriggerClass(className)}
         >
           {label}
         </button>

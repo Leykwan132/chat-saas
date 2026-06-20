@@ -53,6 +53,6 @@ export function formatContactIntent(intent: ContactIntent): string {
     case "support":
       return "Support";
     case "demo":
-      return "Schedule a demo";
+      return "Book a demo";
   }
 }

@@ -10,6 +10,7 @@ import {
   type PlanKey,
 } from '../../shared/planCatalog';
 import {
+  EnterprisePlanAction,
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
@@ -71,7 +72,7 @@ export default function PricingPage() {
       <SiteHeader />
 
       <main className="flex flex-1 flex-col items-center px-5 py-32 sm:px-6 sm:py-40">
-        <div className="flex w-full max-w-[90rem] flex-col gap-28 sm:gap-32">
+        <div className="flex w-full max-w-[96rem] flex-col gap-28 sm:gap-32">
           <div className="flex flex-col gap-10">
             <h1 className="text-center text-4xl font-semibold tracking-tight sm:text-5xl font-title">
               Choose your plan
@@ -79,12 +80,15 @@ export default function PricingPage() {
 
             <SubscriptionPlanPicker
               variant="pricing"
+              enterpriseLayout="column"
               includeEnterprise
               billingInterval={billingInterval}
               onBillingIntervalChange={setBillingInterval}
               disabled={submitting}
               renderPlanAction={(p) => {
-                if (p.isEnterprise) return null;
+                if (p.isEnterprise) {
+                  return <EnterprisePlanAction label="Contact our sales" />;
+                }
 
                 return (
                   <SubscriptionPlanActionButton

@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   HoverCard,
   HoverCardContent,
@@ -9,6 +8,7 @@ import {
   AUTO_LEAD_TAGGING_HOVER_TITLE,
   isAutoLeadTaggingLabel,
 } from '../../../shared/planCatalog';
+import { pricingFeatureHoverTriggerClass } from './pricingStyles';
 
 type PlanAutoLeadTaggingHoverHintProps = {
   label: string;
@@ -28,10 +28,7 @@ export function PlanAutoLeadTaggingHoverHint({
       <HoverCardTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'cursor-help text-left underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80',
-            className,
-          )}
+          className={pricingFeatureHoverTriggerClass(className)}
         >
           {label}
         </button>
@@ -41,6 +38,11 @@ export function PlanAutoLeadTaggingHoverHint({
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
           {AUTO_LEAD_TAGGING_HOVER_DESCRIPTION}
         </p>
+        <ul className="mt-2 list-disc list-inside text-sm text-muted-foreground space-y-1 pl-1">
+          <li>Hot</li>
+          <li>Cold</li>
+          <li>Warm</li>
+        </ul>
       </HoverCardContent>
     </HoverCard>
   );

@@ -11,11 +11,12 @@ import {
   pricingTableShellClass,
 } from './pricingStyles';
 import {
+  COMPARISON_PLAN_ORDER,
   getComparisonPlanName,
   getGroupedPlanComparisonRows,
   isKnowledgeBaseLimitLabel,
   isPlanModelAccessLabel,
-  PLAN_ORDER,
+  type ComparisonPlanKey,
   type PlanKey,
 } from '../../../shared/planCatalog';
 
@@ -30,19 +31,34 @@ function ComparisonCell({
   planId,
 }: {
   value: string | boolean;
-  planId: PlanKey;
+  planId: ComparisonPlanKey;
 }) {
   if (value === false) {
-    return <span className="text-base text-muted-foreground/45">—</span>;
+    return (
+      <span
+        className={cn(
+          'text-base',
+          planId === 'enterprise' ? 'text-zinc-500' : 'text-muted-foreground/45',
+        )}
+      >
+        —
+      </span>
+    );
   }
 
   if (value === true) {
     return (
-      <Check className="mx-auto size-4 text-foreground" aria-label="Included" />
+      <Check
+        className={cn(
+          'mx-auto size-4',
+          planId === 'enterprise' ? 'text-white' : 'text-foreground',
+        )}
+        aria-label="Included"
+      />
     );
   }
 
-  if (isPlanModelAccessLabel(value)) {
+  if (planId !== 'enterprise' && isPlanModelAccessLabel(value)) {
     return (
       <PlanModelsHoverHint
         planId={planId}
@@ -56,12 +72,24 @@ function ComparisonCell({
     return (
       <PlanKnowledgeBaseHoverHint
         label={value}
-        className="text-base text-foreground"
+        className={cn(
+          'text-base',
+          planId === 'enterprise' ? 'text-zinc-200' : 'text-foreground',
+        )}
       />
     );
   }
 
-  return <span className="text-base text-foreground">{value}</span>;
+  return (
+    <span
+      className={cn(
+        'text-base',
+        planId === 'enterprise' ? 'text-zinc-200' : 'text-foreground',
+      )}
+    >
+      {value}
+    </span>
+  );
 }
 
 function ComparisonRowLabel({ label }: { label: string }) {
@@ -83,26 +111,32 @@ export function PlanComparisonTable({
 
       <div className={pricingTableShellClass}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1120px] border-collapse table-fixed">
+          <table className="w-full min-w-[84rem] border-collapse table-fixed">
             <colgroup>
               <col className="w-[14rem]" />
-              {PLAN_ORDER.map((planId) => (
+              {COMPARISON_PLAN_ORDER.map((planId) => (
                 <col key={planId} className="w-[14rem]" />
               ))}
             </colgroup>
             <thead>
               <tr className={cn('border-b', pricingSectionBorderClass())}>
                 <th className="px-8 py-5" />
-                {PLAN_ORDER.map((planId) => (
+                {COMPARISON_PLAN_ORDER.map((planId) => (
                   <th
                     key={planId}
                     className={cn(
                       'border-l px-8 py-5 text-center align-middle',
                       pricingSectionBorderClass(),
-                      currentPlanId === planId && 'bg-muted/20',
+                      planId === 'enterprise' && 'bg-zinc-950 text-white',
+                      planId !== 'enterprise' && currentPlanId === planId && 'bg-muted/20',
                     )}
                   >
-                    <p className="text-lg font-semibold tracking-tight text-foreground">
+                    <p
+                      className={cn(
+                        'text-lg font-semibold tracking-tight',
+                        planId === 'enterprise' ? 'text-white' : 'text-foreground',
+                      )}
+                    >
                       {getComparisonPlanName(planId)}
                     </p>
                   </th>
@@ -116,7 +150,7 @@ export function PlanComparisonTable({
                   {group.title ? (
                     <tr className={cn('border-b', pricingSectionBorderClass())}>
                       <th
-                        colSpan={PLAN_ORDER.length + 1}
+                        colSpan={COMPARISON_PLAN_ORDER.length + 1}
                         scope="colgroup"
                         className="px-8 py-3 text-left"
                       >
@@ -131,23 +165,27 @@ export function PlanComparisonTable({
                     >
                       <th
                         scope="row"
-                        className="px-8 py-4 text-center align-middle text-sm font-medium text-muted-foreground"
+                        className="px-8 py-4 text-left align-middle text-sm font-medium text-muted-foreground"
                       >
                         <PricingAiFeatureLabel label={row.label}>
                           <ComparisonRowLabel label={row.label} />
                         </PricingAiFeatureLabel>
                       </th>
-                      {PLAN_ORDER.map((planId) => (
+                      {COMPARISON_PLAN_ORDER.map((planId) => (
                         <td
                           key={`${row.label}-${planId}`}
                           className={cn(
                             'border-l px-8 py-4 text-center align-middle',
                             pricingSectionBorderClass(),
-                            currentPlanId === planId && 'bg-muted/20',
+                            planId === 'enterprise' && 'bg-zinc-950 text-white',
+                            planId !== 'enterprise' && currentPlanId === planId && 'bg-muted/20',
                           )}
                         >
                           <div className="flex justify-center">
-                            <ComparisonCell value={row.values[planId]} planId={planId} />
+                            <ComparisonCell
+                              value={row.values[planId]}
+                              planId={planId}
+                            />
                           </div>
                         </td>
                       ))}

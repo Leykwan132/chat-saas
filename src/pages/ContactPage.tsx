@@ -26,7 +26,7 @@ type ContactIntent = 'enterprise' | 'support' | 'demo';
 const intentLabels: Record<ContactIntent, string> = {
   enterprise: 'Enterprise plan',
   support: 'Support',
-  demo: 'Schedule a demo',
+  demo: 'Book a demo',
 };
 
 const numberOfUsersOptions = [

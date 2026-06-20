@@ -79,7 +79,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
                     to="/contact?intent=demo"
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                   >
-                    Schedule a demo
+                    Book a demo
                   </Link>
                   <Link
                     to="/contact?intent=support"

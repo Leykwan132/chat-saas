@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   HoverCard,
   HoverCardContent,
@@ -10,7 +9,7 @@ import {
   ADVANCED_ANALYTICS_INCLUDES,
   isTopicAnalyticsLabel,
 } from '../../../shared/planCatalog';
-import { pricingSquareBulletClass } from './pricingStyles';
+import { pricingFeatureHoverTriggerClass, pricingSquareBulletClass } from './pricingStyles';
 
 type PlanAdvancedAnalyticsHoverHintProps = {
   label: string;
@@ -30,10 +29,7 @@ export function PlanAdvancedAnalyticsHoverHint({
       <HoverCardTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'cursor-help text-left underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80',
-            className,
-          )}
+          className={pricingFeatureHoverTriggerClass(className)}
         >
           {label}
         </button>

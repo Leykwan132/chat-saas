@@ -131,7 +131,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                       : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
                   )}
                 >
-                  Get started for free
+                  Start for free
                 </button>
               </>
             )}
@@ -206,7 +206,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                       onClick={onSignUp}
                       className="flex w-full py-2 text-left text-sm font-medium text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-white transition-colors cursor-pointer"
                     >
-                      Get started for free
+                      Start for free
                     </button>
                   </div>
                 )}

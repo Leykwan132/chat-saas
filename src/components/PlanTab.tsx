@@ -11,12 +11,6 @@ import {
   CardHeader,
 } from '@/components/ui/card';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -27,18 +21,11 @@ import {
   EXTRA_CREDITS_PACK_AMOUNT,
   EXTRA_CREDITS_PACK_NOTE,
   formatExtraCreditsPackPrice,
-  getPlanChangeActionLabel,
-  type BillingInterval,
-  type PlanKey,
 } from '../../shared/planCatalog';
-import {
-  EnterprisePlanAction,
-  SubscriptionPlanActionButton,
-  SubscriptionPlanPicker,
-} from '@/components/SubscriptionPlanPicker';
+import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Coins, ExternalLink, AlertCircle } from 'lucide-react';
+import { Coins, AlertCircle, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function PlanTab() {
@@ -54,10 +41,8 @@ export function PlanTab() {
   const createPortal = useAction(api.stripe.createPortal);
 
   const [plansDialogOpen, setPlansDialogOpen] = useState(false);
-  const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
-  const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCreditsLoading, setIsCreditsLoading] = useState(false);
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     if (window.location.hash !== '#plan-add-ons') {
@@ -104,14 +89,12 @@ export function PlanTab() {
     const isCredits = mode === 'payment';
     if (isCredits) {
       setIsCreditsLoading(true);
-    } else {
-      setLoadingPlanKey(planKey);
     }
 
     try {
       const session = await createCheckout({
         plan: isCredits ? undefined : (planKey ?? undefined),
-        interval: isCredits ? undefined : billingInterval,
+        interval: isCredits ? undefined : 'monthly',
         mode,
         cancelPath: planReturnPath,
       });
@@ -126,8 +109,6 @@ export function PlanTab() {
     } finally {
       if (isCredits) {
         setIsCreditsLoading(false);
-      } else {
-        setLoadingPlanKey(null);
       }
     }
   };
@@ -138,14 +119,15 @@ export function PlanTab() {
       const session = await createPortal({
         returnPath: planReturnPath,
       });
-      if (session && session.url) {
+      if (session?.url) {
         window.location.href = session.url;
       } else {
         toast.error('Could not load billing portal.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Portal error:', error);
-      toast.error(error.message || 'Failed to open customer portal.');
+      const message = error instanceof Error ? error.message : 'Failed to open customer portal.';
+      toast.error(message);
     } finally {
       setIsPortalLoading(false);
     }
@@ -178,14 +160,32 @@ export function PlanTab() {
           )}
         </p>
 
-        <Button
-          type="button"
-          size="sm"
-          className="mt-5"
-          onClick={() => setPlansDialogOpen(true)}
-        >
-          Adjust plan
-        </Button>
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setPlansDialogOpen(true)}
+          >
+            Adjust plan
+          </Button>
+          {plan !== 'free' ? (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              className="h-auto gap-1.5 px-0 text-muted-foreground"
+              onClick={() => void handlePortal()}
+              disabled={isPortalLoading}
+            >
+              {isPortalLoading ? (
+                <Spinner className="size-3.5" />
+              ) : (
+                <ExternalLink className="size-3.5" />
+              )}
+              Billing portal
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {/* Add-ons */}
@@ -225,95 +225,11 @@ export function PlanTab() {
         </div>
       </div>
 
-      {/* Subscription plans dialog */}
-      <Dialog open={plansDialogOpen} onOpenChange={setPlansDialogOpen}>
-        <DialogContent
-          showCloseButton={false}
-          className="flex max-h-[min(90vh,920px)] w-[calc(100%-2rem)] flex-col gap-5 overflow-hidden px-6 py-8 sm:max-w-[90rem] sm:px-10 sm:py-10"
-        >
-          <DialogHeader className="shrink-0 items-center text-center">
-            <DialogTitle className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Choose your plan
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1 pb-2 sm:px-2">
-            <SubscriptionPlanPicker
-              includeEnterprise
-              billingInterval={billingInterval}
-              onBillingIntervalChange={setBillingInterval}
-              currentPlanId={plan as PlanKey}
-              disabled={loadingPlanKey !== null || isPortalLoading}
-              renderPlanAction={(planCard) => {
-                if (planCard.isEnterprise) {
-                  return <EnterprisePlanAction label={planCard.actionLabel} />;
-                }
-
-                const isCurrent = plan === planCard.id;
-                const isFreeDowngrade = planCard.id === 'free';
-                const isLoading = isFreeDowngrade
-                  ? isPortalLoading
-                  : loadingPlanKey === planCard.id;
-                const label = isLoading
-                  ? 'Loading…'
-                  : getPlanChangeActionLabel(
-                      plan as PlanKey,
-                      planCard.id,
-                      planCard.actionLabel,
-                    );
-
-                if (isCurrent) {
-                  return (
-                    <SubscriptionPlanActionButton
-                      planId={planCard.id}
-                      emphasizeRecommended={false}
-                      isCurrentPlan
-                      label="Current plan"
-                      disabled
-                      onClick={() => undefined}
-                    />
-                  );
-                }
-
-                return (
-                  <SubscriptionPlanActionButton
-                    planId={planCard.id}
-                    emphasizeRecommended={false}
-                    label={label}
-                    disabled={loadingPlanKey !== null || isPortalLoading}
-                    loading={isLoading}
-                    onClick={() =>
-                      isFreeDowngrade
-                        ? void handlePortal()
-                        : void handleCheckout(planCard.id, 'subscription')
-                    }
-                  />
-                );
-              }}
-            />
-          </div>
-
-          {plan !== 'free' && (
-            <div className="flex shrink-0 justify-end border-t border-border/60 px-1 pt-6 sm:px-2">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="gap-1.5 text-muted-foreground"
-                onClick={() => void handlePortal()}
-                disabled={isPortalLoading}
-              >
-                {isPortalLoading ? (
-                  <Spinner className="size-3.5" />
-                ) : (
-                  <ExternalLink className="size-3.5" />
-                )}
-                Manage billing portal
-              </Button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AdjustPlanDialog
+        open={plansDialogOpen}
+        onOpenChange={setPlansDialogOpen}
+        planReturnPath={planReturnPath}
+      />
     </div>
   );
 }

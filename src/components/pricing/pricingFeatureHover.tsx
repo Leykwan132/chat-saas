@@ -1,3 +1,4 @@
+import { PlanWhatsAppFeatureHoverHint } from './PlanWhatsAppFeatureHoverHint';
 import { PlanAdvancedAnalyticsHoverHint } from './PlanAdvancedAnalyticsHoverHint';
 import { PlanAutoLeadTaggingHoverHint } from './PlanAutoLeadTaggingHoverHint';
 import { PlanChannelsHoverHint } from './PlanChannelsHoverHint';
@@ -12,6 +13,7 @@ import {
   isPlanFeatureDescriptionHoverLabel,
   isPlanModelAccessLabel,
   isTopicAnalyticsLabel,
+  isWhatsAppPlanFeatureLabel,
   type PlanKey,
 } from '../../../shared/planCatalog';
 import { pricingFeatureTextClass } from './pricingStyles';
@@ -20,8 +22,9 @@ export function renderPricingFeatureLabel(
   text: string,
   planId: PlanKey | undefined,
   isEnterprise: boolean,
+  isCompact = false,
 ) {
-  const className = pricingFeatureTextClass(isEnterprise);
+  const className = pricingFeatureTextClass(isEnterprise, isCompact);
 
   if (planId && isPlanModelAccessLabel(text)) {
     return <PlanModelsHoverHint planId={planId} label={text} className={className} />;
@@ -41,6 +44,10 @@ export function renderPricingFeatureLabel(
 
   if (isChannelLimitLabel(text) || isChannelsComparisonLabel(text)) {
     return <PlanChannelsHoverHint label={text} className={className} />;
+  }
+
+  if (isWhatsAppPlanFeatureLabel(text)) {
+    return <PlanWhatsAppFeatureHoverHint label={text} className={className} />;
   }
 
   if (isTopicAnalyticsLabel(text)) {
@@ -63,6 +70,10 @@ export function renderPricingComparisonRowLabel(label: string) {
 
   if (isChannelsComparisonLabel(label)) {
     return <PlanChannelsHoverHint label={label} className={className} />;
+  }
+
+  if (isWhatsAppPlanFeatureLabel(label)) {
+    return <PlanWhatsAppFeatureHoverHint label={label} className={className} />;
   }
 
   if (isTopicAnalyticsLabel(label)) {

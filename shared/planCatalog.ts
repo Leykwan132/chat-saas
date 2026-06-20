@@ -67,6 +67,18 @@ const MB = 1024 * KB;
 export const BASIC_LIMITED_MODELS_LABEL = "Basic models";
 export const ADVANCED_MODELS_LABEL = "Advanced models";
 
+/** Models included on Starter, Growth, and Business plans. */
+export const ADVANCED_PLAN_MODELS = [
+  "deepseek/deepseek-v4-flash",
+  "google/gemma-4-31b-it:free",
+  "meta-llama/llama-3.3-70b-instruct:free",
+  "qwen/qwen3-next-80b-a3b-instruct:free",
+  "nvidia/nemotron-3-super-120b-a12b:free",
+  "minimax/minimax-m2.5",
+  "z-ai/glm-4.5-air",
+  "openai/gpt-oss-120b:free",
+] as const;
+
 /** Human-readable labels for models referenced in plan catalogs. */
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
@@ -81,9 +93,17 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
 };
 
 export function getPlanModelDisplayNames(planId: PlanKey): string[] {
-  return PLAN_CATALOG[planId].models.map(
-    (modelId) => MODEL_DISPLAY_NAMES[modelId] ?? modelId,
-  );
+  const seen = new Set<string>();
+  const names: string[] = [];
+
+  for (const modelId of PLAN_CATALOG[planId].models) {
+    const name = MODEL_DISPLAY_NAMES[modelId] ?? modelId;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
 }
 
 export function isBasicLimitedModelsLabel(label: string): boolean {
@@ -140,7 +160,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     priceAnnualRm: 1490,
     period: "mo",
     monthlyCredits: 1000,
-    maxMembers: 10,
+    maxMembers: 5,
     maxAgents: 3,
     maxChannels: 2,
     knowledgeBaseBytesPerAgent: 5 * MB,
@@ -150,16 +170,10 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "1,000 credits / mo",
       ADVANCED_MODELS_LABEL,
       "Team analytics",
-      "10 team members",
+      "5 team members",
     ],
     actionLabel: "Get Starter",
-    models: [
-      "deepseek/deepseek-v4-flash",
-      "google/gemma-4-31b-it:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "qwen/qwen3-next-80b-a3b-instruct:free",
-      "openai/gpt-oss-120b:free",
-    ],
+    models: [...ADVANCED_PLAN_MODELS],
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       broadcasting: true,
@@ -182,7 +196,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     priceAnnualRm: 3990,
     period: "mo",
     monthlyCredits: 5000,
-    maxMembers: 20,
+    maxMembers: 10,
     maxAgents: 10,
     maxChannels: 5,
     knowledgeBaseBytesPerAgent: 20 * MB,
@@ -192,20 +206,11 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "5,000 credits / mo",
       "Auto booking",
       "Advanced Analytics",
-      "20 team members",
+      "10 team members",
     ],
     actionLabel: "Get Growth",
     popular: true,
-    models: [
-      "deepseek/deepseek-v4-flash",
-      "google/gemma-4-31b-it:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "qwen/qwen3-next-80b-a3b-instruct:free",
-      "nvidia/nemotron-3-super-120b-a12b:free",
-      "minimax/minimax-m2.5",
-      "z-ai/glm-4.5-air",
-      "openai/gpt-oss-120b:free",
-    ],
+    models: [...ADVANCED_PLAN_MODELS],
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       broadcasting: true,
@@ -228,7 +233,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     priceAnnualRm: 8990,
     period: "mo",
     monthlyCredits: 15000,
-    maxMembers: 50,
+    maxMembers: 25,
     maxAgents: 25,
     maxChannels: 15,
     knowledgeBaseBytesPerAgent: 40 * MB,
@@ -237,20 +242,10 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "25 AI Agents",
       "15,000 credits / mo",
       "15 channels",
-      "50 team members",
+      "25 team members",
     ],
     actionLabel: "Get Business",
-    models: [
-      "deepseek/deepseek-v4-flash",
-      "google/gemma-4-31b-it:free",
-      "meta-llama/llama-3.3-70b-instruct:free",
-      "qwen/qwen3-next-80b-a3b-instruct:free",
-      "nvidia/nemotron-3-super-120b-a12b:free",
-      "minimax/minimax-m2.5",
-      "z-ai/glm-4.5-air",
-      "openai/gpt-oss-120b",
-      "openai/gpt-oss-120b:free",
-    ],
+    models: [...ADVANCED_PLAN_MODELS],
     platforms: ["whatsapp", "instagram", "messenger"],
     features: {
       broadcasting: true,
@@ -421,7 +416,7 @@ export function isAiTaggedPlanFeature(label: string): boolean {
 
 export const AUTO_LEAD_TAGGING_HOVER_TITLE = "Auto lead tagging";
 export const AUTO_LEAD_TAGGING_HOVER_DESCRIPTION =
-  "AI analyzes conversations and automatically tags your leads — helping you grade interest and spot which leads are worth following up on first.";
+  "Our AI will help to categorize into the following category:";
 
 export const KNOWLEDGE_BASE_HOVER_TITLE = "Knowledge base";
 export const KNOWLEDGE_BASE_HOVER_DESCRIPTION =
@@ -437,11 +432,13 @@ export const AUTO_BOOKING_HOVER_DESCRIPTION =
 
 export const CHAT_SUMMARY_HOVER_TITLE = "Chat summary";
 export const CHAT_SUMMARY_HOVER_DESCRIPTION =
-  "AI generates a concise summary of each conversation so your team can catch up quickly without reading every message.";
+  "One button generation for your chat summary.";
 
 export const CHANNELS_HOVER_TITLE = "Supported channels";
 export const CHANNELS_HOVER_DESCRIPTION =
-  "Each connected channel counts toward your plan limit. You can connect:";
+  "Each connected channel counts toward your plan limit.";
+
+export const SUPPORTED_PLATFORM_HOVER_LABEL = "Supported Platform:";
 
 export const ADVANCED_ANALYTICS_HOVER_TITLE = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
@@ -507,8 +504,44 @@ export function getPlanFeatureDescriptionHover(label: string): {
   return null;
 }
 
-export const FOLLOW_UPS_LABEL = "Follow-ups (WhatsApp only)";
-export const BROADCASTING_LABEL = "Broadcasting (WhatsApp only)";
+export const FOLLOW_UPS_LABEL = "Follow-ups";
+export const BROADCASTING_LABEL = "Broadcasting";
+
+export const WHATSAPP_ONLY_CHANNEL_DISPLAY_NAMES = ["WhatsApp"] as const;
+
+export const WHATSAPP_FEATURE_BILLING_HOVER_DESCRIPTION =
+  "Message billing is handled by Meta — our platform does not charge on top.";
+
+export const BROADCASTING_HOVER_TITLE = "Broadcasting";
+export const BROADCASTING_HOVER_DESCRIPTION = WHATSAPP_FEATURE_BILLING_HOVER_DESCRIPTION;
+
+export const FOLLOW_UPS_HOVER_TITLE = "Follow-ups";
+export const FOLLOW_UPS_HOVER_DESCRIPTION = WHATSAPP_FEATURE_BILLING_HOVER_DESCRIPTION;
+
+export function isBroadcastingLabel(label: string): boolean {
+  return label === BROADCASTING_LABEL;
+}
+
+export function isFollowUpsLabel(label: string): boolean {
+  return label === FOLLOW_UPS_LABEL;
+}
+
+export function isWhatsAppPlanFeatureLabel(label: string): boolean {
+  return isBroadcastingLabel(label) || isFollowUpsLabel(label);
+}
+
+export function getWhatsAppPlanFeatureHover(label: string): {
+  title: string;
+  description: string;
+} | null {
+  if (isBroadcastingLabel(label)) {
+    return { title: BROADCASTING_HOVER_TITLE, description: BROADCASTING_HOVER_DESCRIPTION };
+  }
+  if (isFollowUpsLabel(label)) {
+    return { title: FOLLOW_UPS_HOVER_TITLE, description: FOLLOW_UPS_HOVER_DESCRIPTION };
+  }
+  return null;
+}
 
 /** Full feature bullets shown inside pricing cards — fixed row order for side-by-side comparison. */
 export type PlanCardFeatureRow = {
@@ -779,6 +812,46 @@ export function getGroupedPlanFeatureRows(planId: ComparisonPlanKey): PlanFeatur
   }));
 }
 
+const ENTERPRISE_COLUMN_LIMIT_LABELS = new Set([
+  CHANNELS_COMPARISON_LABEL,
+  "AI agents",
+  CREDITS_COMPARISON_LABEL,
+  "Knowledge base",
+  "AI models",
+  "Team members",
+]);
+
+function getEnterpriseColumnLimitRowText(comparisonLabel: string): string {
+  switch (comparisonLabel) {
+    case CHANNELS_COMPARISON_LABEL:
+      return formatChannelLimit("unlimited");
+    case "AI agents":
+      return formatAgentLimit("unlimited");
+    case CREDITS_COMPARISON_LABEL:
+      return "Unlimited credits / mo";
+    case "Knowledge base":
+      return "Unlimited per agent";
+    case "AI models":
+      return "Unlimited AI models";
+    case "Team members":
+      return "Unlimited";
+    default:
+      return "Unlimited";
+  }
+}
+
+/** Enterprise plan-picker column: limits show what is unlimited; product features keep their labels. */
+export function getEnterpriseColumnFeatureGroups(): PlanFeatureGroup[] {
+  return PLAN_FEATURE_GROUP_ORDER.map((groupKey) => ({
+    title: PLAN_FEATURE_GROUP_LABELS[groupKey],
+    rows: PLAN_FEATURE_ROW_SPECS.filter((spec) => spec.group === groupKey).map((spec) =>
+      ENTERPRISE_COLUMN_LIMIT_LABELS.has(spec.comparisonLabel)
+        ? { text: getEnterpriseColumnLimitRowText(spec.comparisonLabel), included: true }
+        : spec.getEnterpriseCardRow(),
+    ),
+  }));
+}
+
 /** @deprecated Use getAlignedPlanFeatureRows */
 export function getPlanCardFeatures(planId: ComparisonPlanKey): string[] {
   return getAlignedPlanFeatureRows(planId)
@@ -788,7 +861,7 @@ export function getPlanCardFeatures(planId: ComparisonPlanKey): string[] {
 
 export type PlanComparisonRow = {
   label: string;
-  values: Record<PlanKey, string | boolean>;
+  values: Record<ComparisonPlanKey, string | boolean>;
 };
 
 export type PlanComparisonGroup = {
@@ -796,12 +869,35 @@ export type PlanComparisonGroup = {
   rows: PlanComparisonRow[];
 };
 
+function getEnterpriseComparisonValue(spec: PlanFeatureRowSpec): string | boolean {
+  if (ENTERPRISE_COLUMN_LIMIT_LABELS.has(spec.comparisonLabel)) {
+    return getEnterpriseColumnLimitRowText(spec.comparisonLabel);
+  }
+
+  const enterpriseRow = spec.getEnterpriseCardRow();
+  if (!enterpriseRow.included) {
+    return false;
+  }
+
+  const sampleValue = spec.getComparisonValue("business");
+  if (typeof sampleValue === "boolean") {
+    return true;
+  }
+
+  return enterpriseRow.text;
+}
+
 function buildPlanComparisonRow(spec: PlanFeatureRowSpec): PlanComparisonRow {
   return {
     label: spec.comparisonLabel,
     values: Object.fromEntries(
-      PLAN_ORDER.map((planId) => [planId, spec.getComparisonValue(planId)]),
-    ) as Record<PlanKey, string | boolean>,
+      COMPARISON_PLAN_ORDER.map((planId) => [
+        planId,
+        planId === "enterprise"
+          ? getEnterpriseComparisonValue(spec)
+          : spec.getComparisonValue(planId),
+      ]),
+    ) as Record<ComparisonPlanKey, string | boolean>,
   };
 }
 

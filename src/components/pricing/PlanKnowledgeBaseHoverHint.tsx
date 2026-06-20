@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils';
 import {
   HoverCard,
   HoverCardContent,
@@ -9,6 +8,7 @@ import {
   KNOWLEDGE_BASE_HOVER_TITLE,
   isKnowledgeBaseLimitLabel,
 } from '../../../shared/planCatalog';
+import { pricingFeatureHoverTriggerClass } from './pricingStyles';
 
 type PlanKnowledgeBaseHoverHintProps = {
   label: string;
@@ -28,10 +28,7 @@ export function PlanKnowledgeBaseHoverHint({
       <HoverCardTrigger asChild>
         <button
           type="button"
-          className={cn(
-            'cursor-help text-left underline decoration-dotted underline-offset-4 transition-colors hover:text-foreground/80',
-            className,
-          )}
+          className={pricingFeatureHoverTriggerClass(className)}
         >
           {label}
         </button>

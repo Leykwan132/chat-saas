@@ -1,12 +1,14 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Plus } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router';
+import { useState } from 'react';
+import { CircleArrowUp, Plus } from 'lucide-react';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { cn } from '@/lib/utils';
 
 function topUpProgressValue(remaining: number, granted: number) {
@@ -35,6 +37,9 @@ function useAnalyticsUsagePath() {
 
 export function CreditMeter() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
+  const planReturnPath = `${location.pathname}${location.search}`;
   const analyticsUsagePath = useAnalyticsUsagePath();
   const planTopUpPath = useSettingsPath('plan', '#plan-add-ons');
   const { isLoading: isAuthLoading } = useAuth();
@@ -54,6 +59,14 @@ export function CreditMeter() {
       : 0;
   const topUpPct = topUpProgressValue(purchasedCredits, purchasedCreditsGranted);
   const hasTopUps = purchasedCredits > 0;
+  const showUpgradePlan =
+    !isLoading &&
+    planAndUsage?.canManageBilling &&
+    planAndUsage.plan !== 'business';
+
+  const goToUpgradePlan = () => {
+    setAdjustPlanOpen(true);
+  };
 
   const goToTopUp = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -65,7 +78,19 @@ export function CreditMeter() {
   };
 
   return (
-    <div className="group-data-[collapsible=icon]:hidden px-[0.675rem] py-[0.45rem]">
+    <div className="group-data-[collapsible=icon]:hidden px-[0.675rem] py-[0.45rem] space-y-[0.5625rem]">
+      {showUpgradePlan ? (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={goToUpgradePlan}
+            className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-transparent px-2 py-0.5 text-[10px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <CircleArrowUp className="size-2.5" />
+            Upgrade plan
+          </button>
+        </div>
+      ) : null}
       <div
         role="button"
         tabIndex={0}
@@ -80,7 +105,7 @@ export function CreditMeter() {
       >
         <div className="space-y-[0.45rem]">
           <div className="flex items-center justify-between">
-            {!isLoading && planAndUsage?.isTeam ? (
+            {!isLoading && planAndUsage?.plan ? (
               <Badge
                 variant="secondary"
                 className="h-[0.9rem] rounded px-[0.225rem] text-[8.1px] font-semibold uppercase bg-primary/10 text-primary border-none select-none tracking-wider"
@@ -91,7 +116,7 @@ export function CreditMeter() {
             <span
               className={cn(
                 'text-[0.675rem] font-semibold tabular-nums',
-                (!isLoading && !planAndUsage?.isTeam) || isLoading ? 'ml-auto' : null,
+                (!isLoading && !planAndUsage?.plan) || isLoading ? 'ml-auto' : null,
                 !isLoading && monthlyPct <= 10 && 'text-red-500',
                 !isLoading && monthlyPct > 10 && monthlyPct <= 30 && 'text-amber-500',
                 (isLoading || monthlyPct > 30) && 'text-muted-foreground',
@@ -141,6 +166,12 @@ export function CreditMeter() {
           </Button>
         ) : null}
       </div>
+
+      <AdjustPlanDialog
+        open={adjustPlanOpen}
+        onOpenChange={setAdjustPlanOpen}
+        planReturnPath={planReturnPath}
+      />
     </div>
   );
 }
