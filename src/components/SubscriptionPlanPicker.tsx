@@ -25,9 +25,9 @@ import { PricingFeatureList } from '@/components/pricing/PricingFeatureList';
 import { pricingSectionBorderClass, type PlanPickerDensity } from '@/components/pricing/pricingStyles';
 
 const planPriceClassDefault =
-  'font-sans text-4xl font-semibold tracking-tight text-foreground';
+  'font-sans text-4xl font-normal tracking-tight text-foreground';
 const planPriceClassCompact =
-  'font-sans text-3xl font-semibold tracking-tight text-foreground';
+  'font-sans text-3xl font-normal tracking-tight text-foreground';
 
 type SubscriptionPlanPickerProps = {
   billingInterval: BillingInterval;
