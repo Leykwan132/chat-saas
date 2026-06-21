@@ -66,17 +66,17 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
           ? 'border-transparent bg-transparent py-2'
           : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'
       )}>
-      <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6">
         <Link to="/" className={cn(
           'flex items-center gap-2 text-[15px] transition-colors duration-300',
           isHeaderTransparent ? 'text-white' : 'text-zinc-950 dark:text-white'
         )}>
-          <img src="/icon.svg" className={cn('size-6 transition-all duration-300', isHeaderTransparent ? 'invert' : 'dark:invert')} alt="" />
-          <span className="font-title font-semibold text-[16px] tracking-normal">Kilobot</span>
+          <img src="/icon.svg" className={cn('size-7 transition-all duration-300', isHeaderTransparent ? 'invert' : 'dark:invert')} alt="" />
+          <span className="font-title font-semibold text-[20px] tracking-normal">Kilobot</span>
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="absolute left-1/2 -translate-x-1/2 hidden items-center gap-7 text-sm md:flex">
+        <nav className="absolute left-1/2 -translate-x-1/2 hidden items-center gap-7 text-[15px] md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.to}
@@ -109,7 +109,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
               <Link
                 to={POST_LOGIN_REDIRECT}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-300 hover:opacity-90',
+                  'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-[15px] font-medium transition-all duration-300 hover:opacity-90',
                   isHeaderTransparent
                     ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
                     : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
@@ -124,7 +124,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                   type="button"
                   onClick={onSignIn}
                   className={cn(
-                    'rounded-md px-3 py-2 text-sm font-medium transition-colors duration-300 cursor-pointer',
+                    'rounded-md px-3 py-2 text-[15px] font-medium transition-colors duration-300 cursor-pointer',
                     isHeaderTransparent
                       ? 'text-zinc-300 hover:text-white'
                       : 'text-zinc-650 hover:text-zinc-900 dark:text-zinc-350 dark:hover:text-white'
@@ -136,7 +136,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
                   type="button"
                   onClick={onSignUp}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-all duration-300 cursor-pointer',
+                    'inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-[15px] font-medium transition-all duration-300 cursor-pointer',
                     isHeaderTransparent
                       ? 'bg-white text-zinc-900 hover:bg-white/90 shadow-sm'
                       : 'bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-[#050505] dark:shadow-[0_0_24px_rgba(255,255,255,0.16)]'
