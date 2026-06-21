@@ -35,6 +35,7 @@ import {
   type PlanKey,
 } from '../../shared/planCatalog';
 import {
+  EnterprisePlanAction,
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
@@ -267,21 +268,28 @@ export function OnboardingFlow() {
 
         {/* Form content */}
         <div className="flex flex-1 flex-col justify-center px-8 sm:px-14 md:px-20 py-12">
-          <div className={cn('mx-auto w-full', step === 4 ? 'max-w-6xl' : 'max-w-lg')}>
+          <div className={cn('mx-auto w-full', step === 4 ? 'max-w-[96rem]' : 'max-w-lg')}>
             {step === 4 ? (
               <motion.div {...fadeInMotion} className="flex flex-col gap-8">
                 <div className="flex flex-col gap-5">
-                  <h1 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">
+                  <h1 className="font-title text-center text-3xl font-semibold tracking-tight sm:text-4xl">
                     Choose your plan
                   </h1>
 
                   <SubscriptionPlanPicker
-                  variant="onboarding"
+                  variant="pricing"
+                  density="compact"
+                  enterpriseLayout="column"
+                  includeEnterprise
                   billingInterval={billingInterval}
                   onBillingIntervalChange={setBillingInterval}
                   disabled={submitting}
                   renderPlanAction={(p) => {
-                    if (p.isEnterprise) return null;
+                    if (p.isEnterprise) {
+                      return (
+                        <EnterprisePlanAction label="Contact our sales" />
+                      );
+                    }
 
                     return (
                     <SubscriptionPlanActionButton

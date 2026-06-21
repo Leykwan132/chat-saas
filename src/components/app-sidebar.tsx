@@ -207,9 +207,8 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         <SidebarHeader className="flex flex-row items-center justify-between px-[0.9rem] py-[0.7875rem]">
           <a href="/workspace" className="flex items-center gap-[0.675rem]">
             <img src="/icon.svg" className="size-[1.35rem] dark:invert" alt="" />
-            <div className="flex min-w-0 flex-col gap-[0.1125rem] leading-none">
+            <div className="flex min-w-0 flex-col leading-none">
               <span className="text-[14.5px] font-semibold tracking-normal font-title">Kilobot</span>
-              <span className="truncate text-[0.675rem] text-sidebar-foreground/60">{agent.name}</span>
             </div>
           </a>
           <Button

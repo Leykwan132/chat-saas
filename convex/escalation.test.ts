@@ -8,12 +8,12 @@ import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 beforeAll(() => {
-  process.env.STRIPE_PRICE_STANDARD_MONTHLY = "price_standard_monthly";
-  process.env.STRIPE_PRICE_STANDARD_ANNUAL = "price_standard_annual";
-  process.env.STRIPE_PRICE_PRO_MONTHLY = "price_pro_monthly";
-  process.env.STRIPE_PRICE_PRO_ANNUAL = "price_pro_annual";
-  process.env.STRIPE_PRICE_ULTRA_MONTHLY = "price_ultra_monthly";
-  process.env.STRIPE_PRICE_ULTRA_ANNUAL = "price_ultra_annual";
+  process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
+  process.env.STRIPE_PRICE_STARTER_ANNUAL = "price_starter_annual";
+  process.env.STRIPE_PRICE_GROWTH_MONTHLY = "price_growth_monthly";
+  process.env.STRIPE_PRICE_GROWTH_ANNUAL = "price_growth_annual";
+  process.env.STRIPE_PRICE_BUSINESS_MONTHLY = "price_business_monthly";
+  process.env.STRIPE_PRICE_BUSINESS_ANNUAL = "price_business_annual";
   process.env.STRIPE_PRICE_EXTRA_CREDITS = "price_extra_credits";
 });
 

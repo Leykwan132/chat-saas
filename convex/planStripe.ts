@@ -13,16 +13,16 @@ export const STRIPE_PRICE_IDS: Record<
   Record<BillingInterval, string>
 > = {
   starter: {
-    monthly: requireEnvVar("STRIPE_PRICE_STANDARD_MONTHLY"),
-    annual: requireEnvVar("STRIPE_PRICE_STANDARD_ANNUAL"),
+    monthly: requireEnvVar("STRIPE_PRICE_STARTER_MONTHLY"),
+    annual: requireEnvVar("STRIPE_PRICE_STARTER_ANNUAL"),
   },
   growth: {
-    monthly: requireEnvVar("STRIPE_PRICE_PRO_MONTHLY"),
-    annual: requireEnvVar("STRIPE_PRICE_PRO_ANNUAL"),
+    monthly: requireEnvVar("STRIPE_PRICE_GROWTH_MONTHLY"),
+    annual: requireEnvVar("STRIPE_PRICE_GROWTH_ANNUAL"),
   },
   business: {
-    monthly: requireEnvVar("STRIPE_PRICE_ULTRA_MONTHLY"),
-    annual: requireEnvVar("STRIPE_PRICE_ULTRA_ANNUAL"),
+    monthly: requireEnvVar("STRIPE_PRICE_BUSINESS_MONTHLY"),
+    annual: requireEnvVar("STRIPE_PRICE_BUSINESS_ANNUAL"),
   },
 };
 

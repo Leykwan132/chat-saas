@@ -253,11 +253,11 @@ function SubscriptionPlanCard({
       <CardHeader
         className={cn(
           'shrink-0 rounded-none',
-          isCompact ? 'px-4 pb-2 pt-4' : 'px-6 pb-5 pt-6',
+          isCompact ? 'px-4 pb-2 pt-4 min-h-[100px]' : 'px-6 pb-5 pt-6 min-h-[150px]',
         )}
       >
         <div className={cn(isCompact ? 'flex flex-col gap-2' : undefined)}>
-          <div className={cn(isCompact && 'flex min-h-5 items-center')}>
+          <div className={cn('flex items-center', isCompact ? 'min-h-6' : 'min-h-8')}>
             <CardTitle
               className={cn(
                 'font-semibold tracking-tight',
@@ -269,7 +269,7 @@ function SubscriptionPlanCard({
             >
               {plan.name}
               {plan.popular && !isCurrent ? (
-                <span className="shrink-0 rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-600 dark:bg-amber-400/20 dark:text-amber-400">
+                <span className="shrink-0 inline-flex items-center justify-center rounded-full bg-zinc-100 px-2 py-1 text-[8px] font-bold uppercase tracking-wide text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 leading-none">
                   Popular
                 </span>
               ) : null}
@@ -284,7 +284,9 @@ function SubscriptionPlanCard({
             </CardTitle>
           </div>
 
-          <div className={cn(isCompact ? 'flex h-9 items-baseline' : 'mt-4')}>
+          <div className={cn(
+            isCompact ? 'flex flex-col' : 'mt-4 flex flex-col'
+          )}>
             {isEnterprise ? (
               <p
                 className={cn(
@@ -295,26 +297,37 @@ function SubscriptionPlanCard({
                 {plan.customPriceLabel}
               </p>
             ) : (
-              <div className="flex h-full items-baseline gap-2.5">
-                <div className="flex items-baseline gap-1">
-                  <span className={planPriceClass}>RM</span>
-                  {plan.id === 'free' ? (
-                    <span className={planPriceClass}>0</span>
-                  ) : (
-                    <WordRotate
-                      inline
-                      words={[
-                        formatPlanPriceAmount(plan.monthlyPriceRm),
-                        formatPlanPriceAmount(plan.annualPriceRm),
-                      ]}
-                      activeIndex={billingInterval === 'monthly' ? 0 : 1}
-                      className={planPriceClass}
-                    />
-                  )}
+              <div className="flex flex-col">
+                <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-1">
+                    <span className={planPriceClass}>RM</span>
+                    {plan.id === 'free' ? (
+                      <span className={planPriceClass}>0</span>
+                    ) : (
+                      <WordRotate
+                        inline
+                        words={[
+                          formatPlanPriceAmount(plan.monthlyPriceRm),
+                          formatPlanPriceAmount(plan.yearlyPriceRm ?? 0),
+                        ]}
+                        activeIndex={billingInterval === 'monthly' ? 0 : 1}
+                        className={planPriceClass}
+                      />
+                    )}
+                  </div>
+                  <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                    {plan.id === 'free' ? '/ forever' : billingInterval === 'monthly' ? '/ month' : '/ year'}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs font-medium text-muted-foreground">
-                  {plan.id === 'free' ? '/ forever' : '/ mo.'}
-                </span>
+                {billingInterval === 'annual' && plan.id !== 'free' && (
+                  <div className={cn(
+                    "flex items-baseline gap-2 text-sm text-muted-foreground leading-none font-medium",
+                    isCompact ? "mt-0.5" : "mt-1.5"
+                  )}>
+                    <span>RM {formatPlanPriceAmount(plan.annualPriceRm)}</span>
+                    <span className="text-xs font-normal">/ month</span>
+                  </div>
+                )}
               </div>
             )}
           </div>

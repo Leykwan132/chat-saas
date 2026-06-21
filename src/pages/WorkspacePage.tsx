@@ -6,6 +6,7 @@ import { CreditMeter } from '@/components/CreditMeter';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import {
   Bot,
   Mail,
@@ -112,9 +113,23 @@ function AgentsSidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
-            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
+            className="group/logo-toggle relative size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            aria-label="Expand sidebar"
           >
-            <PanelLeftOpen className="size-5" />
+            <img
+              src="/icon.svg"
+              alt=""
+              className={cn(
+                'size-[1.35rem] dark:invert transition-opacity duration-150',
+                'group-hover/logo-toggle:opacity-0',
+              )}
+            />
+            <PanelLeftOpen
+              className={cn(
+                'absolute size-[1.125rem] opacity-0 transition-opacity duration-150',
+                'group-hover/logo-toggle:opacity-100',
+              )}
+            />
             <span className="sr-only">Expand Sidebar</span>
           </Button>
         </SidebarHeader>
@@ -122,9 +137,8 @@ function AgentsSidebar() {
         <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
           <Link to="/workspace" className="flex items-center gap-3">
             <img src="/icon.svg" className="size-6 dark:invert" />
-            <div className="flex min-w-0 flex-col gap-0.5 leading-none">
+            <div className="flex min-w-0 flex-col leading-none">
               <span className="font-semibold text-[16px] tracking-normal font-title">Kilobot</span>
-              <span className="truncate text-xs text-sidebar-foreground/60">Workspace</span>
             </div>
           </Link>
           <Button
