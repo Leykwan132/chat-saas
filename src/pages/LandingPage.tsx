@@ -33,7 +33,7 @@ function PrimaryCta({
   if (hasSession) {
     return (
       <Link to={POST_LOGIN_REDIRECT} className={className}>
-        Go to dashboard
+        Dashboard
         <ArrowRight className="size-4" />
       </Link>
     );
@@ -317,7 +317,7 @@ function Hero({
     <section className="w-full bg-white dark:bg-[#060606] px-5 pt-28 pb-16 sm:px-6 sm:pt-32 sm:pb-20">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center min-h-[60svh] sm:min-h-[70svh] py-16">
-          <h1 className="font-title text-balance text-3xl font-normal leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-4xl md:text-[52px]">
+          <h1 className="font-title text-balance text-[32px] font-normal leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-[38px] md:text-[52px]">
             AI Agent for your inbox <br />
             in 5 minutes
           </h1>
