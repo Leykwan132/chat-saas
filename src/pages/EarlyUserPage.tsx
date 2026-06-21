@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { ArrowRight, Play, MessageSquare, Link as LinkIcon } from 'lucide-react';
+import { FaWhatsapp, FaInstagram, FaFacebookMessenger } from 'react-icons/fa';
 import { api } from '../../convex/_generated/api';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +27,13 @@ const teamSizeOptions = [
   '51–200',
   '201+',
 ] as const;
+
+const channelIcons: Record<string, React.ReactNode> = {
+  WhatsApp: <FaWhatsapp className="size-6" />,
+  Instagram: <FaInstagram className="size-6" />,
+  Messenger: <FaFacebookMessenger className="size-6" />,
+  'Web Chat': <MessageSquare className="size-6" />,
+};
 
 export default function EarlyUserPage() {
   const submitContactRequest = useMutation(api.contactRequests.submit);
@@ -274,7 +282,7 @@ export default function EarlyUserPage() {
                   <div className="space-y-6">
 
                     <div className="space-y-5">
-                      <label className="block space-y-2">
+                      <label className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           Name <span className="text-red-500">*</span>
                         </span>
@@ -287,7 +295,7 @@ export default function EarlyUserPage() {
                         />
                       </label>
 
-                      <label className="block space-y-2">
+                      <label className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           Email <span className="text-red-500">*</span>
                         </span>
@@ -300,7 +308,7 @@ export default function EarlyUserPage() {
                         />
                       </label>
 
-                      <label className="block space-y-2">
+                      <label className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           Company / Project Name <span className="text-red-500">*</span>
                         </span>
@@ -313,7 +321,7 @@ export default function EarlyUserPage() {
                         />
                       </label>
 
-                      <label className="block space-y-2">
+                      <label className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           Number of team members <span className="text-red-500">*</span>
                         </span>
@@ -344,7 +352,7 @@ export default function EarlyUserPage() {
                         </Select>
                       </label>
 
-                      <label className="block space-y-2">
+                      <label className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           What is your usecase? <span className="text-red-500">*</span>
                         </span>
@@ -356,22 +364,40 @@ export default function EarlyUserPage() {
                         />
                       </label>
 
-                      <div className="space-y-2">
+                      <div className="flex flex-col gap-3">
                         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
                           Which channels do you want to connect?
                         </span>
-                        <div className="grid grid-cols-2 gap-3 pt-1">
-                          {['WhatsApp', 'Instagram', 'Messenger', 'Web Chat'].map((channel) => (
-                            <label key={channel} className="flex items-center gap-2.5 p-3 rounded-lg border border-zinc-200 dark:border-white/[0.06] bg-zinc-100/30 dark:bg-white/[0.01] hover:bg-zinc-150/40 dark:hover:bg-white/[0.03] cursor-pointer transition-colors text-sm">
-                              <input
-                                type="checkbox"
-                                checked={channels.includes(channel)}
-                                onChange={() => handleChannelToggle(channel)}
-                                className="rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-zinc-900 dark:focus:ring-white focus:ring-offset-0 focus:ring-0 checked:bg-zinc-900 dark:checked:bg-white checked:border-zinc-900 dark:checked:border-white cursor-pointer size-4"
-                              />
-                              <span className="text-zinc-700 dark:text-zinc-300">{channel}</span>
-                            </label>
-                          ))}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {['WhatsApp', 'Instagram', 'Messenger', 'Web Chat'].map((channel) => {
+                            const isSelected = channels.includes(channel);
+                            return (
+                              <button
+                                key={channel}
+                                type="button"
+                                onClick={() => handleChannelToggle(channel)}
+                                className={cn(
+                                  "flex flex-col items-center justify-center p-5 rounded-xl border text-center transition-all cursor-pointer select-none gap-3 outline-none w-full",
+                                  isSelected
+                                    ? "border-zinc-950 bg-zinc-50/50 ring-1 ring-zinc-950 dark:border-white dark:bg-white/[0.05] dark:ring-1 dark:ring-white"
+                                    : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-white/[0.08] dark:bg-white/[0.02] dark:hover:bg-white/[0.04]"
+                                )}
+                              >
+                                <div className={cn(
+                                  "transition-colors",
+                                  isSelected ? "text-zinc-950 dark:text-white" : "text-zinc-400 dark:text-zinc-500"
+                                )}>
+                                  {channelIcons[channel]}
+                                </div>
+                                <span className={cn(
+                                  "text-xs font-semibold tracking-tight transition-colors",
+                                  isSelected ? "text-zinc-950 dark:text-white" : "text-zinc-500 dark:text-zinc-400"
+                                )}>
+                                  {channel}
+                                </span>
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
 
