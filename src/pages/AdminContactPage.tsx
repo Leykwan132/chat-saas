@@ -30,7 +30,7 @@ import { isValidEmailFormat } from '../../shared/emailValidation';
 const SESSION_STORAGE_KEY = 'adminContactSession';
 
 type ContactStatus = 'unread' | 'seen' | 'replied' | 'closed';
-type ContactIntent = 'enterprise' | 'support' | 'demo';
+type ContactIntent = 'enterprise' | 'support' | 'demo' | 'early_user';
 type StatusFilter = 'all' | ContactStatus;
 type IntentFilter = 'all' | ContactIntent;
 
@@ -43,6 +43,7 @@ const intentLabels: Record<ContactIntent, string> = {
   enterprise: 'Enterprise plan',
   support: 'Support',
   demo: 'Book a demo',
+  early_user: 'Early user program',
 };
 
 const statusLabels: Record<ContactStatus, string> = {
@@ -65,6 +66,7 @@ const intentFilterLabels: Record<IntentFilter, string> = {
   enterprise: 'Enterprise plan',
   support: 'Support',
   demo: 'Book a demo',
+  early_user: 'Early user program',
 };
 
 const fieldClass =

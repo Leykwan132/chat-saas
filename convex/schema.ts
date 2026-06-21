@@ -251,6 +251,7 @@ export default defineSchema({
       v.literal("enterprise"),
       v.literal("support"),
       v.literal("demo"),
+      v.literal("early_user"),
     ),
     email: v.string(),
     status: v.union(

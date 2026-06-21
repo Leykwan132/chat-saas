@@ -4,6 +4,7 @@ export const contactIntentValidator = v.union(
   v.literal("enterprise"),
   v.literal("support"),
   v.literal("demo"),
+  v.literal("early_user"),
 );
 
 export const contactStatusValidator = v.union(
@@ -19,7 +20,7 @@ export type ContactStatus =
   | "replied"
   | "closed";
 
-export type ContactIntent = "enterprise" | "support" | "demo";
+export type ContactIntent = "enterprise" | "support" | "demo" | "early_user";
 
 export const CONTACT_STATUSES: ContactStatus[] = [
   "unread",
@@ -54,5 +55,7 @@ export function formatContactIntent(intent: ContactIntent): string {
       return "Support";
     case "demo":
       return "Book a demo";
+    case "early_user":
+      return "Early user program";
   }
 }

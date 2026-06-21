@@ -34,7 +34,7 @@ export default function LeaderboardPage() {
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-5 pt-20 pb-12 sm:px-6 sm:pt-24 sm:pb-16">
         <div className="animate-fade-in flex flex-col items-center justify-center gap-2 py-32 text-center">
-          <h1 className="m-0 font-title text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl">
+          <h1 className="m-0 font-title text-4xl font-normal tracking-tight text-zinc-950 dark:text-white sm:text-5xl">
             Model Leaderboard
           </h1>
           <p className="mt-1 max-w-xl text-sm font-medium text-zinc-500 dark:text-zinc-400 sm:text-base">

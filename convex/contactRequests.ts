@@ -7,6 +7,7 @@ const contactIntentValidator = v.union(
   v.literal("enterprise"),
   v.literal("support"),
   v.literal("demo"),
+  v.literal("early_user"),
 );
 
 function requireTrimmed(value: string | undefined, label: string) {
@@ -37,7 +38,21 @@ export const submit = mutation({
 
     let requestId;
 
-    if (args.intent === "support") {
+    if (args.intent === "early_user") {
+      const contactName = requireTrimmed(args.contactName, "Name");
+      const companyName = requireTrimmed(args.companyName, "Company / Project");
+      requestId = await ctx.db.insert("contactRequests", {
+        intent: args.intent,
+        email,
+        status: "unread",
+        companyName,
+        contactName,
+        numberOfUsers: args.numberOfUsers,
+        additionalDetails,
+        createdAt: now,
+        updatedAt: now,
+      });
+    } else if (args.intent === "support") {
       requestId = await ctx.db.insert("contactRequests", {
         intent: args.intent,
         email,

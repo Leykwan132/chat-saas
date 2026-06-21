@@ -28,7 +28,7 @@ function PrimaryCta({
   label: string;
 }) {
   const className =
-    'inline-flex h-11 w-full items-center justify-center gap-2 rounded-full bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 px-6 text-sm font-semibold transition-colors sm:w-auto';
+    'inline-flex h-11 flex-1 sm:flex-none sm:w-auto items-center justify-center gap-2 rounded-full bg-zinc-950 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-950 px-4 sm:px-6 text-sm font-semibold transition-colors';
 
   if (hasSession) {
     return (
@@ -316,19 +316,19 @@ function Hero({
   return (
     <section className="w-full bg-white dark:bg-[#060606] px-5 pt-28 pb-16 sm:px-6 sm:pt-32 sm:pb-20">
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto flex max-w-3xl flex-col items-center text-center py-24">
-          <h1 className="font-title text-balance text-3xl font-semibold leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-4xl md:text-[52px]">
+        <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center min-h-[60svh] sm:min-h-[70svh] py-16">
+          <h1 className="font-title text-balance text-3xl font-normal leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-4xl md:text-[52px]">
             AI Agent for your inbox <br />
             in 5 minutes
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-sm md:text-base">
             Kilobot puts AI agents in your messaging inbox to qualify leads, answer questions, and close deals 24/7.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+          <div className="mt-8 flex flex-row items-center justify-center gap-3 sm:gap-3.5 w-full sm:w-auto max-w-sm">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
             <Link
               to="/contact?intent=demo"
-              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5 sm:w-auto"
+              className="inline-flex h-11 flex-1 sm:flex-none sm:w-auto items-center justify-center rounded-full border border-zinc-200 bg-transparent px-4 sm:px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5"
             >
               Book a demo
             </Link>
@@ -371,7 +371,7 @@ function SectionHeading({
   return (
     <BlurFade inView delay={delay} className={cn('max-w-xl', className)}>
       {label ? <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">{label}</p> : null}
-      <h2 className="text-balance text-3xl font-semibold tracking-tight text-zinc-950 dark:text-white sm:text-4xl md:text-5xl font-title">
+      <h2 className="text-balance text-3xl font-normal tracking-tight text-zinc-950 dark:text-white sm:text-4xl md:text-5xl font-title">
         {title}
       </h2>
       {body ? (
@@ -560,22 +560,22 @@ function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
           {/* Kilobot Logo (Directly, no wrapper container) */}
           <img src="/icon.svg" className="size-10 invert mb-6" alt="Kilobot Logo" />
 
-          <h3 className="text-2xl sm:text-3xl md:text-[34px] font-semibold tracking-tight text-white mb-8 font-title leading-tight max-w-3xl">
+          <h3 className="text-2xl sm:text-3xl md:text-[34px] font-normal tracking-tight text-white mb-8 font-title leading-tight max-w-3xl">
             Upgrade your inbox today.
           </h3>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="flex flex-row items-center justify-center gap-3 sm:gap-3.5 w-full sm:w-auto max-w-sm">
             <button
               type="button"
               onClick={onSignUp}
-              className="inline-flex h-11 w-full items-center justify-center rounded-full bg-white hover:bg-white/90 text-zinc-950 px-6 text-sm font-semibold transition-colors cursor-pointer shadow-sm sm:w-auto"
+              className="inline-flex h-11 flex-1 sm:flex-none sm:w-auto items-center justify-center rounded-full bg-white hover:bg-white/90 text-zinc-950 px-4 sm:px-6 text-sm font-semibold transition-colors cursor-pointer shadow-sm"
             >
               Start for free
             </button>
 
             <Link
               to="/contact?intent=demo"
-              className="inline-flex h-11 w-full items-center justify-center rounded-full border border-white/20 bg-transparent px-6 text-sm font-semibold text-white transition-all hover:bg-white/5 sm:w-auto"
+              className="inline-flex h-11 flex-1 sm:flex-none sm:w-auto items-center justify-center rounded-full border border-white/20 bg-transparent px-4 sm:px-6 text-sm font-semibold text-white transition-all hover:bg-white/5"
             >
               Book a demo
             </Link>

@@ -49,12 +49,23 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
   };
 
   return (
-    <header className={cn(
-      'fixed inset-x-0 top-0 z-50 transition-all duration-300',
-      isHeaderTransparent
-        ? 'border-transparent bg-transparent py-2'
-        : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'
-    )}>
+    <>
+      <div className="relative z-50 w-full h-auto py-2.5 sm:py-0 sm:h-8 bg-yellow-400 text-zinc-950 text-xs font-normal select-none flex items-center justify-center transition-all duration-300 border-b border-zinc-950/10">
+        <div className="px-5 text-center leading-tight">
+          <span>Join our Early Adopter Program: Get 1 year of Growth Plan free.</span>
+          <Link to="/early-user" className="underline font-semibold hover:opacity-80 inline-flex items-center gap-0.5 ml-1 whitespace-nowrap">
+            LEARN MORE HERE <ArrowRight className="size-3" />
+          </Link>
+        </div>
+      </div>
+
+      <header className={cn(
+        'fixed inset-x-0 z-50 transition-all duration-300',
+        isScrolled ? 'top-0' : 'top-[52px] sm:top-8',
+        isHeaderTransparent
+          ? 'border-transparent bg-transparent py-2'
+          : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'
+      )}>
       <div className="relative mx-auto flex h-14 max-w-7xl items-center justify-between px-5 sm:px-6">
         <Link to="/" className={cn(
           'flex items-center gap-2 text-[15px] transition-colors duration-300',
@@ -216,5 +227,6 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
         </div>
       </div>
     </header>
+    </>
   );
 }

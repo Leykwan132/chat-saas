@@ -61,6 +61,12 @@ export function SiteFooter({ className }: SiteFooterProps) {
                     Leaderboard
                   </Link>
                   <Link
+                    to="/early-user"
+                    className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    Early Adopters
+                  </Link>
+                  <Link
                     to="/contact"
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                   >
