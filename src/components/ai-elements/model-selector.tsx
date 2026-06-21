@@ -72,9 +72,12 @@ export type ModelSelectorInputProps = ComponentProps<typeof CommandInput>;
 
 export const ModelSelectorInput = ({
   className,
+  children,
   ...props
 }: ModelSelectorInputProps) => (
-  <CommandInput className={cn("h-auto text-sm", className)} {...props} />
+  <CommandInput className={cn("h-auto text-sm", className)} {...props}>
+    {children}
+  </CommandInput>
 );
 
 export type ModelSelectorListProps = ComponentProps<typeof CommandList>;
