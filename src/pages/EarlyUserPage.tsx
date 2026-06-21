@@ -262,7 +262,7 @@ export default function EarlyUserPage() {
           <section id="apply-form" className="scroll-mt-28 pt-8">
             <div className="text-center mb-10">
               <h2 className="font-title text-[38px] sm:text-4xl font-normal text-zinc-950 dark:text-white text-center">
-                Become an Early Adopter
+                Become our Early Adopter
               </h2>
             </div>
             <div className="max-w-xl mx-auto">
