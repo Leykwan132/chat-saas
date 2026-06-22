@@ -32,12 +32,9 @@ import { RequireOrganization } from '@/components/RequireOrganization';
 import { Switch } from '@/components/ui/switch';
 import { ModelPicker } from '@/components/ModelPicker';
 import { cn } from '@/lib/utils';
-import { PixelImage } from '@/components/ui/pixel-image';
 import { TypingAnimation as LoopingTypingAnimation } from '@/components/ui/typing-animation';
 
 const RECOMMENDED_MODEL = 'deepseek/deepseek-v4-flash';
-
-const AGENT_CREATED_IMAGE = 'https://storage.kilobot.app/grad-3.webp';
 
 const CREATING_AGENT_PHRASES = [
   'Cooking your agent…',
@@ -622,13 +619,6 @@ function AgentCreatedSuccessPanel({
       >
         Your agent is ready.
       </LoopingTypingAnimation>
-
-      <PixelImage
-        src={AGENT_CREATED_IMAGE}
-        customGrid={{ rows: 4, cols: 6 }}
-        grayscaleAnimation
-        className="size-72 shrink-0 sm:size-80"
-      />
 
       <div className="flex flex-row flex-nowrap items-center justify-center gap-2.5">
         <Button type="button" className="h-10 shrink-0 gap-2 px-4" onClick={onTrain}>

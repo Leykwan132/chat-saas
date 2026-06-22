@@ -37,7 +37,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
-import { PixelImage } from '@/registry/magicui/pixel-image';
 import { cn } from '@/lib/utils';
 import { getClientTimeZone } from '@/lib/calendarTimeUtils';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -45,8 +44,6 @@ import type { Id } from '../../convex/_generated/dataModel';
 type Step = 1 | 2 | 3 | 4;
 
 const DEFAULT_RETURN_TO = '/workspace/settings?section=teams';
-
-const TEAM_CREATED_IMAGE = 'https://storage.kilobot.app/grad-2.webp';
 
 const INDUSTRY_ICONS: Record<TeamIndustryId, LucideIcon> = {
   Technology: Monitor,
@@ -389,14 +386,6 @@ function CreateTeamFlow() {
                         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                           <span>{name.trim()}</span> is ready.
                         </h1>
-                      </BlurFade>
-                      <BlurFade delay={0.08}>
-                        <PixelImage
-                          src={TEAM_CREATED_IMAGE}
-                          customGrid={{ rows: 4, cols: 6 }}
-                          grayscaleAnimation
-                          className="h-[15.21rem] w-[15.21rem] shrink-0 sm:h-[16.9rem] sm:w-[16.9rem] md:h-[16.9rem] md:w-[16.9rem]"
-                        />
                       </BlurFade>
                     </div>
 
