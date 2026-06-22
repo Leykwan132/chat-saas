@@ -435,6 +435,9 @@ function CreateAgentForm() {
                           disabled={!enabledModels || enabledModels.length === 0}
                           className="w-full"
                         />
+                        <span className="text-xs text-muted-foreground mt-1">
+                          Note: You can customize response length, emoji use, formality, and humor level later in settings.
+                        </span>
                       </div>
 
                       <div className="border-t border-border/50 my-1" />

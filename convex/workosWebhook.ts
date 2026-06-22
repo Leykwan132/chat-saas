@@ -304,9 +304,6 @@ async function removeMembership(ctx: MutationCtx, data: any) {
   }
 }
 
-function dedupeAppend<T>(list: T[], item: T): T[] {
-  return list.includes(item) ? list : [...list, item];
-}
 
 async function syncInvitationFromWebhook(ctx: MutationCtx, data: unknown) {
   const parsed = parseWorkosInvitationPayload(data);

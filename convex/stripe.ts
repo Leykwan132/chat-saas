@@ -266,6 +266,9 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
         updatedAt: Date.now(),
       });
 
+      if (!orgTeam.ownerId) {
+        throw new Error("Team owner not found");
+      }
       const owner = await ctx.db.get(orgTeam.ownerId);
       if (!owner) {
         throw new Error("Team owner not found");
@@ -379,6 +382,9 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         updatedAt: Date.now(),
       });
 
+      if (!orgTeam.ownerId) {
+        throw new Error("Team owner not found");
+      }
       const owner = await ctx.db.get(orgTeam.ownerId);
       if (!owner) {
         throw new Error("Team owner not found");
@@ -485,6 +491,9 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
       if (!orgTeam) {
         throw new Error("Team not found for organization " + args.orgId);
+      }
+      if (!orgTeam.ownerId) {
+        throw new Error("Team owner not found");
       }
       const owner = await ctx.db.get(orgTeam.ownerId);
       if (!owner) {

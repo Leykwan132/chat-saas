@@ -55,7 +55,7 @@ async function resolveLastResortUserId(
     .query("teams")
     .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
     .unique();
-  if (team !== null) {
+  if (team !== null && team.ownerId) {
     const owner = await ctx.db.get(team.ownerId);
     if (owner !== null) {
       return owner.workosUserId;

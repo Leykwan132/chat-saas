@@ -460,7 +460,17 @@ Additional rules:
 }
 
 export function buildAgent(
-  agent: { name: string; model: string; systemPrompt: string; escalationEnabled?: boolean; escalationMessage?: string },
+  agent: {
+    name: string;
+    model: string;
+    systemPrompt: string;
+    escalationEnabled?: boolean;
+    escalationMessage?: string;
+    responseLength?: string;
+    emojiUse?: string;
+    formality?: string;
+    humorLevel?: string;
+  },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
   mediaCollections: string[] = [],
@@ -788,7 +798,44 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   3. If relevant context is found: answer using only that context
   4. If no relevant context is found: ${noContextFallback}. Do not guess or add filler`;
 
-  const instructions = `${agent.systemPrompt}
+  const instructions = `${agent.systemPrompt}${(() => {
+    let styleBlock = "";
+    if (agent.responseLength || agent.emojiUse || agent.formality || agent.humorLevel) {
+      styleBlock = "\n\n## Response Style Guidelines";
+      if (agent.responseLength === "brief") {
+        styleBlock += "\n- Keep your responses brief (1-2 sentences).";
+      } else if (agent.responseLength === "standard") {
+        styleBlock += "\n- Keep your responses standard length (2-5 sentences).";
+      } else if (agent.responseLength === "detailed") {
+        styleBlock += "\n- Keep your responses detailed (5-7 sentences).";
+      }
+
+      if (agent.emojiUse === "never") {
+        styleBlock += "\n- Do not use any emojis in your responses under any circumstances.";
+      } else if (agent.emojiUse === "occasional") {
+        styleBlock += "\n- Use emojis occasionally (use them in some responses but don't overdo it).";
+      } else if (agent.emojiUse === "frequent") {
+        styleBlock += "\n- Use emojis frequently (use emojis in most responses to sound friendly and expressive 🤠).";
+      }
+
+      if (agent.formality === "casual") {
+        styleBlock += "\n- Adopt a casual tone (e.g., 'No problem, gotcha covered!').";
+      } else if (agent.formality === "conversational") {
+        styleBlock += "\n- Adopt a conversational tone (e.g., 'Sure thing. I'll fix it right away.').";
+      } else if (agent.formality === "professional") {
+        styleBlock += "\n- Adopt a professional tone (e.g., 'I understand. We're addressing your concern now.').";
+      }
+
+      if (agent.humorLevel === "none") {
+        styleBlock += "\n- Do not use humor (e.g., 'Let me look into that.'). Keep it straightforward.";
+      } else if (agent.humorLevel === "light") {
+        styleBlock += "\n- Use light humor when appropriate (e.g., 'Seems like we're in a bit of a pickle.').";
+      } else if (agent.humorLevel === "playful") {
+        styleBlock += "\n- Use playful, highly enthusiastic humor (e.g., 'Hold tight, I'm fetching your data faster than a squirrel!').";
+      }
+    }
+    return styleBlock;
+  })()}
 
   ## Tool Usage — REQUIRED
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.

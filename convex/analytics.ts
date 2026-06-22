@@ -5,7 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { Permission } from "../shared/permissions";
 import { workosOrgRoleSlug } from "../shared/teamRoleCatalog";
-import { getTeamByWorkosOrgId } from "./teamHelpers";
+
 import { analyticsMetrics } from "./aggregates";
 import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
 import { getLast6CalendarMonths } from "./usageMonthKey";
@@ -824,15 +824,20 @@ export const getMemberPerformance = query({
     const { orgId, userId } = await assertAnalyticsAccess(ctx);
     if (!orgId || orgId === "personal") return [];
     if (!(await canReadTeamAnalytics(ctx, orgId, userId))) return [];
-    const org = await ctx.db
-      .query("organizations")
+    const team = await ctx.db
+      .query("teams")
       .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
       .unique();
-    if (org === null) return [];
+    if (team === null) return [];
+
+    const memberships = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+      .collect();
 
     const users: Doc<"users">[] = [];
-    for (const memberId of org.members) {
-      const user = await ctx.db.get(memberId);
+    for (const membership of memberships) {
+      const user = await ctx.db.get(membership.userId);
       if (user !== null) users.push(user);
     }
 
@@ -847,7 +852,6 @@ export const getMemberPerformance = query({
       "conversionDurationMs",
       "droppedCount",
     ];
-    const team = await getTeamByWorkosOrgId(ctx, orgId);
     const roleByUserId = new Map<Id<"users">, Doc<"teamMemberships">["role"]>();
     if (team !== null) {
       const memberships = await ctx.db

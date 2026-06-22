@@ -274,6 +274,10 @@ export default defineSchema({
     orgId: v.string(),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
+    responseLength: v.optional(v.union(v.literal("brief"), v.literal("standard"), v.literal("detailed"))),
+    emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
+    formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
+    humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

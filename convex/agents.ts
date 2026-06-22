@@ -152,6 +152,10 @@ export const create = mutation({
     contacts: v.optional(v.string()),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
+    responseLength: v.optional(v.union(v.literal("brief"), v.literal("standard"), v.literal("detailed"))),
+    emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
+    formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
+    humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
   },
   handler: async (ctx, args) => {
     const { userId, orgId, permissions } = await getAuthContext(ctx);
@@ -197,6 +201,10 @@ export const create = mutation({
       orgId,
       escalationEnabled: args.escalationEnabled ?? false,
       escalationMessage: args.escalationMessage,
+      responseLength: args.responseLength ?? "brief",
+      emojiUse: args.emojiUse ?? "occasional",
+      formality: args.formality ?? "conversational",
+      humorLevel: args.humorLevel ?? "light",
       createdAt: now,
       updatedAt: now,
     });
@@ -220,6 +228,10 @@ export const update = mutation({
     contacts: v.optional(v.string()),
     escalationEnabled: v.optional(v.boolean()),
     escalationMessage: v.optional(v.string()),
+    responseLength: v.optional(v.union(v.literal("brief"), v.literal("standard"), v.literal("detailed"))),
+    emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
+    formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
+    humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
   },
   handler: async (ctx, args) => {
     const { orgId, permissions } = await getAuthContext(ctx);
@@ -262,6 +274,10 @@ export const update = mutation({
       templateKey: args.templateKey,
       websiteUrls: args.websiteUrls ?? [],
       contacts: args.contacts?.trim() || undefined,
+      responseLength: args.responseLength ?? "brief",
+      emojiUse: args.emojiUse ?? "occasional",
+      formality: args.formality ?? "conversational",
+      humorLevel: args.humorLevel ?? "light",
       updatedAt: Date.now(),
     };
     if (args.escalationEnabled !== undefined) {

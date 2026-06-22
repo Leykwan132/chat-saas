@@ -364,6 +364,9 @@ export const persistCreditPeriodReset = internalMutation({
       if (!team) {
         return;
       }
+      if (!team.ownerId) {
+        return;
+      }
       const owner = await ctx.db.get(team.ownerId);
       if (!owner) {
         return;
@@ -394,7 +397,7 @@ export async function getBillingEntityForUser(
   // This is referring to the user current team. 
   if (user.activeTeamId) {
     const team = await ctx.db.get(user.activeTeamId);
-    if (team && team.type === "organizational") {
+    if (team && team.type === "organizational" && team.ownerId) {
       const owner = await ctx.db.get(team.ownerId);
       if (owner) {
         return { billingUser: owner, isTeam: true, teamName: team.name };

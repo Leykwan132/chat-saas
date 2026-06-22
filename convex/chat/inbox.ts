@@ -689,7 +689,7 @@ export const internalGetOrgByWorkosId = internalQuery({
   args: { orgId: v.string() },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("organizations")
+      .query("teams")
       .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
       .unique();
   },

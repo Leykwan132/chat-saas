@@ -1,4 +1,5 @@
-import { mutation, query, internalQuery, type QueryCtx } from "./_generated/server";
+import { mutation, query, internalQuery, type QueryCtx, type MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { v } from "convex/values";
 import { getAuthContext } from "./authUtils";
 import { getPlan, getPlanFromStripe } from "./plans";

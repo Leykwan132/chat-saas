@@ -1,6 +1,6 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Navigate, Routes, Route, useParams, useLocation } from 'react-router'
+import { createBrowserRouter, RouterProvider, createRoutesFromElements, Outlet, Navigate, Route, useParams, useLocation } from 'react-router'
 import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
 import { ConvexProviderWithAuthKit } from '@convex-dev/workos'
 import { ConvexReactClient } from 'convex/react'
@@ -198,85 +198,89 @@ function RootLayout() {
           <TooltipProvider>
             <UpgradeModalProvider>
               <ScrollToTop />
-            <Routes>
-            <Route path="/login" element={<LoginRoute />} />
-            <Route path="/callback" element={<CallbackRoute />} />
-            <Route path="/" element={<HomePage />} />
-            <Route path="/sign-in" element={<SignInPage />} />
-            <Route path="/pricing" element={<PricingPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/early-user" element={<EarlyUserPage />} />
-            <Route path="/admin/contact" element={<AdminContactPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />
-            <Route path="/terms" element={<TermsPage />} />
-            <Route path="/leaderboard" element={<LeaderboardPage />} />
-            <Route path="/onboarding" element={<OnboardingFlow />} />
-            <Route path="/workspace" element={<WorkspacePage />}>
-              <Route index element={<AgentsIndex />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="invitations" element={<InvitationsPage />} />
-              <Route path="usage" element={<WorkspaceUsagePage />} />
-              <Route path="account" element={<Navigate to="../settings" replace />} />
-            </Route>
-            <Route path="/create-agent" element={<CreateAgentPage />} />
-            <Route path="/create-team" element={<CreateTeamPage />} />
-            <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
-            <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
-              <Route index element={<DashboardIndexRedirect />} />
-              <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
-              <Route path="chats" element={<ChatsToInboxRedirect />} />
-              <Route path="quick-replies" element={<QuickRepliesPage />} />
-              <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
-              <Route path="playground/:threadId?" element={<AgentPage />} />
-              <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
-              <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
-              <Route path="channels" element={<ChannelsPage />} />
-              <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
-              <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
-              <Route path="customers" element={<CustomersPage />} />
-              <Route path="customers/:customerId" element={<CustomerDetailPage />} />
-              <Route path="follow-ups" element={<FollowUpPage />} />
-              <Route path="follow-ups/new" element={<AutomationsFollowUpPage />} />
-              <Route path="follow-ups/:ruleId" element={<FollowUpDetailPage />} />
-              <Route path="broadcast" element={<BroadcastPage />} />
-              <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
-              <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />
-              <Route path="templates" element={<TemplatesPage />} />
-              <Route path="templates/new" element={<CreateTemplatePage />} />
-              <Route path="templates/:templateName" element={<TemplateDetailPage />} />
-              <Route path="availability" element={<SchedulePage />} />
-              <Route
-                path="availability/:workosUserId/edit"
-                element={<ScheduleUserAvailabilityPage />}
-              />
-              <Route path="availability/:workosUserId" element={<ScheduleUserDetailPage />} />
-              <Route path="calendar" element={<CalendarPage />} />
-              <Route path="auto-booking/new" element={<AutoBookingServicePage />} />
-              <Route path="auto-booking/:serviceId/edit" element={<AutoBookingServicePage />} />
-              <Route path="auto-booking/:serviceId" element={<AutoBookingServicePage />} />
-              <Route path="auto-booking" element={<AutoBookingPage />} />
-              <Route path="lead-assignment" element={<LeadAssignmentPage />} />
-              <Route path="agent-setup" element={<InstructionsPage />} />
-              <Route path="analytics" element={<AnalyticsIndex />} />
-              <Route path="analytics/:section" element={<AnalyticsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="account" element={<Navigate to="../settings" replace />} />
-            </Route>
-          </Routes>
-          <Toaster />
+              <Outlet />
+              <Toaster />
             </UpgradeModalProvider>
           </TooltipProvider>
         </ConvexProviderWithAuthKit>
-    </AuthKitProvider>
+      </AuthKitProvider>
     </ThemeProvider>
   )
 }
 
+const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route element={<RootLayout />}>
+      <Route path="/login" element={<LoginRoute />} />
+      <Route path="/callback" element={<CallbackRoute />} />
+      <Route path="/" element={<HomePage />} />
+      <Route path="/sign-in" element={<SignInPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/early-user" element={<EarlyUserPage />} />
+      <Route path="/admin/contact" element={<AdminContactPage />} />
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />
+      <Route path="/terms" element={<TermsPage />} />
+      <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/onboarding" element={<OnboardingFlow />} />
+      <Route path="/workspace" element={<WorkspacePage />}>
+        <Route index element={<AgentsIndex />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="invitations" element={<InvitationsPage />} />
+        <Route path="usage" element={<WorkspaceUsagePage />} />
+        <Route path="account" element={<Navigate to="../settings" replace />} />
+      </Route>
+      <Route path="/create-agent" element={<CreateAgentPage />} />
+      <Route path="/create-team" element={<CreateTeamPage />} />
+      <Route path="/dashboard" element={<Navigate to="/workspace" replace />} />
+      <Route path="/dashboard/:agentId" element={<DashboardLayout />}>
+        <Route index element={<DashboardIndexRedirect />} />
+        <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
+        <Route path="chats" element={<ChatsToInboxRedirect />} />
+        <Route path="quick-replies" element={<QuickRepliesPage />} />
+        <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
+        <Route path="playground/:threadId?" element={<AgentPage />} />
+        <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
+        <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
+        <Route path="channels" element={<ChannelsPage />} />
+        <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
+        <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="customers/:customerId" element={<CustomerDetailPage />} />
+        <Route path="follow-ups" element={<FollowUpPage />} />
+        <Route path="follow-ups/new" element={<AutomationsFollowUpPage />} />
+        <Route path="follow-ups/:ruleId" element={<FollowUpDetailPage />} />
+        <Route path="broadcast" element={<BroadcastPage />} />
+        <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
+        <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />
+        <Route path="templates" element={<TemplatesPage />} />
+        <Route path="templates/new" element={<CreateTemplatePage />} />
+        <Route path="templates/:templateName" element={<TemplateDetailPage />} />
+        <Route path="availability" element={<SchedulePage />} />
+        <Route
+          path="availability/:workosUserId/edit"
+          element={<ScheduleUserAvailabilityPage />}
+        />
+        <Route path="availability/:workosUserId" element={<ScheduleUserDetailPage />} />
+        <Route path="calendar" element={<CalendarPage />} />
+        <Route path="auto-booking/new" element={<AutoBookingServicePage />} />
+        <Route path="auto-booking/:serviceId/edit" element={<AutoBookingServicePage />} />
+        <Route path="auto-booking/:serviceId" element={<AutoBookingServicePage />} />
+        <Route path="auto-booking" element={<AutoBookingPage />} />
+        <Route path="lead-assignment" element={<LeadAssignmentPage />} />
+        <Route path="agent-setup" element={<InstructionsPage />} />
+        <Route path="analytics" element={<AnalyticsIndex />} />
+        <Route path="analytics/:section" element={<AnalyticsPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="account" element={<Navigate to="../settings" replace />} />
+      </Route>
+    </Route>
+  )
+);
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <RootLayout />
-    </BrowserRouter>
+    <RouterProvider router={router} />
   </StrictMode>,
 )

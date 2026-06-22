@@ -1,17 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { useNavigate, useParams, Navigate } from 'react-router';
+import { useNavigate, useParams, Navigate, useBlocker } from 'react-router';
 import {
   Wrench,
   Bot,
   ArrowRight,
   Banknote,
   Mail,
-  Check,
   Maximize2,
   Zap,
   AlertTriangle,
+  List,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
@@ -31,6 +37,13 @@ import {
 } from '@/components/ui/hover-card';
 import { ModelPicker } from '@/components/ModelPicker';
 import { usePermissions } from '@/hooks/usePermissions';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Permission } from '../../shared/permissions';
 import { cn } from '@/lib/utils';
 import {
@@ -62,6 +75,30 @@ const templateOptions: Array<{
     icon: Mail,
     description: 'Resolve customer issues with care.',
   },
+];
+
+const RESPONSE_LENGTH_OPTIONS = [
+  { value: 'brief', label: 'Brief', description: '1-2 sentences' },
+  { value: 'standard', label: 'Standard', description: '2-5 sentences' },
+  { value: 'detailed', label: 'Detailed', description: '5-7 sentences' },
+];
+
+const EMOJI_USE_OPTIONS = [
+  { value: 'never', label: 'Never', description: 'Never used' },
+  { value: 'occasional', label: 'Occasional', description: 'Used in some responses' },
+  { value: 'frequent', label: 'Frequent', description: 'Used in most responses 🤠' },
+];
+
+const FORMALITY_OPTIONS = [
+  { value: 'casual', label: 'Casual', description: 'No problem, gotcha covered!' },
+  { value: 'conversational', label: 'Conversational', description: 'Sure thing. I\'ll fix it right away.' },
+  { value: 'professional', label: 'Professional', description: 'I understand. We\'re addressing your concern now.' },
+];
+
+const HUMOR_LEVEL_OPTIONS = [
+  { value: 'none', label: 'None', description: 'Let me look into that.' },
+  { value: 'light', label: 'Light', description: 'Seems like we\'re in a bit of a pickle.' },
+  { value: 'playful', label: 'Playful', description: 'Hold tight, I\'m fetching your data faster than a squirrel!' },
 ];
 
 type ReplyMode = 'automatic' | 'manual';
@@ -168,6 +205,10 @@ export default function InstructionsPage() {
   const [escalationEnabled, setEscalationEnabled] = useState(false);
   const [sendEscalationMsg, setSendEscalationMsg] = useState(false);
   const [escalationMessage, setEscalationMessage] = useState('');
+  const [responseLength, setResponseLength] = useState<'brief' | 'standard' | 'detailed'>('brief');
+  const [emojiUse, setEmojiUse] = useState<'never' | 'occasional' | 'frequent'>('occasional');
+  const [formality, setFormality] = useState<'casual' | 'conversational' | 'professional'>('conversational');
+  const [humorLevel, setHumorLevel] = useState<'none' | 'light' | 'playful'>('light');
 
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingEscalation, setIsSavingEscalation] = useState(false);
@@ -188,12 +229,60 @@ export default function InstructionsPage() {
     setEscalationEnabled(agent.escalationEnabled ?? false);
     setSendEscalationMsg(!!agent.escalationMessage);
     setEscalationMessage(agent.escalationMessage ?? '');
+    setResponseLength((agent.responseLength as any) ?? 'brief');
+    setEmojiUse((agent.emojiUse as any) ?? 'occasional');
+    setFormality((agent.formality as any) ?? 'conversational');
+    setHumorLevel((agent.humorLevel as any) ?? 'light');
   }, [agent]);
 
   useEffect(() => {
     if (!routingSettings) return;
     setReplyMode(routingSettings.aiEnabledOnInbound ? 'automatic' : 'manual');
   }, [routingSettings]);
+
+  const hasBasicChanges = agent ? (
+    name !== agent.name ||
+    model !== agent.model ||
+    templateKey !== agent.templateKey ||
+    systemPrompt !== agent.systemPrompt ||
+    responseLength !== (agent.responseLength ?? 'brief') ||
+    emojiUse !== (agent.emojiUse ?? 'occasional') ||
+    formality !== (agent.formality ?? 'conversational') ||
+    humorLevel !== (agent.humorLevel ?? 'light')
+  ) : false;
+
+  const hasEscalationChanges = agent ? (
+    escalationEnabled !== (agent.escalationEnabled ?? false) ||
+    sendEscalationMsg !== (!!agent.escalationMessage) ||
+    (sendEscalationMsg && escalationMessage !== (agent.escalationMessage ?? ''))
+  ) : false;
+
+  const savedReplyMode: ReplyMode | null = routingSettings
+    ? routingSettings.aiEnabledOnInbound
+      ? 'automatic'
+      : 'manual'
+    : null;
+  const hasReplyModeChanges =
+    savedReplyMode !== null && replyMode !== savedReplyMode;
+
+  const isDirty = hasBasicChanges || hasEscalationChanges || hasReplyModeChanges;
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname
+  );
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
 
   const handleSave = async () => {
     if (!selectedAgentId || !agent) return;
@@ -208,6 +297,10 @@ export default function InstructionsPage() {
         templateKey,
         escalationEnabled,
         escalationMessage: sendEscalationMsg ? escalationMessage : undefined,
+        responseLength,
+        emojiUse,
+        formality,
+        humorLevel,
       });
       toast.success('Agent saved successfully');
     } catch (err) {
@@ -261,6 +354,10 @@ export default function InstructionsPage() {
         templateKey,
         escalationEnabled,
         escalationMessage: sendEscalationMsg ? escalationMessage : undefined,
+        responseLength,
+        emojiUse,
+        formality,
+        humorLevel,
       });
       toast.success('Escalation settings saved successfully');
     } catch (err) {
@@ -284,6 +381,10 @@ export default function InstructionsPage() {
     setTemplateKey(agent.templateKey);
     setModel(agent.model);
     setSystemPrompt(agent.systemPrompt);
+    setResponseLength((agent.responseLength as any) ?? 'brief');
+    setEmojiUse((agent.emojiUse as any) ?? 'occasional');
+    setFormality((agent.formality as any) ?? 'conversational');
+    setHumorLevel((agent.humorLevel as any) ?? 'light');
   };
 
   if (permissionsLoading || agent === undefined) {
@@ -310,25 +411,6 @@ export default function InstructionsPage() {
       </div>
     );
   }
-
-  const hasBasicChanges =
-    name !== agent.name ||
-    model !== agent.model ||
-    templateKey !== agent.templateKey ||
-    systemPrompt !== agent.systemPrompt;
-
-  const hasEscalationChanges =
-    escalationEnabled !== (agent.escalationEnabled ?? false) ||
-    sendEscalationMsg !== (!!agent.escalationMessage) ||
-    (sendEscalationMsg && escalationMessage !== (agent.escalationMessage ?? ''));
-
-  const savedReplyMode: ReplyMode | null = routingSettings
-    ? routingSettings.aiEnabledOnInbound
-      ? 'automatic'
-      : 'manual'
-    : null;
-  const hasReplyModeChanges =
-    savedReplyMode !== null && replyMode !== savedReplyMode;
 
   const isRoutingSettingsLoading = canReadRouting && routingSettings === undefined;
 
@@ -387,62 +469,130 @@ export default function InstructionsPage() {
                   />
                 </label>
 
-                <div className="flex flex-col gap-2.5">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Role Template
-                  </span>
-                  <div className="flex flex-wrap gap-3">
-                    {templateOptions.map(({ key, icon: Icon, description }) => {
-                      const template = AGENT_TEMPLATES[key];
-                      const active = templateKey === key;
-                      return (
-                        <button
-                          key={key}
-                          type="button"
-                          onClick={() => applyTemplate(key)}
-                          className="text-left focus:outline-none shrink-0"
-                        >
-                          <div
-                            className={cn(
-                              'relative flex aspect-[5/7] w-[8.55rem] flex-col rounded-sm border bg-card px-4 py-4.5 transition-colors duration-200 cursor-pointer',
-                              active
-                                ? 'border-foreground bg-accent/40'
-                                : 'border-border hover:border-foreground/35 hover:bg-accent/20',
-                            )}
-                          >
-                            {active && (
-                              <Check className="absolute right-2 top-2 size-3.5 text-foreground" />
-                            )}
-                            <div className="flex flex-1 items-start pt-0.5">
-                              <Icon
-                                className={cn(
-                                  'size-10 stroke-[1.5]',
-                                  active
-                                    ? 'text-foreground'
-                                    : 'text-muted-foreground/45',
-                                )}
-                              />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                  {/* Response Length */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">Response length</span>
+                    <Select value={responseLength} onValueChange={(val) => setResponseLength(val as any)}>
+                      <SelectTrigger className="w-full !h-auto !py-3 !rounded-lg px-3.5 justify-between">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {RESPONSE_LENGTH_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
+                            <div className="flex flex-col text-left py-1 gap-1">
+                              <span className="font-semibold text-foreground text-[13px] leading-none">{opt.label}</span>
+                              <span className="text-[11px] text-muted-foreground leading-none">{opt.description}</span>
                             </div>
-                            <div className="space-y-1 text-left">
-                              <p className="text-sm font-semibold leading-tight text-foreground">
-                                {template.label}
-                              </p>
-                              <p className="line-clamp-2 text-[11px] leading-snug text-muted-foreground">
-                                {description}
-                              </p>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Emoji Use */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">Emoji use</span>
+                    <Select value={emojiUse} onValueChange={(val) => setEmojiUse(val as any)}>
+                      <SelectTrigger className="w-full !h-auto !py-3 !rounded-lg px-3.5 justify-between">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {EMOJI_USE_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
+                            <div className="flex flex-col text-left py-1 gap-1">
+                              <span className="font-semibold text-foreground text-[13px] leading-none">{opt.label}</span>
+                              <span className="text-[11px] text-muted-foreground leading-none">{opt.description}</span>
                             </div>
-                          </div>
-                        </button>
-                      );
-                    })}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Formality */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">Formality</span>
+                    <Select value={formality} onValueChange={(val) => setFormality(val as any)}>
+                      <SelectTrigger className="w-full !h-auto !py-3 !rounded-lg px-3.5 justify-between">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FORMALITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
+                            <div className="flex flex-col text-left py-1 gap-1">
+                              <span className="font-semibold text-foreground text-[13px] leading-none">{opt.label}</span>
+                              <span className="text-[11px] text-muted-foreground leading-none">{opt.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Humor Level */}
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold text-muted-foreground">Humor level</span>
+                    <Select value={humorLevel} onValueChange={(val) => setHumorLevel(val as any)}>
+                      <SelectTrigger className="w-full !h-auto !py-3 !rounded-lg px-3.5 justify-between">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {HUMOR_LEVEL_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value} textValue={opt.label}>
+                            <div className="flex flex-col text-left py-1 gap-1">
+                              <span className="font-semibold text-foreground text-[13px] leading-none">{opt.label}</span>
+                              <span className="text-[11px] text-muted-foreground leading-none">{opt.description}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-                <Separator className="my-2" />
+
+                <Separator className="my-1" />
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    Goal
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Goal
+                    </span>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="link"
+                          className="h-auto p-0 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold text-xs no-underline hover:no-underline flex items-center gap-1 cursor-pointer"
+                        >
+                          <List className="size-3.5" />
+                          <span>Template Library</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-80 p-1.5 bg-popover border border-border rounded-xl shadow-lg">
+                        {templateOptions.map(({ key, icon: Icon, description }) => {
+                          const template = AGENT_TEMPLATES[key];
+                          return (
+                            <DropdownMenuItem
+                              key={key}
+                              onSelect={() => applyTemplate(key)}
+                              className="flex flex-col items-start gap-1 p-2.5 rounded-lg cursor-pointer hover:bg-accent/50 focus:bg-accent/50 transition-colors duration-150"
+                            >
+                              <div className="flex items-center gap-2 font-semibold text-[13px] text-foreground">
+                                <Icon className="size-3.5" />
+                                <span>{template.label}</span>
+                              </div>
+                              <span className="text-[11px] text-muted-foreground leading-normal">
+                                {description}
+                              </span>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
                   <div className="relative flex flex-col">
                     <textarea
                       value={systemPrompt}
@@ -691,6 +841,39 @@ export default function InstructionsPage() {
           <DialogFooter className="shrink-0 flex justify-end gap-2">
             <Button type="button" onClick={() => setIsGoalExpanded(false)}>
               Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unsaved Changes Confirmation Dialog */}
+      <Dialog open={blocker.state === 'blocked'} onOpenChange={(open) => {
+        if (!open) {
+          blocker.reset?.();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Unsaved changes</DialogTitle>
+            <DialogDescription>
+              You have unsaved changes on this page. Are you sure you want to leave without saving?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 pt-4">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => blocker.reset?.()}
+              className="w-full sm:w-auto"
+            >
+              Keep Editing
+            </Button>
+            <Button
+              type="button"
+              onClick={() => blocker.proceed?.()}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white"
+            >
+              Discard and Leave
             </Button>
           </DialogFooter>
         </DialogContent>
