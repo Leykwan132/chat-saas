@@ -6,12 +6,13 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
 import {
+  ensureTeamMembership,
   ensureUserAccount,
   getTeamByWorkosOrgId,
   removeTeamMembership,
-  syncOrgTeamMembershipsFromOrganization,
 } from "./teamHelpers";
 import { provisionMemberSchedulesForOrg } from "./leadRouting/provision";
 import { isWorkosOrgAdminRole } from "../shared/teamRoleCatalog";
