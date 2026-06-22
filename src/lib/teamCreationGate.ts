@@ -43,6 +43,7 @@ export function handleCreateTeamGate(
   onAllowed: () => void,
   navigate: NavigateFunction,
   planPath = DEFAULT_PLAN_PATH,
+  openUpgradeModal?: () => void,
 ) {
   if (canCreateOrgTeam === undefined) return;
 
@@ -52,7 +53,11 @@ export function handleCreateTeamGate(
   }
 
   if (canCreateOrgTeam.requiresPlanUpgrade) {
-    showTeamCreationUpgradeToast(navigate, planPath);
+    if (openUpgradeModal) {
+      openUpgradeModal();
+    } else {
+      showTeamCreationUpgradeToast(navigate, planPath);
+    }
     return;
   }
 

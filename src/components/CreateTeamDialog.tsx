@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router';
 import { useAction, useQuery } from 'convex/react';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,7 +6,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { getClientTimeZone } from '@/lib/calendarTimeUtils';
-import { showTeamCreationUpgradeToast } from '@/lib/teamCreationGate';
+import { useUpgradeModal } from '@/components/UpgradeModal';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,10 +32,10 @@ export function CreateTeamDialog({
   open: controlledOpen,
   onOpenChange,
 }: CreateTeamDialogProps) {
-  const navigate = useNavigate();
   const { switchTeam } = useActiveTeam();
   const createTeam = useAction(api.organizationsAdmin.createTeamForCurrentUser);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
+  const { openUpgradeModal } = useUpgradeModal();
 
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -70,7 +69,7 @@ export function CreateTeamDialog({
 
     if (canCreateOrgTeam && !canCreateOrgTeam.allowed) {
       if (canCreateOrgTeam.requiresPlanUpgrade) {
-        showTeamCreationUpgradeToast(navigate);
+        openUpgradeModal();
         return;
       }
       setError(canCreateOrgTeam.reason ?? 'You cannot create a team right now.');

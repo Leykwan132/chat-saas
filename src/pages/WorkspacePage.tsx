@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/breadcrumb';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
-import { showAgentLimitToast } from '@/lib/agentCreationLimit';
+import { useUpgradeModal } from '@/components/UpgradeModal';
 import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
 
 import { usePermissions } from '@/hooks/usePermissions';
@@ -59,15 +59,15 @@ import { useActiveTeam } from '@/hooks/useActiveTeam';
 
 function AgentPreview() {
   return (
-    <div className="relative h-50 overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_30%_20%,#60a5fa_0,#3b82f6_34%,#2563eb_62%,#1d4ed8_100%)]">
+    <div className="relative h-32 overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_30%_20%,#60a5fa_0,#3b82f6_34%,#2563eb_62%,#1d4ed8_100%)]">
       <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.18),transparent_35%,rgba(255,255,255,0.2)_75%)]" />
-      <div className="absolute left-1/2 top-5 w-56 -translate-x-1/2 overflow-hidden rounded-t-xl bg-white shadow-xl">
-        <div className="h-10 bg-blue-500 px-3 py-2 text-[9px] font-medium text-white">
-          agent-config.ts
+      <div className="absolute left-1/2 top-8 w-40 -translate-x-1/2 overflow-hidden rounded-t-xl bg-white shadow-xl">
+        <div className="h-7 bg-blue-500 px-2 py-1.5 text-[8px] font-medium text-white">
+          agent
         </div>
-        <div className="h-35 px-3 py-3">
-          <div className="h-7 w-28 rounded-full bg-zinc-100" />
-          <div className="ml-auto mt-3 h-7 w-28 rounded-full bg-blue-500" />
+        <div className="h-20 px-2 py-2">
+          <div className="h-4 w-20 rounded-full bg-zinc-100" />
+          <div className="ml-auto mt-2 h-4 w-20 rounded-full bg-blue-500" />
         </div>
       </div>
     </div>
@@ -76,23 +76,41 @@ function AgentPreview() {
 
 function AgentCardSkeleton() {
   return (
-    <div className="w-full max-w-[456px] overflow-hidden rounded-lg border border-border bg-card">
-      <div className="relative h-50 overflow-hidden bg-muted/40 animate-pulse">
-        <div className="absolute left-1/2 top-5 w-56 -translate-x-1/2 overflow-hidden rounded-t-xl bg-muted/20 border border-muted/30">
-          <div className="h-10 bg-muted/30" />
-          <div className="h-35 px-3 py-3 space-y-3">
-            <div className="h-7 w-28 rounded-full bg-muted/20 animate-pulse" />
-            <div className="ml-auto h-7 w-28 rounded-full bg-muted/30 animate-pulse" />
+    <div className="w-full overflow-hidden rounded-lg border border-border bg-card">
+      <div className="relative h-32 overflow-hidden bg-muted/40 animate-pulse">
+        <div className="absolute left-1/2 top-3 w-40 -translate-x-1/2 overflow-hidden rounded-t-xl bg-muted/20 border border-muted/30">
+          <div className="h-7 bg-muted/30" />
+          <div className="h-20 px-2 py-2 space-y-2">
+            <div className="h-4 w-20 rounded-full bg-muted/20 animate-pulse" />
+            <div className="ml-auto h-4 w-20 rounded-full bg-muted/30 animate-pulse" />
           </div>
         </div>
       </div>
-      <div className="flex items-start justify-between border-t border-border px-6 py-6">
-        <div className="flex-1 space-y-2">
-          <div className="h-5 w-2/3 rounded-md bg-muted/40 animate-pulse" />
-          <div className="h-4 w-1/2 rounded-md bg-muted/20 animate-pulse" />
+      <div className="flex items-start justify-between border-t border-border px-4 py-4">
+        <div className="flex-1 space-y-1.5">
+          <div className="h-4 w-2/3 rounded-md bg-muted/40 animate-pulse" />
+          <div className="h-3 w-1/2 rounded-md bg-muted/20 animate-pulse" />
         </div>
       </div>
     </div>
+  );
+}
+
+function CreateAgentCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
+        'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
+        'min-h-[9.5rem]',
+      )}
+      aria-label="Create a new AI agent"
+    >
+      <Plus className="size-6" strokeWidth={1.75} />
+      <span className="text-xs font-medium">New AI agent</span>
+    </button>
   );
 }
 
@@ -214,16 +232,16 @@ function AgentCard({
 
   return (
     <article
-      className="group w-full max-w-[456px] cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-foreground/30"
+      className="group w-full cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-foreground/30"
       onClick={handleCardClick}
     >
       <AgentPreview />
-      <div className="flex items-start justify-between gap-4 border-t border-border px-6 py-6 transition-colors group-hover:bg-muted/20">
+      <div className="flex items-start justify-between gap-3 border-t border-border px-4 py-4 transition-colors group-hover:bg-muted/20">
         <div className="min-w-0">
-          <span className="block truncate text-lg font-semibold tracking-tight text-foreground">
+          <span className="block truncate text-sm font-semibold tracking-tight text-foreground">
             {agent.name}
           </span>
-          <p className="m-0 mt-1 text-sm text-muted-foreground">
+          <p className="m-0 mt-0.5 text-xs text-muted-foreground">
             Last trained {new Date(agent.updatedAt).toLocaleString(undefined, {
               month: 'short',
               day: 'numeric',
@@ -327,6 +345,7 @@ export function AgentsIndex() {
   const removeAgent = useMutation(api.agents.remove);
   const { can } = usePermissions();
   const { activeTeam } = useActiveTeam();
+  const { openUpgradeModal } = useUpgradeModal();
 
   const [deletingId, setDeletingId] = useState<Id<'agents'> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -335,7 +354,7 @@ export function AgentsIndex() {
     if (canCreateAgent === undefined) return;
 
     if (!canCreateAgent.allowed) {
-      showAgentLimitToast(navigate);
+      openUpgradeModal();
       return;
     }
 
@@ -380,21 +399,19 @@ export function AgentsIndex() {
       )}
 
       {agents === undefined ? (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           <AgentCardSkeleton />
           <AgentCardSkeleton />
           <AgentCardSkeleton />
         </div>
       ) : agents.length === 0 ? (
-        <div className="flex h-72 max-w-xl flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-center">
-          <Bot className="mb-3 size-8 text-muted-foreground" />
-          <h2 className="m-0 text-base font-semibold">No agents yet</h2>
-          <p className="m-0 mt-2 max-w-sm text-sm text-muted-foreground">
-            Create an AI agent for a specific use case, then open its dashboard.
-          </p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {can(Permission.AGENTS_CREATE) && (
+            <CreateAgentCard onClick={handleNewAgent} />
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {agents.map((agent: Doc<'agents'>) => (
             <AgentCard
               key={agent._id}
@@ -404,6 +421,9 @@ export function AgentsIndex() {
               canDelete={can(Permission.AGENTS_MANAGE)}
             />
           ))}
+          {can(Permission.AGENTS_CREATE) && (
+            <CreateAgentCard onClick={handleNewAgent} />
+          )}
         </div>
       )}
     </div>

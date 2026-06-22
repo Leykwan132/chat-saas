@@ -166,7 +166,12 @@ export default function AutoBookingPage() {
   };
 
   return (
-    <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
+    <PlanFeatureGate
+      featureKey="auto_booking"
+      featureName="Auto Booking"
+      title="Unlock Auto Booking"
+      description="Let AI handle end-to-end bookings — from scheduling to confirmations, right from chat."
+    >
       <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>

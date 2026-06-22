@@ -48,6 +48,7 @@ import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
 import { ThemeProvider } from '@/components/theme-provider'
 import { OnboardingFlow } from '@/components/OnboardingFlow'
+import { UpgradeModalProvider } from '@/components/UpgradeModal'
 import PricingPage from './pages/PricingPage.tsx'
 import ContactPage from './pages/ContactPage.tsx'
 import EarlyUserPage from './pages/EarlyUserPage.tsx'
@@ -194,7 +195,8 @@ function RootLayout() {
       >
         <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
           <TooltipProvider>
-            <ScrollToTop />
+            <UpgradeModalProvider>
+              <ScrollToTop />
             <Routes>
             <Route path="/login" element={<LoginRoute />} />
             <Route path="/callback" element={<CallbackRoute />} />
@@ -261,8 +263,9 @@ function RootLayout() {
             </Route>
           </Routes>
           <Toaster />
-        </TooltipProvider>
-      </ConvexProviderWithAuthKit>
+            </UpgradeModalProvider>
+          </TooltipProvider>
+        </ConvexProviderWithAuthKit>
     </AuthKitProvider>
     </ThemeProvider>
   )

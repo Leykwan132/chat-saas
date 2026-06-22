@@ -1,15 +1,14 @@
-import { Link } from 'react-router';
+import { useEffect } from 'react';
 import { useQuery } from 'convex/react';
-import { LockKeyhole } from 'lucide-react';
+import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
-import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
   PLAN_CATALOG,
-  PLAN_ORDER,
   type PlanFeatureFlags,
   type PlanKey,
 } from '../../shared/planCatalog';
+import { UpgradeCard, type UpgradeScenario } from '@/components/UpgradeModal';
 import { cn } from '@/lib/utils';
 
 type PlanFeatureGateProps = {
@@ -17,22 +16,45 @@ type PlanFeatureGateProps = {
   featureName: string;
   children: React.ReactNode;
   className?: string;
+  title?: string;
+  description?: string;
 };
 
-function getRequiredPlanName(featureKey: keyof PlanFeatureFlags) {
-  const planKey = PLAN_ORDER.find((key) => PLAN_CATALOG[key].features[featureKey]);
-  return planKey ? PLAN_CATALOG[planKey].name : 'a paid plan';
+function resolveScenario(plan: PlanKey | undefined): UpgradeScenario {
+  if (plan === 'starter') return 'starter_to_growth';
+  if (plan === 'growth') return 'growth_to_business';
+  return 'free_to_starter';
+}
+
+/** Locks the nearest scrollable ancestor (<main>) while the gate is mounted. */
+function useScrollLock() {
+  useEffect(() => {
+    const el = document.querySelector('main');
+    if (!el) return;
+    const prev = el.style.overflow;
+    el.style.overflow = 'hidden';
+    return () => {
+      el.style.overflow = prev;
+    };
+  }, []);
 }
 
 export function PlanFeatureGate({
   featureKey,
-  featureName,
   children,
   className,
+  title,
+  description,
 }: PlanFeatureGateProps) {
-  const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const isAuthenticated = Boolean(user);
 
-  if (planAndUsage === undefined) {
+  const planAndUsage = useQuery(
+    api.plans.getPlanAndUsage,
+    isAuthLoading || !isAuthenticated ? 'skip' : {},
+  );
+
+  if (isAuthLoading || planAndUsage === undefined) {
     return (
       <div className="flex min-h-64 items-center justify-center">
         <Spinner className="size-6 text-muted-foreground" />
@@ -49,33 +71,45 @@ export function PlanFeatureGate({
     return <>{children}</>;
   }
 
-  const requiredPlanName = getRequiredPlanName(featureKey);
+  const scenario = resolveScenario(currentPlan);
+
+  return <GateOverlay scenario={scenario} className={className} title={title} description={description}>{children}</GateOverlay>;
+}
+
+function GateOverlay({
+  scenario,
+  children,
+  className,
+  title,
+  description,
+}: {
+  scenario: UpgradeScenario;
+  children: React.ReactNode;
+  className?: string;
+  title?: string;
+  description?: string;
+}) {
+  useScrollLock();
 
   return (
-    <div className={cn('relative min-h-[28rem] overflow-hidden rounded-2xl', className)}>
-      <div className="pointer-events-none select-none blur-[3px] opacity-45">
+    <div
+      className={cn(
+        'relative overflow-hidden',
+        // Full height below header; pull up by py-8 (2rem) to compensate for
+        // main's top padding so the card lands on the true visual center.
+        '-mt-8 h-[calc(100svh-57px)]',
+        className,
+      )}
+    >
+      {/* Blurred background content */}
+      <div className="pointer-events-none select-none blur-sm opacity-25 absolute inset-0 overflow-hidden">
         {children}
       </div>
-      <div className="absolute inset-0 flex items-center justify-center bg-background/55 p-6 backdrop-blur-[2px]">
-        <div className="max-w-md rounded-2xl border border-border bg-card/95 p-6 text-center shadow-lg">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-            <LockKeyhole className="size-6" />
-          </div>
-          <h2 className="mt-4 text-xl font-semibold tracking-tight text-foreground">
-            Unlock {featureName}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {featureName} is available on {requiredPlanName} and above. Upgrade
-            your plan or book a demo to see how it works for your team.
-          </p>
-          <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
-            <Button asChild>
-              <Link to="/workspace/settings?section=plan">Unlock plan</Link>
-            </Button>
-            <Button asChild variant="outline">
-              <Link to="/contact?intent=enterprise">See demo</Link>
-            </Button>
-          </div>
+
+      {/* Embedded upgrade card — centered in the full visible area */}
+      <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-[4px] px-6">
+        <div className="w-full max-w-lg rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 overflow-hidden">
+          <UpgradeCard scenario={scenario} title={title} description={description} />
         </div>
       </div>
     </div>

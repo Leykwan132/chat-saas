@@ -1316,7 +1316,7 @@ export default function ChatsPage() {
     return (
       <div className="flex h-full flex-col gap-6 px-8 py-8">
         <ChatsPageHeader />
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Lock className="size-6 text-muted-foreground" />
           </div>
@@ -1337,7 +1337,7 @@ export default function ChatsPage() {
     return (
       <div className="flex h-full flex-col gap-6 px-8 py-8">
         <ChatsPageHeader />
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 py-16 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 rounded-2xl border border-dashed border-border bg-card px-8 text-center">
           <div className="flex size-12 items-center justify-center rounded-xl bg-muted">
             <Plug className="size-6 text-muted-foreground" />
           </div>

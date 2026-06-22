@@ -33,10 +33,11 @@ export function AdjustPlanDialog({
   onOpenChange,
   planReturnPath,
 }: AdjustPlanDialogProps) {
-  const { isLoading: isAuthLoading } = useAuth();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const isAuthenticated = Boolean(user);
   const planAndUsage = useQuery(
     api.plans.getPlanAndUsage,
-    isAuthLoading ? 'skip' : {},
+    isAuthLoading || !isAuthenticated ? 'skip' : {},
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);

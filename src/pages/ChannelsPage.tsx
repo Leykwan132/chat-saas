@@ -20,6 +20,7 @@ import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { PageDescription } from '@/components/PageDescription';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useUpgradeModal } from '@/components/UpgradeModal';
 import {
   Dialog,
   DialogContent,
@@ -154,6 +155,7 @@ export default function ChannelsPage() {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
   const ensureDefaultAgentId = useMutation(api.channels.ensureDefaultAgentId);
+  const { openUpgradeModal } = useUpgradeModal();
   useMetaChannelCallbackParams();
 
   const [openAddDialog, setOpenAddDialog] = useState(false);
@@ -212,7 +214,13 @@ export default function ChannelsPage() {
         </div>
         <Button
           type="button"
-          onClick={() => setOpenAddDialog(true)}
+          onClick={() => {
+            if (limitReached) {
+              openUpgradeModal();
+            } else {
+              setOpenAddDialog(true);
+            }
+          }}
           className="gap-2 shrink-0 rounded-xl"
         >
           <Plus className="size-4" />
@@ -277,7 +285,13 @@ export default function ChannelsPage() {
           {/* Add channel placeholder card */}
           <button
             type="button"
-            onClick={() => setOpenAddDialog(true)}
+            onClick={() => {
+              if (limitReached) {
+                openUpgradeModal();
+              } else {
+                setOpenAddDialog(true);
+              }
+            }}
             className={cn(
               'flex size-56 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
               'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
