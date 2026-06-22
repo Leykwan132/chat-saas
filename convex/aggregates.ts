@@ -38,7 +38,7 @@ export const agentMonthlyAggregator = new TableAggregate<{
     `${usageMonthKeyFromTimestamp(doc.createdAt)}:${doc.agentId ?? "unassigned"}`,
 });
 
-export const creditDailyUsageAggregator = new TableAggregate<{
+export const creditAgentDailyUsageAggregator = new TableAggregate<{
   Key: number;
   DataModel: DataModel;
   TableName: "creditUsageEvents";
@@ -52,6 +52,28 @@ export const creditDailyUsageAggregator = new TableAggregate<{
       toUtcDateKey(doc.createdAt),
       doc.agentId ?? "unassigned",
     ),
+});
+
+export const creditWorkspaceDailyUsageAggregator = new TableAggregate<{
+  Key: number;
+  DataModel: DataModel;
+  TableName: "creditUsageEvents";
+  Namespace: string;
+}>(components.creditWorkspaceDailyUsage, {
+  sortKey: (doc) => doc.credits,
+  sumValue: (doc) => doc.credits,
+  namespace: (doc) => `${doc.userId}:${doc.orgId ?? ""}:${toUtcDateKey(doc.createdAt)}`,
+});
+
+export const creditAccountDailyUsageAggregator = new TableAggregate<{
+  Key: number;
+  DataModel: DataModel;
+  TableName: "creditUsageEvents";
+  Namespace: string;
+}>(components.creditAccountDailyUsage, {
+  sortKey: (doc) => doc.credits,
+  sumValue: (doc) => doc.credits,
+  namespace: (doc) => `${doc.userId}:${toUtcDateKey(doc.createdAt)}`,
 });
 
 export const analyticsMetrics = new TableAggregate<{

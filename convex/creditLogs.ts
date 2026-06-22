@@ -166,6 +166,7 @@ export async function insertCreditLog(
       if (!existing) {
         await ctx.db.insert("creditUsageEvents", {
           userId: entry.userId,
+          orgId: entry.orgId,
           agentId: entry.agentId,
           modelId: entry.modelId,
           credits,

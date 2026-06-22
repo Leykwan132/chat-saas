@@ -798,6 +798,7 @@ export default defineSchema({
     .index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
   creditUsageEvents: defineTable({
     userId: v.id("users"),
+    orgId: v.optional(v.string()),
     agentId: v.optional(v.id("agents")),
     modelId: v.optional(v.string()),
     credits: v.number(),
@@ -807,6 +808,7 @@ export default defineSchema({
   })
     .index("by_userId_and_createdAt", ["userId", "createdAt"])
     .index("by_agentId_and_createdAt", ["agentId", "createdAt"])
+    .index("by_orgId_and_createdAt", ["orgId", "createdAt"])
     .index("by_creditLogId", ["creditLogId"]),
   processedStripePayments: defineTable({
     stripePaymentIntentId: v.string(),

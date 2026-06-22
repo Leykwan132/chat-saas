@@ -34,22 +34,41 @@ function formatDateTime(ms: number) {
 }
 
 export function CreditSpendTable({
+  scope = 'agent',
   agentId,
+  workspaceId,
   timeRange,
 }: {
-  agentId: Id<'agents'>;
+  scope?: 'agent' | 'workspace' | 'account';
+  agentId?: Id<'agents'>;
+  workspaceId?: string;
   timeRange: CreditTimeRange;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+
+  const query =
+    scope === 'agent'
+      ? api.creditUsageAnalytics.getAgentCreditSpendHistory
+      : scope === 'workspace'
+        ? api.creditUsageAnalytics.getWorkspaceCreditSpendHistory
+        : api.creditUsageAnalytics.getAccountCreditSpendHistory;
+
+  const queryArgs =
+    scope === 'agent' && agentId
+      ? { agentId, timeRange }
+      : scope === 'workspace' && workspaceId
+        ? { workspaceId, timeRange }
+        : { timeRange };
+
   const { results, status, loadMore } = usePaginatedQuery(
-    api.creditUsageAnalytics.getAgentCreditSpendHistory,
-    { agentId, timeRange },
+    query as any,
+    queryArgs,
     { initialNumItems: PAGE_SIZE },
   );
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [agentId, timeRange]);
+  }, [scope, agentId, workspaceId, timeRange]);
 
   const loadedPageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const hasNextPage =

@@ -32,5 +32,7 @@ app.use(aggregate, { name: "modelLifetimeUsage" });
 app.use(aggregate, { name: "modelMonthlyUsage" });
 app.use(aggregate, { name: "agentMonthlyUsage" });
 app.use(aggregate, { name: "creditDailyUsage" });
+app.use(aggregate, { name: "creditWorkspaceDailyUsage" });
+app.use(aggregate, { name: "creditAccountDailyUsage" });
 app.use(aggregate, { name: "analyticsMetrics" });
 export default app;

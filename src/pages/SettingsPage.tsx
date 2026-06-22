@@ -1,8 +1,9 @@
 import { useLocation, useSearchParams } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { Building2, CreditCard, User } from 'lucide-react';
+import { Building2, CreditCard, User, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PlanTab } from '@/components/PlanTab';
+import { AccountUsageTab } from '@/components/AccountUsageTab';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { TeamDetailSection } from '@/components/teams/TeamDetailSection';
@@ -11,11 +12,12 @@ import type { Id } from '../../convex/_generated/dataModel';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 
-type AccountSection = 'profile' | 'teams' | 'plan';
+type AccountSection = 'profile' | 'teams' | 'usage' | 'plan';
 
 const NAV_ITEMS: { key: AccountSection; label: string; icon: React.ElementType }[] = [
   { key: 'profile', label: 'Profile', icon: User },
   { key: 'teams', label: 'Teams', icon: Building2 },
+  { key: 'usage', label: 'Usage', icon: BarChart3 },
   { key: 'plan', label: 'Plan', icon: CreditCard },
 ];
 
@@ -121,6 +123,8 @@ export default function SettingsPage() {
   let section: AccountSection =
     rawSection === 'teams' || rawSection === 'organisations' || rawSection === 'members'
       ? 'teams'
+      : rawSection === 'usage'
+      ? 'usage'
       : rawSection === 'plan'
       ? 'plan'
       : 'profile';
@@ -141,9 +145,11 @@ export default function SettingsPage() {
         ? teamId
           ? 'Team details'
           : 'Teams'
-        : section === 'plan'
-          ? 'Plan'
-          : 'Profile';
+        : section === 'usage'
+          ? 'Account usage'
+          : section === 'plan'
+            ? 'Plan'
+            : 'Profile';
 
   const visibleNavItems = NAV_ITEMS.filter((item) => {
     if (item.key === 'plan') {
@@ -191,10 +197,12 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {section === 'profile' ? (
+           {section === 'profile' ? (
             <ProfileContent />
           ) : section === 'teams' ? (
             <TeamsContent settingsBasePath={settingsBasePath} />
+          ) : section === 'usage' ? (
+            <AccountUsageTab />
           ) : section === 'plan' ? (
             <PlanTab />
           ) : (

@@ -296,6 +296,7 @@ export async function ensureOrganizationalTeam(
   args: {
     workosOrgId: string;
     name: string;
+    stripeSubscriptionId?: string;
     ownerUserId: Id<"users">;
     timeZone?: string;
   },
@@ -306,6 +307,7 @@ export async function ensureOrganizationalTeam(
     const teamId = await ctx.db.insert("teams", {
       type: "organizational",
       name: args.name,
+      stripeSubscriptionId: args.stripeSubscriptionId,
       ownerId: args.ownerUserId,
       workosOrgId: args.workosOrgId,
       timeZone: normalizeTimeZone(args.timeZone),

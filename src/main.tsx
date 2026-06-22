@@ -16,6 +16,7 @@ import ChatsPage from './pages/ChatsPage.tsx'
 import AgentPage from './pages/AgentPage.tsx'
 import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
 import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
+import WorkspaceUsagePage from './pages/WorkspaceUsagePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import CustomerDetailPage from './pages/CustomerDetailPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
@@ -215,6 +216,7 @@ function RootLayout() {
               <Route index element={<AgentsIndex />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="invitations" element={<InvitationsPage />} />
+              <Route path="usage" element={<WorkspaceUsagePage />} />
               <Route path="account" element={<Navigate to="../settings" replace />} />
             </Route>
             <Route path="/create-agent" element={<CreateAgentPage />} />

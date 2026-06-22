@@ -14,6 +14,7 @@ import {
   Trash2,
   PanelLeftClose,
   PanelLeftOpen,
+  BarChart3,
 } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -118,6 +119,7 @@ function AgentsSidebar() {
   const { pathname } = useLocation();
   const isAgentsRoute = pathname === '/workspace';
   const isInvitationsRoute = pathname === '/workspace/invitations';
+  const isUsageRoute = pathname === '/workspace/usage';
   const { state, toggleSidebar } = useSidebar();
   const { count: pendingInvitationCount } = usePendingTeamInvitations();
   const { can } = usePermissions();
@@ -198,6 +200,14 @@ function AgentsSidebar() {
                   ) : null}
                 </SidebarMenuItem>
               )}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={isUsageRoute} tooltip="Usage">
+                  <Link to="/workspace/usage">
+                    <BarChart3 />
+                    <span>Usage</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

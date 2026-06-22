@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { action, internalMutation, type ActionCtx } from "./_generated/server";
-import { api, internal } from "./_generated/api";
+import { api, components, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { TeamListItem } from "./teams";
 import { getAuthContext } from "./authUtils";
@@ -125,10 +125,16 @@ async function createTeamHandler(
     throw new Error(gate.reason ?? "You cannot create a team on your current plan.");
   }
 
+  const subscription = await ctx.runQuery(
+    components.stripe.public.getSubscriptionByOrgId,
+    { orgId: userId },
+  );
+
   const result = await createWorkOSTeam(userId, args);
 
   const teamId = await ctx.runMutation(internal.organizationsAdmin.persistCreatedTeam, {
     workosOrgId: result.organizationId,
+    stripeSubscriptionId: subscription?.stripeSubscriptionId,
     name: result.name,
     workosUserId: userId,
     industry: args.industry,
@@ -149,6 +155,7 @@ export const persistCreatedTeam = internalMutation({
     companySize: v.optional(v.string()),
     domain: v.optional(v.string()),
     timeZone: v.optional(v.string()),
+    stripeSubscriptionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const user = await getUserByWorkosId(ctx, args.workosUserId);
@@ -193,6 +200,7 @@ export const persistCreatedTeam = internalMutation({
     const teamId = await ensureOrganizationalTeam(ctx, {
       workosOrgId: args.workosOrgId,
       name: args.name,
+      stripeSubscriptionId: args.stripeSubscriptionId,
       ownerUserId: user._id,
       timeZone: args.timeZone,
     });

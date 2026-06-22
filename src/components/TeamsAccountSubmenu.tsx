@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useQuery } from 'convex/react';
-import { Building2, Check, Plus, UserPlus, Users } from 'lucide-react';
+import { Building2, Plus, UserPlus, Users, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -10,6 +10,7 @@ import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
 import { useUpgradeModal } from '@/components/UpgradeModal';
 import { Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
@@ -237,20 +238,41 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
                 >
                   <TeamAvatar team={team} profilePictureUrl={user?.profilePictureUrl} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-foreground">
-                      {getTeamDisplayName(team)}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="truncate text-sm font-semibold text-foreground">
+                        {getTeamDisplayName(team)}
+                      </span>
+                      {isActiveTeam && (
+                        <Badge
+                          variant="secondary"
+                          className="shrink-0 rounded-md px-1.5 py-0 text-[10px] font-medium"
+                        >
+                          current
+                        </Badge>
+                      )}
                     </div>
                     <div className="truncate text-xs text-muted-foreground">
                       {formatTeamMeta(team)}
                     </div>
                   </div>
-                  {isActiveTeam ? (
-                    isSwitching ? (
-                      <Spinner className="size-4 shrink-0" />
-                    ) : (
-                      <Check className="size-4 shrink-0 text-foreground" />
-                    )
-                  ) : null}
+                  {isSwitching ? (
+                    <Spinner className="size-4 shrink-0" />
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        navigate(`${settingsPath}?section=teams&teamId=${team._id}`);
+                      }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onPointerUp={(e) => e.stopPropagation()}
+                      className="rounded-md p-1 hover:bg-accent text-muted-foreground hover:text-foreground shrink-0 transition-colors"
+                      aria-label="Team settings"
+                    >
+                      <Settings className="size-4" />
+                    </button>
+                  )}
                 </DropdownMenuItem>
               );
             })

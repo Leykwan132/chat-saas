@@ -46,7 +46,7 @@ type Step = 1 | 2 | 3 | 4;
 
 const DEFAULT_RETURN_TO = '/workspace/settings?section=teams';
 
-const TEAM_CREATED_IMAGE = 'https://picsum.photos/seed/team-created/800/800';
+const TEAM_CREATED_IMAGE = 'https://storage.kilobot.app/grad-2.webp';
 
 const INDUSTRY_ICONS: Record<TeamIndustryId, LucideIcon> = {
   Technology: Monitor,
@@ -400,7 +400,7 @@ function CreateTeamFlow() {
                       </BlurFade>
                     </div>
 
-                    <div className="flex items-center justify-start gap-2.5">
+                    <div className="flex items-center justify-start gap-6">
                       <Button
                         type="button"
                         className="h-10 shrink-0 gap-2 px-4"

@@ -156,6 +156,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const { userId, orgId, permissions } = await getAuthContext(ctx);
 
+    console.log('agent create permissions', permissions);
     if (orgId && orgId !== "personal" && !permissions.includes("agents:create")) {
       throw new Error("You do not have permission to create agents in this workspace.");
     }

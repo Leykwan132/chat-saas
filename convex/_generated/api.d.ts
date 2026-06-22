@@ -20,6 +20,7 @@ import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as autoBooking from "../autoBooking.js";
 import type * as autoBookingSessionStatus from "../autoBookingSessionStatus.js";
+import type * as backfillEvents from "../backfillEvents.js";
 import type * as billingScope from "../billingScope.js";
 import type * as broadcastPool from "../broadcastPool.js";
 import type * as calendarEvents from "../calendarEvents.js";
@@ -138,6 +139,7 @@ declare const fullApi: ApiFromModules<{
   authUtils: typeof authUtils;
   autoBooking: typeof autoBooking;
   autoBookingSessionStatus: typeof autoBookingSessionStatus;
+  backfillEvents: typeof backfillEvents;
   billingScope: typeof billingScope;
   broadcastPool: typeof broadcastPool;
   calendarEvents: typeof calendarEvents;
@@ -288,5 +290,7 @@ export declare const components: {
   modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
   agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
   creditDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditDailyUsage">;
+  creditWorkspaceDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditWorkspaceDailyUsage">;
+  creditAccountDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditAccountDailyUsage">;
   analyticsMetrics: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"analyticsMetrics">;
 };

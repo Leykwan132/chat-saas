@@ -122,19 +122,45 @@ function buildModelChartRows(
 }
 
 export function CreditUsagePanel({
+  scope = 'agent',
   agentId,
+  workspaceId,
   timeRange,
   onTimeRangeChange,
+  workspaceOptions,
+  selectedWorkspaceId,
+  onWorkspaceChange,
 }: {
-  agentId: Id<'agents'>;
+  scope?: 'agent' | 'workspace' | 'account';
+  agentId?: Id<'agents'>;
+  workspaceId?: string;
   timeRange: CreditTimeRange;
   onTimeRangeChange: (value: CreditTimeRange) => void;
+  workspaceOptions?: Array<{ id: string; name: string }>;
+  selectedWorkspaceId?: string;
+  onWorkspaceChange?: (value: string) => void;
 }) {
   const [metric, setMetric] = useState<CreditMetric>('cumulative');
-  const usage = useQuery(api.creditUsageAnalytics.getAgentCreditUsage, {
-    agentId,
-    timeRange,
-  });
+
+  const agentUsage = useQuery(
+    api.creditUsageAnalytics.getAgentCreditUsage,
+    scope === 'agent' && agentId ? { agentId, timeRange } : 'skip'
+  );
+  const workspaceUsage = useQuery(
+    api.creditUsageAnalytics.getWorkspaceCreditUsage,
+    scope === 'workspace' && workspaceId ? { workspaceId, timeRange } : 'skip'
+  );
+  const accountUsage = useQuery(
+    api.creditUsageAnalytics.getAccountCreditUsage,
+    scope === 'account' ? { timeRange } : 'skip'
+  );
+
+  const usage =
+    scope === 'agent'
+      ? agentUsage
+      : scope === 'workspace'
+        ? workspaceUsage
+        : accountUsage;
 
   const modelSeries = usage?.modelUsage.series ?? [];
   const seriesKeys = useMemo(
@@ -179,6 +205,24 @@ export function CreditUsagePanel({
           </CardDescription>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {workspaceOptions && onWorkspaceChange && (
+            <Select
+              value={selectedWorkspaceId ?? 'all'}
+              onValueChange={onWorkspaceChange}
+            >
+              <SelectTrigger size="sm" className="w-[180px]">
+                <SelectValue placeholder="All Workspaces" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Workspaces</SelectItem>
+                {workspaceOptions.map((option) => (
+                  <SelectItem key={option.id} value={option.id}>
+                    {option.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select
             value={metric}
             onValueChange={(value) => setMetric(value as CreditMetric)}

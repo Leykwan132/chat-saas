@@ -37,7 +37,7 @@ import { TypingAnimation as LoopingTypingAnimation } from '@/components/ui/typin
 
 const RECOMMENDED_MODEL = 'deepseek/deepseek-v4-flash';
 
-const AGENT_CREATED_IMAGE = 'https://picsum.photos/seed/agent-created/800/800';
+const AGENT_CREATED_IMAGE = 'https://storage.kilobot.app/grad-3.webp';
 
 const CREATING_AGENT_PHRASES = [
   'Cooking your agent…',
