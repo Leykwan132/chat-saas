@@ -33,7 +33,6 @@ import {
   getCreditPeriodKey,
   getCreditPeriodSummary,
   getTopUpSummary,
-  scopeFromOrg,
   scopeFromUser,
 } from "./creditEntries";
 
@@ -163,7 +162,7 @@ export type CreditBillingSnapshot = {
 
 async function resolvePurchasedCreditsGranted(
   ctx: QueryCtx,
-  entity: Doc<"organizations"> | Doc<"users">,
+  entity: Doc<"users">,
   scope: { orgId: string; userId?: Doc<"users">["_id"] },
 ): Promise<number> {
   const topUpSummary = await getTopUpSummary(ctx, scope);
@@ -187,7 +186,7 @@ function hasActiveStripeBilling(status: string | undefined): boolean {
 }
 
 export function resolveCreditBilling(
-  entity: Doc<"organizations"> | Doc<"users">,
+  entity: Doc<"users">,
   stripeInfo: StripePlanInfo,
 ): CreditBillingSnapshot {
   const planConfig = getPlan(stripeInfo.plan);
@@ -230,16 +229,15 @@ function isMutationCtx(ctx: QueryCtx | MutationCtx): ctx is MutationCtx {
 
 async function persistCreditPeriodResetOnEntity(
   ctx: MutationCtx,
-  entity: Doc<"organizations"> | Doc<"users">,
+  entity: Doc<"users">,
   stripeInfo: StripePlanInfo,
-): Promise<Doc<"organizations"> | Doc<"users">> {
+): Promise<Doc<"users">> {
   const billing = resolveCreditBilling(entity, stripeInfo);
   if (!billing.needsPersistedReset || !billing.resetReason) {
     return entity;
   }
 
-  const isOrg = "workosOrgId" in entity;
-  const scope = isOrg ? scopeFromOrg(entity) : scopeFromUser(entity);
+  const scope = scopeFromUser(entity);
   const periodKey = getCreditPeriodKey(stripeInfo);
   const before = snapshotCreditBalances(entity);
   const topUpSummary = await getTopUpSummary(ctx, scope);
@@ -270,14 +268,10 @@ async function persistCreditPeriodResetOnEntity(
     patch.creditsPeriodMonthKey = monthKey;
   }
 
-  if ("workosOrgId" in entity) {
-    await ctx.db.patch(entity._id, patch);
-  } else {
-    await ctx.db.patch(entity._id, patch);
-  }
+  await ctx.db.patch(entity._id, patch);
   await insertCreditLog(ctx, {
-    orgId: isOrg ? entity.workosOrgId : "",
-    userId: isOrg ? undefined : entity._id,
+    orgId: "",
+    userId: entity._id,
     eventType: "monthly_reset",
     label: "Monthly reset",
     amount: balanceAfter - before.balanceBefore,
@@ -291,25 +285,20 @@ async function persistCreditPeriodResetOnEntity(
     reason: billing.resetReason,
   });
 
-  const updated =
-    "workosOrgId" in entity
-      ? await ctx.db.get(entity._id)
-      : await ctx.db.get(entity._id);
-  return updated as Doc<"organizations"> | Doc<"users">;
+  const updated = await ctx.db.get(entity._id);
+  return updated!;
 }
 
 export async function syncCreditBilling(
   ctx: QueryCtx | MutationCtx,
-  entity: Doc<"organizations"> | Doc<"users">,
+  entity: Doc<"users">,
   stripeInfo?: StripePlanInfo,
-): Promise<{ entity: Doc<"organizations"> | Doc<"users">; billing: CreditBillingSnapshot }> {
-  const entityId = "workosOrgId" in entity ? entity.workosOrgId : entity.workosUserId;
-  const resolvedStripeInfo = stripeInfo ?? (await getPlanFromStripe(ctx, entityId));
+): Promise<{ entity: Doc<"users">; billing: CreditBillingSnapshot }> {
+  const resolvedStripeInfo = stripeInfo ?? (await getPlanFromStripe(ctx, entity.workosUserId));
   const billing = resolveCreditBilling(entity, resolvedStripeInfo);
 
   if (isMutationCtx(ctx)) {
-    const scope =
-      "workosOrgId" in entity ? scopeFromOrg(entity) : scopeFromUser(entity);
+    const scope = scopeFromUser(entity);
     const periodKey = getCreditPeriodKey(resolvedStripeInfo);
 
     if (billing.needsPersistedReset) {
@@ -331,11 +320,8 @@ export async function syncCreditBilling(
       periodKey,
       billing.monthlyAllowance,
     );
-    const updated =
-      "workosOrgId" in entity
-        ? await ctx.db.get(entity._id)
-        : await ctx.db.get(entity._id);
-    const syncedEntity = (updated ?? entity) as Doc<"organizations"> | Doc<"users">;
+    const updated = await ctx.db.get(entity._id);
+    const syncedEntity = updated!;
     return {
       entity: syncedEntity,
       billing: resolveCreditBilling(syncedEntity, resolvedStripeInfo),
@@ -347,7 +333,7 @@ export async function syncCreditBilling(
       entity: {
         ...entity,
         credits: billing.effectiveCredits - getPurchasedCredits(entity),
-      } as Doc<"organizations"> | Doc<"users">,
+      } as Doc<"users">,
       billing,
     };
   }
@@ -357,9 +343,9 @@ export async function syncCreditBilling(
 
 export async function lazyResetCreditsIfNeeded(
   ctx: MutationCtx | QueryCtx,
-  entity: Doc<"organizations"> | Doc<"users">,
+  entity: Doc<"users">,
   stripeInfo?: StripePlanInfo,
-): Promise<Doc<"organizations"> | Doc<"users">> {
+): Promise<Doc<"users">> {
   const { entity: syncedEntity } = await syncCreditBilling(ctx, entity, stripeInfo);
   return syncedEntity;
 }
@@ -371,15 +357,19 @@ export const persistCreditPeriodReset = internalMutation({
   },
   handler: async (ctx, args) => {
     if (args.workosOrgId) {
-      const org = await ctx.db
-        .query("organizations")
+      const team = await ctx.db
+        .query("teams")
         .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId!))
         .unique();
-      if (!org) {
+      if (!team) {
+        return;
+      }
+      const owner = await ctx.db.get(team.ownerId);
+      if (!owner) {
         return;
       }
       const stripeInfo = await getPlanFromStripe(ctx, args.workosOrgId);
-      await persistCreditPeriodResetOnEntity(ctx, org, stripeInfo);
+      await persistCreditPeriodResetOnEntity(ctx, owner, stripeInfo);
       return;
     }
 

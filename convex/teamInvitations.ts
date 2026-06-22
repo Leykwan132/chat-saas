@@ -115,18 +115,10 @@ export const getOrganizationDisplayName = internalQuery({
     workosOrgId: v.string(),
   },
   handler: async (ctx, args): Promise<string | null> => {
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
-      .unique();
-    if (org) {
-      return org.name;
-    }
-
     const team = await ctx.db
       .query("teams")
       .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
-      .first();
+      .unique();
     return team?.name ?? null;
   },
 });

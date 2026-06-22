@@ -89,7 +89,6 @@ import type * as metaWebhookShared from "../metaWebhookShared.js";
 import type * as oauthSessions from "../oauthSessions.js";
 import type * as oauthShared from "../oauthShared.js";
 import type * as orgRoles from "../orgRoles.js";
-import type * as organizations from "../organizations.js";
 import type * as organizationsAdmin from "../organizationsAdmin.js";
 import type * as planCatalog from "../planCatalog.js";
 import type * as planStripe from "../planStripe.js";
@@ -208,7 +207,6 @@ declare const fullApi: ApiFromModules<{
   oauthSessions: typeof oauthSessions;
   oauthShared: typeof oauthShared;
   orgRoles: typeof orgRoles;
-  organizations: typeof organizations;
   organizationsAdmin: typeof organizationsAdmin;
   planCatalog: typeof planCatalog;
   planStripe: typeof planStripe;

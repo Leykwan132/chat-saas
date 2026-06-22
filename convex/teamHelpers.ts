@@ -332,46 +332,4 @@ export async function ensureOrganizationalTeam(
   return team._id;
 }
 
-export async function syncOrgTeamMembershipsFromOrganization(
-  ctx: MutationCtx,
-  org: Doc<"organizations">,
-) {
-  let team = await getTeamByWorkosOrgId(ctx, org.workosOrgId);
-  if (team === null) {
-    const ownerId = org.admins[0] ?? org.members[0];
-    if (ownerId === undefined) return;
-    await ensureOrganizationalTeam(ctx, {
-      workosOrgId: org.workosOrgId,
-      name: org.name,
-      ownerUserId: ownerId,
-    });
-    team = await getTeamByWorkosOrgId(ctx, org.workosOrgId);
-    if (team === null) return;
-  }
 
-  for (const memberId of org.members) {
-    const role: Doc<"teamMemberships">["role"] = org.admins.includes(memberId)
-      ? "admin"
-      : "member";
-    await ensureTeamMembership(ctx, {
-      teamId: team._id,
-      userId: memberId,
-      role: memberId === team.ownerId ? "owner" : role,
-    });
-
-    const user = await ctx.db.get(memberId);
-    if (user !== null) {
-      await provisionMemberSchedulesForOrg(ctx, org.workosOrgId, user.workosUserId);
-    }
-  }
-
-  const memberships = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
-    .collect();
-  for (const membership of memberships) {
-    if (!org.members.includes(membership.userId)) {
-      await ctx.db.delete(membership._id);
-    }
-  }
-}

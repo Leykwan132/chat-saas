@@ -162,15 +162,15 @@ async function deleteUserByWorkosId(ctx: MutationCtx, workosUserId?: string) {
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
     .unique();
   if (user === null) return;
-  // Scrub the user from every org's members/admins arrays before deleting.
-  const orgs = await ctx.db.query("organizations").collect();
-  for (const org of orgs) {
-    const members = org.members.filter((id) => id !== user._id);
-    const admins = org.admins.filter((id) => id !== user._id);
-    if (members.length !== org.members.length || admins.length !== org.admins.length) {
-      await ctx.db.patch(org._id, { members, admins, updatedAt: Date.now() });
-    }
+
+  const memberships = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId", (q) => q.eq("userId", user._id))
+    .collect();
+  for (const membership of memberships) {
+    await ctx.db.delete(membership._id);
   }
+
   await ctx.db.delete(user._id);
 }
 
@@ -179,18 +179,13 @@ async function upsertOrganization(ctx: MutationCtx, data: any) {
   if (!workosOrgId) return;
   const now = Date.now();
   const name: string = data?.name ?? "Untitled Organization";
-  const existing = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
-    .unique();
+  
+  const existing = await getTeamByWorkosOrgId(ctx, workosOrgId);
   if (existing === null) {
-    await ctx.db.insert("organizations", {
-      workosOrgId,
+    await ctx.db.insert("teams", {
+      type: "organizational",
       name,
-      members: [],
-      admins: [],
-      plan: "free",
-      credits: 500,
+      workosOrgId,
       createdAt: now,
       updatedAt: now,
     });
@@ -200,25 +195,10 @@ async function upsertOrganization(ctx: MutationCtx, data: any) {
   } else {
     await ctx.db.patch(existing._id, { name, updatedAt: now });
   }
-
-  const org = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
-    .unique();
-  if (org !== null) {
-    await syncOrgTeamMembershipsFromOrganization(ctx, org);
-  }
 }
 
 async function deleteOrganizationByWorkosId(ctx: MutationCtx, workosOrgId?: string) {
   if (!workosOrgId) return;
-  const org = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
-    .unique();
-  if (org === null) return;
-  await ctx.db.delete(org._id);
-
   const team = await getTeamByWorkosOrgId(ctx, workosOrgId);
   if (team !== null) {
     const memberships = await ctx.db
@@ -245,22 +225,45 @@ async function applyMembership(ctx: MutationCtx, data: any) {
     workosUserId,
     email: typeof data?.email === "string" ? data.email : undefined,
   });
-  const orgId = await ensureOrganization(ctx, workosOrgId);
-  const org = await ctx.db.get(orgId);
-  if (org === null) return;
 
-  const isNewMember = !org.members.includes(userId);
-  const isAdmin = isWorkosOrgAdminRole(roleSlug);
-  const members = dedupeAppend(org.members, userId);
-  const admins = isAdmin
-    ? dedupeAppend(org.admins, userId)
-    : org.admins.filter((id) => id !== userId);
-  await ctx.db.patch(orgId, { members, admins, updatedAt: Date.now() });
-
-  const updatedOrg = await ctx.db.get(orgId);
-  if (updatedOrg !== null) {
-    await syncOrgTeamMembershipsFromOrganization(ctx, updatedOrg);
+  let team = await getTeamByWorkosOrgId(ctx, workosOrgId);
+  const now = Date.now();
+  if (team === null) {
+    const teamId = await ctx.db.insert("teams", {
+      type: "organizational",
+      name: "Untitled Organization",
+      workosOrgId,
+      ownerId: userId,
+      createdAt: now,
+      updatedAt: now,
+    });
+    team = (await ctx.db.get(teamId))!;
+    await ctx.scheduler.runAfter(0, internal.orgRoles.provisionOrganizationRolesAction, {
+      workosOrgId,
+    });
   }
+
+  if (team.ownerId === undefined) {
+    await ctx.db.patch(team._id, { ownerId: userId, updatedAt: now });
+    team = { ...team, ownerId: userId };
+  }
+
+  const existingMembership = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", userId).eq("teamId", team!._id),
+    )
+    .unique();
+  const isNewMember = existingMembership === null;
+
+  const role: Doc<"teamMemberships">["role"] = isWorkosOrgAdminRole(roleSlug) ? "admin" : "member";
+  const finalRole = userId === team.ownerId ? "owner" : role;
+
+  await ensureTeamMembership(ctx, {
+    teamId: team._id,
+    userId,
+    role: finalRole,
+  });
 
   if (isNewMember) {
     const user = await ctx.db.get(userId);
@@ -280,39 +283,24 @@ async function removeMembership(ctx: MutationCtx, data: any) {
     .query("users")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
     .unique();
-  const org = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
-    .unique();
-  if (user === null || org === null) return;
-
-  const members = org.members.filter((id) => id !== user._id);
-  const admins = org.admins.filter((id) => id !== user._id);
-  await ctx.db.patch(org._id, { members, admins, updatedAt: Date.now() });
-
   const team = await getTeamByWorkosOrgId(ctx, workosOrgId);
-  if (team !== null) {
-    await removeTeamMembership(ctx, team._id, user._id);
-  }
-}
+  if (user === null || team === null) return;
 
-async function ensureOrganization(ctx: MutationCtx, workosOrgId: string) {
-  const existing = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
-    .unique();
-  if (existing !== null) return existing._id;
-  const now = Date.now();
-  return await ctx.db.insert("organizations", {
-    workosOrgId,
-    name: "Untitled Organization",
-    members: [],
-    admins: [],
-    plan: "free",
-    credits: 500,
-    createdAt: now,
-    updatedAt: now,
-  });
+  await removeTeamMembership(ctx, team._id, user._id);
+
+  if (team.ownerId === user._id) {
+    const memberships = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_teamId", (q) => q.eq("teamId", team!._id))
+      .collect();
+    const nextOwner = memberships.find((m) => m.role === "admin") ?? memberships[0];
+    if (nextOwner) {
+      await ctx.db.patch(team._id, { ownerId: nextOwner.userId, updatedAt: Date.now() });
+      await ctx.db.patch(nextOwner._id, { role: "owner" });
+    } else {
+      await ctx.db.patch(team._id, { ownerId: undefined, updatedAt: Date.now() });
+    }
+  }
 }
 
 function dedupeAppend<T>(list: T[], item: T): T[] {

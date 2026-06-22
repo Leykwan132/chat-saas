@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
+import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -43,6 +44,12 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
     "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
     "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
   });
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
 
   // 1. Setup mock Agent
   const agentId = await t.run(async (ctx) => {

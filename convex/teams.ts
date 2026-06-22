@@ -34,16 +34,19 @@ export type TeamListItem = {
 };
 
 async function resolveOrgPlan(
-  ctx: Parameters<typeof getPlanFromStripe>[0],
-  org: { plan?: PlanKey; workosOrgId: string },
+  ctx: QueryCtx | MutationCtx,
+  team: { ownerId?: Id<"users"> },
 ): Promise<PlanKey> {
+  if (!team.ownerId) return "free";
+  const owner = await ctx.db.get(team.ownerId);
+  if (!owner) return "free";
   try {
-    const stripeInfo = await getPlanFromStripe(ctx, org.workosOrgId);
+    const stripeInfo = await getPlanFromStripe(ctx, owner.workosUserId);
     if (stripeInfo.plan !== "free") return stripeInfo.plan;
   } catch (err) {
-    console.warn(`Failed to resolve Stripe plan for org ${org.workosOrgId}:`, err);
+    console.warn(`Failed to resolve Stripe plan for team owner ${owner.workosUserId}:`, err);
   }
-  return org.plan ?? "free";
+  return (owner.plan as PlanKey) ?? "free";
 }
 
 function buildTeamListItem(args: {
@@ -119,27 +122,17 @@ async function listTeamsForCurrentUser(ctx: QueryCtx) {
         });
       }
 
-      const org =
-        team.workosOrgId !== undefined
-          ? await ctx.db
-              .query("organizations")
-              .withIndex("by_workosOrgId", (q) =>
-                q.eq("workosOrgId", team.workosOrgId!),
-              )
-              .unique()
-          : null;
-      const orgPlan = org ? await resolveOrgPlan(ctx, org) : ("free" as PlanKey);
+      const orgPlan = await resolveOrgPlan(ctx, team);
 
       return buildTeamListItem({
         team,
         isActive,
-        memberCount: org?.members.length ?? memberCount,
+        memberCount,
         maxMembers: getMemberLimitForPlan(orgPlan),
         planKey: orgPlan,
         isAdmin:
           membership?.role === "owner" ||
-          membership?.role === "admin" ||
-          (org?.admins.includes(userRow._id) ?? false),
+          membership?.role === "admin",
         isOwner: membership?.role === "owner",
       });
     }),
@@ -261,11 +254,11 @@ export const canInviteMembers = query({
       };
     }
 
-    const org = await ctx.db
-      .query("organizations")
+    const team = await ctx.db
+      .query("teams")
       .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
       .unique();
-    if (org === null) {
+    if (team === null) {
       return {
         allowed: false,
         reason: "Team not found.",
@@ -277,7 +270,7 @@ export const canInviteMembers = query({
 
     const stripeInfo = await getPlanFromStripe(ctx, userId);
     const userPlan = stripeInfo.plan;
-    const memberCount = org.members.length;
+    const memberCount = await countTeamMembers(ctx, team._id);
     const maxMembers = getMemberLimitForPlan(userPlan);
 
     if (userPlan === "free") {

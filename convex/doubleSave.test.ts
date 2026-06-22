@@ -101,11 +101,13 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
 
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
 
   const mockAggregate = {
     "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
     "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
   };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
   t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
@@ -210,11 +212,13 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
 
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
 
   const mockAggregate = {
     "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
     "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
   };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
   t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
@@ -289,7 +293,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
       status: "active",
       currentPeriodEnd: Math.floor(Date.now() / 1000) + 86400 * 30,
       cancelAtPeriodEnd: false,
-      priceId: "price_pro_monthly",
+      priceId: "price_growth_monthly",
     });
   });
 

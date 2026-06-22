@@ -25,32 +25,26 @@ export const getAuthUser = query({
 export const getUsers = query({
   args: {},
   handler: async (ctx) => {
-    const { orgId, activeTeamId } = await getAuthContext(ctx);
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
-      .unique();
-    if (org === null) return [];
+    const { activeTeamId } = await getAuthContext(ctx);
+    if (!activeTeamId) return [];
 
-    const adminSet = new Set<string>(org.admins.map((id: string) => id));
+    const memberships = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_teamId", (q) => q.eq("teamId", activeTeamId))
+      .collect();
+
     const users: Array<
       Doc<"users"> & { isAdmin: boolean; role: Doc<"teamMemberships">["role"] }
     > = [];
-    for (const memberId of org.members) {
-      const user = await ctx.db.get(memberId);
+
+    for (const membership of memberships) {
+      const user = await ctx.db.get(membership.userId);
       if (user === null) continue;
 
-      const membership = await ctx.db
-        .query("teamMemberships")
-        .withIndex("by_userId_and_teamId", (q) =>
-          q.eq("userId", memberId).eq("teamId", activeTeamId),
-        )
-        .unique();
+      const role = membership.role;
+      const isAdmin = role === "owner" || role === "admin";
 
-      const role: Doc<"teamMemberships">["role"] = membership?.role
-        ?? (adminSet.has(memberId) ? "admin" : "member");
-
-      users.push({ ...user, isAdmin: adminSet.has(memberId), role });
+      users.push({ ...user, isAdmin, role });
     }
     return users;
   },

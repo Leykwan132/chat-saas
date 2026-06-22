@@ -357,20 +357,30 @@ async function setConversationLeadOwnerHandler(
     throw new Error("Conversation not found");
   }
 
-  const org = await ctx.db
-    .query("organizations")
+  const team = await ctx.db
+    .query("teams")
     .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
     .unique();
-  if (org === null) {
-    throw new Error("Organization not found");
+  if (team === null) {
+    throw new Error("Team not found");
   }
 
   const userRow = await ctx.db
     .query("users")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
     .unique();
-  if (userRow === null || !org.members.includes(userRow._id)) {
-    throw new Error("User is not a member of this organization");
+  if (userRow === null) {
+    throw new Error("User not found");
+  }
+
+  const membership = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", userRow._id).eq("teamId", team._id),
+    )
+    .unique();
+  if (membership === null) {
+    throw new Error("User is not a member of this team");
   }
 
   await ctx.db.patch(conversationId, {

@@ -17,7 +17,6 @@ import {
 import {
   createTopUpEntry,
   getCreditPeriodKey,
-  scopeFromOrg,
   scopeFromUser,
   syncDenormalizedCreditFields,
 } from "./creditEntries";
@@ -164,15 +163,7 @@ export const syncBillingWithStripe = action({
   },
 });
 
-export const internalGetOrg = internalQuery({
-  args: { orgId: v.string() },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
-      .unique();
-  },
-});
+
 
 export const internalGetUser = internalQuery({
   args: { userId: v.string() },
@@ -265,25 +256,23 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
         });
       }
     } else {
-      const org = await ctx.db
-        .query("organizations")
-        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
-        .unique();
-      if (!org) {
-        throw new Error("Organization not found");
-      }
-
-      // Assign the Stripe subscription ID to the organizational team in the teams table
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
-      if (orgTeam) {
-        await ctx.db.patch(orgTeam._id, {
-          stripeSubscriptionId: args.stripeSubscriptionId,
-          updatedAt: Date.now(),
-        });
+      if (!orgTeam) {
+        throw new Error("Team not found for organization " + args.orgId);
+      }
+      
+      await ctx.db.patch(orgTeam._id, {
+        stripeSubscriptionId: args.stripeSubscriptionId,
+        updatedAt: Date.now(),
+      });
+
+      const owner = await ctx.db.get(orgTeam.ownerId);
+      if (!owner) {
+        throw new Error("Team owner not found");
       }
 
-      const isPlanChanged = org.stripePriceId !== args.priceId;
-      const isNewPeriod = org.stripeSubscriptionCurrentPeriodEnd !== newPeriodEndMs;
+      const isPlanChanged = owner.stripePriceId !== args.priceId;
+      const isNewPeriod = owner.stripeSubscriptionCurrentPeriodEnd !== newPeriodEndMs;
 
       const updates: any = {
         stripeCustomerId: args.stripeCustomerId,
@@ -298,10 +287,10 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
         updates.credits = monthlyCredits;
       }
 
-      await ctx.db.patch(org._id, updates);
+      await ctx.db.patch(owner._id, updates);
 
       if (isPlanChanged || isNewPeriod) {
-        const before = snapshotCreditBalances(org);
+        const before = snapshotCreditBalances(owner);
         const monthlyCreditsAfter = monthlyCredits;
         const purchasedCreditsAfter = before.purchasedCreditsBefore;
         const balanceAfter = monthlyCreditsAfter + purchasedCreditsAfter;
@@ -380,27 +369,26 @@ export const handleSubscriptionDeletedInternal = internalMutation({
         reason: "Subscription canceled, reverted to Free plan",
       });
     } else {
-      const org = await ctx.db
-        .query("organizations")
-        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
-        .unique();
-      if (!org) {
-        throw new Error("Organization not found");
-      }
-
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
-      if (orgTeam) {
-        await ctx.db.patch(orgTeam._id, {
-          stripeSubscriptionId: undefined,
-          updatedAt: Date.now(),
-        });
+      if (!orgTeam) {
+        throw new Error("Team not found for organization " + args.orgId);
       }
 
-      const before = snapshotCreditBalances(org);
+      await ctx.db.patch(orgTeam._id, {
+        stripeSubscriptionId: undefined,
+        updatedAt: Date.now(),
+      });
+
+      const owner = await ctx.db.get(orgTeam.ownerId);
+      if (!owner) {
+        throw new Error("Team owner not found");
+      }
+
+      const before = snapshotCreditBalances(owner);
       const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
       const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
 
-      await ctx.db.patch(org._id, {
+      await ctx.db.patch(owner._id, {
         stripeSubscriptionId: undefined,
         stripePriceId: undefined,
         stripeSubscriptionStatus: "canceled",
@@ -494,18 +482,19 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
         reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
       });
     } else {
-      const org = await ctx.db
-        .query("organizations")
-        .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.orgId))
-        .unique();
-      if (!org) {
-        throw new Error("Organization not found");
+      const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
+      if (!orgTeam) {
+        throw new Error("Team not found for organization " + args.orgId);
+      }
+      const owner = await ctx.db.get(orgTeam.ownerId);
+      if (!owner) {
+        throw new Error("Team owner not found");
       }
 
-      const scope = scopeFromOrg(org);
+      const scope = scopeFromUser(owner);
       const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
       const periodKey = getCreditPeriodKey(stripeInfo);
-      const before = snapshotCreditBalances(org);
+      const before = snapshotCreditBalances(owner);
       const topUpEntryId = await createTopUpEntry(ctx, scope, {
         amount: args.creditsToGrant,
         label: buildTopUpLabel(args.creditsToGrant),
@@ -513,10 +502,10 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
       });
       const synced = await syncDenormalizedCreditFields(
         ctx,
-        org._id,
+        owner._id,
         scope,
         periodKey,
-        org,
+        owner,
       );
       const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
 

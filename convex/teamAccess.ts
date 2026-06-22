@@ -66,20 +66,7 @@ async function isTeamAdmin(
     return false;
   }
 
-  if (access.membership.role === "owner" || access.membership.role === "admin") {
-    return true;
-  }
-
-  if (access.team.workosOrgId === undefined) {
-    return false;
-  }
-
-  const org = await ctx.db
-    .query("organizations")
-    .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", access.team.workosOrgId!))
-    .unique();
-
-  return org?.admins.includes(access.userRow._id) ?? false;
+  return access.membership.role === "owner" || access.membership.role === "admin";
 }
 
 async function isTeamOwner(

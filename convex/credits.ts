@@ -54,7 +54,7 @@ export function isPlaygroundCreditsEnabled(): boolean {
 async function applyUsageDeduction(
   ctx: MutationCtx,
   args: {
-    entity: Doc<"users"> | Doc<"organizations">;
+    entity: Doc<"users">;
     scope: CreditScope;
     stripeEntityId: string;
     creditsCharged: number;

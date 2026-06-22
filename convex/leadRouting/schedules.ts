@@ -81,19 +81,28 @@ async function assertOrgMember(ctx: Parameters<typeof assertAvailabilityRead>[0]
   if (!orgId || orgId === "personal") {
     throw new Error("Organization required");
   }
-  const org = await ctx.db
-    .query("organizations")
+  const team = await ctx.db
+    .query("teams")
     .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
     .unique();
-  if (org === null) {
-    throw new Error("Organization not found");
+  if (team === null) {
+    throw new Error("Team not found");
   }
   const userRow = await ctx.db
     .query("users")
     .withIndex("by_workosUserId", (q) => q.eq("workosUserId", workosUserId))
     .unique();
-  if (userRow === null || !org.members.includes(userRow._id)) {
-    throw new Error("User is not a member of this organization");
+  if (userRow === null) {
+    throw new Error("User not found");
+  }
+  const membership = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", userRow._id).eq("teamId", team._id),
+    )
+    .unique();
+  if (membership === null) {
+    throw new Error("User is not a member of this team");
   }
 }
 
@@ -140,14 +149,24 @@ export const getForAgentUser = query({
     }
 
     const { orgId } = await getAuthContext(ctx);
-    const org =
+    const team =
       orgId && orgId !== "personal"
         ? await ctx.db
-            .query("organizations")
+            .query("teams")
             .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", orgId))
             .unique()
         : null;
-    const isAdmin = org?.admins.includes(user._id) ?? false;
+
+    let isAdmin = false;
+    if (team !== null) {
+      const membership = await ctx.db
+        .query("teamMemberships")
+        .withIndex("by_userId_and_teamId", (q) =>
+          q.eq("userId", user._id).eq("teamId", team._id),
+        )
+        .unique();
+      isAdmin = membership?.role === "owner" || membership?.role === "admin";
+    }
 
     const schedule = await ctx.db
       .query("userSchedules")

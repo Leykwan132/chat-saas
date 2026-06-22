@@ -37,14 +37,19 @@ export async function provisionOrgMemberSchedulesForAgent(
 ) {
   if (!isTeamOrgId(workosOrgId)) return;
 
-  const org = await ctx.db
-    .query("organizations")
+  const team = await ctx.db
+    .query("teams")
     .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", workosOrgId))
     .unique();
-  if (org === null) return;
+  if (team === null) return;
 
-  for (const memberId of org.members) {
-    const user = await ctx.db.get(memberId);
+  const memberships = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+    .collect();
+
+  for (const membership of memberships) {
+    const user = await ctx.db.get(membership.userId);
     if (user === null) continue;
     await ensureUserScheduleForAgent(ctx, {
       agentId,

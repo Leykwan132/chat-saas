@@ -6,6 +6,7 @@ import schema from "./schema";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
+import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 beforeAll(() => {
   process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
@@ -46,6 +47,13 @@ test("Sender name resolution for channel, human, and AI providers", async () => 
   };
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {

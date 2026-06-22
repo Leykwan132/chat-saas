@@ -22,7 +22,6 @@ export const wipe = internalMutation({
       "channels",
       "customers",
       "users",
-      "organizations",
       "processedEvents",
     ] as const;
 
@@ -44,7 +43,7 @@ export const wipe = internalMutation({
 export const wipeWorkosState = internalMutation({
   args: { confirm: v.literal("yes") },
   handler: async (ctx) => {
-    const tables = ["users", "organizations", "processedEvents"] as const;
+    const tables = ["users", "processedEvents"] as const;
     const counts: Record<string, number> = {};
     for (const table of tables) {
       const rows = await ctx.db.query(table).collect();

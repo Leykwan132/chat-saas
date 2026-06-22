@@ -6,6 +6,7 @@ import schema from "./schema";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
+import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 beforeAll(() => {
   process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
@@ -46,6 +47,13 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
   };
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -79,14 +87,7 @@ test("Smart escalation lifecycle: trigger, resolve, and auto-resolve", async () 
       lastName: "Test",
     });
 
-    await ctx.db.insert("organizations", {
-      workosOrgId: orgId,
-      name: "Test Org",
-      members: [userDbId],
-      admins: [userDbId],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+
 
     const teamId = await ensureOrganizationalTeam(ctx, {
       workosOrgId: orgId,
@@ -262,6 +263,13 @@ test("escalates without sending a customer message when escalationMessage is uns
   };
   t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
   t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
 
   t.registerComponent("agent", agentSchema, {
     "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
@@ -285,14 +293,7 @@ test("escalates without sending a customer message when escalationMessage is uns
       lastName: "Message",
     });
 
-    await ctx.db.insert("organizations", {
-      workosOrgId: orgId,
-      name: "Test Org",
-      members: [userDbId],
-      admins: [userDbId],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+
 
     const teamId = await ensureOrganizationalTeam(ctx, {
       workosOrgId: orgId,

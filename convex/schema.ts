@@ -134,35 +134,10 @@ export default defineSchema({
   })
     .index("by_workosUserId", ["workosUserId"])
     .index("by_email", ["email"]),
-  organizations: defineTable({
-    workosOrgId: v.string(),
-    name: v.string(),
-    members: v.array(v.id("users")),
-    admins: v.array(v.id("users")),
-    plan: v.optional(
-      v.union(
-        v.literal("free"),
-        v.literal("starter"),
-        v.literal("growth"),
-        v.literal("business"),
-      )
-    ),
-    credits: v.optional(v.number()),
-    purchasedCredits: v.optional(v.number()),
-    purchasedCreditsGranted: v.optional(v.number()),
-    stripeCustomerId: v.optional(v.string()),
-    stripeSubscriptionId: v.optional(v.string()),
-    stripePriceId: v.optional(v.string()),
-    stripeSubscriptionStatus: v.optional(v.string()),
-    stripeSubscriptionCurrentPeriodEnd: v.optional(v.number()),
-    creditsPeriodMonthKey: v.optional(v.string()),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  }).index("by_workosOrgId", ["workosOrgId"]),
   teams: defineTable({
     type: v.union(v.literal("personal"), v.literal("organizational")),
     name: v.string(),
-    ownerId: v.id("users"),
+    ownerId: v.optional(v.id("users")),
     workosOrgId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     industry: v.optional(v.string()),

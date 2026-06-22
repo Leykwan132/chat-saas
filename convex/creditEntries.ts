@@ -37,9 +37,7 @@ export function scopeFromUser(user: Doc<"users">): CreditScope {
   return { orgId: "", userId: user._id };
 }
 
-export function scopeFromOrg(org: Doc<"organizations">): CreditScope {
-  return { orgId: org.workosOrgId };
-}
+
 
 async function getCreditPeriodByKey(
   ctx: Pick<QueryCtx, "db">,
@@ -293,7 +291,7 @@ export async function deductFromCreditEntries(
 /** Keep denormalized `credits` / `purchasedCredits` on users & orgs in sync with entries. */
 export async function syncDenormalizedCreditFields(
   ctx: MutationCtx,
-  entityId: Id<"users"> | Id<"organizations">,
+  entityId: Id<"users">,
   scope: CreditScope,
   periodKey: string,
   fallbackEntity?: CreditEntity,
@@ -315,7 +313,7 @@ export async function syncDenormalizedCreditFields(
 /** Ensure entry tables exist and match legacy balances on first touch. */
 export async function ensureCreditEntryState(
   ctx: MutationCtx,
-  entity: Doc<"users"> | Doc<"organizations">,
+  entity: Doc<"users">,
   scope: CreditScope,
   periodKey: string,
   monthlyAllowance: number,

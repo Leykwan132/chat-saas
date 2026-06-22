@@ -164,39 +164,6 @@ export const persistCreatedTeam = internalMutation({
     }
 
     const now = Date.now();
-    let org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
-      .unique();
-
-    if (org === null) {
-      const orgId = await ctx.db.insert("organizations", {
-        workosOrgId: args.workosOrgId,
-        name: args.name,
-        members: [user._id],
-        admins: [user._id],
-        plan: "free",
-        credits: 500,
-        createdAt: now,
-        updatedAt: now,
-      });
-      org = (await ctx.db.get(orgId))!;
-    } else {
-      const members = org.members.includes(user._id)
-        ? org.members
-        : [...org.members, user._id];
-      const admins = org.admins.includes(user._id)
-        ? org.admins
-        : [...org.admins, user._id];
-      await ctx.db.patch(org._id, {
-        name: args.name,
-        members,
-        admins,
-        updatedAt: now,
-      });
-      org = (await ctx.db.get(org._id))!;
-    }
-
     const teamId = await ensureOrganizationalTeam(ctx, {
       workosOrgId: args.workosOrgId,
       name: args.name,
@@ -307,18 +274,6 @@ export const persistUpdatedOrganization = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
-      .unique();
-
-    if (org !== null) {
-      await ctx.db.patch(org._id, {
-        name: args.name,
-        updatedAt: now,
-      });
-    }
-
     const team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);
     if (team !== null) {
       await ctx.db.patch(team._id, {
@@ -339,15 +294,6 @@ export const removeOrganizationLocally = internalMutation({
     const user = await getUserByWorkosId(ctx, args.workosUserId);
     if (user === null) {
       throw new Error("User not found");
-    }
-
-    const org = await ctx.db
-      .query("organizations")
-      .withIndex("by_workosOrgId", (q) => q.eq("workosOrgId", args.workosOrgId))
-      .unique();
-
-    if (org !== null) {
-      await ctx.db.delete(org._id);
     }
 
     const team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);

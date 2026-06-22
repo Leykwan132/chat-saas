@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useQuery } from 'convex/react';
-import { CreditCard, LogOut, Settings } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import { TeamsAccountSubmenu, accountMenuProfileRowClassName } from '@/components/TeamsAccountSubmenu';
@@ -129,14 +129,6 @@ export function UserProfileButton({ settingsPath }: { settingsPath: string }) {
           >
             <Settings className="size-4" />
             Settings
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            disabled={isSigningOut}
-            onSelect={() => navigate('/pricing')}
-          >
-            <CreditCard className="size-4" />
-            Plan and pricing
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-2" />
