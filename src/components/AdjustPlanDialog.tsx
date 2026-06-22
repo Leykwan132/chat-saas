@@ -99,7 +99,7 @@ export function AdjustPlanDialog({
       <DialogContent
         showCloseButton
         className={cn(
-          'fixed inset-0 z-50 m-0 flex h-svh w-svw max-w-none translate-none transform-none flex-col overflow-hidden',
+          'fixed inset-0 z-50 m-0 flex h-svh w-svw max-w-none translate-none transform-none flex-col overflow-y-auto',
           'top-0 left-0 rounded-none border-0 bg-background p-0 shadow-none ring-0',
           'sm:top-0 sm:left-0 sm:max-w-none',
           'data-open:zoom-in-100 data-closed:zoom-out-100',
