@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
+import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { logConversationEvent } from "./conversationLogs";
 
 const customerServiceValidator = v.union(
@@ -81,10 +81,8 @@ function resolveBroadcastPhone(customer: Doc<"customers">): string | null {
 export const listForAgentBroadcast = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return [];
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const agent = await getAgentForBroadcast(ctx, args.agentId);
     if (agent === null) {
@@ -93,7 +91,7 @@ export const listForAgentBroadcast = query({
 
     const rows = await ctx.db
       .query("customers")
-      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", orgId))
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
       .order("desc")
       .collect();
 
@@ -162,14 +160,12 @@ export const listForAgentBroadcast = query({
 export const listWhatsAppBroadcastCandidates = query({
   args: { channelId: v.id("channels") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return [];
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const channel = await ctx.db.get(args.channelId);
     if (
       channel === null ||
-      channel.orgId !== orgId ||
+      channel.orgId !== resolvedOrgId ||
       channel.service !== "whatsapp"
     ) {
       throw new Error("Channel not found");
@@ -207,7 +203,7 @@ export const listWhatsAppBroadcastCandidates = query({
       const phone = c.contactAddress.trim();
       if (c.customerId !== undefined) {
         const cust = await ctx.db.get(c.customerId);
-        if (cust !== null && cust.orgId === orgId) {
+        if (cust !== null && cust.orgId === resolvedOrgId) {
           out.push({
             customerId: cust._id,
             name: cust.name?.trim() || c.contactName,
@@ -295,13 +291,11 @@ export const getSidebarDetailsForConversation = query({
 export const listForCurrentOrg = query({
   args: { paginationOpts: paginationOptsValidator },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return { page: [], isDone: true, continueCursor: "" };
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const result = await ctx.db
       .query("customers")
-      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", orgId))
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
       .order("desc")
       .paginate(args.paginationOpts);
 
@@ -392,10 +386,8 @@ export const addManually = mutation({
     leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      throw new Error("You must belong to an organization to add customers.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const name = args.name.trim();
     if (!name) {
       throw new Error("Customer name is required");
@@ -406,7 +398,7 @@ export const addManually = mutation({
       assertNotLeadTemperatureTag(tag);
     }
     return await ctx.db.insert("customers", {
-      orgId,
+      orgId: resolvedOrgId,
       service: "manual",
       contactAddress: "",
       name,

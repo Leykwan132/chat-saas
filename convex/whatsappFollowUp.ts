@@ -6,7 +6,7 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
+import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { followUpPool } from "./followUpPool";
@@ -83,8 +83,15 @@ export const createFollowUpRule = mutation({
     if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     await assertFollowUpsAvailable(ctx, orgId, userId);
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
+
+    // Security check: verify channel belongs to the resolvedOrgId
+    const channel = await ctx.db.get(args.channelId);
+    if (channel === null || channel.orgId !== resolvedOrgId) {
+      throw new Error("Channel not found");
+    }
 
     const name = args.name.trim();
     if (!name) {
@@ -102,7 +109,7 @@ export const createFollowUpRule = mutation({
     const now = Date.now();
     return await ctx.db.insert("followUpRules", {
       agentId: args.agentId,
-      orgId,
+      orgId: resolvedOrgId,
       channelId: args.channelId,
       name,
       attempts: args.attempts,
@@ -146,8 +153,9 @@ export const getFollowUpRule = query({
     if (!orgId || !userId) {
       return null;
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const rule = await ctx.db.get(args.id);
-    if (rule === null || rule.orgId !== orgId) {
+    if (rule === null || rule.orgId !== resolvedOrgId) {
       return null;
     }
     await assertAgentInOrg(ctx, rule.agentId, orgId, userId);
@@ -181,8 +189,9 @@ export const updateFollowUpRule = mutation({
     if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const rule = await ctx.db.get(args.id);
-    if (rule === null || rule.orgId !== orgId) {
+    if (rule === null || rule.orgId !== resolvedOrgId) {
       throw new Error("Follow-up rule not found");
     }
     if (args.isActive) {
@@ -235,12 +244,13 @@ export const updateFollowUpRule = mutation({
 export const deleteFollowUpRule = mutation({
   args: { id: v.id("followUpRules") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId) {
+    const { orgId, userId } = await getAuthContext(ctx);
+    if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const rule = await ctx.db.get(args.id);
-    if (rule === null || rule.orgId !== orgId) {
+    if (rule === null || rule.orgId !== resolvedOrgId) {
       throw new Error("Follow-up rule not found");
     }
     await ctx.db.delete(args.id);
@@ -258,8 +268,9 @@ export const setFollowUpRuleActive = mutation({
     if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const rule = await ctx.db.get(args.id);
-    if (rule === null || rule.orgId !== orgId) {
+    if (rule === null || rule.orgId !== resolvedOrgId) {
       throw new Error("Follow-up rule not found");
     }
     if (args.isActive) {
@@ -287,9 +298,10 @@ export const listFollowUpSendsForRule = query({
     if (!orgId || !userId) {
       return null;
     }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const rule = await ctx.db.get(args.ruleId);
-    if (rule === null || rule.orgId !== orgId) {
+    if (rule === null || rule.orgId !== resolvedOrgId) {
       return null;
     }
     await assertAgentInOrg(ctx, rule.agentId, orgId, userId);

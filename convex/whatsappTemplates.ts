@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, internalMutation, query, internalQuery } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 
 export const createLocalTemplate = mutation({
   args: {
@@ -12,16 +12,20 @@ export const createLocalTemplate = mutation({
     components: v.any(), // Array of components
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     
+    // Security check: verify channel belongs to the resolvedOrgId
+    const channel = await ctx.db.get(args.channelId);
+    if (channel === null || channel.orgId !== resolvedOrgId) {
+      throw new Error("Channel not found");
+    }
+
     // Abstract the purpose: broadcasting -> MARKETING, follow_up -> UTILITY
     const category = args.purpose === "broadcasting" ? "MARKETING" : "UTILITY";
     
     const templateId = await ctx.db.insert("whatsappTemplates", {
-      orgId,
+      orgId: resolvedOrgId,
       channelId: args.channelId,
       name: args.name,
       language: args.language,
@@ -69,14 +73,12 @@ export const listLocalTemplates = query({
     channelId: v.id("channels"),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     return await ctx.db
       .query("whatsappTemplates")
       .withIndex("by_orgId_and_channelId", (q) =>
-        q.eq("orgId", orgId).eq("channelId", args.channelId)
+        q.eq("orgId", resolvedOrgId).eq("channelId", args.channelId)
       )
       .collect();
   },

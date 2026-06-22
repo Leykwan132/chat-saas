@@ -9,7 +9,7 @@ import {
 } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
+import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { broadcastPool } from "./broadcastPool";
 
 const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
@@ -196,11 +196,9 @@ function normalizeLanguage(lang: MetaTemplateRow["language"]): string {
 export const listTemplates = action({
   args: { channelId: v.id("channels") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
-    const channel = await getOrgWhatsAppChannel(ctx, args.channelId, orgId);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const channel = await getOrgWhatsAppChannel(ctx, args.channelId, resolvedOrgId);
     const token = resolveAccessToken(channel);
     const wabaId = channel.wabaId!.trim();
 
@@ -276,11 +274,9 @@ export const createTemplate = action({
     bodyText: v.string(),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
-    const channel = await getOrgWhatsAppChannel(ctx, args.channelId, orgId);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const channel = await getOrgWhatsAppChannel(ctx, args.channelId, resolvedOrgId);
     const token = resolveAccessToken(channel);
     const wabaId = channel.wabaId!.trim();
     const res = await fetch(`${graphBase()}/${wabaId}/message_templates`, {
@@ -309,14 +305,12 @@ export const sendTemplateBatch = action({
     toPhones: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     return await sendTemplateBatchToPhones(
       ctx,
       args.channelId,
-      orgId,
+      resolvedOrgId,
       args.templateName,
       args.templateLanguage,
       args.toPhones,
@@ -335,16 +329,14 @@ export const scheduleTemplateBatch = mutation({
   },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
 
     const channel = await ctx.db.get(args.channelId);
     if (
       channel === null ||
-      channel.orgId !== orgId ||
+      channel.orgId !== resolvedOrgId ||
       channel.service !== "whatsapp"
     ) {
       throw new Error("Channel not found");
@@ -360,7 +352,7 @@ export const scheduleTemplateBatch = mutation({
 
     const scheduleId = await ctx.db.insert("whatsappBroadcastSchedules", {
       agentId: args.agentId,
-      orgId,
+      orgId: resolvedOrgId,
       channelId: args.channelId,
       templateName: args.templateName.trim(),
       templateLanguage: args.templateLanguage.trim(),
@@ -376,7 +368,7 @@ export const scheduleTemplateBatch = mutation({
     for (const customerId of uniqueCustomerIds) {
       const recipientId = await ctx.db.insert("whatsappBroadcastRecipients", {
         scheduleId,
-        orgId,
+        orgId: resolvedOrgId,
         customerId,
         status: isImmediate ? "processing" : "pending",
       });
@@ -414,9 +406,6 @@ export const listSchedulesForAgent = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
 
     return await ctx.db
@@ -431,12 +420,10 @@ export const getBroadcastSchedule = query({
   args: { scheduleId: v.id("whatsappBroadcastSchedules") },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const schedule = await ctx.db.get(args.scheduleId);
-    if (schedule === null || schedule.orgId !== orgId) {
+    if (schedule === null || schedule.orgId !== resolvedOrgId) {
       return null;
     }
     await assertAgentInOrg(ctx, schedule.agentId, orgId, userId);
@@ -448,12 +435,10 @@ export const listBroadcastScheduleRecipients = query({
   args: { scheduleId: v.id("whatsappBroadcastSchedules") },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const schedule = await ctx.db.get(args.scheduleId);
-    if (schedule === null || schedule.orgId !== orgId) {
+    if (schedule === null || schedule.orgId !== resolvedOrgId) {
       return null;
     }
     await assertAgentInOrg(ctx, schedule.agentId, orgId, userId);
@@ -524,13 +509,11 @@ export const cancelScheduledBatch = mutation({
     scheduleId: v.id("whatsappBroadcastSchedules"),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const schedule = await ctx.db.get(args.scheduleId);
-    if (schedule === null || schedule.orgId !== orgId) {
+    if (schedule === null || schedule.orgId !== resolvedOrgId) {
       throw new Error("Schedule not found");
     }
 
@@ -549,13 +532,11 @@ export const deleteScheduleRecord = mutation({
     scheduleId: v.id("whatsappBroadcastSchedules"),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId || orgId === "personal") {
-      throw new Error("You must belong to an organization.");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
     const schedule = await ctx.db.get(args.scheduleId);
-    if (schedule === null || schedule.orgId !== orgId) {
+    if (schedule === null || schedule.orgId !== resolvedOrgId) {
       throw new Error("Schedule not found");
     }
 
