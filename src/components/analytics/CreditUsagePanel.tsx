@@ -148,7 +148,7 @@ export function CreditUsagePanel({
   );
   const workspaceUsage = useQuery(
     api.creditUsageAnalytics.getWorkspaceCreditUsage,
-    scope === 'workspace' && workspaceId ? { workspaceId, timeRange } : 'skip'
+    scope === 'workspace' && typeof workspaceId === 'string' ? { workspaceId, timeRange } : 'skip'
   );
   const accountUsage = useQuery(
     api.creditUsageAnalytics.getAccountCreditUsage,
@@ -207,8 +207,8 @@ export function CreditUsagePanel({
         <div className="flex flex-wrap items-center gap-2">
           {workspaceOptions && onWorkspaceChange && (
             <Select
-              value={selectedWorkspaceId ?? 'all'}
-              onValueChange={onWorkspaceChange}
+              value={selectedWorkspaceId === '' ? 'personal' : (selectedWorkspaceId ?? 'all')}
+              onValueChange={(val) => onWorkspaceChange(val === 'personal' ? '' : val)}
             >
               <SelectTrigger size="sm" className="w-[180px]">
                 <SelectValue placeholder="All Workspaces" />
@@ -216,7 +216,7 @@ export function CreditUsagePanel({
               <SelectContent>
                 <SelectItem value="all">All Workspaces</SelectItem>
                 {workspaceOptions.map((option) => (
-                  <SelectItem key={option.id} value={option.id}>
+                  <SelectItem key={option.id} value={option.id || 'personal'}>
                     {option.name}
                   </SelectItem>
                 ))}

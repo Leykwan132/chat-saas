@@ -86,7 +86,6 @@ import type * as messengerSend from "../messengerSend.js";
 import type * as messengerSync from "../messengerSync.js";
 import type * as messengerWebhook from "../messengerWebhook.js";
 import type * as metaWebhookShared from "../metaWebhookShared.js";
-import type * as migrations_migrateCreditsToUserQuota from "../migrations/migrateCreditsToUserQuota.js";
 import type * as oauthSessions from "../oauthSessions.js";
 import type * as oauthShared from "../oauthShared.js";
 import type * as orgRoles from "../orgRoles.js";
@@ -206,7 +205,6 @@ declare const fullApi: ApiFromModules<{
   messengerSync: typeof messengerSync;
   messengerWebhook: typeof messengerWebhook;
   metaWebhookShared: typeof metaWebhookShared;
-  "migrations/migrateCreditsToUserQuota": typeof migrations_migrateCreditsToUserQuota;
   oauthSessions: typeof oauthSessions;
   oauthShared: typeof oauthShared;
   orgRoles: typeof orgRoles;

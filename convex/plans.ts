@@ -1,6 +1,6 @@
 import { query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { v } from "convex/values";
-import { getAuthContext } from "./authUtils";
+import { getAuthContextOrNull } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { components } from "./_generated/api";
 import {
@@ -167,7 +167,9 @@ export async function getChannelLimitForOrg(
 export const getPlanAndUsage = query({
   args: {},
   handler: async (ctx) => {
-    const { userId } = await getAuthContext(ctx);
+    const auth = await getAuthContextOrNull(ctx);
+    if (!auth) return null;
+    const { userId } = auth;
     const user = await ctx.db
       .query("users")
       .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))

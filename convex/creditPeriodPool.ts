@@ -23,8 +23,24 @@ function anchorDayFor(userCreatedAt: number): number {
   return new Date(userCreatedAt).getUTCDate();
 }
 
-/** Add one calendar month to `startMs`, clamping `anchorDay` to month length. */
-function addOneMonth(startMs: number, anchorDay: number): number {
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
+const DAY_MS = 24 * HOUR_MS;
+
+/** Add the period duration to `startMs`, falling back to one calendar month. */
+function addPeriodDuration(startMs: number, anchorDay: number): number {
+  const resetPeriod = process.env.CREDIT_RESET_PERIOD;
+  if (resetPeriod === "minutes") {
+    return startMs + MINUTE_MS;
+  }
+  if (resetPeriod === "hours") {
+    return startMs + HOUR_MS;
+  }
+  if (resetPeriod === "days") {
+    return startMs + DAY_MS;
+  }
+
+  // Default to one calendar month, clamping `anchorDay` to month length.
   const d = new Date(startMs);
   const year = d.getUTCFullYear();
   const month = d.getUTCMonth();
@@ -41,11 +57,11 @@ function computeNextPeriod(
   const anchorDay = anchorDayFor(userCreatedAt);
   if (latest) {
     const periodStart = latest.periodEnd;
-    const periodEnd = addOneMonth(periodStart, anchorDay);
+    const periodEnd = addPeriodDuration(periodStart, anchorDay);
     return { periodStart, periodEnd };
   }
   const periodStart = userCreatedAt;
-  const periodEnd = addOneMonth(periodStart, anchorDay);
+  const periodEnd = addPeriodDuration(periodStart, anchorDay);
   return { periodStart, periodEnd };
 }
 
@@ -60,12 +76,12 @@ export function computeCurrentPeriodBounds(
 ): { periodStart: number; periodEnd: number } {
   const anchorDay = anchorDayFor(userCreatedAt);
   let periodStart = userCreatedAt;
-  let periodEnd = addOneMonth(periodStart, anchorDay);
+  let periodEnd = addPeriodDuration(periodStart, anchorDay);
   const now = Date.now();
   let guard = 0;
   while (periodEnd <= now && guard < 24) {
     periodStart = periodEnd;
-    periodEnd = addOneMonth(periodStart, anchorDay);
+    periodEnd = addPeriodDuration(periodStart, anchorDay);
     guard++;
   }
   return { periodStart, periodEnd };

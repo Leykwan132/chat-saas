@@ -729,19 +729,7 @@ export default defineSchema({
     .index("by_userId_and_periodStart", ["userId", "periodStart"])
     .index("by_userId_and_periodEnd", ["userId", "periodEnd"])
     .index("by_periodEnd", ["periodEnd"]),
-  // Deprecated: replaced by userCreditPeriods. Kept so existing docs validate
-  // until the data migration completes, then removed in a follow-up narrow deploy.
-  creditPeriods: defineTable({
-    orgId: v.string(),
-    userId: v.optional(v.id("users")),
-    periodKey: v.string(),
-    amount: v.number(),
-    balance: v.number(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_orgId_and_periodKey", ["orgId", "periodKey"])
-    .index("by_userId_and_periodKey", ["userId", "periodKey"]),
+
   // One row per top-up purchase. Carries forward across billing cycles (no
   // reset). Mirrors userCreditPeriods: remaining = grantedCredits - usedCredits.
   // Deducted FIFO by createdAt after the monthly quota is exhausted.
@@ -800,7 +788,7 @@ export default defineSchema({
     stripePaymentIntentId: v.optional(v.string()),
     periodId: v.optional(v.id("userCreditPeriods")),
     /** @deprecated migrated to periodId */
-    creditPeriodId: v.optional(v.id("creditPeriods")),
+    creditPeriodId: v.optional(v.string()),
     topUpEntryId: v.optional(v.id("topUpEntries")),
     deductionSource: v.optional(
       v.union(v.literal("monthly"), v.literal("top_up")),

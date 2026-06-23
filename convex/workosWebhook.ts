@@ -31,14 +31,20 @@ import {
 // users / organizations sync mutations. Must respond within 5 seconds — the
 // dispatch mutation is small and idempotent so we run it inline.
 export const workosWebhook = httpAction(async (ctx, req) => {
+  console.log("[workosWebhook] Received webhook request", {
+    method: req.method,
+    url: req.url,
+    signatureHeader: req.headers.get("workos-signature"),
+  });
   const secret = process.env.WORKOS_WEBHOOK_SECRET;
   if (!secret) {
-    console.error("WORKOS_WEBHOOK_SECRET is not configured");
+    console.error("[workosWebhook] WORKOS_WEBHOOK_SECRET is not configured");
     return new Response("server misconfigured", { status: 500 });
   }
 
   const sigHeader = req.headers.get("workos-signature");
   if (!sigHeader) {
+    console.warn("[workosWebhook] Missing workos-signature header");
     return new Response("missing signature", { status: 400 });
   }
 
@@ -46,7 +52,8 @@ export const workosWebhook = httpAction(async (ctx, req) => {
   let parsed: Record<string, unknown>;
   try {
     parsed = JSON.parse(rawBody);
-  } catch {
+  } catch (err) {
+    console.error("[workosWebhook] Failed to parse JSON body", err);
     return new Response("invalid json", { status: 400 });
   }
 
@@ -61,18 +68,24 @@ export const workosWebhook = httpAction(async (ctx, req) => {
       secret,
     });
   } catch (err) {
-    console.error("WorkOS signature verification failed", err);
+    console.error("[workosWebhook] WorkOS signature verification failed", err);
     return new Response("invalid signature", { status: 401 });
   }
 
+  console.log("[workosWebhook] Signature verified. Dispatching event", {
+    id: event.id,
+    event: event.event,
+  });
+
   try {
-    await ctx.runMutation(internal.workosWebhook.dispatch, {
+    const result = await ctx.runMutation(internal.workosWebhook.dispatch, {
       eventId: event.id,
       eventType: event.event,
       data: event.data as unknown,
     });
+    console.log("[workosWebhook] Dispatch mutation completed", result);
   } catch (err) {
-    console.error(`Failed to process WorkOS event ${event.id}`, err);
+    console.error(`[workosWebhook] Failed to process WorkOS event ${event.id}`, err);
     // 500 lets WorkOS retry. Idempotency is enforced via processedEvents.
     return new Response("processing failed", { status: 500 });
   }
@@ -89,47 +102,69 @@ export const dispatch = internalMutation({
     data: v.any(),
   },
   handler: async (ctx, { eventId, eventType, data }) => {
+    console.log("[workosWebhook.dispatch] Dispatching event", { eventId, eventType });
     const existing = await ctx.db
       .query("processedEvents")
       .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
       .unique();
     if (existing !== null) {
+      console.log("[workosWebhook.dispatch] Event has already been processed (duplicate)", { eventId });
       return { dedup: true };
     }
 
-    switch (eventType) {
-      case "user.created":
-      case "user.updated":
-        await upsertUser(ctx, data);
-        break;
-      case "user.deleted":
-        await deleteUserByWorkosId(ctx, data?.id);
-        break;
-      case "organization.created":
-      case "organization.updated":
-        await upsertOrganization(ctx, data);
-        break;
-      case "organization.deleted":
-        await deleteOrganizationByWorkosId(ctx, data?.id);
-        break;
-      case "organization_membership.created":
-      case "organization_membership.updated":
-        await applyMembership(ctx, data);
-        break;
-      case "organization_membership.deleted":
-        await removeMembership(ctx, data);
-        break;
-      case "invitation.created":
-      case "invitation.revoked":
-        await syncInvitationFromWebhook(ctx, data);
-        break;
-      case "invitation.accepted":
-        await handleInvitationAccepted(ctx, data);
-        break;
-      default:
-        // Unhandled events are still recorded so retries of the same delivery
-        // dedupe correctly.
-        break;
+    try {
+      switch (eventType) {
+        case "user.created":
+        case "user.updated":
+          console.log("[workosWebhook.dispatch] Handling upsertUser", data?.id);
+          await upsertUser(ctx, data);
+          break;
+        case "user.deleted":
+          console.log("[workosWebhook.dispatch] Handling deleteUserByWorkosId", data?.id);
+          await deleteUserByWorkosId(ctx, data?.id);
+          break;
+        case "organization.created":
+        case "organization.updated":
+          console.log("[workosWebhook.dispatch] Handling upsertOrganization", data?.id);
+          await upsertOrganization(ctx, data);
+          break;
+        case "organization.deleted":
+          console.log("[workosWebhook.dispatch] Handling deleteOrganizationByWorkosId", data?.id);
+          await deleteOrganizationByWorkosId(ctx, data?.id);
+          break;
+        case "organization_membership.created":
+        case "organization_membership.updated":
+          console.log("[workosWebhook.dispatch] Handling applyMembership", {
+            userId: data?.user_id ?? data?.userId,
+            orgId: data?.organization_id ?? data?.organizationId,
+          });
+          await applyMembership(ctx, data);
+          break;
+        case "organization_membership.deleted":
+          console.log("[workosWebhook.dispatch] Handling removeMembership", {
+            userId: data?.user_id ?? data?.userId,
+            orgId: data?.organization_id ?? data?.organizationId,
+          });
+          await removeMembership(ctx, data);
+          break;
+        case "invitation.created":
+        case "invitation.revoked":
+          console.log("[workosWebhook.dispatch] Handling syncInvitationFromWebhook", data?.id);
+          await syncInvitationFromWebhook(ctx, data);
+          break;
+        case "invitation.accepted":
+          console.log("[workosWebhook.dispatch] Handling handleInvitationAccepted", data?.id);
+          await handleInvitationAccepted(ctx, data);
+          break;
+        default:
+          console.log("[workosWebhook.dispatch] Unhandled event type", eventType);
+          // Unhandled events are still recorded so retries of the same delivery
+          // dedupe correctly.
+          break;
+      }
+    } catch (err) {
+      console.error(`[workosWebhook.dispatch] Error handling event ${eventType} (${eventId}):`, err);
+      throw err;
     }
 
     await ctx.db.insert("processedEvents", {
@@ -137,6 +172,7 @@ export const dispatch = internalMutation({
       processedAt: Date.now(),
     });
 
+    console.log("[workosWebhook.dispatch] Event successfully processed and saved to processedEvents", { eventId });
     return { dedup: false, eventType };
   },
 });

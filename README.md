@@ -86,6 +86,20 @@ npx convex env set BOT_TOKEN '<telegram-bot-token>'
 npx convex env set ADMIN_TELEGRAM_CHAT_ID '<your-chat-id>'
 ```
 
+### Configuring Credit Reset Period (For Testing)
+
+To test the credit reset worker and logic faster in development, you can configure the duration of the reset cycle using the `CREDIT_RESET_PERIOD` environment variable in Convex:
+
+```bash
+npx convex env set CREDIT_RESET_PERIOD 'minutes'
+```
+
+Supported values:
+- `month` (default): Resets on the same day next month.
+- `days`: Resets after 1 day (24 hours).
+- `hours`: Resets after 1 hour.
+- `minutes`: Resets after 1 minute.
+
 If you have existing contact requests with legacy statuses (`new`, `reviewed`), run the one-off migration:
 
 ```bash
