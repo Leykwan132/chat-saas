@@ -2,12 +2,12 @@ import { internalQuery, mutation, query } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import type { Doc } from "./_generated/dataModel";
 import { v } from "convex/values";
-import { getPlan, getPlanFromStripe } from "./plans";
-import { insertCreditLog } from "./creditLogs";
+import { getPlanFromStripe } from "./plans";
 import {
-  ensureActiveCreditPeriod,
-  scopeFromUser,
-} from "./creditEntries";
+  ensureFirstCreditPeriod,
+  getOrCreateCurrentPeriod,
+} from "./creditPeriodPool";
+import { getBillingEntityForUser } from "./plans";
 import { ensureUserAccount } from "./teamHelpers";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
@@ -137,9 +137,6 @@ export const completeOnboarding = mutation({
       throw new Error("User not found in database");
     }
 
-    const planConfig = getPlan(args.plan);
-    const initialCredits = planConfig.monthlyCredits;
-
     await ctx.db.patch(user._id, {
       onboarded: true,
       onboardingAnswers: {
@@ -147,38 +144,14 @@ export const completeOnboarding = mutation({
         useCase: args.useCase,
         channels: args.channels,
       },
-      credits: user.credits !== undefined ? user.credits : initialCredits,
       updatedAt: Date.now(),
     });
 
-    if (user.credits === undefined) {
-      const scope = scopeFromUser(user);
-      const periodKey = `month:${new Date().getUTCFullYear()}-${String(new Date().getUTCMonth() + 1).padStart(2, "0")}`;
-      const creditPeriod = await ensureActiveCreditPeriod(
-        ctx,
-        scope,
-        periodKey,
-        initialCredits,
-        initialCredits,
-      );
-
-      await insertCreditLog(ctx, {
-        orgId: "",
-        userId: user._id,
-        eventType: "grant",
-        label: `Welcome credits (${planConfig.name})`,
-        amount: initialCredits,
-        balanceBefore: 0,
-        balanceAfter: initialCredits,
-        monthlyCreditsBefore: 0,
-        monthlyCreditsAfter: initialCredits,
-        purchasedCreditsBefore: 0,
-        purchasedCreditsAfter: 0,
-        creditCost: initialCredits,
-        creditPeriodId: creditPeriod._id,
-        reason: `Initial onboarding credit grant for ${planConfig.name} plan`,
-      });
-    }
+    // Ensure a credit period exists for the user's billing account. The first
+    // period grants the plan's monthly credits as the welcome allocation.
+    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    await ensureFirstCreditPeriod(ctx, billingUser._id);
+    await getOrCreateCurrentPeriod(ctx, billingUser._id);
 
     return { success: true };
   },

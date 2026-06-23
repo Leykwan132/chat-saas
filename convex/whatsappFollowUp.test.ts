@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { expect, test, beforeAll } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { withComponents } from "./testUtils";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
@@ -99,7 +100,7 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
 
   // 4. Setup mock Conversation (last message was outbound, 2 hours ago)
   const lastMsgAt = Date.now() - 7200 * 1000;
-  const agentThreadId = await t.runInComponent("agent", async (ctx) => {
+  const agentThreadId = await withComponents(t).runInComponent("agent", async (ctx) => {
     return await ctx.db.insert("threads", {
       userId: "org-123",
       title: "WhatsApp Conversation Thread",

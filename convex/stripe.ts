@@ -2,6 +2,7 @@ import { action, internalMutation, internalQuery } from "./_generated/server";
 import { components, internal } from "./_generated/api";
 import { StripeSubscriptions } from "@convex-dev/stripe";
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { getBillingWorkosUserId } from "./billingScope";
 import { getPlan } from "./plans";
 import { EXTRA_CREDITS_PRICE_ID, EXTRA_CREDITS_PACK_AMOUNT, getStripePriceId, resolvePlanKeyFromStripePriceId } from "./planCatalog";
@@ -12,15 +13,15 @@ import {
 import {
   buildTopUpLabel,
   insertCreditLog,
-  snapshotCreditBalances,
 } from "./creditLogs";
 import {
   createTopUpEntry,
-  getCreditPeriodKey,
-  scopeFromUser,
-  syncDenormalizedCreditFields,
 } from "./creditEntries";
-import { getPlanFromStripe } from "./plans";
+import {
+  ensureFirstCreditPeriod,
+  applyPlanUpgradeToCurrentPeriod,
+  snapshotUserCredit,
+} from "./creditPeriodPool";
 import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
@@ -186,16 +187,17 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
   },
   handler: async (ctx, args) => {
     const isPersonal = args.orgId.startsWith("user_");
-    
+
     const isActive = args.status === "active" || args.status === "trialing";
     const plan = isActive
       ? resolvePlanKeyFromStripePriceId(args.priceId)
       : "free";
 
     const planConfig = getPlan(plan);
-    const monthlyCredits = planConfig.monthlyCredits;
     const newPeriodEndMs = args.currentPeriodEnd * 1000;
 
+    // Resolve the billing user (owner) for this subscription.
+    let owner: Doc<"users">;
     if (isPersonal) {
       const user = await ctx.db
         .query("users")
@@ -204,8 +206,6 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
       if (!user) {
         throw new Error("User not found");
       }
-
-      // Assign the Stripe subscription ID to the personal team in the teams table
       const personalTeam = await getPersonalTeamForUser(ctx, user._id);
       if (personalTeam) {
         await ctx.db.patch(personalTeam._id, {
@@ -213,107 +213,65 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
           updatedAt: Date.now(),
         });
       }
-
-      const isPlanChanged = user.stripePriceId !== args.priceId;
-      const isNewPeriod = user.stripeSubscriptionCurrentPeriodEnd !== newPeriodEndMs;
-
-      const updates: any = {
-        stripeCustomerId: args.stripeCustomerId,
-        stripeSubscriptionId: args.stripeSubscriptionId,
-        stripePriceId: args.priceId,
-        stripeSubscriptionStatus: args.status,
-        stripeSubscriptionCurrentPeriodEnd: newPeriodEndMs,
-        updatedAt: Date.now(),
-      };
-
-      if (isPlanChanged || isNewPeriod) {
-        updates.credits = monthlyCredits;
-      }
-
-      await ctx.db.patch(user._id, updates);
-
-      if (isPlanChanged || isNewPeriod) {
-        const before = snapshotCreditBalances(user);
-        const monthlyCreditsAfter = monthlyCredits;
-        const purchasedCreditsAfter = before.purchasedCreditsBefore;
-        const balanceAfter = monthlyCreditsAfter + purchasedCreditsAfter;
-        await insertCreditLog(ctx, {
-          orgId: "",
-          userId: user._id,
-          eventType: isNewPeriod && !isPlanChanged ? "monthly_reset" : "grant",
-          label:
-            isNewPeriod && !isPlanChanged
-              ? "Monthly reset"
-              : `Plan ${isPlanChanged ? "change" : "renewal"} (${planConfig.name})`,
-          amount: balanceAfter - before.balanceBefore,
-          balanceBefore: before.balanceBefore,
-          balanceAfter,
-          monthlyCreditsBefore: before.monthlyCreditsBefore,
-          monthlyCreditsAfter,
-          purchasedCreditsBefore: before.purchasedCreditsBefore,
-          purchasedCreditsAfter,
-          reason: `Subscription ${isPlanChanged ? "change" : "renewal"} to ${planConfig.name} plan`,
-        });
-      }
+      owner = user;
     } else {
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
       if (!orgTeam) {
         throw new Error("Team not found for organization " + args.orgId);
       }
-      
       await ctx.db.patch(orgTeam._id, {
         stripeSubscriptionId: args.stripeSubscriptionId,
         updatedAt: Date.now(),
       });
-
       if (!orgTeam.ownerId) {
         throw new Error("Team owner not found");
       }
-      const owner = await ctx.db.get(orgTeam.ownerId);
-      if (!owner) {
+      const ownerDoc = await ctx.db.get(orgTeam.ownerId);
+      if (!ownerDoc) {
         throw new Error("Team owner not found");
       }
+      owner = ownerDoc;
+    }
 
-      const isPlanChanged = owner.stripePriceId !== args.priceId;
-      const isNewPeriod = owner.stripeSubscriptionCurrentPeriodEnd !== newPeriodEndMs;
+    const isPlanChanged = owner.stripePriceId !== args.priceId;
 
-      const updates: any = {
-        stripeCustomerId: args.stripeCustomerId,
-        stripeSubscriptionId: args.stripeSubscriptionId,
-        stripePriceId: args.priceId,
-        stripeSubscriptionStatus: args.status,
-        stripeSubscriptionCurrentPeriodEnd: newPeriodEndMs,
-        updatedAt: Date.now(),
-      };
+    // Keep Stripe subscription metadata on the owner user in sync (used for
+    // plan lookups). The credit cycle itself is independent of the Stripe
+    // billing interval, so no credit reset happens on Stripe period change.
+    await ctx.db.patch(owner._id, {
+      stripeCustomerId: args.stripeCustomerId,
+      stripeSubscriptionId: args.stripeSubscriptionId,
+      stripePriceId: args.priceId,
+      stripeSubscriptionStatus: args.status,
+      stripeSubscriptionCurrentPeriodEnd: newPeriodEndMs,
+      updatedAt: Date.now(),
+    });
 
-      if (isPlanChanged || isNewPeriod) {
-        updates.credits = monthlyCredits;
-      }
+    // Ensure a credit period exists for the billing user (first subscription,
+    // or re-activation after cancellation).
+    await ensureFirstCreditPeriod(ctx, owner._id);
 
-      await ctx.db.patch(owner._id, updates);
-
-      if (isPlanChanged || isNewPeriod) {
-        const before = snapshotCreditBalances(owner);
-        const monthlyCreditsAfter = monthlyCredits;
-        const purchasedCreditsAfter = before.purchasedCreditsBefore;
-        const balanceAfter = monthlyCreditsAfter + purchasedCreditsAfter;
-        await insertCreditLog(ctx, {
-          orgId: args.orgId,
-          eventType: isNewPeriod && !isPlanChanged ? "monthly_reset" : "grant",
-          label:
-            isNewPeriod && !isPlanChanged
-              ? "Monthly reset"
-              : `Plan ${isPlanChanged ? "change" : "renewal"} (${planConfig.name})`,
-          amount: balanceAfter - before.balanceBefore,
-          balanceBefore: before.balanceBefore,
-          balanceAfter,
-          monthlyCreditsBefore: before.monthlyCreditsBefore,
-          monthlyCreditsAfter,
-          purchasedCreditsBefore: before.purchasedCreditsBefore,
-          purchasedCreditsAfter,
-          reason: `Subscription ${isPlanChanged ? "change" : "renewal"} to ${planConfig.name} plan`,
-        });
-      }
+    // On a plan upgrade, grow the current period's allocation immediately so
+    // the user benefits right away. Downgrades take effect at the next cycle
+    // (the worker re-reads the plan when it creates the next period).
+    if (isPlanChanged && isActive) {
+      const before = await snapshotUserCredit(ctx, owner._id);
+      await applyPlanUpgradeToCurrentPeriod(ctx, owner._id);
+      const after = await snapshotUserCredit(ctx, owner._id);
+      await insertCreditLog(ctx, {
+        orgId: isPersonal ? "" : args.orgId,
+        userId: owner._id,
+        eventType: "grant",
+        label: `Plan change (${planConfig.name})`,
+        amount: after.totalRemaining - before.totalRemaining,
+        balanceBefore: before.totalRemaining,
+        balanceAfter: after.totalRemaining,
+        monthlyCreditsBefore: before.monthlyRemaining,
+        monthlyCreditsAfter: after.monthlyRemaining,
+        purchasedCreditsBefore: before.purchasedRemaining,
+        purchasedCreditsAfter: after.purchasedRemaining,
+        reason: `Subscription changed to ${planConfig.name} plan`,
+      });
     }
   },
 });
@@ -325,8 +283,8 @@ export const handleSubscriptionDeletedInternal = internalMutation({
   },
   handler: async (ctx, args) => {
     const isPersonal = args.orgId.startsWith("user_");
-    const freePlanConfig = getPlan("free");
 
+    let owner: Doc<"users">;
     if (isPersonal) {
       const user = await ctx.db
         .query("users")
@@ -335,7 +293,6 @@ export const handleSubscriptionDeletedInternal = internalMutation({
       if (!user) {
         throw new Error("User not found");
       }
-
       const personalTeam = await getPersonalTeamForUser(ctx, user._id);
       if (personalTeam) {
         await ctx.db.patch(personalTeam._id, {
@@ -343,80 +300,51 @@ export const handleSubscriptionDeletedInternal = internalMutation({
           updatedAt: Date.now(),
         });
       }
-
-      const before = snapshotCreditBalances(user);
-      const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
-      const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
-
-      await ctx.db.patch(user._id, {
-        stripeSubscriptionId: undefined,
-        stripePriceId: undefined,
-        stripeSubscriptionStatus: "canceled",
-        stripeSubscriptionCurrentPeriodEnd: undefined,
-        credits: newMonthlyCredits,
-        updatedAt: Date.now(),
-      });
-
-      await insertCreditLog(ctx, {
-        orgId: "",
-        userId: user._id,
-        eventType: "adjustment",
-        label: "Plan canceled",
-        amount: balanceAfter - before.balanceBefore,
-        balanceBefore: before.balanceBefore,
-        balanceAfter,
-        monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: newMonthlyCredits,
-        purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: before.purchasedCreditsBefore,
-        reason: "Subscription canceled, reverted to Free plan",
-      });
+      owner = user;
     } else {
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
       if (!orgTeam) {
         throw new Error("Team not found for organization " + args.orgId);
       }
-
       await ctx.db.patch(orgTeam._id, {
         stripeSubscriptionId: undefined,
         updatedAt: Date.now(),
       });
-
       if (!orgTeam.ownerId) {
         throw new Error("Team owner not found");
       }
-      const owner = await ctx.db.get(orgTeam.ownerId);
-      if (!owner) {
+      const ownerDoc = await ctx.db.get(orgTeam.ownerId);
+      if (!ownerDoc) {
         throw new Error("Team owner not found");
       }
-
-      const before = snapshotCreditBalances(owner);
-      const newMonthlyCredits = Math.min(before.monthlyCreditsBefore, freePlanConfig.monthlyCredits);
-      const balanceAfter = newMonthlyCredits + before.purchasedCreditsBefore;
-
-      await ctx.db.patch(owner._id, {
-        stripeSubscriptionId: undefined,
-        stripePriceId: undefined,
-        stripeSubscriptionStatus: "canceled",
-        stripeSubscriptionCurrentPeriodEnd: undefined,
-        credits: newMonthlyCredits,
-        updatedAt: Date.now(),
-      });
-
-      await insertCreditLog(ctx, {
-        orgId: args.orgId,
-        eventType: "adjustment",
-        label: "Plan canceled",
-        amount: balanceAfter - before.balanceBefore,
-        balanceBefore: before.balanceBefore,
-        balanceAfter,
-        monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: newMonthlyCredits,
-        purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: before.purchasedCreditsBefore,
-        reason: "Subscription canceled, reverted to Free plan",
-      });
+      owner = ownerDoc;
     }
+
+    await ctx.db.patch(owner._id, {
+      stripeSubscriptionId: undefined,
+      stripePriceId: undefined,
+      stripeSubscriptionStatus: "canceled",
+      stripeSubscriptionCurrentPeriodEnd: undefined,
+      updatedAt: Date.now(),
+    });
+
+    // Cancellation reverts the plan to free. The current cycle keeps its
+    // allocation; the next cycle (created by the worker) grants free credits.
+    const before = await snapshotUserCredit(ctx, owner._id);
+    await insertCreditLog(ctx, {
+      orgId: isPersonal ? "" : args.orgId,
+      userId: owner._id,
+      eventType: "adjustment",
+      label: "Plan canceled",
+      amount: 0,
+      balanceBefore: before.totalRemaining,
+      balanceAfter: before.totalRemaining,
+      monthlyCreditsBefore: before.monthlyRemaining,
+      monthlyCreditsAfter: before.monthlyRemaining,
+      purchasedCreditsBefore: before.purchasedRemaining,
+      purchasedCreditsAfter: before.purchasedRemaining,
+      reason: "Subscription canceled, reverts to Free plan next cycle",
+    });
   },
 });
 
@@ -443,6 +371,7 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
 
     const isPersonal = args.orgId.startsWith("user_");
 
+    let owner: Doc<"users">;
     if (isPersonal) {
       const user = await ctx.db
         .query("users")
@@ -451,42 +380,7 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
       if (!user) {
         throw new Error("User not found");
       }
-
-      const scope = scopeFromUser(user);
-      const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
-      const periodKey = getCreditPeriodKey(stripeInfo);
-      const before = snapshotCreditBalances(user);
-      const topUpEntryId = await createTopUpEntry(ctx, scope, {
-        amount: args.creditsToGrant,
-        label: buildTopUpLabel(args.creditsToGrant),
-        stripePaymentIntentId: args.stripePaymentIntentId,
-      });
-      const synced = await syncDenormalizedCreditFields(
-        ctx,
-        user._id,
-        scope,
-        periodKey,
-        user,
-      );
-      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
-
-      await insertCreditLog(ctx, {
-        orgId: "",
-        userId: user._id,
-        eventType: "top_up",
-        label: buildTopUpLabel(args.creditsToGrant),
-        amount: args.creditsToGrant,
-        balanceBefore: before.balanceBefore,
-        balanceAfter,
-        monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: synced.monthlyCredits,
-        purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: synced.purchasedCredits,
-        creditCost: args.creditsToGrant,
-        stripePaymentIntentId: args.stripePaymentIntentId,
-        topUpEntryId,
-        reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
-      });
+      owner = user;
     } else {
       const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
       if (!orgTeam) {
@@ -495,46 +389,38 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
       if (!orgTeam.ownerId) {
         throw new Error("Team owner not found");
       }
-      const owner = await ctx.db.get(orgTeam.ownerId);
-      if (!owner) {
+      const ownerDoc = await ctx.db.get(orgTeam.ownerId);
+      if (!ownerDoc) {
         throw new Error("Team owner not found");
       }
-
-      const scope = scopeFromUser(owner);
-      const stripeInfo = await getPlanFromStripe(ctx, args.orgId);
-      const periodKey = getCreditPeriodKey(stripeInfo);
-      const before = snapshotCreditBalances(owner);
-      const topUpEntryId = await createTopUpEntry(ctx, scope, {
-        amount: args.creditsToGrant,
-        label: buildTopUpLabel(args.creditsToGrant),
-        stripePaymentIntentId: args.stripePaymentIntentId,
-      });
-      const synced = await syncDenormalizedCreditFields(
-        ctx,
-        owner._id,
-        scope,
-        periodKey,
-        owner,
-      );
-      const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
-
-      await insertCreditLog(ctx, {
-        orgId: args.orgId,
-        eventType: "top_up",
-        label: buildTopUpLabel(args.creditsToGrant),
-        amount: args.creditsToGrant,
-        balanceBefore: before.balanceBefore,
-        balanceAfter,
-        monthlyCreditsBefore: before.monthlyCreditsBefore,
-        monthlyCreditsAfter: synced.monthlyCredits,
-        purchasedCreditsBefore: before.purchasedCreditsBefore,
-        purchasedCreditsAfter: synced.purchasedCredits,
-        creditCost: args.creditsToGrant,
-        stripePaymentIntentId: args.stripePaymentIntentId,
-        topUpEntryId,
-        reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
-      });
+      owner = ownerDoc;
     }
+
+    const before = await snapshotUserCredit(ctx, owner._id);
+    const topUpEntryId = await createTopUpEntry(ctx, owner._id, {
+      grantedCredits: args.creditsToGrant,
+      label: buildTopUpLabel(args.creditsToGrant),
+      stripePaymentIntentId: args.stripePaymentIntentId,
+    });
+    const after = await snapshotUserCredit(ctx, owner._id);
+
+    await insertCreditLog(ctx, {
+      orgId: isPersonal ? "" : args.orgId,
+      userId: owner._id,
+      eventType: "top_up",
+      label: buildTopUpLabel(args.creditsToGrant),
+      amount: args.creditsToGrant,
+      balanceBefore: before.totalRemaining,
+      balanceAfter: after.totalRemaining,
+      monthlyCreditsBefore: before.monthlyRemaining,
+      monthlyCreditsAfter: after.monthlyRemaining,
+      purchasedCreditsBefore: before.purchasedRemaining,
+      purchasedCreditsAfter: after.purchasedRemaining,
+      creditCost: args.creditsToGrant,
+      stripePaymentIntentId: args.stripePaymentIntentId,
+      topUpEntryId,
+      reason: `Stripe payment: Purchased ${args.creditsToGrant} extra credits`,
+    });
 
     await ctx.db.insert("processedStripePayments", {
       stripePaymentIntentId: args.stripePaymentIntentId,

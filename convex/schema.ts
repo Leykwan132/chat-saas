@@ -102,6 +102,9 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
+    // Deprecated: replaced by userCreditPeriods / topUpEntries (granted/used).
+    // Kept optional so existing docs validate until the data migration completes,
+    // then removed in a follow-up narrow deploy.
     credits: v.optional(v.number()),
     purchasedCredits: v.optional(v.number()),
     purchasedCreditsGranted: v.optional(v.number()),
@@ -119,6 +122,7 @@ export default defineSchema({
     stripePriceId: v.optional(v.string()),
     stripeSubscriptionStatus: v.optional(v.string()),
     stripeSubscriptionCurrentPeriodEnd: v.optional(v.number()),
+    /** @deprecated replaced by userCreditPeriods.periodEnd */
     creditsPeriodMonthKey: v.optional(v.string()),
     onboarded: v.optional(v.boolean()),
     onboardingAnswers: v.optional(
@@ -699,8 +703,34 @@ export default defineSchema({
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
     .index("by_orgId_userId", ["orgId", "userId"])
     .index("by_agentId", ["agentId"]),
-  // One row per billing month (or Stripe period). `amount` is the grant;
-  // `balance` is what's left in that period before top-ups are touched.
+  // One row per billing user per monthly credit cycle. Source of truth for the
+  // monthly credit quota: remaining = grantedCredits - usedCredits.
+  // `periodEnd` is the next reset moment (shown in the plan UI). Cycles are
+  // monthly, anchored to the user's creation day-of-month, independent of the
+  // Stripe payment interval (so annual plans still reset monthly).
+  // The quota belongs to the billing user (owner); multiple teams share it.
+  userCreditPeriods: defineTable({
+    userId: v.id("users"),
+    periodStart: v.number(),
+    periodEnd: v.number(),
+    grantedCredits: v.number(),
+    usedCredits: v.number(),
+    planKey: v.optional(
+      v.union(
+        v.literal("free"),
+        v.literal("starter"),
+        v.literal("growth"),
+        v.literal("business"),
+      ),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId_and_periodStart", ["userId", "periodStart"])
+    .index("by_userId_and_periodEnd", ["userId", "periodEnd"])
+    .index("by_periodEnd", ["periodEnd"]),
+  // Deprecated: replaced by userCreditPeriods. Kept so existing docs validate
+  // until the data migration completes, then removed in a follow-up narrow deploy.
   creditPeriods: defineTable({
     orgId: v.string(),
     userId: v.optional(v.id("users")),
@@ -712,21 +742,31 @@ export default defineSchema({
   })
     .index("by_orgId_and_periodKey", ["orgId", "periodKey"])
     .index("by_userId_and_periodKey", ["userId", "periodKey"]),
-  // One row per top-up purchase. Usage deducts from entries FIFO by createdAt.
+  // One row per top-up purchase. Carries forward across billing cycles (no
+  // reset). Mirrors userCreditPeriods: remaining = grantedCredits - usedCredits.
+  // Deducted FIFO by createdAt after the monthly quota is exhausted.
+  // Belongs to the billing user; multiple teams share the same quota.
+  // Old fields (orgId/userId/amount/balance) are kept optional so legacy rows
+  // validate until migrated; new code reads grantedCredits/usedCredits.
   topUpEntries: defineTable({
-    orgId: v.string(),
     userId: v.optional(v.id("users")),
-    amount: v.number(),
-    balance: v.number(),
+    grantedCredits: v.optional(v.number()),
+    usedCredits: v.optional(v.number()),
     label: v.optional(v.string()),
     stripePaymentIntentId: v.optional(v.string()),
+    /** @deprecated legacy scope field, use userId */
+    orgId: v.optional(v.string()),
+    /** @deprecated migrated to userId (was already userId in legacy) */
+    amount: v.optional(v.number()),
+    /** @deprecated migrated to grantedCredits - usedCredits */
+    balance: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_orgId", ["orgId"])
-    .index("by_userId", ["userId"])
+    .index("by_userId_and_createdAt", ["userId", "createdAt"])
     .index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
   creditLogs: defineTable({
+    teamId: v.optional(v.id("teams")),
     orgId: v.string(),
     userId: v.optional(v.id("users")),
     amount: v.number(),
@@ -758,6 +798,8 @@ export default defineSchema({
     conversationId: v.optional(v.id("conversations")),
     reason: v.optional(v.string()),
     stripePaymentIntentId: v.optional(v.string()),
+    periodId: v.optional(v.id("userCreditPeriods")),
+    /** @deprecated migrated to periodId */
     creditPeriodId: v.optional(v.id("creditPeriods")),
     topUpEntryId: v.optional(v.id("topUpEntries")),
     deductionSource: v.optional(
@@ -768,6 +810,7 @@ export default defineSchema({
     .index("by_orgId", ["orgId"])
     .index("by_createdAt", ["createdAt"])
     .index("by_orgId_and_createdAt", ["orgId", "createdAt"])
+    .index("by_teamId_and_createdAt", ["teamId", "createdAt"])
     .index("by_userId_and_createdAt", ["userId", "createdAt"])
     .index("by_userId_and_eventType_and_createdAt", [
       "userId",

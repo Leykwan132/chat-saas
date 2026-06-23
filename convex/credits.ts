@@ -8,29 +8,24 @@ import {
 } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import { getModelPricing } from "./llm/modelPricing";
-import {
-  lazyResetCreditsIfNeeded,
-  getPlanFromStripe,
-  syncCreditBilling,
-  getBillingEntityForUser,
-} from "./plans";
-import { getTotalCreditBalance } from "./creditBalance";
+import { getPlanFromStripe, getBillingEntityForUser } from "./plans";
 import {
   buildTopUpLabel,
   buildUsageLabel,
   formatCreditLogEventType,
   formatCreditLogLabel,
   insertCreditLog,
-  snapshotCreditBalances,
 } from "./creditLogs";
 import {
   createTopUpEntry,
-  deductFromCreditEntries,
-  getCreditPeriodKey,
-  scopeFromUser,
-  syncDenormalizedCreditFields,
-  type CreditScope,
+  deductFromUserQuota,
+  type CreditDeductionResult,
 } from "./creditEntries";
+import {
+  getOrCreateCurrentPeriod,
+  snapshotUserCredit,
+  ensureFirstCreditPeriod,
+} from "./creditPeriodPool";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getDailyCreditUsageForAgents } from "./creditUsageAnalytics";
 import {
@@ -54,14 +49,9 @@ export function isPlaygroundCreditsEnabled(): boolean {
 async function applyUsageDeduction(
   ctx: MutationCtx,
   args: {
-    entity: Doc<"users">;
-    scope: CreditScope;
-    stripeEntityId: string;
+    billingUser: Doc<"users">;
     creditsCharged: number;
-    before: ReturnType<typeof snapshotCreditBalances>;
     log: {
-      orgId: string;
-      userId?: Id<"users">;
       modelId: string;
       agentId?: Id<"agents">;
       agentName?: string;
@@ -69,43 +59,30 @@ async function applyUsageDeduction(
       reason?: string;
     };
   },
-): Promise<number> {
-  const stripeInfo = await getPlanFromStripe(ctx, args.stripeEntityId);
-  const periodKey = getCreditPeriodKey(stripeInfo);
-  const deduction = await deductFromCreditEntries(
-    ctx,
-    args.scope,
-    periodKey,
-    args.creditsCharged,
-  );
-  const synced = await syncDenormalizedCreditFields(
-    ctx,
-    args.entity._id,
-    args.scope,
-    periodKey,
-    args.entity,
-  );
-  const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
+): Promise<{ deduction: CreditDeductionResult; balanceAfter: number }> {
+  const before = await snapshotUserCredit(ctx, args.billingUser._id);
+  const deduction = await deductFromUserQuota(ctx, args.billingUser._id, args.creditsCharged);
+  const after = await snapshotUserCredit(ctx, args.billingUser._id);
 
   await insertCreditLog(ctx, {
-    orgId: args.log.orgId,
-    userId: args.log.userId,
+    orgId: "",
+    userId: args.billingUser._id,
     eventType: "usage",
     label: buildUsageLabel(args.log.agentName),
     amount: -args.creditsCharged,
-    balanceBefore: args.before.balanceBefore,
-    balanceAfter,
-    monthlyCreditsBefore: args.before.monthlyCreditsBefore,
-    monthlyCreditsAfter: synced.monthlyCredits,
-    purchasedCreditsBefore: args.before.purchasedCreditsBefore,
-    purchasedCreditsAfter: synced.purchasedCredits,
+    balanceBefore: before.totalRemaining,
+    balanceAfter: after.totalRemaining,
+    monthlyCreditsBefore: before.monthlyRemaining,
+    monthlyCreditsAfter: after.monthlyRemaining,
+    purchasedCreditsBefore: before.purchasedRemaining,
+    purchasedCreditsAfter: after.purchasedRemaining,
     creditCost: args.creditsCharged,
     modelId: args.log.modelId,
     agentId: args.log.agentId,
     agentName: args.log.agentName,
     conversationId: args.log.conversationId,
     reason: args.log.reason,
-    creditPeriodId: deduction.creditPeriodId,
+    periodId: deduction.periodId,
     topUpEntryId: deduction.topUpAllocations[0]?.topUpEntryId,
     deductionSource:
       deduction.monthlyDeducted > 0
@@ -115,7 +92,7 @@ async function applyUsageDeduction(
           : undefined,
   });
 
-  return balanceAfter;
+  return { deduction, balanceAfter: after.totalRemaining };
 }
 
 export const isPlaygroundDeductEnabled = query({
@@ -139,11 +116,10 @@ export const getBalance = query({
       return null;
     }
     const { billingUser } = await getBillingEntityForUser(ctx, user);
-    const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
-    const { billing } = await syncCreditBilling(ctx, billingUser, stripeInfo);
+    const snapshot = await snapshotUserCredit(ctx, billingUser._id);
     return {
-      credits: billing.effectiveCredits,
-      monthlyAllowance: billing.monthlyAllowance,
+      credits: snapshot.totalRemaining,
+      monthlyAllowance: snapshot.monthlyGranted,
     };
   },
 });
@@ -167,8 +143,8 @@ export const internalCheckCredits = internalQuery({
       return { ok: false as const, reason: "user_not_found" as const };
     }
     const { billingUser } = await getBillingEntityForUser(ctx, user);
-    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, billingUser)) as Doc<"users">;
-    const balance = getTotalCreditBalance(currentUserDoc);
+    const snapshot = await snapshotUserCredit(ctx, billingUser._id);
+    const balance = snapshot.totalRemaining;
     const cost = pricing.creditCost;
     if (balance < cost) {
       return {
@@ -221,23 +197,17 @@ export const internalDeductCredits = internalMutation({
     }
 
     const { billingUser } = await getBillingEntityForUser(ctx, user);
-    const currentUserDoc = (await lazyResetCreditsIfNeeded(ctx, billingUser)) as Doc<"users">;
-    const before = snapshotCreditBalances(currentUserDoc);
-    let balanceAfter = before.balanceBefore;
 
+    let balanceAfter = 0;
     if (!skipDeduction) {
-      if (before.balanceBefore < pricing.creditCost) {
+      const before = await snapshotUserCredit(ctx, billingUser._id);
+      if (before.totalRemaining < pricing.creditCost) {
         throw new Error("Insufficient credits");
       }
-      balanceAfter = await applyUsageDeduction(ctx, {
-        entity: currentUserDoc,
-        scope: scopeFromUser(currentUserDoc),
-        stripeEntityId: currentUserDoc.workosUserId,
+      const result = await applyUsageDeduction(ctx, {
+        billingUser,
         creditsCharged,
-        before,
         log: {
-          orgId: "",
-          userId: currentUserDoc._id,
           modelId: args.modelId,
           agentId,
           agentName,
@@ -245,6 +215,10 @@ export const internalDeductCredits = internalMutation({
           reason: args.reason ?? `AI reply using ${args.modelId}`,
         },
       });
+      balanceAfter = result.balanceAfter;
+    } else {
+      const snapshot = await snapshotUserCredit(ctx, billingUser._id);
+      balanceAfter = snapshot.totalRemaining;
     }
 
     return {
@@ -270,41 +244,32 @@ export const topUp = mutation({
       throw new Error("User not found");
     }
 
-    const scope = scopeFromUser(userObj);
-    const stripeInfo = await getPlanFromStripe(ctx, userId);
-    const periodKey = getCreditPeriodKey(stripeInfo);
-    const before = snapshotCreditBalances(userObj);
-    const topUpEntryId = await createTopUpEntry(ctx, scope, {
-      amount: 500,
+    const { billingUser } = await getBillingEntityForUser(ctx, userObj);
+    const before = await snapshotUserCredit(ctx, billingUser._id);
+    const topUpEntryId = await createTopUpEntry(ctx, billingUser._id, {
+      grantedCredits: 500,
       label: buildTopUpLabel(500),
     });
-    const synced = await syncDenormalizedCreditFields(
-      ctx,
-      userObj._id,
-      scope,
-      periodKey,
-      userObj,
-    );
-    const balanceAfter = synced.monthlyCredits + synced.purchasedCredits;
+    const after = await snapshotUserCredit(ctx, billingUser._id);
 
     await insertCreditLog(ctx, {
       orgId: "",
-      userId: userObj._id,
+      userId: billingUser._id,
       eventType: "top_up",
       label: buildTopUpLabel(500),
       amount: 500,
-      balanceBefore: before.balanceBefore,
-      balanceAfter,
-      monthlyCreditsBefore: before.monthlyCreditsBefore,
-      monthlyCreditsAfter: synced.monthlyCredits,
-      purchasedCreditsBefore: before.purchasedCreditsBefore,
-      purchasedCreditsAfter: synced.purchasedCredits,
+      balanceBefore: before.totalRemaining,
+      balanceAfter: after.totalRemaining,
+      monthlyCreditsBefore: before.monthlyRemaining,
+      monthlyCreditsAfter: after.monthlyRemaining,
+      purchasedCreditsBefore: before.purchasedRemaining,
+      purchasedCreditsAfter: after.purchasedRemaining,
       creditCost: 500,
       topUpEntryId,
       reason: "User topped up credits (manual/test)",
     });
 
-    return { success: true, newCredits: balanceAfter };
+    return { success: true, newCredits: after.totalRemaining };
   },
 });
 
@@ -349,10 +314,10 @@ export const getUsageDashboard = query({
     }
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
+    const snapshot = await snapshotUserCredit(ctx, userDoc._id);
 
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
+    const periodStartMs = snapshot.period?.periodStart ?? getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
     const agents = isPersonal
       ? await ctx.db
@@ -445,7 +410,7 @@ export const getUsageDashboard = query({
     );
 
     const periodEndBoundMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+      snapshot.period?.periodEnd ?? userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
 
     const chartSeries = combinedAgentUsage
       .filter((row) => row.creditsUsed > 0)
@@ -505,8 +470,8 @@ export const getUsageDashboard = query({
 
     return {
       orgName: "Your account",
-      credits: billing.effectiveCredits,
-      monthlyAllowance: billing.monthlyAllowance,
+      credits: snapshot.totalRemaining,
+      monthlyAllowance: snapshot.monthlyGranted,
       plan: stripeInfo.plan,
       periodStartMs,
       periodEndMs: periodEndBoundMs,
@@ -538,10 +503,8 @@ export const getCreditHistory = query({
     }
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-
-    const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const { billing } = await syncCreditBilling(ctx, userDoc, stripeInfo);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
+    const snapshot = await snapshotUserCredit(ctx, userDoc._id);
+    const periodStartMs = snapshot.period?.periodStart ?? getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
 
     const logs = await ctx.db
       .query("creditLogs")
@@ -590,12 +553,26 @@ export const getCreditHistory = query({
     });
 
     return {
-      credits: billing.effectiveCredits,
-      monthlyAllowance: billing.monthlyAllowance,
+      credits: snapshot.totalRemaining,
+      monthlyAllowance: snapshot.monthlyGranted,
       periodStartMs,
       periodEndMs:
-        userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS,
+        snapshot.period?.periodEnd ?? userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS,
       entries,
     };
+  },
+});
+
+export const ensureFirstPeriodForUser = internalMutation({
+  args: { workosUserId: v.string() },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.workosUserId))
+      .unique();
+    if (!user) return;
+    const { billingUser } = await getBillingEntityForUser(ctx, user);
+    await ensureFirstCreditPeriod(ctx, billingUser._id);
+    await getOrCreateCurrentPeriod(ctx, billingUser._id);
   },
 });

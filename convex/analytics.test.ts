@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
+import { convexTest, type TestConvex } from "convex-test";
 import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
@@ -13,12 +13,14 @@ const mockAggregate = {
   "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
 };
 
-function registerAnalyticsAggregate(t: ReturnType<typeof convexTest>) {
+type AppTestConvex = TestConvex<typeof schema>;
+
+function registerAnalyticsAggregate(t: AppTestConvex) {
   t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
 }
 
 async function insertAnalyticsFixture(
-  t: ReturnType<typeof convexTest>,
+  t: AppTestConvex,
   args: {
     tags?: string[];
     leadTemperature?: "Hot" | "Warm" | "Cold";
@@ -101,7 +103,7 @@ async function insertAnalyticsFixture(
 }
 
 async function metricRowsForConversation(
-  t: ReturnType<typeof convexTest>,
+  t: AppTestConvex,
   conversationId: Id<"conversations">,
 ) {
   return await t.run(async (ctx) => {

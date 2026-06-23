@@ -1,12 +1,6 @@
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import {
-  getMonthlyCredits,
-  getPurchasedCredits,
-  getTotalCreditBalance,
-  type CreditEntity,
-} from "./creditBalance";
 
 export const creditLogEventTypeValidator = v.union(
   v.literal("monthly_reset"),
@@ -30,6 +24,7 @@ export const creditLogLegacyTypeValidator = v.union(
 );
 
 export type CreditLogInsert = {
+  teamId?: Id<"teams">;
   orgId: string;
   userId?: Id<"users">;
   eventType: CreditLogEventType;
@@ -37,10 +32,10 @@ export type CreditLogInsert = {
   amount: number;
   balanceBefore: number;
   balanceAfter: number;
-  monthlyCreditsBefore: number;
-  monthlyCreditsAfter: number;
-  purchasedCreditsBefore: number;
-  purchasedCreditsAfter: number;
+  monthlyCreditsBefore?: number;
+  monthlyCreditsAfter?: number;
+  purchasedCreditsBefore?: number;
+  purchasedCreditsAfter?: number;
   creditCost?: number;
   modelId?: string;
   agentId?: Id<"agents">;
@@ -48,7 +43,7 @@ export type CreditLogInsert = {
   conversationId?: Id<"conversations">;
   reason?: string;
   stripePaymentIntentId?: string;
-  creditPeriodId?: Id<"creditPeriods">;
+  periodId?: Id<"userCreditPeriods">;
   topUpEntryId?: Id<"topUpEntries">;
   deductionSource?: "monthly" | "top_up";
 };
@@ -67,14 +62,6 @@ function legacyTypeForEvent(eventType: CreditLogEventType) {
   }
 }
 
-export function snapshotCreditBalances(entity: CreditEntity) {
-  return {
-    monthlyCreditsBefore: getMonthlyCredits(entity),
-    purchasedCreditsBefore: getPurchasedCredits(entity),
-    balanceBefore: getTotalCreditBalance(entity),
-  };
-}
-
 export function buildUsageLabel(agentName?: string | null) {
   if (agentName?.trim()) {
     return `Usage by "${agentName.trim()}"`;
@@ -88,38 +75,20 @@ export function buildTopUpLabel(credits: number) {
 
 export async function sumTopUpGrants(
   ctx: Pick<QueryCtx, "db">,
-  scope: { orgId: string; userId?: Id<"users"> },
+  userId: Id<"users">,
 ): Promise<number> {
-  const entries =
-    scope.orgId !== ""
-      ? await ctx.db
-          .query("topUpEntries")
-          .withIndex("by_orgId", (q) => q.eq("orgId", scope.orgId))
-          .collect()
-      : scope.userId
-        ? await ctx.db
-            .query("topUpEntries")
-            .withIndex("by_userId", (q) => q.eq("userId", scope.userId!))
-            .collect()
-        : [];
-
+  const entries = await ctx.db
+    .query("topUpEntries")
+    .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
+    .collect();
   if (entries.length > 0) {
-    return entries.reduce((sum, entry) => sum + entry.amount, 0);
+    return entries.reduce((sum, entry) => sum + (entry.grantedCredits ?? entry.amount ?? 0), 0);
   }
 
-  const logs =
-    scope.orgId !== ""
-      ? await ctx.db
-          .query("creditLogs")
-          .withIndex("by_orgId", (q) => q.eq("orgId", scope.orgId))
-          .collect()
-      : scope.userId
-        ? await ctx.db
-            .query("creditLogs")
-            .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", scope.userId!))
-            .collect()
-        : [];
-
+  const logs = await ctx.db
+    .query("creditLogs")
+    .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
+    .collect();
   return logs
     .filter((log) => log.eventType === "top_up" || log.type === "top_up")
     .reduce((sum, log) => sum + Math.max(0, log.amount), 0);
@@ -131,6 +100,7 @@ export async function insertCreditLog(
 ) {
   const createdAt = Date.now();
   const creditLogId = await ctx.db.insert("creditLogs", {
+    teamId: entry.teamId,
     orgId: entry.orgId,
     userId: entry.userId,
     type: legacyTypeForEvent(entry.eventType),
@@ -150,7 +120,7 @@ export async function insertCreditLog(
     conversationId: entry.conversationId,
     reason: entry.reason,
     stripePaymentIntentId: entry.stripePaymentIntentId,
-    creditPeriodId: entry.creditPeriodId,
+    periodId: entry.periodId,
     topUpEntryId: entry.topUpEntryId,
     deductionSource: entry.deductionSource,
     createdAt,

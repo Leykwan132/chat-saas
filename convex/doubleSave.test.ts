@@ -3,6 +3,7 @@ import { convexTest } from "convex-test";
 import { expect, test, vi, beforeAll } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { withComponents } from "./testUtils";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
@@ -174,7 +175,7 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   expect(conv).not.toBeNull();
 
   // Query the agent component's messages for this thread
-  const agentMessages = await t.runInComponent("agent", async (ctx) => {
+  const agentMessages = await withComponents(t).runInComponent("agent", async (ctx) => {
     return await ctx.db.query("messages").collect();
   });
 
@@ -244,8 +245,8 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
     });
   });
 
-  await t.run(async (ctx) => {
-    await ctx.db.insert("teams", {
+  const teamId = await t.run(async (ctx) => {
+    const id = await ctx.db.insert("teams", {
       type: "organizational",
       name: "Mock Team",
       ownerId: userId,
@@ -254,6 +255,8 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+    await ctx.db.patch(userId, { activeTeamId: id, updatedAt: Date.now() });
+    return id;
   });
 
   const agentId = await t.run(async (ctx) => {
@@ -286,7 +289,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   });
 
   // Mock Stripe Subscription inside stripe component
-  await t.runInComponent("stripe", async (ctx) => {
+  await withComponents(t).runInComponent("stripe", async (ctx) => {
     await ctx.db.insert("subscriptions", {
       stripeSubscriptionId: "sub-123",
       stripeCustomerId: "cust-123",
@@ -312,13 +315,15 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
 
   // Mock Stripe Subscription and credits so that checkAiFeature and credits pass
   await t.run(async (ctx) => {
-    await ctx.db.insert("creditPeriods", {
-      orgId: "org-123",
-      periodKey: "2026-06",
-      amount: 1000,
-      balance: 1000,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+    const now = Date.now();
+    await ctx.db.insert("userCreditPeriods", {
+      userId,
+      periodStart: now,
+      periodEnd: now + 30 * 24 * 60 * 60 * 1000,
+      grantedCredits: 1000,
+      usedCredits: 0,
+      createdAt: now,
+      updatedAt: now,
     });
   });
 
@@ -330,7 +335,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   });
 
   // Query messages inside the agent component
-  const agentMessages = await t.runInComponent("agent", async (ctx) => {
+  const agentMessages = await withComponents(t).runInComponent("agent", async (ctx) => {
     return await ctx.db.query("messages").collect();
   });
 

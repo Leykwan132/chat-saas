@@ -1,222 +1,31 @@
-import type { Doc, Id } from "./_generated/dataModel";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
-import { getMonthlyCredits, getPurchasedCredits, type CreditEntity } from "./creditBalance";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
+import {
+  getOrCreateCurrentPeriod,
+} from "./creditPeriodPool";
 
-export type CreditScope = {
-  orgId: string;
-  userId?: Id<"users">;
+export type CreditDeductionResult = {
+  monthlyDeducted: number;
+  topUpDeducted: number;
+  periodId?: Id<"userCreditPeriods">;
+  topUpAllocations: Array<{ topUpEntryId: Id<"topUpEntries">; amount: number }>;
 };
 
-export type StripePeriodInfo = {
-  status?: string;
-  currentPeriodEnd?: number;
-};
-
-function hasActiveStripeBilling(status: string | undefined): boolean {
-  return status === "active" || status === "trialing";
-}
-
-export function getCalendarMonthKey(date = new Date()): string {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  return `${year}-${month}`;
-}
-
-/** Stable key for the active monthly credit bucket (calendar month or Stripe period). */
-export function getCreditPeriodKey(stripeInfo: StripePeriodInfo): string {
-  if (
-    stripeInfo.currentPeriodEnd &&
-    hasActiveStripeBilling(stripeInfo.status)
-  ) {
-    return `stripe:${stripeInfo.currentPeriodEnd}`;
-  }
-  return `month:${getCalendarMonthKey()}`;
-}
-
-export function scopeFromUser(user: Doc<"users">): CreditScope {
-  return { orgId: "", userId: user._id };
-}
-
-
-
-async function getCreditPeriodByKey(
-  ctx: Pick<QueryCtx, "db">,
-  scope: CreditScope,
-  periodKey: string,
-): Promise<Doc<"creditPeriods"> | null> {
-  if (scope.orgId !== "") {
-    return await ctx.db
-      .query("creditPeriods")
-      .withIndex("by_orgId_and_periodKey", (q) =>
-        q.eq("orgId", scope.orgId).eq("periodKey", periodKey),
-      )
-      .unique();
-  }
-  if (scope.userId) {
-    return await ctx.db
-      .query("creditPeriods")
-      .withIndex("by_userId_and_periodKey", (q) =>
-        q.eq("userId", scope.userId!).eq("periodKey", periodKey),
-      )
-      .unique();
-  }
-  return null;
-}
-
-async function listTopUpEntries(
-  ctx: Pick<QueryCtx, "db">,
-  scope: CreditScope,
-): Promise<Array<Doc<"topUpEntries">>> {
-  if (scope.orgId !== "") {
-    return await ctx.db
-      .query("topUpEntries")
-      .withIndex("by_orgId", (q) => q.eq("orgId", scope.orgId))
-      .collect();
-  }
-  if (scope.userId) {
-    return await ctx.db
-      .query("topUpEntries")
-      .withIndex("by_userId", (q) => q.eq("userId", scope.userId!))
-      .collect();
-  }
-  return [];
-}
-
-export async function getActiveCreditPeriod(
-  ctx: Pick<QueryCtx, "db">,
-  scope: CreditScope,
-  periodKey: string,
-): Promise<Doc<"creditPeriods"> | null> {
-  return await getCreditPeriodByKey(ctx, scope, periodKey);
-}
-
-export async function getCreditPeriodSummary(
-  ctx: Pick<QueryCtx, "db">,
-  scope: CreditScope,
-  periodKey: string,
-) {
-  const period = await getCreditPeriodByKey(ctx, scope, periodKey);
-  return {
-    monthlyCredits: period?.balance ?? 0,
-    monthlyAllowance: period?.amount ?? 0,
-    creditPeriodId: period?._id,
-  };
-}
-
-export async function getTopUpSummary(
-  ctx: Pick<QueryCtx, "db">,
-  scope: CreditScope,
-) {
-  const entries = await listTopUpEntries(ctx, scope);
-  return {
-    purchasedCredits: entries.reduce((sum, entry) => sum + entry.balance, 0),
-    purchasedCreditsGranted: entries.reduce((sum, entry) => sum + entry.amount, 0),
-    activeTopUpCount: entries.filter((entry) => entry.balance > 0).length,
-  };
-}
-
-/** Creates the monthly credit bucket if missing (backfill from legacy `credits` field). */
-export async function ensureActiveCreditPeriod(
-  ctx: MutationCtx,
-  scope: CreditScope,
-  periodKey: string,
-  monthlyAllowance: number,
-  legacyMonthlyBalance?: number,
-): Promise<Doc<"creditPeriods">> {
-  const existing = await getCreditPeriodByKey(ctx, scope, periodKey);
-  if (existing) {
-    return existing;
-  }
-
-  const balance = legacyMonthlyBalance ?? monthlyAllowance;
-  const now = Date.now();
-  const id = await ctx.db.insert("creditPeriods", {
-    orgId: scope.orgId,
-    userId: scope.userId,
-    periodKey,
-    amount: monthlyAllowance,
-    balance,
-    createdAt: now,
-    updatedAt: now,
-  });
-  const created = await ctx.db.get(id);
-  if (created === null) {
-    throw new Error("Failed to create credit period");
-  }
-  return created;
-}
-
-/** Starts a fresh monthly bucket on billing cycle rollover. */
-export async function createCreditPeriodReset(
-  ctx: MutationCtx,
-  scope: CreditScope,
-  periodKey: string,
-  monthlyAllowance: number,
-): Promise<Doc<"creditPeriods">> {
-  const existing = await getCreditPeriodByKey(ctx, scope, periodKey);
-  if (existing) {
-    await ctx.db.patch(existing._id, {
-      amount: monthlyAllowance,
-      balance: monthlyAllowance,
-      updatedAt: Date.now(),
-    });
-    const updated = await ctx.db.get(existing._id);
-    if (updated === null) {
-      throw new Error("Failed to reset credit period");
-    }
-    return updated;
-  }
-
-  return await ensureActiveCreditPeriod(
-    ctx,
-    scope,
-    periodKey,
-    monthlyAllowance,
-    monthlyAllowance,
-  );
-}
-
-/** Backfill a single legacy top-up row when `purchasedCredits` exists but no entries do. */
-export async function ensureTopUpEntriesFromLegacy(
-  ctx: MutationCtx,
-  scope: CreditScope,
-  entity: CreditEntity,
-): Promise<void> {
-  const legacyBalance = getPurchasedCredits(entity);
-  if (legacyBalance <= 0) {
-    return;
-  }
-
-  const entries = await listTopUpEntries(ctx, scope);
-  const migratedBalance = entries.reduce((sum, entry) => sum + entry.balance, 0);
-  if (migratedBalance >= legacyBalance) {
-    return;
-  }
-
-  const remaining = legacyBalance - migratedBalance;
-  await createTopUpEntry(ctx, scope, {
-    amount: remaining,
-    balance: remaining,
-    label: "Legacy top-up balance",
-  });
-}
-
+/** Create a top-up entry (granted/used quota, carried forward across cycles). */
 export async function createTopUpEntry(
   ctx: MutationCtx,
-  scope: CreditScope,
+  userId: Id<"users">,
   args: {
-    amount: number;
-    balance?: number;
+    grantedCredits: number;
     label?: string;
     stripePaymentIntentId?: string;
   },
 ): Promise<Id<"topUpEntries">> {
   const now = Date.now();
   return await ctx.db.insert("topUpEntries", {
-    orgId: scope.orgId,
-    userId: scope.userId,
-    amount: args.amount,
-    balance: args.balance ?? args.amount,
+    userId,
+    grantedCredits: args.grantedCredits,
+    usedCredits: 0,
     label: args.label,
     stripePaymentIntentId: args.stripePaymentIntentId,
     createdAt: now,
@@ -224,60 +33,65 @@ export async function createTopUpEntry(
   });
 }
 
-export type CreditDeductionResult = {
-  monthlyDeducted: number;
-  topUpDeducted: number;
-  creditPeriodId?: Id<"creditPeriods">;
-  topUpAllocations: Array<{ topUpEntryId: Id<"topUpEntries">; amount: number }>;
-};
-
-/** Deduct from the active monthly bucket first, then top-up entries (FIFO). */
-export async function deductFromCreditEntries(
+/**
+ * Deduct `cost` credits from the user's monthly quota first, then top-up
+ * entries FIFO by createdAt. Throws "Insufficient credits" if both are
+ * exhausted — because this runs inside a Convex mutation transaction, the
+ * throw rolls back any partial `usedCredits` patch, so no partial deduction
+ * and no audit log are written on failure (per the quota design).
+ */
+export async function deductFromUserQuota(
   ctx: MutationCtx,
-  scope: CreditScope,
-  periodKey: string,
+  userId: Id<"users">,
   cost: number,
 ): Promise<CreditDeductionResult> {
   if (cost <= 0) {
     return { monthlyDeducted: 0, topUpDeducted: 0, topUpAllocations: [] };
   }
 
+  const period = await getOrCreateCurrentPeriod(ctx, userId);
+  const monthlyRemaining = period.grantedCredits - period.usedCredits;
+  const fromMonthly = Math.min(monthlyRemaining, cost);
+
   let remaining = cost;
   const result: CreditDeductionResult = {
     monthlyDeducted: 0,
     topUpDeducted: 0,
+    periodId: undefined,
     topUpAllocations: [],
   };
 
-  const period = await getCreditPeriodByKey(ctx, scope, periodKey);
-  if (period && period.balance > 0) {
-    const fromMonthly = Math.min(period.balance, remaining);
+  if (fromMonthly > 0) {
     await ctx.db.patch(period._id, {
-      balance: period.balance - fromMonthly,
+      usedCredits: period.usedCredits + fromMonthly,
       updatedAt: Date.now(),
     });
     result.monthlyDeducted = fromMonthly;
-    result.creditPeriodId = period._id;
+    result.periodId = period._id;
     remaining -= fromMonthly;
   }
 
   if (remaining > 0) {
-    const topUps = (await listTopUpEntries(ctx, scope))
-      .filter((entry) => entry.balance > 0)
+    const topUps = (
+      await ctx.db
+        .query("topUpEntries")
+        .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
+        .collect()
+    )
+      .filter((e) => (e.grantedCredits ?? 0) - (e.usedCredits ?? 0) > 0)
       .sort((a, b) => a.createdAt - b.createdAt);
 
     for (const entry of topUps) {
-      if (remaining <= 0) {
-        break;
-      }
-      const fromTopUp = Math.min(entry.balance, remaining);
+      if (remaining <= 0) break;
+      const leftover = (entry.grantedCredits ?? 0) - (entry.usedCredits ?? 0);
+      const take = Math.min(leftover, remaining);
       await ctx.db.patch(entry._id, {
-        balance: entry.balance - fromTopUp,
+        usedCredits: (entry.usedCredits ?? 0) + take,
         updatedAt: Date.now(),
       });
-      result.topUpDeducted += fromTopUp;
-      result.topUpAllocations.push({ topUpEntryId: entry._id, amount: fromTopUp });
-      remaining -= fromTopUp;
+      result.topUpDeducted += take;
+      result.topUpAllocations.push({ topUpEntryId: entry._id, amount: take });
+      remaining -= take;
     }
   }
 
@@ -286,45 +100,4 @@ export async function deductFromCreditEntries(
   }
 
   return result;
-}
-
-/** Keep denormalized `credits` / `purchasedCredits` on users & orgs in sync with entries. */
-export async function syncDenormalizedCreditFields(
-  ctx: MutationCtx,
-  entityId: Id<"users">,
-  scope: CreditScope,
-  periodKey: string,
-  fallbackEntity?: CreditEntity,
-): Promise<{ monthlyCredits: number; purchasedCredits: number }> {
-  const period = await getCreditPeriodByKey(ctx, scope, periodKey);
-  const topUpSummary = await getTopUpSummary(ctx, scope);
-  const monthlyCredits = period?.balance ?? getMonthlyCredits(fallbackEntity ?? {});
-  const purchasedCredits = topUpSummary.purchasedCredits;
-
-  await ctx.db.patch(entityId as any, {
-    credits: monthlyCredits,
-    purchasedCredits,
-    updatedAt: Date.now(),
-  });
-
-  return { monthlyCredits, purchasedCredits };
-}
-
-/** Ensure entry tables exist and match legacy balances on first touch. */
-export async function ensureCreditEntryState(
-  ctx: MutationCtx,
-  entity: Doc<"users">,
-  scope: CreditScope,
-  periodKey: string,
-  monthlyAllowance: number,
-): Promise<void> {
-  await ensureActiveCreditPeriod(
-    ctx,
-    scope,
-    periodKey,
-    monthlyAllowance,
-    getMonthlyCredits(entity),
-  );
-  await ensureTopUpEntriesFromLegacy(ctx, scope, entity);
-  await syncDenormalizedCreditFields(ctx, entity._id, scope, periodKey, entity);
 }

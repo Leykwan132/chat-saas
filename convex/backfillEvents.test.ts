@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
@@ -128,7 +128,7 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
   expect(eventBefore?.orgId).toBeUndefined();
 
   // 2. Run the backfill mutation
-  const backfillResult = await t.mutation(api.backfillEvents.backfillExistingEventsOrgId, {});
+  const backfillResult = await t.mutation(internal.backfillEvents.backfillExistingEventsOrgId, {});
   expect(backfillResult.updated).toBe(1);
 
   // 3. Verify after backfill orgId is "org-1"
