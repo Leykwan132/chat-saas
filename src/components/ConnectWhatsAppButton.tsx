@@ -13,7 +13,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
-import { Shimmer } from '@/components/ai-elements/shimmer';
 import {
   refreshFacebookLoginStatus,
   useFacebookSession,
@@ -27,9 +26,7 @@ import {
   logWhatsAppConnect,
   redactFacebookPayload,
 } from '@/lib/whatsappConnectDebug';
-import { getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import {
-  getWhatsAppConnectionAttemptStatus,
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
 
@@ -57,13 +54,6 @@ type DialogState =
   | { kind: 'success' }
   | { kind: 'error'; message: string };
 
-const PROGRESS_LABELS: Record<NonNullable<Doc<'channels'>['progressStep']>, string> = {
-  linking: 'Forming a digital handshake...',
-  subscribing: 'Tuning the frequencies...',
-  registering: 'Whispering to the WhatsApp servers...',
-  exchanging: 'Swapping secret decoder rings...',
-  backfilling: 'Gathering the conversational gossip...',
-};
 
 
 function isSignupFinishEvent(event: SessionInfoMessage['event']) {
@@ -155,7 +145,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         openConnectionAttempt.status === 'syncing';
 
       if (isSyncingOrConnected) {
-        if (!userDismissed && dialogState.kind !== 'success') {
+        if (!userDismissed && dialogState.kind === 'connecting') {
           setDialogState({ kind: 'success' });
           onConnected?.();
         }
@@ -474,24 +464,11 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         </button>
 
         <Dialog
-          open={dialogState.kind !== 'closed'}
+          open={dialogState.kind === 'success' || dialogState.kind === 'error'}
           onOpenChange={handleDialogOpenChange}
         >
-          <DialogContent
-            showCloseButton={dialogState.kind !== 'connecting'}
-            onInteractOutside={(e) => {
-              if (dialogState.kind === 'connecting') e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              if (dialogState.kind === 'connecting') e.preventDefault();
-            }}
-          >
-            {dialogState.kind === 'connecting' ? (
-              <ConnectingState
-                channel={whatsappChannel}
-                attempt={openConnectionAttempt ?? undefined}
-              />
-            ) : dialogState.kind === 'success' ? (
+          <DialogContent>
+            {dialogState.kind === 'success' ? (
               <SuccessState />
             ) : dialogState.kind === 'error' ? (
               <ErrorState
@@ -527,21 +504,11 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       </div>
 
       <Dialog
-        open={dialogState.kind !== 'closed'}
+        open={dialogState.kind === 'success' || dialogState.kind === 'error'}
         onOpenChange={handleDialogOpenChange}
       >
-        <DialogContent
-          showCloseButton={dialogState.kind !== 'connecting'}
-          onInteractOutside={(e) => {
-            if (dialogState.kind === 'connecting') e.preventDefault();
-          }}
-          onEscapeKeyDown={(e) => {
-            if (dialogState.kind === 'connecting') e.preventDefault();
-          }}
-        >
-          {dialogState.kind === 'connecting' ? (
-            <ConnectingState channel={whatsappChannel} />
-          ) : dialogState.kind === 'success' ? (
+        <DialogContent>
+          {dialogState.kind === 'success' ? (
             <SuccessState />
           ) : dialogState.kind === 'error' ? (
             <ErrorState
@@ -561,46 +528,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   );
 }
 
-function ConnectingState({
-  channel,
-  attempt,
-}: {
-  channel: Doc<'channels'> | undefined;
-  attempt?: Doc<'whatsappConnectionAttempts'>;
-}) {
-  const attemptStatus = attempt
-    ? getWhatsAppConnectionAttemptStatus(attempt, channel)
-    : null;
-  const syncStatus = getWhatsAppSyncStatus(channel);
-  const label =
-    attemptStatus?.label ??
-    syncStatus?.label ??
-    (channel?.progressStep && PROGRESS_LABELS[channel.progressStep]
-      ? PROGRESS_LABELS[channel.progressStep]
-      : 'Setting things up');
-  const detail = attemptStatus?.detail ?? syncStatus?.detail;
-
-  return (
-    <div className="flex flex-col items-center gap-5 py-6 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
-        <Spinner className="size-6 text-muted-foreground" />
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <DialogTitle className="text-base">Connecting your WhatsApp account</DialogTitle>
-        <DialogDescription asChild>
-          <div className="flex flex-col gap-1">
-            <Shimmer duration={2} spread={3}>
-              {label}
-            </Shimmer>
-            {detail ? (
-              <span className="text-xs text-muted-foreground">{detail}</span>
-            ) : null}
-          </div>
-        </DialogDescription>
-      </div>
-    </div>
-  );
-}
 
 function SuccessState() {
   return (
