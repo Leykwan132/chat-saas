@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import {
   httpAction,
   internalMutation,
+  internalQuery,
   type ActionCtx,
   type MutationCtx,
 } from "./_generated/server";
@@ -13,6 +14,7 @@ import {
 } from "./chat/inboxAudioIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { whatsappSyncPool } from "./channelSyncPools";
+import { isOpenWhatsAppConnectionAttempt, maybeCompleteWhatsAppConnectionAttempt } from "./whatsappConnectionAttemptUtils";
 
 
 const messageStatusValidator = v.union(
@@ -314,10 +316,74 @@ export const handleAccountUpdate = internalMutation({
         event: args.event,
         timestampMs: args.timestampMs,
       });
+      return { shouldStartSync: false };
     }
+
+    if (args.event === "PARTNER_APP_INSTALLED") {
+      return await handlePartnerAppInstalled(ctx, args);
+    }
+
     return { shouldStartSync: false };
   },
 });
+
+export const internalHasAccountUpdate = internalQuery({
+  args: {
+    wabaId: v.string(),
+    event: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("whatsappAccountUpdates")
+      .withIndex("by_wabaId_and_event", (q) =>
+        q.eq("wabaId", args.wabaId).eq("event", args.event),
+      )
+      .unique();
+    return row !== null;
+  },
+});
+
+async function handlePartnerAppInstalled(
+  ctx: MutationCtx,
+  args: {
+    wabaId: string;
+    timestampMs?: number;
+    partnerAppId?: string;
+  },
+): Promise<AccountUpdateResult> {
+  const now = args.timestampMs ?? Date.now();
+  const attempts = await ctx.db
+    .query("whatsappConnectionAttempts")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", args.wabaId))
+    .collect();
+  const openAttempt =
+    attempts.find((attempt) => isOpenWhatsAppConnectionAttempt(attempt)) ??
+    attempts.find((attempt) => attempt.status === "token_ready");
+
+  const channels = await ctx.db
+    .query("channels")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", args.wabaId))
+    .collect();
+  const channel =
+    channels.find((c) => c.status === "connected") ??
+    channels.find((c) => c.status === "pending") ??
+    channels[0];
+
+  if (openAttempt !== undefined) {
+    await ctx.db.patch(openAttempt._id, {
+      status: "connected",
+      partnerAppInstalledAt: now,
+      ...(channel !== undefined ? { channelId: channel._id } : {}),
+      updatedAt: now,
+    });
+  }
+
+  if (channel === undefined || channel.status !== "connected") {
+    return { shouldStartSync: false };
+  }
+
+  return { shouldStartSync: false, channelId: channel._id };
+}
 
 function isAccountStopEvent(event: string): boolean {
   return (
@@ -457,6 +523,8 @@ export const handleStateSync = internalMutation({
         updatedAt: now,
       });
     }
+
+    await maybeCompleteWhatsAppConnectionAttempt(ctx, channel._id);
   },
 });
 

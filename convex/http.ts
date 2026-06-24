@@ -286,6 +286,7 @@ http.route({
 //
 // Messenger uses classic `dialog/oauth` → /auth/messenger/callback (see
 // messengerAuth.start + messengerOAuthCallback).
+// WhatsApp Embedded Signup → /auth/whatsapp/callback (see whatsAppOAuthCallback).
 // ────────────────────────────────────────────────────────────────────────
 
 const FALLBACK_RETURN_PATH = "/workspace";
@@ -478,6 +479,40 @@ http.route({
   path: "/auth/messenger/callback",
   method: "GET",
   handler: messengerOAuthCallback,
+});
+
+// WhatsApp Embedded Signup OAuth redirect. Meta may send the browser here
+// instead of (or in addition to) postMessage when the hosted flow finishes.
+// WABA / phone ids still come from the open connection attempt or postMessage;
+// we ferry the auth `code` back to the SPA to finish completeSignup.
+const whatsAppOAuthCallback = httpAction(async (_ctx, req) => {
+  const { code, returnPath, oauthError, oauthErrorReason } = parseCallbackUrl(req);
+
+  console.log('whatsAppOAuthCallback', { code, returnPath, oauthError, oauthErrorReason });
+  if (oauthError) {
+    return redirectResponse(returnPath, {
+      whatsapp: "error",
+      message: oauthErrorReason ?? oauthError,
+    });
+  }
+
+  if (!code) {
+    return redirectResponse(returnPath, {
+      whatsapp: "error",
+      message: "Missing authorization code from WhatsApp callback",
+    });
+  }
+
+  return redirectResponse(returnPath, {
+    whatsapp: "redirect",
+    code,
+  });
+});
+
+http.route({
+  path: "/auth/whatsapp/callback",
+  method: "GET",
+  handler: whatsAppOAuthCallback,
 });
 
 // ────────────────────────────────────────────────────────────────────────

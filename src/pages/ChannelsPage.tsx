@@ -51,9 +51,15 @@ import {
   WHATSAPP_DEMO_WABA_ID,
 } from '@/lib/whatsappCloudDemo';
 import { getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
+import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
+import {
+  getWhatsAppConnectionAttemptStatus,
+  isOpenWhatsAppConnectionAttempt,
+} from '@/lib/whatsappConnectionAttemptStatus';
 
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
+type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
 
 /** Toggle the WhatsApp Cloud API quick demo section on the Channels page. */
 const SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO = false;
@@ -109,6 +115,10 @@ function channelIdentifier(channel: ChannelDoc): string {
 // `?messenger=...`. Toast once and strip query params so refresh does not
 // replay. Multi-Page Messenger pick (`?messenger=pick`) is handled inside
 // ConnectMessengerButton.
+//
+// Static OAuth callbacks land on Channels with `?instagram=…`, `?messenger=…`,
+// or `?whatsapp=…`. WhatsApp redirect carries a one-time code we stash in
+// sessionStorage for ConnectWhatsAppButton to finish completeSignup.
 function useMetaChannelCallbackParams() {
   const [searchParams, setSearchParams] = useSearchParams();
   const handledRef = useRef<string | null>(null);
@@ -116,6 +126,38 @@ function useMetaChannelCallbackParams() {
   useEffect(() => {
     const instagram = searchParams.get('instagram');
     const messenger = searchParams.get('messenger');
+    const whatsapp = searchParams.get('whatsapp');
+
+    if (whatsapp === 'redirect') {
+      const code = searchParams.get('code');
+      const key = code ? `whatsapp:redirect:${code.slice(0, 12)}` : 'whatsapp:redirect';
+      if (handledRef.current === key) return;
+      handledRef.current = key;
+      if (code) {
+        sessionStorage.setItem(WHATSAPP_OAUTH_REDIRECT_CODE_KEY, code);
+        toast.message('WhatsApp authorization received. Finishing connection…');
+      } else {
+        toast.error('WhatsApp redirect was missing an authorization code.');
+      }
+      const next = new URLSearchParams(searchParams);
+      next.delete('whatsapp');
+      next.delete('code');
+      setSearchParams(next, { replace: true });
+      return;
+    }
+
+    if (whatsapp === 'error') {
+      const key = 'whatsapp:error';
+      if (handledRef.current === key) return;
+      handledRef.current = key;
+      const message = searchParams.get('message') ?? 'Unknown error';
+      toast.error(`WhatsApp connect failed: ${message}`);
+      const next = new URLSearchParams(searchParams);
+      next.delete('whatsapp');
+      next.delete('message');
+      setSearchParams(next, { replace: true });
+      return;
+    }
 
     if (instagram === 'connected' || instagram === 'error') {
       const key = `instagram:${instagram}`;
@@ -155,6 +197,13 @@ function useMetaChannelCallbackParams() {
 export default function ChannelsPage() {
   const { agentId } = useParams();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const openWhatsAppAttempt = useQuery(
+    api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
+    {},
+  );
+  const cancelWhatsAppAttempt = useMutation(
+    api.whatsappEmbeddedSignup.cancelConnectionAttempt,
+  );
   const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
   const ensureDefaultAgentId = useMutation(api.channels.ensureDefaultAgentId);
   const { openUpgradeModal } = useUpgradeModal();
@@ -180,6 +229,20 @@ export default function ChannelsPage() {
   const activeCount = connectedChannelsList.length;
   const channelLimit = planAndUsage?.channelLimit ?? 1;
   const limitReached = activeCount >= channelLimit;
+  const openAttemptChannel = useMemo(() => {
+    if (!channels || !openWhatsAppAttempt) return undefined;
+    if (openWhatsAppAttempt.channelId) {
+      return channels.find((c) => c._id === openWhatsAppAttempt.channelId);
+    }
+    if (openWhatsAppAttempt.phoneNumberId) {
+      return channels.find(
+        (c) =>
+          c.service === 'whatsapp' &&
+          c.phoneNumberId === openWhatsAppAttempt.phoneNumberId,
+      );
+    }
+    return undefined;
+  }, [channels, openWhatsAppAttempt]);
 
   useEffect(() => {
     if (!channels) return;
@@ -266,6 +329,27 @@ export default function ChannelsPage() {
         </div>
 
         <div className="flex flex-wrap gap-2 mt-2">
+          {openWhatsAppAttempt &&
+          (isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) ||
+            openWhatsAppAttempt.status === 'error') ? (
+            <PendingWhatsAppConnectionCard
+              attempt={openWhatsAppAttempt}
+              channel={openAttemptChannel}
+              onCancel={async () => {
+                try {
+                  await cancelWhatsAppAttempt({
+                    attemptId: openWhatsAppAttempt._id,
+                  });
+                  toast.message('WhatsApp connection cancelled');
+                } catch (err) {
+                  toast.error(
+                    err instanceof Error ? err.message : String(err),
+                  );
+                }
+              }}
+            />
+          ) : null}
+
           {connectedChannelsList.map((channel: ChannelDoc) => (
             <ConnectedChannelCard
               key={channel._id}
@@ -332,10 +416,13 @@ export default function ChannelsPage() {
           <div className="flex flex-wrap justify-center gap-6 mt-4">
             <ConnectWhatsAppButton
               forceAllowConnect
-              disabled={limitReached}
+              disabled={limitReached || (openWhatsAppAttempt != null && openWhatsAppAttempt.status !== 'error')}
               onConnected={() => setOpenAddDialog(false)}
             >
-              <PlatformOptionCard service="whatsapp" disabled={limitReached} />
+              <PlatformOptionCard
+                service="whatsapp"
+                disabled={limitReached || (openWhatsAppAttempt != null && openWhatsAppAttempt.status !== 'error')}
+              />
             </ConnectWhatsAppButton>
             <ConnectInstagramButton
               forceAllowConnect
@@ -381,6 +468,87 @@ function PlatformOptionCard({
     <div className="flex flex-col items-center gap-4 pointer-events-none w-full">
       <Icon className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
       <h3 className="text-sm font-semibold text-foreground leading-none">{meta.label}</h3>
+    </div>
+  );
+}
+
+function PendingWhatsAppConnectionCard({
+  attempt,
+  channel,
+  onCancel,
+}: {
+  attempt: WhatsAppConnectionAttemptDoc;
+  channel: ChannelDoc | undefined;
+  onCancel: () => void | Promise<void>;
+}) {
+  const status = getWhatsAppConnectionAttemptStatus(attempt, channel);
+  const [cancelling, setCancelling] = useState(false);
+  const label =
+    channel?.displayPhoneNumber ??
+    attempt.phoneNumberId ??
+    attempt.wabaId ??
+    'WhatsApp';
+
+  return (
+    <div
+      className={cn(
+        'flex size-56 flex-col rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 p-3.5',
+      )}
+    >
+      <div className="flex min-h-0 flex-1 flex-col justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <SiWhatsapp className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+              {label}
+            </h3>
+          </div>
+          <div className="mt-2 flex items-start gap-2">
+            {status.spinning ? (
+              <Loader2
+                className="mt-0.5 size-3.5 shrink-0 animate-spin text-amber-600 dark:text-amber-400"
+                aria-hidden
+              />
+            ) : (
+              <CircleAlert
+                className="mt-0.5 size-3.5 shrink-0 text-destructive"
+                aria-hidden
+              />
+            )}
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium leading-snug text-foreground">
+                {status.label}
+              </p>
+              {status.detail ? (
+                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground line-clamp-3">
+                  {status.detail}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-3 h-7 w-full text-xs"
+          disabled={cancelling}
+          onClick={() => {
+            setCancelling(true);
+            void Promise.resolve(onCancel()).finally(() => setCancelling(false));
+          }}
+        >
+          {cancelling ? (
+            <>
+              <Loader2 className="size-3 animate-spin" />
+              Cancelling…
+            </>
+          ) : (
+            'Cancel connection'
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

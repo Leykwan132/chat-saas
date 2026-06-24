@@ -1,5 +1,5 @@
-// Cross-provider helpers for our static-callback OAuth flows (Instagram +
-// Messenger). Everything in here is plain V8-runtime code with no Convex
+// Cross-provider helpers for our static-callback OAuth flows (Instagram,
+// Messenger, and WhatsApp). Everything in here is plain V8-runtime code with no Convex
 // `ctx` dependency, so the same functions can be called from action
 // handlers, HTTP route handlers, and tests.
 

@@ -86,6 +86,8 @@ const whatsappConnectionAttemptStatusValidator = v.union(
   v.literal("token_ready"),
   v.literal("connected"),
   v.literal("syncing"),
+  v.literal("completed"),
+  v.literal("cancelled"),
   v.literal("error"),
 );
 
@@ -525,7 +527,9 @@ export default defineSchema({
   })
     .index("by_wabaId", ["wabaId"])
     .index("by_channelId", ["channelId"])
-    .index("by_orgId_and_status", ["orgId", "status"]),
+    .index("by_orgId_and_status", ["orgId", "status"])
+    .index("by_connectedByUserId_and_status", ["connectedByUserId", "status"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
   whatsappHistoryChunks: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),

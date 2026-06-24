@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { maybeCompleteWhatsAppConnectionAttempt } from "./whatsappConnectionAttemptUtils";
 import {
   internalAction,
   internalMutation,
@@ -512,6 +513,7 @@ export const internalMarkHistoryNotShared = internalMutation({
         updatedAt: now,
       });
     }
+    await maybeCompleteWhatsAppConnectionAttempt(ctx, channel._id);
   },
 });
 
@@ -571,6 +573,7 @@ export const internalMarkHistoryChunkCompleted = internalMutation({
           updatedAt: now,
         });
       }
+      await maybeCompleteWhatsAppConnectionAttempt(ctx, chunk.channelId);
     }
   },
 });

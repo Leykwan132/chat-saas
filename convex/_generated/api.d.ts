@@ -109,6 +109,7 @@ import type * as triggers from "../triggers.js";
 import type * as usageMonthKey from "../usageMonthKey.js";
 import type * as users from "../users.js";
 import type * as whatsappBroadcast from "../whatsappBroadcast.js";
+import type * as whatsappConnectionAttemptUtils from "../whatsappConnectionAttemptUtils.js";
 import type * as whatsappDemo from "../whatsappDemo.js";
 import type * as whatsappEmbeddedSignup from "../whatsappEmbeddedSignup.js";
 import type * as whatsappFollowUp from "../whatsappFollowUp.js";
@@ -230,6 +231,7 @@ declare const fullApi: ApiFromModules<{
   usageMonthKey: typeof usageMonthKey;
   users: typeof users;
   whatsappBroadcast: typeof whatsappBroadcast;
+  whatsappConnectionAttemptUtils: typeof whatsappConnectionAttemptUtils;
   whatsappDemo: typeof whatsappDemo;
   whatsappEmbeddedSignup: typeof whatsappEmbeddedSignup;
   whatsappFollowUp: typeof whatsappFollowUp;

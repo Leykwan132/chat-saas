@@ -29,6 +29,10 @@ import {
   redactFacebookPayload,
 } from '@/lib/whatsappConnectDebug';
 import { getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
+import {
+  getWhatsAppConnectionAttemptStatus,
+  isOpenWhatsAppConnectionAttempt,
+} from '@/lib/whatsappConnectionAttemptStatus';
 
 type SessionInfoMessage = {
   type: 'WA_EMBEDDED_SIGNUP';
@@ -69,9 +73,14 @@ function isSignupFinishEvent(event: SessionInfoMessage['event']) {
 }
 
 export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled, children }: ConnectWhatsAppButtonProps) {
+  const prepareSignup = useAction(api.whatsappEmbeddedSignup.prepareWhatsAppSignup);
   const completeSignup = useAction(api.whatsappEmbeddedSignup.completeSignup);
   const beginConnectionAttempt = useMutation(
     api.whatsappEmbeddedSignup.beginConnectionAttempt,
+  );
+  const openConnectionAttempt = useQuery(
+    api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
+    {},
   );
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
@@ -85,6 +94,15 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   >(undefined);
   const [activePhoneNumberId, setActivePhoneNumberId] = useState<string | undefined>(undefined);
   const completingRef = useRef(false);
+  const stagedSignupRef = useRef(false);
+
+  const isPartnerWebhookReady = useCallback(
+    (attempt: Doc<'whatsappConnectionAttempts'> | null | undefined) =>
+      attempt?.status === 'connected' ||
+      attempt?.status === 'syncing' ||
+      Boolean(attempt?.partnerAppInstalledAt),
+    [],
+  );
 
   const signupIds = resolveWhatsAppEmbeddedSignupIds({
     appId: import.meta.env.VITE_META_APP_ID as string | undefined,
@@ -101,14 +119,53 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   // in the success state.
   const whatsappChannel = useMemo(() => {
     if (!channels) return undefined;
+    if (openConnectionAttempt?.channelId) {
+      return channels.find((c) => c._id === openConnectionAttempt.channelId);
+    }
     if (activePhoneNumberId) {
       return channels.find(
         (c: Doc<'channels'>) =>
           c.service === 'whatsapp' && c.phoneNumberId === activePhoneNumberId,
       );
     }
+    if (openConnectionAttempt?.phoneNumberId) {
+      return channels.find(
+        (c) =>
+          c.service === 'whatsapp' &&
+          c.phoneNumberId === openConnectionAttempt.phoneNumberId,
+      );
+    }
     return channels.find((c: Doc<'channels'>) => c.service === 'whatsapp');
-  }, [channels, activePhoneNumberId]);
+  }, [channels, activePhoneNumberId, openConnectionAttempt]);
+
+  useEffect(() => {
+    if (!openConnectionAttempt) {
+      if (
+        dialogState.kind === 'connecting' &&
+        whatsappChannel?.status === 'connected'
+      ) {
+        setDialogState({ kind: 'success' });
+        onConnected?.();
+      }
+      return;
+    }
+
+    if (openConnectionAttempt.status === 'error') {
+      setDialogState({
+        kind: 'error',
+        message: openConnectionAttempt.lastError ?? 'Connection failed',
+      });
+      setBusy(false);
+      return;
+    }
+
+    if (isOpenWhatsAppConnectionAttempt(openConnectionAttempt)) {
+      setDialogState({ kind: 'connecting' });
+      if (openConnectionAttempt.phoneNumberId) {
+        setActivePhoneNumberId(openConnectionAttempt.phoneNumberId);
+      }
+    }
+  }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected]);
 
   useEffect(() => {
     if (whatsappChannel) {
@@ -137,14 +194,14 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
   const tryCompleteSignup = useCallback(async () => {
     if (completingRef.current) {
-      logWhatsAppConnect('complete', 'skipped — already completing');
+      logWhatsAppConnect('complete', 'skipped - already completing');
       return;
     }
 
     const code = authCodeRef.current;
     const { wabaId, phoneNumberId } = sessionInfoRef.current;
     if (!code || !wabaId || !phoneNumberId) {
-      logWhatsAppConnect('complete', 'skipped — missing prerequisites', {
+      logWhatsAppConnect('complete', 'skipped - missing prerequisites', {
         hasCode: Boolean(code),
         hasWabaId: Boolean(wabaId),
         hasPhoneNumberId: Boolean(phoneNumberId),
@@ -154,6 +211,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
     completingRef.current = true;
     setDialogState({ kind: 'connecting' });
+    let waitingForWebhook = false;
     logWhatsAppConnect('complete', 'starting backend completeSignup', {
       wabaId,
       phoneNumberId,
@@ -162,26 +220,65 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
     try {
       const attemptId = await connectionAttemptPromiseRef.current;
-      const result = await completeSignup({ code, wabaId, phoneNumberId, attemptId });
-      logWhatsAppConnect('complete', 'WhatsApp connected — Facebook responses', {
+
+      if (!isPartnerWebhookReady(openConnectionAttempt)) {
+        if (!stagedSignupRef.current) {
+          await prepareSignup({
+            wabaId,
+            phoneNumberId,
+            attemptId,
+          });
+          stagedSignupRef.current = true;
+        }
+        waitingForWebhook = true;
+        logWhatsAppConnect('complete', 'staged signup - waiting for PARTNER_APP_INSTALLED webhook', {
+          attemptStatus: openConnectionAttempt?.status,
+        });
+        return;
+      }
+
+      logWhatsAppConnect('complete', 'webhook received - exchanging authorization code for access token', {
+        attemptStatus: openConnectionAttempt?.status,
+      });
+      const result = await completeSignup({
+        code,
+        wabaId,
+        phoneNumberId,
+        attemptId,
+      });
+      logWhatsAppConnect('complete', 'WhatsApp connected - Facebook responses', {
         embeddedSignupMessage: redactFacebookPayload(embeddedSignupMessageRef.current),
         fbLogin: redactFacebookPayload(fbLoginResponseRef.current),
         completeSignupResult: result,
       });
       logWhatsAppConnect('complete', 'backend completeSignup succeeded', { result });
-      setDialogState({ kind: 'success' });
-      onConnected?.();
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       logWhatsAppConnect('complete', 'backend completeSignup failed', { error: msg });
       setDialogState({ kind: 'error', message: msg });
     } finally {
       completingRef.current = false;
-      setBusy(false);
+      if (!waitingForWebhook) {
+        setBusy(false);
+      }
     }
-  }, [completeSignup, onConnected]);
+  }, [
+    completeSignup,
+    isPartnerWebhookReady,
+    openConnectionAttempt,
+    prepareSignup,
+  ]);
 
-  const requestAuthCodeAndComplete = useCallback(() => {
+  // After PARTNER_APP_INSTALLED, exchange the stored auth code for a token.
+  useEffect(() => {
+    if (!isPartnerWebhookReady(openConnectionAttempt)) return;
+    if (!authCodeRef.current || !sessionInfoRef.current.wabaId) return;
+    if (completingRef.current) return;
+    logWhatsAppConnect('complete', 'PARTNER_APP_INSTALLED observed - starting token exchange');
+    void tryCompleteSignup();
+  }, [isPartnerWebhookReady, openConnectionAttempt, tryCompleteSignup]);
+
+  const requestAuthCodeAndComplete = useCallback(async () => {
     logWhatsAppConnect('auth-code', 'requestAuthCodeAndComplete called', {
       hasAppId: Boolean(appId),
       hasConfigId: Boolean(configId),
@@ -192,58 +289,58 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     });
 
     if (!appId || !configId) {
-      logWhatsAppConnect('auth-code', 'aborted — missing appId or configId');
+      logWhatsAppConnect('auth-code', 'aborted - missing appId or configId');
       return;
     }
 
-    void (async () => {
-      let fb: NonNullable<typeof window.FB>;
-      try {
-        fb = await waitForFacebookSdk();
-      } catch {
-        logWhatsAppConnect('auth-code', 'aborted — Facebook SDK not ready');
-        toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
-        setBusy(false);
-        return;
-      }
+    let fb: NonNullable<typeof window.FB>;
+    try {
+      fb = await waitForFacebookSdk();
+    } catch {
+      logWhatsAppConnect('auth-code', 'aborted - Facebook SDK not ready');
+      toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
+      setBusy(false);
+      return;
+    }
 
-      logWhatsAppConnect('auth-code', 'calling FB.login');
-      fb.login(
-        (response: FBLoginResponse) => {
-          refreshFacebookLoginStatus();
-          fbLoginResponseRef.current = response;
-          logWhatsAppConnect('auth-code', 'FB.login callback', {
-            response: redactFacebookPayload(response),
-          });
+    fb.login(
+      (response: FBLoginResponse) => {
+        refreshFacebookLoginStatus();
+        console.log('response from FB login: ', response);
+        fbLoginResponseRef.current = response;
 
-          const code = response.authResponse?.code;
-          if (!code) {
-            const message =
-              response.status === 'unknown'
-                ? 'Signup cancelled before completion.'
-                : 'Did not receive an authorisation code.';
-            logWhatsAppConnect('auth-code', 'no auth code received', { message });
-            toast.error(message);
-            setBusy(false);
-            return;
-          }
+        if (response.authResponse) {
+          const code = response.authResponse.code;
+          console.log('response: ', code);
+        } else {
+          console.log('response: ', response);
+        }
 
-          authCodeRef.current = code;
-          logWhatsAppConnect('auth-code', 'auth code stored — proceeding to completeSignup');
-          void tryCompleteSignup();
+        const code = response.authResponse?.code;
+        if (!code) {
+          const message =
+            response.status === 'unknown'
+              ? 'Signup cancelled before completion.'
+              : 'Did not receive an authorisation code.';
+          toast.error(message);
+          setBusy(false);
+          return;
+        }
+
+        authCodeRef.current = code;
+        void tryCompleteSignup();
+      },
+      {
+        config_id: configId,
+        response_type: 'code',
+        override_default_response_type: true,
+        extras: {
+          featureType: 'whatsapp_business_app_onboarding',
+          sessionInfoVersion: '3',
         },
-        {
-          config_id: configId,
-          response_type: 'code',
-          override_default_response_type: true,
-          extras: {
-            featureType: 'whatsapp_business_app_onboarding',
-            sessionInfoVersion: '3',
-          },
-        },
-      );
-    })();
-  }, [appId, configId, tryCompleteSignup]);
+      },
+    );
+  }, [appId, configId, fbSession.ready, tryCompleteSignup]);
 
   // Meta posts WA_EMBEDDED_SIGNUP to the opener when the hosted onboard flow finishes.
   useEffect(() => {
@@ -290,70 +387,83 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     return () => window.removeEventListener('message', handleMessage);
   }, [requestAuthCodeAndComplete]);
 
-  const launchSignup = useCallback(() => {
+  const launchSignup = useCallback(async () => {
     if (!appId || !configId) {
-      logWhatsAppConnect('launch', 'aborted — missing appId or configId');
+      logWhatsAppConnect('launch', 'aborted - missing appId or configId');
       toast.error(
         'WhatsApp is not configured. Set VITE_META_APP_ID and VITE_META_EMBEDDED_SIGNUP_CONFIG_ID.',
       );
       return;
     }
 
-    void (async () => {
-      try {
-        await waitForFacebookSdk();
-      } catch {
-        logWhatsAppConnect('launch', 'aborted — Facebook SDK not ready');
-        toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
-        return;
-      }
+    if (
+      openConnectionAttempt &&
+      isOpenWhatsAppConnectionAttempt(openConnectionAttempt)
+    ) {
+      logWhatsAppConnect('launch', 'aborted - open connection attempt exists');
+      toast.error(
+        'You already have a WhatsApp connection in progress. Cancel it on the Channels page first.',
+      );
+      return;
+    }
 
-      setBusy(true);
-      completingRef.current = false;
-      sessionInfoRef.current = {};
-      embeddedSignupMessageRef.current = undefined;
-      fbLoginResponseRef.current = undefined;
-      authCodeRef.current = undefined;
-      connectionAttemptPromiseRef.current = undefined;
-      setActivePhoneNumberId(undefined);
+    try {
+      await waitForFacebookSdk();
+    } catch {
+      logWhatsAppConnect('launch', 'aborted - Facebook SDK not ready');
+      toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
+      return;
+    }
 
-      const onboardUrl = buildWhatsAppOnboardUrl(appId, configId);
-      logWhatsAppConnect('launch', 'opening embedded signup', {
-        appId,
-        configId,
+    setBusy(true);
+    completingRef.current = false;
+    stagedSignupRef.current = false;
+    sessionInfoRef.current = {};
+    embeddedSignupMessageRef.current = undefined;
+    fbLoginResponseRef.current = undefined;
+    authCodeRef.current = undefined;
+    connectionAttemptPromiseRef.current = undefined;
+    setActivePhoneNumberId(undefined);
+
+    const onboardUrl = buildWhatsAppOnboardUrl(appId, configId);
+    logWhatsAppConnect('launch', 'opening embedded signup', {
+      appId,
+      configId,
+      onboardUrl,
+    });
+
+    const popup = window.open(
+      onboardUrl,
+      'whatsapp_embedded_signup',
+      'width=960,height=720,menubar=no,toolbar=no,location=no,status=no',
+    );
+
+    if (!popup) {
+      logWhatsAppConnect('fallback', 'popup blocked - opening new tab', {
         onboardUrl,
       });
+      window.open(onboardUrl, '_blank', 'noopener,noreferrer');
+      toast.message('Complete WhatsApp setup in the new tab, then return here.');
+      setBusy(false);
+      return;
+    }
 
-      const popup = window.open(
-        onboardUrl,
-        'whatsapp_embedded_signup',
-        'width=960,height=720,menubar=no,toolbar=no,location=no,status=no',
-      );
-
-      if (!popup) {
-        logWhatsAppConnect('fallback', 'popup blocked — opening new tab', {
-          onboardUrl,
-          note:
-            'postMessage from the hosted flow may not reach this window; watch for redirect_uri callback instead',
+    connectionAttemptPromiseRef.current = beginConnectionAttempt({})
+      .then((attemptId) => {
+        setDialogState({ kind: 'connecting' });
+        return attemptId;
+      })
+      .catch((err) => {
+        logWhatsAppConnect('launch', 'connection attempt tracking failed', {
+          error: err instanceof Error ? err.message : String(err),
         });
-        window.open(onboardUrl, '_blank', 'noopener,noreferrer');
-        toast.message('Complete WhatsApp setup in the new tab, then return here.');
+        toast.error(err instanceof Error ? err.message : String(err));
         setBusy(false);
-        return;
-      }
+        return undefined;
+      });
 
-      connectionAttemptPromiseRef.current = beginConnectionAttempt({})
-        .then((attemptId) => attemptId)
-        .catch((err) => {
-          logWhatsAppConnect('launch', 'connection attempt tracking failed', {
-            error: err instanceof Error ? err.message : String(err),
-          });
-          return undefined;
-        });
-
-      logWhatsAppConnect('launch', 'popup opened — waiting for WA_EMBEDDED_SIGNUP postMessage');
-    })();
-  }, [appId, beginConnectionAttempt, configId]);
+    logWhatsAppConnect('launch', 'popup opened - waiting for WA_EMBEDDED_SIGNUP postMessage');
+  }, [appId, beginConnectionAttempt, configId, openConnectionAttempt]);
 
   const handleDialogOpenChange = useCallback(
     (open: boolean) => {
@@ -419,7 +529,10 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
             }}
           >
             {dialogState.kind === 'connecting' ? (
-              <ConnectingState channel={whatsappChannel} />
+              <ConnectingState
+                channel={whatsappChannel}
+                attempt={openConnectionAttempt ?? undefined}
+              />
             ) : dialogState.kind === 'success' ? (
               <SuccessState channel={whatsappChannel} />
             ) : dialogState.kind === 'error' ? (
@@ -490,13 +603,24 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   );
 }
 
-function ConnectingState({ channel }: { channel: Doc<'channels'> | undefined }) {
+function ConnectingState({
+  channel,
+  attempt,
+}: {
+  channel: Doc<'channels'> | undefined;
+  attempt?: Doc<'whatsappConnectionAttempts'>;
+}) {
+  const attemptStatus = attempt
+    ? getWhatsAppConnectionAttemptStatus(attempt, channel)
+    : null;
   const syncStatus = getWhatsAppSyncStatus(channel);
   const label =
+    attemptStatus?.label ??
     syncStatus?.label ??
     (channel?.progressStep && PROGRESS_LABELS[channel.progressStep]
       ? PROGRESS_LABELS[channel.progressStep]
       : 'Setting things up');
+  const detail = attemptStatus?.detail ?? syncStatus?.detail;
 
   return (
     <div className="flex flex-col items-center gap-5 py-6 text-center">
@@ -510,10 +634,8 @@ function ConnectingState({ channel }: { channel: Doc<'channels'> | undefined }) 
             <Shimmer duration={2} spread={3}>
               {label}
             </Shimmer>
-            {syncStatus?.detail ? (
-              <span className="text-xs text-muted-foreground">
-                {syncStatus.detail}
-              </span>
+            {detail ? (
+              <span className="text-xs text-muted-foreground">{detail}</span>
             ) : null}
           </div>
         </DialogDescription>

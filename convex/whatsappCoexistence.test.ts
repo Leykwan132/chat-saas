@@ -40,6 +40,7 @@ test("WhatsApp success account_update events are audit-only", async () => {
     timestampMs: 1_700_000_020_000,
   });
   expect(installed.shouldStartSync).toBe(false);
+  expect(installed.channelId).toBe(channelId);
 
   const duplicate = await t.mutation(internal.whatsappWebhook.handleAccountUpdate, {
     wabaId: "waba-123",
@@ -102,18 +103,30 @@ test("account_update before channel exists is stored but does not drive connecti
   expect(result.channel?.coexistenceSyncStartedAt).toBeUndefined();
 });
 
-test("linked connection attempt ignores success account_update for connection state", async () => {
+test("linked connection attempt moves to connected when partner app is installed", async () => {
   const t = convexTest(schema, modules);
-  const attemptId = await t.run(async (ctx) => {
-    return await ctx.db.insert("whatsappConnectionAttempts", {
+  const channelId = await t.run(async (ctx) => {
+    const insertedChannelId = await ctx.db.insert("channels", {
       orgId: "org-123",
-      connectedByUserId: "user-123",
-      status: "signup_finished",
+      service: "whatsapp",
       wabaId: "waba-linked",
       phoneNumberId: "phone-linked",
+      status: "connected",
+      connectedByUserId: "user-123",
       createdAt: 1_700_000_000_000,
       updatedAt: 1_700_000_000_000,
     });
+    await ctx.db.insert("whatsappConnectionAttempts", {
+      orgId: "org-123",
+      connectedByUserId: "user-123",
+      status: "token_ready",
+      wabaId: "waba-linked",
+      phoneNumberId: "phone-linked",
+      channelId: insertedChannelId,
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_000_000,
+    });
+    return insertedChannelId;
   });
 
   const result = await t.mutation(internal.whatsappWebhook.handleAccountUpdate, {
@@ -121,12 +134,17 @@ test("linked connection attempt ignores success account_update for connection st
     event: "PARTNER_APP_INSTALLED",
     timestampMs: 1_700_000_020_000,
   });
-  const attempt = await t.run(async (ctx) => await ctx.db.get(attemptId));
+  const attempt = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("whatsappConnectionAttempts")
+      .withIndex("by_wabaId", (q) => q.eq("wabaId", "waba-linked"))
+      .unique();
+  });
 
   expect(result.shouldStartSync).toBe(false);
-  expect(attempt?.status).toBe("signup_finished");
-  expect(attempt?.partnerAppInstalledAt).toBeUndefined();
-  expect(attempt?.channelId).toBeUndefined();
+  expect(result.channelId).toBe(channelId);
+  expect(attempt?.status).toBe("connected");
+  expect(attempt?.partnerAppInstalledAt).toBe(1_700_000_020_000);
 });
 
 test("completeSignup token persistence marks channel connected without account_update", async () => {
