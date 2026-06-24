@@ -371,7 +371,7 @@ async function handlePartnerAppInstalled(
 
   if (openAttempt !== undefined) {
     await ctx.db.patch(openAttempt._id, {
-      status: "connected",
+      status: openAttempt.status === "syncing" ? "syncing" : "connected",
       partnerAppInstalledAt: now,
       ...(channel !== undefined ? { channelId: channel._id } : {}),
       updatedAt: now,

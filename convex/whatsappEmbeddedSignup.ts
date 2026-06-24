@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { action, internalMutation, internalQuery, mutation, query, type ActionCtx } from "./_generated/server";
+import { action, internalMutation, internalQuery, mutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
@@ -256,67 +256,72 @@ type TokenExchangeResponse = {
   expires_in?: number;
 };
 
+function selectMetaAppCredentials(args: {
+  applicationId?: string;
+}): { appId: string; appSecret: string } {
+  const appIdEnv = process.env.META_APP_ID;
+  const appSecretEnv = process.env.META_APP_SECRET;
+  if (!appIdEnv || !appSecretEnv) {
+    logWhatsAppConnect("failed", { reason: "missing META_APP_ID / META_APP_SECRET" });
+    throw new Error(
+      "META_APP_ID / META_APP_SECRET are not configured on the Convex deployment.",
+    );
+  }
+
+  const appIds = appIdEnv.split("|").map((value) => value.trim());
+  const appSecrets = appSecretEnv.split("|").map((value) => value.trim());
+  if (
+    appIds.length !== appSecrets.length ||
+    appIds.some((value) => value.length === 0) ||
+    appSecrets.some((value) => value.length === 0)
+  ) {
+    throw new Error(
+      "META_APP_ID and META_APP_SECRET must have matching pipe-separated values.",
+    );
+  }
+
+  const selectedIndex =
+    args.applicationId !== undefined
+      ? appIds.indexOf(args.applicationId)
+      : 0;
+  if (selectedIndex === -1) {
+    throw new Error(
+      `Could not find application id '${args.applicationId}' in META_APP_ID.`,
+    );
+  }
+
+  return {
+    appId: appIds[selectedIndex],
+    appSecret: appSecrets[selectedIndex],
+  };
+}
+
 async function exchangeAuthorizationCodeForToken(args: {
   appId: string;
   appSecret: string;
   code: string;
-  redirectUri?: string;
 }): Promise<TokenExchangeResponse> {
-  const url = `${graphBase()}/oauth/access_token`;
-  const payload: Record<string, string> = {
-    client_id: args.appId,
-    client_secret: args.appSecret,
-    grant_type: "authorization_code",
-    code: args.code,
-  };
-  if (args.redirectUri !== undefined && args.redirectUri.length > 0) {
-    payload.redirect_uri = args.redirectUri;
-  }
+  const url = new URL(`${graphBase()}/oauth/access_token`);
+  url.searchParams.set("client_id", args.appId);
+  url.searchParams.set("client_secret", args.appSecret);
+  url.searchParams.set("code", args.code);
 
   logWhatsAppConnect("token-exchange-request", {
-    method: "POST",
-    url,
-    grantType: payload.grant_type,
-    hasClientId: Boolean(payload.client_id),
-    hasRedirectUri: Boolean(payload.redirect_uri),
-    redirectUri: payload.redirect_uri,
+    method: "GET",
+    url: url.toString(),
+    hasClientId: true,
     codeLength: args.code.length,
   });
 
   return await graphFetch<TokenExchangeResponse>(
-    url,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    },
+    url.toString(),
+    { method: "GET" },
     "Code exchange",
   );
 }
 
-async function partnerAppInstalledForWaba(
-  ctx: ActionCtx,
-  wabaId: string,
-  attemptId?: Id<"whatsappConnectionAttempts">,
-): Promise<boolean> {
-  const recorded = await ctx.runQuery(internal.whatsappWebhook.internalHasAccountUpdate, {
-    wabaId,
-    event: "PARTNER_APP_INSTALLED",
-  });
-  if (recorded) return true;
-  if (attemptId === undefined) return false;
-  const attempt = await ctx.runQuery(internal.whatsappEmbeddedSignup.internalGetAttempt, {
-    attemptId,
-  });
-  return (
-    attempt?.partnerAppInstalledAt !== undefined ||
-    attempt?.status === "connected" ||
-    attempt?.status === "syncing"
-  );
-}
-
-// Stage signup after FB.login + embedded signup FINISH, before Meta's
-// PARTNER_APP_INSTALLED webhook. Token exchange waits for that webhook.
+// Stage signup after FB.login + embedded signup FINISH. completeSignup also
+// stages the row, so this remains safe for clients that still call it.
 export const prepareWhatsAppSignup = action({
   args: {
     wabaId: v.string(),
@@ -354,28 +359,34 @@ export const prepareWhatsAppSignup = action({
     logWhatsAppConnect("prepare-completed", {
       wabaId: args.wabaId,
       phoneNumberId: args.phoneNumberId,
-      waitingFor: "PARTNER_APP_INSTALLED",
     });
     return { prepared: true as const };
   },
 });
 
-// Public action invoked from the frontend after PARTNER_APP_INSTALLED was
-// received and FB.login returned an authorization code.
+// Public action invoked from the frontend after FB.login returns the short-lived
+// authorization code and WA_EMBEDDED_SIGNUP returns the WABA + phone IDs.
 //
 // Steps:
-//   1. Exchange the code for a long-lived business token (POST /oauth/access_token).
+//   1. Exchange the code for a business token (GET /oauth/access_token).
 //   2. Subscribe our Meta App to the WABA's webhook events.
-//   3. Register the Cloud API phone number.
+//   3. Skip phone-number registration for mobile coexistence.
 //   4. Look up display metadata for the number.
 //   5. Persist the channel row and start coexistence sync.
 export const completeSignup = action({
   args: {
     code: v.string(),
+    applicationId: v.optional(v.string()),
     wabaId: v.string(),
     phoneNumberId: v.string(),
     attemptId: v.optional(v.id("whatsappConnectionAttempts")),
-    redirectUri: v.optional(v.string()),
+    flowType: v.optional(
+      v.union(
+        v.literal("only_waba"),
+        v.literal("new_phone_number"),
+        v.literal("existing_phone_number"),
+      ),
+    ),
   },
   handler: async (
     ctx,
@@ -389,38 +400,20 @@ export const completeSignup = action({
       userId,
       wabaId: args.wabaId,
       phoneNumberId: args.phoneNumberId,
+      flowType: args.flowType ?? "existing_phone_number",
       codeLength: args.code.length,
     });
 
-    const appId = process.env.META_APP_ID;
-    const appSecret = process.env.META_APP_SECRET;
-    if (!appId || !appSecret) {
-      logWhatsAppConnect("failed", { reason: "missing META_APP_ID / META_APP_SECRET" });
-      throw new Error(
-        "META_APP_ID / META_APP_SECRET are not configured on the Convex deployment.",
-      );
-    }
-    logWhatsAppConnect("env", {
-      graphVersion: graphVersion(),
-      hasAppId: Boolean(appId),
-      hasAppSecret: Boolean(appSecret),
-    });
-
     try {
-      const webhookReady = await partnerAppInstalledForWaba(
-        ctx,
-        args.wabaId,
-        args.attemptId,
-      );
-      if (!webhookReady) {
-        logWhatsAppConnect("blocked", {
-          reason: "PARTNER_APP_INSTALLED webhook not received yet",
-          wabaId: args.wabaId,
-        });
-        throw new Error(
-          "Waiting for Meta to confirm WhatsApp setup. Keep this window open.",
-        );
-      }
+      const flowType = args.flowType ?? "existing_phone_number";
+      const { appId, appSecret } = selectMetaAppCredentials({
+        applicationId: args.applicationId,
+      });
+      logWhatsAppConnect("env", {
+        graphVersion: graphVersion(),
+        appId,
+        hasAppSecret: Boolean(appSecret),
+      });
 
       if (args.attemptId !== undefined) {
         await ctx.runMutation(
@@ -444,13 +437,20 @@ export const completeSignup = action({
         connectedByUserId: userId,
       });
 
-      // 1. Exchange code for access token (POST JSON — matches Meta ES docs).
-      logWhatsAppConnect("step", { progressStep: "exchanging-token" });
+      await ctx.runMutation(internal.channels.internalSetProgress, {
+        orgId: channelOrgId,
+        service: "whatsapp",
+        progressStep: "exchanging",
+        phoneNumberId: args.phoneNumberId,
+      });
+
+      // 1. Exchange code for access token. Meta's coexistence sample calls
+      //    oauth/access_token with client_id, client_secret, and code only.
+      logWhatsAppConnect("step", { progressStep: "exchanging" });
       const tokenRes = await exchangeAuthorizationCodeForToken({
         appId,
         appSecret,
         code: args.code,
-        redirectUri: args.redirectUri,
       });
       const accessToken = tokenRes.access_token;
       const tokenExpiresAt = tokenRes.expires_in
@@ -488,32 +488,35 @@ export const completeSignup = action({
         "WABA subscribe",
       );
 
-      await ctx.runMutation(internal.channels.internalSetProgress, {
-        orgId: channelOrgId,
-        service: "whatsapp",
-        progressStep: "registering",
-        phoneNumberId: args.phoneNumberId,
-      });
+      if (flowType === "existing_phone_number") {
+        logWhatsAppConnect("coexistence-skip-register", {
+          phoneNumberId: args.phoneNumberId,
+        });
+      } else {
+        await ctx.runMutation(internal.channels.internalSetProgress, {
+          orgId: channelOrgId,
+          service: "whatsapp",
+          progressStep: "registering",
+          phoneNumberId: args.phoneNumberId,
+        });
 
-      // 3. Register the phone number with Cloud API. PIN can be anything
-      //    when the number was migrated via Embedded Signup; we generate one.
-      logWhatsAppConnect("step", { progressStep: "registering" });
-      const pin = String(Math.floor(100000 + Math.random() * 900000));
-      await graphFetch(
-        `${graphBase()}/${args.phoneNumberId}/register`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
+        const pin = String(Math.floor(100000 + Math.random() * 900000));
+        await graphFetch(
+          `${graphBase()}/${args.phoneNumberId}/register`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              messaging_product: "whatsapp",
+              pin,
+            }),
           },
-          body: JSON.stringify({
-            messaging_product: "whatsapp",
-            pin,
-          }),
-        },
-        "Phone number register",
-      );
+          "Phone number register",
+        );
+      }
 
       // 4. Read display metadata so we can show a friendly number in the UI.
       let displayPhoneNumber: string | undefined;
@@ -555,13 +558,7 @@ export const completeSignup = action({
         );
       }
 
-      const shouldStartSync = await partnerAppInstalledForWaba(
-        ctx,
-        args.wabaId,
-        args.attemptId,
-      );
-
-      if (shouldStartSync) {
+      if (flowType === "existing_phone_number") {
         if (args.attemptId !== undefined) {
           await ctx.runMutation(
             internal.whatsappEmbeddedSignup.internalStartCoexistenceSyncForChannel,

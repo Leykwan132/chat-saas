@@ -147,6 +147,48 @@ test("linked connection attempt moves to connected when partner app is installed
   expect(attempt?.partnerAppInstalledAt).toBe(1_700_000_020_000);
 });
 
+test("partner app installed does not downgrade syncing connection attempt", async () => {
+  const t = convexTest(schema, modules);
+  await t.run(async (ctx) => {
+    const channelId = await ctx.db.insert("channels", {
+      orgId: "org-123",
+      service: "whatsapp",
+      wabaId: "waba-syncing",
+      phoneNumberId: "phone-syncing",
+      status: "connected",
+      connectedByUserId: "user-123",
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_000_000,
+    });
+    await ctx.db.insert("whatsappConnectionAttempts", {
+      orgId: "org-123",
+      connectedByUserId: "user-123",
+      status: "syncing",
+      wabaId: "waba-syncing",
+      phoneNumberId: "phone-syncing",
+      channelId,
+      syncStartedAt: 1_700_000_010_000,
+      createdAt: 1_700_000_000_000,
+      updatedAt: 1_700_000_010_000,
+    });
+  });
+
+  await t.mutation(internal.whatsappWebhook.handleAccountUpdate, {
+    wabaId: "waba-syncing",
+    event: "PARTNER_APP_INSTALLED",
+    timestampMs: 1_700_000_020_000,
+  });
+  const attempt = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("whatsappConnectionAttempts")
+      .withIndex("by_wabaId", (q) => q.eq("wabaId", "waba-syncing"))
+      .unique();
+  });
+
+  expect(attempt?.status).toBe("syncing");
+  expect(attempt?.partnerAppInstalledAt).toBe(1_700_000_020_000);
+});
+
 test("completeSignup token persistence marks channel connected without account_update", async () => {
   const t = convexTest(schema, modules);
 
