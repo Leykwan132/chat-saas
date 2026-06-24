@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { CheckCircle2, CircleAlert, ExternalLink } from 'lucide-react';
+import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -65,7 +65,6 @@ const PROGRESS_LABELS: Record<NonNullable<Doc<'channels'>['progressStep']>, stri
   backfilling: 'Gathering the conversational gossip...',
 };
 
-const PAYMENT_METHOD_URL = 'https://business.facebook.com/wa/manage/home/';
 
 function isSignupFinishEvent(event: SessionInfoMessage['event']) {
   return event === 'FINISH' || event === 'FINISH_WHATSAPP_BUSINESS_APP_ONBOARDING';
@@ -83,6 +82,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const [busy, setBusy] = useState(false);
   const [dialogState, setDialogState] = useState<DialogState>({ kind: 'closed' });
+  const [userDismissed, setUserDismissed] = useState(false);
   const sessionInfoRef = useRef<{ wabaId?: string; phoneNumberId?: string }>({});
   const embeddedSignupMessageRef = useRef<SessionInfoMessage | undefined>(undefined);
   const fbLoginResponseRef = useRef<FBLoginResponse | undefined>(undefined);
@@ -136,6 +136,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         setDialogState({ kind: 'success' });
         onConnected?.();
       }
+      setUserDismissed(false);
       return;
     }
 
@@ -149,12 +150,26 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     }
 
     if (isOpenWhatsAppConnectionAttempt(openConnectionAttempt)) {
-      setDialogState({ kind: 'connecting' });
+      const isSyncingOrConnected =
+        openConnectionAttempt.status === 'connected' ||
+        openConnectionAttempt.status === 'syncing';
+
+      if (isSyncingOrConnected) {
+        if (!userDismissed && dialogState.kind !== 'success') {
+          setDialogState({ kind: 'success' });
+          onConnected?.();
+        }
+      } else {
+        if (!userDismissed && dialogState.kind !== 'connecting') {
+          setDialogState({ kind: 'connecting' });
+        }
+      }
+
       if (openConnectionAttempt.phoneNumberId) {
         setActivePhoneNumberId(openConnectionAttempt.phoneNumberId);
       }
     }
-  }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected]);
+  }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected, userDismissed]);
 
   useEffect(() => {
     if (whatsappChannel) {
@@ -372,6 +387,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
     setBusy(true);
     completingRef.current = false;
+    setUserDismissed(false);
     sessionInfoRef.current = {};
     embeddedSignupMessageRef.current = undefined;
     fbLoginResponseRef.current = undefined;
@@ -407,16 +423,21 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       if (open) return;
       // Disallow dismissing while the action is in flight; the open-change
       // event still fires for ESC etc., so guard explicitly.
-      if (dialogState.kind === 'connecting') {
+      const isSyncingOrConnected =
+        openConnectionAttempt?.status === 'connected' ||
+        openConnectionAttempt?.status === 'syncing';
+
+      if (dialogState.kind === 'connecting' && !isSyncingOrConnected) {
         logWhatsAppConnect('complete', 'dialog open-change ignored while connecting');
         return;
       }
       logWhatsAppConnect('complete', 'dialog closed by user', {
         previousKind: dialogState.kind,
       });
+      setUserDismissed(true);
       setDialogState({ kind: 'closed' });
     },
-    [dialogState.kind],
+    [dialogState.kind, openConnectionAttempt?.status],
   );
 
   if (!forceAllowConnect && whatsappChannel?.status === 'connected') {
@@ -471,7 +492,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
                 attempt={openConnectionAttempt ?? undefined}
               />
             ) : dialogState.kind === 'success' ? (
-              <SuccessState channel={whatsappChannel} />
+              <SuccessState />
             ) : dialogState.kind === 'error' ? (
               <ErrorState
                 message={dialogState.message}
@@ -521,7 +542,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
           {dialogState.kind === 'connecting' ? (
             <ConnectingState channel={whatsappChannel} />
           ) : dialogState.kind === 'success' ? (
-            <SuccessState channel={whatsappChannel} />
+            <SuccessState />
           ) : dialogState.kind === 'error' ? (
             <ErrorState
               message={dialogState.message}
@@ -581,53 +602,24 @@ function ConnectingState({
   );
 }
 
-function SuccessState({ channel }: { channel: Doc<'channels'> | undefined }) {
-  const number =
-    channel?.displayPhoneNumber ?? channel?.phoneNumberId ?? undefined;
-  const syncStatus = getWhatsAppSyncStatus(channel);
+function SuccessState() {
   return (
-    <div className="flex flex-col gap-5 py-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-          <CheckCircle2 className="size-6" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <DialogTitle className="text-base">WhatsApp connected</DialogTitle>
-          <DialogDescription>
-            {number
-              ? `Your number ${number} is linked to this workspace.`
-              : 'Your WhatsApp Business account is linked to this workspace.'}
-          </DialogDescription>
-        </div>
+    <div className="flex flex-col items-center gap-5 py-6 text-center">
+      <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <CheckCircle2 className="size-6" />
       </div>
-
-      {syncStatus ? (
-        <div className="flex flex-col gap-1 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-          <p className="font-medium">{syncStatus.label}</p>
-          {syncStatus.detail ? (
-            <p className="text-muted-foreground">{syncStatus.detail}</p>
-          ) : null}
-        </div>
-      ) : null}
-
-      <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted/40 p-4 text-sm">
-        <p className="font-medium">One last step: add a payment method</p>
-        <p className="text-muted-foreground">
-          Open WhatsApp Manager and add a payment method so you can start
-          sending messages to your customers.
-        </p>
+      <div className="flex flex-col items-center gap-2">
+        <DialogTitle className="text-base font-semibold">WhatsApp connected</DialogTitle>
+        <DialogDescription>
+          Syncing is in progress, will be completed soon.
+        </DialogDescription>
       </div>
-
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+      <div className="mt-2 w-full">
         <DialogClose asChild>
-          <Button variant="outline">Done</Button>
+          <Button variant="outline" className="w-full">
+            Dismiss
+          </Button>
         </DialogClose>
-        <Button asChild>
-          <a href={PAYMENT_METHOD_URL} target="_blank" rel="noopener noreferrer">
-            Open WhatsApp Manager
-            <ExternalLink className="size-4" />
-          </a>
-        </Button>
       </div>
     </div>
   );

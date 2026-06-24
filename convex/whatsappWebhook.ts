@@ -43,6 +43,7 @@ const stateSyncContactValidator = v.object({
       full_name: v.optional(v.string()),
       first_name: v.optional(v.string()),
       phone_number: v.optional(v.string()),
+      user_id: v.optional(v.string()),
     }),
   ),
   timestampMs: v.optional(v.number()),

@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
@@ -330,7 +331,9 @@ export default function ChannelsPage() {
 
         <div className="flex flex-wrap gap-2 mt-2">
           {openWhatsAppAttempt &&
-          (isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) ||
+          ((isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) &&
+            openWhatsAppAttempt.status !== 'connected' &&
+            openWhatsAppAttempt.status !== 'syncing') ||
             openWhatsAppAttempt.status === 'error') ? (
             <PendingWhatsAppConnectionCard
               attempt={openWhatsAppAttempt}
@@ -586,6 +589,12 @@ function ConnectedChannelCard({
   const channelName = channelIdentifier(channel);
   const whatsappSyncStatus =
     channel.service === 'whatsapp' ? getWhatsAppSyncStatus(channel) : null;
+  const isSyncing =
+    channel.service === 'whatsapp' &&
+    (channel.historySyncStatus === 'requested' ||
+      channel.historySyncStatus === 'syncing' ||
+      channel.contactSyncStatus === 'requested' ||
+      channel.contactSyncStatus === 'syncing');
 
   const handleDisconnectOpenChange = useCallback((open: boolean) => {
     setDisconnectOpen(open);
@@ -665,14 +674,29 @@ function ConnectedChannelCard({
         </div>
 
         {/* Bottom Details */}
-        <div className="mt-auto flex items-center justify-between gap-2">
+        <div className="mt-auto flex items-center justify-between gap-2 w-full">
           <div className="min-w-0 flex-1">
             {channel.status === 'connected' ? (
               whatsappSyncStatus ? (
-                <div className="text-[11px] leading-snug">
+                <div className="text-[11px] leading-snug space-y-1.5 w-full">
                   <p className="font-medium text-foreground truncate">
                     {whatsappSyncStatus.label}
                   </p>
+                  {isSyncing && (
+                    <Progress
+                      value={
+                        channel.historySyncStatus === 'syncing' || channel.historySyncStatus === 'requested'
+                          ? Math.max(0, Math.min(100, channel.historySyncProgress ?? 0))
+                          : 10
+                      }
+                      className={cn(
+                        "h-1.5 w-full",
+                        (channel.contactSyncStatus === 'requested' || channel.contactSyncStatus === 'syncing') &&
+                          channel.historySyncStatus !== 'syncing' &&
+                          "animate-pulse bg-emerald-500/10"
+                      )}
+                    />
+                  )}
                   {whatsappSyncStatus.detail ? (
                     <p className="text-muted-foreground line-clamp-2">
                       {whatsappSyncStatus.detail}
