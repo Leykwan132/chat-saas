@@ -340,9 +340,11 @@ export const listForCurrentOrg = query({
 export const getById = query({
   args: { customerId: v.id("customers") },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const customer = await ctx.db.get(args.customerId);
-    if (customer === null || customer.orgId !== orgId) {
+
+    if (customer === null || customer.orgId !== resolvedOrgId) {
       return null;
     }
     let assignedUserId: string | undefined = undefined;
@@ -426,11 +428,13 @@ export const update = mutation({
     notes: v.optional(v.string()),
     leadTemperature: v.optional(v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"), v.null())),
     conversationId: v.optional(v.id("conversations")),
+    customFields: v.optional(v.record(v.string(), v.string())),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const customer = await ctx.db.get(args.customerId);
-    if (customer === null || customer.orgId !== orgId) {
+    if (customer === null || customer.orgId !== resolvedOrgId) {
       throw new Error("Customer not found");
     }
     const patch: Record<string, unknown> = { updatedAt: Date.now() };
@@ -481,6 +485,9 @@ export const update = mutation({
     if (args.notes !== undefined) patch.notes = args.notes;
     if (args.leadTemperature !== undefined) {
       patch.leadTemperature = args.leadTemperature === null ? undefined : args.leadTemperature;
+    }
+    if (args.customFields !== undefined) {
+      patch.customFields = args.customFields;
     }
     await ctx.db.patch(args.customerId, patch);
 
@@ -629,9 +636,10 @@ export const addCustomerTag = mutation({
     conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const customer = await ctx.db.get(args.customerId);
-    if (customer === null || customer.orgId !== orgId) {
+    if (customer === null || customer.orgId !== resolvedOrgId) {
       throw new Error("Customer not found");
     }
     const normalized = args.tag.trim();
@@ -673,9 +681,10 @@ export const removeCustomerTag = mutation({
     conversationId: v.optional(v.id("conversations")),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const customer = await ctx.db.get(args.customerId);
-    if (customer === null || customer.orgId !== orgId) {
+    if (customer === null || customer.orgId !== resolvedOrgId) {
       throw new Error("Customer not found");
     }
     const current = customer.tags ?? [];
@@ -770,6 +779,137 @@ export const backfillLeadTemperature = mutation({
       }
     }
     return { processed: customers.length, updated: updatedCount };
+  },
+});
+
+export const countForCurrentOrg = query({
+  args: {},
+  handler: async (ctx) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const customers = await ctx.db
+      .query("customers")
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
+      .collect();
+    return customers.length;
+  },
+});
+
+export const countFilteredForCurrentOrg = query({
+  args: {
+    search: v.string(),
+    selectedFilters: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    
+    const customers = await ctx.db
+      .query("customers")
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
+      .collect();
+      
+    const q = args.search.trim().toLowerCase();
+    const activePlatforms = args.selectedFilters.filter(f => f.startsWith('platform:')).map(f => f.slice(9));
+    const activeTags = args.selectedFilters.filter(f => f.startsWith('tag:')).map(f => f.slice(4));
+    const activeLeads = args.selectedFilters.filter(f => f.startsWith('lead:')).map(f => f.slice(5));
+    
+    const filtered = customers.filter((c) => {
+      if (activePlatforms.length > 0) {
+        if (!activePlatforms.includes(c.service)) return false;
+      }
+      if (activeTags.length > 0) {
+        if (!c.tags || !c.tags.some(t => activeTags.includes(t))) return false;
+      }
+      if (activeLeads.length > 0) {
+        if (!c.leadTemperature || !activeLeads.includes(c.leadTemperature)) return false;
+      }
+      if (!q) return true;
+      const haystack = [c.name, c.email, c.phone, c.contactAddress]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+    
+    return filtered.length;
+  },
+});
+
+export const deleteCustomer = mutation({
+  args: { customerId: v.id("customers") },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const customer = await ctx.db.get(args.customerId);
+    if (customer === null || customer.orgId !== resolvedOrgId) {
+      throw new Error("Customer not found or access denied");
+    }
+
+    // 1. Delete linked conversations and their associated records
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_customerId", (q) => q.eq("customerId", args.customerId))
+      .collect();
+
+    for (const conv of conversations) {
+      // 1a. Delete messages in this conversation
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_conversationId_and_createdAt", (q) =>
+          q.eq("conversationId", conv._id)
+        )
+        .collect();
+      for (const msg of messages) {
+        await ctx.db.delete(msg._id);
+      }
+
+      // 1b. Delete analytics facts
+      const facts = await ctx.db
+        .query("conversationAnalyticsFacts")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const fact of facts) {
+        await ctx.db.delete(fact._id);
+      }
+
+      // 1c. Delete topic assignments
+      const topicAssignments = await ctx.db
+        .query("conversationTopicAssignments")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const assignment of topicAssignments) {
+        await ctx.db.delete(assignment._id);
+      }
+
+      // 1d. Delete auto booking sessions
+      const bookingSessions = await ctx.db
+        .query("autoBookingSessions")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const session of bookingSessions) {
+        await ctx.db.delete(session._id);
+      }
+
+      // 1e. Delete conversation logs
+      const logs = await ctx.db
+        .query("conversationLogs")
+        .withIndex("by_conversationId_and_performedAt", (q) =>
+          q.eq("conversationId", conv._id)
+        )
+        .collect();
+      for (const log of logs) {
+        await ctx.db.delete(log._id);
+      }
+
+      // Finally, delete the conversation document
+      await ctx.db.delete(conv._id);
+    }
+
+    // 2. Delete customer document
+    await ctx.db.delete(args.customerId);
+
+    return { success: true };
   },
 });
 

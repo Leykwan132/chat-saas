@@ -179,6 +179,14 @@ export default defineSchema({
     ownerPermissions: v.optional(v.array(v.string())),
     adminPermissions: v.optional(v.array(v.string())),
     memberPermissions: v.optional(v.array(v.string())),
+    customFields: v.optional(
+      v.array(
+        v.object({
+          key: v.string(),
+          label: v.string(),
+        })
+      )
+    ),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -436,6 +444,7 @@ export default defineSchema({
     followUpAttempt: v.optional(v.number()),
     followUpPendingRuleId: v.optional(v.id("followUpRules")),
     followUpScheduledAt: v.optional(v.number()),
+    customFields: v.optional(v.record(v.string(), v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
@@ -1180,4 +1189,84 @@ export default defineSchema({
   })
     .index("by_channelId", ["channelId"])
     .index("by_orgId_and_channelId", ["orgId", "channelId"]),
+  // ─── Bulk CSV Customer Import ────────────────────────────
+  // Parent table aggregating progress across one or more import jobs/chunks.
+  customerImports: defineTable({
+    orgId: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    fileName: v.string(),
+    totalRows: v.number(),
+    processedRows: v.number(),
+    failedRows: v.number(),
+    skippedRows: v.number(),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_orgId_and_status", ["orgId", "status"])
+    .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
+
+  // One row per import job. Tracks overall progress and settings.
+  customerImportJobs: defineTable({
+    importId: v.optional(v.id("customerImports")),
+    orgId: v.string(),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    fileName: v.string(),
+    totalRows: v.number(),
+    processedRows: v.number(),
+    failedRows: v.number(),
+    skippedRows: v.number(),
+    /** Maps our customer field key → CSV column header name */
+    fieldMapping: v.record(v.string(), v.string()),
+    /** Tags to apply to every imported customer */
+    tags: v.array(v.string()),
+    leadTemperature: v.optional(
+      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold")),
+    ),
+    createdBy: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_importId", ["importId"])
+    .index("by_orgId_and_status", ["orgId", "status"])
+    .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
+  // One row per batch of CSV rows within an import job.
+  customerImportRows: defineTable({
+    jobId: v.id("customerImportJobs"),
+    batchIndex: v.number(),
+    /** Array of raw row objects (column header → cell value) */
+    rows: v.array(v.record(v.string(), v.string())),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+      v.literal("failed"),
+    ),
+    processedCount: v.number(),
+    failedCount: v.number(),
+    skippedCount: v.number(),
+    errorMessage: v.optional(v.string()),
+    rowIssues: v.optional(
+      v.array(
+        v.object({
+          rowNumber: v.number(),
+          name: v.string(),
+          reason: v.string(),
+          type: v.union(v.literal("skipped"), v.literal("failed")),
+        })
+      )
+    ),
+  })
+    .index("by_jobId", ["jobId"])
+    .index("by_jobId_and_status", ["jobId", "status"]),
 });

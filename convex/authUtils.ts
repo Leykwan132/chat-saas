@@ -71,18 +71,13 @@ async function buildAuthContextFromDb(
   ctx: DbCtx,
   activeOrgIdOverride?: string | null,
 ): Promise<AuthContext> {
-  console.log("[getAuthContext] Starting buildAuthContextFromDb", { activeOrgIdOverride });
   const identity = await ctx.auth.getUserIdentity();
   if (identity === null) {
-    console.log("[getAuthContext] Identity is null (not authenticated)");
     throw new Error("Not authenticated");
   }
-  
-  console.log("[getAuthContext] Identity", identity);
 
   let user = await getUserByWorkosId(ctx, identity.subject);
   if (user === null) {
-    console.log("[getAuthContext] User not found in DB for WorkOS ID:", identity.subject);
     if ("insert" in ctx.db) {
       const userId = await ensureUserAccount(ctx as MutationCtx, extractIdentityFields(identity));
       user = await ctx.db.get(userId);
@@ -94,12 +89,6 @@ async function buildAuthContextFromDb(
     }
   }
 
-  console.log("[getAuthContext] Found user in DB", {
-    userDbId: user._id,
-    workosUserId: user.workosUserId,
-    email: user.email,
-  });
-
   const overrideOrgId = resolveOrgIdOverride(activeOrgIdOverride);
   let orgId: string;
   let activeTeamId: Id<"teams">;
@@ -108,30 +97,16 @@ async function buildAuthContextFromDb(
     const activeTeam = await getActiveTeamForUser(ctx, user);
     orgId = overrideOrgId;
     activeTeamId = activeTeam._id;
-    console.log("[getAuthContext] Resolved with overrideOrgId", {
-      overrideOrgId,
-      activeTeamId,
-    });
   } else {
     const activeTeam = await getActiveTeamForUser(ctx, user);
     orgId = teamToOrgId(activeTeam);
     activeTeamId = activeTeam._id;
-    console.log("[getAuthContext] Resolved standard active team", {
-      orgId,
-      activeTeamId,
-    });
   }
 
   const claims = identity as unknown as WorkOSClaims;
   const role = claims.role ?? null;
   const roles = claims.roles ?? (role ? [role] : []);
   const permissions = claims.permissions ?? [];
-
-  console.log("[getAuthContext] WorkOS Claims derived", {
-    role,
-    roles,
-    permissions,
-  });
 
   return {
     userId: identity.subject,
@@ -180,10 +155,6 @@ export async function getAuthContext(
   ctx: DbCtx | ActionCtx,
   activeOrgIdOverride?: string | null,
 ): Promise<AuthContext> {
-  console.log("[getAuthContext] getAuthContext called", {
-    isDbCtx: "db" in ctx,
-    activeOrgIdOverride,
-  });
   if ("db" in ctx) {
     return await buildAuthContextFromDb(ctx, activeOrgIdOverride);
   }
@@ -193,17 +164,14 @@ export async function getAuthContext(
     const result = await ctx.runQuery(internal.authUtils.resolveAuthScope, {
       activeOrgIdOverride,
     });
-    console.log("[getAuthContext] Action resolved auth scope successfully");
     return result;
   } catch (error) {
     if (error instanceof Error && error.message.includes("User not found")) {
-      console.log("[getAuthContext] User not found during Action auth resolution. Attempting to auto-upsert user...");
       try {
         await ctx.runMutation(internal.authUtils.autoUpsertUser);
         const retryResult = await ctx.runQuery(internal.authUtils.resolveAuthScope, {
           activeOrgIdOverride,
         });
-        console.log("[getAuthContext] Action resolved auth scope successfully after auto-upsert");
         return retryResult;
       } catch (upsertError) {
         console.error("[getAuthContext] Action failed to auto-upsert user:", upsertError);

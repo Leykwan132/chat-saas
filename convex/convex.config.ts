@@ -27,6 +27,7 @@ app.use(workpool, { name: "broadcastWorkpool" });
 app.use(workpool, { name: "followUpWorkpool" });
 app.use(workpool, { name: "conversationLogWorkpool" });
 app.use(workpool, { name: "creditPeriodWorkpool" });
+app.use(workpool, { name: "customerImportWorkpool" });
 app.use(workOSAuthKit);
 app.use(crons);
 app.use(aggregate, { name: "modelLifetimeUsage" });

@@ -53,6 +53,7 @@ import type * as creditPeriodPool from "../creditPeriodPool.js";
 import type * as creditUsageAnalytics from "../creditUsageAnalytics.js";
 import type * as credits from "../credits.js";
 import type * as crons from "../crons.js";
+import type * as customerImportPool from "../customerImportPool.js";
 import type * as customers from "../customers.js";
 import type * as debugTemplates from "../debugTemplates.js";
 import type * as devReset from "../devReset.js";
@@ -172,6 +173,7 @@ declare const fullApi: ApiFromModules<{
   creditUsageAnalytics: typeof creditUsageAnalytics;
   credits: typeof credits;
   crons: typeof crons;
+  customerImportPool: typeof customerImportPool;
   customers: typeof customers;
   debugTemplates: typeof debugTemplates;
   devReset: typeof devReset;
@@ -285,6 +287,7 @@ export declare const components: {
   followUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"followUpWorkpool">;
   conversationLogWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"conversationLogWorkpool">;
   creditPeriodWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"creditPeriodWorkpool">;
+  customerImportWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"customerImportWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;

@@ -1770,7 +1770,7 @@ export default function ChatsPage() {
                                 onValueChange={(value) => void handleLeadStatusChange(value)}
                                 disabled={leadStatusSaving || customerSidebarDetails === undefined}
                               >
-                                <SelectTrigger className="h-8 border-border bg-background text-xs font-medium shadow-none">
+                                <SelectTrigger className="!h-10 py-1.5 border-border bg-background text-xs font-medium shadow-none">
                                   <SelectValue asChild>
                                     <span className="flex items-center gap-1.5">
                                       {customerSidebarDetails?.leadTemperature ? (

@@ -318,7 +318,7 @@ function Hero({
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center min-h-[60svh] sm:min-h-[70svh] py-16">
           <h1 className="font-title text-balance text-[32px] font-normal leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-[38px] md:text-[52px]">
-            AI Agent for your inbox <br />
+            Your AI Sales Agent <br />
             in 5 minutes
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-sm md:text-base">

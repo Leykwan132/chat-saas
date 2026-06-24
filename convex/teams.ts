@@ -32,6 +32,7 @@ export type TeamListItem = {
   companySize: string | null;
   domain: string | null;
   timeZone: string;
+  customFields?: { key: string; label: string }[];
 };
 
 async function resolveOrgPlan(
@@ -61,6 +62,7 @@ function buildTeamListItem(args: {
     companySize?: string;
     domain?: string;
     timeZone?: string;
+    customFields?: { key: string; label: string }[];
   };
   isActive: boolean;
   memberCount: number;
@@ -86,6 +88,7 @@ function buildTeamListItem(args: {
     companySize: args.team.companySize ?? null,
     domain: args.team.domain ?? null,
     timeZone: normalizeTimeZone(args.team.timeZone),
+    customFields: args.team.customFields ?? [],
   };
 }
 
@@ -325,3 +328,43 @@ export const getPersonalTeamInternal = internalQuery({
     return await getPersonalTeamForUser(ctx, args.userId);
   },
 });
+
+export const addCustomFields = mutation({
+  args: {
+    fields: v.array(
+      v.object({
+        key: v.string(),
+        label: v.string(),
+      })
+    ),
+  },
+  handler: async (ctx, args) => {
+    const { userId } = await getAuthContext(ctx);
+    const userRow = await getUserByWorkosId(ctx, userId);
+    if (userRow === null) {
+      throw new Error("User not found");
+    }
+
+    const activeTeam = await getActiveTeamForUser(ctx, userRow);
+    const currentFields = activeTeam.customFields ?? [];
+
+    const merged = [...currentFields];
+    for (const field of args.fields) {
+      const normalizedKey = field.key.trim().toLowerCase();
+      if (!merged.some((cf) => cf.key.toLowerCase() === normalizedKey)) {
+        merged.push({
+          key: field.key.trim(),
+          label: field.label.trim(),
+        });
+      }
+    }
+
+    await ctx.db.patch(activeTeam._id, {
+      customFields: merged,
+      updatedAt: Date.now(),
+    });
+
+    return merged;
+  },
+});
+

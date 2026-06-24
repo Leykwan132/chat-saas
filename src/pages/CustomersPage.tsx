@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
-import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown } from 'lucide-react';
+import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown, Upload } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -10,11 +10,13 @@ import { api } from '../../convex/_generated/api';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
 import { PageDescription } from '@/components/PageDescription';
+import { ImportCustomersDialog, ImportProgressBanner } from '@/components/ImportCustomersDialog';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -121,6 +123,7 @@ export default function CustomersPage() {
   const [filterPopoverOpen, setFilterPopoverOpen] = useState(false);
   const [filterSearchInput, setFilterSearchInput] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const handleToggleFilter = (filterKey: string) => {
     setSelectedFilters((prev) => {
@@ -133,15 +136,27 @@ export default function CustomersPage() {
   };
 
   const teamUsers = useQuery(api.users.getUsers, {});
+  const totalCustomersCount = useQuery(
+    api.customers.countFilteredForCurrentOrg,
+    { search, selectedFilters }
+  );
 
-  const ITEMS_PER_PAGE = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const ITEMS_PER_PAGE = itemsPerPage;
   const [currentPage, setCurrentPage] = useState(1);
 
   const { results: customers, status, loadMore } = usePaginatedQuery(
     api.customers.listForCurrentOrg,
     {},
-    { initialNumItems: ITEMS_PER_PAGE },
+    { initialNumItems: 50 },
   );
+
+  useEffect(() => {
+    const targetLength = currentPage * ITEMS_PER_PAGE;
+    if (targetLength > customers.length && status === 'CanLoadMore') {
+      void loadMore(Math.max(ITEMS_PER_PAGE, targetLength - customers.length));
+    }
+  }, [currentPage, ITEMS_PER_PAGE, customers.length, status, loadMore]);
 
   const allExistingTags = useMemo(() => {
     const tagsSet = new Set<string>();
@@ -191,8 +206,26 @@ export default function CustomersPage() {
     setCurrentPage(1);
   }, [search, selectedFilters]);
 
-  const totalPages = Math.max(1, Math.ceil(visible.length / ITEMS_PER_PAGE));
-  const hasNextPage = status === 'CanLoadMore' || (currentPage * ITEMS_PER_PAGE < visible.length);
+  const totalPages = Math.max(1, Math.ceil((totalCustomersCount ?? visible.length) / ITEMS_PER_PAGE));
+  const hasNextPage = status === 'CanLoadMore' || (currentPage * ITEMS_PER_PAGE < (totalCustomersCount ?? visible.length));
+
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 4) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 2) {
+        pages.push(1, 2, 3, 'ellipsis', totalPages);
+      } else if (currentPage >= totalPages - 1) {
+        pages.push(1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, 'ellipsis', currentPage, 'ellipsis', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const handleNextPage = () => {
     if (!hasNextPage) return;
@@ -224,8 +257,23 @@ export default function CustomersPage() {
             Keep track of everyone who messages your business.
           </PageDescription>
         </div>
-        <AddCustomerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="size-4" />
+            Import CSV
+          </Button>
+          <AddCustomerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+        </div>
       </div>
+
+      {/* Import progress banner */}
+      <ImportProgressBanner />
+
+      <ImportCustomersDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        existingTags={allExistingTags}
+      />
 
       {status === 'LoadingFirstPage' ? (
         <div className="flex items-center justify-center py-20">
@@ -437,6 +485,10 @@ export default function CustomersPage() {
             </Popover>
           </div>
 
+          <div className="flex items-center text-xs text-muted-foreground font-medium px-1 mb-1.5">
+            {totalCustomersCount !== undefined ? `${totalCustomersCount} customers` : 'Loading...'}
+          </div>
+
           {/* Table */}
           <div className="bg-white dark:bg-zinc-950 rounded-xl border border-border overflow-hidden">
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -597,7 +649,31 @@ export default function CustomersPage() {
             </table>
 
             {/* Pagination Controls */}
-            <div className="relative flex flex-col sm:flex-row items-center justify-center gap-4 border-t border-border px-6 py-4 bg-zinc-50/50 dark:bg-zinc-900/10 min-h-[58px]">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border px-6 py-4 bg-zinc-50/50 dark:bg-zinc-900/10 min-h-[58px]">
+              {/* Rows per page */}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                <span>Rows per page</span>
+                <Select
+                  value={String(itemsPerPage)}
+                  onValueChange={(val) => {
+                    const newSize = Number(val);
+                    setItemsPerPage(newSize);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="h-8 w-[70px] bg-background text-xs rounded-lg">
+                    <SelectValue placeholder={String(itemsPerPage)} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Pagination Numbers */}
               <div className="flex justify-center">
                 <Pagination>
                   <PaginationContent>
@@ -616,19 +692,25 @@ export default function CustomersPage() {
                       />
                     </PaginationItem>
                     
-                    {Array.from({ length: totalPages }).map((_, index) => {
-                      const pageNumber = index + 1;
+                    {getPageNumbers().map((item, index) => {
+                      if (item === 'ellipsis') {
+                        return (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
                       return (
-                        <PaginationItem key={pageNumber}>
+                        <PaginationItem key={item}>
                           <PaginationLink
                             href="#"
                             onClick={(e) => {
                               e.preventDefault();
-                              setCurrentPage(pageNumber);
+                              setCurrentPage(item);
                             }}
-                            isActive={currentPage === pageNumber}
+                            isActive={currentPage === item}
                           >
-                            {pageNumber}
+                            {item}
                           </PaginationLink>
                         </PaginationItem>
                       );
@@ -652,9 +734,9 @@ export default function CustomersPage() {
                 </Pagination>
               </div>
               
-              <p className="text-xs text-muted-foreground font-medium text-center sm:text-right sm:absolute sm:right-6">
+              <p className="text-xs text-muted-foreground font-medium text-center sm:text-right">
                 Showing {visible.length > 0 ? (currentPage - 1) * ITEMS_PER_PAGE + 1 : 0} to{" "}
-                {Math.min(currentPage * ITEMS_PER_PAGE, visible.length)} of {visible.length} customers
+                {Math.min(currentPage * ITEMS_PER_PAGE, totalCustomersCount ?? visible.length)} of {totalCustomersCount ?? visible.length} customers
               </p>
             </div>
           </div>
@@ -779,7 +861,7 @@ function AddCustomerDialog({
               onValueChange={(val: any) => setLeadTemperature(val)}
               disabled={busy}
             >
-              <SelectTrigger className="w-full bg-background border-border">
+              <SelectTrigger className="w-full !h-10 py-1.5 bg-background border-border">
                 <SelectValue placeholder="Select lead temperature" />
               </SelectTrigger>
               <SelectContent>

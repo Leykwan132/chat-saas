@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Pagination,
   PaginationContent,
+  PaginationEllipsis,
   PaginationItem,
   PaginationLink,
   PaginationNext,
@@ -77,6 +78,24 @@ export function CreditSpendTable({
     status === 'CanLoadMore'
       ? Math.max(loadedPageCount, currentPage + 1)
       : loadedPageCount;
+
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 4) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 2) {
+        pages.push(1, 2, 3, 'ellipsis', totalPages);
+      } else if (currentPage >= totalPages - 1) {
+        pages.push(1, 'ellipsis', totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, 'ellipsis', currentPage, 'ellipsis', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const pageRows = useMemo(
     () => results.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
@@ -191,16 +210,22 @@ export function CreditSpendTable({
                       />
                     </PaginationItem>
 
-                    {Array.from({ length: totalPages }).map((_, index) => {
-                      const pageNumber = index + 1;
+                    {getPageNumbers().map((item, index) => {
+                      if (item === 'ellipsis') {
+                        return (
+                          <PaginationItem key={`ellipsis-${index}`}>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        );
+                      }
                       return (
-                        <PaginationItem key={pageNumber}>
+                        <PaginationItem key={item}>
                           <PaginationLink
                             href="#"
                             onClick={(event) => {
                               event.preventDefault();
-                              if (pageNumber > currentPage) {
-                                const nextIndex = pageNumber * PAGE_SIZE;
+                              if (item > currentPage) {
+                                const nextIndex = item * PAGE_SIZE;
                                 if (
                                   nextIndex > results.length &&
                                   status === 'CanLoadMore'
@@ -208,11 +233,11 @@ export function CreditSpendTable({
                                   void loadMore(PAGE_SIZE);
                                 }
                               }
-                              setCurrentPage(pageNumber);
+                              setCurrentPage(item);
                             }}
-                            isActive={currentPage === pageNumber}
+                            isActive={currentPage === item}
                           >
-                            {pageNumber}
+                            {item}
                           </PaginationLink>
                         </PaginationItem>
                       );

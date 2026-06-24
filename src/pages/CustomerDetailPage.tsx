@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check, Save } from 'lucide-react';
-import { isLeadTemperatureTag, isReservedTemperatureTag } from '@/lib/leadTemperature';
+import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check, Save, Flame, Sun, Snowflake, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { isLeadTemperatureTag, isReservedTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -19,6 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 function getTagColorClass(tag: string): { bg: string; text: string; dot: string } {
   let hash = 0;
@@ -65,6 +73,7 @@ export default function CustomerDetailPage() {
   const { agentId, customerId: customerIdParam } = useParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const typedCustomerId = customerIdParam as Id<'customers'> | undefined;
+  const navigate = useNavigate();
 
   const customer = useQuery(
     api.customers.getById,
@@ -72,6 +81,7 @@ export default function CustomerDetailPage() {
   );
 
   const teamUsers = useQuery(api.users.getUsers, {});
+  const activeTeam = useQuery(api.teams.getActiveTeam);
 
   // Fetch loaded customers page to extract all existing organization tags
   const customersResult = useQuery(
@@ -82,16 +92,30 @@ export default function CustomerDetailPage() {
   const addTag = useMutation(api.customers.addCustomerTag);
   const removeTag = useMutation(api.customers.removeCustomerTag);
   const updateCustomer = useMutation(api.customers.update);
+  const deleteCustomer = useMutation(api.customers.deleteCustomer);
+
+  const [actionModal, setActionModal] = useState<{
+    open: boolean;
+    status: 'loading' | 'success';
+    message: string;
+  }>({
+    open: false,
+    status: 'loading',
+    message: '',
+  });
 
   const handleUpdateLeadTemperature = async (value: string) => {
     if (!typedCustomerId) return;
+    setActionModal({ open: true, status: 'loading', message: 'Updating lead status...' });
     try {
       await updateCustomer({
         customerId: typedCustomerId,
         leadTemperature: value === 'None' ? null : (value as any),
       });
-      toast.success('Lead status updated');
+      setActionModal({ open: true, status: 'success', message: 'Lead status updated' });
+      setTimeout(() => setActionModal(prev => ({ ...prev, open: false })), 1200);
     } catch (e) {
+      setActionModal(prev => ({ ...prev, open: false }));
       toast.error(e instanceof Error ? e.message : 'Could not update lead status');
     }
   };
@@ -104,19 +128,24 @@ export default function CustomerDetailPage() {
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editCustomFields, setEditCustomFields] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingCustomer, setIsDeletingCustomer] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const handleStartEdit = () => {
     setEditName(customer?.name ?? '');
     setEditEmail(customer?.email ?? '');
     setEditPhone(customer?.phone ?? '');
     setEditNotes(customer?.notes ?? '');
+    setEditCustomFields(customer?.customFields ?? {});
     setIsEditing(true);
   };
 
   const handleSave = async () => {
     if (!typedCustomerId) return;
     setIsSaving(true);
+    setActionModal({ open: true, status: 'loading', message: 'Saving customer details...' });
     try {
       await updateCustomer({
         customerId: typedCustomerId,
@@ -124,17 +153,40 @@ export default function CustomerDetailPage() {
         email: editEmail,
         phone: editPhone,
         notes: editNotes,
+        customFields: editCustomFields,
       });
-      toast.success('Customer details updated');
+      setActionModal({ open: true, status: 'success', message: 'Customer details updated' });
       setIsEditing(false);
+      setTimeout(() => setActionModal(prev => ({ ...prev, open: false })), 1200);
     } catch (e) {
+      setActionModal(prev => ({ ...prev, open: false }));
       toast.error(e instanceof Error ? e.message : 'Could not update customer details');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const isLoading = customer === undefined || teamUsers === undefined || customersResult === undefined;
+  const handleDeleteCustomer = async () => {
+    if (!typedCustomerId || !typedAgentId) return;
+
+    setActionModal({ open: true, status: 'loading', message: 'Deleting customer...' });
+    setIsDeletingCustomer(true);
+    setDeleteConfirmOpen(false);
+    try {
+      await deleteCustomer({ customerId: typedCustomerId });
+      setActionModal({ open: true, status: 'success', message: 'Customer deleted successfully' });
+      setTimeout(() => {
+        setActionModal(prev => ({ ...prev, open: false }));
+        navigate(`/dashboard/${typedAgentId}/customers`);
+      }, 1200);
+    } catch (e) {
+      setActionModal(prev => ({ ...prev, open: false }));
+      toast.error(e instanceof Error ? e.message : 'Could not delete customer');
+      setIsDeletingCustomer(false);
+    }
+  };
+
+  const isLoading = customer === undefined || teamUsers === undefined || customersResult === undefined || activeTeam === undefined;
 
   const label = customer ? serviceLabel(customer.service) : 'Manual';
   const SourceIcon = sourceBadgeInfo[label].icon;
@@ -159,27 +211,37 @@ export default function CustomerDetailPage() {
 
   const handleAddTag = async (tag: string) => {
     if (!typedCustomerId) return;
+    setActionModal({ open: true, status: 'loading', message: 'Adding tag...' });
     try {
       await addTag({ customerId: typedCustomerId, tag });
-      toast.success(`Tag "${tag}" added`);
+      setActionModal({ open: true, status: 'success', message: `Tag "${tag}" added` });
       setTagSearchInput('');
       setTagPopoverOpen(false);
+      setTimeout(() => setActionModal(prev => ({ ...prev, open: false })), 1200);
     } catch (e) {
+      setActionModal(prev => ({ ...prev, open: false }));
       toast.error(e instanceof Error ? e.message : 'Could not add tag');
     }
   };
 
   const handleToggleTag = async (tag: string, isSelected: boolean) => {
     if (!typedCustomerId) return;
+    setActionModal({
+      open: true,
+      status: 'loading',
+      message: isSelected ? `Removing tag "${tag}"...` : `Adding tag "${tag}"...`
+    });
     try {
       if (isSelected) {
         await removeTag({ customerId: typedCustomerId, tag });
-        toast.success(`Tag "${tag}" removed`);
+        setActionModal({ open: true, status: 'success', message: `Tag "${tag}" removed` });
       } else {
         await addTag({ customerId: typedCustomerId, tag });
-        toast.success(`Tag "${tag}" added`);
+        setActionModal({ open: true, status: 'success', message: `Tag "${tag}" added` });
       }
+      setTimeout(() => setActionModal(prev => ({ ...prev, open: false })), 1200);
     } catch (e) {
+      setActionModal(prev => ({ ...prev, open: false }));
       toast.error(e instanceof Error ? e.message : 'Could not update tag');
     }
   };
@@ -229,9 +291,21 @@ export default function CustomerDetailPage() {
                 </Button>
               </div>
             ) : (
-              <Button variant="outline" size="sm" onClick={handleStartEdit} className="h-8 text-xs rounded-lg">
-                Edit Profile
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setDeleteConfirmOpen(true)}
+                  disabled={isDeletingCustomer}
+                  className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 dark:hover:text-red-400 rounded-lg shrink-0"
+                  title="Delete Customer"
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleStartEdit} disabled={isDeletingCustomer} className="h-8 text-xs rounded-lg">
+                  Edit Profile
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -272,10 +346,10 @@ export default function CustomerDetailPage() {
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Platform & Assignment</h2>
         <div className="rounded-xl border border-border bg-card p-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6 text-sm">
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Platform</span>
-              <span className="text-foreground flex items-center gap-2 font-medium">
+              <span className="text-foreground flex items-center gap-2 font-medium mt-1">
                 <SourceIcon className={cn("size-3.5 shrink-0", sourceBadgeInfo[label].colorClass)} />
                 {label}
               </span>
@@ -283,7 +357,7 @@ export default function CustomerDetailPage() {
 
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Current Assignee</span>
-              <span className="text-foreground flex items-center gap-2 font-medium">
+              <span className="text-foreground flex items-center gap-2 font-medium mt-1">
                 {customer.assignedUserId ? (
                   <>
                     <User className="size-3.5 text-[#6366f1] shrink-0" />
@@ -297,6 +371,54 @@ export default function CustomerDetailPage() {
                   <span className="text-muted-foreground/60 font-normal">Unassigned</span>
                 )}
               </span>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Lead Status</span>
+              <Select
+                value={customer.leadTemperature || 'None'}
+                onValueChange={handleUpdateLeadTemperature}
+                disabled={isEditing}
+              >
+                <SelectTrigger className="w-full max-w-[140px] !h-8 py-1 px-2.5 bg-background border-border text-xs rounded-lg mt-0.5">
+                  <SelectValue placeholder="Select status">
+                    {customer.leadTemperature ? (() => {
+                      const temp = customer.leadTemperature;
+                      const style = getLeadTemperatureStyle(temp);
+                      const Icon = style.icon;
+                      return (
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Icon className={cn("size-3.5 shrink-0", style.iconClass)} />
+                          {temp}
+                        </span>
+                      );
+                    })() : (
+                      'None'
+                    )}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="None">None</SelectItem>
+                  <SelectItem value="Hot">
+                    <span className="flex items-center gap-1.5">
+                      <Flame className="size-3.5 text-red-500 dark:text-red-400" />
+                      Hot
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Warm">
+                    <span className="flex items-center gap-1.5">
+                      <Sun className="size-3.5 text-amber-500 dark:text-amber-400" />
+                      Warm
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="Cold">
+                    <span className="flex items-center gap-1.5">
+                      <Snowflake className="size-3.5 text-sky-500 dark:text-sky-400" />
+                      Cold
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -343,26 +465,6 @@ export default function CustomerDetailPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Lead Status</span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <Select
-                  value={customer.leadTemperature || 'None'}
-                  onValueChange={handleUpdateLeadTemperature}
-                  disabled={isEditing}
-                >
-                  <SelectTrigger className="w-[140px] h-8 bg-background border-border text-xs">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="None">None</SelectItem>
-                    <SelectItem value="Hot">Hot</SelectItem>
-                    <SelectItem value="Warm">Warm</SelectItem>
-                    <SelectItem value="Cold">Cold</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
 
             <div className="flex flex-col gap-1">
               <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">First Seen</span>
@@ -379,6 +481,39 @@ export default function CustomerDetailPage() {
                 {new Date(customer.lastSeenAt).toLocaleString()}
               </span>
             </div>
+
+            {activeTeam && activeTeam.customFields && activeTeam.customFields.map((field) => {
+              const key = field.key;
+              const label = field.label;
+              const rawValue = customer?.customFields?.[key];
+              const hasValue = typeof rawValue === 'string' && rawValue.trim() !== '';
+
+              if (!isEditing && !hasValue) return null;
+
+              const value = rawValue || '—';
+
+              return (
+                <div key={key} className="flex flex-col gap-1">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editCustomFields[key] ?? ''}
+                      onChange={(e) => setEditCustomFields(prev => ({
+                        ...prev,
+                        [key]: e.target.value
+                      }))}
+                      className="w-full max-w-xs rounded-md border border-input bg-background px-3 py-1.5 text-xs ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      placeholder={label}
+                    />
+                  ) : (
+                    <span className="text-foreground text-sm max-w-xs break-words whitespace-pre-wrap leading-relaxed py-0.5">
+                      {value}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -507,6 +642,65 @@ export default function CustomerDetailPage() {
           )}
         </div>
       </section>
+
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete Customer</DialogTitle>
+            <DialogDescription className="pt-2">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{customer.name?.trim() || 'this customer'}</span>? This action is permanent and will cascade-delete all associated conversations, messages, logs, facts, and bookings.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+              disabled={isDeletingCustomer}
+              className="h-9 rounded-lg"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteCustomer}
+              disabled={isDeletingCustomer}
+              className="h-9 rounded-lg bg-red-600 hover:bg-red-700 text-white flex items-center gap-1.5"
+            >
+              {isDeletingCustomer ? (
+                <>Deleting…</>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={actionModal.open} onOpenChange={(open) => {
+        if (actionModal.status === 'success') {
+          setActionModal(prev => ({ ...prev, open }));
+        }
+      }}>
+        <DialogContent className="sm:max-w-[320px] flex flex-col items-center justify-center p-6 gap-4 [&>button]:hidden rounded-2xl">
+          {actionModal.status === 'loading' ? (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <Loader2 className="size-10 animate-spin text-zinc-600 dark:text-zinc-400" />
+              <p className="text-sm font-medium text-foreground">{actionModal.message}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center gap-3 py-4">
+              <div className="size-12 rounded-full bg-emerald-50 dark:bg-emerald-950/30 flex items-center justify-center">
+                <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <p className="text-sm font-medium text-foreground">is done</p>
+              <p className="text-xs text-muted-foreground">{actionModal.message}</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
