@@ -18,6 +18,7 @@ import { Shimmer } from '@/components/ai-elements/shimmer';
 import {
   refreshFacebookLoginStatus,
   useFacebookSession,
+  waitForFacebookSdk,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
 
@@ -57,15 +58,12 @@ export function ConnectMessengerButton({
   const appId = import.meta.env.VITE_META_APP_ID as string | undefined;
   const messengerConfigId = import.meta.env
     .VITE_MESSENGER_CONFIG_ID as string | undefined;
-  const graphVersion =
-    (import.meta.env.VITE_META_GRAPH_API_VERSION as string | undefined) ||
-    'v22.0';
   const codeExchangeRedirectUri =
     (import.meta.env.VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI as
       | string
       | undefined)?.trim() || undefined;
 
-  const fbSession = useFacebookSession({ appId, version: graphVersion });
+  useFacebookSession();
 
   const [activeChannelId, setActiveChannelId] = useState<Id<'channels'> | undefined>(undefined);
 
@@ -99,16 +97,20 @@ export function ConnectMessengerButton({
       return;
     }
 
-    if (!fbSession.ready || !window.FB) {
-      toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
-      return;
-    }
+    void (async () => {
+      let fb: NonNullable<typeof window.FB>;
+      try {
+        fb = await waitForFacebookSdk();
+      } catch {
+        toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
+        return;
+      }
 
-    setBusy(true);
-    setDialogState({ kind: 'closed' });
-    setActiveChannelId(undefined);
+      setBusy(true);
+      setDialogState({ kind: 'closed' });
+      setActiveChannelId(undefined);
 
-    window.FB.login(
+      fb.login(
       (response: FBLoginResponse) => {
         refreshFacebookLoginStatus();
         void (async () => {
@@ -157,12 +159,12 @@ export function ConnectMessengerButton({
         override_default_response_type: true,
       },
     );
+    })();
   }, [
     appId,
     messengerConfigId,
     completeSignup,
     onConnected,
-    fbSession.ready,
     codeExchangeRedirectUri,
     openPagePicker,
   ]);

@@ -24,6 +24,23 @@
 
 <body>
   <div id="root"></div>
+  <script>
+    window.fbAsyncInit = function () {
+      FB.init({
+        appId: '999704942713974',
+        autoLogAppEvents: true,
+        xfbml: true,
+        version: 'v25.0',
+      });
+    };
+  </script>
+  <script
+    async
+    defer
+    crossorigin="anonymous"
+    id="facebook-jssdk"
+    src="https://connect.facebook.net/en_US/sdk.js"
+  ></script>
   <script type="module" src="/src/main.tsx"></script>
 </body>
 

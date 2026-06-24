@@ -50,8 +50,10 @@ import {
   WHATSAPP_DEMO_TEMPLATE_NAME,
   WHATSAPP_DEMO_WABA_ID,
 } from '@/lib/whatsappCloudDemo';
+import { getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 
 type ChannelDoc = Doc<'channels'>;
+type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 
 /** Toggle the WhatsApp Cloud API quick demo section on the Channels page. */
 const SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO = false;
@@ -181,13 +183,15 @@ export default function ChannelsPage() {
 
   useEffect(() => {
     if (!channels) return;
-    setDisconnectingChannelIds((prev) => {
-      const next = new Set(prev);
-      for (const id of prev) {
-        const ch = channels.find((c: ChannelDoc) => (c._id as string) === id);
-        if (!ch || ch.status === 'disconnected') next.delete(id);
-      }
-      return next;
+    queueMicrotask(() => {
+      setDisconnectingChannelIds((prev) => {
+        const next = new Set(prev);
+        for (const id of prev) {
+          const ch = channels.find((c: ChannelDoc) => (c._id as string) === id);
+          if (!ch || ch.status === 'disconnected') next.delete(id);
+        }
+        return next;
+      });
     });
   }, [channels]);
 
@@ -412,13 +416,15 @@ function ConnectedChannelCard({
   const [acknowledgedDataLoss, setAcknowledgedDataLoss] = useState(false);
 
   const channelName = channelIdentifier(channel);
+  const whatsappSyncStatus =
+    channel.service === 'whatsapp' ? getWhatsAppSyncStatus(channel) : null;
 
   const handleDisconnectOpenChange = useCallback((open: boolean) => {
     setDisconnectOpen(open);
     if (!open) {
       setAcknowledgedDataLoss(false);
     }
-  }, []);
+  }, [setDisconnectOpen, setAcknowledgedDataLoss]);
 
   const confirmDisconnect = useCallback(async () => {
     onDisconnectBegin();
@@ -494,9 +500,22 @@ function ConnectedChannelCard({
         <div className="mt-auto flex items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
             {channel.status === 'connected' ? (
-              <p className="text-[11px] leading-snug text-muted-foreground font-medium truncate">
-                {(channel as any).conversationCount ?? 0} conversations saved
-              </p>
+              whatsappSyncStatus ? (
+                <div className="text-[11px] leading-snug">
+                  <p className="font-medium text-foreground truncate">
+                    {whatsappSyncStatus.label}
+                  </p>
+                  {whatsappSyncStatus.detail ? (
+                    <p className="text-muted-foreground line-clamp-2">
+                      {whatsappSyncStatus.detail}
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <p className="text-[11px] leading-snug text-muted-foreground font-medium truncate">
+                  {(channel as ChannelWithConversationCount).conversationCount ?? 0} conversations saved
+                </p>
+              )
             ) : channel.status === 'error' && channel.lastError ? (
               <p className="text-[11px] leading-snug text-destructive line-clamp-2" title={channel.lastError}>
                 {channel.lastError}
@@ -665,7 +684,7 @@ function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {
       })();
     },
     [
-      whatsappChannel?.wabaId,
+      whatsappChannel,
       sendDemoTemplate,
       listDemoTemplates,
       createDemoTemplate,

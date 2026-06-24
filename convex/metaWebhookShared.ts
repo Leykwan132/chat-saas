@@ -1,6 +1,5 @@
-// Helpers shared across all Meta-platform webhooks (WhatsApp, Instagram,
-// Messenger) that hit POST /webhook/meta. They split the boilerplate of
-// "validate HMAC and parse JSON" away from the per-platform dispatchers.
+// Helpers shared across Meta-platform product-specific webhooks. They split
+// the signature-validation boilerplate away from each platform dispatcher.
 
 export type MetaWebhookEnvelope = {
   object?: string;

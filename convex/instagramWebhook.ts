@@ -8,8 +8,9 @@ import {
 } from "./chat/inboxAudioIngest";
 import { markOutboundReadThroughExternalId } from "./chat/readReceipts";
 
-// POST handler for the `object: "instagram"` branch of /webhook/meta.
-// The caller (convex/http.ts) has already validated the HMAC and parsed JSON.
+// POST handler for the product-specific /webhook/instagram route.
+// The caller (convex/http.ts) has already read the raw body and checked the
+// top-level object discriminator.
 //
 // Payload shape (Instagram Messaging webhooks):
 //   {
@@ -26,10 +27,8 @@ import { markOutboundReadThroughExternalId } from "./chat/readReceipts";
 //     }],
 //   }
 //
-// Exposed as a plain async function rather than an httpAction because the
-// /webhook/meta dispatcher (convex/http.ts) calls it after it has already
-// verified the HMAC and read the body — wrapping it in `httpAction` would
-// prevent direct invocation.
+// Exposed as a plain async function rather than an httpAction so the HTTP
+// dispatcher can call it after it has already read the body.
 export async function receive(
   ctx: ActionCtx,
   rawBody: string,

@@ -8,7 +8,7 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
@@ -53,6 +53,20 @@ const statusValidator = v.union(
   v.literal("disconnected"),
   v.literal("error"),
 );
+
+const WHATSAPP_LOG_PREFIX = "[whatsapp-connect]";
+
+function logWhatsAppChannel(
+  fn: string,
+  step: string,
+  data?: Record<string, unknown>,
+) {
+  if (data === undefined) {
+    console.log(`${WHATSAPP_LOG_PREFIX}:${fn}`, step);
+    return;
+  }
+  console.log(`${WHATSAPP_LOG_PREFIX}:${fn}`, step, data);
+}
 
 export const listForCurrentOrg = query({
   args: {},
@@ -247,7 +261,6 @@ async function upsertWhatsAppChannel(
     .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
     .collect();
   const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
-
   const patch = {
     wabaId: args.wabaId,
     phoneNumberId: args.phoneNumberId,
@@ -261,17 +274,33 @@ async function upsertWhatsAppChannel(
   };
 
   if (existing === null) {
-    return await ctx.db.insert("channels", {
+    const newId = await ctx.db.insert("channels", {
       orgId: args.orgId,
       service: "whatsapp",
       ...patch,
       connectedByUserId: args.connectedByUserId,
       createdAt: now,
     });
+    logWhatsAppChannel("upsertWhatsAppChannel", "inserted row", {
+      channelId: newId,
+      phoneNumberId: args.phoneNumberId,
+      wabaId: args.wabaId,
+      hasDisplayPhoneNumber: Boolean(args.displayPhoneNumber),
+      hasTokenExpiry: Boolean(args.tokenExpiresAt),
+    });
+    return newId;
   }
   await ctx.db.patch(existing._id, {
     ...patch,
     connectedByUserId: args.connectedByUserId,
+  });
+  logWhatsAppChannel("upsertWhatsAppChannel", "patched existing row", {
+    channelId: existing._id,
+    phoneNumberId: args.phoneNumberId,
+    wabaId: args.wabaId,
+    previousStatus: existing.status,
+    hasDisplayPhoneNumber: Boolean(args.displayPhoneNumber),
+    hasTokenExpiry: Boolean(args.tokenExpiresAt),
   });
   return existing._id;
 }
@@ -290,6 +319,10 @@ export const internalStartPending = internalMutation({
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
     if (!checkPlatformSupport(stripeInfo.plan, "whatsapp")) {
+      logWhatsAppChannel("internalStartPending", "blocked by plan", {
+        plan: stripeInfo.plan,
+        orgId: args.orgId,
+      });
       throw new Error(`WhatsApp is not supported on the ${stripeInfo.plan} plan.`);
     }
     const now = Date.now();
@@ -300,20 +333,36 @@ export const internalStartPending = internalMutation({
 
     const isDemo = args.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID;
     const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
+    logWhatsAppChannel("internalStartPending", "lookup", {
+      orgId: args.orgId,
+      phoneNumberId: args.phoneNumberId,
+      isDemo,
+      existingChannelId: existing?._id,
+      existingStatus: existing?.status,
+      matchCount: channels.length,
+    });
 
     if (!isDemo) {
       const otherConnected = channels.find((c) => c.orgId !== args.orgId && c.status !== "disconnected");
       if (otherConnected) {
+        logWhatsAppChannel("internalStartPending", "rejected — already connected to another org", {
+          ownerOrgId: otherConnected.orgId,
+          phoneNumberId: args.phoneNumberId,
+        });
         throw new Error("This WhatsApp phone number is already connected to another workspace.");
       }
     }
 
     if (existing !== null && existing.status !== "disconnected") {
       if (existing.status === "connected") {
+        logWhatsAppChannel("internalStartPending", "rejected — already connected to this org", {
+          channelId: existing._id,
+          phoneNumberId: args.phoneNumberId,
+        });
         throw new Error("This WhatsApp phone number is already connected to this workspace.");
       }
     }
-    
+
     if (existing === null) {
       await enforceChannelLimit(ctx, args.orgId, args.connectedByUserId);
     } else if (existing.status === "disconnected") {
@@ -321,7 +370,7 @@ export const internalStartPending = internalMutation({
     }
 
     if (existing === null) {
-      return await ctx.db.insert("channels", {
+      const newId = await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "whatsapp",
         wabaId: args.wabaId,
@@ -332,6 +381,11 @@ export const internalStartPending = internalMutation({
         createdAt: now,
         updatedAt: now,
       });
+      logWhatsAppChannel("internalStartPending", "inserted pending row", {
+        channelId: newId,
+        phoneNumberId: args.phoneNumberId,
+      });
+      return newId;
     }
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
@@ -342,6 +396,11 @@ export const internalStartPending = internalMutation({
       lastError: undefined,
       connectedByUserId: args.connectedByUserId,
       updatedAt: now,
+    });
+    logWhatsAppChannel("internalStartPending", "patched existing row to pending", {
+      channelId: existing._id,
+      phoneNumberId: args.phoneNumberId,
+      previousStatus: existing.status,
     });
     return existing._id;
   },
@@ -366,7 +425,7 @@ export const internalSetProgress = internalMutation({
     phoneNumberId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    let existing = null;
+    let existing: Doc<"channels"> | null;
     if (args.igUserId) {
       existing = await ctx.db
         .query("channels")
@@ -391,11 +450,25 @@ export const internalSetProgress = internalMutation({
         )
         .unique();
     }
-    if (existing === null) return;
+    if (existing === null) {
+      logWhatsAppChannel("internalSetProgress", "no matching channel — skipped", {
+        service: args.service,
+        progressStep: args.progressStep,
+        phoneNumberId: args.phoneNumberId,
+      });
+      return;
+    }
     await ctx.db.patch(existing._id, {
       progressStep: args.progressStep,
       updatedAt: Date.now(),
     });
+    if (args.service === "whatsapp") {
+      logWhatsAppChannel("internalSetProgress", "updated", {
+        channelId: existing._id,
+        progressStep: args.progressStep,
+        phoneNumberId: args.phoneNumberId,
+      });
+    }
   },
 });
 
@@ -414,7 +487,7 @@ export const internalRecordError = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
-    let existing = null;
+    let existing: Doc<"channels"> | null;
     if (args.igUserId) {
       existing = await ctx.db
         .query("channels")
@@ -441,7 +514,7 @@ export const internalRecordError = internalMutation({
     }
     
     if (existing === null) {
-      await ctx.db.insert("channels", {
+      const newId = await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: args.service,
         igUserId: args.igUserId,
@@ -453,6 +526,13 @@ export const internalRecordError = internalMutation({
         createdAt: now,
         updatedAt: now,
       });
+      if (args.service === "whatsapp") {
+        logWhatsAppChannel("internalRecordError", "inserted error placeholder row", {
+          channelId: newId,
+          phoneNumberId: args.phoneNumberId,
+          error: args.error,
+        });
+      }
       return;
     }
     await ctx.db.patch(existing._id, {
@@ -460,6 +540,14 @@ export const internalRecordError = internalMutation({
       lastError: args.error,
       updatedAt: now,
     });
+    if (args.service === "whatsapp") {
+      logWhatsAppChannel("internalRecordError", "patched row to error", {
+        channelId: existing._id,
+        phoneNumberId: args.phoneNumberId,
+        previousStatus: existing.status,
+        error: args.error,
+      });
+    }
   },
 });
 

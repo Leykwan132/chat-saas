@@ -113,6 +113,7 @@ import type * as whatsappDemo from "../whatsappDemo.js";
 import type * as whatsappEmbeddedSignup from "../whatsappEmbeddedSignup.js";
 import type * as whatsappFollowUp from "../whatsappFollowUp.js";
 import type * as whatsappSend from "../whatsappSend.js";
+import type * as whatsappSync from "../whatsappSync.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
 import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
 import type * as whatsappWebhook from "../whatsappWebhook.js";
@@ -233,6 +234,7 @@ declare const fullApi: ApiFromModules<{
   whatsappEmbeddedSignup: typeof whatsappEmbeddedSignup;
   whatsappFollowUp: typeof whatsappFollowUp;
   whatsappSend: typeof whatsappSend;
+  whatsappSync: typeof whatsappSync;
   whatsappTemplates: typeof whatsappTemplates;
   whatsappTemplatesAction: typeof whatsappTemplatesAction;
   whatsappWebhook: typeof whatsappWebhook;
@@ -278,6 +280,7 @@ export declare const components: {
   linkDiscovererWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"linkDiscovererWorkpool">;
   instagramSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"instagramSyncWorkpool">;
   messengerSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"messengerSyncWorkpool">;
+  whatsappSyncWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"whatsappSyncWorkpool">;
   inboxAiReplyWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"inboxAiReplyWorkpool">;
   metaIndicatorWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaIndicatorWorkpool">;
   metaReactionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaReactionWorkpool">;

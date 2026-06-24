@@ -1,8 +1,9 @@
 import { v } from "convex/values";
-import { action } from "./_generated/server";
+import { action, internalMutation, mutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { whatsappSyncPool } from "./channelSyncPools";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const LOG_PREFIX = "[whatsapp-connect]";
@@ -36,11 +37,64 @@ type GraphError = {
   };
 };
 
+export const beginConnectionAttempt = mutation({
+  args: {},
+  handler: async (ctx): Promise<Id<"whatsappConnectionAttempts">> => {
+    const { orgId, userId } = await getAuthContext(ctx);
+    const channelOrgId = resolveChannelOrgId(orgId, userId);
+    const now = Date.now();
+    return await ctx.db.insert("whatsappConnectionAttempts", {
+      orgId: channelOrgId,
+      connectedByUserId: userId,
+      status: "started",
+      createdAt: now,
+      updatedAt: now,
+    });
+  },
+});
+
+export const internalUpdateConnectionAttempt = internalMutation({
+  args: {
+    attemptId: v.id("whatsappConnectionAttempts"),
+    wabaId: v.optional(v.string()),
+    phoneNumberId: v.optional(v.string()),
+    channelId: v.optional(v.id("channels")),
+    status: v.optional(
+      v.union(
+        v.literal("started"),
+        v.literal("signup_finished"),
+        v.literal("token_ready"),
+        v.literal("connected"),
+        v.literal("syncing"),
+        v.literal("error"),
+      ),
+    ),
+    lastError: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const attempt = await ctx.db.get(args.attemptId);
+    if (attempt === null) return;
+    await ctx.db.patch(args.attemptId, {
+      ...(args.wabaId !== undefined ? { wabaId: args.wabaId } : {}),
+      ...(args.phoneNumberId !== undefined
+        ? { phoneNumberId: args.phoneNumberId }
+        : {}),
+      ...(args.channelId !== undefined ? { channelId: args.channelId } : {}),
+      ...(args.status !== undefined ? { status: args.status } : {}),
+      ...(args.lastError !== undefined ? { lastError: args.lastError } : {}),
+      updatedAt: Date.now(),
+    });
+  },
+});
+
 async function graphFetch<T>(
   url: string,
   init: RequestInit,
   context: string,
 ): Promise<T> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const startedAt = Date.now();
+  logWhatsAppConnect("graph-request", { context, method, url });
   const res = await fetch(url, init);
   const text = await res.text();
   let body: unknown;
@@ -62,6 +116,12 @@ async function graphFetch<T>(
     });
     throw new Error(`${context} failed: ${msg}`);
   }
+  logWhatsAppConnect("graph-response", {
+    context,
+    method,
+    status: res.status,
+    durationMs: Date.now() - startedAt,
+  });
   return body as T;
 }
 
@@ -80,11 +140,13 @@ export const completeSignup = action({
     code: v.string(),
     wabaId: v.string(),
     phoneNumberId: v.string(),
+    attemptId: v.optional(v.id("whatsappConnectionAttempts")),
   },
   handler: async (
     ctx,
     args,
   ): Promise<{ channelId: Id<"channels">; displayPhoneNumber?: string }> => {
+    const startedAt = Date.now();
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     logWhatsAppConnect("started", {
@@ -98,12 +160,30 @@ export const completeSignup = action({
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
     if (!appId || !appSecret) {
+      logWhatsAppConnect("failed", { reason: "missing META_APP_ID / META_APP_SECRET" });
       throw new Error(
         "META_APP_ID / META_APP_SECRET are not configured on the Convex deployment.",
       );
     }
+    logWhatsAppConnect("env", {
+      graphVersion: graphVersion(),
+      hasAppId: Boolean(appId),
+      hasAppSecret: Boolean(appSecret),
+    });
 
     try {
+      if (args.attemptId !== undefined) {
+        await ctx.runMutation(
+          internal.whatsappEmbeddedSignup.internalUpdateConnectionAttempt,
+          {
+            attemptId: args.attemptId,
+            wabaId: args.wabaId,
+            phoneNumberId: args.phoneNumberId,
+            status: "signup_finished",
+          },
+        );
+      }
+
       // 0. Seed a `pending` channel row with progressStep="linking" so the
       //    connecting dialog has something to subscribe to immediately.
       logWhatsAppConnect("step", { progressStep: "linking" });
@@ -212,10 +292,26 @@ export const completeSignup = action({
           connectedByUserId: userId,
         },
       );
+      if (args.attemptId !== undefined) {
+        await ctx.runMutation(
+          internal.whatsappEmbeddedSignup.internalUpdateConnectionAttempt,
+          {
+            attemptId: args.attemptId,
+            channelId,
+            status: "syncing",
+          },
+        );
+      }
+      await whatsappSyncPool.enqueueAction(
+        ctx,
+        internal.whatsappSync.initiateCoexistenceSync,
+        { channelId },
+      );
 
       logWhatsAppConnect("completed", {
         channelId,
         displayPhoneNumber,
+        durationMs: Date.now() - startedAt,
       });
       return { channelId, displayPhoneNumber };
     } catch (err) {
@@ -224,6 +320,7 @@ export const completeSignup = action({
         error: message,
         wabaId: args.wabaId,
         phoneNumberId: args.phoneNumberId,
+        durationMs: Date.now() - startedAt,
       });
       await ctx.runMutation(internal.channels.internalRecordError, {
         orgId: channelOrgId,
@@ -232,6 +329,18 @@ export const completeSignup = action({
         connectedByUserId: userId,
         phoneNumberId: args.phoneNumberId,
       });
+      if (args.attemptId !== undefined) {
+        await ctx.runMutation(
+          internal.whatsappEmbeddedSignup.internalUpdateConnectionAttempt,
+          {
+            attemptId: args.attemptId,
+            wabaId: args.wabaId,
+            phoneNumberId: args.phoneNumberId,
+            status: "error",
+            lastError: message,
+          },
+        );
+      }
       throw err;
     }
   },

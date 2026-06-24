@@ -148,57 +148,6 @@ http.route({
   handler: workosWebhook,
 });
 
-// Meta webhooks (WhatsApp, Instagram, Messenger) — single endpoint
-//   https://<convex-site>/webhook/meta
-// configured against each product in the Meta App Dashboard. We verify the
-// shared HMAC once here, then dispatch based on the top-level `object`
-// discriminator.
-http.route({
-  path: "/webhook/meta",
-  method: "GET",
-  handler: metaVerify,
-});
-
-const metaDispatch = httpAction(async (ctx, req) => {
-  const rawBody = await req.text();
-  // const sig = await verifyMetaSignature(req, rawBody);
-  // if (!sig.ok) {
-  //   return new Response(sig.message, { status: sig.status });
-  // }
-
-  let object: string | undefined;
-  try {
-    const peek = JSON.parse(rawBody) as { object?: string };
-    object = peek.object;
-  } catch {
-    return new Response("invalid json", { status: 400 });
-  }
-
-  switch (object) {
-    case "whatsapp_business_account":
-      return await whatsappReceive(ctx, rawBody);
-    case "instagram":
-      return await instagramReceive(ctx, rawBody);
-    case "page":
-      console.log("[messenger-webhook] dispatch", {
-        route: "/webhook/meta",
-        object,
-        bodyBytes: rawBody.length,
-      });
-      return await messengerReceive(ctx, rawBody);
-    default:
-      // Webhook subscribed for a product we don't currently model (or a
-      // probe). Always ack so Meta does not keep retrying.
-      return new Response(null, { status: 200 });
-  }
-});
-
-http.route({
-  path: "/webhook/meta",
-  method: "POST",
-  handler: metaDispatch,
-});
-
 const whatsappDispatch = httpAction(async (ctx, req) => {
   const rawBody = await req.text();
   // const sig = await verifyMetaSignature(req, rawBody);
@@ -206,6 +155,8 @@ const whatsappDispatch = httpAction(async (ctx, req) => {
   //   return new Response(sig.message, { status: sig.status });
   // }
 
+  console.log("whatsappDispatch", rawBody);
+
   let object: string | undefined;
   try {
     const peek = JSON.parse(rawBody) as { object?: string };
@@ -214,9 +165,14 @@ const whatsappDispatch = httpAction(async (ctx, req) => {
     return new Response("invalid json", { status: 400 });
   }
 
-  if (object === "whatsapp_business_account") {
+  console.log("whatsappDispatch object", object);
+
+  if (object === 'whatsapp_business_account') {
+    console.log("whatsappDispatch whatsapp_business_account");
     return await whatsappReceive(ctx, rawBody);
   }
+  console.log("whatsappDispatch default");
+
   return new Response(null, { status: 200 });
 });
 

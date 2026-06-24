@@ -21,7 +21,7 @@ function logMessengerWebhook(
   console.log(`${LOG_PREFIX}`, step, data);
 }
 
-// POST handler for the `object: "page"` branch of /webhook/meta.
+// POST handler for the product-specific /webhook/messenger route.
 //
 // Payload shape (Messenger Platform):
 //   {

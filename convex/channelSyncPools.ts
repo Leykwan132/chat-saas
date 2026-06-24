@@ -16,3 +16,10 @@ export const messengerSyncPool = new Workpool(
   components.messengerSyncWorkpool,
   { maxParallelism: 2 },
 );
+
+// WhatsApp coexistence sync can deliver large history chunks. Keep this pool
+// small so webhook-triggered ingestion never floods the inbox writer path.
+export const whatsappSyncPool = new Workpool(
+  components.whatsappSyncWorkpool,
+  { maxParallelism: 2 },
+);

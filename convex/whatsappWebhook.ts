@@ -1,11 +1,18 @@
 import { v } from "convex/values";
-import { httpAction, internalMutation, type ActionCtx } from "./_generated/server";
+import {
+  httpAction,
+  internalMutation,
+  type ActionCtx,
+  type MutationCtx,
+} from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
 import {
   resolveInboxLedgerContentType,
   resolveWhatsAppAudioFiles,
 } from "./chat/inboxAudioIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
+import { whatsappSyncPool } from "./channelSyncPools";
 
 
 const messageStatusValidator = v.union(
@@ -16,7 +23,30 @@ const messageStatusValidator = v.union(
   v.literal("failed"),
 );
 
-// GET /webhook/meta — Meta verification handshake. We must echo
+const contentTypeValidator = v.union(
+  v.literal("text"),
+  v.literal("image"),
+  v.literal("audio"),
+  v.literal("file"),
+  v.literal("video"),
+  v.literal("document"),
+  v.literal("unknown"),
+);
+
+const stateSyncContactValidator = v.object({
+  type: v.optional(v.string()),
+  action: v.optional(v.string()),
+  contact: v.optional(
+    v.object({
+      full_name: v.optional(v.string()),
+      first_name: v.optional(v.string()),
+      phone_number: v.optional(v.string()),
+    }),
+  ),
+  timestampMs: v.optional(v.number()),
+});
+
+// GET /webhook/whatsapp — Meta verification handshake. We must echo
 // `hub.challenge` plain when `hub.verify_token` matches the secret we
 // configured in the Meta App Dashboard webhook settings.
 export const verify = httpAction(async (_ctx, req) => {
@@ -25,6 +55,7 @@ export const verify = httpAction(async (_ctx, req) => {
   const token = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
 
+  
   const expected = process.env.META_APP_VERIFY_TOKEN;
   if (!expected) {
     console.error("META_APP_VERIFY_TOKEN is not configured");
@@ -36,9 +67,9 @@ export const verify = httpAction(async (_ctx, req) => {
   return new Response("forbidden", { status: 403 });
 });
 
-// POST /webhook/meta — incoming WhatsApp events.
+// POST /webhook/whatsapp — incoming WhatsApp events.
 //
-// The /webhook/meta dispatcher (convex/http.ts) verifies the X-Hub-Signature
+// The /webhook/whatsapp dispatcher (convex/http.ts) verifies the X-Hub-Signature
 // HMAC and reads the raw body before calling this handler, so we just walk
 // entry[].changes[].value and persist each message / status update.
 //
@@ -57,6 +88,129 @@ export async function receive(
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
+      if (change.field === "account_update") {
+        const value = change.value;
+        const wabaId = value.waba_info?.waba_id ?? entry.id;
+        const event = value.event;
+        if (!wabaId || !event) continue;
+        try {
+          const result: AccountUpdateResult = await ctx.runMutation(
+            internal.whatsappWebhook.handleAccountUpdate,
+            {
+              wabaId,
+              event,
+              phoneNumber: value.phone_number,
+              ownerBusinessId: value.waba_info?.owner_business_id,
+              partnerAppId: value.waba_info?.partner_app_id,
+              timestampMs: parseEntryTimestamp(entry.time),
+            },
+          );
+          if (result.shouldStartSync && result.channelId) {
+            await whatsappSyncPool.enqueueAction(
+              ctx,
+              internal.whatsappSync.initiateCoexistenceSync,
+              { channelId: result.channelId },
+            );
+          }
+        } catch (err) {
+          console.error("Failed to handle WhatsApp account_update", err);
+        }
+        continue;
+      }
+
+      if (change.field === "smb_app_state_sync") {
+        const value = change.value;
+        const phoneNumberId = value.metadata?.phone_number_id;
+        if (!phoneNumberId) continue;
+        try {
+          await ctx.runMutation(internal.whatsappWebhook.handleStateSync, {
+            phoneNumberId,
+            contacts: (value.state_sync ?? []).map((item) => ({
+              type: item.type,
+              action: item.action,
+              contact: item.contact,
+              timestampMs: parseOptionalTimestamp(item.metadata?.timestamp),
+            })),
+          });
+        } catch (err) {
+          console.error("Failed to handle WhatsApp smb_app_state_sync", err);
+        }
+        continue;
+      }
+
+      if (change.field === "history") {
+        const value = change.value;
+        const phoneNumberId = value.metadata?.phone_number_id;
+        if (!phoneNumberId) continue;
+
+        const historyError = firstHistoryError(value);
+        if (historyError) {
+          if (historyError.code === 2593109) {
+            await ctx.runMutation(internal.whatsappSync.internalMarkHistoryNotShared, {
+              phoneNumberId,
+              errorCode: historyError.code,
+              errorMessage:
+                historyError.message ??
+                historyError.title ??
+                "WhatsApp history sync was not shared by the business.",
+            });
+          } else {
+            console.warn("WhatsApp history webhook contained an error", historyError);
+          }
+          continue;
+        }
+
+        const channel = await ctx.runQuery(
+          internal.channels.internalGetChannelByPhoneNumberId,
+          { phoneNumberId },
+        );
+        if (channel === null) continue;
+
+        const metadata = latestHistoryMetadata(value);
+        const storageId = await ctx.storage.store(
+          new Blob([JSON.stringify(value)], { type: "application/json" }),
+        );
+        const chunkId: Id<"whatsappHistoryChunks"> = await ctx.runMutation(
+          internal.whatsappSync.internalCaptureHistoryChunk,
+          {
+            channelId: channel._id,
+            phoneNumberId,
+            phase: metadata.phase,
+            chunkOrder: metadata.chunkOrder,
+            progress: metadata.progress,
+            storageId,
+          },
+        );
+        await whatsappSyncPool.enqueueAction(
+          ctx,
+          internal.whatsappSync.processHistoryChunk,
+          { chunkId },
+        );
+        continue;
+      }
+
+      if (change.field === "smb_message_echoes") {
+        const value = change.value;
+        const phoneNumberId = value.metadata?.phone_number_id;
+        if (!phoneNumberId) continue;
+        for (const echo of value.message_echoes ?? []) {
+          if (!echo.id || !echo.to) continue;
+          try {
+            await ctx.runMutation(internal.whatsappWebhook.handleMessageEcho, {
+              phoneNumberId,
+              to: echo.to,
+              externalId: echo.id,
+              timestampMs: parseTimestamp(echo.timestamp),
+              content: extractContent(echo),
+              contentType: resolveWhatsAppContentType(echo),
+            });
+          } catch (err) {
+            console.error("Failed to persist WhatsApp message echo", err);
+          }
+        }
+        continue;
+      }
+
       if (change.field !== "messages") continue;
       const value = change.value;
       const phoneNumberId = value.metadata?.phone_number_id;
@@ -142,6 +296,201 @@ export async function receive(
 
   return new Response(null, { status: 200 });
 }
+
+export const handleAccountUpdate = internalMutation({
+  args: {
+    wabaId: v.string(),
+    event: v.string(),
+    phoneNumber: v.optional(v.string()),
+    ownerBusinessId: v.optional(v.string()),
+    partnerAppId: v.optional(v.string()),
+    timestampMs: v.optional(v.number()),
+  },
+  handler: async (ctx, args): Promise<AccountUpdateResult> => {
+    await recordAccountUpdate(ctx, args);
+    if (isAccountStopEvent(args.event)) {
+      await stopWhatsAppConnectionForWaba(ctx, {
+        wabaId: args.wabaId,
+        event: args.event,
+        timestampMs: args.timestampMs,
+      });
+    }
+    return { shouldStartSync: false };
+  },
+});
+
+function isAccountStopEvent(event: string): boolean {
+  return (
+    event === "PARTNER_REMOVED" ||
+    event === "ACCOUNT_OFFBOARDED" ||
+    event === "ACCOUNT_DISABLED" ||
+    event === "BUSINESS_ACCOUNT_DISABLED" ||
+    event === "ONBOARDING_REJECTED"
+  );
+}
+
+async function stopWhatsAppConnectionForWaba(
+  ctx: MutationCtx,
+  args: { wabaId: string; event: string; timestampMs?: number },
+) {
+  const now = Date.now();
+  const message = `WhatsApp account update ${args.event}`;
+  const channels = await ctx.db
+    .query("channels")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", args.wabaId))
+    .take(10);
+  for (const channel of channels) {
+    await ctx.db.patch(channel._id, {
+      status: "error",
+      lastError: message,
+      historySyncStatus: "failed",
+      historySyncError: message,
+      historySyncUpdatedAt: args.timestampMs ?? now,
+      contactSyncStatus: "failed",
+      updatedAt: now,
+    });
+  }
+
+  const attempts = await ctx.db
+    .query("whatsappConnectionAttempts")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", args.wabaId))
+    .take(10);
+  for (const attempt of attempts) {
+    await ctx.db.patch(attempt._id, {
+      status: "error",
+      lastError: message,
+      updatedAt: now,
+    });
+  }
+}
+
+async function recordAccountUpdate(
+  ctx: MutationCtx,
+  args: {
+    wabaId: string;
+    event: string;
+    phoneNumber?: string;
+    ownerBusinessId?: string;
+    partnerAppId?: string;
+    timestampMs?: number;
+  },
+) {
+  const now = Date.now();
+  const existing = await ctx.db
+    .query("whatsappAccountUpdates")
+    .withIndex("by_wabaId_and_event", (q) =>
+      q.eq("wabaId", args.wabaId).eq("event", args.event),
+    )
+    .unique();
+  const patch = {
+    phoneNumber: args.phoneNumber,
+    ownerBusinessId: args.ownerBusinessId,
+    partnerAppId: args.partnerAppId,
+    eventAt: args.timestampMs,
+    updatedAt: now,
+  };
+  if (existing === null) {
+    await ctx.db.insert("whatsappAccountUpdates", {
+      wabaId: args.wabaId,
+      event: args.event,
+      ...patch,
+      createdAt: now,
+    });
+    return;
+  }
+  await ctx.db.patch(existing._id, patch);
+}
+
+export const handleStateSync = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    contacts: v.array(stateSyncContactValidator),
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .collect();
+    const channel = channels.find((c) => c.status === "connected") ?? channels[0];
+    if (channel === undefined) return;
+
+    let lastEventAt: number | undefined;
+    for (const item of args.contacts) {
+      if (item.type !== "contact") continue;
+      if (item.timestampMs !== undefined) {
+        lastEventAt =
+          lastEventAt === undefined
+            ? item.timestampMs
+            : Math.max(lastEventAt, item.timestampMs);
+      }
+      if (item.action !== "add") continue;
+      const phone = item.contact?.phone_number?.trim();
+      if (!phone) continue;
+      const name =
+        item.contact?.full_name?.trim() || item.contact?.first_name?.trim();
+      await ctx.runMutation(internal.customers.internalUpsertFromWebhook, {
+        orgId: channel.orgId,
+        service: "whatsapp",
+        contactAddress: phone,
+        profileName: name || undefined,
+        phone,
+      });
+    }
+
+    const now = Date.now();
+    await ctx.db.patch(channel._id, {
+      contactSyncStatus: "completed",
+      contactSyncLastEventAt: lastEventAt ?? now,
+      updatedAt: now,
+    });
+
+    const req = await ctx.db
+      .query("whatsappSyncRequests")
+      .withIndex("by_channelId_and_syncType", (q) =>
+        q.eq("channelId", channel._id).eq("syncType", "smb_app_state_sync"),
+      )
+      .first();
+    if (req !== null) {
+      await ctx.db.patch(req._id, {
+        status: "completed",
+        completedAt: now,
+        updatedAt: now,
+      });
+    }
+  },
+});
+
+export const handleMessageEcho = internalMutation({
+  args: {
+    phoneNumberId: v.string(),
+    to: v.string(),
+    externalId: v.string(),
+    timestampMs: v.number(),
+    content: v.string(),
+    contentType: contentTypeValidator,
+  },
+  handler: async (ctx, args) => {
+    const channels = await ctx.db
+      .query("channels")
+      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .collect();
+    const channel = channels.find((c) => c.status === "connected") ?? channels[0];
+    if (channel === undefined) return;
+
+    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
+      channelId: channel._id,
+      externalId: args.externalId,
+      contactAddress: args.to,
+      contactPhone: args.to,
+      direction: "outgoing",
+      content: args.content,
+      contentType: args.contentType,
+      timestampMs: args.timestampMs,
+      isHistorical: false,
+      humanAgentName: "WhatsApp Business app",
+    });
+  },
+});
 
 // Persist one inbound message + upsert its conversation + customer. Wrapped
 // in a single internal mutation so all three writes happen atomically.
@@ -341,6 +690,13 @@ function parseOptionalTimestamp(ts?: string): number | undefined {
   return n < 1_000_000_000_000 ? n * 1000 : n;
 }
 
+function parseEntryTimestamp(ts?: number | string): number | undefined {
+  if (ts === undefined) return undefined;
+  const n = Number(ts);
+  if (!Number.isFinite(n)) return undefined;
+  return n < 1_000_000_000_000 ? n * 1000 : n;
+}
+
 function extractContent(msg: WhatsAppIncomingMessage): string {
   if (msg.text?.body) return msg.text.body;
   if (msg.image?.caption) return msg.image.caption;
@@ -353,6 +709,60 @@ function extractContent(msg: WhatsAppIncomingMessage): string {
     return msg.interactive.list_reply.title;
   if (msg.type === "audio") return "";
   return `<${msg.type ?? "unknown"}>`;
+}
+
+function resolveWhatsAppContentType(msg: WhatsAppIncomingMessage) {
+  switch (msg.type) {
+    case "text":
+      return "text" as const;
+    case "image":
+      return "image" as const;
+    case "audio":
+      return "audio" as const;
+    case "video":
+      return "video" as const;
+    case "document":
+      return "document" as const;
+    default:
+      return resolveInboxLedgerContentType(
+        extractContent(msg),
+        undefined,
+        undefined,
+      );
+  }
+}
+
+function firstHistoryError(
+  value: WhatsAppChangeValue,
+): WhatsAppHistoryError | undefined {
+  for (const item of value.history ?? []) {
+    const error = item.errors?.[0];
+    if (error) return error;
+  }
+  return undefined;
+}
+
+function latestHistoryMetadata(value: WhatsAppChangeValue): {
+  phase?: number;
+  chunkOrder?: number;
+  progress?: number;
+} {
+  let latest: { phase?: number; chunkOrder?: number; progress?: number } = {};
+  for (const item of value.history ?? []) {
+    const metadata = item.metadata;
+    if (!metadata) continue;
+    if (
+      latest.progress === undefined ||
+      (metadata.progress ?? 0) >= latest.progress
+    ) {
+      latest = {
+        phase: metadata.phase,
+        chunkOrder: metadata.chunk_order,
+        progress: metadata.progress,
+      };
+    }
+  }
+  return latest;
 }
 
 function mapStatus(status?: string) {
@@ -376,6 +786,7 @@ type WhatsAppWebhookPayload = {
   object?: string;
   entry?: Array<{
     id?: string;
+    time?: number | string;
     changes?: Array<{
       field?: string;
       value: WhatsAppChangeValue;
@@ -384,10 +795,40 @@ type WhatsAppWebhookPayload = {
 };
 
 type WhatsAppChangeValue = {
+  event?: string;
+  phone_number?: string;
+  waba_info?: {
+    waba_id?: string;
+    owner_business_id?: string;
+    partner_app_id?: string;
+  };
   messaging_product?: string;
   metadata?: { display_phone_number?: string; phone_number_id?: string };
   contacts?: Array<{ wa_id?: string; profile?: { name?: string } }>;
   messages?: WhatsAppIncomingMessage[];
+  message_echoes?: WhatsAppIncomingMessage[];
+  state_sync?: Array<{
+    type?: string;
+    action?: string;
+    contact?: {
+      full_name?: string;
+      first_name?: string;
+      phone_number?: string;
+    };
+    metadata?: { timestamp?: string };
+  }>;
+  history?: Array<{
+    metadata?: {
+      phase?: number;
+      chunk_order?: number;
+      progress?: number;
+    };
+    threads?: Array<{
+      id?: string;
+      messages?: WhatsAppIncomingMessage[];
+    }>;
+    errors?: WhatsAppHistoryError[];
+  }>;
   statuses?: Array<{
     id: string;
     status: string;
@@ -400,6 +841,7 @@ type WhatsAppChangeValue = {
 type WhatsAppIncomingMessage = {
   id: string;
   from: string;
+  to?: string;
   timestamp?: string;
   type?: string;
   text?: { body?: string };
@@ -413,4 +855,16 @@ type WhatsAppIncomingMessage = {
     button_reply?: { id?: string; title?: string };
     list_reply?: { id?: string; title?: string };
   };
+};
+
+type WhatsAppHistoryError = {
+  code?: number;
+  title?: string;
+  message?: string;
+  error_data?: { details?: string };
+};
+
+type AccountUpdateResult = {
+  shouldStartSync: boolean;
+  channelId?: Id<"channels">;
 };

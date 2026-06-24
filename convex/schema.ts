@@ -45,6 +45,50 @@ const customerServiceValidator = v.union(
   v.literal("manual"),
 );
 
+const whatsappSyncTypeValidator = v.union(
+  v.literal("smb_app_state_sync"),
+  v.literal("history"),
+);
+
+const whatsappSyncRequestStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("requested"),
+  v.literal("completed"),
+  v.literal("failed"),
+  v.literal("not_shared"),
+);
+
+const whatsappHistoryChunkStatusValidator = v.union(
+  v.literal("queued"),
+  v.literal("processing"),
+  v.literal("completed"),
+  v.literal("failed"),
+);
+
+const whatsappHistorySyncStatusValidator = v.union(
+  v.literal("requested"),
+  v.literal("syncing"),
+  v.literal("completed"),
+  v.literal("not_shared"),
+  v.literal("failed"),
+);
+
+const whatsappContactSyncStatusValidator = v.union(
+  v.literal("requested"),
+  v.literal("syncing"),
+  v.literal("completed"),
+  v.literal("failed"),
+);
+
+const whatsappConnectionAttemptStatusValidator = v.union(
+  v.literal("started"),
+  v.literal("signup_finished"),
+  v.literal("token_ready"),
+  v.literal("connected"),
+  v.literal("syncing"),
+  v.literal("error"),
+);
+
 const autoBookingFieldTypeValidator = v.union(
   v.literal("text"),
   v.literal("number"),
@@ -411,6 +455,18 @@ export default defineSchema({
         v.literal("backfilling"),
       ),
     ),
+    mmLiteTermsSignedAt: v.optional(v.number()),
+    partnerAppInstalledAt: v.optional(v.number()),
+    coexistenceSyncStartedAt: v.optional(v.number()),
+    historySyncPhase: v.optional(v.number()),
+    historySyncChunkOrder: v.optional(v.number()),
+    historySyncProgress: v.optional(v.number()),
+    historySyncStatus: v.optional(whatsappHistorySyncStatusValidator),
+    historySyncUpdatedAt: v.optional(v.number()),
+    historySyncError: v.optional(v.string()),
+    contactSyncStartedAt: v.optional(v.number()),
+    contactSyncLastEventAt: v.optional(v.number()),
+    contactSyncStatus: v.optional(whatsappContactSyncStatusValidator),
     lastError: v.optional(v.string()),
     connectedByUserId: v.string(),
     defaultAgentId: v.optional(v.id("agents")),
@@ -419,9 +475,79 @@ export default defineSchema({
   })
     .index("by_orgId_and_service", ["orgId", "service"])
     .index("by_phoneNumberId", ["phoneNumberId"])
+    .index("by_wabaId", ["wabaId"])
     .index("by_igUserId", ["igUserId"])
     .index("by_pageId", ["pageId"])
     .index("by_fbUserId", ["fbUserId"]),
+  whatsappSyncRequests: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    wabaId: v.optional(v.string()),
+    phoneNumberId: v.string(),
+    syncType: whatsappSyncTypeValidator,
+    requestId: v.optional(v.string()),
+    status: whatsappSyncRequestStatusValidator,
+    errorMessage: v.optional(v.string()),
+    errorCode: v.optional(v.number()),
+    createdAt: v.number(),
+    requestedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_requestId", ["requestId"])
+    .index("by_channelId_and_syncType", ["channelId", "syncType"])
+    .index("by_phoneNumberId", ["phoneNumberId"]),
+  whatsappAccountUpdates: defineTable({
+    wabaId: v.string(),
+    event: v.string(),
+    phoneNumber: v.optional(v.string()),
+    ownerBusinessId: v.optional(v.string()),
+    partnerAppId: v.optional(v.string()),
+    eventAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wabaId", ["wabaId"])
+    .index("by_wabaId_and_event", ["wabaId", "event"]),
+  whatsappConnectionAttempts: defineTable({
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    status: whatsappConnectionAttemptStatusValidator,
+    wabaId: v.optional(v.string()),
+    phoneNumberId: v.optional(v.string()),
+    channelId: v.optional(v.id("channels")),
+    mmLiteTermsSignedAt: v.optional(v.number()),
+    partnerAppInstalledAt: v.optional(v.number()),
+    syncStartedAt: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_wabaId", ["wabaId"])
+    .index("by_channelId", ["channelId"])
+    .index("by_orgId_and_status", ["orgId", "status"]),
+  whatsappHistoryChunks: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    phoneNumberId: v.string(),
+    phase: v.optional(v.number()),
+    chunkOrder: v.optional(v.number()),
+    progress: v.optional(v.number()),
+    storageId: v.id("_storage"),
+    status: whatsappHistoryChunkStatusValidator,
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_channelId_and_status", ["channelId", "status"])
+    .index("by_channelId_and_phase_and_chunkOrder", [
+      "channelId",
+      "phase",
+      "chunkOrder",
+    ])
+    .index("by_phoneNumberId", ["phoneNumberId"]),
   // A customer is anyone who messaged the org via any channel, or who was
   // added manually. Natural key is (orgId, service, contactAddress).
   customers: defineTable({
