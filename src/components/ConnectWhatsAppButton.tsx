@@ -305,8 +305,9 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
     fb.login(
       (response: FBLoginResponse) => {
-        refreshFacebookLoginStatus();
         console.log('response from FB login: ', response);
+        refreshFacebookLoginStatus();
+        console.log('response from FB login after refresh: ', response);
         fbLoginResponseRef.current = response;
 
         if (response.authResponse) {

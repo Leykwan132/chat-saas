@@ -172,7 +172,9 @@ export function waitForFacebookSdk(
 }
 
 export function refreshFacebookLoginStatus() {
+  console.log('refreshFacebookLoginStatus', window.FB);
   if (!window.FB) return;
+  console.log('refreshFacebookLoginStatus', window.FB);
   window.FB.getLoginStatus(applyResponse, true);
 }
 
