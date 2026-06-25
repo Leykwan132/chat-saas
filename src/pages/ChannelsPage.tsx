@@ -17,6 +17,7 @@ import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
 import { PageDescription } from '@/components/PageDescription';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -681,7 +682,7 @@ function ConnectedChannelCard({
           <div className="mt-1">
             {channel.status === 'connected' ? (
               <p className="text-[11px] leading-snug text-muted-foreground">
-                Since {formatConnectedSince(channel.createdAt)}
+                {formatPrefixedRelativeAge('Connected', channel.createdAt)}
               </p>
             ) : (
               <div className="flex items-start justify-between gap-2 mt-1.5">
@@ -834,14 +835,6 @@ function ConnectedChannelCard({
       </Dialog>
     </div>
   );
-}
-
-function formatConnectedSince(ts: number): string {
-  return new Date(ts).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
 }
 
 function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {

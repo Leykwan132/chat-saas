@@ -6,6 +6,7 @@ import { CreditMeter } from '@/components/CreditMeter';
 import { ModeToggle } from '@/components/mode-toggle';
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
+import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
 import { cn } from '@/lib/utils';
 import {
   Bot,
@@ -252,12 +253,7 @@ function AgentCard({
             {agent.name}
           </span>
           <p className="m-0 mt-0.5 text-xs text-muted-foreground">
-            Last trained {new Date(agent.updatedAt).toLocaleString(undefined, {
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            })}
+            {formatPrefixedRelativeAge('Created', agent.createdAt)}
           </p>
         </div>
 
