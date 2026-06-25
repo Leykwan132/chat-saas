@@ -9,11 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
-  WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
-  WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-} from '@/lib/whatsappCloudDemo';
+
+const DEFAULT_TEMPLATE_LANGUAGE = 'en_US';
 
 type TemplateRow = {
   name: string;
@@ -35,10 +32,10 @@ export default function ChannelWhatsAppTemplatesPage() {
   const [rows, setRows] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
-  const [name, setName] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_NAME);
-  const [language, setLanguage] = useState(WHATSAPP_DEMO_TEMPLATE_LANGUAGE);
+  const [name, setName] = useState('');
+  const [language, setLanguage] = useState(DEFAULT_TEMPLATE_LANGUAGE);
   const [category, setCategory] = useState('UTILITY');
-  const [bodyText, setBodyText] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_BODY);
+  const [bodyText, setBodyText] = useState('');
   const [rawExpanded, setRawExpanded] = useState(false);
 
   const channel = channels?.find((c: any) => c._id === (channelId as Id<'channels'> | undefined));
@@ -125,7 +122,7 @@ export default function ChannelWhatsAppTemplatesPage() {
       await createTemplate({
         channelId: channelId as Id<'channels'>,
         name: trimmedName,
-        language: language.trim() || WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
+        language: language.trim() || DEFAULT_TEMPLATE_LANGUAGE,
         category: category.trim() || 'UTILITY',
         bodyText: trimmedBody,
       });
@@ -166,8 +163,8 @@ export default function ChannelWhatsAppTemplatesPage() {
         <h1 className="m-0 text-3xl font-semibold tracking-tight">{label}</h1>
         <p className="m-0 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Create and list templates for this WhatsApp Business Account. Graph API
-          calls run on Convex using this channel&apos;s credentials (or the demo
-          token when using the demo channel)—nothing is stored in the browser.
+          calls run on Convex using this channel&apos;s credentials—nothing is
+          stored in the browser.
         </p>
         <p className="m-0 text-xs text-muted-foreground">
           WABA:{' '}
@@ -176,12 +173,8 @@ export default function ChannelWhatsAppTemplatesPage() {
       </header>
 
       <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
-        If list or create fails with a missing-token error, set{' '}
-        <code className="rounded bg-background px-1 py-0.5 text-xs">
-          WHATSAPP_DEMO_ACCESS_TOKEN
-        </code>{' '}
-        on Convex for the demo channel, or reconnect a production WhatsApp
-        channel in Channels.
+        If list or create fails with a missing-token error, reconnect this
+        WhatsApp channel from Channels.
       </div>
 
       <div className="flex flex-wrap gap-2">

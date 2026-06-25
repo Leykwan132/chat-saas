@@ -35,10 +35,7 @@ export const submitTemplateToMeta = internalAction({
         throw new Error("WhatsApp channel not found");
       }
       
-      const isDemo = channel.accessToken === "__whatsapp_demo__";
-      const token = isDemo
-        ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-        : (channel.accessToken ?? "").trim();
+      const token = (channel.accessToken ?? "").trim();
       if (!token) {
         throw new Error("WhatsApp access token is missing");
       }

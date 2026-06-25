@@ -12,10 +12,6 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
-import {
-  isDemoInboxChannel,
-  WHATSAPP_DEMO_PHONE_NUMBER_ID,
-} from "./whatsappDemo";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 
 async function enforceChannelLimit(
@@ -89,10 +85,8 @@ export const listForCurrentOrg = query({
           .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
           .collect();
 
-    const visibleChannels = channels.filter((channel) => !isDemoInboxChannel(channel));
-
     return await Promise.all(
-      visibleChannels.map(async (channel) => {
+      channels.map(async (channel) => {
         const conversations = await ctx.db
           .query("conversations")
           .withIndex("by_channel_and_contactAddress", (q) => q.eq("channelId", channel._id))
@@ -209,7 +203,6 @@ export const getConnectedForCurrentOrg = query({
     return rows.filter(
       (r) =>
         r.status === "connected" &&
-        !isDemoInboxChannel(r) &&
         (args.agentId === undefined ||
           r.defaultAgentId === undefined ||
           r.defaultAgentId === args.agentId),
@@ -354,13 +347,6 @@ async function upsertWhatsAppChannel(
       defaultAgentId,
       createdAt: now,
     });
-    logWhatsAppChannel("upsertWhatsAppChannel", "inserted row", {
-      channelId: newId,
-      phoneNumberId: args.phoneNumberId,
-      wabaId: args.wabaId,
-      hasDisplayPhoneNumber: Boolean(args.displayPhoneNumber),
-      hasTokenExpiry: Boolean(args.tokenExpiresAt),
-    });
     return newId;
   }
   const backfillAgentId =
@@ -375,14 +361,6 @@ async function upsertWhatsAppChannel(
     ...patch,
     connectedByUserId: args.connectedByUserId,
     ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
-  });
-  logWhatsAppChannel("upsertWhatsAppChannel", "patched existing row", {
-    channelId: existing._id,
-    phoneNumberId: args.phoneNumberId,
-    wabaId: args.wabaId,
-    previousStatus: existing.status,
-    hasDisplayPhoneNumber: Boolean(args.displayPhoneNumber),
-    hasTokenExpiry: Boolean(args.tokenExpiresAt),
   });
   return existing._id;
 }
@@ -414,26 +392,15 @@ export const internalStartPending = internalMutation({
       .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
       .collect();
 
-    const isDemo = args.phoneNumberId === WHATSAPP_DEMO_PHONE_NUMBER_ID;
     const existing = channels.find((c) => c.orgId === args.orgId) ?? null;
-    logWhatsAppChannel("internalStartPending", "lookup", {
-      orgId: args.orgId,
-      phoneNumberId: args.phoneNumberId,
-      isDemo,
-      existingChannelId: existing?._id,
-      existingStatus: existing?.status,
-      matchCount: channels.length,
-    });
 
-    if (!isDemo) {
-      const otherConnected = channels.find((c) => c.orgId !== args.orgId && c.status !== "disconnected");
-      if (otherConnected) {
-        logWhatsAppChannel("internalStartPending", "rejected — already connected to another org", {
-          ownerOrgId: otherConnected.orgId,
-          phoneNumberId: args.phoneNumberId,
-        });
-        throw new Error("This WhatsApp phone number is already connected to another workspace.");
-      }
+    const otherConnected = channels.find((c) => c.orgId !== args.orgId && c.status !== "disconnected");
+    if (otherConnected) {
+      logWhatsAppChannel("internalStartPending", "rejected — already connected to another org", {
+        ownerOrgId: otherConnected.orgId,
+        phoneNumberId: args.phoneNumberId,
+      });
+      throw new Error("This WhatsApp phone number is already connected to another workspace.");
     }
 
     if (existing !== null && existing.status !== "disconnected") {
@@ -471,10 +438,6 @@ export const internalStartPending = internalMutation({
         createdAt: now,
         updatedAt: now,
       });
-      logWhatsAppChannel("internalStartPending", "inserted pending row", {
-        channelId: newId,
-        phoneNumberId: args.phoneNumberId,
-      });
       return newId;
     }
     const backfillAgentId =
@@ -495,11 +458,6 @@ export const internalStartPending = internalMutation({
       connectedByUserId: args.connectedByUserId,
       ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
       updatedAt: now,
-    });
-    logWhatsAppChannel("internalStartPending", "patched existing row to pending", {
-      channelId: existing._id,
-      phoneNumberId: args.phoneNumberId,
-      previousStatus: existing.status,
     });
     return existing._id;
   },
@@ -550,24 +508,12 @@ export const internalSetProgress = internalMutation({
         .unique();
     }
     if (existing === null) {
-      logWhatsAppChannel("internalSetProgress", "no matching channel — skipped", {
-        service: args.service,
-        progressStep: args.progressStep,
-        phoneNumberId: args.phoneNumberId,
-      });
       return;
     }
     await ctx.db.patch(existing._id, {
       progressStep: args.progressStep,
       updatedAt: Date.now(),
     });
-    if (args.service === "whatsapp") {
-      logWhatsAppChannel("internalSetProgress", "updated", {
-        channelId: existing._id,
-        progressStep: args.progressStep,
-        phoneNumberId: args.phoneNumberId,
-      });
-    }
   },
 });
 

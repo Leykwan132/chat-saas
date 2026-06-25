@@ -4,11 +4,8 @@ import { Link, useParams, useSearchParams } from 'react-router';
 import {
   Check,
   CircleAlert,
-  FileText,
-  FilePlus2,
   Loader2,
   RefreshCw,
-  Send,
   Trash2,
   Plus,
   MoreHorizontal,
@@ -19,7 +16,6 @@ import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
 import { PageDescription } from '@/components/PageDescription';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useUpgradeModal } from '@/components/UpgradeModal';
 import {
@@ -44,14 +40,6 @@ import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
-import {
-  WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
-  WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
-  WHATSAPP_DEMO_RECIPIENT,
-  WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-  WHATSAPP_DEMO_TEMPLATE_NAME,
-  WHATSAPP_DEMO_WABA_ID,
-} from '@/lib/whatsappCloudDemo';
 import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
@@ -62,9 +50,6 @@ import {
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
-
-/** Toggle the WhatsApp Cloud API quick demo section on the Channels page. */
-const SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO = false;
 
 const SERVICE_META: Record<
   ChannelDoc['service'],
@@ -304,10 +289,6 @@ export default function ChannelsPage() {
           Add new channel
         </Button>
       </header>
-
-      {SHOW_WHATSAPP_CLOUD_API_QUICK_DEMO ? (
-        <WhatsAppCloudApiDemo channels={channels ?? []} />
-      ) : null}
 
       {/* Guides section styled exactly like BroadcastPage */}
       <section className="flex flex-col gap-4 animate-fade-in">
@@ -834,162 +815,6 @@ function ConnectedChannelCard({
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function WhatsAppCloudApiDemo({ channels }: { channels: ChannelDoc[] }) {
-  const whatsappChannel = channels.find((channel) => channel.service === 'whatsapp');
-  const sendDemoTemplate = useAction(api.whatsappDemo.sendDemoTemplateMessage);
-  const listDemoTemplates = useAction(api.whatsappDemo.listDemoMessageTemplates);
-  const createDemoTemplate = useAction(api.whatsappDemo.createDemoMessageTemplate);
-  const [busyAction, setBusyAction] = useState<
-    'send' | 'templates' | 'createTemplate' | null
-  >(null);
-  const [result, setResult] = useState<string | null>(null);
-
-  const runDemoRequest = useCallback(
-    (action: 'send' | 'templates' | 'createTemplate') => {
-      void (async () => {
-        setBusyAction(action);
-        setResult(null);
-
-        try {
-          if (action === 'send') {
-            const { result: out } = await sendDemoTemplate({});
-            setResult(out);
-            toast.success('Demo WhatsApp template request completed');
-            return;
-          }
-
-          const wabaId = whatsappChannel?.wabaId ?? WHATSAPP_DEMO_WABA_ID;
-          if ((action === 'templates' || action === 'createTemplate') && !wabaId) {
-            throw new Error(
-              'No WhatsApp Business Account ID found. Connect WhatsApp or use the demo WABA id.',
-            );
-          }
-
-          if (action === 'createTemplate') {
-            const { result: out } = await createDemoTemplate({
-              name: WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
-              language: WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-              category: 'UTILITY',
-              bodyText: WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
-              wabaId,
-            });
-            setResult(out);
-            toast.success('WhatsApp message template creation request completed');
-            return;
-          }
-
-          const { result: out } = await listDemoTemplates({ wabaId });
-          setResult(out);
-          toast.success('WhatsApp message templates request completed');
-        } catch (err) {
-          const message = err instanceof Error ? err.message : String(err);
-          setResult(message);
-          toast.error(message);
-        } finally {
-          setBusyAction(null);
-        }
-      })();
-    },
-    [
-      whatsappChannel,
-      sendDemoTemplate,
-      listDemoTemplates,
-      createDemoTemplate,
-    ],
-  );
-
-  return (
-    <section className="flex flex-col gap-4 rounded-xl border border-dashed border-border bg-muted/20 p-5">
-      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">
-            WhatsApp Cloud API quick demo
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Temporary test helper for sending the sample template message and
-            creating or retrieving message templates. Calls run on Convex using{' '}
-            <code className="mx-1 rounded bg-muted px-1 py-0.5 text-xs">
-              WHATSAPP_DEMO_ACCESS_TOKEN
-            </code>{' '}
-            (never sent to the browser).
-          </p>
-        </div>
-        <Badge variant="outline" className="w-fit">
-          Demo only
-        </Badge>
-      </div>
-
-      <div className="grid gap-3 text-sm md:grid-cols-3">
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="font-medium">Send template message</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Sends {WHATSAPP_DEMO_TEMPLATE_NAME} to {WHATSAPP_DEMO_RECIPIENT}.
-          </p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="font-medium">Create message template</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Creates {WHATSAPP_DEMO_NEW_TEMPLATE_NAME} on the selected WABA.
-          </p>
-        </div>
-        <div className="rounded-lg border border-border bg-card p-3">
-          <p className="font-medium">Retrieve message templates</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Uses the connected WhatsApp WABA ID, or WHATSAPP_DEMO_WABA_ID if set.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          onClick={() => runDemoRequest('send')}
-          disabled={busyAction !== null}
-        >
-          {busyAction === 'send' ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Send className="size-4" />
-          )}
-          Send sample message
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => runDemoRequest('createTemplate')}
-          disabled={busyAction !== null}
-        >
-          {busyAction === 'createTemplate' ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <FilePlus2 className="size-4" />
-          )}
-          Create demo template
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => runDemoRequest('templates')}
-          disabled={busyAction !== null}
-        >
-          {busyAction === 'templates' ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <FileText className="size-4" />
-          )}
-          Retrieve templates
-        </Button>
-      </div>
-
-      {result ? (
-        <pre className="max-h-72 overflow-auto rounded-lg border border-border bg-background p-3 text-xs text-foreground">
-          {result}
-        </pre>
-      ) : null}
-    </section>
   );
 }
 

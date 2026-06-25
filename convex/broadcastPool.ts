@@ -17,7 +17,6 @@ export const broadcastPool = new Workpool(
   { maxParallelism: 3 }, // Rate-limiting safety for Meta Graph API
 );
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
 function graphBase(): string {
@@ -26,16 +25,9 @@ function graphBase(): string {
 }
 
 function resolveAccessToken(channel: Doc<"channels">): string {
-  const isDemo = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-  const token = isDemo
-    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-    : (channel.accessToken ?? "").trim();
+  const token = (channel.accessToken ?? "").trim();
   if (!token) {
-    throw new Error(
-      isDemo
-        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to use the demo WhatsApp channel."
-        : "WhatsApp channel has no access token. Reconnect in Channels.",
-    );
+    throw new Error("WhatsApp channel has no access token. Reconnect in Channels.");
   }
   return token;
 }

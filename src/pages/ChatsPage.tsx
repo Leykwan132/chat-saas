@@ -552,7 +552,6 @@ export default function ChatsPage() {
       createdAt: number;
     }>
   >([]);
-  const clearedInboxSampleDataRef = useRef(false);
   const markRead = useAction(api.conversations.markReadAndSendSeen);
   const setConversationAiEnabled = useMutation(api.conversations.setConversationAiEnabled);
   const setConversationLeadOwner = useMutation(api.conversations.setConversationLeadOwner);
@@ -603,20 +602,11 @@ export default function ChatsPage() {
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(true);
   const [logSectionOpen, setLogSectionOpen] = useState(false);
-  const clearInboxSampleData = useMutation(api.whatsappDemo.clearInboxSampleData);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
   const textEntries = useQuery(
     api.knowledgeBase.listTextEntries,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
   );
-
-  useEffect(() => {
-    if (connectedChannels === undefined || clearedInboxSampleDataRef.current) return;
-    clearedInboxSampleDataRef.current = true;
-    void clearInboxSampleData({}).catch(() => {
-      clearedInboxSampleDataRef.current = false;
-    });
-  }, [connectedChannels, clearInboxSampleData]);
 
   const selectedConversation = useQuery(
     api.conversations.get,

@@ -2,7 +2,6 @@
 
 import type { Doc } from "../_generated/dataModel";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -357,17 +356,10 @@ function resolveWhatsAppAccessToken(channel: Doc<"channels">): {
   accessToken: string;
   error?: string;
 } {
-  const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-  const accessToken = isDemoChannel
-    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-    : (channel.accessToken ?? "").trim();
+  const accessToken = (channel.accessToken ?? "").trim();
   return {
     accessToken,
-    error: accessToken
-      ? undefined
-      : isDemoChannel
-        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment"
-        : "WhatsApp channel is not connected",
+    error: accessToken ? undefined : "WhatsApp channel is not connected",
   };
 }
 

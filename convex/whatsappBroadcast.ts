@@ -12,7 +12,6 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { broadcastPool } from "./broadcastPool";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const MAX_BATCH_SEND = 50;
 
@@ -147,16 +146,9 @@ async function getOrgWhatsAppChannel(
 }
 
 function resolveAccessToken(channel: Doc<"channels">): string {
-  const isDemo = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-  const token = isDemo
-    ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-    : (channel.accessToken ?? "").trim();
+  const token = (channel.accessToken ?? "").trim();
   if (!token) {
-    throw new Error(
-      isDemo
-        ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to use the demo WhatsApp channel."
-        : "WhatsApp channel has no access token. Reconnect in Channels.",
-    );
+    throw new Error("WhatsApp channel has no access token. Reconnect in Channels.");
   }
   return token;
 }

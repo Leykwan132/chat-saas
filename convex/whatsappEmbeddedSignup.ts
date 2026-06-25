@@ -207,9 +207,6 @@ async function graphFetch<T>(
   init: RequestInit,
   context: string,
 ): Promise<T> {
-  const method = (init.method ?? "GET").toUpperCase();
-  const startedAt = Date.now();
-  logWhatsAppConnect("graph-request", { context, method, url });
   const res = await fetch(url, init);
   const text = await res.text();
   let body: unknown;
@@ -228,25 +225,9 @@ async function graphFetch<T>(
       code: err?.code,
       errorSubcode: err?.error_subcode,
       fbtraceId: err?.fbtrace_id,
-      responseBody: body,
     });
     throw new Error(`${context} failed: ${msg}`);
   }
-  logWhatsAppConnect("graph-response", {
-    context,
-    method,
-    status: res.status,
-    durationMs: Date.now() - startedAt,
-    ...(context === "Code exchange"
-      ? {
-          hasAccessToken: Boolean(
-            (body as { access_token?: string }).access_token,
-          ),
-          tokenType: (body as { token_type?: string }).token_type,
-          expiresIn: (body as { expires_in?: number }).expires_in,
-        }
-      : { responseBody: body }),
-  });
   return body as T;
 }
 
@@ -262,7 +243,6 @@ function selectMetaAppCredentials(args: {
   const appIdEnv = process.env.META_APP_ID;
   const appSecretEnv = process.env.META_APP_SECRET;
   if (!appIdEnv || !appSecretEnv) {
-    logWhatsAppConnect("failed", { reason: "missing META_APP_ID / META_APP_SECRET" });
     throw new Error(
       "META_APP_ID / META_APP_SECRET are not configured on the Convex deployment.",
     );
@@ -306,13 +286,6 @@ async function exchangeAuthorizationCodeForToken(args: {
   url.searchParams.set("client_secret", args.appSecret);
   url.searchParams.set("code", args.code);
 
-  logWhatsAppConnect("token-exchange-request", {
-    method: "GET",
-    url: url.toString(),
-    hasClientId: true,
-    codeLength: args.code.length,
-  });
-
   return await graphFetch<TokenExchangeResponse>(
     url.toString(),
     { method: "GET" },
@@ -332,11 +305,6 @@ export const prepareWhatsAppSignup = action({
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
-    logWhatsAppConnect("prepare-started", {
-      wabaId: args.wabaId,
-      phoneNumberId: args.phoneNumberId,
-      attemptId: args.attemptId,
-    });
 
     if (args.attemptId !== undefined) {
       await ctx.runMutation(
@@ -358,10 +326,6 @@ export const prepareWhatsAppSignup = action({
       agentId: args.agentId,
     });
 
-    logWhatsAppConnect("prepare-completed", {
-      wabaId: args.wabaId,
-      phoneNumberId: args.phoneNumberId,
-    });
     return { prepared: true as const };
   },
 });
@@ -412,11 +376,6 @@ export const completeSignup = action({
       const { appId, appSecret } = selectMetaAppCredentials({
         applicationId: args.applicationId,
       });
-      logWhatsAppConnect("env", {
-        graphVersion: graphVersion(),
-        appId,
-        hasAppSecret: Boolean(appSecret),
-      });
 
       if (args.attemptId !== undefined) {
         await ctx.runMutation(
@@ -432,7 +391,6 @@ export const completeSignup = action({
 
       // 0. Seed a `pending` channel row with progressStep="linking" so the
       //    connecting dialog has something to subscribe to immediately.
-      logWhatsAppConnect("step", { progressStep: "linking" });
       await ctx.runMutation(internal.channels.internalStartPending, {
         orgId: channelOrgId,
         wabaId: args.wabaId,
@@ -450,7 +408,6 @@ export const completeSignup = action({
 
       // 1. Exchange code for access token. Meta's coexistence sample calls
       //    oauth/access_token with client_id, client_secret, and code only.
-      logWhatsAppConnect("step", { progressStep: "exchanging" });
       const tokenRes = await exchangeAuthorizationCodeForToken({
         appId,
         appSecret,
@@ -460,11 +417,6 @@ export const completeSignup = action({
       const tokenExpiresAt = tokenRes.expires_in
         ? Date.now() + tokenRes.expires_in * 1000
         : undefined;
-      logWhatsAppConnect("token-exchange-succeeded", {
-        tokenType: tokenRes.token_type,
-        expiresIn: tokenRes.expires_in,
-        hasAccessToken: Boolean(accessToken),
-      });
 
       if (args.attemptId !== undefined) {
         await ctx.runMutation(
@@ -482,7 +434,6 @@ export const completeSignup = action({
 
       // 2. Subscribe our app to the WABA. This is required before Meta will
       //    deliver webhook events for messages sent to this WABA's numbers.
-      logWhatsAppConnect("step", { progressStep: "subscribing" });
       await graphFetch(
         `${graphBase()}/${args.wabaId}/subscribed_apps`,
         {
@@ -492,11 +443,7 @@ export const completeSignup = action({
         "WABA subscribe",
       );
 
-      if (flowType === "existing_phone_number") {
-        logWhatsAppConnect("coexistence-skip-register", {
-          phoneNumberId: args.phoneNumberId,
-        });
-      } else {
+      if (flowType !== "existing_phone_number") {
         await ctx.runMutation(internal.channels.internalSetProgress, {
           orgId: channelOrgId,
           service: "whatsapp",
@@ -525,20 +472,17 @@ export const completeSignup = action({
       // 4. Read display metadata so we can show a friendly number in the UI.
       let displayPhoneNumber: string | undefined;
       try {
-        logWhatsAppConnect("step", { progressStep: "fetching-display-number" });
         const meta = await graphFetch<{ display_phone_number?: string }>(
           `${graphBase()}/${args.phoneNumberId}?fields=display_phone_number`,
           { headers: { Authorization: `Bearer ${accessToken}` } },
           "Phone number fetch",
         );
         displayPhoneNumber = meta.display_phone_number;
-        logWhatsAppConnect("display-number-fetched", { displayPhoneNumber });
       } catch (err) {
         console.warn(`${LOG_PREFIX}:completeSignup`, "display number fetch failed", err);
       }
 
       // 5. Persist.
-      logWhatsAppConnect("step", { progressStep: "persisting-channel" });
       const channelId: Id<"channels"> = await ctx.runMutation(
         internal.channels.internalUpsertWhatsApp,
         {

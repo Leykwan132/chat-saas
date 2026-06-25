@@ -113,12 +113,6 @@ function AnalyticsIndex() {
 
 
 
-/** Legacy sidebar URL; templates now live under Channels → channel. */
-function WhatsappDemoTemplateRedirect() {
-  const { agentId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/channels`} replace />
-}
-
 function ChatsToInboxRedirect() {
   const { agentId } = useParams()
   return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
@@ -245,7 +239,6 @@ const router = createBrowserRouter(
         <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
         <Route path="channels" element={<ChannelsPage />} />
         <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
-        <Route path="whatsapp-demo/template" element={<WhatsappDemoTemplateRedirect />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:customerId" element={<CustomerDetailPage />} />
         <Route path="follow-ups" element={<FollowUpPage />} />

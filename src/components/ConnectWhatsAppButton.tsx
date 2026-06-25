@@ -24,10 +24,6 @@ import {
   resolveWhatsAppEmbeddedSignupIds,
 } from '@/lib/whatsappEmbeddedSignup';
 import {
-  logWhatsAppConnect,
-  redactFacebookPayload,
-} from '@/lib/whatsappConnectDebug';
-import {
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
 
@@ -77,8 +73,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   const [dialogState, setDialogState] = useState<DialogState>({ kind: 'closed' });
   const [userDismissed, setUserDismissed] = useState(false);
   const sessionInfoRef = useRef<{ wabaId?: string; phoneNumberId?: string }>({});
-  const embeddedSignupMessageRef = useRef<SessionInfoMessage | undefined>(undefined);
-  const fbLoginResponseRef = useRef<FBLoginResponse | undefined>(undefined);
   const authCodeRef = useRef<string | undefined>(undefined);
   const connectionAttemptPromiseRef = useRef<
     Promise<Id<'whatsappConnectionAttempts'> | undefined> | undefined
@@ -94,7 +88,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   const configId = signupIds?.configId;
 
   // SDK is loaded from index.html; hook attaches session listeners.
-  const fbSession = useFacebookSession();
+  useFacebookSession();
 
   // Live whatsapp channel row from Convex. Used both to pull the active
   // progressStep into the connecting state and to display the phone number
@@ -188,63 +182,19 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     }
   }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected, userDismissed, agentId, navigate]);
 
-  useEffect(() => {
-    if (whatsappChannel) {
-      logWhatsAppConnect('complete', 'channel state observed', {
-        channelId: whatsappChannel._id,
-        status: whatsappChannel.status,
-        progressStep: whatsappChannel.progressStep,
-        hasDisplayPhoneNumber: Boolean(whatsappChannel.displayPhoneNumber),
-        activePhoneNumberId,
-      });
-    }
-  }, [whatsappChannel, activePhoneNumberId]);
-
-  useEffect(() => {
-    if (!forceAllowConnect && whatsappChannel?.status === 'connected') {
-      logWhatsAppConnect('complete', 'rendering connected-state button', {
-        channelId: whatsappChannel._id,
-        displayPhoneNumber: whatsappChannel.displayPhoneNumber,
-      });
-    }
-  }, [forceAllowConnect, whatsappChannel]);
-
-  useEffect(() => {
-    logWhatsAppConnect('dialog', 'state changed', { kind: dialogState.kind });
-  }, [dialogState.kind]);
-
   const tryCompleteSignup = useCallback(async () => {
-    if (completingRef.current) {
-      logWhatsAppConnect('complete', 'skipped - already completing');
-      return;
-    }
+    if (completingRef.current) return;
 
     const code = authCodeRef.current;
     const { wabaId, phoneNumberId } = sessionInfoRef.current;
-    if (!code || !wabaId || !phoneNumberId) {
-      logWhatsAppConnect('complete', 'skipped - missing prerequisites', {
-        hasCode: Boolean(code),
-        hasWabaId: Boolean(wabaId),
-        hasPhoneNumberId: Boolean(phoneNumberId),
-      });
-      return;
-    }
+    if (!code || !wabaId || !phoneNumberId) return;
 
     completingRef.current = true;
     setDialogState({ kind: 'connecting' });
-    logWhatsAppConnect('complete', 'starting backend completeSignup', {
-      wabaId,
-      phoneNumberId,
-      codeLength: code.length,
-    });
 
     try {
       const attemptId = await connectionAttemptPromiseRef.current;
-
-      logWhatsAppConnect('complete', 'exchanging authorization code for access token', {
-        attemptId,
-      });
-      const result = await completeSignup({
+      await completeSignup({
         code,
         applicationId: appId,
         wabaId,
@@ -252,15 +202,8 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         attemptId,
         flowType: 'existing_phone_number',
       });
-      logWhatsAppConnect('complete', 'WhatsApp connected - Facebook responses', {
-        embeddedSignupMessage: redactFacebookPayload(embeddedSignupMessageRef.current),
-        fbLogin: redactFacebookPayload(fbLoginResponseRef.current),
-        completeSignupResult: result,
-      });
-      logWhatsAppConnect('complete', 'backend completeSignup succeeded', { result });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      logWhatsAppConnect('complete', 'backend completeSignup failed', { error: msg });
       setDialogState({ kind: 'error', message: msg });
     } finally {
       completingRef.current = false;
@@ -269,25 +212,12 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   }, [appId, completeSignup]);
 
   const requestAuthCodeAndComplete = useCallback(async () => {
-    logWhatsAppConnect('auth-code', 'requestAuthCodeAndComplete called', {
-      hasAppId: Boolean(appId),
-      hasConfigId: Boolean(configId),
-      fbReady: fbSession.ready,
-      hasFbSdk: Boolean(window.FB),
-      wabaId: sessionInfoRef.current.wabaId,
-      phoneNumberId: sessionInfoRef.current.phoneNumberId,
-    });
-
-    if (!appId || !configId) {
-      logWhatsAppConnect('auth-code', 'aborted - missing appId or configId');
-      return;
-    }
+    if (!appId || !configId) return;
 
     let fb: NonNullable<typeof window.FB>;
     try {
       fb = await waitForFacebookSdk();
     } catch {
-      logWhatsAppConnect('auth-code', 'aborted - Facebook SDK not ready');
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       setBusy(false);
       return;
@@ -296,13 +226,8 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     fb.login(
       (response: FBLoginResponse) => {
         refreshFacebookLoginStatus();
-        fbLoginResponseRef.current = response;
 
         const code = response.authResponse?.code;
-        logWhatsAppConnect('auth-code', 'FB.login returned', {
-          status: response.status,
-          hasCode: Boolean(code),
-        });
         if (!code) {
           const message =
             response.status === 'unknown'
@@ -327,7 +252,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         },
       },
     );
-  }, [appId, configId, fbSession.ready, tryCompleteSignup]);
+  }, [appId, configId, tryCompleteSignup]);
 
   // Meta posts WA_EMBEDDED_SIGNUP when the embedded signup flow finishes.
   useEffect(() => {
@@ -344,13 +269,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       }
       if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
 
-      logWhatsAppConnect('message', `WA_EMBEDDED_SIGNUP:${payload.event}`, {
-        origin: event.origin,
-        payload: redactFacebookPayload(payload),
-      });
-
       if (isSignupFinishEvent(payload.event) && payload.data) {
-        embeddedSignupMessageRef.current = payload;
         sessionInfoRef.current = {
           wabaId: payload.data.waba_id,
           phoneNumberId: payload.data.phone_number_id,
@@ -358,13 +277,9 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         setActivePhoneNumberId(payload.data.phone_number_id);
         void tryCompleteSignup();
       } else if (payload.event === 'CANCEL') {
-        logWhatsAppConnect('message', 'signup cancelled by user');
         setBusy(false);
         toast.message('WhatsApp connection cancelled');
       } else if (payload.event === 'ERROR' && payload.data?.error_message) {
-        logWhatsAppConnect('message', 'embedded signup error', {
-          error: payload.data.error_message,
-        });
         setBusy(false);
         toast.error(`Embedded Signup error: ${payload.data.error_message}`);
       }
@@ -376,7 +291,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
   const launchSignup = useCallback(async () => {
     if (!appId || !configId) {
-      logWhatsAppConnect('launch', 'aborted - missing appId or configId');
       toast.error(
         'WhatsApp is not configured. Set VITE_META_APP_ID and VITE_META_EMBEDDED_SIGNUP_CONFIG_ID.',
       );
@@ -390,7 +304,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         openConnectionAttempt.status === 'token_ready');
 
     if (isSignupActive) {
-      logWhatsAppConnect('launch', 'aborted - active signup attempt exists');
       toast.error(
         'You already have a WhatsApp connection in progress. Cancel it on the Channels page first.',
       );
@@ -400,7 +313,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     try {
       await waitForFacebookSdk();
     } catch {
-      logWhatsAppConnect('launch', 'aborted - Facebook SDK not ready');
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       return;
     }
@@ -409,16 +321,9 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     completingRef.current = false;
     setUserDismissed(false);
     sessionInfoRef.current = {};
-    embeddedSignupMessageRef.current = undefined;
-    fbLoginResponseRef.current = undefined;
     authCodeRef.current = undefined;
     connectionAttemptPromiseRef.current = undefined;
     setActivePhoneNumberId(undefined);
-
-    logWhatsAppConnect('launch', 'starting FB.login embedded signup', {
-      appId,
-      configId,
-    });
 
     connectionAttemptPromiseRef.current = beginConnectionAttempt({})
       .then((attemptId) => {
@@ -426,16 +331,12 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         return attemptId;
       })
       .catch((err) => {
-        logWhatsAppConnect('launch', 'connection attempt tracking failed', {
-          error: err instanceof Error ? err.message : String(err),
-        });
         toast.error(err instanceof Error ? err.message : String(err));
         setBusy(false);
         return undefined;
       });
 
     void requestAuthCodeAndComplete();
-    logWhatsAppConnect('launch', 'FB.login started - waiting for auth code and WA_EMBEDDED_SIGNUP postMessage');
   }, [appId, beginConnectionAttempt, configId, openConnectionAttempt, requestAuthCodeAndComplete]);
 
   const handleDialogOpenChange = useCallback(
@@ -448,12 +349,8 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         openConnectionAttempt?.status === 'syncing';
 
       if (dialogState.kind === 'connecting' && !isSyncingOrConnected) {
-        logWhatsAppConnect('complete', 'dialog open-change ignored while connecting');
         return;
       }
-      logWhatsAppConnect('complete', 'dialog closed by user', {
-        previousKind: dialogState.kind,
-      });
       setUserDismissed(true);
       setDialogState({ kind: 'closed' });
     },
@@ -502,9 +399,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
               <ErrorState
                 message={dialogState.message}
                 onRetry={() => {
-                  logWhatsAppConnect('dialog', 'retry requested from error state', {
-                    errorMessage: dialogState.message,
-                  });
                   setDialogState({ kind: 'closed' });
                   launchSignup();
                 }}
@@ -540,9 +434,6 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
             <ErrorState
               message={dialogState.message}
               onRetry={() => {
-                logWhatsAppConnect('dialog', 'retry requested from error state', {
-                  errorMessage: dialogState.message,
-                });
                 setDialogState({ kind: 'closed' });
                 launchSignup();
               }}

@@ -54,11 +54,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  WHATSAPP_DEMO_NEW_TEMPLATE_BODY,
-  WHATSAPP_DEMO_NEW_TEMPLATE_NAME,
-  WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
-} from '@/lib/whatsappCloudDemo';
 import { startOfDay } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import {
@@ -67,6 +62,8 @@ import {
 } from '@/lib/scheduleUtils';
 
 import { getWhatsAppRateForCategory } from '@/lib/whatsappRates';
+
+const DEFAULT_TEMPLATE_LANGUAGE = 'en_US';
 
 const MAX_BATCH = 50;
 
@@ -322,10 +319,10 @@ export default function AutomationsBroadcastPage() {
   const [sendBusy, setSendBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
-  const [tplName, setTplName] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_NAME);
-  const [tplLang, setTplLang] = useState(WHATSAPP_DEMO_TEMPLATE_LANGUAGE);
+  const [tplName, setTplName] = useState('');
+  const [tplLang, setTplLang] = useState(DEFAULT_TEMPLATE_LANGUAGE);
   const [tplCategory, setTplCategory] = useState('UTILITY');
-  const [tplBody, setTplBody] = useState(WHATSAPP_DEMO_NEW_TEMPLATE_BODY);
+  const [tplBody, setTplBody] = useState('');
 
   useEffect(() => {
     if (!channelId && whatsappReady.length > 0) {
@@ -501,7 +498,7 @@ export default function AutomationsBroadcastPage() {
       await createTemplate({
         channelId: channelId as Id<'channels'>,
         name: n,
-        language: tplLang.trim() || WHATSAPP_DEMO_TEMPLATE_LANGUAGE,
+        language: tplLang.trim() || DEFAULT_TEMPLATE_LANGUAGE,
         category: tplCategory.trim() || 'UTILITY',
         bodyText: b,
       });

@@ -8,8 +8,6 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 
-const WHATSAPP_DEMO_ACCESS_SENTINEL = "__whatsapp_demo__";
-
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
 function graphBase() {
@@ -51,16 +49,9 @@ export const sendText = action({
       throw new Error("WhatsApp channel is not connected");
     }
 
-    const isDemoChannel = channel.accessToken === WHATSAPP_DEMO_ACCESS_SENTINEL;
-    const accessToken = isDemoChannel
-      ? (process.env.WHATSAPP_DEMO_ACCESS_TOKEN ?? "").trim()
-      : (channel.accessToken ?? "").trim();
+    const accessToken = (channel.accessToken ?? "").trim();
     if (!accessToken) {
-      throw new Error(
-        isDemoChannel
-          ? "Set WHATSAPP_DEMO_ACCESS_TOKEN on your Convex deployment to send from the demo WhatsApp inbox."
-          : "WhatsApp channel is not connected",
-      );
+      throw new Error("WhatsApp channel is not connected");
     }
 
     const url = `${graphBase()}/${channel.phoneNumberId}/messages`;
