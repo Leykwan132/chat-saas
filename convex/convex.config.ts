@@ -24,6 +24,7 @@ app.use(workpool, { name: "metaIndicatorWorkpool" });
 app.use(workpool, { name: "metaReactionWorkpool" });
 app.use(workpool, { name: "mediaDeleteWorkpool" });
 app.use(workpool, { name: "threadSummarizerWorkpool" });
+app.use(workpool, { name: "leadLabelWorkpool" });
 app.use(workpool, { name: "broadcastWorkpool" });
 app.use(workpool, { name: "followUpWorkpool" });
 app.use(workpool, { name: "conversationLogWorkpool" });

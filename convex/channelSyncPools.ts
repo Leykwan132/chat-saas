@@ -21,5 +21,5 @@ export const messengerSyncPool = new Workpool(
 // small so webhook-triggered ingestion never floods the inbox writer path.
 export const whatsappSyncPool = new Workpool(
   components.whatsappSyncWorkpool,
-  { maxParallelism: 2 },
+  { maxParallelism: 1 },
 );

@@ -13,8 +13,33 @@ function historyPhaseLabel(phase: number | undefined): string {
   }
 }
 
+export function getWhatsAppHistoryDisplayProgress(
+  channel: Doc<'channels'>,
+): number {
+  if (channel.historySyncStatus === 'completed') {
+    return 100;
+  }
+
+  const raw = channel.historySyncProgress ?? 0;
+  const totalBatches = channel.historySyncTotalBatchCount;
+  const completedBatches = channel.historySyncCompletedBatchCount ?? 0;
+
+  if (
+    channel.historySyncStatus === 'syncing' &&
+    totalBatches !== undefined &&
+    totalBatches > 0
+  ) {
+    return Math.min(
+      99,
+      90 + Math.floor((completedBatches / totalBatches) * 9),
+    );
+  }
+
+  return Math.max(0, Math.min(90, raw));
+}
+
 export function getWhatsAppSyncStatus(channel: Doc<'channels'> | undefined):
-  | { label: string; detail?: string }
+  | { label: string; detail?: string; showCheck?: boolean }
   | null {
   if (!channel || channel.service !== 'whatsapp') return null;
   if (channel.historySyncStatus === 'not_shared') {
@@ -30,19 +55,21 @@ export function getWhatsAppSyncStatus(channel: Doc<'channels'> | undefined):
     };
   }
   if (channel.historySyncStatus === 'completed') {
-    return { label: 'Chat history sync complete' };
+    return { label: 'Ready', showCheck: true };
   }
   if (
     channel.historySyncStatus === 'requested' ||
     channel.historySyncStatus === 'syncing'
   ) {
-    const progress = Math.max(0, Math.min(100, channel.historySyncProgress ?? 0));
+    const progress = getWhatsAppHistoryDisplayProgress(channel);
+    const importing =
+      channel.historySyncTotalBatchCount !== undefined &&
+      (channel.historySyncCompletedBatchCount ?? 0) <
+        channel.historySyncTotalBatchCount;
     return {
-      label: `${historyPhaseLabel(channel.historySyncPhase)} (${progress}%)`,
-      detail:
-        channel.contactSyncStatus === 'completed'
-          ? 'Contacts synced. Keep WhatsApp Business open while chats finish.'
-          : 'Syncing contacts and messages from WhatsApp Business.',
+      label: importing
+        ? `Syncing chat history (${progress}%)`
+        : `${historyPhaseLabel(channel.historySyncPhase)} (${progress}%)`,
     };
   }
   if (channel.contactSyncStatus === 'requested') {

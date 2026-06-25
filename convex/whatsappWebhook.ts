@@ -15,8 +15,8 @@ import {
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { whatsappSyncPool } from "./channelSyncPools";
 import { isOpenWhatsAppConnectionAttempt, maybeCompleteWhatsAppConnectionAttempt } from "./whatsappConnectionAttemptUtils";
-
-
+import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
+import { isSkippedWhatsAppContact } from "./whatsappSkipContacts";
 const messageStatusValidator = v.union(
   v.literal("queued"),
   v.literal("sent"),
@@ -105,6 +105,7 @@ export async function receive(
               phoneNumber: value.phone_number,
               ownerBusinessId: value.waba_info?.owner_business_id,
               partnerAppId: value.waba_info?.partner_app_id,
+              disconnectionReason: value.disconnection_info?.reason,
               timestampMs: parseEntryTimestamp(entry.time),
             },
           );
@@ -169,26 +170,69 @@ export async function receive(
         );
         if (channel === null) continue;
 
-        const metadata = latestHistoryMetadata(value);
-        const storageId = await ctx.storage.store(
-          new Blob([JSON.stringify(value)], { type: "application/json" }),
-        );
-        const chunkId: Id<"whatsappHistoryChunks"> = await ctx.runMutation(
-          internal.whatsappSync.internalCaptureHistoryChunk,
-          {
-            channelId: channel._id,
-            phoneNumberId,
-            phase: metadata.phase,
-            chunkOrder: metadata.chunkOrder,
-            progress: metadata.progress,
-            storageId,
-          },
-        );
-        await whatsappSyncPool.enqueueAction(
-          ctx,
-          internal.whatsappSync.processHistoryChunk,
-          { chunkId },
-        );
+        let shouldSync = false;
+        const historyItems = value.history ?? [];
+        for (const item of historyItems) {
+          const metadata = item.metadata;
+          if (metadata?.phase === undefined || metadata.chunk_order === undefined) {
+            console.warn("WhatsApp history item missing phase/chunk_order; skipping", {
+              phoneNumberId,
+              progress: metadata?.progress,
+            });
+            continue;
+          }
+          const result = await ctx.runMutation(
+            internal.whatsappSync.internalStageHistoryBatch,
+            {
+              channelId: channel._id,
+              phoneNumberId,
+              phase: metadata.phase,
+              chunkOrder: metadata.chunk_order,
+              progress: metadata.progress,
+              historyThreads: (item.threads ?? []).map((thread) => ({
+                id: thread.id,
+                messages: thread.messages,
+              })),
+            },
+          );
+          shouldSync = shouldSync || result.shouldSync;
+        }
+
+        const anchorMetadata = historyItems.find(
+          (item) =>
+            item.metadata?.phase !== undefined &&
+            item.metadata.chunk_order !== undefined,
+        )?.metadata;
+        if ((value.messages?.length ?? 0) > 0) {
+          if (anchorMetadata === undefined) {
+            console.warn(
+              "WhatsApp history webhook had top-level messages but no batch metadata; skipping",
+              { phoneNumberId, messageCount: value.messages!.length },
+            );
+          } else {
+            const result = await ctx.runMutation(
+              internal.whatsappSync.internalStageHistoryBatch,
+              {
+                channelId: channel._id,
+                phoneNumberId,
+                phase: anchorMetadata.phase,
+                chunkOrder: anchorMetadata.chunk_order,
+                progress: anchorMetadata.progress,
+                historyThreads: [],
+                standaloneMessages: value.messages,
+              },
+            );
+            shouldSync = shouldSync || result.shouldSync;
+          }
+        }
+
+        if (shouldSync) {
+          await whatsappSyncPool.enqueueAction(
+            ctx,
+            internal.whatsappSync.syncHistoryIngestThreads,
+            { channelId: channel._id },
+          );
+        }
         continue;
       }
 
@@ -307,10 +351,20 @@ export const handleAccountUpdate = internalMutation({
     phoneNumber: v.optional(v.string()),
     ownerBusinessId: v.optional(v.string()),
     partnerAppId: v.optional(v.string()),
+    disconnectionReason: v.optional(v.string()),
     timestampMs: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<AccountUpdateResult> => {
     await recordAccountUpdate(ctx, args);
+
+    if (
+      args.event === "PARTNER_APP_UNINSTALLED" ||
+      args.event === "PARTNER_REMOVED"
+    ) {
+      await deleteWhatsAppConnectionForWaba(ctx, args.wabaId);
+      return { shouldStartSync: false };
+    }
+
     if (isAccountStopEvent(args.event)) {
       await stopWhatsAppConnectionForWaba(ctx, {
         wabaId: args.wabaId,
@@ -388,7 +442,6 @@ async function handlePartnerAppInstalled(
 
 function isAccountStopEvent(event: string): boolean {
   return (
-    event === "PARTNER_REMOVED" ||
     event === "ACCOUNT_OFFBOARDED" ||
     event === "ACCOUNT_DISABLED" ||
     event === "BUSINESS_ACCOUNT_DISABLED" ||
@@ -428,6 +481,109 @@ async function stopWhatsAppConnectionForWaba(
       lastError: message,
       updatedAt: now,
     });
+  }
+}
+
+async function deleteWhatsAppConnectionForWaba(
+  ctx: MutationCtx,
+  wabaId: string,
+) {
+  console.log(`[deleteWhatsAppConnectionForWaba] Deleting all data for WABA ID: ${wabaId}`);
+
+  // 1. Find all channels for this WABA
+  const channels = await ctx.db
+    .query("channels")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", wabaId))
+    .collect();
+
+  for (const channel of channels) {
+    // 2. Find and delete all conversations and associated messages/analytics
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_channel_and_contactAddress", (q) =>
+        q.eq("channelId", channel._id),
+      )
+      .collect();
+
+    for (const conv of conversations) {
+      // Delete messages
+      const messages = await ctx.db
+        .query("messages")
+        .withIndex("by_conversationId_and_createdAt", (q) =>
+          q.eq("conversationId", conv._id),
+        )
+        .collect();
+      for (const msg of messages) {
+        await ctx.db.delete(msg._id);
+      }
+
+      // Delete analytics facts
+      const facts = await ctx.db
+        .query("conversationAnalyticsFacts")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const fact of facts) {
+        await ctx.db.delete(fact._id);
+      }
+
+      // Delete topic assignments
+      const topics = await ctx.db
+        .query("conversationTopicAssignments")
+        .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
+        .collect();
+      for (const topic of topics) {
+        await ctx.db.delete(topic._id);
+      }
+
+      // Delete metric entries
+      const metrics = await ctx.db
+        .query("analyticsMetricEntries")
+        .withIndex("by_sourceConversationId", (q) =>
+          q.eq("sourceConversationId", conv._id),
+        )
+        .collect();
+      for (const metric of metrics) {
+        await ctx.db.delete(metric._id);
+      }
+
+      // Delete conversation itself
+      await ctx.db.delete(conv._id);
+    }
+
+    // 3. Find and delete sync requests
+    const syncRequests = await ctx.db
+      .query("whatsappSyncRequests")
+      .withIndex("by_channelId_and_syncType", (q) =>
+        q.eq("channelId", channel._id),
+      )
+      .collect();
+    for (const req of syncRequests) {
+      await ctx.db.delete(req._id);
+    }
+
+    // 4. Delete history staging rows
+    await deleteWhatsAppHistoryStagingForChannel(ctx, channel._id);
+
+    // 5. Delete the channel itself
+    await ctx.db.delete(channel._id);
+  }
+
+  // 6. Delete all connection attempts
+  const attempts = await ctx.db
+    .query("whatsappConnectionAttempts")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", wabaId))
+    .collect();
+  for (const attempt of attempts) {
+    await ctx.db.delete(attempt._id);
+  }
+
+  // 7. Delete all account updates
+  const updates = await ctx.db
+    .query("whatsappAccountUpdates")
+    .withIndex("by_wabaId", (q) => q.eq("wabaId", wabaId))
+    .collect();
+  for (const update of updates) {
+    await ctx.db.delete(update._id);
   }
 }
 
@@ -492,7 +648,7 @@ export const handleStateSync = internalMutation({
       }
       if (item.action !== "add") continue;
       const phone = item.contact?.phone_number?.trim();
-      if (!phone) continue;
+      if (!phone || isSkippedWhatsAppContact(phone)) continue;
       const name =
         item.contact?.full_name?.trim() || item.contact?.first_name?.trim();
       await ctx.runMutation(internal.customers.internalUpsertFromWebhook, {
@@ -501,6 +657,8 @@ export const handleStateSync = internalMutation({
         contactAddress: phone,
         profileName: name || undefined,
         phone,
+        userId: channel.connectedByUserId,
+        agentId: channel.defaultAgentId,
       });
     }
 
@@ -539,6 +697,8 @@ export const handleMessageEcho = internalMutation({
     contentType: contentTypeValidator,
   },
   handler: async (ctx, args) => {
+    if (isSkippedWhatsAppContact(args.to)) return;
+
     const channels = await ctx.db
       .query("channels")
       .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
@@ -581,6 +741,8 @@ export const handleIncoming = internalMutation({
     ),
   },
   handler: async (ctx, args) => {
+    if (isSkippedWhatsAppContact(args.from)) return;
+
     // Dedupe — if Meta retries the same delivery we'll have already saved it.
     const existingMsg = await ctx.db
       .query("messages")
@@ -811,29 +973,6 @@ function firstHistoryError(
   return undefined;
 }
 
-function latestHistoryMetadata(value: WhatsAppChangeValue): {
-  phase?: number;
-  chunkOrder?: number;
-  progress?: number;
-} {
-  let latest: { phase?: number; chunkOrder?: number; progress?: number } = {};
-  for (const item of value.history ?? []) {
-    const metadata = item.metadata;
-    if (!metadata) continue;
-    if (
-      latest.progress === undefined ||
-      (metadata.progress ?? 0) >= latest.progress
-    ) {
-      latest = {
-        phase: metadata.phase,
-        chunkOrder: metadata.chunk_order,
-        progress: metadata.progress,
-      };
-    }
-  }
-  return latest;
-}
-
 function mapStatus(status?: string) {
   switch (status) {
     case "sent":
@@ -870,6 +1009,10 @@ type WhatsAppChangeValue = {
     waba_id?: string;
     owner_business_id?: string;
     partner_app_id?: string;
+  };
+  disconnection_info?: {
+    reason?: string;
+    initiated_by?: string;
   };
   messaging_product?: string;
   metadata?: { display_phone_number?: string; phone_number_id?: string };

@@ -488,11 +488,19 @@ function DetailsPanelSkeleton() {
 
 export default function ChatsPage() {
   const { agentId } = useParams();
+  const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading } = usePermissions();
-  const connectedChannels = useQuery(api.channels.getConnectedForCurrentOrg, {});
+  const connectedChannels = useQuery(
+    api.channels.getConnectedForCurrentOrg,
+    typedAgentId ? { agentId: typedAgentId } : {},
+  );
   const linkedConversations = useQuery(
     api.conversations.listLinkedForCurrentOrg,
-    connectedChannels !== undefined ? {} : 'skip',
+    connectedChannels !== undefined
+      ? typedAgentId
+        ? { agentId: typedAgentId }
+        : {}
+      : 'skip',
   );
   const bookingConversationIds = useQuery(
     api.autoBooking.listActiveBookingConversationIdsForCurrentOrg,
@@ -2333,7 +2341,7 @@ function ChatsPageHeader({ className }: { className?: string }) {
     <div className={cn('flex items-start justify-between', className)}>
       <div>
         <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
-          Messages
+          Inbox
         </h1>
         <PageDescription>
           View and reply to all your customer conversations in one place.

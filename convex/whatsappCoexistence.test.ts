@@ -309,6 +309,60 @@ test("smb_app_state_sync upserts added contacts and preserves removed contacts",
   expect(result.channel?.contactSyncLastEventAt).toBe(1_700_000_050_000);
 });
 
+test("Meta official account is skipped for contact and history sync", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+
+  await t.mutation(internal.whatsappWebhook.handleStateSync, {
+    phoneNumberId: "phone-123",
+    contacts: [
+      {
+        type: "contact",
+        action: "add",
+        contact: {
+          full_name: "WhatsApp from Meta",
+          phone_number: "447710173736",
+        },
+        timestampMs: 1_700_000_040_000,
+      },
+    ],
+  });
+
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 0,
+    chunkOrder: 1,
+    progress: 10,
+    historyThreads: [
+      {
+        id: "447710173736",
+        messages: [
+          {
+            id: "meta-msg-1",
+            from: "447710173736",
+            timestamp: "1700000",
+            type: "text",
+            text: { body: "WhatsApp Business Platform" },
+          },
+        ],
+      },
+    ],
+  });
+
+  await t.run(async (ctx) => {
+    const customer = await ctx.db
+      .query("customers")
+      .withIndex("by_orgId_and_service_and_contactAddress", (q) =>
+        q.eq("orgId", "org-123").eq("service", "whatsapp").eq("contactAddress", "447710173736"),
+      )
+      .unique();
+    expect(customer).toBeNull();
+    expect(await ctx.db.query("whatsappHistoryIngestMessages").collect()).toHaveLength(0);
+    expect(await ctx.db.query("whatsappHistoryIngestThreads").collect()).toHaveLength(0);
+  });
+});
+
 test("history progress is monotonic and opt-out is recorded", async () => {
   const t = convexTest(schema, modules);
   const channelId = await insertWhatsAppChannel(t);
@@ -326,26 +380,21 @@ test("history progress is monotonic and opt-out is recorded", async () => {
       updatedAt: 1_700_000_001_000,
     });
   });
-  const storageIds = await t.run(async (ctx) => ({
-    first: await ctx.storage.store(new Blob(["{}"], { type: "application/json" })),
-    second: await ctx.storage.store(new Blob(["{}"], { type: "application/json" })),
-  }));
-
-  await t.mutation(internal.whatsappSync.internalCaptureHistoryChunk, {
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
     channelId,
     phoneNumberId: "phone-123",
     phase: 0,
     chunkOrder: 1,
     progress: 55,
-    storageId: storageIds.first,
+    historyThreads: [],
   });
-  await t.mutation(internal.whatsappSync.internalCaptureHistoryChunk, {
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
     channelId,
     phoneNumberId: "phone-123",
     phase: 1,
     chunkOrder: 1,
     progress: 30,
-    storageId: storageIds.second,
+    historyThreads: [],
   });
 
   let result = await t.run(async (ctx) => ({
@@ -369,44 +418,144 @@ test("history progress is monotonic and opt-out is recorded", async () => {
   expect(result.request?.errorCode).toBe(2593109);
 });
 
-test("history chunk status transitions to processing and completed", async () => {
+test("history staging without phase and chunkOrder creates no batch", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+
+  const result = await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    progress: 100,
+    historyThreads: [
+      {
+        id: "16505551234",
+        messages: [
+          {
+            id: "msg-orphan",
+            from: "16505551234",
+            timestamp: "1700000",
+            type: "text",
+            text: { body: "Hi" },
+          },
+        ],
+      },
+    ],
+  });
+
+  expect(result.isNewBatch).toBe(false);
+  expect(result.shouldSync).toBe(false);
+  await t.run(async (ctx) => {
+    expect(await ctx.db.query("whatsappHistorySyncBatches").collect()).toHaveLength(0);
+    expect(await ctx.db.query("whatsappHistoryIngestThreads").collect()).toHaveLength(0);
+    expect(await ctx.db.query("whatsappHistoryIngestMessages").collect()).toHaveLength(0);
+  });
+});
+
+test("history read status is staged for outgoing messages", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 0,
+    chunkOrder: 1,
+    progress: 10,
+    historyThreads: [
+      {
+        id: "16505551234",
+        messages: [
+          {
+            id: "msg-read",
+            from: "15550783881",
+            to: "16505551234",
+            timestamp: "1700000",
+            type: "text",
+            text: { body: "Already read" },
+            history_context: { status: "read" },
+          },
+        ],
+      },
+    ],
+  });
+
+  const staged = await t.run(async (ctx) =>
+    ctx.db.query("whatsappHistoryIngestMessages").first(),
+  );
+  expect(staged?.historyStatus).toBe("read");
+  expect(staged?.direction).toBe("outgoing");
+
+  const work = await t.mutation(internal.whatsappSync.internalBeginIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+  });
+  expect(work?.messages[0]?.outboundStatus).toBe("read");
+});
+
+test("history batch and thread status use unified pending syncing completed", async () => {
   const t = convexTest(schema, modules);
   const channelId = await insertWhatsAppChannel(t);
   await t.run(async (ctx) => {
-    await ctx.db.insert("whatsappSyncRequests", {
-      channelId,
-      orgId: "org-123",
-      wabaId: "waba-123",
-      phoneNumberId: "phone-123",
-      syncType: "history",
-      status: "requested",
-      requestId: "meta-request-123",
-      createdAt: 1_700_000_000_000,
-      requestedAt: 1_700_000_001_000,
-      updatedAt: 1_700_000_001_000,
-    });
+    await ctx.db.patch(channelId, { historySyncStatus: "syncing" });
   });
-  const storageId = await t.run(
-    async (ctx) =>
-      await ctx.storage.store(new Blob(["{}"], { type: "application/json" })),
-  );
-  const chunkId = await t.mutation(internal.whatsappSync.internalCaptureHistoryChunk, {
+
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
     channelId,
     phoneNumberId: "phone-123",
     phase: 2,
     chunkOrder: 3,
     progress: 100,
-    storageId,
+    historyThreads: [
+      {
+        id: "16505551234",
+        messages: [
+          {
+            id: "msg-1",
+            from: "16505551234",
+            timestamp: "1700000",
+            type: "text",
+            text: { body: "Hi" },
+          },
+        ],
+      },
+    ],
   });
 
-  await t.mutation(internal.whatsappSync.internalMarkHistoryChunkProcessing, {
-    chunkId,
-  });
-  const chunk = await t.run(async (ctx) => await ctx.db.get(chunkId));
-  expect(chunk?.status).toBe("processing");
+  const staged = await t.run(async (ctx) => ({
+    batch: await ctx.db.query("whatsappHistorySyncBatches").first(),
+    thread: await ctx.db.query("whatsappHistoryIngestThreads").first(),
+  }));
+  expect(staged.batch?.status).toBe("pending");
+  expect(staged.thread?.status).toBe("pending");
 
-  await t.mutation(internal.whatsappSync.internalMarkHistoryChunkCompleted, {
-    chunkId,
+  const work = await t.mutation(internal.whatsappSync.internalBeginIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+  });
+  expect(work?.messages).toHaveLength(1);
+
+  const syncing = await t.run(async (ctx) => ({
+    batch: await ctx.db.get(staged.batch!._id),
+    thread: await ctx.db.get(staged.thread!._id),
+  }));
+  expect(syncing.thread?.status).toBe("syncing");
+  expect(syncing.batch?.status).toBe("syncing");
+
+  await t.mutation(internal.whatsappSync.internalCompleteIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+    ingestThreadIds: work!.ingestThreadIds,
+  });
+
+  const completed = await t.run(async (ctx) => ({
+    batch: await ctx.db.get(staged.batch!._id),
+    thread: await ctx.db.get(staged.thread!._id),
+  }));
+  expect(completed.thread?.status).toBe("completed");
+  expect(completed.batch?.status).toBe("completed");
+
+  await t.mutation(internal.whatsappSync.internalCompleteHistorySync, {
+    channelId,
   });
   const result = await t.run(async (ctx) => {
     const request = await ctx.db
@@ -414,15 +563,180 @@ test("history chunk status transitions to processing and completed", async () =>
       .withIndex("by_channelId_and_syncType", (q) =>
         q.eq("channelId", channelId).eq("syncType", "history"),
       )
-      .unique();
+      .first();
     return {
-      chunk: await ctx.db.get(chunkId),
       channel: await ctx.db.get(channelId),
       request,
     };
   });
-  expect(result.chunk?.status).toBe("completed");
   expect(result.channel?.historySyncStatus).toBe("completed");
   expect(result.channel?.historySyncProgress).toBe(100);
-  expect(result.request?.status).toBe("completed");
+});
+
+test("history ingest triggers once all 3 batches arrive with progress >= 100", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+  await t.run(async (ctx) => {
+    await ctx.db.patch(channelId, { historySyncStatus: "syncing" });
+  });
+
+  const first = await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 0,
+    chunkOrder: 1,
+    progress: 50,
+    historyThreads: [],
+  });
+  expect(first.shouldSync).toBe(false);
+
+  const second = await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 1,
+    chunkOrder: 1,
+    progress: 75,
+    historyThreads: [],
+  });
+  expect(second.shouldSync).toBe(false);
+
+  const third = await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 2,
+    chunkOrder: 3,
+    progress: 100,
+    historyThreads: [],
+  });
+  expect(third.shouldSync).toBe(true);
+
+  const state = await t.run(async (ctx) => {
+    const batches = await ctx.db
+      .query("whatsappHistorySyncBatches")
+      .withIndex("by_channelId", (q) => q.eq("channelId", channelId))
+      .collect();
+    const channel = await ctx.db.get(channelId);
+    return {
+      batchCount: batches.length,
+      status: channel?.historySyncStatus,
+      progress: channel?.historySyncProgress,
+      totalBatches: channel?.historySyncTotalBatchCount,
+    };
+  });
+  expect(state.batchCount).toBe(3);
+  expect(state.status).toBe("syncing");
+  expect(state.progress).toBe(90);
+  expect(state.totalBatches).toBe(3);
+});
+
+test("internalBeginIngestContact orders messages by timestamp across batches", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+  await t.run(async (ctx) => {
+    await ctx.db.patch(channelId, { historySyncStatus: "syncing" });
+  });
+
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 1,
+    chunkOrder: 1,
+    progress: 50,
+    historyThreads: [
+      {
+        id: "16505551234",
+        messages: [
+          {
+            id: "msg-newer",
+            from: "16505551234",
+            timestamp: "2000",
+            type: "text",
+            text: { body: "Newer" },
+          },
+        ],
+      },
+    ],
+  });
+
+  await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+    channelId,
+    phoneNumberId: "phone-123",
+    phase: 0,
+    chunkOrder: 1,
+    progress: 25,
+    historyThreads: [
+      {
+        id: "16505551234",
+        messages: [
+          {
+            id: "msg-older",
+            from: "16505551234",
+            timestamp: "1000",
+            type: "text",
+            text: { body: "Older" },
+          },
+        ],
+      },
+    ],
+  });
+
+  const work = await t.mutation(internal.whatsappSync.internalBeginIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+  });
+
+  expect(work?.messages.map((m) => m.externalId)).toEqual(["msg-older", "msg-newer"]);
+});
+
+test("shared threads across batches complete all batches when ingest finishes", async () => {
+  const t = convexTest(schema, modules);
+  const channelId = await insertWhatsAppChannel(t);
+  await t.run(async (ctx) => {
+    await ctx.db.patch(channelId, { historySyncStatus: "syncing" });
+  });
+
+  for (const phase of [0, 1, 2]) {
+    await t.mutation(internal.whatsappSync.internalStageHistoryBatch, {
+      channelId,
+      phoneNumberId: "phone-123",
+      phase,
+      chunkOrder: 1,
+      progress: 100,
+      historyThreads: [
+        {
+          id: "16505551234",
+          messages: [
+            {
+              id: `msg-phase-${phase}`,
+              from: "16505551234",
+              timestamp: String(1000 + phase),
+              type: "text",
+              text: { body: `Phase ${phase}` },
+            },
+          ],
+        },
+      ],
+    });
+  }
+
+  const work = await t.mutation(internal.whatsappSync.internalBeginIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+  });
+  expect(work?.ingestThreadIds).toHaveLength(3);
+
+  await t.mutation(internal.whatsappSync.internalCompleteIngestContact, {
+    channelId,
+    whatsappThreadId: "16505551234",
+    ingestThreadIds: work!.ingestThreadIds,
+  });
+
+  await t.run(async (ctx) => {
+    const batches = await ctx.db
+      .query("whatsappHistorySyncBatches")
+      .withIndex("by_channelId", (q) => q.eq("channelId", channelId))
+      .collect();
+    expect(batches).toHaveLength(3);
+    expect(batches.every((batch) => batch.status === "completed")).toBe(true);
+  });
 });

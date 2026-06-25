@@ -145,7 +145,6 @@ export default function CustomerDetailPage() {
   const handleSave = async () => {
     if (!typedCustomerId) return;
     setIsSaving(true);
-    setActionModal({ open: true, status: 'loading', message: 'Saving customer details...' });
     try {
       await updateCustomer({
         customerId: typedCustomerId,
@@ -155,11 +154,9 @@ export default function CustomerDetailPage() {
         notes: editNotes,
         customFields: editCustomFields,
       });
-      setActionModal({ open: true, status: 'success', message: 'Customer details updated' });
+      toast.success('Saved');
       setIsEditing(false);
-      setTimeout(() => setActionModal(prev => ({ ...prev, open: false })), 1200);
     } catch (e) {
-      setActionModal(prev => ({ ...prev, open: false }));
       toast.error(e instanceof Error ? e.message : 'Could not update customer details');
     } finally {
       setIsSaving(false);
@@ -627,20 +624,22 @@ export default function CustomerDetailPage() {
       {/* Notes section */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-foreground">Notes</h2>
-        <div className="rounded-xl border border-border bg-card p-5">
-          {isEditing ? (
-            <textarea
-              value={editNotes}
-              onChange={(e) => setEditNotes(e.target.value)}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[120px]"
-              placeholder="Add notes about this customer..."
-            />
-          ) : customer.notes?.trim() ? (
-            <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{customer.notes}</p>
-          ) : (
-            <p className="text-sm text-muted-foreground/70 italic">No notes created for this customer.</p>
-          )}
-        </div>
+        {isEditing ? (
+          <textarea
+            value={editNotes}
+            onChange={(e) => setEditNotes(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card p-5 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring min-h-[120px]"
+            placeholder="Add notes about this customer..."
+          />
+        ) : (
+          <div className="rounded-xl border border-border bg-card p-5">
+            {customer.notes?.trim() ? (
+              <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">{customer.notes}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground/70 italic">No notes created for this customer.</p>
+            )}
+          </div>
+        )}
       </section>
 
       <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>

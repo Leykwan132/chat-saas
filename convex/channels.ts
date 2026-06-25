@@ -16,6 +16,7 @@ import {
   isDemoInboxChannel,
   WHATSAPP_DEMO_PHONE_NUMBER_ID,
 } from "./whatsappDemo";
+import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -72,11 +73,21 @@ export const listForCurrentOrg = query({
   args: {},
   handler: async (ctx) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    const channelOrgId = resolveChannelOrgId(orgId, userId);
-    const channels = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
-      .collect();
+    // Personal workspaces have no team/org, so channels are looked up by the
+    // owner's connectedByUserId instead of by orgId. Team workspaces scope by
+    // orgId as usual.
+    const isPersonal = !orgId || orgId === "personal";
+    const channels = isPersonal
+      ? await ctx.db
+          .query("channels")
+          .withIndex("by_connectedByUserId", (q) =>
+            q.eq("connectedByUserId", userId),
+          )
+          .collect()
+      : await ctx.db
+          .query("channels")
+          .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+          .collect();
 
     const visibleChannels = channels.filter((channel) => !isDemoInboxChannel(channel));
 
@@ -144,18 +155,65 @@ export const ensureDefaultAgentId = mutation({
   },
 });
 
+// Resolves the best agent to auto-assign as defaultAgentId when a channel
+// is created. Prefers the connecting user's most recently created agent
+// (covers personal workspaces where the channel's orgId is the userId, and
+// organisational workspaces where the connector is also an agent owner).
+// Falls back to the most recently created agent in the channel's org.
+async function resolveDefaultAgentIdForChannel(
+  ctx: MutationCtx,
+  args: { channelOrgId: string; connectedByUserId: string },
+): Promise<Id<"agents"> | undefined> {
+  const userAgent = await ctx.db
+    .query("agents")
+    .withIndex("by_userId", (q) => q.eq("userId", args.connectedByUserId))
+    .order("desc")
+    .first();
+  if (userAgent !== null) {
+    return userAgent._id;
+  }
+  const orgAgent = await ctx.db
+    .query("agents")
+    .withIndex("by_orgId", (q) => q.eq("orgId", args.channelOrgId))
+    .order("desc")
+    .first();
+  return orgAgent?._id;
+}
+
 // Returns only currently-connected channel rows. Used by the Chats page to
-// decide whether to render the "no channels connected" empty state.
+// decide whether to render the "no channels connected" empty state. When
+// `agentId` is provided, only channels whose defaultAgentId matches are
+// returned (so each agent's inbox sees only its own channels).
+//
+// Personal workspaces have no team/org (orgId = ""), so channels are looked
+// up by the owner's connectedByUserId instead of by orgId. Team workspaces
+// scope by orgId as usual.
 export const getConnectedForCurrentOrg = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    agentId: v.optional(v.id("agents")),
+  },
+  handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    const channelOrgId = resolveChannelOrgId(orgId, userId);
-    const rows = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) => q.eq("orgId", channelOrgId))
-      .collect();
-    return rows.filter((r) => r.status === "connected" && !isDemoInboxChannel(r));
+    const isPersonal = !orgId || orgId === "personal";
+    const rows = isPersonal
+      ? await ctx.db
+          .query("channels")
+          .withIndex("by_connectedByUserId", (q) =>
+            q.eq("connectedByUserId", userId),
+          )
+          .collect()
+      : await ctx.db
+          .query("channels")
+          .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+          .collect();
+    return rows.filter(
+      (r) =>
+        r.status === "connected" &&
+        !isDemoInboxChannel(r) &&
+        (args.agentId === undefined ||
+          r.defaultAgentId === undefined ||
+          r.defaultAgentId === args.agentId),
+    );
   },
 });
 
@@ -167,9 +225,15 @@ export const disconnect = mutation({
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     const channel = await ctx.db.get(args.channelId);
-    if (channel === null || channel.orgId !== channelOrgId) {
+
+    if(channel === null || (orgId && channel?.orgId !== channelOrgId)) {
       throw new Error("Channel not found");
     }
+
+    if(!orgId && userId !== channel?.connectedByUserId) {
+      throw new Error("User does not have permission to disconnect this channel");
+    }
+
     await cleanupChannelData(ctx, args.channelId);
 
     await ctx.db.patch(args.channelId, {
@@ -237,6 +301,7 @@ export const internalUpsertWhatsApp = internalMutation({
     accessToken: v.string(),
     tokenExpiresAt: v.optional(v.number()),
     connectedByUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     return await upsertWhatsAppChannel(ctx, args);
@@ -253,6 +318,7 @@ async function upsertWhatsAppChannel(
     accessToken: string;
     tokenExpiresAt?: number;
     connectedByUserId: string;
+    agentId?: Id<"agents">;
   },
 ): Promise<Id<"channels">> {
   const now = Date.now();
@@ -274,11 +340,18 @@ async function upsertWhatsAppChannel(
   };
 
   if (existing === null) {
+    const defaultAgentId =
+      args.agentId ??
+      (await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      }));
     const newId = await ctx.db.insert("channels", {
       orgId: args.orgId,
       service: "whatsapp",
       ...patch,
       connectedByUserId: args.connectedByUserId,
+      defaultAgentId,
       createdAt: now,
     });
     logWhatsAppChannel("upsertWhatsAppChannel", "inserted row", {
@@ -290,9 +363,18 @@ async function upsertWhatsAppChannel(
     });
     return newId;
   }
+  const backfillAgentId =
+    existing.defaultAgentId === undefined
+      ? (args.agentId ??
+        (await resolveDefaultAgentIdForChannel(ctx, {
+          channelOrgId: args.orgId,
+          connectedByUserId: args.connectedByUserId,
+        })))
+      : undefined;
   await ctx.db.patch(existing._id, {
     ...patch,
     connectedByUserId: args.connectedByUserId,
+    ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
   });
   logWhatsAppChannel("upsertWhatsAppChannel", "patched existing row", {
     channelId: existing._id,
@@ -315,6 +397,7 @@ export const internalStartPending = internalMutation({
     wabaId: v.string(),
     phoneNumberId: v.string(),
     connectedByUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
     const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
@@ -370,6 +453,12 @@ export const internalStartPending = internalMutation({
     }
 
     if (existing === null) {
+      const defaultAgentId =
+        args.agentId ??
+        (await resolveDefaultAgentIdForChannel(ctx, {
+          channelOrgId: args.orgId,
+          connectedByUserId: args.connectedByUserId,
+        }));
       const newId = await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "whatsapp",
@@ -378,6 +467,7 @@ export const internalStartPending = internalMutation({
         status: "pending",
         progressStep: "linking",
         connectedByUserId: args.connectedByUserId,
+        defaultAgentId,
         createdAt: now,
         updatedAt: now,
       });
@@ -387,6 +477,14 @@ export const internalStartPending = internalMutation({
       });
       return newId;
     }
+    const backfillAgentId =
+      existing.defaultAgentId === undefined
+        ? (args.agentId ??
+          (await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          })))
+        : undefined;
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       wabaId: args.wabaId,
@@ -395,6 +493,7 @@ export const internalStartPending = internalMutation({
       progressStep: "linking",
       lastError: undefined,
       connectedByUserId: args.connectedByUserId,
+      ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
       updatedAt: now,
     });
     logWhatsAppChannel("internalStartPending", "patched existing row to pending", {
@@ -590,6 +689,10 @@ export const internalStartInstagramPending = internalMutation({
     }
 
     if (existing === null) {
+      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      });
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "instagram",
@@ -597,16 +700,25 @@ export const internalStartInstagramPending = internalMutation({
         status: "pending",
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
+        defaultAgentId,
         createdAt: now,
         updatedAt: now,
       });
     }
+    const backfillAgentId =
+      existing.defaultAgentId === undefined
+        ? await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          })
+        : undefined;
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       status: "pending",
       progressStep: "exchanging",
       lastError: undefined,
       connectedByUserId: args.connectedByUserId,
+      ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
       updatedAt: now,
     });
     return existing._id;
@@ -643,18 +755,31 @@ export const internalUpsertInstagram = internalMutation({
     };
 
     if (existing === null) {
+      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      });
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "instagram",
         ...patch,
         connectedByUserId: args.connectedByUserId,
+        defaultAgentId,
         createdAt: now,
       });
     }
+    const backfillAgentId =
+      existing.defaultAgentId === undefined
+        ? await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          })
+        : undefined;
     await ctx.db.patch(existing._id, {
       ...patch,
       orgId: args.orgId,
       connectedByUserId: args.connectedByUserId,
+      ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
     });
     return existing._id;
   },
@@ -737,6 +862,10 @@ export const internalStartMessengerPending = internalMutation({
     }
 
     if (existing === null) {
+      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      });
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "messenger",
@@ -744,16 +873,25 @@ export const internalStartMessengerPending = internalMutation({
         status: "pending",
         progressStep: "exchanging",
         connectedByUserId: args.connectedByUserId,
+        defaultAgentId,
         createdAt: now,
         updatedAt: now,
       });
     }
+    const backfillAgentId =
+      existing.defaultAgentId === undefined
+        ? await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          })
+        : undefined;
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       status: "pending",
       progressStep: "exchanging",
       lastError: undefined,
       connectedByUserId: args.connectedByUserId,
+      ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
       updatedAt: now,
     });
     return existing._id;
@@ -795,18 +933,31 @@ export const internalUpsertMessenger = internalMutation({
     };
 
     if (existing === null) {
+      const defaultAgentId = await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      });
       return await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "messenger",
         ...patch,
         connectedByUserId: args.connectedByUserId,
+        defaultAgentId,
         createdAt: now,
       });
     }
+    const backfillAgentId =
+      existing.defaultAgentId === undefined
+        ? await resolveDefaultAgentIdForChannel(ctx, {
+            channelOrgId: args.orgId,
+            connectedByUserId: args.connectedByUserId,
+          })
+        : undefined;
     await ctx.db.patch(existing._id, {
       ...patch,
       orgId: args.orgId,
       connectedByUserId: args.connectedByUserId,
+      ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
     });
     return existing._id;
   },
@@ -917,6 +1068,8 @@ async function cleanupChannelData(
     }
     await ctx.db.delete(conv._id);
   }
+
+  await deleteWhatsAppHistoryStagingForChannel(ctx, channelId);
 }
 
 async function disconnectChannelRow(

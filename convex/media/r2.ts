@@ -40,7 +40,6 @@ export function generateInboxMediaKey(orgId: string, mimeType: string): string {
   const id = crypto.randomUUID();
   return `inbox/${orgId}/${id}.${ext}`;
 }
-
 // ─── Knowledge-base image helpers ─────────────────────────
 
 function sanitizePathSegment(value: string): string {

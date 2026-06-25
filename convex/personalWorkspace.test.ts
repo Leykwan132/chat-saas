@@ -74,14 +74,14 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
       templateKey: "blank",
       fileSize: 0,
       userId: workosUserId,
-      orgId: "personal",
+      orgId: "",
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
 
-    // In personal workspaces, channel orgId is the workosUserId
+    // In personal workspaces, there is no team so orgId is the empty string.
     const channelId = await ctx.db.insert("channels", {
-      orgId: workosUserId,
+      orgId: "",
       service: "whatsapp",
       wabaId: "waba-id-personal",
       phoneNumberId: "phone-id-personal",
@@ -112,13 +112,13 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   expect(templates.length).toBe(1);
   expect(templates[0]).toMatchObject({
     name: "personal_template",
-    orgId: workosUserId,
+    orgId: "",
   });
 
-  // 3. Setup mock Customer under the personal account (orgId = workosUserId)
+  // 3. Setup mock Customer under the personal account (orgId = "")
   const customerId = await t.run(async (ctx) => {
     return await ctx.db.insert("customers", {
-      orgId: workosUserId,
+      orgId: "",
       service: "whatsapp",
       contactAddress: "+60111111111",
       source: "whatsapp",
@@ -138,7 +138,7 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   // Let's create a conversation first so candidate list picks it up correctly
   await t.run(async (ctx) => {
     await ctx.db.insert("conversations", {
-      orgId: workosUserId,
+      orgId: "",
       channelId,
       service: "whatsapp",
       orgAddress: "phone-id-personal",
@@ -180,7 +180,7 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   });
   expect(schedule).toBeDefined();
   expect(schedule).toMatchObject({
-    orgId: workosUserId,
+    orgId: "",
     templateName: "personal_template",
   });
 

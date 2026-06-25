@@ -185,6 +185,133 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   expect(agentMessages[0].text).toBe("Hello there");
 });
 
+test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply or mark-seen", async () => {
+  const t = convexTest(schema, modules);
+
+  t.registerComponent("stripe", stripeSchema, {
+    "public": () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
+    "private": () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  });
+
+  const mockWorkpool = {
+    "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
+    "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
+    "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
+    "danger": () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
+    "kick": () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
+    "lib": () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
+    "logging": () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
+    "loop": () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
+    "recovery": () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
+    "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
+    "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+
+  const mockAggregate = {
+    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  };
+  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
+  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
+
+  t.registerComponent("agent", agentSchema, {
+    "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
+    "files": () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
+    "messages": () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
+    "streams": () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
+    "threads": () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
+    "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
+    "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  });
+
+  const agentId = await t.run(async (ctx) => {
+    return await ctx.db.insert("agents", {
+      name: "Support Agent",
+      provider: "openrouter",
+      model: "deepseek/deepseek-v4-flash",
+      systemPrompt: "You are a support agent.",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: "user-123",
+      orgId: "org-123",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+  const channelId = await t.run(async (ctx) => {
+    return await ctx.db.insert("channels", {
+      orgId: "org-123",
+      service: "whatsapp",
+      phoneNumberId: "phone-id-123",
+      accessToken: "token-123",
+      status: "connected",
+      connectedByUserId: "user-123",
+      defaultAgentId: agentId,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  // A live (non-historical) inbound message on an AI-routable conversation.
+  // The historical-only mutation must ingest it but NOT enqueue AI/mark-seen.
+  const result = await t.mutation(
+    internal.chat.inbox.internalIngestHistoricalChannelMessage,
+    {
+      channelId,
+      externalId: "hist-msg-1",
+      contactAddress: "+60123456789",
+      contactName: "Jane Doe",
+      direction: "incoming",
+      content: "Historical hello",
+      contentType: "text",
+      timestampMs: Date.now(),
+      isHistorical: false,
+    },
+  );
+
+  expect(result.skipped).toBe(false);
+  expect(result.conversationId).toBeDefined();
+
+  const message = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("messages")
+      .withIndex("by_externalId", (q) => q.eq("externalId", "hist-msg-1"))
+      .unique();
+  });
+  expect(message).not.toBeNull();
+  expect(message?.content).toBe("Historical hello");
+
+  // No AI reply work was enqueued onto the workpool.
+  const enqueuedWork = await withComponents(t).runInComponent(
+    "inboxAiReplyWorkpool",
+    async (ctx) => await ctx.db.query("work").collect(),
+  );
+  expect(enqueuedWork.length).toBe(0);
+
+  // Re-ingesting the same external id is a dedup no-op.
+  const dup = await t.mutation(
+    internal.chat.inbox.internalIngestHistoricalChannelMessage,
+    {
+      channelId,
+      externalId: "hist-msg-1",
+      contactAddress: "+60123456789",
+      direction: "incoming",
+      content: "Historical hello",
+      contentType: "text",
+      timestampMs: Date.now(),
+      isHistorical: false,
+    },
+  );
+  expect(dup.skipped).toBe(true);
+});
+
 test("AI reply worker executes correctly with promptMessageId and saveMessages='none'", async () => {
   const t = convexTest(schema, modules);
 

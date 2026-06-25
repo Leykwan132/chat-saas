@@ -289,15 +289,47 @@ export const getSidebarDetailsForConversation = query({
 
 // Paginated list of customers for the caller's org, newest activity first.
 export const listForCurrentOrg = query({
-  args: { paginationOpts: paginationOptsValidator },
+  args: {
+    paginationOpts: paginationOptsValidator,
+    agentId: v.optional(v.id("agents")),
+  },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
-    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
-    const result = await ctx.db
-      .query("customers")
-      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
-      .order("desc")
-      .paginate(args.paginationOpts);
+    const isPersonal = !orgId || orgId === "personal";
+
+    // Scope by (userId + agentId) for personal, (orgId + agentId) for team.
+    // When agentId is provided, use the compound index so the DB filters by
+    // agent directly. Otherwise fall back to the scope-only index.
+    let result;
+    if (isPersonal && args.agentId !== undefined) {
+      result = await ctx.db
+        .query("customers")
+        .withIndex("by_userId_and_agentId_and_lastSeenAt", (q) =>
+          q.eq("userId", userId).eq("agentId", args.agentId!),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    } else if (isPersonal) {
+      result = await ctx.db
+        .query("customers")
+        .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", ""))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    } else if (args.agentId !== undefined) {
+      result = await ctx.db
+        .query("customers")
+        .withIndex("by_orgId_and_agentId_and_lastSeenAt", (q) =>
+          q.eq("orgId", orgId).eq("agentId", args.agentId!),
+        )
+        .order("desc")
+        .paginate(args.paginationOpts);
+    } else {
+      result = await ctx.db
+        .query("customers")
+        .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", orgId))
+        .order("desc")
+        .paginate(args.paginationOpts);
+    }
 
     const page = await Promise.all(
       result.page.map(async (customer) => {
@@ -541,6 +573,8 @@ export const internalUpsertFromWebhook = internalMutation({
     profileName: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    userId: v.optional(v.string()),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"customers">> => {
     return await upsertCustomer(ctx, args);
@@ -562,6 +596,8 @@ async function upsertCustomer(
     profileName?: string;
     email?: string;
     phone?: string;
+    userId?: string;
+    agentId?: Id<"agents">;
   },
 ): Promise<Id<"customers">> {
   const now = Date.now();
@@ -577,12 +613,20 @@ async function upsertCustomer(
 
   const inputEmail = args.email && !isSyntheticEmail(args.email) ? args.email.trim() : undefined;
 
+  let resolvedName = args.profileName?.trim();
+  if (args.service === "whatsapp" && (!resolvedName || resolvedName === "")) {
+    const rawPhone = args.phone?.trim() || args.contactAddress.trim();
+    resolvedName = rawPhone.startsWith("+") ? rawPhone : `+${rawPhone}`;
+  }
+
   if (existing === null) {
     return await ctx.db.insert("customers", {
       orgId: args.orgId,
+      userId: args.userId,
+      agentId: args.agentId,
       service: args.service,
       contactAddress: args.contactAddress,
-      name: args.profileName,
+      name: resolvedName,
       email: inputEmail,
       phone:
         args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined),
@@ -600,8 +644,8 @@ async function upsertCustomer(
     updatedAt: now,
   };
   // Only refresh the cached name if we never had one — preserve user edits.
-  if (!existing.name && args.profileName) {
-    patch.name = args.profileName;
+  if (!existing.name && resolvedName) {
+    patch.name = resolvedName;
   }
   // Only refresh email/phone if we never had them — preserve user edits.
   if (!existing.email && inputEmail) {

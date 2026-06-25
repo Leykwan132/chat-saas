@@ -51,7 +51,7 @@ import {
   WHATSAPP_DEMO_TEMPLATE_NAME,
   WHATSAPP_DEMO_WABA_ID,
 } from '@/lib/whatsappCloudDemo';
-import { getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
+import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
   getWhatsAppConnectionAttemptStatus,
@@ -202,6 +202,14 @@ export default function ChannelsPage() {
     api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
     {},
   );
+  const isWhatsAppSignupActive = useMemo(() => {
+    return (
+      openWhatsAppAttempt != null &&
+      (openWhatsAppAttempt.status === 'started' ||
+        openWhatsAppAttempt.status === 'signup_finished' ||
+        openWhatsAppAttempt.status === 'token_ready')
+    );
+  }, [openWhatsAppAttempt]);
   const cancelWhatsAppAttempt = useMutation(
     api.whatsappEmbeddedSignup.cancelConnectionAttempt,
   );
@@ -419,12 +427,12 @@ export default function ChannelsPage() {
           <div className="flex flex-wrap justify-center gap-6 mt-4">
             <ConnectWhatsAppButton
               forceAllowConnect
-              disabled={limitReached || (openWhatsAppAttempt != null && openWhatsAppAttempt.status !== 'error')}
+              disabled={limitReached || isWhatsAppSignupActive}
               onConnected={() => setOpenAddDialog(false)}
             >
               <PlatformOptionCard
                 service="whatsapp"
-                disabled={limitReached || (openWhatsAppAttempt != null && openWhatsAppAttempt.status !== 'error')}
+                disabled={limitReached || isWhatsAppSignupActive}
               />
             </ConnectWhatsAppButton>
             <ConnectInstagramButton
@@ -475,6 +483,17 @@ function PlatformOptionCard({
   );
 }
 
+function WhatsAppReadyStatus({ label }: { label: string }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-1.5">
+      <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800">
+        <Check className="size-2.5 text-emerald-100" strokeWidth={2.5} aria-hidden />
+      </span>
+      <span className="truncate text-[11px] font-medium text-foreground">{label}</span>
+    </span>
+  );
+}
+
 function PendingWhatsAppConnectionCard({
   attempt,
   channel,
@@ -507,27 +526,33 @@ function PendingWhatsAppConnectionCard({
             </h3>
           </div>
           <div className="mt-2 flex items-start gap-2">
-            {status.spinning ? (
-              <Loader2
-                className="mt-0.5 size-3.5 shrink-0 animate-spin text-amber-600 dark:text-amber-400"
-                aria-hidden
-              />
+            {status.showCheck ? (
+              <WhatsAppReadyStatus label={status.label} />
+            ) : status.spinning ? (
+              <>
+                <Loader2
+                  className="mt-0.5 size-3.5 shrink-0 animate-spin text-amber-600 dark:text-amber-400"
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium leading-snug text-foreground">
+                    {status.label}
+                  </p>
+                </div>
+              </>
             ) : (
-              <CircleAlert
-                className="mt-0.5 size-3.5 shrink-0 text-destructive"
-                aria-hidden
-              />
+              <>
+                <CircleAlert
+                  className="mt-0.5 size-3.5 shrink-0 text-destructive"
+                  aria-hidden
+                />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-medium leading-snug text-foreground">
+                    {status.label}
+                  </p>
+                </div>
+              </>
             )}
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium leading-snug text-foreground">
-                {status.label}
-              </p>
-              {status.detail ? (
-                <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground line-clamp-3">
-                  {status.detail}
-                </p>
-              ) : null}
-            </div>
           </div>
         </div>
 
@@ -679,16 +704,16 @@ function ConnectedChannelCard({
             {channel.status === 'connected' ? (
               whatsappSyncStatus ? (
                 <div className="text-[11px] leading-snug space-y-1.5 w-full">
-                  <p className="font-medium text-foreground truncate">
-                    {whatsappSyncStatus.label}
-                  </p>
+                  {whatsappSyncStatus.showCheck ? (
+                    <WhatsAppReadyStatus label={whatsappSyncStatus.label} />
+                  ) : (
+                    <p className="font-medium text-foreground truncate">
+                      {whatsappSyncStatus.label}
+                    </p>
+                  )}
                   {isSyncing && (
                     <Progress
-                      value={
-                        channel.historySyncStatus === 'syncing' || channel.historySyncStatus === 'requested'
-                          ? Math.max(0, Math.min(100, channel.historySyncProgress ?? 0))
-                          : 10
-                      }
+                      value={getWhatsAppHistoryDisplayProgress(channel)}
                       className={cn(
                         "h-1.5 w-full",
                         (channel.contactSyncStatus === 'requested' || channel.contactSyncStatus === 'syncing') &&
@@ -697,7 +722,7 @@ function ConnectedChannelCard({
                       )}
                     />
                   )}
-                  {whatsappSyncStatus.detail ? (
+                  {!isSyncing && whatsappSyncStatus.detail ? (
                     <p className="text-muted-foreground line-clamp-2">
                       {whatsappSyncStatus.detail}
                     </p>

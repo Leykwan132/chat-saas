@@ -58,9 +58,9 @@ const whatsappSyncRequestStatusValidator = v.union(
   v.literal("not_shared"),
 );
 
-const whatsappHistoryChunkStatusValidator = v.union(
-  v.literal("queued"),
-  v.literal("processing"),
+const whatsappStagingSyncStatusValidator = v.union(
+  v.literal("pending"),
+  v.literal("syncing"),
   v.literal("completed"),
   v.literal("failed"),
 );
@@ -463,6 +463,8 @@ export default defineSchema({
     historySyncPhase: v.optional(v.number()),
     historySyncChunkOrder: v.optional(v.number()),
     historySyncProgress: v.optional(v.number()),
+    historySyncCompletedBatchCount: v.optional(v.number()),
+    historySyncTotalBatchCount: v.optional(v.number()),
     historySyncStatus: v.optional(whatsappHistorySyncStatusValidator),
     historySyncUpdatedAt: v.optional(v.number()),
     historySyncError: v.optional(v.string()),
@@ -480,7 +482,8 @@ export default defineSchema({
     .index("by_wabaId", ["wabaId"])
     .index("by_igUserId", ["igUserId"])
     .index("by_pageId", ["pageId"])
-    .index("by_fbUserId", ["fbUserId"]),
+    .index("by_fbUserId", ["fbUserId"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
   whatsappSyncRequests: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),
@@ -530,32 +533,97 @@ export default defineSchema({
     .index("by_orgId_and_status", ["orgId", "status"])
     .index("by_connectedByUserId_and_status", ["connectedByUserId", "status"])
     .index("by_connectedByUserId", ["connectedByUserId"]),
-  whatsappHistoryChunks: defineTable({
+  whatsappHistorySyncBatches: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),
     phoneNumberId: v.string(),
     phase: v.optional(v.number()),
     chunkOrder: v.optional(v.number()),
     progress: v.optional(v.number()),
-    storageId: v.id("_storage"),
-    status: whatsappHistoryChunkStatusValidator,
+    status: whatsappStagingSyncStatusValidator,
     errorMessage: v.optional(v.string()),
     createdAt: v.number(),
-    startedAt: v.optional(v.number()),
     completedAt: v.optional(v.number()),
     updatedAt: v.number(),
   })
+    .index("by_channelId", ["channelId"])
     .index("by_channelId_and_status", ["channelId", "status"])
     .index("by_channelId_and_phase_and_chunkOrder", [
       "channelId",
       "phase",
       "chunkOrder",
+    ]),
+  whatsappHistoryIngestThreads: defineTable({
+    batchId: v.id("whatsappHistorySyncBatches"),
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    phoneNumberId: v.string(),
+    whatsappThreadId: v.string(),
+    contactAddress: v.string(),
+    status: whatsappStagingSyncStatusValidator,
+    errorMessage: v.optional(v.string()),
+    createdAt: v.number(),
+    completedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_batchId_and_status", ["batchId", "status"])
+    .index("by_batchId_and_whatsappThreadId", [
+      "batchId",
+      "whatsappThreadId",
     ])
-    .index("by_phoneNumberId", ["phoneNumberId"]),
+    .index("by_channelId_and_status", ["channelId", "status"])
+    .index("by_channelId_and_whatsappThreadId", [
+      "channelId",
+      "whatsappThreadId",
+    ]),
+  whatsappHistoryIngestMessages: defineTable({
+    channelId: v.id("channels"),
+    orgId: v.string(),
+    batchId: v.id("whatsappHistorySyncBatches"),
+    ingestThreadId: v.id("whatsappHistoryIngestThreads"),
+    externalId: v.string(),
+    whatsappThreadId: v.string(),
+    direction: v.union(v.literal("incoming"), v.literal("outgoing")),
+    content: v.string(),
+    contentType: v.union(
+      v.literal("text"),
+      v.literal("image"),
+      v.literal("audio"),
+      v.literal("video"),
+      v.literal("document"),
+      v.literal("file"),
+    ),
+    timestampMs: v.number(),
+    rawType: v.optional(v.string()),
+    historyStatus: v.optional(
+      v.union(
+        v.literal("sent"),
+        v.literal("delivered"),
+        v.literal("read"),
+        v.literal("failed"),
+      ),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_ingestThreadId_and_timestampMs", [
+      "ingestThreadId",
+      "timestampMs",
+    ])
+    .index("by_channelId_and_externalId", ["channelId", "externalId"])
+    .index("by_channelId_and_whatsappThreadId_and_timestampMs", [
+      "channelId",
+      "whatsappThreadId",
+      "timestampMs",
+    ]),
   // A customer is anyone who messaged the org via any channel, or who was
   // added manually. Natural key is (orgId, service, contactAddress).
   customers: defineTable({
     orgId: v.string(),
+    /** Owner's WorkOS user id (personal workspaces) or channel connector (team). */
+    userId: v.optional(v.string()),
+    /** Agent this contact is segregated to (from the channel's defaultAgentId). */
+    agentId: v.optional(v.id("agents")),
     service: customerServiceValidator,
     contactAddress: v.string(),
     name: v.optional(v.string()),
@@ -583,11 +651,25 @@ export default defineSchema({
       "orgId",
       "service",
       "contactAddress",
+    ])
+    .index("by_userId_and_agentId_and_lastSeenAt", [
+      "userId",
+      "agentId",
+      "lastSeenAt",
+    ])
+    .index("by_orgId_and_agentId_and_lastSeenAt", [
+      "orgId",
+      "agentId",
+      "lastSeenAt",
     ]),
   // Unified conversation table. service: "playground" rows are AI-playground
   // threads; the rest are channel-backed inbox conversations.
   conversations: defineTable({
     orgId: v.string(),
+    /** Owner's WorkOS user id. For personal workspaces (orgId = ""), this
+     *  scopes the conversation to its owner; for team workspaces it records
+     *  the channel connector and queries still use orgId. */
+    userId: v.optional(v.string()),
     channelId: v.optional(v.id("channels")),
     service: conversationServiceValidator,
     orgAddress: v.string(),
@@ -629,6 +711,17 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_orgId_and_lastMessageAt", ["orgId", "lastMessageAt"])
+    .index("by_userId_and_lastMessageAt", ["userId", "lastMessageAt"])
+    .index("by_orgId_and_assignedAgentId_and_lastMessageAt", [
+      "orgId",
+      "assignedAgentId",
+      "lastMessageAt",
+    ])
+    .index("by_userId_and_assignedAgentId_and_lastMessageAt", [
+      "userId",
+      "assignedAgentId",
+      "lastMessageAt",
+    ])
     .index("by_lastMessageAt", ["lastMessageAt"])
     .index("by_channel_and_contactAddress", ["channelId", "contactAddress"])
     .index("by_threadId", ["threadId"])

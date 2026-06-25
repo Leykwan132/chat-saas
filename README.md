@@ -172,3 +172,23 @@ Drop rate is based on lead outcome: a conversation counts as dropped when its li
 ### Topic Detection
 
 A daily Convex cron runs topic detection over recent conversations that are missing a topic or have new messages since their last topic assignment. The detector sends a bounded transcript plus existing org topics to the LLM, reuses an existing topic when possible, and stores the result in `conversationTopics` and `conversationTopicAssignments`.
+
+## WhatsApp Connection Attempts
+
+To track the multi-step Meta Embedded Signup and synchronization flow, the `whatsappConnectionAttempts` table registers the state of each setup attempt.
+
+### Connection Attempt Statuses
+
+The lifecycle transitions through the following statuses:
+
+| Status | Meaning | Trigger & Update Timing |
+|---|---|---|
+| **`started`** | Connection flow initialized; signup popup opened. | Created in `beginConnectionAttempt` mutation when the user clicks **Connect**. |
+| **`signup_finished`** | User completed the Meta signup dialog. | Updated when the frontend receives the `WA_EMBEDDED_SIGNUP` window message. |
+| **`token_ready`** | Meta authorization code successfully exchanged for access token. | Updated inside `completeSignup` action after receiving the OAuth token from Meta. |
+| **`connected`** | Meta webhook subscription is active and terms are signed. | Updated during webhook callbacks confirming the app link and registration. |
+| **`syncing`** | Initial sync of contacts and chat history is running in the background. | Transitioned when coexistence/history sync jobs are queued. |
+| **`completed`** | Initial sync is finished (both contacts and history are synced). | Checked and set by `maybeCompleteWhatsAppConnectionAttempt` once both contact and history sync status reach terminal states. |
+| **`cancelled`** | Connection attempt cancelled by the user. | Updated via `cancelConnectionAttempt` mutation when the user clicks **Cancel** on the Channels page. |
+| **`error`** | Flow failed (invalid credentials, API error, or sync crash). | Updated when an error is caught during token exchange, during webhook disconnect events, or if a sync task encounters a fatal failure. |
+

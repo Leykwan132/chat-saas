@@ -932,6 +932,14 @@ export const ingestChannelMessageArgs = {
   contentType: v.optional(contentTypeValidator),
   timestampMs: v.number(),
   isHistorical: v.optional(v.boolean()),
+  outboundStatus: v.optional(
+    v.union(
+      v.literal("sent"),
+      v.literal("delivered"),
+      v.literal("read"),
+      v.literal("failed"),
+    ),
+  ),
   assignedAgentId: v.optional(v.id("agents")),
   authorUserId: v.optional(v.string()),
   humanAgentName: v.optional(v.string()),
@@ -966,6 +974,7 @@ export type IngestChannelMessageArgs = {
   contentType?: Doc<"messages">["contentType"];
   timestampMs: number;
   isHistorical?: boolean;
+  outboundStatus?: "sent" | "delivered" | "read" | "failed";
   assignedAgentId?: Id<"agents">;
   authorUserId?: string;
   humanAgentName?: string;
@@ -1021,6 +1030,8 @@ export async function ingestChannelMessage(
       profileName: args.contactName,
       email: args.contactEmail,
       phone: args.contactPhone,
+      userId: channel.connectedByUserId,
+      agentId: channel.defaultAgentId,
     },
   );
 
@@ -1080,6 +1091,16 @@ export async function ingestChannelMessage(
   }
 
   const now = args.timestampMs;
+  const outboundStatus =
+    args.direction === "outgoing" ? (args.outboundStatus ?? "sent") : undefined;
+  const outboundStatusFields =
+    outboundStatus === undefined
+      ? {}
+      : {
+          status: outboundStatus,
+          statusUpdatedAt: now,
+          ...(outboundStatus === "read" ? { readAt: now } : {}),
+        };
   if (images.length > 0) {
     for (const img of images) {
       await ctx.db.insert("messages", {
@@ -1096,7 +1117,7 @@ export async function ingestChannelMessage(
         content: img.url,
         mediaUrl: img.url,
         agentMessageId,
-        status: args.direction === "outgoing" ? "sent" : undefined,
+        ...outboundStatusFields,
         createdAt: now,
       });
     }
@@ -1118,7 +1139,7 @@ export async function ingestChannelMessage(
         content: file.url,
         mediaUrl: file.url,
         agentMessageId,
-        status: args.direction === "outgoing" ? "sent" : undefined,
+        ...outboundStatusFields,
         createdAt: now,
       });
     }
@@ -1138,7 +1159,7 @@ export async function ingestChannelMessage(
       contentType: args.contentType ?? "text",
       content: args.content,
       agentMessageId,
-      status: args.direction === "outgoing" ? "sent" : undefined,
+      ...outboundStatusFields,
       createdAt: now,
     });
   }
@@ -1192,11 +1213,13 @@ async function upsertInboxConversation(
 
   const now = Date.now();
   const channel = await ctx.db.get(args.channelId);
+  const customer = await ctx.db.get(args.customerId);
+  const resolvedContactName = args.contactName?.trim() || customer?.name?.trim();
 
   if (existing === null) {
     const threadId = await createThreadForConversation(ctx, {
       orgId: args.orgId,
-      contactName: args.contactName,
+      contactName: resolvedContactName,
       contactAddress: args.contactAddress,
       service: args.service,
     });
@@ -1209,6 +1232,23 @@ async function upsertInboxConversation(
         .collect();
       if (agents.length === 1) {
         routingAgentId = agents[0]!._id;
+      } else if (agents.length > 1) {
+        // Pick the most recently created agent so a conversation is always
+        // assigned to an agent for segregation by (scope + agentId).
+        routingAgentId = agents.reduce((latest, a) =>
+          a.createdAt > latest.createdAt ? a : latest,
+        )._id;
+      }
+    }
+    if (routingAgentId === undefined && channel?.connectedByUserId) {
+      // Final fallback for personal workspaces: resolve the owner's agent.
+      const userAgent = await ctx.db
+        .query("agents")
+        .withIndex("by_userId", (q) => q.eq("userId", channel.connectedByUserId!))
+        .order("desc")
+        .first();
+      if (userAgent !== null) {
+        routingAgentId = userAgent._id;
       }
     }
 
@@ -1223,11 +1263,12 @@ async function upsertInboxConversation(
 
     const conversationId = await ctx.db.insert("conversations", {
       orgId: args.orgId,
+      userId: channel?.connectedByUserId,
       channelId: args.channelId,
       service: args.service,
       orgAddress: args.orgAddress,
       contactAddress: args.contactAddress,
-      contactName: args.contactName,
+      contactName: resolvedContactName,
       customerId: args.customerId,
       status: "open",
       tags: [],
@@ -1283,8 +1324,8 @@ async function upsertInboxConversation(
   if (args.isIncoming) {
     patch.lastCustomerMessageAt = args.lastMessageAt;
   }
-  if (!existing.contactName && args.contactName) {
-    patch.contactName = args.contactName;
+  if (!existing.contactName && resolvedContactName) {
+    patch.contactName = resolvedContactName;
   }
   if (!existing.customerId) {
     patch.customerId = args.customerId;

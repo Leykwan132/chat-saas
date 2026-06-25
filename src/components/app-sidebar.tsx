@@ -153,6 +153,12 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     api.conversations.getTotalUnreadForAgent,
     canReadChats ? { agentId: agent._id } : 'skip',
   );
+  const canReadChannels = !isLoading && can(Permission.CHANNELS_READ);
+  const connectedChannels = useQuery(
+    api.channels.getConnectedForCurrentOrg,
+    canReadChannels ? {} : 'skip',
+  );
+  const connectedChannelCount = connectedChannels?.length;
 
   const filterItems = (items: NavItem[]) => {
     if (isLoading) return [];
@@ -337,16 +343,32 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                       )}
 
                       {/* Other Team Items (Channels, Analytics, etc.) */}
-                      {otherTeamItems.map((item) => (
-                        <SidebarNavMenuItem
-                          key={item.to}
-                          to={item.to}
-                          end
-                          tooltip={item.label}
-                          icon={item.icon}
-                          label={item.label}
-                        />
-                      ))}
+                      {otherTeamItems.map((item) => {
+                        const showChannelCount =
+                          item.label === 'Channels' &&
+                          connectedChannelCount !== undefined &&
+                          connectedChannelCount > 0;
+                        const tooltip = showChannelCount
+                          ? `${item.label} (${connectedChannelCount})`
+                          : item.label;
+                        return (
+                          <SidebarNavMenuItem
+                            key={item.to}
+                            to={item.to}
+                            end
+                            tooltip={tooltip}
+                            icon={item.icon}
+                            label={item.label}
+                            badge={
+                              showChannelCount ? (
+                                <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-sidebar-accent-foreground/15 text-[10px] font-bold leading-none text-sidebar-foreground">
+                                  {connectedChannelCount}
+                                </span>
+                              ) : undefined
+                            }
+                          />
+                        );
+                      })}
                     </>
                   );
                 })()}

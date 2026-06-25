@@ -11,11 +11,24 @@ import {
   isDemoInboxConversation,
 } from "./whatsappDemo";
 
-export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: string) {
-  const channelRows = await ctx.db
-    .query("channels")
-    .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
-    .collect();
+export async function getLinkedInboxConversationDocs(
+  ctx: QueryCtx,
+  orgId: string,
+  userId?: string,
+  agentId?: Id<"agents">,
+) {
+  const isPersonal = !orgId || orgId === "personal";
+  const channelRows = isPersonal
+    ? await ctx.db
+        .query("channels")
+        .withIndex("by_connectedByUserId", (q) =>
+          q.eq("connectedByUserId", userId ?? ""),
+        )
+        .collect()
+    : await ctx.db
+        .query("channels")
+        .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
+        .collect();
 
   const connectedChannelById = new Map(
     channelRows
@@ -30,11 +43,42 @@ export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: strin
     };
   }
 
-  const recent = await ctx.db
-    .query("conversations")
-    .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
-    .order("desc")
-    .take(400);
+  // Conversations are scoped by (userId or orgId) + assignedAgentId so the
+  // agent dimension is filtered at the DB level. When no agentId is provided,
+  // fall back to the scope-only index. We then filter to conversations whose
+  // channel is in the connected set above.
+  let recent: Doc<"conversations">[];
+  if (isPersonal && agentId !== undefined) {
+    recent = await ctx.db
+      .query("conversations")
+      .withIndex("by_userId_and_assignedAgentId_and_lastMessageAt", (q) =>
+        q.eq("userId", userId ?? "").eq("assignedAgentId", agentId),
+      )
+      .order("desc")
+      .take(400);
+  } else if (isPersonal) {
+    recent = await ctx.db
+      .query("conversations")
+      .withIndex("by_userId_and_lastMessageAt", (q) =>
+        q.eq("userId", userId ?? ""),
+      )
+      .order("desc")
+      .take(400);
+  } else if (agentId !== undefined) {
+    recent = await ctx.db
+      .query("conversations")
+      .withIndex("by_orgId_and_assignedAgentId_and_lastMessageAt", (q) =>
+        q.eq("orgId", orgId).eq("assignedAgentId", agentId),
+      )
+      .order("desc")
+      .take(400);
+  } else {
+    recent = await ctx.db
+      .query("conversations")
+      .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
+      .order("desc")
+      .take(400);
+  }
 
   const conversations = recent.filter(
     (c) =>
@@ -47,32 +91,26 @@ export async function getLinkedInboxConversationDocs(ctx: QueryCtx, orgId: strin
   return { connectedChannelById, conversations };
 }
 
-function conversationBelongsToAgent(
-  conv: Doc<"conversations">,
-  connectedChannelById: Map<Id<"channels">, Doc<"channels">>,
-  agentId: Id<"agents">,
-): boolean {
-  if (conv.assignedAgentId === agentId) {
-    return true;
-  }
-  if (conv.channelId === undefined) {
-    return false;
-  }
-  const channel = connectedChannelById.get(conv.channelId);
-  return channel?.defaultAgentId === agentId;
-}
-
 // Latest inbox threads tied to channels that are still connected. Omits the AI
 // playground and orphaned rows left after disconnect (channel no longer linked).
+// Works for both organisational (orgId = WorkOS org id) and personal
+// (orgId = "") workspaces. For personal, channels are looked up by the
+// owner's connectedByUserId; for team, by orgId. Conversations are scoped by
+// (userId or orgId) + assignedAgentId at the DB level when `agentId` is
+// provided, so each agent's inbox sees only its own conversations.
 export const listLinkedForCurrentOrg = query({
-  args: {},
-  handler: async (ctx) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return [];
-    }
+  args: {
+    agentId: v.optional(v.id("agents")),
+  },
+  handler: async (ctx, args) => {
+    const { orgId, userId } = await getAuthContext(ctx);
 
-    const { conversations } = await getLinkedInboxConversationDocs(ctx, orgId);
+    const { conversations } = await getLinkedInboxConversationDocs(
+      ctx,
+      orgId,
+      userId,
+      args.agentId,
+    );
     if (conversations.length === 0) {
       return [];
     }
@@ -103,24 +141,17 @@ export const getTotalUnreadForAgent = query({
     agentId: v.id("agents"),
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return 0;
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
 
-    const agent = await ctx.db.get(args.agentId);
-    if (agent === null || agent.orgId !== orgId) {
-      return 0;
-    }
-
-    const { connectedChannelById, conversations } =
-      await getLinkedInboxConversationDocs(ctx, orgId);
+    const { conversations } = await getLinkedInboxConversationDocs(
+      ctx,
+      orgId,
+      userId,
+      args.agentId,
+    );
 
     let totalUnread = 0;
     for (const conv of conversations) {
-      if (!conversationBelongsToAgent(conv, connectedChannelById, args.agentId)) {
-        continue;
-      }
       totalUnread += conv.unreadCount;
     }
     return totalUnread;
@@ -129,20 +160,28 @@ export const getTotalUnreadForAgent = query({
 
 // Inbox list for the caller's org. Excludes "playground" service rows so the
 // AI-playground threads don't show up in the customer-conversations inbox.
+// Personal workspaces (orgId = "") scope by the caller's userId; team
+// workspaces scope by orgId.
 export const listForCurrentOrg = query({
   args: {
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
-    const { orgId } = await getAuthContext(ctx);
-    if (orgId === "personal" || !orgId) {
-      return { page: [], isDone: true, continueCursor: "" };
-    }
-    const result = await ctx.db
-      .query("conversations")
-      .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
-      .order("desc")
-      .paginate(args.paginationOpts);
+    const { orgId, userId } = await getAuthContext(ctx);
+    const isPersonal = !orgId || orgId === "personal";
+    const result = isPersonal
+      ? await ctx.db
+          .query("conversations")
+          .withIndex("by_userId_and_lastMessageAt", (q) =>
+            q.eq("userId", userId),
+          )
+          .order("desc")
+          .paginate(args.paginationOpts)
+      : await ctx.db
+          .query("conversations")
+          .withIndex("by_orgId_and_lastMessageAt", (q) => q.eq("orgId", orgId))
+          .order("desc")
+          .paginate(args.paginationOpts);
     return {
       ...result,
       page: result.page.filter(

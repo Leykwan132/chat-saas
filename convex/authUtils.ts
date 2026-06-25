@@ -206,7 +206,13 @@ export async function getAuthContextOrNull(
   }
 }
 
-/** Channel rows are keyed by org id; personal workspaces use the user id. */
-export function resolveChannelOrgId(orgId: string, userId: string): string {
-  return !orgId || orgId === "personal" ? userId : orgId;
+/**
+ * Channel rows are keyed by org id. Organisational workspaces use their
+ * WorkOS org id; personal workspaces have no team/org, so we use the empty
+ * string consistently — the same value `teamToOrgId` returns for a personal
+ * team. This keeps channels, conversations, customers, etc. aligned on ""
+ * for "does not belong to a team".
+ */
+export function resolveChannelOrgId(orgId: string, _userId: string): string {
+  return !orgId || orgId === "personal" ? "" : orgId;
 }

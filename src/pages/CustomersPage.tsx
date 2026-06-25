@@ -7,7 +7,7 @@ import { isLeadTemperatureTag, getLeadTemperatureStyle, type LeadTemperature } f
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Doc } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
 import { PageDescription } from '@/components/PageDescription';
 import { ImportCustomersDialog, ImportProgressBanner } from '@/components/ImportCustomersDialog';
@@ -147,7 +147,7 @@ export default function CustomersPage() {
 
   const { results: customers, status, loadMore } = usePaginatedQuery(
     api.customers.listForCurrentOrg,
-    {},
+    { agentId: agentId as Id<'agents'> },
     { initialNumItems: 50 },
   );
 

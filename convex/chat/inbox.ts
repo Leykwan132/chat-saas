@@ -78,6 +78,14 @@ export const internalIngestChannelMessage = internalMutation({
   },
 });
 
+export const internalIngestHistoricalChannelMessage = internalMutation({
+  args: ingestChannelMessageArgs,
+  handler: async (ctx, args) => {
+    console.log("internalIngestHistoricalChannelMessage", args);
+    return await ingestChannelMessage(ctx, args);
+  },
+});
+
 async function latestIncomingExternalId(
   ctx: MutationCtx,
   conversationId: Id<"conversations">,

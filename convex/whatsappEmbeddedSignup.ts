@@ -327,6 +327,7 @@ export const prepareWhatsAppSignup = action({
     wabaId: v.string(),
     phoneNumberId: v.string(),
     attemptId: v.optional(v.id("whatsappConnectionAttempts")),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
@@ -354,6 +355,7 @@ export const prepareWhatsAppSignup = action({
       wabaId: args.wabaId,
       phoneNumberId: args.phoneNumberId,
       connectedByUserId: userId,
+      agentId: args.agentId,
     });
 
     logWhatsAppConnect("prepare-completed", {
@@ -387,6 +389,7 @@ export const completeSignup = action({
         v.literal("existing_phone_number"),
       ),
     ),
+    agentId: v.optional(v.id("agents")),
   },
   handler: async (
     ctx,
@@ -435,6 +438,7 @@ export const completeSignup = action({
         wabaId: args.wabaId,
         phoneNumberId: args.phoneNumberId,
         connectedByUserId: userId,
+        agentId: args.agentId,
       });
 
       await ctx.runMutation(internal.channels.internalSetProgress, {
@@ -545,6 +549,7 @@ export const completeSignup = action({
           accessToken,
           tokenExpiresAt,
           connectedByUserId: userId,
+          agentId: args.agentId,
         },
       );
       if (args.attemptId !== undefined) {

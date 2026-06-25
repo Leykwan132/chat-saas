@@ -114,6 +114,7 @@ import type * as whatsappDemo from "../whatsappDemo.js";
 import type * as whatsappEmbeddedSignup from "../whatsappEmbeddedSignup.js";
 import type * as whatsappFollowUp from "../whatsappFollowUp.js";
 import type * as whatsappSend from "../whatsappSend.js";
+import type * as whatsappSkipContacts from "../whatsappSkipContacts.js";
 import type * as whatsappSync from "../whatsappSync.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
 import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
@@ -236,6 +237,7 @@ declare const fullApi: ApiFromModules<{
   whatsappEmbeddedSignup: typeof whatsappEmbeddedSignup;
   whatsappFollowUp: typeof whatsappFollowUp;
   whatsappSend: typeof whatsappSend;
+  whatsappSkipContacts: typeof whatsappSkipContacts;
   whatsappSync: typeof whatsappSync;
   whatsappTemplates: typeof whatsappTemplates;
   whatsappTemplatesAction: typeof whatsappTemplatesAction;
@@ -288,6 +290,7 @@ export declare const components: {
   metaReactionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"metaReactionWorkpool">;
   mediaDeleteWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"mediaDeleteWorkpool">;
   threadSummarizerWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"threadSummarizerWorkpool">;
+  leadLabelWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"leadLabelWorkpool">;
   broadcastWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"broadcastWorkpool">;
   followUpWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"followUpWorkpool">;
   conversationLogWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"conversationLogWorkpool">;

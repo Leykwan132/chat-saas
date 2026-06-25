@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
+import { useNavigate, useParams } from 'react-router';
 import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -61,6 +62,8 @@ function isSignupFinishEvent(event: SessionInfoMessage['event']) {
 }
 
 export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled, children }: ConnectWhatsAppButtonProps) {
+  const navigate = useNavigate();
+  const { agentId } = useParams();
   const completeSignup = useAction(api.whatsappEmbeddedSignup.completeSignup);
   const beginConnectionAttempt = useMutation(
     api.whatsappEmbeddedSignup.beginConnectionAttempt,
@@ -123,8 +126,20 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         dialogState.kind === 'connecting' &&
         whatsappChannel?.status === 'connected'
       ) {
-        setDialogState({ kind: 'success' });
+        setDialogState({ kind: 'closed' });
+        setUserDismissed(true);
         onConnected?.();
+        toast.success('WhatsApp connected successfully', {
+          description: 'Chat syncing is in progress, will be completed soon.',
+          duration: 15000,
+          action: {
+            label: 'See progress',
+            onClick: () => {
+              const redirectPath = agentId ? `/dashboard/${agentId}/channels` : '/dashboard';
+              navigate(redirectPath);
+            }
+          }
+        });
       }
       setUserDismissed(false);
       return;
@@ -146,8 +161,20 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
       if (isSyncingOrConnected) {
         if (!userDismissed && dialogState.kind === 'connecting') {
-          setDialogState({ kind: 'success' });
+          setDialogState({ kind: 'closed' });
+          setUserDismissed(true);
           onConnected?.();
+          toast.success('WhatsApp connected successfully', {
+            description: 'Chat syncing is in progress, will be completed soon.',
+            duration: 15000,
+            action: {
+              label: 'See progress',
+              onClick: () => {
+                const redirectPath = agentId ? `/dashboard/${agentId}/channels` : '/dashboard';
+                navigate(redirectPath);
+              }
+            }
+          });
         }
       } else {
         if (!userDismissed && dialogState.kind !== 'connecting') {
@@ -159,7 +186,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         setActivePhoneNumberId(openConnectionAttempt.phoneNumberId);
       }
     }
-  }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected, userDismissed]);
+  }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected, userDismissed, agentId, navigate]);
 
   useEffect(() => {
     if (whatsappChannel) {
@@ -356,11 +383,14 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       return;
     }
 
-    if (
+    const isSignupActive =
       openConnectionAttempt &&
-      isOpenWhatsAppConnectionAttempt(openConnectionAttempt)
-    ) {
-      logWhatsAppConnect('launch', 'aborted - open connection attempt exists');
+      (openConnectionAttempt.status === 'started' ||
+        openConnectionAttempt.status === 'signup_finished' ||
+        openConnectionAttempt.status === 'token_ready');
+
+    if (isSignupActive) {
+      logWhatsAppConnect('launch', 'aborted - active signup attempt exists');
       toast.error(
         'You already have a WhatsApp connection in progress. Cancel it on the Channels page first.',
       );
@@ -464,13 +494,11 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         </button>
 
         <Dialog
-          open={dialogState.kind === 'success' || dialogState.kind === 'error'}
+          open={dialogState.kind === 'error'}
           onOpenChange={handleDialogOpenChange}
         >
           <DialogContent>
-            {dialogState.kind === 'success' ? (
-              <SuccessState />
-            ) : dialogState.kind === 'error' ? (
+            {dialogState.kind === 'error' ? (
               <ErrorState
                 message={dialogState.message}
                 onRetry={() => {
@@ -504,13 +532,11 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       </div>
 
       <Dialog
-        open={dialogState.kind === 'success' || dialogState.kind === 'error'}
+        open={dialogState.kind === 'error'}
         onOpenChange={handleDialogOpenChange}
       >
         <DialogContent>
-          {dialogState.kind === 'success' ? (
-            <SuccessState />
-          ) : dialogState.kind === 'error' ? (
+          {dialogState.kind === 'error' ? (
             <ErrorState
               message={dialogState.message}
               onRetry={() => {
@@ -529,28 +555,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 }
 
 
-function SuccessState() {
-  return (
-    <div className="flex flex-col items-center gap-5 py-6 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-        <CheckCircle2 className="size-6" />
-      </div>
-      <div className="flex flex-col items-center gap-2">
-        <DialogTitle className="text-base font-semibold">WhatsApp connected</DialogTitle>
-        <DialogDescription>
-          Syncing is in progress, will be completed soon.
-        </DialogDescription>
-      </div>
-      <div className="mt-2 w-full">
-        <DialogClose asChild>
-          <Button variant="outline" className="w-full">
-            Dismiss
-          </Button>
-        </DialogClose>
-      </div>
-    </div>
-  );
-}
+
 
 function ErrorState({
   message,

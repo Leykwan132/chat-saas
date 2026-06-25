@@ -16,3 +16,7 @@ export const metaReactionPool = new Workpool(components.metaReactionWorkpool, {
 export const threadSummarizerPool = new Workpool(components.threadSummarizerWorkpool, {
   maxParallelism: 4,
 });
+
+export const leadLabelPool = new Workpool(components.leadLabelWorkpool, {
+  maxParallelism: 4,
+});
