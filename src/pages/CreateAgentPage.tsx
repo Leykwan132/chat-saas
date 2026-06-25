@@ -311,7 +311,7 @@ function CreateAgentForm() {
                     navigate(`/dashboard/${createdAgentId}/knowledge-base/web`)
                   }
                   onPlayground={() =>
-                    navigate(`/dashboard/${createdAgentId}/playground`)
+                    navigate(`/dashboard/${createdAgentId}/agent-setup`)
                   }
                 />
               ) : (

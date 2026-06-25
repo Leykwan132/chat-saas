@@ -6,7 +6,7 @@ import {
   X,
   Check,
   ChevronDown,
-  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import {
   Sheet,
   SheetClose,
@@ -116,7 +117,27 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-muted-foreground">URL</span>
-            <Input value={webInput} onChange={(e) => { setWebInput(e.target.value); setWebInputError(null); }} onKeyDown={(e) => { if (e.key === "Enter") handleSearchWeb(); }} placeholder="https://example.com" className={webInputError ? "border-destructive focus-visible:ring-destructive" : ""} />
+            <div className="relative">
+              <Input
+                value={webInput}
+                onChange={(e) => { setWebInput(e.target.value); setWebInputError(null); }}
+                onKeyDown={(e) => { if (e.key === "Enter") handleSearchWeb(); }}
+                placeholder="https://example.com"
+                className={cn(
+                  "pr-12",
+                  webInputError && "border-destructive focus-visible:ring-destructive",
+                )}
+              />
+              <button
+                type="button"
+                onClick={handleSearchWeb}
+                disabled={isSearchingLinks || !webInput.trim()}
+                aria-label="Discover links from URL"
+                className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-black text-white transition-opacity hover:bg-black/90 disabled:opacity-40"
+              >
+                {isSearchingLinks ? <Spinner className="size-3 text-white" /> : <ArrowRight className="size-3.5" />}
+              </button>
+            </div>
             {webInputError && <p className="text-xs text-destructive">{webInputError}</p>}
           </div>
           {!isSearchingLinks && (() => {
@@ -138,11 +159,6 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
             }
             return null;
           })()}
-          <div className="flex justify-end gap-2">
-            {webInput.trim() && (
-              <Button type="button" onClick={handleSearchWeb} disabled={isSearchingLinks}>{isSearchingLinks ? <Spinner className="size-4" /> : <><Sparkles className="size-4" /> Discover</>}</Button>
-            )}
-          </div>
         </div>
       </div>
       ) : null}

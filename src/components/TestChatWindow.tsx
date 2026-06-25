@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef, useCallback, isValidElement, cloneElement } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { Bot, RotateCw, RefreshCw } from 'lucide-react';
+import { BadgeCheck, RotateCw, RefreshCw, Maximize2 } from 'lucide-react';
 import {
   extractMediaKeys,
   stripMediaMarkers,
@@ -14,8 +13,7 @@ import { useUIMessages, useSmoothText, optimisticallySendMessage } from "@convex
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { Button } from '@/components/ui/button';
-import { Suggestion, Suggestions } from "@/components/ai-elements/suggestion";
-import { CHAT_SUGGESTIONS } from "@/lib/utils";
+import { Spinner } from '@/components/ui/spinner';
 import { parseCitations, type Citation } from "@/lib/citation-parser";
 import {
   InlineCitation,
@@ -50,7 +48,6 @@ import {
 import {
   Message,
   MessageContent,
-  MessageResponse,
 } from "@/components/ai-elements/message";
 import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
@@ -206,7 +203,7 @@ function StreamingMarkdown({ text, status }: { text: string; status: string }) {
 
   if (!hasCitations) {
     return (
-      <div className="[&_p]:mb-3 [&_p]:leading-relaxed [&_p:first-child]:mt-0">
+      <div className="[&_p]:leading-snug [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_p:not(:last-child)]:mb-2">
         <Markdown>{processed}</Markdown>
       </div>
     );
@@ -221,7 +218,7 @@ function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   };
 
   return (
-    <div className="[&_p]:mb-3 [&_p]:leading-relaxed [&_p:first-child]:mt-0">
+    <div className="[&_p]:leading-snug [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_p:not(:last-child)]:mb-2">
       <Markdown components={markdownComponents}>
         {parsedContent}
       </Markdown>
@@ -229,29 +226,190 @@ function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   );
 }
 
-function AnimatedBotIcon({ isAnimating }: { isAnimating: boolean }) {
+function AnimatedBotIcon({
+  isAnimating,
+  className,
+}: {
+  isAnimating: boolean;
+  className?: string;
+}) {
+  const iconClassName =
+    'size-full scale-[1.12] object-cover dark:invert';
+
   return (
-    <div className="relative flex size-9 shrink-0 items-center justify-center">
-      {isAnimating && (
-        <>
-          <div
-            className="absolute inset-0 rounded-full animate-spin"
-            style={{
-              background: "conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)",
-            }}
+    <div className={cn('relative size-10 shrink-0', className)}>
+      {isAnimating ? (
+        <div
+          className="absolute inset-0 animate-spin rounded-full p-[3px]"
+          style={{
+            background:
+              'conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6)',
+          }}
+        />
+      ) : null}
+      <div
+        className={cn(
+          'absolute flex items-center justify-center rounded-full border-2 border-white bg-white dark:border-white dark:bg-white',
+          isAnimating ? 'inset-[3px]' : 'inset-0',
+        )}
+      >
+        <div className="size-7 overflow-hidden rounded-full">
+          <img
+            src="/icon.svg"
+            alt=""
+            className={iconClassName}
           />
-          <div className="absolute inset-[2px] rounded-full bg-card" />
-        </>
-      )}
-      <Bot className="relative z-10 size-5 text-primary" />
+        </div>
+      </div>
     </div>
   );
 }
+
+type PlaygroundTrainingStatus = 'loading' | 'ready' | 'indexing';
+
+function getPlaygroundTrainingStatus(
+  isCheckingStatus: boolean,
+  indexingStatus:
+    | { isIndexing: boolean; queued: number; running: number }
+    | null
+    | undefined,
+): PlaygroundTrainingStatus {
+  if (isCheckingStatus || indexingStatus === null || indexingStatus === undefined) {
+    return 'loading';
+  }
+  if (indexingStatus.isIndexing) {
+    return 'indexing';
+  }
+  return 'ready';
+}
+
+const PLAYGROUND_TRAINING_STATUS_CONFIG: Record<
+  Exclude<PlaygroundTrainingStatus, 'loading'>,
+  { bgClass: string; borderClass: string }
+> = {
+  ready: {
+    bgClass: 'bg-emerald-800 dark:bg-emerald-900',
+    borderClass: 'border-emerald-700/50 dark:border-emerald-800/50',
+  },
+  indexing: {
+    bgClass: 'bg-amber-700 dark:bg-amber-850',
+    borderClass: 'border-amber-600/50 dark:border-amber-750/50',
+  },
+};
+
+function getUpdatingLabel(indexingStatus: { queued: number; running: number }) {
+  const { running, queued } = indexingStatus;
+  if (running > 0) {
+    return running === 1 ? 'Training 1 item…' : `Training ${running} items…`;
+  }
+  return queued === 1 ? '1 item in queue…' : `${queued} items in queue…`;
+}
+
+function PlaygroundTrainingStatusBanner({
+  indexingStatus,
+  isCheckingStatus,
+  onCheckStatus,
+}: {
+  indexingStatus:
+    | { isIndexing: boolean; queued: number; running: number }
+    | null
+    | undefined;
+  isCheckingStatus: boolean;
+  onCheckStatus: () => void;
+}) {
+  const status = getPlaygroundTrainingStatus(isCheckingStatus, indexingStatus);
+  const coloredConfig =
+    status === 'loading' ? null : PLAYGROUND_TRAINING_STATUS_CONFIG[status];
+
+  const label =
+    status === 'loading'
+      ? 'Checking status…'
+      : status === 'indexing'
+        ? getUpdatingLabel(indexingStatus!)
+        : 'Your agent is ready.';
+
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-2 border-b px-4 py-2 text-xs transition-colors',
+        status === 'loading'
+          ? 'border-border bg-muted/30'
+          : cn(coloredConfig!.bgClass, coloredConfig!.borderClass),
+      )}
+    >
+      {status === 'loading' || status === 'indexing' ? (
+        <Spinner
+          className={cn(
+            'size-3.5 shrink-0',
+            status === 'loading' ? 'text-muted-foreground' : 'text-white/80',
+          )}
+        />
+      ) : (
+        <BadgeCheck className="size-3.5 shrink-0 text-white/80" />
+      )}
+
+      <span
+        className={cn(
+          'min-w-0',
+          status === 'loading' ? 'text-muted-foreground' : 'font-semibold text-white',
+        )}
+      >
+        {label}
+      </span>
+
+      <div className="ml-auto flex shrink-0 items-center gap-1">
+        <button
+          type="button"
+          onClick={onCheckStatus}
+          disabled={isCheckingStatus}
+          className={cn(
+            'inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-50',
+            status === 'loading'
+              ? 'text-muted-foreground hover:text-foreground'
+              : 'text-white/60 hover:text-white',
+          )}
+          title="Refresh training status"
+          aria-label="Refresh training status"
+        >
+          <RefreshCw className={cn('size-3', isCheckingStatus && 'animate-spin')} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const PLAYGROUND_PROMPT_SHELL_CLASS =
+  'rounded-2xl border border-border bg-input/50 focus-within:border-ring overflow-hidden [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0';
+
+const PLAYGROUND_MESSAGE_TEXT_CLASS = 'text-sm leading-snug';
+
+const PLAYGROUND_CONVERSATION_CONTENT_CLASS = 'gap-5 p-5';
+
+const PLAYGROUND_ASSISTANT_ROW_CLASS =
+  'flex w-fit max-w-[85%] flex-col items-start gap-2 sm:max-w-none';
+
+const PLAYGROUND_BUBBLE_SHELL_CLASS = 'rounded-lg border border-border px-3 py-2';
+
+const PLAYGROUND_ASSISTANT_BUBBLE_CLASS =
+  cn(
+    PLAYGROUND_MESSAGE_TEXT_CLASS,
+    'min-w-0 w-full max-w-full text-foreground',
+  );
+
+const PLAYGROUND_USER_BUBBLE_CLASS =
+  cn(
+    PLAYGROUND_MESSAGE_TEXT_CLASS,
+    PLAYGROUND_BUBBLE_SHELL_CLASS,
+    'ml-auto w-fit max-w-[85%] bg-blue-50 text-blue-950 dark:bg-blue-950/40 dark:text-blue-200 sm:max-w-none',
+  );
 
 export function TestChatWindow({
   agentId,
   threadId,
   agentName,
+  embedded = false,
+  fillContainer = false,
+  onThreadIdChange,
   indexingStatus,
   isCheckingStatus,
   onCheckStatus,
@@ -259,11 +417,21 @@ export function TestChatWindow({
   agentId: Id<"agents">;
   threadId: string | undefined;
   agentName?: string;
+  embedded?: boolean;
+  fillContainer?: boolean;
+  onThreadIdChange?: (threadId: string) => void;
   indexingStatus?: { isIndexing: boolean; queued: number; running: number } | null;
   isCheckingStatus?: boolean;
   onCheckStatus?: () => void;
 }) {
-  const navigate = useNavigate();
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
+
+  const setActiveThread = useCallback(
+    (nextThreadId: string) => {
+      onThreadIdChange?.(nextThreadId);
+    },
+    [onThreadIdChange],
+  );
   const [, setConversationId] =
     useState<Id<"conversations"> | null>(null);
   const [input, setInput] = useState("");
@@ -320,14 +488,14 @@ export function TestChatWindow({
 
     if (latestPlaygroundThread !== null) {
       setConversationId(latestPlaygroundThread.conversationId);
-      navigate(`/dashboard/${agentId}/playground/${latestPlaygroundThread.threadId}`, { replace: true });
+      setActiveThread(latestPlaygroundThread.threadId);
     } else {
       resetThreadMutation({ agentId }).then(({ threadId: newThreadId, conversationId }) => {
         setConversationId(conversationId);
-        navigate(`/dashboard/${agentId}/playground/${newThreadId}`, { replace: true });
+        setActiveThread(newThreadId);
       });
     }
-  }, [agentId, threadId, latestPlaygroundThread, resetThreadMutation, navigate]);
+  }, [agentId, threadId, latestPlaygroundThread, resetThreadMutation, setActiveThread]);
 
   useEffect(() => {
     if (!isSending && shouldFocusAfterSend.current) {
@@ -353,10 +521,6 @@ export function TestChatWindow({
     }
   }, [input, threadId, isSending, agentId, sendMessageMutation]);
 
-  const handleSuggestionClick = useCallback((suggestion: string) => {
-    setInput(suggestion);
-  }, []);
-
   const handleSubmit = useCallback(
     (message: PromptInputMessage) => {
       handleSend(message.text);
@@ -375,7 +539,7 @@ export function TestChatWindow({
     const { threadId: newThreadId, conversationId: newConversationId } =
       await resetThreadMutation({ agentId, existingThreadId: threadId });
     setConversationId(newConversationId);
-    navigate(`/dashboard/${agentId}/playground/${newThreadId}`, { replace: true });
+    setActiveThread(newThreadId);
   };
 
   const isConversationLoading = !threadId || status === "LoadingFirstPage";
@@ -384,7 +548,7 @@ export function TestChatWindow({
   const renderMessages = () => {
     if (isConversationLoading) {
       return (
-        <ConversationContent>
+        <ConversationContent className={PLAYGROUND_CONVERSATION_CONTENT_CLASS}>
           <div className="flex size-full min-h-[400px] flex-col items-center justify-center gap-3 text-center">
             <Shimmer duration={2} spread={3} className="text-sm font-medium">
               Loading Conversations...
@@ -396,7 +560,7 @@ export function TestChatWindow({
 
     return (
       <>
-        <ConversationContent>
+        <ConversationContent className={PLAYGROUND_CONVERSATION_CONTENT_CLASS}>
           {messages.length === 0 ? (
             <ConversationEmptyState
               title={`Chat with ${displayName}`}
@@ -422,14 +586,15 @@ export function TestChatWindow({
               <Message from={message.role} key={message.key}>
                 <MessageContent>
                   {message.role !== "user" ? (
-                    <div className="flex items-start gap-2">
+                    <div className={PLAYGROUND_ASSISTANT_ROW_CLASS}>
                       <AnimatedBotIcon
+                        className="shrink-0"
                         isAnimating={
                           message.status === "streaming" ||
                           message.status === "pending"
                         }
                       />
-                      <MessageResponse>
+                      <div className={PLAYGROUND_ASSISTANT_BUBBLE_CLASS}>
                         <StreamingMarkdown
                           text={displayText}
                           status={message.status}
@@ -438,10 +603,10 @@ export function TestChatWindow({
                           messageKey={message.key}
                           items={mediaItems}
                         />
-                      </MessageResponse>
+                      </div>
                     </div>
                   ) : (
-                    <div className=" rounded-lg bg-blue-50 dark:bg-blue-950/40 px-3 py-2 text-base text-blue-950 dark:text-blue-200 ml-auto">
+                    <div className={PLAYGROUND_USER_BUBBLE_CLASS}>
                       {displayText}
                     </div>
                   )}
@@ -453,9 +618,9 @@ export function TestChatWindow({
           {status === "LoadingMore" && messages.length > 0 && (
             <Message from="assistant">
               <MessageContent>
-                <div className="flex items-start gap-2">
-                  <AnimatedBotIcon isAnimating={true} />
-                  <div className="pt-1">
+                <div className={PLAYGROUND_ASSISTANT_ROW_CLASS}>
+                  <AnimatedBotIcon className="shrink-0" isAnimating={true} />
+                  <div className={PLAYGROUND_ASSISTANT_BUBBLE_CLASS}>
                     <Shimmer duration={3} spread={3}>
                       Slower shimmer with wider spread
                     </Shimmer>
@@ -472,86 +637,75 @@ export function TestChatWindow({
 
   const renderInput = (ref: React.RefObject<HTMLTextAreaElement | null>) => (
     <div className="w-full min-w-0 max-w-full shrink-0 overflow-hidden border-t border-border p-4">
-      {messages.length === 0 && (
-        <div className="pb-4">
-          <Suggestions>
-            {CHAT_SUGGESTIONS.map((s) => (
-              <Suggestion key={s} suggestion={s} onClick={handleSuggestionClick} />
-            ))}
-          </Suggestions>
-        </div>
-      )}
-      <ChatPromptInput
-        containerClassName="w-full max-w-full"
-        disabled={isSending}
-        onChange={setInput}
-        onSubmit={handleSubmit}
-        placeholder="Type a message..."
-        submitDisabled={isSending}
-        submitStatus={isSending ? "submitted" : undefined}
-        textareaRef={ref}
-        value={input}
-        allowImageAttachments
-        enableMediaUpload
-      />
+      <div className={PLAYGROUND_PROMPT_SHELL_CLASS}>
+        {onCheckStatus ? (
+          <PlaygroundTrainingStatusBanner
+            indexingStatus={indexingStatus}
+            isCheckingStatus={isCheckingStatus ?? false}
+            onCheckStatus={onCheckStatus}
+          />
+        ) : null}
+        <ChatPromptInput
+          containerClassName="w-full max-w-full"
+          disabled={isSending}
+          onChange={setInput}
+          onSubmit={handleSubmit}
+          placeholder="Type a message..."
+          submitDisabled={isSending}
+          submitStatus={isSending ? "submitted" : undefined}
+          textareaRef={ref}
+          value={input}
+          allowImageAttachments
+          enableMediaUpload
+        />
+      </div>
     </div>
   );
 
   return (
     <>
-      <div className="w-full min-w-0 max-w-full">
-        <div className="flex h-[calc(100vh-220px)] min-h-[600px] w-full min-w-0 max-w-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm mt-4">
+      <div className={cn('w-full min-w-0 max-w-full', fillContainer && 'h-full')}>
+        <div
+          className={cn(
+            'flex w-full min-w-0 max-w-full flex-col overflow-hidden',
+            !fillContainer && 'rounded-lg border border-border bg-card shadow-sm',
+            fillContainer
+              ? 'mt-0 h-full min-h-0 bg-card'
+              : embedded
+                ? 'h-[min(744px,calc(100vh-10rem))] min-h-[541px]'
+                : 'mt-4 h-[calc(100vh-220px)] min-h-[600px]',
+          )}
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[280px]">
-                {agentName?.trim() || "Test your agent"}
-              </span>
+            <span className="text-sm font-semibold truncate max-w-[150px] sm:max-w-[280px]">
+              {agentName?.trim() || "Test your agent"}
+            </span>
 
-              {/* Minimal Status Indicator */}
-              {onCheckStatus && (
-                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-medium bg-muted/40 border border-border/50 px-2.5 py-0.5 rounded-full select-none">
-                  {isCheckingStatus ? (
-                    <>
-                      <span className="size-1.5 rounded-full bg-zinc-400 animate-pulse"></span>
-                      <span>Updating…</span>
-                    </>
-                  ) : indexingStatus?.isIndexing ? (
-                    <>
-                      <span className="relative flex size-1.5 shrink-0">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full size-1.5 bg-amber-500"></span>
-                      </span>
-                      <span>Training ({indexingStatus.queued})</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="size-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span>Ready</span>
-                    </>
-                  )}
-                  <button
-                    onClick={() => onCheckStatus()}
-                    disabled={isCheckingStatus}
-                    className="ml-1 cursor-pointer text-muted-foreground/60 hover:text-muted-foreground disabled:opacity-50 flex items-center justify-center"
-                    title="Refresh training status"
-                  >
-                    <RefreshCw className={cn("size-2.5", isCheckingStatus && "animate-spin")} />
-                  </button>
-                </div>
-              )}
+            <div className="flex items-center gap-1">
+              {embedded ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => setFullscreenOpen(true)}
+                  title="Open full playground"
+                  aria-label="Open full playground"
+                >
+                  <Maximize2 className="size-4" />
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleReset}
+                disabled={!threadId}
+                title="Reset conversation"
+              >
+                <RotateCw className="size-4" />
+              </Button>
             </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleReset}
-              disabled={!threadId}
-              title="Reset conversation"
-            >
-              <RotateCw className="size-4" />
-            </Button>
           </div>
 
           <Conversation className="min-h-0 min-w-0 flex-1 overflow-hidden">
@@ -588,6 +742,32 @@ export function TestChatWindow({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {embedded ? (
+        <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
+          <DialogContent
+            overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-md"
+            className="flex h-[min(92vh,960px)] w-full max-w-[min(calc(100%-2rem),70rem)] flex-col gap-0 overflow-hidden rounded-lg border border-border bg-card p-0 shadow-sm sm:max-w-[min(calc(100%-2rem),70rem)]"
+          >
+            <DialogHeader className="sr-only">
+              <DialogTitle>Playground</DialogTitle>
+              <DialogDescription>Test your agent in an expanded window</DialogDescription>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-hidden">
+              <TestChatWindow
+                agentId={agentId}
+                agentName={agentName}
+                threadId={threadId}
+                fillContainer
+                onThreadIdChange={onThreadIdChange}
+                indexingStatus={indexingStatus}
+                isCheckingStatus={isCheckingStatus}
+                onCheckStatus={onCheckStatus}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }

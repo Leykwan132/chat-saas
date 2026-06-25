@@ -2,14 +2,10 @@ import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { useNavigate, useParams, Navigate, useBlocker } from 'react-router';
 import {
-  Wrench,
   Bot,
-  ArrowRight,
   Banknote,
   Mail,
   Maximize2,
-  Zap,
-  AlertTriangle,
   List,
 } from 'lucide-react';
 import {
@@ -36,6 +32,7 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import { ModelPicker } from '@/components/ModelPicker';
+import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   Select,
@@ -395,9 +392,9 @@ export default function InstructionsPage() {
     );
   }
 
-  // Redirect to playground if user lacks manage permissions
+  // Users without agent-setup access can still test from Knowledge Base.
   if (!can(Permission.AGENTS_MANAGE)) {
-    return <Navigate to={`/dashboard/${agentId}/playground`} replace />;
+    return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />;
   }
 
   if (agent === null || !selectedAgentId) {
@@ -415,7 +412,7 @@ export default function InstructionsPage() {
   const isRoutingSettingsLoading = canReadRouting && routingSettings === undefined;
 
   return (
-    <div className="flex w-full flex-col gap-6 max-w-6xl">
+    <div className="flex w-full flex-col gap-6 max-w-none">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
@@ -425,10 +422,6 @@ export default function InstructionsPage() {
             Tell your AI agent how to talk to and help your customers.
           </PageDescription>
         </div>
-        <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
-          Test in playground
-          <ArrowRight className="size-4" />
-        </Button>
       </header>
 
       {error && (
@@ -437,13 +430,13 @@ export default function InstructionsPage() {
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] items-stretch">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="grid min-w-0 max-w-6xl gap-6 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] items-stretch">
         {/* Left Column: Configuration Form */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            <Wrench className="size-4" />
-            <span>Basic Configuration</span>
-          </div>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">
+            Basic Configuration
+          </h2>
           <div className="rounded-xl border border-border bg-card">
             <div className="px-5 py-5">
               <div className="grid gap-5">
@@ -642,10 +635,9 @@ export default function InstructionsPage() {
         {/* Right Column: Triggers & Escalation */}
         <div className="space-y-6">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <Zap className="size-4" />
-              <span>Triggers</span>
-            </div>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Triggers
+            </h2>
 
             {canReadRouting ? (
               isRoutingSettingsLoading ? (
@@ -734,10 +726,9 @@ export default function InstructionsPage() {
 
           {/* Human Escalation Category */}
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <AlertTriangle className="size-4" />
-              <span>Human Escalation</span>
-            </div>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Human Escalation
+            </h2>
 
             <div className="rounded-xl border border-border bg-card">
               <div className="px-5 py-5">
@@ -818,11 +809,17 @@ export default function InstructionsPage() {
             </div>
           </div>
         </div>
+        </div>
+
+        <AgentPlaygroundPanel agentId={selectedAgentId} className="hidden xl:flex" />
       </div>
 
       {/* Expanded Goal Dialog */}
       <Dialog open={isGoalExpanded} onOpenChange={setIsGoalExpanded}>
-        <DialogContent className="sm:max-w-2xl h-[80vh] flex flex-col gap-4">
+        <DialogContent
+          overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-md"
+          className="flex h-[min(92vh,960px)] w-full max-w-[calc(100%-2rem)] flex-col gap-4 rounded-lg border border-border bg-card sm:max-w-[calc(100%-2rem)]"
+        >
           <DialogHeader>
             <DialogTitle>Edit Goal & Agent Setup</DialogTitle>
             <DialogDescription>

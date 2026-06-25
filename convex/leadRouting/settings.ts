@@ -7,7 +7,7 @@ import {
   getOrCreateLeadAssignmentSettings,
 } from "./helpers";
 import { isUserEligible } from "./eligibility";
-import { getAuthContext } from "../authUtils";
+import { getAuthContext, resolveChannelOrgId } from "../authUtils";
 
 const assignmentMethodValidator = v.union(
   v.literal("balanced"),
@@ -119,10 +119,8 @@ export const getRosterOpenLeadCounts = query({
   },
   handler: async (ctx, args) => {
     await assertAvailabilityRead(ctx, args.agentId);
-    const { orgId } = await getAuthContext(ctx);
-    if (!orgId) {
-      throw new Error("Organization required");
-    }
+    const { orgId, userId } = await getAuthContext(ctx);
+    const scopedOrgId = resolveChannelOrgId(orgId, userId);
 
     const services = ["playground", "whatsapp", "instagram", "messenger"] as const;
     const counts: Record<string, number> = {};
@@ -134,7 +132,7 @@ export const getRosterOpenLeadCounts = query({
           .query("conversations")
           .withIndex("by_orgId_and_service_and_assignedAgentId_and_assignedUserId", (q) =>
             q
-              .eq("orgId", orgId)
+              .eq("orgId", scopedOrgId)
               .eq("service", service)
               .eq("assignedAgentId", args.agentId)
               .eq("assignedUserId", workosUserId),

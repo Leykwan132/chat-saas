@@ -13,7 +13,6 @@ import SignInPage from './pages/SignInPage.tsx'
 import { POST_LOGIN_REDIRECT } from './constants'
 import DashboardLayout from './layouts/DashboardLayout.tsx'
 import ChatsPage from './pages/ChatsPage.tsx'
-import AgentPage from './pages/AgentPage.tsx'
 import KnowledgeBasePage from './pages/KnowledgeBasePage.tsx'
 import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import WorkspaceUsagePage from './pages/WorkspaceUsagePage.tsx'
@@ -86,8 +85,13 @@ if (!WORKOS_CLIENT_ID) {
 }
 
 function OldAgentRedirect() {
-  const { agentId, threadId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/playground${threadId ? `/${threadId}` : ''}`} replace />
+  const { agentId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/agent-setup`} replace />
+}
+
+function PlaygroundRedirect() {
+  const { agentId } = useParams()
+  return <Navigate to={`/dashboard/${agentId}/agent-setup`} replace />
 }
 
 function KnowledgeBaseIndex() {
@@ -134,11 +138,14 @@ function DashboardIndexRedirect() {
   if (can(Permission.CHATS_READ)) {
     return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
   }
-  if (can(Permission.PLAYGROUND_ACCESS)) {
-    return <Navigate to={`/dashboard/${agentId}/playground`} replace />
+  if (can(Permission.AGENTS_MANAGE)) {
+    return <Navigate to={`/dashboard/${agentId}/agent-setup`} replace />
   }
   if (can(Permission.KB_READ)) {
     return <Navigate to={`/dashboard/${agentId}/knowledge-base`} replace />
+  }
+  if (can(Permission.PLAYGROUND_ACCESS)) {
+    return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
   }
   if (can(Permission.CUSTOMERS_READ)) {
     return <Navigate to={`/dashboard/${agentId}/customers`} replace />
@@ -234,7 +241,7 @@ const router = createBrowserRouter(
         <Route path="chats" element={<ChatsToInboxRedirect />} />
         <Route path="quick-replies" element={<QuickRepliesPage />} />
         <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
-        <Route path="playground/:threadId?" element={<AgentPage />} />
+        <Route path="playground/:threadId?" element={<PlaygroundRedirect />} />
         <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />
         <Route path="knowledge-base/:type" element={<KnowledgeBasePage />} />
         <Route path="channels" element={<ChannelsPage />} />

@@ -155,8 +155,6 @@ const whatsappDispatch = httpAction(async (ctx, req) => {
   //   return new Response(sig.message, { status: sig.status });
   // }
 
-  console.log("whatsappDispatch", rawBody);
-
   let object: string | undefined;
   try {
     const peek = JSON.parse(rawBody) as { object?: string };
@@ -165,13 +163,9 @@ const whatsappDispatch = httpAction(async (ctx, req) => {
     return new Response("invalid json", { status: 400 });
   }
 
-  console.log("whatsappDispatch object", object);
-
   if (object === 'whatsapp_business_account') {
-    console.log("whatsappDispatch whatsapp_business_account");
     return await whatsappReceive(ctx, rawBody);
   }
-  console.log("whatsappDispatch default");
 
   return new Response(null, { status: 200 });
 });

@@ -319,13 +319,6 @@ export async function receive(
       }
 
       for (const status of value.statuses ?? []) {
-        console.log("[whatsappWebhook.receive] status event received:", {
-          phoneNumberId,
-          externalId: status.id,
-          status: status.status,
-          timestamp: status.timestamp,
-          recipientId: status.recipient_id,
-        });
         try {
           await ctx.runMutation(internal.whatsappWebhook.handleStatus, {
             phoneNumberId,

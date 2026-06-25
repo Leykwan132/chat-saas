@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Gamepad2, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -68,13 +68,12 @@ function getNavItems(agentId: string): {
     team: [
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
       { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
-      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
     configuration: [
       { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
-      { to: `/dashboard/${agentId}/playground`, icon: Gamepad2, label: 'Playground', requiredPermission: Permission.PLAYGROUND_ACCESS },
+      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
       {
         to: `/dashboard/${agentId}/auto-booking`,
         icon: CalendarCheck,
@@ -231,6 +230,44 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
 
       {/* Nav */}
       <SidebarContent className="gap-0">
+        {configurationItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {configurationItems.map((item) => {
+                  const showChannelCount =
+                    item.label === 'Channels' &&
+                    connectedChannelCount !== undefined &&
+                    connectedChannelCount > 0;
+                  const tooltip = showChannelCount
+                    ? `${item.label} (${connectedChannelCount})`
+                    : item.label;
+
+                  return (
+                    <SidebarNavMenuItem
+                      key={item.to}
+                      to={item.to}
+                      end={item.end}
+                      tooltip={tooltip}
+                      icon={item.icon}
+                      label={item.label}
+                      badge={
+                        item.badge ??
+                        (showChannelCount ? (
+                          <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-sidebar-accent-foreground/15 text-[10px] font-bold leading-none text-sidebar-foreground">
+                            {connectedChannelCount}
+                          </span>
+                        ) : undefined)
+                      }
+                    />
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
         {engagementItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Engagement</SidebarGroupLabel>
@@ -264,27 +301,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     />
                   );
                 })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {configurationItems.length > 0 && (
-          <SidebarGroup>
-            <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {configurationItems.map((item) => (
-                  <SidebarNavMenuItem
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    tooltip={item.label}
-                    icon={item.icon}
-                    label={item.label}
-                    badge={item.badge}
-                  />
-                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -342,33 +358,17 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                         </Collapsible>
                       )}
 
-                      {/* Other Team Items (Channels, Analytics, etc.) */}
-                      {otherTeamItems.map((item) => {
-                        const showChannelCount =
-                          item.label === 'Channels' &&
-                          connectedChannelCount !== undefined &&
-                          connectedChannelCount > 0;
-                        const tooltip = showChannelCount
-                          ? `${item.label} (${connectedChannelCount})`
-                          : item.label;
-                        return (
-                          <SidebarNavMenuItem
-                            key={item.to}
-                            to={item.to}
-                            end
-                            tooltip={tooltip}
-                            icon={item.icon}
-                            label={item.label}
-                            badge={
-                              showChannelCount ? (
-                                <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-sidebar-accent-foreground/15 text-[10px] font-bold leading-none text-sidebar-foreground">
-                                  {connectedChannelCount}
-                                </span>
-                              ) : undefined
-                            }
-                          />
-                        );
-                      })}
+                      {/* Other Team Items (Analytics, etc.) */}
+                      {otherTeamItems.map((item) => (
+                        <SidebarNavMenuItem
+                          key={item.to}
+                          to={item.to}
+                          end
+                          tooltip={item.label}
+                          icon={item.icon}
+                          label={item.label}
+                        />
+                      ))}
                     </>
                   );
                 })()}

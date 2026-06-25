@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowRight, Globe, FileText, AlignLeft, HelpCircle, File, Info, Lightbulb } from 'lucide-react';
+import { Globe, FileText, AlignLeft, HelpCircle, File, Info, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from "sonner";
 import { PageDescription } from '@/components/PageDescription';
+import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Progress } from '@/components/ui/progress';
@@ -148,19 +149,15 @@ export default function KnowledgeBasePage() {
               Add content your AI can reference when answering customer questions.
             </PageDescription>
           </div>
-          <Button onClick={() => navigate(`/dashboard/${agentId}/playground`)}>
-            Test in playground
-            <ArrowRight className="size-4" />
-          </Button>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[252px_1fr_220px]">
+        <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_auto]">
           {/* LEFT: Nav tabs */}
           <div className="flex flex-col gap-8">
             <div className="flex flex-col gap-2.5">
-              <span className="px-3 text-base font-semibold text-muted-foreground">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
                 Sources
-              </span>
+              </h2>
               <nav className="flex flex-col gap-1">
                 {KNOWLEDGE_TABS.map(({ type: tabType, label, icon: Icon }) => {
                   const isActive = type === tabType;
@@ -181,12 +178,10 @@ export default function KnowledgeBasePage() {
                   );
                 })}
               </nav>
-            </div>
 
-            <div className="flex flex-col gap-2.5">
-              <span className="px-3 text-base font-semibold text-muted-foreground">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
                 Send Media
-              </span>
+              </h2>
               <nav className="flex flex-col gap-1">
                 {MEDIA_TABS.map(({ type: tabType, label, icon: Icon }) => {
                   const isActive = type === tabType;
@@ -208,6 +203,34 @@ export default function KnowledgeBasePage() {
                 })}
               </nav>
             </div>
+
+            <Separator />
+
+            <div className="flex flex-col gap-2.5">
+              <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                Storage limit
+              </h2>
+
+              <div className="flex w-full flex-col gap-3">
+                {statRows.map(({ label, count, size, icon: Icon }) => (
+                  <div key={label} className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Icon className="size-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{count} {label}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground tabular-nums">{formatFileSize(size)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="w-full space-y-1">
+                <span className="text-xs text-muted-foreground">Storage used</span>
+                <Progress value={Math.min((totalFileSize / maxTotalSize) * 100, 100)} className="h-1" />
+                <div className="flex justify-end text-xs text-muted-foreground tabular-nums">
+                  {formatFileSize(totalFileSize)} of {formatFileSize(maxTotalSize)}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* MIDDLE: Type-specific content */}
@@ -215,7 +238,7 @@ export default function KnowledgeBasePage() {
             <div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="min-w-0 flex-1">
-                  <h2 className="flex items-center gap-2 text-3xl font-semibold tracking-tight">
+                  <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
                     {type === 'web' && 'Web Sources'}
                     {type === 'file' && (
                       <span className="flex items-center gap-1.5">
@@ -310,34 +333,9 @@ export default function KnowledgeBasePage() {
             )}
           </div>
 
-          {/* RIGHT: Storage limit + stats */}
-          <div className="flex flex-col gap-5">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <FileText className="size-4 text-foreground" />
-                <h2 className="text-sm font-semibold text-foreground">Storage limit</h2>
-              </div>
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Storage used</span>
-                  <span>{formatFileSize(totalFileSize)} of {formatFileSize(maxTotalSize)}</span>
-                </div>
-                <Progress value={Math.min((totalFileSize / maxTotalSize) * 100, 100)} className="h-1" />
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {statRows.map(({ label, count, size, icon: Icon }) => (
-                <div key={label} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
-                  <div className="flex items-center gap-2">
-                    <Icon className="size-4 text-muted-foreground" />
-                    <span className="text-sm font-medium text-foreground">{count} {label}</span>
-                  </div>
-                  <span className="text-xs text-muted-foreground tabular-nums">{formatFileSize(size)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          {selectedAgentId ? (
+            <AgentPlaygroundPanel agentId={selectedAgentId} className="hidden xl:flex" />
+          ) : null}
         </div>
       </div>
 
