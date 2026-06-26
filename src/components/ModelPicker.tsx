@@ -198,7 +198,7 @@ export function ModelPicker({
           variant="outline"
           className={cn(
             'h-9 min-h-9 w-full justify-start gap-2 rounded-md border border-transparent bg-input/50 px-3.5 py-0 text-sm font-normal shadow-none',
-            'hover:bg-input/50 hover:text-foreground',
+            'hover:bg-input/50 hover:text-foreground dark:bg-input/50 dark:hover:bg-input/50 dark:aria-expanded:bg-input/50',
             'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30',
             className,
           )}

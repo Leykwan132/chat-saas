@@ -19,6 +19,7 @@ export type WorkflowNodeData = Record<string, unknown> & {
 
 export type WorkflowEdgeData = Record<string, unknown> & {
   routePoints?: WorkflowEdgeRoutePoint[];
+  onSelectTargetNode?: () => void;
 };
 
 export type WorkflowEdgeRoutePoint = {

@@ -57,17 +57,24 @@ export function WorkflowEdge({
         <EdgeLabelRenderer>
           <div
             className="nodrag nopan absolute z-50"
+            onClick={(event) => {
+              event.stopPropagation();
+              data?.onSelectTargetNode?.();
+            }}
             style={{
               pointerEvents: 'all',
               transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
               isolation: 'isolate',
             }}
           >
-            <span className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+            <button
+              type="button"
+              className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white shadow-sm"
+            >
               <ReceiptText className="size-3 shrink-0" aria-hidden="true" />
               <span className="sr-only">Condition:</span>
               <span className="min-w-0 truncate">{label}</span>
-            </span>
+            </button>
           </div>
         </EdgeLabelRenderer>
       ) : null}

@@ -47,14 +47,14 @@ The page uses a two-column layout: a fixed-width sidebar for navigation and a ma
     *   `--color-bg-dark`: `#24292e`
     *   `--color-bg-light`: `#ffffff`
 *   **Typography:**
-    *   `--font-sans`: "Google Sans Flex", "Geist Fallback"
+    *   `--font-sans`: "Geist", ui-sans-serif, system-ui, sans-serif
 *   **Spacing:** Confirm specific values for margins, padding, and gutters.
 *   **Border Radius:** Confirm specific values.
 *   **Shadows:** Confirm specific values.
 
 ### 7.2. Typography
-*   **Headings:** Use `var(--font-sans)` ("Google Sans Flex", "Geist Fallback").
-*   **Body Text:** Use `var(--font-sans)` ("Google Sans Flex", "Geist Fallback").
+*   **Headings:** Use `var(--font-sans)` ("Geist").
+*   **Body Text:** Use `var(--font-sans)` ("Geist").
 
 ### 7.3. Color and Surfaces
 *   **Background:** `var(--color-bg-light)` for light mode, `var(--color-bg-dark)` for dark mode.

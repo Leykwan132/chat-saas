@@ -1,16 +1,13 @@
 import { useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
-import { Globe, FileText, AlignLeft, HelpCircle, File, Info, Lightbulb } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Globe, FileText, AlignLeft, HelpCircle, Info, Lightbulb } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { toast } from "sonner";
+import { toast } from 'sonner';
 import { PageDescription } from '@/components/PageDescription';
-import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +16,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatFileSize } from '@/components/knowledge-base/helpers';
 import { Separator } from '@/components/ui/separator';
 import { WebSection } from '@/components/knowledge-base/WebSection';
 import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
 import { ImageSection } from '@/components/knowledge-base/ImageSection';
+import {
+  KnowledgeBaseNavigation,
+  type KnowledgeType,
+} from '@/components/knowledge-base/KnowledgeBaseNavigation';
+import { KnowledgeBaseStoragePanel } from '@/components/knowledge-base/KnowledgeBaseStoragePanel';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
@@ -34,23 +35,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-// ─── Config ────────────────────────────────────────────────────
-
-type KnowledgeType = 'web' | 'file' | 'text' | 'qa' | 'media';
-
-const KNOWLEDGE_TABS: { type: KnowledgeType; label: string; icon: React.ElementType }[] = [
-  { type: 'web', label: 'Web', icon: Globe },
-  { type: 'file', label: 'Files', icon: FileText },
-  { type: 'text', label: 'Text', icon: AlignLeft },
-  { type: 'qa', label: 'Q&A', icon: HelpCircle },
-];
-
-const MEDIA_TABS: { type: KnowledgeType; label: string; icon: React.ElementType }[] = [
-  { type: 'media', label: 'Files', icon: File },
-];
-
-// ─── Main Page ──────────────────────────────────────────────────
 
 export default function KnowledgeBasePage() {
   const { agentId, type: rawType } = useParams();
@@ -70,7 +54,6 @@ export default function KnowledgeBasePage() {
   const enqueueImageDelete = useAction(api.knowledgeBaseImages.enqueueImageDelete);
   const deleteWebEntryGroup = useAction(api.cloudflare.deleteWebEntryGroup);
 
-  // ── Delete dialog state ──
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<
     | { type: 'web' | 'file' | 'text' | 'qa'; entryId: Id<any>; cfItemId?: string; isGroup?: boolean }
@@ -83,7 +66,6 @@ export default function KnowledgeBasePage() {
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
   const maxTotalSize = storageLimits?.maxTotalSize ?? 4 * 1024 * 1024;
 
-  // ── Stats ──
   const textCount = textEntries?.filter((e: any) => e.status === "completed").length ?? 0;
   const fileCount = fileEntries?.filter((e: any) => e.status === "completed").length ?? 0;
   const webCount = webEntries?.filter((e: any) => e.parentId && e.status === "completed").length ?? 0;
@@ -98,7 +80,6 @@ export default function KnowledgeBasePage() {
 
   const totalFileSize = webSize + fileSizeVal + textSize + qaSize + mediaSize;
 
-  // ── Shared delete handler ──
   const openDeleteDialog = (
     entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
     entryId: Id<any> | string,
@@ -127,8 +108,12 @@ export default function KnowledgeBasePage() {
         await enqueueDelete({ entryId: deleteTarget.entryId, entryType: deleteTarget.type, cfItemId: deleteTarget.cfItemId });
         toast.success("Item is now being deleted");
       }
-    } catch { toast.error("Failed to delete item"); } finally {
-      setIsDeleting(false); setDeleteDialogOpen(false); setDeleteTarget(null);
+    } catch {
+      toast.error("Failed to delete item");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -151,89 +136,12 @@ export default function KnowledgeBasePage() {
           </div>
         </header>
 
-        <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_auto]">
-          {/* LEFT: Nav tabs */}
-          <div className="flex flex-col gap-8">
-            <div className="flex flex-col gap-2.5">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Sources
-              </h2>
-              <nav className="flex flex-col gap-1">
-                {KNOWLEDGE_TABS.map(({ type: tabType, label, icon: Icon }) => {
-                  const isActive = type === tabType;
-                  return (
-                    <button
-                      key={tabType}
-                      onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/${tabType}`)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-medium transition-colors',
-                        isActive
-                          ? 'bg-secondary font-semibold text-secondary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                      )}
-                    >
-                      <Icon className="size-[18px] shrink-0" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </nav>
+        <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
+          <KnowledgeBaseNavigation
+            activeType={type}
+            onSelect={(nextType) => navigate(`/dashboard/${agentId}/knowledge-base/${nextType}`)}
+          />
 
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Send Media
-              </h2>
-              <nav className="flex flex-col gap-1">
-                {MEDIA_TABS.map(({ type: tabType, label, icon: Icon }) => {
-                  const isActive = type === tabType;
-                  return (
-                    <button
-                      key={tabType}
-                      onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/${tabType}`)}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[15px] font-medium transition-colors',
-                        isActive
-                          ? 'bg-secondary font-semibold text-secondary-foreground'
-                          : 'text-muted-foreground hover:bg-accent hover:text-foreground',
-                      )}
-                    >
-                      <Icon className="size-[18px] shrink-0" />
-                      {label}
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-
-            <Separator />
-
-            <div className="flex flex-col gap-2.5">
-              <h2 className="text-lg font-semibold tracking-tight text-foreground">
-                Storage limit
-              </h2>
-
-              <div className="flex w-full flex-col gap-3">
-                {statRows.map(({ label, count, size, icon: Icon }) => (
-                  <div key={label} className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <Icon className="size-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{count} {label}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground tabular-nums">{formatFileSize(size)}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="w-full space-y-1">
-                <span className="text-xs text-muted-foreground">Storage used</span>
-                <Progress value={Math.min((totalFileSize / maxTotalSize) * 100, 100)} className="h-1" />
-                <div className="flex justify-end text-xs text-muted-foreground tabular-nums">
-                  {formatFileSize(totalFileSize)} of {formatFileSize(maxTotalSize)}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* MIDDLE: Type-specific content */}
           <div className="flex flex-col gap-4 min-w-0">
             <div>
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -333,13 +241,15 @@ export default function KnowledgeBasePage() {
             )}
           </div>
 
-          {selectedAgentId ? (
-            <AgentPlaygroundPanel agentId={selectedAgentId} className="hidden xl:flex" />
-          ) : null}
+          <KnowledgeBaseStoragePanel
+            rows={statRows}
+            totalFileSize={totalFileSize}
+            maxTotalSize={maxTotalSize}
+            className="lg:col-start-2 xl:col-start-auto"
+          />
         </div>
       </div>
 
-      {/* ── Delete Dialog ── */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -351,8 +261,22 @@ export default function KnowledgeBasePage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex flex-row justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setDeleteDialogOpen(false)} disabled={isDeleting}>Cancel</Button>
-            <Button type="button" variant="destructive" onClick={() => void handleDeleteConfirm()} disabled={isDeleting}>{isDeleting ? <Spinner className="size-4" /> : "Delete"}</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => void handleDeleteConfirm()}
+              disabled={isDeleting}
+            >
+              {isDeleting ? <Spinner className="size-4" /> : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

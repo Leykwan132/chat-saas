@@ -6,7 +6,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans: "Google Sans Flex", ui-sans-serif, system-ui, sans-serif;
+    --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
     --font-title: "Gilda Display", serif;
 }
 
@@ -149,7 +149,7 @@ body[data-scroll-locked] .right-scroll-bar-position {
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --font-sans: "Google Sans Flex", sans-serif;
+    --font-sans: "Geist", sans-serif;
     --font-title: "Gilda Display", serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);

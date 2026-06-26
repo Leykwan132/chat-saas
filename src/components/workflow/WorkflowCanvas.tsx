@@ -44,14 +44,8 @@ type WorkflowCanvasProps = {
   nodes: WorkflowFlowNode[];
   edges: WorkflowFlowEdge[];
   onSelectNode: (nodeId?: Id<'workflowNodes'>) => void;
-  onNodeMoved: (
-    nodeId: Id<'workflowNodes'>,
-    position: { x: number; y: number },
-  ) => void;
-  onNodesConnected: (
-    sourceNodeId: Id<'workflowNodes'>,
-    targetNodeId: Id<'workflowNodes'>,
-  ) => void;
+  onNodeMoved: (nodeId: Id<'workflowNodes'>, position: { x: number; y: number }) => void;
+  onNodesConnected: (sourceNodeId: Id<'workflowNodes'>, targetNodeId: Id<'workflowNodes'>) => void;
   onEdgeRemoved: (edgeId: Id<'workflowEdges'>) => void;
   onCleanup: () => void;
   onReset: () => void;
@@ -218,6 +212,15 @@ function WorkflowCanvasInner({
     }
   };
 
+  const handleSelectEdge = useCallback(
+    (edge: WorkflowFlowEdge) => {
+      if (isTemporaryWorkflowEdge(edge)) return;
+      setSelectedEdgeId(edge.id);
+      onSelectNode(edge.target as Id<'workflowNodes'>);
+    },
+    [onSelectNode],
+  );
+
   const renderedEdges = localEdges.map((edge) => {
     if (isTemporaryWorkflowEdge(edge)) return edge;
 
@@ -225,6 +228,10 @@ function WorkflowCanvasInner({
       ...edge,
       selected: edge.id === selectedEdgeId,
       zIndex: edge.id === selectedEdgeId ? SELECTED_EDGE_Z_INDEX : WORKFLOW_EDGE_Z_INDEX,
+      data: {
+        ...edge.data,
+        onSelectTargetNode: () => handleSelectEdge(edge),
+      },
     } satisfies WorkflowFlowEdge;
   });
 
@@ -255,8 +262,7 @@ function WorkflowCanvasInner({
       onEdgesDelete={handleEdgesDelete}
       onEdgeClick={(event, edge) => {
         event.stopPropagation();
-        setSelectedEdgeId(edge.id);
-        onSelectNode(undefined);
+        handleSelectEdge(edge);
       }}
       onNodeClick={(_event, node) => {
         setSelectedEdgeId(undefined);

@@ -102,7 +102,7 @@ export default function TemplateDetailPage() {
 
   if (templates.length > 0 && !template) {
     return (
-      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-6">
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit gap-1 text-muted-foreground" asChild>
           <Link to={`/dashboard/${agentId}/templates`}>
             <ArrowLeft className="size-4" />
@@ -126,7 +126,7 @@ export default function TemplateDetailPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 animate-fade-in pb-12 px-4 md:px-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 animate-fade-in pb-12">
       <div>
         <Button
           variant="ghost"

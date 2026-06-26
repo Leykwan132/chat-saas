@@ -479,7 +479,7 @@ export default function CreateTemplatePage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 md:px-6 pb-20 animate-fade-in">
+    <div className="mx-auto w-full max-w-7xl pb-20 animate-fade-in">
       <div className="mb-6">
         <Button
           variant="ghost"

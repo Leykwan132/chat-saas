@@ -52,7 +52,7 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['"Google Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Geist"', 'system-ui', 'sans-serif'],
       },
       keyframes: {
         'fade-in': {
