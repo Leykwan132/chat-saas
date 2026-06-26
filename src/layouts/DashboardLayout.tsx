@@ -113,8 +113,9 @@ function DashboardContent() {
   const location = useLocation();
   const isInboxPage = /\/inbox\/?$/.test(location.pathname);
   const isCalendarPage = /\/calendar\/?$/.test(location.pathname);
+  const isWorkflowPage = /\/workflow\/?$/.test(location.pathname);
   const isCreateAutoBookingPage = /\/auto-booking\/new\/?$/.test(location.pathname);
-  const isFullHeightPage = isInboxPage || isCalendarPage;
+  const isFullHeightPage = isInboxPage || isCalendarPage || isWorkflowPage;
   const agent = useQuery(
     api.agents.get,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',

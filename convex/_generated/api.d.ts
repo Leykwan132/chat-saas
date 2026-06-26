@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as agentAccess from "../agentAccess.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
 import type * as agents from "../agents.js";
@@ -117,6 +118,10 @@ import type * as whatsappSync from "../whatsappSync.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
 import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
 import type * as whatsappWebhook from "../whatsappWebhook.js";
+import type * as workflowCore from "../workflowCore.js";
+import type * as workflowReset from "../workflowReset.js";
+import type * as workflowValidators from "../workflowValidators.js";
+import type * as workflows from "../workflows.js";
 import type * as workosClient from "../workosClient.js";
 import type * as workosOrganizationActions from "../workosOrganizationActions.js";
 import type * as workosWebhook from "../workosWebhook.js";
@@ -129,6 +134,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agentAccess: typeof agentAccess;
   agentRuntime: typeof agentRuntime;
   agentUsage: typeof agentUsage;
   agents: typeof agents;
@@ -238,6 +244,10 @@ declare const fullApi: ApiFromModules<{
   whatsappTemplates: typeof whatsappTemplates;
   whatsappTemplatesAction: typeof whatsappTemplatesAction;
   whatsappWebhook: typeof whatsappWebhook;
+  workflowCore: typeof workflowCore;
+  workflowReset: typeof workflowReset;
+  workflowValidators: typeof workflowValidators;
+  workflows: typeof workflows;
   workosClient: typeof workosClient;
   workosOrganizationActions: typeof workosOrganizationActions;
   workosWebhook: typeof workosWebhook;

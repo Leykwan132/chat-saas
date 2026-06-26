@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { autoBookingSessionStatusValidator } from "./autoBookingSessionStatus";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
+import { workflowNodeKindValidator } from "./workflowValidators";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -342,6 +343,40 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
+  workflows: defineTable({
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    userId: v.string(),
+    name: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"])
+    .index("by_userId_and_orgId", ["userId", "orgId"]),
+  workflowNodes: defineTable({
+    workflowId: v.id("workflows"),
+    kind: workflowNodeKindValidator,
+    title: v.string(),
+    description: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    positionX: v.number(),
+    positionY: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_workflowId", ["workflowId"]),
+  workflowEdges: defineTable({
+    workflowId: v.id("workflows"),
+    sourceNodeId: v.id("workflowNodes"),
+    targetNodeId: v.id("workflowNodes"),
+    label: v.optional(v.string()),
+    detail: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_workflowId", ["workflowId"])
+    .index("by_workflowId_and_sourceNodeId", ["workflowId", "sourceNodeId"])
+    .index("by_workflowId_and_targetNodeId", ["workflowId", "targetNodeId"]),
   textEntries: defineTable({
     agentId: v.id("agents"),
     title: v.string(),

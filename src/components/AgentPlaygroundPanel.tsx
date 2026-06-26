@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
+import { motion } from 'motion/react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -9,7 +10,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { cn } from '@/lib/utils';
 
-const PANEL_HEIGHT_CLASS = 'min-h-[541px]';
+const PANEL_HEIGHT_CLASS = 'h-[calc(100svh-7rem)] min-h-[541px]';
 
 type AgentPlaygroundPanelProps = {
   agentId: Id<'agents'>;
@@ -61,7 +62,7 @@ export function AgentPlaygroundPanel({ agentId, className }: AgentPlaygroundPane
     return (
       <div
         className={cn(
-          'flex w-[360px] items-center justify-center',
+          'sticky top-8 flex w-[360px] shrink-0 items-center justify-center border-l border-border bg-background',
           PANEL_HEIGHT_CLASS,
           className,
         )}
@@ -76,13 +77,17 @@ export function AgentPlaygroundPanel({ agentId, className }: AgentPlaygroundPane
   }
 
   return (
-    <aside
+    <motion.aside
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        'sticky top-20 flex w-[360px] min-h-0 shrink-0 flex-col',
+        'sticky top-8 flex w-[360px] min-h-0 shrink-0 flex-col overflow-hidden border-l border-border bg-background shadow-xl',
+        PANEL_HEIGHT_CLASS,
         className,
       )}
     >
-      <span className="mb-2.5 px-1 text-lg font-semibold tracking-tight text-foreground">
+      <span className="shrink-0 border-b border-border px-4 py-3 text-lg font-semibold tracking-tight text-foreground">
         Playground
       </span>
       <TestChatWindow
@@ -94,7 +99,8 @@ export function AgentPlaygroundPanel({ agentId, className }: AgentPlaygroundPane
         indexingStatus={indexingStatus}
         isCheckingStatus={isCheckingStatus}
         onCheckStatus={checkStatus}
+        fillContainer
       />
-    </aside>
+    </motion.aside>
   );
 }

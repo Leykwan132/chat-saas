@@ -1,10 +1,15 @@
 import { v } from "convex/values";
-import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
+import { ensureWorkflowForAgent } from "./workflowCore";
+import {
+  assertCanCreateAgent,
+  assertCanManageAgent,
+  getOwnedAgent,
+} from "./agentAccess";
+import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 
 const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
@@ -32,33 +37,6 @@ async function assertEnabledModel(modelId: string) {
   if (!isEnabledModel(modelId)) {
     throw new Error("Selected model is not available");
   }
-}
-
-async function getOwnedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">) {
-  const { userId, orgId } = await getAuthContext(ctx);
-
-  const agent = await ctx.db.get(agentId);
-  if (agent === null) {
-    return null;
-  }
-
-  const normalizedOrgId =
-    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
-  const agentOrgId =
-    !agent.orgId || agent.orgId === "personal" ? PERSONAL_ORG_FALLBACK : agent.orgId;
-
-  if (agentOrgId !== PERSONAL_ORG_FALLBACK) {
-    if (agentOrgId === normalizedOrgId) {
-      return agent;
-    }
-    return null;
-  }
-
-  if (agent.userId !== userId) {
-    return null;
-  }
-
-  return agent;
 }
 
 async function listAgentsForContext(
@@ -158,12 +136,10 @@ export const create = mutation({
     humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
   },
   handler: async (ctx, args) => {
-    const { userId, orgId, permissions } = await getAuthContext(ctx);
+    const auth = await getAuthContext(ctx);
+    const { userId, orgId } = auth;
 
-    console.log('agent create permissions', permissions);
-    if (orgId && orgId !== "personal" && !permissions.includes("agents:create")) {
-      throw new Error("You do not have permission to create agents in this workspace.");
-    }
+    assertCanCreateAgent(auth);
 
     const stripeInfo = await getPlanFromStripe(ctx, userId);
     const plan = stripeInfo.plan;
@@ -213,6 +189,12 @@ export const create = mutation({
       await provisionOrgMemberSchedulesForAgent(ctx, agentId, orgId);
     }
 
+    const agent = await ctx.db.get(agentId);
+    if (agent === null) {
+      throw new Error("Agent not found after create");
+    }
+    await ensureWorkflowForAgent(ctx, agent);
+
     return agentId;
   },
 });
@@ -234,10 +216,8 @@ export const update = mutation({
     humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
   },
   handler: async (ctx, args) => {
-    const { orgId, permissions } = await getAuthContext(ctx);
-    if (orgId && orgId !== "personal" && !permissions.includes("agents:manage")) {
-      throw new Error("You do not have permission to modify agents in this workspace.");
-    }
+    const auth = await getAuthContext(ctx);
+    assertCanManageAgent(auth);
 
     const agent = await getOwnedAgent(ctx, args.agentId);
     if (agent === null) {
@@ -305,10 +285,8 @@ export const remove = mutation({
     agentId: v.id("agents"),
   },
   handler: async (ctx, args) => {
-    const { orgId, permissions } = await getAuthContext(ctx);
-    if (orgId && orgId !== "personal" && !permissions.includes("agents:manage")) {
-      throw new Error("You do not have permission to delete agents in this workspace.");
-    }
+    const auth = await getAuthContext(ctx);
+    assertCanManageAgent(auth);
 
     const agent = await getOwnedAgent(ctx, args.agentId);
     if (agent === null) {

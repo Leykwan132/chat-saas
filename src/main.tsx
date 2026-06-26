@@ -43,6 +43,7 @@ import SchedulePage from './pages/SchedulePage.tsx'
 import ScheduleUserDetailPage from './pages/ScheduleUserDetailPage.tsx'
 import ScheduleUserAvailabilityPage from './pages/ScheduleUserAvailabilityPage.tsx'
 import InstructionsPage from './pages/InstructionsPage.tsx'
+import WorkflowPage from './pages/WorkflowPage.tsx'
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/sonner"
 import { Spinner } from "@/components/ui/spinner"
@@ -270,6 +271,7 @@ const router = createBrowserRouter(
         <Route path="auto-booking" element={<AutoBookingPage />} />
         <Route path="lead-assignment" element={<LeadAssignmentPage />} />
         <Route path="agent-setup" element={<InstructionsPage />} />
+        <Route path="workflow" element={<WorkflowPage />} />
         <Route path="analytics" element={<AnalyticsIndex />} />
         <Route path="analytics/:section" element={<AnalyticsPage />} />
         <Route path="settings" element={<SettingsPage />} />

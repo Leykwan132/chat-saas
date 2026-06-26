@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle } from 'lucide-react';
+import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle, Workflow } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -72,6 +72,7 @@ function getNavItems(agentId: string): {
     ],
     configuration: [
       { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
+      { to: `/dashboard/${agentId}/workflow`, icon: Workflow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
       {
