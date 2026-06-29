@@ -118,6 +118,7 @@ import type * as whatsappSync from "../whatsappSync.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
 import type * as whatsappTemplatesAction from "../whatsappTemplatesAction.js";
 import type * as whatsappWebhook from "../whatsappWebhook.js";
+import type * as workflowBookingServices from "../workflowBookingServices.js";
 import type * as workflowCore from "../workflowCore.js";
 import type * as workflowReset from "../workflowReset.js";
 import type * as workflowValidators from "../workflowValidators.js";
@@ -244,6 +245,7 @@ declare const fullApi: ApiFromModules<{
   whatsappTemplates: typeof whatsappTemplates;
   whatsappTemplatesAction: typeof whatsappTemplatesAction;
   whatsappWebhook: typeof whatsappWebhook;
+  workflowBookingServices: typeof workflowBookingServices;
   workflowCore: typeof workflowCore;
   workflowReset: typeof workflowReset;
   workflowValidators: typeof workflowValidators;

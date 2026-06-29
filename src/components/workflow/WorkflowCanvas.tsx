@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   applyNodeChanges,
-  Background,
-  BackgroundVariant,
-  Controls,
   ReactFlow,
   ReactFlowProvider,
   type Connection,
@@ -14,29 +11,28 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { isWorkflowTerminalNodeKind } from '../../../shared/workflows';
-import { WorkflowEdge } from './WorkflowEdge';
-import { WorkflowNode } from './WorkflowNode';
+import { WorkflowBackground } from './WorkflowBackground';
 import { WorkflowToolbar } from './WorkflowToolbar';
+import { WorkflowAutomationStateProvider } from './workflowAutomationState';
+import { workflowCanvasEdgeTypes, workflowCanvasNodeTypes } from './workflowCanvasConfig';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
+import { useWorkflowCanvasView } from './useWorkflowCanvasView';
 import {
   createTemporaryWorkflowEdge,
   getDeletedWorkflowEdgeIds,
+  isAutomationWorkflowEdge,
   isTemporaryWorkflowEdge,
   keepOnlyEdgeDeletions,
   removeDeletedWorkflowEdges,
   SELECTED_EDGE_Z_INDEX,
   type WorkflowConnectionCandidate,
 } from './workflowCanvasEdges';
-
-const nodeTypes = {
-  workflow: WorkflowNode,
-};
-
-const edgeTypes = {
-  workflow: WorkflowEdge,
-};
+import {
+  canConnectWorkflowFlowNodes,
+  findPersistedWorkflowFlowNode,
+  isPersistedWorkflowFlowNode,
+} from './workflowCanvasNodes';
 
 const MIN_PROXIMITY_DISTANCE = 180;
 
@@ -65,32 +61,37 @@ function WorkflowCanvasInner({
   cleanupDisabled = false,
   resetDisabled = false,
 }: WorkflowCanvasProps) {
-  const [localNodes, setLocalNodes] = useState<WorkflowFlowNode[]>(nodes);
-  const [localEdges, setLocalEdges] = useState<WorkflowFlowEdge[]>(edges);
   const [selectedEdgeId, setSelectedEdgeId] = useState<string>();
-
-  useEffect(() => {
-    setLocalNodes(nodes);
-  }, [nodes]);
-
-  useEffect(() => {
-    setLocalEdges(edges);
-  }, [edges]);
+  const {
+    activeView,
+    handleViewChange,
+    localEdges,
+    localNodes,
+    setLocalEdges,
+    setLocalNodes,
+  } = useWorkflowCanvasView({
+    nodes,
+    edges,
+    onSelectNode,
+    onClearSelectedEdge: () => setSelectedEdgeId(undefined),
+  });
 
   useEffect(() => {
     if (!selectedEdgeId) return;
     if (localEdges.some((edge) => !isTemporaryWorkflowEdge(edge) && edge.id === selectedEdgeId)) return;
     setSelectedEdgeId(undefined);
   }, [localEdges, selectedEdgeId]);
-
   const getClosestEdge = useCallback(
     (draggedNode: WorkflowFlowNode): WorkflowConnectionCandidate | null => {
+      if (!isPersistedWorkflowFlowNode(draggedNode)) return null;
       const closestNode = localNodes.reduce<{
         distance: number;
-        node?: WorkflowFlowNode;
+        node?: typeof draggedNode;
       }>(
         (closest, node) => {
-          if (node.id === draggedNode.id) return closest;
+          if (!isPersistedWorkflowFlowNode(node) || node.id === draggedNode.id) {
+            return closest;
+          }
 
           const dx = node.position.x - draggedNode.position.x;
           const dy = node.position.y - draggedNode.position.y;
@@ -117,12 +118,7 @@ function WorkflowCanvasInner({
       const sourceNode = closestNodeIsSource ? closestNode.node : draggedNode;
       const targetNode = closestNodeIsSource ? draggedNode : closestNode.node;
 
-      if (
-        isWorkflowTerminalNodeKind(sourceNode.data.kind) ||
-        targetNode.data.kind === 'start'
-      ) {
-        return null;
-      }
+      if (!canConnectWorkflowFlowNodes(sourceNode, targetNode)) return null;
 
       return {
         sourceNodeId: sourceNode.data.nodeId,
@@ -147,13 +143,10 @@ function WorkflowCanvasInner({
     ({ source, target }: Pick<Connection, 'source' | 'target'>): WorkflowConnectionCandidate | null => {
       if (source === target) return null;
 
-      const sourceNode = localNodes.find((node) => node.id === source);
-      const targetNode = localNodes.find((node) => node.id === target);
+      const sourceNode = findPersistedWorkflowFlowNode(localNodes, source);
+      const targetNode = findPersistedWorkflowFlowNode(localNodes, target);
       if (!sourceNode || !targetNode) return null;
-      if (
-        isWorkflowTerminalNodeKind(sourceNode.data.kind) ||
-        targetNode.data.kind === 'start'
-      ) {
+      if (!canConnectWorkflowFlowNodes(sourceNode, targetNode)) {
         return null;
       }
 
@@ -168,8 +161,8 @@ function WorkflowCanvasInner({
   const handleNodesChange = (changes: NodeChange<WorkflowFlowNode>[]) => {
     setLocalNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
   };
-
   const handleNodeDrag: OnNodeDrag<WorkflowFlowNode> = (_event, node) => {
+    if (!isPersistedWorkflowFlowNode(node)) return;
     const closestEdge = getClosestEdge(node);
 
     setLocalEdges((currentEdges) => {
@@ -180,8 +173,8 @@ function WorkflowCanvasInner({
       return nextEdges;
     });
   };
-
   const handleNodeDragStop: OnNodeDrag<WorkflowFlowNode> = (_event, node) => {
+    if (!isPersistedWorkflowFlowNode(node)) return;
     onNodeMoved(node.data.nodeId, node.position);
     const closestEdge = getClosestEdge(node);
     setLocalEdges((currentEdges) => (
@@ -214,7 +207,7 @@ function WorkflowCanvasInner({
 
   const handleSelectEdge = useCallback(
     (edge: WorkflowFlowEdge) => {
-      if (isTemporaryWorkflowEdge(edge)) return;
+      if (isTemporaryWorkflowEdge(edge) || isAutomationWorkflowEdge(edge)) return;
       setSelectedEdgeId(edge.id);
       onSelectNode(edge.target as Id<'workflowNodes'>);
     },
@@ -222,7 +215,7 @@ function WorkflowCanvasInner({
   );
 
   const renderedEdges = localEdges.map((edge) => {
-    if (isTemporaryWorkflowEdge(edge)) return edge;
+    if (isTemporaryWorkflowEdge(edge) || isAutomationWorkflowEdge(edge)) return edge;
 
     return {
       ...edge,
@@ -234,17 +227,18 @@ function WorkflowCanvasInner({
       },
     } satisfies WorkflowFlowEdge;
   });
+  const automationView = activeView !== 'messageHandling';
 
   return (
     <ReactFlow
       nodes={localNodes}
       edges={renderedEdges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
+      nodeTypes={workflowCanvasNodeTypes}
+      edgeTypes={workflowCanvasEdgeTypes}
       fitView
-      fitViewOptions={{ padding: 0.25 }}
+      fitViewOptions={{ padding: automationView ? 0.45 : 0.25 }}
       minZoom={0.35}
-      maxZoom={1.6}
+      maxZoom={automationView ? 1.35 : 1.6}
       nodesDraggable
       nodesConnectable
       deleteKeyCode={['Backspace', 'Delete']}
@@ -265,6 +259,7 @@ function WorkflowCanvasInner({
         handleSelectEdge(edge);
       }}
       onNodeClick={(_event, node) => {
+        if (!isPersistedWorkflowFlowNode(node)) return;
         setSelectedEdgeId(undefined);
         onSelectNode(node.data.nodeId);
       }}
@@ -277,23 +272,25 @@ function WorkflowCanvasInner({
       onNodeDragStop={handleNodeDragStop}
       proOptions={{ hideAttribution: true }}
     >
-      <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-      <Controls position="bottom-left" showInteractive={false} />
+      <WorkflowBackground />
       <WorkflowToolbar
+        activeView={activeView}
+        onViewChange={handleViewChange}
         onCleanup={onCleanup}
         onReset={onReset}
-        cleanupDisabled={cleanupDisabled}
+        cleanupDisabled={cleanupDisabled || activeView !== 'messageHandling'}
         resetDisabled={resetDisabled}
       />
     </ReactFlow>
   );
 }
-
 export function WorkflowCanvas(props: WorkflowCanvasProps) {
   return (
     <div className="min-h-0 flex-1 bg-background">
       <ReactFlowProvider>
-        <WorkflowCanvasInner {...props} />
+        <WorkflowAutomationStateProvider>
+          <WorkflowCanvasInner {...props} />
+        </WorkflowAutomationStateProvider>
       </ReactFlowProvider>
     </div>
   );

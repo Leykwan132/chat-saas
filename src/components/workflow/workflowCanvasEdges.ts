@@ -1,7 +1,11 @@
 import { MarkerType, type OnBeforeDelete } from '@xyflow/react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
-import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
+import {
+  AUTOMATION_WORKFLOW_EDGE_PREFIX,
+  type WorkflowFlowEdge,
+  type WorkflowFlowNode,
+} from './workflowTypes';
 
 const TEMP_WORKFLOW_EDGE_PREFIX = 'temp:';
 const TEMPORARY_EDGE_Z_INDEX = WORKFLOW_EDGE_Z_INDEX + 2;
@@ -15,6 +19,10 @@ export type WorkflowConnectionCandidate = {
 
 export function isTemporaryWorkflowEdge(edge: Pick<WorkflowFlowEdge, 'id'>) {
   return edge.id.startsWith(TEMP_WORKFLOW_EDGE_PREFIX);
+}
+
+export function isAutomationWorkflowEdge(edge: Pick<WorkflowFlowEdge, 'id'>) {
+  return edge.id.startsWith(AUTOMATION_WORKFLOW_EDGE_PREFIX);
 }
 
 export function createTemporaryWorkflowEdge({
@@ -39,7 +47,7 @@ export function createTemporaryWorkflowEdge({
 
 export function getDeletedWorkflowEdgeIds(deletedEdges: WorkflowFlowEdge[]) {
   return deletedEdges
-    .filter((edge) => !isTemporaryWorkflowEdge(edge))
+    .filter((edge) => !isTemporaryWorkflowEdge(edge) && !isAutomationWorkflowEdge(edge))
     .map((edge) => edge.id);
 }
 
@@ -58,6 +66,9 @@ export const keepOnlyEdgeDeletions: OnBeforeDelete<
 
   return {
     nodes: [],
-    edges: edges.filter((edge) => !isTemporaryWorkflowEdge(edge)),
+    edges: edges.filter((edge) => (
+      !isTemporaryWorkflowEdge(edge) &&
+      !isAutomationWorkflowEdge(edge)
+    )),
   };
 };

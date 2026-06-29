@@ -14,9 +14,9 @@ import {
 } from '@/components/ui/dialog';
 import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
 import { workflowKindIcons } from './workflowCatalog';
-import type { WorkflowFlowNode } from './workflowTypes';
+import type { WorkflowPersistedFlowNode } from './workflowTypes';
 
-export function WorkflowNode({ data, selected }: NodeProps<WorkflowFlowNode>) {
+export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
@@ -44,7 +44,13 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowFlowNode>) {
         )}
       >
         <div className="flex max-w-full items-center justify-start gap-2.5 text-base font-semibold">
-          <Icon className="size-4 shrink-0" />
+          {isEntry ? (
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+              <Icon className="size-4" />
+            </span>
+          ) : (
+            <Icon className="size-4 shrink-0" />
+          )}
           <span className="min-w-0 truncate">{data.title}</span>
         </div>
         {data.description ? (
@@ -71,7 +77,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowFlowNode>) {
               type="button"
               variant="outline"
               size="icon"
-              className="cursor-pointer rounded-xl border-destructive bg-destructive text-white shadow-lg hover:bg-destructive/90 hover:text-white"
+              className="cursor-pointer rounded-xl border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white"
               onClick={(event) => {
                 event.stopPropagation();
                 setDeleteDialogOpen(true);

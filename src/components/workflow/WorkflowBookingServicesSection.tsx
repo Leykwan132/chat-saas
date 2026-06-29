@@ -1,0 +1,138 @@
+import { useMemo } from 'react';
+import { Link } from 'react-router';
+import { useQuery } from 'convex/react';
+import { CalendarCheck, ExternalLink, Plus } from 'lucide-react';
+import { api } from '../../../convex/_generated/api';
+import type { Id } from '../../../convex/_generated/dataModel';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+
+type BookingServiceRow = {
+  _id: Id<'autoBookingServices'>;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  durationMinutes: number;
+};
+
+type WorkflowBookingServicesSectionProps = {
+  agentId: Id<'agents'>;
+  allowedServiceIds?: Id<'autoBookingServices'>[];
+  onAllowedServiceIdsChange: (serviceIds: Id<'autoBookingServices'>[]) => void;
+};
+
+export function WorkflowBookingServicesSection({
+  agentId,
+  allowedServiceIds,
+  onAllowedServiceIdsChange,
+}: WorkflowBookingServicesSectionProps) {
+  const services = useQuery(api.workflowBookingServices.listForAgent, { agentId }) as
+    | BookingServiceRow[]
+    | undefined;
+
+  const effectiveAllowedServiceIds = useMemo(() => {
+    const ids = allowedServiceIds ?? services?.map((service) => service._id) ?? [];
+    return new Set(ids);
+  }, [allowedServiceIds, services]);
+
+  const handleToggleService = (
+    serviceId: Id<'autoBookingServices'>,
+    checked: boolean,
+  ) => {
+    const currentIds = allowedServiceIds ?? services?.map((service) => service._id) ?? [];
+    const currentSet = new Set(currentIds);
+    if (checked) {
+      currentSet.add(serviceId);
+    } else {
+      currentSet.delete(serviceId);
+    }
+    onAllowedServiceIdsChange(Array.from(currentSet));
+  };
+
+  if (services === undefined) {
+    return (
+      <div className="flex flex-col gap-2 rounded-lg border border-border p-3">
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
+  if (services.length === 0) {
+    return (
+      <Empty className="rounded-lg border border-dashed border-border p-6">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CalendarCheck />
+          </EmptyMedia>
+          <EmptyTitle>No services yet</EmptyTitle>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button asChild size="sm" variant="outline">
+            <Link to={`/dashboard/${agentId}/auto-booking/new`}>
+              <Plus data-icon="inline-start" />
+              Add service
+            </Link>
+          </Button>
+        </EmptyContent>
+      </Empty>
+    );
+  }
+
+  return (
+    <div className="flex flex-col overflow-hidden rounded-lg border border-border">
+      {services.map((service, index) => {
+        const checked = effectiveAllowedServiceIds.has(service._id);
+        return (
+          <div
+            key={service._id}
+            className={cn(
+              'flex items-center gap-3 p-3',
+              index > 0 && 'border-t border-border',
+            )}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-2">
+                <Link
+                  to={`/dashboard/${agentId}/auto-booking/${service._id}`}
+                  className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary"
+                >
+                  <span className="truncate">{service.name}</span>
+                  <ExternalLink className="size-3 shrink-0" />
+                </Link>
+                <Badge variant={service.isActive ? 'secondary' : 'outline'}>
+                  {service.isActive ? 'Active' : 'Inactive'}
+                </Badge>
+              </div>
+              <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                <span>{service.durationMinutes} min</span>
+                {service.description?.trim() ? (
+                  <>
+                    <span aria-hidden>/</span>
+                    <span className="truncate">{service.description.trim()}</span>
+                  </>
+                ) : null}
+              </div>
+            </div>
+            <Switch
+              checked={checked}
+              onCheckedChange={(nextChecked) => handleToggleService(service._id, nextChecked)}
+              aria-label={`${checked ? 'Disallow' : 'Allow'} ${service.name}`}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}

@@ -12,6 +12,7 @@ export type SearchableSelectOption = {
   label: string;
   searchValue?: string;
   tag?: string;
+  tagClassName?: string;
 };
 
 function SearchableSelectSearch({
@@ -46,14 +47,18 @@ function SearchableSelectList({
   selectedValue,
   emptyText,
   onSelect,
+  listClassName,
+  optionClassName,
 }: {
   options: SearchableSelectOption[];
   selectedValue?: string;
   emptyText: string;
   onSelect: (value: string) => void;
+  listClassName?: string;
+  optionClassName?: string;
 }) {
   return (
-    <div className="p-1">
+    <div className={cn('p-1', listClassName)}>
       {options.length === 0 ? (
         <div className="px-3 py-6 text-center text-sm text-muted-foreground">{emptyText}</div>
       ) : (
@@ -63,13 +68,17 @@ function SearchableSelectList({
             type="button"
             onClick={() => onSelect(option.value)}
             className={cn(
-              'flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
+              'flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
               option.value === selectedValue && 'bg-muted text-foreground',
+              optionClassName,
             )}
           >
             <span className="min-w-0 truncate">{option.label}</span>
             {option.tag ? (
-              <Badge variant="outline" className="shrink-0 font-normal">
+              <Badge
+                variant="outline"
+                className={cn('shrink-0 font-normal', option.tagClassName)}
+              >
                 {option.tag}
               </Badge>
             ) : null}
@@ -93,12 +102,17 @@ export function SearchableSelect({
   triggerLabel,
   hideChevron = false,
   contentClassName,
+  listClassName,
+  optionClassName,
+  scrollAreaClassName,
+  showSelectedTag = true,
+  showSearch = true,
   triggerId,
   triggerAriaLabel,
 }: {
   value?: string;
   placeholder: string;
-  searchPlaceholder: string;
+  searchPlaceholder?: string;
   emptyText: string;
   options: SearchableSelectOption[];
   onChange: (value: string) => void;
@@ -108,6 +122,11 @@ export function SearchableSelect({
   triggerLabel?: ReactNode;
   hideChevron?: boolean;
   contentClassName?: string;
+  listClassName?: string;
+  optionClassName?: string;
+  scrollAreaClassName?: string;
+  showSelectedTag?: boolean;
+  showSearch?: boolean;
   triggerId?: string;
   triggerAriaLabel?: string;
 }) {
@@ -155,8 +174,11 @@ export function SearchableSelect({
               )}
             >
               <span className="truncate">{selectedOption?.label ?? placeholder}</span>
-              {selectedOption?.tag ? (
-                <Badge variant="outline" className="shrink-0 font-normal">
+              {showSelectedTag && selectedOption?.tag ? (
+                <Badge
+                  variant="outline"
+                  className={cn('shrink-0 font-normal', selectedOption.tagClassName)}
+                >
                   {selectedOption.tag}
                 </Badge>
               ) : null}
@@ -173,18 +195,24 @@ export function SearchableSelect({
           contentClassName ?? 'w-[var(--radix-popover-trigger-width)]',
         )}
         align="start"
+        onEscapeKeyDown={() => setOpen(false)}
+        onPointerDownOutside={() => setOpen(false)}
         onWheel={(event) => event.stopPropagation()}
       >
-        <SearchableSelectSearch
-          value={searchQuery}
-          placeholder={searchPlaceholder}
-          onChange={setSearchQuery}
-        />
-        <ScrollArea className="h-60 overflow-hidden">
+        {showSearch ? (
+          <SearchableSelectSearch
+            value={searchQuery}
+            placeholder={searchPlaceholder ?? placeholder}
+            onChange={setSearchQuery}
+          />
+        ) : null}
+        <ScrollArea className={cn('h-60 overflow-hidden', scrollAreaClassName)}>
           <SearchableSelectList
             options={filteredOptions}
             selectedValue={value}
             emptyText={emptyText}
+            listClassName={listClassName}
+            optionClassName={optionClassName}
             onSelect={(nextValue) => {
               onChange(nextValue);
               setOpen(false);

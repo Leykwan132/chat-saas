@@ -49,8 +49,8 @@ The page uses a two-column layout: a fixed-width sidebar for navigation and a ma
 *   **Typography:**
     *   `--font-sans`: "Geist", ui-sans-serif, system-ui, sans-serif
 *   **Spacing:** Confirm specific values for margins, padding, and gutters.
-*   **Border Radius:** Confirm specific values.
-*   **Shadows:** Confirm specific values.
+*   **Border Radius:** fix at fully rounded for main button. but rounded-sm for minor button.
+*   **Shadows:** No Shadows.
 
 ### 7.2. Typography
 *   **Headings:** Use `var(--font-sans)` ("Geist").

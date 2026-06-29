@@ -360,6 +360,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     notes: v.optional(v.string()),
+    allowedAutoBookingServiceIds: v.optional(v.array(v.id("autoBookingServices"))),
     positionX: v.number(),
     positionY: v.number(),
     createdAt: v.number(),

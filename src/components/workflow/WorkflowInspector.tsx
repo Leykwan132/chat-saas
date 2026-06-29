@@ -1,17 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Loader2, Save, Trash2, X } from 'lucide-react';
-import { AnimatePresence, motion } from 'motion/react';
-import type { Doc } from '../../../convex/_generated/dataModel';
+import { Loader2, Save, Trash2 } from 'lucide-react';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import {
   isWorkflowActionNodeKind,
   workflowConditionDisplayLabel,
   workflowNodeTitle,
 } from '../../../shared/workflows';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Separator } from '@/components/ui/separator';
+import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
   {
@@ -29,6 +36,7 @@ const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
 ];
 
 type WorkflowInspectorProps = {
+  agentId?: Id<'agents'>;
   node?: Doc<'workflowNodes'>;
   conditionEdge?: Doc<'workflowEdges'>;
   isSaving?: boolean;
@@ -37,12 +45,14 @@ type WorkflowInspectorProps = {
     description: string;
     conditionLabel?: string;
     conditionDetail?: string;
+    allowedAutoBookingServiceIds?: Id<'autoBookingServices'>[];
   }) => void;
   onRemove: () => void;
   onClose: () => void;
 };
 
 export function WorkflowInspector({
+  agentId,
   node,
   conditionEdge,
   isSaving = false,
@@ -54,18 +64,27 @@ export function WorkflowInspector({
   const [goal, setGoal] = useState('');
   const [conditionLabel, setConditionLabel] = useState('');
   const [conditionDetail, setConditionDetail] = useState('');
+  const [allowedAutoBookingServiceIds, setAllowedAutoBookingServiceIds] = useState<
+    Id<'autoBookingServices'>[] | undefined
+  >();
 
   useEffect(() => {
     setTitle(node?.title ?? '');
     setGoal(node?.description ?? '');
     setConditionLabel(workflowConditionDisplayLabel(conditionEdge?.label) ?? '');
     setConditionDetail(conditionEdge?.detail ?? '');
+    setAllowedAutoBookingServiceIds(
+      node?.kind === 'bookAppointment'
+        ? node.allowedAutoBookingServiceIds
+        : undefined,
+    );
   }, [conditionEdge?.detail, conditionEdge?.label, node]);
 
   const selectedTitle = node ? title.trim() || workflowNodeTitle(node.kind) : '';
   const conditionEnabled = conditionEdge !== undefined;
   const isAction = node ? isWorkflowActionNodeKind(node.kind) : false;
   const isCustomAction = node?.kind === 'aiResponds';
+  const isBookAppointmentAction = node?.kind === 'bookAppointment';
   const hasGoalField = isAction || Boolean(node?.description);
   const nameLabel = isAction ? 'Action Name' : 'Title';
   const goalLabel = isAction ? 'Goal' : 'Description';
@@ -73,50 +92,41 @@ export function WorkflowInspector({
   const conditionDetailPlaceholder = isCustomAction
     ? 'If the customer asks about...'
     : 'Describe when this action should run';
+  const contentGridClassName = conditionEnabled
+    ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
+    : 'grid gap-8';
   const saveDisabled = isSaving || !title.trim() || (isAction && !goal.trim());
 
   return (
-    <AnimatePresence>
+    <Dialog open={Boolean(node)} onOpenChange={(open) => !open && onClose()}>
       {node ? (
-        <motion.aside
-          key="workflow-inspector"
-          initial={{ x: '100%' }}
-          animate={{ x: 0 }}
-          exit={{ x: '100%' }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          className="pointer-events-auto absolute inset-y-0 right-0 z-30 flex w-[min(24rem,100%)] flex-col border-l border-border bg-background/95 shadow-xl backdrop-blur"
-        >
-          <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
-            <h2 className="min-w-0 truncate text-sm font-semibold leading-8 text-foreground">
-              {selectedTitle}
-            </h2>
-            <div className="flex items-center gap-1">
+        <DialogContent className="flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[920px]">
+          <DialogHeader className="shrink-0 border-b border-border px-6 py-5 pr-14">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <DialogTitle className="truncate text-lg">{selectedTitle}</DialogTitle>
+                <DialogDescription>
+                  Configure when this workflow node runs and what the AI should do.
+                </DialogDescription>
+              </div>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
                 disabled={node.kind === 'start' || node.kind === 'end' || isSaving}
                 onClick={onRemove}
+                className="mr-8 shrink-0"
               >
                 <Trash2 data-icon="inline-start" />
                 <span className="sr-only">Remove node</span>
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                onClick={onClose}
-              >
-                <X data-icon="inline-start" />
-                <span className="sr-only">Close node setup</span>
-              </Button>
             </div>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto p-4">
-            <FieldGroup className="gap-4">
-              {conditionEnabled ? (
-                <>
-                  <section className="space-y-4 text-left">
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+            <FieldGroup className="gap-6">
+              <div className={contentGridClassName}>
+                {conditionEnabled ? (
+                  <section className="flex flex-col gap-5 text-left">
                     <h3 className="text-base font-semibold text-foreground">Condition</h3>
                     <Field>
                       <FieldLabel htmlFor="workflow-node-condition-label">Condition Label</FieldLabel>
@@ -134,8 +144,8 @@ export function WorkflowInspector({
                         value={conditionDetail}
                         onChange={(event) => setConditionDetail(event.target.value)}
                         placeholder={conditionDetailPlaceholder}
-                        rows={4}
-                        style={{ minHeight: '7rem' }}
+                        rows={6}
+                        style={{ minHeight: '11rem' }}
                       />
                       {isCustomAction ? (
                         <div className="flex flex-wrap gap-2">
@@ -158,44 +168,62 @@ export function WorkflowInspector({
                       ) : null}
                     </Field>
                   </section>
-                  <Separator />
-                </>
-              ) : null}
-              <section className="space-y-4 text-left">
-                <h3 className="text-base font-semibold text-foreground">Actions</h3>
-                <Field className="items-start text-left">
-                  <FieldLabel className="text-left" htmlFor="workflow-node-title">{nameLabel}</FieldLabel>
-                  <Input
-                    id="workflow-node-title"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    className="text-left"
-                  />
-                </Field>
-                {hasGoalField ? (
+                ) : null}
+                <section className="flex flex-col gap-5 text-left">
+                  <h3 className="text-base font-semibold text-foreground">Actions</h3>
                   <Field className="items-start text-left">
-                    <FieldLabel className="text-left" htmlFor="workflow-node-description">{goalLabel}</FieldLabel>
-                    <Textarea
-                      id="workflow-node-description"
-                      value={goal}
-                      onChange={(event) => setGoal(event.target.value)}
+                    <FieldLabel className="text-left" htmlFor="workflow-node-title">{nameLabel}</FieldLabel>
+                    <Input
+                      id="workflow-node-title"
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
                       className="text-left"
-                      rows={isAction ? 8 : 3}
-                      style={isAction ? { minHeight: '13rem' } : undefined}
                     />
                   </Field>
-                ) : null}
-              </section>
+                  {hasGoalField ? (
+                    <Field className="items-start text-left">
+                      <FieldLabel className="text-left" htmlFor="workflow-node-description">{goalLabel}</FieldLabel>
+                      <Textarea
+                        id="workflow-node-description"
+                        value={goal}
+                        onChange={(event) => setGoal(event.target.value)}
+                        className="text-left"
+                        rows={isAction ? 10 : 4}
+                        style={isAction ? { minHeight: '16rem' } : undefined}
+                      />
+                    </Field>
+                  ) : null}
+                  {isBookAppointmentAction && agentId ? (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-1">
+                        <h4 className="text-sm font-semibold text-foreground">Services</h4>
+                        <p className="text-xs leading-relaxed text-muted-foreground">
+                          AI will only book services that are available.
+                        </p>
+                      </div>
+                      <WorkflowBookingServicesSection
+                        agentId={agentId}
+                        allowedServiceIds={allowedAutoBookingServiceIds}
+                        onAllowedServiceIdsChange={setAllowedAutoBookingServiceIds}
+                      />
+                    </div>
+                  ) : null}
+                </section>
+              </div>
             </FieldGroup>
+          </div>
+          <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
             <Button
               type="button"
-              className="mt-4"
               disabled={saveDisabled}
               onClick={() => onSave({
                 title,
                 description: hasGoalField ? goal : '',
                 conditionLabel: conditionEnabled ? conditionLabel : undefined,
                 conditionDetail: conditionEnabled ? conditionDetail : undefined,
+                allowedAutoBookingServiceIds: isBookAppointmentAction
+                  ? allowedAutoBookingServiceIds
+                  : undefined,
               })}
             >
               {isSaving ? (
@@ -205,9 +233,9 @@ export function WorkflowInspector({
               )}
               Save
             </Button>
-          </div>
-        </motion.aside>
+          </DialogFooter>
+        </DialogContent>
       ) : null}
-    </AnimatePresence>
+    </Dialog>
   );
 }

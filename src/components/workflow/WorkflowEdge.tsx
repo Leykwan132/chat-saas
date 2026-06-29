@@ -5,7 +5,6 @@ import {
   getBezierPath,
   type EdgeProps,
 } from '@xyflow/react';
-import { ReceiptText } from 'lucide-react';
 import type { WorkflowFlowEdge } from './workflowTypes';
 
 export function WorkflowEdge({
@@ -69,11 +68,10 @@ export function WorkflowEdge({
           >
             <button
               type="button"
-              className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white shadow-sm"
+              className="relative z-10 flex max-w-48 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
             >
-              <ReceiptText className="size-3 shrink-0" aria-hidden="true" />
               <span className="sr-only">Condition:</span>
-              <span className="min-w-0 truncate">{label}</span>
+              <span className="min-w-0 truncate">If: {label}</span>
             </button>
           </div>
         </EdgeLabelRenderer>

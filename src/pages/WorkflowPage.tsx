@@ -35,6 +35,7 @@ export default function WorkflowPage() {
   const connectNodes = useMutation(api.workflows.connectNodes);
   const updateNode = useMutation(api.workflows.updateNode);
   const updateEdgeCondition = useMutation(api.workflows.updateEdgeCondition);
+  const updateAllowedBookingServices = useMutation(api.workflowBookingServices.updateAllowedServices);
   const removeNode = useMutation(api.workflows.removeNode);
   const removeEdge = useMutation(api.workflows.removeEdge);
   const resetWorkflow = useMutation(api.workflowReset.resetForAgent);
@@ -204,11 +205,17 @@ export default function WorkflowPage() {
     description: string;
     conditionLabel?: string;
     conditionDetail?: string;
+    allowedAutoBookingServiceIds?: Id<'autoBookingServices'>[];
   }) => {
     if (!typedAgentId || !selectedNodeId) return;
     setIsSaving(true);
     try {
-      const { conditionLabel, conditionDetail, ...nodeValues } = values;
+      const {
+        allowedAutoBookingServiceIds,
+        conditionLabel,
+        conditionDetail,
+        ...nodeValues
+      } = values;
       await updateNode({
         agentId: typedAgentId,
         nodeId: selectedNodeId,
@@ -220,6 +227,13 @@ export default function WorkflowPage() {
           edgeId: selectedConditionEdge._id,
           label: conditionLabel,
           detail: conditionDetail,
+        });
+      }
+      if (allowedAutoBookingServiceIds !== undefined) {
+        await updateAllowedBookingServices({
+          agentId: typedAgentId,
+          nodeId: selectedNodeId,
+          serviceIds: allowedAutoBookingServiceIds,
         });
       }
       toast.success('Saved');
@@ -263,6 +277,7 @@ export default function WorkflowPage() {
         resetDisabled={isResetting || (graph.nodes.length === 1 && graph.edges.length === 0)}
       />
       <WorkflowInspector
+        agentId={typedAgentId}
         node={selectedNode}
         conditionEdge={selectedConditionEdge}
         isSaving={isSaving}

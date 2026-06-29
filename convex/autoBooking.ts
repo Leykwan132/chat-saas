@@ -27,6 +27,7 @@ import {
   isActiveAutoBookingSessionStatus,
 } from "./autoBookingSessionStatus";
 import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
+import { filterServicesByWorkflowBookingSelection } from "./workflowBookingServices";
 
 const serviceFieldValidator = v.object({
   key: v.string(),
@@ -222,9 +223,10 @@ async function listActiveBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents
   if (agent === null || !(await isAutoBookingAvailableForAgent(ctx, agent))) {
     return [];
   }
-  return (await listServices(ctx, agentId)).filter(
+  const activeServices = (await listServices(ctx, agentId)).filter(
     (service) => service.isActive && service.archivedAt === undefined,
   );
+  return await filterServicesByWorkflowBookingSelection(ctx, agentId, activeServices);
 }
 
 async function resolveBookingService(
@@ -1048,8 +1050,19 @@ export const internalIsEnabled = internalQuery({
       .withIndex("by_agentId_and_isActive", (q) =>
         q.eq("agentId", args.agentId).eq("isActive", true),
       )
-      .take(1);
-    return services.some((service) => service.archivedAt === undefined);
+      .take(50);
+    const activeServices = [];
+    for (const service of services) {
+      if (service.archivedAt === undefined) {
+        activeServices.push(service);
+      }
+    }
+    const workflowAllowedServices = await filterServicesByWorkflowBookingSelection(
+      ctx,
+      args.agentId,
+      activeServices,
+    );
+    return workflowAllowedServices.length > 0;
   },
 });
 
@@ -1065,9 +1078,14 @@ export const listActiveServices = internalQuery({
     const activeServices = services
       .filter((service) => service.archivedAt === undefined)
       .sort((a, b) => a.sortOrder - b.sortOrder);
+    const workflowAllowedServices = await filterServicesByWorkflowBookingSelection(
+      ctx,
+      args.agentId,
+      activeServices,
+    );
     return {
-      enabled: activeServices.length > 0,
-      services: activeServices
+      enabled: workflowAllowedServices.length > 0,
+      services: workflowAllowedServices
         .map((service) => ({
           serviceId: service._id,
           name: service.name,
