@@ -1,35 +1,20 @@
-import { useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { isWorkflowTerminalNodeKind } from '../../../shared/workflows';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
 import { workflowKindIcons } from './workflowCatalog';
 import type { WorkflowPersistedFlowNode } from './workflowTypes';
 
 export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
   const isEntry = data.kind === 'start';
   const isProtected = data.kind === 'start' || data.kind === 'end';
 
-  const handleDeleteConfirm = () => {
-    setDeleteDialogOpen(false);
-    data.onRemoveNode(data.nodeId);
-  };
-
   return (
-    <div className="group relative flex min-w-[192px] max-w-[360px] flex-col items-center">
+    <div className="group relative flex min-w-[176px] max-w-[300px] flex-col items-center">
       <Handle
         type="target"
         position={Position.Top}
@@ -38,9 +23,9 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
       />
       <div
         className={cn(
-          'relative z-10 flex min-h-20 min-w-[192px] max-w-[360px] w-fit flex-col items-start justify-center gap-1.5 rounded-xl border border-border bg-card px-5 py-4 text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted',
+          'relative z-10 flex min-h-20 min-w-[176px] max-w-[300px] w-fit flex-col items-start justify-center gap-1.5 rounded-xl border border-border bg-card px-4 py-3.5 text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted',
           selected && 'border-ring ring-1 ring-ring',
-          data.description && 'min-w-[244px]',
+          data.description && 'min-w-[220px]',
         )}
       >
         <div className="flex max-w-full items-center justify-start gap-2.5 text-base font-semibold">
@@ -80,7 +65,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
               className="cursor-pointer rounded-xl border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white"
               onClick={(event) => {
                 event.stopPropagation();
-                setDeleteDialogOpen(true);
+                data.onRemoveNode(data.nodeId);
               }}
             >
               <Trash2 className="size-4" />
@@ -89,33 +74,6 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           ) : null}
         </div>
       ) : null}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete {data.title}?</DialogTitle>
-            <DialogDescription>
-              This will remove the node and all connections attached to it.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              className="bg-destructive text-white hover:bg-destructive/90 hover:text-white"
-              onClick={handleDeleteConfirm}
-            >
-              Delete node
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

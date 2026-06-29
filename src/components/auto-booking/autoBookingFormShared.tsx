@@ -29,7 +29,6 @@ import {
   fieldTypePreview,
   type AssignmentStrategy,
   type FieldType,
-  type SalesStyle,
   type ServiceFieldForm,
   type ServiceForm,
   type TeamUserOption,
@@ -56,28 +55,10 @@ export const AUTO_BOOKING_SECTION_COPY = {
     subtitle: 'Choose what your AI agent gathers in chat before preparing the booking.',
   },
   assignment: {
-    title: 'Assignment & tone',
-    subtitle: 'Decide who receives bookings and how the AI approaches customers.',
+    title: 'Assignment',
+    subtitle: 'Decide who receives bookings from this service.',
   },
 } as const;
-
-export const SALES_STYLE_OPTIONS: WizardSelectOption[] = [
-  {
-    value: 'proactive',
-    title: 'Proactive',
-    description: 'Actively suggests booking and nudges customers toward scheduling.',
-  },
-  {
-    value: 'neutral',
-    title: 'Neutral',
-    description: 'Offers booking when relevant without being pushy.',
-  },
-  {
-    value: 'gentle',
-    title: 'Gentle',
-    description: 'Mentions booking softly and waits for the customer to express interest.',
-  },
-];
 
 export const ASSIGNMENT_STRATEGY_OPTIONS: WizardSelectOption[] = [
   {
@@ -725,13 +706,6 @@ export function AutoBookingAssignmentFields({
         />
       ) : null}
 
-      <WizardSelectField
-        label="Tone style"
-        value={form.salesStyle}
-        disabled={disabled}
-        options={SALES_STYLE_OPTIONS}
-        onChange={(value) => setForm((prev) => ({ ...prev, salesStyle: value as SalesStyle }))}
-      />
     </div>
   );
 }

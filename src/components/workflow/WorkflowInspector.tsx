@@ -83,15 +83,21 @@ export function WorkflowInspector({
   const selectedTitle = node ? title.trim() || workflowNodeTitle(node.kind) : '';
   const conditionEnabled = conditionEdge !== undefined;
   const isAction = node ? isWorkflowActionNodeKind(node.kind) : false;
+  const isQuestionAnswerAction = node?.kind === 'answerQuestions';
   const isCustomAction = node?.kind === 'aiResponds';
   const isBookAppointmentAction = node?.kind === 'bookAppointment';
   const hasGoalField = isAction || Boolean(node?.description);
   const nameLabel = isAction ? 'Action Name' : 'Title';
   const goalLabel = isAction ? 'Goal' : 'Description';
-  const conditionLabelPlaceholder = isCustomAction ? 'e.g., Pricing question' : 'e.g., Ready to book';
-  const conditionDetailPlaceholder = isCustomAction
-    ? 'If the customer asks about...'
-    : 'Describe when this action should run';
+  let conditionLabelPlaceholder = 'e.g., Ready to book';
+  let conditionDetailPlaceholder = 'Describe when this action should run';
+  if (isQuestionAnswerAction) {
+    conditionLabelPlaceholder = 'e.g., Customer question';
+    conditionDetailPlaceholder = 'If the customer asks about...';
+  } else if (isCustomAction) {
+    conditionLabelPlaceholder = 'e.g., Pricing question';
+    conditionDetailPlaceholder = 'If the customer asks about...';
+  }
   const contentGridClassName = conditionEnabled
     ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
     : 'grid gap-8';

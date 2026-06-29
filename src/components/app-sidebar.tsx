@@ -59,6 +59,14 @@ function getNavItems(agentId: string): {
     ],
     tools: [
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
+      {
+        to: `/dashboard/${agentId}/auto-booking`,
+        icon: CalendarCheck,
+        label: 'Services',
+        end: true,
+        requiredPermission: Permission.AUTOMATION_READ,
+        badge: <AiBadge />,
+      },
     ],
     outreach: [
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
@@ -75,14 +83,6 @@ function getNavItems(agentId: string): {
       { to: `/dashboard/${agentId}/workflow`, icon: Workflow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
       { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
-      {
-        to: `/dashboard/${agentId}/auto-booking`,
-        icon: CalendarCheck,
-        label: 'Auto Booking',
-        end: true,
-        requiredPermission: Permission.AUTOMATION_READ,
-        badge: <AiBadge />,
-      },
     ],
   };
 }
@@ -391,6 +391,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     tooltip={item.label}
                     icon={item.icon}
                     label={item.label}
+                    badge={item.badge}
                   />
                 ))}
 

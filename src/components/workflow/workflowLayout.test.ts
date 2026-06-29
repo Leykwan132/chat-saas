@@ -3,6 +3,7 @@ import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import type { WorkflowNodeKind } from '../../../shared/workflows';
 import {
   getWorkflowCleanupPositions,
+  getWorkflowCleanupNodeSize,
   getWorkflowLayoutNodeSize,
 } from './workflowLayout';
 import type { WorkflowGraph } from './workflowTypes';
@@ -114,7 +115,7 @@ test('cleanup layout separates sibling nodes on the same row', () => {
   const positionedNodes = nodes.map((node) => ({
     node,
     position: positions.get(node._id)!,
-    size: getWorkflowLayoutNodeSize(node),
+    size: getWorkflowCleanupNodeSize(node),
   }));
 
   for (let i = 0; i < positionedNodes.length; i += 1) {
@@ -144,5 +145,5 @@ test('layout caps node width for long titles', () => {
     'A very long custom action name that should not make the workflow node keep growing across the canvas',
   );
 
-  expect(getWorkflowLayoutNodeSize(node).width).toBe(360);
+  expect(getWorkflowLayoutNodeSize(node).width).toBe(300);
 });

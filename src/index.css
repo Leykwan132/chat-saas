@@ -23,10 +23,6 @@ html {
     scrollbar-gutter: stable;
 }
 
-html:has(body[data-scroll-locked]) {
-    scrollbar-gutter: auto;
-}
-
 html:has(.contact-page) {
     scrollbar-gutter: auto;
     -ms-overflow-style: none;

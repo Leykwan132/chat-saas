@@ -136,10 +136,6 @@ export default function AutoBookingPage() {
   const [walkthroughStep, setWalkthroughStep] = useState(0);
   const overviewServices = overview?.services;
   const services = useMemo(() => (overviewServices ?? []) as ServiceRow[], [overviewServices]);
-  const activeServiceCount = useMemo(
-    () => services.filter((service) => service.isActive).length,
-    [services],
-  );
   const createServiceHref = `/dashboard/${typedAgentId}/auto-booking/new`;
 
   if (!typedAgentId) return null;
@@ -176,7 +172,7 @@ export default function AutoBookingPage() {
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 flex items-center gap-2.5 text-4xl font-semibold tracking-tight text-foreground">
-            Auto Booking
+            Services
             <AiBadge size="md" className="w-[22px]" />
           </h1>
           <PageDescription>
@@ -211,14 +207,6 @@ export default function AutoBookingPage() {
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Your Services</h2>
-            {services.length > 0 ? (
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                {activeServiceCount > 0 ? (
-                  <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-                ) : null}
-                {activeServiceCount} active
-              </span>
-            ) : null}
           </div>
           <Separator className="mt-3" />
         </div>
@@ -368,12 +356,6 @@ function ServiceCard({
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="flex items-start justify-between gap-2">
           <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{service.name}</h3>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {service.isActive ? (
-              <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
-            ) : null}
-            {service.isActive ? 'Active' : 'Inactive'}
-          </span>
         </div>
 
         {service.description?.trim() ? (

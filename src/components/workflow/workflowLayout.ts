@@ -6,21 +6,27 @@ import {
   type NodeLabel,
 } from '@dagrejs/dagre';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { workflowNodeDisplayTitle } from '../../../shared/workflows';
+import {
+  isWorkflowTerminalNodeKind,
+  workflowNodeDisplayTitle,
+} from '../../../shared/workflows';
 import type { WorkflowGraph } from './workflowTypes';
 
-const NODE_MIN_WIDTH = 192;
-const NODE_DESCRIPTION_WIDTH = 244;
-const NODE_MAX_WIDTH = 360;
+const NODE_MIN_WIDTH = 176;
+const NODE_DESCRIPTION_WIDTH = 220;
+const NODE_MAX_WIDTH = 300;
 const NODE_MIN_HEIGHT = 80;
 const NODE_DESCRIPTION_HEIGHT = 126;
 const TITLE_CHARACTER_WIDTH = 11;
 const DESCRIPTION_CHARACTER_WIDTH = 7;
-const NODE_HORIZONTAL_PADDING = 84;
-const NODE_DESCRIPTION_MAX_TEXT_WIDTH = 320;
-const NODE_DESCRIPTION_HORIZONTAL_PADDING = 56;
+const NODE_HORIZONTAL_PADDING = 72;
+const NODE_DESCRIPTION_MAX_TEXT_WIDTH = 260;
+const NODE_DESCRIPTION_HORIZONTAL_PADDING = 48;
 const NODE_COLLISION_GAP = 56;
 const RANK_Y_TOLERANCE = 24;
+const NODE_CONTROL_BUTTON_WIDTH = 36;
+const NODE_CONTROL_OFFSET = 16;
+const NODE_CONTROL_GAP = 8;
 
 export type WorkflowCleanupPosition = {
   nodeId: Id<'workflowNodes'>;
@@ -50,6 +56,27 @@ export function getWorkflowLayoutNodeSize(node: WorkflowGraph['nodes'][number]) 
   return {
     width: Math.min(NODE_MAX_WIDTH, Math.max(minWidth, titleWidth, descriptionWidth)),
     height: node.description ? NODE_DESCRIPTION_HEIGHT : NODE_MIN_HEIGHT,
+  };
+}
+
+function getWorkflowNodeControlRailWidth(node: WorkflowGraph['nodes'][number]) {
+  const controlCount = Number(!isWorkflowTerminalNodeKind(node.kind)) +
+    Number(node.kind !== 'start' && node.kind !== 'end');
+  if (controlCount === 0) return 0;
+
+  return (
+    NODE_CONTROL_OFFSET +
+    controlCount * NODE_CONTROL_BUTTON_WIDTH +
+    (controlCount - 1) * NODE_CONTROL_GAP
+  );
+}
+
+export function getWorkflowCleanupNodeSize(node: WorkflowGraph['nodes'][number]) {
+  const size = getWorkflowLayoutNodeSize(node);
+
+  return {
+    ...size,
+    width: size.width + getWorkflowNodeControlRailWidth(node),
   };
 }
 
@@ -146,7 +173,7 @@ export function getWorkflowCleanupPositions(
         x: layoutNode.x - size.width / 2,
         y: layoutNode.y - size.height / 2,
       },
-      width: size.width,
+      width: getWorkflowCleanupNodeSize(node).width,
       height: size.height,
       centerY: layoutNode.y,
     }];

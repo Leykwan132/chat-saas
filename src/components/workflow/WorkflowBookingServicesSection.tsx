@@ -4,7 +4,6 @@ import { useQuery } from 'convex/react';
 import { CalendarCheck, ExternalLink, Plus } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Empty,
@@ -21,8 +20,6 @@ type BookingServiceRow = {
   _id: Id<'autoBookingServices'>;
   name: string;
   description?: string;
-  isActive: boolean;
-  durationMinutes: number;
 };
 
 type WorkflowBookingServicesSectionProps = {
@@ -111,24 +108,18 @@ export function WorkflowBookingServicesSection({
                   <span className="truncate">{service.name}</span>
                   <ExternalLink className="size-3 shrink-0" />
                 </Link>
-                <Badge variant={service.isActive ? 'secondary' : 'outline'}>
-                  {service.isActive ? 'Active' : 'Inactive'}
-                </Badge>
               </div>
-              <div className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                <span>{service.durationMinutes} min</span>
-                {service.description?.trim() ? (
-                  <>
-                    <span aria-hidden>/</span>
-                    <span className="truncate">{service.description.trim()}</span>
-                  </>
-                ) : null}
-              </div>
+              {service.description?.trim() ? (
+                <p className="mt-1 truncate text-xs text-muted-foreground">
+                  {service.description.trim()}
+                </p>
+              ) : null}
             </div>
             <Switch
               checked={checked}
               onCheckedChange={(nextChecked) => handleToggleService(service._id, nextChecked)}
               aria-label={`${checked ? 'Disallow' : 'Allow'} ${service.name}`}
+              className="data-[state=checked]:bg-emerald-600"
             />
           </div>
         );

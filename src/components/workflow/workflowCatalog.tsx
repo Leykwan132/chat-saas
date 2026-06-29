@@ -6,6 +6,7 @@ import {
   Image as ImageIcon,
   ListChecks,
   MessageCircle,
+  MessageCircleQuestionMark,
   MessageSquare,
   MousePointerClick,
   PhoneForwarded,
@@ -23,6 +24,7 @@ import {
 
 export const workflowKindIcons = {
   start: MessageCircle,
+  answerQuestions: MessageCircleQuestionMark,
   aiResponds: MousePointerClick,
   sendImage: ImageIcon,
   sendText: MessageSquare,

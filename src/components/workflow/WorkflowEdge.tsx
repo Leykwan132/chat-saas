@@ -5,6 +5,7 @@ import {
   getBezierPath,
   type EdgeProps,
 } from '@xyflow/react';
+import { ClipboardList } from 'lucide-react';
 import type { WorkflowFlowEdge } from './workflowTypes';
 
 export function WorkflowEdge({
@@ -19,7 +20,6 @@ export function WorkflowEdge({
   label,
   interactionWidth,
   style,
-  selected,
   data,
 }: EdgeProps<WorkflowFlowEdge>) {
   const [path, labelX, labelY] = data?.routePoints?.length
@@ -46,10 +46,7 @@ export function WorkflowEdge({
         interactionWidth={interactionWidth}
         markerStart={markerStart}
         markerEnd={markerEnd}
-        style={{
-          ...style,
-          strokeWidth: selected ? 2.5 : style?.strokeWidth,
-        }}
+        style={style}
         className="workflow-edge"
       />
       {label ? (
@@ -68,10 +65,11 @@ export function WorkflowEdge({
           >
             <button
               type="button"
-              className="relative z-10 flex max-w-48 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
+              className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
             >
               <span className="sr-only">Condition:</span>
-              <span className="min-w-0 truncate">If: {label}</span>
+              <ClipboardList className="size-3 shrink-0" aria-hidden="true" />
+              <span className="min-w-0 truncate">{label}</span>
             </button>
           </div>
         </EdgeLabelRenderer>

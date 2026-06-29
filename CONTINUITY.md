@@ -3,13 +3,7 @@
 - 2026-06-26T00:00Z [USER] Success: direct sidebar Workflow item under Agent Setup; React Flow canvas with hover plus and dropdown; Convex persistence; one workflow per agent.
 - 2026-06-26T00:00Z [USER] V1 stores graph structure and node display details only; runtime execution is out of scope.
 - 2026-06-26T00:00Z [CODE] Convex guidance requires validators, indexed bounded reads, schema in `convex/schema.ts`, and auth-derived ownership checks.
-- 2026-06-26T18:44+08:00 [USER] Workflow refinement milestone compressed: action ordering/goals, booking condition defaults, condition label/detail split, front-layer condition pill with `ReceiptText`, Save spinner, and capped node cards.
-- 2026-06-26T22:54+08:00 [USER] Agent Setup/Knowledge Base/templates UI milestone compressed: setup layout, Test column, Smart Escalate, prompt/template text, page padding, and Geist font updates.
-- 2026-06-26T23:27+08:00 [USER] Workflow canvas should show Followups left of Message enters and Reminders left of Followups; first node has a switch and plus; requested background color refers to XYFlow `Background`, not node fill.
-- 2026-06-27T03:17+08:00 [USER] SUPERSEDED: Workflow Reminders/Followups trigger builder should use progressive Who -> When -> How/message template -> estimated cost menus.
-- 2026-06-27T12:36+08:00 [USER] Workflow Reminders/Followups default-node polish milestone compressed: visible animated React Flow edges, more spacing, Agent Setup-style controls, and clearer two-row cards.
-- 2026-06-27T13:00+08:00 [USER] Workflow Reminders/Followups option picker milestone compressed: use centered dialog option cards and no visible radio buttons because selected styling is enough.
-- 2026-06-27T22:45+08:00 [USER] Workflow controls milestone compressed: top-left 3-tab switcher for Message handling/Reminders/Followups, instant tab switching, separate flat stacked switcher, non-draggable tools above, red Reset icon+text, and condition pill text `If: {{label}}`.
+- 2026-06-27T22:45+08:00 [USER] Workflow controls milestone compressed: top-left 3-tab switcher for Message handling/Reminders/Followups, instant tab switching, separate flat stacked switcher, non-draggable tools above, red Reset icon+text, and condition pill text `If: {{label}}` (condition text superseded by 2026-06-29 clipboard-list icon).
 - 2026-06-28 [USER] SUPERSEDES prior Followups node detail: Followups should have one visible `When to follow up` schedule node; a separate summary node should sit beside the Followups group to show a top view of the current system.
 - 2026-06-28 [USER] Followups `Message content` should match Create Follow-up: stage 1 chooses same vs different messages; immediately after strategy selection, stage 2 lets users choose one template or different templates per follow-up and shows WhatsApp preview.
 - 2026-06-28 [USER] Followups Summary should sit outside/right of the group, top-aligned beside Followups, update immediately, use solid display-only styling without visible canvas dots, title only `Summary`, no icon/footer controls, and no workflow node shadows.
@@ -24,6 +18,12 @@
 - 2026-06-29T01:57+08:00 [USER] Reminder timing final polish milestone compressed: one selected timing, no search, suggested-first menu, compact custom dialog, and rounded Confirm.
 - 2026-06-29T13:12+08:00 [USER] Book appointment action should add a Services section that lists created Auto Booking services with detail links and toggles for AI booking eligibility.
 - 2026-06-29T13:34+08:00 [USER] Workflow setup surfaces should use roomy dialogs instead of sheet/drawer layout, with enough spacing.
+- 2026-06-29 [USER] Workflow condition edge pill should use a clipboard-list icon before the condition label instead of leading text `If`.
+- 2026-06-29 [USER] Auto Booking should move from AI Agent navigation into Tools and be renamed `Services` in section-level UI.
+- 2026-06-29T14:13+08:00 [USER] Services polish milestone compressed: success headline stays one line, Services switches are green when on, tone options are hidden, active labels are hidden, and workflow Services rows show description only.
+- 2026-06-29T14:40+08:00 [USER] Workflow plus menu should include a Q&A node where the AI answers questions based on the knowledge base.
+- 2026-06-29T14:52+08:00 [USER] Workflow node interaction polish compressed: Q&A nodes need conditions, delete should not confirm, and add should not open setup.
+- 2026-06-29T15:02+08:00 [USER] Workflow canvas polish compressed: node cards should be narrower, selecting edges should not open setup dialogs or thicken strokes, dragging nodes should not proximity-connect, and cleanup should preserve spacing around side controls.
 
 # Decisions
 - 2026-06-26T00:00Z [USER] D001 ACTIVE: Workflow V1 is a persistent skeleton, not an execution engine.
@@ -31,8 +31,8 @@
 - 2026-06-26T17:23+08:00 [USER] D005 ACTIVE: New/lazy workflows default to the start node only; users add `Close conversation` when they need a terminal action.
 - 2026-06-26T00:00Z [USER] D003 ACTIVE: Use existing `agents:manage` permission for Workflow V1.
 - 2026-06-26T00:00Z [USER] D004 ACTIVE: Sidebar item is direct and placed immediately below Agent Setup.
-- 2026-06-26T18:44+08:00 [USER] D006 ACTIVE: New workflow plus items are `Qualify leads`, `Book appointment`, `Custom action`, and `Close conversation` in that order; legacy node kinds may remain readable for existing graphs.
-- 2026-06-26T18:44+08:00 [USER] D007 ACTIVE: Workflow action nodes (`Qualify leads`, `Book appointment`, `Custom action`) use editable Name, required Goal, and optional incoming Condition; `Close conversation` stays terminal-only.
+- 2026-06-26T18:44+08:00 [USER] D006 SUPERSEDED: New workflow plus items were `Qualify leads`, `Book appointment`, `Custom action`, and `Close conversation` in that order; legacy node kinds may remain readable for existing graphs.
+- 2026-06-26T18:44+08:00 [USER] D007 SUPERSEDED: Workflow action nodes (`Qualify leads`, `Book appointment`, `Custom action`) used editable Name, required Goal, and optional incoming Condition; `Close conversation` stayed terminal-only.
 - 2026-06-26T18:47+08:00 [CODE] D008 ACTIVE: Default action goals live in `shared/workflows.ts` descriptions; booking goal mirrors Auto Booking flow rules from `convex/chat/threads.ts`, lead goal mirrors hot/warm/cold classifier intent from `convex/chat/inboxActions.ts`.
 - 2026-06-26T20:40+08:00 [CODE] D009 SUPERSEDED: Agent Setup used `AgentPlaygroundPanel mode="drawer"` for Test; existing aside mode remains available for other pages.
 - 2026-06-26T20:45+08:00 [CODE] D010 ACTIVE: Agent Setup uses one global `Publish` action for dirty basic, routing, and escalation changes; per-panel save/reset controls are removed.
@@ -57,15 +57,25 @@
 - 2026-06-29T01:57+08:00 [CODE] D029 ACTIVE: Custom reminder dialog `Confirm` button is fully rounded.
 - 2026-06-29T13:12+08:00 [CODE] D030 ACTIVE: Book appointment workflow service selection stores `allowedAutoBookingServiceIds`; unset means all current active services are allowed, saved arrays mean only selected services, and runtime booking service lists use the union across configured Book appointment nodes.
 - 2026-06-29T13:34+08:00 [CODE] D031 ACTIVE: Shared workflow node setup uses a wide centered Dialog with scrollable body and footer save action instead of the right-side drawer.
+- 2026-06-29T14:38+08:00 [CODE] D032 ACTIVE: Keep `html { scrollbar-gutter: stable; }` active while Radix overlays set `body[data-scroll-locked]`; do not switch the gutter to `auto` for overlay scroll-lock.
+- 2026-06-29T14:40+08:00 [CODE] D033 ACTIVE: New workflow plus items are `Q&A`, `Qualify leads`, `Book appointment`, `Custom action`, and `Close conversation` in that order; Q&A persists as `answerQuestions`.
+- 2026-06-29T14:40+08:00 [CODE] D034 ACTIVE: Workflow action nodes (`Q&A`, `Qualify leads`, `Book appointment`, `Custom action`) use editable Name, required Goal, and optional incoming Condition; `Close conversation` stays terminal-only.
+- 2026-06-29T14:48+08:00 [CODE] D035 ACTIVE: Q&A nodes default their incoming edge condition to `Customer question` with knowledge-base answer guidance; inspector placeholders use Q&A language.
+- 2026-06-29T14:50+08:00 [CODE] D036 ACTIVE: Workflow canvas node trash buttons delete immediately without a confirmation dialog; inspector trash still invokes the shared delete action directly.
+- 2026-06-29T14:52+08:00 [CODE] D037 ACTIVE: Workflow plus-menu add creates the node and leaves no node selected; setup dialogs open only by explicit node selection.
+- 2026-06-29T14:57+08:00 [CODE] D038 ACTIVE: Persistent workflow node cards cap at 300px wide, use 176px base/220px description minimums, and layout sizing constants mirror those rendered widths.
+- 2026-06-29T14:59+08:00 [CODE] D039 ACTIVE: Workflow edge selection only selects the edge for edge actions; it clears node selection and uses the normal stroke width.
+- 2026-06-29T15:02+08:00 [CODE] D040 ACTIVE: Workflow node dragging only updates position; connections are created only through explicit React Flow handle connections.
+- 2026-06-29T15:11+08:00 [CODE] D041 ACTIVE: Workflow cleanup uses real card sizes for Dagre edge geometry but reserves a right-side control rail during row overlap cleanup so plus/delete buttons do not crowd sibling nodes.
 
 # Done (recent)
-- 2026-06-29T01:32+08:00 [CODE] Reminder timing dropdown now uses auto list height for the reminder select, duration-ascending option order, no `appointment` suffix in labels, untagged `Custom`, and a dark green Suggested badge beside `3 hours before`.
-- 2026-06-29T01:39+08:00 [CODE] Custom reminder dialog now uses equal-width amount/unit fields and a full-width controlled unit select that closes on selection, Escape, or outside pointer.
-- 2026-06-29T01:42+08:00 [CODE] Reminder timing menu now hides the search field while other `SearchableSelect` uses keep search by default.
-- 2026-06-29T01:54+08:00 [CODE] Reminder timing menu now puts Suggested first, hides the Suggested badge in the closed trigger, gives rows more padding, and custom dialog uses smaller amount input, ghost Cancel, Confirm, more spacing, and non-modal unit menu.
-- 2026-06-29T01:57+08:00 [CODE] Custom reminder dialog `Confirm` button now uses `rounded-full`.
-- 2026-06-29T13:12+08:00 [CODE] Book appointment inspector now has a Services section; service selections persist on workflow nodes and filter Auto Booking services exposed to the AI runtime.
-- 2026-06-29T13:34+08:00 [CODE] WorkflowInspector changed from animated side drawer to wide dialog; Condition and Actions use responsive roomy columns.
+- 2026-06-29T14:48+08:00 [CODE] Q&A workflow nodes now get a default `Customer question` condition and Q&A-specific condition placeholders in the setup dialog.
+- 2026-06-29T14:50+08:00 [CODE] Workflow canvas node delete no longer opens a confirmation dialog; the trash button calls the delete action immediately.
+- 2026-06-29T14:52+08:00 [CODE] Workflow plus-menu node creation no longer auto-selects the new action node or opens its setup dialog.
+- 2026-06-29T14:57+08:00 [CODE] Persistent workflow canvas node cards now use narrower 300px max width, reduced padding, and matching layout sizing constants.
+- 2026-06-29T14:59+08:00 [CODE] Workflow edge selection no longer opens target node setup or increases edge stroke width.
+- 2026-06-29T15:02+08:00 [CODE] Workflow drag proximity auto-connect and temporary preview edge creation were removed; drag stop only saves node position.
+- 2026-06-29T15:11+08:00 [CODE] Workflow cleanup spacing now accounts for the visible side controls without widening the rendered node cards.
 
 # Working set
 - 2026-06-26T17:29+08:00 [CODE] `convex/schema.ts`, `convex/agents.ts`, `convex/agentAccess.ts`, `convex/workflow*.ts`, `convex/workflow*.test.ts`, `convex/workflowReset.ts`.
@@ -75,33 +85,32 @@
 - 2026-06-26T22:12+08:00 [CODE] `index.html`, `src/index.css`, `tailwind.config.cjs`, `DESIGN.md`.
 - 2026-06-26T22:14+08:00 [CODE] `src/lib/utils.ts`, `convex/agents.ts`.
 - 2026-06-26T22:20+08:00 [CODE] `src/components/agent-setup/AgentSetupRoutingPanel.tsx`, `src/components/agent-setup/AgentSetupPanels.tsx`, `src/pages/InstructionsPage.tsx`.
-- 2026-06-26T22:31+08:00 [CODE] `src/components/ModelPicker.tsx`.
 - 2026-06-26T22:33+08:00 [CODE] `src/pages/TemplatesPage.tsx`, `src/pages/CreateTemplatePage.tsx`, `src/pages/TemplateDetailPage.tsx`.
 - 2026-06-29T01:32+08:00 [CODE] `src/components/ui/searchable-select.tsx`.
 - 2026-06-29T01:54+08:00 [CODE] `src/components/workflow/WorkflowReminderTimingRow.tsx`.
 - 2026-06-29T13:12+08:00 [CODE] `convex/workflowBookingServices.ts`, `convex/workflowBookingServices.test.ts`, `convex/schema.ts`, `convex/autoBooking.ts`, `src/components/workflow/WorkflowBookingServicesSection.tsx`, `src/components/workflow/WorkflowInspector.tsx`, `src/pages/WorkflowPage.tsx`.
+- 2026-06-29T14:13+08:00 [CODE] `src/pages/AutoBookingPage.tsx`, `src/pages/AutoBookingServicePage.tsx`, `src/components/workflow/WorkflowBookingServicesSection.tsx`.
 
 # Open questions
 - 2026-06-26T00:00Z [USER] None for V1.
 
 # Receipts
-- 2026-06-28T22:40+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, LOC checks, and `curl -I http://127.0.0.1:5178/` passed after row-based Reminders timing controls.
-- 2026-06-28T22:59+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, LOC checks, and `curl -I http://127.0.0.1:5178/` passed after splitting Reminder timing rows into amount and unit selects.
-- 2026-06-28T23:02+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after changing Reminder amount to numeric input and tightening unit dropdown dismissal.
-- 2026-06-28T23:42+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after Reminders timing row sizing/dismissal polish.
-- 2026-06-29T00:29+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after compacting Reminders timing controls.
-- 2026-06-29T00:31+08:00 [TOOL] Targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after making the Reminders timing delete button red.
-- 2026-06-29T00:35+08:00 [TOOL] Targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after matching Reminders timing field padding to Number of reminders.
-- 2026-06-29T00:41+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after combining Reminder amount/unit into one dropdown trigger.
-- 2026-06-29T00:44+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after placing Reminder amount input and unit Select side by side inside the timing popover.
-- 2026-06-29T00:49+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after limiting Reminders to one reminder timing.
-- 2026-06-29T00:54+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after switching Reminder timing to the calendar-style searchable dropdown.
-- 2026-06-29T00:59+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after limiting Reminder timing to five choices and adding the custom timing dialog.
-- 2026-06-29T01:26+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after making the Reminders setup card content-height.
-- 2026-06-29T01:32+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx --bun shadcn@latest docs badge popover dialog select button input` returned docs URLs; targeted `git diff --check`, trailing-whitespace scan, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after reminder dropdown label/order/badge/height polish. TypeScript skipped for narrow UI-only change per environment rule.
-- 2026-06-29T01:39+08:00 [TOOL] Trailing-whitespace scan, `wc -l src/components/workflow/WorkflowReminderTimingRow.tsx`, and `curl -I http://127.0.0.1:5178/` passed after custom reminder dialog equal-width/unit-dismiss polish. TypeScript skipped for narrow UI-only change per environment rule.
-- 2026-06-29T01:42+08:00 [TOOL] `rg` confirmed `Search reminder times...` removed; trailing-whitespace scan, `git diff --check -- src/components/ui/searchable-select.tsx`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after hiding search in reminder timing menu. TypeScript skipped for narrow UI-only change per environment rule.
-- 2026-06-29T01:54+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx --bun shadcn@latest docs select dialog button input badge popover` returned docs URLs after sandbox escalation; trailing-whitespace scan, `git diff --check -- src/components/ui/searchable-select.tsx`, `wc -l`, and `curl -I http://127.0.0.1:5178/` passed after reminder dropdown/dialog polish. TypeScript skipped for narrow UI-only change per environment rule.
-- 2026-06-29T01:57+08:00 [TOOL] `rg` confirmed `Confirm` button class is `h-9 rounded-full`; trailing-whitespace scan, `wc -l src/components/workflow/WorkflowReminderTimingRow.tsx`, and `curl -I http://127.0.0.1:5178/` passed. TypeScript skipped for narrow UI-only change per environment rule.
+- 2026-06-29T01:57+08:00 [TOOL] Reminders timing polish receipts compressed: targeted TypeScript checks where used, shadcn docs lookups, `git diff --check`, whitespace/LOC checks, and `curl -I http://127.0.0.1:5178/` passed across substeps; TypeScript skipped only for narrow UI-only substeps per rule.
 - 2026-06-29T13:12+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx convex codegen`, `bunx vitest run convex/workflowBookingServices.test.ts`, `bunx tsc -b`, `git diff --check`, and LOC checks passed after Book appointment Services selection.
 - 2026-06-29T13:34+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx --bun shadcn@latest docs dialog button textarea input separator`, `bunx tsc -b`, `git diff --check -- src/components/workflow/WorkflowInspector.tsx`, and LOC check passed after switching WorkflowInspector to Dialog.
+- 2026-06-29 [TOOL] `rg`, `git diff --check -- src/components/workflow/WorkflowEdge.tsx`, and `wc -l src/components/workflow/WorkflowEdge.tsx` passed after replacing visible `If:` text with clipboard-list icon.
+- 2026-06-29 [TOOL] `rg` and targeted `git diff --check` passed after Services nav rename; `wc -l` confirmed touched files were pre-existing over 300 LOC where applicable. TypeScript skipped for narrow UI label/nav change.
+- 2026-06-29T14:04+08:00 [TOOL] Targeted `git diff --check -- src/components/auto-booking/CreateAutoBookingServiceWizard.tsx` passed; `wc -l` confirmed the file remains a pre-existing 740 lines. TypeScript skipped for narrow UI-only styling change.
+- 2026-06-29T14:08+08:00 [TOOL] shadcn docs for `switch` fetched after approval; `git diff --check -- src/components/workflow/WorkflowBookingServicesSection.tsx` passed; `rg` confirmed emerald checked-state classes on Services-related switches. TypeScript skipped for narrow UI-only styling change.
+- 2026-06-29T14:10+08:00 [TOOL] `rg` confirmed visible tone labels/options removed from Services UI; targeted `git diff --check` and LOC checks passed. TypeScript skipped for narrow UI-only removal.
+- 2026-06-29T14:13+08:00 [TOOL] `rg` confirmed no visible Services active labels or workflow duration/timeslot text remain in targeted files; targeted `git diff --check` and LOC checks passed. TypeScript skipped for narrow UI-only display change.
+- 2026-06-29T14:38+08:00 [TOOL] `bunx --bun shadcn@latest docs select dropdown-menu popover` returned docs URLs after approval; `git diff --check -- src/index.css`, `wc -l src/index.css`, and `curl -I http://127.0.0.1:5178/` passed. Exact Agent Setup browser verification was blocked by unauthenticated local tab; TypeScript skipped for one-rule CSS fix.
+- 2026-06-29T14:40+08:00 [TOOL] `bunx convex codegen` passed after approved rerun; `bunx vitest run convex/workflowActions.test.ts convex/workflows.test.ts`, `bunx tsc -b`, targeted `git diff --check`, `wc -l`, and `rg` passed after adding workflow Q&A.
+- 2026-06-29T14:45+08:00 [TOOL] `git diff --check -- src/pages/WorkflowPage.tsx`, `wc -l src/pages/WorkflowPage.tsx`, and targeted diff review passed after dismissing WorkflowInspector on successful save. TypeScript skipped for one-line state update.
+- 2026-06-29T14:48+08:00 [TOOL] `bunx vitest run convex/workflowActions.test.ts`, targeted `git diff --check`, and `wc -l` passed after adding Q&A default conditions. TypeScript skipped for metadata/placeholder change.
+- 2026-06-29T14:50+08:00 [TOOL] `git diff --check -- src/components/workflow/WorkflowNode.tsx`, `wc -l`, `rg`, and targeted diff review passed after removing the node delete confirmation dialog. TypeScript skipped for narrow UI-only deletion.
+- 2026-06-29T14:52+08:00 [TOOL] `git diff --check -- src/pages/WorkflowPage.tsx`, `wc -l`, `rg`, and targeted diff review passed after removing add-node auto-selection. TypeScript skipped for narrow UI-only behavior change.
+- 2026-06-29T14:57+08:00 [TOOL] `bunx vitest run src/components/workflow/workflowLayout.test.ts`, targeted `git diff --check`, `wc -l`, and `rg` passed after narrowing persistent workflow node cards.
+- 2026-06-29T14:59+08:00 [TOOL] `rg`, targeted `git diff --check`, `wc -l`, and diff review passed after removing edge-selected dialog open and stroke-width override. TypeScript skipped for narrow UI-only behavior change.
+- 2026-06-29T15:02+08:00 [TOOL] `rg`, targeted `git diff --check`, `wc -l`, diff review, and `bunx tsc -b` passed after removing proximity auto-connect.
+- 2026-06-29T15:11+08:00 [TOOL] Initial `workflowEdgeRouting.test.ts` caught inflated Dagre cleanup widths; after limiting control-rail width to row overlap cleanup, `workflowLayout.test.ts`, `workflowEdgeRouting.test.ts`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed.

@@ -36,7 +36,6 @@ import {
   buildServiceMutationArgs,
   DEFAULT_SERVICE_FORM,
   fieldTypePreview,
-  salesStyleLabel,
   type ServiceForm,
   type TeamUserOption,
 } from '@/lib/autoBookingServiceForm';
@@ -187,7 +186,7 @@ export function CreateAutoBookingServiceWizard({
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
             <ArrowLeft className="size-4" />
-            Auto Booking
+            Services
           </Link>
           {headerStepLabel ? (
             <span className="text-xs font-medium text-muted-foreground">{headerStepLabel}</span>
@@ -544,14 +543,14 @@ function ServiceCreatedSuccessPanel({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -12 }}
       transition={{ duration: 0.22 }}
-      className="flex max-w-md flex-col items-center gap-6 text-center"
+      className="flex max-w-xl flex-col items-center gap-6 text-center"
     >
       <LoopingTypingAnimation
         as="h1"
         startOnView={false}
         showCursor={false}
         typeSpeed={45}
-        className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl"
+        className="whitespace-nowrap text-2xl font-semibold tracking-normal sm:text-4xl md:text-5xl"
       >
         Your service is ready.
       </LoopingTypingAnimation>
@@ -562,7 +561,7 @@ function ServiceCreatedSuccessPanel({
 
       <Button type="button" className="h-10 shrink-0 gap-2 px-4" onClick={onBack}>
         <ArrowLeft className="size-4 shrink-0" />
-        Back to Auto Booking
+        Back to Services
       </Button>
     </motion.div>
   );
@@ -660,9 +659,6 @@ function AssignmentSetupTerminal({ form }: { form: ServiceForm }) {
       <TypingAnimation>&gt; kilobot configure assignment</TypingAnimation>
       <AnimatedSpan className="text-green-600 dark:text-green-400">
         ✔ Assignment: {assignmentLabel(form.assignmentStrategy)}
-      </AnimatedSpan>
-      <AnimatedSpan className="text-green-600 dark:text-green-400">
-        ✔ Tone: {salesStyleLabel(form.salesStyle)}
       </AnimatedSpan>
       <AnimatedSpan className="text-green-600 dark:text-green-400">
         {form.isActive ? '✔ Enabled right away' : '○ Disabled on create'}

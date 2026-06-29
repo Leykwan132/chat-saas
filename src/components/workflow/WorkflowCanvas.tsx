@@ -19,7 +19,6 @@ import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
 import { useWorkflowCanvasView } from './useWorkflowCanvasView';
 import {
-  createTemporaryWorkflowEdge,
   getDeletedWorkflowEdgeIds,
   isAutomationWorkflowEdge,
   isTemporaryWorkflowEdge,
@@ -33,8 +32,6 @@ import {
   findPersistedWorkflowFlowNode,
   isPersistedWorkflowFlowNode,
 } from './workflowCanvasNodes';
-
-const MIN_PROXIMITY_DISTANCE = 180;
 
 type WorkflowCanvasProps = {
   nodes: WorkflowFlowNode[];
@@ -81,53 +78,6 @@ function WorkflowCanvasInner({
     if (localEdges.some((edge) => !isTemporaryWorkflowEdge(edge) && edge.id === selectedEdgeId)) return;
     setSelectedEdgeId(undefined);
   }, [localEdges, selectedEdgeId]);
-  const getClosestEdge = useCallback(
-    (draggedNode: WorkflowFlowNode): WorkflowConnectionCandidate | null => {
-      if (!isPersistedWorkflowFlowNode(draggedNode)) return null;
-      const closestNode = localNodes.reduce<{
-        distance: number;
-        node?: typeof draggedNode;
-      }>(
-        (closest, node) => {
-          if (!isPersistedWorkflowFlowNode(node) || node.id === draggedNode.id) {
-            return closest;
-          }
-
-          const dx = node.position.x - draggedNode.position.x;
-          const dy = node.position.y - draggedNode.position.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < closest.distance && distance < MIN_PROXIMITY_DISTANCE) {
-            return { distance, node };
-          }
-
-          return closest;
-        },
-        { distance: Number.MAX_VALUE },
-      );
-
-      if (!closestNode.node) return null;
-
-      const closestNodeIsSource = (
-        closestNode.node.position.y < draggedNode.position.y ||
-        (
-          closestNode.node.position.y === draggedNode.position.y &&
-          closestNode.node.position.x < draggedNode.position.x
-        )
-      );
-      const sourceNode = closestNodeIsSource ? closestNode.node : draggedNode;
-      const targetNode = closestNodeIsSource ? draggedNode : closestNode.node;
-
-      if (!canConnectWorkflowFlowNodes(sourceNode, targetNode)) return null;
-
-      return {
-        sourceNodeId: sourceNode.data.nodeId,
-        targetNodeId: targetNode.data.nodeId,
-      };
-    },
-    [localNodes],
-  );
-
   const hasRealEdge = useCallback(
     ({ sourceNodeId, targetNodeId }: WorkflowConnectionCandidate) => (
       localEdges.some((edge) => (
@@ -161,28 +111,9 @@ function WorkflowCanvasInner({
   const handleNodesChange = (changes: NodeChange<WorkflowFlowNode>[]) => {
     setLocalNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
   };
-  const handleNodeDrag: OnNodeDrag<WorkflowFlowNode> = (_event, node) => {
-    if (!isPersistedWorkflowFlowNode(node)) return;
-    const closestEdge = getClosestEdge(node);
-
-    setLocalEdges((currentEdges) => {
-      const nextEdges = currentEdges.filter((edge) => !isTemporaryWorkflowEdge(edge));
-      if (closestEdge && !hasRealEdge(closestEdge)) {
-        nextEdges.push(createTemporaryWorkflowEdge(closestEdge));
-      }
-      return nextEdges;
-    });
-  };
   const handleNodeDragStop: OnNodeDrag<WorkflowFlowNode> = (_event, node) => {
     if (!isPersistedWorkflowFlowNode(node)) return;
     onNodeMoved(node.data.nodeId, node.position);
-    const closestEdge = getClosestEdge(node);
-    setLocalEdges((currentEdges) => (
-      currentEdges.filter((edge) => !isTemporaryWorkflowEdge(edge))
-    ));
-    if (closestEdge && !hasRealEdge(closestEdge)) {
-      onNodesConnected(closestEdge.sourceNodeId, closestEdge.targetNodeId);
-    }
   };
 
   const handleConnect: OnConnect = (connection) => {
@@ -209,7 +140,7 @@ function WorkflowCanvasInner({
     (edge: WorkflowFlowEdge) => {
       if (isTemporaryWorkflowEdge(edge) || isAutomationWorkflowEdge(edge)) return;
       setSelectedEdgeId(edge.id);
-      onSelectNode(edge.target as Id<'workflowNodes'>);
+      onSelectNode(undefined);
     },
     [onSelectNode],
   );
@@ -268,7 +199,6 @@ function WorkflowCanvasInner({
         onSelectNode(undefined);
       }}
       onNodesChange={handleNodesChange}
-      onNodeDrag={handleNodeDrag}
       onNodeDragStop={handleNodeDragStop}
       proOptions={{ hideAttribution: true }}
     >

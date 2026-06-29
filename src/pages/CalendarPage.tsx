@@ -1166,7 +1166,7 @@ export default function CalendarPage() {
               <div className="flex flex-col gap-1.5 p-3">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <span className="text-sm font-semibold text-foreground">Auto-Booking</span>
+                    <span className="text-sm font-semibold text-foreground">Services</span>
                     <AiBadge size="sm" />
                   </div>
                   <ArrowRight className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5" />

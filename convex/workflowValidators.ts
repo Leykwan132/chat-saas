@@ -2,6 +2,7 @@ import { v } from "convex/values";
 
 export const workflowNodeKindValidator = v.union(
   v.literal("start"),
+  v.literal("answerQuestions"),
   v.literal("aiResponds"),
   v.literal("sendImage"),
   v.literal("sendText"),
@@ -18,6 +19,7 @@ export const workflowNodeKindValidator = v.union(
 );
 
 export const addableWorkflowNodeKindValidator = v.union(
+  v.literal("answerQuestions"),
   v.literal("updateLeadsStatus"),
   v.literal("bookAppointment"),
   v.literal("aiResponds"),

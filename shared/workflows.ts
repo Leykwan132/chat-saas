@@ -1,5 +1,6 @@
 export const WORKFLOW_NODE_KINDS = [
   'start',
+  'answerQuestions',
   'aiResponds',
   'sendImage',
   'sendText',
@@ -18,6 +19,7 @@ export const WORKFLOW_NODE_KINDS = [
 export type WorkflowNodeKind = (typeof WORKFLOW_NODE_KINDS)[number];
 
 export const ADDABLE_WORKFLOW_NODE_KINDS = [
+  'answerQuestions',
   'updateLeadsStatus',
   'bookAppointment',
   'aiResponds',
@@ -35,6 +37,7 @@ export const WORKFLOW_TERMINAL_NODE_KINDS = [
 ] as const satisfies readonly WorkflowNodeKind[];
 
 export const WORKFLOW_ACTION_NODE_KINDS = [
+  'answerQuestions',
   'aiResponds',
   'updateLeadsStatus',
   'bookAppointment',
@@ -46,6 +49,10 @@ export const WORKFLOW_NODE_META: Record<
 > = {
   start: {
     label: 'Message enters',
+  },
+  answerQuestions: {
+    label: 'Q&A',
+    description: 'Answer customer questions using only the knowledge base as the source of truth. If the knowledge base does not contain the answer, say so and ask a clarifying question instead of guessing.',
   },
   aiResponds: {
     label: 'Custom action',
@@ -101,6 +108,10 @@ export const WORKFLOW_NODE_META: Record<
 export const WORKFLOW_NODE_DEFAULT_CONDITIONS: Partial<
   Record<WorkflowNodeKind, { label: string; detail: string }>
 > = {
+  answerQuestions: {
+    label: 'Customer question',
+    detail: 'If the customer asks a question about the business, products, services, policies, pricing, or support details, answer using the knowledge base.',
+  },
   bookAppointment: {
     label: 'Ready to book',
     detail: 'If the user is very sure about their interest in the services, proceed to book an appointment.',

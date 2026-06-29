@@ -197,7 +197,7 @@ export default function AutoBookingServicePage() {
         <Button asChild variant="ghost" className="w-fit gap-2 px-0 text-muted-foreground hover:text-foreground">
           <Link to={backHref}>
             <ArrowLeft className="size-4" />
-            Back to Auto Booking
+            Back to Services
           </Link>
         </Button>
 
@@ -213,11 +213,11 @@ export default function AutoBookingServicePage() {
 
           {canManage ? (
             <div className="flex shrink-0 items-center gap-2">
-              <span className="text-sm text-muted-foreground">Active</span>
               <Switch
                 checked={form.isActive}
                 onCheckedChange={(checked) => setForm((prev) => ({ ...prev, isActive: checked }))}
                 className="data-[state=checked]:bg-emerald-600"
+                aria-label={`${form.isActive ? 'Turn off' : 'Turn on'} ${form.name.trim() || 'service'}`}
               />
               <Button
                 type="button"
@@ -286,7 +286,7 @@ export default function AutoBookingServicePage() {
           <DialogHeader>
             <DialogTitle>Delete {form.name.trim() || 'this service'}?</DialogTitle>
             <DialogDescription>
-              This removes the service from Auto Booking. Existing appointments will not be changed.
+              This removes the service from Services. Existing appointments will not be changed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

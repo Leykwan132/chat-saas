@@ -4,10 +4,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import type { Id } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
-import {
-  isWorkflowActionNodeKind,
-  type AddableWorkflowNodeKind,
-} from '../../shared/workflows';
+import type { AddableWorkflowNodeKind } from '../../shared/workflows';
 import { Permission } from '../../shared/permissions';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Spinner } from '@/components/ui/spinner';
@@ -54,16 +51,11 @@ export default function WorkflowPage() {
       setSelectedNodeId(undefined);
       const toastId = toast.loading('Creating node…');
       try {
-        const existingNodeIds = new Set(graph?.nodes.map((node) => node._id));
-        const nextGraph = await addNodeAfter({
+        await addNodeAfter({
           agentId: typedAgentId,
           sourceNodeId: nodeId,
           kind,
         });
-        const addedNode = nextGraph.nodes.find((node) => !existingNodeIds.has(node._id));
-        setSelectedNodeId(
-          addedNode && isWorkflowActionNodeKind(addedNode.kind) ? addedNode._id : undefined,
-        );
         toast.success('Node created', { id: toastId });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Could not add node', {
@@ -71,7 +63,7 @@ export default function WorkflowPage() {
         });
       }
     },
-    [addNodeAfter, graph?.nodes, typedAgentId],
+    [addNodeAfter, typedAgentId],
   );
 
   const handleRemoveNode = useCallback(
@@ -236,6 +228,7 @@ export default function WorkflowPage() {
           serviceIds: allowedAutoBookingServiceIds,
         });
       }
+      setSelectedNodeId(undefined);
       toast.success('Saved');
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not save node');
