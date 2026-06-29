@@ -24,13 +24,13 @@ import {
 import { TypingAnimation as LoopingTypingAnimation } from '@/components/ui/typing-animation';
 import { cn } from '@/lib/utils';
 import {
-  AUTO_BOOKING_SECTION_COPY,
-  AutoBookingAssignmentFields,
-  AutoBookingDataCollectionFields,
-  AutoBookingServiceDetailsFields,
-  AutoBookingTimingFields,
-} from '@/components/auto-booking/autoBookingFormShared';
-import { DataCollectFieldIcon } from '@/components/auto-booking/DataCollectFieldIcon';
+  SERVICE_SECTION_COPY,
+  ServiceAssignmentFields,
+  ServiceDataCollectionFields,
+  ServiceDetailsFields,
+  ServiceTimingFields,
+} from '@/components/services/serviceFormShared';
+import { DataCollectFieldIcon } from '@/components/services/DataCollectFieldIcon';
 import {
   assignmentLabel,
   buildServiceMutationArgs,
@@ -38,15 +38,15 @@ import {
   fieldTypePreview,
   type ServiceForm,
   type TeamUserOption,
-} from '@/lib/autoBookingServiceForm';
+} from '@/lib/serviceForm';
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6;
 
 const STEP_COPY: Record<1 | 2 | 3 | 4, { title: string; subtitle: string }> = {
-  1: AUTO_BOOKING_SECTION_COPY.details,
-  2: AUTO_BOOKING_SECTION_COPY.timing,
-  3: AUTO_BOOKING_SECTION_COPY.data,
-  4: AUTO_BOOKING_SECTION_COPY.assignment,
+  1: SERVICE_SECTION_COPY.details,
+  2: SERVICE_SECTION_COPY.timing,
+  3: SERVICE_SECTION_COPY.data,
+  4: SERVICE_SECTION_COPY.assignment,
 };
 
 const CREATING_SERVICE_PHRASES = [
@@ -57,27 +57,27 @@ const CREATING_SERVICE_PHRASES = [
   'Almost ready…',
 ];
 
-interface CreateAutoBookingServiceWizardProps {
+interface CreateServiceWizardProps {
   agentId: Id<'agents'>;
   teamUserOptions: TeamUserOption[];
 }
 
-export function CreateAutoBookingServiceWizard({
+export function CreateServiceWizard({
   agentId,
   teamUserOptions,
-}: CreateAutoBookingServiceWizardProps) {
+}: CreateServiceWizardProps) {
   const navigate = useNavigate();
-  const createService = useMutation(api.autoBooking.createService);
-  const updateService = useMutation(api.autoBooking.updateService);
+  const createService = useMutation(api.appointmentBooking.services.createService);
+  const updateService = useMutation(api.appointmentBooking.services.updateService);
 
   const [step, setStep] = useState<Step>(1);
   const [form, setForm] = useState<ServiceForm>(DEFAULT_SERVICE_FORM);
   const [error, setError] = useState<string | null>(null);
   const [creatingPhase, setCreatingPhase] = useState(0);
-  const [createdServiceId, setCreatedServiceId] = useState<Id<'autoBookingServices'> | null>(null);
+  const [createdServiceId, setCreatedServiceId] = useState<Id<'appointmentServices'> | null>(null);
   const createStartedRef = useRef(false);
 
-  const backHref = `/dashboard/${agentId}/auto-booking`;
+  const backHref = `/dashboard/${agentId}/services`;
   const trimmedName = form.name.trim();
 
   const slideStepMotion = {
@@ -269,7 +269,7 @@ export function CreateAutoBookingServiceWizard({
                         }}
                       >
                         <StepHeading step={1} />
-                        <AutoBookingServiceDetailsFields form={form} setForm={setForm} />
+                        <ServiceDetailsFields form={form} setForm={setForm} />
 
                         <div className="rounded-lg border border-border/80 bg-muted/30 px-3 py-2.5">
                           <p className="text-xs leading-relaxed text-muted-foreground">
@@ -308,7 +308,7 @@ export function CreateAutoBookingServiceWizard({
                         <StepHeading step={2} />
 
                         <div className="flex w-full flex-col gap-6">
-                          <AutoBookingTimingFields form={form} setForm={setForm} />
+                          <ServiceTimingFields form={form} setForm={setForm} />
 
                           <WizardStepNav
                             onBack={() => setStep(1)}
@@ -333,7 +333,7 @@ export function CreateAutoBookingServiceWizard({
                         <StepHeading step={3} />
 
                         <div className="flex w-full flex-col gap-6">
-                          <AutoBookingDataCollectionFields form={form} setForm={setForm} />
+                          <ServiceDataCollectionFields form={form} setForm={setForm} />
 
                           <WizardStepNav
                             onBack={() => setStep(2)}
@@ -358,7 +358,7 @@ export function CreateAutoBookingServiceWizard({
                         <StepHeading step={4} />
 
                         <div className="flex w-full flex-col gap-6">
-                          <AutoBookingAssignmentFields
+                          <ServiceAssignmentFields
                             form={form}
                             setForm={setForm}
                             teamUserOptions={teamUserOptions}
@@ -572,7 +572,7 @@ function NameSetupTerminal({ name }: { name: string }) {
 
   return (
     <TerminalWindow className="w-full">
-      <TypingAnimation>&gt; kilobot auto-booking create</TypingAnimation>
+      <TypingAnimation>&gt; kilobot services create</TypingAnimation>
       <AnimatedSpan className="text-green-600 dark:text-green-400">✔ Agent ready</AnimatedSpan>
       <AnimatedSpan
         className={

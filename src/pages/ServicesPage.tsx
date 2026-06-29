@@ -9,22 +9,20 @@ import {
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { AiBadge } from '@/components/AiBadge';
 import { PageDescription } from '@/components/PageDescription';
 import {
-  AutoBookingOverviewDialog,
-  AUTO_BOOKING_OVERVIEW_META,
-} from '@/components/AutoBookingOverviewDialog';
+  ServicesOverviewDialog,
+  SERVICES_OVERVIEW_META,
+} from '@/components/ServicesOverviewDialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import { usePermissions } from '@/hooks/usePermissions';
-import { type ServiceRow } from '@/lib/autoBookingServiceForm';
+import { type ServiceRow } from '@/lib/serviceForm';
 import { cn } from '@/lib/utils';
 import { Permission } from '../../shared/permissions';
-import { PlanFeatureGate } from '@/components/PlanFeatureGate';
 
 function formatBookingCount(count: number) {
   if (count === 1) return '1 booking';
@@ -119,7 +117,7 @@ function formatDateTime(value: number) {
   return format(new Date(value), 'MMM d, yyyy h:mm a');
 }
 
-export default function AutoBookingPage() {
+export default function ServicesPage() {
   const { agentId } = useParams();
   const navigate = useNavigate();
   const typedAgentId = agentId as Id<'agents'> | undefined;
@@ -128,15 +126,15 @@ export default function AutoBookingPage() {
   const canManage = can(Permission.AUTOMATION_MANAGE) || can(Permission.CALENDAR_MANAGE);
 
   const overview = useQuery(
-    api.autoBooking.getOverview,
+    api.appointmentBooking.services.getOverview,
     typedAgentId && canRead ? { agentId: typedAgentId } : 'skip',
   );
-  const updateService = useMutation(api.autoBooking.updateService);
+  const updateService = useMutation(api.appointmentBooking.services.updateService);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
   const overviewServices = overview?.services;
   const services = useMemo(() => (overviewServices ?? []) as ServiceRow[], [overviewServices]);
-  const createServiceHref = `/dashboard/${typedAgentId}/auto-booking/new`;
+  const createServiceHref = `/dashboard/${typedAgentId}/services/new`;
 
   if (!typedAgentId) return null;
 
@@ -146,11 +144,11 @@ export default function AutoBookingPage() {
 
   const isLoading = permissionsLoading || overview === undefined;
   if (isLoading) {
-    return <AutoBookingSkeleton />;
+    return <ServicesSkeleton />;
   }
 
   const handleToggleActive = async (
-    serviceId: Id<'autoBookingServices'>,
+    serviceId: Id<'appointmentServices'>,
     isActive: boolean,
   ) => {
     if (!canManage) return;
@@ -162,18 +160,11 @@ export default function AutoBookingPage() {
   };
 
   return (
-    <PlanFeatureGate
-      featureKey="auto_booking"
-      featureName="Auto Booking"
-      title="Unlock Auto Booking"
-      description="Let AI handle end-to-end bookings — from scheduling to confirmations, right from chat."
-    >
-      <div className="flex w-full flex-col gap-8">
+    <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <h1 className="m-0 flex items-center gap-2.5 text-4xl font-semibold tracking-tight text-foreground">
             Services
-            <AiBadge size="md" className="w-[22px]" />
           </h1>
           <PageDescription>
             Let AI book appointments for customers right from chat.
@@ -193,8 +184,8 @@ export default function AutoBookingPage() {
         <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
         <div className="flex max-w-[700px] flex-wrap items-end gap-6">
           <BookCard
-            tag={AUTO_BOOKING_OVERVIEW_META.tag}
-            title={AUTO_BOOKING_OVERVIEW_META.bookTitle}
+            tag={SERVICES_OVERVIEW_META.tag}
+            title={SERVICES_OVERVIEW_META.bookTitle}
             onClick={() => {
               setWalkthroughStep(0);
               setIsWalkthroughOpen(true);
@@ -226,7 +217,7 @@ export default function AutoBookingPage() {
                 key={service._id}
                 service={service}
                 canManage={canManage}
-                detailHref={`/dashboard/${typedAgentId}/auto-booking/${service._id}`}
+                detailHref={`/dashboard/${typedAgentId}/services/${service._id}`}
                 onToggleActive={(isActive) => void handleToggleActive(service._id, isActive)}
               />
             ))}
@@ -305,7 +296,7 @@ export default function AutoBookingPage() {
         </div>
       </section>
 
-      <AutoBookingOverviewDialog
+      <ServicesOverviewDialog
         open={isWalkthroughOpen}
         onOpenChange={setIsWalkthroughOpen}
         step={walkthroughStep}
@@ -313,8 +304,7 @@ export default function AutoBookingPage() {
         onAddService={canManage ? () => navigate(createServiceHref) : undefined}
       />
 
-      </div>
-    </PlanFeatureGate>
+    </div>
   );
 }
 
@@ -391,7 +381,7 @@ function ServiceCard({
   );
 }
 
-function AutoBookingSkeleton() {
+function ServicesSkeleton() {
   return (
     <div className="flex w-full flex-col gap-8">
       <div className="border-b border-border pb-6">

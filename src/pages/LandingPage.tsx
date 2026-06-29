@@ -53,7 +53,7 @@ const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB-3.png';
 const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
 
 const FEATURE_SHOWCASE_IMAGES = {
-  autoBooking: 'https://storage.kilobot.app/AB.png',
+  appointmentBooking: 'https://storage.kilobot.app/AB.png',
   autoLeadAssign: 'https://storage.kilobot.app/ALA.png',
   broadcast: 'https://storage.kilobot.app/BC.png',
   humanEscalation: 'https://storage.kilobot.app/HA.png',
@@ -84,7 +84,7 @@ function FeaturesSection() {
                 AI Agent
               </h3>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Auto lead labeling, summaries, auto-booking with date and lead assignment.
+                Auto lead labeling, summaries, services with date and lead assignment.
               </p>
             </div>
             
@@ -153,10 +153,10 @@ const FEATURE_ITEMS: FeatureItem[] = [
   },
   {
     id: 'calendar',
-    tabLabel: 'Auto Booking',
+    tabLabel: 'Services',
     description:
       'End-to-end booking in chat—check the calendar, confirm the slot, and collect the details you need.',
-    image: FEATURE_SHOWCASE_IMAGES.autoBooking,
+    image: FEATURE_SHOWCASE_IMAGES.appointmentBooking,
   },
   {
     id: 'assignment',

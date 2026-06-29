@@ -1,6 +1,6 @@
 import { AlertCircle, Check, CheckCheck, Loader2, SmilePlus } from 'lucide-react';
 import { isFileUIPart } from 'ai';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   Attachment,
@@ -63,6 +63,7 @@ import {
   type InboxMessageReaction,
 } from '../../../shared/messageReactions';
 import { cn } from '@/lib/utils';
+import { splitWhatsAppText } from '@/lib/whatsappText';
 
 function getInboxMessageFileParts(
   message: InboxUIMessage,
@@ -287,6 +288,22 @@ function InboxMessageAttachments({
   );
 }
 
+function WhatsAppFormattedText({ text }: { text: string }) {
+  return (
+    <>
+      {splitWhatsAppText(text).map((segment, index) =>
+        segment.bold ? (
+          <strong key={index} className="font-semibold">
+            {segment.text}
+          </strong>
+        ) : (
+          <Fragment key={index}>{segment.text}</Fragment>
+        ),
+      )}
+    </>
+  );
+}
+
 function InboxMessageBody({
   message,
   isCustomer,
@@ -383,7 +400,7 @@ function InboxMessageBody({
                 ),
           )}
         >
-          {text}
+          <WhatsAppFormattedText text={text} />
         </div>
       ) : null}
     </>

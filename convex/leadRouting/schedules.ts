@@ -138,7 +138,10 @@ export const getForAgentUser = query({
   },
   handler: async (ctx, args) => {
     await assertAvailabilityRead(ctx, args.agentId);
-    await assertOrgMember(ctx, args.workosUserId);
+    const { userId } = await getAuthContext(ctx);
+    if (userId !== args.workosUserId) {
+      await assertOrgMember(ctx, args.workosUserId);
+    }
 
     const user = await ctx.db
       .query("users")
@@ -230,7 +233,9 @@ export const addUser = mutation({
     } else {
       await assertAvailabilityRead(ctx, args.agentId);
     }
-    await assertOrgMember(ctx, args.workosUserId);
+    if (userId !== args.workosUserId) {
+      await assertOrgMember(ctx, args.workosUserId);
+    }
 
     return await ensureUserScheduleForAgent(ctx, {
       agentId: args.agentId,

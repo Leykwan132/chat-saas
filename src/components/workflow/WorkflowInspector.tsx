@@ -45,7 +45,7 @@ type WorkflowInspectorProps = {
     description: string;
     conditionLabel?: string;
     conditionDetail?: string;
-    allowedAutoBookingServiceIds?: Id<'autoBookingServices'>[];
+    allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
   }) => void;
   onRemove: () => void;
   onClose: () => void;
@@ -64,8 +64,8 @@ export function WorkflowInspector({
   const [goal, setGoal] = useState('');
   const [conditionLabel, setConditionLabel] = useState('');
   const [conditionDetail, setConditionDetail] = useState('');
-  const [allowedAutoBookingServiceIds, setAllowedAutoBookingServiceIds] = useState<
-    Id<'autoBookingServices'>[] | undefined
+  const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
+    Id<'appointmentServices'>[] | undefined
   >();
 
   useEffect(() => {
@@ -73,9 +73,9 @@ export function WorkflowInspector({
     setGoal(node?.description ?? '');
     setConditionLabel(workflowConditionDisplayLabel(conditionEdge?.label) ?? '');
     setConditionDetail(conditionEdge?.detail ?? '');
-    setAllowedAutoBookingServiceIds(
+    setAllowedAppointmentBookingServiceIds(
       node?.kind === 'bookAppointment'
-        ? node.allowedAutoBookingServiceIds
+        ? node.allowedAppointmentServiceIds
         : undefined,
     );
   }, [conditionEdge?.detail, conditionEdge?.label, node]);
@@ -209,8 +209,8 @@ export function WorkflowInspector({
                       </div>
                       <WorkflowBookingServicesSection
                         agentId={agentId}
-                        allowedServiceIds={allowedAutoBookingServiceIds}
-                        onAllowedServiceIdsChange={setAllowedAutoBookingServiceIds}
+                        allowedServiceIds={allowedAppointmentServiceIds}
+                        onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
                       />
                     </div>
                   ) : null}
@@ -227,8 +227,8 @@ export function WorkflowInspector({
                 description: hasGoalField ? goal : '',
                 conditionLabel: conditionEnabled ? conditionLabel : undefined,
                 conditionDetail: conditionEnabled ? conditionDetail : undefined,
-                allowedAutoBookingServiceIds: isBookAppointmentAction
-                  ? allowedAutoBookingServiceIds
+                allowedAppointmentServiceIds: isBookAppointmentAction
+                  ? allowedAppointmentServiceIds
                   : undefined,
               })}
             >

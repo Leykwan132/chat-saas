@@ -31,8 +31,8 @@ import {
 import { DotPattern } from '@/components/ui/dot-pattern';
 import { AnimatedList, AnimatedListItem } from '@/components/ui/animated-list';
 
-export const AUTO_BOOKING_OVERVIEW_META = {
-  tag: 'Auto Booking',
+export const SERVICES_OVERVIEW_META = {
+  tag: 'Services',
   bookTitle: 'Overview',
   dialogLabel: 'Overview',
 } as const;
@@ -104,7 +104,7 @@ const WORKFLOW_STEPS: WorkflowStepConfig[] = [
       'Offer available slots or let customers suggest a time',
       'Assign to the conversation owner, round robin, or a specific user',
     ],
-    note: 'Make sure team members have schedules configured so Auto Booking can find real availability.',
+    note: 'Make sure team members have schedules configured so Services can find real availability.',
   },
   {
     stepNumber: 3,
@@ -136,7 +136,7 @@ function workflowToOverviewStep(step: WorkflowStepConfig): OverviewStep {
 
 const OVERVIEW_STEPS: OverviewStep[] = [
   {
-    title: 'Auto Booking',
+    title: 'Services',
     description:
       'Let AI book appointments for customers right from chat, without manual back-and-forth.',
     sectionTitle: 'Most common scenarios',
@@ -146,7 +146,7 @@ const OVERVIEW_STEPS: OverviewStep[] = [
   ...WORKFLOW_STEPS.map(workflowToOverviewStep),
 ];
 
-interface AutoBookingOverviewDialogProps {
+interface ServicesOverviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   step: number;
@@ -154,13 +154,13 @@ interface AutoBookingOverviewDialogProps {
   onAddService?: () => void;
 }
 
-export function AutoBookingOverviewDialog({
+export function ServicesOverviewDialog({
   open,
   onOpenChange,
   step,
   onStepChange,
   onAddService,
-}: AutoBookingOverviewDialogProps) {
+}: ServicesOverviewDialogProps) {
   const stepCount = OVERVIEW_STEPS.length;
   const [api, setApi] = useState<CarouselApi>();
   const [activeIndex, setActiveIndex] = useState(step);
@@ -205,7 +205,7 @@ export function AutoBookingOverviewDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="flex max-h-[min(90vh,640px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[880px]">
-        <DialogTitle className="sr-only">{AUTO_BOOKING_OVERVIEW_META.dialogLabel}</DialogTitle>
+        <DialogTitle className="sr-only">{SERVICES_OVERVIEW_META.dialogLabel}</DialogTitle>
         <Carousel setApi={setApi} opts={{ startIndex: step, watchDrag: true }} className="w-full">
           <CarouselContent className={cn('ml-0', OVERVIEW_SLIDE_HEIGHT_CLASS)}>
             {OVERVIEW_STEPS.map((slide, slideIndex) => (
@@ -448,7 +448,7 @@ function FeaturesVisual({
   }
 
   return (
-    <AnimatedList key={`auto-booking-features-${animKey}`} delay={750} className="w-full gap-3">
+    <AnimatedList key={`services-features-${animKey}`} delay={750} className="w-full gap-3">
       {FEATURE_SCENARIOS.map((scenario) => (
         <AnimatedListItem key={scenario.title}>
           <ScenarioCard {...scenario} />

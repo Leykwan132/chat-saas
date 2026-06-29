@@ -56,7 +56,7 @@ export type ServiceForm = {
 };
 
 export type ServiceRow = {
-  _id: Id<'autoBookingServices'>;
+  _id: Id<'appointmentServices'>;
   name: string;
   description?: string;
   isActive: boolean;

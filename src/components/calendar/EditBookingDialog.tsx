@@ -65,7 +65,7 @@ type CalendarEvent = {
   endDate?: string;
   status: 'confirmed' | 'tentative' | 'cancelled';
   bookingSource?: 'manual' | 'ai';
-  autoBookingServiceId?: Id<'autoBookingServices'>;
+  appointmentServiceId?: Id<'appointmentServices'>;
   customFieldResponses?: Record<string, string | number | boolean | null>;
   remarks?: string;
   participants: CalendarParticipant[];
@@ -367,9 +367,9 @@ export function EditBookingDialog({
     }
   }, [eventData, displayTimeZone]);
 
-  const isEditingAutoBooking = Boolean(
-    editingAppointmentDetails?.isAutoBooking ??
-      eventData?.autoBookingServiceId ??
+  const isEditingAppointmentBooking = Boolean(
+    editingAppointmentDetails?.isAppointmentBooking ??
+      eventData?.appointmentServiceId ??
       eventData?.bookingSource === 'ai',
   );
 
@@ -448,7 +448,7 @@ export function EditBookingDialog({
       await updateEvent({
         eventId,
         ...payload,
-        ...(isEditingAutoBooking
+        ...(isEditingAppointmentBooking
           ? {
               customFieldResponses: buildCustomFieldResponses(
                 formState.collectedFields,
@@ -710,7 +710,7 @@ export function EditBookingDialog({
                     </div>
                   </div>
 
-                  {isEditingAutoBooking ? (
+                  {isEditingAppointmentBooking ? (
                     isLoadingEditingAppointmentDetails ? (
                       <CustomerDetailFormSkeleton />
                     ) : (
@@ -805,7 +805,7 @@ export function EditBookingDialog({
                     )
                   ) : null}
 
-                  {isEditingAutoBooking && !isLoadingEditingAppointmentDetails ? (
+                  {isEditingAppointmentBooking && !isLoadingEditingAppointmentDetails ? (
                     <div className="space-y-4">
                       <p className="text-xs font-semibold text-muted-foreground">Internal Notes</p>
                       

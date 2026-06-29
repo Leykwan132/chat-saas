@@ -70,7 +70,7 @@ async function createBookingService(
 ) {
   return await t.run(async (ctx) => {
     const now = Date.now();
-    return await ctx.db.insert("autoBookingServices", {
+    return await ctx.db.insert("appointmentServices", {
       agentId,
       name,
       isActive,
@@ -110,29 +110,29 @@ test("book appointment service selection filters active booking services", async
     (node) => node.kind === "bookAppointment",
   );
 
-  const unrestricted = await t.query(internal.autoBooking.listActiveServices, { agentId });
+  const unrestricted = await t.query(internal.appointmentBooking.services.listActiveServices, { agentId });
   expect(unrestricted.services.map((service) => service.serviceId)).toEqual([
     consultationId,
     installationId,
   ]);
 
-  await authed.mutation(api.workflowBookingServices.updateAllowedServices, {
+  await authed.mutation(api.workflowAppointmentServices.updateAllowedServices, {
     agentId,
     nodeId: bookAppointmentNode!._id,
     serviceIds: [installationId],
   });
 
-  const selected = await t.query(internal.autoBooking.listActiveServices, { agentId });
+  const selected = await t.query(internal.appointmentBooking.services.listActiveServices, { agentId });
   expect(selected.enabled).toBe(true);
   expect(selected.services.map((service) => service.serviceId)).toEqual([installationId]);
 
-  await authed.mutation(api.workflowBookingServices.updateAllowedServices, {
+  await authed.mutation(api.workflowAppointmentServices.updateAllowedServices, {
     agentId,
     nodeId: bookAppointmentNode!._id,
     serviceIds: [],
   });
 
-  const disabled = await t.query(internal.autoBooking.listActiveServices, { agentId });
+  const disabled = await t.query(internal.appointmentBooking.services.listActiveServices, { agentId });
   expect(disabled.enabled).toBe(false);
   expect(disabled.services).toEqual([]);
 });

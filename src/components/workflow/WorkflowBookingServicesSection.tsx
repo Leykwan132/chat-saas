@@ -17,15 +17,15 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 type BookingServiceRow = {
-  _id: Id<'autoBookingServices'>;
+  _id: Id<'appointmentServices'>;
   name: string;
   description?: string;
 };
 
 type WorkflowBookingServicesSectionProps = {
   agentId: Id<'agents'>;
-  allowedServiceIds?: Id<'autoBookingServices'>[];
-  onAllowedServiceIdsChange: (serviceIds: Id<'autoBookingServices'>[]) => void;
+  allowedServiceIds?: Id<'appointmentServices'>[];
+  onAllowedServiceIdsChange: (serviceIds: Id<'appointmentServices'>[]) => void;
 };
 
 export function WorkflowBookingServicesSection({
@@ -33,7 +33,7 @@ export function WorkflowBookingServicesSection({
   allowedServiceIds,
   onAllowedServiceIdsChange,
 }: WorkflowBookingServicesSectionProps) {
-  const services = useQuery(api.workflowBookingServices.listForAgent, { agentId }) as
+  const services = useQuery(api.workflowAppointmentServices.listForAgent, { agentId }) as
     | BookingServiceRow[]
     | undefined;
 
@@ -43,7 +43,7 @@ export function WorkflowBookingServicesSection({
   }, [allowedServiceIds, services]);
 
   const handleToggleService = (
-    serviceId: Id<'autoBookingServices'>,
+    serviceId: Id<'appointmentServices'>,
     checked: boolean,
   ) => {
     const currentIds = allowedServiceIds ?? services?.map((service) => service._id) ?? [];
@@ -77,7 +77,7 @@ export function WorkflowBookingServicesSection({
         </EmptyHeader>
         <EmptyContent>
           <Button asChild size="sm" variant="outline">
-            <Link to={`/dashboard/${agentId}/auto-booking/new`}>
+            <Link to={`/dashboard/${agentId}/services/new`}>
               <Plus data-icon="inline-start" />
               Add service
             </Link>
@@ -102,7 +102,7 @@ export function WorkflowBookingServicesSection({
             <div className="min-w-0 flex-1">
               <div className="flex min-w-0 items-center gap-2">
                 <Link
-                  to={`/dashboard/${agentId}/auto-booking/${service._id}`}
+                  to={`/dashboard/${agentId}/services/${service._id}`}
                   className="inline-flex min-w-0 items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary"
                 >
                   <span className="truncate">{service.name}</span>

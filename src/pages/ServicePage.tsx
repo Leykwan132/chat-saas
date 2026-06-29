@@ -5,8 +5,8 @@ import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import { CreateAutoBookingServiceWizard } from '@/components/auto-booking/CreateAutoBookingServiceWizard';
-import { AutoBookingServiceForm } from '@/components/AutoBookingServiceForm';
+import { CreateServiceWizard } from '@/components/services/CreateServiceWizard';
+import { ServiceForm } from '@/components/ServiceForm';
 import { DetailPageActionFooter } from '@/components/automation/DetailPageActionFooter';
 import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
@@ -27,17 +27,16 @@ import {
   serviceFormsEqual,
   serviceToForm,
   teamMemberRoleLabel,
-  type ServiceForm,
+  type ServiceForm as ServiceFormValues,
   type ServiceRow,
   type TeamMemberRole,
   type TeamUserOption,
-} from '@/lib/autoBookingServiceForm';
+} from '@/lib/serviceForm';
 import { Permission } from '../../shared/permissions';
 import {
-  AUTO_BOOKING_SESSION_METRIC_STATUSES,
-  AUTO_BOOKING_SESSION_STATUS_LABELS,
-} from '@/lib/autoBookingSessionStatus';
-import { PlanFeatureGate } from '@/components/PlanFeatureGate';
+  APPOINTMENT_BOOKING_SESSION_METRIC_STATUSES,
+  APPOINTMENT_BOOKING_SESSION_STATUS_LABELS,
+} from '@/lib/appointmentBookingSessionStatus';
 
 type TeamUser = Doc<'users'> & { isAdmin: boolean; role: TeamMemberRole };
 
@@ -46,30 +45,30 @@ function memberLabel(user: { firstName?: string; lastName?: string; email: strin
   return fullName || user.email;
 }
 
-export default function AutoBookingServicePage() {
+export default function ServicePage() {
   const { agentId, serviceId } = useParams();
   const navigate = useNavigate();
   const typedAgentId = agentId as Id<'agents'> | undefined;
-  const typedServiceId = serviceId as Id<'autoBookingServices'> | undefined;
+  const typedServiceId = serviceId as Id<'appointmentServices'> | undefined;
   const isEditMode = Boolean(typedServiceId);
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canRead = can(Permission.AUTOMATION_READ) || can(Permission.CALENDAR_READ);
   const canManage = can(Permission.AUTOMATION_MANAGE) || can(Permission.CALENDAR_MANAGE);
 
   const overview = useQuery(
-    api.autoBooking.getOverview,
+    api.appointmentBooking.services.getOverview,
     typedAgentId && canRead ? { agentId: typedAgentId } : 'skip',
   );
   const serviceMetrics = useQuery(
-    api.autoBooking.getServiceMetrics,
+    api.appointmentBooking.services.getServiceMetrics,
     typedServiceId && canRead ? { serviceId: typedServiceId } : 'skip',
   );
   const teamUsers = useQuery(api.users.getUsers, {});
-  const updateService = useMutation(api.autoBooking.updateService);
-  const archiveService = useMutation(api.autoBooking.archiveService);
+  const updateService = useMutation(api.appointmentBooking.services.updateService);
+  const archiveService = useMutation(api.appointmentBooking.services.archiveService);
 
-  const [form, setForm] = useState<ServiceForm>(DEFAULT_SERVICE_FORM);
-  const [savedForm, setSavedForm] = useState<ServiceForm>(DEFAULT_SERVICE_FORM);
+  const [form, setForm] = useState<ServiceFormValues>(DEFAULT_SERVICE_FORM);
+  const [savedForm, setSavedForm] = useState<ServiceFormValues>(DEFAULT_SERVICE_FORM);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -110,7 +109,7 @@ export default function AutoBookingServicePage() {
   }
 
   if (!permissionsLoading && !isEditMode && !canManage) {
-    return <Navigate to={`/dashboard/${typedAgentId}/auto-booking`} replace />;
+    return <Navigate to={`/dashboard/${typedAgentId}/services`} replace />;
   }
 
   const isLoading =
@@ -123,22 +122,18 @@ export default function AutoBookingServicePage() {
         !editingService));
 
   if (isLoading) {
-    return isEditMode ? <EditAutoBookingServiceSkeleton /> : <CreateAutoBookingServiceSkeleton />;
+    return isEditMode ? <EditServiceSkeleton /> : <CreateServiceSkeleton />;
   }
 
   if (isEditMode && !editingService) {
-    return <Navigate to={`/dashboard/${typedAgentId}/auto-booking`} replace />;
+    return <Navigate to={`/dashboard/${typedAgentId}/services`} replace />;
   }
 
   if (!isEditMode) {
-    return (
-      <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
-        <CreateAutoBookingServiceWizard agentId={typedAgentId} teamUserOptions={teamUserOptions} />
-      </PlanFeatureGate>
-    );
+    return <CreateServiceWizard agentId={typedAgentId} teamUserOptions={teamUserOptions} />;
   }
 
-  const backHref = `/dashboard/${typedAgentId}/auto-booking`;
+  const backHref = `/dashboard/${typedAgentId}/services`;
 
   const handleCancel = () => {
     setForm(savedForm);
@@ -188,8 +183,7 @@ export default function AutoBookingServicePage() {
   const showSaveFooter = canManage && isDirty;
 
   return (
-    <PlanFeatureGate featureKey="auto_booking" featureName="Auto Booking">
-      <div
+    <div
         className="mx-auto flex w-full max-w-3xl flex-col gap-8"
         style={showSaveFooter ? { paddingBottom: '4.5rem' } : undefined}
       >
@@ -236,17 +230,17 @@ export default function AutoBookingServicePage() {
 
       {serviceMetrics ? (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-          {AUTO_BOOKING_SESSION_METRIC_STATUSES.map((status) => (
+          {APPOINTMENT_BOOKING_SESSION_METRIC_STATUSES.map((status) => (
             <ServiceMetricCard
               key={status}
-              label={AUTO_BOOKING_SESSION_STATUS_LABELS[status]}
+              label={APPOINTMENT_BOOKING_SESSION_STATUS_LABELS[status]}
               value={serviceMetrics[status]}
             />
           ))}
         </div>
       ) : null}
 
-      <AutoBookingServiceForm
+      <ServiceForm
         form={form}
         setForm={setForm}
         teamUserOptions={teamUserOptions}
@@ -304,8 +298,7 @@ export default function AutoBookingServicePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-    </PlanFeatureGate>
+    </div>
   );
 }
 
@@ -322,7 +315,7 @@ function ServiceMetricCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function CreateAutoBookingServiceSkeleton() {
+function CreateServiceSkeleton() {
   return (
     <div className="flex min-h-[100svh] flex-col bg-background">
       <div className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/75 px-6 py-4 backdrop-blur-xl">
@@ -340,7 +333,7 @@ function CreateAutoBookingServiceSkeleton() {
   );
 }
 
-function EditAutoBookingServiceSkeleton() {
+function EditServiceSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
       <div className="border-b border-border pb-6">

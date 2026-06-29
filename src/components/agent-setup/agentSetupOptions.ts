@@ -26,27 +26,27 @@ export const templateOptions: AgentTemplateOption[] = [
 ];
 
 export const RESPONSE_LENGTH_OPTIONS = [
-  { value: 'brief', label: 'Brief', description: '1-2 lines' },
-  { value: 'standard', label: 'Standard', description: '2-5 lines' },
-  { value: 'detailed', label: 'Detailed', description: '5-7 lines' },
+  { value: 'brief', label: 'Brief', description: 'Short replies for quick answers.' },
+  { value: 'standard', label: 'Standard', description: 'Balanced replies with enough detail.' },
+  { value: 'detailed', label: 'Detailed', description: 'Fuller replies when context matters.' },
 ] as const;
 
 export const EMOJI_USE_OPTIONS = [
-  { value: 'never', label: 'Never', description: 'No emoji' },
-  { value: 'occasional', label: 'Occasional', description: 'Sometimes' },
-  { value: 'frequent', label: 'Frequent', description: 'Often' },
+  { value: 'never', label: 'Never', description: '"Thanks, I can help with that."' },
+  { value: 'occasional', label: 'Occasional', description: '"Sounds good 😊"' },
+  { value: 'frequent', label: 'Frequent', description: '"Great, happy to help 😊✨"' },
 ] as const;
 
 export const FORMALITY_OPTIONS = [
-  { value: 'casual', label: 'Casual', description: 'Relaxed' },
-  { value: 'conversational', label: 'Conversational', description: 'Natural' },
-  { value: 'professional', label: 'Professional', description: 'Polished' },
+  { value: 'casual', label: 'Casual', description: 'Friendly and relaxed in everyday language.' },
+  { value: 'conversational', label: 'Conversational', description: 'Natural, helpful, and still clear.' },
+  { value: 'professional', label: 'Professional', description: 'Polished and respectful for business chats.' },
 ] as const;
 
 export const HUMOR_LEVEL_OPTIONS = [
-  { value: 'none', label: 'None', description: 'Direct' },
-  { value: 'light', label: 'Light', description: 'Subtle' },
-  { value: 'playful', label: 'Playful', description: 'Warm' },
+  { value: 'none', label: 'None', description: 'Straightforward replies with no jokes.' },
+  { value: 'light', label: 'Light', description: 'A little warmth when it fits the chat.' },
+  { value: 'playful', label: 'Playful', description: 'More personality in friendly, low-risk chats.' },
 ] as const;
 
 export type ResponseLength = (typeof RESPONSE_LENGTH_OPTIONS)[number]['value'];

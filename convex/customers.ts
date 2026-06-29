@@ -926,9 +926,9 @@ export const deleteCustomer = mutation({
         await ctx.db.delete(assignment._id);
       }
 
-      // 1d. Delete auto booking sessions
+      // 1d. Delete appointment booking sessions
       const bookingSessions = await ctx.db
-        .query("autoBookingSessions")
+        .query("appointmentBookingSessions")
         .withIndex("by_conversationId", (q) => q.eq("conversationId", conv._id))
         .collect();
       for (const session of bookingSessions) {

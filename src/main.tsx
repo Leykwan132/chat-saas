@@ -37,8 +37,8 @@ import FollowUpPage from './pages/FollowUpPage.tsx'
 import FollowUpDetailPage from './pages/FollowUpDetailPage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
 import CalendarPage from './pages/CalendarPage.tsx'
-import AutoBookingPage from './pages/AutoBookingPage.tsx'
-import AutoBookingServicePage from './pages/AutoBookingServicePage.tsx'
+import ServicesPage from './pages/ServicesPage.tsx'
+import ServicePage from './pages/ServicePage.tsx'
 import SchedulePage from './pages/SchedulePage.tsx'
 import ScheduleUserDetailPage from './pages/ScheduleUserDetailPage.tsx'
 import ScheduleUserAvailabilityPage from './pages/ScheduleUserAvailabilityPage.tsx'
@@ -265,10 +265,10 @@ const router = createBrowserRouter(
         />
         <Route path="availability/:workosUserId" element={<ScheduleUserDetailPage />} />
         <Route path="calendar" element={<CalendarPage />} />
-        <Route path="auto-booking/new" element={<AutoBookingServicePage />} />
-        <Route path="auto-booking/:serviceId/edit" element={<AutoBookingServicePage />} />
-        <Route path="auto-booking/:serviceId" element={<AutoBookingServicePage />} />
-        <Route path="auto-booking" element={<AutoBookingPage />} />
+        <Route path="services/new" element={<ServicePage />} />
+        <Route path="services/:serviceId/edit" element={<ServicePage />} />
+        <Route path="services/:serviceId" element={<ServicePage />} />
+        <Route path="services" element={<ServicesPage />} />
         <Route path="lead-assignment" element={<LeadAssignmentPage />} />
         <Route path="agent-setup" element={<InstructionsPage />} />
         <Route path="workflow" element={<WorkflowPage />} />

@@ -1,24 +1,25 @@
-import { useQuery } from 'convex/react';
-import {
-  AlignLeft,
-  Calendar,
-  Clock,
-  Hash,
-  Link2,
-  MessageSquare,
-  Phone,
-  User,
-  Users,
-} from 'lucide-react';
+import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import { PencilLine, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
+import { BookingDetailsPanelSkeleton } from '@/components/booking/BookingDetailsPanel';
+import { CalendarEventDeleteDialog } from '@/components/calendar/CalendarEventDeleteDialog';
+import { CalendarEventDetailsEditBody } from '@/components/calendar/CalendarEventDetailsEditBody';
 import {
-  BookingDetailsPanel,
-  BookingDetailsPanelSkeleton,
-  formatCollectedFieldValue,
-  type BookingDetailItem,
-  type BookingDetailSection,
-} from '@/components/booking/BookingDetailsPanel';
+  EventDetailsBody,
+  type AppointmentDetails,
+} from '@/components/calendar/CalendarEventDetailsBody';
+import {
+  buildCustomFieldResponses,
+  combineDateTime,
+  formStateFromEvent,
+  getAllDayBounds,
+  type CalendarEventForEditing,
+  type EventEditFormState,
+  type TeamUserOption,
+} from '@/components/calendar/calendarEventEditModel';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,138 +28,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-
-type AppointmentDetails = {
-  eventId: Id<'calendarEvents'>;
-  title: string;
-  status: 'confirmed' | 'tentative' | 'cancelled';
-  bookingSource?: 'manual' | 'ai';
-  isAutoBooking: boolean;
-  serviceName: string;
-  serviceFields: Array<{ key: string; label: string }>;
-  collectedFields: Record<string, string | number | boolean | null>;
-  date: string;
-  timeRange: string;
-  teamMember?: string;
-  customerName?: string;
-  attendeeNames: string[];
-  description?: string;
-  link?: string;
-  remarks?: string;
-  conversationId?: Id<'conversations'>;
-};
-
-const DEFAULT_FIELD_KEYS = new Set(['date', 'time', 'name', 'phone']);
-
-function buildExtraFieldRows(details: AppointmentDetails): BookingDetailItem[] {
-  const rows: BookingDetailItem[] = [];
-  const labeledKeys = new Set<string>();
-
-  for (const field of details.serviceFields) {
-    labeledKeys.add(field.key);
-    const value = formatCollectedFieldValue(details.collectedFields[field.key]);
-    if (value === '—') continue;
-    if (DEFAULT_FIELD_KEYS.has(field.key.toLowerCase())) continue;
-    rows.push({
-      label: field.label,
-      value,
-      icon: User,
-    });
-  }
-
-  for (const [key, value] of Object.entries(details.collectedFields)) {
-    if (labeledKeys.has(key)) continue;
-    const formatted = formatCollectedFieldValue(value);
-    if (formatted === '—') continue;
-    if (DEFAULT_FIELD_KEYS.has(key.toLowerCase())) continue;
-    rows.push({
-      label: key
-        .split(/[-_]/)
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' '),
-      value: formatted,
-      icon: User,
-    });
-  }
-
-  return rows;
-}
-
-function buildDetailSections(details: AppointmentDetails): BookingDetailSection[] {
-  const bookingDetailRows: BookingDetailItem[] = [];
-  if (details.date) {
-    bookingDetailRows.push({ label: 'Date', value: details.date, icon: Calendar });
-  }
-  if (details.timeRange) {
-    bookingDetailRows.push({ label: 'Time', value: details.timeRange, icon: Clock });
-  }
-  if (details.link) {
-    bookingDetailRows.push({ label: 'Link', value: details.link, icon: Link2 });
-  }
-  if (details.description) {
-    bookingDetailRows.push({ label: 'Description', value: details.description, icon: AlignLeft });
-  }
-  bookingDetailRows.push({
-    label: 'Booking reference',
-    value: details.eventId,
-    icon: Hash,
-  });
-  bookingDetailRows.push(...buildExtraFieldRows(details));
-
-  const customerDetailRows: BookingDetailItem[] = [];
-  const customerName =
-    details.customerName ??
-    formatCollectedFieldValue(details.collectedFields.name);
-  const customerPhone = formatCollectedFieldValue(details.collectedFields.phone);
-  if (customerName !== '—') {
-    customerDetailRows.push({
-      label: 'Customer name',
-      value: customerName,
-      icon: User,
-    });
-  }
-  if (customerPhone !== '—') {
-    customerDetailRows.push({ label: 'Phone', value: customerPhone, icon: Phone });
-  }
-
-  const teamDetailRows: BookingDetailItem[] = [];
-  if (details.teamMember) {
-    teamDetailRows.push({
-      label: 'Team member',
-      value: details.teamMember,
-      icon: User,
-    });
-  }
-  if (details.attendeeNames.length > 0) {
-    teamDetailRows.push({
-      label: 'Attendees',
-      value: details.attendeeNames.join(', '),
-      icon: Users,
-    });
-  }
-
-  const sections: BookingDetailSection[] = [
-    { title: 'Booking detail', rows: bookingDetailRows },
-    { title: 'Customer detail', rows: customerDetailRows },
-    { title: 'Team detail', rows: teamDetailRows },
-  ];
-
-  if (details.remarks?.trim()) {
-    sections.push({
-      title: 'Remarks',
-      rows: [{ label: 'Remarks', value: details.remarks, icon: MessageSquare }],
-    });
-  }
-
-  return sections;
-}
+import { Spinner } from '@/components/ui/spinner';
 
 type CalendarEventDetailsDialogProps = {
   eventId: Id<'calendarEvents'> | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   canEdit: boolean;
-  onEdit: () => void;
+  onDeleteSuccess?: () => void;
 };
 
 export function CalendarEventDetailsDialog({
@@ -166,46 +43,219 @@ export function CalendarEventDetailsDialog({
   open,
   onOpenChange,
   canEdit,
-  onEdit,
+  onDeleteSuccess,
 }: CalendarEventDetailsDialogProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [formState, setFormState] = useState<EventEditFormState | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const updateEvent = useMutation(api.calendarEvents.update);
+  const removeEvent = useMutation(api.calendarEvents.remove);
 
   const details = useQuery(
     api.calendarEvents.getAppointmentDetails,
     open && eventId ? { eventId } : 'skip',
-  );
+  ) as AppointmentDetails | null | undefined;
+  const eventData = useQuery(
+    api.calendarEvents.getEventForEditing,
+    open && eventId ? { eventId } : 'skip',
+  ) as CalendarEventForEditing | null | undefined;
+  const teamUsers = useQuery(api.users.getUsers, {}) as TeamUserOption[] | undefined;
 
   const loading = open && eventId !== null && details === undefined;
-  const sections = details ? buildDetailSections(details) : [];
-  const title = details
-    ? details.isAutoBooking && details.serviceName
-      ? details.serviceName
-      : details.title
-    : 'Appointment details';
-  const badge = details?.status === 'cancelled' ? 'Cancelled' : undefined;
+  const title = details ? details.title : 'Appointment details';
+  const editFormState =
+    isEditing && eventData ? formState ?? formStateFromEvent(eventData) : formState;
+  const editLoading =
+    isEditing &&
+    (details === undefined ||
+      eventData === undefined ||
+      teamUsers === undefined ||
+      editFormState === null);
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setIsEditing(false);
+      setFormState(null);
+      setDeleteDialogOpen(false);
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const updateForm = (patch: Partial<EventEditFormState>) => {
+    setFormState((current) => {
+      const base = current ?? (eventData ? formStateFromEvent(eventData) : null);
+      return base ? { ...base, ...patch } : null;
+    });
+  };
+
+  const updateCollectedField = (key: string, value: string) => {
+    setFormState((current) => {
+      const base = current ?? (eventData ? formStateFromEvent(eventData) : null);
+      if (!base) return null;
+      return {
+        ...base,
+        collectedFields: {
+          ...base.collectedFields,
+          [key]: value,
+        },
+      };
+    });
+  };
+
+  const handleStartEdit = () => {
+    if (eventData) {
+      setFormState(formStateFromEvent(eventData));
+    }
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setFormState(null);
+  };
+
+  const handleSaveEvent = async () => {
+    if (!eventId || !editFormState || !details) return;
+    if (!editFormState.title.trim()) {
+      toast.error('Event title is required');
+      return;
+    }
+    if (!editFormState.customerId || !editFormState.assignedUserId) {
+      toast.error('Customer and team member are required');
+      return;
+    }
+
+    const timeRange = editFormState.allDay
+      ? getAllDayBounds(editFormState.date, editFormState.timeZone)
+      : {
+          startAt: combineDateTime(
+            editFormState.date,
+            editFormState.startTime,
+            editFormState.timeZone,
+          ),
+          endAt: combineDateTime(
+            editFormState.date,
+            editFormState.endTime,
+            editFormState.timeZone,
+          ),
+        };
+    const { startAt, endAt } = timeRange;
+    if (startAt === null || endAt === null) {
+      toast.error('Enter a valid start and end time');
+      return;
+    }
+    if (endAt <= startAt) {
+      toast.error('End time must be after start time');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await updateEvent({
+        eventId,
+        title: editFormState.title,
+        description: editFormState.description || undefined,
+        link: editFormState.link || undefined,
+        startAt,
+        endAt,
+        timeZone: editFormState.timeZone,
+        allDay: editFormState.allDay,
+        startDate: editFormState.allDay ? editFormState.date : undefined,
+        endDate: editFormState.allDay ? editFormState.date : undefined,
+        customerId: editFormState.customerId as Id<'customers'>,
+        assignedUserId: editFormState.assignedUserId as Id<'users'>,
+        attendeeUserIds: editFormState.attendeeUserIds as Id<'users'>[],
+        customFieldResponses: buildCustomFieldResponses(
+          editFormState.collectedFields,
+          details.serviceFields,
+        ),
+        remarks: editFormState.remarks.trim(),
+      });
+      toast.success('Event updated');
+      setIsEditing(false);
+      setFormState(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not save event');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (!eventId) return;
+    setIsDeleting(true);
+    try {
+      await removeEvent({ eventId });
+      toast.success('Event deleted');
+      setDeleteDialogOpen(false);
+      onDeleteSuccess?.();
+      handleOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Could not delete event');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md gap-0 overflow-hidden p-0">
-          <DialogHeader className="sr-only">
-            <DialogTitle>{title}</DialogTitle>
-          </DialogHeader>
-
-          <div className="max-h-[min(70vh,560px)] overflow-y-auto px-6 py-5">
-            {loading ? (
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-[63rem]" showCloseButton={false}>
+          <DialogHeader className="sr-only"><DialogTitle>{title}</DialogTitle></DialogHeader>
+          <div className="max-h-[min(82vh,760px)] overflow-y-auto px-10 py-8">
+            {loading || editLoading ? (
               <BookingDetailsPanelSkeleton variant="inline" />
-            ) : details ? (
-              <BookingDetailsPanel
-                title={title}
-                badge={badge}
-                sections={sections}
-                variant="inline"
+            ) : isEditing && editFormState && details && teamUsers ? (
+              <CalendarEventDetailsEditBody
+                form={editFormState}
+                serviceFields={details.serviceFields}
+                teamUsers={teamUsers}
                 actions={
-                  canEdit && details.isAutoBooking
-                    ? {
-                        onEditBooking: onEdit,
-                      }
-                    : undefined
+                  canEdit && eventId ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => setDeleteDialogOpen(true)}
+                      aria-label="Delete event"
+                    >
+                      <Trash2 />
+                    </Button>
+                  ) : null
+                }
+                onFormChange={updateForm}
+                onCollectedFieldChange={updateCollectedField}
+              />
+            ) : details ? (
+              <EventDetailsBody
+                details={details}
+                actions={
+                  canEdit && eventId ? (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleStartEdit}
+                        aria-label="Update event"
+                      >
+                        <PencilLine />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                        aria-label="Delete event"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  ) : null
                 }
               />
             ) : (
@@ -213,15 +263,28 @@ export function CalendarEventDetailsDialog({
             )}
           </div>
 
-          <DialogFooter className="border-t border-border px-6 py-4">
+          <DialogFooter className="border-t border-border px-10 py-5">
             <div className="flex w-full items-center justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-                Close
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button type="button" variant="ghost" onClick={handleCancelEdit}>
+                    Cancel
+                  </Button>
+                  <Button type="button" disabled={isSaving || !canEdit} onClick={() => void handleSaveEvent()}>
+                    {isSaving ? <Spinner /> : null}
+                    Save
+                  </Button>
+                </>
+              ) : (
+                <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)}>
+                  Close
+                </Button>
+              )}
             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <CalendarEventDeleteDialog eventId={eventId} open={deleteDialogOpen} isDeleting={isDeleting} onOpenChange={setDeleteDialogOpen} onConfirm={() => void handleDeleteEvent()} />
     </>
   );
 }

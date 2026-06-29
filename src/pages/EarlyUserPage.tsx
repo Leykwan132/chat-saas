@@ -125,7 +125,7 @@ export default function EarlyUserPage() {
     },
     {
       question: "How does the 1-year free Growth plan work?",
-      answer: "Once accepted, we will upgrade your account. You get 10 AI agents, 5,000 monthly credits, calendar auto-booking, and integrations free for 12 months."
+      answer: "Once accepted, we will upgrade your account. You get 10 AI agents, 5,000 monthly credits, calendar services, and integrations free for 12 months."
     },
     {
       question: "Which messaging channels can I connect?",

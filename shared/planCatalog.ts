@@ -6,7 +6,6 @@ export type PlanFeatureFlags = {
   lead_tagging: boolean;
   conversation_summaries: boolean;
   follow_ups: boolean;
-  auto_booking: boolean;
   thread_summary: boolean;
   sync_lead_labeling: boolean;
   auto_reply: boolean;
@@ -51,7 +50,6 @@ export type EnterprisePlanEntry = {
     | "lead_tagging"
     | "conversation_summaries"
     | "follow_ups"
-    | "auto_booking"
     | "ai_agent_customization"
     | "agent_usage"
     | "team_analytics"
@@ -144,7 +142,6 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       lead_tagging: false,
       conversation_summaries: false,
       follow_ups: false,
-      auto_booking: false,
       thread_summary: false,
       sync_lead_labeling: false,
       auto_reply: false,
@@ -180,7 +177,6 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       lead_tagging: true,
       conversation_summaries: true,
       follow_ups: true,
-      auto_booking: false,
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: false,
@@ -204,7 +200,6 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "Everything in Starter, plus:",
       "10 AI Agents",
       "5,000 credits / mo",
-      "Auto booking",
       "Advanced Analytics",
       "10 team members",
     ],
@@ -217,7 +212,6 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       lead_tagging: true,
       conversation_summaries: true,
       follow_ups: true,
-      auto_booking: true,
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: true,
@@ -252,7 +246,6 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       lead_tagging: true,
       conversation_summaries: true,
       follow_ups: true,
-      auto_booking: true,
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: true,
@@ -329,7 +322,6 @@ export const ENTERPRISE_PLAN: EnterprisePlanEntry = {
     lead_tagging: true,
     conversation_summaries: true,
     follow_ups: true,
-    auto_booking: true,
     ai_agent_customization: true,
     agent_usage: true,
     team_analytics: true,
@@ -386,7 +378,6 @@ export function isKnowledgeBaseLimitLabel(label: string): boolean {
 
 export const AUTO_LEAD_TAGGING_LABEL = "Auto lead tagging";
 export const CHAT_SUMMARY_LABEL = "Chat summary";
-export const AUTO_BOOKING_LABEL = "Auto booking";
 export const AGENT_USAGE_LABEL = "AI agent usage";
 export const TEAM_ANALYTICS_LABEL = "Team analytics";
 export const TOPIC_ANALYTICS_LABEL = "Advanced Analytics";
@@ -406,7 +397,6 @@ export const SUPPORTED_CHANNEL_DISPLAY_NAMES = [
 export const AI_TAGGED_PLAN_FEATURE_LABELS = [
   AUTO_LEAD_TAGGING_LABEL,
   CHAT_SUMMARY_LABEL,
-  AUTO_BOOKING_LABEL,
   TOPIC_ANALYTICS_LABEL,
 ] as const;
 
@@ -426,10 +416,6 @@ export const CREDITS_HOVER_TITLE = "Credits";
 export const CREDITS_HOVER_DESCRIPTION =
   "Your monthly credit quota refreshes each billing cycle. Usage depends on the model — different models deduct different credits per AI message.";
 
-export const AUTO_BOOKING_HOVER_TITLE = "Auto booking";
-export const AUTO_BOOKING_HOVER_DESCRIPTION =
-  "AI guides customers through booking in chat — collecting details, checking availability, and creating calendar appointments.";
-
 export const CHAT_SUMMARY_HOVER_TITLE = "Chat summary";
 export const CHAT_SUMMARY_HOVER_DESCRIPTION =
   "One button generation for your chat summary.";
@@ -446,10 +432,6 @@ export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
 
 export function isAutoLeadTaggingLabel(label: string): boolean {
   return label === AUTO_LEAD_TAGGING_LABEL;
-}
-
-export function isAutoBookingLabel(label: string): boolean {
-  return label === AUTO_BOOKING_LABEL;
 }
 
 export function isChatSummaryLabel(label: string): boolean {
@@ -483,7 +465,6 @@ export function isChannelLimitLabel(label: string): boolean {
 export function isPlanFeatureDescriptionHoverLabel(label: string): boolean {
   return (
     isPlanCreditsLabel(label) ||
-    isAutoBookingLabel(label) ||
     isChatSummaryLabel(label)
   );
 }
@@ -494,9 +475,6 @@ export function getPlanFeatureDescriptionHover(label: string): {
 } | null {
   if (isPlanCreditsLabel(label)) {
     return { title: CREDITS_HOVER_TITLE, description: CREDITS_HOVER_DESCRIPTION };
-  }
-  if (isAutoBookingLabel(label)) {
-    return { title: AUTO_BOOKING_HOVER_TITLE, description: AUTO_BOOKING_HOVER_DESCRIPTION };
   }
   if (isChatSummaryLabel(label)) {
     return { title: CHAT_SUMMARY_HOVER_TITLE, description: CHAT_SUMMARY_HOVER_DESCRIPTION };
@@ -720,19 +698,6 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
     }),
     getComparisonValue: (planId) =>
       PLAN_CATALOG[planId].features.conversation_summaries,
-  },
-  {
-    group: "ai_features",
-    comparisonLabel: AUTO_BOOKING_LABEL,
-    getSelfServeCardRow: (planId) => ({
-      text: AUTO_BOOKING_LABEL,
-      included: PLAN_CATALOG[planId].features.auto_booking,
-    }),
-    getEnterpriseCardRow: () => ({
-      text: AUTO_BOOKING_LABEL,
-      included: true,
-    }),
-    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.auto_booking,
   },
   {
     group: "analytics",

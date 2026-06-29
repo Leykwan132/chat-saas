@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { logConversationEvent } from "./conversationLogs";
 import {
   Permission,
@@ -14,7 +14,7 @@ import {
   formatCalendarAllDayDate,
   formatCalendarDateTime,
 } from "./calendarFormatUtils";
-import { AutoBookingSessionStatus } from "./autoBookingSessionStatus";
+import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -264,8 +264,8 @@ export const getAppointmentDetails = query({
       .filter((participant) => participant.role === "attendee")
       .map((participant) => participant.displayName ?? participant.email);
 
-    const service = event.autoBookingServiceId
-      ? await ctx.db.get(event.autoBookingServiceId)
+    const service = event.appointmentServiceId
+      ? await ctx.db.get(event.appointmentServiceId)
       : null;
     const { date, timeRange } = formatEventDateTime(event);
     const collectedFields = event.customFieldResponses ?? {};
@@ -275,7 +275,7 @@ export const getAppointmentDetails = query({
       title: event.title,
       status: event.status,
       bookingSource: event.bookingSource,
-      isAutoBooking: event.bookingSource === "ai" || event.autoBookingServiceId !== undefined,
+      isAppointmentBooking: event.bookingSource === "ai" || event.appointmentServiceId !== undefined,
       serviceName: service?.name ?? event.title,
       serviceFields: service?.fields ?? [],
       collectedFields,
@@ -376,12 +376,10 @@ export const listCustomerOptions = query({
   args: {},
   handler: async (ctx) => {
     const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
-    if (!auth.orgId || auth.orgId === "personal") {
-      return [];
-    }
+    const resolvedOrgId = resolveChannelOrgId(auth.orgId, auth.userId);
     const customers = await ctx.db
       .query("customers")
-      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", auth.orgId))
+      .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
       .order("desc")
       .take(100);
     return customers.map((customer) => ({
@@ -564,8 +562,8 @@ export const update = mutation({
       };
       patch.customFieldResponses = mergedCollectedFields;
 
-      if (event.autoBookingServiceId !== undefined) {
-        const service = await ctx.db.get(event.autoBookingServiceId);
+      if (event.appointmentServiceId !== undefined) {
+        const service = await ctx.db.get(event.appointmentServiceId);
         if (service !== null) {
           patch.title = `${service.name} - ${bookingDisplayName(mergedCollectedFields)}`;
         }
@@ -604,14 +602,14 @@ export const update = mutation({
       }
       if (event.conversationId !== undefined) {
         const sessions = await ctx.db
-          .query("autoBookingSessions")
+          .query("appointmentBookingSessions")
           .withIndex("by_conversationId", (q) => q.eq("conversationId", event.conversationId!))
           .collect();
         const session = sessions.find(
           (row) =>
             row.calendarEventId === args.eventId &&
-            (row.status === AutoBookingSessionStatus.Booked ||
-              row.status === AutoBookingSessionStatus.Editing),
+            (row.status === AppointmentBookingSessionStatus.Booked ||
+              row.status === AppointmentBookingSessionStatus.Editing),
         );
         if (session !== undefined) {
           await ctx.db.patch(session._id, {
@@ -724,4 +722,3 @@ export const getEventForEditing = query({
     };
   },
 });
-

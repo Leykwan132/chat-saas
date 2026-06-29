@@ -7,7 +7,7 @@ import {
   ToggleLeft,
   Type,
 } from 'lucide-react';
-import type { FieldType } from '@/lib/autoBookingServiceForm';
+import type { FieldType } from '@/lib/serviceForm';
 import { cn } from '@/lib/utils';
 
 type DataCollectFieldIconProps = {

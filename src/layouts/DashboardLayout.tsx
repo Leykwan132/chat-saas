@@ -114,7 +114,7 @@ function DashboardContent() {
   const isInboxPage = /\/inbox\/?$/.test(location.pathname);
   const isCalendarPage = /\/calendar\/?$/.test(location.pathname);
   const isWorkflowPage = /\/workflow\/?$/.test(location.pathname);
-  const isCreateAutoBookingPage = /\/auto-booking\/new\/?$/.test(location.pathname);
+  const isCreateServicesPage = /\/services\/new\/?$/.test(location.pathname);
   const isFullHeightPage = isInboxPage || isCalendarPage || isWorkflowPage;
   const agent = useQuery(
     api.agents.get,
@@ -137,7 +137,7 @@ function DashboardContent() {
     return <Navigate to="/workspace" replace />;
   }
 
-  if (isCreateAutoBookingPage) {
+  if (isCreateServicesPage) {
     return (
       <TooltipProvider delayDuration={0}>
         <div className="flex min-h-[100svh] flex-col bg-background">

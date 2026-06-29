@@ -32,7 +32,7 @@ export default function WorkflowPage() {
   const connectNodes = useMutation(api.workflows.connectNodes);
   const updateNode = useMutation(api.workflows.updateNode);
   const updateEdgeCondition = useMutation(api.workflows.updateEdgeCondition);
-  const updateAllowedBookingServices = useMutation(api.workflowBookingServices.updateAllowedServices);
+  const updateAllowedBookingServices = useMutation(api.workflowAppointmentServices.updateAllowedServices);
   const removeNode = useMutation(api.workflows.removeNode);
   const removeEdge = useMutation(api.workflows.removeEdge);
   const resetWorkflow = useMutation(api.workflowReset.resetForAgent);
@@ -197,13 +197,13 @@ export default function WorkflowPage() {
     description: string;
     conditionLabel?: string;
     conditionDetail?: string;
-    allowedAutoBookingServiceIds?: Id<'autoBookingServices'>[];
+    allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
   }) => {
     if (!typedAgentId || !selectedNodeId) return;
     setIsSaving(true);
     try {
       const {
-        allowedAutoBookingServiceIds,
+        allowedAppointmentServiceIds,
         conditionLabel,
         conditionDetail,
         ...nodeValues
@@ -221,11 +221,11 @@ export default function WorkflowPage() {
           detail: conditionDetail,
         });
       }
-      if (allowedAutoBookingServiceIds !== undefined) {
+      if (allowedAppointmentServiceIds !== undefined) {
         await updateAllowedBookingServices({
           agentId: typedAgentId,
           nodeId: selectedNodeId,
-          serviceIds: allowedAutoBookingServiceIds,
+          serviceIds: allowedAppointmentServiceIds,
         });
       }
       setSelectedNodeId(undefined);

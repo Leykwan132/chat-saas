@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
-import { Globe, FileText, AlignLeft, HelpCircle, Info, Lightbulb } from 'lucide-react';
+import { Globe, FileText, AlignLeft, HelpCircle, Info, Lightbulb, XIcon } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -123,6 +124,11 @@ export default function KnowledgeBasePage() {
     { label: 'text', count: textCount, size: textSize, icon: AlignLeft },
     { label: 'Q&A', count: qaCount, size: qaSize, icon: HelpCircle },
   ];
+  const deleteDialogTitle = deleteTarget?.type === 'web' && deleteTarget.isGroup
+    ? 'Remove URL and linked pages'
+    : deleteTarget?.type === 'media'
+      ? 'Remove media'
+      : 'Remove knowledge item';
 
   return (
     <>
@@ -251,9 +257,14 @@ export default function KnowledgeBasePage() {
       </div>
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" showCloseButton={false}>
+          <DialogClose asChild>
+            <Button type="button" variant="ghost" size="icon-sm" className="absolute right-4 top-4 rounded-full" aria-label="Close">
+              <XIcon />
+            </Button>
+          </DialogClose>
           <DialogHeader>
-            <DialogTitle>Delete entry</DialogTitle>
+            <DialogTitle>{deleteDialogTitle}</DialogTitle>
             <DialogDescription>
               {deleteTarget?.type === 'web' && deleteTarget.isGroup
                 ? "Are you sure you want to delete this URL and all its discovered links? This action cannot be undone."

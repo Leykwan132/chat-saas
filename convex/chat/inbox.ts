@@ -26,6 +26,7 @@ import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
+import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -257,7 +258,11 @@ export const internalPersistAiReply = internalMutation({
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) return null;
 
-    const trimmed = args.content.trim();
+    const normalizedContent =
+      conv.service === "whatsapp"
+        ? normalizeCustomerFacingResponseFormatting(args.content)
+        : args.content;
+    const trimmed = normalizedContent.trim();
     const now = Date.now();
     const messageMetadata =
       args.llmModel !== undefined
@@ -501,7 +506,11 @@ export const generateAiReplyWorker = internalAction({
       internal.knowledgeBaseImages.internalListCollectionNames,
       { agentId: conv.assignedAgentId },
     );
-    const activeBooking = await ctx.runQuery(internal.autoBooking.listActiveServices, {
+    const activeBooking = await ctx.runQuery(internal.appointmentBooking.services.listActiveServices, {
+      agentId: conv.assignedAgentId,
+    });
+    console.log("activeBooking", activeBooking);
+    const workflowRuntimeContext = await ctx.runQuery(internal.workflowRuntimeContext.loadForAgent, {
       agentId: conv.assignedAgentId,
     });
     const configuredAgent = buildAgent(
@@ -511,6 +520,7 @@ export const generateAiReplyWorker = internalAction({
       mediaCollections,
       conv._id,
       activeBooking.services,
+      workflowRuntimeContext,
     );
 
     let typingActive = false;

@@ -25,20 +25,20 @@ async function getWorkflowBookAppointmentNodes(ctx: DbCtx, agentId: Id<"agents">
 async function normalizeServiceIds(
   ctx: MutationCtx,
   agentId: Id<"agents">,
-  serviceIds: Id<"autoBookingServices">[],
+  serviceIds: Id<"appointmentServices">[],
 ) {
   if (serviceIds.length > MAX_BOOKING_SERVICES) {
     throw new Error("Too many services selected");
   }
 
-  const seen = new Set<Id<"autoBookingServices">>();
-  const normalized: Id<"autoBookingServices">[] = [];
+  const seen = new Set<Id<"appointmentServices">>();
+  const normalized: Id<"appointmentServices">[] = [];
   for (const serviceId of serviceIds) {
     if (seen.has(serviceId)) continue;
 
     const service = await ctx.db.get(serviceId);
     if (service === null || service.agentId !== agentId || service.archivedAt !== undefined) {
-      throw new Error("Auto booking service not found");
+      throw new Error("Service not found");
     }
 
     seen.add(serviceId);
@@ -47,19 +47,19 @@ async function normalizeServiceIds(
   return normalized;
 }
 
-export async function getAllowedAutoBookingServiceIdsForAgent(
+export async function getAllowedAppointmentBookingServiceIdsForAgent(
   ctx: DbCtx,
   agentId: Id<"agents">,
 ) {
   const nodes = await getWorkflowBookAppointmentNodes(ctx, agentId);
-  if (nodes.length === 0) return undefined;
+  if (nodes.length === 0) return new Set<Id<"appointmentServices">>();
 
-  const allowedIds = new Set<Id<"autoBookingServices">>();
+  const allowedIds = new Set<Id<"appointmentServices">>();
   for (const node of nodes) {
-    if (node.allowedAutoBookingServiceIds === undefined) {
+    if (node.allowedAppointmentServiceIds === undefined) {
       return undefined;
     }
-    for (const serviceId of node.allowedAutoBookingServiceIds) {
+    for (const serviceId of node.allowedAppointmentServiceIds) {
       allowedIds.add(serviceId);
     }
   }
@@ -67,13 +67,13 @@ export async function getAllowedAutoBookingServiceIdsForAgent(
 }
 
 export async function filterServicesByWorkflowBookingSelection<
-  Service extends Pick<Doc<"autoBookingServices">, "_id">,
+  Service extends Pick<Doc<"appointmentServices">, "_id">,
 >(
   ctx: DbCtx,
   agentId: Id<"agents">,
   services: Service[],
 ) {
-  const allowedIds = await getAllowedAutoBookingServiceIdsForAgent(ctx, agentId);
+  const allowedIds = await getAllowedAppointmentBookingServiceIdsForAgent(ctx, agentId);
   if (allowedIds === undefined) return services;
 
   const filtered: Service[] = [];
@@ -90,7 +90,7 @@ export const listForAgent = query({
   handler: async (ctx, args) => {
     const { agent } = await assertManageableAgent(ctx, args.agentId);
     const services = await ctx.db
-      .query("autoBookingServices")
+      .query("appointmentServices")
       .withIndex("by_agentId_and_sortOrder", (q) => q.eq("agentId", agent._id))
       .take(MAX_BOOKING_SERVICES);
 
@@ -114,7 +114,7 @@ export const updateAllowedServices = mutation({
   args: {
     agentId: v.id("agents"),
     nodeId: v.id("workflowNodes"),
-    serviceIds: v.array(v.id("autoBookingServices")),
+    serviceIds: v.array(v.id("appointmentServices")),
   },
   handler: async (ctx, args) => {
     const { agent } = await assertManageableAgent(ctx, args.agentId);
@@ -134,7 +134,7 @@ export const updateAllowedServices = mutation({
     const serviceIds = await normalizeServiceIds(ctx, agent._id, args.serviceIds);
     const now = Date.now();
     await ctx.db.patch(node._id, {
-      allowedAutoBookingServiceIds: serviceIds,
+      allowedAppointmentServiceIds: serviceIds,
       updatedAt: now,
     });
     await ctx.db.patch(workflow._id, { updatedAt: now });

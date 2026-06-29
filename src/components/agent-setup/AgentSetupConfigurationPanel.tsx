@@ -1,6 +1,15 @@
 import { Input } from '@/components/ui/input';
 import { ModelPicker, type ModelPickerOption } from '@/components/ModelPicker';
 import {
+  Bot,
+  CaseSensitive,
+  Laugh,
+  MessageSquareText,
+  Smile,
+  TextCursorInput,
+  type LucideIcon,
+} from 'lucide-react';
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -30,6 +39,15 @@ type SelectOption<T extends string> = {
   description: string;
 };
 
+function FieldLabelWithIcon({ Icon, children }: { Icon: LucideIcon; children: string }) {
+  return (
+    <FieldLabel className="flex items-center gap-2">
+      <Icon className="size-4 shrink-0 text-muted-foreground" />
+      <span>{children}</span>
+    </FieldLabel>
+  );
+}
+
 type AgentSetupConfigurationPanelProps = {
   name: string;
   model: string;
@@ -50,18 +68,20 @@ function SettingSelect<T extends string>({
   label,
   value,
   options,
+  Icon,
   onChange,
 }: {
   label: string;
   value: T;
   options: readonly SelectOption<T>[];
+  Icon: LucideIcon;
   onChange: (value: T) => void;
 }) {
   const selectedOption = options.find((option) => option.value === value);
 
   return (
     <Field className="gap-2.5">
-      <FieldLabel>{label}</FieldLabel>
+      <FieldLabelWithIcon Icon={Icon}>{label}</FieldLabelWithIcon>
       <Select value={value} onValueChange={(nextValue) => onChange(nextValue as T)}>
         <SelectTrigger className="h-auto min-h-12 w-full justify-between rounded-lg border-border bg-input/50 px-4 py-3.5">
           <SelectValue>
@@ -81,11 +101,11 @@ function SettingSelect<T extends string>({
           <SelectGroup>
             {options.map((option) => (
               <SelectItem key={option.value} value={option.value} textValue={option.label}>
-                <span className="flex w-full min-w-0 items-center justify-between gap-3 py-1.5 text-left">
+                <span className="flex w-full min-w-0 flex-col items-start gap-1 py-1.5 text-left">
                   <span className="truncate text-sm font-semibold leading-tight text-foreground">
                     {option.label}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-right text-xs leading-tight text-muted-foreground">
+                  <span className="line-clamp-2 text-xs leading-snug text-muted-foreground">
                     {option.description}
                   </span>
                 </span>
@@ -120,7 +140,10 @@ export function AgentSetupConfigurationPanel({
       </h2>
       <FieldGroup className="gap-5">
         <Field className="gap-2.5">
-          <FieldLabel htmlFor="agent-name">Name</FieldLabel>
+          <FieldLabel className="flex items-center gap-2" htmlFor="agent-name">
+            <TextCursorInput className="size-4 shrink-0 text-muted-foreground" />
+            <span>Name</span>
+          </FieldLabel>
           <Input
             id="agent-name"
             value={name}
@@ -130,7 +153,7 @@ export function AgentSetupConfigurationPanel({
           />
         </Field>
         <Field className="gap-2.5">
-          <FieldLabel>Model</FieldLabel>
+          <FieldLabelWithIcon Icon={Bot}>Model</FieldLabelWithIcon>
           <ModelPicker
             models={models}
             value={model}
@@ -143,24 +166,28 @@ export function AgentSetupConfigurationPanel({
             label="Response length"
             value={responseLength}
             options={RESPONSE_LENGTH_OPTIONS}
+            Icon={MessageSquareText}
             onChange={onResponseLengthChange}
           />
           <SettingSelect
             label="Emoji use"
             value={emojiUse}
             options={EMOJI_USE_OPTIONS}
+            Icon={Smile}
             onChange={onEmojiUseChange}
           />
           <SettingSelect
             label="Formality"
             value={formality}
             options={FORMALITY_OPTIONS}
+            Icon={CaseSensitive}
             onChange={onFormalityChange}
           />
           <SettingSelect
             label="Humor level"
             value={humorLevel}
             options={HUMOR_LEVEL_OPTIONS}
+            Icon={Laugh}
             onChange={onHumorLevelChange}
           />
         </div>

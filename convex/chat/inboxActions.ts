@@ -29,6 +29,7 @@ import {
   INBOX_REACTION_EMOJIS,
   isAllowedInboxReactionEmoji,
 } from "../../shared/messageReactions";
+import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
 
 type MetaIndicatorActionResult =
   | { ok: true; skipped?: string }
@@ -576,14 +577,17 @@ export const internalSendAiReply = internalAction({
     }
     const { conversation, channel } = ctxData;
     const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
+    const content =
+      conversation.service === "whatsapp"
+        ? normalizeCustomerFacingResponseFormatting(args.content)
+        : args.content;
 
-    // Case 1: text + media
-    if (args.content.trim() && args.mediaUrls.length > 0) {
+    if (content.trim() && args.mediaUrls.length > 0) {
       if (conversation.service === "instagram" || conversation.service === "messenger") {
         const { imageResult, textResult } = await sendTextAndImage(
           conversation,
           channel,
-          { text: args.content, imageUrls: args.mediaUrls, ...options },
+          { text: content, imageUrls: args.mediaUrls, ...options },
         );
         if (!imageResult.ok) return { ok: false, error: imageResult.error, policy: imageResult.policy };
         if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
@@ -593,20 +597,17 @@ export const internalSendAiReply = internalAction({
           mediaExternalIds: imageResult.externalId ? [imageResult.externalId] : [],
         };
       }
-      // WhatsApp: send text only
-      const textResult = await sendTextToChannel(conversation, channel, args.content, options);
+      const textResult = await sendTextToChannel(conversation, channel, content, options);
       if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
       return { ok: true, textExternalId: textResult.externalId, mediaExternalIds: [] };
     }
 
-    // Case 2: text only
-    if (args.content.trim()) {
-      const result = await sendTextToChannel(conversation, channel, args.content, options);
+    if (content.trim()) {
+      const result = await sendTextToChannel(conversation, channel, content, options);
       if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
       return { ok: true, textExternalId: result.externalId };
     }
 
-    // Case 3: media only
     if (args.mediaUrls.length > 0) {
       const result = await sendMediaToChannel(conversation, channel, {
         imageUrls: args.mediaUrls,

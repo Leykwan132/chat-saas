@@ -57,7 +57,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     buttonLabel: 'Upgrade to Growth',
     features: [
       {
-        title: 'Auto Booking & Scheduling',
+        title: 'Services & Scheduling',
         description: 'Book meetings and sync calendars automatically.',
       },
       {

@@ -182,6 +182,10 @@ function PlaygroundMessageAttachments({
   );
 }
 
+const whatsAppMarkdownComponents: Components = {
+  em: ({ children, ...props }) => <strong {...props}>{children}</strong>,
+};
+
 function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   const [visibleText] = useSmoothText(text, { startStreaming: status === "streaming" });
   const processed = visibleText.replace(/\n+/g, "\n\n");
@@ -204,12 +208,13 @@ function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   if (!hasCitations) {
     return (
       <div className="[&_p]:leading-snug [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_p:not(:last-child)]:mb-2">
-        <Markdown>{processed}</Markdown>
+        <Markdown components={whatsAppMarkdownComponents}>{processed}</Markdown>
       </div>
     );
   }
 
   const markdownComponents: Components = {
+    ...whatsAppMarkdownComponents,
     p: ({ children, ...props }) => {
       citationInjectKey = 0;
       const injected = injectCitations(children, citations);

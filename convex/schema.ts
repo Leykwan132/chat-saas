@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { autoBookingSessionStatusValidator } from "./autoBookingSessionStatus";
+import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
 import { workflowNodeKindValidator } from "./workflowValidators";
 
@@ -92,7 +92,7 @@ const whatsappConnectionAttemptStatusValidator = v.union(
   v.literal("error"),
 );
 
-const autoBookingFieldTypeValidator = v.union(
+const appointmentFieldTypeValidator = v.union(
   v.literal("text"),
   v.literal("number"),
   v.literal("select"),
@@ -102,39 +102,39 @@ const autoBookingFieldTypeValidator = v.union(
   v.literal("phone"),
 );
 
-const autoBookingTimeSlotPolicyValidator = v.union(
+const appointmentTimeSlotPolicyValidator = v.union(
   v.literal("offer_slots"),
   v.literal("customer_suggests"),
 );
 
-const autoBookingSalesStyleValidator = v.union(
+const appointmentSalesStyleValidator = v.union(
   v.literal("proactive"),
   v.literal("neutral"),
   v.literal("gentle"),
 );
 
-const autoBookingAssignmentStrategyValidator = v.union(
+const appointmentAssignmentStrategyValidator = v.union(
   v.literal("conversation_owner"),
   v.literal("balanced"),
   v.literal("round_robin"),
   v.literal("specific_user"),
 );
 
-const autoBookingCollectedValueValidator = v.union(
+const appointmentCollectedValueValidator = v.union(
   v.string(),
   v.number(),
   v.boolean(),
   v.null(),
 );
 
-const autoBookingServiceFieldValidator = v.object({
+const appointmentServiceFieldValidator = v.object({
   key: v.string(),
   label: v.string(),
-  type: autoBookingFieldTypeValidator,
+  type: appointmentFieldTypeValidator,
   options: v.optional(v.array(v.string())),
 });
 
-const autoBookingSlotValidator = v.object({
+const appointmentBookingSlotValidator = v.object({
   startAt: v.number(),
   endAt: v.number(),
   assignedUserId: v.id("users"),
@@ -360,7 +360,7 @@ export default defineSchema({
     title: v.string(),
     description: v.optional(v.string()),
     notes: v.optional(v.string()),
-    allowedAutoBookingServiceIds: v.optional(v.array(v.id("autoBookingServices"))),
+    allowedAppointmentServiceIds: v.optional(v.array(v.id("appointmentServices"))),
     positionX: v.number(),
     positionY: v.number(),
     createdAt: v.number(),
@@ -1143,13 +1143,7 @@ export default defineSchema({
     endAt: v.number(),
     label: v.optional(v.string()),
   }).index("by_userScheduleId", ["userScheduleId"]),
-  autoBookingSettings: defineTable({
-    agentId: v.id("agents"),
-    enabled: v.boolean(),
-    defaultTimeZone: v.string(),
-    updatedAt: v.number(),
-  }).index("by_agentId", ["agentId"]),
-  autoBookingServices: defineTable({
+  appointmentServices: defineTable({
     agentId: v.id("agents"),
     name: v.string(),
     description: v.optional(v.string()),
@@ -1159,11 +1153,11 @@ export default defineSchema({
     durationMinutes: v.number(),
     bufferMinutes: v.optional(v.number()),
     timeZone: v.optional(v.string()),
-    fields: v.array(autoBookingServiceFieldValidator),
-    timeSlotPolicy: autoBookingTimeSlotPolicyValidator,
+    fields: v.array(appointmentServiceFieldValidator),
+    timeSlotPolicy: appointmentTimeSlotPolicyValidator,
     preferredTimeMinutes: v.optional(v.array(v.number())),
-    salesStyle: autoBookingSalesStyleValidator,
-    assignmentStrategy: autoBookingAssignmentStrategyValidator,
+    salesStyle: appointmentSalesStyleValidator,
+    assignmentStrategy: appointmentAssignmentStrategyValidator,
     specificWorkosUserId: v.optional(v.string()),
     lastAssignedWorkosUserId: v.optional(v.string()),
     lastAssignedAt: v.optional(v.number()),
@@ -1172,14 +1166,14 @@ export default defineSchema({
   })
     .index("by_agentId_and_sortOrder", ["agentId", "sortOrder"])
     .index("by_agentId_and_isActive", ["agentId", "isActive"]),
-  autoBookingSessions: defineTable({
+  appointmentBookingSessions: defineTable({
     conversationId: v.id("conversations"),
     agentId: v.id("agents"),
-    serviceId: v.optional(v.id("autoBookingServices")),
-    status: autoBookingSessionStatusValidator,
-    collectedFields: v.record(v.string(), autoBookingCollectedValueValidator),
-    proposedSlots: v.optional(v.array(autoBookingSlotValidator)),
-    selectedSlot: v.optional(autoBookingSlotValidator),
+    serviceId: v.optional(v.id("appointmentServices")),
+    status: appointmentBookingSessionStatusValidator,
+    collectedFields: v.record(v.string(), appointmentCollectedValueValidator),
+    proposedSlots: v.optional(v.array(appointmentBookingSlotValidator)),
+    selectedSlot: v.optional(appointmentBookingSlotValidator),
     calendarEventId: v.optional(v.id("calendarEvents")),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1224,9 +1218,9 @@ export default defineSchema({
     externalUpdatedAt: v.optional(v.number()),
     agentId: v.optional(v.id("agents")),
     conversationId: v.optional(v.id("conversations")),
-    autoBookingServiceId: v.optional(v.id("autoBookingServices")),
+    appointmentServiceId: v.optional(v.id("appointmentServices")),
     bookingSource: v.optional(v.union(v.literal("manual"), v.literal("ai"))),
-    customFieldResponses: v.optional(v.record(v.string(), autoBookingCollectedValueValidator)),
+    customFieldResponses: v.optional(v.record(v.string(), appointmentCollectedValueValidator)),
     remarks: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),

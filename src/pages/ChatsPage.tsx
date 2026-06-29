@@ -503,7 +503,7 @@ export default function ChatsPage() {
       : 'skip',
   );
   const bookingConversationIds = useQuery(
-    api.autoBooking.listActiveBookingConversationIdsForCurrentOrg,
+    api.appointmentBooking.currentBooking.listActiveBookingConversationIdsForCurrentOrg,
     connectedChannels !== undefined ? {} : 'skip',
   );
   const currentUser = useQuery(api.users.currentUser);
@@ -635,7 +635,7 @@ export default function ChatsPage() {
   );
 
   const conversationBooking = useQuery(
-    api.autoBooking.getCurrentBookingForConversation,
+    api.appointmentBooking.currentBooking.getCurrentBookingForConversation,
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 

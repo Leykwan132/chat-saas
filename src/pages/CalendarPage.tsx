@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, useParams, useSearchParams } from 'react-router';
+import { Navigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
@@ -15,7 +15,6 @@ import {
   subMonths,
 } from 'date-fns';
 import {
-  ArrowRight,
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +23,6 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import { AiBadge } from '@/components/AiBadge';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -81,6 +79,7 @@ import {
 } from '@/components/inbox/inboxLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
+import { CalendarEventDetailsDialog } from '@/components/calendar/CalendarEventDetailsDialog';
 import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import {
   inboxSidebarCountClassName,
@@ -125,7 +124,7 @@ type CalendarEvent = {
   endDate?: string;
   status: 'confirmed' | 'tentative' | 'cancelled';
   bookingSource?: 'manual' | 'ai';
-  autoBookingServiceId?: Id<'autoBookingServices'>;
+  appointmentServiceId?: Id<'appointmentServices'>;
   customFieldResponses?: Record<string, string | number | boolean | null>;
   remarks?: string;
   participants: CalendarParticipant[];
@@ -756,6 +755,9 @@ export default function CalendarPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dayEventSearchQuery, setDayEventSearchQuery] = useState('');
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [detailsDialogEventId, setDetailsDialogEventId] =
+    useState<Id<'calendarEvents'> | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editDialogEventId, setEditDialogEventId] = useState<Id<'calendarEvents'> | null>(null);
 
@@ -789,9 +791,9 @@ export default function CalendarPage() {
     eventSheetOpen && editingEvent ? { eventId: editingEvent._id } : 'skip',
   );
 
-  const isEditingAutoBooking = Boolean(
-    editingAppointmentDetails?.isAutoBooking ??
-      editingEvent?.autoBookingServiceId ??
+  const isEditingAppointmentBooking = Boolean(
+    editingAppointmentDetails?.isAppointmentBooking ??
+      editingEvent?.appointmentServiceId ??
       editingEvent?.bookingSource === 'ai',
   );
   const isLoadingEditingAppointmentDetails =
@@ -942,8 +944,8 @@ export default function CalendarPage() {
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEventId(event._id);
-    setEditDialogEventId(event._id);
-    setEditDialogOpen(true);
+    setDetailsDialogEventId(event._id);
+    setDetailsDialogOpen(true);
   };
 
 
@@ -1035,7 +1037,7 @@ export default function CalendarPage() {
         await updateEvent({
           eventId: editingEvent._id,
           ...payload,
-          ...(isEditingAutoBooking
+          ...(isEditingAppointmentBooking
             ? {
                 customFieldResponses: buildCustomFieldResponses(
                   formState.collectedFields,
@@ -1113,10 +1115,11 @@ export default function CalendarPage() {
             <div className="px-3 pb-3">
               <Button
                 type="button"
-                className="w-full gap-2 mt-2"
+                size="lg"
+                className="mt-2 h-11 w-full gap-2 px-5 py-3"
                 onClick={() => openCreateSheet()}
               >
-                <Plus className="size-4" />
+                <Plus data-icon="inline-start" />
                 New Event
               </Button>
             </div>
@@ -1151,32 +1154,6 @@ export default function CalendarPage() {
             />
           </CalendarSidebarFilterSection>
 
-          <div className="px-3 pt-2">
-            <Link
-              to={`/dashboard/${agentId}/auto-booking`}
-              className="group block overflow-hidden rounded-xl border border-border bg-card"
-            >
-              <div className="overflow-hidden border-b border-border">
-                <img
-                  src="https://storage.kilobot.app/grad.webp"
-                  alt=""
-                  className="block h-32 w-full object-cover object-center transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-                />
-              </div>
-              <div className="flex flex-col gap-1.5 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <span className="text-sm font-semibold text-foreground">Services</span>
-                    <AiBadge size="sm" />
-                  </div>
-                  <ArrowRight className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5" />
-                </div>
-                <p className="text-sm leading-normal text-muted-foreground decoration-foreground/40 underline-offset-4 transition-[text-decoration-color] duration-300 group-hover:underline">
-                  Let AI book your appointments?
-                </p>
-              </div>
-            </Link>
-          </div>
         </div>
       </aside>
 
@@ -1426,7 +1403,7 @@ export default function CalendarPage() {
                   />
                 </div>
 
-                {isEditingAutoBooking ? (
+                {isEditingAppointmentBooking ? (
                   isLoadingEditingAppointmentDetails ? (
                     <CustomerDetailFormSkeleton />
                   ) : (
@@ -1521,7 +1498,7 @@ export default function CalendarPage() {
                   )
                 ) : null}
 
-                {isEditingAutoBooking && !isLoadingEditingAppointmentDetails ? (
+                {isEditingAppointmentBooking && !isLoadingEditingAppointmentDetails ? (
                   <div className="grid gap-2">
                     <Label htmlFor="event-remarks">Remarks</Label>
                     <Textarea
@@ -1614,6 +1591,14 @@ export default function CalendarPage() {
       </Sheet>
 
 
+      <CalendarEventDetailsDialog
+        eventId={detailsDialogEventId}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        canEdit={canManageCalendar}
+        onDeleteSuccess={() => setSelectedEventId(null)}
+      />
+
       {editDialogOpen && editDialogEventId && (
         <EditBookingDialog
           eventId={editDialogEventId}
@@ -1702,4 +1687,3 @@ function DatePickerField({
     </div>
   );
 }
-

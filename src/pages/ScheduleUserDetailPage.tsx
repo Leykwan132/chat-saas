@@ -74,7 +74,7 @@ export default function ScheduleUserDetailPage() {
     null,
   );
   const scheduleEnabled = detail?.schedule?.enabled ?? false;
-  const timeOff = detail?.timeOff ?? [];
+  const timeOff = useMemo(() => detail?.timeOff ?? [], [detail?.timeOff]);
   const isTimeOff = isCurrentlyOnTimeOff(timeOff);
   const isActive = scheduleEnabled && !isTimeOff;
   const statusLabel = !scheduleEnabled ? 'Inactive' : isTimeOff ? 'Away' : 'Active';
@@ -133,11 +133,17 @@ export default function ScheduleUserDetailPage() {
   };
 
   const handleToggleEnabled = async (enabled: boolean) => {
+    const toastId = toast.loading(enabled ? 'Turning on availability…' : 'Turning off availability…');
     try {
       const userScheduleId = await ensureSchedule();
       await updateUser({ userScheduleId, enabled });
+      toast.success(enabled ? 'Availability turned on' : 'Availability turned off', {
+        id: toastId,
+      });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Update failed');
+      toast.error(e instanceof Error ? e.message : 'Update failed', {
+        id: toastId,
+      });
     }
   };
 

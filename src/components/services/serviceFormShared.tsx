@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
-import { DataCollectFieldIcon } from '@/components/auto-booking/DataCollectFieldIcon';
-import { PreferredTimesEditor } from '@/components/auto-booking/PreferredTimesEditor';
+import { DataCollectFieldIcon } from '@/components/services/DataCollectFieldIcon';
+import { PreferredTimesEditor } from '@/components/services/PreferredTimesEditor';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,7 +32,7 @@ import {
   type ServiceFieldForm,
   type ServiceForm,
   type TeamUserOption,
-} from '@/lib/autoBookingServiceForm';
+} from '@/lib/serviceForm';
 
 export type WizardSelectOption = {
   value: string;
@@ -41,7 +41,7 @@ export type WizardSelectOption = {
   meta?: string;
 };
 
-export const AUTO_BOOKING_SECTION_COPY = {
+export const SERVICE_SECTION_COPY = {
   details: {
     title: 'Your service',
     subtitle: 'Name the appointment type the AI should offer in chat.',
@@ -124,7 +124,7 @@ function getAvailableFieldSuggestions(form: ServiceForm): FieldSuggestion[] {
   return suggestions;
 }
 
-export function AutoBookingSectionHeading({
+export function ServiceSectionHeading({
   title,
   subtitle,
 }: {
@@ -369,7 +369,7 @@ export function WizardSelectField({
   );
 }
 
-export function AutoBookingServiceDetailsFields({
+export function ServiceDetailsFields({
   form,
   setForm,
   disabled = false,
@@ -405,7 +405,7 @@ export function AutoBookingServiceDetailsFields({
   );
 }
 
-export function AutoBookingTimingFields({
+export function ServiceTimingFields({
   form,
   setForm,
   disabled = false,
@@ -448,7 +448,7 @@ export function AutoBookingTimingFields({
   );
 }
 
-export function AutoBookingDataCollectionFields({
+export function ServiceDataCollectionFields({
   form,
   setForm,
   disabled = false,
@@ -666,7 +666,7 @@ export function AutoBookingDataCollectionFields({
   );
 }
 
-export function AutoBookingAssignmentFields({
+export function ServiceAssignmentFields({
   form,
   setForm,
   teamUserOptions,

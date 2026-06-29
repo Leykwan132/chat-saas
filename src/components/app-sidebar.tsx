@@ -5,7 +5,6 @@ import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
 import { Button } from '@/components/ui/button';
-import { AiBadge } from '@/components/AiBadge';
 import { cn } from '@/lib/utils';
 import {
   Sidebar,
@@ -60,12 +59,11 @@ function getNavItems(agentId: string): {
     tools: [
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
       {
-        to: `/dashboard/${agentId}/auto-booking`,
+        to: `/dashboard/${agentId}/services`,
         icon: CalendarCheck,
         label: 'Services',
         end: true,
         requiredPermission: Permission.AUTOMATION_READ,
-        badge: <AiBadge />,
       },
     ],
     outreach: [

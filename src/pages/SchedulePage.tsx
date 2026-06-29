@@ -22,6 +22,11 @@ type RosterEntry = {
   timeOff: Array<{ _id: Id<'userTimeOff'>; startAt: number; endAt: number; label?: string }>;
 };
 
+type TeamUser = Doc<'users'> & {
+  isAdmin: boolean;
+  role: Doc<'teamMemberships'>['role'];
+};
+
 export default function SchedulePage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const { agentId } = useParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
@@ -40,7 +45,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
   const workosUserIdsForLeadCounts = useMemo(() => {
     if (currentUser === undefined || currentUser === null) return undefined;
     if (showTeamRoster) {
-      return (teamUsers ?? []).map((u: any) => u.workosUserId);
+      return (teamUsers ?? []).map((u) => u.workosUserId);
     }
     return [currentUser.workosUserId];
   }, [showTeamRoster, teamUsers, currentUser]);
@@ -63,21 +68,29 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     scheduleId: Id<'userSchedules'>,
     enabled: boolean,
   ) => {
+    const toastId = toast.loading(enabled ? 'Turning on availability…' : 'Turning off availability…');
     let activeId = scheduleId;
     const isTemporary = scheduleId.startsWith('temp_');
     if (isTemporary) {
       try {
         activeId = await addUser({ agentId: typedAgentId!, workosUserId: targetUserId });
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Could not initialize schedule');
+        toast.error(e instanceof Error ? e.message : 'Could not initialize schedule', {
+          id: toastId,
+        });
         return;
       }
     }
 
     try {
       await updateUser({ userScheduleId: activeId, enabled });
+      toast.success(enabled ? 'Availability turned on' : 'Availability turned off', {
+        id: toastId,
+      });
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Update failed');
+      toast.error(e instanceof Error ? e.message : 'Update failed', {
+        id: toastId,
+      });
     }
   };
 
@@ -85,7 +98,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     if (!teamUsers || !currentUser) return [];
     const teammates = showTeamRoster
       ? teamUsers
-      : teamUsers.filter((u: any) => u.workosUserId === currentUser.workosUserId);
+      : teamUsers.filter((u) => u.workosUserId === currentUser.workosUserId);
     if (teammates.length === 0) return [];
 
     return [...teammates].sort((a, b) => {
@@ -127,7 +140,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
 
   const activeCount = useMemo(() => {
     if (!teamUsers) return 0;
-    return teamUsers.filter((teammate: Doc<'users'> & { isAdmin: boolean }) => {
+    return (teamUsers as TeamUser[]).filter((teammate) => {
       const existing = (roster as RosterEntry[] ?? []).find((r: RosterEntry) => r.schedule.workosUserId === teammate.workosUserId);
       return existing ? existing.schedule.enabled === true : false;
     }).length;
