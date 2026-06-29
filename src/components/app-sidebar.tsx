@@ -1,6 +1,5 @@
-import { NavLink, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
-import { MessageSquare, Bot, Users, BarChart3, BookOpen, Plug, PanelLeftClose, PanelLeftOpen, UserRoundCheck, Calendar, Clock3, ReplyAll, Megaphone, MessageCircleReply, FileText, CalendarCheck, ChevronRight, Send, Shuffle, Workflow } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -15,132 +14,21 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { usePermissions } from '../hooks/usePermissions';
-import { Permission, type PermissionSlug } from '../../shared/permissions';
+import { Permission } from '../../shared/permissions';
+import { getNavItems, type NavItem } from './app-sidebar-nav';
+import { SidebarNavMenuItem } from './app-sidebar-nav-item';
 
 function formatUnreadBadgeCount(count: number): string {
   return count > 99 ? '99+' : String(count);
 }
 
-type NavItem = {
-  to: string;
-  icon: any;
-  label: string;
-  end?: boolean;
-  requiredPermission: PermissionSlug;
-  badge?: React.ReactNode;
-};
-
-function getNavItems(agentId: string): {
-  engagement: NavItem[];
-  tools: NavItem[];
-  outreach: NavItem[];
-  team: NavItem[];
-  configuration: NavItem[];
-} {
-  return {
-    engagement: [
-      { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
-      { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
-    ],
-    tools: [
-      { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
-      {
-        to: `/dashboard/${agentId}/services`,
-        icon: CalendarCheck,
-        label: 'Services',
-        end: true,
-        requiredPermission: Permission.AUTOMATION_READ,
-      },
-    ],
-    outreach: [
-      { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
-      { to: `/dashboard/${agentId}/follow-ups`, icon: MessageCircleReply, label: 'Follow-ups', requiredPermission: Permission.FOLLOWUPS_READ },
-      { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
-    ],
-    team: [
-      { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
-      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
-      { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
-    ],
-    configuration: [
-      { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
-      { to: `/dashboard/${agentId}/workflow`, icon: Workflow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
-      { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
-      { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
-    ],
-  };
-}
-
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
   agent: Doc<'agents'>;
 };
-
-type SidebarNavMenuItemProps = {
-  to: string;
-  end?: boolean;
-  tooltip?: string;
-  icon: NavItem['icon'];
-  label: string;
-  badge?: React.ReactNode;
-};
-
-function SidebarNavMenuItem({
-  to,
-  end,
-  tooltip,
-  icon: Icon,
-  label,
-  badge,
-}: SidebarNavMenuItemProps) {
-  const { state, setOpen } = useSidebar();
-
-  return (
-    <SidebarMenuItem>
-      <NavLink
-        to={to}
-        end={end}
-        onClick={() => {
-          if (state === 'collapsed') {
-            setOpen(true);
-          }
-        }}
-      >
-        {({ isActive }) => (
-          <SidebarMenuButton asChild isActive={isActive} tooltip={tooltip}>
-            {badge ? (
-              <span className="flex w-full min-w-0 items-center gap-[0.45rem]">
-                <Icon />
-                <span className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <span className="truncate">{label}</span>
-                  {badge}
-                </span>
-              </span>
-            ) : (
-              <span>
-                <Icon />
-                <span>{label}</span>
-              </span>
-            )}
-          </SidebarMenuButton>
-        )}
-      </NavLink>
-    </SidebarMenuItem>
-  );
-}
 
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
@@ -163,24 +51,13 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     return items.filter((item) => can(item.requiredPermission));
   };
 
-  const location = useLocation();
   const engagementItems = filterItems(navItems.engagement);
   const toolsItems = filterItems(navItems.tools);
-  const outreachItems = filterItems(navItems.outreach);
   const teamItems = filterItems(navItems.team);
   const configurationItems = filterItems(navItems.configuration);
 
-  const isOutreachActive = outreachItems.some((item) =>
-    location.pathname.startsWith(item.to),
-  );
-
-  const isAssignmentActive = teamItems
-    .filter((item) => item.label === 'Availability' || item.label === 'Lead Assignment')
-    .some((item) => location.pathname.startsWith(item.to));
-
   return (
     <Sidebar collapsible="icon" {...props}>
-      {/* Logo / Toggle */}
       {state === 'collapsed' ? (
         <SidebarHeader className="flex items-center justify-center">
           <Button
@@ -227,7 +104,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         </SidebarHeader>
       )}
 
-      {/* Nav */}
       <SidebarContent className="gap-0">
         {configurationItems.length > 0 && (
           <SidebarGroup>
@@ -310,73 +186,22 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>Team</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {(() => {
-                  const assignmentGroupItems = teamItems.filter(
-                    (item) => item.label === 'Availability' || item.label === 'Lead Assignment'
-                  );
-                  const otherTeamItems = teamItems.filter(
-                    (item) => item.label !== 'Availability' && item.label !== 'Lead Assignment'
-                  );
-
-                  return (
-                    <>
-                      {/* Assignment collapsible submenu */}
-                      {assignmentGroupItems.length > 0 && (
-                        <Collapsible
-                          asChild
-                          defaultOpen={isAssignmentActive}
-                          className="group/collapsible"
-                        >
-                          <SidebarMenuItem>
-                            <CollapsibleTrigger asChild>
-                              <SidebarMenuButton tooltip="Assignment">
-                                <Shuffle />
-                                <span>Assignment</span>
-                                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                              </SidebarMenuButton>
-                            </CollapsibleTrigger>
-                            <CollapsibleContent>
-                              <SidebarMenuSub className="border-l-0 pl-2">
-                                {assignmentGroupItems.map((item) => (
-                                  <SidebarMenuSubItem key={item.to}>
-                                    <NavLink to={item.to} end>
-                                      {({ isActive }) => (
-                                        <SidebarMenuButton asChild isActive={isActive}>
-                                          <span>
-                                            <item.icon />
-                                            <span>{item.label}</span>
-                                          </span>
-                                        </SidebarMenuButton>
-                                      )}
-                                    </NavLink>
-                                  </SidebarMenuSubItem>
-                                ))}
-                              </SidebarMenuSub>
-                            </CollapsibleContent>
-                          </SidebarMenuItem>
-                        </Collapsible>
-                      )}
-
-                      {/* Other Team Items (Analytics, etc.) */}
-                      {otherTeamItems.map((item) => (
-                        <SidebarNavMenuItem
-                          key={item.to}
-                          to={item.to}
-                          end
-                          tooltip={item.label}
-                          icon={item.icon}
-                          label={item.label}
-                        />
-                      ))}
-                    </>
-                  );
-                })()}
+                {teamItems.map((item) => (
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         )}
 
-        {(toolsItems.length > 0 || outreachItems.length > 0) && (
+        {toolsItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>Tools</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -392,43 +217,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     badge={item.badge}
                   />
                 ))}
-
-                {/* Outreach collapsible submenu */}
-                {outreachItems.length > 0 && (
-                  <Collapsible
-                    asChild
-                    defaultOpen={isOutreachActive}
-                    className="group/collapsible"
-                  >
-                    <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip="Outreach">
-                          <Send />
-                          <span>Outreach</span>
-                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub className="border-l-0 pl-2">
-                          {outreachItems.map((item) => (
-                            <SidebarMenuSubItem key={item.to}>
-                              <NavLink to={item.to}>
-                                {({ isActive }) => (
-                                  <SidebarMenuButton asChild isActive={isActive}>
-                                    <span>
-                                      <item.icon />
-                                      <span>{item.label}</span>
-                                    </span>
-                                  </SidebarMenuButton>
-                                )}
-                              </NavLink>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -439,7 +227,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         <CreditMeter />
       </SidebarFooter>
 
-      {/* Drag rail to resize */}
       <SidebarRail />
     </Sidebar>
   );

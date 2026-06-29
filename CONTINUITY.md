@@ -15,6 +15,8 @@
 - 2026-06-29 [USER] Refinement: event detail should be larger/spacier, remove top-right cross and confirm label, use update/delete icons, avatar for team member, centered icon/data rows, and full edit via update.
 - 2026-06-29 [USER] Refinement: update mode should keep the same event detail layout, turning display values into inputs and replacing Close with Save at the bottom.
 - 2026-06-29 [USER] Current goal: continue polishing clicked calendar event details; the old description area should be named Summary for AI-generated customer background before the upcoming booked service.
+- 2026-06-29 [USER] Current goal: remove Follow-ups from the sidebar, move Broadcast and Message Templates out of Outreach, and remove the Outreach group.
+- 2026-06-29 [USER] Current goal: remove the Assignment sidebar submenu as well.
 
 # Decisions
 - 2026-06-26T00:00Z [USER] D001 ACTIVE: Workflow V1 is a persistent skeleton; legacy action graph decisions before 2026-06-29 are compressed into Snapshot milestones.
@@ -41,13 +43,13 @@
 - 2026-06-29 [CODE] D049 ACTIVE: AI-created appointment calendar descriptions are deterministic summaries of booked service, customer profile/contact, channel, lead metadata, and collected interest fields; no new AI summary is generated at booking time.
 
 # Done (recent)
-- 2026-06-29 [CODE] Booking prompt separates knowledge-base context from bookable Services, and WhatsApp reply formatting forbids Markdown tables while normalizing them to bullets.
-- 2026-06-29 [CODE] Personal workspace users can initialize/view their own availability schedules without an organization.
 - 2026-06-29 [CODE] Availability switches show loading toast while enabling/disabling and replace it with success/error.
 - 2026-06-29 [CODE] Inbox and playground chat displays render `*text*` as bold to match WhatsApp.
 - 2026-06-29 [CODE] AI-created booking calendar descriptions include customer details and interest/context fields for the assigned agent.
 - 2026-06-29 [CODE] Clicked calendar event details are larger, use update/delete icons, hide default top close/status, show avatar team member, edit inline with bottom Save, and label AI booking context as Summary.
 - 2026-06-29 [CODE] Calendar sidebar Services AI card below `Assigned to me` removed; `+ New Event` uses larger padding.
+- 2026-06-29 [CODE] Sidebar Tools now includes Broadcast and Message Templates directly; Follow-ups and the Outreach group were removed from sidebar nav.
+- 2026-06-29 [CODE] Sidebar Team now lists Lead Assignment, Availability, and Analytics directly; Assignment submenu was removed.
 
 # Working set
 - 2026-06-29 [CODE] `convex/calendarEvents.ts`, `convex/calendarEvents.test.ts`.
@@ -60,15 +62,13 @@
 - 2026-06-29T16:06+08:00 [CODE] `src/pages/ServicesPage.tsx`, `src/pages/ServicePage.tsx`, `src/components/services/`, `src/lib/serviceForm.ts`, `src/lib/appointmentBookingSessionStatus.ts`.
 - 2026-06-26T00:00Z [CODE] `shared/workflows.ts`, `src/pages/WorkflowPage.tsx`, `src/components/workflow/`.
 - 2026-06-26T20:40+08:00 [CODE] `src/pages/InstructionsPage.tsx`, `src/components/AgentPlaygroundPanel.tsx`, `src/components/agent-setup/`.
-- 2026-06-26T20:50+08:00 [CODE] `src/pages/KnowledgeBasePage.tsx`, `src/components/knowledge-base/`.
 - 2026-06-29 [CODE] `src/pages/CalendarPage.tsx`, `src/components/calendar/CalendarEventDetailsDialog.tsx`, `src/components/calendar/CalendarEventDetailsBody.tsx`.
+- 2026-06-29 [CODE] `src/components/app-sidebar.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar-nav-item.tsx`.
 
 # Open questions
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-06-29T15:02+08:00 [TOOL] `rg`, targeted `git diff --check`, `wc -l`, diff review, and `bunx tsc -b` passed after removing proximity auto-connect.
-- 2026-06-29T15:11+08:00 [TOOL] `workflowLayout.test.ts`, `workflowEdgeRouting.test.ts`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after workflow cleanup adjustment.
 - 2026-06-29T15:37+08:00 [TOOL] `git diff --check`, targeted `bunx eslint`, and LOC checks passed for Model & Style option polish; prior full TypeScript blocker was superseded by 2026-06-29T16:06+08:00.
 - 2026-06-29T16:06+08:00 [TOOL] `bunx convex codegen`, `bunx tsc -b`, appointment/workflow vitests, auto-booking `rg`, `git diff --check`, and backend appointment LOC checks passed after Services refactor.
 - 2026-06-29T16:18+08:00 [TOOL] `git diff --check`, targeted `bunx eslint`, and LOC checks passed after removing `Example:` from emoji helper lines.
@@ -88,3 +88,5 @@
 - 2026-06-29 [TOOL] `bunx tsc -b`, targeted calendar detail `bunx eslint`, `git diff --check`, and calendar detail LOC checks passed after inline edit-mode layout; `CalendarPage.tsx` still has pre-existing full-file lint blockers.
 - 2026-06-29 [TOOL] `git diff --check -- src/pages/CalendarPage.tsx` passed after Calendar sidebar card/button adjustment; `source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/pages/CalendarPage.tsx` remains blocked by pre-existing React hook rule errors at 808, 818, and 960.
 - 2026-06-29 [TOOL] `git diff --check`, Node 22 targeted `bunx eslint`, and LOC checks passed after renaming calendar event detail Description copy to Summary.
+- 2026-06-29 [TOOL] `git diff --check -- src/components/app-sidebar.tsx src/components/app-sidebar-nav.ts src/components/app-sidebar-nav-item.tsx`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after sidebar nav cleanup.
+- 2026-06-29 [TOOL] `rg`, `git diff --check`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after removing the Assignment sidebar submenu.
