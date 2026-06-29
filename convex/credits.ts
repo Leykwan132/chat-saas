@@ -32,6 +32,7 @@ import {
   DAY_MS,
   getUsagePeriodStartMs,
 } from "./usageMonthKey";
+import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
 
 export function getDefaultUserCredits(): number {
   const raw = process.env.DEFAULT_USER_CREDITS?.trim();
@@ -198,7 +199,7 @@ export const internalDeductCredits = internalMutation({
 
     const { billingUser } = await getBillingEntityForUser(ctx, user);
 
-    let balanceAfter = 0;
+    let balanceAfter: number;
     if (!skipDeduction) {
       const before = await snapshotUserCredit(ctx, billingUser._id);
       if (before.totalRemaining < pricing.creditCost) {
@@ -313,6 +314,8 @@ export const getUsageDashboard = query({
       return null;
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const snapshot = await snapshotUserCredit(ctx, userDoc._id);
 
@@ -432,6 +435,7 @@ export const getUsageDashboard = query({
         periodStartMs,
         periodEndMs: periodEndBoundMs,
         agentKeys: chartAgentKeys.length > 0 ? chartAgentKeys : ["unassigned"],
+        timeZone,
       },
     );
 
@@ -475,6 +479,7 @@ export const getUsageDashboard = query({
       plan: stripeInfo.plan,
       periodStartMs,
       periodEndMs: periodEndBoundMs,
+      timeZone,
       totalUsedThisPeriod,
       agentUsage: filteredAgentUsage,
       agents: agents.map((agent) => ({ _id: agent._id, name: agent.name })),

@@ -17,6 +17,10 @@
 - 2026-06-29 [USER] Current goal: continue polishing clicked calendar event details; the old description area should be named Summary for AI-generated customer background before the upcoming booked service.
 - 2026-06-29 [USER] Current goal: remove Follow-ups from the sidebar, move Broadcast and Message Templates out of Outreach, and remove the Outreach group.
 - 2026-06-29 [USER] Current goal: remove the Assignment sidebar submenu as well.
+- 2026-06-29T22:18+08:00 [USER] Current goal: review Analytics Usage / Credit usage because chart appears to stop at June 28 instead of showing June 29.
+- 2026-06-29T22:18+08:00 [CODE] Finding: Credit usage daily buckets are UTC date keys and the UI formats those keys via local timezone, so `2026-06-29` renders as June 28 in US timezones.
+- 2026-06-29T22:42+08:00 [USER] Goal: implement the long-term timezone-aware fix using Calendar/team timezone data.
+- 2026-06-29T22:42+08:00 [CODE] Credit usage daily chart buckets now use active/selected team timezone and render date keys as calendar dates, not UTC-midnight timestamps.
 
 # Decisions
 - 2026-06-26T00:00Z [USER] D001 ACTIVE: Workflow V1 is a persistent skeleton; legacy action graph decisions before 2026-06-29 are compressed into Snapshot milestones.
@@ -43,37 +47,31 @@
 - 2026-06-29 [CODE] D049 ACTIVE: AI-created appointment calendar descriptions are deterministic summaries of booked service, customer profile/contact, channel, lead metadata, and collected interest fields; no new AI summary is generated at booking time.
 
 # Done (recent)
-- 2026-06-29 [CODE] Availability switches show loading toast while enabling/disabling and replace it with success/error.
 - 2026-06-29 [CODE] Inbox and playground chat displays render `*text*` as bold to match WhatsApp.
 - 2026-06-29 [CODE] AI-created booking calendar descriptions include customer details and interest/context fields for the assigned agent.
 - 2026-06-29 [CODE] Clicked calendar event details are larger, use update/delete icons, hide default top close/status, show avatar team member, edit inline with bottom Save, and label AI booking context as Summary.
 - 2026-06-29 [CODE] Calendar sidebar Services AI card below `Assigned to me` removed; `+ New Event` uses larger padding.
 - 2026-06-29 [CODE] Sidebar Tools now includes Broadcast and Message Templates directly; Follow-ups and the Outreach group were removed from sidebar nav.
 - 2026-06-29 [CODE] Sidebar Team now lists Lead Assignment, Availability, and Analytics directly; Assignment submenu was removed.
+- 2026-06-29T22:42+08:00 [CODE] Credit usage charts use timezone-aware date keys from persisted team timezone; helper test covers US/Malaysia date boundary.
 
 # Working set
-- 2026-06-29 [CODE] `convex/calendarEvents.ts`, `convex/calendarEvents.test.ts`.
-- 2026-06-29 [CODE] `src/components/inbox/InboxThreadMessages.tsx`, `src/components/TestChatWindow.tsx`, `src/lib/whatsappText.ts`, `src/lib/whatsappText.test.ts`.
-- 2026-06-29 [CODE] `convex/leadRouting/schedules.ts`, `convex/leadRoutingSchedules.test.ts`.
-- 2026-06-29 [CODE] `src/pages/SchedulePage.tsx`, `src/pages/ScheduleUserDetailPage.tsx`.
-- 2026-06-29 [CODE] `convex/chat/workflowPrompt.ts`, `convex/chat/threads.ts`.
-- 2026-06-29T16:36+08:00 [CODE] `convex/appointmentBooking/`, `convex/appointmentBookingSessionStatus.ts`, `convex/appointmentBookingFields.test.ts`, `convex/workflowAppointmentServices.ts`, `convex/workflowRuntimeContext.ts`.
-- 2026-06-29T16:36+08:00 [CODE] `convex/chat/responseFormatting.ts`, `convex/chat/responseFormatting.test.ts`.
-- 2026-06-29T16:06+08:00 [CODE] `src/pages/ServicesPage.tsx`, `src/pages/ServicePage.tsx`, `src/components/services/`, `src/lib/serviceForm.ts`, `src/lib/appointmentBookingSessionStatus.ts`.
-- 2026-06-26T00:00Z [CODE] `shared/workflows.ts`, `src/pages/WorkflowPage.tsx`, `src/components/workflow/`.
-- 2026-06-26T20:40+08:00 [CODE] `src/pages/InstructionsPage.tsx`, `src/components/AgentPlaygroundPanel.tsx`, `src/components/agent-setup/`.
-- 2026-06-29 [CODE] `src/pages/CalendarPage.tsx`, `src/components/calendar/CalendarEventDetailsDialog.tsx`, `src/components/calendar/CalendarEventDetailsBody.tsx`.
-- 2026-06-29 [CODE] `src/components/app-sidebar.tsx`, `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar-nav-item.tsx`.
+- 2026-06-29T22:18+08:00 [CODE] `convex/creditUsageAnalytics.ts`.
+- 2026-06-29T22:18+08:00 [CODE] `convex/usageMonthKey.ts`.
+- 2026-06-29T22:42+08:00 [CODE] `convex/timeZoneDateKeys.ts`, `convex/timeZoneDateKeys.test.ts`.
+- 2026-06-29T22:18+08:00 [CODE] `src/components/analytics/CreditUsagePanel.tsx`.
+- 2026-06-29T22:42+08:00 [CODE] `src/components/analytics/creditUsageChartModel.ts`.
+- 2026-06-29T22:18+08:00 [CODE] `src/components/analytics/CreditSpendTable.tsx`.
+- 2026-06-29T22:18+08:00 [CODE] `src/pages/AnalyticsPage.tsx`.
+- 2026-06-29T22:18+08:00 [CODE] `src/components/AccountUsageTab.tsx`.
+- 2026-06-29T22:18+08:00 [CODE] `src/pages/WorkspaceUsagePage.tsx`.
+- 2026-06-29T22:42+08:00 [CODE] `convex/credits.ts`, `convex/_generated/api.d.ts`.
+- 2026-06-29T22:18+08:00 [CODE] Prior workflow/booking/calendar/sidebar working paths compressed into Snapshot/Done/Receipts.
 
 # Open questions
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-06-29T15:37+08:00 [TOOL] `git diff --check`, targeted `bunx eslint`, and LOC checks passed for Model & Style option polish; prior full TypeScript blocker was superseded by 2026-06-29T16:06+08:00.
-- 2026-06-29T16:06+08:00 [TOOL] `bunx convex codegen`, `bunx tsc -b`, appointment/workflow vitests, auto-booking `rg`, `git diff --check`, and backend appointment LOC checks passed after Services refactor.
-- 2026-06-29T16:18+08:00 [TOOL] `git diff --check`, targeted `bunx eslint`, and LOC checks passed after removing `Example:` from emoji helper lines.
-- 2026-06-29T16:19+08:00 [TOOL] `git diff --check`, targeted `bunx eslint`, and LOC checks passed after selected-value layout adjustment.
-- 2026-06-29T16:25+08:00 [TOOL] `git diff --check -- src/pages/KnowledgeBasePage.tsx` and LOC check passed; targeted eslint remains blocked by pre-existing `no-explicit-any` errors.
 - 2026-06-29T16:36+08:00 [TOOL] `git diff --check -- convex/chat/threads.ts convex/chat/responseFormatting.ts`, targeted `rg`, and `wc -l` passed after single-asterisk chat guidance.
 - 2026-06-29T17:45+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/chat/responseFormatting.test.ts && bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after WhatsApp bold normalization.
 - 2026-06-29 [TOOL] `git diff --check -- convex/chat/workflowPrompt.ts convex/chat/threads.ts`, `wc -l`, and targeted `rg` passed after booking/knowledge prompt boundary refinement. TypeScript skipped for prompt-only string changes.
@@ -90,3 +88,5 @@
 - 2026-06-29 [TOOL] `git diff --check`, Node 22 targeted `bunx eslint`, and LOC checks passed after renaming calendar event detail Description copy to Summary.
 - 2026-06-29 [TOOL] `git diff --check -- src/components/app-sidebar.tsx src/components/app-sidebar-nav.ts src/components/app-sidebar-nav-item.tsx`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after sidebar nav cleanup.
 - 2026-06-29 [TOOL] `rg`, `git diff --check`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after removing the Assignment sidebar submenu.
+- 2026-06-29T22:18+08:00 [TOOL] Reviewed credit usage data path and reproduced that `2026-06-29T00:00:00Z` formats as `Jun 28` in US timezones but `Jun 29` in UTC/Asia-Kuala_Lumpur.
+- 2026-06-29T22:42+08:00 [TOOL] `bunx convex codegen`, `bunx vitest run convex/timeZoneDateKeys.test.ts`, targeted `bunx eslint`, `bunx tsc -b`, and `git diff --check` passed after timezone-aware credit usage fix.

@@ -4,24 +4,20 @@ import type { PaginationOptions } from "convex/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalMutation, query } from "./_generated/server";
-import {
-  creditAgentDailyUsageAggregator,
-  creditWorkspaceDailyUsageAggregator,
-  creditAccountDailyUsageAggregator,
-} from "./aggregates";
 import { assertAgentAccess } from "./agentUsage";
 import { getAuthContext } from "./authUtils";
 import { formatCreditLogEventType } from "./creditLogs";
 import { getBillingEntityForUser, getPlanFromStripe, getPlan } from "./plans";
-import { getActiveTeamForUser, teamToOrgId } from "./teamHelpers";
+import { getActiveTeamForUser, normalizeTimeZone, teamToOrgId } from "./teamHelpers";
 import { getModelPricing } from "./llm/modelPricing";
 import {
-  creditDailyUsageNamespace,
   DAY_MS,
-  getDateKeysInRange,
   getUsagePeriodStartMs,
-  toUtcDateKey,
 } from "./usageMonthKey";
+import {
+  getDateKeysInTimeZoneRange,
+  toTimeZoneDateKey,
+} from "./timeZoneDateKeys";
 import {
   MODEL_USAGE_OTHERS_COLOR,
   modelUsageChartColor,
@@ -351,34 +347,35 @@ function resolveCreditUsageRange(
   return { rangeStartMs, rangeEndMs };
 }
 
-async function sumDailyCreditsForAgents(
-  ctx: QueryCtx,
-  billingUserId: Id<"users">,
+type DailyCreditRecord = {
+  createdAt: number;
+  credits: number;
+};
+
+function buildDailyUsageRows<TRecord extends DailyCreditRecord>(
+  records: TRecord[],
   dateKeys: string[],
-  agentKeys: string[],
+  groupKeys: string[],
+  timeZone: string,
+  groupKeyForRecord: (record: TRecord) => string,
 ) {
-  if (dateKeys.length === 0 || agentKeys.length === 0) {
-    return [] as number[];
+  const dailyByGroup = new Map<string, Map<string, number>>();
+
+  for (const record of records) {
+    const dateKey = toTimeZoneDateKey(record.createdAt, timeZone);
+    if (!dailyByGroup.has(dateKey)) {
+      dailyByGroup.set(dateKey, new Map());
+    }
+    const groupKey = groupKeyForRecord(record);
+    const dayMap = dailyByGroup.get(dateKey)!;
+    dayMap.set(groupKey, (dayMap.get(groupKey) ?? 0) + record.credits);
   }
 
-  const requests = dateKeys.flatMap((dateKey) =>
-    agentKeys.map((agentKey) => ({
-      namespace: creditDailyUsageNamespace(billingUserId, dateKey, agentKey),
-    })),
-  );
-
-  return await creditAgentDailyUsageAggregator.sumBatch(ctx, requests);
-}
-
-function buildDailyUsageRows(
-  dateKeys: string[],
-  agentKeys: string[],
-  sums: number[],
-) {
-  return dateKeys.map((date, dateIndex) => {
+  return dateKeys.map((date) => {
     const row: Record<string, number | string> = { date, total: 0 };
-    agentKeys.forEach((agentKey, agentIndex) => {
-      const credits = sums[dateIndex * agentKeys.length + agentIndex] ?? 0;
+    const dayMap = dailyByGroup.get(date) ?? new Map<string, number>();
+    groupKeys.forEach((agentKey) => {
+      const credits = dayMap.get(agentKey) ?? 0;
       row[agentKey] = credits;
       row.total = (row.total as number) + credits;
     });
@@ -390,28 +387,87 @@ async function listUsageLogsForPeriod(
   ctx: QueryCtx,
   billingUserId: Id<"users">,
   periodStartMs: number,
+  periodEndMs: number,
 ) {
-  const indexedLogs = await ctx.db
+  const indexedLogs: Doc<"creditLogs">[] = [];
+  for await (const log of ctx.db
     .query("creditLogs")
     .withIndex("by_userId_and_eventType_and_createdAt", (q) =>
-      q.eq("userId", billingUserId).eq("eventType", "usage").gte("createdAt", periodStartMs),
-    )
-    .collect();
+      q
+        .eq("userId", billingUserId)
+        .eq("eventType", "usage")
+        .gte("createdAt", periodStartMs)
+        .lte("createdAt", periodEndMs),
+    )) {
+    indexedLogs.push(log);
+  }
 
   if (indexedLogs.length > 0) {
     return indexedLogs;
   }
 
-  const legacyLogs = await ctx.db
+  const legacyLogs: Doc<"creditLogs">[] = [];
+  for await (const log of ctx.db
     .query("creditLogs")
     .withIndex("by_userId_and_createdAt", (q) =>
-      q.eq("userId", billingUserId).gte("createdAt", periodStartMs),
-    )
-    .collect();
+      q
+        .eq("userId", billingUserId)
+        .gte("createdAt", periodStartMs)
+        .lte("createdAt", periodEndMs),
+    )) {
+    legacyLogs.push(log);
+  }
 
   return legacyLogs.filter(
     (log) => formatCreditLogEventType(log) === "usage",
   );
+}
+
+async function listUserCreditUsageEventsInRange(
+  ctx: QueryCtx,
+  args: {
+    billingUserId: Id<"users">;
+    rangeStartMs: number;
+    rangeEndMs: number;
+  },
+) {
+  const events: Doc<"creditUsageEvents">[] = [];
+  for await (const event of ctx.db
+    .query("creditUsageEvents")
+    .withIndex("by_userId_and_createdAt", (q) =>
+      q
+        .eq("userId", args.billingUserId)
+        .gte("createdAt", args.rangeStartMs)
+        .lte("createdAt", args.rangeEndMs),
+    )) {
+    events.push(event);
+  }
+  return events;
+}
+
+async function listAgentCreditUsageEventsInRange(
+  ctx: QueryCtx,
+  args: {
+    billingUserId: Id<"users">;
+    agentId: Id<"agents">;
+    rangeStartMs: number;
+    rangeEndMs: number;
+  },
+) {
+  const events: Doc<"creditUsageEvents">[] = [];
+  for await (const event of ctx.db
+    .query("creditUsageEvents")
+    .withIndex("by_agentId_and_createdAt", (q) =>
+      q
+        .eq("agentId", args.agentId)
+        .gte("createdAt", args.rangeStartMs)
+        .lte("createdAt", args.rangeEndMs),
+    )) {
+    if (event.userId === args.billingUserId) {
+      events.push(event);
+    }
+  }
+  return events;
 }
 
 async function buildDailyUsageFromLogs(
@@ -419,12 +475,13 @@ async function buildDailyUsageFromLogs(
   logs: Doc<"creditLogs">[],
   dateKeys: string[],
   agentKeys: string[],
+  timeZone: string,
 ) {
   const conversationAgentCache = new Map<
     Id<"conversations">,
     Id<"agents"> | undefined
   >();
-  const dailyByAgent = new Map<string, Map<string, number>>();
+  const records: Array<DailyCreditRecord & { agentKey: string }> = [];
 
   for (const log of logs) {
     if (log.conversationId && !log.agentId && !conversationAgentCache.has(log.conversationId)) {
@@ -437,25 +494,20 @@ async function buildDailyUsageFromLogs(
       agentKey = conversationAgentCache.get(log.conversationId) ?? "unassigned";
     }
 
-    const dateKey = toUtcDateKey(log.createdAt);
-    if (!dailyByAgent.has(dateKey)) {
-      dailyByAgent.set(dateKey, new Map());
-    }
-    const dayMap = dailyByAgent.get(dateKey)!;
-    const amount = log.creditCost ?? Math.abs(log.amount);
-    dayMap.set(agentKey, (dayMap.get(agentKey) ?? 0) + amount);
+    records.push({
+      agentKey,
+      createdAt: log.createdAt,
+      credits: log.creditCost ?? Math.abs(log.amount),
+    });
   }
 
-  return dateKeys.map((date) => {
-    const dayMap = dailyByAgent.get(date) ?? new Map<string, number>();
-    const row: Record<string, number | string> = { date, total: 0 };
-    for (const agentKey of agentKeys) {
-      const credits = dayMap.get(agentKey) ?? 0;
-      row[agentKey] = credits;
-      row.total = (row.total as number) + credits;
-    }
-    return row;
-  });
+  return buildDailyUsageRows(
+    records,
+    dateKeys,
+    agentKeys,
+    timeZone,
+    (record) => record.agentKey,
+  );
 }
 
 type AgentCreditUsageRecord = {
@@ -473,26 +525,22 @@ async function listAgentCreditUsageRecords(
     rangeEndMs: number;
   },
 ): Promise<AgentCreditUsageRecord[]> {
-  const events = await ctx.db
-    .query("creditUsageEvents")
-    .withIndex("by_agentId_and_createdAt", (q) =>
-      q.eq("agentId", args.agentId).gte("createdAt", args.rangeStartMs),
-    )
-    .collect();
+  const events = await listAgentCreditUsageEventsInRange(ctx, args);
 
-  const scopedEvents = events.filter(
-    (event) => event.createdAt <= args.rangeEndMs,
-  );
-
-  if (scopedEvents.length > 0) {
-    return scopedEvents.map((event) => ({
+  if (events.length > 0) {
+    return events.map((event) => ({
       modelId: event.modelId,
       credits: event.credits,
       createdAt: event.createdAt,
     }));
   }
 
-  const logs = await listUsageLogsForPeriod(ctx, args.billingUserId, args.rangeStartMs);
+  const logs = await listUsageLogsForPeriod(
+    ctx,
+    args.billingUserId,
+    args.rangeStartMs,
+    args.rangeEndMs,
+  );
   const conversationAgentCache = new Map<
     Id<"conversations">,
     Id<"agents"> | undefined
@@ -500,10 +548,6 @@ async function listAgentCreditUsageRecords(
   const records: AgentCreditUsageRecord[] = [];
 
   for (const log of logs) {
-    if (log.createdAt > args.rangeEndMs) {
-      continue;
-    }
-
     if (log.conversationId && !log.agentId && !conversationAgentCache.has(log.conversationId)) {
       const conversation = await ctx.db.get(log.conversationId);
       conversationAgentCache.set(log.conversationId, conversation?.assignedAgentId);
@@ -532,13 +576,14 @@ async function listAgentCreditUsageRecords(
 function buildAgentModelCreditDailyUsage(
   records: AgentCreditUsageRecord[],
   dateKeys: string[],
+  timeZone: string,
 ) {
   const modelTotals = new Map<string, number>();
   const dailyByModel = new Map<string, Map<string, number>>();
 
   for (const record of records) {
     const modelId = record.modelId ?? "unknown";
-    const dateKey = toUtcDateKey(record.createdAt);
+    const dateKey = toTimeZoneDateKey(record.createdAt, timeZone);
     modelTotals.set(modelId, (modelTotals.get(modelId) ?? 0) + record.credits);
 
     if (!dailyByModel.has(dateKey)) {
@@ -619,32 +664,55 @@ export async function getDailyCreditUsageForAgents(
     periodStartMs: number;
     periodEndMs: number;
     agentKeys: string[];
+    timeZone: string;
   },
 ) {
-  const dateKeys = getDateKeysInRange(args.periodStartMs, args.periodEndMs);
+  const dateKeys = getDateKeysInTimeZoneRange(
+    args.periodStartMs,
+    args.periodEndMs,
+    args.timeZone,
+  );
   if (dateKeys.length === 0 || args.agentKeys.length === 0) {
     return { dateKeys, dailyUsage: [] as Array<Record<string, number | string>> };
   }
 
-  const aggregateSums = await sumDailyCreditsForAgents(
+  const events = await listUserCreditUsageEventsInRange(
     ctx,
-    args.billingUserId,
-    dateKeys,
-    args.agentKeys,
+    {
+      billingUserId: args.billingUserId,
+      rangeStartMs: args.periodStartMs,
+      rangeEndMs: args.periodEndMs,
+    },
   );
-  const aggregateTotal = aggregateSums.reduce((sum, value) => sum + value, 0);
 
-  if (aggregateTotal > 0) {
+  if (events.length > 0) {
     return {
       dateKeys,
-      dailyUsage: buildDailyUsageRows(dateKeys, args.agentKeys, aggregateSums),
+      dailyUsage: buildDailyUsageRows(
+        events,
+        dateKeys,
+        args.agentKeys,
+        args.timeZone,
+        (event) => event.agentId ?? "unassigned",
+      ),
     };
   }
 
-  const logs = await listUsageLogsForPeriod(ctx, args.billingUserId, args.periodStartMs);
+  const logs = await listUsageLogsForPeriod(
+    ctx,
+    args.billingUserId,
+    args.periodStartMs,
+    args.periodEndMs,
+  );
   return {
     dateKeys,
-    dailyUsage: await buildDailyUsageFromLogs(ctx, logs, dateKeys, args.agentKeys),
+    dailyUsage: await buildDailyUsageFromLogs(
+      ctx,
+      logs,
+      dateKeys,
+      args.agentKeys,
+      args.timeZone,
+    ),
   };
 }
 
@@ -665,6 +733,8 @@ export const getAgentCreditUsage = query({
       return null;
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
     const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
@@ -676,51 +746,21 @@ export const getAgentCreditUsage = query({
       periodStartMs,
       periodEndMs,
     );
-    const dateKeys = getDateKeysInRange(rangeStartMs, rangeEndMs);
+    const dateKeys = getDateKeysInTimeZoneRange(rangeStartMs, rangeEndMs, timeZone);
     const agentKey = args.agentId;
-
-    const aggregateSums = await sumDailyCreditsForAgents(
-      ctx,
-      userDoc._id,
+    const usageRecords = await listAgentCreditUsageRecords(ctx, {
+      billingUserId: userDoc._id,
+      agentId: args.agentId,
+      rangeStartMs,
+      rangeEndMs,
+    });
+    const dailyRows = buildDailyUsageRows(
+      usageRecords,
       dateKeys,
       [agentKey],
+      timeZone,
+      () => agentKey,
     );
-    let dailyRows = buildDailyUsageRows(dateKeys, [agentKey], aggregateSums);
-    const aggregateTotal = aggregateSums.reduce((sum, value) => sum + value, 0);
-
-    if (aggregateTotal === 0) {
-      const logs = await listUsageLogsForPeriod(ctx, userDoc._id, rangeStartMs);
-      const conversationAgentCache = new Map<
-        Id<"conversations">,
-        Id<"agents"> | undefined
-      >();
-      const scopedLogs = [];
-
-      for (const log of logs) {
-        if (log.conversationId && !log.agentId && !conversationAgentCache.has(log.conversationId)) {
-          const conversation = await ctx.db.get(log.conversationId);
-          conversationAgentCache.set(log.conversationId, conversation?.assignedAgentId);
-        }
-
-        const resolvedAgentId =
-          log.agentId ??
-          (log.conversationId
-            ? conversationAgentCache.get(log.conversationId)
-            : undefined);
-
-        if ((resolvedAgentId ?? ("unassigned" as const)) === args.agentId) {
-          scopedLogs.push(log);
-        }
-      }
-
-      dailyRows = await buildDailyUsageFromLogs(
-        ctx,
-        scopedLogs,
-        dateKeys,
-        [agentKey],
-      );
-    }
-
     let cumulativeCredits = 0;
     const dailyUsage = dailyRows.map((row) => {
       const credits = (row[agentKey] as number | undefined) ?? 0;
@@ -732,16 +772,11 @@ export const getAgentCreditUsage = query({
       };
     });
     const totalCreditsUsed = dailyUsage.reduce((sum, row) => sum + row.credits, 0);
-    const usageRecords = await listAgentCreditUsageRecords(ctx, {
-      billingUserId: userDoc._id,
-      agentId: args.agentId,
-      rangeStartMs,
-      rangeEndMs,
-    });
-    const modelUsage = buildAgentModelCreditDailyUsage(usageRecords, dateKeys);
+    const modelUsage = buildAgentModelCreditDailyUsage(usageRecords, dateKeys, timeZone);
 
     return {
       plan: stripeInfo.plan,
+      timeZone,
       periodStartMs: rangeStartMs,
       periodEndMs: rangeEndMs,
       totalCreditsUsed,
@@ -880,33 +915,33 @@ export const getWorkspaceAndAccountUsage = query({
     const periodEndMs =
       billingUser.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
 
-    const dateKeys = getDateKeysInRange(periodStartMs, periodEndMs);
-
-    // Get current workspace (active team)
     const activeTeam = await getActiveTeamForUser(ctx, user);
-    const activeWorkspaceId = teamToOrgId(activeTeam); // "" for personal, workosOrgId for organizational
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
+    const activeWorkspaceId = teamToOrgId(activeTeam);
+    const rangeEndMs = Math.min(periodEndMs, Date.now());
+    const accountEvents = await listUserCreditUsageEventsInRange(ctx, {
+      billingUserId: billingUser._id,
+      rangeStartMs: periodStartMs,
+      rangeEndMs,
+    });
+    const logs =
+      accountEvents.length === 0
+        ? await listUsageLogsForPeriod(ctx, billingUser._id, periodStartMs, rangeEndMs)
+        : [];
 
-    // 1. Calculate Workspace Usage for active workspace using aggregator
-    let workspaceCreditsUsed = 0;
-    if (dateKeys.length > 0) {
-      const workspaceRequests = dateKeys.map((dateKey) => ({
-        namespace: `${billingUser._id}:${activeWorkspaceId}:${dateKey}`,
-      }));
-      const workspaceSums = await creditWorkspaceDailyUsageAggregator.sumBatch(ctx, workspaceRequests);
-      workspaceCreditsUsed = workspaceSums.reduce((sum, val) => sum + val, 0);
-    }
+    const accountCreditsUsed =
+      accountEvents.length > 0
+        ? accountEvents.reduce((sum, event) => sum + event.credits, 0)
+        : logs.reduce((sum, log) => sum + (log.creditCost ?? Math.abs(log.amount)), 0);
+    const workspaceCreditsUsed =
+      accountEvents.length > 0
+        ? accountEvents
+            .filter((event) => (event.orgId ?? "") === activeWorkspaceId)
+            .reduce((sum, event) => sum + event.credits, 0)
+        : logs
+            .filter((log) => (log.orgId ?? "") === activeWorkspaceId)
+            .reduce((sum, log) => sum + (log.creditCost ?? Math.abs(log.amount)), 0);
 
-    // 2. Calculate Account Usage using aggregator
-    let accountCreditsUsed = 0;
-    if (dateKeys.length > 0) {
-      const accountRequests = dateKeys.map((dateKey) => ({
-        namespace: `${billingUser._id}:${dateKey}`,
-      }));
-      const accountSums = await creditAccountDailyUsageAggregator.sumBatch(ctx, accountRequests);
-      accountCreditsUsed = accountSums.reduce((sum, val) => sum + val, 0);
-    }
-
-    // 3. Get all workspaces/teams for breakdown
     const memberships = await ctx.db
       .query("teamMemberships")
       .withIndex("by_userId", (q) => q.eq("userId", user._id))
@@ -917,14 +952,14 @@ export const getWorkspaceAndAccountUsage = query({
       const team = await ctx.db.get(membership.teamId);
       if (team) {
         const teamWorkspaceId = teamToOrgId(team);
-        let teamCreditsUsed = 0;
-        if (dateKeys.length > 0) {
-          const teamRequests = dateKeys.map((dateKey) => ({
-            namespace: `${billingUser._id}:${teamWorkspaceId}:${dateKey}`,
-          }));
-          const teamSums = await creditWorkspaceDailyUsageAggregator.sumBatch(ctx, teamRequests);
-          teamCreditsUsed = teamSums.reduce((sum, val) => sum + val, 0);
-        }
+        const teamCreditsUsed =
+          accountEvents.length > 0
+            ? accountEvents
+                .filter((event) => (event.orgId ?? "") === teamWorkspaceId)
+                .reduce((sum, event) => sum + event.credits, 0)
+            : logs
+                .filter((log) => (log.orgId ?? "") === teamWorkspaceId)
+                .reduce((sum, log) => sum + (log.creditCost ?? Math.abs(log.amount)), 0);
 
         breakdown.push({
           workspaceId: teamWorkspaceId,
@@ -946,6 +981,7 @@ export const getWorkspaceAndAccountUsage = query({
       accountCreditsUsed,
       monthlyAllowance,
       plan: stripeInfo.plan,
+      timeZone,
       periodStartMs,
       periodEndMs,
       breakdown,
@@ -957,7 +993,7 @@ async function assertWorkspaceAccess(
   ctx: QueryCtx,
   userId: Id<"users">,
   workspaceId: string,
-) {
+): Promise<Doc<"teams">> {
   const memberships = await ctx.db
     .query("teamMemberships")
     .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -966,7 +1002,7 @@ async function assertWorkspaceAccess(
   for (const membership of memberships) {
     const team = await ctx.db.get(membership.teamId);
     if (team && teamToOrgId(team) === workspaceId) {
-      return;
+      return team;
     }
   }
   throw new Error("Unauthorized access to workspace credit usage");
@@ -986,6 +1022,8 @@ export const getAccountCreditUsage = query({
       return null;
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
     const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
@@ -997,9 +1035,8 @@ export const getAccountCreditUsage = query({
       periodStartMs,
       periodEndMs,
     );
-    const dateKeys = getDateKeysInRange(rangeStartMs, rangeEndMs);
+    const dateKeys = getDateKeysInTimeZoneRange(rangeStartMs, rangeEndMs, timeZone);
 
-    // Get all memberships to identify the workspaces
     const memberships = await ctx.db
       .query("teamMemberships")
       .withIndex("by_userId", (q) => q.eq("userId", userDoc._id))
@@ -1014,56 +1051,36 @@ export const getAccountCreditUsage = query({
     }
     const workspaceIds = Array.from(workspacesMap.keys());
 
-    // 1. Try aggregates
-    let aggregateTotal = 0;
-    let dailyRows: Record<string, string | number>[] = [];
-    if (dateKeys.length > 0 && workspaceIds.length > 0) {
-      const requests = dateKeys.flatMap((dateKey) =>
-        workspaceIds.map((wId) => ({
-          namespace: `${userDoc._id}:${wId}:${dateKey}`,
-        }))
+    let dailyRows: Record<string, string | number>[] = dateKeys.map((date) => ({ date, total: 0 }));
+    const events = await listUserCreditUsageEventsInRange(ctx, {
+      billingUserId: userDoc._id,
+      rangeStartMs,
+      rangeEndMs,
+    });
+
+    if (events.length > 0 && workspaceIds.length > 0) {
+      dailyRows = buildDailyUsageRows(
+        events,
+        dateKeys,
+        workspaceIds,
+        timeZone,
+        (event) => event.orgId ?? "",
       );
-      const aggregateSums = await creditWorkspaceDailyUsageAggregator.sumBatch(ctx, requests);
-      dailyRows = buildDailyUsageRows(dateKeys, workspaceIds, aggregateSums);
-      aggregateTotal = aggregateSums.reduce((sum, value) => sum + value, 0);
-    } else {
-      dailyRows = dateKeys.map((date) => ({ date, total: 0 }));
+    } else if (workspaceIds.length > 0) {
+      const logs = await listUsageLogsForPeriod(ctx, userDoc._id, rangeStartMs, rangeEndMs);
+      dailyRows = buildDailyUsageRows(
+        logs.map((log) => ({
+          orgId: log.orgId ?? "",
+          createdAt: log.createdAt,
+          credits: log.creditCost ?? Math.abs(log.amount),
+        })),
+        dateKeys,
+        workspaceIds,
+        timeZone,
+        (log) => log.orgId,
+      );
     }
 
-    // 2. Fallback to events if aggregates are 0
-    if (aggregateTotal === 0 && dateKeys.length > 0) {
-      const events = await ctx.db
-        .query("creditUsageEvents")
-        .withIndex("by_userId_and_createdAt", (q) =>
-          q.eq("userId", userDoc._id).gte("createdAt", rangeStartMs)
-        )
-        .collect();
-      const scopedEvents = events.filter((e) => e.createdAt <= rangeEndMs);
-
-      const dailyByWorkspace = new Map<string, Map<string, number>>();
-      for (const e of scopedEvents) {
-        const wId = e.orgId ?? "";
-        const dateKey = toUtcDateKey(e.createdAt);
-        if (!dailyByWorkspace.has(dateKey)) {
-          dailyByWorkspace.set(dateKey, new Map());
-        }
-        const dayMap = dailyByWorkspace.get(dateKey)!;
-        dayMap.set(wId, (dayMap.get(wId) ?? 0) + e.credits);
-      }
-
-      dailyRows = dateKeys.map((date) => {
-        const dayMap = dailyByWorkspace.get(date) ?? new Map<string, number>();
-        const row: Record<string, number | string> = { date, total: 0 };
-        for (const wId of workspaceIds) {
-          const credits = dayMap.get(wId) ?? 0;
-          row[wId] = credits;
-          row.total = (row.total as number) + credits;
-        }
-        return row;
-      });
-    }
-
-    // Format output
     let cumulativeCredits = 0;
     const dailyUsage = dailyRows.map((row) => {
       const credits = (row.total as number) ?? 0;
@@ -1076,7 +1093,6 @@ export const getAccountCreditUsage = query({
     });
     const totalCreditsUsed = dailyUsage.reduce((sum, row) => sum + row.credits, 0);
 
-    // Build breakdown for the chart/legend
     const workspaceTotals = new Map<string, number>();
     for (const row of dailyRows) {
       for (const wId of workspaceIds) {
@@ -1086,7 +1102,7 @@ export const getAccountCreditUsage = query({
     }
 
     const rankedWorkspaces = [...workspaceTotals.entries()]
-      .filter(([_, credits]) => credits > 0)
+      .filter(([, credits]) => credits > 0)
       .sort((a, b) => b[1] - a[1]);
     const topWorkspaceIds = rankedWorkspaces.slice(0, TOP_MODEL_SERIES_LIMIT).map(([wId]) => wId);
     const wIdToKey = new Map(topWorkspaceIds.map((wId, index) => [wId, `ws_${index}`]));
@@ -1138,6 +1154,7 @@ export const getAccountCreditUsage = query({
 
     return {
       plan: stripeInfo.plan,
+      timeZone,
       periodStartMs: rangeStartMs,
       periodEndMs: rangeEndMs,
       totalCreditsUsed,
@@ -1226,7 +1243,8 @@ export const getWorkspaceCreditUsage = query({
       return null;
     }
 
-    await assertWorkspaceAccess(ctx, user._id, args.workspaceId);
+    const workspaceTeam = await assertWorkspaceAccess(ctx, user._id, args.workspaceId);
+    const timeZone = normalizeTimeZone(workspaceTeam.timeZone);
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
@@ -1239,9 +1257,8 @@ export const getWorkspaceCreditUsage = query({
       periodStartMs,
       periodEndMs,
     );
-    const dateKeys = getDateKeysInRange(rangeStartMs, rangeEndMs);
+    const dateKeys = getDateKeysInTimeZoneRange(rangeStartMs, rangeEndMs, timeZone);
 
-    // Get all agents in this workspace
     const agents = await ctx.db
       .query("agents")
       .withIndex("by_orgId", (q) => q.eq("orgId", args.workspaceId))
@@ -1253,56 +1270,33 @@ export const getWorkspaceCreditUsage = query({
     agentsMap.set("unassigned", "Unassigned");
     const agentKeys = Array.from(agentsMap.keys());
 
-    // 1. Try aggregates
-    let aggregateTotal = 0;
-    let dailyRows: Record<string, string | number>[] = [];
-    if (dateKeys.length > 0 && agentKeys.length > 0) {
-      const requests = dateKeys.flatMap((dateKey) =>
-        agentKeys.map((agentId) => ({
-          namespace: creditDailyUsageNamespace(userDoc._id, dateKey, agentId),
-        }))
+    let dailyRows: Record<string, string | number>[] = dateKeys.map((date) => ({ date, total: 0 }));
+    const events = (await listUserCreditUsageEventsInRange(ctx, {
+      billingUserId: userDoc._id,
+      rangeStartMs,
+      rangeEndMs,
+    })).filter((event) => (event.orgId ?? "") === args.workspaceId);
+
+    if (events.length > 0 && agentKeys.length > 0) {
+      dailyRows = buildDailyUsageRows(
+        events,
+        dateKeys,
+        agentKeys,
+        timeZone,
+        (event) => event.agentId ?? "unassigned",
       );
-      const aggregateSums = await creditAgentDailyUsageAggregator.sumBatch(ctx, requests);
-      dailyRows = buildDailyUsageRows(dateKeys, agentKeys, aggregateSums);
-      aggregateTotal = aggregateSums.reduce((sum, value) => sum + value, 0);
-    } else {
-      dailyRows = dateKeys.map((date) => ({ date, total: 0 }));
+    } else if (agentKeys.length > 0) {
+      const logs = await listUsageLogsForPeriod(ctx, userDoc._id, rangeStartMs, rangeEndMs);
+      const workspaceLogs = logs.filter((log) => (log.orgId ?? "") === args.workspaceId);
+      dailyRows = await buildDailyUsageFromLogs(
+        ctx,
+        workspaceLogs,
+        dateKeys,
+        agentKeys,
+        timeZone,
+      );
     }
 
-    // 2. Fallback to events if aggregates are 0
-    if (aggregateTotal === 0 && dateKeys.length > 0) {
-      const events = await ctx.db
-        .query("creditUsageEvents")
-        .withIndex("by_orgId_and_createdAt", (q) =>
-          q.eq("orgId", args.workspaceId).gte("createdAt", rangeStartMs)
-        )
-        .collect();
-      const scopedEvents = events.filter((e) => e.createdAt <= rangeEndMs);
-
-      const dailyByAgent = new Map<string, Map<string, number>>();
-      for (const e of scopedEvents) {
-        const agentKey = e.agentId ?? "unassigned";
-        const dateKey = toUtcDateKey(e.createdAt);
-        if (!dailyByAgent.has(dateKey)) {
-          dailyByAgent.set(dateKey, new Map());
-        }
-        const dayMap = dailyByAgent.get(dateKey)!;
-        dayMap.set(agentKey, (dayMap.get(agentKey) ?? 0) + e.credits);
-      }
-
-      dailyRows = dateKeys.map((date) => {
-        const dayMap = dailyByAgent.get(date) ?? new Map<string, number>();
-        const row: Record<string, number | string> = { date, total: 0 };
-        for (const aKey of agentKeys) {
-          const credits = dayMap.get(aKey) ?? 0;
-          row[aKey] = credits;
-          row.total = (row.total as number) + credits;
-        }
-        return row;
-      });
-    }
-
-    // Format output
     let cumulativeCredits = 0;
     const dailyUsage = dailyRows.map((row) => {
       const credits = (row.total as number) ?? 0;
@@ -1315,7 +1309,6 @@ export const getWorkspaceCreditUsage = query({
     });
     const totalCreditsUsed = dailyUsage.reduce((sum, row) => sum + row.credits, 0);
 
-    // Build breakdown for the chart/legend
     const agentTotals = new Map<string, number>();
     for (const row of dailyRows) {
       for (const aKey of agentKeys) {
@@ -1325,7 +1318,7 @@ export const getWorkspaceCreditUsage = query({
     }
 
     const rankedAgents = [...agentTotals.entries()]
-      .filter(([_, credits]) => credits > 0)
+      .filter(([, credits]) => credits > 0)
       .sort((a, b) => b[1] - a[1]);
     const topAgentKeys = rankedAgents.slice(0, TOP_MODEL_SERIES_LIMIT).map(([aKey]) => aKey);
     const aKeyToKey = new Map(topAgentKeys.map((aKey, index) => [aKey, `agent_${index}`]));
@@ -1377,6 +1370,7 @@ export const getWorkspaceCreditUsage = query({
 
     return {
       plan: stripeInfo.plan,
+      timeZone,
       periodStartMs: rangeStartMs,
       periodEndMs: rangeEndMs,
       totalCreditsUsed,

@@ -121,6 +121,7 @@ import type * as teamMembers from "../teamMembers.js";
 import type * as teamRoles from "../teamRoles.js";
 import type * as teams from "../teams.js";
 import type * as testUtils from "../testUtils.js";
+import type * as timeZoneDateKeys from "../timeZoneDateKeys.js";
 import type * as triggers from "../triggers.js";
 import type * as usageMonthKey from "../usageMonthKey.js";
 import type * as users from "../users.js";
@@ -265,6 +266,7 @@ declare const fullApi: ApiFromModules<{
   teamRoles: typeof teamRoles;
   teams: typeof teams;
   testUtils: typeof testUtils;
+  timeZoneDateKeys: typeof timeZoneDateKeys;
   triggers: typeof triggers;
   usageMonthKey: typeof usageMonthKey;
   users: typeof users;

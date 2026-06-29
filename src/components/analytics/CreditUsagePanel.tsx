@@ -22,7 +22,6 @@ import {
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-  type ChartConfig,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -33,93 +32,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-
-type CreditTimeRange = '7d' | '30d' | '90d' | 'period';
-type CreditMetric = 'daily' | 'cumulative';
+import {
+  buildModelChartConfig,
+  buildModelChartRows,
+  formatPeriodLabel,
+  formatTooltipDateLabel,
+  METRIC_OPTIONS,
+  TIME_RANGE_OPTIONS,
+  type CreditMetric,
+  type CreditTimeRange,
+} from '@/components/analytics/creditUsageChartModel';
 
 export type { CreditTimeRange };
 
-const TIME_RANGE_OPTIONS: Array<{ value: CreditTimeRange; label: string }> = [
-  { value: 'period', label: 'Billing period' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: '90d', label: 'Last 90 days' },
-];
-
 const CHART_HEIGHT = 400;
-
-const METRIC_OPTIONS: Array<{ value: CreditMetric; label: string }> = [
-  { value: 'daily', label: 'Daily' },
-  { value: 'cumulative', label: 'Cumulative' },
-];
-
-function formatPeriodLabel(startMs: number, endMs: number) {
-  const start = new Date(startMs);
-  const end = new Date(endMs);
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
-  return `${formatter.format(start)} – ${formatter.format(end)}`;
-}
-
-function formatDateLabel(date: string) {
-  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString(undefined, {
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function formatTooltipDateLabel(date: string) {
-  return new Date(`${date}T00:00:00.000Z`).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-function buildModelChartConfig(
-  series: Array<{ key: string; label: string; color: string }>,
-): ChartConfig {
-  return Object.fromEntries(
-    series.map((item) => [
-      item.key,
-      {
-        label: item.label,
-        color: item.color,
-      },
-    ]),
-  );
-}
-
-function buildModelChartRows(
-  daily: Array<Record<string, number | string>>,
-  seriesKeys: string[],
-  metric: CreditMetric,
-) {
-  if (metric === 'daily') {
-    return daily.map((row) => ({
-      ...row,
-      dateLabel: formatDateLabel(String(row.date)),
-    }));
-  }
-
-  const runningTotals = Object.fromEntries(seriesKeys.map((key) => [key, 0]));
-
-  return daily.map((row) => {
-    const nextRow: Record<string, number | string> = {
-      date: row.date,
-      dateLabel: formatDateLabel(String(row.date)),
-    };
-
-    for (const key of seriesKeys) {
-      runningTotals[key] += (row[key] as number | undefined) ?? 0;
-      nextRow[key] = runningTotals[key];
-    }
-
-    return nextRow;
-  });
-}
 
 export function CreditUsagePanel({
   scope = 'agent',
@@ -162,7 +88,10 @@ export function CreditUsagePanel({
         ? workspaceUsage
         : accountUsage;
 
-  const modelSeries = usage?.modelUsage.series ?? [];
+  const modelSeries = useMemo(
+    () => usage?.modelUsage.series ?? [],
+    [usage],
+  );
   const seriesKeys = useMemo(
     () => modelSeries.map((series) => series.key),
     [modelSeries],
@@ -197,10 +126,12 @@ export function CreditUsagePanel({
                   ? `${usage.totalCreditsUsed.toLocaleString()} credits used (${formatPeriodLabel(
                       usage.periodStartMs,
                       usage.periodEndMs,
+                      usage.timeZone,
                     )})`
                   : `No credit usage yet (${formatPeriodLabel(
                       usage.periodStartMs,
                       usage.periodEndMs,
+                      usage.timeZone,
                     )})`}
           </CardDescription>
         </div>
