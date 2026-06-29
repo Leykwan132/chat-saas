@@ -722,7 +722,7 @@ export default function ChatsPage() {
       assignedUserId: conv.assignedUserId,
       tags: conv.tags ?? [],
       leadTemperature: conv.leadTemperature,
-      hasBooking: bookingConversationIdSet.has(conv._id as string),
+      hasBooking: conv.status === 'booked' || bookingConversationIdSet.has(conv._id as string),
       escalation: conv.escalation,
     }));
   }, [linkedConversations, bookingConversationIdSet]);
@@ -765,7 +765,7 @@ export default function ChatsPage() {
       if (chat.conversationStatus === 'requires_user_input') {
         counts.escalated += 1;
       }
-      if (bookingConversationIdSet.has(chat.id as string)) {
+      if (chat.conversationStatus === 'booked' || bookingConversationIdSet.has(chat.id as string)) {
         counts.booking += 1;
       }
       counts.byPlatform[chat.platform] = (counts.byPlatform[chat.platform] ?? 0) + 1;
@@ -804,7 +804,7 @@ export default function ChatsPage() {
       list = list.filter((c) => c.conversationStatus === 'requires_user_input');
     }
     if (bookingActive) {
-      list = list.filter((c) => bookingConversationIdSet.has(c.id as string));
+      list = list.filter((c) => c.conversationStatus === 'booked' || bookingConversationIdSet.has(c.id as string));
     }
     if (activeTags.length > 0) {
       list = list.filter(

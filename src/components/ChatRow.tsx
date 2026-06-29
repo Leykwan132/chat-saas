@@ -12,7 +12,7 @@ import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import { BookedListLabel } from '@/components/booking/BookingDetailsPanel';
 import type { Id } from '../../convex/_generated/dataModel';
 
-function getTagColorClass(_tag: string): { bg: string; text: string; dot: string } {
+function getTagColorClass(): { bg: string; text: string; dot: string } {
   return {
     bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
     text: 'text-zinc-600 dark:text-zinc-400',
@@ -30,8 +30,7 @@ export type Chat = {
   unread: number;
   platform: ConversationPlatform;
   requiresAction: boolean;
-  /** Inbox row status; used for label filter on Chats page. */
-  conversationStatus: 'open' | 'snoozed' | 'closed' | 'requires_user_input';
+  conversationStatus: 'open' | 'snoozed' | 'closed' | 'booked' | 'requires_user_input';
   tags?: string[];
   leadTemperature?: 'Hot' | 'Warm' | 'Cold';
   hasBooking?: boolean;
@@ -155,7 +154,7 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                   {chat.tags && chat.tags
                     .filter((tag: string) => !isLeadTemperatureTag(tag))
                     .map((tag: string) => {
-                      const colors = getTagColorClass(tag);
+                      const colors = getTagColorClass();
                       return (
                         <span
                           key={tag}

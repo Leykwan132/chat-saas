@@ -716,6 +716,7 @@ export default defineSchema({
       v.literal("open"),
       v.literal("snoozed"),
       v.literal("closed"),
+      v.literal("booked"),
       v.literal("requires_user_input"),
     ),
     escalation: v.optional(

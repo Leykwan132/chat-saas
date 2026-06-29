@@ -25,9 +25,10 @@ export const cancelBookingSession = internalMutation({
       const agent = conversation?.assignedAgentId
         ? await ctx.db.get(conversation.assignedAgentId)
         : null;
+      const now = Date.now();
       await ctx.db.patch(event._id, {
         status: "cancelled",
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
       await logConversationEvent(ctx, {
         conversationId: args.conversationId,
@@ -43,8 +44,14 @@ export const cancelBookingSession = internalMutation({
       });
       await ctx.db.patch(booked._id, {
         status: AppointmentBookingSessionStatus.Cancelled,
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
+      if (conversation?.status === "booked") {
+        await ctx.db.patch(args.conversationId, {
+          status: "open",
+          updatedAt: now,
+        });
+      }
       return { success: true, message: "Booking cancelled." };
     }
 
@@ -68,10 +75,11 @@ export const cancelBookingSession = internalMutation({
       ? await ctx.db.get(conversation.assignedAgentId)
       : null;
 
+    const now = Date.now();
     if (active.calendarEventId !== undefined) {
       await ctx.db.patch(active.calendarEventId, {
         status: "cancelled",
-        updatedAt: Date.now(),
+        updatedAt: now,
       });
       await logConversationEvent(ctx, {
         conversationId: args.conversationId,
@@ -89,8 +97,14 @@ export const cancelBookingSession = internalMutation({
 
     await ctx.db.patch(active._id, {
       status: AppointmentBookingSessionStatus.Cancelled,
-      updatedAt: Date.now(),
+      updatedAt: now,
     });
+    if (conversation?.status === "booked") {
+      await ctx.db.patch(args.conversationId, {
+        status: "open",
+        updatedAt: now,
+      });
+    }
     return { success: true, message: "Booking cancelled." };
   },
 });

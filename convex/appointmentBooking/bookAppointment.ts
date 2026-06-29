@@ -112,6 +112,10 @@ export const bookAppointment = internalMutation({
       calendarEventId: eventId,
       updatedAt: now,
     });
+    await ctx.db.patch(conversation._id, {
+      status: "booked",
+      updatedAt: now,
+    });
     await logConversationEvent(ctx, {
       conversationId: conversation._id,
       action: "event_booked",
