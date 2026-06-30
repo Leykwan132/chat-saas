@@ -626,13 +626,6 @@ export const generateAiReplyWorker = internalAction({
       const replyText = result.text.trim();
       const mediaItemsFromToolResults = extractSendMediaItemsFromResult(result);
 
-      console.info("[media-tool-results]", {
-        conversationId: conv._id,
-        service: conv.service,
-        replyTextLength: replyText.length,
-        mediaItemCount: mediaItemsFromToolResults.length,
-        mediaItems: mediaItemsFromToolResults,
-      });
       if (!replyText && mediaItemsFromToolResults.length === 0) return;
 
       const { text: cleanText, mediaUrls, mediaClientIds } =

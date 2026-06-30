@@ -524,23 +524,12 @@ export function buildAgent(
       execute: async (ctx, { workflowNodeId }) => {
         const nodeId = workflowNodeId as Id<"workflowNodes">;
         if (!sendMediaNodeIds.has(nodeId)) {
-          console.warn("[sendMediaTool] unavailable-node", {
-            agentId,
-            workflowNodeId,
-          });
           throw new Error("Media node is not available in the active workflow");
         }
-        const result = await ctx.runQuery(
+        return await ctx.runQuery(
           internal.workflowMediaInternal.internalListReadyByNode,
           { agentId, nodeId },
         );
-        console.info("[sendMediaTool] media-resolved", {
-          agentId,
-          workflowNodeId,
-          mediaCount: result.length,
-          mediaTypes: result.map((item) => item.mediaType),
-        });
-        return result;
       },
     });
   }
