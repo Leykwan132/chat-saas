@@ -3,7 +3,6 @@
 - 2026-06-26T00:00Z [CODE] Convex guidance requires validators, indexed bounded reads, schema in `convex/schema.ts`, and auth-derived ownership checks.
 - 2026-06-27T22:45+08:00 [USER] Workflow UI milestone compressed: top-left mode switcher, non-draggable controls, roomy dialogs, edge condition pills, node add/delete/selection polish, and layout cleanup are established.
 - 2026-06-28T12:18+08:00 [USER] Followups and Reminders workflow setup milestone compressed: Followups has setup/summary/guide behavior; Reminders are only for booked appointments and currently fixed to one reminder timing.
-- 2026-06-29T13:12+08:00 [USER] Book appointment workflow action needs a Services section listing created Services with detail links and booking eligibility controls.
 - 2026-06-29T14:40+08:00 [USER] Workflow plus menu includes Q&A, Qualify leads, Book appointment, Custom action, and Close conversation; Q&A answers from knowledge base.
 - 2026-06-29T15:37+08:00 [USER] Model & Style UI keeps icons on field titles only, uses clearer option explanations, and closed select values stay side-by-side.
 - 2026-06-29T16:06+08:00 [USER] Goal: clean-break Auto Booking into Services-backed appointment booking driven by direct-message workflow runtime context.
@@ -23,6 +22,8 @@
 - 2026-06-29T22:42+08:00 [CODE] Credit usage daily chart buckets now use active/selected team timezone and render date keys as calendar dates, not UTC-midnight timestamps.
 - 2026-06-29T23:26+08:00 [USER] Goal: AI-booked appointments should mark the conversation itself as booked so booked chats can be filtered in Inbox.
 - 2026-06-29T23:26+08:00 [CODE] Conversation status now includes `booked`; AI create/update booking sets it, AI cancellation clears it to `open`, and Inbox Booked filter recognizes status or active booking session.
+- 2026-06-30T01:12+08:00 [USER] Goal: migrate Knowledge Base Send Media into Workflow as a node-owned `Send Media` action with user-authored conditions.
+- 2026-06-30T01:12+08:00 [CODE] Now: Workflow exposes `Send Media`; uploads are tied to `workflowNodeId`; runtime sends media only through matching Send Media nodes; visible KB Send Media surface is removed.
 
 # Decisions
 - 2026-06-26T00:00Z [USER] D001 ACTIVE: Workflow V1 is a persistent skeleton; legacy action graph decisions before 2026-06-29 are compressed into Snapshot milestones.
@@ -47,43 +48,52 @@
 - 2026-06-29 [CODE] D047 ACTIVE: Availability schedule org membership checks apply only when accessing another user's schedule; a user can initialize/view their own schedule in a personal workspace.
 - 2026-06-29 [CODE] D048 ACTIVE: Chat display treats WhatsApp single-asterisk emphasis as bold in inbox bubbles and playground Markdown.
 - 2026-06-29 [CODE] D049 ACTIVE: AI-created appointment calendar descriptions are deterministic summaries of booked service, customer profile/contact, channel, lead metadata, and collected interest fields; no new AI summary is generated at booking time.
+- 2026-06-30T01:12+08:00 [CODE] D050 ACTIVE: Send Media is Workflow-owned using existing `sendImage` node kind, `workflowSendMedia` media purpose, optional `workflowNodeId`, and node-scoped `sendMedia` runtime tool.
+- 2026-06-30T16:42+08:00 [CODE] D051 ACTIVE: Workflow media actions are split as `sendImage` = Send Photo/Video and `sendFile` = Send Files; Messenger always sends assets via `message.attachments`; WhatsApp multi photo/video sends carousel cards in valid 2-10 card batches while files remain document/file attachments; media sends emit structured logs and now use `sendMedia` tool results directly instead of requiring `[MEDIA:clientId]` markers in customer text.
 
 # Done (recent)
-- 2026-06-29 [CODE] AI-created booking calendar descriptions include customer details and interest/context fields for the assigned agent.
-- 2026-06-29 [CODE] Clicked calendar event details are larger, use update/delete icons, hide default top close/status, show avatar team member, edit inline with bottom Save, and label AI booking context as Summary.
-- 2026-06-29 [CODE] Calendar sidebar Services AI card below `Assigned to me` removed; `+ New Event` uses larger padding.
-- 2026-06-29 [CODE] Sidebar Tools now includes Broadcast and Message Templates directly; Follow-ups and the Outreach group were removed from sidebar nav.
-- 2026-06-29 [CODE] Sidebar Team now lists Lead Assignment, Availability, and Analytics directly; Assignment submenu was removed.
-- 2026-06-29T22:42+08:00 [CODE] Credit usage charts use timezone-aware date keys from persisted team timezone; helper test covers US/Malaysia date boundary.
-- 2026-06-29T23:26+08:00 [CODE] AI appointment booking persists `conversations.status = "booked"` and Inbox Booked filtering uses the status.
+- 2026-06-30T02:29-03:13+08:00 [CODE] Send Media upload UI/cleanup milestone compressed: square previews, failed/non-ready hiding, image preview dialog, immediate R2 upload, deterministic deletion cleanup, and duplicate placeholder hiding.
+- 2026-06-30T11:34-12:14+08:00 [CODE] Graph media delivery milestone compressed: WhatsApp posts each media URL to `/messages`; Messenger/Instagram post each image as `message.attachment.payload.url` before text; per-image external IDs are tracked.
+- 2026-06-30T12:33-12:42+08:00 [CODE] Workflow node dialog polish compressed: Save is disabled unless valid dirty fields exist, and Send Media footer shows uploaded media count.
+- 2026-06-30T13:12+08:00 [CODE] Inbox mapping now renders workflow-generated image media URLs as `inboxAttachments` and hides raw URL-only assistant text.
+- 2026-06-30T12:59+08:00 [CODE] Workflow node data wording now uses action `Name` and condition `Name`/`Detail` in the dialog payload and runtime prompt context.
+- 2026-06-30T17:20+08:00 [CODE] Workflow media actions now expose Send Photo/Video plus Send Files, validate uploads by node type, resolve typed media items from `sendMedia` tool results across AI SDK result shapes, use Messenger `message.attachments`, use WhatsApp carousel cards with 2-10 card batches, and log media-send/tool extraction diagnostics.
+- 2026-06-30T15:16+08:00 [CODE] Workflow photo/video thumbnails now show bottom-left photo/video badges, and video thumbnails open the same fullscreen preview dialog with controls.
 
 # Working set
-- 2026-06-29T23:26+08:00 [CODE] `convex/schema.ts`.
-- 2026-06-29T23:26+08:00 [CODE] `convex/appointmentBooking/bookAppointment.ts`, `convex/appointmentBooking/updateAppointment.ts`, `convex/appointmentBooking/cancellations.ts`.
-- 2026-06-29T23:26+08:00 [CODE] `src/pages/ChatsPage.tsx`, `src/components/ChatRow.tsx`.
-- 2026-06-29T23:26+08:00 [CODE] `convex/appointmentBookingStatus.test.ts`.
-- 2026-06-29T23:26+08:00 [CODE] Prior analytics/workflow/booking/calendar/sidebar working paths compressed into Snapshot/Done/Receipts.
+- 2026-06-30T01:12+08:00 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/schema.ts`.
+- 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.ts`, `convex/workflowMediaInternal.ts`, `convex/workflowMediaShared.ts`, `convex/workflowMediaDeletion.ts`, `convex/workflowRuntimeContext.ts`.
+- 2026-06-30T15:08+08:00 [CODE] `convex/chat/threads.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/inbox.ts`, `convex/chat/inboxActions.ts`, `convex/chat/inboxMessageMapping.ts`, `convex/chat/channelSend.ts`, `convex/chat/channelSend.test.ts`.
+- 2026-06-30T15:16+08:00 [CODE] `src/components/workflow/WorkflowSendMediaSection.tsx`, `WorkflowMediaUploader.tsx`, `WorkflowMediaGrid.tsx`, `WorkflowImagePreview.tsx`, `WorkflowMediaKindBadge.tsx`, `WorkflowLegacyMediaImport.tsx`.
+- 2026-06-30T01:12+08:00 [CODE] `src/pages/WorkflowPage.tsx`, `src/pages/KnowledgeBasePage.tsx`, `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`.
+- 2026-06-30T01:57+08:00 [CODE] `src/components/workflow/WorkflowInspector.tsx`.
+- 2026-06-30T02:17+08:00 [CODE] `src/components/workflow/WorkflowNode.tsx`, `WorkflowAutomationNode.tsx`, `WorkflowAutomationStepNode.tsx`.
+- 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.test.ts`, `convex/workflowMediaCleanup.test.ts`, `convex/workflowActions.test.ts`, `src/components/workflow/workflowCatalog.test.tsx`.
+- 2026-06-30T12:25+08:00 [CODE] `src/components/ConnectInstagramButton.tsx`, `src/components/ConnectMessengerButton.tsx`, `src/components/MessengerPagePickerDialog.tsx`.
+- 2026-06-29T23:26+08:00 [CODE] Prior booking/status/analytics/sidebar working paths compressed into Snapshot/Done/Receipts.
 
 # Open questions
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-06-29T16:36+08:00 [TOOL] `git diff --check -- convex/chat/threads.ts convex/chat/responseFormatting.ts`, targeted `rg`, and `wc -l` passed after single-asterisk chat guidance.
-- 2026-06-29T17:45+08:00 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/chat/responseFormatting.test.ts && bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after WhatsApp bold normalization.
-- 2026-06-29 [TOOL] `git diff --check -- convex/chat/workflowPrompt.ts convex/chat/threads.ts`, `wc -l`, and targeted `rg` passed after booking/knowledge prompt boundary refinement. TypeScript skipped for prompt-only string changes.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/chat/responseFormatting.test.ts` passed after adding Markdown-table-to-bullets normalization.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/leadRoutingSchedules.test.ts`, targeted `git diff --check`, and LOC checks passed after personal availability auth fix; `convex/leadRouting/schedules.ts` remains pre-existing over 300 lines.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/pages/SchedulePage.tsx src/pages/ScheduleUserDetailPage.tsx`, targeted `git diff --check`, and LOC checks passed after availability switch loading toasts; touched pages remain pre-existing over 300 lines.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/lib/whatsappText.test.ts`, `bunx eslint src/lib/whatsappText.ts src/lib/whatsappText.test.ts`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after WhatsApp bold display; full touched-component eslint is blocked by pre-existing hook/ts-ignore rules in `TestChatWindow.tsx` and `InboxThreadMessages.tsx`.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/calendarEvents.test.ts`, targeted `bunx eslint`, `git diff --check`, and LOC check passed after personal calendar customer selector fix; `convex/calendarEvents.ts` remains pre-existing over 300 lines.
-- 2026-06-29 [TOOL] `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/appointmentBookingFields.test.ts`, targeted `bunx eslint`, `bunx tsc -b`, `git diff --check`, and LOC checks passed after enriching AI booking calendar descriptions.
-- 2026-06-29 [TOOL] `bunx tsc -b`, targeted calendar detail `bunx eslint`, `git diff --check`, and new-file LOC checks passed; full targeted CalendarPage lint remains blocked by pre-existing React hook rule errors around timezone/search-param effects and `Date.now`; dev server started at `http://127.0.0.1:5178/`.
-- 2026-06-29 [TOOL] `bunx tsc -b`, targeted calendar detail `bunx eslint`, and `git diff --check` passed after spacing/action/avatar refinement; `bunx eslint src/pages/CalendarPage.tsx` remains blocked by the same pre-existing React hook rule errors.
-- 2026-06-29 [TOOL] `bunx tsc -b`, targeted calendar detail `bunx eslint`, `git diff --check`, and calendar detail LOC checks passed after inline edit-mode layout; `CalendarPage.tsx` still has pre-existing full-file lint blockers.
-- 2026-06-29 [TOOL] `git diff --check -- src/pages/CalendarPage.tsx` passed after Calendar sidebar card/button adjustment; `source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/pages/CalendarPage.tsx` remains blocked by pre-existing React hook rule errors at 808, 818, and 960.
-- 2026-06-29 [TOOL] `git diff --check`, Node 22 targeted `bunx eslint`, and LOC checks passed after renaming calendar event detail Description copy to Summary.
-- 2026-06-29 [TOOL] `git diff --check -- src/components/app-sidebar.tsx src/components/app-sidebar-nav.ts src/components/app-sidebar-nav-item.tsx`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after sidebar nav cleanup.
-- 2026-06-29 [TOOL] `rg`, `git diff --check`, Node 22 targeted `bunx eslint`, `bunx tsc -b`, and LOC checks passed after removing the Assignment sidebar submenu.
-- 2026-06-29T22:18+08:00 [TOOL] Reviewed credit usage data path and reproduced that `2026-06-29T00:00:00Z` formats as `Jun 28` in US timezones but `Jun 29` in UTC/Asia-Kuala_Lumpur.
-- 2026-06-29T22:42+08:00 [TOOL] `bunx convex codegen`, `bunx vitest run convex/timeZoneDateKeys.test.ts`, targeted `bunx eslint`, `bunx tsc -b`, and `git diff --check` passed after timezone-aware credit usage fix.
-- 2026-06-29T23:26+08:00 [TOOL] `bunx convex codegen`, `bunx vitest run convex/appointmentBookingStatus.test.ts convex/appointmentBookingCancel.test.ts`, `bunx tsc -b`, `bunx eslint src/components/ChatRow.tsx`, and `git diff --check` passed after booked conversation status; full `ChatsPage.tsx` lint remains blocked by pre-existing hook/any/no-unused-vars issues.
+- 2026-06-30T02:29+08:00 [TOOL] `bunx tsc -b`, Node 22 targeted eslint for `WorkflowPage` and media components, targeted `git diff --check`, and LOC checks passed; full `WorkflowInspector.tsx` lint still fails on pre-existing `react-hooks/set-state-in-effect` at line 76.
+- 2026-06-30T02:36+08:00 [TOOL] Node 22 targeted eslint for Send Media media components, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after hiding failed media previews.
+- 2026-06-30T02:39+08:00 [TOOL] Node 22 targeted eslint, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after adding workflow image preview dialog.
+- 2026-06-30T02:50+08:00 [TOOL] Node 22 `bunx vitest run convex/workflowMedia.test.ts convex/workflows.test.ts`, targeted Convex `bunx eslint`, `bunx tsc -b`, tracked `git diff --check`, trailing-whitespace check, and LOC checks passed after Send Media node media cleanup.
+- 2026-06-30T03:02+08:00 [TOOL] Node 22 `bunx convex codegen`, `bunx vitest run convex/workflowMedia.test.ts convex/workflows.test.ts src/components/workflow/workflowCatalog.test.tsx`, `bunx tsc -b`, targeted clean-file `bunx eslint`, `git diff --check`, trailing-whitespace, and LOC checks passed after direct Send Media upload; full `WorkflowInspector.tsx` lint remains blocked by pre-existing `react-hooks/set-state-in-effect`.
+- 2026-06-30T03:08+08:00 [TOOL] Node 22 `bunx vitest run convex/workflowMedia.test.ts convex/workflowMediaCleanup.test.ts convex/workflows.test.ts`, `bunx tsc -b`, targeted Convex `bunx eslint`, `git diff --check`, trailing-whitespace, and LOC checks passed after strengthening Send Media asset deletion.
+- 2026-06-30T03:13+08:00 [TOOL] Node 22 targeted eslint for Send Media media components, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after hiding duplicate upload placeholder rows.
+- 2026-06-30T11:34+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/channelSend.test.ts`, targeted `bunx eslint convex/chat/channelSend.ts convex/chat/inboxActions.ts convex/chat/channelSend.test.ts`, and targeted `git diff --check` passed after WhatsApp Send Media delivery.
+- 2026-06-30T12:14+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/channelSend.test.ts`, targeted `bunx eslint convex/chat/channelSend.ts convex/chat/inboxActions.ts convex/chat/channelSend.test.ts`, and targeted `git diff --check` passed after Messenger attachment-payload delivery.
+- 2026-06-30T12:33+08:00 [TOOL] `git diff --check -- src/components/workflow/WorkflowInspector.tsx` and LOC check passed after Save dirty-state gating; Node 22 targeted eslint remains blocked by pre-existing `react-hooks/set-state-in-effect`.
+- 2026-06-30T12:42+08:00 [TOOL] Node 22 `bunx eslint src/components/workflow/WorkflowSendMediaSection.tsx`, LOC check, and trailing-whitespace `rg` passed after adding the media uploaded count.
+- 2026-06-30T12:25+08:00 [TOOL] Node 22 targeted eslint for Messenger/Instagram connect components, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed.
+- 2026-06-30T13:12+08:00 [TOOL] Node 22 `bunx eslint convex/chat/inboxMessageMapping.ts`, targeted `git diff --check`, and LOC check for `convex/chat/inboxMessageMapping.ts` passed after inbox attachment rendering; broader lint remains blocked by pre-existing `no-explicit-any`/`no-useless-escape` in `convex/chat/inbox.ts` and `convex/chat/threads.ts`.
+- 2026-06-30T12:59+08:00 [TOOL] Node 22 `bunx eslint src/pages/WorkflowPage.tsx convex/workflowRuntimeContext.ts convex/chat/workflowPrompt.ts`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after node-data naming update; `WorkflowInspector.tsx` lint remains blocked by pre-existing `react-hooks/set-state-in-effect`.
+- 2026-06-30T15:08+08:00 [TOOL] Node 22 `bunx convex codegen`, `bunx vitest run convex/chat/channelSend.test.ts convex/workflowMedia.test.ts convex/workflowActions.test.ts src/components/workflow/workflowCatalog.test.tsx`, `bunx tsc -b`, clean-file targeted eslint, `git diff --check`, and LOC checks passed after Send Photo/Video + Send Files split; `WorkflowInspector.tsx` lint remains blocked by pre-existing `react-hooks/set-state-in-effect`.
+- 2026-06-30T15:16+08:00 [TOOL] Node 22 targeted eslint for workflow media preview/grid/uploader/badge components, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after video preview + photo/video badge polish.
+- 2026-06-30T15:32+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/channelSend.test.ts convex/workflowMedia.test.ts convex/workflowActions.test.ts src/components/workflow/workflowCatalog.test.tsx`, targeted `bunx eslint convex/chat/channelSend.ts convex/chat/channelSend.test.ts`, `bunx tsc -b`, and targeted `git diff --check` passed after hardening WhatsApp carousel card payloads.
+- 2026-06-30T15:35+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/channelSend.test.ts`, targeted `bunx eslint convex/chat/channelSend.ts convex/chat/channelSend.test.ts`, `bunx tsc -b`, and targeted `git diff --check` passed after making Messenger asset sends always use `message.attachments`.
+- 2026-06-30T15:57+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/channelSend.test.ts convex/workflowMedia.test.ts convex/workflowActions.test.ts src/components/workflow/workflowCatalog.test.tsx`, targeted `bunx eslint convex/chat/channelSend.ts convex/chat/channelSend.test.ts convex/chat/mediaSendLogs.ts`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after adding structured media-send logs.
+- 2026-06-30T16:42+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/mediaToolResults.test.ts convex/chat/channelSend.test.ts convex/workflowMedia.test.ts convex/workflowActions.test.ts src/components/workflow/workflowCatalog.test.tsx`, targeted clean-file eslint, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after moving media resolution from text markers to structured `sendMedia` tool results; full `threads.ts` lint still has known `any`/unused-arg errors only.
+- 2026-06-30T17:20+08:00 [TOOL] Node 22 `bunx vitest run convex/chat/mediaToolResults.test.ts convex/chat/channelSend.test.ts`, targeted `bunx eslint convex/chat/mediaToolResults.ts convex/chat/mediaToolResults.test.ts convex/chat/inbox.ts convex/chat/threads.ts`, `bunx tsc -b`, and targeted `git diff --check` passed after robustifying media tool-result extraction and structured diagnostics.

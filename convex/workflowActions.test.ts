@@ -74,6 +74,8 @@ test("plus actions create action nodes with expected default condition labels", 
   expect(startNode).toBeDefined();
   expect(ADDABLE_WORKFLOW_NODE_KINDS).toEqual([
     "answerQuestions",
+    "sendImage",
+    "sendFile",
     "updateLeadsStatus",
     "bookAppointment",
     "aiResponds",
@@ -100,6 +102,18 @@ test("plus actions create action nodes with expected default condition labels", 
       expect(actionNode!.description).toContain("knowledge base as the source of truth");
       expect(actionEdge?.label).toBe("Customer question");
       expect(actionEdge?.detail).toContain("answer using the knowledge base");
+    }
+    if (kind === "sendImage") {
+      expect(actionNode!.title).toBe("Send Photo/Video");
+      expect(actionNode!.description).toContain("node-owned photos or videos");
+      expect(actionEdge?.label).toBeUndefined();
+      expect(actionEdge?.detail).toBeUndefined();
+    }
+    if (kind === "sendFile") {
+      expect(actionNode!.title).toBe("Send Files");
+      expect(actionNode!.description).toContain("node-owned files or documents");
+      expect(actionEdge?.label).toBeUndefined();
+      expect(actionEdge?.detail).toBeUndefined();
     }
   }
 });

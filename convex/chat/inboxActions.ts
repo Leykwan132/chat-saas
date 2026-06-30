@@ -23,6 +23,7 @@ import {
   throwIfChannelSendFailed,
   type ChannelSendResult,
   type ChannelSendPolicy,
+  type ChannelMediaItem,
   type MetaIndicatorResult,
 } from "./channelSend";
 import {
@@ -34,6 +35,12 @@ import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting"
 type MetaIndicatorActionResult =
   | { ok: true; skipped?: string }
   | { ok: false; error: string };
+
+const channelMediaItemValidator = v.object({
+  url: v.string(),
+  mediaType: v.string(),
+  filename: v.optional(v.string()),
+});
 
 type ReplyPersistResult = {
   agentMessageId: string;
@@ -559,6 +566,7 @@ export const internalSendAiReply = internalAction({
     conversationId: v.id("conversations"),
     content: v.string(),
     mediaUrls: v.array(v.string()),
+    mediaItems: v.optional(v.array(channelMediaItemValidator)),
     allowHumanAgentTag: v.optional(v.boolean()),
   },
   handler: async (ctx, args): Promise<{
@@ -581,25 +589,21 @@ export const internalSendAiReply = internalAction({
       conversation.service === "whatsapp"
         ? normalizeCustomerFacingResponseFormatting(args.content)
         : args.content;
+    const mediaItems: ChannelMediaItem[] =
+      args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
 
-    if (content.trim() && args.mediaUrls.length > 0) {
-      if (conversation.service === "instagram" || conversation.service === "messenger") {
-        const { imageResult, textResult } = await sendTextAndImage(
-          conversation,
-          channel,
-          { text: content, imageUrls: args.mediaUrls, ...options },
-        );
-        if (!imageResult.ok) return { ok: false, error: imageResult.error, policy: imageResult.policy };
-        if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
-        return {
-          ok: true,
-          textExternalId: textResult.externalId,
-          mediaExternalIds: imageResult.externalId ? [imageResult.externalId] : [],
-        };
-      }
-      const textResult = await sendTextToChannel(conversation, channel, content, options);
-      if (!textResult.ok) return { ok: false, error: textResult.error, policy: textResult.policy };
-      return { ok: true, textExternalId: textResult.externalId, mediaExternalIds: [] };
+    if (content.trim() && mediaItems.length > 0) {
+      const result = await sendMediaToChannel(conversation, channel, {
+        text: content,
+        mediaItems,
+        ...options,
+      });
+      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+      return {
+        ok: true,
+        textExternalId: result.textConsumed ? undefined : result.externalId,
+        mediaExternalIds: result.externalIds ?? [],
+      };
     }
 
     if (content.trim()) {
@@ -608,13 +612,16 @@ export const internalSendAiReply = internalAction({
       return { ok: true, textExternalId: result.externalId };
     }
 
-    if (args.mediaUrls.length > 0) {
+    if (mediaItems.length > 0) {
       const result = await sendMediaToChannel(conversation, channel, {
-        imageUrls: args.mediaUrls,
+        mediaItems,
         ...options,
       });
       if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
-      return { ok: true, mediaExternalIds: result.externalId ? [result.externalId] : [] };
+      return {
+        ok: true,
+        mediaExternalIds: result.externalIds ?? (result.externalId ? [result.externalId] : []),
+      };
     }
 
     return { ok: false, error: "Nothing to send", policy: "generic" };
@@ -828,7 +835,7 @@ Make it highly customer-centric and readable at a single glance.`;
         throw error;
       }
       console.error("Failed to generate thread summary:", error);
-      throw new Error("Failed to generate summary. Please try again.");
+      throw new Error("Failed to generate summary. Please try again.", { cause: error });
     }
   },
 });

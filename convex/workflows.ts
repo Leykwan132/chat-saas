@@ -18,6 +18,7 @@ import {
   workflowNodeDescription,
   workflowNodeTitle,
 } from "../shared/workflows";
+import { deleteOrQueueWorkflowNodeMedia } from "./workflowMediaDeletion";
 
 function requireFinitePosition(value: number, field: string) {
   if (!Number.isFinite(value)) {
@@ -288,6 +289,9 @@ export const removeNode = mutation({
 
     for (const edge of connectedEdges) {
       await ctx.db.delete(edge._id);
+    }
+    if (node.kind === "sendImage" || node.kind === "sendFile") {
+      await deleteOrQueueWorkflowNodeMedia(ctx, agent, node._id);
     }
     await ctx.db.delete(node._id);
 

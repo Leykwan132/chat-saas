@@ -7,8 +7,11 @@ import {
   type MutationCtx,
 } from "../_generated/server";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
-import { inboxPromptContent } from "../../shared/inboxAttachments";
+import type { Doc, Id } from "../_generated/dataModel";
+import {
+  INBOX_IMAGE_PLACEHOLDER,
+  inboxPromptContent,
+} from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
@@ -21,12 +24,48 @@ import {
   saveHumanReplyTextAndImages,
   buildAgent,
   saveAiReply,
+  inferMediaMimeType,
 } from "./threads";
 import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
 import { extractMediaFromText } from "./mediaUrlExtractor";
+import {
+  dedupeMediaItems,
+  extractSendMediaItemsFromResult,
+} from "./mediaToolResults";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import type { ChannelMediaItem } from "./channelSend";
+
+type ResolvedChannelMediaItem = {
+  url: string;
+  mediaType: string;
+  filename?: string;
+};
+
+const channelMediaItemValidator = v.object({
+  url: v.string(),
+  mediaType: v.string(),
+  filename: v.optional(v.string()),
+});
+
+function contentTypeForMediaItem(item: ChannelMediaItem) {
+  const mediaType = item.mediaType ?? inferMediaMimeType(item.url);
+  if (mediaType.startsWith("image/")) return "image" as const;
+  if (mediaType.startsWith("video/")) return "video" as const;
+  if (
+    mediaType === "application/pdf" ||
+    mediaType.includes("wordprocessingml") ||
+    mediaType.includes("spreadsheetml") ||
+    mediaType.includes("presentationml") ||
+    mediaType === "application/msword" ||
+    mediaType === "application/vnd.ms-excel" ||
+    mediaType === "application/vnd.ms-powerpoint"
+  ) {
+    return "document" as const;
+  }
+  return "file" as const;
+}
 
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
@@ -220,7 +259,7 @@ export const internalPersistHumanReply = internalMutation({
           : "";
 
     const markedRead = conv.unreadCount > 0;
-    const patch: Record<string, any> = {
+    const patch: Partial<Doc<"conversations">> = {
       lastMessageAt: now,
       unreadCount: 0,
       updatedAt: now,
@@ -305,7 +344,7 @@ export const internalPersistAiReply = internalMutation({
     });
 
     const markedRead = conv.unreadCount > 0;
-    const patch: Record<string, any> = {
+    const patch: Partial<Doc<"conversations">> = {
       lastMessageAt: now,
       unreadCount: 0,
       updatedAt: now,
@@ -332,6 +371,7 @@ export const internalPersistAiMediaReply = internalMutation({
     conversationId: v.id("conversations"),
     threadId: v.string(),
     mediaUrls: v.array(v.string()),
+    mediaItems: v.optional(v.array(channelMediaItemValidator)),
     externalIds: v.array(v.string()),
   },
   handler: async (ctx, args) => {
@@ -343,18 +383,26 @@ export const internalPersistAiMediaReply = internalMutation({
     const orgAddress =
       channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
 
-    // Save each media URL as assistant message in the agent thread
+    const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({
+      url,
+      mediaType: inferMediaMimeType(url),
+    }));
+    const inboxAttachments = mediaItems.map((item) => ({
+      url: item.url,
+      mediaType: item.mediaType ?? inferMediaMimeType(item.url),
+      type: "image" as const,
+    }));
     const agentMessageId = await saveAiReply(
       ctx,
       args.threadId,
-      args.mediaUrls.join("\n"),
+      INBOX_IMAGE_PLACEHOLDER,
       conv.assignedAgentId,
       now,
+      { inboxAttachments },
     );
 
-    // Insert into messages ledger for inbox display
-    for (let i = 0; i < args.mediaUrls.length; i++) {
-      const url = args.mediaUrls[i];
+    for (let i = 0; i < mediaItems.length; i++) {
+      const item = mediaItems[i]!;
       const externalId = args.externalIds[i] ?? undefined;
       await ctx.db.insert("messages", {
         orgId: conv.orgId,
@@ -365,9 +413,9 @@ export const internalPersistAiMediaReply = internalMutation({
         orgAddress,
         contactAddress: conv.contactAddress,
         direction: "outgoing",
-        contentType: "image",
-        content: url,
-        mediaUrl: url,
+        contentType: contentTypeForMediaItem(item),
+        content: item.url,
+        mediaUrl: item.url,
         agentMessageId,
         status: "sent",
         createdAt: now,
@@ -502,14 +550,9 @@ export const generateAiReplyWorker = internalAction({
       return;
     }
 
-    const mediaCollections: string[] = await ctx.runQuery(
-      internal.knowledgeBaseImages.internalListCollectionNames,
-      { agentId: conv.assignedAgentId },
-    );
     const activeBooking = await ctx.runQuery(internal.appointmentBooking.services.listActiveServices, {
       agentId: conv.assignedAgentId,
     });
-    console.log("activeBooking", activeBooking);
     const workflowRuntimeContext = await ctx.runQuery(internal.workflowRuntimeContext.loadForAgent, {
       agentId: conv.assignedAgentId,
     });
@@ -517,7 +560,6 @@ export const generateAiReplyWorker = internalAction({
       agent,
       conv.assignedAgentId,
       false,
-      mediaCollections,
       conv._id,
       activeBooking.services,
       workflowRuntimeContext,
@@ -560,6 +602,7 @@ export const generateAiReplyWorker = internalAction({
         });
       }
 
+      console.log('OpenRouter key', process.env.OPEN_ROUTER_API);
       const result = await configuredAgent.generateText(
         ctx,
         { threadId: conv.threadId },
@@ -581,19 +624,37 @@ export const generateAiReplyWorker = internalAction({
       }
 
       const replyText = result.text.trim();
-      if (!replyText) return;
+      const mediaItemsFromToolResults = extractSendMediaItemsFromResult(result);
+
+      console.info("[media-tool-results]", {
+        conversationId: conv._id,
+        service: conv.service,
+        replyTextLength: replyText.length,
+        mediaItemCount: mediaItemsFromToolResults.length,
+        mediaItems: mediaItemsFromToolResults,
+      });
+      if (!replyText && mediaItemsFromToolResults.length === 0) return;
 
       const { text: cleanText, mediaUrls, mediaClientIds } =
         extractMediaFromText(replyText);
-      const urlsFromClientIds: string[] =
+      const mediaItemsFromUrls: ResolvedChannelMediaItem[] = mediaUrls.map((url) => ({
+        url,
+        mediaType: inferMediaMimeType(url),
+      }));
+      const mediaItemsFromClientIds: ResolvedChannelMediaItem[] =
         mediaClientIds.length > 0
           ? await ctx.runQuery(
-              internal.knowledgeBaseImages.internalResolveClientIdsToPublicUrls,
+              internal.knowledgeBaseImages.internalResolveClientIdsToMediaItems,
               { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
             )
           : [];
-      const allMediaUrls = [...mediaUrls, ...urlsFromClientIds];
-      if (!cleanText && allMediaUrls.length === 0) return;
+      const allMediaItems = dedupeMediaItems([
+        ...mediaItemsFromToolResults,
+        ...mediaItemsFromUrls,
+        ...mediaItemsFromClientIds,
+      ]);
+      const allMediaUrls = allMediaItems.map((item) => item.url);
+      if (!cleanText && allMediaItems.length === 0) return;
 
       let usage: { llmModel: string; creditsCharged: number };
       try {
@@ -626,6 +687,7 @@ export const generateAiReplyWorker = internalAction({
           conversationId: conv._id,
           content: cleanText,
           mediaUrls: allMediaUrls,
+          mediaItems: allMediaItems,
           allowHumanAgentTag: false,
         },
       );
@@ -681,6 +743,7 @@ export const generateAiReplyWorker = internalAction({
             conversationId: conv._id,
             threadId: conv.threadId,
             mediaUrls: allMediaUrls,
+            mediaItems: allMediaItems,
             externalIds: sendResult.mediaExternalIds ?? [],
           },
         );

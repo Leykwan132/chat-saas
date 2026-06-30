@@ -75,3 +75,20 @@ export function generateKnowledgeBaseImageKey(
   const safeFileName = sanitizePathSegment(fileName.trim());
   return `knowledge-base/${orgId}/${agentId}/${safeCollection}/${safeFileName}`;
 }
+
+export function buildWorkflowMediaFileName(originalFileName: string): string {
+  return sanitizePathSegment(originalFileName.trim());
+}
+
+export function generateWorkflowMediaKey(
+  orgId: string,
+  agentId: string,
+  workflowNodeId: string,
+  clientId: string,
+  fileName: string,
+): string {
+  const safeNodeId = sanitizePathSegment(workflowNodeId.trim());
+  const safeClientId = sanitizePathSegment(clientId.trim());
+  const safeFileName = sanitizePathSegment(fileName.trim());
+  return `workflow-media/${orgId}/${agentId}/${safeNodeId}/${safeClientId}_${safeFileName}`;
+}

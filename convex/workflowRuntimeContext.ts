@@ -5,6 +5,7 @@ import { getWorkflowForAgent, listWorkflowEdges, listWorkflowNodes } from "./wor
 import { workflowNodeDescription, workflowNodeDisplayTitle } from "../shared/workflows";
 
 const MAX_RUNTIME_SERVICES = 100;
+const MAX_RUNTIME_MEDIA = 500;
 
 type RuntimeService = {
   serviceId: Id<"appointmentServices">;
@@ -49,6 +50,24 @@ function servicesForNode(
     .map(serviceForPrompt);
 }
 
+function mediaForNode(
+  node: Doc<"workflowNodes">,
+  mediaRows: Doc<"mediaUploads">[],
+) {
+  if (node.kind !== "sendImage" && node.kind !== "sendFile") return [];
+  return mediaRows
+    .filter((row) =>
+      row.workflowNodeId === node._id &&
+      row.purpose === "workflowSendMedia" &&
+      row.status === "ready",
+    )
+    .map((row) => ({
+      clientId: row.clientId,
+      filename: row.filename,
+      mediaType: row.mediaType,
+    }));
+}
+
 export const loadForAgent = internalQuery({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
@@ -61,6 +80,10 @@ export const loadForAgent = internalQuery({
     const edges = await listWorkflowEdges(ctx, workflow._id);
     const activeServices = await listActiveServices(ctx, args.agentId);
     const serviceById = new Map(activeServices.map((service) => [service._id, service]));
+    const mediaRows = await ctx.db
+      .query("mediaUploads")
+      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
+      .take(MAX_RUNTIME_MEDIA);
 
     return {
       workflowId: workflow._id,
@@ -74,15 +97,16 @@ export const loadForAgent = internalQuery({
           .filter((edge) => edge.targetNodeId === node._id)
           .map((edge) => ({
             sourceNodeId: edge.sourceNodeId,
-            label: edge.label,
+            name: edge.label,
             detail: edge.detail,
           })),
         allowedServices: servicesForNode(node, activeServices, serviceById),
+        mediaAssets: mediaForNode(node, mediaRows),
       })),
       edges: edges.map((edge) => ({
         sourceNodeId: edge.sourceNodeId,
         targetNodeId: edge.targetNodeId,
-        label: edge.label,
+        name: edge.label,
         detail: edge.detail,
       })),
     };

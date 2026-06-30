@@ -5,7 +5,12 @@ import { internalAction } from "./_generated/server";
 import { components } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
 import { uploadToCF, deleteFromCF, scrapeMarkdown, scrapeLinks } from "./cloudflare";
-import { r2, generateKnowledgeBaseImageKey, getPublicMediaUrl } from "./media/r2";
+import {
+  r2,
+  generateKnowledgeBaseImageKey,
+  generateWorkflowMediaKey,
+  getPublicMediaUrl,
+} from "./media/r2";
 
 // ─── Workpool instances ───────────────────────────────────
 
@@ -113,6 +118,38 @@ export const kbImageUploadWorker = internalAction({
       args.orgId,
       args.agentId,
       args.collectionName,
+      args.fileName,
+    );
+
+    const blob = new Blob([args.fileBytes], { type: args.mimeType });
+    await r2.store(ctx, blob, { key });
+
+    return {
+      r2Key: key,
+      fileSize: args.fileBytes.byteLength,
+      publicUrl: getPublicMediaUrl(key),
+    };
+  },
+});
+
+export const workflowMediaUploadWorker = internalAction({
+  args: {
+    uploadId: v.id("mediaUploads"),
+    clientId: v.string(),
+    orgId: v.string(),
+    userId: v.string(),
+    agentId: v.id("agents"),
+    workflowNodeId: v.id("workflowNodes"),
+    fileName: v.string(),
+    mimeType: v.string(),
+    fileBytes: v.bytes(),
+  },
+  handler: async (ctx, args) => {
+    const key = generateWorkflowMediaKey(
+      args.orgId,
+      args.agentId,
+      args.workflowNodeId,
+      args.clientId,
       args.fileName,
     );
 

@@ -365,6 +365,40 @@ export const internalResolveClientIdsToPublicUrls = internalQuery({
   },
 });
 
+export const internalResolveClientIdsToMediaItems = internalQuery({
+  args: {
+    agentId: v.id("agents"),
+    clientIds: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (args.clientIds.length === 0) {
+      return [] as Array<{ url: string; mediaType: string; filename?: string }>;
+    }
+
+    const rows = await ctx.db
+      .query("mediaUploads")
+      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
+      .collect();
+
+    const byClientId = new Map<string, { url: string; mediaType: string; filename?: string }>();
+    for (const row of rows) {
+      if (row.status === "ready" && row.publicUrl) {
+        byClientId.set(row.clientId, {
+          url: row.publicUrl,
+          mediaType: row.mediaType,
+          filename: row.filename,
+        });
+      }
+    }
+
+    return args.clientIds
+      .map((id) => byClientId.get(id))
+      .filter((item): item is { url: string; mediaType: string; filename?: string } =>
+        item !== undefined,
+      );
+  },
+});
+
 /** Playground UI: resolve [MEDIA:clientId] markers to display URLs. */
 export const listReadyMediaByAgent = query({
   args: { agentId: v.id("agents") },

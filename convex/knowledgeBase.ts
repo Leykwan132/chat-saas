@@ -56,11 +56,9 @@ async function getKnowledgeBaseBytesForAgent(
     sumRows("webEntries", webEntries) +
     sumRows("qaEntries", qaEntries) +
     mediaUploads.reduce((sum, row) => {
-      if (
-        row.purpose !== "knowledgeBase" ||
-        row.status === "deleting" ||
-        row.status === "cancelled"
-      ) {
+      const countsTowardAgentStorage =
+        row.purpose === "knowledgeBase" || row.purpose === "workflowSendMedia";
+      if (!countsTowardAgentStorage || row.status === "deleting" || row.status === "cancelled") {
         return sum;
       }
       return sum + (row.fileSize ?? 0);

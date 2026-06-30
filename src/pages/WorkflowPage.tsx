@@ -193,9 +193,9 @@ export default function WorkflowPage() {
   };
 
   const handleSaveNode = async (values: {
-    title: string;
+    name: string;
     description: string;
-    conditionLabel?: string;
+    conditionName?: string;
     conditionDetail?: string;
     allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
   }) => {
@@ -204,20 +204,22 @@ export default function WorkflowPage() {
     try {
       const {
         allowedAppointmentServiceIds,
-        conditionLabel,
+        conditionName,
         conditionDetail,
-        ...nodeValues
+        name,
+        description,
       } = values;
       await updateNode({
         agentId: typedAgentId,
         nodeId: selectedNodeId,
-        ...nodeValues,
+        title: name,
+        description,
       });
-      if (selectedConditionEdge && conditionLabel !== undefined) {
+      if (selectedConditionEdge && conditionName !== undefined) {
         await updateEdgeCondition({
           agentId: typedAgentId,
           edgeId: selectedConditionEdge._id,
-          label: conditionLabel,
+          label: conditionName,
           detail: conditionDetail,
         });
       }

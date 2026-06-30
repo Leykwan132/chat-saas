@@ -3,6 +3,7 @@ export const WORKFLOW_NODE_KINDS = [
   'answerQuestions',
   'aiResponds',
   'sendImage',
+  'sendFile',
   'sendText',
   'closeConversation',
   'updateLeadsStatus',
@@ -20,6 +21,8 @@ export type WorkflowNodeKind = (typeof WORKFLOW_NODE_KINDS)[number];
 
 export const ADDABLE_WORKFLOW_NODE_KINDS = [
   'answerQuestions',
+  'sendImage',
+  'sendFile',
   'updateLeadsStatus',
   'bookAppointment',
   'aiResponds',
@@ -38,6 +41,8 @@ export const WORKFLOW_TERMINAL_NODE_KINDS = [
 
 export const WORKFLOW_ACTION_NODE_KINDS = [
   'answerQuestions',
+  'sendImage',
+  'sendFile',
   'aiResponds',
   'updateLeadsStatus',
   'bookAppointment',
@@ -58,8 +63,12 @@ export const WORKFLOW_NODE_META: Record<
     label: 'Custom action',
   },
   sendImage: {
-    label: 'Send image',
-    description: 'Send an image in the conversation.',
+    label: 'Send Photo/Video',
+    description: 'Send node-owned photos or videos to the customer when this condition matches.',
+  },
+  sendFile: {
+    label: 'Send Files',
+    description: 'Send node-owned files or documents to the customer when this condition matches.',
   },
   sendText: {
     label: 'Send text',

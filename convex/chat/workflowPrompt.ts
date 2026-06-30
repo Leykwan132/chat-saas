@@ -13,6 +13,12 @@ type RuntimeService = {
   }>;
 };
 
+type RuntimeMediaAsset = {
+  clientId: string;
+  filename?: string;
+  mediaType: string;
+};
+
 export type WorkflowRuntimeContextForPrompt = {
   workflowId: Id<"workflows">;
   nodes: Array<{
@@ -23,27 +29,30 @@ export type WorkflowRuntimeContextForPrompt = {
     notes?: string;
     incomingConditions: Array<{
       sourceNodeId: Id<"workflowNodes">;
-      label?: string;
+      name?: string;
       detail?: string;
     }>;
     allowedServices: RuntimeService[];
+    mediaAssets: RuntimeMediaAsset[];
   }>;
   edges: Array<{
     sourceNodeId: Id<"workflowNodes">;
     targetNodeId: Id<"workflowNodes">;
-    label?: string;
+    name?: string;
     detail?: string;
   }>;
 } | null;
 
 function formatCondition(condition: {
-  label?: string;
+  name?: string;
   detail?: string;
 }) {
-  const label = condition.label?.trim();
+  const name = condition.name?.trim();
   const detail = condition.detail?.trim();
-  if (label && detail) return `${label}: ${detail}`;
-  return label || detail || "No explicit condition";
+  if (name && detail) return `Name: ${name}; Detail: ${detail}`;
+  if (name) return `Name: ${name}`;
+  if (detail) return `Detail: ${detail}`;
+  return "No explicit condition";
 }
 
 function formatServices(services: RuntimeService[]) {
@@ -56,6 +65,17 @@ function formatServices(services: RuntimeService[]) {
         .join(", ");
       const description = service.description ? ` - ${service.description}` : "";
       return `  - ${service.name} (${service.durationMinutes} min, ID: ${service.serviceId})${description}. Required fields: ${fields}`;
+    }),
+  ].join("\n");
+}
+
+function formatMediaAssets(mediaAssets: RuntimeMediaAsset[]) {
+  if (mediaAssets.length === 0) return "- Media assets: none uploaded";
+  return [
+    "- Media assets:",
+    ...mediaAssets.map((asset) => {
+      const filename = asset.filename ? `, file: ${asset.filename}` : "";
+      return `  - clientId: ${asset.clientId}${filename}, type: ${asset.mediaType}`;
     }),
   ].join("\n");
 }
@@ -86,6 +106,10 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
       const goal = node.goal ? `- Goal: ${node.goal}` : undefined;
       const notes = node.notes ? `- Notes: ${node.notes}` : undefined;
       const services = node.kind === "bookAppointment" ? formatServices(node.allowedServices) : undefined;
+      const mediaAssets =
+        node.kind === "sendImage" || node.kind === "sendFile"
+          ? formatMediaAssets(node.mediaAssets)
+          : undefined;
       return [
         `### ${index + 1}. ${node.title} (${node.kind})`,
         `- Node ID: ${node.nodeId}`,
@@ -93,6 +117,7 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
         goal,
         notes,
         services,
+        mediaAssets,
       ].filter((line): line is string => line !== undefined).join("\n");
     })
     .join("\n\n");
@@ -101,6 +126,8 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
 Use this workflow as the source of truth for what stage the conversation is in and what you should do next. Infer the active node each turn from the latest customer message, the message history, each node goal, and the incoming edge conditions. Do not store or invent a persistent conversation stage.
 
 When a condition matches a node, follow that node's goal. If several nodes might match, choose the most specific condition. If no action node condition matches, continue with the normal support/sales response rules.
+
+For Send Photo/Video and Send Files nodes, call \`sendMedia\` with that node's Node ID only when the incoming condition matches. Do not include internal media IDs, media URLs, or \`[MEDIA:...]\` markers in the customer-facing response; the system sends returned assets separately. Do not call \`sendMedia\` for Q&A, booking, lead qualification, or custom action nodes.
 
 For Book appointment nodes, use only the Services listed on that node. Start a new booking only when the workflow conditions indicate Book appointment or when the customer explicitly asks to book. Reschedule and cancellation requests for an existing appointment may use the booking tools even if the current turn is about changing or cancelling rather than creating a new booking.
 ${buildServiceBoundaryRules()}

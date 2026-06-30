@@ -168,22 +168,27 @@ export const generatePlaygroundResponseAsync = internalAction({
     });
     if (!agent) throw new Error("Agent not found");
 
-    const mediaCollections: string[] = await ctx.runQuery(
-      internal.knowledgeBaseImages.internalListCollectionNames,
-      { agentId: args.agentId },
-    );
-
     const conv = await ctx.runQuery(
       internal.chat.streaming.internalGetConversationByThreadId,
       { threadId: args.threadId },
+    );
+    const activeBooking = conv
+      ? await ctx.runQuery(internal.appointmentBooking.services.listActiveServices, {
+          agentId: args.agentId,
+        })
+      : { services: [] };
+    const workflowRuntimeContext = await ctx.runQuery(
+      internal.workflowRuntimeContext.loadForAgent,
+      { agentId: args.agentId },
     );
 
     const configuredAgent = buildAgent(
       agent,
       args.agentId,
       args.enableCitations ?? false,
-      mediaCollections,
       conv?._id ?? undefined,
+      activeBooking.services,
+      workflowRuntimeContext,
     );
     const result = await configuredAgent.streamText(
       ctx,

@@ -1,12 +1,23 @@
 "use node";
 
 import type { Doc } from "../_generated/dataModel";
+import {
+  logMediaSendDone,
+  logMediaSendGraphError,
+  logMediaSendGraphSuccess,
+  logMediaSendResultError,
+  logMediaSendStart,
+  mediaSendLogContext,
+  type MediaSendLogContext,
+} from "./mediaSendLogs";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
 const HOUR_MS = 60 * 60 * 1000;
 const MESSAGING_WINDOW_MS = 24 * HOUR_MS;
 const HUMAN_AGENT_WINDOW_MS = 7 * 24 * HOUR_MS;
+const WHATSAPP_CAROUSEL_MIN_CARDS = 2;
+const WHATSAPP_CAROUSEL_MAX_CARDS = 10;
 
 /** Meta Graph API error code: message outside standard messaging window. */
 export const META_ERROR_MESSAGING_WINDOW = 10;
@@ -48,7 +59,12 @@ export type ChannelSendPolicy =
   | "generic";
 
 export type ChannelSendResult =
-  | { ok: true; externalId: string | undefined }
+  | {
+      ok: true;
+      externalId: string | undefined;
+      externalIds?: string[];
+      textConsumed?: boolean;
+    }
   | {
       ok: false;
       error: string;
@@ -61,9 +77,16 @@ export type SendTextToChannelOptions = {
   allowHumanAgentTag?: boolean;
 };
 
+export type ChannelMediaItem = {
+  url: string;
+  mediaType?: string;
+  filename?: string;
+};
+
 export type SendMediaToChannelOptions = SendTextToChannelOptions & {
   text?: string;
-  imageUrls: string[];
+  imageUrls?: string[];
+  mediaItems?: ChannelMediaItem[];
 };
 
 export type SendTextAndImageOptions = SendTextToChannelOptions & {
@@ -190,7 +213,7 @@ export async function sendTextAndImage(
   channel: Doc<"channels">,
   options: SendTextAndImageOptions,
 ): Promise<TextAndImageSendResult> {
-  const imageUrls = options.imageUrls.filter((url) => url.trim().length > 0);
+  const imageUrls = normalizeImageUrls(options.imageUrls);
   const trimmed = options.text.trim();
   if (!trimmed) {
     throw new Error("sendTextAndImage requires non-empty text");
@@ -247,52 +270,57 @@ export async function sendMediaToChannel(
   channel: Doc<"channels">,
   options: SendMediaToChannelOptions,
 ): Promise<ChannelSendResult> {
-  const imageUrls = options.imageUrls.filter((url) => url.trim().length > 0);
+  const mediaItems = normalizeMediaItems(options);
   const trimmed = options.text?.trim() ?? "";
 
-  if (imageUrls.length === 0) {
+  if (mediaItems.length === 0) {
     return sendTextToChannel(conversation, channel, trimmed, options);
   }
 
+  logMediaSendStart(mediaSendLogContext(conversation, channel, "media.flow", mediaItems, {
+    hasText: trimmed.length > 0,
+  }));
+
   if (conversation.service === "whatsapp") {
+    const usesCarousel = shouldSendWhatsAppCarousel(mediaItems, trimmed);
+    const mediaResult = await sendWhatsAppMedia(conversation, channel, mediaItems, trimmed);
+    if (!mediaResult.ok || trimmed.length === 0 || usesCarousel) {
+      return mediaResult;
+    }
+    const textResult = await sendWhatsApp(conversation, channel, trimmed);
+    if (!textResult.ok) {
+      logMediaSendResultError(
+        mediaSendLogContext(conversation, channel, "whatsapp.text_after_media", mediaItems, {
+          hasText: true,
+        }),
+        textResult,
+      );
+      return textResult;
+    }
+    logMediaSendDone(
+      mediaSendLogContext(conversation, channel, "whatsapp.media_then_text", mediaItems, {
+        hasText: true,
+      }),
+      mediaResult.externalIds,
+    );
     return {
-      ok: false,
-      error:
-        "Image attachments are not supported for WhatsApp yet. Send text only.",
-      policy: "generic",
+      ...textResult,
+      externalIds: mediaResult.externalIds,
     };
   }
 
   switch (conversation.service) {
     case "instagram":
-      if (trimmed.length > 0) {
-        const { textResult } = await sendTextAndImage(conversation, channel, {
-          text: trimmed,
-          imageUrls,
-          allowHumanAgentTag: options.allowHumanAgentTag,
-        });
-        return textResult;
-      }
-      return sendInstagramMedia(conversation, channel, {
-        text: "",
-        imageUrls,
-        options,
-      });
+      return sendMetaMediaThenText(conversation, channel, mediaItems, trimmed, options);
     case "messenger":
-      if (trimmed.length > 0) {
-        const { textResult } = await sendTextAndImage(conversation, channel, {
-          text: trimmed,
-          imageUrls,
-          allowHumanAgentTag: options.allowHumanAgentTag,
-        });
-        return textResult;
-      }
-      return sendMessengerMedia(conversation, channel, {
-        text: "",
-        imageUrls,
-        options,
-      });
+      return sendMetaMediaThenText(conversation, channel, mediaItems, trimmed, options);
     default:
+      logMediaSendResultError(
+        mediaSendLogContext(conversation, channel, "media.unsupported_service", mediaItems, {
+          hasText: trimmed.length > 0,
+        }),
+        { error: "Unsupported service", policy: "generic" },
+      );
       return { ok: false, error: "Unsupported service", policy: "generic" };
   }
 }
@@ -350,6 +378,157 @@ function messagingWindowState(
   if (elapsed <= MESSAGING_WINDOW_MS) return "standard";
   if (elapsed <= HUMAN_AGENT_WINDOW_MS) return "human_agent";
   return "blocked";
+}
+
+function normalizeImageUrls(imageUrls: string[]): string[] {
+  return imageUrls.map((url) => url.trim()).filter((url) => url.length > 0);
+}
+
+function inferMediaTypeFromUrl(url: string) {
+  const lower = url.split("?")[0].toLowerCase();
+  if (lower.endsWith(".mp4")) return "video/mp4";
+  if (lower.endsWith(".mpeg") || lower.endsWith(".mpg")) return "video/mpeg";
+  if (lower.endsWith(".mov")) return "video/quicktime";
+  if (lower.endsWith(".webm")) return "video/webm";
+  if (lower.endsWith(".m4v")) return "video/x-m4v";
+  if (lower.endsWith(".3gp")) return "video/3gpp";
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".doc")) return "application/msword";
+  if (lower.endsWith(".docx")) {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (lower.endsWith(".xls")) return "application/vnd.ms-excel";
+  if (lower.endsWith(".xlsx")) {
+    return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  }
+  if (lower.endsWith(".ppt")) return "application/vnd.ms-powerpoint";
+  if (lower.endsWith(".pptx")) {
+    return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+  }
+  if (lower.endsWith(".txt")) return "text/plain";
+  if (lower.endsWith(".csv")) return "text/csv";
+  if (lower.endsWith(".zip")) return "application/zip";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".gif")) return "image/gif";
+  return "image/jpeg";
+}
+
+function normalizeMediaItems(options: SendMediaToChannelOptions): ChannelMediaItem[] {
+  const fromItems = (options.mediaItems ?? [])
+    .map((item) => ({
+      ...item,
+      url: item.url.trim(),
+      mediaType: item.mediaType ?? inferMediaTypeFromUrl(item.url),
+    }))
+    .filter((item) => item.url.length > 0);
+  const fromImageUrls = normalizeImageUrls(options.imageUrls ?? []).map((url) => ({
+    url,
+    mediaType: inferMediaTypeFromUrl(url),
+  }));
+  return [...fromItems, ...fromImageUrls];
+}
+
+function mediaAttachmentType(item: ChannelMediaItem): "image" | "video" | "file" {
+  const mediaType = item.mediaType ?? inferMediaTypeFromUrl(item.url);
+  if (mediaType.startsWith("image/")) return "image";
+  if (mediaType.startsWith("video/")) return "video";
+  return "file";
+}
+
+function shouldSendWhatsAppCarousel(mediaItems: ChannelMediaItem[], bodyText: string) {
+  return (
+    bodyText.length > 0 &&
+    mediaItems.length >= WHATSAPP_CAROUSEL_MIN_CARDS &&
+    mediaItems.every(isWhatsAppCarouselMediaItem)
+  );
+}
+
+function isWhatsAppCarouselMediaItem(item: ChannelMediaItem) {
+  const type = mediaAttachmentType(item);
+  return type === "image" || type === "video";
+}
+
+function splitWhatsAppCarouselBatches(mediaItems: ChannelMediaItem[]) {
+  const batches: ChannelMediaItem[][] = [];
+  let index = 0;
+  while (index < mediaItems.length) {
+    const remaining = mediaItems.length - index;
+    const size =
+      remaining > WHATSAPP_CAROUSEL_MAX_CARDS &&
+      remaining % WHATSAPP_CAROUSEL_MAX_CARDS === 1
+        ? WHATSAPP_CAROUSEL_MAX_CARDS - 1
+        : Math.min(remaining, WHATSAPP_CAROUSEL_MAX_CARDS);
+    const batch = mediaItems.slice(index, index + size);
+    if (batch.length < WHATSAPP_CAROUSEL_MIN_CARDS) {
+      throw new Error("WhatsApp carousel batches require at least two media items");
+    }
+    batches.push(batch);
+    index += size;
+  }
+  return batches;
+}
+
+function withMediaExternalIds(
+  result: ChannelSendResult,
+  mediaResult: ChannelSendResult = result,
+): ChannelSendResult {
+  if (!result.ok) return result;
+  if (!mediaResult.ok) return result;
+  return {
+    ...result,
+    externalIds: mediaResult.externalIds ?? (mediaResult.externalId ? [mediaResult.externalId] : []),
+  };
+}
+
+async function sendMetaMediaThenText(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  mediaItems: ChannelMediaItem[],
+  text: string,
+  options: SendTextToChannelOptions,
+): Promise<ChannelSendResult> {
+  const imageResult = conversation.service === "instagram"
+    ? await sendInstagramMedia(conversation, channel, {
+        text: "",
+        mediaItems,
+        options,
+      })
+    : await sendMessengerMedia(conversation, channel, {
+        text: "",
+        mediaItems,
+        options,
+      });
+  if (!imageResult.ok || text.length === 0) {
+    if (imageResult.ok) {
+      logMediaSendDone(
+        mediaSendLogContext(conversation, channel, `${conversation.service}.media_only`, mediaItems, {
+          hasText: false,
+        }),
+        imageResult.externalIds,
+      );
+    }
+    return withMediaExternalIds(imageResult);
+  }
+  const textResult = conversation.service === "instagram"
+    ? await sendInstagram(conversation, channel, text, options)
+    : await sendMessenger(conversation, channel, text, options);
+  if (!textResult.ok) {
+    logMediaSendResultError(
+      mediaSendLogContext(conversation, channel, `${conversation.service}.text_after_media`, mediaItems, {
+        hasText: true,
+      }),
+      textResult,
+    );
+    return textResult;
+  }
+  logMediaSendDone(
+    mediaSendLogContext(conversation, channel, `${conversation.service}.media_then_text`, mediaItems, {
+      hasText: true,
+    }),
+    imageResult.externalIds,
+  );
+  return withMediaExternalIds(textResult, imageResult);
 }
 
 function resolveWhatsAppAccessToken(channel: Doc<"channels">): {
@@ -502,6 +681,166 @@ async function sendWhatsApp(
   return parseGraphResponse(res);
 }
 
+async function sendWhatsAppMedia(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  mediaItems: ChannelMediaItem[],
+  bodyText: string,
+): Promise<ChannelSendResult> {
+  const context = mediaSendLogContext(conversation, channel, "whatsapp.media", mediaItems, {
+    hasText: bodyText.trim().length > 0,
+  });
+  if (channel.status !== "connected" || !channel.phoneNumberId) {
+    const result = { ok: false, error: "WhatsApp channel is not connected", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
+  }
+
+  const { accessToken, error } = resolveWhatsAppAccessToken(channel);
+  if (!accessToken) {
+    const result = {
+      ok: false,
+      error: error ?? "WhatsApp channel is not connected",
+      policy: "generic",
+    } as const;
+    logMediaSendResultError(context, result);
+    return result;
+  }
+
+  if (shouldSendWhatsAppCarousel(mediaItems, bodyText)) {
+    return sendWhatsAppCarousel(conversation, channel, accessToken, mediaItems, bodyText);
+  }
+
+  const externalIds: string[] = [];
+  for (const [index, item] of mediaItems.entries()) {
+    const mediaBody = buildWhatsAppMediaBody(conversation, item);
+    const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(mediaBody),
+    });
+    const result = await parseGraphResponse(
+      res,
+      mediaSendLogContext(conversation, channel, `whatsapp.${whatsAppMediaType(item)}`, [item], {
+        hasText: bodyText.trim().length > 0,
+        itemIndex: index,
+      }),
+    );
+    if (!result.ok) {
+      return result;
+    }
+    if (result.externalId) {
+      externalIds.push(result.externalId);
+    }
+  }
+
+  const result = { ok: true as const, externalId: externalIds[0], externalIds };
+  logMediaSendDone(context, externalIds);
+  return result;
+}
+
+function whatsAppMediaType(item: ChannelMediaItem): "image" | "video" | "document" {
+  const type = mediaAttachmentType(item);
+  if (type === "image") return "image";
+  if (type === "video") return "video";
+  return "document";
+}
+
+function buildWhatsAppMediaBody(
+  conversation: Doc<"conversations">,
+  item: ChannelMediaItem,
+) {
+  const type = whatsAppMediaType(item);
+  const mediaPayload: Record<string, string> = { link: item.url };
+  if (type === "document" && item.filename) {
+    mediaPayload.filename = item.filename;
+  }
+  return {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: conversation.contactAddress,
+    type,
+    [type]: mediaPayload,
+  };
+}
+
+function buildWhatsAppCarouselCard(item: ChannelMediaItem, index: number) {
+  const headerType = whatsAppMediaType(item);
+  if (headerType === "document") {
+    throw new Error("WhatsApp carousel cards only support image or video headers");
+  }
+  return {
+    card_index: index,
+    type: "cta_url",
+    header: {
+      type: headerType,
+      [headerType]: { link: item.url },
+    },
+    ...(item.filename ? { body: { text: item.filename } } : {}),
+  };
+}
+
+async function sendWhatsAppCarousel(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  accessToken: string,
+  mediaItems: ChannelMediaItem[],
+  bodyText: string,
+): Promise<ChannelSendResult> {
+  const externalIds: string[] = [];
+  const batches = splitWhatsAppCarouselBatches(mediaItems);
+  for (const [batchIndex, batch] of batches.entries()) {
+    const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: conversation.contactAddress,
+        type: "interactive",
+        interactive: {
+          type: "carousel",
+          body: { text: bodyText },
+          action: {
+            cards: batch.map(buildWhatsAppCarouselCard),
+          },
+        },
+      }),
+    });
+    const result = await parseGraphResponse(
+      res,
+      mediaSendLogContext(conversation, channel, "whatsapp.carousel", batch, {
+        hasText: bodyText.trim().length > 0,
+        batchIndex,
+        batchSize: batch.length,
+      }),
+    );
+    if (!result.ok) return result;
+    if (result.externalId) {
+      externalIds.push(result.externalId);
+    }
+  }
+  const result = {
+    ok: true as const,
+    externalId: externalIds[0],
+    externalIds,
+    textConsumed: true,
+  };
+  logMediaSendDone(
+    mediaSendLogContext(conversation, channel, "whatsapp.carousel", mediaItems, {
+      hasText: bodyText.trim().length > 0,
+    }),
+    externalIds,
+  );
+  return result;
+}
+
 async function sendWhatsAppReaction(
   conversation: Doc<"conversations">,
   channel: Doc<"channels">,
@@ -610,11 +949,11 @@ async function sendInstagram(
   return parsed;
 }
 
-function buildImageAttachments(imageUrls: string[]) {
-  return imageUrls.map((url) => ({
-    type: "image" as const,
-    payload: { url },
-  }));
+function buildMediaAttachment(item: ChannelMediaItem) {
+  return {
+    type: mediaAttachmentType(item),
+    payload: { url: item.url },
+  };
 }
 
 async function sendInstagramMedia(
@@ -622,82 +961,106 @@ async function sendInstagramMedia(
   channel: Doc<"channels">,
   args: {
     text: string;
-    imageUrls: string[];
+    imageUrls?: string[];
+    mediaItems?: ChannelMediaItem[];
     options?: SendTextToChannelOptions;
   },
 ): Promise<ChannelSendResult> {
+  const mediaItems = normalizeMediaItems(args);
+  const context = mediaSendLogContext(conversation, channel, "instagram.media", mediaItems, {
+    hasText: args.text.trim().length > 0,
+  });
   if (channel.status !== "connected" || !channel.igUserId) {
-    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+    const result = { ok: false, error: "Instagram channel is not connected", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
 
   const trimmed = args.text;
   if (trimmed.length > 0) {
     const bytes = new TextEncoder().encode(trimmed).length;
     if (bytes > 1000) {
-      return {
+      const result = {
         ok: false,
         error: "Instagram text messages must be 1000 bytes or less (UTF-8)",
         policy: "generic",
-      };
+      } as const;
+      logMediaSendResultError(context, result);
+      return result;
     }
   }
 
   const windowState = messagingWindowState(conversation);
   if (windowState === "blocked") {
-    return {
+    const result = {
       ok: false,
       error: "Outside Instagram messaging window",
       policy: "messaging_window",
-    };
+    } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
 
   const accessToken = normalizeMetaAccessToken(channel.accessToken);
   if (!accessToken) {
-    return { ok: false, error: "Instagram channel is not connected", policy: "generic" };
+    const result = { ok: false, error: "Instagram channel is not connected", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
 
   const useHumanAgent =
     windowState === "human_agent" && args.options?.allowHumanAgentTag === true;
 
-  const message: Record<string, unknown> = {
-    attachments: buildImageAttachments(args.imageUrls),
-  };
-  if (trimmed.length > 0) {
-    message.text = trimmed;
-  }
+  const externalIds: string[] = [];
+  for (const [index, item] of mediaItems.entries()) {
+    const body: Record<string, unknown> = {
+      message: { attachment: buildMediaAttachment(item) },
+      recipient: { id: conversation.contactAddress },
+    };
+    if (useHumanAgent) {
+      body.messaging_type = "MESSAGE_TAG";
+      body.tag = "HUMAN_AGENT";
+    }
 
-  const body: Record<string, unknown> = {
-    message,
-    recipient: { id: conversation.contactAddress },
-  };
-  if (useHumanAgent) {
-    body.messaging_type = "MESSAGE_TAG";
-    body.tag = "HUMAN_AGENT";
-  }
-
-  const res = await fetch(`${igGraphBase()}/me/messages`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-
-  const parsed = await parseGraphResponse(res);
-  if (
-    !parsed.ok &&
-    parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
-    windowState === "human_agent" &&
-    args.options?.allowHumanAgentTag &&
-    !useHumanAgent
-  ) {
-    return sendInstagramMedia(conversation, channel, {
-      ...args,
-      options: { ...args.options, allowHumanAgentTag: true },
+    const res = await fetch(`${igGraphBase()}/me/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
     });
+
+    const parsed = await parseGraphResponse(
+      res,
+      mediaSendLogContext(conversation, channel, "instagram.attachment", [item], {
+        hasText: args.text.trim().length > 0,
+        itemIndex: index,
+      }),
+    );
+    if (
+      !parsed.ok &&
+      parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
+      windowState === "human_agent" &&
+      args.options?.allowHumanAgentTag &&
+      !useHumanAgent
+    ) {
+      return sendInstagramMedia(conversation, channel, {
+        ...args,
+        options: { ...args.options, allowHumanAgentTag: true },
+      });
+    }
+    if (!parsed.ok) {
+      return parsed;
+    }
+    if (parsed.externalId) {
+      externalIds.push(parsed.externalId);
+    }
   }
-  return parsed;
+
+  const result = { ok: true as const, externalId: externalIds[0], externalIds };
+  logMediaSendDone(context, externalIds);
+  return result;
 }
 
 async function sendMessenger(
@@ -828,40 +1191,48 @@ async function sendMessengerMedia(
   channel: Doc<"channels">,
   args: {
     text: string;
-    imageUrls: string[];
+    imageUrls?: string[];
+    mediaItems?: ChannelMediaItem[];
     options?: SendTextToChannelOptions;
   },
 ): Promise<ChannelSendResult> {
+  const mediaItems = normalizeMediaItems(args);
+  const context = mediaSendLogContext(conversation, channel, "messenger.media", mediaItems, {
+    hasText: args.text.trim().length > 0,
+  });
   if (channel.status !== "connected" || !channel.pageId) {
-    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+    const result = { ok: false, error: "Messenger channel is not connected", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
   const accessToken = normalizeMetaAccessToken(channel.accessToken);
   if (!accessToken) {
-    return { ok: false, error: "Messenger channel is not connected", policy: "generic" };
+    const result = { ok: false, error: "Messenger channel is not connected", policy: "generic" } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
 
   const windowState = messagingWindowState(conversation);
   if (windowState === "blocked") {
-    return {
+    const result = {
       ok: false,
       error: "Outside Messenger messaging window",
       policy: "messaging_window",
-    };
+    } as const;
+    logMediaSendResultError(context, result);
+    return result;
   }
 
   const useHumanAgent =
     windowState === "human_agent" && args.options?.allowHumanAgentTag === true;
 
-  const message: Record<string, unknown> = {
-    attachments: buildImageAttachments(args.imageUrls),
-  };
-  if (args.text.length > 0) {
-    message.text = args.text;
+  if (mediaItems.length === 0) {
+    return { ok: true, externalId: undefined, externalIds: [] };
   }
 
   const payload: Record<string, unknown> = {
     recipient: { id: conversation.contactAddress },
-    message,
+    message: { attachments: mediaItems.map(buildMediaAttachment) },
   };
   if (useHumanAgent) {
     payload.messaging_type = "MESSAGE_TAG";
@@ -879,7 +1250,12 @@ async function sendMessengerMedia(
     body: JSON.stringify(payload),
   });
 
-  const parsed = await parseGraphResponse(res);
+  const parsed = await parseGraphResponse(
+    res,
+    mediaSendLogContext(conversation, channel, "messenger.attachments", mediaItems, {
+      hasText: args.text.trim().length > 0,
+    }),
+  );
   if (
     !parsed.ok &&
     parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
@@ -892,21 +1268,24 @@ async function sendMessengerMedia(
       options: { ...args.options, allowHumanAgentTag: true },
     });
   }
-  return parsed;
+  if (!parsed.ok) {
+    return parsed;
+  }
+  const result = {
+    ...parsed,
+    externalIds: parsed.externalId ? [parsed.externalId] : [],
+  };
+  logMediaSendDone(context, result.externalIds);
+  return result;
 }
 
 async function parseMetaIndicatorResponse(
   res: Response,
 ): Promise<MetaIndicatorResult> {
   const text = await res.text();
-  let body: {
+  const body = parseJsonBody<{
     error?: { message?: string; code?: number; error_subcode?: number };
-  } | null = null;
-  try {
-    body = text.length ? JSON.parse(text) : null;
-  } catch {
-    body = null;
-  }
+  }>(text);
 
   if (!res.ok) {
     return {
@@ -919,32 +1298,47 @@ async function parseMetaIndicatorResponse(
   return { ok: true };
 }
 
-async function parseGraphResponse(res: Response): Promise<ChannelSendResult> {
+async function parseGraphResponse(
+  res: Response,
+  mediaLogContext?: MediaSendLogContext,
+): Promise<ChannelSendResult> {
   const text = await res.text();
-  let body: {
+  const body = parseJsonBody<{
     messages?: Array<{ id?: string }>;
     message_id?: string;
     id?: string;
     error?: { message?: string; code?: number; error_subcode?: number };
-  } | null = null;
-  try {
-    body = text.length ? JSON.parse(text) : null;
-  } catch {
-    body = null;
-  }
+  }>(text);
 
   if (!res.ok) {
     const errorCode = body?.error?.code;
+    const error = body?.error?.message ?? `HTTP ${res.status}`;
+    logMediaSendGraphError(mediaLogContext, {
+      httpStatus: res.status,
+      error,
+      errorCode,
+      errorSubcode: body?.error?.error_subcode,
+    });
     const policy: ChannelSendPolicy | undefined =
       errorCode === META_ERROR_MESSAGING_WINDOW ? "messaging_window" : "generic";
     return {
       ok: false,
-      error: body?.error?.message ?? `HTTP ${res.status}`,
+      error,
       errorCode,
       policy,
     };
   }
 
   const externalId = body?.messages?.[0]?.id ?? body?.message_id ?? body?.id;
+  logMediaSendGraphSuccess(mediaLogContext, res.status, externalId);
   return { ok: true, externalId };
+}
+
+function parseJsonBody<T>(text: string): T | null {
+  if (!text) return null;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return null;
+  }
 }

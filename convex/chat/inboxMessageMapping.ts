@@ -4,8 +4,12 @@ import type { UIMessage } from "@convex-dev/agent/react";
 import type { Id, Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
 import type { InboxAttachment } from "../../shared/inboxAttachments";
-import { readInboxAttachmentsFromProviderMetadata } from "../../shared/inboxAttachments";
+import {
+  INBOX_IMAGE_PLACEHOLDER,
+  readInboxAttachmentsFromProviderMetadata,
+} from "../../shared/inboxAttachments";
 import type { InboxMessageReaction } from "../../shared/messageReactions";
+import { inferMediaMimeType } from "./mediaUrlExtractor";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -150,6 +154,32 @@ function readInboxAttachments(doc: MessageDoc): InboxAttachment[] | undefined {
   return readInboxAttachmentsFromProviderMetadata(doc.providerMetadata);
 }
 
+function ledgerMediaAttachment(row: Doc<"messages">): InboxAttachment | undefined {
+  const isMedia =
+    row.contentType === "image" ||
+    row.contentType === "video" ||
+    row.contentType === "document" ||
+    row.contentType === "file";
+  if (!isMedia || !row.mediaUrl) {
+    return undefined;
+  }
+  return {
+    url: row.mediaUrl,
+    mediaType: inferMediaMimeType(row.mediaUrl),
+    type: "image",
+  };
+}
+
+function shouldHideLedgerMediaText(
+  text: string | undefined,
+  attachments: InboxAttachment[] | undefined,
+) {
+  if (!text || !attachments?.length) return false;
+  const attachmentUrls = new Set(attachments.map((attachment) => attachment.url));
+  const tokens = text.trim().split(/\s+/).filter(Boolean);
+  return tokens.length > 0 && tokens.every((token) => attachmentUrls.has(token));
+}
+
 /** One MessageDoc → one UIMessage (avoids merging consecutive assistant rows). */
 export async function messageDocsToInboxUIMessages(
   ctx: QueryCtx,
@@ -165,10 +195,16 @@ export async function messageDocsToInboxUIMessages(
 
   const sentAtByAgentMessageId = new Map<string, number>();
   const ledgerByAgentMessageId = new Map<string, Doc<"messages">>();
+  const ledgerAttachmentsByAgentMessageId = new Map<string, InboxAttachment[]>();
   for (const row of ledgerRows) {
     if (row.agentMessageId) {
       sentAtByAgentMessageId.set(row.agentMessageId, row.createdAt);
       ledgerByAgentMessageId.set(row.agentMessageId, row);
+      const attachment = ledgerMediaAttachment(row);
+      if (attachment !== undefined) {
+        const existing = ledgerAttachmentsByAgentMessageId.get(row.agentMessageId) ?? [];
+        ledgerAttachmentsByAgentMessageId.set(row.agentMessageId, [...existing, attachment]);
+      }
     }
   }
 
@@ -212,12 +248,16 @@ export async function messageDocsToInboxUIMessages(
       const sentByAi = resolveSentByAi(doc, ui.role);
       const agentName = resolveAgentName(doc, ui.role, fallbackChannelName, userIdToName);
       const sentAt = resolveSentAt(doc, sentAtByAgentMessageId);
-      const inboxAttachments = readInboxAttachments(doc);
       const docId = agentMessageDocId(doc);
       const ledger = docId ? ledgerByAgentMessageId.get(docId) : undefined;
+      const inboxAttachments =
+        readInboxAttachments(doc) ??
+        (docId ? ledgerAttachmentsByAgentMessageId.get(docId) : undefined);
+      const hideLedgerMediaText = shouldHideLedgerMediaText(ui.text, inboxAttachments);
       return [
         {
           ...ui,
+          ...(hideLedgerMediaText ? { text: INBOX_IMAGE_PLACEHOLDER } : {}),
           _creationTime: sentAt,
           ...(ledger !== undefined
             ? {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { useParams, useNavigate } from 'react-router';
-import { Globe, FileText, AlignLeft, HelpCircle, Info, Lightbulb, XIcon } from 'lucide-react';
+import { Globe, FileText, AlignLeft, HelpCircle, Info, XIcon } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -22,7 +22,6 @@ import { WebSection } from '@/components/knowledge-base/WebSection';
 import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
-import { ImageSection } from '@/components/knowledge-base/ImageSection';
 import {
   KnowledgeBaseNavigation,
   type KnowledgeType,
@@ -37,10 +36,22 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+type KnowledgeEntryId =
+  | Id<'webEntries'>
+  | Id<'fileEntries'>
+  | Id<'textEntries'>
+  | Id<'qaEntries'>;
+
+type DeleteTarget =
+  | { type: 'web'; entryId: Id<'webEntries'>; cfItemId?: string; isGroup?: boolean }
+  | { type: 'file'; entryId: Id<'fileEntries'>; cfItemId?: string; isGroup?: boolean }
+  | { type: 'text'; entryId: Id<'textEntries'>; cfItemId?: string; isGroup?: boolean }
+  | { type: 'qa'; entryId: Id<'qaEntries'>; cfItemId?: string; isGroup?: boolean };
+
 export default function KnowledgeBasePage() {
   const { agentId, type: rawType } = useParams();
   const navigate = useNavigate();
-  const type = (rawType && ['web', 'file', 'text', 'qa', 'media'].includes(rawType) ? rawType : 'web') as KnowledgeType;
+  const type = (rawType && ['web', 'file', 'text', 'qa'].includes(rawType) ? rawType : 'web') as KnowledgeType;
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const { can } = usePermissions();
   const canManageKnowledgeBase = can(Permission.KB_MANAGE);
@@ -49,48 +60,46 @@ export default function KnowledgeBasePage() {
   const fileEntries = useQuery(api.knowledgeBase.listFileEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
   const webEntries = useQuery(api.knowledgeBase.listWebEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
   const qaEntries = useQuery(api.knowledgeBase.listQAEntries, selectedAgentId ? { agentId: selectedAgentId } : "skip");
-  const kbImages = useQuery(api.knowledgeBaseImages.listKbImagesByAgent, selectedAgentId ? { agentId: selectedAgentId } : "skip");
 
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
-  const enqueueImageDelete = useAction(api.knowledgeBaseImages.enqueueImageDelete);
   const deleteWebEntryGroup = useAction(api.cloudflare.deleteWebEntryGroup);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<
-    | { type: 'web' | 'file' | 'text' | 'qa'; entryId: Id<any>; cfItemId?: string; isGroup?: boolean }
-    | { type: 'media'; clientId: string }
-    | null
-  >(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
   const maxTotalSize = storageLimits?.maxTotalSize ?? 4 * 1024 * 1024;
 
-  const textCount = textEntries?.filter((e: any) => e.status === "completed").length ?? 0;
-  const fileCount = fileEntries?.filter((e: any) => e.status === "completed").length ?? 0;
-  const webCount = webEntries?.filter((e: any) => e.parentId && e.status === "completed").length ?? 0;
-  const qaCount = qaEntries?.filter((e: any) => e.status === "completed").length ?? 0;
-  const webSize = webEntries?.reduce((sum: number, e: any) => sum + (e.fileSize ?? 0), 0) ?? 0;
-  const fileSizeVal = fileEntries?.reduce((sum: number, e: any) => sum + (e.fileSize ?? 0), 0) ?? 0;
-  const textSize = textEntries?.reduce((sum: number, e: any) => sum + (e.fileSize ?? 0), 0) ?? 0;
-  const qaSize = qaEntries?.reduce((sum: number, e: any) => sum + (e.fileSize ?? 0), 0) ?? 0;
+  const textCount = textEntries?.filter((entry) => entry.status === "completed").length ?? 0;
+  const fileCount = fileEntries?.filter((entry) => entry.status === "completed").length ?? 0;
+  const webCount = webEntries?.filter((entry) => entry.parentId && entry.status === "completed").length ?? 0;
+  const qaCount = qaEntries?.filter((entry) => entry.status === "completed").length ?? 0;
+  const webSize = webEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
+  const fileSizeVal = fileEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
+  const textSize = textEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
+  const qaSize = qaEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
 
-  const mediaCount = kbImages?.filter((e: any) => e.status === "ready").length ?? 0;
-  const mediaSize = kbImages?.reduce((sum: number, e: any) => sum + (e.fileSize ?? 0), 0) ?? 0;
-
-  const totalFileSize = webSize + fileSizeVal + textSize + qaSize + mediaSize;
+  const totalFileSize = webSize + fileSizeVal + textSize + qaSize;
 
   const openDeleteDialog = (
     entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
-    entryId: Id<any> | string,
+    entryId: KnowledgeEntryId | string,
     cfItemId?: string,
     isGroup?: boolean,
   ) => {
     if (entryType === 'media') {
-      setDeleteTarget({ type: 'media', clientId: entryId as string });
+      throw new Error('Send Media is managed from Workflow');
+    }
+    if (entryType === 'web') {
+      setDeleteTarget({ type: entryType, entryId: entryId as Id<'webEntries'>, cfItemId, isGroup });
+    } else if (entryType === 'file') {
+      setDeleteTarget({ type: entryType, entryId: entryId as Id<'fileEntries'>, cfItemId, isGroup });
+    } else if (entryType === 'text') {
+      setDeleteTarget({ type: entryType, entryId: entryId as Id<'textEntries'>, cfItemId, isGroup });
     } else {
-      setDeleteTarget({ type: entryType, entryId: entryId as Id<any>, cfItemId, isGroup });
+      setDeleteTarget({ type: entryType, entryId: entryId as Id<'qaEntries'>, cfItemId, isGroup });
     }
     setDeleteDialogOpen(true);
   };
@@ -99,10 +108,7 @@ export default function KnowledgeBasePage() {
     if (!deleteTarget) return;
     setIsDeleting(true);
     try {
-      if ('clientId' in deleteTarget) {
-        await enqueueImageDelete({ clientId: deleteTarget.clientId });
-        toast.success("Asset is now being deleted");
-      } else if (deleteTarget.isGroup && deleteTarget.type === 'web') {
+      if (deleteTarget.isGroup && deleteTarget.type === 'web') {
         await deleteWebEntryGroup({ parentId: deleteTarget.entryId });
         toast.success("URL group is now being deleted");
       } else {
@@ -120,15 +126,13 @@ export default function KnowledgeBasePage() {
 
   const statRows = [
     { label: 'web', count: webCount, size: webSize, icon: Globe },
-    { label: 'file', count: fileCount + mediaCount, size: fileSizeVal + mediaSize, icon: FileText },
+    { label: 'file', count: fileCount, size: fileSizeVal, icon: FileText },
     { label: 'text', count: textCount, size: textSize, icon: AlignLeft },
     { label: 'Q&A', count: qaCount, size: qaSize, icon: HelpCircle },
   ];
   const deleteDialogTitle = deleteTarget?.type === 'web' && deleteTarget.isGroup
     ? 'Remove URL and linked pages'
-    : deleteTarget?.type === 'media'
-      ? 'Remove media'
-      : 'Remove knowledge item';
+    : 'Remove knowledge item';
 
   return (
     <>
@@ -173,32 +177,14 @@ export default function KnowledgeBasePage() {
                     )}
                     {type === 'text' && 'Text'}
                     {type === 'qa' && 'Q&A'}
-                    {type === 'media' && 'Send Media'}
                   </h2>
                   <p className="mt-1 text-sm text-muted-foreground">
                     {type === 'web' && 'Crawl websites and import pages as knowledge.'}
                     {type === 'file' && 'Upload documents for your agent to reference.'}
                     {type === 'text' && 'Write or paste raw text content directly.'}
                     {type === 'qa' && 'Add question and answer pairs your agent can learn from.'}
-                    {type === 'media' && 'Upload images or PDFs here that your agent can reference or send directly to customers.'}
                   </p>
                 </div>
-
-                {type === 'file' && canManageKnowledgeBase && (
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/dashboard/${agentId}/knowledge-base/media`)}
-                    className="flex flex-col gap-1 rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-left transition-all hover:bg-amber-500/20 active:scale-[0.98] cursor-pointer shrink-0 max-w-[240px]"
-                  >
-                    <div className="flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300">
-                      <Lightbulb className="size-3.5 shrink-0" />
-                      <span>Popular</span>
-                    </div>
-                    <span className="text-xs  text-amber-700 dark:text-amber-400">
-                      Allow AI to send media?
-                    </span>
-                  </button>
-                )}
               </div>
 
               <Separator className="mt-4" />
@@ -233,15 +219,6 @@ export default function KnowledgeBasePage() {
                 entries={qaEntries}
                 agentId={selectedAgentId}
                 openDeleteDialog={openDeleteDialog}
-                canManage={canManageKnowledgeBase}
-              />
-            )}
-            {type === 'media' && (
-              <ImageSection
-                agentId={selectedAgentId}
-                openDeleteDialog={openDeleteDialog}
-                maxFileSize={maxFileSize}
-                type="media"
                 canManage={canManageKnowledgeBase}
               />
             )}

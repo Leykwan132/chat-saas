@@ -963,15 +963,17 @@ export default defineSchema({
     mediaType: v.string(),
     filename: v.optional(v.string()),
     fileSize: v.optional(v.number()),
-    purpose: v.optional(v.literal("knowledgeBase")),
+    purpose: v.optional(v.union(v.literal("knowledgeBase"), v.literal("workflowSendMedia"))),
     agentId: v.optional(v.id("agents")),
+    workflowNodeId: v.optional(v.id("workflowNodes")),
     collectionName: v.optional(v.string()),
     error: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
     .index("by_orgId_userId", ["orgId", "userId"])
-    .index("by_agentId", ["agentId"]),
+    .index("by_agentId", ["agentId"])
+    .index("by_workflowNodeId", ["workflowNodeId"]),
   // One row per billing user per monthly credit cycle. Source of truth for the
   // monthly credit quota: remaining = grantedCredits - usedCredits.
   // `periodEnd` is the next reset moment (shown in the plan UI). Cycles are

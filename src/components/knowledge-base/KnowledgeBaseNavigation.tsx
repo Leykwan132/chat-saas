@@ -1,8 +1,8 @@
 import type { ElementType } from 'react';
-import { AlignLeft, File, FileText, Globe, HelpCircle } from 'lucide-react';
+import { AlignLeft, FileText, Globe, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export type KnowledgeType = 'web' | 'file' | 'text' | 'qa' | 'media';
+export type KnowledgeType = 'web' | 'file' | 'text' | 'qa';
 
 type KnowledgeTab = {
   type: KnowledgeType;
@@ -15,10 +15,6 @@ const KNOWLEDGE_TABS: KnowledgeTab[] = [
   { type: 'file', label: 'Files', icon: FileText },
   { type: 'text', label: 'Text', icon: AlignLeft },
   { type: 'qa', label: 'Q&A', icon: HelpCircle },
-];
-
-const MEDIA_TABS: KnowledgeTab[] = [
-  { type: 'media', label: 'Files', icon: File },
 ];
 
 type KnowledgeBaseNavigationProps = {
@@ -75,12 +71,6 @@ export function KnowledgeBaseNavigation({
       <KnowledgeBaseNavGroup
         title="Sources"
         tabs={KNOWLEDGE_TABS}
-        activeType={activeType}
-        onSelect={onSelect}
-      />
-      <KnowledgeBaseNavGroup
-        title="Send Media"
-        tabs={MEDIA_TABS}
         activeType={activeType}
         onSelect={onSelect}
       />

@@ -19,21 +19,32 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
+import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
-  {
-    label: 'Pricing question',
-    detail: 'If the customer asks about pricing or packages',
-  },
-  {
-    label: 'Needs guidance',
-    detail: 'If the customer needs help choosing an option',
-  },
-  {
-    label: 'Human support',
-    detail: 'If the customer asks to speak with a human',
-  },
+  { name: 'Pricing question', detail: 'If the customer asks about pricing or packages' },
+  { name: 'Needs guidance', detail: 'If the customer needs help choosing an option' },
+  { name: 'Human support', detail: 'If the customer asks to speak with a human' },
 ];
+
+function normalizedPersistedText(value: string | undefined) {
+  return value?.trim() ?? '';
+}
+
+function normalizedConditionName(value: string | undefined) {
+  return workflowConditionDisplayLabel(value) ?? '';
+}
+
+function sameOptionalIdSet<T extends string>(first: T[] | undefined, second: T[] | undefined) {
+  if (first === undefined || second === undefined) {
+    return first === second;
+  }
+  if (first.length !== second.length) {
+    return false;
+  }
+  const secondSet = new Set(second);
+  return first.every((id) => secondSet.has(id));
+}
 
 type WorkflowInspectorProps = {
   agentId?: Id<'agents'>;
@@ -41,9 +52,9 @@ type WorkflowInspectorProps = {
   conditionEdge?: Doc<'workflowEdges'>;
   isSaving?: boolean;
   onSave: (values: {
-    title: string;
+    name: string;
     description: string;
-    conditionLabel?: string;
+    conditionName?: string;
     conditionDetail?: string;
     allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
   }) => void;
@@ -60,18 +71,18 @@ export function WorkflowInspector({
   onRemove,
   onClose,
 }: WorkflowInspectorProps) {
-  const [title, setTitle] = useState('');
+  const [name, setName] = useState('');
   const [goal, setGoal] = useState('');
-  const [conditionLabel, setConditionLabel] = useState('');
+  const [conditionName, setConditionName] = useState('');
   const [conditionDetail, setConditionDetail] = useState('');
   const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
     Id<'appointmentServices'>[] | undefined
   >();
 
   useEffect(() => {
-    setTitle(node?.title ?? '');
+    setName(node?.title ?? '');
     setGoal(node?.description ?? '');
-    setConditionLabel(workflowConditionDisplayLabel(conditionEdge?.label) ?? '');
+    setConditionName(workflowConditionDisplayLabel(conditionEdge?.label) ?? '');
     setConditionDetail(conditionEdge?.detail ?? '');
     setAllowedAppointmentBookingServiceIds(
       node?.kind === 'bookAppointment'
@@ -80,52 +91,69 @@ export function WorkflowInspector({
     );
   }, [conditionEdge?.detail, conditionEdge?.label, node]);
 
-  const selectedTitle = node ? title.trim() || workflowNodeTitle(node.kind) : '';
+  const selectedTitle = node ? name.trim() || workflowNodeTitle(node.kind) : '';
   const conditionEnabled = conditionEdge !== undefined;
   const isAction = node ? isWorkflowActionNodeKind(node.kind) : false;
   const isQuestionAnswerAction = node?.kind === 'answerQuestions';
+  const isSendMediaAction = node?.kind === 'sendImage';
+  const isSendFileAction = node?.kind === 'sendFile';
+  const hasMediaSection = isSendMediaAction || isSendFileAction;
   const isCustomAction = node?.kind === 'aiResponds';
   const isBookAppointmentAction = node?.kind === 'bookAppointment';
   const hasGoalField = isAction || Boolean(node?.description);
-  const nameLabel = isAction ? 'Action Name' : 'Title';
+  const nameLabel = isAction ? 'Name' : 'Title';
   const goalLabel = isAction ? 'Goal' : 'Description';
-  let conditionLabelPlaceholder = 'e.g., Ready to book';
+  let conditionNamePlaceholder = 'e.g., Ready to book';
   let conditionDetailPlaceholder = 'Describe when this action should run';
   if (isQuestionAnswerAction) {
-    conditionLabelPlaceholder = 'e.g., Customer question';
+    conditionNamePlaceholder = 'e.g., Customer question';
     conditionDetailPlaceholder = 'If the customer asks about...';
+  } else if (isSendMediaAction) {
+    conditionNamePlaceholder = 'e.g., Product photos';
+    conditionDetailPlaceholder = 'If the customer asks for photos or videos about...';
+  } else if (isSendFileAction) {
+    conditionNamePlaceholder = 'e.g., Product brochure';
+    conditionDetailPlaceholder = 'If the customer asks for documents, files, or brochures about...';
   } else if (isCustomAction) {
-    conditionLabelPlaceholder = 'e.g., Pricing question';
+    conditionNamePlaceholder = 'e.g., Pricing question';
     conditionDetailPlaceholder = 'If the customer asks about...';
   }
   const contentGridClassName = conditionEnabled
     ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
     : 'grid gap-8';
-  const saveDisabled = isSaving || !title.trim() || (isAction && !goal.trim());
+  const hasNodeChanges = Boolean(node) && (
+    normalizedPersistedText(name) !== normalizedPersistedText(node?.title) ||
+    (
+      hasGoalField &&
+      normalizedPersistedText(goal) !== normalizedPersistedText(node?.description)
+    ) ||
+    (
+      conditionEnabled &&
+      (
+        normalizedConditionName(conditionName) !== normalizedConditionName(conditionEdge?.label) ||
+        normalizedPersistedText(conditionDetail) !== normalizedPersistedText(conditionEdge?.detail)
+      )
+    ) ||
+    (
+      isBookAppointmentAction &&
+      !sameOptionalIdSet(
+        allowedAppointmentServiceIds,
+        node?.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined,
+      )
+    )
+  );
+  const saveDisabled = isSaving || !name.trim() || (isAction && !goal.trim()) || !hasNodeChanges;
 
   return (
     <Dialog open={Boolean(node)} onOpenChange={(open) => !open && onClose()}>
       {node ? (
         <DialogContent className="flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[920px]">
           <DialogHeader className="shrink-0 border-b border-border px-6 py-5 pr-14">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <DialogTitle className="truncate text-lg">{selectedTitle}</DialogTitle>
-                <DialogDescription>
-                  Configure when this workflow node runs and what the AI should do.
-                </DialogDescription>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                disabled={node.kind === 'start' || node.kind === 'end' || isSaving}
-                onClick={onRemove}
-                className="mr-8 shrink-0"
-              >
-                <Trash2 data-icon="inline-start" />
-                <span className="sr-only">Remove node</span>
-              </Button>
+            <div className="min-w-0">
+              <DialogTitle className="truncate text-lg">{selectedTitle}</DialogTitle>
+              <DialogDescription>
+                Configure when this workflow node runs and what the AI should do.
+              </DialogDescription>
             </div>
           </DialogHeader>
           <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
@@ -135,16 +163,16 @@ export function WorkflowInspector({
                   <section className="flex flex-col gap-5 text-left">
                     <h3 className="text-base font-semibold text-foreground">Condition</h3>
                     <Field>
-                      <FieldLabel htmlFor="workflow-node-condition-label">Condition Label</FieldLabel>
+                      <FieldLabel htmlFor="workflow-node-condition-name">Name</FieldLabel>
                       <Input
-                        id="workflow-node-condition-label"
-                        value={conditionLabel}
-                        onChange={(event) => setConditionLabel(event.target.value)}
-                        placeholder={conditionLabelPlaceholder}
+                        id="workflow-node-condition-name"
+                        value={conditionName}
+                        onChange={(event) => setConditionName(event.target.value)}
+                        placeholder={conditionNamePlaceholder}
                       />
                     </Field>
                     <Field>
-                      <FieldLabel htmlFor="workflow-node-condition-detail">Condition Detail</FieldLabel>
+                      <FieldLabel htmlFor="workflow-node-condition-detail">Detail</FieldLabel>
                       <Textarea
                         id="workflow-node-condition-detail"
                         value={conditionDetail}
@@ -157,17 +185,17 @@ export function WorkflowInspector({
                         <div className="flex flex-wrap gap-2">
                           {CUSTOM_ACTION_CONDITION_SUGGESTIONS.map((suggestion) => (
                             <Button
-                              key={suggestion.label}
+                              key={suggestion.name}
                               type="button"
                               variant="outline"
                               size="xs"
                               className="h-auto min-h-8 justify-start whitespace-normal rounded-md px-2 py-1.5 text-left leading-snug"
                               onClick={() => {
-                                setConditionLabel(suggestion.label);
+                                setConditionName(suggestion.name);
                                 setConditionDetail(suggestion.detail);
                               }}
                             >
-                              {suggestion.label}
+                              {suggestion.name}
                             </Button>
                           ))}
                         </div>
@@ -181,8 +209,8 @@ export function WorkflowInspector({
                     <FieldLabel className="text-left" htmlFor="workflow-node-title">{nameLabel}</FieldLabel>
                     <Input
                       id="workflow-node-title"
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
                       className="text-left"
                     />
                   </Field>
@@ -218,14 +246,34 @@ export function WorkflowInspector({
               </div>
             </FieldGroup>
           </div>
+          {hasMediaSection && agentId ? (
+            <div className="shrink-0 border-t border-border bg-popover px-6 py-4">
+              <WorkflowSendMediaSection
+                agentId={agentId}
+                nodeId={node._id}
+                nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
+              />
+            </div>
+          ) : null}
           <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-600/25 dark:hover:bg-red-950/30"
+              disabled={node.kind === 'start' || node.kind === 'end' || isSaving}
+              onClick={onRemove}
+            >
+              <Trash2 className="size-4" />
+              <span className="sr-only">Delete node</span>
+            </Button>
             <Button
               type="button"
               disabled={saveDisabled}
               onClick={() => onSave({
-                title,
+                name,
                 description: hasGoalField ? goal : '',
-                conditionLabel: conditionEnabled ? conditionLabel : undefined,
+                conditionName: conditionEnabled ? conditionName : undefined,
                 conditionDetail: conditionEnabled ? conditionDetail : undefined,
                 allowedAppointmentServiceIds: isBookAppointmentAction
                   ? allowedAppointmentServiceIds

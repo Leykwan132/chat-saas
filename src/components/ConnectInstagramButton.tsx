@@ -3,29 +3,27 @@ import { useAction, useQuery } from 'convex/react';
 import { CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
+import type { Doc } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
-// The Instagram OAuth flow uses a STATIC redirect URI registered with Meta:
-//   ${CONVEX_SITE_URL}/auth/instagram/callback
-//
-// Per-flow dynamic state (specifically, where to drop the user back into the
-// app after the connect succeeds) travels inside the OAuth `state`
-// parameter, which is generated server-side in `instagramAuth.start`. This
-// component only:
-//   1. Asks the backend for an authorize URL bound to the current return path
-//   2. Navigates the browser to that URL
-//
-// On successful completion the static callback 302-redirects the browser
-// back to `returnPath?instagram=connected`, where ChannelsPage shows a
-// toast. There is no `?code=` handling on the frontend anymore.
-export function ConnectInstagramButton({ forceAllowConnect, disabled, children }: { forceAllowConnect?: boolean; disabled?: boolean; children?: React.ReactNode }) {
+type ConnectInstagramButtonProps = {
+  forceAllowConnect?: boolean;
+  disabled?: boolean;
+  children?: React.ReactNode;
+};
+
+export function ConnectInstagramButton({
+  forceAllowConnect,
+  disabled,
+  children,
+}: ConnectInstagramButtonProps) {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const startInstagramAuth = useAction(api.instagramAuth.start);
   const [busy, setBusy] = useState(false);
 
   const instagramChannel = useMemo(
-    () => channels?.find((c: any) => c.service === 'instagram'),
+    () => channels?.find((c: Doc<'channels'>) => c.service === 'instagram'),
     [channels],
   );
 
@@ -78,14 +76,7 @@ export function ConnectInstagramButton({ forceAllowConnect, disabled, children }
 
   return (
     <Button type="button" onClick={launchSignup} disabled={busy}>
-      {busy ? (
-        <>
-          <Spinner className="size-4" />
-          Connect
-        </>
-      ) : (
-        'Connect'
-      )}
+      {busy ? <Spinner className="size-4" /> : 'Connect'}
     </Button>
   );
 }

@@ -9,6 +9,7 @@ import {
   stepCountIs,
   createTool,
 } from "@convex-dev/agent";
+import type { ToolSet } from "ai";
 import { openRouterModel } from "../llm/openRouter";
 import { z } from "zod";
 import { internal } from "../_generated/api";
@@ -35,6 +36,16 @@ import {
 import { chatResponseFormattingBlock } from "./responseFormatting";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
+
+type UsageWithTokenAliases = {
+  promptTokens?: number;
+  inputTokens?: number;
+  completionTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  reasoningTokens?: number;
+  cachedInputTokens?: number;
+};
 
 export async function resolveAssignedAgentName(
   ctx: MutationCtx,
@@ -319,6 +330,7 @@ export async function saveAiReply(
   assignedAgentId: Id<"agents"> | undefined,
   sentAt: number = Date.now(),
   opts?: {
+    inboxAttachments?: InboxAttachment[];
     messageMetadata?: Record<string, unknown>;
   },
 ): Promise<string> {
@@ -331,6 +343,7 @@ export async function saveAiReply(
       agentName,
       sentByAi: true,
     },
+    inboxAttachments: opts?.inboxAttachments,
     messageMetadata: opts?.messageMetadata,
   });
 }
@@ -471,7 +484,6 @@ export function buildAgent(
   },
   agentId: Id<"agents">,
   enableCitations: boolean = false,
-  mediaCollections: string[] = [],
   conversationId?: Id<"conversations">,
   activeBookingServices: ActiveBookingServiceForPrompt[] = [],
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt = null,
@@ -479,8 +491,13 @@ export function buildAgent(
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
   const escalationConfigured = agent.escalationEnabled === true;
+  const sendMediaNodeIds = new Set(
+    workflowRuntimeContext?.nodes
+      .filter((node) => node.kind === "sendImage" || node.kind === "sendFile")
+      .map((node) => node.nodeId) ?? [],
+  );
 
-  const tools: Record<string, any> = {
+  const tools: ToolSet = {
     fetchContext: createTool({
       description:
         "MUST be called before answering ANY user question. Searches the knowledge base (uploaded documents, Q&A pairs, web references) for relevant context. Always call this first — even if you think you know the answer.",
@@ -495,21 +512,38 @@ export function buildAgent(
         return result;
       },
     }),
-    sendMedia: createTool({
+  };
+
+  if (sendMediaNodeIds.size > 0) {
+    tools.sendMedia = createTool({
       description:
-        "Retrieves media assets (images, PDFs) from a specific collection to send to the customer. Call when the customer's question relates to an available media collection. You MUST include the returned clientId values in your response formatted as [MEDIA:clientId] so they are sent as attachments.",
+        "Retrieves media assets for a specific Send Photo/Video or Send Files workflow node. Call only when the customer's latest message matches that node's incoming condition. The system sends returned assets separately, so do not include internal media IDs or URLs in the customer-facing response.",
       inputSchema: z.object({
-        collectionName: z.string().describe("The exact collection name to retrieve media from"),
+        workflowNodeId: z.string().describe("The exact Node ID of the matching media workflow node"),
       }),
-      execute: async (ctx, { collectionName }) => {
+      execute: async (ctx, { workflowNodeId }) => {
+        const nodeId = workflowNodeId as Id<"workflowNodes">;
+        if (!sendMediaNodeIds.has(nodeId)) {
+          console.warn("[sendMediaTool] unavailable-node", {
+            agentId,
+            workflowNodeId,
+          });
+          throw new Error("Media node is not available in the active workflow");
+        }
         const result = await ctx.runQuery(
-          internal.knowledgeBaseImages.internalListReadyByCollection,
-          { agentId, collectionName },
+          internal.workflowMediaInternal.internalListReadyByNode,
+          { agentId, nodeId },
         );
+        console.info("[sendMediaTool] media-resolved", {
+          agentId,
+          workflowNodeId,
+          mediaCount: result.length,
+          mediaTypes: result.map((item) => item.mediaType),
+        });
         return result;
       },
-    }),
-  };
+    });
+  }
 
   if (escalationConfigured) {
     tools.escalateToHuman = createTool({
@@ -535,7 +569,7 @@ export function buildAgent(
   if (conversationId) {
     tools.giveReaction = createTool({
       description:
-        "Give a small assurance reaction to the customer's latest message. REQUIRED when the customer confirms a booking slot or approves booking changes: call this on their confirmation message before \`sendBookingConfirmation\` or \`sendBookingUpdateConfirmation\`, and before sending that confirmation text. Also use after you have fulfilled other requests or answered one concrete question. Do not use for greetings, jokes, unclear requests, complaints that need escalation, or before the customer has clearly confirmed when a confirmation message is next.",
+        "Give a small assurance reaction to the customer's latest message. REQUIRED when the customer confirms a booking slot or approves booking changes: call this on their confirmation message before `sendBookingConfirmation` or `sendBookingUpdateConfirmation`, and before sending that confirmation text. Also use after you have fulfilled other requests or answered one concrete question. Do not use for greetings, jokes, unclear requests, complaints that need escalation, or before the customer has clearly confirmed when a confirmation message is next.",
       inputSchema: z.object({
         target: z.literal("latest_user_message").describe("Always react to the latest customer message."),
         emoji: z.enum(INBOX_REACTION_EMOJIS).describe("Use one assurance-oriented emoji."),
@@ -685,7 +719,7 @@ export function buildAgent(
 
     tools.sendBookingConfirmation = createTool({
       description:
-        "Builds the final booking confirmation message after bookAppointment succeeds. Call only after \`giveReaction\` on the customer's slot confirmation. Send the returned confirmationMessage to the customer exactly as written.",
+        "Builds the final booking confirmation message after bookAppointment succeeds. Call only after `giveReaction` on the customer's slot confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingConfirmation, {
@@ -696,7 +730,7 @@ export function buildAgent(
 
     tools.sendBookingUpdateConfirmation = createTool({
       description:
-        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Call only after \`giveReaction\` on the customer's change confirmation. Send the returned confirmationMessage to the customer exactly as written.",
+        "Builds the updated booking confirmation message after updateBookingAppointment succeeds. Call only after `giveReaction` on the customer's change confirmation. Send the returned confirmationMessage to the customer exactly as written.",
       inputSchema: z.object({}),
       execute: async (ctx) => {
         return await ctx.runMutation(internal.appointmentBooking.confirmations.sendBookingUpdateConfirmation, {
@@ -727,19 +761,6 @@ export function buildAgent(
 - Make the content informative and the sources credible
 Format citations as numbered references within the text. Use only sources found via \`fetchContext\` — do not fabricate sources.
 - This is citations section, not references. Must use the keyword Citations.`
-    : "";
-
-  const mediaBlock = mediaCollections.length > 0
-    ? `\n\n## Send Media to Customer
-You have media collections that can be sent directly to the customer as attachments.
-Available collections: ${mediaCollections.map(c => `"${c}"`).join(", ")}
-
-When the customer asks about something that matches one of these collections:
-1. Call \`sendMedia\` with the exact collection name.
-2. Include the returned clientId values in your response using the format: [MEDIA:clientId]
-3. If \`fetchContext\` returned no relevant text, send the media with one short, friendly sentence to identify it (e.g. from the collection name). Do NOT describe what the file shows, what it is useful for, or any details not in \`fetchContext\`.
-Do NOT fabricate clientIds or URLs. Only use clientIds returned by the \`sendMedia\` tool.
-If \`sendMedia\` returns assets for a matching collection, that counts as a successful answer — never say you couldn't find anything.`
     : "";
 
   const toneBlock = escalationConfigured
@@ -780,13 +801,13 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   const workflowBlock = buildWorkflowRuntimeBlock(workflowRuntimeContext);
 
   const noContextFallback = escalationConfigured
-    ? "call \`escalateToHuman\` with the user's question and explain what information was missing. Do NOT send any message to the user."
+    ? "call `escalateToHuman` with the user's question and explain what information was missing. Do NOT send any message to the user."
     : "give a short, natural reply that you don't have that information";
 
-  const toolSteps = mediaCollections.length > 0
+  const toolSteps = sendMediaNodeIds.size > 0
     ? `  ### Steps for every response:
   1. Call \`fetchContext\` with the user's original query
-  2. If the question matches an available media collection, call \`sendMedia\` with the exact collection name
+  2. If the latest message matches a Send Photo/Video or Send Files workflow node condition, call \`sendMedia\` with that node's Node ID
   3. Read the returned context and any media assets carefully
   4. Reply using ONLY what the tools returned. If only media was found, send it with a brief, friendly label — nothing more.
   5. Only if BOTH \`fetchContext\` returned nothing relevant AND \`sendMedia\` returned no matching assets: ${noContextFallback}`
@@ -839,22 +860,17 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
 
 ${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
-  ${citationBlock}${mediaBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
+  ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
-  console.log("instructions", instructions);
   return new Agent(components.agent, {
     name: agent.name,
     languageModel: openRouterModel(agent.model),
     instructions,
     stopWhen: stepCountIs(8),
     tools,
-    rawRequestResponseHandler: async (_request, _response) => {
-      console.log("request", _request);
-      console.log("response", _response);
-    },
     usageHandler: async (ctx, args) => {
       const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;
-      const u = usage as any;
+      const u = usage as UsageWithTokenAliases;
       const normalizedUsage = {
         promptTokens: u.promptTokens ?? u.inputTokens ?? 0,
         completionTokens: u.completionTokens ?? u.outputTokens ?? 0,

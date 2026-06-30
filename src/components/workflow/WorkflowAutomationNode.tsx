@@ -90,7 +90,7 @@ export function WorkflowAutomationNode({
       <Handle
         type="source"
         position={Position.Bottom}
-        className="left-1/2 !z-0 !size-3 !border-2 !border-background !bg-muted-foreground opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+        className="left-1/2 !z-0 opacity-0"
         isConnectable={false}
       />
     </div>
