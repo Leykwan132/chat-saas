@@ -52,6 +52,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   };
 
   const engagementItems = filterItems(navItems.engagement);
+  const bookingsItems = filterItems(navItems.bookings);
   const toolsItems = filterItems(navItems.tools);
   const teamItems = filterItems(navItems.team);
   const configurationItems = filterItems(navItems.configuration);
@@ -138,6 +139,27 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     />
                   );
                 })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {bookingsItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Bookings</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {bookingsItems.map((item) => (
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                    badge={item.badge}
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

@@ -52,13 +52,13 @@
 - 2026-07-01T14:25+08:00 [CODE] D052 ACTIVE: WhatsApp template header media uses separate Meta flows: approval gets `header_handle` via `/{app-id}/uploads`, while send readiness uploads exact-MIME R2 media to `/{phone-number-id}/media` in a workpool and stores `mediaId`; no MIME fallback.
 
 # Done (recent)
-- 2026-06-30T23:31+08:00 [CODE] Workflow media actions now expose Send Photo/Video plus Send Files, validate uploads by node type, resolve typed media items from `sendMedia` tool results across AI SDK result shapes, use Messenger `message.attachments`, use WhatsApp carousel cards with 2-10 card batches, and keep media-send logging only.
 - 2026-06-30T15:16+08:00 [CODE] Workflow photo/video thumbnails now show bottom-left photo/video badges, and video thumbnails open the same fullscreen preview dialog with controls.
 - 2026-07-01T09:58+08:00 [CODE] Create Template top section is unframed, with Template name, WhatsApp type, and category stacked as full-width one-line fields; all Create Template dropdowns now match Agent Setup select styling, including the nested Buttons Type dropdown; Template name and Button Text inputs use matching 48px sizing/padding; submit keeps selected media visible and hides media upload progress; Quick Reply preview buttons render a reply icon; Buttons render above Footer; language remains implicit English.
 - 2026-07-01T01:05+08:00 [CODE] Message Templates category/status filter dropdown buttons use 48px rounded select styling with trigger-width dropdown content and grouped items.
 - 2026-07-01T02:01+08:00 [CODE] WhatsApp template submission now converts R2 header media to Meta header handles via `/{app-id}/uploads` plus `/upload:<session>` binary upload before calling `/message_templates`; upload IDs are normalized and returned `h` handles are required.
 - 2026-07-01T16:32+08:00 [CODE] WhatsApp template builder now supports registry-backed `@` parameters, named Meta examples, WhatsApp `*bold*`, known-parameter-only inline variable tooltips, Follow-up/Reminder/Broadcast presets, prepared media IDs for PDF/JPEG/JPG/PNG/MP4 headers, and line-tab detail editing.
 - 2026-07-01T22:27+08:00 [CODE] Template Detail removed visible metadata and tabs, places the three analytics cards below the template title and above the editable Header section, and reuses Create Template header, footer, and buttons sections with matching skeletons.
+- 2026-07-02 [CODE] Sidebar `Bookings` now contains Calendar, Availability, and Services; Channels sits under `AI Agent` directly below Knowledge Base.
 
 # Working set
 - 2026-06-30T01:12+08:00 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/schema.ts`.
@@ -72,13 +72,12 @@
 - 2026-07-01T14:25+08:00 [CODE] `src/pages/CreateTemplatePage.tsx`, `src/components/WhatsAppTemplatePreview.tsx`, `src/components/templates/*`.
 - 2026-07-01T14:25+08:00 [CODE] `convex/schema.ts`, `convex/whatsappTemplates.ts`, `convex/whatsappTemplatesAction.ts`, `convex/whatsappTemplateUpdate.ts`, `convex/whatsappTemplateMediaPool.ts`, `convex/whatsappTemplateSendPayload.ts`, `convex/whatsappBroadcast.ts`, `convex/broadcastPool.ts`, `convex/followUpPool.ts`, `convex/media/r2Client.ts`.
 - 2026-07-01T14:25+08:00 [CODE] `shared/whatsappTemplateMedia.ts`, `shared/whatsappTemplateParameters.ts`, and their Vitest tests.
-- 2026-06-29T23:26+08:00 [CODE] Prior booking/status/analytics/sidebar working paths compressed into Snapshot/Done/Receipts.
+- 2026-07-02 [CODE] `src/components/app-sidebar-nav.ts`, `src/components/app-sidebar.tsx`.
 
 # Open questions
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-06-30T12:33+08:00 [TOOL] `git diff --check -- src/components/workflow/WorkflowInspector.tsx` and LOC check passed after Save dirty-state gating; Node 22 targeted eslint remains blocked by pre-existing `react-hooks/set-state-in-effect`.
 - 2026-06-30T12:42+08:00 [TOOL] Node 22 `bunx eslint src/components/workflow/WorkflowSendMediaSection.tsx`, LOC check, and trailing-whitespace `rg` passed after adding the media uploaded count.
 - 2026-06-30T12:25+08:00 [TOOL] Node 22 targeted eslint for Messenger/Instagram connect components, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed.
 - 2026-06-30T13:12+08:00 [TOOL] Node 22 `bunx eslint convex/chat/inboxMessageMapping.ts`, targeted `git diff --check`, and LOC check for `convex/chat/inboxMessageMapping.ts` passed after inbox attachment rendering; broader lint remains blocked by pre-existing `no-explicit-any`/`no-useless-escape` in `convex/chat/inbox.ts` and `convex/chat/threads.ts`.
@@ -98,3 +97,4 @@
 - 2026-07-01T16:20+08:00 [TOOL] Node 22 targeted `bunx eslint`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after replacing variable chip backgrounds with inline tooltip text and increasing preview note spacing.
 - 2026-07-01T17:05+08:00 [TOOL] Node 22 `bunx convex codegen`, targeted `bunx eslint`, `bunx tsc -b`, targeted `git diff --check`, and LOC checks passed after Template Detail line tabs plus Meta component update action.
 - 2026-07-01T22:29+08:00 [TOOL] Node 22 `bunx convex codegen`, targeted `bunx eslint`, `bunx tsc -b`, `bunx vitest run shared/whatsappTemplateMedia.test.ts shared/whatsappTemplateParameters.test.ts`, `git diff --check`, LOC check, and `rg` stale-reference checks passed after moving Template Detail analytics below the title and adding per-asset header media persistence/update support.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/app-sidebar-nav.ts src/components/app-sidebar.tsx`, `git diff --check`, and LOC checks passed after the `Bookings` sidebar regrouping.

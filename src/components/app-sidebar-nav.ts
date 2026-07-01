@@ -29,6 +29,7 @@ export type NavItem = {
 
 export function getNavItems(agentId: string): {
   engagement: NavItem[];
+  bookings: NavItem[];
   tools: NavItem[];
   team: NavItem[];
   configuration: NavItem[];
@@ -36,18 +37,20 @@ export function getNavItems(agentId: string): {
   return {
     engagement: [
       { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
       { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
+    ],
+    bookings: [
+      { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
+      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
+      { to: `/dashboard/${agentId}/services`, icon: CalendarCheck, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
     ],
     tools: [
       { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
-      { to: `/dashboard/${agentId}/services`, icon: CalendarCheck, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
       { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
     team: [
       { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
-      { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
     configuration: [
