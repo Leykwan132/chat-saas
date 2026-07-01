@@ -1,30 +1,63 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useAction, useQuery } from 'convex/react';
 import {
   ArrowLeft,
-  Loader2,
-  Megaphone,
-  Calendar,
-  Layers,
-  Globe,
-  Activity,
   AlertCircle,
-  Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
+import type { Doc } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
+import { TemplateDetailDetailsTab } from '@/components/templates/TemplateDetailDetailsTab';
+import { TemplateDetailPageSkeleton } from '@/components/templates/TemplateDetailPageSkeleton';
+import type {
+  TemplateDetailComponentInput,
+  TemplateDetailUpdateComponent,
+} from '@/components/templates/templateDetailEditorHelpers';
 
 type TemplateRow = {
   name: string;
   language: string;
-  status: string;
   category: string;
-  components?: Array<{ type: string; text?: string }>;
+  components?: TemplateDetailComponentInput[];
 };
+
+function TemplateAnalyticsPanel() {
+  return (
+    <section className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-4 text-center sm:grid-cols-3 lg:col-span-7">
+        <div className="flex flex-col gap-1 rounded-xl border border-border/80 bg-muted/10 p-4">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            Sent
+          </span>
+          <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
+            0
+          </div>
+          <span className="text-[10px] text-muted-foreground">Total messages</span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-xl border border-border/80 bg-muted/10 p-4">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            Delivered
+          </span>
+          <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
+            0%
+          </div>
+          <span className="text-[10px] text-muted-foreground">Delivery rate</span>
+        </div>
+        <div className="flex flex-col gap-1 rounded-xl border border-border/80 bg-muted/10 p-4">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+            Read
+          </span>
+          <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
+            0%
+          </div>
+          <span className="text-[10px] text-muted-foreground">Open rate</span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function TemplateDetailPage() {
   const { agentId, templateName } = useParams();
@@ -33,15 +66,18 @@ export default function TemplateDetailPage() {
 
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
+  const updateTemplateComponents = useAction(
+    api.whatsappTemplateUpdate.updateTemplateComponents,
+  );
 
-  const [channelId, setChannelId] = useState<Id<'channels'> | ''>('');
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingChanges, setSavingChanges] = useState(false);
 
   const whatsappReady = useMemo(() => {
     if (!channels) return [];
     return channels.filter(
-      (c: any) =>
+      (c: Doc<'channels'>) =>
         c.service === 'whatsapp' &&
         c.status === 'connected' &&
         Boolean(c.wabaId?.trim()) &&
@@ -49,31 +85,37 @@ export default function TemplateDetailPage() {
     );
   }, [channels]);
 
-  useEffect(() => {
-    if (!channelId && whatsappReady.length > 0) {
-      setChannelId(whatsappReady[0]._id);
-    }
-  }, [channelId, whatsappReady]);
-
-  const loadTemplates = useCallback(async () => {
-    if (!channelId) return;
-    setLoading(true);
-    try {
-      const { templates: rows } = await listTemplates({
-        channelId: channelId as Id<'channels'>,
-      });
-      setTemplates(rows);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [channelId, listTemplates]);
+  const activeChannelId = whatsappReady[0]?._id ?? null;
 
   useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
+    if (!activeChannelId) return;
+    let cancelled = false;
+
+    async function loadTemplatesForChannel() {
+      await Promise.resolve();
+      if (cancelled) return;
+      setLoading(true);
+      try {
+        const { templates: rows } = await listTemplates({
+          channelId: activeChannelId,
+        });
+        if (!cancelled) setTemplates(rows);
+      } catch (e) {
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : String(e);
+          toast.error(msg);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadTemplatesForChannel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChannelId, listTemplates]);
 
   const template = useMemo(() => {
     if (!templateName) return null;
@@ -86,14 +128,31 @@ export default function TemplateDetailPage() {
     );
   }, [templates, templateName, targetLanguage]);
 
-  const isApproved = template?.status === 'APPROVED';
+  const handleSaveTemplateChanges = async (
+    components: TemplateDetailUpdateComponent[],
+  ) => {
+    if (!activeChannelId || !template) {
+      throw new Error('No active WhatsApp channel connected.');
+    }
+    setSavingChanges(true);
+    try {
+      await updateTemplateComponents({
+        channelId: activeChannelId,
+        templateName: template.name,
+        templateLanguage: template.language,
+        category: template.category,
+        components,
+      });
+      const { templates: rows } = await listTemplates({ channelId: activeChannelId });
+      setTemplates(rows);
+      toast.success('Template updated in Meta.');
+    } finally {
+      setSavingChanges(false);
+    }
+  };
 
   if (channels === undefined || (loading && templates.length === 0)) {
-    return (
-      <div className="flex justify-center py-20">
-        <Loader2 className="size-8 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <TemplateDetailPageSkeleton />;
   }
 
   if (!templateName || !agentId) {
@@ -115,7 +174,7 @@ export default function TemplateDetailPage() {
             Template not found
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            The template &quot;{templateName}&quot; ({targetLanguage}) could not be found on this account.
+            The template &quot;{templateName}&quot; could not be found on this account.
           </p>
           <Button className="mt-6" asChild>
             <Link to={`/dashboard/${agentId}/templates`}>Open Templates list</Link>
@@ -143,134 +202,25 @@ export default function TemplateDetailPage() {
 
       {template && (
         <>
-          {/* HEADER SECTION */}
-          <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b border-border pb-6">
-            <div>
-              <div className="flex flex-wrap items-center gap-2.5">
-                <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground leading-none">
-                  {template.name}
-                </h1>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-800/40 px-2.5 py-0.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium select-none">
-                  <span className={`size-1.5 rounded-full shrink-0 ${isApproved ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  <span>
-                    {isApproved ? 'Approved' : 'In review'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            {isApproved && (
-              <Button
-                asChild
-                className="h-10 px-5 gap-2 font-semibold text-sm shadow-sm hover:scale-[1.01] transition-transform active:scale-[0.99]"
-              >
-                <Link to={`/dashboard/${agentId}/broadcast/new`}>
-                  <Megaphone className="size-4" />
-                  Use in Broadcast
-                </Link>
-              </Button>
-            )}
+          <header className="border-b border-border pb-6">
+            <h1 className="m-0 text-3xl font-semibold leading-none tracking-tight text-foreground">
+              {template.name}
+            </h1>
           </header>
 
-          {/* LAYOUT CONTAINER */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-            {/* LEFT COLUMN: METADATA & STATIC STATS (lg:col-span-7) */}
-            <div className="lg:col-span-7 flex flex-col gap-6">
-              {/* METADATA LIST CARD */}
-              <div className="rounded-xl border border-border bg-card p-6 shadow-2xs">
-                <h3 className="m-0 text-sm font-semibold text-foreground mb-4">
-                  Template details
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/10">
-                    <Layers className="size-4.5 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground font-medium">Category</span>
-                      <span className="font-semibold text-foreground capitalize mt-0.5">
-                        {template.category.toLowerCase()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/10">
-                    <Globe className="size-4.5 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground font-medium">Language</span>
-                      <span className="font-semibold text-foreground mt-0.5">{template.language}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/10">
-                    <Activity className="size-4.5 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground font-medium">Approval status</span>
-                      <span className="font-semibold text-foreground capitalize mt-0.5">
-                        {template.status.toLowerCase()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-muted/10">
-                    <Calendar className="size-4.5 text-muted-foreground shrink-0" />
-                    <div className="flex flex-col">
-                      <span className="text-muted-foreground font-medium">Last updated</span>
-                      <span className="font-semibold text-foreground mt-0.5">1 Jun 2026</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <TemplateAnalyticsPanel />
 
-              {/* STATS ANALYTICS CARD */}
-              <div className="rounded-xl border border-border bg-card p-6 shadow-2xs">
-                <h3 className="m-0 text-sm font-semibold text-foreground mb-4">
-                  Campaign performance
-                </h3>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div className="flex flex-col gap-1 p-4 rounded-xl bg-muted/10 border border-border/80">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Sent
-                    </span>
-                    <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
-                      0
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">Total messages</span>
-                  </div>
-                  <div className="flex flex-col gap-1 p-4 rounded-xl bg-muted/10 border border-border/80">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Delivered
-                    </span>
-                    <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
-                      0%
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">Delivery rate</span>
-                  </div>
-                  <div className="flex flex-col gap-1 p-4 rounded-xl bg-muted/10 border border-border/80">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                      Read
-                    </span>
-                    <div className="text-4xl font-semibold text-foreground tabular-nums tracking-tight">
-                      0%
-                    </div>
-                    <span className="text-[10px] text-muted-foreground">Open rate</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/10 text-2xs text-muted-foreground leading-normal flex items-start gap-2">
-                  <Info className="size-3.5 text-primary shrink-0 mt-0.5" />
-                  <span>
-                    Template message statistics update automatically when templates are dispatched 
-                    via Broadcast campaigns. Currently, there are no sent records for this template.
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* RIGHT COLUMN: WhatsApp Preview (lg:col-span-5) */}
-            <div className="lg:col-span-5 flex flex-col">
-              <WhatsAppTemplatePreview
-                templateName={template?.name}
-                components={template?.components as any}
-                isLoading={loading}
-                emptyMessage="Template preview unavailable."
-              />
-            </div>
-          </div>
+          <TemplateDetailDetailsTab
+            key={`${template.name}-${template.language}-${JSON.stringify(
+              template.components ?? [],
+            )}`}
+            templateName={template.name}
+            category={template.category}
+            components={template.components}
+            loading={loading}
+            saving={savingChanges}
+            onSave={handleSaveTemplateChanges}
+          />
         </>
       )}
     </div>

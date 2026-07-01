@@ -5,6 +5,7 @@ import { getAuthContext } from "../authUtils";
 import { r2, generateInboxMediaKey } from "./r2";
 import { mediaDeletePool } from "../mediaPools";
 import type { Id } from "../_generated/dataModel";
+import { getWhatsAppTemplateMediaSpec } from "../../shared/whatsappTemplateMedia";
 
 /** Signed URL + org-scoped key for client-side PUT (used with `useUploadFile` pattern). */
 export const generateUploadUrl = mutation({
@@ -19,19 +20,20 @@ export const generateUploadUrl = mutation({
   }),
   handler: async (ctx, args) => {
     const auth = await getAuthContext(ctx);
-    if (!args.mediaType.startsWith("image/")) {
-      throw new Error("Only image uploads are supported");
+    const mediaType = args.mediaType.trim().toLowerCase();
+    if (!mediaType.startsWith("image/") && getWhatsAppTemplateMediaSpec(mediaType) === null) {
+      throw new Error("Only image, PDF, or MP4 uploads are supported");
     }
 
     await ctx.runMutation(internal.media.attachments.internalCreateUpload, {
       clientId: args.clientId,
       orgId: auth.orgId,
       userId: auth.userId,
-      mediaType: args.mediaType,
+      mediaType,
       filename: args.filename,
     });
 
-    const key = generateInboxMediaKey(auth.orgId, args.mediaType);
+    const key = generateInboxMediaKey(auth.orgId, mediaType);
     return await r2.generateUploadUrl(key);
   },
 });

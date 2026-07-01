@@ -11,6 +11,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { broadcastPool } from "./broadcastPool";
+import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const MAX_BATCH_SEND = 50;
@@ -81,6 +82,13 @@ async function sendTemplateBatchToPhones(
       continue;
     }
     try {
+      const template = await buildWhatsAppTemplateSendPayload(ctx, {
+        orgId,
+        channelId,
+        templateName,
+        templateLanguage,
+        toPhone: to,
+      });
       const res = await fetch(`${graphBase()}/${phoneNumberId}/messages`, {
         method: "POST",
         headers: {
@@ -91,10 +99,7 @@ async function sendTemplateBatchToPhones(
           messaging_product: "whatsapp",
           to,
           type: "template",
-          template: {
-            name: templateName.trim(),
-            language: { code: templateLanguage.trim() },
-          },
+          template,
         }),
       });
       await readGraphJson(res);
@@ -155,7 +160,7 @@ function resolveAccessToken(channel: Doc<"channels">): string {
 
 async function readGraphJson(res: Response): Promise<unknown> {
   const text = await res.text();
-  let body: unknown = text;
+  let body: unknown;
   try {
     body = text.length ? JSON.parse(text) : text;
   } catch {
@@ -174,7 +179,23 @@ type MetaTemplateRow = {
   language?: string | { code?: string };
   status?: string;
   category?: string;
-  components?: Array<{ type: string; text?: string }>;
+  components?: ListedTemplateComponent[];
+};
+
+type ListedTemplateComponent = {
+  type: string;
+  text?: string;
+  format?: string;
+  [key: string]: unknown;
+};
+
+type ListedTemplate = {
+  name: string;
+  language: string;
+  status: string;
+  category: string;
+  components: ListedTemplateComponent[];
+  error?: string;
 };
 
 function normalizeLanguage(lang: MetaTemplateRow["language"]): string {
@@ -183,6 +204,19 @@ function normalizeLanguage(lang: MetaTemplateRow["language"]): string {
     return lang.code.trim();
   }
   return "";
+}
+
+function normalizeTemplateComponents(value: unknown): ListedTemplateComponent[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((component) => {
+    if (component === null || typeof component !== "object" || Array.isArray(component)) {
+      return [];
+    }
+    const record = component as Record<string, unknown>;
+    const type = typeof record.type === "string" ? record.type : "";
+    if (!type) return [];
+    return [{ ...record, type } as ListedTemplateComponent];
+  });
 }
 
 export const listTemplates = action({
@@ -207,13 +241,13 @@ export const listTemplates = action({
       console.error("Failed to list templates from Meta:", e);
     }
 
-    const remoteTemplates = rows
+    const remoteTemplates: ListedTemplate[] = rows
       .map((r) => ({
         name: (r.name ?? "").trim(),
         language: normalizeLanguage(r.language),
         status: r.status ?? "UNKNOWN",
         category: r.category ?? "",
-        components: r.components ?? [],
+        components: normalizeTemplateComponents(r.components),
       }))
       .filter((r) => r.name.length > 0 && r.language.length > 0);
 
@@ -222,33 +256,33 @@ export const listTemplates = action({
       channelId: args.channelId,
     });
 
-    const finalTemplates: typeof remoteTemplates = [...remoteTemplates];
+    const finalTemplates: ListedTemplate[] = [...remoteTemplates];
 
     for (const local of localTemplates) {
-      const match = remoteTemplates.find(
+      const matchIndex = finalTemplates.findIndex(
         (r) => r.name === local.name && r.language === local.language
       );
-      if (match) {
-        // Safe-heal: template is now on Meta, so clean up local record
-        await ctx.runMutation(internal.whatsappTemplates.deleteLocalTemplate, {
-          templateId: local._id,
-        });
+      if (matchIndex >= 0) {
+        const remote = finalTemplates[matchIndex];
+        const localComponents = normalizeTemplateComponents(local.components);
+        finalTemplates[matchIndex] = {
+          ...remote,
+          category: remote.category || local.category,
+          components: localComponents.length > 0 ? localComponents : remote.components,
+        };
       } else {
-        // Not on Meta yet (or failed, or submitting)
         let statusString = "SUBMITTING";
         if (local.status === "failed") {
           statusString = "SUBMISSION_FAILED";
         }
         
-        // Add to list so user can see it
         finalTemplates.push({
           name: local.name,
           language: local.language,
           status: statusString,
           category: local.category,
-          components: local.components,
-          // Attach error if it exists
-          ...((local as any).error ? { error: (local as any).error } : {}),
+          components: normalizeTemplateComponents(local.components),
+          ...(local.error ? { error: local.error } : {}),
         });
       }
     }
@@ -456,7 +490,7 @@ export const listBroadcastScheduleRecipients = query({
       const sentAt = rec.processedAt ?? schedule.scheduledAt;
 
       let ok: boolean | undefined = undefined;
-      let error: string | undefined = rec.errorMessage;
+      const error: string | undefined = rec.errorMessage;
       let deliveryLabel: string = "Scheduled";
 
       if (rec.status === "completed") {

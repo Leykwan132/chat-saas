@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -254,28 +255,32 @@ export default function TemplatesPage() {
         <div className="flex flex-wrap items-center gap-2">
           {/* Category Selector */}
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-            <SelectTrigger className="w-[140px] bg-background border-border">
+            <SelectTrigger className="h-12 w-[160px] justify-between rounded-lg border-border bg-input/50 px-4 py-3 text-sm font-medium">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c.toLowerCase()}
-                </SelectItem>
-              ))}
+            <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
+              <SelectGroup>
+                <SelectItem value="ALL">All Categories</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c.toLowerCase()}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
             </SelectContent>
           </Select>
 
           {/* Status Selector */}
           <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-            <SelectTrigger className="w-[140px] bg-background border-border">
+            <SelectTrigger className="h-12 w-[160px] justify-between rounded-lg border-border bg-input/50 px-4 py-3 text-sm font-medium">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="APPROVED">Approved</SelectItem>
-              <SelectItem value="IN_REVIEW">Under Review</SelectItem>
+            <SelectContent align="start" className="w-[var(--radix-select-trigger-width)]">
+              <SelectGroup>
+                <SelectItem value="ALL">All Status</SelectItem>
+                <SelectItem value="APPROVED">Approved</SelectItem>
+                <SelectItem value="IN_REVIEW">Under Review</SelectItem>
+              </SelectGroup>
             </SelectContent>
           </Select>
 

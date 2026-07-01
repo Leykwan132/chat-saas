@@ -33,6 +33,8 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/webp": "webp",
   "image/heic": "heic",
   "image/heif": "heif",
+  "application/pdf": "pdf",
+  "video/mp4": "mp4",
 };
 
 export function generateInboxMediaKey(orgId: string, mimeType: string): string {

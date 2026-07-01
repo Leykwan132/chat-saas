@@ -9,6 +9,7 @@ import type { Doc } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
+import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
 
 export const followUpPool = new Workpool(
   components.followUpWorkpool,
@@ -108,6 +109,14 @@ export const followUpWorker = internalAction({
       };
     }
 
+    const template = await buildWhatsAppTemplateSendPayload(ctx, {
+      orgId: rule.orgId,
+      channelId: rule.channelId,
+      templateName: attemptConfig.templateName,
+      templateLanguage: attemptConfig.templateLanguage,
+      customerId: customer._id,
+    });
+
     const url = `${graphBase()}/${phoneNumberId}/messages`;
     const res = await fetch(url, {
       method: "POST",
@@ -119,10 +128,7 @@ export const followUpWorker = internalAction({
         messaging_product: "whatsapp",
         to,
         type: "template",
-        template: {
-          name: attemptConfig.templateName.trim(),
-          language: { code: attemptConfig.templateLanguage.trim() },
-        },
+        template,
       }),
     });
 

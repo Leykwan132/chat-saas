@@ -120,6 +120,28 @@ const appointmentAssignmentStrategyValidator = v.union(
   v.literal("specific_user"),
 );
 
+const whatsappTemplateParameterFormatValidator = v.union(v.literal("named"));
+
+const whatsappTemplateHeaderFormatValidator = v.union(
+  v.literal("DOCUMENT"),
+  v.literal("IMAGE"),
+  v.literal("VIDEO"),
+);
+
+const whatsappTemplateMediaMimeTypeValidator = v.union(
+  v.literal("application/pdf"),
+  v.literal("image/jpeg"),
+  v.literal("image/jpg"),
+  v.literal("image/png"),
+  v.literal("video/mp4"),
+);
+
+const whatsappTemplateMediaStatusValidator = v.union(
+  v.literal("preparing"),
+  v.literal("ready"),
+  v.literal("failed"),
+);
+
 const appointmentCollectedValueValidator = v.union(
   v.string(),
   v.number(),
@@ -1434,7 +1456,8 @@ export default defineSchema({
     language: v.string(),
     purpose: v.union(v.literal("broadcasting"), v.literal("follow_up")),
     category: v.union(v.literal("MARKETING"), v.literal("UTILITY")),
-    components: v.any(), // Array of components
+    parameterFormat: v.optional(whatsappTemplateParameterFormatValidator),
+    components: v.any(),
     status: v.union(
       v.literal("submitting"),
       v.literal("submitted"),
@@ -1444,7 +1467,32 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_channelId", ["channelId"])
-    .index("by_orgId_and_channelId", ["orgId", "channelId"]),
+    .index("by_orgId_and_channelId", ["orgId", "channelId"])
+    .index("by_channelId_and_name_and_language", ["channelId", "name", "language"]),
+  whatsappTemplateMediaAssets: defineTable({
+    orgId: v.string(),
+    channelId: v.id("channels"),
+    templateId: v.id("whatsappTemplates"),
+    templateName: v.string(),
+    templateLanguage: v.string(),
+    r2Key: v.string(),
+    filename: v.string(),
+    mimeType: whatsappTemplateMediaMimeTypeValidator,
+    headerFormat: whatsappTemplateHeaderFormatValidator,
+    mediaId: v.optional(v.string()),
+    status: whatsappTemplateMediaStatusValidator,
+    uploadedAt: v.optional(v.number()),
+    retryCount: v.number(),
+    lastError: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_templateId", ["templateId"])
+    .index("by_channelId_and_templateName_and_templateLanguage", [
+      "channelId",
+      "templateName",
+      "templateLanguage",
+    ]),
   // ─── Bulk CSV Customer Import ────────────────────────────
   // Parent table aggregating progress across one or more import jobs/chunks.
   customerImports: defineTable({

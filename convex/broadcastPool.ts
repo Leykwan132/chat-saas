@@ -11,6 +11,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
+import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
 
 export const broadcastPool = new Workpool(
   components.broadcastWorkpool,
@@ -90,6 +91,14 @@ export const broadcastWorker = internalAction({
       };
     }
 
+    const template = await buildWhatsAppTemplateSendPayload(ctx, {
+      orgId: schedule.orgId,
+      channelId: schedule.channelId,
+      templateName: schedule.templateName,
+      templateLanguage: schedule.templateLanguage,
+      customerId: customer._id,
+    });
+
     const url = `${graphBase()}/${phoneNumberId}/messages`;
     const res = await fetch(url, {
       method: "POST",
@@ -101,10 +110,7 @@ export const broadcastWorker = internalAction({
         messaging_product: "whatsapp",
         to,
         type: "template",
-        template: {
-          name: schedule.templateName.trim(),
-          language: { code: schedule.templateLanguage.trim() },
-        },
+        template,
       }),
     });
 
