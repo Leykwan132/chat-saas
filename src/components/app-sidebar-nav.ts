@@ -6,6 +6,7 @@ import {
   Calendar,
   CalendarCheck,
   Clock3,
+  LayoutDashboard,
   FileText,
   Megaphone,
   MessageSquare,
@@ -28,6 +29,7 @@ export type NavItem = {
 };
 
 export function getNavItems(agentId: string): {
+  topLevel: NavItem[];
   engagement: NavItem[];
   bookings: NavItem[];
   tools: NavItem[];
@@ -35,6 +37,9 @@ export function getNavItems(agentId: string): {
   configuration: NavItem[];
 } {
   return {
+    topLevel: [
+      { to: `/dashboard/${agentId}/overview`, icon: LayoutDashboard, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
+    ],
     engagement: [
       { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
       { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },

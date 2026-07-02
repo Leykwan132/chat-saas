@@ -5,6 +5,7 @@ import { type Id } from "./_generated/dataModel";
 import { getUserByWorkosId } from "./teamHelpers";
 import { getAuthContext } from "./authUtils";
 import { components, internal } from "./_generated/api";
+import { recordHumanEscalationFact } from "./agentOverviewAggregates";
 
 // Initialize the Workpool for asynchronous logging
 export const conversationLogPool = new Workpool(components.conversationLogWorkpool, {
@@ -38,15 +39,14 @@ export async function logConversationEvent(
       userId?: string;
       agentId?: Id<"agents">;
     };
-    metadata?: any;
+    metadata?: unknown;
   }
 ) {
   let actorType: "user" | "ai" | "system" = args.actor?.type ?? "system";
   let actorName = args.actor?.name;
   let actorUserId = args.actor?.userId;
-  let actorAgentId = args.actor?.agentId;
+  const actorAgentId = args.actor?.agentId;
 
-  // Resolve actor details synchronously in the mutation transaction
   if (!args.actor) {
     try {
       const identity = await ctx.auth.getUserIdentity();
@@ -66,12 +66,11 @@ export async function logConversationEvent(
           }
         }
       }
-    } catch (e) {
-      // Ignore auth resolution errors during background / system tasks
+    } catch (error) {
+      console.warn("Unable to resolve conversation log actor identity", error);
     }
   }
 
-  // Enqueue the log event action asynchronously in the workpool
   await conversationLogPool.enqueueAction(
     ctx,
     internal.conversationLogs.internalLogEventAction,
@@ -164,7 +163,8 @@ export const logEvent = internalMutation({
       return;
     }
 
-    await ctx.db.insert("conversationLogs", {
+    const now = Date.now();
+    const conversationLogId = await ctx.db.insert("conversationLogs", {
       conversationId: args.conversationId,
       orgId: conversation.orgId,
       action: args.action,
@@ -173,8 +173,16 @@ export const logEvent = internalMutation({
       actorUserId: args.actor.userId,
       actorAgentId: args.actor.agentId,
       metadata: args.metadata,
-      performedAt: Date.now(),
+      performedAt: now,
     });
+    if (args.action === "escalation_raised" && args.actor.agentId !== undefined) {
+      await recordHumanEscalationFact(ctx, {
+        conversation,
+        agentId: args.actor.agentId,
+        conversationLogId,
+        timestamp: now,
+      });
+    }
   }
 });
 

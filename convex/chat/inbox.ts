@@ -34,6 +34,7 @@ import {
 } from "./mediaToolResults";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
+import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
 import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
 import type { ChannelMediaItem } from "./channelSend";
 
@@ -342,6 +343,13 @@ export const internalPersistAiReply = internalMutation({
       status: "sent",
       createdAt: now,
     });
+    if (conv.assignedAgentId !== undefined) {
+      await recordAiAssistedConversationAggregate(ctx, {
+        conversation: conv,
+        agentId: conv.assignedAgentId,
+        timestamp: now,
+      });
+    }
 
     const markedRead = conv.unreadCount > 0;
     const patch: Partial<Doc<"conversations">> = {
@@ -413,12 +421,20 @@ export const internalPersistAiMediaReply = internalMutation({
         orgAddress,
         contactAddress: conv.contactAddress,
         direction: "outgoing",
+        agentId: conv.assignedAgentId,
         contentType: contentTypeForMediaItem(item),
         content: item.url,
         mediaUrl: item.url,
         agentMessageId,
         status: "sent",
         createdAt: now,
+      });
+    }
+    if (conv.assignedAgentId !== undefined) {
+      await recordAiAssistedConversationAggregate(ctx, {
+        conversation: conv,
+        agentId: conv.assignedAgentId,
+        timestamp: now,
       });
     }
 

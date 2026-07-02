@@ -9,6 +9,16 @@
  */
 
 import type * as agentAccess from "../agentAccess.js";
+import type * as agentOverview from "../agentOverview.js";
+import type * as agentOverviewAbandonments from "../agentOverviewAbandonments.js";
+import type * as agentOverviewAggregates from "../agentOverviewAggregates.js";
+import type * as agentOverviewClose from "../agentOverviewClose.js";
+import type * as agentOverviewDaily from "../agentOverviewDaily.js";
+import type * as agentOverviewMessages from "../agentOverviewMessages.js";
+import type * as agentOverviewModel from "../agentOverviewModel.js";
+import type * as agentOverviewSentiment from "../agentOverviewSentiment.js";
+import type * as agentOverviewTestHelpers from "../agentOverviewTestHelpers.js";
+import type * as agentOverviewTopics from "../agentOverviewTopics.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
 import type * as agents from "../agents.js";
@@ -165,6 +175,16 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agentAccess: typeof agentAccess;
+  agentOverview: typeof agentOverview;
+  agentOverviewAbandonments: typeof agentOverviewAbandonments;
+  agentOverviewAggregates: typeof agentOverviewAggregates;
+  agentOverviewClose: typeof agentOverviewClose;
+  agentOverviewDaily: typeof agentOverviewDaily;
+  agentOverviewMessages: typeof agentOverviewMessages;
+  agentOverviewModel: typeof agentOverviewModel;
+  agentOverviewSentiment: typeof agentOverviewSentiment;
+  agentOverviewTestHelpers: typeof agentOverviewTestHelpers;
+  agentOverviewTopics: typeof agentOverviewTopics;
   agentRuntime: typeof agentRuntime;
   agentUsage: typeof agentUsage;
   agents: typeof agents;
@@ -372,4 +392,6 @@ export declare const components: {
   creditWorkspaceDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditWorkspaceDailyUsage">;
   creditAccountDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditAccountDailyUsage">;
   analyticsMetrics: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"analyticsMetrics">;
+  agentOverviewAiAssistedDaily: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentOverviewAiAssistedDaily">;
+  agentOverviewHumanEscalationsDaily: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentOverviewHumanEscalationsDaily">;
 };

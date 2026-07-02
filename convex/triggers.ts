@@ -10,6 +10,8 @@ import {
   creditWorkspaceDailyUsageAggregator,
   creditAccountDailyUsageAggregator,
   analyticsMetrics,
+  agentOverviewAiAssistedDailyAggregator,
+  agentOverviewHumanEscalationsDailyAggregator,
 } from "./aggregates";
 
 // 1. Initialize triggers registry
@@ -23,6 +25,14 @@ triggers.register("creditUsageEvents", creditAgentDailyUsageAggregator.trigger()
 triggers.register("creditUsageEvents", creditWorkspaceDailyUsageAggregator.trigger());
 triggers.register("creditUsageEvents", creditAccountDailyUsageAggregator.trigger());
 triggers.register("analyticsMetricEntries", analyticsMetrics.trigger());
+triggers.register(
+  "agentOverviewDailyConversationFacts",
+  agentOverviewAiAssistedDailyAggregator.idempotentTrigger(),
+);
+triggers.register(
+  "agentOverviewHumanEscalationFacts",
+  agentOverviewHumanEscalationsDailyAggregator.idempotentTrigger(),
+);
 
 // Export trigger-wrapped mutations to automatically keep aggregates in sync
 export const mutation = customMutation(

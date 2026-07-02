@@ -51,6 +51,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     return items.filter((item) => can(item.requiredPermission));
   };
 
+  const topLevelItems = filterItems(navItems.topLevel);
   const engagementItems = filterItems(navItems.engagement);
   const bookingsItems = filterItems(navItems.bookings);
   const toolsItems = filterItems(navItems.tools);
@@ -106,6 +107,22 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
       )}
 
       <SidebarContent className="gap-0">
+        {topLevelItems.length > 0 && (
+          <SidebarMenu className="p-[0.45rem] group-data-[collapsible=icon]:p-0">
+            {topLevelItems.map((item) => (
+              <SidebarNavMenuItem
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                tooltip={item.label}
+                icon={item.icon}
+                label={item.label}
+                badge={item.badge}
+              />
+            ))}
+          </SidebarMenu>
+        )}
+
         {configurationItems.length > 0 && (
           <SidebarGroup>
             <SidebarGroupLabel>AI Agent</SidebarGroupLabel>

@@ -86,3 +86,32 @@ export const analyticsMetrics = new TableAggregate<{
   sumValue: (doc) => doc.value,
   namespace: (doc) => doc.namespace,
 });
+
+export function agentOverviewDailyNamespace(
+  agentId: string,
+  timeZone: string,
+): string {
+  return `${agentId}:${timeZone}`;
+}
+
+export const agentOverviewAiAssistedDailyAggregator = new TableAggregate<{
+  Key: string;
+  DataModel: DataModel;
+  TableName: "agentOverviewDailyConversationFacts";
+  Namespace: string;
+}>(components.agentOverviewAiAssistedDaily, {
+  sortKey: (doc) => doc.date,
+  sumValue: () => 1,
+  namespace: (doc) => agentOverviewDailyNamespace(doc.agentId, doc.timeZone),
+});
+
+export const agentOverviewHumanEscalationsDailyAggregator = new TableAggregate<{
+  Key: string;
+  DataModel: DataModel;
+  TableName: "agentOverviewHumanEscalationFacts";
+  Namespace: string;
+}>(components.agentOverviewHumanEscalationsDaily, {
+  sortKey: (doc) => doc.date,
+  sumValue: () => 1,
+  namespace: (doc) => agentOverviewDailyNamespace(doc.agentId, doc.timeZone),
+});

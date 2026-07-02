@@ -40,4 +40,6 @@ app.use(aggregate, { name: "creditDailyUsage" });
 app.use(aggregate, { name: "creditWorkspaceDailyUsage" });
 app.use(aggregate, { name: "creditAccountDailyUsage" });
 app.use(aggregate, { name: "analyticsMetrics" });
+app.use(aggregate, { name: "agentOverviewAiAssistedDaily" });
+app.use(aggregate, { name: "agentOverviewHumanEscalationsDaily" });
 export default app;

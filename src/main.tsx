@@ -18,6 +18,7 @@ import WorkspacePage, { AgentsIndex } from './pages/WorkspacePage.tsx'
 import WorkspaceUsagePage from './pages/WorkspaceUsagePage.tsx'
 import CustomersPage from './pages/CustomersPage.tsx'
 import CustomerDetailPage from './pages/CustomerDetailPage.tsx'
+import AgentOverviewPage from './pages/AgentOverviewPage.tsx'
 import AnalyticsPage from './pages/AnalyticsPage.tsx'
 import LeaderboardPage from './pages/LeaderboardPage.tsx'
 import CreateAgentPage from './pages/CreateAgentPage.tsx'
@@ -241,6 +242,7 @@ const router = createBrowserRouter(
         <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
         <Route path="chats" element={<ChatsToInboxRedirect />} />
         <Route path="quick-replies" element={<QuickRepliesPage />} />
+        <Route path="overview" element={<AgentOverviewPage />} />
         <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
         <Route path="playground/:threadId?" element={<PlaygroundRedirect />} />
         <Route path="knowledge-base" element={<KnowledgeBaseIndex />} />

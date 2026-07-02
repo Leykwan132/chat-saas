@@ -862,10 +862,45 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_conversationId_and_createdAt", ["conversationId", "createdAt"])
+    .index("by_agentId_and_createdAt", ["agentId", "createdAt"])
     .index("by_agentMessageId", ["agentMessageId"])
     .index("by_externalId", ["externalId"])
     .index("by_orgId", ["orgId"])
     .index("by_orgId_and_createdAt", ["orgId", "createdAt"]),
+  agentOverviewDailyConversationFacts: defineTable({
+    agentId: v.id("agents"),
+    conversationId: v.id("conversations"),
+    orgId: v.string(),
+    timeZone: v.string(),
+    date: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId_and_timeZone_and_date", [
+      "agentId",
+      "timeZone",
+      "date",
+    ])
+    .index("by_agentId_and_conversationId_and_timeZone_and_date", [
+      "agentId",
+      "conversationId",
+      "timeZone",
+      "date",
+    ]),
+  agentOverviewHumanEscalationFacts: defineTable({
+    agentId: v.id("agents"),
+    conversationId: v.id("conversations"),
+    conversationLogId: v.optional(v.id("conversationLogs")),
+    orgId: v.string(),
+    timeZone: v.string(),
+    date: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_agentId_and_timeZone_and_date", [
+      "agentId",
+      "timeZone",
+      "date",
+    ])
+    .index("by_conversationLogId", ["conversationLogId"]),
   conversationAnalyticsFacts: defineTable({
     orgId: v.string(),
     conversationId: v.id("conversations"),
@@ -1256,6 +1291,11 @@ export default defineSchema({
       "bookingSource",
       "startAt",
     ])
+    .index("by_agentId_and_bookingSource_and_createdAt", [
+      "agentId",
+      "bookingSource",
+      "createdAt",
+    ])
     .index("by_teamId_and_externalProvider_and_externalEventId", [
       "teamId",
       "externalProvider",
@@ -1448,6 +1488,11 @@ export default defineSchema({
     performedAt: v.number(),
   })
     .index("by_conversationId_and_performedAt", ["conversationId", "performedAt"])
+    .index("by_actorAgentId_and_action_and_performedAt", [
+      "actorAgentId",
+      "action",
+      "performedAt",
+    ])
     .index("by_orgId_and_performedAt", ["orgId", "performedAt"]),
   whatsappTemplates: defineTable({
     orgId: v.string(),
