@@ -54,13 +54,11 @@ const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
 
 const FEATURE_SHOWCASE_IMAGES = {
   appointmentBooking: 'https://storage.kilobot.app/AB.png',
-  autoLeadAssign: 'https://storage.kilobot.app/ALA.png',
-  broadcast: 'https://storage.kilobot.app/BC.png',
-  humanEscalation: 'https://storage.kilobot.app/HA.png',
+  modernWorkflows: 'https://storage.kilobot.app/WF.svg',
   autoLeadAnalysis: 'https://storage.kilobot.app/CLD.png',
-  roleBasedInteraction: 'https://storage.kilobot.app/RBAC.png',
   advancedAnalytics: 'https://storage.kilobot.app/Analytics%20(2).png',
   naturalInteraction: 'https://storage.kilobot.app/NI.png',
+  roleBasedInteraction: 'https://storage.kilobot.app/RBAC.png',
 } as const;
 
 function FeaturesSection() {
@@ -70,7 +68,7 @@ function FeaturesSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
           <SectionHeading
-            title="Transform Your Inbox"
+            title="The new era of Sales"
             className="mx-auto text-center items-center"
           />
         </div>
@@ -148,48 +146,29 @@ const FEATURE_ITEMS: FeatureItem[] = [
     id: 'humanLike',
     tabLabel: 'Natural Interaction',
     description:
-      'AI that reacts in real time—customers see typing indicators and messages that feel natural, not scripted.',
+      'AI that sees, reacts, and shows typing indicators in real time.',
     image: FEATURE_SHOWCASE_IMAGES.naturalInteraction,
   },
   {
-    id: 'calendar',
-    tabLabel: 'Services',
+    id: 'workflows',
+    tabLabel: 'Modern Workflows',
     description:
-      'End-to-end booking in chat—check the calendar, confirm the slot, and collect the details you need.',
-    image: FEATURE_SHOWCASE_IMAGES.appointmentBooking,
+      'Set up powerful workflows for followups, reminders, bookings with simple language.',
+    image: FEATURE_SHOWCASE_IMAGES.modernWorkflows,
   },
   {
-    id: 'assignment',
-    tabLabel: 'Auto Lead Assign',
+    id: 'calendar',
+    tabLabel: 'Auto Booking',
     description:
-      'Assign leads automatically using round robin or load balancing across your team.',
-    image: FEATURE_SHOWCASE_IMAGES.autoLeadAssign,
+      'Collect relevant details and secure bookings with customers on autopilot.',
+    image: FEATURE_SHOWCASE_IMAGES.appointmentBooking,
   },
   {
     id: 'scoring',
     tabLabel: 'Auto Lead Analysis',
     description:
-      'Analyze customer quality from the conversation—intent, fit, and readiness in real time.',
+      'Quality customers from the conversation—intent, fit, and readiness in real time.',
     image: FEATURE_SHOWCASE_IMAGES.autoLeadAnalysis,
-  },
-  {
-    id: 'outreach',
-    tabLabel: 'Broadcast',
-    description:
-      'Send broadcast campaigns and schedule messages to reach customers at the right time.',
-    image: FEATURE_SHOWCASE_IMAGES.broadcast,
-  },
-  {
-    id: 'escalation',
-    tabLabel: 'Human Escalation',
-    description: 'Detect when a human is needed and escalate with full conversation context.',
-    image: FEATURE_SHOWCASE_IMAGES.humanEscalation,
-  },
-  {
-    id: 'access',
-    tabLabel: 'Role Based Access Control',
-    description: 'Control team access with custom roles and channel permissions.',
-    image: FEATURE_SHOWCASE_IMAGES.roleBasedInteraction,
   },
   {
     id: 'advancedAnalytics',
@@ -198,17 +177,22 @@ const FEATURE_ITEMS: FeatureItem[] = [
       'Understand customer sentiment and discover the most common topics across your conversations.',
     image: FEATURE_SHOWCASE_IMAGES.advancedAnalytics,
   },
+  {
+    id: 'access',
+    tabLabel: 'Role Based Access Control',
+    description:
+      'Control team access with custom roles and channel permissions.',
+    image: FEATURE_SHOWCASE_IMAGES.roleBasedInteraction,
+  },
 ];
 
 const FEATURE_COLORS: Record<string, string> = {
   calendar: 'bg-indigo-500 dark:bg-indigo-400',
-  assignment: 'bg-blue-500 dark:bg-blue-400',
-  outreach: 'bg-violet-500 dark:bg-violet-400',
-  escalation: 'bg-amber-500 dark:bg-amber-400',
+  workflows: 'bg-blue-500 dark:bg-blue-400',
   scoring: 'bg-orange-500 dark:bg-orange-400',
-  access: 'bg-slate-500 dark:bg-slate-400',
   advancedAnalytics: 'bg-cyan-500 dark:bg-cyan-400',
   humanLike: 'bg-emerald-500 dark:bg-emerald-400',
+  access: 'bg-slate-500 dark:bg-slate-400',
 };
 
 function FeatureShowcaseImage({ src, alt }: { src: string; alt: string }) {
@@ -231,7 +215,7 @@ function FeatureShowcaseSection() {
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
           <SectionHeading
-            title="Simple, yet powerful"
+            title="Like Human, but 24/7"
             className="mx-auto text-center items-center"
           />
         </div>
@@ -318,7 +302,7 @@ function Hero({
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto flex max-w-3xl flex-col items-center justify-center text-center min-h-[60svh] sm:min-h-[70svh] py-16">
           <h1 className="font-title text-balance text-[32px] font-normal leading-tight tracking-normal text-zinc-950 dark:text-white sm:text-[38px] md:text-[52px]">
-            Your AI Sales Agent <br />
+            AI Agent for Sales <br />
             in 5 minutes
           </h1>
           <p className="mx-auto mt-6 max-w-xl text-pretty text-xs leading-relaxed text-zinc-600 dark:text-zinc-400 sm:text-sm md:text-base">
@@ -385,20 +369,20 @@ function ComparisonSection() {
   const kilobotItems = [
     {
       title: 'Go Live Within 5 Minutes',
-      description: 'Go live in minutes on your own—with support if you need it.',
+      description: 'Go live in minutes on your own. Start with free plan.',
     },
     {
       title: 'Natural, Human-Like Replies',
       description:
-        'AI that sees incoming messages, shows typing indicators, and reacts naturally in real time.',
+        'Kilobot sees incoming messages, shows typing indicators, and reacts with emojis like you.',
     },
     {
-      title: 'Context-Aware AI',
-      description: 'AI powered entirely by a large language model—not rigid decision trees or scripts.',
+      title: 'Smart Workflows with LLM',
+      description: 'Kilobot optimizes the power of LLM & powerful workflows to achieve agentic behavior.',
     },
     {
       title: 'Transparent Agent Setup',
-      description: "See and configure your agent's prompts, knowledge, and behavior.",
+      description: "See and configure your agent's prompts, knowledge, and models.",
     },
     {
       title: 'Role-Based Access Control Built-In',
@@ -417,11 +401,11 @@ function ComparisonSection() {
     },
     {
       title: 'Rule-Based Conversations',
-      description: 'Decision trees and scripts—not AI that understands context.',
+      description: 'Lousy outdated workflow systems that are not smart enough to understand context.',
     },
     {
-      title: 'Black Box AI',
-      description: "You can't see or configure how your AI agent thinks and responds.",
+      title: 'Limited Customization',
+      description: "You can't see or configure how your agent thinks and responds.",
     },
     {
       title: 'No Built-In Access Control',
