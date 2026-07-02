@@ -76,7 +76,7 @@ export function StatsSection() {
                   className="font-title font-medium text-zinc-950 dark:text-white"
                 />
               </div>
-              <div className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans max-w-xs mx-auto">
+              <div className="text-sm sm:text-base font-normal text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans max-w-xs mx-auto">
                 {stat.label}
               </div>
             </div>

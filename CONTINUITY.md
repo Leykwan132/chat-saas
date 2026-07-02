@@ -100,7 +100,7 @@
 - 2026-07-02 [CODE] D098 ACTIVE: Agent Overview mock snapshot mode and mock data module are removed; Overview always uses live Convex summary and credit usage queries.
 
 # Done (recent)
-- 2026-07-03 [CODE] Landing page `Our numbers` stats use the motion rolling-digit `NumberTicker` with locale comma formatting and lighter medium-weight numerals; stats query/rendering moved into a dedicated landing component and the ticker lives at `src/components/motion/number-ticker.tsx`.
+- 2026-07-03 [CODE] Landing page `Our numbers` stats use the motion rolling-digit `NumberTicker` with locale comma formatting, medium-weight numerals, and normal-weight stat labels; stats query/rendering moved into a dedicated landing component and the ticker lives at `src/components/motion/number-ticker.tsx`.
 - 2026-07-03 [CODE] Landing feature showcase order is Natural Interaction, Modern Workflows, Auto Booking, Auto Lead Analysis, Advanced Analytics, Role Based Access Control; Modern Workflows uses simple five-minute setup copy, Auto Booking emphasizes collecting relevant details and securing key-customer bookings, and Auto Lead Assign/Human Escalation/Broadcast were removed.
 - 2026-07-02 [CODE] Landing page hero/demo images now use the new storage SVGs: desktop `https://storage.kilobot.app/Kilo%20-%20Landing%20Desktop%20-%202.svg` and mobile `https://storage.kilobot.app/Kilobot%20Landing%20-%20Mobile%20-%202.svg`.
 - 2026-07-02 [CODE] Agent Overview mock snapshot mode was removed; the page no longer accepts URL-gated mock data and renders live Common Topics / Customer Sentiment again.
@@ -140,4 +140,4 @@
 - 2026-07-02 [TOOL] Source scan found no remaining Agent Overview mock module, mock URL flag, or `useMockData` references after removing mock snapshot mode.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx` and `git diff --check` passed after replacing the landing desktop and mobile image URLs; `LandingPage.tsx` remains an existing 614-line file.
 - 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx`, `git diff --check`, and landing feature scan passed after updating Auto Booking copy and restoring Role Based Access Control as the final landing feature option.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx src/components/landing/LandingStatsSection.tsx src/components/motion/number-ticker.tsx` and `git diff --check` passed after wiring homepage stats to the motion NumberTicker and lightening the numeral typography.
+- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx src/components/landing/LandingStatsSection.tsx src/components/motion/number-ticker.tsx`, later `bunx eslint src/components/landing/LandingStatsSection.tsx`, and `git diff --check` passed after wiring homepage stats to the motion NumberTicker and lightening the stat typography.
