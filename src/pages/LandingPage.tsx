@@ -46,8 +46,8 @@ function PrimaryCta({
   );
 }
 
-const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/kilobot-landing.png';
-const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/kilobot-mobile.png';
+const LANDING_DESKTOP_IMAGE = 'https://storage.kilobot.app/Kilo%20-%20Landing%20Desktop%20-%203.svg';
+const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/Kilobot%20Landing%20-%20Mobile%20-%202.svg';
 const FEATURE_AI_AGENT_IMAGE = 'https://storage.kilobot.app/AI%20Agent-3.png';
 const FEATURE_KB_IMAGE = 'https://storage.kilobot.app/KB-3.png';
 const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
