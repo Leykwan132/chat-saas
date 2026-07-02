@@ -37,6 +37,10 @@ import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
 import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
 import type { ChannelMediaItem } from "./channelSend";
+import {
+  ensureWorkflowForAgent,
+  workflowHasHumanEscalationNode,
+} from "../workflowCore";
 
 type ResolvedChannelMediaItem = {
   url: string;
@@ -468,11 +472,14 @@ export const internalEscalateConversation = internalMutation({
     if (!conv?.assignedAgentId) return;
 
     const agent = await ctx.db.get(conv.assignedAgentId);
-    if (!agent?.escalationEnabled) {
+    if (agent === null) {
       return;
     }
-
-    const escalationMessage = agent.escalationMessage?.trim();
+    const workflow = await ensureWorkflowForAgent(ctx, agent);
+    const escalationAvailable = await workflowHasHumanEscalationNode(ctx, workflow._id);
+    if (!escalationAvailable) {
+      return;
+    }
     const now = Date.now();
     await ctx.db.patch(args.conversationId, {
       status: "requires_user_input",
@@ -499,17 +506,6 @@ export const internalEscalateConversation = internalMutation({
     await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
       conversationId: args.conversationId,
     });
-
-    if (escalationMessage) {
-      await ctx.scheduler.runAfter(
-        0,
-        internal.chat.inboxActions.internalSendEscalationMessage,
-        {
-          conversationId: args.conversationId,
-          content: escalationMessage,
-        },
-      );
-    }
   },
 });
 
@@ -567,6 +563,9 @@ export const generateAiReplyWorker = internalAction({
     }
 
     const activeBooking = await ctx.runQuery(internal.appointmentBooking.services.listActiveServices, {
+      agentId: conv.assignedAgentId,
+    });
+    await ctx.runMutation(internal.workflowMigrations.ensureLegacyHumanEscalationForAgent, {
       agentId: conv.assignedAgentId,
     });
     const workflowRuntimeContext = await ctx.runQuery(internal.workflowRuntimeContext.loadForAgent, {

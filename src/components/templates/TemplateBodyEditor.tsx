@@ -12,6 +12,8 @@ import {
   findActiveAtTrigger,
 } from '../../../shared/whatsappTemplateParameters';
 import {
+  TEMPLATE_PARAMETER_DROPDOWN_WIDTH,
+  getTemplateParameterDropdownLeft,
   measureCaretDropdownPosition,
   renderEditorText,
   type DropdownPosition,
@@ -139,10 +141,11 @@ export function TemplateBodyEditor({ value, onChange }: TemplateBodyEditorProps)
     if (!rootRef.current) return;
     const rootRect = rootRef.current.getBoundingClientRect();
     const buttonRect = button.getBoundingClientRect();
+    const buttonAnchorLeft = buttonRect.left - rootRect.left + buttonRect.width / 2;
     setActiveTrigger(null);
     setHighlightedParameterIndex(0);
     setDropdownPosition({
-      left: Math.max(buttonRect.left - rootRect.left, 8),
+      left: getTemplateParameterDropdownLeft(buttonAnchorLeft, rootRef.current.clientWidth),
       top: buttonRect.bottom - rootRect.top + 4,
     });
     setParameterOpen((open) => !open);
@@ -234,10 +237,11 @@ export function TemplateBodyEditor({ value, onChange }: TemplateBodyEditorProps)
 
       {parameterOpen && (
         <div
-          className="absolute w-fit min-w-52 max-w-[min(16rem,calc(100%-16px))] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-md"
+          className="absolute max-w-[calc(100%-16px)] rounded-lg border border-border bg-popover p-1.5 text-popover-foreground shadow-md"
           style={{
             left: dropdownPosition.left,
             top: dropdownPosition.top,
+            width: TEMPLATE_PARAMETER_DROPDOWN_WIDTH,
           }}
           role="listbox"
         >
@@ -254,14 +258,14 @@ export function TemplateBodyEditor({ value, onChange }: TemplateBodyEditorProps)
                 onClick={() => insertParameter(parameter.key)}
                 onMouseEnter={() => setHighlightedParameterIndex(index)}
                 className={cn(
-                  'flex flex-col gap-0.5 rounded-md px-3 py-2 text-left transition-colors',
+                  'flex min-w-0 flex-col gap-0.5 rounded-md px-3 py-2 text-left transition-colors',
                   index === highlightedParameterIndex ? 'bg-muted' : 'hover:bg-muted',
                 )}
               >
-                <span className="text-sm font-semibold text-foreground">
+                <span className="truncate text-sm font-semibold text-foreground">
                   @{parameter.key}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                <span className="truncate text-xs text-muted-foreground">
                   {parameter.example}
                 </span>
               </button>

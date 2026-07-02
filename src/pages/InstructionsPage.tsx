@@ -35,7 +35,6 @@ export default function InstructionsPage() {
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
   const [model, setModel] = useState('');
   const [systemPrompt, setSystemPrompt] = useState('');
-  const [escalationEnabled, setEscalationEnabled] = useState(false);
   const [responseLength, setResponseLength] = useState<ResponseLength>('brief');
   const [emojiUse, setEmojiUse] = useState<EmojiUse>('occasional');
   const [formality, setFormality] = useState<Formality>('conversational');
@@ -53,7 +52,6 @@ export default function InstructionsPage() {
     setTemplateKey(agent.templateKey);
     setModel(agent.model);
     setSystemPrompt(agent.systemPrompt);
-    setEscalationEnabled(agent.escalationEnabled ?? false);
     setResponseLength((agent.responseLength ?? 'brief') as ResponseLength);
     setEmojiUse((agent.emojiUse ?? 'occasional') as EmojiUse);
     setFormality((agent.formality ?? 'conversational') as Formality);
@@ -74,16 +72,13 @@ export default function InstructionsPage() {
     formality !== ((agent.formality ?? 'conversational') as Formality) ||
     humorLevel !== ((agent.humorLevel ?? 'light') as HumorLevel)
   ) : false;
-  const hasEscalationChanges = agent ? (
-    escalationEnabled !== (agent.escalationEnabled ?? false)
-  ) : false;
   const savedReplyMode: ReplyMode | null = routingSettings
     ? routingSettings.aiEnabledOnInbound
       ? 'automatic'
       : 'manual'
     : null;
   const hasReplyModeChanges = savedReplyMode !== null && replyMode !== savedReplyMode;
-  const isDirty = hasBasicChanges || hasEscalationChanges || hasReplyModeChanges;
+  const isDirty = hasBasicChanges || hasReplyModeChanges;
   const canPublish = Boolean(
     isDirty &&
     name.trim() &&
@@ -112,15 +107,13 @@ export default function InstructionsPage() {
     setIsPublishing(true);
     setError(null);
     try {
-      if (hasBasicChanges || hasEscalationChanges) {
+      if (hasBasicChanges) {
         await updateAgent({
           agentId: selectedAgentId,
           name,
           model,
           systemPrompt,
           templateKey,
-          escalationEnabled,
-          escalationMessage: undefined,
           responseLength,
           emojiUse,
           formality,
@@ -194,7 +187,6 @@ export default function InstructionsPage() {
         isRoutingSettingsLoading={isRoutingSettingsLoading}
         isPublishing={isPublishing}
         replyMode={replyMode}
-        escalationEnabled={escalationEnabled}
         isTestOpen={isTestOpen}
         onNameChange={setName}
         onModelChange={setModel}
@@ -205,7 +197,6 @@ export default function InstructionsPage() {
         onFormalityChange={setFormality}
         onHumorLevelChange={setHumorLevel}
         onReplyModeChange={setReplyMode}
-        onEscalationEnabledChange={setEscalationEnabled}
         onTestOpenChange={setIsTestOpen}
       />
 

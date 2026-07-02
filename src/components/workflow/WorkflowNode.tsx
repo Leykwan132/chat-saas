@@ -7,6 +7,9 @@ import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
 import { workflowKindIcons } from './workflowCatalog';
 import type { WorkflowPersistedFlowNode } from './workflowTypes';
 
+const hiddenHandleClassName = 'left-1/2 !z-0 opacity-0';
+const sourceHandleClassName = 'left-1/2 !z-20 !size-3 !rounded-full !border !border-border !bg-background transition-colors group-hover:!border-muted-foreground/35';
+
 export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
@@ -18,7 +21,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
       <Handle
         type="target"
         position={Position.Top}
-        className="left-1/2 !z-0 opacity-0"
+        className={hiddenHandleClassName}
         isConnectable={!isEntry}
       />
       <div
@@ -44,12 +47,13 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           </p>
         ) : null}
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="left-1/2 !z-0 opacity-0"
-        isConnectable={!isTerminal}
-      />
+      {!isTerminal ? (
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          className={sourceHandleClassName}
+        />
+      ) : null}
       {(!isTerminal || !isProtected) ? (
         <div className="nodrag nopan absolute left-full top-1/2 z-20 ml-4 flex -translate-y-1/2 items-center gap-2">
           {!isTerminal ? (

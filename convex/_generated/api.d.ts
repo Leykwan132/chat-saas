@@ -158,6 +158,7 @@ import type * as workflowMedia from "../workflowMedia.js";
 import type * as workflowMediaDeletion from "../workflowMediaDeletion.js";
 import type * as workflowMediaInternal from "../workflowMediaInternal.js";
 import type * as workflowMediaShared from "../workflowMediaShared.js";
+import type * as workflowMigrations from "../workflowMigrations.js";
 import type * as workflowReset from "../workflowReset.js";
 import type * as workflowRuntimeContext from "../workflowRuntimeContext.js";
 import type * as workflowValidators from "../workflowValidators.js";
@@ -324,6 +325,7 @@ declare const fullApi: ApiFromModules<{
   workflowMediaDeletion: typeof workflowMediaDeletion;
   workflowMediaInternal: typeof workflowMediaInternal;
   workflowMediaShared: typeof workflowMediaShared;
+  workflowMigrations: typeof workflowMigrations;
   workflowReset: typeof workflowReset;
   workflowRuntimeContext: typeof workflowRuntimeContext;
   workflowValidators: typeof workflowValidators;

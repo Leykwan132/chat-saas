@@ -475,8 +475,6 @@ export function buildAgent(
     name: string;
     model: string;
     systemPrompt: string;
-    escalationEnabled?: boolean;
-    escalationMessage?: string;
     responseLength?: string;
     emojiUse?: string;
     formality?: string;
@@ -490,7 +488,12 @@ export function buildAgent(
 ) {
   const appointmentBookingEnabled = conversationId !== undefined && activeBookingServices.length > 0;
   const defaultBookingTimeZone = normalizeTimeZone(activeBookingServices[0]?.timeZone);
-  const escalationConfigured = agent.escalationEnabled === true;
+  const humanEscalationNodeIds = new Set(
+    workflowRuntimeContext?.nodes
+      .filter((node) => node.kind === "humanEscalation")
+      .map((node) => node.nodeId) ?? [],
+  );
+  const escalationConfigured = humanEscalationNodeIds.size > 0;
   const sendMediaNodeIds = new Set(
     workflowRuntimeContext?.nodes
       .filter((node) => node.kind === "sendImage" || node.kind === "sendFile")
@@ -537,12 +540,16 @@ export function buildAgent(
   if (escalationConfigured) {
     tools.escalateToHuman = createTool({
       description:
-        "Call this tool if you lack confidence in answering the user's question, do not have enough details to answer, or if the user explicitly requests a human agent. Do NOT send any message to the user when escalating — call this tool only. This will pause your automated responses and alert a human teammate to take over.",
+        "Call this tool when the customer's latest message matches a Human escalation workflow node, when you lack confidence in answering, when you do not have enough details to answer, or when the user explicitly requests a human agent. Do NOT send any message to the user when escalating — call this tool only. This will pause automated responses and alert a human teammate to take over.",
       inputSchema: z.object({
         question: z.string().describe("The exact user question or issue you are unsure of or lack detail to answer."),
         context: z.string().describe("The reason or context explaining why you are unsure, what detail is missing, or why the conversation needs a human."),
+        workflowNodeId: z.string().optional().describe("The exact Human escalation workflow node ID that matched, if a node condition matched."),
       }),
-      execute: async (ctx, { question, context }) => {
+      execute: async (ctx, { question, context, workflowNodeId }) => {
+        if (workflowNodeId !== undefined && !humanEscalationNodeIds.has(workflowNodeId as Id<"workflowNodes">)) {
+          throw new Error("Human escalation node is not available in the active workflow");
+        }
         if (conversationId) {
           await ctx.runMutation(internal.chat.inbox.internalEscalateConversation, {
             conversationId,

@@ -129,6 +129,8 @@ When a condition matches a node, follow that node's goal. If several nodes might
 
 For Send Photo/Video and Send Files nodes, call \`sendMedia\` with that node's Node ID only when the incoming condition matches. Do not include internal media IDs, media URLs, or \`[MEDIA:...]\` markers in the customer-facing response; the system sends returned assets separately. Do not call \`sendMedia\` for Q&A, booking, lead qualification, or custom action nodes.
 
+For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
+
 For Book appointment nodes, use only the Services listed on that node. Start a new booking only when the workflow conditions indicate Book appointment or when the customer explicitly asks to book. Reschedule and cancellation requests for an existing appointment may use the booking tools even if the current turn is about changing or cancelling rather than creating a new booking.
 ${buildServiceBoundaryRules()}
 

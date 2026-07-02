@@ -23,6 +23,7 @@ function initTest() {
 async function createPersonalAgent(
   t: ReturnType<typeof initTest>,
   workosUserId: string,
+  options: { escalationEnabled?: boolean } = {},
 ) {
   return await t.run(async (ctx) => {
     const now = Date.now();
@@ -55,6 +56,9 @@ async function createPersonalAgent(
       fileSize: 0,
       userId: workosUserId,
       orgId: "",
+      ...(options.escalationEnabled !== undefined
+        ? { escalationEnabled: options.escalationEnabled }
+        : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -94,6 +98,35 @@ test("ensureForAgent lazily creates one workflow and is idempotent", async () =>
   expect(second.edges).toHaveLength(0);
 });
 
+test("ensureForAgent migrates legacy smart escalation into a workflow node", async () => {
+  const t = initTest();
+  const workosUserId = "user-workflow-legacy-escalation";
+  const { agentId } = await createPersonalAgent(t, workosUserId, {
+    escalationEnabled: true,
+  });
+  const authed = t.withIdentity({ subject: workosUserId });
+
+  const first = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const second = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const humanEscalationNodes = second.nodes.filter(
+    (node) => node.kind === "humanEscalation",
+  );
+  const humanEscalationEdges = second.edges.filter(
+    (edge) => edge.targetNodeId === humanEscalationNodes[0]?._id,
+  );
+
+  expect(second.workflow._id).toBe(first.workflow._id);
+  expect(humanEscalationNodes).toHaveLength(1);
+  expect(humanEscalationNodes[0].title).toBe("Human escalation");
+  expect(humanEscalationEdges).toHaveLength(1);
+  expect(humanEscalationEdges[0].label).toBe("Needs human");
+  await t.run(async (ctx) => {
+    const agent = await ctx.db.get(agentId);
+    expect(agent?.escalationEnabled).toBe(false);
+    expect(agent?.escalationMessage).toBeUndefined();
+  });
+});
+
 test("addNodeAfter adds child nodes without rewiring existing children", async () => {
   const t = initTest();
   const workosUserId = "user-workflow-add";
@@ -127,6 +160,18 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   expect(bookAppointmentNode!.title).toBe("Book appointment");
   expect(bookAppointmentNode!.description).toContain("book only after explicit slot confirmation");
 
+  const withHumanEscalation = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: startNode!._id,
+    kind: "humanEscalation",
+  });
+  const humanEscalationNode = withHumanEscalation.nodes.find(
+    (node) => node.kind === "humanEscalation",
+  );
+  expect(humanEscalationNode).toBeDefined();
+  expect(humanEscalationNode!.title).toBe("Human escalation");
+  expect(humanEscalationNode!.description).toContain("Pause AI replies");
+
   const withCloseConversation = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
@@ -144,6 +189,7 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   ]);
   expect(edgePairs).toContainEqual([startNode!._id, qualifiedLeadsNode!._id]);
   expect(edgePairs).toContainEqual([startNode!._id, bookAppointmentNode!._id]);
+  expect(edgePairs).toContainEqual([startNode!._id, humanEscalationNode!._id]);
   expect(edgePairs).toContainEqual([startNode!._id, closeConversationNode!._id]);
   expect(
     withCloseConversation.edges.some((edge) => edge.sourceNodeId === qualifiedLeadsNode!._id),

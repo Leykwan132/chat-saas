@@ -1,5 +1,4 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -23,9 +22,7 @@ type AgentSetupRoutingPanelProps = {
   isLoading: boolean;
   isPublishing: boolean;
   replyMode: ReplyMode;
-  escalationEnabled: boolean;
   onReplyModeChange: (value: ReplyMode) => void;
-  onEscalationEnabledChange: (value: boolean) => void;
 };
 
 export function AgentSetupRoutingPanel({
@@ -34,9 +31,7 @@ export function AgentSetupRoutingPanel({
   isLoading,
   isPublishing,
   replyMode,
-  escalationEnabled,
   onReplyModeChange,
-  onEscalationEnabledChange,
 }: AgentSetupRoutingPanelProps) {
   const selectedOption = REPLY_MODE_OPTIONS.find((option) => option.value === replyMode);
 
@@ -63,11 +58,11 @@ export function AgentSetupRoutingPanel({
                   <SelectValue>
                     {selectedOption ? (
                       <span className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left">
-                        <span className="truncate text-[13px] font-semibold leading-tight text-foreground">
+                        <span className="shrink-0 text-[13px] font-semibold leading-tight text-foreground">
                           {selectedOption.label}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-right text-[11px] leading-tight text-muted-foreground">
-                          {selectedOption.description}
+                          {selectedOption.selectedDescription}
                         </span>
                       </span>
                     ) : null}
@@ -77,11 +72,11 @@ export function AgentSetupRoutingPanel({
                   <SelectGroup>
                     {REPLY_MODE_OPTIONS.map((option) => (
                       <SelectItem key={option.value} value={option.value} textValue={option.label}>
-                        <span className="flex w-full min-w-0 items-center justify-between gap-3 py-1.5 text-left">
-                          <span className="truncate text-[13px] font-semibold leading-tight text-foreground">
+                        <span className="flex w-full min-w-0 flex-col gap-1 py-1.5 text-left">
+                          <span className="text-[13px] font-semibold leading-tight text-foreground">
                             {option.label}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-right text-[11px] leading-tight text-muted-foreground">
+                          <span className="whitespace-normal text-[11px] leading-snug text-muted-foreground">
                             {option.description}
                           </span>
                         </span>
@@ -91,22 +86,6 @@ export function AgentSetupRoutingPanel({
                 </SelectContent>
               </Select>
             </Field>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={escalationEnabled}
-                  onCheckedChange={onEscalationEnabledChange}
-                  disabled={isPublishing}
-                  className="shrink-0 data-[state=checked]:bg-emerald-600"
-                />
-                <span className="block text-sm font-semibold leading-tight text-foreground">
-                  Smart Escalate
-                </span>
-              </div>
-              <span className="block text-xs leading-snug text-muted-foreground">
-                Pause AI and alert your team when a human is requested or the AI is unsure.
-              </span>
-            </div>
           </div>
         )
       ) : (

@@ -8,7 +8,7 @@ test('workflow add options include media actions after Q&A', () => {
     'sendFile',
     'updateLeadsStatus',
     'bookAppointment',
-    'aiResponds',
+    'humanEscalation',
     'closeConversation',
   ]);
   expect(workflowAddOptions[1]).toMatchObject({

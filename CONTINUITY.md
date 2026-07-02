@@ -36,7 +36,7 @@
 - 2026-06-29T00:49+08:00 [CODE] D021 ACTIVE: Reminders are fixed to one reminder and one selected timing.
 - 2026-06-29T13:12+08:00 [CODE] D030 SUPERSEDED by D042: Book appointment workflow service selection used `allowedAutoBookingServiceIds`.
 - 2026-06-29T13:34+08:00 [CODE] D031 ACTIVE: Shared workflow node setup uses a wide centered Dialog.
-- 2026-06-29T14:40+08:00 [CODE] D033 ACTIVE: Workflow action menu order is `Q&A`, `Qualify leads`, `Book appointment`, `Custom action`, `Close conversation`.
+- 2026-06-29T14:40+08:00 [CODE] D033 SUPERSEDED by D096: Workflow action menu order included `Custom action`.
 - 2026-06-29T14:40+08:00 [CODE] D034 ACTIVE: Workflow action nodes use editable Name, required Goal, and optional incoming Condition; `Close conversation` stays terminal-only.
 - 2026-06-29T14:48+08:00 [CODE] D035 ACTIVE: Q&A nodes default incoming edge condition to `Customer question`.
 - 2026-06-29T14:57+08:00 [CODE] D038 ACTIVE: Persistent workflow node cards cap at 300px wide.
@@ -90,22 +90,28 @@
 - 2026-07-02 [CODE] D088 ACTIVE: Agent Overview visible metric row is four cards: AI-assisted conversation, Total credits spent, Booked appointments, and Human escalation; `Avg Credits per conversation` is not a card or chart mode, and Daily/Cumulative applies only to the four visible metrics.
 - 2026-07-02 [CODE] D089 SUPERSEDED by D090: Agent Overview main trend chart used a 552px plotting area, 15% taller than the previous 480px chart.
 - 2026-07-02 [CODE] D090 ACTIVE: Agent Overview main trend chart uses a 497px plotting area, 10% shorter than the previous 552px chart.
+- 2026-07-02 [CODE] D091 SUPERSEDED by D092: Direct Message workflow nodes briefly showed visible neutral circular connection handles at both top target and bottom source points.
+- 2026-07-02 [CODE] D092 SUPERSEDED by D093: Direct Message workflow nodes showed a smaller neutral 1px circular connection handle only at the valid bottom source point.
+- 2026-07-02 [CODE] D093 SUPERSEDED by D094: Direct Message workflow nodes showed a subtle `size-3` neutral 1px circular connection handle only at the valid bottom source point.
+- 2026-07-02 [CODE] D094 ACTIVE: Direct Message workflow nodes show a subtle `size-3` circular connection handle only at the valid bottom source point, using the softer semantic `border` token; top target handles remain invisible for connection landing.
+- 2026-07-02 [CODE] D095 ACTIVE: Smart human escalation is workflow-owned as a terminal `humanEscalation` node; the node's presence enables `escalateToHuman`, old Agent Setup/Create Agent switches are removed, and legacy `escalationEnabled` agents lazily materialize the node then clear the legacy flag when their workflow/runtime is ensured.
+- 2026-07-02 [CODE] D096 ACTIVE: `Custom action` / `aiResponds` is temporarily removed from addable workflow node options and the add-node validator, while the persisted node kind remains supported for existing saved workflows.
 
 # Done (recent)
+- 2026-07-02 [CODE] Workflow page loading now uses a canvas-shaped skeleton instead of a centered spinner while permissions/workflow graph/lazy workflow creation are loading.
+- 2026-07-02 [CODE] Agent Setup reply mode copy now clarifies `Automatic` as AI replying instantly to every customer message and `Manual` as AI staying off until the team assigns it to reply; the closed select stays one row with a short summary, while dropdown options show fuller descriptions.
+- 2026-07-02 [CODE] Custom action is no longer addable from the workflow plus menu or Convex add-node mutation; existing `aiResponds` nodes remain renderable/loadable.
+- 2026-07-02 [CODE] Human escalation moved into Direct Message Workflow as an addable `Human escalation` node with default `Needs human` condition, node-gated runtime/tool prompt, legacy lazy migration, old Smart Escalate setup/create UI removal, and updated workflow/escalation tests.
+- 2026-07-02 [CODE] Create Template body `@` parameter menu now uses a fixed 240px width, clamps inside the editor, and places its left edge 16px left of the live caret/button anchor.
 - 2026-07-01T09:58+08:00 [CODE] Create Template top section is unframed, with Template name, WhatsApp type, and category stacked as full-width one-line fields; all Create Template dropdowns now match Agent Setup select styling, including the nested Buttons Type dropdown; Template name and Button Text inputs use matching 48px sizing/padding; submit keeps selected media visible and hides media upload progress; Quick Reply preview buttons render a reply icon; Buttons render above Footer; language remains implicit English.
-- 2026-07-01T01:05+08:00 [CODE] Message Templates category/status filter dropdown buttons use 48px rounded select styling with trigger-width dropdown content and grouped items.
 - 2026-07-01T02:01+08:00 [CODE] WhatsApp template submission now converts R2 header media to Meta header handles via `/{app-id}/uploads` plus `/upload:<session>` binary upload before calling `/message_templates`; upload IDs are normalized and returned `h` handles are required.
-- 2026-07-01T16:32+08:00 [CODE] WhatsApp template builder now supports registry-backed `@` parameters, named Meta examples, WhatsApp `*bold*`, known-parameter-only inline variable tooltips, Follow-up/Reminder/Broadcast presets, prepared media IDs for PDF/JPEG/JPG/PNG/MP4 headers, and line-tab detail editing.
-- 2026-07-01T22:27+08:00 [CODE] Template Detail removed visible metadata and tabs, places the three analytics cards below the template title and above the editable Header section, and reuses Create Template header, footer, and buttons sections with matching skeletons.
-- 2026-07-02 [CODE] Sidebar `Bookings` now contains Calendar, Availability, and Services; Channels sits under `AI Agent` directly below Knowledge Base.
-- 2026-07-02 [CODE] Agent Overview added at `/dashboard/:agentId/overview` as the first ungrouped sidebar item, with range-filtered summary query, clickable value-first five-card metric grid starting with AI-assisted conversation and ending with Human escalation, trigger-backed aggregate facts for those two counts, Daily/Cumulative smooth trend chart controls inside the chart header, Analytics-style common topics/customer sentiment charts, and Analytics no longer duplicates the old Advanced Analytics topics section.
 
 # Working set
-- 2026-06-30T01:12+08:00 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/schema.ts`.
+- 2026-07-02 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/workflowCore.ts`, `convex/workflowMigrations.ts`, `convex/schema.ts`.
 - 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.ts`, `convex/workflowMediaInternal.ts`, `convex/workflowMediaShared.ts`, `convex/workflowMediaDeletion.ts`, `convex/workflowRuntimeContext.ts`.
 - 2026-06-30T15:08+08:00 [CODE] `convex/chat/threads.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/inbox.ts`, `convex/chat/inboxActions.ts`, `convex/chat/inboxMessageMapping.ts`, `convex/chat/channelSend.ts`, `convex/chat/channelSend.test.ts`.
 - 2026-06-30T15:16+08:00 [CODE] `src/components/workflow/WorkflowSendMediaSection.tsx`, `WorkflowMediaUploader.tsx`, `WorkflowMediaGrid.tsx`, `WorkflowImagePreview.tsx`, `WorkflowMediaKindBadge.tsx`, `WorkflowLegacyMediaImport.tsx`.
-- 2026-06-30T01:12+08:00 [CODE] `src/pages/WorkflowPage.tsx`, `src/pages/KnowledgeBasePage.tsx`, `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`.
+- 2026-07-02 [CODE] `src/pages/WorkflowPage.tsx`, `src/components/workflow/WorkflowPageSkeleton.tsx`, `src/pages/KnowledgeBasePage.tsx`, `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`.
 - 2026-06-30T01:57+08:00 [CODE] `src/components/workflow/WorkflowInspector.tsx`.
 - 2026-06-30T02:17+08:00 [CODE] `src/components/workflow/WorkflowNode.tsx`, `WorkflowAutomationNode.tsx`, `WorkflowAutomationStepNode.tsx`.
 - 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.test.ts`, `convex/workflowMediaCleanup.test.ts`, `convex/workflowActions.test.ts`, `src/components/workflow/workflowCatalog.test.tsx`.
@@ -119,11 +125,6 @@
 
 # Receipts
 - 2026-07-02 [TOOL] Compacted older receipts: Node 22 targeted lint/typecheck/vitest/codegen, `git diff --check`, and LOC checks passed across workflow media, template media, sidebar regrouping, Analytics cleanup, and Agent Overview foundation/chart/topic work before the entries below.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted Overview `bunx eslint` and `bunx tsc -b` passed after replacing the visible `AI messages sent` metric/chart option with escalation-backed `Needs attention`.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-overview/AgentOverviewTrendChart.tsx`, `git diff --check`, and LOC checks passed after increasing Overview main trend chart plotting height to 400px.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted Overview trend/page `bunx eslint`, `git diff --check`, LOC checks, and stale dropdown scans passed after removing the graph top-right metric dropdown.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx vitest run src/components/agent-overview/agentOverviewTrendModel.test.ts` (2 tests), targeted Overview eslint, `bunx tsc -b`, `git diff --check`, auto-width selector scan, and LOC checks passed after adding Daily/Cumulative trend mode.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-overview/AgentOverviewTrendChart.tsx`, `git diff --check`, and LOC checks passed after removing the extra trend title-to-graph gap.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx vitest run src/components/agent-overview/agentOverviewTrendModel.test.ts` (2 tests), targeted Overview eslint, `bunx tsc -b`, `git diff --check`, targeted trailing-whitespace/stale-five-card scans, and LOC checks passed after adding Total conversations as the first Overview metric/card-chart mode.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx vitest run src/components/agent-overview/agentOverviewTrendModel.test.ts` (2 tests), targeted Overview eslint, `bunx tsc -b`, `git diff --check`, stale Needs-attention/six-card scans, trailing-whitespace scan, and LOC checks passed after removing the Needs attention card/chart mode.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-overview/AgentOverviewTopicsAndSentiment.tsx`, `git diff --check`, and LOC check passed after moving the Common Topics tooltip conversation count above the title.
@@ -141,3 +142,12 @@
 - 2026-07-02 [TOOL] Node 22.22.0 targeted Overview trend-model Vitest (2 tests), targeted Overview frontend eslint, `git diff --check`, stale visible-average scan, and LOC checks passed after removing Avg Credits per conversation as a card/chart mode.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-overview/AgentOverviewTrendChart.tsx`, `git diff --check`, and LOC checks passed after increasing the Overview main chart plotting height from 480px to 552px.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-overview/AgentOverviewTrendChart.tsx`, `git diff --check`, and LOC checks passed after reducing the Overview main chart plotting height from 552px to 497px.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/workflow/WorkflowNode.tsx`, `git diff --check`, and LOC check passed after making Direct Message workflow connection handles visible as neutral circles.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/workflow/WorkflowNode.tsx`, `git diff --check`, and LOC check passed after limiting the visible Direct Message workflow handle to a smaller, thinner bottom source circle.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/workflow/WorkflowNode.tsx`, `git diff --check`, and LOC check passed after reducing the Direct Message workflow bottom source handle to `size-3` and removing its shadow.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/workflow/WorkflowNode.tsx`, `git diff --check`, and LOC check passed after softening the Direct Message workflow bottom source handle border to the semantic `border` token.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted template body editor `bunx eslint`, `git diff --check`, and template LOC check passed after moving the Create Template `@` dropdown left edge to 16px before the caret/button anchor.
+- 2026-07-02 [TOOL] Node 22.22.0 `bunx convex codegen`, targeted workflow/escalation Vitest (15 tests), `bunx tsc -b`, narrower touched backend/workflow eslint, and `git diff --check` passed after making Human escalation workflow-node-owned. Broad touched-file eslint still reports pre-existing `react-hooks/set-state-in-effect` errors in `WorkflowInspector`, `CreateAgentPage`, and `InstructionsPage`.
+- 2026-07-02 [TOOL] Node 22.22.0 `bunx convex codegen`, targeted `bunx vitest run convex/workflowActions.test.ts src/components/workflow/workflowCatalog.test.tsx` (6 tests), targeted workflow eslint, and `git diff --check` passed after removing Custom action from addable workflow nodes.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/agent-setup/agentSetupOptions.ts src/components/agent-setup/AgentSetupRoutingPanel.tsx` and `git diff --check` passed after clarifying Agent Setup reply mode copy and keeping the selected value one row.
+- 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/WorkflowPage.tsx src/components/workflow/WorkflowPageSkeleton.tsx`, `git diff --check`, and LOC check passed after replacing Workflow loading spinner with skeleton.

@@ -8,6 +8,7 @@ export const workflowNodeKindValidator = v.union(
   v.literal("sendFile"),
   v.literal("sendText"),
   v.literal("closeConversation"),
+  v.literal("humanEscalation"),
   v.literal("updateLeadsStatus"),
   v.literal("bookAppointment"),
   v.literal("subagent"),
@@ -25,6 +26,6 @@ export const addableWorkflowNodeKindValidator = v.union(
   v.literal("sendFile"),
   v.literal("updateLeadsStatus"),
   v.literal("bookAppointment"),
-  v.literal("aiResponds"),
+  v.literal("humanEscalation"),
   v.literal("closeConversation"),
 );

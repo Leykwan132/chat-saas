@@ -7,9 +7,9 @@ import { api } from '../../convex/_generated/api';
 import type { AddableWorkflowNodeKind } from '../../shared/workflows';
 import { Permission } from '../../shared/permissions';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Spinner } from '@/components/ui/spinner';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { WorkflowInspector } from '@/components/workflow/WorkflowInspector';
+import { WorkflowPageSkeleton } from '@/components/workflow/WorkflowPageSkeleton';
 import { workflowGraphToFlow } from '@/components/workflow/workflowFlowModel';
 import { getWorkflowCleanupPositions } from '@/components/workflow/workflowLayout';
 
@@ -250,11 +250,7 @@ export default function WorkflowPage() {
   }
 
   if (permissionsLoading || graph === undefined || graph === null) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center bg-background">
-        <Spinner className="size-8 text-muted-foreground" />
-      </div>
-    );
+    return <WorkflowPageSkeleton />;
   }
 
   return (

@@ -29,7 +29,6 @@ import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { RequireOrganization } from '@/components/RequireOrganization';
-import { Switch } from '@/components/ui/switch';
 import { ModelPicker } from '@/components/ModelPicker';
 import { cn } from '@/lib/utils';
 import { TypingAnimation as LoopingTypingAnimation } from '@/components/ui/typing-animation';
@@ -115,9 +114,6 @@ function CreateAgentForm() {
   const [name, setName] = useState('');
   const [templateKey, setTemplateKey] = useState<AgentTemplateKey>('blank');
   const [model, setModel] = useState('');
-  const [escalationEnabled, setEscalationEnabled] = useState(false);
-  const [sendEscalationMsg, setSendEscalationMsg] = useState(false);
-  const [escalationMessage, setEscalationMessage] = useState('');
   const [createdAgentId, setCreatedAgentId] = useState<Id<'agents'> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creatingPhase, setCreatingPhase] = useState(0);
@@ -153,8 +149,6 @@ function CreateAgentForm() {
               model,
               systemPrompt: AGENT_TEMPLATES[templateKey].prompt,
               templateKey,
-              escalationEnabled,
-              escalationMessage: (escalationEnabled && sendEscalationMsg) ? escalationMessage : undefined,
             });
             setCreatedAgentId(agentId);
             setCreatingPhase(3);
@@ -439,62 +433,6 @@ function CreateAgentForm() {
                           Note: You can customize response length, emoji use, formality, and humor level later in settings.
                         </span>
                       </div>
-
-                      <div className="border-t border-border/50 my-1" />
-
-                      <div className="flex flex-col gap-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <span className="block text-base font-semibold leading-tight text-foreground">
-                              Smart Escalate
-                            </span>
-                            <span className="mt-0.5 block text-sm leading-snug text-muted-foreground">
-                              Pause AI and alert your team when a human is requested or the AI is unsure.
-                            </span>
-                          </div>
-                          <Switch
-                            checked={escalationEnabled}
-                            onCheckedChange={setEscalationEnabled}
-                            className="mt-1 shrink-0 data-[state=checked]:bg-emerald-600"
-                          />
-                        </div>
-
-                        {escalationEnabled && (
-                          <div className="space-y-4 pl-4 border-l-2 border-border/80">
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex flex-col gap-0.5">
-                                <span className="text-xs font-semibold text-foreground">
-                                  Send automated message
-                                </span>
-                                <span className="text-[11px] text-muted-foreground">
-                                  Send a response to the customer when handoff is triggered.
-                                </span>
-                              </div>
-                              <Switch
-                                checked={sendEscalationMsg}
-                                onCheckedChange={setSendEscalationMsg}
-                                className="data-[state=checked]:bg-emerald-600"
-                              />
-                            </div>
-
-                            {sendEscalationMsg && (
-                              <div className="flex flex-col gap-2">
-                                <span className="text-xs font-semibold text-muted-foreground">
-                                  Escalation Message
-                                </span>
-                                <textarea
-                                  value={escalationMessage}
-                                  onChange={(e) => setEscalationMessage(e.target.value)}
-                                  placeholder="e.g., We've notified our support team and a human agent will be with you shortly."
-                                  className="min-h-[4rem] resize-none rounded-lg border border-border bg-background px-3 py-2 text-xs leading-normal outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/30"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="border-t border-border/50 my-1" />
 
                       <div className="flex items-center justify-between">
                         <button

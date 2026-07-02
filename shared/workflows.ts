@@ -6,6 +6,7 @@ export const WORKFLOW_NODE_KINDS = [
   'sendFile',
   'sendText',
   'closeConversation',
+  'humanEscalation',
   'updateLeadsStatus',
   'bookAppointment',
   'subagent',
@@ -25,7 +26,7 @@ export const ADDABLE_WORKFLOW_NODE_KINDS = [
   'sendFile',
   'updateLeadsStatus',
   'bookAppointment',
-  'aiResponds',
+  'humanEscalation',
   'closeConversation',
 ] as const;
 
@@ -36,6 +37,7 @@ export const WORKFLOW_CONDITION_EDGE_LABEL = 'Condition';
 
 export const WORKFLOW_TERMINAL_NODE_KINDS = [
   'closeConversation',
+  'humanEscalation',
   'end',
 ] as const satisfies readonly WorkflowNodeKind[];
 
@@ -46,6 +48,7 @@ export const WORKFLOW_ACTION_NODE_KINDS = [
   'aiResponds',
   'updateLeadsStatus',
   'bookAppointment',
+  'humanEscalation',
 ] as const satisfies readonly WorkflowNodeKind[];
 
 export const WORKFLOW_NODE_META: Record<
@@ -76,6 +79,10 @@ export const WORKFLOW_NODE_META: Record<
   },
   closeConversation: {
     label: 'Close conversation',
+  },
+  humanEscalation: {
+    label: 'Human escalation',
+    description: 'Pause AI replies and alert a teammate when the customer needs a human or the AI cannot answer with confidence.',
   },
   updateLeadsStatus: {
     label: 'Qualify leads',
@@ -124,6 +131,10 @@ export const WORKFLOW_NODE_DEFAULT_CONDITIONS: Partial<
   bookAppointment: {
     label: 'Ready to book',
     detail: 'If the user is very sure about their interest in the services, proceed to book an appointment.',
+  },
+  humanEscalation: {
+    label: 'Needs human',
+    detail: 'If the customer asks for a human teammate, the AI is unsure, or the workflow cannot answer safely, pause AI replies and escalate to the team.',
   },
 };
 

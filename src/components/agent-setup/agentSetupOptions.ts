@@ -59,16 +59,18 @@ export const REPLY_MODE_OPTIONS: Array<{
   value: ReplyMode;
   label: string;
   description: string;
+  selectedDescription: string;
   whenToUse: Array<{ title: string; description: string }>;
 }> = [
   {
     value: 'automatic',
     label: 'Automatic',
-    description: 'Instant replies',
+    description: 'AI replies instantly to every customer message.',
+    selectedDescription: 'AI replies instantly',
     whenToUse: [
       {
-        title: 'Fast first response',
-        description: 'Reply right away without waiting for a teammate.',
+        title: 'Always-on replies',
+        description: 'Let AI answer each new customer message as soon as it arrives.',
       },
       {
         title: 'After-hours coverage',
@@ -83,11 +85,12 @@ export const REPLY_MODE_OPTIONS: Array<{
   {
     value: 'manual',
     label: 'Manual',
-    description: 'Teammate starts it',
+    description: 'AI stays off until your team assigns it to reply.',
+    selectedDescription: 'Assign AI to reply',
     whenToUse: [
       {
-        title: 'Human review first',
-        description: 'Check the message before AI joins the conversation.',
+        title: 'Assign AI when ready',
+        description: 'Review the conversation first, then let AI take over replies.',
       },
       {
         title: 'High-value leads',

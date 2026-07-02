@@ -7,6 +7,20 @@ export type DropdownPosition = {
   top: number;
 };
 
+export const TEMPLATE_PARAMETER_DROPDOWN_WIDTH = 240;
+
+const TEMPLATE_PARAMETER_DROPDOWN_GUTTER = 8;
+const TEMPLATE_PARAMETER_DROPDOWN_CURSOR_OFFSET = 16;
+
+export function getTemplateParameterDropdownLeft(anchorLeft: number, containerWidth: number) {
+  const targetLeft = anchorLeft - TEMPLATE_PARAMETER_DROPDOWN_CURSOR_OFFSET;
+  const maxLeft = Math.max(
+    containerWidth - TEMPLATE_PARAMETER_DROPDOWN_WIDTH - TEMPLATE_PARAMETER_DROPDOWN_GUTTER,
+    TEMPLATE_PARAMETER_DROPDOWN_GUTTER,
+  );
+  return Math.min(Math.max(targetLeft, TEMPLATE_PARAMETER_DROPDOWN_GUTTER), maxLeft);
+}
+
 function lineHeightPx(style: CSSStyleDeclaration) {
   const explicit = Number.parseFloat(style.lineHeight);
   if (Number.isFinite(explicit)) return explicit;
@@ -55,10 +69,7 @@ export function measureCaretDropdownPosition(
     textarea.scrollTop +
     lineHeightPx(style) +
     4;
-  const left = Math.min(
-    Math.max(rawLeft, 8),
-    Math.max(root.clientWidth - 264, 8),
-  );
+  const left = getTemplateParameterDropdownLeft(rawLeft, root.clientWidth);
   const top = Math.max(rawTop, 8);
 
   mirror.remove();

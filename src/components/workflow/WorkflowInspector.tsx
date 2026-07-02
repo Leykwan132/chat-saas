@@ -100,6 +100,7 @@ export function WorkflowInspector({
   const hasMediaSection = isSendMediaAction || isSendFileAction;
   const isCustomAction = node?.kind === 'aiResponds';
   const isBookAppointmentAction = node?.kind === 'bookAppointment';
+  const isHumanEscalationAction = node?.kind === 'humanEscalation';
   const hasGoalField = isAction || Boolean(node?.description);
   const nameLabel = isAction ? 'Name' : 'Title';
   const goalLabel = isAction ? 'Goal' : 'Description';
@@ -117,6 +118,9 @@ export function WorkflowInspector({
   } else if (isCustomAction) {
     conditionNamePlaceholder = 'e.g., Pricing question';
     conditionDetailPlaceholder = 'If the customer asks about...';
+  } else if (isHumanEscalationAction) {
+    conditionNamePlaceholder = 'e.g., Needs human';
+    conditionDetailPlaceholder = 'If the customer asks for a human or the AI cannot answer safely...';
   }
   const contentGridClassName = conditionEnabled
     ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'

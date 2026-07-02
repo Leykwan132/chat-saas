@@ -177,6 +177,9 @@ export const generatePlaygroundResponseAsync = internalAction({
           agentId: args.agentId,
         })
       : { services: [] };
+    await ctx.runMutation(internal.workflowMigrations.ensureLegacyHumanEscalationForAgent, {
+      agentId: args.agentId,
+    });
     const workflowRuntimeContext = await ctx.runQuery(
       internal.workflowRuntimeContext.loadForAgent,
       { agentId: args.agentId },

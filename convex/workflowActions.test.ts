@@ -78,7 +78,7 @@ test("plus actions create action nodes with expected default condition labels", 
     "sendFile",
     "updateLeadsStatus",
     "bookAppointment",
-    "aiResponds",
+    "humanEscalation",
     "closeConversation",
   ]);
 
@@ -114,6 +114,12 @@ test("plus actions create action nodes with expected default condition labels", 
       expect(actionNode!.description).toContain("node-owned files or documents");
       expect(actionEdge?.label).toBeUndefined();
       expect(actionEdge?.detail).toBeUndefined();
+    }
+    if (kind === "humanEscalation") {
+      expect(actionNode!.title).toBe("Human escalation");
+      expect(actionNode!.description).toContain("Pause AI replies");
+      expect(actionEdge?.label).toBe("Needs human");
+      expect(actionEdge?.detail).toContain("pause AI replies and escalate");
     }
   }
 });
@@ -238,7 +244,7 @@ test("resetForAgent clears workflow graph back to the entry node", async () => {
   expect(reset.edges).toHaveLength(0);
 });
 
-test("close conversation nodes cannot create outgoing edges", async () => {
+test("terminal workflow nodes cannot create outgoing edges", async () => {
   const t = initTest();
   const workosUserId = "user-workflow-close-terminal";
   const { agentId } = await createPersonalAgent(t, workosUserId);
@@ -275,6 +281,23 @@ test("close conversation nodes cannot create outgoing edges", async () => {
     authed.mutation(api.workflows.connectNodes, {
       agentId,
       sourceNodeId: closeConversationNode!._id,
+      targetNodeId: qualifiedLeadsNode!._id,
+    }),
+  ).rejects.toThrow("Cannot connect from a terminal node");
+
+  const withHumanEscalation = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: startNode!._id,
+    kind: "humanEscalation",
+  });
+  const humanEscalationNode = withHumanEscalation.nodes.find(
+    (node) => node.kind === "humanEscalation",
+  );
+
+  await expect(
+    authed.mutation(api.workflows.connectNodes, {
+      agentId,
+      sourceNodeId: humanEscalationNode!._id,
       targetNodeId: qualifiedLeadsNode!._id,
     }),
   ).rejects.toThrow("Cannot connect from a terminal node");

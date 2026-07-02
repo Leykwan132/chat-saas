@@ -28,7 +28,6 @@ type AgentSetupPanelsProps = {
   isRoutingSettingsLoading: boolean;
   isPublishing: boolean;
   replyMode: ReplyMode;
-  escalationEnabled: boolean;
   agentId: Id<'agents'>;
   isTestOpen: boolean;
   onNameChange: (value: string) => void;
@@ -40,7 +39,6 @@ type AgentSetupPanelsProps = {
   onFormalityChange: (value: Formality) => void;
   onHumorLevelChange: (value: HumorLevel) => void;
   onReplyModeChange: (value: ReplyMode) => void;
-  onEscalationEnabledChange: (value: boolean) => void;
   onTestOpenChange: (open: boolean) => void;
 };
 
@@ -58,7 +56,6 @@ export function AgentSetupPanels({
   isRoutingSettingsLoading,
   isPublishing,
   replyMode,
-  escalationEnabled,
   agentId,
   isTestOpen,
   onNameChange,
@@ -70,7 +67,6 @@ export function AgentSetupPanels({
   onFormalityChange,
   onHumorLevelChange,
   onReplyModeChange,
-  onEscalationEnabledChange,
   onTestOpenChange,
 }: AgentSetupPanelsProps) {
   return (
@@ -109,9 +105,7 @@ export function AgentSetupPanels({
           isLoading={isRoutingSettingsLoading}
           isPublishing={isPublishing}
           replyMode={replyMode}
-          escalationEnabled={escalationEnabled}
           onReplyModeChange={onReplyModeChange}
-          onEscalationEnabledChange={onEscalationEnabledChange}
         />
       </aside>
       <AgentPlaygroundPanel
