@@ -100,13 +100,13 @@
 - 2026-07-02 [CODE] D098 ACTIVE: Agent Overview mock snapshot mode and mock data module are removed; Overview always uses live Convex summary and credit usage queries.
 
 # Done (recent)
+- 2026-07-03 [CODE] Landing page `Our numbers` stats use the motion rolling-digit `NumberTicker` with locale comma formatting and lighter medium-weight numerals; stats query/rendering moved into a dedicated landing component and the ticker lives at `src/components/motion/number-ticker.tsx`.
 - 2026-07-03 [CODE] Landing feature showcase order is Natural Interaction, Modern Workflows, Auto Booking, Auto Lead Analysis, Advanced Analytics, Role Based Access Control; Modern Workflows uses simple five-minute setup copy, Auto Booking emphasizes collecting relevant details and securing key-customer bookings, and Auto Lead Assign/Human Escalation/Broadcast were removed.
 - 2026-07-02 [CODE] Landing page hero/demo images now use the new storage SVGs: desktop `https://storage.kilobot.app/Kilo%20-%20Landing%20Desktop%20-%202.svg` and mobile `https://storage.kilobot.app/Kilobot%20Landing%20-%20Mobile%20-%202.svg`.
 - 2026-07-02 [CODE] Agent Overview mock snapshot mode was removed; the page no longer accepts URL-gated mock data and renders live Common Topics / Customer Sentiment again.
 - 2026-07-02 [CODE] Workflow page loading now uses a canvas-shaped skeleton instead of a centered spinner while permissions/workflow graph/lazy workflow creation are loading.
 - 2026-07-02 [CODE] Agent Setup reply mode copy now clarifies `Automatic` as AI replying instantly to every customer message and `Manual` as AI staying off until the team assigns it to reply; the closed select stays one row with a short summary, while dropdown options show fuller descriptions.
 - 2026-07-02 [CODE] Custom action is no longer addable from the workflow plus menu or Convex add-node mutation; existing `aiResponds` nodes remain renderable/loadable.
-- 2026-07-02 [CODE] Human escalation moved into Direct Message Workflow as an addable `Human escalation` node with default `Needs human` condition, node-gated runtime/tool prompt, legacy lazy migration, old Smart Escalate setup/create UI removal, and updated workflow/escalation tests.
 
 # Working set
 - 2026-07-02 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/workflowCore.ts`, `convex/workflowMigrations.ts`, `convex/schema.ts`.
@@ -120,7 +120,7 @@
 - 2026-07-01T14:25+08:00 [CODE] `src/pages/CreateTemplatePage.tsx`, `src/components/WhatsAppTemplatePreview.tsx`, `src/components/templates/*`.
 - 2026-07-01T14:25+08:00 [CODE] `convex/schema.ts`, `convex/whatsappTemplates.ts`, `convex/whatsappTemplatesAction.ts`, `convex/whatsappTemplateUpdate.ts`, `convex/whatsappTemplateMediaPool.ts`, `convex/whatsappTemplateSendPayload.ts`, `convex/whatsappBroadcast.ts`, `convex/broadcastPool.ts`, `convex/followUpPool.ts`, `convex/media/r2Client.ts`.
 - 2026-07-02 [CODE] `convex/agentOverview.ts`, `convex/agentOverviewModel.ts`, `convex/agentOverviewDaily.ts`, `convex/agentOverviewMessages.ts`, `convex/agentOverviewSentiment.ts`, `convex/agentOverviewTopics.ts`, `convex/schema.ts`, `src/pages/AgentOverviewPage.tsx`, `src/components/agent-overview/*`, `src/pages/AnalyticsPage.tsx`, `src/components/analytics/TeamAnalyticsContent.tsx`, `src/components/analytics/UsageAnalyticsContent.tsx`.
-- 2026-07-03 [CODE] `src/pages/LandingPage.tsx`.
+- 2026-07-03 [CODE] `src/pages/LandingPage.tsx`, `src/components/landing/LandingStatsSection.tsx`, `src/components/motion/number-ticker.tsx`.
 
 # Open questions
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
@@ -140,3 +140,4 @@
 - 2026-07-02 [TOOL] Source scan found no remaining Agent Overview mock module, mock URL flag, or `useMockData` references after removing mock snapshot mode.
 - 2026-07-02 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx` and `git diff --check` passed after replacing the landing desktop and mobile image URLs; `LandingPage.tsx` remains an existing 614-line file.
 - 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx`, `git diff --check`, and landing feature scan passed after updating Auto Booking copy and restoring Role Based Access Control as the final landing feature option.
+- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx src/components/landing/LandingStatsSection.tsx src/components/motion/number-ticker.tsx` and `git diff --check` passed after wiring homepage stats to the motion NumberTicker and lightening the numeral typography.

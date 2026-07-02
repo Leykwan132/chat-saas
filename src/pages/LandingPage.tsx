@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
-import { useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import {
   ArrowRight,
   Check,
@@ -11,10 +9,10 @@ import {
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { StatsSection } from '@/components/landing/LandingStatsSection';
 import { BlurFade } from '@/components/ui/blur-fade';
 import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
-import { NumberTicker } from '@/components/ui/number-ticker';
 
 
 
@@ -474,61 +472,6 @@ function ComparisonSection() {
               </ul>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-
-function StatsSection() {
-  const aggregates = useQuery(api.agentUsage.getLifetimeModelUsage);
-  const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
-
-  const totalTokens = aggregates?.reduce((sum, item) => sum + item.totalTokens, 0) ?? 0;
-  const modelsCount = supportedModels?.length ?? 0;
-  const businessesOnboarded = 10;
-
-  const stats = [
-    {
-      value: modelsCount,
-      label: 'Models Supported',
-    },
-    {
-      value: totalTokens,
-      label: 'Total Token Used',
-    },
-    {
-      value: businessesOnboarded,
-      label: 'Businesses Onboarded',
-    },
-  ];
-
-  return (
-    <section className="bg-zinc-50/20 dark:bg-[#060606]/20 py-24 px-6 sm:py-32 sm:px-8">
-      <div className="mx-auto max-w-6xl">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">
-          <SectionHeading
-            title="Our numbers"
-            className="mx-auto text-center items-center"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 sm:gap-16 text-center">
-          {stats.map((stat, idx) => (
-            <div 
-              key={idx} 
-              className="flex flex-col items-center gap-6 animate-fade-in"
-            >
-              <div className="text-5xl sm:text-6xl md:text-7xl font-semibold tracking-tighter text-zinc-950 dark:text-white font-title select-none leading-none flex items-center justify-center">
-                <NumberTicker value={stat.value} className="text-zinc-950 dark:text-white font-semibold font-title" />
-              </div>
-              <div className="text-sm sm:text-base font-semibold text-zinc-700 dark:text-zinc-300 leading-relaxed font-sans max-w-xs mx-auto">
-                {stat.label}
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     </section>
