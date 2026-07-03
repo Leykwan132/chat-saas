@@ -1,6 +1,7 @@
 import { cn } from '@/lib/utils';
 
 export type PlanPickerDensity = 'default' | 'compact';
+export type PlanPickerCompactSpacing = 'default' | 'roomy';
 
 /** Shared shell for pricing cards, add-ons, and comparison tables. */
 export const pricingTableShellClass =
@@ -16,7 +17,7 @@ export function pricingColumnClass(isEnterprise?: boolean) {
 export function pricingColumnDividerClass(isEnterprise?: boolean) {
   return cn(
     'border-border/70',
-    isEnterprise ? 'border-white/10' : 'border-border/70',
+    isEnterprise ? 'border-zinc-700/60' : 'border-border/70',
   );
 }
 
@@ -36,7 +37,7 @@ export function pricingDottedUnderlineClass(isEnterprise?: boolean, isCompact?: 
 }
 
 export function pricingSectionBorderClass(isEnterprise?: boolean) {
-  return cn(isEnterprise ? 'border-white/10' : 'border-border/60');
+  return cn(isEnterprise ? 'border-zinc-700/60' : 'border-border/60');
 }
 
 export const pricingSquareBulletClass =

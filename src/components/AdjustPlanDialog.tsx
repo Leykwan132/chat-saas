@@ -61,7 +61,7 @@ export function AdjustPlanDialog({
         cancelPath: planReturnPath,
       });
       if (session?.url) {
-        window.location.href = session.url;
+        window.location.assign(session.url);
       } else {
         toast.error('Could not initiate checkout. Please try again.');
       }
@@ -81,7 +81,7 @@ export function AdjustPlanDialog({
         returnPath: planReturnPath,
       });
       if (session?.url) {
-        window.location.href = session.url;
+        window.location.assign(session.url);
       } else {
         toast.error('Could not load billing portal.');
       }
@@ -105,8 +105,8 @@ export function AdjustPlanDialog({
           'data-open:zoom-in-100 data-closed:zoom-out-100',
         )}
       >
-        <div className="flex min-h-0 flex-1 flex-col justify-start px-4 pt-12 pb-8 sm:px-8 sm:pt-16 sm:pb-10">
-          <div className="mx-auto flex w-full max-w-[96rem] flex-col gap-5">
+        <div className="flex min-h-0 flex-1 flex-col justify-start px-4 py-10 sm:px-8 sm:py-12 lg:justify-center">
+          <div className="mx-auto flex w-full max-w-[96rem] flex-col gap-7">
             <DialogHeader className="shrink-0 items-center text-center">
               <DialogTitle className="font-title text-3xl font-semibold tracking-tight sm:text-4xl">
                 Choose your plan
@@ -121,6 +121,7 @@ export function AdjustPlanDialog({
               <SubscriptionPlanPicker
                 variant="pricing"
                 density="compact"
+                compactSpacing="roomy"
                 enterpriseLayout="column"
                 includeEnterprise
                 billingInterval={billingInterval}

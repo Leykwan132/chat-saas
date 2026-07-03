@@ -18,6 +18,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { isValidEmailFormat } from '../../shared/emailValidation';
+import { earlyAdopterFaqs } from '@/content/earlyAdopterFaqs';
 
 const teamSizeOptions = [
   '1 (Just me)',
@@ -44,7 +45,6 @@ export default function EarlyUserPage() {
   const [teamSize, setTeamSize] = useState('');
   const [useCase, setUseCase] = useState('');
   const [channels, setChannels] = useState<string[]>([]);
-  const [feedbackCommitted, setFeedbackCommitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
@@ -87,18 +87,13 @@ export default function EarlyUserPage() {
       toast.error('Please describe your use case.');
       return;
     }
-    if (!feedbackCommitted) {
-      toast.error('Please agree to provide early feedback.');
-      return;
-    }
 
     setIsSubmitting(true);
     try {
       const details = [
         `Team Size: ${teamSize}`,
         `Use Case: ${useCase.trim()}`,
-        `Requested Channels: ${channels.length > 0 ? channels.join(', ') : 'None selected'}`,
-        `Feedback Committed: Yes`
+        `Requested Channels: ${channels.length > 0 ? channels.join(', ') : 'None selected'}`
       ].join('\n');
 
       await submitContactRequest({
@@ -117,29 +112,6 @@ export default function EarlyUserPage() {
       setIsSubmitting(false);
     }
   };
-
-  const faqs = [
-    {
-      question: "What is the Early Adopter Program?",
-      answer: "It is a beta-testing cohort where you get full access to our Growth plan completely free for a year in exchange for testing Kilobot and sharing your honest feedback."
-    },
-    {
-      question: "How does the 1-year free Growth plan work?",
-      answer: "Once accepted, we will upgrade your account. You get 10 AI agents, 5,000 monthly credits, calendar services, and integrations free for 12 months."
-    },
-    {
-      question: "Which messaging channels can I connect?",
-      answer: "You can connect your official WhatsApp, Instagram, Messenger, or Web Chat inboxes directly from your Kilobot dashboard using our official Meta API integrations."
-    },
-    {
-      question: "What kind of feedback do you expect?",
-      answer: "We expect you to test your AI agents in real customer conversations, report any bugs or operational issues, and share suggestions for improving the platform."
-    },
-    {
-      question: "Will I really have direct access to the founder?",
-      answer: "Yes. We set up a private WhatsApp chat for direct, 1-on-1 support with the founder to help you build, tune, and optimize your AI agents."
-    }
-  ];
 
   return (
     <div className="flex min-h-[100svh] flex-col overflow-x-clip bg-zinc-50 font-sans text-zinc-900 antialiased dark:bg-[#060606] dark:text-zinc-100 selection:bg-zinc-200 dark:selection:bg-zinc-800">
@@ -232,14 +204,14 @@ export default function EarlyUserPage() {
               FAQ
             </h2>
             <div className="max-w-2xl mx-auto border-t border-zinc-200 dark:border-white/[0.08]">
-              {faqs.map((faq, idx) => {
+              {earlyAdopterFaqs.map((faq, idx) => {
                 const isOpen = openFaqIndex === idx;
                 return (
                   <div key={idx} className="border-b border-zinc-200 dark:border-white/[0.08] py-4 text-left">
                     <button
                       type="button"
                       onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                      className="w-full flex justify-between items-center text-left py-2.5 font-medium text-zinc-950 dark:text-white text-base sm:text-lg focus:outline-none hover:underline cursor-pointer group"
+                      className="w-full flex justify-between items-center text-left py-2.5 font-medium text-zinc-950 dark:text-white text-base sm:text-lg focus:outline-none cursor-pointer group"
                     >
                       <span className="group-hover:text-zinc-700 dark:group-hover:text-zinc-200 transition-colors">{faq.question}</span>
                       <span className="text-zinc-400 dark:text-zinc-500 text-xl font-light ml-4 select-none group-hover:text-zinc-650 dark:group-hover:text-zinc-300 transition-colors">
@@ -266,7 +238,7 @@ export default function EarlyUserPage() {
               </h2>
             </div>
             <div className="max-w-xl mx-auto">
-              <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-6 sm:p-8 md:p-10 shadow-sm">
+              <div className="overflow-hidden rounded-xl border border-zinc-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-6 sm:p-8 md:p-10">
                 {submitted ? (
                   <div className="flex flex-col justify-center py-10 text-center items-center">
                     <div className="space-y-4">
@@ -401,17 +373,6 @@ export default function EarlyUserPage() {
                         </div>
                       </div>
 
-                      <label className="flex items-start gap-3 p-3 rounded-lg border border-zinc-200 dark:border-white/[0.06] bg-zinc-100/30 dark:bg-white/[0.01] mt-6 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={feedbackCommitted}
-                          onChange={(e) => setFeedbackCommitted(e.target.checked)}
-                          className="mt-1 rounded border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-white focus:ring-zinc-900 dark:focus:ring-white focus:ring-offset-0 focus:ring-0 checked:bg-zinc-900 dark:checked:bg-white checked:border-zinc-900 dark:checked:border-white cursor-pointer size-4"
-                        />
-                        <span className="text-xs text-zinc-500 dark:text-zinc-400 leading-normal">
-                          I agree to try out Kilobot and provide constructive feedback and bug reports to the founder. <span className="text-red-500">*</span>
-                        </span>
-                      </label>
                     </div>
 
                     <div className="flex justify-start pt-2">

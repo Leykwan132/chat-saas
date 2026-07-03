@@ -19,7 +19,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     toPlan: 'starter',
     toPlanName: 'Starter',
     title: 'Unlock Starter Features',
-    description: 'Unlock multiple agents, automated follow-ups, and premium AI models.',
+    description: 'Unlock multiple agents, lead insights, and premium AI models.',
     buttonLabel: 'Upgrade to Starter',
     features: [
       {
@@ -35,8 +35,8 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: 'Deploy specialized sales and support agents.',
       },
       {
-        title: 'Broadcasting & Follow-ups',
-        description: 'Send mass campaigns and auto-replies.',
+        title: 'Auto Lead Tagging',
+        description: 'Label and organize new leads automatically.',
       },
       {
         title: '5 Team Members',

@@ -105,7 +105,7 @@ export function PlanComparisonTable({
 
   return (
     <section id={id} className={cn('w-full', className)}>
-      <h2 className="mb-10 text-center text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+      <h2 className="mb-10 text-center text-4xl font-normal tracking-tight text-foreground sm:text-5xl font-title">
         Compare plans
       </h2>
 
@@ -125,15 +125,15 @@ export function PlanComparisonTable({
                   <th
                     key={planId}
                     className={cn(
-                      'border-l px-8 py-5 text-center align-middle',
-                      pricingSectionBorderClass(),
+                      'border-l border-b px-8 py-5 text-center align-middle',
+                      pricingSectionBorderClass(planId === 'enterprise'),
                       planId === 'enterprise' && 'bg-zinc-950 text-white',
                       planId !== 'enterprise' && currentPlanId === planId && 'bg-muted/20',
                     )}
                   >
                     <p
                       className={cn(
-                        'text-lg font-semibold tracking-tight',
+                        'text-lg font-normal tracking-tight',
                         planId === 'enterprise' ? 'text-white' : 'text-foreground',
                       )}
                     >
@@ -161,7 +161,7 @@ export function PlanComparisonTable({
                   {group.rows.map((row) => (
                     <tr
                       key={row.label}
-                      className={cn('border-b border-dotted', pricingSectionBorderClass())}
+                      className={cn('border-b', pricingSectionBorderClass())}
                     >
                       <th
                         scope="row"
@@ -175,8 +175,8 @@ export function PlanComparisonTable({
                         <td
                           key={`${row.label}-${planId}`}
                           className={cn(
-                            'border-l px-8 py-4 text-center align-middle',
-                            pricingSectionBorderClass(),
+                            'border-l border-b px-8 py-4 text-center align-middle',
+                            pricingSectionBorderClass(planId === 'enterprise'),
                             planId === 'enterprise' && 'bg-zinc-950 text-white',
                             planId !== 'enterprise' && currentPlanId === planId && 'bg-muted/20',
                           )}

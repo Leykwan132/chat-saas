@@ -14,7 +14,6 @@ import { WordRotate } from '@/components/ui/word-rotate';
 import { cn } from '@/lib/utils';
 import {
   formatPlanPriceAmount,
-  getEnterpriseColumnFeatureGroups,
   getPlanPickerCards,
   type BillingInterval,
   type PlanKey,
@@ -22,7 +21,11 @@ import {
 } from '../../shared/planCatalog';
 import { PricingEnterpriseBanner } from '@/components/pricing/PricingEnterpriseBanner';
 import { PricingFeatureList } from '@/components/pricing/PricingFeatureList';
-import { pricingSectionBorderClass, type PlanPickerDensity } from '@/components/pricing/pricingStyles';
+import {
+  pricingSectionBorderClass,
+  type PlanPickerCompactSpacing,
+  type PlanPickerDensity,
+} from '@/components/pricing/pricingStyles';
 
 const planPriceClassDefault =
   'font-sans text-4xl font-normal tracking-tight text-foreground';
@@ -38,9 +41,10 @@ type SubscriptionPlanPickerProps = {
   disabled?: boolean;
   showBillingToggle?: boolean;
   includeEnterprise?: boolean;
-  /** Onboarding keeps the recommended Pro styling; pricing shows full features + bottom enterprise banner. */
+  /** Onboarding keeps the recommended Pro styling; pricing shows progressive plan bullets. */
   variant?: 'onboarding' | 'account' | 'pricing';
   density?: PlanPickerDensity;
+  compactSpacing?: PlanPickerCompactSpacing;
   /** Pricing page uses a bottom banner; the plan dialog uses a fifth column. */
   enterpriseLayout?: 'banner' | 'column';
   onViewAllFeatures?: () => void;
@@ -59,11 +63,13 @@ export function SubscriptionPlanPicker({
   includeEnterprise = false,
   variant = 'account',
   density = 'default',
+  compactSpacing = 'default',
   enterpriseLayout = 'banner',
   onViewAllFeatures,
   className,
 }: SubscriptionPlanPickerProps) {
   const isCompact = density === 'compact';
+  const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const allCards = plans ?? getPlanPickerCards({ includeEnterprise });
   const showEnterpriseBanner =
     variant === 'pricing' && includeEnterprise && enterpriseLayout === 'banner';
@@ -71,11 +77,17 @@ export function SubscriptionPlanPicker({
     showEnterpriseBanner || !includeEnterprise
       ? allCards.filter((plan): plan is PlanPickerCard & { isEnterprise?: false } => !plan.isEnterprise)
       : allCards;
-  const showFullFeatures = variant === 'pricing';
+  const showPricingKeyFeatures = variant === 'pricing';
   const enterpriseColumnCount = gridCards.some((plan) => plan.isEnterprise) ? 5 : 4;
 
   return (
-    <div className={cn('flex flex-col', isCompact ? 'gap-4' : 'gap-8', className)}>
+    <div
+      className={cn(
+        'flex flex-col',
+        isRoomyCompact ? 'gap-5' : isCompact ? 'gap-4' : 'gap-8',
+        className,
+      )}
+    >
       {showBillingToggle && (
         <PlanBillingToggle
           billingInterval={billingInterval}
@@ -84,11 +96,25 @@ export function SubscriptionPlanPicker({
         />
       )}
 
-      <div className={cn('flex flex-col', isCompact ? 'min-h-0 flex-1 gap-2' : 'gap-4')}>
+      <div
+        className={cn(
+          'flex flex-col',
+          isRoomyCompact
+            ? 'min-h-0 flex-1 gap-4'
+            : isCompact
+              ? 'min-h-0 flex-1 gap-2'
+              : 'gap-4',
+        )}
+      >
         <div
           className={cn(
             'grid grid-cols-1 items-stretch sm:grid-cols-2',
-            isCompact
+            isRoomyCompact
+              ? cn(
+                  'min-h-0 flex-1 gap-3 xl:gap-4',
+                  enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
+                )
+              : isCompact
               ? cn(
                   'min-h-0 flex-1 gap-2',
                   enterpriseColumnCount === 5 ? 'lg:grid-cols-5' : 'lg:grid-cols-4',
@@ -106,9 +132,6 @@ export function SubscriptionPlanPicker({
               plan.popular &&
               !highlightCurrent &&
               (variant === 'onboarding' || variant === 'pricing' || currentPlanId == null);
-            const enterpriseCustomFeatures =
-              plan.isEnterprise === true && enterpriseLayout === 'column';
-
             return (
               <SubscriptionPlanCard
                 key={plan.id}
@@ -118,10 +141,10 @@ export function SubscriptionPlanPicker({
                 highlightCurrent={highlightCurrent}
                 showPopularHighlight={showPopularHighlight}
                 disabled={disabled}
-                showFullFeatures={showFullFeatures}
-                enterpriseCustomFeatures={enterpriseCustomFeatures}
+                showPricingKeyFeatures={showPricingKeyFeatures}
                 density={density}
-                onViewAllFeatures={!showFullFeatures ? onViewAllFeatures : undefined}
+                compactSpacing={compactSpacing}
+                onViewAllFeatures={!showPricingKeyFeatures ? onViewAllFeatures : undefined}
                 action={renderPlanAction(plan)}
               />
             );
@@ -200,9 +223,9 @@ type SubscriptionPlanCardProps = {
   highlightCurrent?: boolean;
   showPopularHighlight?: boolean;
   disabled?: boolean;
-  showFullFeatures?: boolean;
-  enterpriseCustomFeatures?: boolean;
+  showPricingKeyFeatures?: boolean;
   density?: PlanPickerDensity;
+  compactSpacing?: PlanPickerCompactSpacing;
   onViewAllFeatures?: () => void;
   action: ReactNode;
 };
@@ -214,21 +237,16 @@ function SubscriptionPlanCard({
   highlightCurrent = false,
   showPopularHighlight = false,
   disabled = false,
-  showFullFeatures = false,
-  enterpriseCustomFeatures = false,
+  showPricingKeyFeatures = false,
   density = 'default',
+  compactSpacing = 'default',
   onViewAllFeatures,
   action,
 }: SubscriptionPlanCardProps) {
   const isEnterprise = plan.isEnterprise === true;
   const isCompact = density === 'compact';
+  const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const planPriceClass = isCompact ? planPriceClassCompact : planPriceClassDefault;
-  const displayFeatureGroups =
-    showFullFeatures && plan.featureGroups
-      ? enterpriseCustomFeatures
-        ? getEnterpriseColumnFeatureGroups()
-        : plan.featureGroups
-      : undefined;
 
   return (
     <Card
@@ -253,10 +271,22 @@ function SubscriptionPlanCard({
       <CardHeader
         className={cn(
           'shrink-0 rounded-none',
-          isCompact ? 'px-4 pb-2 pt-4 min-h-[100px]' : 'px-6 pb-5 pt-6 min-h-[150px]',
+          isRoomyCompact
+            ? 'px-5 pb-4 pt-5 min-h-[112px]'
+            : isCompact
+              ? 'px-4 pb-2 pt-4 min-h-[100px]'
+              : 'px-6 pb-5 pt-6 min-h-[150px]',
         )}
       >
-        <div className={cn(isCompact ? 'flex flex-col gap-2' : undefined)}>
+        <div
+          className={cn(
+            isRoomyCompact
+              ? 'flex flex-col gap-3'
+              : isCompact
+                ? 'flex flex-col gap-2'
+                : undefined,
+          )}
+        >
           <div className={cn('flex items-center', isCompact ? 'min-h-6' : 'min-h-8')}>
             <CardTitle
               className={cn(
@@ -276,7 +306,7 @@ function SubscriptionPlanCard({
               {isCurrent ? (
                 <Badge
                   variant="secondary"
-                  className="rounded-md border border-foreground/15 bg-background/80 px-2 py-0 text-[10px] font-semibold text-foreground"
+                  className="shrink-0 rounded-full border-0 bg-zinc-100 px-2 py-1 text-[8px] font-bold uppercase leading-none tracking-wide text-zinc-800 shadow-none dark:bg-zinc-800 dark:text-zinc-200"
                 >
                   Current
                 </Badge>
@@ -335,14 +365,15 @@ function SubscriptionPlanCard({
       </CardHeader>
 
       <PricingFeatureList
-        featureGroups={displayFeatureGroups}
-        featureRows={showFullFeatures ? undefined : plan.featureRows}
-        features={showFullFeatures ? undefined : plan.keyFeatures}
-        header={showFullFeatures ? undefined : plan.featureSectionHeader}
+        featureRows={showPricingKeyFeatures ? undefined : plan.featureRows}
+        features={showPricingKeyFeatures ? plan.keyFeatures : undefined}
+        header={plan.featureSectionHeader}
         planId={plan.isEnterprise ? undefined : plan.id}
         isEnterprise={isEnterprise}
         density={density}
-        onViewAll={!showFullFeatures ? onViewAllFeatures : undefined}
+        compactSpacing={compactSpacing}
+        onViewAll={!showPricingKeyFeatures ? onViewAllFeatures : undefined}
+        showDottedUnderlines={!showPricingKeyFeatures}
         className={cn('flex-1 border-t', pricingSectionBorderClass(isEnterprise))}
       />
 
@@ -350,7 +381,12 @@ function SubscriptionPlanCard({
         <CardFooter
           className={cn(
             'mt-auto w-full shrink-0 rounded-none border-t',
-            isCompact ? 'px-4 pb-4 pt-3' : 'px-6 pb-6 pt-5',
+            pricingSectionBorderClass(isEnterprise),
+            isRoomyCompact
+              ? 'px-5 pb-5 pt-4'
+              : isCompact
+                ? 'px-4 pb-4 pt-3'
+                : 'px-6 pb-6 pt-5',
           )}
         >
           {action}

@@ -15,6 +15,7 @@ import {
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
 import { PlanComparisonTable } from '@/components/pricing/PlanComparisonTable';
+import { PricingFaqSection } from '@/components/pricing/PricingFaqSection';
 import { SiteFooter } from '@/components/SiteFooter';
 import { POST_LOGIN_REDIRECT } from '../constants';
 
@@ -109,6 +110,8 @@ export default function PricingPage() {
               }}
             />
           </div>
+
+          <PricingFaqSection />
 
           <PlanComparisonTable
             id="pricing-comparison"

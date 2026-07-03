@@ -53,7 +53,7 @@ import { OnboardingFlow } from '@/components/OnboardingFlow'
 import { UpgradeModalProvider } from '@/components/UpgradeModal'
 import PricingPage from './pages/PricingPage.tsx'
 import ContactPage from './pages/ContactPage.tsx'
-import EarlyUserPage from './pages/EarlyUserPage.tsx'
+import EarlyAdopterProgramPage from './pages/EarlyUserPage.tsx'
 import AdminContactPage from './pages/AdminContactPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
@@ -220,7 +220,8 @@ const router = createBrowserRouter(
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/contact" element={<ContactPage />} />
-      <Route path="/early-user" element={<EarlyUserPage />} />
+      <Route path="/early-adopter-program" element={<EarlyAdopterProgramPage />} />
+      <Route path="/early-user" element={<Navigate to="/early-adopter-program" replace />} />
       <Route path="/admin/contact" element={<AdminContactPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />

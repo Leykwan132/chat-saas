@@ -52,7 +52,7 @@ const FEATURE_MODELS_IMAGE = 'https://storage.kilobot.app/Models-3.png';
 
 const FEATURE_SHOWCASE_IMAGES = {
   appointmentBooking: 'https://storage.kilobot.app/AB.png',
-  modernWorkflows: 'https://storage.kilobot.app/WF.svg',
+  aiWorkflows: 'https://storage.kilobot.app/WF.png',
   autoLeadAnalysis: 'https://storage.kilobot.app/CLD.png',
   advancedAnalytics: 'https://storage.kilobot.app/Analytics%20(2).png',
   naturalInteraction: 'https://storage.kilobot.app/NI.png',
@@ -149,10 +149,10 @@ const FEATURE_ITEMS: FeatureItem[] = [
   },
   {
     id: 'workflows',
-    tabLabel: 'Modern Workflows',
+    tabLabel: 'AI Workflows',
     description:
       'Set up powerful workflows for followups, reminders, bookings with simple language.',
-    image: FEATURE_SHOWCASE_IMAGES.modernWorkflows,
+    image: FEATURE_SHOWCASE_IMAGES.aiWorkflows,
   },
   {
     id: 'calendar',

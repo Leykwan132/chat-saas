@@ -16,7 +16,10 @@ import {
   type PlanFeatureGroup,
   type PlanKey,
 } from '../../../shared/planCatalog';
-import type { PlanPickerDensity } from '@/components/pricing/pricingStyles';
+import type {
+  PlanPickerCompactSpacing,
+  PlanPickerDensity,
+} from '@/components/pricing/pricingStyles';
 
 type PricingFeatureListProps = {
   header?: string;
@@ -26,7 +29,9 @@ type PricingFeatureListProps = {
   planId?: PlanKey;
   isEnterprise?: boolean;
   density?: PlanPickerDensity;
+  compactSpacing?: PlanPickerCompactSpacing;
   onViewAll?: () => void;
+  showDottedUnderlines?: boolean;
   className?: string;
 };
 
@@ -75,9 +80,9 @@ function FeatureRowItem({
           )}
         >
           {row.included ? (
-                      <PricingAiFeatureLabel label={row.text}>
-                        {renderPricingFeatureLabel(row.text, planId, isEnterprise, isCompact)}
-                      </PricingAiFeatureLabel>
+            <PricingAiFeatureLabel label={row.text}>
+              {renderPricingFeatureLabel(row.text, planId, isEnterprise, isCompact)}
+            </PricingAiFeatureLabel>
           ) : (
             '—'
           )}
@@ -98,27 +103,35 @@ export function PricingFeatureList({
   planId,
   isEnterprise = false,
   density = 'default',
+  compactSpacing = 'default',
   onViewAll,
+  showDottedUnderlines = true,
   className,
 }: PricingFeatureListProps) {
   const isCompact = density === 'compact';
+  const isRoomyCompact = isCompact && compactSpacing === 'roomy';
   const useGroupedRows = featureGroups != null;
   const useAlignedRows = !useGroupedRows && featureRows != null;
-  const showRowUnderline = !useGroupedRows;
+  const showRowUnderline = showDottedUnderlines && !useGroupedRows;
 
   return (
     <div
       className={cn(
         'flex flex-1 flex-col',
-        isCompact ? 'px-3 py-2' : 'px-6 py-6',
+        isRoomyCompact ? 'px-5 py-4' : isCompact ? 'px-3 py-2' : 'px-6 py-6',
         className,
       )}
     >
       {header ? (
-        <div className={cn('flex items-center gap-1.5', isCompact ? 'py-0.5' : 'py-1')}>
+        <div
+          className={cn(
+            'grid grid-cols-[1rem_minmax(0,1fr)] items-center gap-2',
+            isCompact ? (isRoomyCompact ? 'py-1' : 'py-0.5') : 'py-1',
+          )}
+        >
           <ListChecks
             className={cn(
-              'shrink-0',
+              'shrink-0 justify-self-center',
               isCompact ? 'size-2.5' : 'size-3',
               isEnterprise ? 'text-zinc-400' : 'text-muted-foreground',
             )}
@@ -126,7 +139,7 @@ export function PricingFeatureList({
           <p
             className={cn(
               'font-medium',
-              isCompact ? 'text-[10px]' : 'text-xs',
+              isRoomyCompact ? 'text-[11px]' : isCompact ? 'text-[10px]' : 'text-xs',
               isEnterprise ? 'text-zinc-300' : 'text-muted-foreground',
             )}
           >
@@ -135,7 +148,18 @@ export function PricingFeatureList({
         </div>
       ) : null}
 
-      <div className={cn('flex flex-1 flex-col gap-0', header ? (isCompact ? 'mt-1.5' : 'mt-5') : undefined)}>
+      <div
+        className={cn(
+          'flex flex-1 flex-col gap-0',
+          header
+            ? isRoomyCompact
+              ? 'mt-3'
+              : isCompact
+                ? 'mt-1.5'
+                : 'mt-5'
+            : undefined,
+        )}
+      >
         {useGroupedRows
           ? featureGroups.map((group, groupIndex) => (
               <div
@@ -194,14 +218,23 @@ export function PricingFeatureList({
               <li
                 key={feature}
                 className={cn(
-                  isCompact ? 'py-0.5 first:pt-0 last:pb-0' : 'py-2 first:pt-0 last:pb-0',
+                  isRoomyCompact
+                    ? 'py-1 first:pt-0 last:pb-0'
+                    : isCompact
+                      ? 'py-0.5 first:pt-0 last:pb-0'
+                      : 'py-2 first:pt-0 last:pb-0',
                 )}
               >
-                <div className={cn('flex items-start', isCompact ? 'gap-1.5' : 'gap-2')}>
+                <div
+                  className={cn(
+                    'grid grid-cols-[1rem_minmax(0,1fr)] items-center',
+                    isRoomyCompact ? 'gap-2' : isCompact ? 'gap-1.5' : 'gap-2',
+                  )}
+                >
                   <Check
                     className={cn(
-                      'mt-px shrink-0',
-                      isCompact ? 'size-2.5' : 'size-4',
+                      'shrink-0 justify-self-center',
+                      isRoomyCompact ? 'size-3' : isCompact ? 'size-2.5' : 'size-4',
                       isEnterprise ? 'text-white' : 'text-foreground',
                     )}
                   />
@@ -214,10 +247,12 @@ export function PricingFeatureList({
                     <PricingAiFeatureLabel label={feature}>
                       {renderPricingFeatureLabel(feature, planId, isEnterprise, isCompact)}
                     </PricingAiFeatureLabel>
-                    <span
-                      className={pricingDottedUnderlineClass(isEnterprise, isCompact)}
-                      aria-hidden
-                    />
+                    {showDottedUnderlines ? (
+                      <span
+                        className={pricingDottedUnderlineClass(isEnterprise, isCompact)}
+                        aria-hidden
+                      />
+                    ) : null}
                   </span>
                 </div>
               </li>
