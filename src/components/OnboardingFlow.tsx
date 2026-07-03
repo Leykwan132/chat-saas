@@ -203,7 +203,7 @@ export function OnboardingFlow() {
   const handleComplete = async (planKey: PlanKey) => {
     setSubmitting(true);
     try {
-      await completeOnboarding({ role, useCase: useCases, channels, plan: planKey });
+      await completeOnboarding({ role, useCase: useCases, channels });
       toast.success('Workspace created!');
       if (planKey === 'free') {
         toast.loading('Setting up billing account…');

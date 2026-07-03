@@ -1,4 +1,5 @@
 import type { BillingInterval, PlanKey } from "../shared/planCatalog";
+import type { ExtraCreditsPackId } from "../shared/extraCreditsCatalog";
 
 function requireEnvVar(name: string): string {
   const value = process.env[name];
@@ -26,13 +27,21 @@ export const STRIPE_PRICE_IDS: Record<
   },
 };
 
-export const EXTRA_CREDITS_PRICE_ID = requireEnvVar("STRIPE_PRICE_EXTRA_CREDITS");
+const EXTRA_CREDITS_PRICE_ENV_NAMES: Record<ExtraCreditsPackId, string> = {
+  credits_2000: "STRIPE_PRICE_EXTRA_CREDITS_2000",
+  credits_5000: "STRIPE_PRICE_EXTRA_CREDITS_5000",
+  credits_15000: "STRIPE_PRICE_EXTRA_CREDITS_15000",
+};
 
 export function getStripePriceId(
   plan: Exclude<PlanKey, "free">,
   interval: BillingInterval,
 ): string {
   return STRIPE_PRICE_IDS[plan][interval];
+}
+
+export function getExtraCreditsPriceId(packId: ExtraCreditsPackId): string {
+  return requireEnvVar(EXTRA_CREDITS_PRICE_ENV_NAMES[packId]);
 }
 
 export function resolvePlanKeyFromStripePriceId(priceId: string): Exclude<PlanKey, "free"> {

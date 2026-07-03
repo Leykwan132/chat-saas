@@ -8,7 +8,6 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import {
-  EXTRA_CREDITS_PRICE_ID,
   PLAN_CATALOG,
   PLAN_ORDER,
   formatPlanPriceLabel,
@@ -39,8 +38,6 @@ function buildPlanConfig(key: PlanKey): PlanConfig {
 export const PLANS: Record<PlanKey, PlanConfig> = Object.fromEntries(
   PLAN_ORDER.map((key) => [key, buildPlanConfig(key)]),
 ) as Record<PlanKey, PlanConfig>;
-
-export { EXTRA_CREDITS_PRICE_ID };
 
 export function getPlan(planName: string | undefined): PlanConfig {
   const key = (planName ?? "free") as PlanKey;
@@ -207,7 +204,6 @@ export const getPlanAndUsage = query({
       stripeSubscriptionCurrentPeriodEnd: stripeInfo.currentPeriodEnd,
       memberCount: 1,
       allPlans: PLANS,
-      extraCreditsPriceId: EXTRA_CREDITS_PRICE_ID,
       channelLimit,
     };
   },

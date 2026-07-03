@@ -46,6 +46,7 @@ import type * as appointmentBookingSessionStatus from "../appointmentBookingSess
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
 import type * as backfillEvents from "../backfillEvents.js";
+import type * as billingAddOns from "../billingAddOns.js";
 import type * as billingScope from "../billingScope.js";
 import type * as broadcastPool from "../broadcastPool.js";
 import type * as calendarEvents from "../calendarEvents.js";
@@ -125,6 +126,7 @@ import type * as plans from "../plans.js";
 import type * as quickReplies from "../quickReplies.js";
 import type * as signedRequest from "../signedRequest.js";
 import type * as stripe from "../stripe.js";
+import type * as stripeCheckout from "../stripeCheckout.js";
 import type * as teamAccess from "../teamAccess.js";
 import type * as teamHelpers from "../teamHelpers.js";
 import type * as teamInvitationRecords from "../teamInvitationRecords.js";
@@ -213,6 +215,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   authUtils: typeof authUtils;
   backfillEvents: typeof backfillEvents;
+  billingAddOns: typeof billingAddOns;
   billingScope: typeof billingScope;
   broadcastPool: typeof broadcastPool;
   calendarEvents: typeof calendarEvents;
@@ -292,6 +295,7 @@ declare const fullApi: ApiFromModules<{
   quickReplies: typeof quickReplies;
   signedRequest: typeof signedRequest;
   stripe: typeof stripe;
+  stripeCheckout: typeof stripeCheckout;
   teamAccess: typeof teamAccess;
   teamHelpers: typeof teamHelpers;
   teamInvitationRecords: typeof teamInvitationRecords;

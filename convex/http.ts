@@ -21,23 +21,71 @@ authKit.registerRoutes(http);
 import { components } from "./_generated/api";
 import { registerRoutes } from "@convex-dev/stripe";
 import {
-  EXTRA_CREDITS_PACK_AMOUNT,
   STRIPE_CREDITS_AMOUNT_METADATA_KEY,
   STRIPE_EXTRA_CREDITS_METADATA_TYPE,
 } from "../shared/planCatalog";
 
+type StripeEventLike<T> = {
+  data: {
+    object: T;
+  };
+};
+
+type StripeMetadata = Record<string, string | undefined>;
+
+type StripeCustomerRef = string | { id?: string } | null;
+
+type StripeSubscriptionPayload = {
+  id: string;
+  customer?: StripeCustomerRef;
+  status: string;
+  metadata?: StripeMetadata | null;
+  items?: {
+    data?: Array<{
+      price?: {
+        id?: string;
+      };
+      current_period_end?: number;
+    }>;
+  };
+};
+
+type StripeCheckoutSessionPayload = {
+  mode?: string;
+  metadata?: StripeMetadata | null;
+};
+
+type StripePaymentIntentPayload = {
+  id: string;
+  status?: string;
+  customer?: StripeCustomerRef;
+  metadata?: StripeMetadata | null;
+};
+
+function getStripeEventObject<T>(event: unknown): T {
+  return (event as StripeEventLike<T>).data.object;
+}
+
+function getStripeCustomerId(customer: StripeCustomerRef): string | null {
+  if (typeof customer === "string") {
+    return customer;
+  }
+  return customer?.id ?? null;
+}
+
 registerRoutes(http, components.stripe, {
   webhookPath: "/stripe/webhook",
   events: {
-    "customer.subscription.created": async (ctx, event: any) => {
-      const subscription = event.data.object;
+    "customer.subscription.created": async (ctx, event: unknown) => {
+      const subscription = getStripeEventObject<StripeSubscriptionPayload>(event);
       console.log("Subscription created:", subscription.id, subscription.status);
       const orgId = subscription.metadata?.orgId;
-      if (orgId) {
+      const stripeCustomerId = getStripeCustomerId(subscription.customer ?? null);
+      if (orgId && stripeCustomerId) {
         const item = subscription.items?.data?.[0];
         await ctx.runMutation(internal.stripe.handleSubscriptionUpdatedInternal, {
           stripeSubscriptionId: subscription.id,
-          stripeCustomerId: subscription.customer as string,
+          stripeCustomerId,
           status: subscription.status,
           priceId: item?.price?.id || "",
           currentPeriodEnd: item?.current_period_end || 0,
@@ -45,15 +93,16 @@ registerRoutes(http, components.stripe, {
         });
       }
     },
-    "customer.subscription.updated": async (ctx, event: any) => {
-      const subscription = event.data.object;
+    "customer.subscription.updated": async (ctx, event: unknown) => {
+      const subscription = getStripeEventObject<StripeSubscriptionPayload>(event);
       console.log("Subscription updated:", subscription.id, subscription.status);
       const orgId = subscription.metadata?.orgId;
-      if (orgId) {
+      const stripeCustomerId = getStripeCustomerId(subscription.customer ?? null);
+      if (orgId && stripeCustomerId) {
         const item = subscription.items?.data?.[0];
         await ctx.runMutation(internal.stripe.handleSubscriptionUpdatedInternal, {
           stripeSubscriptionId: subscription.id,
-          stripeCustomerId: subscription.customer as string,
+          stripeCustomerId,
           status: subscription.status,
           priceId: item?.price?.id || "",
           currentPeriodEnd: item?.current_period_end || 0,
@@ -61,8 +110,8 @@ registerRoutes(http, components.stripe, {
         });
       }
     },
-    "customer.subscription.deleted": async (ctx, event: any) => {
-      const subscription = event.data.object;
+    "customer.subscription.deleted": async (ctx, event: unknown) => {
+      const subscription = getStripeEventObject<StripeSubscriptionPayload>(event);
       const orgId = subscription.metadata?.orgId;
       if (orgId) {
         await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
@@ -71,15 +120,15 @@ registerRoutes(http, components.stripe, {
         });
       }
     },
-    "checkout.session.completed": async (_ctx, event: any) => {
-      const session = event.data.object;
+    "checkout.session.completed": async (_ctx, event: unknown) => {
+      const session = getStripeEventObject<StripeCheckoutSessionPayload>(event);
       if (session.mode === "payment" && session.metadata?.type === STRIPE_EXTRA_CREDITS_METADATA_TYPE) {
         // Credits are granted from payment_intent.succeeded after verification.
         return;
       }
     },
-    "payment_intent.succeeded": async (ctx, event: any) => {
-      const paymentIntent = event.data.object;
+    "payment_intent.succeeded": async (ctx, event: unknown) => {
+      const paymentIntent = getStripeEventObject<StripePaymentIntentPayload>(event);
       if (paymentIntent.status !== "succeeded") {
         return;
       }
@@ -105,19 +154,19 @@ registerRoutes(http, components.stripe, {
 
       const creditsRaw =
         metadata[STRIPE_CREDITS_AMOUNT_METADATA_KEY] ?? metadata.creditsAmount;
-      const creditsToGrant = Number.parseInt(
-        String(creditsRaw ?? EXTRA_CREDITS_PACK_AMOUNT),
-        10,
-      );
+      if (creditsRaw === undefined) {
+        console.warn("Missing credits metadata for payment intent:", paymentIntent.id);
+        return;
+      }
+
+      const creditsToGrant = Number.parseInt(String(creditsRaw), 10);
       if (!Number.isFinite(creditsToGrant) || creditsToGrant <= 0) {
         console.warn("Invalid credits metadata for payment intent:", paymentIntent.id);
         return;
       }
 
       const stripeCustomerId =
-        (typeof paymentIntent.customer === "string"
-          ? paymentIntent.customer
-          : undefined) ?? storedPayment.stripeCustomerId;
+        getStripeCustomerId(paymentIntent.customer ?? null) ?? storedPayment.stripeCustomerId;
       if (!stripeCustomerId) {
         console.warn("payment_intent.succeeded missing customer:", paymentIntent.id);
         return;

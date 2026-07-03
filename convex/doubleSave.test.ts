@@ -18,7 +18,9 @@ beforeAll(() => {
   process.env.STRIPE_PRICE_GROWTH_ANNUAL = "price_growth_annual";
   process.env.STRIPE_PRICE_BUSINESS_MONTHLY = "price_business_monthly";
   process.env.STRIPE_PRICE_BUSINESS_ANNUAL = "price_business_annual";
-  process.env.STRIPE_PRICE_EXTRA_CREDITS = "price_extra_credits";
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_2000 = "price_extra_credits_2000";
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_5000 = "price_extra_credits_5000";
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_15000 = "price_extra_credits_15000";
 });
 
 const { mockModel, internalAction } = await vi.hoisted(async () => {

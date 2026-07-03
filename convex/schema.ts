@@ -171,28 +171,12 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     profilePictureUrl: v.optional(v.string()),
-    // Deprecated: replaced by userCreditPeriods / topUpEntries (granted/used).
-    // Kept optional so existing docs validate until the data migration completes,
-    // then removed in a follow-up narrow deploy.
-    credits: v.optional(v.number()),
-    purchasedCredits: v.optional(v.number()),
-    purchasedCreditsGranted: v.optional(v.number()),
-    plan: v.optional(
-      v.union(
-        v.literal("free"),
-        v.literal("starter"),
-        v.literal("growth"),
-        v.literal("business"),
-      )
-    ),
     lastActiveAt: v.optional(v.number()),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
     stripeSubscriptionStatus: v.optional(v.string()),
     stripeSubscriptionCurrentPeriodEnd: v.optional(v.number()),
-    /** @deprecated replaced by userCreditPeriods.periodEnd */
-    creditsPeriodMonthKey: v.optional(v.string()),
     onboarded: v.optional(v.boolean()),
     onboardingAnswers: v.optional(
       v.object({

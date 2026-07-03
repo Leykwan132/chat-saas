@@ -115,12 +115,6 @@ export const completeOnboarding = mutation({
     role: v.string(),
     useCase: v.array(v.string()),
     channels: v.array(v.string()),
-    plan: v.union(
-      v.literal("free"),
-      v.literal("starter"),
-      v.literal("growth"),
-      v.literal("business"),
-    ),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();

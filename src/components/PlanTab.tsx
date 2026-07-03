@@ -6,26 +6,18 @@ import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { Button } from '@/components/ui/button';
 import {
-  Card,
-  CardFooter,
-  CardHeader,
-} from '@/components/ui/card';
-import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import {
-  EXTRA_CREDITS_PACK_AMOUNT,
-  EXTRA_CREDITS_PACK_NOTE,
-  formatExtraCreditsPackPrice,
-} from '../../shared/planCatalog';
+import type { ExtraCreditsPackId } from '../../shared/planCatalog';
 import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
+import { PlanAddOnsSection } from '@/components/billing/PlanAddOnsSection';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Coins, AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function PlanTab() {
@@ -41,7 +33,7 @@ export function PlanTab() {
   const createPortal = useAction(api.stripe.createPortal);
 
   const [plansDialogOpen, setPlansDialogOpen] = useState(false);
-  const [isCreditsLoading, setIsCreditsLoading] = useState(false);
+  const [loadingCreditsPackId, setLoadingCreditsPackId] = useState<ExtraCreditsPackId | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
@@ -86,31 +78,25 @@ export function PlanTab() {
     periodEndMs,
   } = planAndUsage;
 
-  const handleCheckout = async (planKey: string | null, mode: 'subscription' | 'payment') => {
-    const isCredits = mode === 'payment';
-    if (isCredits) {
-      setIsCreditsLoading(true);
-    }
-
+  const handleCreditsCheckout = async (extraCreditsPackId: ExtraCreditsPackId) => {
+    setLoadingCreditsPackId(extraCreditsPackId);
     try {
       const session = await createCheckout({
-        plan: isCredits ? undefined : (planKey ?? undefined),
-        interval: isCredits ? undefined : 'monthly',
-        mode,
+        mode: 'payment',
+        extraCreditsPackId,
         cancelPath: planReturnPath,
       });
-      if (session && session.url) {
-        window.location.href = session.url;
+      if (session?.url) {
+        window.location.assign(session.url);
       } else {
         toast.error('Could not initiate checkout. Please try again.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Checkout error:', error);
-      toast.error(error.message || 'An error occurred initiating checkout.');
+      const message = error instanceof Error ? error.message : 'An error occurred initiating checkout.';
+      toast.error(message);
     } finally {
-      if (isCredits) {
-        setIsCreditsLoading(false);
-      }
+      setLoadingCreditsPackId(null);
     }
   };
 
@@ -121,7 +107,7 @@ export function PlanTab() {
         returnPath: planReturnPath,
       });
       if (session?.url) {
-        window.location.href = session.url;
+        window.location.assign(session.url);
       } else {
         toast.error('Could not load billing portal.');
       }
@@ -135,8 +121,7 @@ export function PlanTab() {
   };
 
   return (
-    <div className="space-y-8 max-w-xl">
-      {/* Current plan */}
+    <div className="space-y-8 max-w-5xl">
       <div className="rounded-xl border border-border bg-card p-5 max-w-md">
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <h3 className="text-xl font-semibold tracking-tight text-foreground">
@@ -199,42 +184,10 @@ export function PlanTab() {
         </div>
       </div>
 
-      {/* Add-ons */}
-      <div id="plan-add-ons" className="scroll-mt-6">
-        <h3 className="text-sm font-semibold text-foreground">Add-ons</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          One-time purchases on top of your subscription.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-4">
-          <Card className="w-full max-w-[17.5rem] overflow-hidden rounded-xl border border-border bg-card py-0 shadow-none ring-0">
-            <CardHeader className="rounded-none px-5 pt-5 pb-4">
-              <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                <Coins className="size-3.5 text-muted-foreground" />
-                {EXTRA_CREDITS_PACK_AMOUNT.toLocaleString()} credits
-              </p>
-              <div className="mt-2 flex items-baseline gap-1.5">
-                <span className="text-4xl font-normal tracking-tight text-foreground">
-                  {formatExtraCreditsPackPrice()}
-                </span>
-              </div>
-              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-                {EXTRA_CREDITS_PACK_NOTE}
-              </p>
-            </CardHeader>
-            <CardFooter className="rounded-none border-t border-border/60 px-5 pb-5 pt-4">
-              <Button
-                type="button"
-                variant="secondary"
-                className="h-9 w-full rounded-lg text-sm font-medium"
-                onClick={() => handleCheckout(null, 'payment')}
-                disabled={isCreditsLoading}
-              >
-                {isCreditsLoading ? <Spinner className="size-3.5" /> : 'Top Up Now'}
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      </div>
+      <PlanAddOnsSection
+        loadingCreditsPackId={loadingCreditsPackId}
+        onCreditsCheckout={(extraCreditsPackId) => void handleCreditsCheckout(extraCreditsPackId)}
+      />
 
       <AdjustPlanDialog
         open={plansDialogOpen}

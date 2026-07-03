@@ -5,7 +5,14 @@ import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getBillingWorkosUserId } from "./billingScope";
 import { getPlan } from "./plans";
-import { EXTRA_CREDITS_PRICE_ID, EXTRA_CREDITS_PACK_AMOUNT, getStripePriceId, resolvePlanKeyFromStripePriceId } from "./planCatalog";
+import {
+  getExtraCreditsPack,
+  getExtraCreditsPriceId,
+  getStripePriceId,
+  resolvePlanKeyFromStripePriceId,
+  type ExtraCreditsPackId,
+  type PlanKey,
+} from "./planCatalog";
 import {
   STRIPE_CREDITS_AMOUNT_METADATA_KEY,
   STRIPE_EXTRA_CREDITS_METADATA_TYPE,
@@ -18,6 +25,11 @@ import {
   createTopUpEntry,
 } from "./creditEntries";
 import {
+  createCheckoutSessionWithPromotionCodes,
+  type CheckoutMetadata,
+  type CheckoutSessionParams,
+} from "./stripeCheckout";
+import {
   ensureFirstCreditPeriod,
   applyPlanUpgradeToCurrentPeriod,
   snapshotUserCredit,
@@ -26,18 +38,40 @@ import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
+type BillingUserRecord = {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  stripeCustomerId?: string | null;
+  stripePriceId?: string | null;
+  stripeSubscriptionId?: string | null;
+};
+
+function isPaidPlanKey(plan: string): plan is Exclude<PlanKey, "free"> {
+  return plan === "starter" || plan === "growth" || plan === "business";
+}
+
 export const createCheckout = action({
   args: {
     plan: v.optional(v.string()),
     interval: v.optional(v.union(v.literal("monthly"), v.literal("annual"))),
     mode: v.union(v.literal("subscription"), v.literal("payment")),
+    extraCreditsPackId: v.optional(
+      v.union(
+        v.literal("credits_2000"),
+        v.literal("credits_5000"),
+        v.literal("credits_15000"),
+      ),
+    ),
     orgId: v.optional(v.union(v.string(), v.null())),
     cancelPath: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const userId = await getBillingWorkosUserId(ctx);
 
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
+      userId,
+    })) as BillingUserRecord | null;
     if (!user) {
       throw new Error("User not found");
     }
@@ -53,14 +87,20 @@ export const createCheckout = action({
       name,
     });
     
-    let priceId = "";
+    let priceId: string;
+    let extraCreditsPack: ReturnType<typeof getExtraCreditsPack> | null = null;
     if (args.mode === "payment") {
-      priceId = EXTRA_CREDITS_PRICE_ID;
+      if (!args.extraCreditsPackId) {
+        throw new Error("Extra credits pack is required for payment checkout");
+      }
+      const extraCreditsPackId = args.extraCreditsPackId as ExtraCreditsPackId;
+      extraCreditsPack = getExtraCreditsPack(extraCreditsPackId);
+      priceId = getExtraCreditsPriceId(extraCreditsPackId);
     } else {
-      if (!args.plan || !args.interval) {
+      if (!args.plan || !args.interval || !isPaidPlanKey(args.plan)) {
         throw new Error("Plan and interval are required for subscription checkout");
       }
-      priceId = getStripePriceId(args.plan as any, args.interval);
+      priceId = getStripePriceId(args.plan, args.interval);
     }
 
     const frontendUrl = (process.env.APP_BASE_URL || "http://localhost:5173").replace(
@@ -72,28 +112,31 @@ export const createCheckout = action({
       ? `${frontendUrl}${args.cancelPath.startsWith("/") ? args.cancelPath : `/${args.cancelPath}`}`
       : `${frontendUrl}/onboarding`;
 
-    const creditMetadata = {
-      orgId: userId,
-      type: STRIPE_EXTRA_CREDITS_METADATA_TYPE,
-      [STRIPE_CREDITS_AMOUNT_METADATA_KEY]: String(EXTRA_CREDITS_PACK_AMOUNT),
-    };
+    const creditMetadata: CheckoutMetadata | null = extraCreditsPack
+      ? {
+          orgId: userId,
+          type: STRIPE_EXTRA_CREDITS_METADATA_TYPE,
+          extraCreditsPackId: extraCreditsPack.id,
+          [STRIPE_CREDITS_AMOUNT_METADATA_KEY]: String(extraCreditsPack.credits),
+        }
+      : null;
 
-    const sessionParams: any = {
+    const sessionParams: CheckoutSessionParams = {
       priceId,
       customerId: customer.customerId,
       mode: args.mode,
       successUrl,
       cancelUrl,
-      metadata: args.mode === "payment" ? creditMetadata : { orgId: userId, type: "subscription" },
+      metadata: creditMetadata ?? { orgId: userId, type: "subscription" },
     };
 
     if (args.mode === "subscription") {
       sessionParams.subscriptionMetadata = { orgId: userId };
-    } else {
+    } else if (creditMetadata) {
       sessionParams.paymentIntentMetadata = creditMetadata;
     }
 
-    return await stripeClient.createCheckoutSession(ctx, sessionParams);
+    return await createCheckoutSessionWithPromotionCodes(sessionParams);
   },
 });
 
@@ -105,7 +148,9 @@ export const createPortal = action({
   handler: async (ctx, args) => {
     const userId = await getBillingWorkosUserId(ctx);
 
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
+      userId,
+    })) as BillingUserRecord | null;
     if (!user) throw new Error("User not found");
     const stripeCustomerId = user.stripeCustomerId;
 
@@ -133,7 +178,7 @@ export const syncBillingWithStripe = action({
   args: {
     orgId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, _args) => {
+  handler: async (ctx) => {
     const userId = await getBillingWorkosUserId(ctx);
 
     const subscription = await ctx.runQuery(
@@ -153,7 +198,9 @@ export const syncBillingWithStripe = action({
       return { success: true, plan: subscription.priceId };
     }
 
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
+      userId,
+    })) as BillingUserRecord | null;
     if (user && user.stripePriceId) {
       await ctx.runMutation(internal.stripe.handleSubscriptionDeletedInternal, {
         stripeSubscriptionId: user.stripeSubscriptionId || "unknown",
@@ -439,7 +486,7 @@ export const handlePaymentCompletedInternal = internalMutation({
     orgId: v.string(),
     amountInCents: v.number(),
   },
-  handler: async (_ctx, _args) => {
+  handler: async () => {
     // Credit top-ups are granted from payment_intent.succeeded to avoid double grants.
     return { success: true, skipped: true };
   },
@@ -449,10 +496,12 @@ export const createStripeCustomer = action({
   args: {
     orgId: v.optional(v.union(v.string(), v.null())),
   },
-  handler: async (ctx, _args) => {
+  handler: async (ctx) => {
     const userId = await getBillingWorkosUserId(ctx);
 
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, { userId })) as any;
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
+      userId,
+    })) as BillingUserRecord | null;
     if (!user) {
       throw new Error("User not found");
     }

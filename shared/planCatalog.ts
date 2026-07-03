@@ -349,13 +349,18 @@ export type BillingInterval = "monthly" | "annual";
 
 export const ANNUAL_DISCOUNT_PERCENT = 20;
 
-export const EXTRA_CREDITS_PACK_RM = 99;
-export const EXTRA_CREDITS_PACK_AMOUNT = 1000;
-export const EXTRA_CREDITS_PACK_NOTE =
-  "Extra credit will be carried forward and won't expire.";
-
 export const STRIPE_EXTRA_CREDITS_METADATA_TYPE = "extra_credits";
 export const STRIPE_CREDITS_AMOUNT_METADATA_KEY = "creditsAmount";
+
+export {
+  EXTRA_CREDITS_PACK_NOTE,
+  EXTRA_CREDITS_PACKS,
+  EXTRA_CREDITS_PACKS_BY_ID,
+  formatExtraCreditsPackPrice,
+  getExtraCreditsPack,
+  type ExtraCreditsPack,
+  type ExtraCreditsPackId,
+} from "./extraCreditsCatalog";
 
 function formatAgentLimit(count: number | "unlimited"): string {
   if (count === "unlimited") return "Unlimited AI agents";
@@ -917,10 +922,6 @@ export function getGroupedPlanComparisonRows(): PlanComparisonGroup[] {
 
 export function getComparisonPlanName(planId: ComparisonPlanKey): string {
   return planId === "enterprise" ? ENTERPRISE_PLAN.name : PLAN_CATALOG[planId].name;
-}
-
-export function formatExtraCreditsPackPrice(): string {
-  return formatPlanPriceRm(EXTRA_CREDITS_PACK_RM);
 }
 
 export function getAnnualMonthlyEquivalent(priceMonthlyRm: number, priceAnnualRm?: number): number {

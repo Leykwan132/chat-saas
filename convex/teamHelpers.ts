@@ -210,11 +210,6 @@ export async function createPersonalTeamForUser(
     updatedAt: now,
   });
 
-  const user = await ctx.db.get(userId);
-  if (user !== null && user.plan === undefined) {
-    await ctx.db.patch(userId, { plan: "free", updatedAt: now });
-  }
-
   return teamId;
 }
 
@@ -283,7 +278,6 @@ export async function ensureUserAccount(
     firstName: args.firstName,
     lastName: args.lastName,
     profilePictureUrl: args.profilePictureUrl,
-    plan: "free",
     createdAt: now,
     updatedAt: now,
   });
@@ -331,5 +325,4 @@ export async function ensureOrganizationalTeam(
 
   return team._id;
 }
-
 

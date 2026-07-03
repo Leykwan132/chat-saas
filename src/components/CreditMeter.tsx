@@ -141,7 +141,7 @@ export function CreditMeter() {
         {!isLoading && hasTopUps ? (
           <div className="space-y-[0.45rem]">
             <div className="flex items-center justify-between">
-              <span className="text-[0.675rem] font-medium text-muted-foreground">Top ups</span>
+              <span className="text-[0.675rem] font-medium text-muted-foreground">Add-on</span>
               <span className="text-[0.675rem] font-medium tabular-nums text-muted-foreground">
                 {purchasedCredits.toLocaleString()} / {purchasedCreditsGranted.toLocaleString()}
               </span>
@@ -158,11 +158,11 @@ export function CreditMeter() {
             type="button"
             variant="outline"
             size="xs"
-            className="w-full text-[9px] h-[1.35rem] gap-[0.1125rem]"
+            className="h-[1.35rem] w-full text-[10px] leading-none"
             onClick={goToTopUp}
           >
-            <Plus className="size-[0.5625rem]" />
-            <span>Top up</span>
+            <Plus data-icon="inline-start" />
+            Extra credits
           </Button>
         ) : null}
       </div>

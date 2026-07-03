@@ -48,7 +48,7 @@ async function resolveOrgPlan(
   } catch (err) {
     console.warn(`Failed to resolve Stripe plan for team owner ${owner.workosUserId}:`, err);
   }
-  return (owner.plan as PlanKey) ?? "free";
+  return "free";
 }
 
 function buildTeamListItem(args: {
@@ -367,4 +367,3 @@ export const addCustomFields = mutation({
     return merged;
   },
 });
-
