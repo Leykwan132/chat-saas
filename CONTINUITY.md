@@ -21,11 +21,11 @@
 - 2026-07-04 [CODE] D112 ACTIVE: Dashboard preview loading avatars use TestChatWindow-style conic-ring geometry with explicit circular clipping/box sizing; Thinking text stays below the icon.
 
 # Done (recent)
+- 2026-07-04 [CODE] Channels page crash fixed by moving channel service metadata into `src/lib/channelServiceMeta.ts`; unsupported persisted/in-flight channel service values now resolve to an unsupported channel card instead of `ConnectedChannelCard` reading `.icon` from undefined.
 - 2026-07-04 [CODE] Thinking text restored below the loading icon; dashboard loading avatar shell now clips/sizes the ring explicitly to avoid off-center rendering.
 - 2026-07-04 [CODE] Setup dialog has roomier dialog padding, Installation snippet artifact, appearance controls, branding control, and desktop/mobile AspectRatio preview frames.
 - 2026-07-04 [CODE] Preview/public widget use the signature input-bar behavior with motion spring input expansion, bottom fade/slide chat window, outside-click dismiss, and compact collapsed footprint.
 - 2026-07-04 [CODE] Preview/public widget message rendering now uses cleaner playground-style user bubbles, assistant text, Kilobot fallback avatar in chat only, and shimmer pending AI.
-- 2026-07-04 [CODE] Layout/theme choices were removed from setup UI and public config remains fixed.
 - 2026-07-04 [CODE] Dashboard preview now sends real backend messages, loads persisted messages, shows send/loading/error/thinking states, and removed the fake preview reply model.
 - 2026-07-04 [CODE] `api.webWidget.publicReceiveMessage` reuses the same ingest/enqueue helper as the HTTP widget message path.
 
@@ -33,7 +33,7 @@
 - 2026-07-04 [CODE] `convex/webWidget.ts`, `convex/webWidgetAdmin.ts`, `convex/webWidgetCore.ts`, `convex/webWidgetValidators.ts`, `convex/http.ts`, `convex/schema.ts`.
 - 2026-07-04 [CODE] `convex/webWidget.test.ts`, `convex/webWidgetBranding.test.ts`, `convex/webWidgetDefaultChannel.test.ts`.
 - 2026-07-04 [CODE] `public/widget/v1.js`.
-- 2026-07-04 [CODE] `src/components/channels/*`, `src/pages/ChannelsPage.tsx`, `src/pages/ChatsPage.tsx`.
+- 2026-07-04 [CODE] `src/components/channels/*`, `src/pages/ChannelsPage.tsx`, `src/lib/channelServiceMeta.ts`, `src/lib/channelServiceMeta.test.ts`, `src/pages/ChatsPage.tsx`.
 - 2026-07-04 [CODE] `shared/webWidgetLayouts.ts`, `shared/webWidgetThemes.ts`, `shared/channelColors.ts`, `shared/planCatalog.ts`.
 - 2026-07-04 [CODE] `convex/chat/threads.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`.
 - 2026-07-04 [CODE] `src/components/ai-elements/artifact.tsx`, `src/components/ai-elements/code-block.tsx`, `src/components/ui/aspect-ratio.tsx`, `src/registry/magicui/typing-animation.tsx`.
@@ -43,6 +43,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-04 [TOOL] Node 22.22.0 red/green `bunx vitest run src/lib/channelServiceMeta.test.ts` passed with 2 tests; targeted eslint and `git diff --check` passed for `ChannelsPage.tsx`, `channelServiceMeta.ts`, and test file.
 - 2026-07-04 [TOOL] Node 22.22.0 `bunx convex codegen` passed after adding `api.webWidget.publicReceiveMessage`.
 - 2026-07-04 [TOOL] Node 22.22.0 targeted eslint passed for `convex/webWidget.ts`, `convex/webWidgetDefaultChannel.test.ts`, and Website preview/settings components.
 - 2026-07-04 [TOOL] Node 22.22.0 `bunx vitest run convex/webWidgetDefaultChannel.test.ts convex/webWidget.test.ts convex/webWidgetBranding.test.ts` passed (9 tests).
@@ -58,3 +59,4 @@
 - 2026-07-04 [TOOL] Node 22.22.0 mobile loading layout update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-04 [TOOL] Node 22.22.0 setup dialog spacing update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-04 [TOOL] Node 22.22.0 loading avatar alignment update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
+- 2026-07-03 [TOOL] Compacted billing/pricing receipts: user-plan schema cleanup/migration, Stripe top-up packs with promo codes, CreditMeter/history UI, pricing FAQ/comparison/upgrade dialog polish, and landing AI Workflows image update all passed targeted lint/typecheck/vitest/codegen and `git diff --check`.

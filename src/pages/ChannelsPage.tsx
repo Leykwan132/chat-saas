@@ -9,9 +9,8 @@ import {
   Trash2,
   Plus,
   MoreHorizontal,
-  Globe,
 } from 'lucide-react';
-import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
+import { SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -49,32 +48,15 @@ import {
   getWhatsAppConnectionAttemptStatus,
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
+import {
+  CHANNEL_SERVICE_META,
+  getChannelServiceMeta,
+  isSupportedChannelService,
+} from '@/lib/channelServiceMeta';
 
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
 type WhatsAppConnectionAttemptDoc = Doc<'whatsappConnectionAttempts'>;
-
-const SERVICE_META: Record<
-  ChannelDoc['service'],
-  { label: string; icon: React.ElementType }
-> = {
-  whatsapp: {
-    label: 'WhatsApp',
-    icon: SiWhatsapp,
-  },
-  instagram: {
-    label: 'Instagram',
-    icon: SiInstagram,
-  },
-  messenger: {
-    label: 'Messenger',
-    icon: SiMessenger,
-  },
-  web: {
-    label: 'Website',
-    icon: Globe,
-  },
-};
 
 const STATUS_META: Record<
   ChannelDoc['status'],
@@ -90,6 +72,13 @@ const STATUS_META: Record<
 // WhatsApp surfaces the phone number; Instagram its handle; Messenger its
 // Page name. Falls back to whichever Meta id we know.
 function channelIdentifier(channel: ChannelDoc): string {
+  if (channel.service === 'web') {
+    return 'Website';
+  }
+  if (!isSupportedChannelService(channel.service)) {
+    return getChannelServiceMeta(channel.service).label;
+  }
+
   switch (channel.service) {
     case 'whatsapp':
       return (
@@ -102,8 +91,6 @@ function channelIdentifier(channel: ChannelDoc): string {
       return channel.displayUsername ?? channel.igUserId ?? 'No identifier yet';
     case 'messenger':
       return channel.displayUsername ?? channel.pageId ?? 'No identifier yet';
-    case 'web':
-      return 'Website';
   }
 }
 
@@ -481,7 +468,7 @@ function PlatformOptionCard({
   service: ChannelDoc['service'];
   disabled?: boolean;
 }) {
-  const meta = SERVICE_META[service];
+  const meta = CHANNEL_SERVICE_META[service];
   const Icon = meta.icon;
 
   return (
@@ -603,17 +590,10 @@ function ConnectedChannelCard({
   onDisconnectUndone: () => void;
   onShowWebDetails: () => void;
 }) {
-  const meta = SERVICE_META[channel.service];
+  const meta = getChannelServiceMeta(channel.service);
   const Icon = meta.icon;
   const status = STATUS_META[channel.status];
-  
-  const iconColors: Record<ChannelDoc['service'], string> = {
-    whatsapp: 'text-emerald-600 dark:text-emerald-400',
-    instagram: 'text-pink-600 dark:text-pink-400',
-    messenger: 'text-blue-600 dark:text-blue-400',
-    web: 'text-foreground',
-  };
-  const currentIconColor = iconColors[channel.service];
+  const currentIconColor = meta.iconColor;
 
   const disconnect = useMutation(api.channels.disconnect);
   const enqueueSyncConversations = useAction(
