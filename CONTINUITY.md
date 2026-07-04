@@ -1,7 +1,8 @@
 # Snapshot
 - 2026-07-04 [USER] Goal: implement pasteable Website chat channel with Finn-style bottom input, setup dialog, Installation snippet, desktop/mobile preview, persisted visitor conversations, paid icon/branding controls, and real AI processing.
 - 2026-07-04 [CODE] Now: Website channel backend, public widget script, default Website card, setup UI, preview UI, and regression coverage are implemented in the working tree.
-- 2026-07-04 [CODE] Current focus: Website setup dialog uses tighter header/pane padding, top-aligned desktop preview, tighter message spacing, and vertical below-icon thinking state.
+- 2026-07-05 [USER] Current focus: Early Adopter Program FAQ should include a separate note that users get six weeks of guidance on how to go live.
+- 2026-07-05 [CODE] Now: Early adopter FAQ includes a separate go-live guidance item; `EarlyUserPage.tsx` remains split into focused section components so touched code files stay under 300 LOC.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -21,13 +22,14 @@
 - 2026-07-04 [CODE] D112 ACTIVE: Dashboard preview loading avatars use TestChatWindow-style conic-ring geometry with explicit circular clipping/box sizing; Thinking text stays below the icon.
 
 # Done (recent)
-- 2026-07-04 [CODE] Channels page crash fixed by moving channel service metadata into `src/lib/channelServiceMeta.ts`; unsupported persisted/in-flight channel service values now resolve to an unsupported channel card instead of `ConnectedChannelCard` reading `.icon` from undefined.
 - 2026-07-04 [CODE] Thinking text restored below the loading icon; dashboard loading avatar shell now clips/sizes the ring explicitly to avoid off-center rendering.
 - 2026-07-04 [CODE] Setup dialog has roomier dialog padding, Installation snippet artifact, appearance controls, branding control, and desktop/mobile AspectRatio preview frames.
 - 2026-07-04 [CODE] Preview/public widget use the signature input-bar behavior with motion spring input expansion, bottom fade/slide chat window, outside-click dismiss, and compact collapsed footprint.
 - 2026-07-04 [CODE] Preview/public widget message rendering now uses cleaner playground-style user bubbles, assistant text, Kilobot fallback avatar in chat only, and shimmer pending AI.
 - 2026-07-04 [CODE] Dashboard preview now sends real backend messages, loads persisted messages, shows send/loading/error/thinking states, and removed the fake preview reply model.
 - 2026-07-04 [CODE] `api.webWidget.publicReceiveMessage` reuses the same ingest/enqueue helper as the HTTP widget message path.
+- 2026-07-04 [CODE] Early adopter program copy updated from one-year to three-month free Growth access; FAQ now promises six weeks of support for onboarding and go-live.
+- 2026-07-05 [CODE] Early adopter FAQ now has a dedicated “Will I get help going live?” item for six weeks of guidance.
 
 # Working set
 - 2026-07-04 [CODE] `convex/webWidget.ts`, `convex/webWidgetAdmin.ts`, `convex/webWidgetCore.ts`, `convex/webWidgetValidators.ts`, `convex/http.ts`, `convex/schema.ts`.
@@ -37,6 +39,7 @@
 - 2026-07-04 [CODE] `shared/webWidgetLayouts.ts`, `shared/webWidgetThemes.ts`, `shared/channelColors.ts`, `shared/planCatalog.ts`.
 - 2026-07-04 [CODE] `convex/chat/threads.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`.
 - 2026-07-04 [CODE] `src/components/ai-elements/artifact.tsx`, `src/components/ai-elements/code-block.tsx`, `src/components/ui/aspect-ratio.tsx`, `src/registry/magicui/typing-animation.tsx`.
+- 2026-07-04 [CODE] `src/pages/EarlyUserPage.tsx`, `src/components/early-adopter/*`, `src/content/earlyAdopterFaqs.ts`, `src/components/SiteHeader.tsx`.
 
 # Open questions
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
@@ -59,4 +62,6 @@
 - 2026-07-04 [TOOL] Node 22.22.0 mobile loading layout update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-04 [TOOL] Node 22.22.0 setup dialog spacing update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-04 [TOOL] Node 22.22.0 loading avatar alignment update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 early adopter copy/refactor passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, old-copy scan, and line-count check.
+- 2026-07-05 [TOOL] Node 22.22.0 early adopter go-live FAQ update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-03 [TOOL] Compacted billing/pricing receipts: user-plan schema cleanup/migration, Stripe top-up packs with promo codes, CreditMeter/history UI, pricing FAQ/comparison/upgrade dialog polish, and landing AI Workflows image update all passed targeted lint/typecheck/vitest/codegen and `git diff --check`.

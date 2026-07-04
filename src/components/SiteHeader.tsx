@@ -52,7 +52,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
     <>
       <div className="relative z-50 w-full h-auto py-3 sm:py-2 bg-yellow-400 text-zinc-950 text-xs font-normal select-none flex items-center justify-center transition-all duration-300 border-b border-zinc-950/10">
         <div className="px-5 text-center leading-tight">
-          <span>Join our Early Adopter Program: <br className="sm:hidden" />Get 1 year of Growth Plan free.</span>
+          <span>Join our Early Adopter Program: <br className="sm:hidden" />Get 3 months of Growth plan free.</span>
           <Link to="/early-adopter-program" className="underline font-semibold hover:opacity-80 inline-flex items-center gap-1.5 ml-2 whitespace-nowrap">
             Learn more <ArrowRight className="size-3" />
           </Link>
