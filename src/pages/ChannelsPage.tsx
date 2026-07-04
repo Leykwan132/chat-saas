@@ -465,7 +465,7 @@ export default function ChannelsPage() {
 function PlatformOptionCard({
   service,
 }: {
-  service: ChannelDoc['service'];
+  service: keyof typeof CHANNEL_SERVICE_META;
   disabled?: boolean;
 }) {
   const meta = CHANNEL_SERVICE_META[service];
