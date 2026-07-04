@@ -9,6 +9,7 @@ import {
   Trash2,
   Plus,
   MoreHorizontal,
+  Globe,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -39,6 +40,8 @@ import { cn } from '@/lib/utils';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
+import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
+import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
@@ -66,6 +69,10 @@ const SERVICE_META: Record<
   messenger: {
     label: 'Messenger',
     icon: SiMessenger,
+  },
+  web: {
+    label: 'Website',
+    icon: Globe,
   },
 };
 
@@ -95,6 +102,8 @@ function channelIdentifier(channel: ChannelDoc): string {
       return channel.displayUsername ?? channel.igUserId ?? 'No identifier yet';
     case 'messenger':
       return channel.displayUsername ?? channel.pageId ?? 'No identifier yet';
+    case 'web':
+      return 'Website';
   }
 }
 
@@ -205,6 +214,7 @@ export default function ChannelsPage() {
   useMetaChannelCallbackParams();
 
   const [openAddDialog, setOpenAddDialog] = useState(false);
+  const [webDetailsOpen, setWebDetailsOpen] = useState(false);
   const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
     Set<string>
   >(new Set());
@@ -221,7 +231,12 @@ export default function ChannelsPage() {
     [channels, disconnectingChannelIds],
   );
 
-  const activeCount = connectedChannelsList.length;
+  const externalConnectedChannelsList = useMemo(
+    () => connectedChannelsList.filter((channel) => channel.service !== 'web'),
+    [connectedChannelsList],
+  );
+  const activeCount = externalConnectedChannelsList.length;
+  const visibleActiveCount = activeCount + 1;
   const channelLimit = planAndUsage?.channelLimit ?? 1;
   const limitReached = activeCount >= channelLimit;
   const openAttemptChannel = useMemo(() => {
@@ -271,7 +286,7 @@ export default function ChannelsPage() {
         <div>
           <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Channels</h1>
           <PageDescription>
-            Connect WhatsApp, Instagram, and Messenger to start receiving messages.
+            Website is available by default. Connect WhatsApp, Instagram, and Messenger to receive more messages.
           </PageDescription>
         </div>
         <Button
@@ -313,7 +328,7 @@ export default function ChannelsPage() {
           <div className="flex items-center gap-2">
             <h2 className="text-lg font-semibold tracking-tight text-foreground">Connected channels</h2>
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
-              {activeCount}
+              {visibleActiveCount}
             </span>
           </div>
           <Separator className="mt-3" />
@@ -343,7 +358,12 @@ export default function ChannelsPage() {
             />
           ) : null}
 
-          {connectedChannelsList.map((channel: ChannelDoc) => (
+          <WebsiteChannelCard
+            agentId={agentId}
+            onShowDetails={() => setWebDetailsOpen(true)}
+          />
+
+          {externalConnectedChannelsList.map((channel: ChannelDoc) => (
             <ConnectedChannelCard
               key={channel._id}
               agentId={agentId}
@@ -360,6 +380,7 @@ export default function ChannelsPage() {
                   return next;
                 });
               }}
+              onShowWebDetails={() => setWebDetailsOpen(true)}
             />
           ))}
 
@@ -433,6 +454,12 @@ export default function ChannelsPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <WebWidgetDetailsDialog
+        open={webDetailsOpen}
+        onOpenChange={setWebDetailsOpen}
+        agentId={agentId}
+      />
 
       {/* Guide Dialogs */}
       <ChannelLifecycleGuideDialog
@@ -564,14 +591,17 @@ function PendingWhatsAppConnectionCard({
 }
 
 function ConnectedChannelCard({
+  agentId,
   channel,
   onDisconnectBegin,
   onDisconnectUndone,
+  onShowWebDetails,
 }: {
   agentId?: string;
   channel: ChannelDoc;
   onDisconnectBegin: () => void;
   onDisconnectUndone: () => void;
+  onShowWebDetails: () => void;
 }) {
   const meta = SERVICE_META[channel.service];
   const Icon = meta.icon;
@@ -581,6 +611,7 @@ function ConnectedChannelCard({
     whatsapp: 'text-emerald-600 dark:text-emerald-400',
     instagram: 'text-pink-600 dark:text-pink-400',
     messenger: 'text-blue-600 dark:text-blue-400',
+    web: 'text-foreground',
   };
   const currentIconColor = iconColors[channel.service];
 
@@ -684,7 +715,20 @@ function ConnectedChannelCard({
         <div className="mt-auto flex items-center justify-between gap-2 w-full">
           <div className="min-w-0 flex-1">
             {channel.status === 'connected' ? (
-              whatsappSyncStatus ? (
+              channel.service === 'web' ? (
+                <div className="w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-6 w-full text-[11px]"
+                    disabled={!agentId}
+                    onClick={onShowWebDetails}
+                  >
+                    Setup Info
+                  </Button>
+                </div>
+              ) : whatsappSyncStatus ? (
                 <div className="text-[11px] leading-snug space-y-1.5 w-full">
                   {whatsappSyncStatus.showCheck ? (
                     <WhatsAppReadyStatus label={whatsappSyncStatus.label} />

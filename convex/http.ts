@@ -1,6 +1,6 @@
 import { httpRouter } from "convex/server";
 import { httpAction, type ActionCtx } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { workosWebhook } from "./workosWebhook";
 import {
   receive as whatsappReceive,
@@ -333,6 +333,152 @@ http.route({
 // ────────────────────────────────────────────────────────────────────────
 
 const FALLBACK_RETURN_PATH = "/workspace";
+
+const widgetCorsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+function widgetJsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...widgetCorsHeaders,
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function widgetOptionsResponse() {
+  return new Response(null, {
+    status: 204,
+    headers: widgetCorsHeaders,
+  });
+}
+
+function widgetErrorResponse(error: unknown, status = 400) {
+  const message = error instanceof Error ? error.message : String(error);
+  return widgetJsonResponse({ error: message }, status);
+}
+
+function getWidgetKey(req: Request) {
+  return new URL(req.url).searchParams.get("key")?.trim() ?? "";
+}
+
+function getWidgetVisitorId(req: Request) {
+  return new URL(req.url).searchParams.get("visitorId")?.trim() ?? "";
+}
+
+const widgetConfig = httpAction(async (ctx, req) => {
+  const publicKey = getWidgetKey(req);
+  if (!publicKey) {
+    return widgetErrorResponse("Missing widget key", 400);
+  }
+  try {
+    const config = await ctx.runQuery(api.webWidget.publicGetConfig, {
+      publicKey,
+    });
+    return widgetJsonResponse(config);
+  } catch (error) {
+    return widgetErrorResponse(error, 404);
+  }
+});
+
+const widgetMessages = httpAction(async (ctx, req) => {
+  const publicKey = getWidgetKey(req);
+  const visitorId = getWidgetVisitorId(req);
+  if (!publicKey || !visitorId) {
+    return widgetErrorResponse("Missing widget key or visitor ID", 400);
+  }
+  try {
+    const messages = await ctx.runQuery(api.webWidget.publicListMessages, {
+      publicKey,
+      visitorId,
+    });
+    return widgetJsonResponse({ messages });
+  } catch (error) {
+    return widgetErrorResponse(error, 404);
+  }
+});
+
+const widgetMessage = httpAction(async (ctx, req) => {
+  let body: {
+    publicKey?: unknown;
+    visitorId?: unknown;
+    content?: unknown;
+    pageUrl?: unknown;
+  };
+  try {
+    body = (await req.json()) as typeof body;
+  } catch {
+    return widgetErrorResponse("Invalid JSON", 400);
+  }
+
+  if (
+    typeof body.publicKey !== "string" ||
+    typeof body.visitorId !== "string" ||
+    typeof body.content !== "string"
+  ) {
+    return widgetErrorResponse("Missing widget key, visitor ID, or content", 400);
+  }
+
+  try {
+    const result = await ctx.runMutation(internal.webWidget.internalReceiveMessage, {
+      publicKey: body.publicKey,
+      visitorId: body.visitorId,
+      content: body.content,
+      pageUrl: typeof body.pageUrl === "string" ? body.pageUrl : undefined,
+    });
+    const messages = await ctx.runQuery(api.webWidget.publicListMessages, {
+      publicKey: body.publicKey,
+      visitorId: body.visitorId,
+    });
+    return widgetJsonResponse({
+      ok: true,
+      conversationId: result.conversationId,
+      messages,
+    });
+  } catch (error) {
+    return widgetErrorResponse(error, 400);
+  }
+});
+
+http.route({
+  path: "/widget/config",
+  method: "GET",
+  handler: widgetConfig,
+});
+
+http.route({
+  path: "/widget/config",
+  method: "OPTIONS",
+  handler: httpAction(async () => widgetOptionsResponse()),
+});
+
+http.route({
+  path: "/widget/messages",
+  method: "GET",
+  handler: widgetMessages,
+});
+
+http.route({
+  path: "/widget/messages",
+  method: "OPTIONS",
+  handler: httpAction(async () => widgetOptionsResponse()),
+});
+
+http.route({
+  path: "/widget/message",
+  method: "POST",
+  handler: widgetMessage,
+});
+
+http.route({
+  path: "/widget/message",
+  method: "OPTIONS",
+  handler: httpAction(async () => widgetOptionsResponse()),
+});
 
 // Resolves { code, csrf, returnPath, oauthError } from a callback URL.
 // Lives here so both callbacks parse the inbound URL identically.

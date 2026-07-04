@@ -27,7 +27,10 @@ async function enforceChannelLimit(
     .collect();
   
   const activeChannels = currentChannels.filter(
-    (c) => c.status !== "disconnected" && c._id !== incomingChannelId
+    (c) =>
+      c.status !== "disconnected" &&
+      c.service !== "web" &&
+      c._id !== incomingChannelId
   );
   
   if (activeChannels.length >= limit) {
@@ -42,6 +45,7 @@ const serviceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
 );
 
 const statusValidator = v.union(
@@ -228,6 +232,19 @@ export const disconnect = mutation({
     }
 
     await cleanupChannelData(ctx, args.channelId);
+
+    if (channel.service === "web") {
+      const settings = await ctx.db
+        .query("webWidgetSettings")
+        .withIndex("by_channelId", (q) => q.eq("channelId", args.channelId))
+        .unique();
+      if (settings !== null) {
+        await ctx.db.patch(settings._id, {
+          enabled: false,
+          updatedAt: Date.now(),
+        });
+      }
+    }
 
     await ctx.db.patch(args.channelId, {
       status: "disconnected",

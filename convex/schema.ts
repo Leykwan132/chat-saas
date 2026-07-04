@@ -3,6 +3,10 @@ import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
 import { workflowNodeKindValidator } from "./workflowValidators";
+import {
+  webWidgetLayoutValidator,
+  webWidgetThemeValidator,
+} from "./webWidgetValidators";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -12,6 +16,7 @@ const serviceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
 );
 
 const conversationServiceValidator = v.union(
@@ -19,6 +24,7 @@ const conversationServiceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
 );
 
 const analyticsMetricValidator = v.union(
@@ -43,6 +49,7 @@ const customerServiceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
   v.literal("manual"),
 );
 
@@ -526,6 +533,25 @@ export default defineSchema({
     .index("by_pageId", ["pageId"])
     .index("by_fbUserId", ["fbUserId"])
     .index("by_connectedByUserId", ["connectedByUserId"]),
+  webWidgetSettings: defineTable({
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    publicKey: v.string(),
+    enabled: v.boolean(),
+    agentDisplayName: v.string(),
+    placeholder: v.optional(v.string()),
+    layout: v.optional(webWidgetLayoutValidator),
+    theme: v.optional(webWidgetThemeValidator),
+    iconStorageId: v.optional(v.id("_storage")),
+    hidePoweredBy: v.optional(v.boolean()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_publicKey", ["publicKey"])
+    .index("by_channelId", ["channelId"])
+    .index("by_agentId", ["agentId"]),
   whatsappSyncRequests: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),

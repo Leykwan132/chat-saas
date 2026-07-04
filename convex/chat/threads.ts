@@ -1027,7 +1027,8 @@ export async function ingestChannelMessage(
   if (
     service !== "whatsapp" &&
     service !== "instagram" &&
-    service !== "messenger"
+    service !== "messenger" &&
+    service !== "web"
   ) {
     throw new Error(`Unsupported channel service: ${service}`);
   }
@@ -1047,7 +1048,7 @@ export async function ingestChannelMessage(
   );
 
   const orgAddress =
-    channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? "";
+    channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? "web";
 
   const trimmedContent = args.content.trim();
   const images = args.images ?? [];
@@ -1200,7 +1201,7 @@ async function upsertInboxConversation(
   args: {
     orgId: string;
     channelId: Id<"channels">;
-    service: "whatsapp" | "instagram" | "messenger";
+    service: "whatsapp" | "instagram" | "messenger" | "web";
     orgAddress: string;
     contactAddress: string;
     contactName?: string;

@@ -122,7 +122,8 @@ export const sendReply = action({
     if (
       conversation.service !== "whatsapp" &&
       conversation.service !== "instagram" &&
-      conversation.service !== "messenger"
+      conversation.service !== "messenger" &&
+      conversation.service !== "web"
     ) {
       throw new Error("Not a channel conversation");
     }

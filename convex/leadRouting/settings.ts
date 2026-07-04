@@ -122,7 +122,7 @@ export const getRosterOpenLeadCounts = query({
     const { orgId, userId } = await getAuthContext(ctx);
     const scopedOrgId = resolveChannelOrgId(orgId, userId);
 
-    const services = ["playground", "whatsapp", "instagram", "messenger"] as const;
+    const services = ["playground", "whatsapp", "instagram", "messenger", "web"] as const;
     const counts: Record<string, number> = {};
 
     for (const workosUserId of args.workosUserIds) {

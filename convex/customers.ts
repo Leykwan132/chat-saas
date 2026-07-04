@@ -16,6 +16,7 @@ const customerServiceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
   v.literal("manual"),
 );
 
@@ -23,6 +24,7 @@ const channelServiceValidator = v.union(
   v.literal("whatsapp"),
   v.literal("instagram"),
   v.literal("messenger"),
+  v.literal("web"),
 );
 
 function assertNotLeadTemperatureTag(tag: string) {
@@ -591,7 +593,7 @@ async function upsertCustomer(
   ctx: MutationCtx,
   args: {
     orgId: string;
-    service: "whatsapp" | "instagram" | "messenger";
+    service: "whatsapp" | "instagram" | "messenger" | "web";
     contactAddress: string;
     profileName?: string;
     email?: string;

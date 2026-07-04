@@ -3,6 +3,7 @@ import {
   Inbox,
   LayoutGrid,
   MessageSquareDot,
+  Globe,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -60,6 +61,7 @@ const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
   instagram: 'Instagram',
   messenger: 'Messenger',
+  web: 'Web',
 };
 
 function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
@@ -72,6 +74,8 @@ function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
       return <SiInstagram {...common} />;
     case 'messenger':
       return <SiMessenger {...common} />;
+    case 'web':
+      return <Globe className={className} />;
   }
 }
 
