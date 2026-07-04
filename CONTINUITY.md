@@ -1,155 +1,60 @@
 # Snapshot
-- 2026-06-26T00:00Z [USER] Goal: implement persistent Agent Workflow Builder for `/dashboard/:agentId/workflow`; V1 stores graph structure/display only and direct runtime execution was originally out of scope.
-- 2026-06-26T00:00Z [CODE] Convex guidance requires validators, indexed bounded reads, schema in `convex/schema.ts`, and auth-derived ownership checks.
-- 2026-06-27T22:45+08:00 [USER] Workflow UI milestone compressed: top-left mode switcher, non-draggable controls, roomy dialogs, edge condition pills, node add/delete/selection polish, and layout cleanup are established.
-- 2026-06-28T12:18+08:00 [USER] Followups and Reminders workflow setup milestone compressed: Followups has setup/summary/guide behavior; Reminders are only for booked appointments and currently fixed to one reminder timing.
-- 2026-06-29T14:40+08:00 [USER] Workflow plus menu includes Q&A, Qualify leads, Book appointment, Custom action, and Close conversation; Q&A answers from knowledge base.
-- 2026-06-29T15:37+08:00 [USER] Model & Style UI keeps icons on field titles only, uses clearer option explanations, and closed select values stay side-by-side.
-- 2026-06-29T16:06+08:00 [USER] Goal: clean-break Auto Booking into Services-backed appointment booking driven by direct-message workflow runtime context.
-- 2026-06-29T16:06+08:00 [CODE] Services-backed appointment booking now uses `appointmentServices`, `appointmentBookingSessions`, workflow runtime context, and appointment booking modules.
-- 2026-06-29T17:45+08:00 [CODE] WhatsApp AI replies normalize Markdown bold to WhatsApp single-asterisk bold before sending/persisting.
-- 2026-06-29 [USER] Current goal: enrich AI-created booking calendar descriptions with customer details and customer interest so assigned agents know what to expect.
-- 2026-06-29 [CODE] Now: AI booking create/update writes calendar descriptions with service interest, collected custom fields, customer contact/profile, channel, tags, lead temperature, and notes.
-- 2026-06-29 [USER] Calendar event detail milestone compressed: larger clicked-event details, no confirm/top-right close, update/delete icons, team avatar, edit-in-place update mode, and Summary for AI-generated customer background before service.
-- 2026-06-29 [USER] Current goal: remove Follow-ups from the sidebar, move Broadcast and Message Templates out of Outreach, and remove the Outreach group.
-- 2026-06-29 [USER] Current goal: remove the Assignment sidebar submenu as well.
-- 2026-06-29T22:18+08:00 [USER] Current goal: review Analytics Usage / Credit usage because chart appears to stop at June 28 instead of showing June 29.
-- 2026-06-29T22:18+08:00 [CODE] Finding: Credit usage daily buckets are UTC date keys and the UI formats those keys via local timezone, so `2026-06-29` renders as June 28 in US timezones.
-- 2026-06-29T22:42+08:00 [USER] Goal: implement the long-term timezone-aware fix using Calendar/team timezone data.
-- 2026-06-29T22:42+08:00 [CODE] Credit usage daily chart buckets now use active/selected team timezone and render date keys as calendar dates, not UTC-midnight timestamps.
-- 2026-06-29T23:26+08:00 [USER] Goal: AI-booked appointments should mark the conversation itself as booked so booked chats can be filtered in Inbox.
-- 2026-06-29T23:26+08:00 [CODE] Conversation status now includes `booked`; AI create/update booking sets it, AI cancellation clears it to `open`, and Inbox Booked filter recognizes status or active booking session.
-- 2026-06-30T01:12+08:00 [USER] Goal: migrate Knowledge Base Send Media into Workflow as a node-owned `Send Media` action with user-authored conditions.
-- 2026-06-30T01:12+08:00 [CODE] Now: Workflow exposes `Send Media`; uploads are tied to `workflowNodeId`; runtime sends media only through matching Send Media nodes; visible KB Send Media surface is removed.
-- 2026-07-01T14:25+08:00 [USER] Current goal: WhatsApp templates support `@` parameters, bold text, preview chips, a template library, named Meta payloads, and prepared media IDs for PDF/image/video headers.
-- 2026-07-01T22:27+08:00 [CODE] Now: Create Template uses `@` dropdown params, named examples, exact MIME validation, Text/Image/Video/PDF headers with per-asset persisted selections, library presets, Meta upload-session handles, post-submit media-ID preparation, and Template Detail has no tabs with analytics below the title plus component/media header editing via Meta template update.
-- 2026-07-02 [USER] Current goal: Agent Overview is the first top-level sidebar item, outside the AI Agent group, showing four clickable value-first metrics: AI-assisted conversation, Total credits spent, Booked appointments, and Human escalation; Avg Credits per conversation is removed.
-- 2026-07-02 [USER] Current goal: remove duplicate Advanced Analytics from the Analytics page because Overview now owns common topics and customer sentiment.
+- 2026-07-04 [USER] Goal: implement pasteable Website chat channel with Finn-style bottom input, setup dialog, Installation snippet, desktop/mobile preview, persisted visitor conversations, paid icon/branding controls, and real AI processing.
+- 2026-07-04 [CODE] Now: Website channel backend, public widget script, default Website card, setup UI, preview UI, and regression coverage are implemented in the working tree.
+- 2026-07-04 [CODE] Current focus: Website setup dialog uses tighter header/pane padding, top-aligned desktop preview, tighter message spacing, and vertical below-icon thinking state.
+- 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
+- 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
+- 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
 
 # Decisions
-- 2026-06-26T00:00Z [USER] D001 ACTIVE: Workflow V1 is a persistent skeleton; legacy action graph decisions before 2026-06-29 are compressed into Snapshot milestones.
-- 2026-06-26T17:23+08:00 [USER] D005 ACTIVE: New/lazy workflows default to the start node only; users add `Close conversation` when they need a terminal action.
-- 2026-06-26T00:00Z [USER] D003 ACTIVE: Use existing `agents:manage` permission for Workflow V1.
-- 2026-06-26T20:45+08:00 [CODE] D010 ACTIVE: Agent Setup uses one global `Publish` action for dirty basic, routing, and escalation changes.
-- 2026-06-26T22:34+08:00 [CODE] D011 ACTIVE: Agent Setup uses `AgentPlaygroundPanel mode="inline"` for `Test`.
-- 2026-06-29T00:44+08:00 [CODE] D020 ACTIVE: Reminder timing rows use one combined Popover trigger showing `N unit`.
-- 2026-06-29T00:49+08:00 [CODE] D021 ACTIVE: Reminders are fixed to one reminder and one selected timing.
-- 2026-06-29T13:12+08:00 [CODE] D030 SUPERSEDED by D042: Book appointment workflow service selection used `allowedAutoBookingServiceIds`.
-- 2026-06-29T13:34+08:00 [CODE] D031 ACTIVE: Shared workflow node setup uses a wide centered Dialog.
-- 2026-06-29T14:40+08:00 [CODE] D033 SUPERSEDED by D096: Workflow action menu order included `Custom action`.
-- 2026-06-29T14:40+08:00 [CODE] D034 ACTIVE: Workflow action nodes use editable Name, required Goal, and optional incoming Condition; `Close conversation` stays terminal-only.
-- 2026-06-29T14:48+08:00 [CODE] D035 ACTIVE: Q&A nodes default incoming edge condition to `Customer question`.
-- 2026-06-29T14:57+08:00 [CODE] D038 ACTIVE: Persistent workflow node cards cap at 300px wide.
-- 2026-06-29T15:02+08:00 [CODE] D040 ACTIVE: Workflow node dragging only updates position; explicit handles create connections.
-- 2026-06-29T16:06+08:00 [CODE] D042 ACTIVE: Services-backed appointment booking uses `appointmentServices`, `appointmentBookingSessions`, `allowedAppointmentServiceIds`, and `appointmentServiceId`; legacy settings and `auto_booking` gates are removed.
-- 2026-06-29T16:06+08:00 [CODE] D043 ACTIVE: Direct-message generation loads workflow nodes/edges and per-node allowed Services each turn; the model infers the active stage without persisted conversation stage.
-- 2026-06-29T16:06+08:00 [CODE] D044 ACTIVE: `cancelBooking` cancels a confirmed appointment when no edit is active, but cancels only the edit session and preserves the event during an edit.
-- 2026-06-29 [CODE] D045 ACTIVE: Knowledge-base results can semantically explain or map customer intent to listed Services, but only Services listed in workflow/booking runtime context are bookable.
-- 2026-06-29 [CODE] D046 ACTIVE: Customer-facing WhatsApp AI replies must not use Markdown tables; use bullets instead, with a formatter backstop converting Markdown tables to bullet lists.
-- 2026-06-29 [CODE] D047 ACTIVE: Availability schedule org membership checks apply only when accessing another user's schedule; a user can initialize/view their own schedule in a personal workspace.
-- 2026-06-29 [CODE] D048 ACTIVE: Chat display treats WhatsApp single-asterisk emphasis as bold in inbox bubbles and playground Markdown.
-- 2026-06-29 [CODE] D049 ACTIVE: AI-created appointment calendar descriptions are deterministic summaries of booked service, customer profile/contact, channel, lead metadata, and collected interest fields; no new AI summary is generated at booking time.
-- 2026-06-30T01:12+08:00 [CODE] D050 ACTIVE: Send Media is Workflow-owned using existing `sendImage` node kind, `workflowSendMedia` media purpose, optional `workflowNodeId`, and node-scoped `sendMedia` runtime tool.
-- 2026-06-30T16:42+08:00 [CODE] D051 ACTIVE: Workflow media actions are split as `sendImage` = Send Photo/Video and `sendFile` = Send Files; Messenger always sends assets via `message.attachments`; WhatsApp multi photo/video sends carousel cards in valid 2-10 card batches while files remain document/file attachments; media sends emit structured logs and now use `sendMedia` tool results directly instead of requiring `[MEDIA:clientId]` markers in customer text.
-- 2026-07-01T14:25+08:00 [CODE] D052 ACTIVE: WhatsApp template header media uses separate Meta flows: approval gets `header_handle` via `/{app-id}/uploads`, while send readiness uploads exact-MIME R2 media to `/{phone-number-id}/media` in a workpool and stores `mediaId`; no MIME fallback.
-- 2026-07-02 [CODE] D053 ACTIVE: Agent Overview v1 uses the billing cycle; close means AI-booked appointment; credits come from existing credit usage analytics while overview query owns operational counts.
-- 2026-07-02 [CODE] D054 ACTIVE: Agent Overview range filters support billing period plus 7d/30d/90d; operational summary and credit usage use the same selected range, with non-billing ranges clamped inside the current billing cycle.
-- 2026-07-02 [CODE] D055 ACTIVE: Agent Overview is rendered as an ungrouped top-level sidebar item before the `AI Agent` group.
-- 2026-07-02 [CODE] D056 ACTIVE: Agent Overview abandonment means an open, non-booked, non-escalated conversation where the customer sent the last message and it has been quiet for at least 24 hours.
-- 2026-07-02 [CODE] D057 ACTIVE: Agent Overview `Total messages sent` counts all outgoing messages in selected agent conversations; `AI messages sent` remains AI-only, and the Messages trend uses total sent messages.
-- 2026-07-02 [CODE] D058 SUPERSEDED by D088: Agent Overview metric tiles were chart selectors where every tile mapped to a daily trend, including ratio/average modes.
-- 2026-07-02 [CODE] D059 ACTIVE: Agent Overview metric tiles include compact SVG previews drawn from the same trend rows used by the main chart, without vertical guide lines.
-- 2026-07-02 [CODE] D060 ACTIVE: The selected Agent Overview metric tile shows a thick primary-colored left rail without shifting tile content or changing the tile background.
-- 2026-07-02 [CODE] D061 SUPERSEDED by D070: Visible Agent Overview metric options were limited to AI messages sent, total credits spent, credits per conversation, booked appointments, and escalation rate.
-- 2026-07-02 [CODE] D062 ACTIVE: Agent Overview customer sentiment uses the selected-range conversations' existing `customerSentiment` values and renders beside Trending topics as a compact donut graph.
-- 2026-07-02 [CODE] D063 SUPERSEDED by D088: Agent Overview previously included ratio trend rows for credits per conversation and escalation rate.
-- 2026-07-02 [CODE] D064 ACTIVE: Agent Overview common topics and customer sentiment reuse Analytics chart primitives (`AnalyticsChartShell`, `AnalyticsHorizontalBarChart`, `AnalyticsCustomerSentimentPieChart`) instead of separate Overview-only cards.
-- 2026-07-02 [CODE] D065 ACTIVE: Agent Overview metric preview sparklines use smooth unfilled cubic SVG paths while keeping the same values and selected-state styling.
-- 2026-07-02 [CODE] D066 ACTIVE: Agent Overview main trend chart uses a smooth monotone Recharts area curve.
-- 2026-07-02 [CODE] D067 ACTIVE: Agent Overview common-topic hover tooltip shows the small muted conversation count above the topic title, with description as secondary context below.
-- 2026-07-02 [CODE] D068 ACTIVE: Agent Overview common-topic chart adds extra top spacing below its title, and the Overview sentiment pie is slightly larger than the shared Analytics default via a local wrapper override.
-- 2026-07-02 [CODE] D069 ACTIVE: Analytics page now exposes only AI Agent Usage and Team Analytics; common topics/customer sentiment remain in Overview and the old `topics` analytics section redirects to the default analytics section.
-- 2026-07-02 [CODE] D070 SUPERSEDED by D076: Agent Overview five-card metric row replaces visible `AI messages sent` with `Needs attention`, backed by escalated conversations/counts; `Needs attention` is the last card, `Escalation rate` remains the ratio metric, and no separate Needs Attention section is intended.
-- 2026-07-02 [CODE] D071 SUPERSEDED by D085: Agent Overview main trend chart used a taller 400px plotting area to improve the wide-page aspect ratio.
-- 2026-07-02 [CODE] D072 ACTIVE: Agent Overview main trend chart header has no divider line between the title row and the graph.
-- 2026-07-02 [CODE] D073 SUPERSEDED by D076: Agent Overview main trend chart has no top-right metric dropdown; chart selection is controlled only by the five metric cards.
-- 2026-07-02 [CODE] D074 SUPERSEDED by D088: Agent Overview Daily/Cumulative mode originally included running totals plus running denominator-based ratios.
-- 2026-07-02 [CODE] D075 ACTIVE: Agent Overview main trend chart removes extra vertical gap between the title row and graph; header bottom padding and chart content top padding are zero.
-- 2026-07-02 [CODE] D076 SUPERSEDED by D077: Agent Overview metric row is six cards ordered Total conversations, Total credits spent, Avg. credits per conversation, Booked appointments, Escalation rate, Needs attention; chart selection remains card-only with no graph dropdown, and conversations participates in Daily/Cumulative chart rows and mini previews.
-- 2026-07-02 [CODE] D077 SUPERSEDED by D083: Agent Overview metric row was five cards ordered Total conversations, Total credits spent, Avg. credits per conversation, Booked appointments, Escalation rate; Needs attention was no longer a visible card or chart mode.
-- 2026-07-02 [CODE] D078 ACTIVE: Agent Overview metric preview sparklines keep semantic colors but use lighter stroke opacity: selected 0.8, unselected 0.58.
-- 2026-07-02 [CODE] D079 SUPERSEDED by D080: Agent Overview selected metric rail bled one border pixel past the tile on top/bottom/left so it covered card borders and grid gutters while the outer Card clipped rounded corners.
-- 2026-07-02 [CODE] D080 SUPERSEDED by D081: Agent Overview selected metric rail was wider (`w-3`) and bled 2px past the tile on top/bottom/left.
-- 2026-07-02 [CODE] D081 SUPERSEDED by D082: Agent Overview selected metric rail kept the original visual width and extended vertically with `-inset-y-1`.
-- 2026-07-02 [CODE] D082 ACTIVE: Agent Overview selected metric tile no longer shows a side rail; selected state uses a subtle `bg-muted/50` background while unselected tiles keep `bg-card` plus muted hover.
-- 2026-07-02 [CODE] D083 ACTIVE: Agent Overview final metric is `Human escalation`, a count/trend of AI-raised handoffs from `conversationLogs` rows where `action` is `escalation_raised`, not an escalation-rate percentage.
-- 2026-07-02 [CODE] D084 SUPERSEDED by D086: Agent Overview first metric was `AI-handled conversations`, counted as unique `messages.conversationId` values where the selected agent sent at least one outgoing AI message in the selected range.
-- 2026-07-02 [CODE] D085 SUPERSEDED by D089: Agent Overview main trend chart used a 480px plotting area and rendered the billing-period and Daily/Cumulative controls inside the chart header.
-- 2026-07-02 [CODE] D086 SUPERSEDED by D087: Agent Overview AI-assisted and Human escalation counters were dual-written into `agentOverviewDailyAggregates` by `agentId + timeZone + date`.
-- 2026-07-02 [CODE] D087 ACTIVE: Agent Overview first metric is `AI-assisted conversation`; AI-assisted uses `agentOverviewDailyConversationFacts` and Human escalation uses `agentOverviewHumanEscalationFacts` as source facts by `agentId + timeZone + date`; `@convex-dev/aggregate` component triggers maintain daily sums in `agentOverviewAiAssistedDaily` and `agentOverviewHumanEscalationsDaily`, with bounded raw fallback only when fact rows are absent.
-- 2026-07-02 [CODE] D088 ACTIVE: Agent Overview visible metric row is four cards: AI-assisted conversation, Total credits spent, Booked appointments, and Human escalation; `Avg Credits per conversation` is not a card or chart mode, and Daily/Cumulative applies only to the four visible metrics.
-- 2026-07-02 [CODE] D089 SUPERSEDED by D090: Agent Overview main trend chart used a 552px plotting area, 15% taller than the previous 480px chart.
-- 2026-07-02 [CODE] D090 ACTIVE: Agent Overview main trend chart uses a 497px plotting area, 10% shorter than the previous 552px chart.
-- 2026-07-02 [CODE] D091 SUPERSEDED by D092: Direct Message workflow nodes briefly showed visible neutral circular connection handles at both top target and bottom source points.
-- 2026-07-02 [CODE] D092 SUPERSEDED by D093: Direct Message workflow nodes showed a smaller neutral 1px circular connection handle only at the valid bottom source point.
-- 2026-07-02 [CODE] D093 SUPERSEDED by D094: Direct Message workflow nodes showed a subtle `size-3` neutral 1px circular connection handle only at the valid bottom source point.
-- 2026-07-02 [CODE] D094 ACTIVE: Direct Message workflow nodes show a subtle `size-3` circular connection handle only at the valid bottom source point, using the softer semantic `border` token; top target handles remain invisible for connection landing.
-- 2026-07-02 [CODE] D095 ACTIVE: Smart human escalation is workflow-owned as a terminal `humanEscalation` node; the node's presence enables `escalateToHuman`, old Agent Setup/Create Agent switches are removed, and legacy `escalationEnabled` agents lazily materialize the node then clear the legacy flag when their workflow/runtime is ensured.
-- 2026-07-02 [CODE] D096 ACTIVE: `Custom action` / `aiResponds` is temporarily removed from addable workflow node options and the add-node validator, while the persisted node kind remains supported for existing saved workflows.
-- 2026-07-02 [CODE] D097 SUPERSEDED by D098: Agent Overview mock snapshot data was opt-in via `?mock=overview` or `?mock=true`.
-- 2026-07-02 [CODE] D098 ACTIVE: Agent Overview mock snapshot mode and mock data module are removed; Overview always uses live Convex summary and credit usage queries.
-- 2026-07-03 [CODE] D099 SUPERSEDED by D100: Stripe subscription price IDs are the source of truth for billing plan; stored `users.plan` was deprecated and no longer read/written before final schema removal.
-- 2026-07-03 [CODE] D100 ACTIVE: `users` stores profile/auth/team billing linkage only; plan, monthly credit counters, purchased-credit counters, and `creditsPeriodMonthKey` live in Stripe/userCreditPeriods/topUpEntries/creditLogs instead of user documents.
+- 2026-07-04 [CODE] D101 ACTIVE: Web widget runtime accepts `{ publicKey, visitorId, content, pageUrl }`; backend resolves `publicKey -> webWidgetSettings` and uses stored `channelId`/`agentId`, validating only that settings exist and are enabled.
+- 2026-07-04 [CODE] D102 ACTIVE: Web widget placeholder is optional persisted widget settings; public/dashboard config derives `What can {agentDisplayName} help with?` until the user saves custom placeholder text.
+- 2026-07-04 [CODE] D103 ACTIVE: Web widget Powered by branding is enforced server-side for free plans; paid-plan widgets can persist `hidePoweredBy`, and dashboard free-plan attempts open Adjust Plan instead of saving.
+- 2026-07-04 [CODE] D104 ACTIVE: Web widget layout/theme are fixed for now to the signature input-bar + light input defaults; dashboard/public config ignore stored layout/theme and the setup UI no longer exposes those pickers.
+- 2026-07-04 [CODE] D105 ACTIVE: Website is a built-in/default channel in Channels; users open Setup Info to lazily ensure widget settings, Website is not offered in the add-channel dialog, and web channels do not consume external channel capacity.
+- 2026-07-04 [CODE] D106 ACTIVE: Website setup preview is a live widget conversation: it stores `kilobot:widget-preview:{publicKey}:visitorId`, calls `api.webWidget.publicReceiveMessage`, subscribes to `api.webWidget.publicListMessages`, and never generates fake assistant replies.
+- 2026-07-04 [CODE] D107 ACTIVE: Website widget conversation rendering follows the playground chat style: assistant text is Markdown-rendered, pending AI is shown as a shimmer assistant row, and status-pill thinking UI is avoided.
+- 2026-07-04 [CODE] D108 ACTIVE: Website widget avatars use uploaded icon first and Kilobot `/icon.svg` fallback when no custom avatar exists; pasted widgets resolve the fallback icon from the widget script origin.
+- 2026-07-04 [CODE] D109 ACTIVE: Website widget avatars live in the chat surfaces only; the prompt/input bar does not render an avatar.
+- 2026-07-04 [CODE] D110 ACTIVE: Public pasted widget loading avatars use the lightweight CSS shine treatment.
+- 2026-07-04 [CODE] D111 ACTIVE: Dashboard preview reset starts a fresh preview conversation by rotating `kilobot:widget-preview:{publicKey}:visitorId`; it does not delete old backend preview threads.
+- 2026-07-04 [CODE] D112 ACTIVE: Dashboard preview loading avatars use TestChatWindow-style conic-ring geometry with explicit circular clipping/box sizing; Thinking text stays below the icon.
 
 # Done (recent)
-- 2026-07-03 [CODE] Final user-table billing cleanup narrowed `users` schema by removing `plan`, `credits`, `purchasedCredits`, `purchasedCreditsGranted`, and `creditsPeriodMonthKey`; the one-off `userPlanMigration` module was removed after the default deployment cleanup completed.
-- 2026-07-03 [CODE] Stored `users.plan` was deauthored before schema narrowing: new user docs no longer wrote it, onboarding stopped passing it to `completeOnboarding`, team plan resolution stopped falling back to it, and default-deployment data was cleared.
-- 2026-07-03 [CODE] Billing add-ons now offer top-up packs for 2,000/RM49, 5,000/RM99, and 15,000/RM249 credits in a one-row desktop grid with flat `Select` card buttons; CreditMeter uses `Add-on` for top-up balance and a direct plus-icon `Extra credits` CTA; purchase history is hidden unless top-up log rows exist, then shows standalone iconless rows with same-size regular text: muted date first, credit purchase beside it, and `- RM` on the right; Checkout sessions allow Stripe promotion codes; checkout metadata, webhook credit grants, and idempotency regression coverage are in place.
-- 2026-07-03 [CODE] Pricing page now places FAQ above the comparison table; comparison heading reads `Compare plans` with the large title treatment, solid row dividers, grey Enterprise dividers, and normal-weight plan titles.
-- 2026-07-03 [CODE] Upgrade plan dialog now uses roomier centered desktop layout, aligned fixed-width feature icon columns, muted Enterprise dividers, matching Popular/Current plan pills, Priority support in key features, and `Custom model access`.
-- 2026-07-03 [CODE] Landing AI Workflows showcase image now uses `https://storage.kilobot.app/WF.png`.
-- 2026-07-03 [CODE] Product copy now uses AI Workflows across pricing, comparison feature labels, FAQ copy, and landing tabs.
+- 2026-07-04 [CODE] Thinking text restored below the loading icon; dashboard loading avatar shell now clips/sizes the ring explicitly to avoid off-center rendering.
+- 2026-07-04 [CODE] Setup dialog has roomier dialog padding, Installation snippet artifact, appearance controls, branding control, and desktop/mobile AspectRatio preview frames.
+- 2026-07-04 [CODE] Preview/public widget use the signature input-bar behavior with motion spring input expansion, bottom fade/slide chat window, outside-click dismiss, and compact collapsed footprint.
+- 2026-07-04 [CODE] Preview/public widget message rendering now uses cleaner playground-style user bubbles, assistant text, Kilobot fallback avatar in chat only, and shimmer pending AI.
+- 2026-07-04 [CODE] Layout/theme choices were removed from setup UI and public config remains fixed.
+- 2026-07-04 [CODE] Dashboard preview now sends real backend messages, loads persisted messages, shows send/loading/error/thinking states, and removed the fake preview reply model.
+- 2026-07-04 [CODE] `api.webWidget.publicReceiveMessage` reuses the same ingest/enqueue helper as the HTTP widget message path.
 
 # Working set
-- 2026-07-02 [CODE] `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/workflowCore.ts`, `convex/workflowMigrations.ts`, `convex/schema.ts`.
-- 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.ts`, `convex/workflowMediaInternal.ts`, `convex/workflowMediaShared.ts`, `convex/workflowMediaDeletion.ts`, `convex/workflowRuntimeContext.ts`.
-- 2026-06-30T15:08+08:00 [CODE] `convex/chat/threads.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/inbox.ts`, `convex/chat/inboxActions.ts`, `convex/chat/inboxMessageMapping.ts`, `convex/chat/channelSend.ts`, `convex/chat/channelSend.test.ts`.
-- 2026-06-30T15:16+08:00 [CODE] `src/components/workflow/WorkflowSendMediaSection.tsx`, `WorkflowMediaUploader.tsx`, `WorkflowMediaGrid.tsx`, `WorkflowImagePreview.tsx`, `WorkflowMediaKindBadge.tsx`, `WorkflowLegacyMediaImport.tsx`.
-- 2026-07-02 [CODE] `src/pages/WorkflowPage.tsx`, `src/components/workflow/WorkflowPageSkeleton.tsx`, `src/pages/KnowledgeBasePage.tsx`, `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`.
-- 2026-06-30T01:57+08:00 [CODE] `src/components/workflow/WorkflowInspector.tsx`.
-- 2026-06-30T02:17+08:00 [CODE] `src/components/workflow/WorkflowNode.tsx`, `WorkflowAutomationNode.tsx`, `WorkflowAutomationStepNode.tsx`.
-- 2026-06-30T01:12+08:00 [CODE] `convex/workflowMedia.test.ts`, `convex/workflowMediaCleanup.test.ts`, `convex/workflowActions.test.ts`, `src/components/workflow/workflowCatalog.test.tsx`.
-- 2026-07-01T14:25+08:00 [CODE] `src/pages/CreateTemplatePage.tsx`, `src/components/WhatsAppTemplatePreview.tsx`, `src/components/templates/*`.
-- 2026-07-01T14:25+08:00 [CODE] `convex/schema.ts`, `convex/whatsappTemplates.ts`, `convex/whatsappTemplatesAction.ts`, `convex/whatsappTemplateUpdate.ts`, `convex/whatsappTemplateMediaPool.ts`, `convex/whatsappTemplateSendPayload.ts`, `convex/whatsappBroadcast.ts`, `convex/broadcastPool.ts`, `convex/followUpPool.ts`, `convex/media/r2Client.ts`.
-- 2026-07-02 [CODE] `convex/agentOverview.ts`, `convex/agentOverviewModel.ts`, `convex/agentOverviewDaily.ts`, `convex/agentOverviewMessages.ts`, `convex/agentOverviewSentiment.ts`, `convex/agentOverviewTopics.ts`, `convex/schema.ts`, `src/pages/AgentOverviewPage.tsx`, `src/components/agent-overview/*`, `src/pages/AnalyticsPage.tsx`, `src/components/analytics/TeamAnalyticsContent.tsx`, `src/components/analytics/UsageAnalyticsContent.tsx`.
-- 2026-07-03 [CODE] `src/components/PlanTab.tsx`, `src/components/billing/PlanAddOnsSection.tsx`, `shared/extraCreditsCatalog.ts`, `shared/planCatalog.ts`, `convex/billingAddOns.ts`, `convex/stripe.ts`, `convex/http.ts`, `convex/planStripe.ts`, `convex/plans.ts`, `convex/stripeTopUp.test.ts`, `convex/userPlan.test.ts`, pricing/FAQ/landing files.
+- 2026-07-04 [CODE] `convex/webWidget.ts`, `convex/webWidgetAdmin.ts`, `convex/webWidgetCore.ts`, `convex/webWidgetValidators.ts`, `convex/http.ts`, `convex/schema.ts`.
+- 2026-07-04 [CODE] `convex/webWidget.test.ts`, `convex/webWidgetBranding.test.ts`, `convex/webWidgetDefaultChannel.test.ts`.
+- 2026-07-04 [CODE] `public/widget/v1.js`.
+- 2026-07-04 [CODE] `src/components/channels/*`, `src/pages/ChannelsPage.tsx`, `src/pages/ChatsPage.tsx`.
+- 2026-07-04 [CODE] `shared/webWidgetLayouts.ts`, `shared/webWidgetThemes.ts`, `shared/channelColors.ts`, `shared/planCatalog.ts`.
+- 2026-07-04 [CODE] `convex/chat/threads.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`.
+- 2026-07-04 [CODE] `src/components/ai-elements/artifact.tsx`, `src/components/ai-elements/code-block.tsx`, `src/components/ui/aspect-ratio.tsx`, `src/registry/magicui/typing-animation.tsx`.
 
 # Open questions
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
-- 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
+- 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-07-03 [TOOL] Node 22.22.0 TDD red/green for `convex/userPlan.test.ts` confirmed legacy `users` billing fields were accepted before schema narrowing and rejected after removing `plan`, `credits`, `purchasedCredits`, `purchasedCreditsGranted`, and `creditsPeriodMonthKey`; Convex codegen, targeted eslint, `bunx vitest run convex/userPlan.test.ts convex/stripeCheckout.test.ts convex/stripeTopUp.test.ts`, `bunx tsc -b --pretty false`, schema source scan, and `git diff --check` passed.
-- 2026-07-03 [TOOL] Node 22.22.0 `bunx convex run userPlanMigration:clearStoredUserPlan '{"batchSize":100}'` succeeded against the default Convex deployment; scanned 5 user docs, cleared 5 stored `plan` fields, `isDone: true`, and `continueCursor: null`.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted TDD red/green for `convex/userPlan.test.ts`, Convex codegen, Convex-file eslint, `bunx vitest run convex/userPlan.test.ts convex/stripeCheckout.test.ts convex/stripeTopUp.test.ts`, `bunx tsc -b --pretty false`, stored-plan source scans, and `git diff --check` passed after stopping new `users.plan` writes and adding the cleanup migration; direct `OnboardingFlow` eslint still reports pre-existing React compiler errors unrelated to the arg removal.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint convex/stripe.ts convex/stripeCheckout.ts convex/stripeCheckout.test.ts`, `bunx vitest run convex/stripeCheckout.test.ts`, `bunx tsc -b --pretty false`, `git diff --check`, LOC check, and source scans passed after routing Checkout creation through a local Stripe helper that sends `allow_promotion_codes: true` for subscription and top-up sessions.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/CreditMeter.tsx`, shadcn Button docs, direct CreditMeter snippet scan, and `git diff --check` passed after simplifying the `Extra credits` CTA to direct icon + text children.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/CreditMeter.tsx`, `git diff --check`, CreditMeter copy/alignment scan, shadcn Button docs fetch after approved network retry, and focused diff review passed after tightening the `Extra credits` CTA line-height while keeping the `data-icon="inline-start"` icon slot.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted Convex codegen, top-up/history source scans, settings-plan route check, `bunx eslint` on touched billing/pricing files, `bunx tsc -b --pretty false`, `bunx vitest run convex/stripeTopUp.test.ts`, and `git diff --check` passed after adding three top-up packs, one-row add-on grid, flattened add-on card footers with `Select` CTA, CreditMeter `Add-on`/aligned plus `Extra credits` copy, log-row-gated standalone iconless history list with same-size regular date/credit/`- RM` text, creditLogs-backed purchase history, and webhook/history/idempotency regression tests; initial codegen showed missing Convex env vars until top-up price lookup became checkout-time lazy.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/pricing/PlanComparisonTable.tsx`, comparison-table border/title scan, pricing route check, and `git diff --check` passed after making comparison table row dividers solid, Enterprise dividers grey, and plan titles normal weight.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/pricing/PlanComparisonTable.tsx`, pricing heading scan, pricing route check, and `git diff --check` passed after restoring the bottom comparison heading to `Compare plans`.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/PricingPage.tsx src/components/pricing/PlanComparisonTable.tsx src/components/pricing/PricingFaqSection.tsx`, pricing section order/title scan, pricing route check, and `git diff --check` passed after moving FAQ above comparison.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/SubscriptionPlanPicker.tsx`, current-badge style scan, pricing route check, and `git diff --check` passed after matching the Current label to the Popular pill.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/AdjustPlanDialog.tsx src/components/SubscriptionPlanPicker.tsx src/components/pricing/PricingFeatureList.tsx src/components/pricing/pricingStyles.ts`, pricing route check, and `git diff --check` passed after centering the upgrade picker, aligning feature icons, and muting Enterprise dividers.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/AdjustPlanDialog.tsx src/components/SubscriptionPlanPicker.tsx src/components/pricing/PricingFeatureList.tsx src/components/pricing/pricingStyles.ts shared/planCatalog.ts`, stale Enterprise wording scan, pricing route check, and `git diff --check` passed after upgrade-dialog spacing and Enterprise wording changes.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint shared/planCatalog.ts`, Free display-feature order check, and `git diff --check` passed after swapping Basic models and `400KB per agent`.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/LandingPage.tsx`, AI Workflows image URL scan, and `git diff --check` passed after switching the image to `WF.png`.
-- 2026-07-03 [TOOL] Compacted pricing-card receipts: Node 22 targeted eslint/scans, typecheck where needed, pricing route checks, Chrome preview, and `git diff --check` passed across AI Workflows rename, Free feature additions, channel limits, and paid-plan knowledge base sizes.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint shared/planCatalog.ts`, `bunx tsc -b --pretty false`, knowledge-base-size scan, pricing route check, Chrome preview, and `git diff --check` passed after adding paid-plan knowledge base sizes to pricing cards.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/components/SubscriptionPlanPicker.tsx src/components/pricing/PricingFeatureList.tsx src/components/pricing/PlanComparisonTable.tsx shared/planCatalog.ts src/pages/PricingPage.tsx`, `bunx tsc -b --pretty false`, `git diff --check`, zero-diff check for `PlanComparisonTable.tsx`, and Chrome accessibility-tree preview passed after moving progressive pricing bullets to the plan cards only.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/pages/EarlyUserPage.tsx src/components/pricing/PricingFaqSection.tsx`, FAQ `hover:underline` scan, and `git diff --check` passed after removing FAQ hover underlines.
-- 2026-07-03 [TOOL] Node 22.22.0 targeted `bunx eslint src/content/earlyAdopterFaqs.ts`, removed Early Adopter FAQ question scan, and `git diff --check` passed after removing three Early Adopter FAQ questions.
-- 2026-07-02 [TOOL] Compacted older receipts: Node 22 targeted lint/typecheck/vitest/codegen, `git diff --check`, and LOC checks passed across workflow media, template media, sidebar regrouping, Analytics cleanup, and Agent Overview foundation/chart/topic work before the entries below.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted workflow/escalation codegen/tests/lint/typecheck passed after making Human escalation workflow-node-owned; broad touched-file eslint still reports pre-existing `react-hooks/set-state-in-effect` errors in `WorkflowInspector`, `CreateAgentPage`, and `InstructionsPage`.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted workflow action Vitest, workflow eslint, and `git diff --check` passed after removing Custom action from addable workflow nodes.
-- 2026-07-02 [TOOL] Node 22.22.0 targeted Agent Setup reply-mode eslint and `git diff --check` passed after clarifying copy and keeping the selected value one row.
+- 2026-07-04 [TOOL] Node 22.22.0 `bunx convex codegen` passed after adding `api.webWidget.publicReceiveMessage`.
+- 2026-07-04 [TOOL] Node 22.22.0 targeted eslint passed for `convex/webWidget.ts`, `convex/webWidgetDefaultChannel.test.ts`, and Website preview/settings components.
+- 2026-07-04 [TOOL] Node 22.22.0 `bunx vitest run convex/webWidgetDefaultChannel.test.ts convex/webWidget.test.ts convex/webWidgetBranding.test.ts` passed (9 tests).
+- 2026-07-04 [TOOL] Node 22.22.0 `bunx tsc -b --pretty false` passed.
+- 2026-07-04 [TOOL] `git diff --check` passed after ledger compression; touched code files remain below 300 LOC.
+- 2026-07-04 [TOOL] Node 22.22.0 widget rendering update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc -b --pretty false`, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 fallback-avatar update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc -b --pretty false`, `git diff --check`, source scan, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 input-avatar removal passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc -b --pretty false`, source scan, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 shine-border loading avatar update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc -b --pretty false`, source scan, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 mobile preview frame fix passed `bunx tsc --noEmit --pretty false` and `git diff --check`; affected file is 55 LOC.
+- 2026-07-04 [TOOL] Node 22.22.0 preview reset/avatar/padding update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, source scan, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 widget message spacing update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, and `git diff --check`.
+- 2026-07-04 [TOOL] Node 22.22.0 mobile loading layout update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 setup dialog spacing update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
+- 2026-07-04 [TOOL] Node 22.22.0 loading avatar alignment update passed targeted eslint, `node --check public/widget/v1.js`, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.

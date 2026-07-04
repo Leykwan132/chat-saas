@@ -8,6 +8,7 @@ import {
   Clock,
   Contact,
   FileText,
+  Globe,
   Lock,
   MessageSquare,
   MessageSquareDot,
@@ -114,6 +115,7 @@ const INBOX_PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   whatsapp: 'WhatsApp',
   instagram: 'Instagram',
   messenger: 'Messenger',
+  web: 'Web',
 };
 
 type InboxChatListItem = Chat & {
@@ -421,6 +423,8 @@ function PlatformMenuIcon({
       return <SiInstagram {...common} />;
     case 'messenger':
       return <SiMessenger {...common} />;
+    case 'web':
+      return <Globe size={size} className={getPlatformIconClassName(platform)} />;
   }
 }
 
@@ -646,7 +650,7 @@ export default function ChatsPage() {
 
   const connectedPlatforms = useMemo(() => {
     const seen = new Set<ConversationPlatform>();
-    const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger'];
+    const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger', 'web'];
     for (const ch of connectedChannels ?? []) {
       if (ch.status === 'connected') seen.add(ch.service);
     }
@@ -1192,7 +1196,8 @@ export default function ChatsPage() {
   const canReplyFromInbox =
     selectedConversation?.service === 'whatsapp' ||
     selectedConversation?.service === 'instagram' ||
-    selectedConversation?.service === 'messenger';
+    selectedConversation?.service === 'messenger' ||
+    selectedConversation?.service === 'web';
 
   const handleSendReply = async (message?: PromptInputMessage) => {
     const trimmed = (message?.text ?? draftReply).trim();
@@ -1211,20 +1216,25 @@ export default function ChatsPage() {
     if (
       service !== 'whatsapp' &&
       service !== 'instagram' &&
-      service !== 'messenger'
+      service !== 'messenger' &&
+      service !== 'web'
     ) {
       toast.error(
-        'Sending from the inbox is available for WhatsApp, Instagram, and Messenger only right now.',
+        'Sending from the inbox is available for connected channels only right now.',
       );
       return;
     }
+    const isMetaService =
+      service === 'whatsapp' ||
+      service === 'instagram' ||
+      service === 'messenger';
     // Guard: Meta 24-hour conversation window
     const lastCustomerMessageAt = selectedConversation?.lastCustomerMessageAt;
     const WINDOW_MS = 24 * 60 * 60 * 1000;
     const windowClosed =
       lastCustomerMessageAt === undefined ||
       Date.now() - lastCustomerMessageAt >= WINDOW_MS;
-    if (windowClosed) {
+    if (isMetaService && windowClosed) {
       toast.error(
         'Conversation window closed. Sending outside the window violates Meta policy — your account could be banned. Use a template message to re-open the conversation.',
         { duration: 6000 },
@@ -1905,7 +1915,8 @@ export default function ChatsPage() {
                                 <span className="inline-flex min-w-0 items-center justify-end gap-1.5 truncate text-right font-medium text-foreground">
                                   {selectedConversation?.service === 'whatsapp' ||
                                   selectedConversation?.service === 'instagram' ||
-                                  selectedConversation?.service === 'messenger' ? (
+                                  selectedConversation?.service === 'messenger' ||
+                                  selectedConversation?.service === 'web' ? (
                                     <PlatformMenuIcon
                                       platform={selectedConversation.service}
                                       size={14}

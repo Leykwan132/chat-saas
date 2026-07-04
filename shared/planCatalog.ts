@@ -140,7 +140,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     ],
     actionLabel: "Start for Free",
     models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it:free", "openai/gpt-oss-120b:free"],
-    platforms: ["whatsapp", "instagram", "messenger"],
+    platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,
       lead_tagging: false,
@@ -177,7 +177,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     ],
     actionLabel: "Get Starter",
     models: [...ADVANCED_PLAN_MODELS],
-    platforms: ["whatsapp", "instagram", "messenger"],
+    platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,
       lead_tagging: true,
@@ -214,7 +214,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     actionLabel: "Get Growth",
     popular: true,
     models: [...ADVANCED_PLAN_MODELS],
-    platforms: ["whatsapp", "instagram", "messenger"],
+    platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,
       lead_tagging: true,
@@ -249,7 +249,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     ],
     actionLabel: "Get Business",
     models: [...ADVANCED_PLAN_MODELS],
-    platforms: ["whatsapp", "instagram", "messenger"],
+    platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,
       lead_tagging: true,

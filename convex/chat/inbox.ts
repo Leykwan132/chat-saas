@@ -541,7 +541,7 @@ export const generateAiReplyWorker = internalAction({
       userId: agent.userId,
     });
 
-    if (!checkAiFeature(stripeInfo.plan, "auto_reply")) {
+    if (conv.service !== "web" && !checkAiFeature(stripeInfo.plan, "auto_reply")) {
       console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
         billingUserId: agent.userId,
         plan: stripeInfo.plan,

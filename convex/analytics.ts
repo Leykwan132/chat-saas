@@ -14,7 +14,7 @@ import {
   type CustomerSentiment,
 } from "../shared/customerSentiment";
 
-const CHANNEL_SERVICES: ConversationService[] = ["whatsapp", "instagram", "messenger"];
+const CHANNEL_SERVICES: ConversationService[] = ["whatsapp", "instagram", "messenger", "web"];
 
 const rangeValidator = v.union(
   v.literal("7d"),
@@ -1019,7 +1019,7 @@ export const getChannelConversions = query({
       .query("channels")
       .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
       .take(100);
-    const services: ConversationService[] = ["whatsapp", "instagram", "messenger"];
+    const services: ConversationService[] = ["whatsapp", "instagram", "messenger", "web"];
     const serviceNamespaces = services.flatMap((service) => [
       serviceNamespace(orgId, service, "channelConversationCount"),
       serviceNamespace(orgId, service, "channelConvertedCount"),

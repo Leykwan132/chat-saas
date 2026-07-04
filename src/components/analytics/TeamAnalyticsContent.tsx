@@ -49,7 +49,7 @@ export function TeamAnalyticsContent({ range }: { range: AnalyticsRange }) {
   const hasChannelMonthlyData = useMemo(
     () =>
       channelMonthlyChartData.some((row) =>
-        ['whatsapp', 'instagram', 'messenger'].some(
+        ['whatsapp', 'instagram', 'messenger', 'web'].some(
           (service) => Number(row[service] ?? 0) > 0,
         ),
       ),

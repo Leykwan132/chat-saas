@@ -1,4 +1,4 @@
-import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle } from 'lucide-react';
+import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle, Globe } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
@@ -20,7 +20,7 @@ function getTagColorClass(): { bg: string; text: string; dot: string } {
   };
 }
 
-export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger';
+export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger' | 'web';
 
 export type Chat = {
   id: Id<'conversations'>;
@@ -50,6 +50,8 @@ function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
       return <SiInstagram {...common} title="Instagram" />;
     case 'messenger':
       return <SiMessenger {...common} title="Messenger" />;
+    case 'web':
+      return <Globe size={14} className={getPlatformIconClassName(platform)} />;
   }
 }
 

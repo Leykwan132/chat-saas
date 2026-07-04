@@ -8,5 +8,7 @@ export function getPlatformIconClassName(platform: ConversationPlatform): string
       return 'text-[#0866FF]';
     case 'instagram':
       return 'text-[#E4405F]';
+    case 'web':
+      return 'text-foreground';
   }
 }

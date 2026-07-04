@@ -102,6 +102,7 @@ const CHANNEL_TREND_CHART_CONFIG = {
   whatsapp: { label: CONVERSATION_CHANNEL_LABELS.whatsapp, color: ANALYTICS_CHART_COLORS.channels.whatsapp },
   instagram: { label: CONVERSATION_CHANNEL_LABELS.instagram, color: ANALYTICS_CHART_COLORS.channels.instagram },
   messenger: { label: CONVERSATION_CHANNEL_LABELS.messenger, color: ANALYTICS_CHART_COLORS.channels.messenger },
+  web: { label: CONVERSATION_CHANNEL_LABELS.web, color: ANALYTICS_CHART_COLORS.channels.web },
 } satisfies ChartConfig;
 
 function formatAnalyticsMonthLabel(label: string) {
@@ -275,6 +276,12 @@ export function AnalyticsCustomersByChannelChart({
           dataKey="messenger"
           stackId="channels"
           fill="var(--color-messenger)"
+          maxBarSize={28}
+        />
+        <Bar
+          dataKey="web"
+          stackId="channels"
+          fill="var(--color-web)"
           maxBarSize={28}
           radius={[4, 4, 0, 0]}
         />
