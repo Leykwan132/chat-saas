@@ -1,8 +1,8 @@
 # Snapshot
 - 2026-07-04 [USER] Goal: implement pasteable Website chat channel with Finn-style bottom input, setup dialog, Installation snippet, desktop/mobile preview, persisted visitor conversations, paid icon/branding controls, and real AI processing.
 - 2026-07-04 [CODE] Now: Website channel backend, public widget script, default Website card, setup UI, preview UI, and regression coverage are implemented in the working tree.
-- 2026-07-05 [USER] Current focus: fix `src/pages/ChannelsPage.tsx` TS7053 where `PlatformOptionCard` indexed connectable-channel metadata with possible `web` service.
-- 2026-07-05 [CODE] Now: `PlatformOptionCard.service` is narrowed to `keyof typeof CHANNEL_SERVICE_META`, matching the add-channel dialog's external platform options.
+- 2026-07-05 [USER] Current focus: fix screenshot-width Website widget expanded appearance and the awkward/uncentered corner icon.
+- 2026-07-05 [CODE] Now: public widget keeps full-height mobile layout under 480px, uses a centered SVG close button, and pads/contains the fallback icon in avatar circles.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -22,13 +22,13 @@
 - 2026-07-04 [CODE] D112 ACTIVE: Dashboard preview loading avatars use TestChatWindow-style conic-ring geometry with explicit circular clipping/box sizing; Thinking text stays below the icon.
 
 # Done (recent)
-- 2026-07-04 [CODE] Setup dialog has roomier dialog padding, Installation snippet artifact, appearance controls, branding control, and desktop/mobile AspectRatio preview frames.
 - 2026-07-04 [CODE] Preview/public widget use the signature input-bar behavior with motion spring input expansion, bottom fade/slide chat window, outside-click dismiss, and compact collapsed footprint.
 - 2026-07-04 [CODE] Preview/public widget message rendering now uses cleaner playground-style user bubbles, assistant text, Kilobot fallback avatar in chat only, and shimmer pending AI.
 - 2026-07-04 [CODE] Dashboard preview now sends real backend messages, loads persisted messages, shows send/loading/error/thinking states, and removed the fake preview reply model.
 - 2026-07-04 [CODE] `api.webWidget.publicReceiveMessage` reuses the same ingest/enqueue helper as the HTTP widget message path.
 - 2026-07-05 [CODE] Early adopter FAQ now has a dedicated “Will I get help going live?” item for six weeks of guidance.
 - 2026-07-05 [CODE] Channels page TS7053 fix narrowed `PlatformOptionCard.service` to keys of `CHANNEL_SERVICE_META`.
+- 2026-07-05 [CODE] Mobile/screenshot-width Website widget expanded state keeps a fixed input gap, avoids full-height mobile layout above 480px, and uses centered icon treatment; public script CSS has regression coverage.
 
 # Working set
 - 2026-07-04 [CODE] `convex/webWidget.ts`, `convex/webWidgetAdmin.ts`, `convex/webWidgetCore.ts`, `convex/webWidgetValidators.ts`, `convex/http.ts`, `convex/schema.ts`.
@@ -45,7 +45,6 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-07-04 [TOOL] Node 22.22.0 `bunx convex codegen` passed after adding `api.webWidget.publicReceiveMessage`.
 - 2026-07-04 [TOOL] Node 22.22.0 targeted eslint passed for `convex/webWidget.ts`, `convex/webWidgetDefaultChannel.test.ts`, and Website preview/settings components.
 - 2026-07-04 [TOOL] Node 22.22.0 `bunx vitest run convex/webWidgetDefaultChannel.test.ts convex/webWidget.test.ts convex/webWidgetBranding.test.ts` passed (9 tests).
 - 2026-07-04 [TOOL] Node 22.22.0 `bunx tsc -b --pretty false` passed.
@@ -63,4 +62,6 @@
 - 2026-07-04 [TOOL] Node 22.22.0 early adopter copy/refactor passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, old-copy scan, and line-count check.
 - 2026-07-05 [TOOL] Node 22.22.0 early adopter go-live FAQ update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check.
 - 2026-07-05 [TOOL] Node 22.22.0 ChannelsPage TS7053 fix passed `bunx tsc --noEmit --pretty false`, `git diff --check`, and line-count check (`src/pages/ChannelsPage.tsx` remained 1116 LOC).
+- 2026-07-05 [TOOL] Node 22.22.0 mobile widget spacing fix passed RED/GREEN `bunx vitest run src/components/channels/WebWidgetMobileLayout.test.ts`, targeted eslint, `node --check public/widget/v1.js`, `git diff --check`, line-count check, and browser measurement at 390x844.
+- 2026-07-05 [TOOL] Node 22.22.0 screenshot-width/corner-icon widget fix passed RED/GREEN `bunx vitest run src/components/channels/WebWidgetMobileLayout.test.ts`, targeted eslint, `node --check public/widget/v1.js`, `git diff --check`, and line-count check; Playwright visual attempt was blocked by missing bundled Chromium and local Chrome headless failure.
 - 2026-07-03 [TOOL] Compacted billing/pricing receipts: user-plan schema cleanup/migration, Stripe top-up packs with promo codes, CreditMeter/history UI, pricing FAQ/comparison/upgrade dialog polish, and landing AI Workflows image update all passed targeted lint/typecheck/vitest/codegen and `git diff --check`.

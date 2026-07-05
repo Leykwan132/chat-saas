@@ -95,7 +95,7 @@ export function WebWidgetPreview({
     mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[440px]' : 'h-12';
   const launcherWidgetHeight =
     mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[430px]' : 'h-14';
-  const mobileInputPanelClassName = 'bottom-16 left-0 right-0 top-0 w-full';
+  const mobileInputPanelClassName = 'bottom-[4.5rem] left-0 right-0 top-0 w-full';
   const mobileLauncherPanelClassName = 'bottom-20 left-0 right-0 top-0 w-full';
 
   const renderComposer = (variant: 'bar' | 'panel') => (
