@@ -262,6 +262,15 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_teamId", ["teamId"])
     .index("by_userId_and_teamId", ["userId", "teamId"]),
+  workspaceSetupChecklistStates: defineTable({
+    userId: v.id("users"),
+    orgId: v.string(),
+    introShownAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId_and_orgId", ["userId", "orgId"]),
   // Local cache of WorkOS invitations, kept in sync via webhooks and API actions.
   teamInvitationRecords: defineTable({
     workosInvitationId: v.string(),

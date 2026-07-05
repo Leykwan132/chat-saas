@@ -1,322 +1,38 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
-import { UserProfileButton } from '@/components/UserProfileButton';
-import { CreditMeter } from '@/components/CreditMeter';
-import { ModeToggle } from '@/components/mode-toggle';
-import { Link, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Plus } from 'lucide-react';
+import { Outlet, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
-import { cn } from '@/lib/utils';
-import {
-  Bot,
-  Mail,
-  Plus,
-  Trash2,
-  PanelLeftClose,
-  PanelLeftOpen,
-  BarChart3,
-} from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { AgentsSidebar } from '@/components/workspace/AgentsSidebar';
+import {
+  AgentCard,
+  AgentCardSkeleton,
+  CreateAgentCard,
+} from '@/components/workspace/AgentCards';
+import { ModeToggle } from '@/components/mode-toggle';
+import { RequireOrganization } from '@/components/RequireOrganization';
+import { TeamSwitcher } from '@/components/TeamSwitcher';
+import { useUpgradeModal } from '@/components/UpgradeModal';
+import { UserProfileButton } from '@/components/UserProfileButton';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { Spinner } from "@/components/ui/spinner"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarInset,
-  useSidebar,
-} from '@/components/ui/sidebar';
 import {
   Breadcrumb,
   BreadcrumbList,
 } from '@/components/ui/breadcrumb';
-import { RequireOrganization } from '@/components/RequireOrganization';
-import { TeamSwitcher } from '@/components/TeamSwitcher';
-import { useUpgradeModal } from '@/components/UpgradeModal';
-import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
-
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { Spinner } from '@/components/ui/spinner';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
-import { useActiveTeam } from '@/hooks/useActiveTeam';
-
-function AgentPreview() {
-  return (
-    <div className="relative h-32 overflow-hidden rounded-t-lg bg-[radial-gradient(circle_at_30%_20%,#60a5fa_0,#3b82f6_34%,#2563eb_62%,#1d4ed8_100%)]">
-      <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.18),transparent_35%,rgba(255,255,255,0.2)_75%)]" />
-      <div className="absolute left-1/2 top-8 w-40 -translate-x-1/2 overflow-hidden rounded-t-xl bg-white shadow-xl">
-        <div className="h-7 bg-blue-500 px-2 py-1.5 text-[8px] font-medium text-white">
-          agent
-        </div>
-        <div className="h-20 px-2 py-2">
-          <div className="h-4 w-20 rounded-full bg-zinc-100" />
-          <div className="ml-auto mt-2 h-4 w-20 rounded-full bg-blue-500" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AgentCardSkeleton() {
-  return (
-    <div className="w-full overflow-hidden rounded-lg border border-border bg-card">
-      <div className="relative h-32 overflow-hidden bg-muted/40 animate-pulse">
-        <div className="absolute left-1/2 top-3 w-40 -translate-x-1/2 overflow-hidden rounded-t-xl bg-muted/20 border border-muted/30">
-          <div className="h-7 bg-muted/30" />
-          <div className="h-20 px-2 py-2 space-y-2">
-            <div className="h-4 w-20 rounded-full bg-muted/20 animate-pulse" />
-            <div className="ml-auto h-4 w-20 rounded-full bg-muted/30 animate-pulse" />
-          </div>
-        </div>
-      </div>
-      <div className="flex items-start justify-between border-t border-border px-4 py-4">
-        <div className="flex-1 space-y-1.5">
-          <div className="h-4 w-2/3 rounded-md bg-muted/40 animate-pulse" />
-          <div className="h-3 w-1/2 rounded-md bg-muted/20 animate-pulse" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CreateAgentCard({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
-        'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
-        'min-h-[9.5rem]',
-      )}
-      aria-label="Create a new AI agent"
-    >
-      <Plus className="size-6" strokeWidth={1.75} />
-      <span className="text-xs font-medium">New AI agent</span>
-    </button>
-  );
-}
-
-function AgentsSidebar() {
-  const { pathname } = useLocation();
-  const isAgentsRoute = pathname === '/workspace';
-  const isInvitationsRoute = pathname === '/workspace/invitations';
-  const isUsageRoute = pathname === '/workspace/usage';
-  const { state, toggleSidebar } = useSidebar();
-  const { count: pendingInvitationCount } = usePendingTeamInvitations();
-  const { can } = usePermissions();
-
-  return (
-    <Sidebar collapsible="icon">
-      {/* Logo / Toggle */}
-      {state === 'collapsed' ? (
-        <SidebarHeader className="flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="group/logo-toggle relative size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-            aria-label="Expand sidebar"
-          >
-            <img
-              src="/icon.svg"
-              alt=""
-              className={cn(
-                'size-[1.35rem] dark:invert transition-opacity duration-150',
-                'group-hover/logo-toggle:opacity-0',
-              )}
-            />
-            <PanelLeftOpen
-              className={cn(
-                'absolute size-[1.125rem] opacity-0 transition-opacity duration-150',
-                'group-hover/logo-toggle:opacity-100',
-              )}
-            />
-            <span className="sr-only">Expand Sidebar</span>
-          </Button>
-        </SidebarHeader>
-      ) : (
-        <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
-          <Link to="/workspace" className="flex items-center gap-3">
-            <img src="/icon.svg" className="size-6 dark:invert" />
-            <div className="flex min-w-0 flex-col leading-none">
-              <span className="font-semibold text-[16px] tracking-normal font-title">Kilobot</span>
-            </div>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <PanelLeftClose className="size-5" />
-            <span className="sr-only">Collapse Sidebar</span>
-          </Button>
-        </SidebarHeader>
-      )}
-
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isAgentsRoute} tooltip="Agents">
-                  <Link to="/workspace">
-                    <Bot />
-                    <span>Agents</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {can(Permission.TEAM_MANAGE) && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isInvitationsRoute} tooltip="Invitations">
-                    <Link to="/workspace/invitations">
-                      <Mail />
-                      <span>Invitations</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  {pendingInvitationCount > 0 ? (
-                    <SidebarMenuBadge className="bg-red-600 text-white peer-data-active/menu-button:!text-white">
-                      {pendingInvitationCount}
-                    </SidebarMenuBadge>
-                  ) : null}
-                </SidebarMenuItem>
-              )}
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isUsageRoute} tooltip="Usage">
-                  <Link to="/workspace/usage">
-                    <BarChart3 />
-                    <span>Usage</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter>
-        <CreditMeter />
-      </SidebarFooter>
-    </Sidebar>
-  );
-}
-
-function AgentCard({
-  agent,
-  deletingId,
-  onDelete,
-  canDelete,
-}: {
-  agent: Doc<'agents'>;
-  deletingId: Id<'agents'> | null;
-  onDelete: (agentId: Id<'agents'>, agentName: string) => void;
-  canDelete: boolean;
-}) {
-  const navigate = useNavigate();
-
-  const handleCardClick = (e: React.MouseEvent<HTMLElement>) => {
-    if (!e.currentTarget.contains(e.target as Node)) {
-      return;
-    }
-    navigate(`/dashboard/${agent._id}`);
-  };
-
-  return (
-    <article
-      className="group w-full cursor-pointer overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-foreground/30"
-      onClick={handleCardClick}
-    >
-      <AgentPreview />
-      <div className="flex items-start justify-between gap-3 border-t border-border px-4 py-4 transition-colors group-hover:bg-muted/20">
-        <div className="min-w-0">
-          <span className="block truncate text-sm font-semibold tracking-tight text-foreground">
-            {agent.name}
-          </span>
-          <p className="m-0 mt-0.5 text-xs text-muted-foreground">
-            {formatPrefixedRelativeAge('Created', agent.createdAt)}
-          </p>
-        </div>
-
-        {canDelete && (
-          <div className="flex items-center gap-2">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                  aria-label={`Delete ${agent.name}`}
-                  disabled={deletingId === agent._id}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {deletingId === agent._id ? (
-                    <Spinner className="size-4" />
-                  ) : (
-                    <Trash2 className="size-4" />
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent onClick={(e) => e.stopPropagation()}>
-                <DialogHeader className="gap-2">
-                  <DialogTitle className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
-                    Delete {agent.name}?
-                  </DialogTitle>
-                  <DialogDescription className="text-sm leading-relaxed">
-                    This permanently removes the agent. You can&apos;t undo this action.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => onDelete(agent._id, agent.name)}
-                    >
-                      Delete
-                    </Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-// ─── Shell layout (sidebar + inset, renders child routes via Outlet) ──
 
 function WorkspaceShell() {
   return (
     <SidebarProvider>
       <AgentsSidebar />
       <SidebarInset>
-        {/* Top header with breadcrumb */}
         <header className="flex h-14 items-center gap-2 px-4 sticky top-0 z-10 bg-background border-b border-border/50">
           <Breadcrumb>
             <BreadcrumbList>
@@ -331,7 +47,6 @@ function WorkspaceShell() {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 overflow-auto px-14 py-8 md:px-12 lg:px-28">
           <div className="animate-fade-in">
             <Outlet />
@@ -341,8 +56,6 @@ function WorkspaceShell() {
     </SidebarProvider>
   );
 }
-
-// ─── Agents index content ─────────────────────────────────────────
 
 export function AgentsIndex() {
   const navigate = useNavigate();
@@ -392,7 +105,7 @@ export function AgentsIndex() {
         )}
         {can(Permission.AGENTS_CREATE) && (
           <Button type="button" size="lg" onClick={handleNewAgent}>
-            <Plus className="size-4" />
+            <Plus data-icon="inline-start" />
             New AI agent
           </Button>
         )}
@@ -436,19 +149,9 @@ export function AgentsIndex() {
   );
 }
 
-// ─── Route component (auth guard + shell) ────────────────────────
-
 export default function WorkspacePage() {
-  const { isLoading: workosLoading, user } = useAuth();
+  const { isLoading: workosLoading } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const authUser = useQuery(
-    api.users.getAuthUser,
-    workosLoading ? 'skip' : {},
-  );
-
-  useEffect(() => {
-    if (workosLoading) return;
-  }, [workosLoading, user, authUser]);
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
@@ -456,10 +159,7 @@ export default function WorkspacePage() {
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
-  // Keep showing a spinner while WorkOS is restoring the session (e.g. after
-  // a page refresh). Without this guard the Convex <Unauthenticated> block
-  // could fire before AuthKit has had a chance to validate the stored tokens,
-  // bouncing the user back to the home page unnecessarily.
+
   if (workosLoading) {
     return (
       <div className="flex min-h-[100svh] items-center justify-center bg-background">
@@ -467,10 +167,6 @@ export default function WorkspacePage() {
       </div>
     );
   }
-
-  // if (!user) {
-  //   return <Navigate to="/" replace />;
-  // }
 
   return (
     <RequireOrganization>

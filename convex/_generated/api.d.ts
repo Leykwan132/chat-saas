@@ -173,6 +173,7 @@ import type * as workosClient from "../workosClient.js";
 import type * as workosOrganizationActions from "../workosOrganizationActions.js";
 import type * as workosWebhook from "../workosWebhook.js";
 import type * as workpool from "../workpool.js";
+import type * as workspaceSetupChecklist from "../workspaceSetupChecklist.js";
 
 import type {
   ApiFromModules,
@@ -346,6 +347,7 @@ declare const fullApi: ApiFromModules<{
   workosOrganizationActions: typeof workosOrganizationActions;
   workosWebhook: typeof workosWebhook;
   workpool: typeof workpool;
+  workspaceSetupChecklist: typeof workspaceSetupChecklist;
 }>;
 
 /**

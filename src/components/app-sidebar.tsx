@@ -3,6 +3,7 @@ import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
+import { WorkspaceSetupChecklist } from '@/components/setup-checklist/WorkspaceSetupChecklist';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -262,8 +263,9 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="gap-2">
         <CreditMeter />
+        <WorkspaceSetupChecklist agentId={agent._id} />
       </SidebarFooter>
 
       <SidebarRail />
