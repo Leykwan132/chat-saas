@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
+import { usePostHog } from '@posthog/react';
 import { api } from '../../convex/_generated/api';
 import { Spinner } from '@/components/ui/spinner';
 import { SiteHeader } from '@/components/SiteHeader';
@@ -21,6 +22,7 @@ import { POST_LOGIN_REDIRECT } from '../constants';
 
 export default function PricingPage() {
   const { user, signUp } = useAuth();
+  const posthog = usePostHog();
   const hasSession = Boolean(user);
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [submitting, setSubmitting] = useState(false);
@@ -33,6 +35,8 @@ export default function PricingPage() {
 
   const handlePlanSelect = async (plan: PlanKey) => {
     if (submitting) return;
+
+    posthog?.capture('plan_selected', { plan, billing_interval: billingInterval });
 
     if (!hasSession) {
       void signUp(returnTo);
@@ -48,6 +52,7 @@ export default function PricingPage() {
         await createStripeCustomer({ orgId: 'personal' });
         window.location.assign('/workspace');
       } else {
+        posthog?.capture('checkout_initiated', { plan, billing_interval: billingInterval });
         const session = await createCheckoutSession({
           plan,
           interval: billingInterval,
@@ -62,6 +67,7 @@ export default function PricingPage() {
         }
       }
     } catch (err) {
+      posthog?.captureException(err);
       toast.error(err instanceof Error ? err.message : 'Something went wrong');
       setSubmitting(false);
       setSelectedPlan(null);

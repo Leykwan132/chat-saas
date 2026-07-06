@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
+import { usePostHog } from '@posthog/react';
 import {
   Upload,
   Trash2,
@@ -38,6 +39,7 @@ interface FileSectionProps {
 }
 
 export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, canManage = true }: FileSectionProps) {
+  const posthog = usePostHog();
   const enqueueFileUpload = useAction(api.cloudflare.enqueueFileUpload);
 
   const [, setIsSavingFile] = useState(false);
@@ -45,6 +47,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
 
   const handleSaveFile = async (files: File[]) => {
     if (!agentId || files.length === 0) return;
+    posthog?.capture('knowledge_base_item_added', { type: 'file', file_count: files.length });
     toast.success(`${files.length} file${files.length > 1 ? "s" : ""} queued for processing`);
     setIsSavingFile(true);
     try {

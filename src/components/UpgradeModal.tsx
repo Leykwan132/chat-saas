@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
+import { usePostHog } from '@posthog/react';
 import { X } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -32,6 +33,7 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
   const [isOpen, setIsOpen] = useState(false);
   const [activeScenario, setActiveScenario] = useState<UpgradeScenario>('free_to_starter');
   const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
+  const posthog = usePostHog();
 
   const { user, isLoading: isAuthLoading } = useAuth();
   const isAuthenticated = Boolean(user);
@@ -42,21 +44,24 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
   );
 
   const openUpgradeModal = (scenario?: UpgradeScenario) => {
+    let resolvedScenario: UpgradeScenario;
     if (scenario) {
-      setActiveScenario(scenario);
+      resolvedScenario = scenario;
     } else {
       // Auto-resolve based on user plan
       const currentPlan = (planAndUsage?.plan ?? 'free') as PlanKey;
       if (currentPlan === 'free') {
-        setActiveScenario('free_to_starter');
+        resolvedScenario = 'free_to_starter';
       } else if (currentPlan === 'starter') {
-        setActiveScenario('starter_to_growth');
+        resolvedScenario = 'starter_to_growth';
       } else if (currentPlan === 'growth') {
-        setActiveScenario('growth_to_business');
+        resolvedScenario = 'growth_to_business';
       } else {
-        setActiveScenario('free_to_starter'); // default fallback
+        resolvedScenario = 'free_to_starter';
       }
     }
+    setActiveScenario(resolvedScenario);
+    posthog?.capture('upgrade_modal_opened', { scenario: resolvedScenario });
     setIsOpen(true);
   };
 

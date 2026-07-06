@@ -128,6 +128,7 @@ import type * as organizationsAdmin from "../organizationsAdmin.js";
 import type * as planCatalog from "../planCatalog.js";
 import type * as planStripe from "../planStripe.js";
 import type * as plans from "../plans.js";
+import type * as posthog from "../posthog.js";
 import type * as quickReplies from "../quickReplies.js";
 import type * as signedRequest from "../signedRequest.js";
 import type * as stripe from "../stripe.js";
@@ -307,6 +308,7 @@ declare const fullApi: ApiFromModules<{
   planCatalog: typeof planCatalog;
   planStripe: typeof planStripe;
   plans: typeof plans;
+  posthog: typeof posthog;
   quickReplies: typeof quickReplies;
   signedRequest: typeof signedRequest;
   stripe: typeof stripe;

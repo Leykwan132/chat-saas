@@ -12,6 +12,8 @@
 - 2026-07-06 [CODE] Now: workspace agent card entry routes to `/dashboard/:agentId/overview` by default instead of landing on inbox.
 - 2026-07-06 [CODE] Now: Launch Guide trigger is a sidebar-footer pill below `CreditMeter` with spacing matched to the upgrade chip / credit meter gap; guide panel opens above the pill and step hover cards open rightward.
 - 2026-07-06 [CODE] Now: `workspaceSetupChecklistToasts.test.ts` no longer trips TS2349 during `tsc -b`; scheduled toast callbacks are captured in an array before invocation.
+- 2026-07-06 [CODE] Now: AI SDK usage capture sites use `LanguageModelUsage.inputTokens` / `outputTokens`; PostHog capture accepts optional token counts.
+- 2026-07-07 [CODE] Now: inbox `$ai_generation` PostHog distinct IDs resolve through `rawAgentUsage` attribution so agent-owner WorkOS user IDs are used instead of runtime `org:` thread IDs.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -59,15 +61,16 @@
 - 2026-07-06 [CODE] D140 SUPERSEDED: Slimmed catalog previously excluded `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `openai/gpt-oss-120b`, `minimax/minimax-m3`, `z-ai/glm-5.2`, and `meta-llama/llama-3.3-70b-instruct`.
 - 2026-07-06 [CODE] D141 ACTIVE: `openai/gpt-oss-120b` is enabled as “OpenAI GPT-OSS 120B” with `chefSlug: "openai"`, `requiredPlan: "starter"`, labels `["advanced"]`, and paid plan entitlements; `qwen/qwen3.7-plus` is not enabled, display-named, or plan-entitled.
 - 2026-07-06 [CODE] D142 ACTIVE: Current slimmed catalog excludes `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `minimax/minimax-m3`, `z-ai/glm-5.2`, `meta-llama/llama-3.3-70b-instruct`, and `qwen/qwen3.7-plus` from enabled catalog, display names, and plan entitlements.
+- 2026-07-07 [CODE] D143 ACTIVE: PostHog `$ai_generation` distinct IDs for inbox AI replies use the same resolved WorkOS user ID returned by `insertRawUsage`; raw Agent component thread IDs like `org:` are not analytics identities.
 
 # Done (recent)
-- 2026-07-06 [CODE] Admin surface now has contact/cost tabs, compact sortable user/model spend tables, month filter, total/average/highest user spend summary cards, USD/MYR display toggle, Stripe-subscription-derived plan labels, WorkOS-user-ID usage attribution, admin-session-protected cost query, modular files all under 300 LOC, and no `/admin/contact` route.
-- 2026-07-06 [CODE] OpenRouter model selection/calls no longer use `:free` IDs in the enabled catalog or plan entitlements; regression coverage added for catalog/plan IDs.
 - 2026-07-06 [CODE] Model catalog slimmed to a smaller set: DeepSeek V4 Flash, Amazon Nova Micro, Tencent HY3 Preview, OpenAI GPT-OSS 120B, Xiaomi MiMo V2.5, and Google Gemini 3.1 Flash Lite; removed IDs have regression coverage.
 - 2026-07-06 [CODE] Xiaomi MiMo V2.5 and Tencent HY3 Preview restored to enabled catalog, paid plan entitlements, display names, and regression coverage; GLM 5.2 and Meta Llama removed.
 - 2026-07-06 [CODE] Supported LLM Models accordion now allows dynamic content growth, Tencent icons render via `Tencent.Color`, leaderboard analytics display/helpers were split into sub-300-line modules, and the panel skeleton export was restored with regression coverage.
 - 2026-07-06 [CODE] Workspace agent card entry now opens agent overview by default instead of relying on the dashboard index inbox redirect.
 - 2026-07-06 [CODE] Launch Guide floating card was replaced by a compact sidebar-footer pill below the growth credit meter, with matched vertical spacing and the panel anchored above the pill.
+- 2026-07-06 [CODE] AI SDK 6 `LanguageModelUsage` field errors fixed in sentiment, lead-label, and thread-summary capture calls; PostHog token properties now accept omitted counts.
+- 2026-07-07 [CODE] Inbox AI reply capture now uses the resolved agent-owner WorkOS user ID from `insertRawUsage`; regression coverage asserts that the mutation returns the same WorkOS ID it stores.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -78,13 +81,13 @@
 - 2026-07-06 [CODE] Leaderboard/model-list UI working set: `src/pages/LeaderboardPage.tsx`, `src/pages/leaderboardTencentIcon.test.ts`, `src/components/analytics/ModelLeaderboardPanel.tsx`, `src/components/analytics/ModelLeaderboardDisplay.tsx`, `src/components/analytics/modelLeaderboardUtils.ts`, `src/components/analytics/modelLeaderboardPanelExports.test.ts`, `src/components/ui/accordion.tsx`, `src/components/ui/accordion.test.ts`.
 - 2026-07-06 [CODE] Workspace agent entry working set: `src/components/workspace/AgentCards.tsx`, `src/components/workspace/agentWorkspaceRoutes.ts`, `src/components/workspace/agentWorkspaceRoutes.test.ts`.
 - 2026-07-06 [CODE] Launch Guide UI working set: `src/components/setup-checklist/WorkspaceSetupChecklist.tsx`, `src/components/setup-checklist/WorkspaceSetupChecklistPanel.tsx`, `src/components/setup-checklist/workspaceSetupChecklistLayout.ts`, `src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`.
+- 2026-07-07 [CODE] AI SDK/PostHog usage capture working set: `convex/agentUsage.ts`, `convex/agentUsage.test.ts`, `convex/chat/threads.ts`, `convex/posthog.ts`, `convex/analyticsSentiment.ts`, `convex/chat/inboxActions.ts`.
 
 # Open questions
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
-- 2026-07-06 [TOOL] Compacted older receipts through admin month filter: setup checklist, first-visit intro, `/admin` rename/cost work, currency/summaries, plan mapping, compact tables, and month filtering passed their recorded targeted vitest/eslint/tsc, route checks, diff checks, and LOC checks.
 - 2026-07-06 [TOOL] Dev Convex DB one-off patch used temporary `patchRawUsageWorkosIds` action: dry-run found 233/233 rows patchable, apply patched 233 rows, verification dry-run returned 0 patchable and 0 unresolved; temporary file was deleted and `bunx convex codegen` passed after removal.
 - 2026-07-06 [TOOL] Dev Convex DB one-off `agentCostUsage` aggregate backfill used temporary `backfillAgentCostUsage` action: dry-run scanned 233 rows (230 costed, 3 uncosted), apply inserted 233 aggregate entries, verification showed aggregate costed count 230 across 5 namespaces; temporary file was deleted and `bunx convex codegen` passed after removal.
 - 2026-07-06 [TOOL] Node 22.22.0 aggregate cost report passed RED/GREEN `bunx vitest run convex/adminUsageCosts.test.ts convex/agentUsage.test.ts src/components/admin/adminUsageCostsModel.test.ts`, focused widget regression tests, targeted admin/widget ESLint, `bunx tsc --noEmit --pretty false`, `git diff --check`, temp-script scan, and LOC check. `convex/doubleSave.test.ts` remains blocked by pre-existing `mediaItems` validator failure and pre-existing lint issues.
@@ -105,3 +108,5 @@
 - 2026-07-06 [TOOL] Node 22.22.0 workspace agent overview entry passed `bunx vitest run src/components/workspace/agentWorkspaceRoutes.test.ts`, targeted ESLint for touched workspace files, `git diff --check`, and touched-file LOC check.
 - 2026-07-06 [TOOL] Node 22.22.0 Launch Guide footer pill/spacing passed RED/GREEN `bunx vitest run src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`, combined setup-checklist vitest, targeted setup/sidebar ESLint, `git diff --check`, and touched-file LOC check.
 - 2026-07-06 [TOOL] Node 22.22.0 TS2349 build fix passed `bunx tsc -b --pretty false`, focused setup-checklist vitest, targeted ESLint for `workspaceSetupChecklistToasts.test.ts`, `git diff --check`, and LOC check.
+- 2026-07-06 [TOOL] Node 22.22.0 AI SDK usage field fix reproduced TS2339 with `bunx tsc -b --pretty false`, then passed `bunx tsc -b --pretty false`, targeted ESLint for `convex/analyticsSentiment.ts convex/chat/inboxActions.ts convex/posthog.ts`, and `git diff --check`.
+- 2026-07-07 [TOOL] Node 22.22.0 PostHog distinct ID fix passed RED/GREEN `bunx vitest run convex/agentUsage.test.ts`, targeted ESLint for `convex/agentUsage.ts convex/agentUsage.test.ts convex/chat/threads.ts convex/posthog.ts`, and `git diff --check`; full `tsc` intentionally skipped for this small backend patch per project environment rule.

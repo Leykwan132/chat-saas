@@ -3,6 +3,7 @@ import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
 import { Link, Navigate, useNavigate } from 'react-router';
 import { toast } from 'sonner';
+import { usePostHog } from '@posthog/react';
 import {
   ArrowLeft,
   Bot,
@@ -107,6 +108,7 @@ export default function CreateAgentPage() {
 
 function CreateAgentForm() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const createAgent = useMutation(api.agents.create);
   const enabledModels = useQuery(api.llm.modelPricing.listEnabled);
 
@@ -152,9 +154,11 @@ function CreateAgentForm() {
             });
             setCreatedAgentId(agentId);
             setCreatingPhase(3);
+            posthog?.capture('agent_created', { template: templateKey, model });
             toast.success(`"${trimmedName}" created successfully`);
             window.setTimeout(() => setStep(4), 700);
           } catch (err) {
+            posthog?.captureException(err);
             setError(err instanceof Error ? err.message : 'Unable to create agent');
             setStep(2);
             createStartedRef.current = false;

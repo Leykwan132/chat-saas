@@ -75,7 +75,7 @@ test("insertRawUsage stores the agent WorkOS user ID instead of runtime org IDs"
     return agentId;
   });
 
-  await t.mutation(internal.agentUsage.insertRawUsage, {
+  const result = await t.mutation(internal.agentUsage.insertRawUsage, {
     userId: "org:",
     threadId,
     agentId,
@@ -88,5 +88,6 @@ test("insertRawUsage stores the agent WorkOS user ID instead of runtime org IDs"
     return await ctx.db.query("rawAgentUsage").order("desc").first();
   });
 
+  expect(result?.workosUserId).toBe(workosUserId);
   expect(usageRow?.userId).toBe(workosUserId);
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
+import { usePostHog } from '@posthog/react';
 import {
   ArrowRight,
   Check,
@@ -516,10 +517,12 @@ function UpgradeInboxSection({ onSignUp }: { onSignUp: () => void }) {
 
 export default function LandingPage() {
   const { user, signUp } = useAuth();
+  const posthog = usePostHog();
   const hasSession = Boolean(user);
 
   const returnTo = { returnTo: POST_LOGIN_REDIRECT };
   const onSignUp = () => {
+    posthog?.capture('signup_cta_clicked', { source: 'landing_page' });
     void signUp({ state: returnTo });
   };
 

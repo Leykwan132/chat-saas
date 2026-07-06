@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { useMutation } from 'convex/react';
 import { Link, useSearchParams } from 'react-router';
+import { usePostHog } from '@posthog/react';
 import { ArrowRight } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
@@ -81,6 +82,7 @@ function OptionalLabel({ children }: { children: ReactNode }) {
 
 export default function ContactPage() {
   const [searchParams] = useSearchParams();
+  const posthog = usePostHog();
   const submitContactRequest = useMutation(api.contactRequests.submit);
 
   const [intent, setIntent] = useState<ContactIntent>(() =>
@@ -141,8 +143,13 @@ export default function ContactPage() {
         numberOfUsers: showBusinessFields ? numberOfUsers : undefined,
         additionalDetails: additionalDetails.trim() || undefined,
       });
+      posthog?.capture('contact_request_submitted', {
+        intent,
+        number_of_users: showBusinessFields ? numberOfUsers : undefined,
+      });
       setSubmitted(true);
     } catch (error) {
+      posthog?.captureException(error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit request.');
     } finally {
       setIsSubmitting(false);

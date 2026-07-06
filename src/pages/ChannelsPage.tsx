@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { Link, useParams, useSearchParams } from 'react-router';
+import { usePostHog } from '@posthog/react';
 import {
   Check,
   CircleAlert,
@@ -104,6 +105,7 @@ function channelIdentifier(channel: ChannelDoc): string {
 // sessionStorage for ConnectWhatsAppButton to finish completeSignup.
 function useMetaChannelCallbackParams() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const posthog = usePostHog();
   const handledRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -147,6 +149,7 @@ function useMetaChannelCallbackParams() {
       if (handledRef.current === key) return;
       handledRef.current = key;
       if (instagram === 'connected') {
+        posthog?.capture('channel_connected', { channel_type: 'instagram' });
         toast.success('Instagram account connected');
       } else {
         const message = searchParams.get('message') ?? 'Unknown error';
@@ -164,6 +167,7 @@ function useMetaChannelCallbackParams() {
       if (handledRef.current === key) return;
       handledRef.current = key;
       if (messenger === 'connected') {
+        posthog?.capture('channel_connected', { channel_type: 'messenger' });
         toast.success('Messenger account connected');
       } else {
         const message = searchParams.get('message') ?? 'Unknown error';

@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { action, internalAction } from "../_generated/server";
 import type { ActionCtx } from "../_generated/server";
+import { captureAIGeneration } from "../posthog";
 import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import { metaIndicatorPool, metaReactionPool } from "../inboxPools";
@@ -754,10 +755,21 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
     const prompt = `Classify the lead temperature for this chat transcript. Respond with ONLY a JSON object:\n\n${transcript}`;
 
     try {
-      const { text } = await generateText({
+      const leadLabelStart = Date.now();
+      const { text, usage: leadUsage } = await generateText({
         model: openRouterModel(modelId),
         prompt,
         system: systemPrompt,
+      });
+      void captureAIGeneration({
+        distinctId: conv.assignedUserId ?? 'anonymous',
+        traceId: args.conversationId,
+        spanName: 'lead_temperature_classification',
+        model: modelId,
+        provider: 'openrouter',
+        inputTokens: leadUsage.inputTokens,
+        outputTokens: leadUsage.outputTokens,
+        latencySeconds: (Date.now() - leadLabelStart) / 1000,
       });
       const leadTemperature = parseLeadTemperature(text.trim());
       if (!leadTemperature) {
@@ -820,10 +832,21 @@ Make it highly customer-centric and readable at a single glance.`;
     const prompt = `Please summarize the following chat transcript:\n\n${transcript}`;
 
     try {
-      const { text } = await generateText({
+      const summaryStart = Date.now();
+      const { text, usage: summaryUsage } = await generateText({
         model: openRouterModel(modelId),
         prompt,
         system: systemPrompt,
+      });
+      void captureAIGeneration({
+        distinctId: conv.assignedUserId ?? 'anonymous',
+        traceId: args.conversationId,
+        spanName: 'thread_summary_generation',
+        model: modelId,
+        provider: 'openrouter',
+        inputTokens: summaryUsage.inputTokens,
+        outputTokens: summaryUsage.outputTokens,
+        latencySeconds: (Date.now() - summaryStart) / 1000,
       });
       const summary = text.trim();
       if (!summary) {

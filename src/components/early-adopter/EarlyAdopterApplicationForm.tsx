@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { ArrowRight, MessageSquare } from 'lucide-react';
+import { usePostHog } from '@posthog/react';
 import { FaFacebookMessenger, FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -36,6 +37,7 @@ const channelIcons = {
 } as const;
 
 export function EarlyAdopterApplicationForm() {
+  const posthog = usePostHog();
   const submitContactRequest = useMutation(api.contactRequests.submit);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -94,9 +96,14 @@ export function EarlyAdopterApplicationForm() {
         numberOfUsers: teamSize,
         additionalDetails: details,
       });
+      posthog?.capture('early_adopter_application_submitted', {
+        team_size: teamSize,
+        channels_count: channels.length,
+      });
       setSubmitted(true);
       toast.success('Application submitted successfully!');
     } catch (error) {
+      posthog?.captureException(error);
       toast.error(error instanceof Error ? error.message : 'Failed to submit application.');
     } finally {
       setIsSubmitting(false);

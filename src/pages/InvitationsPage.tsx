@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAction } from 'convex/react';
 import { Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePostHog } from '@posthog/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
@@ -20,6 +21,7 @@ import { formatOrgRoleLabel } from '../../shared/teamRoleCatalog';
 
 export default function InvitationsPage() {
   const { invitations, loading, refresh } = usePendingTeamInvitations();
+  const posthog = usePostHog();
   const acceptInvitation = useAction(api.teamInvitations.acceptInvitation);
   const { switchTeam } = useActiveTeam();
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
@@ -28,6 +30,7 @@ export default function InvitationsPage() {
     setAcceptingId(invitationId);
     try {
       const result = await acceptInvitation({ invitationId });
+      posthog?.capture('team_invitation_accepted');
       toast.success(`Joined ${result.invitation.organizationName}`);
 
       if (result.teamId) {

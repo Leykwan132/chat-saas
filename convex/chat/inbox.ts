@@ -617,7 +617,6 @@ export const generateAiReplyWorker = internalAction({
         });
       }
 
-      console.log('OpenRouter key', process.env.OPEN_ROUTER_API);
       const result = await configuredAgent.generateText(
         ctx,
         { threadId: conv.threadId },

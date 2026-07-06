@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAction } from 'convex/react';
+import { usePostHog } from '@posthog/react';
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import {
   Trash2,
@@ -47,6 +48,7 @@ interface WebSectionProps {
 }
 
 export function WebSection({ entries, agentId, openDeleteDialog, canManage = true }: WebSectionProps) {
+  const posthog = usePostHog();
   const enqueueLinkDiscovery = useAction(api.cloudflare.enqueueLinkDiscovery);
   const enqueueDelete = useAction(api.cloudflare.enqueueDelete);
 
@@ -66,6 +68,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
     try {
       await enqueueLinkDiscovery({ agentId, url: trimmed });
       setSearchSourceUrl(trimmed);
+      posthog?.capture('knowledge_base_item_added', { type: 'web' });
       toast.success("URL queued for processing");
       setWebInput("");
     } catch {

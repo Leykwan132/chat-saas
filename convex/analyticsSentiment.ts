@@ -5,6 +5,7 @@ import { internal } from "./_generated/api";
 import { generateText } from "ai";
 import { openRouterModel } from "./llm/openRouter";
 import { DEFAULT_OPENROUTER_MODEL } from "./llm/modelPricing";
+import { captureAIGeneration } from "./posthog";
 import { isAdvancedAnalyticsPlan } from "../shared/planCatalog";
 import {
   CUSTOMER_SENTIMENTS,
@@ -121,10 +122,21 @@ Respond with ONLY this JSON object:
       const prompt = `Analyze the customer's sentiment in this conversation:\n\n${transcript}`;
 
       try {
-        const { text } = await generateText({
+        const sentimentStart = Date.now();
+        const { text, usage: sentimentUsage } = await generateText({
           model: openRouterModel(DEFAULT_OPENROUTER_MODEL),
           system,
           prompt,
+        });
+        void captureAIGeneration({
+          distinctId: candidate.conversationId,
+          traceId: candidate.conversationId,
+          spanName: 'sentiment_analysis',
+          model: DEFAULT_OPENROUTER_MODEL,
+          provider: 'openrouter',
+          inputTokens: sentimentUsage.inputTokens,
+          outputTokens: sentimentUsage.outputTokens,
+          latencySeconds: (Date.now() - sentimentStart) / 1000,
         });
         const sentiment = parseCustomerSentiment(text);
         processed++;

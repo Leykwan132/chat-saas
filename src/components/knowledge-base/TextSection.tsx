@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAction } from 'convex/react';
+import { usePostHog } from '@posthog/react';
 import {
   Trash2,
   Check,
@@ -36,6 +37,7 @@ interface TextSectionProps {
 }
 
 export function TextSection({ entries, agentId, openDeleteDialog, canManage = true }: TextSectionProps) {
+  const posthog = usePostHog();
   const enqueueTextUpload = useAction(api.cloudflare.enqueueTextUpload);
   const updateTextEntry = useAction(api.cloudflare.updateTextEntry);
 
@@ -52,6 +54,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
     setIsSavingText(true);
     try {
       await enqueueTextUpload({ agentId, title: textTitle.trim(), content: textContent.trim() });
+      posthog?.capture('knowledge_base_item_added', { type: 'text' });
       toast.success("Text is now being processed");
       setTextTitle(""); setTextContent("");
     } catch { toast.error("Failed to save text entry"); } finally { setIsSavingText(false); }

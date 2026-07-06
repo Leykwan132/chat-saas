@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { useAction, useQuery } from 'convex/react';
+import { usePostHog } from '@posthog/react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowLeft,
@@ -66,6 +67,7 @@ export default function CreateTeamPage() {
 
 function CreateTeamFlow() {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const [searchParams] = useSearchParams();
   const { switchTeam } = useActiveTeam();
   const createTeam = useAction(api.organizationsAdmin.createTeamForCurrentUser);
@@ -155,8 +157,10 @@ function CreateTeamFlow() {
       });
       setCreatedTeamId(result.teamId as Id<'teams'>);
       setStep(4);
+      posthog?.capture('team_created', { industry, company_size: companySize });
       toast.success(`Created ${result.name}`);
     } catch (err) {
+      posthog?.captureException(err);
       toast.error(err instanceof Error ? err.message : 'Could not create team');
     } finally {
       setSubmitting(false);

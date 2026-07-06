@@ -110,7 +110,7 @@ export const insertRawUsage = internalMutation({
   handler: async (ctx, args) => {
     if (!args.threadId) {
       console.debug("Not tracking usage: threadId is missing");
-      return;
+      return null;
     }
 
     const conversation = await ctx.db
@@ -122,12 +122,12 @@ export const insertRawUsage = internalMutation({
       console.debug(
         `Not tracking usage: no conversation found for threadId ${args.threadId}`,
       );
-      return;
+      return null;
     }
 
     if (conversation.service === "playground") {
       console.debug("Not tracking usage: playground (test) thread");
-      return;
+      return null;
     }
 
     const agentId = args.agentId ?? conversation.assignedAgentId;
@@ -146,6 +146,8 @@ export const insertRawUsage = internalMutation({
       providerMetadata: args.providerMetadata,
       createdAt: Date.now(),
     });
+
+    return { workosUserId };
   },
 });
 

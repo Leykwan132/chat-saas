@@ -3,6 +3,7 @@ import { useAction, useMutation, useQuery } from 'convex/react';
 import { useNavigate, useParams } from 'react-router';
 import { CheckCircle2, CircleAlert } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePostHog } from '@posthog/react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -59,6 +60,7 @@ function isSignupFinishEvent(event: SessionInfoMessage['event']) {
 
 export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled, children }: ConnectWhatsAppButtonProps) {
   const navigate = useNavigate();
+  const posthog = usePostHog();
   const { agentId } = useParams();
   const completeSignup = useAction(api.whatsappEmbeddedSignup.completeSignup);
   const beginConnectionAttempt = useMutation(
@@ -123,6 +125,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         setDialogState({ kind: 'closed' });
         setUserDismissed(true);
         onConnected?.();
+        posthog?.capture('channel_connected', { channel_type: 'whatsapp' });
         toast.success('WhatsApp connected successfully', {
           description: 'Chat syncing is in progress, will be completed soon.',
           duration: 15000,
@@ -158,6 +161,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
           setDialogState({ kind: 'closed' });
           setUserDismissed(true);
           onConnected?.();
+          posthog?.capture('channel_connected', { channel_type: 'whatsapp' });
           toast.success('WhatsApp connected successfully', {
             description: 'Chat syncing is in progress, will be completed soon.',
             duration: 15000,

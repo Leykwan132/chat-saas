@@ -2,6 +2,8 @@ import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { createBrowserRouter, RouterProvider, createRoutesFromElements, Outlet, Navigate, Route, useParams, useLocation } from 'react-router'
 import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
+import posthog from 'posthog-js'
+import { PostHogProvider } from '@posthog/react'
 import { ConvexProviderWithAuthKit } from '@convex-dev/workos'
 import { ConvexReactClient } from 'convex/react'
 import '@radix-ui/themes/styles.css'
@@ -65,6 +67,11 @@ import { usePermissions } from './hooks/usePermissions'
 import { PromptInputProvider } from '@/components/ai-elements/prompt-input'
 import { Permission } from '../shared/permissions'
 import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
+
+posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
+  api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
+  defaults: '2026-01-30',
+})
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
@@ -189,6 +196,19 @@ function CallbackRoute() {
   return <Navigate to={user ? POST_LOGIN_REDIRECT : '/'} replace />
 }
 
+function PostHogIdentifier() {
+  const { user } = useAuth()
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.id, {
+        email: user.email,
+        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
+      })
+    }
+  }, [user])
+  return null
+}
+
 function RootLayout() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
@@ -200,6 +220,7 @@ function RootLayout() {
         <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
           <TooltipProvider>
             <UpgradeModalProvider>
+              <PostHogIdentifier />
               <ScrollToTop />
               <Outlet />
               <Toaster />
@@ -286,6 +307,8 @@ const router = createBrowserRouter(
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <PostHogProvider client={posthog}>
+      <RouterProvider router={router} />
+    </PostHogProvider>
   </StrictMode>,
 )

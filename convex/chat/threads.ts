@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { components } from "../_generated/api";
+import { captureAIGeneration } from "../posthog";
 import {
   createThread,
   saveMessage,
@@ -874,7 +875,7 @@ ${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
         reasoningTokens: u.reasoningTokens ?? undefined,
         cachedInputTokens: u.cachedInputTokens ?? undefined,
       };
-      await ctx.runMutation(internal.agentUsage.insertRawUsage, {
+      const trackedUsage = await ctx.runMutation(internal.agentUsage.insertRawUsage, {
         userId: userId ?? undefined,
         threadId: threadId ?? undefined,
         agentId,
@@ -883,6 +884,18 @@ ${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
         provider,
         usage: normalizedUsage,
         providerMetadata,
+      });
+
+      const fallbackDistinctId =
+        userId !== undefined && !userId.startsWith("org:") ? userId : undefined;
+      void captureAIGeneration({
+        distinctId: trackedUsage?.workosUserId ?? fallbackDistinctId ?? 'anonymous',
+        traceId: threadId ?? agentId,
+        spanName: 'inbox_ai_reply',
+        model,
+        provider: provider ?? 'openrouter',
+        inputTokens: normalizedUsage.promptTokens,
+        outputTokens: normalizedUsage.completionTokens,
       });
     },
   });
