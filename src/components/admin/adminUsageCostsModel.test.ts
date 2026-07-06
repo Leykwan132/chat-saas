@@ -19,7 +19,7 @@ test('formatCost can display USD or MYR estimates', () => {
   );
 });
 
-test('buildUserSpendSummary returns average and highest user spend', () => {
+test('buildUserSpendSummary returns total, average, and highest user spend', () => {
   const summary = buildUserSpendSummary([
     {
       userId: 'user-a',
@@ -27,7 +27,6 @@ test('buildUserSpendSummary returns average and highest user spend', () => {
       planKey: 'free',
       planName: 'Free',
       requestCount: 2,
-      totalTokens: 100,
       totalCostUsd: 0.4,
       averageCostUsd: 0.2,
       topModel: 'model-a',
@@ -39,7 +38,6 @@ test('buildUserSpendSummary returns average and highest user spend', () => {
       planKey: 'growth',
       planName: 'Growth',
       requestCount: 3,
-      totalTokens: 300,
       totalCostUsd: 0.8,
       averageCostUsd: 0.266666667,
       topModel: 'model-b',
@@ -47,6 +45,7 @@ test('buildUserSpendSummary returns average and highest user spend', () => {
     },
   ]);
 
+  expect(summary.totalSpendUsd).toBe(1.2);
   expect(summary.averageSpendUsd).toBe(0.6);
   expect(summary.highestSpendUser?.email).toBe('b@example.com');
   expect(summary.highestSpendUser?.totalCostUsd).toBe(0.8);
@@ -54,7 +53,7 @@ test('buildUserSpendSummary returns average and highest user spend', () => {
 
 test('getCostRowsForMonth returns all-time or selected month rows', () => {
   const report = {
-    rowLimit: 100,
+    rowLimit: null,
     sourceRowCount: 3,
     costedRequestCount: 3,
     monthOptions: [],
@@ -65,7 +64,6 @@ test('getCostRowsForMonth returns all-time or selected month rows', () => {
         planKey: 'growth',
         planName: 'Growth',
         requestCount: 3,
-        totalTokens: 300,
         totalCostUsd: 1.2,
         averageCostUsd: 0.4,
         topModel: 'model-a',
@@ -82,7 +80,6 @@ test('getCostRowsForMonth returns all-time or selected month rows', () => {
         planKey: 'growth',
         planName: 'Growth',
         requestCount: 1,
-        totalTokens: 100,
         totalCostUsd: 0.8,
         averageCostUsd: 0.8,
         topModel: 'model-a',

@@ -9,56 +9,13 @@ import {
   type PlanKey,
 } from "./planCatalog";
 import {
-  addMonthOption,
-  addMonthlyUsageRow,
-  addUsageRow,
-  extractOpenRouterCostUsd,
   roundUsd,
+} from "./agentCostAggregateModel";
+import {
   serializeMonthOptions,
   type ModelAccumulator,
-  type MonthAccumulator,
-  type MonthlyUserAccumulator,
-  type UserAccumulator,
 } from "./adminUsageCostAggregation";
-
-const MAX_USAGE_ROWS = 10_000;
-
-async function resolveUsageWorkosUserId(
-  ctx: QueryCtx,
-  row: Doc<"rawAgentUsage">,
-  agentUserIds: Map<string, string | null>,
-) {
-  if (row.agentId) {
-    const key = row.agentId;
-    if (!agentUserIds.has(key)) {
-      const agent = await ctx.db.get(row.agentId);
-      agentUserIds.set(key, agent?.userId ?? null);
-    }
-    const agentUserId = agentUserIds.get(key);
-    if (agentUserId) {
-      return agentUserId;
-    }
-  }
-
-  if (row.userId && !row.userId.startsWith("org:")) {
-    return row.userId;
-  }
-
-  return null;
-}
-
-function withWorkosUserId(
-  row: Doc<"rawAgentUsage">,
-  workosUserId: string | null,
-) {
-  if (row.userId === workosUserId) {
-    return row;
-  }
-  return {
-    ...row,
-    userId: workosUserId ?? undefined,
-  };
-}
+import { collectAggregateCostAccumulators } from "./adminUsageCostAggregateQuery";
 
 async function resolvePlan(
   ctx: QueryCtx,
@@ -83,6 +40,26 @@ async function resolvePlan(
   return { planKey, planName: PLAN_CATALOG[planKey].name };
 }
 
+async function resolveUserPlan(
+  ctx: QueryCtx,
+  userId: string,
+  cache: Map<string, Promise<{ user: Doc<"users"> | null; plan: { planKey: PlanKey; planName: string } }>>,
+) {
+  if (!cache.has(userId)) {
+    cache.set(userId, (async () => {
+      const user =
+        userId === "unassigned"
+          ? null
+          : await ctx.db
+              .query("users")
+              .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
+              .unique();
+      return { user, plan: await resolvePlan(ctx, user) };
+    })());
+  }
+  return await cache.get(userId)!;
+}
+
 function serializeModelRow(
   model: ModelAccumulator,
   user: Doc<"users"> | null,
@@ -96,7 +73,6 @@ function serializeModelRow(
     model: model.model,
     provider: model.provider,
     requestCount: model.requestCount,
-    totalTokens: model.totalTokens,
     totalCostUsd: roundUsd(model.totalCostUsd),
     averageCostUsd: roundUsd(model.totalCostUsd / model.requestCount),
     lastRequestAt: model.lastRequestAt,
@@ -110,28 +86,13 @@ export const getAdminUsageCostReport = query({
   handler: async (ctx, args) => {
     await assertAdminSession(ctx, args.sessionToken);
 
-    const rows = await ctx.db
-      .query("rawAgentUsage")
-      .order("desc")
-      .take(MAX_USAGE_ROWS);
-    const users = new Map<string, UserAccumulator>();
-    const monthlyUsers = new Map<string, MonthlyUserAccumulator>();
-    const months = new Map<string, MonthAccumulator>();
-    const agentUserIds = new Map<string, string | null>();
-    let costedRequestCount = 0;
-
-    for (const row of rows) {
-      const costUsd = extractOpenRouterCostUsd(row.providerMetadata);
-      if (costUsd === null) {
-        continue;
-      }
-      const workosUserId = await resolveUsageWorkosUserId(ctx, row, agentUserIds);
-      const usageRow = withWorkosUserId(row, workosUserId);
-      costedRequestCount += 1;
-      addUsageRow(users, usageRow, costUsd);
-      addMonthlyUsageRow(monthlyUsers, usageRow, costUsd);
-      addMonthOption(months, usageRow, costUsd);
-    }
+    const {
+      users,
+      monthlyUsers,
+      monthOptions,
+      costedRequestCount,
+    } = await collectAggregateCostAccumulators(ctx);
+    const userPlans = new Map<string, Promise<{ user: Doc<"users"> | null; plan: { planKey: PlanKey; planName: string } }>>();
 
     const userRows = [];
     const modelRows = [];
@@ -139,16 +100,7 @@ export const getAdminUsageCostReport = query({
     const monthlyModelRows = [];
 
     for (const userTotals of users.values()) {
-      const user =
-        userTotals.userId === "unassigned"
-          ? null
-          : await ctx.db
-              .query("users")
-              .withIndex("by_workosUserId", (q) =>
-                q.eq("workosUserId", userTotals.userId),
-              )
-              .unique();
-      const plan = await resolvePlan(ctx, user);
+      const { user, plan } = await resolveUserPlan(ctx, userTotals.userId, userPlans);
       const models = [...userTotals.models.values()].sort(
         (a, b) => b.totalCostUsd - a.totalCostUsd,
       );
@@ -162,7 +114,6 @@ export const getAdminUsageCostReport = query({
         planKey: plan.planKey,
         planName: plan.planName,
         requestCount: userTotals.requestCount,
-        totalTokens: userTotals.totalTokens,
         totalCostUsd: roundUsd(userTotals.totalCostUsd),
         averageCostUsd: roundUsd(userTotals.totalCostUsd / userTotals.requestCount),
         topModel: models[0]?.model ?? null,
@@ -172,16 +123,7 @@ export const getAdminUsageCostReport = query({
     }
 
     for (const userTotals of monthlyUsers.values()) {
-      const user =
-        userTotals.userId === "unassigned"
-          ? null
-          : await ctx.db
-              .query("users")
-              .withIndex("by_workosUserId", (q) =>
-                q.eq("workosUserId", userTotals.userId),
-              )
-              .unique();
-      const plan = await resolvePlan(ctx, user);
+      const { user, plan } = await resolveUserPlan(ctx, userTotals.userId, userPlans);
       const models = [...userTotals.models.values()].sort(
         (a, b) => b.totalCostUsd - a.totalCostUsd,
       );
@@ -199,7 +141,6 @@ export const getAdminUsageCostReport = query({
         planKey: plan.planKey,
         planName: plan.planName,
         requestCount: userTotals.requestCount,
-        totalTokens: userTotals.totalTokens,
         totalCostUsd: roundUsd(userTotals.totalCostUsd),
         averageCostUsd: roundUsd(userTotals.totalCostUsd / userTotals.requestCount),
         topModel: models[0]?.model ?? null,
@@ -216,13 +157,12 @@ export const getAdminUsageCostReport = query({
     monthlyModelRows.sort((a, b) => (
       b.monthKey.localeCompare(a.monthKey) || b.totalCostUsd - a.totalCostUsd
     ));
-    const monthOptions = serializeMonthOptions(months);
 
     return {
-      rowLimit: MAX_USAGE_ROWS,
-      sourceRowCount: rows.length,
+      rowLimit: null,
+      sourceRowCount: costedRequestCount,
       costedRequestCount,
-      monthOptions,
+      monthOptions: serializeMonthOptions(monthOptions),
       userRows,
       modelRows,
       monthlyUserRows,

@@ -1,12 +1,11 @@
 export type CostCurrency = 'usd' | 'myr';
 export const ALL_MONTHS_VALUE = 'all';
 export type SortDirection = 'asc' | 'desc';
-export type UserSortKey = 'totalCostUsd' | 'requestCount' | 'averageCostUsd' | 'totalTokens' | 'lastRequestAt';
+export type UserSortKey = 'totalCostUsd' | 'requestCount' | 'averageCostUsd' | 'lastRequestAt';
 export type ModelSortKey =
   | 'totalCostUsd'
   | 'requestCount'
   | 'averageCostUsd'
-  | 'totalTokens'
   | 'lastRequestAt'
   | 'model';
 
@@ -18,7 +17,6 @@ export type UsageCostModelRow = {
   model: string;
   provider: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   averageCostUsd: number;
   lastRequestAt: number;
@@ -30,7 +28,6 @@ export type UsageCostUserRow = {
   planKey: string;
   planName: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   averageCostUsd: number;
   topModel: string | null;
@@ -51,13 +48,12 @@ export type UsageCostMonthOption = {
   monthKey: string;
   label: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   lastRequestAt: number;
 };
 
 export type UsageCostReport = {
-  rowLimit: number;
+  rowLimit: null;
   sourceRowCount: number;
   costedRequestCount: number;
   monthOptions: UsageCostMonthOption[];
@@ -103,6 +99,7 @@ export function buildUserSpendSummary(userRows: UsageCostUserRow[]) {
   }, null);
 
   return {
+    totalSpendUsd: roundUsd(totalSpendUsd),
     averageSpendUsd: userRows.length === 0 ? 0 : roundUsd(totalSpendUsd / userRows.length),
     highestSpendUser,
   };

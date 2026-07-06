@@ -114,6 +114,7 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -222,6 +223,7 @@ test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
 
   t.registerComponent("agent", agentSchema, {
     "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
@@ -352,6 +354,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {

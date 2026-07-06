@@ -2,6 +2,12 @@ import { TableAggregate } from "@convex-dev/aggregate";
 import { components } from "./_generated/api";
 import type { DataModel } from "./_generated/dataModel";
 import { usageMonthKeyFromTimestamp, creditDailyUsageNamespace, toUtcDateKey } from "./usageMonthKey";
+import {
+  agentCostNamespace,
+  agentCostSortKey,
+  extractOpenRouterCostUsd,
+  type AgentCostSortKey,
+} from "./agentCostAggregateModel";
 
 export const lifetimeAggregator = new TableAggregate<{
   Key: number;
@@ -36,6 +42,17 @@ export const agentMonthlyAggregator = new TableAggregate<{
   sumValue: (doc) => doc.usage.totalTokens,
   namespace: (doc) =>
     `${usageMonthKeyFromTimestamp(doc.createdAt)}:${doc.agentId ?? "unassigned"}`,
+});
+
+export const agentCostAggregator = new TableAggregate<{
+  Key: AgentCostSortKey;
+  DataModel: DataModel;
+  TableName: "rawAgentUsage";
+  Namespace: string;
+}>(components.agentCostUsage, {
+  sortKey: agentCostSortKey,
+  sumValue: (doc) => extractOpenRouterCostUsd(doc.providerMetadata) ?? 0,
+  namespace: agentCostNamespace,
 });
 
 export const creditAgentDailyUsageAggregator = new TableAggregate<{

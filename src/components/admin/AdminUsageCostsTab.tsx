@@ -33,10 +33,10 @@ import {
 } from './adminUsageCostsModel';
 
 const userGridClass =
-  'grid grid-cols-[minmax(120px,1.3fr)_64px_82px_70px_78px_78px_minmax(120px,1fr)_96px] items-center gap-x-2 px-3';
+  'grid grid-cols-[minmax(120px,1.3fr)_64px_82px_70px_78px_minmax(120px,1fr)_96px] items-center gap-x-2 px-3';
 
 const modelGridClass =
-  'grid grid-cols-[minmax(110px,1.1fr)_64px_minmax(130px,1.2fr)_70px_82px_70px_78px_78px_96px] items-center gap-x-2 px-3';
+  'grid grid-cols-[minmax(110px,1.1fr)_64px_minmax(130px,1.2fr)_70px_82px_70px_78px_96px] items-center gap-x-2 px-3';
 
 function SortHeader({
   label,
@@ -163,7 +163,7 @@ export function AdminUsageCostsTab({
             <h2 className="text-lg font-semibold tracking-tight">WorkOS user spend</h2>
             <p className="text-sm text-muted-foreground">
               {report
-                ? `${report.costedRequestCount.toLocaleString()} costed requests from ${report.sourceRowCount.toLocaleString()} recent usage rows`
+                ? `${report.costedRequestCount.toLocaleString()} aggregate-backed costed requests`
                 : 'Loading cost data...'}
             </p>
           </div>
@@ -191,7 +191,6 @@ export function AdminUsageCostsTab({
               <SortHeader label="Spend" active={userSort === 'totalCostUsd'} direction={userDirection} onClick={() => toggleUserSort('totalCostUsd')} align="right" />
               <SortHeader label="Requests" active={userSort === 'requestCount'} direction={userDirection} onClick={() => toggleUserSort('requestCount')} align="right" />
               <SortHeader label="Avg" active={userSort === 'averageCostUsd'} direction={userDirection} onClick={() => toggleUserSort('averageCostUsd')} align="right" />
-              <SortHeader label="Tokens" active={userSort === 'totalTokens'} direction={userDirection} onClick={() => toggleUserSort('totalTokens')} align="right" />
               <div>Top model</div>
               <SortHeader label="Last request" active={userSort === 'lastRequestAt'} direction={userDirection} onClick={() => toggleUserSort('lastRequestAt')} />
             </div>
@@ -206,7 +205,6 @@ export function AdminUsageCostsTab({
                     <div className="text-right tabular-nums">{formatCost(row.totalCostUsd, currency)}</div>
                     <div className="text-right tabular-nums">{row.requestCount.toLocaleString()}</div>
                     <div className="text-right tabular-nums">{formatCost(row.averageCostUsd, currency)}</div>
-                    <div className="text-right tabular-nums">{row.totalTokens.toLocaleString()}</div>
                     <div className="truncate text-muted-foreground">{row.topModel ?? '-'}</div>
                     <div className="text-muted-foreground">{format(new Date(row.lastRequestAt), 'MMM d, h:mm a')}</div>
                   </div>
@@ -229,7 +227,6 @@ export function AdminUsageCostsTab({
               <SortHeader label="Spend" active={modelSort === 'totalCostUsd'} direction={modelDirection} onClick={() => toggleModelSort('totalCostUsd')} align="right" />
               <SortHeader label="Requests" active={modelSort === 'requestCount'} direction={modelDirection} onClick={() => toggleModelSort('requestCount')} align="right" />
               <SortHeader label="Avg" active={modelSort === 'averageCostUsd'} direction={modelDirection} onClick={() => toggleModelSort('averageCostUsd')} align="right" />
-              <SortHeader label="Tokens" active={modelSort === 'totalTokens'} direction={modelDirection} onClick={() => toggleModelSort('totalTokens')} align="right" />
               <SortHeader label="Last request" active={modelSort === 'lastRequestAt'} direction={modelDirection} onClick={() => toggleModelSort('lastRequestAt')} />
             </div>
             {report === undefined ? (
@@ -245,7 +242,6 @@ export function AdminUsageCostsTab({
                     <div className="text-right tabular-nums">{formatCost(row.totalCostUsd, currency)}</div>
                     <div className="text-right tabular-nums">{row.requestCount.toLocaleString()}</div>
                     <div className="text-right tabular-nums">{formatCost(row.averageCostUsd, currency)}</div>
-                    <div className="text-right tabular-nums">{row.totalTokens.toLocaleString()}</div>
                     <div className="text-muted-foreground">{format(new Date(row.lastRequestAt), 'MMM d, h:mm a')}</div>
                   </div>
                 </div>

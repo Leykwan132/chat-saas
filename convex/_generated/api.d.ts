@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as adminUsageCostAggregateQuery from "../adminUsageCostAggregateQuery.js";
 import type * as adminUsageCostAggregation from "../adminUsageCostAggregation.js";
 import type * as adminUsageCosts from "../adminUsageCosts.js";
 import type * as agentAccess from "../agentAccess.js";
+import type * as agentCostAggregateModel from "../agentCostAggregateModel.js";
 import type * as agentOverview from "../agentOverview.js";
 import type * as agentOverviewAbandonments from "../agentOverviewAbandonments.js";
 import type * as agentOverviewAggregates from "../agentOverviewAggregates.js";
@@ -185,9 +187,11 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminUsageCostAggregateQuery: typeof adminUsageCostAggregateQuery;
   adminUsageCostAggregation: typeof adminUsageCostAggregation;
   adminUsageCosts: typeof adminUsageCosts;
   agentAccess: typeof agentAccess;
+  agentCostAggregateModel: typeof agentCostAggregateModel;
   agentOverview: typeof agentOverview;
   agentOverviewAbandonments: typeof agentOverviewAbandonments;
   agentOverviewAggregates: typeof agentOverviewAggregates;
@@ -410,6 +414,7 @@ export declare const components: {
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
   modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
   agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
+  agentCostUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentCostUsage">;
   creditDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditDailyUsage">;
   creditWorkspaceDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditWorkspaceDailyUsage">;
   creditAccountDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditAccountDailyUsage">;

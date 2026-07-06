@@ -90,7 +90,13 @@ export function SpendSummaryCards({
   const highest = summary.highestSpendUser;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-3 sm:grid-cols-3">
+      <div className={cn(pricingTableShellClass, 'p-4')}>
+        <p className="text-xs font-medium text-muted-foreground">Total spend</p>
+        <p className="mt-2 text-2xl font-semibold tabular-nums">
+          {isLoading ? '-' : formatCost(summary.totalSpendUsd, currency)}
+        </p>
+      </div>
       <div className={cn(pricingTableShellClass, 'p-4')}>
         <p className="text-xs font-medium text-muted-foreground">Average spend by user</p>
         <p className="mt-2 text-2xl font-semibold tabular-nums">

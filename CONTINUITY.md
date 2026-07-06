@@ -5,7 +5,7 @@
 - 2026-07-05 [CODE] Now: setup checklist backend, frontend components, workspace/agent sidebar wiring, navigation helper, and regression coverage are implemented in the working tree.
 - 2026-07-06 [CODE] Now: first-visit intro actions share the same `h-11` control height; `Skip` is text-style with transparent hover while `Show Guide` remains the filled CTA.
 - 2026-07-06 [USER] Current focus: rename admin contact surface to admin, add tabbed contact/cost admin views, and report raw agent usage cost by user, plan, and model.
-- 2026-07-06 [CODE] Now: `/admin` admin dashboard, contact/cost tabs, raw usage USD cost report, MYR cost toggle, spend summaries, Stripe-subscription-derived plan mapping, compact spend tables, month filtering, and WorkOS-user-ID usage attribution are implemented; `/admin/contact` route/file are removed; dev DB historical raw usage rows are patched to WorkOS user IDs.
+- 2026-07-06 [CODE] Now: `/admin` admin dashboard, contact/cost tabs, aggregate-backed raw usage USD cost report, MYR cost toggle, total/average/highest spend summaries, Stripe-subscription-derived plan mapping, compact spend tables, month filtering, and WorkOS-user-ID usage attribution are implemented; `/admin/contact` route/file are removed; dev DB historical raw usage rows and agent cost aggregate are backfilled.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -28,8 +28,9 @@
 - 2026-07-06 [CODE] D114 ACTIVE: Admin cost reporting uses `rawAgentUsage.providerMetadata.openrouter.usage.cost` as USD, groups by user and user/model, and reads the latest 10,000 raw usage rows for a bounded admin query.
 - 2026-07-06 [CODE] D116 ACTIVE: Admin MYR cost display is a frontend estimate using `USD_TO_MYR_RATE = 4.7`; source rows remain stored/reported as USD.
 - 2026-07-06 [CODE] D117 ACTIVE: Admin cost plan labels resolve from `users.stripeSubscriptionId` via the Stripe component subscription record; cached user price/status fields are not the source of truth.
-- 2026-07-06 [CODE] D118 ACTIVE: Admin cost month filtering uses UTC `YYYY-MM` buckets derived from the same latest 10,000 raw usage rows; frontend switches between all-time and backend monthly aggregate rows.
+- 2026-07-06 [CODE] D118 SUPERSEDED: Admin cost month filtering used UTC `YYYY-MM` buckets derived from the same latest 10,000 raw usage rows.
 - 2026-07-06 [CODE] D119 ACTIVE: Raw agent usage reporting identity is the WorkOS user ID string, sourced from `agents.userId` when an agent is known; runtime values like `org:` are not reporting identities.
+- 2026-07-06 [CODE] D120 ACTIVE: Admin cost reporting uses one `agentCostUsage` TableAggregate over `rawAgentUsage`; namespace is WorkOS user/provider/model, sort key is `[monthKey, createdAt]`, `sum()` is USD cost, `count()` is request count, and `max()` is latest request.
 
 # Done (recent)
 - 2026-07-05 [CODE] Workspace setup checklist visual polish landed: trigger uses a floating bottom-right vertical card with a rainbow border and no hover-lift motion, twice-raised equal-size three-rocket artwork height, one-line title/description, simple row labels, `BadgeCheck` completed markers, per-step centered twice-raised equal-size three-icon HoverCard artwork, and a bottom “Mark all as completed” button without progress text/bar.
@@ -38,13 +39,13 @@
 - 2026-07-05 [CODE] Workspace setup checklist user-facing label is “Launch Guide” on the floating trigger/panel; first-visit intro says “Welcome to Kilobot”, uses equal left/right columns with a 46.25rem dialog width, matching 27.25rem left/right heights, `welcome-1.png` clipped to the dialog radius, icon-led one-line feature rows, no close X, and a roomier “Show Guide” CTA.
 - 2026-07-05 [CODE] Workspace setup checklist remains visible even when inferred progress reaches 5/5; only the manual “Mark all as completed” action hides it and shows “Tutorial has been completed”.
 - 2026-07-06 [CODE] Workspace setup checklist first-visit intro actions now use matching `h-11` sizing, and `Skip` reads as a text action instead of a separate pill.
-- 2026-07-06 [CODE] Admin surface now has contact/cost tabs, compact sortable user/model spend tables, month filter, average/highest user spend summary cards, USD/MYR display toggle, Stripe-subscription-derived plan labels, WorkOS-user-ID usage attribution, admin-session-protected cost query, modular files all under 300 LOC, and no `/admin/contact` route.
+- 2026-07-06 [CODE] Admin surface now has contact/cost tabs, compact sortable user/model spend tables, month filter, total/average/highest user spend summary cards, USD/MYR display toggle, Stripe-subscription-derived plan labels, WorkOS-user-ID usage attribution, admin-session-protected cost query, modular files all under 300 LOC, and no `/admin/contact` route.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
 - 2026-07-05 [CODE] `src/components/setup-checklist/*`.
 - 2026-07-05 [CODE] `src/components/workspace/AgentsSidebar.tsx`, `src/components/workspace/AgentCards.tsx`, `src/pages/WorkspacePage.tsx`, `src/components/app-sidebar.tsx`.
-- 2026-07-06 [CODE] Admin-cost working set: `convex/adminUsageCosts.ts`, `convex/adminUsageCosts.test.ts`, `src/pages/AdminPage.tsx`, `src/components/admin/*`, `src/main.tsx`, `convex/_generated/api.d.ts`; deleted `src/pages/AdminContactPage.tsx`.
+- 2026-07-06 [CODE] Admin-cost working set: `convex/adminUsageCosts.ts`, `convex/adminUsageCostAggregateQuery.ts`, `convex/agentCostAggregateModel.ts`, `convex/adminUsageCosts.test.ts`, `convex/aggregates.ts`, `convex/triggers.ts`, `convex/convex.config.ts`, `src/pages/AdminPage.tsx`, `src/components/admin/*`, `src/main.tsx`, `convex/_generated/api.d.ts`; deleted `src/pages/AdminContactPage.tsx`.
 
 # Open questions
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
@@ -66,3 +67,6 @@
 - 2026-07-06 [TOOL] Node 22.22.0 admin month filter passed RED/GREEN `bunx vitest run convex/adminUsageCosts.test.ts src/components/admin/adminUsageCostsModel.test.ts`, targeted admin ESLint, `bunx tsc --noEmit --pretty false`, `git diff --check`, LOC check, and `/admin` HTTP 200.
 - 2026-07-06 [TOOL] Node 22.22.0 WorkOS usage attribution passed RED/GREEN `bunx vitest run convex/agentUsage.test.ts convex/adminUsageCosts.test.ts`, combined admin/usage vitest, targeted ESLint, `bunx tsc --noEmit --pretty false`, `git diff --check`, LOC check, and `/admin` HTTP 200 after restarting Vite on 5178.
 - 2026-07-06 [TOOL] Dev Convex DB one-off patch used temporary `patchRawUsageWorkosIds` action: dry-run found 233/233 rows patchable, apply patched 233 rows, verification dry-run returned 0 patchable and 0 unresolved; temporary file was deleted and `bunx convex codegen` passed after removal.
+- 2026-07-06 [TOOL] Dev Convex DB one-off `agentCostUsage` aggregate backfill used temporary `backfillAgentCostUsage` action: dry-run scanned 233 rows (230 costed, 3 uncosted), apply inserted 233 aggregate entries, verification showed aggregate costed count 230 across 5 namespaces; temporary file was deleted and `bunx convex codegen` passed after removal.
+- 2026-07-06 [TOOL] Node 22.22.0 aggregate cost report passed RED/GREEN `bunx vitest run convex/adminUsageCosts.test.ts convex/agentUsage.test.ts src/components/admin/adminUsageCostsModel.test.ts`, focused widget regression tests, targeted admin/widget ESLint, `bunx tsc --noEmit --pretty false`, `git diff --check`, temp-script scan, and LOC check. `convex/doubleSave.test.ts` remains blocked by pre-existing `mediaItems` validator failure and pre-existing lint issues.
+- 2026-07-06 [TOOL] Node 22.22.0 admin total-spend summary card passed RED/GREEN `bunx vitest run src/components/admin/adminUsageCostsModel.test.ts`, targeted admin summary ESLint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and touched-file LOC check.

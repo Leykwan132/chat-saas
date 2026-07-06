@@ -20,6 +20,7 @@ function initTest() {
   t.registerComponent("modelLifetimeUsage", aggregateSchema, aggregateModules);
   t.registerComponent("modelMonthlyUsage", aggregateSchema, aggregateModules);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, aggregateModules);
+  t.registerComponent("agentCostUsage", aggregateSchema, aggregateModules);
   return t;
 }
 

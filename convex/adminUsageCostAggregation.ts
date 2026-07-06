@@ -1,11 +1,10 @@
-import type { Doc } from "./_generated/dataModel";
+import { costMonthLabel, roundUsd } from "./agentCostAggregateModel";
 
 export type ModelAccumulator = {
   userId: string;
   model: string;
   provider: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   lastRequestAt: number;
 };
@@ -13,7 +12,6 @@ export type ModelAccumulator = {
 export type UserAccumulator = {
   userId: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   lastRequestAt: number;
   models: Map<string, ModelAccumulator>;
@@ -28,139 +26,93 @@ export type MonthAccumulator = {
   monthKey: string;
   label: string;
   requestCount: number;
-  totalTokens: number;
   totalCostUsd: number;
   lastRequestAt: number;
 };
 
-const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export type CostAggregateInput = {
+  userId: string;
+  model: string;
+  provider: string;
+  requestCount: number;
+  totalCostUsd: number;
+  lastRequestAt: number;
+};
 
-function asRecord(value: unknown): Record<string, unknown> | null {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, unknown>;
+function modelKey(input: Pick<CostAggregateInput, "provider" | "model">): string {
+  return `${input.provider}:${input.model}`;
 }
 
-function readNumber(value: unknown): number | null {
-  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
-    return value;
-  }
-  if (typeof value !== "string") {
-    return null;
-  }
-  const parsed = Number(value);
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
-}
-
-export function extractOpenRouterCostUsd(providerMetadata: unknown): number | null {
-  const root = asRecord(providerMetadata);
-  const openrouter = asRecord(root?.openrouter);
-  const usage = asRecord(openrouter?.usage);
-  return readNumber(usage?.cost);
-}
-
-export function roundUsd(value: number): number {
-  return Math.round(value * 1_000_000_000) / 1_000_000_000;
-}
-
-function getMonthKey(timestamp: number): string {
-  const date = new Date(timestamp);
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-  return `${date.getUTCFullYear()}-${month}`;
-}
-
-function getMonthLabel(monthKey: string): string {
-  const [year, month] = monthKey.split("-");
-  return `${monthNames[Number(month) - 1]} ${year}`;
-}
-
-function modelKey(row: Doc<"rawAgentUsage">): string {
-  return `${row.provider}:${row.model}`;
-}
-
-export function addUsageRow(
+export function addCostAggregateRow(
   users: Map<string, UserAccumulator>,
-  row: Doc<"rawAgentUsage">,
-  costUsd: number,
+  input: CostAggregateInput,
   accumulatorKey?: string,
 ) {
-  const userId = row.userId ?? "unassigned";
-  const userAccumulatorKey = accumulatorKey ?? userId;
+  const userAccumulatorKey = accumulatorKey ?? input.userId;
   const user =
     users.get(userAccumulatorKey) ??
     {
-      userId,
+      userId: input.userId,
       requestCount: 0,
-      totalTokens: 0,
       totalCostUsd: 0,
       lastRequestAt: 0,
       models: new Map<string, ModelAccumulator>(),
     };
 
-  user.requestCount += 1;
-  user.totalTokens += row.usage.totalTokens;
-  user.totalCostUsd += costUsd;
-  user.lastRequestAt = Math.max(user.lastRequestAt, row.createdAt);
+  user.requestCount += input.requestCount;
+  user.totalCostUsd += input.totalCostUsd;
+  user.lastRequestAt = Math.max(user.lastRequestAt, input.lastRequestAt);
 
-  const modelAccumulatorKey = modelKey(row);
+  const modelAccumulatorKey = modelKey(input);
   const model =
     user.models.get(modelAccumulatorKey) ??
     {
-      userId,
-      model: row.model,
-      provider: row.provider,
+      userId: input.userId,
+      model: input.model,
+      provider: input.provider,
       requestCount: 0,
-      totalTokens: 0,
       totalCostUsd: 0,
       lastRequestAt: 0,
     };
-  model.requestCount += 1;
-  model.totalTokens += row.usage.totalTokens;
-  model.totalCostUsd += costUsd;
-  model.lastRequestAt = Math.max(model.lastRequestAt, row.createdAt);
+
+  model.requestCount += input.requestCount;
+  model.totalCostUsd += input.totalCostUsd;
+  model.lastRequestAt = Math.max(model.lastRequestAt, input.lastRequestAt);
 
   user.models.set(modelAccumulatorKey, model);
   users.set(userAccumulatorKey, user);
 }
 
-export function addMonthlyUsageRow(
+export function addMonthlyCostAggregateRow(
   users: Map<string, MonthlyUserAccumulator>,
-  row: Doc<"rawAgentUsage">,
-  costUsd: number,
+  input: CostAggregateInput & { monthKey: string },
 ) {
-  const monthKey = getMonthKey(row.createdAt);
-  const userId = row.userId ?? "unassigned";
-  const accumulatorKey = `${monthKey}:${userId}`;
-  addUsageRow(users as Map<string, UserAccumulator>, row, costUsd, accumulatorKey);
+  const accumulatorKey = `${input.monthKey}:${input.userId}`;
+  addCostAggregateRow(users as Map<string, UserAccumulator>, input, accumulatorKey);
   const user = users.get(accumulatorKey);
   if (user) {
-    user.monthKey = monthKey;
-    user.monthLabel = getMonthLabel(monthKey);
+    user.monthKey = input.monthKey;
+    user.monthLabel = costMonthLabel(input.monthKey);
   }
 }
 
 export function addMonthOption(
   months: Map<string, MonthAccumulator>,
-  row: Doc<"rawAgentUsage">,
-  costUsd: number,
+  input: CostAggregateInput & { monthKey: string },
 ) {
-  const monthKey = getMonthKey(row.createdAt);
   const month =
-    months.get(monthKey) ??
+    months.get(input.monthKey) ??
     {
-      monthKey,
-      label: getMonthLabel(monthKey),
+      monthKey: input.monthKey,
+      label: costMonthLabel(input.monthKey),
       requestCount: 0,
-      totalTokens: 0,
       totalCostUsd: 0,
       lastRequestAt: 0,
     };
-  month.requestCount += 1;
-  month.totalTokens += row.usage.totalTokens;
-  month.totalCostUsd += costUsd;
-  month.lastRequestAt = Math.max(month.lastRequestAt, row.createdAt);
-  months.set(monthKey, month);
+  month.requestCount += input.requestCount;
+  month.totalCostUsd += input.totalCostUsd;
+  month.lastRequestAt = Math.max(month.lastRequestAt, input.lastRequestAt);
+  months.set(input.monthKey, month);
 }
 
 export function serializeMonthOptions(months: Map<string, MonthAccumulator>) {
@@ -170,7 +122,6 @@ export function serializeMonthOptions(months: Map<string, MonthAccumulator>) {
       monthKey: month.monthKey,
       label: month.label,
       requestCount: month.requestCount,
-      totalTokens: month.totalTokens,
       totalCostUsd: roundUsd(month.totalCostUsd),
       lastRequestAt: month.lastRequestAt,
     }));

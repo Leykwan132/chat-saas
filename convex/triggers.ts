@@ -6,6 +6,7 @@ import {
   lifetimeAggregator,
   monthlyAggregator,
   agentMonthlyAggregator,
+  agentCostAggregator,
   creditAgentDailyUsageAggregator,
   creditWorkspaceDailyUsageAggregator,
   creditAccountDailyUsageAggregator,
@@ -21,6 +22,7 @@ export const triggers = new Triggers<DataModel>();
 triggers.register("rawAgentUsage", lifetimeAggregator.trigger());
 triggers.register("rawAgentUsage", monthlyAggregator.trigger());
 triggers.register("rawAgentUsage", agentMonthlyAggregator.trigger());
+triggers.register("rawAgentUsage", agentCostAggregator.trigger());
 triggers.register("creditUsageEvents", creditAgentDailyUsageAggregator.trigger());
 triggers.register("creditUsageEvents", creditWorkspaceDailyUsageAggregator.trigger());
 triggers.register("creditUsageEvents", creditAccountDailyUsageAggregator.trigger());
