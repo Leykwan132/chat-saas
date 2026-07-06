@@ -13,19 +13,20 @@ vi.mock('sonner', () => ({
 }));
 
 test('setup step opening toast dismisses after its short loading cue', () => {
-  let scheduledCallback: (() => void) | null = null;
+  const scheduledCallbacks: Array<() => void> = [];
   let scheduledDelay = 0;
 
   showWorkspaceSetupChecklistStepOpeningToast((callback, delay) => {
-    scheduledCallback = callback;
+    scheduledCallbacks.push(callback);
     scheduledDelay = delay;
     return 1;
   });
 
   expect(vi.mocked(toast.loading).mock.calls[0]?.[0]).toBe('Opening setup step...');
+  expect(scheduledCallbacks).toHaveLength(1);
   expect(scheduledDelay).toBe(SETUP_STEP_OPENING_TOAST_DURATION_MS);
 
-  scheduledCallback?.();
+  scheduledCallbacks[0]();
 
   expect(toast.dismiss).toHaveBeenCalledWith('setup-step-toast');
 });

@@ -11,6 +11,7 @@
 - 2026-07-06 [CODE] Now: supported-model accordion content no longer clips dynamic rows, Tencent icons use `Tencent.Color`, and `ModelLeaderboardPanel` preserves the `ModelLeaderboardSkeleton` export after the display-module split.
 - 2026-07-06 [CODE] Now: workspace agent card entry routes to `/dashboard/:agentId/overview` by default instead of landing on inbox.
 - 2026-07-06 [CODE] Now: Launch Guide trigger is a sidebar-footer pill below `CreditMeter` with spacing matched to the upgrade chip / credit meter gap; guide panel opens above the pill and step hover cards open rightward.
+- 2026-07-06 [CODE] Now: `workspaceSetupChecklistToasts.test.ts` no longer trips TS2349 during `tsc -b`; scheduled toast callbacks are captured in an array before invocation.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -103,3 +104,4 @@
 - 2026-07-06 [TOOL] Node 22.22.0 OpenAI/Qwen swap passed RED/GREEN `bunx vitest run convex/llm/modelPricing.test.ts`, targeted catalog ESLint, `git diff --check`, production `rg` confirmed no Qwen 3.7 Plus ID/name in catalog/plan files and OpenAI present, and `/leaderboard` returned HTTP 200 after starting Vite on `127.0.0.1:5178`; `bunx tsc` intentionally skipped for this small catalog-only task per project environment rule.
 - 2026-07-06 [TOOL] Node 22.22.0 workspace agent overview entry passed `bunx vitest run src/components/workspace/agentWorkspaceRoutes.test.ts`, targeted ESLint for touched workspace files, `git diff --check`, and touched-file LOC check.
 - 2026-07-06 [TOOL] Node 22.22.0 Launch Guide footer pill/spacing passed RED/GREEN `bunx vitest run src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`, combined setup-checklist vitest, targeted setup/sidebar ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-06 [TOOL] Node 22.22.0 TS2349 build fix passed `bunx tsc -b --pretty false`, focused setup-checklist vitest, targeted ESLint for `workspaceSetupChecklistToasts.test.ts`, `git diff --check`, and LOC check.
