@@ -54,7 +54,7 @@ import { UpgradeModalProvider } from '@/components/UpgradeModal'
 import PricingPage from './pages/PricingPage.tsx'
 import ContactPage from './pages/ContactPage.tsx'
 import EarlyAdopterProgramPage from './pages/EarlyUserPage.tsx'
-import AdminContactPage from './pages/AdminContactPage.tsx'
+import AdminPage from './pages/AdminPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
@@ -222,7 +222,7 @@ const router = createBrowserRouter(
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/early-adopter-program" element={<EarlyAdopterProgramPage />} />
       <Route path="/early-user" element={<Navigate to="/early-adopter-program" replace />} />
-      <Route path="/admin/contact" element={<AdminContactPage />} />
+      <Route path="/admin" element={<AdminPage />} />
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />
       <Route path="/terms" element={<TermsPage />} />

@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as adminUsageCostAggregation from "../adminUsageCostAggregation.js";
+import type * as adminUsageCosts from "../adminUsageCosts.js";
 import type * as agentAccess from "../agentAccess.js";
 import type * as agentOverview from "../agentOverview.js";
 import type * as agentOverviewAbandonments from "../agentOverviewAbandonments.js";
@@ -21,6 +23,7 @@ import type * as agentOverviewTestHelpers from "../agentOverviewTestHelpers.js";
 import type * as agentOverviewTopics from "../agentOverviewTopics.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
+import type * as agentUsageAggregatesModel from "../agentUsageAggregatesModel.js";
 import type * as agents from "../agents.js";
 import type * as aggregates from "../aggregates.js";
 import type * as analytics from "../analytics.js";
@@ -182,6 +185,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  adminUsageCostAggregation: typeof adminUsageCostAggregation;
+  adminUsageCosts: typeof adminUsageCosts;
   agentAccess: typeof agentAccess;
   agentOverview: typeof agentOverview;
   agentOverviewAbandonments: typeof agentOverviewAbandonments;
@@ -195,6 +200,7 @@ declare const fullApi: ApiFromModules<{
   agentOverviewTopics: typeof agentOverviewTopics;
   agentRuntime: typeof agentRuntime;
   agentUsage: typeof agentUsage;
+  agentUsageAggregatesModel: typeof agentUsageAggregatesModel;
   agents: typeof agents;
   aggregates: typeof aggregates;
   analytics: typeof analytics;
