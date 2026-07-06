@@ -14,40 +14,23 @@ export type ModelPricingEntry = {
   isPopular?: boolean;
 };
 
-/** OpenRouter model catalog and per-message credit costs. Edit here to add or change models. */
 export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
-  "nvidia/nemotron-3-super-120b-a12b:free": {
-    label: "NVIDIA Nemotron 3",
+  "amazon/nova-micro-v1": {
+    label: "Amazon Nova Micro",
     creditCost: 1,
     enabled: true,
-    chef: "NVIDIA",
-    chefSlug: "nvidia",
-    requiredPlan: "growth",
-    labels: ["advanced", "latest"],
-  },
-  // "openai/gpt-oss-120b": {
-  //   label: "OpenAI GPT-OSS 120B",
-  //   creditCost: 1,
-  //   enabled: true,
-  //   chef: "OpenAI",
-  //   chefSlug: "openai",
-  // },
-  "openai/gpt-oss-120b:free": {
-    label: "OpenAI GPT-OSS 120B",
-    creditCost: 1,
-    enabled: true,
-    chef: "OpenAI",
-    chefSlug: "openai",
+    chef: "Amazon",
+    chefSlug: "amazon-bedrock",
     requiredPlan: "free",
     labels: ["basic"],
   },
-  "z-ai/glm-4.5-air": {
-    label: "GLM 4.5 Air",
+  "xiaomi/mimo-v2.5": {
+    label: "Xiaomi MiMo V2.5",
     creditCost: 1,
     enabled: true,
-    chef: "Z.AI",
-    chefSlug: "zai",
-    requiredPlan: "growth",
+    chef: "Xiaomi",
+    chefSlug: "xiaomi",
+    requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
   "deepseek/deepseek-v4-flash": {
@@ -60,42 +43,32 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     labels: ["basic", "popular"],
     isPopular: true,
   },
-  "minimax/minimax-m2.5": {
-    label: "MiniMax M2.5",
-    creditCost: 1,
-    enabled: true,
-    chef: "MiniMax",
-    chefSlug: "minimax",
-    requiredPlan: "growth",
-    labels: ["advanced", "latest"],
-  },
-  "google/gemma-4-31b-it:free": {
-    label: "Google Gemma 4",
+  "google/gemini-3.1-flash-lite": {
+    label: "Google Gemini 3.1 Flash Lite",
     creditCost: 1,
     enabled: true,
     chef: "Google",
     chefSlug: "google",
-    requiredPlan: "free",
-    labels: ["basic"],
+    requiredPlan: "starter",
+    labels: ["advanced", "latest"],
   },
-  "qwen/qwen3-next-80b-a3b-instruct:free": {
-    label: "Qwen 3 Next 80B",
+  "openai/gpt-oss-120b": {
+    label: "OpenAI GPT-OSS 120B",
     creditCost: 1,
     enabled: true,
-    chef: "Alibaba",
-    chefSlug: "alibaba",
+    chef: "OpenAI",
+    chefSlug: "openai",
     requiredPlan: "starter",
     labels: ["advanced"],
   },
-  "meta-llama/llama-3.3-70b-instruct:free": {
-    label: "Meta Llama 3.3 70B Instruct",
+  "tencent/hy3-preview": {
+    label: "Tencent HY3 Preview",
     creditCost: 1,
     enabled: true,
-    chef: "Meta",
-    chefSlug: "llama",
+    chef: "Tencent",
+    chefSlug: "tencent",
     requiredPlan: "starter",
-    labels: ["advanced", "popular"],
-    isPopular: true,
+    labels: ["advanced", "latest"],
   },
 };
 

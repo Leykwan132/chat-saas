@@ -65,29 +65,22 @@ const MB = 1024 * KB;
 export const BASIC_LIMITED_MODELS_LABEL = "Basic models";
 export const ADVANCED_MODELS_LABEL = "Advanced models";
 
-/** Models included on Starter, Growth, and Business plans. */
 export const ADVANCED_PLAN_MODELS = [
   "deepseek/deepseek-v4-flash",
-  "google/gemma-4-31b-it:free",
-  "meta-llama/llama-3.3-70b-instruct:free",
-  "qwen/qwen3-next-80b-a3b-instruct:free",
-  "nvidia/nemotron-3-super-120b-a12b:free",
-  "minimax/minimax-m2.5",
-  "z-ai/glm-4.5-air",
-  "openai/gpt-oss-120b:free",
+  "google/gemini-3.1-flash-lite",
+  "tencent/hy3-preview",
+  "openai/gpt-oss-120b",
+  "xiaomi/mimo-v2.5",
+  "amazon/nova-micro-v1",
 ] as const;
 
-/** Human-readable labels for models referenced in plan catalogs. */
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
-  "google/gemma-4-31b-it:free": "Google Gemma 4",
-  "openai/gpt-oss-120b:free": "OpenAI GPT-OSS 120B",
+  "google/gemini-3.1-flash-lite": "Google Gemini 3.1 Flash Lite",
+  "amazon/nova-micro-v1": "Amazon Nova Micro",
+  "tencent/hy3-preview": "Tencent HY3 Preview",
   "openai/gpt-oss-120b": "OpenAI GPT-OSS 120B",
-  "meta-llama/llama-3.3-70b-instruct:free": "Meta Llama 3.3 70B Instruct",
-  "qwen/qwen3-next-80b-a3b-instruct:free": "Qwen 3 Next 80B",
-  "nvidia/nemotron-3-super-120b-a12b:free": "NVIDIA Nemotron 3",
-  "minimax/minimax-m2.5": "MiniMax M2.5",
-  "z-ai/glm-4.5-air": "GLM 4.5 Air",
+  "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
 };
 
 export function getPlanModelDisplayNames(planId: PlanKey): string[] {
@@ -116,7 +109,6 @@ export function isPlanModelAccessLabel(label: string): boolean {
   return isBasicLimitedModelsLabel(label) || isAdvancedModelsLabel(label);
 }
 
-/** Single source of truth for plan pricing, limits, and marketing feature bullets. */
 export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
   free: {
     name: "Free",
@@ -139,7 +131,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "Basic Analytics",
     ],
     actionLabel: "Start for Free",
-    models: ["deepseek/deepseek-v4-flash", "google/gemma-4-31b-it:free", "openai/gpt-oss-120b:free"],
+    models: ["deepseek/deepseek-v4-flash", "amazon/nova-micro-v1"],
     platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,

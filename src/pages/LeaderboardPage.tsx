@@ -4,13 +4,17 @@ import { Spinner } from '@/components/ui/spinner';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { ModelIcon } from '@lobehub/icons';
+import { ModelIcon, Tencent } from '@lobehub/icons';
 import {
   ModelLeaderboardPanel,
   ModelLeaderboardSkeleton,
 } from '@/components/analytics/ModelLeaderboardPanel';
 
 function ModelLogo({ model, size = 20 }: { model: string; size?: number }) {
+  if (model.startsWith('tencent/')) {
+    return <Tencent.Color className="select-none" size={size} />;
+  }
+
   return (
     <ModelIcon
       model={model}
