@@ -51,7 +51,7 @@ export function WorkspaceSetupChecklistPanel({
       <div className="mb-2 flex items-start justify-between gap-3 px-1">
         <div className="min-w-0">
           <p className="m-0 text-sm font-medium">Launch Guide</p>
-          <p className="m-0 truncate text-xs text-muted-foreground">Get your first customer ready.</p>
+          <p className="m-0 truncate text-xs text-muted-foreground">Get your first agent ready.</p>
         </div>
         <Button
           type="button"
@@ -91,7 +91,7 @@ export function WorkspaceSetupChecklistPanel({
                   </span>
                 </button>
               </HoverCardTrigger>
-              <HoverCardContent side="left" align="start" sideOffset={12} className="w-64 rounded-lg">
+              <HoverCardContent side="right" align="start" sideOffset={12} className="w-64 rounded-lg">
                 <div className="flex flex-col gap-3">
                   <WorkspaceSetupChecklistHoverIllustration stepKey={meta.key} />
                   <div className="flex flex-col gap-1">

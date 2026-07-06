@@ -124,7 +124,7 @@ export function AgentsSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-2">
+      <SidebarFooter className="gap-0">
         <CreditMeter />
         <WorkspaceSetupChecklist />
       </SidebarFooter>

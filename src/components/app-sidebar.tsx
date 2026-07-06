@@ -263,7 +263,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="gap-2">
+      <SidebarFooter className="gap-0">
         <CreditMeter />
         <WorkspaceSetupChecklist agentId={agent._id} />
       </SidebarFooter>

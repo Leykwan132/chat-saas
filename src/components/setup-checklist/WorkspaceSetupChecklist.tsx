@@ -13,24 +13,17 @@ import {
   resolveWorkspaceSetupChecklistAction,
   type WorkspaceSetupChecklistStepKey,
 } from './workspaceSetupChecklistNavigation';
+import {
+  workspaceSetupChecklistPanelClassName,
+  workspaceSetupChecklistRootClassName,
+  workspaceSetupChecklistTriggerClassName,
+} from './workspaceSetupChecklistLayout';
 import { showWorkspaceSetupChecklistStepOpeningToast } from './workspaceSetupChecklistToasts';
 
 type WorkspaceSetupChecklistProps = {
   agentId?: Id<'agents'>;
   className?: string;
 };
-
-function LaunchGuideIconImage() {
-  return (
-    <span className="flex h-[8.45rem] w-full items-center justify-center overflow-hidden rounded-md bg-muted/45">
-      <span className="flex items-center justify-center gap-2.5">
-        <Rocket className="size-[18px] text-muted-foreground/30" strokeWidth={1.8} />
-        <Rocket className="size-[18px] text-muted-foreground/55" strokeWidth={1.8} />
-        <Rocket className="size-[18px] text-muted-foreground" strokeWidth={1.8} />
-      </span>
-    </span>
-  );
-}
 
 export function WorkspaceSetupChecklist({
   agentId,
@@ -126,43 +119,33 @@ export function WorkspaceSetupChecklist({
   return (
     <div
       ref={rootRef}
-      className={cn(
-        'fixed right-4 bottom-4 z-50 transition-[width] duration-200 sm:right-5 sm:bottom-5',
-        guideOpen
-          ? 'w-[min(20rem,calc(100vw-2rem))] sm:w-80'
-          : 'w-[min(11.5rem,calc(100vw-2rem))] sm:w-44',
-        className,
-      )}
+      className={cn(workspaceSetupChecklistRootClassName, className)}
     >
       {guideOpen ? (
-        <WorkspaceSetupChecklistPanel
-          steps={checklist.steps}
-          completing={completing}
-          onStepClick={handleStepClick}
-          onComplete={handleComplete}
-          onClose={() => setGuideOpen(false)}
-        />
-      ) : (
-        <Button
-          type="button"
-          variant="ghost"
-          aria-label="Open Launch Guide"
-          onClick={() => setGuideOpen(true)}
-          style={{
-            background:
-              'linear-gradient(var(--color-background), var(--color-background)) padding-box, linear-gradient(135deg, #34d399, #38bdf8, #a78bfa, #f472b6) border-box',
-          }}
-          className="h-auto w-full flex-col items-stretch justify-start gap-2 rounded-lg border border-transparent p-2 text-left text-foreground shadow-lg shadow-black/5 backdrop-blur"
-        >
-          <LaunchGuideIconImage />
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="truncate text-xs font-medium">Launch Guide</span>
-            <span className="truncate text-[11px] leading-4 text-muted-foreground">
-              Follow the key setup steps.
-            </span>
-          </span>
-        </Button>
-      )}
+        <div className={workspaceSetupChecklistPanelClassName}>
+          <WorkspaceSetupChecklistPanel
+            steps={checklist.steps}
+            completing={completing}
+            onStepClick={handleStepClick}
+            onComplete={handleComplete}
+            onClose={() => setGuideOpen(false)}
+          />
+        </div>
+      ) : null}
+      <Button
+        type="button"
+        variant="ghost"
+        aria-label="Open Launch Guide"
+        onClick={() => setGuideOpen(true)}
+        style={{
+          background:
+            'linear-gradient(var(--color-background), var(--color-background)) padding-box, linear-gradient(135deg, #34d399, #38bdf8, #a78bfa, #f472b6) border-box',
+        }}
+        className={workspaceSetupChecklistTriggerClassName}
+      >
+        <Rocket className="size-3.5" strokeWidth={1.8} />
+        <span className="truncate">Launch Guide</span>
+      </Button>
       <WorkspaceSetupChecklistIntroDialog
         open={introOpen}
         onOpenChange={setIntroOpen}

@@ -15,6 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import { getAgentWorkspaceEntryPath } from './agentWorkspaceRoutes';
 
 function AgentPreview() {
   return (
@@ -88,7 +89,7 @@ export function AgentCard({
 
   const handleCardClick = (event: React.MouseEvent<HTMLElement>) => {
     if (!event.currentTarget.contains(event.target as Node)) return;
-    navigate(`/dashboard/${agent._id}`);
+    navigate(getAgentWorkspaceEntryPath(agent._id));
   };
 
   return (
