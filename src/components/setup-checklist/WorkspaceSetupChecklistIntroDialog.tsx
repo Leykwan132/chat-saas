@@ -96,7 +96,12 @@ export function WorkspaceSetupChecklistIntroDialog({
               <Button type="button" className="h-11 px-5" onClick={onCheckOut}>
                 Show Guide
               </Button>
-              <Button type="button" variant="ghost" onClick={onSkip}>
+              <Button
+                type="button"
+                variant="ghost"
+                className="h-11 px-3 text-muted-foreground hover:bg-transparent hover:text-foreground"
+                onClick={onSkip}
+              >
                 Skip
               </Button>
             </DialogFooter>

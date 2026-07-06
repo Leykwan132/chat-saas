@@ -3,6 +3,7 @@
 - 2026-07-04 [CODE] Now: Website channel backend, public widget script, default Website card, setup UI, preview UI, and regression coverage are implemented in the working tree.
 - 2026-07-05 [USER] Current focus: implement a workspace setup checklist with Convex state, first-visit intro dialog, sidebar triggers, five inferred steps, and mark-all-complete hiding.
 - 2026-07-05 [CODE] Now: setup checklist backend, frontend components, workspace/agent sidebar wiring, navigation helper, and regression coverage are implemented in the working tree.
+- 2026-07-06 [CODE] Now: first-visit intro actions share the same `h-11` control height; `Skip` is text-style with transparent hover while `Show Guide` remains the filled CTA.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -22,13 +23,13 @@
 - 2026-07-04 [CODE] D112 ACTIVE: Dashboard preview loading avatars use TestChatWindow-style conic-ring geometry with explicit circular clipping/box sizing; Thinking text stays below the icon.
 
 # Done (recent)
-- 2026-07-05 [CODE] Mobile/screenshot-width Website widget expanded state keeps a fixed input gap, avoids full-height mobile layout above 480px, and uses centered icon treatment; public script CSS has regression coverage.
 - 2026-07-05 [CODE] Workspace setup checklist now stores per-user/workspace intro/completion state, infers five setup steps server-side, renders a floating inline HoverCard checklist, and routes workspace/agent-page step clicks per plan.
 - 2026-07-05 [CODE] Workspace setup checklist visual polish landed: trigger uses a floating bottom-right vertical card with a rainbow border and no hover-lift motion, twice-raised equal-size three-rocket artwork height, one-line title/description, simple row labels, `BadgeCheck` completed markers, per-step centered twice-raised equal-size three-icon HoverCard artwork, and a bottom “Mark all as completed” button without progress text/bar.
 - 2026-07-05 [CODE] Workspace setup checklist trigger now expands in-place into the checklist panel and collapses back to the Launch Guide card on outside click; row HoverCards still provide step guidance.
 - 2026-07-05 [CODE] Workspace setup checklist step navigation now explicitly dismisses the short loading toast; root cause was Sonner loading toasts ignoring `duration`.
 - 2026-07-05 [CODE] Workspace setup checklist user-facing label is “Launch Guide” on the floating trigger/panel; first-visit intro says “Welcome to Kilobot”, uses equal left/right columns with a 46.25rem dialog width, matching 27.25rem left/right heights, `welcome-1.png` clipped to the dialog radius, icon-led one-line feature rows, no close X, and a roomier “Show Guide” CTA.
 - 2026-07-05 [CODE] Workspace setup checklist remains visible even when inferred progress reaches 5/5; only the manual “Mark all as completed” action hides it and shows “Tutorial has been completed”.
+- 2026-07-06 [CODE] Workspace setup checklist first-visit intro actions now use matching `h-11` sizing, and `Skip` reads as a text action instead of a separate pill.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -42,30 +43,8 @@
 # Receipts
 - 2026-07-05 [TOOL] Node 22.22.0 screenshot-width/corner-icon widget fix passed RED/GREEN `bunx vitest run src/components/channels/WebWidgetMobileLayout.test.ts`, targeted eslint, `node --check public/widget/v1.js`, `git diff --check`, and line-count check; Playwright visual attempt was blocked by missing bundled Chromium and local Chrome headless failure.
 - 2026-07-03 [TOOL] Compacted billing/pricing receipts: user-plan schema cleanup/migration, Stripe top-up packs with promo codes, CreditMeter/history UI, pricing FAQ/comparison/upgrade dialog polish, and landing AI Workflows image update all passed targeted lint/typecheck/vitest/codegen and `git diff --check`.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist codegen passed with mock Stripe env vars.
-- 2026-07-05 [TOOL] Node 22.22.0 `bunx vitest run convex/workspaceSetupChecklist.test.ts src/components/setup-checklist/workspaceSetupChecklistNavigation.test.ts` passed (9 tests).
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist targeted eslint and `bunx tsc --noEmit --pretty false` passed.
-- 2026-07-05 [TOOL] `git diff --check` passed; touched setup/sidebar code files remain below 300 LOC.
 - 2026-07-05 [TOOL] Vite dev server started at `http://127.0.0.1:5178/`; `curl -I http://127.0.0.1:5178/workspace` returned HTTP 200.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist footer button update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist outside-click collapse update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro-gradient/manual-hide update passed `bunx vitest run convex/workspaceSetupChecklist.test.ts`, targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro welcome/icon/wider-image polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist compact equal-column intro polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist concise intro/no-close polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro spacing/width polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro height polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro +10% width/+30% height polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro fill-height polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist intro image swap to `welcome-1.png` passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist row-copy polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, focused navigation vitest, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist green-progress/count polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist repeated-icon artwork update passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist dotted hover-card polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist badge-check marker polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist hover-delay/neutral-tile polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist 300ms hover-delay polish passed targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist inline-panel interaction update passed no-leftover-Popover scan, targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist toast-dismiss fix passed RED/GREEN `bunx vitest run src/components/setup-checklist/workspaceSetupChecklistToasts.test.ts src/components/setup-checklist/workspaceSetupChecklistNavigation.test.ts`, targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
-- 2026-07-05 [TOOL] Node 22.22.0 setup checklist “Launch Guide” rename passed targeted eslint, old-visible-string scan, `git diff --check`, and LOC check.
+- 2026-07-05 [TOOL] Compacted setup checklist implementation receipts: backend/codegen, intro dialog, inline panel, navigation, toast, rename, and manual-hide iterations passed targeted vitest/eslint/tsc, `git diff --check`, and LOC checks.
 - 2026-07-05 [TOOL] Node 22.22.0 setup checklist auto-hide-at-5/5 change passed RED/GREEN `bunx vitest run convex/workspaceSetupChecklist.test.ts src/components/setup-checklist/workspaceSetupChecklistNavigation.test.ts src/components/setup-checklist/workspaceSetupChecklistToasts.test.ts`, targeted eslint, `bunx tsc --noEmit --pretty false`, `git diff --check`, and LOC check.
+- 2026-07-06 [TOOL] Node 22.22.0 shadcn button docs command succeeded with writable `/private/tmp` temp/cache paths; docs confirm `variant` and `size` are the Button API.
+- 2026-07-06 [TOOL] Node 22.22.0 first-visit intro action sizing update passed `bunx eslint src/components/setup-checklist/WorkspaceSetupChecklistIntroDialog.tsx`, `git diff --check`, and LOC check (114 lines).
