@@ -587,10 +587,7 @@ export const internalSendAiReply = internalAction({
     }
     const { conversation, channel } = ctxData;
     const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
-    const content =
-      conversation.service === "whatsapp"
-        ? normalizeCustomerFacingResponseFormatting(args.content)
-        : args.content;
+    const content = normalizeCustomerFacingResponseFormatting(args.content);
     const mediaItems: ChannelMediaItem[] =
       args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
 

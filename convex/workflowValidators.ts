@@ -21,7 +21,7 @@ export const workflowNodeKindValidator = v.union(
 );
 
 export const addableWorkflowNodeKindValidator = v.union(
-  v.literal("answerQuestions"),
+  v.literal("sendText"),
   v.literal("sendImage"),
   v.literal("sendFile"),
   v.literal("updateLeadsStatus"),

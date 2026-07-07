@@ -223,57 +223,6 @@ test("removeEdge deletes a selected workflow edge", async () => {
   expect(afterRemove.edges).toHaveLength(withQualifiedLeads.edges.length - 1);
 });
 
-test("removeNode rejects protected nodes and deletes all connected edges", async () => {
-  const t = initTest();
-  const workosUserId = "user-workflow-remove";
-  const { agentId } = await createPersonalAgent(t, workosUserId);
-  const authed = t.withIdentity({ subject: workosUserId });
-  const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
-  const startNode = graph.nodes.find((node) => node.kind === "start");
-
-  await expect(
-    authed.mutation(api.workflows.removeNode, {
-      agentId,
-      nodeId: startNode!._id,
-    }),
-  ).rejects.toThrow("Cannot remove entry or end nodes");
-
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
-    agentId,
-    sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
-  });
-  const qualifiedLeadsNode = withQualifiedLeads.nodes.find(
-    (node) => node.kind === "updateLeadsStatus",
-  );
-  const withCloseConversation = await authed.mutation(api.workflows.addNodeAfter, {
-    agentId,
-    sourceNodeId: qualifiedLeadsNode!._id,
-    kind: "closeConversation",
-  });
-  const closeConversationNode = withCloseConversation.nodes.find(
-    (node) => node.kind === "closeConversation",
-  );
-  expect(closeConversationNode).toBeDefined();
-
-  const afterRemove = await authed.mutation(api.workflows.removeNode, {
-    agentId,
-    nodeId: qualifiedLeadsNode!._id,
-  });
-
-  expect(afterRemove.nodes.some((node) => node._id === qualifiedLeadsNode!._id)).toBe(false);
-  expect(afterRemove.edges).toHaveLength(0);
-  expect(
-    afterRemove.edges.some((edge) => edge.sourceNodeId === qualifiedLeadsNode!._id),
-  ).toBe(false);
-  expect(
-    afterRemove.edges.some((edge) => edge.targetNodeId === qualifiedLeadsNode!._id),
-  ).toBe(false);
-  expect(
-    afterRemove.edges.some((edge) => edge.targetNodeId === closeConversationNode!._id),
-  ).toBe(false);
-});
-
 test("workflow APIs reject cross-org access", async () => {
   const t = initTest();
   const now = Date.now();

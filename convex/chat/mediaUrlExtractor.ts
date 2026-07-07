@@ -4,9 +4,9 @@
  * - Server rewrites URLs to clientIds using mediaUploads
  * - Frontend resolves clientIds via listReadyMediaByAgent
  */
-const MEDIA_MARKER_RE = /\[MEDIA:([^\]\s]+)\]/gi;
-const MEDIA_URL_MARKER_RE = /\[MEDIA:(https?:\/\/[^\]\s]+)\]/gi;
-const MEDIA_KEY_MARKER_RE = /\[MEDIA:(?!https?:\/\/)([^\]\s]+)\]/g;
+const MEDIA_MARKER_RE = /\[\s*MEDIA\s*:\s*([^\]\s]+)\s*\]/gi;
+const MEDIA_URL_MARKER_RE = /\[\s*MEDIA\s*:\s*(https?:\/\/[^\]\s]+)\s*\]/gi;
+const MEDIA_KEY_MARKER_RE = /\[\s*MEDIA\s*:\s*(?!https?:\/\/)([^\]\s]+)\s*\]/gi;
 
 export function extractMediaUrls(text: string): { text: string; mediaUrls: string[] } {
   const mediaUrls: string[] = [];

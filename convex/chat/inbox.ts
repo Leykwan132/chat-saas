@@ -32,6 +32,7 @@ import {
   dedupeMediaItems,
   extractSendMediaItemsFromResult,
 } from "./mediaToolResults";
+import { inferWorkflowMediaClientIdsFromReply } from "./workflowMediaFallback";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
@@ -302,10 +303,7 @@ export const internalPersistAiReply = internalMutation({
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) return null;
 
-    const normalizedContent =
-      conv.service === "whatsapp"
-        ? normalizeCustomerFacingResponseFormatting(args.content)
-        : args.content;
+    const normalizedContent = normalizeCustomerFacingResponseFormatting(args.content);
     const trimmed = normalizedContent.trim();
     const now = Date.now();
     const messageMetadata =
@@ -655,10 +653,24 @@ export const generateAiReplyWorker = internalAction({
               { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
             )
           : [];
+      const fallbackMediaClientIds =
+        mediaItemsFromToolResults.length === 0 &&
+        mediaUrls.length === 0 &&
+        mediaClientIds.length === 0
+          ? inferWorkflowMediaClientIdsFromReply(replyText, workflowRuntimeContext)
+          : [];
+      const mediaItemsFromWorkflowFallback: ResolvedChannelMediaItem[] =
+        fallbackMediaClientIds.length > 0
+          ? await ctx.runQuery(
+              internal.knowledgeBaseImages.internalResolveClientIdsToMediaItems,
+              { agentId: conv.assignedAgentId, clientIds: fallbackMediaClientIds },
+            )
+          : [];
       const allMediaItems = dedupeMediaItems([
         ...mediaItemsFromToolResults,
         ...mediaItemsFromUrls,
         ...mediaItemsFromClientIds,
+        ...mediaItemsFromWorkflowFallback,
       ]);
       const allMediaUrls = allMediaItems.map((item) => item.url);
       if (!cleanText && allMediaItems.length === 0) return;

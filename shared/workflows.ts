@@ -21,7 +21,7 @@ export const WORKFLOW_NODE_KINDS = [
 export type WorkflowNodeKind = (typeof WORKFLOW_NODE_KINDS)[number];
 
 export const ADDABLE_WORKFLOW_NODE_KINDS = [
-  'answerQuestions',
+  'sendText',
   'sendImage',
   'sendFile',
   'updateLeadsStatus',
@@ -43,6 +43,7 @@ export const WORKFLOW_TERMINAL_NODE_KINDS = [
 
 export const WORKFLOW_ACTION_NODE_KINDS = [
   'answerQuestions',
+  'sendText',
   'sendImage',
   'sendFile',
   'aiResponds',
@@ -74,8 +75,8 @@ export const WORKFLOW_NODE_META: Record<
     description: 'Send node-owned files or documents to the customer when this condition matches.',
   },
   sendText: {
-    label: 'Send text',
-    description: 'Send a text message in the conversation.',
+    label: 'Send message',
+    description: 'Write the exact message the AI should send when this workflow condition matches.',
   },
   closeConversation: {
     label: 'Close conversation',
@@ -127,6 +128,10 @@ export const WORKFLOW_NODE_DEFAULT_CONDITIONS: Partial<
   answerQuestions: {
     label: 'Customer question',
     detail: 'If the customer asks a question about the business, products, services, policies, pricing, or support details, answer using the knowledge base.',
+  },
+  sendText: {
+    label: 'Send message',
+    detail: 'If the customer reaches this step, send this configured message.',
   },
   bookAppointment: {
     label: 'Ready to book',

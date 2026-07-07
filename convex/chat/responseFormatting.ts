@@ -2,7 +2,8 @@ export const chatResponseFormattingBlock = `\n\n## Response Formatting
 - For customer-facing emphasis, use exactly one asterisk at the start and one at the end, like *Luminar Residence*.
 - Do not use double asterisks in customer-facing replies.
 - Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
-- When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.`;
+- When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.
+- Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups. Start with the customer-facing answer.`;
 
 function parseMarkdownTableRow(line: string) {
   const trimmed = line.trim();
@@ -68,8 +69,48 @@ function normalizeMarkdownTables(content: string) {
   return normalized.join("\n");
 }
 
+const internalNarrationStartPattern =
+  /^(?:wait,?\s*)?(?:let me|let's|i(?:'ll| will| need to| should)|we need to)\s+(?:first\s+)?(?:check|fetch|look|look up|look into|search|review|find|see)\b/i;
+const internalNarrationStatementPattern =
+  /^(?:they(?:'|’)re asking|the user(?:'|’)s query|user asked|the customer is asking)\b/i;
+const internalNarrationContextPattern =
+  /\b(?:knowledge base|fetchcontext|fetch context|context lookup)\b/i;
+
+function isInternalNarrationSentence(sentence: string) {
+  const trimmed = sentence.trim();
+  return (
+    internalNarrationStartPattern.test(trimmed) ||
+    internalNarrationStatementPattern.test(trimmed) ||
+    (internalNarrationContextPattern.test(trimmed) &&
+      /^(?:checking|searching|reviewing|looking|wait)\b/i.test(trimmed))
+  );
+}
+
+function removeInternalSourcePhrases(line: string) {
+  return line
+    .replace(/\b(?:according to|based on|from)\s+(?:the\s+)?(?:knowledge base|context)\s*,?\s*/gi, "")
+    .replace(/\b(?:the\s+)?knowledge base\s+(?:says|shows|mentions|indicates)\s+(?:that\s+)?/gi, "");
+}
+
+function removeInternalNarrationFromLine(line: string) {
+  const sentences = line.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+  if (sentences === null) return removeInternalSourcePhrases(line).trim();
+  return removeInternalSourcePhrases(
+    sentences.filter((sentence) => !isInternalNarrationSentence(sentence)).join(""),
+  ).trim();
+}
+
+function removeInternalNarration(content: string) {
+  return content
+    .split("\n")
+    .map(removeInternalNarrationFromLine)
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function normalizeCustomerFacingResponseFormatting(content: string): string {
-  return normalizeMarkdownTables(content)
+  return removeInternalNarration(normalizeMarkdownTables(content))
     .replace(/\*{2,3}([^*\n]+?)\*{2,3}/g, "*$1*")
     .replace(/_{2,3}([^_\n]+?)_{2,3}/g, "*$1*");
 }

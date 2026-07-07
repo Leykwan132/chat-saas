@@ -94,7 +94,7 @@ export function WorkflowInspector({
   const selectedTitle = node ? name.trim() || workflowNodeTitle(node.kind) : '';
   const conditionEnabled = conditionEdge !== undefined;
   const isAction = node ? isWorkflowActionNodeKind(node.kind) : false;
-  const isQuestionAnswerAction = node?.kind === 'answerQuestions';
+  const isSendTextAction = node?.kind === 'sendText';
   const isSendMediaAction = node?.kind === 'sendImage';
   const isSendFileAction = node?.kind === 'sendFile';
   const hasMediaSection = isSendMediaAction || isSendFileAction;
@@ -103,12 +103,12 @@ export function WorkflowInspector({
   const isHumanEscalationAction = node?.kind === 'humanEscalation';
   const hasGoalField = isAction || Boolean(node?.description);
   const nameLabel = isAction ? 'Name' : 'Title';
-  const goalLabel = isAction ? 'Goal' : 'Description';
+  const goalLabel = isSendTextAction ? 'Message' : isAction ? 'Goal' : 'Description';
   let conditionNamePlaceholder = 'e.g., Ready to book';
   let conditionDetailPlaceholder = 'Describe when this action should run';
-  if (isQuestionAnswerAction) {
-    conditionNamePlaceholder = 'e.g., Customer question';
-    conditionDetailPlaceholder = 'If the customer asks about...';
+  if (isSendTextAction) {
+    conditionNamePlaceholder = 'e.g., After hours';
+    conditionDetailPlaceholder = 'If the customer reaches this step...';
   } else if (isSendMediaAction) {
     conditionNamePlaceholder = 'e.g., Product photos';
     conditionDetailPlaceholder = 'If the customer asks for photos or videos about...';

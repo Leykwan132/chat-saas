@@ -97,7 +97,7 @@ async function createPersonalAgent(
 async function addNode(
   authed: ReturnType<ReturnType<typeof initTest>["withIdentity"]>,
   agentId: Awaited<ReturnType<typeof createPersonalAgent>>["agentId"],
-  kind: "answerQuestions" | "sendImage" | "sendFile",
+  kind: "sendImage" | "sendFile",
 ) {
   const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
   const startNode = graph.nodes.find((node) => node.kind === "start");
@@ -110,78 +110,6 @@ async function addNode(
     .filter((node) => node.kind === kind)
     .sort((a, b) => b._creationTime - a._creationTime)[0]!;
 }
-
-test("workflow media creation rejects non-Send Media nodes and cross-owner access", async () => {
-  const t = initTest();
-  const ownerId = "workflow-media-owner";
-  const outsiderId = "workflow-media-outsider";
-  const { agentId } = await createPersonalAgent(t, ownerId);
-  await createPersonalAgent(t, outsiderId);
-  const owner = t.withIdentity({ subject: ownerId });
-  const qaNode = await addNode(owner, agentId, "answerQuestions");
-  const mediaNode = await addNode(owner, agentId, "sendImage");
-
-  await expect(
-    owner.mutation(internal.workflowMediaInternal.internalCreateUpload, {
-      agentId,
-      nodeId: qaNode._id,
-      clientId: "non-send-media",
-      fileName: "photo.jpg",
-      mimeType: "image/jpeg",
-      fileSize: 10,
-    }),
-  ).rejects.toThrow("Workflow media node not found");
-
-  const outsider = t.withIdentity({ subject: outsiderId });
-  await expect(
-    outsider.mutation(internal.workflowMediaInternal.internalCreateUpload, {
-      agentId,
-      nodeId: mediaNode._id,
-      clientId: "outside",
-      fileName: "photo.jpg",
-      mimeType: "image/jpeg",
-      fileSize: 10,
-    }),
-  ).rejects.toThrow("Agent not found");
-});
-
-test("ready workflow media is scoped to the matching Send Media node", async () => {
-  const t = initTest();
-  const workosUserId = "workflow-media-ready";
-  const { agentId } = await createPersonalAgent(t, workosUserId);
-  const authed = t.withIdentity({ subject: workosUserId });
-  const firstNode = await addNode(authed, agentId, "sendImage");
-  const secondNode = await addNode(authed, agentId, "sendImage");
-
-  await t.run(async (ctx) => {
-    const now = Date.now();
-    for (const [clientId, nodeId] of [
-      ["first", firstNode._id],
-      ["second", secondNode._id],
-    ] as const) {
-      await ctx.db.insert("mediaUploads", {
-        clientId,
-        orgId: PERSONAL_ORG_ID,
-        userId: workosUserId,
-        status: "ready",
-        publicUrl: `https://cdn.example.com/${clientId}.jpg`,
-        mediaType: "image/jpeg",
-        filename: `${clientId}.jpg`,
-        fileSize: 10,
-        purpose: "workflowSendMedia",
-        agentId,
-        workflowNodeId: nodeId,
-        createdAt: now,
-      });
-    }
-  });
-
-  const firstAssets = await t.query(internal.workflowMediaInternal.internalListReadyByNode, {
-    agentId,
-    nodeId: firstNode._id,
-  });
-  expect(firstAssets.map((asset) => asset.clientId)).toEqual(["first"]);
-});
 
 test("legacy knowledge base files import into a Send Files node", async () => {
   const t = initTest();

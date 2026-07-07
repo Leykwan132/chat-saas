@@ -37,12 +37,6 @@ function parseBody(init: RequestInit | undefined) {
   return JSON.parse(String(init?.body ?? "{}")) as Record<string, unknown>;
 }
 
-function carouselCards(call: { body: Record<string, unknown> }) {
-  return (call.body.interactive as {
-    action: { cards: Array<Record<string, unknown>> };
-  }).action.cards;
-}
-
 beforeEach(() => {
   vi.spyOn(console, "info").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -53,7 +47,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-test("sends multiple WhatsApp photo/video URLs as a carousel", async () => {
+test("sends multiple WhatsApp photo/video URLs before the text response", async () => {
   const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
   vi.stubGlobal(
     "fetch",
@@ -83,90 +77,35 @@ test("sends multiple WhatsApp photo/video URLs as a carousel", async () => {
 
   expect(result).toEqual({
     ok: true,
-    externalId: "wamid.1",
-    externalIds: ["wamid.1"],
-    textConsumed: true,
+    externalId: "wamid.3",
+    externalIds: ["wamid.1", "wamid.2"],
   });
-  expect(calls).toHaveLength(1);
-  expect(calls.map((call) => call.url)).toEqual(["https://graph.facebook.com/v22.0/1234567890/messages"]);
+  expect(calls).toHaveLength(3);
+  expect(calls.map((call) => call.url)).toEqual([
+    "https://graph.facebook.com/v22.0/1234567890/messages",
+    "https://graph.facebook.com/v22.0/1234567890/messages",
+    "https://graph.facebook.com/v22.0/1234567890/messages",
+  ]);
   expect(calls[0]!.body).toMatchObject({
     messaging_product: "whatsapp",
     recipient_type: "individual",
     to: "60123456789",
-    type: "interactive",
-    interactive: {
-      type: "carousel",
-      body: { text: "Here you go." },
-      action: {
-        cards: [
-          {
-            card_index: 0,
-            type: "cta_url",
-            header: {
-              type: "image",
-              image: { link: "https://cdn.example.com/first.jpg" },
-            },
-            body: { text: "first.jpg" },
-          },
-          {
-            card_index: 1,
-            type: "cta_url",
-            header: {
-              type: "video",
-              video: { link: "https://cdn.example.com/second.mp4" },
-            },
-            body: { text: "second.mp4" },
-          },
-        ],
-      },
-    },
+    type: "image",
+    image: { link: "https://cdn.example.com/first.jpg" },
   });
-});
-
-test("splits WhatsApp carousel media into valid card batches", async () => {
-  const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
-      calls.push({ url: String(url), body: parseBody(init) });
-      return new Response(JSON.stringify({ messages: [{ id: `wamid.${calls.length}` }] }), {
-        status: 200,
-      });
-    }),
-  );
-
-  const result = await sendMediaToChannel(whatsappConversation(), whatsappChannel(), {
-    mediaItems: Array.from({ length: 11 }, (_, index) => ({
-      url: `https://cdn.example.com/${index}.jpg`,
-      mediaType: "image/jpeg",
-    })),
-    text: "Gallery",
+  expect(calls[1]!.body).toMatchObject({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: "60123456789",
+    type: "video",
+    video: { link: "https://cdn.example.com/second.mp4" },
   });
-
-  expect(result).toEqual({
-    ok: true,
-    externalId: "wamid.1",
-    externalIds: ["wamid.1", "wamid.2"],
-    textConsumed: true,
-  });
-  expect(calls).toHaveLength(2);
-  expect(carouselCards(calls[0]!)).toHaveLength(9);
-  expect(carouselCards(calls[1]!)).toHaveLength(2);
-  expect(carouselCards(calls[0]!)[0]).toMatchObject({
-    card_index: 0,
-    type: "cta_url",
-    header: {
-      type: "image",
-      image: { link: "https://cdn.example.com/0.jpg" },
-    },
-  });
-  expect(carouselCards(calls[1]!)[0]).toMatchObject({
-    card_index: 0,
-    type: "cta_url",
-    header: {
-      type: "image",
-      image: { link: "https://cdn.example.com/9.jpg" },
-    },
+  expect(calls[2]!.body).toMatchObject({
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to: "60123456789",
+    type: "text",
+    text: { body: "Here you go." },
   });
 });
 

@@ -127,7 +127,9 @@ Use this workflow as the source of truth for what stage the conversation is in a
 
 When a condition matches a node, follow that node's goal. If several nodes might match, choose the most specific condition. If no action node condition matches, continue with the normal support/sales response rules.
 
-For Send Photo/Video and Send Files nodes, call \`sendMedia\` with that node's Node ID only when the incoming condition matches. Do not include internal media IDs, media URLs, or \`[MEDIA:...]\` markers in the customer-facing response; the system sends returned assets separately. Do not call \`sendMedia\` for Q&A, booking, lead qualification, or custom action nodes.
+For Send message nodes, send the configured message when the incoming condition matches. Keep the response focused on that configured message unless the customer asks for a necessary clarification.
+
+For Send Photo/Video and Send Files nodes, call \`sendMedia\` with that node's Node ID only when the incoming condition matches. Do not include internal media IDs, media URLs, or \`[MEDIA:...]\` markers in the customer-facing response; the system sends returned assets separately. Do not call \`sendMedia\` for Send message, Q&A, booking, lead qualification, or custom action nodes.
 
 For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
 

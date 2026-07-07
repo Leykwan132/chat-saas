@@ -73,13 +73,7 @@ test("plus actions create action nodes with expected default condition labels", 
   const startNode = graph.nodes.find((node) => node.kind === "start");
   expect(startNode).toBeDefined();
   expect(ADDABLE_WORKFLOW_NODE_KINDS).toEqual([
-    "answerQuestions",
-    "sendImage",
-    "sendFile",
-    "updateLeadsStatus",
-    "bookAppointment",
-    "humanEscalation",
-    "closeConversation",
+    "sendText", "sendImage", "sendFile", "updateLeadsStatus", "bookAppointment", "humanEscalation", "closeConversation",
   ]);
 
   for (const kind of ADDABLE_WORKFLOW_NODE_KINDS) {
@@ -97,11 +91,11 @@ test("plus actions create action nodes with expected default condition labels", 
     );
     expect(actionEdge?.label).toBe(workflowNodeDefaultCondition(kind)?.label);
     expect(actionEdge?.detail).toBe(workflowNodeDefaultCondition(kind)?.detail);
-    if (kind === "answerQuestions") {
-      expect(actionNode!.title).toBe("Q&A");
-      expect(actionNode!.description).toContain("knowledge base as the source of truth");
-      expect(actionEdge?.label).toBe("Customer question");
-      expect(actionEdge?.detail).toContain("answer using the knowledge base");
+    if (kind === "sendText") {
+      expect(actionNode!.title).toBe("Send message");
+      expect(actionNode!.description).toContain("Write the exact message");
+      expect(actionEdge?.label).toBe("Send message");
+      expect(actionEdge?.detail).toContain("send this configured message");
     }
     if (kind === "sendImage") {
       expect(actionNode!.title).toBe("Send Photo/Video");

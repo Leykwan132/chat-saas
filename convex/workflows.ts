@@ -18,7 +18,7 @@ import {
   workflowNodeDescription,
   workflowNodeTitle,
 } from "../shared/workflows";
-import { deleteOrQueueWorkflowNodeMedia } from "./workflowMediaDeletion";
+import { removeWorkflowNode } from "./workflowNodeRemoval";
 
 function requireFinitePosition(value: number, field: string) {
   if (!Number.isFinite(value)) {
@@ -282,19 +282,9 @@ export const removeNode = mutation({
     }
 
     const edges = await listWorkflowEdges(ctx, workflow._id);
-    const connectedEdges = edges.filter(
-      (edge) => edge.sourceNodeId === node._id || edge.targetNodeId === node._id,
-    );
     const now = Date.now();
 
-    for (const edge of connectedEdges) {
-      await ctx.db.delete(edge._id);
-    }
-    if (node.kind === "sendImage" || node.kind === "sendFile") {
-      await deleteOrQueueWorkflowNodeMedia(ctx, agent, node._id);
-    }
-    await ctx.db.delete(node._id);
-
+    await removeWorkflowNode(ctx, { agent, workflow, node, edges, now });
     await ctx.db.patch(workflow._id, { updatedAt: now });
     return await getWorkflowGraph(ctx, workflow);
   },

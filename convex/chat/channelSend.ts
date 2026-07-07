@@ -16,8 +16,6 @@ const DEFAULT_GRAPH_VERSION = "v22.0";
 const HOUR_MS = 60 * 60 * 1000;
 const MESSAGING_WINDOW_MS = 24 * HOUR_MS;
 const HUMAN_AGENT_WINDOW_MS = 7 * 24 * HOUR_MS;
-const WHATSAPP_CAROUSEL_MIN_CARDS = 2;
-const WHATSAPP_CAROUSEL_MAX_CARDS = 10;
 
 /** Meta Graph API error code: message outside standard messaging window. */
 export const META_ERROR_MESSAGING_WINDOW = 10;
@@ -282,9 +280,8 @@ export async function sendMediaToChannel(
   }));
 
   if (conversation.service === "whatsapp") {
-    const usesCarousel = shouldSendWhatsAppCarousel(mediaItems, trimmed);
     const mediaResult = await sendWhatsAppMedia(conversation, channel, mediaItems, trimmed);
-    if (!mediaResult.ok || trimmed.length === 0 || usesCarousel) {
+    if (!mediaResult.ok || trimmed.length === 0) {
       return mediaResult;
     }
     const textResult = await sendWhatsApp(conversation, channel, trimmed);
@@ -438,39 +435,6 @@ function mediaAttachmentType(item: ChannelMediaItem): "image" | "video" | "file"
   if (mediaType.startsWith("image/")) return "image";
   if (mediaType.startsWith("video/")) return "video";
   return "file";
-}
-
-function shouldSendWhatsAppCarousel(mediaItems: ChannelMediaItem[], bodyText: string) {
-  return (
-    bodyText.length > 0 &&
-    mediaItems.length >= WHATSAPP_CAROUSEL_MIN_CARDS &&
-    mediaItems.every(isWhatsAppCarouselMediaItem)
-  );
-}
-
-function isWhatsAppCarouselMediaItem(item: ChannelMediaItem) {
-  const type = mediaAttachmentType(item);
-  return type === "image" || type === "video";
-}
-
-function splitWhatsAppCarouselBatches(mediaItems: ChannelMediaItem[]) {
-  const batches: ChannelMediaItem[][] = [];
-  let index = 0;
-  while (index < mediaItems.length) {
-    const remaining = mediaItems.length - index;
-    const size =
-      remaining > WHATSAPP_CAROUSEL_MAX_CARDS &&
-      remaining % WHATSAPP_CAROUSEL_MAX_CARDS === 1
-        ? WHATSAPP_CAROUSEL_MAX_CARDS - 1
-        : Math.min(remaining, WHATSAPP_CAROUSEL_MAX_CARDS);
-    const batch = mediaItems.slice(index, index + size);
-    if (batch.length < WHATSAPP_CAROUSEL_MIN_CARDS) {
-      throw new Error("WhatsApp carousel batches require at least two media items");
-    }
-    batches.push(batch);
-    index += size;
-  }
-  return batches;
 }
 
 function withMediaExternalIds(
@@ -711,10 +675,6 @@ async function sendWhatsAppMedia(
     return result;
   }
 
-  if (shouldSendWhatsAppCarousel(mediaItems, bodyText)) {
-    return sendWhatsAppCarousel(conversation, channel, accessToken, mediaItems, bodyText);
-  }
-
   const externalIds: string[] = [];
   for (const [index, item] of mediaItems.entries()) {
     const mediaBody = buildWhatsAppMediaBody(conversation, item);
@@ -769,80 +729,6 @@ function buildWhatsAppMediaBody(
     type,
     [type]: mediaPayload,
   };
-}
-
-function buildWhatsAppCarouselCard(item: ChannelMediaItem, index: number) {
-  const headerType = whatsAppMediaType(item);
-  if (headerType === "document") {
-    throw new Error("WhatsApp carousel cards only support image or video headers");
-  }
-  return {
-    card_index: index,
-    type: "cta_url",
-    header: {
-      type: headerType,
-      [headerType]: { link: item.url },
-    },
-    ...(item.filename ? { body: { text: item.filename } } : {}),
-  };
-}
-
-async function sendWhatsAppCarousel(
-  conversation: Doc<"conversations">,
-  channel: Doc<"channels">,
-  accessToken: string,
-  mediaItems: ChannelMediaItem[],
-  bodyText: string,
-): Promise<ChannelSendResult> {
-  const externalIds: string[] = [];
-  const batches = splitWhatsAppCarouselBatches(mediaItems);
-  for (const [batchIndex, batch] of batches.entries()) {
-    const res = await fetch(`${waGraphBase()}/${channel.phoneNumberId}/messages`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        recipient_type: "individual",
-        to: conversation.contactAddress,
-        type: "interactive",
-        interactive: {
-          type: "carousel",
-          body: { text: bodyText },
-          action: {
-            cards: batch.map(buildWhatsAppCarouselCard),
-          },
-        },
-      }),
-    });
-    const result = await parseGraphResponse(
-      res,
-      mediaSendLogContext(conversation, channel, "whatsapp.carousel", batch, {
-        hasText: bodyText.trim().length > 0,
-        batchIndex,
-        batchSize: batch.length,
-      }),
-    );
-    if (!result.ok) return result;
-    if (result.externalId) {
-      externalIds.push(result.externalId);
-    }
-  }
-  const result = {
-    ok: true as const,
-    externalId: externalIds[0],
-    externalIds,
-    textConsumed: true,
-  };
-  logMediaSendDone(
-    mediaSendLogContext(conversation, channel, "whatsapp.carousel", mediaItems, {
-      hasText: bodyText.trim().length > 0,
-    }),
-    externalIds,
-  );
-  return result;
 }
 
 async function sendWhatsAppReaction(
