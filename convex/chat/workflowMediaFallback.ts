@@ -52,10 +52,13 @@ function replyMentionsLabel(reply: string, label: string | undefined) {
 export function inferWorkflowMediaClientIdsFromReply(
   replyText: string,
   context: WorkflowRuntimeContextForPrompt,
+  requestText?: string,
 ) {
   if (context === null) return [] as string[];
 
-  const normalizedReply = normalizeLabel(replyText);
+  const normalizedTexts = [replyText, requestText ?? ""]
+    .map(normalizeLabel)
+    .filter((text) => text.length > 0);
   const clientIds: string[] = [];
   const seen = new Set<string>();
 
@@ -67,7 +70,9 @@ export function inferWorkflowMediaClientIdsFromReply(
         filenameStem(asset.filename),
         ...nodeLabels(node),
       ].flatMap(labelVariants);
-      if (!labels.some((label) => replyMentionsLabel(normalizedReply, label))) {
+      if (!labels.some((label) =>
+        normalizedTexts.some((text) => replyMentionsLabel(text, label))
+      )) {
         continue;
       }
       if (seen.has(asset.clientId)) continue;

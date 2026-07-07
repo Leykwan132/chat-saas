@@ -19,6 +19,7 @@ test("infers workflow media from a matching layout filename in the reply", () =>
               clientId: "layout-a",
               filename: "Sena Residence Type A Layout.png",
               mediaType: "image/png",
+              url: "https://cdn.example.com/layout-a.png",
             },
           ],
         },
@@ -47,6 +48,7 @@ test("does not infer media when the reply does not reference a ready asset", () 
               clientId: "layout-a",
               filename: "Sena Residence Type A Layout.png",
               mediaType: "image/png",
+              url: "https://cdn.example.com/layout-a.png",
             },
           ],
         },
@@ -75,6 +77,7 @@ test("infers workflow media from send node titles without requiring the action v
               clientId: "layout-a",
               filename: "layout.png",
               mediaType: "image/png",
+              url: "https://cdn.example.com/layout-a.png",
             },
           ],
         },
@@ -84,4 +87,69 @@ test("infers workflow media from send node titles without requiring the action v
   );
 
   expect(ids).toEqual(["layout-a"]);
+});
+
+test("infers workflow video from the customer request when the reply only claims it was sent", () => {
+  const ids = inferWorkflowMediaClientIdsFromReply(
+    "Here it is again!",
+    {
+      workflowId: "workflow-1" as never,
+      nodes: [
+        {
+          nodeId: "node-1" as never,
+          kind: "sendImage",
+          title: "Send Type B video",
+          incomingConditions: [
+            {
+              sourceNodeId: "source-1" as never,
+              name: "Customer asks for Type B video",
+              detail: "If the customer asks to see or resend the Type B video",
+            },
+          ],
+          allowedServices: [],
+          mediaAssets: [
+            {
+              clientId: "type-b-video",
+              filename: "Sena Residence Type B.mp4",
+              mediaType: "video/mp4",
+              url: "https://cdn.example.com/type-b-video.mp4",
+            },
+          ],
+        },
+      ],
+      edges: [],
+    },
+    "Can you send the Sena Residence Type B video again?",
+  );
+
+  expect(ids).toEqual(["type-b-video"]);
+});
+
+test("infers workflow video from the exact plain reply when the model omits the manifest", () => {
+  const ids = inferWorkflowMediaClientIdsFromReply(
+    "Here's the Sena Residence Type B video again! 🎥\n\nLet me know if you need anything else! 😊",
+    {
+      workflowId: "workflow-1" as never,
+      nodes: [
+        {
+          nodeId: "node-1" as never,
+          kind: "sendFile",
+          title: "Send Type B video",
+          incomingConditions: [],
+          allowedServices: [],
+          mediaAssets: [
+            {
+              clientId: "type-b-video",
+              filename: "Sena Residence Type B.mp4",
+              mediaType: "video/mp4",
+              url: "https://cdn.example.com/type-b-video.mp4",
+            },
+          ],
+        },
+      ],
+      edges: [],
+    },
+  );
+
+  expect(ids).toEqual(["type-b-video"]);
 });

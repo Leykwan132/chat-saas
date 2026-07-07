@@ -1,5 +1,20 @@
 import { expect, test } from "vitest";
-import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import {
+  chatResponseFormattingBlock,
+  normalizeCustomerFacingResponseFormatting,
+} from "./responseFormatting";
+
+test("response formatting does not override the required output envelope", () => {
+  expect(chatResponseFormattingBlock).toContain(
+    "If another instruction requires `<customer_response>` or `<media_to_send>`",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "apply these formatting rules inside `<customer_response>`",
+  );
+  expect(chatResponseFormattingBlock).not.toContain(
+    "Start with the customer-facing answer.",
+  );
+});
 
 test("normalizes markdown bold to WhatsApp bold", () => {
   const input = [

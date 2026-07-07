@@ -10,6 +10,7 @@ import { getAuthContext } from "./authUtils";
 import { cfUploadPool } from "./workpool";
 import { api } from "./_generated/api";
 import { buildKnowledgeBaseImageFileName } from "./media/r2";
+import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 import { getBillingPlanFromStripe } from "./billingScope";
 import { getPlan } from "./plans";
 
@@ -289,7 +290,7 @@ export const enqueueImageDelete = action({
   },
 });
 
-/** Returns ready media assets for a specific collection (used by sendMedia tool). */
+/** Returns ready media assets for a specific collection. */
 export const internalListReadyByCollection = internalQuery({
   args: { agentId: v.id("agents"), collectionName: v.string() },
   handler: async (ctx, args) => {
@@ -354,8 +355,8 @@ export const internalResolveClientIdsToPublicUrls = internalQuery({
 
     const byClientId = new Map<string, string>();
     for (const row of rows) {
-      if (row.status === "ready" && row.publicUrl) {
-        byClientId.set(row.clientId, row.publicUrl);
+      if (row.status === "ready") {
+        byClientId.set(row.clientId, requireReadyMediaPublicUrl(row));
       }
     }
 
@@ -382,9 +383,9 @@ export const internalResolveClientIdsToMediaItems = internalQuery({
 
     const byClientId = new Map<string, { url: string; mediaType: string; filename?: string }>();
     for (const row of rows) {
-      if (row.status === "ready" && row.publicUrl) {
+      if (row.status === "ready") {
         byClientId.set(row.clientId, {
-          url: row.publicUrl,
+          url: requireReadyMediaPublicUrl(row),
           mediaType: row.mediaType,
           filename: row.filename,
         });

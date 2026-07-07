@@ -146,7 +146,7 @@ test("does not send WhatsApp text when image delivery fails first", async () => 
   );
 });
 
-test("sends Messenger media payload arrays before the text response", async () => {
+test("sends Messenger media attachments individually before the text response", async () => {
   const calls: Array<{ url: string; body: Record<string, unknown> }> = [];
   vi.stubGlobal(
     "fetch",
@@ -168,11 +168,12 @@ test("sends Messenger media payload arrays before the text response", async () =
 
   expect(result).toEqual({
     ok: true,
-    externalId: "mid.2",
-    externalIds: ["mid.1"],
+    externalId: "mid.3",
+    externalIds: ["mid.1", "mid.2"],
   });
-  expect(calls).toHaveLength(2);
+  expect(calls).toHaveLength(3);
   expect(calls.map((call) => call.url)).toEqual([
+    "https://graph.facebook.com/v22.0/me/messages",
     "https://graph.facebook.com/v22.0/me/messages",
     "https://graph.facebook.com/v22.0/me/messages",
   ]);
@@ -180,27 +181,32 @@ test("sends Messenger media payload arrays before the text response", async () =
     messaging_type: "RESPONSE",
     recipient: { id: "recipient-id" },
     message: {
-      attachments: [
-        {
-          type: "image",
-          payload: { url: "https://cdn.example.com/first.jpg" },
-        },
-        {
-          type: "file",
-          payload: { url: "https://cdn.example.com/second.pdf" },
-        },
-      ],
+      attachment: {
+        type: "image",
+        payload: { url: "https://cdn.example.com/first.jpg", is_reusable: true },
+      },
     },
   });
-  expect(calls[0]!.body.message).not.toHaveProperty("attachment");
+  expect(calls[0]!.body.message).not.toHaveProperty("attachments");
   expect(calls[1]!.body).toMatchObject({
+    messaging_type: "RESPONSE",
+    recipient: { id: "recipient-id" },
+    message: {
+      attachment: {
+        type: "file",
+        payload: { url: "https://cdn.example.com/second.pdf", is_reusable: true },
+      },
+    },
+  });
+  expect(calls[1]!.body.message).not.toHaveProperty("attachments");
+  expect(calls[2]!.body).toMatchObject({
     messaging_type: "RESPONSE",
     recipient: { id: "recipient-id" },
     message: { text: "Done." },
   });
 });
 
-test("sends a single Messenger asset with the attachments array payload", async () => {
+test("sends a single Messenger asset with the singular attachment payload", async () => {
   const calls: Array<{ body: Record<string, unknown> }> = [];
   vi.stubGlobal(
     "fetch",
@@ -226,13 +232,11 @@ test("sends a single Messenger asset with the attachments array payload", async 
     messaging_type: "RESPONSE",
     recipient: { id: "recipient-id" },
     message: {
-      attachments: [
-        {
-          type: "video",
-          payload: { url: "https://cdn.example.com/demo.mp4" },
-        },
-      ],
+      attachment: {
+        type: "video",
+        payload: { url: "https://cdn.example.com/demo.mp4", is_reusable: true },
+      },
     },
   });
-  expect(calls[0]!.body.message).not.toHaveProperty("attachment");
+  expect(calls[0]!.body.message).not.toHaveProperty("attachments");
 });

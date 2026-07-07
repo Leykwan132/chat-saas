@@ -27,12 +27,10 @@ import {
   inferMediaMimeType,
 } from "./threads";
 import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
-import { extractMediaFromText } from "./mediaUrlExtractor";
 import {
-  dedupeMediaItems,
-  extractSendMediaItemsFromResult,
-} from "./mediaToolResults";
-import { inferWorkflowMediaClientIdsFromReply } from "./workflowMediaFallback";
+  extractAiReplyMedia,
+  toChannelMediaItems,
+} from "./aiReplyMedia";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
@@ -42,12 +40,6 @@ import {
   ensureWorkflowForAgent,
   workflowHasHumanEscalationNode,
 } from "../workflowCore";
-
-type ResolvedChannelMediaItem = {
-  url: string;
-  mediaType: string;
-  filename?: string;
-};
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -127,7 +119,6 @@ export const internalIngestChannelMessage = internalMutation({
 export const internalIngestHistoricalChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
   handler: async (ctx, args) => {
-    console.log("internalIngestHistoricalChannelMessage", args);
     return await ingestChannelMessage(ctx, args);
   },
 });
@@ -636,42 +627,12 @@ export const generateAiReplyWorker = internalAction({
       }
 
       const replyText = result.text.trim();
-      const mediaItemsFromToolResults = extractSendMediaItemsFromResult(result);
+      const { text: cleanText, mediaItems: allMediaItems } = extractAiReplyMedia(
+        replyText,
+        workflowRuntimeContext,
+      );
+      const channelMediaItems = toChannelMediaItems(allMediaItems);
 
-      if (!replyText && mediaItemsFromToolResults.length === 0) return;
-
-      const { text: cleanText, mediaUrls, mediaClientIds } =
-        extractMediaFromText(replyText);
-      const mediaItemsFromUrls: ResolvedChannelMediaItem[] = mediaUrls.map((url) => ({
-        url,
-        mediaType: inferMediaMimeType(url),
-      }));
-      const mediaItemsFromClientIds: ResolvedChannelMediaItem[] =
-        mediaClientIds.length > 0
-          ? await ctx.runQuery(
-              internal.knowledgeBaseImages.internalResolveClientIdsToMediaItems,
-              { agentId: conv.assignedAgentId, clientIds: mediaClientIds },
-            )
-          : [];
-      const fallbackMediaClientIds =
-        mediaItemsFromToolResults.length === 0 &&
-        mediaUrls.length === 0 &&
-        mediaClientIds.length === 0
-          ? inferWorkflowMediaClientIdsFromReply(replyText, workflowRuntimeContext)
-          : [];
-      const mediaItemsFromWorkflowFallback: ResolvedChannelMediaItem[] =
-        fallbackMediaClientIds.length > 0
-          ? await ctx.runQuery(
-              internal.knowledgeBaseImages.internalResolveClientIdsToMediaItems,
-              { agentId: conv.assignedAgentId, clientIds: fallbackMediaClientIds },
-            )
-          : [];
-      const allMediaItems = dedupeMediaItems([
-        ...mediaItemsFromToolResults,
-        ...mediaItemsFromUrls,
-        ...mediaItemsFromClientIds,
-        ...mediaItemsFromWorkflowFallback,
-      ]);
       const allMediaUrls = allMediaItems.map((item) => item.url);
       if (!cleanText && allMediaItems.length === 0) return;
 
@@ -706,7 +667,7 @@ export const generateAiReplyWorker = internalAction({
           conversationId: conv._id,
           content: cleanText,
           mediaUrls: allMediaUrls,
-          mediaItems: allMediaItems,
+          mediaItems: channelMediaItems,
           allowHumanAgentTag: false,
         },
       );
@@ -762,7 +723,7 @@ export const generateAiReplyWorker = internalAction({
             conversationId: conv._id,
             threadId: conv.threadId,
             mediaUrls: allMediaUrls,
-            mediaItems: allMediaItems,
+            mediaItems: channelMediaItems,
             externalIds: sendResult.mediaExternalIds ?? [],
           },
         );

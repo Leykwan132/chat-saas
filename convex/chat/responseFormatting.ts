@@ -3,7 +3,8 @@ export const chatResponseFormattingBlock = `\n\n## Response Formatting
 - Do not use double asterisks in customer-facing replies.
 - Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
 - When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.
-- Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups. Start with the customer-facing answer.`;
+- Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups.
+- If another instruction requires \`<customer_response>\` or \`<media_to_send>\`, apply these formatting rules inside \`<customer_response>\` and keep the required envelope tags.`;
 
 function parseMarkdownTableRow(line: string) {
   const trimmed = line.trim();

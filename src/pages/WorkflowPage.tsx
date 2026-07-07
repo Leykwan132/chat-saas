@@ -12,6 +12,7 @@ import { WorkflowInspector } from '@/components/workflow/WorkflowInspector';
 import { WorkflowPageSkeleton } from '@/components/workflow/WorkflowPageSkeleton';
 import { workflowGraphToFlow } from '@/components/workflow/workflowFlowModel';
 import { getWorkflowCleanupPositions } from '@/components/workflow/workflowLayout';
+import { findNewWorkflowNodeId } from './workflowPageNodeSelection';
 
 export default function WorkflowPage() {
   const { agentId } = useParams();
@@ -51,11 +52,14 @@ export default function WorkflowPage() {
       setSelectedNodeId(undefined);
       const toastId = toast.loading('Creating node…');
       try {
-        await addNodeAfter({
+        const nextGraph = await addNodeAfter({
           agentId: typedAgentId,
           sourceNodeId: nodeId,
           kind,
         });
+        if (graph) {
+          setSelectedNodeId(findNewWorkflowNodeId(graph, nextGraph, nodeId, kind));
+        }
         toast.success('Node created', { id: toastId });
       } catch (error) {
         toast.error(error instanceof Error ? error.message : 'Could not add node', {
@@ -63,7 +67,7 @@ export default function WorkflowPage() {
         });
       }
     },
-    [addNodeAfter, typedAgentId],
+    [addNodeAfter, graph, typedAgentId],
   );
 
   const handleRemoveNode = useCallback(

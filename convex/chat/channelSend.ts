@@ -842,7 +842,7 @@ async function sendInstagram(
 function buildMediaAttachment(item: ChannelMediaItem) {
   return {
     type: mediaAttachmentType(item),
-    payload: { url: item.url },
+    payload: { url: item.url, is_reusable: true },
   };
 }
 
@@ -1120,52 +1120,57 @@ async function sendMessengerMedia(
     return { ok: true, externalId: undefined, externalIds: [] };
   }
 
-  const payload: Record<string, unknown> = {
-    recipient: { id: conversation.contactAddress },
-    message: { attachments: mediaItems.map(buildMediaAttachment) },
-  };
-  if (useHumanAgent) {
-    payload.messaging_type = "MESSAGE_TAG";
-    payload.tag = "HUMAN_AGENT";
-  } else {
-    payload.messaging_type = "RESPONSE";
-  }
+  const externalIds: string[] = [];
+  for (const [index, item] of mediaItems.entries()) {
+    const payload: Record<string, unknown> = {
+      recipient: { id: conversation.contactAddress },
+      message: { attachment: buildMediaAttachment(item) },
+    };
+    if (useHumanAgent) {
+      payload.messaging_type = "MESSAGE_TAG";
+      payload.tag = "HUMAN_AGENT";
+    } else {
+      payload.messaging_type = "RESPONSE";
+    }
 
-  const res = await fetch(`${fbGraphBase()}/me/messages`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const parsed = await parseGraphResponse(
-    res,
-    mediaSendLogContext(conversation, channel, "messenger.attachments", mediaItems, {
-      hasText: args.text.trim().length > 0,
-    }),
-  );
-  if (
-    !parsed.ok &&
-    parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
-    windowState === "human_agent" &&
-    args.options?.allowHumanAgentTag &&
-    !useHumanAgent
-  ) {
-    return sendMessengerMedia(conversation, channel, {
-      ...args,
-      options: { ...args.options, allowHumanAgentTag: true },
+    const res = await fetch(`${fbGraphBase()}/me/messages`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
     });
+
+    const parsed = await parseGraphResponse(
+      res,
+      mediaSendLogContext(conversation, channel, "messenger.attachment", [item], {
+        hasText: args.text.trim().length > 0,
+        itemIndex: index,
+      }),
+    );
+    if (
+      !parsed.ok &&
+      parsed.errorCode === META_ERROR_MESSAGING_WINDOW &&
+      windowState === "human_agent" &&
+      args.options?.allowHumanAgentTag &&
+      !useHumanAgent
+    ) {
+      return sendMessengerMedia(conversation, channel, {
+        ...args,
+        options: { ...args.options, allowHumanAgentTag: true },
+      });
+    }
+    if (!parsed.ok) {
+      return parsed;
+    }
+    if (parsed.externalId) {
+      externalIds.push(parsed.externalId);
+    }
   }
-  if (!parsed.ok) {
-    return parsed;
-  }
-  const result = {
-    ...parsed,
-    externalIds: parsed.externalId ? [parsed.externalId] : [],
-  };
-  logMediaSendDone(context, result.externalIds);
+
+  const result = { ok: true as const, externalId: externalIds[0], externalIds };
+  logMediaSendDone(context, externalIds);
   return result;
 }
 

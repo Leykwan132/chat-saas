@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { getPublicMediaUrl } from "./media/r2";
+import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 import { assertManageableAgent } from "./agentAccess";
 import {
   assertAllowedWorkflowMediaType,
@@ -221,7 +222,7 @@ export const internalListReadyByNode = internalQuery({
       .map((row) => ({
         clientId: row.clientId,
         filename: row.filename,
-        publicUrl: row.publicUrl ?? "",
+        publicUrl: requireReadyMediaPublicUrl(row),
         mediaType: row.mediaType,
       }));
   },

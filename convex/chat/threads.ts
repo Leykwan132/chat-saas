@@ -31,10 +31,12 @@ import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
 import { DEFAULT_TEAM_TIME_ZONE, getUserByWorkosId, normalizeTimeZone } from "../teamHelpers";
 import { logConversationEvent } from "../conversationLogs";
 import {
+  buildWorkflowFinalResponseContractBlock,
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
 import { chatResponseFormattingBlock } from "./responseFormatting";
+import { buildAgentOutputFormatBlock } from "./agentOutputFormat";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -495,11 +497,10 @@ export function buildAgent(
       .map((node) => node.nodeId) ?? [],
   );
   const escalationConfigured = humanEscalationNodeIds.size > 0;
-  const sendMediaNodeIds = new Set(
-    workflowRuntimeContext?.nodes
-      .filter((node) => node.kind === "sendImage" || node.kind === "sendFile")
-      .map((node) => node.nodeId) ?? [],
-  );
+  const hasWorkflowMediaNodes =
+    workflowRuntimeContext?.nodes.some((node) =>
+      node.kind === "sendImage" || node.kind === "sendFile"
+    ) ?? false;
 
   const tools: ToolSet = {
     fetchContext: createTool({
@@ -517,26 +518,6 @@ export function buildAgent(
       },
     }),
   };
-
-  if (sendMediaNodeIds.size > 0) {
-    tools.sendMedia = createTool({
-      description:
-        "Retrieves media assets for a specific Send Photo/Video or Send Files workflow node. Call only when the customer's latest message matches that node's incoming condition. The system sends returned assets separately, so do not include internal media IDs or URLs in the customer-facing response.",
-      inputSchema: z.object({
-        workflowNodeId: z.string().describe("The exact Node ID of the matching media workflow node"),
-      }),
-      execute: async (ctx, { workflowNodeId }) => {
-        const nodeId = workflowNodeId as Id<"workflowNodes">;
-        if (!sendMediaNodeIds.has(nodeId)) {
-          throw new Error("Media node is not available in the active workflow");
-        }
-        return await ctx.runQuery(
-          internal.workflowMediaInternal.internalListReadyByNode,
-          { agentId, nodeId },
-        );
-      },
-    });
-  }
 
   if (escalationConfigured) {
     tools.escalateToHuman = createTool({
@@ -796,18 +777,20 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock()}`
     : "";
   const workflowBlock = buildWorkflowRuntimeBlock(workflowRuntimeContext);
+  const outputContractBlocks = buildWorkflowOutputContractBlocks(workflowRuntimeContext);
 
   const noContextFallback = escalationConfigured
     ? "call `escalateToHuman` with the user's question and explain what information was missing. Do NOT send any message to the user."
     : "give a short, natural reply that you don't have that information";
 
-  const toolSteps = sendMediaNodeIds.size > 0
+  const toolSteps = hasWorkflowMediaNodes
     ? `  ### Steps for every response:
   1. Call \`fetchContext\` with the user's original query
-  2. If the latest message matches a Send Photo/Video or Send Files workflow node condition, call \`sendMedia\` with that node's Node ID
-  3. Read the returned context and any media assets carefully
-  4. Reply using ONLY what the tools returned. If only media was found, send it with a brief, friendly label — nothing more.
-  5. Only if BOTH \`fetchContext\` returned nothing relevant AND \`sendMedia\` returned no matching assets: ${noContextFallback}`
+  2. Build \`<workflow_matches>\` by matching the latest message against all Workflow Runtime node goals and incoming conditions. Multiple nodes can match; include every matching node and do not stop at the first match.
+  3. Execute every node listed in \`<workflow_matches>\`. If any matched node is a Send Photo/Video or Send Files node, include the matching workflow node \`nodeId\` plus exact matching media \`url\` and \`type\` values from each matching Workflow Runtime media node in \`<media_to_send>\` every time, including when the same media was already sent earlier
+  4. Read the returned context and workflow media assets carefully
+  5. Reply using ONLY the returned context and Workflow Runtime. If there is relevant context or media to send, The response format MUST include \`<workflow_matches>\`, \`<customer_response>\`, and the matching media nodeId/URL/type objects in \`<media_to_send>\` — nothing more.
+  6. Only if BOTH \`fetchContext\` returned nothing relevant AND no workflow media condition matches: ${noContextFallback}`
     : `  ### Steps for every response:
   1. Call \`fetchContext\` with the user's original query
   2. Read the returned context carefully
@@ -857,7 +840,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
 
 ${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
-  ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
+  ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}${outputContractBlocks}`;
 
   return new Agent(components.agent, {
     name: agent.name,
@@ -899,6 +882,16 @@ ${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
       });
     },
   });
+}
+
+export function buildWorkflowOutputContractBlocks(
+  workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
+) {
+  const outputFormatBlock = buildAgentOutputFormatBlock();
+  const workflowFinalResponseContractBlock =
+    buildWorkflowFinalResponseContractBlock(workflowRuntimeContext);
+
+  return `${outputFormatBlock}${workflowFinalResponseContractBlock}`;
 }
 
 export function normalizeLabel(s: string | undefined): string {

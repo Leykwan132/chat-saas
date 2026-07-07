@@ -3,6 +3,7 @@ import { internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getWorkflowForAgent, listWorkflowEdges, listWorkflowNodes } from "./workflowCore";
 import { workflowNodeDescription, workflowNodeDisplayTitle } from "../shared/workflows";
+import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 
 const MAX_RUNTIME_SERVICES = 100;
 const MAX_RUNTIME_MEDIA = 500;
@@ -65,6 +66,7 @@ function mediaForNode(
       clientId: row.clientId,
       filename: row.filename,
       mediaType: row.mediaType,
+      url: requireReadyMediaPublicUrl(row),
     }));
 }
 
