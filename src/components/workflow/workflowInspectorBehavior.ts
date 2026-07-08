@@ -8,9 +8,10 @@ export function getWorkflowInspectorBehavior(
   const isSendTextAction = kind === 'sendText';
   const isSendMediaAction = kind === 'sendImage';
   const isSendFileAction = kind === 'sendFile';
+  const isBookAppointmentAction = kind === 'bookAppointment';
   const hasMediaSection = isSendMediaAction || isSendFileAction;
   const isAction = isWorkflowActionNodeKind(kind);
-  const hasGoalField = !hasMediaSection && (isAction || hasPersistedDescription);
+  const hasGoalField = !hasMediaSection && !isBookAppointmentAction && (isAction || hasPersistedDescription);
 
   return {
     isAction,
@@ -19,7 +20,7 @@ export function getWorkflowInspectorBehavior(
     isSendFileAction,
     hasMediaSection,
     hasGoalField,
-    saveRequiresDescription: isAction && !hasMediaSection,
+    saveRequiresDescription: isAction && !hasMediaSection && !isBookAppointmentAction,
     nameLabel: isAction ? 'Name' : 'Title',
     goalLabel: isSendTextAction ? 'Message' : isAction ? 'Goal' : 'Description',
     mediaActionTitle: isSendFileAction ? 'Files to send' : 'Your Photos/Videos',

@@ -1,4 +1,4 @@
-import { Banknote, Bot, Mail, type LucideIcon } from 'lucide-react';
+import { Banknote, Bot, Mail, ShoppingBag, type LucideIcon } from 'lucide-react';
 import type { AgentTemplateKey } from '@/lib/agentTemplates';
 
 export type AgentTemplateOption = {
@@ -16,7 +16,12 @@ export const templateOptions: AgentTemplateOption[] = [
   {
     key: 'sales',
     icon: Banknote,
-    description: 'Qualify leads and drive next steps.',
+    description: 'Book real estate showroom visits and qualify buyers.',
+  },
+  {
+    key: 'productSales',
+    icon: ShoppingBag,
+    description: 'Sell products and guide buyers to the next purchase step.',
   },
   {
     key: 'support',

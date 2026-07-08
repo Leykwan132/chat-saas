@@ -71,7 +71,7 @@ function mediaForNode(
 }
 
 function goalForNode(node: Doc<"workflowNodes">) {
-  if (node.kind === "sendImage" || node.kind === "sendFile") return undefined;
+  if (node.kind === "sendImage" || node.kind === "sendFile" || node.kind === "bookAppointment") return undefined;
   return node.description?.trim() || workflowNodeDescription(node.kind);
 }
 

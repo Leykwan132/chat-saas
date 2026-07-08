@@ -37,6 +37,7 @@ import {
 } from "./workflowPrompt";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildAgentOutputFormatBlock } from "./agentOutputFormat";
+import { buildToolUsageBlock } from "./toolPrompt";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -783,19 +784,11 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     ? "call `escalateToHuman` with the user's question and explain what information was missing. Do NOT send any message to the user."
     : "give a short, natural reply that you don't have that information";
 
-  const toolSteps = hasWorkflowMediaNodes
-    ? `  ### Steps for every response:
-  1. Call \`fetchContext\` with the user's original query
-  2. Build \`<workflow_matches>\` by matching the latest message against all Workflow Runtime node goals and incoming conditions. Multiple nodes can match; include every matching node and do not stop at the first match.
-  3. Execute every node listed in \`<workflow_matches>\`. If any matched node is a Send Photo/Video or Send Files node, include the matching workflow node \`nodeId\` plus exact matching media \`url\` and \`type\` values from each matching Workflow Runtime media node in \`<media_to_send>\` every time, including when the same media was already sent earlier
-  4. Read the returned context and workflow media assets carefully
-  5. Reply using ONLY the returned context and Workflow Runtime. If there is relevant context or media to send, The response format MUST include \`<workflow_matches>\`, \`<customer_response>\`, and the matching media nodeId/URL/type objects in \`<media_to_send>\` — nothing more.
-  6. Only if BOTH \`fetchContext\` returned nothing relevant AND no workflow media condition matches: ${noContextFallback}`
-    : `  ### Steps for every response:
-  1. Call \`fetchContext\` with the user's original query
-  2. Read the returned context carefully
-  3. If relevant context is found: answer using only that context
-  4. If no relevant context is found: ${noContextFallback}. Do not guess or add filler`;
+  const toolUsageBlock = buildToolUsageBlock({
+    escalationConfigured,
+    hasWorkflowMediaNodes,
+    noContextFallback,
+  });
 
   const instructions = `${agent.systemPrompt}${(() => {
     let styleBlock = "";
@@ -836,10 +829,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     return styleBlock;
   })()}
 
-  ## Tool Usage — REQUIRED
-  You have a \`fetchContext\` tool that searches the user's knowledge base. You MUST call it before responding to any question — no exceptions. Please pass the exact user original prompt to the \`fetchContext\` tool. Do not rely on your training data alone.
-
-${toolSteps}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
+${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
   ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}${outputContractBlocks}`;
 
   return new Agent(components.agent, {

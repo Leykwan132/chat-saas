@@ -1,4 +1,4 @@
-export type AgentTemplateKey = 'blank' | 'sales' | 'support';
+export type AgentTemplateKey = 'blank' | 'sales' | 'productSales' | 'support';
 
 import { TEMPLATE_PROMPTS } from './utils';
 
@@ -12,9 +12,14 @@ export const AGENT_TEMPLATES: Record<
     prompt: TEMPLATE_PROMPTS.general,
   },
   sales: {
-    label: 'Sales Agent',
-    description: 'Qualifies leads, handles objections, and drives next steps.',
+    label: 'Real estate sales agent',
+    description: 'Books real estate showroom visits and qualifies serious buyers.',
     prompt: TEMPLATE_PROMPTS.sales,
+  },
+  productSales: {
+    label: 'Sales agent',
+    description: 'Helps customers compare options and sell products.',
+    prompt: TEMPLATE_PROMPTS.productSales,
   },
   support: {
     label: 'Support Agent',

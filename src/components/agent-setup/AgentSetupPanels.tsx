@@ -82,6 +82,7 @@ export function AgentSetupPanels({
         value={systemPrompt}
         onChange={onSystemPromptChange}
         onApplyTemplate={onApplyTemplate}
+        workflowHref={`/dashboard/${agentId}/workflow`}
       />
       <aside className="flex min-w-0 flex-col gap-6">
         <AgentSetupConfigurationPanel

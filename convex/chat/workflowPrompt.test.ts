@@ -28,6 +28,9 @@ test("workflow runtime tells send message nodes to send the configured message",
     ],
   });
 
+  expect(block).toContain("### When to use workflow nodes");
+  expect(block).toContain("### How to follow the workflow");
+  expect(block).toContain("### Workflow guardrails");
   expect(block).toContain("For Send message nodes");
   expect(block).toContain("send the configured message");
   expect(block).toContain("Thanks for reaching out");

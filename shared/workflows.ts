@@ -134,8 +134,8 @@ export const WORKFLOW_NODE_DEFAULT_CONDITIONS: Partial<
     detail: 'If the customer reaches this step, send this configured message.',
   },
   bookAppointment: {
-    label: 'Ready to book',
-    detail: 'If the user is very sure about their interest in the services, proceed to book an appointment.',
+    label: 'Yes',
+    detail: 'If the customer wants to book one of the selected services, proceed to appointment booking.',
   },
   humanEscalation: {
     label: 'Needs human',

@@ -64,6 +64,9 @@
 - 2026-07-08 [CODE] Now: landing preview Workflow keeps three nodes but branches Message enters directly into two sub-nodes: Qualify buyer intent and Book showroom visit.
 - 2026-07-08 [CODE] Now: landing preview Workflow inspector modal is scoped inside the demo app container instead of opening over the full landing page.
 - 2026-07-08 [CODE] Now: workflow inspector Condition and Actions sections each show a muted one-line explanation under the section heading.
+- 2026-07-08 [CODE] Now: workflow media final-response contract explicitly marks the matched Send Photo/Video or Send Files manifest rule with `This is important`.
+- 2026-07-08 [CODE] Now: agent sample templates use Role/About the business/Goal/Guardrails plus generic `# Error handling`; samples omit tools/tone/environment/workflow/refund wording; template library includes separate `Real estate sales agent` and product-focused `Sales agent` options; and backend workflow/tool handling is appended by backend prompt blocks.
+- 2026-07-08 [CODE] Now: Book appointment workflow nodes default the incoming condition to `Yes`, do not expose a Goal field in the inspector, and are described to the AI by selected Services instead of node goals.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -153,15 +156,23 @@
 - 2026-07-08 [CODE] D182 ACTIVE: Landing preview numeric display strings are parsed into text/number segments and reuse the existing UI `NumberTicker`; nonnumeric suffix/prefix text remains static.
 - 2026-07-08 [CODE] D183 ACTIVE: Shared `DialogContent` accepts an optional portal container so landing/demo previews can scope modal overlays without changing default app-wide dialog behavior.
 - 2026-07-08 [CODE] D184 ACTIVE: Workflow `sendImage`/`sendFile` nodes do not expose an editable goal to users or the AI prompt; matching is driven by incoming conditions plus uploaded files or `Your Photos/Videos`.
+- 2026-07-08 [CODE] D185 SUPERSEDED: Agent prompt templates previously shared a Role/Goal/Guardrails/Workflow structure; D186 removes workflow from user-facing templates.
+- 2026-07-08 [CODE] D186 SUPERSEDED: Agent prompt templates shared Role/Goal/Guardrails only; D187 adds generic error handling.
+- 2026-07-08 [CODE] D187 SUPERSEDED: Agent prompt templates shared Role/Goal/Guardrails plus generic error handling; D188 adds business context.
+- 2026-07-08 [CODE] D188 SUPERSEDED: Agent prompt templates live in `shared/agentPromptTemplates.ts`; frontend samples and Convex creation fallbacks share Role/About the business/Goal/Guardrails plus generic `**Error handling:**`, with explicit tool/workflow/refund guidance kept out of user-editable samples.
+- 2026-07-08 [CODE] D189 SUPERSEDED: Agent prompt templates stay shared and omit tool/workflow/refund blocks; the sales sample is branded `Real estate sales agent` and frames the role as an AI agent for booking appointments or selling products, tailored to real estate showroom viewing.
+- 2026-07-08 [CODE] D190 ACTIVE: Agent prompt templates stay shared and omit tool/workflow/refund blocks; `sales` remains the real estate showroom booking template with non-pushy guidance for unclear prospects and no template-meta phrasing, `productSales` is the generic `Sales agent` template for selling products, and user-facing samples use a `# Error handling` section.
+- 2026-07-08 [CODE] D191 ACTIVE: Workflow handling rules are backend-enforced via `buildWorkflowBackendHandlingBlock()` for every agent prompt, even when no workflow graph exists; user-visible templates must not include workflow-handling sections.
+- 2026-07-08 [CODE] D192 ACTIVE: Book appointment workflow nodes are service-driven: the default incoming condition label is `Yes`, the inspector omits the Goal field, and runtime prompts omit `- Goal:` for booking nodes even if older nodes have descriptions.
 
 # Done (recent)
-- 2026-07-08 [CODE] Workflow layout orientation is now persisted on the workflow document through `api.workflowLayout.updateOrientation`; the page hydrates from `graph.workflow.layoutOrientation` so returning users keep the selected Horizontal/Vertical presentation.
-- 2026-07-08 [CODE] Workflow file-to-send tiles now open ready file `publicUrl` content in a new browser tab when clicked, while image/video tiles keep the existing preview modal behavior.
-- 2026-07-08 [CODE] Workflow node connection handles follow the persisted layout orientation: horizontal layouts use right-to-left handles, while vertical layouts use bottom-to-top handles.
-- 2026-07-08 [CODE] Workflow Horizontal/Vertical rearrange now shows a spinning `Re-arranging` state and requests a delayed fit-view refocus after successful rearrange.
-- 2026-07-08 [CODE] Horizontal workflow Cleanup now uses a wider 280px rank gap so parent-to-child edges have more room for condition labels after control rails are included.
-- 2026-07-08 [CODE] Workflow Horizontal/Vertical button now renders like the normal Cleanup button, with no extra pressed outline/background; clicking it still switches the layout label/icon.
-- 2026-07-08 [CODE] Workflow Cleanup now uses the current Horizontal/Vertical orientation instead of always applying vertical cleanup, and it does not toggle the orientation button.
+- 2026-07-08 [CODE] Added real estate sales guidance: do not be pushy, but guide customers in every message when they have no clear intention.
+- 2026-07-08 [CODE] Added a product-focused `Sales agent` template alongside `Real estate sales agent` in the template library.
+- 2026-07-08 [CODE] Added `This is important` emphasis to the workflow final response contract for matched media/file nodes requiring `<media_to_send>`.
+- 2026-07-08 [CODE] Sales template renamed to `Real estate sales agent` and focused on booking real estate showroom viewings while preserving shared prompt sections/error handling.
+- 2026-07-08 [CODE] System prompt editor note now distinguishes prompt guidance for answering style/high-level goals/general guardrails from Workflow setup for reliable conditional actions.
+- 2026-07-08 [CODE] Shared sample templates now use `# Error handling`, and backend tool prompt error handling uses heading-style subsections.
+- 2026-07-08 [CODE] Book appointment workflow actions now show Services without a Goal field and use `Yes` as the default booking condition.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -179,12 +190,26 @@
 - 2026-07-08 [CODE] Landing preview working set: `src/pages/LandingPage.tsx`, `src/components/landing/LandingHero.tsx`, `src/components/landing/LandingAppPreview*.tsx`, `src/components/landing/landingAppPreviewData.ts`, `src/components/landing/landingAppPreviewData.test.ts`, `src/components/landing/landingAppPreviewNav.ts`, `src/components/landing/landingWorkflowMockGraph.ts`, `src/components/landing/LandingFeatureSections.tsx`, `src/components/landing/LandingConversionSections.tsx`.
 - 2026-07-08 [CODE] Workflow media goal/copy working set: `convex/chat/workflowPrompt.ts`, `convex/workflowRuntimeContext.ts`, `src/components/workflow/WorkflowInspectorForm.tsx`, `src/components/workflow/WorkflowSendMediaSection.tsx`, `src/components/workflow/WorkflowMediaGrid.tsx`, `src/components/workflow/workflowInspectorBehavior.ts`, `src/components/workflow/workflowSendMediaCopy.ts`, `convex/chat/workflowPromptMediaActions.test.ts`, `src/components/workflow/WorkflowSendMediaSection.test.ts`, `src/components/workflow/WorkflowMediaGrid.test.ts`, `src/components/workflow/workflowInspectorMediaActions.test.ts`, `src/components/workflow/workflowSendMediaCopy.test.ts`.
 - 2026-07-08 [CODE] Workflow UI working set: `convex/workflowLayout*`, `convex/workflowValidators.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`, `src/pages/WorkflowPage*`, `src/pages/workflowPageArrangement.ts`, `src/components/workflow/Workflow{Canvas,Toolbar,Node,Edge,PageSkeleton}*`, `src/components/workflow/useWorkflowCanvasView*`, `src/components/workflow/workflow{Layout,EdgeRouting,FlowModel,Types}*`, `src/components/landing/LandingAppPreviewWorkflow*`.
+- 2026-07-08 [CODE] ElevenLabs prompt-format working set: `shared/agentPromptTemplates.ts`, `src/lib/utils.ts`, `src/lib/agentTemplates*`, `src/components/agent-setup/agentSetupOptions*`, `src/components/agent-setup/AgentSetup{Panels,SystemPromptPanel}*`, `convex/agents.ts`, `convex/chat/toolPrompt.ts`, `convex/chat/threads.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/*Prompt*.test.ts`.
 
 # Open questions
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-08 [TOOL] Node 22.22.0 Book appointment service-driven workflow change reproduced RED in inspector behavior/default-condition/runtime prompt tests, then passed 23 adjacent workflow tests, targeted ESLint, `git diff --check`, stale-copy scan, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 error-handling heading change reproduced RED in shared/frontend/tool prompt tests, then passed 10 focused tests, `git diff --check`, stale bold-label scan, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 backend workflow-handling default reproduced RED in `workflowBackendHandling.test.ts`, then passed 26 prompt/template/component tests, targeted ESLint, user-template stale scan, `git diff --check`, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 real estate role wording cleanup reproduced RED in shared/frontend template tests, then passed 8 focused template tests, targeted ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 real estate non-pushy guidance reproduced RED in shared/frontend template tests, then passed 24 prompt/template/component tests, targeted ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 product Sales agent template reproduced RED in shared/frontend/options tests, then passed 23 prompt/template/component tests, targeted ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 workflow important-phrase prompt test reproduced RED in `workflowPromptImportantPhrase.test.ts`, then passed 17 workflow/tool prompt tests, targeted ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 real-estate sales template and linked Workflow note reproduced RED in shared/frontend/component source tests, then passed 24 prompt/component tests, targeted ESLint, `git diff --check`, touched-file LOC check, and call-site scan for `AgentSetupSystemPromptPanel`.
+- 2026-07-08 [TOOL] Node 22.22.0 refined system prompt workflow-reliability note reproduced RED in `AgentSetupSystemPromptPanel.test.ts`, then passed focused component/template tests, targeted ESLint, `git diff --check`, and touched component LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 business-section template addition reproduced RED in shared/frontend template tests, then passed 19 focused prompt tests, targeted ESLint, `git diff --check`, and touched template LOC check.
+- 2026-07-08 [TOOL] Node 22.22.0 generic template error-handling change reproduced RED in shared/frontend template tests, then passed 19 focused prompt tests, targeted ESLint, `git diff --check`, and stale scan confirming only negative tests mention refund/workflow strings.
+- 2026-07-08 [TOOL] Node 22.22.0 workflow-section template removal reproduced RED in shared/frontend template tests, then passed 19 focused prompt tests, targeted ESLint, `git diff --check`, and template stale-string scan.
+- 2026-07-08 [TOOL] Node 22.22.0 ElevenLabs prompt-format change reproduced RED with template/tool/workflow prompt tests, then passed 19 focused prompt tests, targeted ESLint, `git diff --check`, and touched/new code-file LOC check under 300 except pre-existing legacy `convex/chat/threads.ts`.
 - 2026-07-08 [TOOL] Node 22.22.0 corrected post-persistence inverted workflow handle mapping by reproducing RED for horizontal right/left and vertical bottom/top handles, then passed 15 focused workflow tests, targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check under 300.
 - 2026-07-08 [TOOL] Node 22.22.0 workflow orientation persistence reproduced RED with missing `workflowLayout` Convex module and page hydration, then passed 21 focused workflow tests, targeted ESLint, full `bunx tsc -b --pretty false`, Convex codegen, `git diff --check`, and touched-file LOC check for new/small files.
 - 2026-07-08 [TOOL] Node 22.22.0 workflow file-to-send tile new-tab opening reproduced RED with `WorkflowMediaGrid.test.ts`, then passed 7 focused workflow media tests, targeted ESLint, `git diff --check`, and touched-file LOC check under 300.

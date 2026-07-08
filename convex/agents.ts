@@ -1,9 +1,11 @@
 import { v } from "convex/values";
+import type { Doc } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
+import { AGENT_PROMPT_TEMPLATES } from "../shared/agentPromptTemplates";
 import {
   assertCanCreateAgent,
   assertCanManageAgent,
@@ -19,18 +21,12 @@ const templateKeyValidator = v.union(
   v.literal("support"),
 );
 
-const TEMPLATE_PROMPTS = {
-  blank: "You are a friendly voice assistant built with Cartesia, designed for natural, open-ended conversation. Be warm, curious, genuine, and lighthearted, knowledgeable but not showy. Speak like a thoughtful friend, use contractions and casual phrasing, match the caller's energy, and keep most responses to one or two sentences. Never use lists, bullet points, structured formatting, all-caps titles, or hollow affirmations like \"Great question.\" Use web_search only when you genuinely need current information, and use end_call only after a natural goodbye when the conversation has clearly concluded.",
-  sales: "You are a sales AI agent. Qualify leads, understand customer needs, explain value clearly, handle objections with empathy, and guide prospects toward the next best action.",
-  support: "You are a support AI agent. Resolve customer issues patiently, ask for missing details, explain steps clearly, and escalate when a request requires a human teammate.",
-} as const;
-
-function getPrompt(templateKey: keyof typeof TEMPLATE_PROMPTS, systemPrompt: string | null) {
+function getPrompt(templateKey: keyof typeof AGENT_PROMPT_TEMPLATES, systemPrompt: string | null) {
   const trimmedPrompt = systemPrompt?.trim();
   if (trimmedPrompt) {
     return trimmedPrompt;
   }
-  return TEMPLATE_PROMPTS[templateKey];
+  return AGENT_PROMPT_TEMPLATES[templateKey];
 }
 
 async function assertEnabledModel(modelId: string) {
@@ -247,7 +243,7 @@ export const update = mutation({
       throw new Error(`Your plan (${plan ?? "free"}) does not have access to model: ${model}`);
     }
 
-    const patch: any = {
+    const patch: Partial<Doc<"agents">> = {
       name,
       model,
       systemPrompt,

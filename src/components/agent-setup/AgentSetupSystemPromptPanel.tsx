@@ -1,4 +1,5 @@
 import { List } from 'lucide-react';
+import { Link } from 'react-router';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,12 +15,14 @@ type AgentSetupSystemPromptPanelProps = {
   value: string;
   onChange: (value: string) => void;
   onApplyTemplate: (key: AgentTemplateKey) => void;
+  workflowHref: string;
 };
 
 export function AgentSetupSystemPromptPanel({
   value,
   onChange,
   onApplyTemplate,
+  workflowHref,
 }: AgentSetupSystemPromptPanelProps) {
   return (
     <section className="flex min-w-0 flex-col gap-3">
@@ -67,6 +70,16 @@ export function AgentSetupSystemPromptPanel({
         placeholder="Describe the agent's core purpose, style of response, and guidelines..."
         className="min-h-72 resize-y overflow-y-auto border-border bg-input/35 text-sm leading-6 field-sizing-content"
       />
+      <p className="m-0 text-xs leading-5 text-muted-foreground">
+        Use the system prompt for answering style, high-level goals, and general guardrails. For reliable conditional actions like sending an image or video, booking an appointment, or triggering a handoff, set them up in{' '}
+        <Link
+          to={workflowHref}
+          className="font-medium text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          Workflow
+        </Link>
+        .
+      </p>
     </section>
   );
 }

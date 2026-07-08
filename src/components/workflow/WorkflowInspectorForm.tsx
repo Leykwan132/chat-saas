@@ -94,7 +94,7 @@ export function WorkflowInspectorForm({
   const isCustomAction = node.kind === 'aiResponds';
   const isBookAppointmentAction = node.kind === 'bookAppointment';
   const isHumanEscalationAction = node.kind === 'humanEscalation';
-  let conditionNamePlaceholder = 'e.g., Ready to book';
+  let conditionNamePlaceholder = 'e.g., Yes';
   let conditionDetailPlaceholder = 'Describe when this action should run';
   if (isSendTextAction) {
     conditionNamePlaceholder = 'e.g., After hours';

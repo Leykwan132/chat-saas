@@ -17,16 +17,17 @@ test('send photo and file nodes replace the goal field with media to send', () =
   });
 });
 
-test('non-media action nodes still use their configured text or goal field', () => {
+test('text actions still use their configured message field', () => {
   expect(getWorkflowInspectorBehavior('sendText', false)).toMatchObject({
     hasGoalField: true,
     saveRequiresDescription: true,
     goalLabel: 'Message',
   });
+});
 
+test('book appointment replaces the goal field with services', () => {
   expect(getWorkflowInspectorBehavior('bookAppointment', false)).toMatchObject({
-    hasGoalField: true,
-    saveRequiresDescription: true,
-    goalLabel: 'Goal',
+    hasGoalField: false,
+    saveRequiresDescription: false,
   });
 });

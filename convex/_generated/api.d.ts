@@ -75,6 +75,7 @@ import type * as chat_readReceipts from "../chat/readReceipts.js";
 import type * as chat_responseFormatting from "../chat/responseFormatting.js";
 import type * as chat_streaming from "../chat/streaming.js";
 import type * as chat_threads from "../chat/threads.js";
+import type * as chat_toolPrompt from "../chat/toolPrompt.js";
 import type * as chat_workflowMediaFallback from "../chat/workflowMediaFallback.js";
 import type * as chat_workflowPrompt from "../chat/workflowPrompt.js";
 import type * as cloudflare from "../cloudflare.js";
@@ -262,6 +263,7 @@ declare const fullApi: ApiFromModules<{
   "chat/responseFormatting": typeof chat_responseFormatting;
   "chat/streaming": typeof chat_streaming;
   "chat/threads": typeof chat_threads;
+  "chat/toolPrompt": typeof chat_toolPrompt;
   "chat/workflowMediaFallback": typeof chat_workflowMediaFallback;
   "chat/workflowPrompt": typeof chat_workflowPrompt;
   cloudflare: typeof cloudflare;
