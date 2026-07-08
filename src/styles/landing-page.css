@@ -1,0 +1,9 @@
+html:has(.landing-page) {
+    scrollbar-gutter: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+html:has(.landing-page)::-webkit-scrollbar {
+    display: none;
+}

@@ -66,7 +66,7 @@ export function SiteHeader({ transparent = false }: { transparent?: boolean }) {
           ? 'border-transparent bg-transparent py-2'
           : 'border-b border-zinc-200 dark:border-white/[0.06] bg-white/75 dark:bg-[#060606]/75 backdrop-blur-xl py-0'
       )}>
-      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-6 md:px-0">
         <Link to="/" className={cn(
           'flex items-center gap-2 text-[15px] transition-colors duration-300',
           isHeaderTransparent ? 'text-white' : 'text-zinc-950 dark:text-white'
