@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   applyNodeChanges,
   ReactFlow,
@@ -16,6 +16,7 @@ import { WorkflowToolbar } from './WorkflowToolbar';
 import { WorkflowAutomationStateProvider } from './workflowAutomationState';
 import { workflowCanvasEdgeTypes, workflowCanvasNodeTypes } from './workflowCanvasConfig';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
+import type { WorkflowLayoutOrientation } from './workflowLayout';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
 import { useWorkflowCanvasView } from './useWorkflowCanvasView';
 import {
@@ -40,9 +41,14 @@ type WorkflowCanvasProps = {
   onNodeMoved: (nodeId: Id<'workflowNodes'>, position: { x: number; y: number }) => void;
   onNodesConnected: (sourceNodeId: Id<'workflowNodes'>, targetNodeId: Id<'workflowNodes'>) => void;
   onEdgeRemoved: (edgeId: Id<'workflowEdges'>) => void;
+  layoutOrientation: WorkflowLayoutOrientation;
   onCleanup: () => void;
+  onArrange: () => void;
   onReset: () => void;
+  arrangeFocusRequest?: number;
   cleanupDisabled?: boolean;
+  arrangeDisabled?: boolean;
+  arrangeLoading?: boolean;
   resetDisabled?: boolean;
 };
 
@@ -53,9 +59,14 @@ function WorkflowCanvasInner({
   onNodeMoved,
   onNodesConnected,
   onEdgeRemoved,
+  layoutOrientation,
   onCleanup,
+  onArrange,
   onReset,
+  arrangeFocusRequest = 0,
   cleanupDisabled = false,
+  arrangeDisabled = false,
+  arrangeLoading = false,
   resetDisabled = false,
 }: WorkflowCanvasProps) {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string>();
@@ -69,15 +80,11 @@ function WorkflowCanvasInner({
   } = useWorkflowCanvasView({
     nodes,
     edges,
+    arrangeFocusRequest,
     onSelectNode,
     onClearSelectedEdge: () => setSelectedEdgeId(undefined),
   });
 
-  useEffect(() => {
-    if (!selectedEdgeId) return;
-    if (localEdges.some((edge) => !isTemporaryWorkflowEdge(edge) && edge.id === selectedEdgeId)) return;
-    setSelectedEdgeId(undefined);
-  }, [localEdges, selectedEdgeId]);
   const hasRealEdge = useCallback(
     ({ sourceNodeId, targetNodeId }: WorkflowConnectionCandidate) => (
       localEdges.some((edge) => (
@@ -205,10 +212,14 @@ function WorkflowCanvasInner({
       <WorkflowBackground />
       <WorkflowToolbar
         activeView={activeView}
+        layoutOrientation={layoutOrientation}
         onViewChange={handleViewChange}
         onCleanup={onCleanup}
+        onArrange={onArrange}
         onReset={onReset}
         cleanupDisabled={cleanupDisabled || activeView !== 'messageHandling'}
+        arrangeDisabled={arrangeDisabled || activeView !== 'messageHandling'}
+        arrangeLoading={arrangeLoading}
         resetDisabled={resetDisabled}
       />
     </ReactFlow>

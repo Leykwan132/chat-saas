@@ -11,11 +11,14 @@ export type WorkflowGraph = {
   edges: Doc<'workflowEdges'>[];
 };
 
+export type WorkflowLayoutOrientation = 'horizontal' | 'vertical';
+
 export type WorkflowNodeData = Record<string, unknown> & {
   nodeId: Id<'workflowNodes'>;
   kind: WorkflowNodeKind;
   title: string;
   description?: string;
+  layoutOrientation: WorkflowLayoutOrientation;
   onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void;
   onRemoveNode: (nodeId: Id<'workflowNodes'>) => void;
 };

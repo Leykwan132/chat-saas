@@ -10,6 +10,7 @@ import {
 type UseWorkflowCanvasViewArgs = {
   nodes: WorkflowFlowNode[];
   edges: WorkflowFlowEdge[];
+  arrangeFocusRequest?: number;
   onSelectNode: (nodeId?: Id<'workflowNodes'>) => void;
   onClearSelectedEdge: () => void;
 };
@@ -21,6 +22,7 @@ function getWorkflowFitViewPadding(view: WorkflowCanvasView) {
 export function useWorkflowCanvasView({
   nodes,
   edges,
+  arrangeFocusRequest = 0,
   onSelectNode,
   onClearSelectedEdge,
 }: UseWorkflowCanvasViewArgs) {
@@ -33,8 +35,17 @@ export function useWorkflowCanvasView({
   const [localNodes, setLocalNodes] = useState<WorkflowFlowNode[]>(visibleElements.nodes);
   const [localEdges, setLocalEdges] = useState<WorkflowFlowEdge[]>(visibleElements.edges);
 
-  useEffect(() => setLocalNodes(visibleElements.nodes), [visibleElements.nodes]);
-  useEffect(() => setLocalEdges(visibleElements.edges), [visibleElements.edges]);
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => setLocalNodes(visibleElements.nodes));
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [visibleElements.nodes]);
+
+  useEffect(() => {
+    const frameId = window.requestAnimationFrame(() => setLocalEdges(visibleElements.edges));
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [visibleElements.edges]);
 
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
@@ -43,6 +54,16 @@ export function useWorkflowCanvasView({
 
     return () => window.cancelAnimationFrame(frameId);
   }, [activeView, fitView]);
+
+  useEffect(() => {
+    if (arrangeFocusRequest === 0) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      void fitView({ padding: getWorkflowFitViewPadding(activeView), duration: 320 });
+    }, 80);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeView, arrangeFocusRequest, fitView]);
 
   const handleViewChange = useCallback(
     (view: WorkflowCanvasView) => {

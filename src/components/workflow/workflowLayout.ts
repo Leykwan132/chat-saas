@@ -10,7 +10,7 @@ import {
   isWorkflowTerminalNodeKind,
   workflowNodeDisplayTitle,
 } from '../../../shared/workflows';
-import type { WorkflowGraph } from './workflowTypes';
+import type { WorkflowGraph, WorkflowLayoutOrientation } from './workflowTypes';
 
 const NODE_MIN_WIDTH = 176;
 const NODE_DESCRIPTION_WIDTH = 220;
@@ -23,10 +23,14 @@ const NODE_HORIZONTAL_PADDING = 72;
 const NODE_DESCRIPTION_MAX_TEXT_WIDTH = 260;
 const NODE_DESCRIPTION_HORIZONTAL_PADDING = 48;
 const NODE_COLLISION_GAP = 56;
+const VERTICAL_RANK_GAP = 90;
+const HORIZONTAL_RANK_GAP = 280;
 const RANK_Y_TOLERANCE = 24;
 const NODE_CONTROL_BUTTON_WIDTH = 36;
 const NODE_CONTROL_OFFSET = 16;
 const NODE_CONTROL_GAP = 8;
+
+export type { WorkflowLayoutOrientation } from './workflowTypes';
 
 export type WorkflowCleanupPosition = {
   nodeId: Id<'workflowNodes'>;
@@ -41,6 +45,12 @@ type WorkflowLayoutPosition = WorkflowCleanupPosition & {
   height: number;
   centerY: number;
 };
+
+export function getNextWorkflowLayoutOrientation(
+  orientation: WorkflowLayoutOrientation,
+): WorkflowLayoutOrientation {
+  return orientation === 'horizontal' ? 'vertical' : 'horizontal';
+}
 
 export function getWorkflowLayoutNodeSize(node: WorkflowGraph['nodes'][number]) {
   const title = workflowNodeDisplayTitle(node.kind, node.title);
@@ -126,12 +136,13 @@ function resolveLayoutOverlaps(items: WorkflowLayoutPosition[]) {
 
 export function getWorkflowCleanupPositions(
   graph: WorkflowGraph,
+  orientation: WorkflowLayoutOrientation = 'vertical',
 ): WorkflowCleanupPosition[] {
   const layoutGraph = new Graph<GraphLabel, NodeLabel, EdgeLabel>()
     .setDefaultEdgeLabel(() => ({}))
     .setGraph({
-      rankdir: 'TB',
-      ranksep: 90,
+      rankdir: orientation === 'horizontal' ? 'LR' : 'TB',
+      ranksep: orientation === 'horizontal' ? HORIZONTAL_RANK_GAP : VERTICAL_RANK_GAP,
       nodesep: 80,
       edgesep: 32,
       marginx: 0,

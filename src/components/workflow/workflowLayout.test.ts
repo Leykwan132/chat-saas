@@ -138,6 +138,48 @@ test('cleanup layout separates sibling nodes on the same row', () => {
   }
 });
 
+test('cleanup layout can arrange workflow horizontally or vertically', () => {
+  const start = workflowNode('start', 'start', 'Message enters');
+  const sendText = workflowNode('send-text', 'sendText', 'Send message');
+  const end = workflowNode('end', 'end', 'End');
+  const graph = workflowGraph(
+    [start, sendText, end],
+    [
+      workflowEdge('start-send', start._id, sendText._id),
+      workflowEdge('send-end', sendText._id, end._id),
+    ],
+  );
+
+  const horizontalPositions = new Map(
+    getWorkflowCleanupPositions(graph, 'horizontal').map((item) => [item.nodeId, item.position]),
+  );
+  const verticalPositions = new Map(
+    getWorkflowCleanupPositions(graph, 'vertical').map((item) => [item.nodeId, item.position]),
+  );
+  const startSize = getWorkflowLayoutNodeSize(start);
+  const sendTextSize = getWorkflowLayoutNodeSize(sendText);
+  const horizontalStart = horizontalPositions.get(start._id)!;
+  const horizontalSendText = horizontalPositions.get(sendText._id)!;
+  const verticalStart = verticalPositions.get(start._id)!;
+  const verticalSendText = verticalPositions.get(sendText._id)!;
+  const horizontalStartCleanupSize = getWorkflowCleanupNodeSize(start);
+
+  expect(horizontalSendText.x).toBeGreaterThan(horizontalStart.x);
+  expect(horizontalSendText.x - (
+    horizontalStart.x + horizontalStartCleanupSize.width
+  )).toBeGreaterThanOrEqual(220);
+  expect(Math.abs(
+    horizontalSendText.y + sendTextSize.height / 2 -
+      (horizontalStart.y + startSize.height / 2),
+  )).toBeLessThan(1);
+
+  expect(verticalSendText.y).toBeGreaterThan(verticalStart.y);
+  expect(Math.abs(
+    verticalSendText.x + sendTextSize.width / 2 -
+      (verticalStart.x + startSize.width / 2),
+  )).toBeLessThan(1);
+});
+
 test('layout caps node width for long titles', () => {
   const node = workflowNode(
     'long-title',

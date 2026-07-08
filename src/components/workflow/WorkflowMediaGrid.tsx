@@ -27,6 +27,49 @@ function mediaPreviewUrl(entry: WorkflowMediaEntry) {
   return null;
 }
 
+function WorkflowFilePreviewTile({
+  entry,
+  preview,
+  isImage,
+  isVideo,
+  density,
+}: {
+  entry: WorkflowMediaEntry;
+  preview: string | null;
+  isImage: boolean;
+  isVideo: boolean;
+  density: 'default' | 'compact';
+}) {
+  const icon = isImage ? (
+    <ImageIcon className={cn('text-muted-foreground', density === 'compact' ? 'size-5' : 'size-6')} />
+  ) : isVideo ? (
+    <Video className={cn('text-muted-foreground', density === 'compact' ? 'size-5' : 'size-8')} />
+  ) : (
+    <FileText className={cn('text-muted-foreground', density === 'compact' ? 'size-6' : 'size-10')} />
+  );
+  const className = cn(
+    'flex items-center justify-center bg-background transition-colors',
+    density === 'compact' ? 'size-full' : 'aspect-square w-full',
+    preview && 'cursor-pointer hover:bg-muted/60',
+  );
+
+  if (!preview) {
+    return <div className={className}>{icon}</div>;
+  }
+
+  return (
+    <a
+      href={preview}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={className}
+      aria-label={`Open ${entry.filename ?? 'file'} in new tab`}
+    >
+      {icon}
+    </a>
+  );
+}
+
 export function WorkflowMediaGrid({
   entries,
   onDelete,
@@ -109,15 +152,13 @@ export function WorkflowMediaGrid({
                   </button>
                 </WorkflowImagePreview>
               ) : (
-                <div className="flex size-full items-center justify-center bg-background">
-                  {isImage ? (
-                    <ImageIcon className="size-5 text-muted-foreground" />
-                  ) : isVideo ? (
-                    <Video className="size-5 text-muted-foreground" />
-                  ) : (
-                    <FileText className="size-6 text-muted-foreground" />
-                  )}
-                </div>
+                <WorkflowFilePreviewTile
+                  entry={entry}
+                  preview={preview}
+                  isImage={isImage}
+                  isVideo={isVideo}
+                  density={density}
+                />
               )}
               {isImage ? <WorkflowMediaKindBadge kind="image" /> : null}
               {isVideo ? <WorkflowMediaKindBadge kind="video" /> : null}
@@ -183,15 +224,13 @@ export function WorkflowMediaGrid({
                 </button>
               </WorkflowImagePreview>
             ) : (
-              <div className="flex aspect-square w-full items-center justify-center bg-background">
-                {isImage ? (
-                  <ImageIcon className="size-6 text-muted-foreground" />
-                ) : isVideo ? (
-                  <Video className="size-8 text-muted-foreground" />
-                ) : (
-                  <FileText className="size-10 text-muted-foreground" />
-                )}
-              </div>
+              <WorkflowFilePreviewTile
+                entry={entry}
+                preview={preview}
+                isImage={isImage}
+                isVideo={isVideo}
+                density={density}
+              />
             )}
             {isImage ? <WorkflowMediaKindBadge kind="image" className="bottom-11" /> : null}
             {isVideo ? <WorkflowMediaKindBadge kind="video" className="bottom-11" /> : null}

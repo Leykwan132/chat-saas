@@ -1,4 +1,13 @@
-import { Maximize2, RotateCcw, WandSparkles, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  Columns3,
+  LoaderCircle,
+  Maximize2,
+  RotateCcw,
+  Rows3,
+  WandSparkles,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
 import { Panel, useReactFlow } from '@xyflow/react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -6,25 +15,40 @@ import {
   workflowCanvasViewOptions,
   type WorkflowCanvasView,
 } from './workflowCanvasViews';
+import type { WorkflowLayoutOrientation } from './workflowLayout';
 
 type WorkflowToolbarProps = {
   activeView: WorkflowCanvasView;
+  layoutOrientation: WorkflowLayoutOrientation;
   onViewChange: (view: WorkflowCanvasView) => void;
   onCleanup: () => void;
+  onArrange: () => void;
   onReset: () => void;
   cleanupDisabled?: boolean;
+  arrangeDisabled?: boolean;
+  arrangeLoading?: boolean;
   resetDisabled?: boolean;
 };
 
 export function WorkflowToolbar({
   activeView,
+  layoutOrientation,
   onViewChange,
   onCleanup,
+  onArrange,
   onReset,
   cleanupDisabled = false,
+  arrangeDisabled = false,
+  arrangeLoading = false,
   resetDisabled = false,
 }: WorkflowToolbarProps) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
+  const ArrangeIcon = arrangeLoading
+    ? LoaderCircle
+    : layoutOrientation === 'horizontal' ? Columns3 : Rows3;
+  const arrangeLabel = arrangeLoading
+    ? 'Re-arranging'
+    : layoutOrientation === 'horizontal' ? 'Horizontal' : 'Vertical';
 
   return (
     <>
@@ -60,6 +84,19 @@ export function WorkflowToolbar({
           >
             <WandSparkles data-icon="inline-start" />
             Cleanup
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={arrangeDisabled}
+            onClick={onArrange}
+          >
+            <ArrangeIcon
+              data-icon="inline-start"
+              className={cn(arrangeLoading && 'animate-spin')}
+            />
+            {arrangeLabel}
           </Button>
           <Button
             type="button"

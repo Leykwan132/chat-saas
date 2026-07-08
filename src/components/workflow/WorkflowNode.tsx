@@ -7,21 +7,31 @@ import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
 import { workflowKindIcons } from './workflowCatalog';
 import type { WorkflowPersistedFlowNode } from './workflowTypes';
 
-const hiddenHandleClassName = 'left-1/2 !z-0 opacity-0';
-const sourceHandleClassName = 'left-1/2 !z-20 !size-3 !rounded-full !border !border-border !bg-background transition-colors group-hover:!border-muted-foreground/35';
+const targetHandleClassName = '!z-0 opacity-0';
+const horizontalTargetHandleClassName = '!left-0';
+const verticalTargetHandleClassName = '!top-0 !left-1/2 !-translate-x-1/2';
+const sourceHandleClassName = '!z-20 !size-3 !rounded-full !border !border-border !bg-background transition-colors group-hover:!border-muted-foreground/35';
+const horizontalSourceHandleClassName = '!right-0 !left-auto';
+const verticalSourceHandleClassName = '!bottom-0 !top-auto !left-1/2 !-translate-x-1/2';
 
 export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
   const isEntry = data.kind === 'start';
   const isProtected = data.kind === 'start' || data.kind === 'end';
+  const isVertical = data.layoutOrientation === 'vertical';
+  const targetPosition = isVertical ? Position.Top : Position.Left;
+  const sourcePosition = isVertical ? Position.Bottom : Position.Right;
 
   return (
     <div className="group relative flex min-w-[176px] max-w-[300px] flex-col items-center">
       <Handle
         type="target"
-        position={Position.Top}
-        className={hiddenHandleClassName}
+        position={targetPosition}
+        className={cn(
+          targetHandleClassName,
+          isVertical ? verticalTargetHandleClassName : horizontalTargetHandleClassName,
+        )}
         isConnectable={!isEntry}
       />
       <div
@@ -50,8 +60,11 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
       {!isTerminal ? (
         <Handle
           type="source"
-          position={Position.Bottom}
-          className={sourceHandleClassName}
+          position={sourcePosition}
+          className={cn(
+            sourceHandleClassName,
+            isVertical ? verticalSourceHandleClassName : horizontalSourceHandleClassName,
+          )}
         />
       ) : null}
       {(!isTerminal || !isProtected) ? (

@@ -69,7 +69,7 @@ function workflowGraph(
 
 function applyCleanupPositions(graph: WorkflowGraph): WorkflowGraph {
   const cleanupPositions = new Map(
-    getWorkflowCleanupPositions(graph).map((item) => [item.nodeId, item.position]),
+    getWorkflowCleanupPositions(graph, 'horizontal').map((item) => [item.nodeId, item.position]),
   );
 
   return {
@@ -85,7 +85,7 @@ function applyCleanupPositions(graph: WorkflowGraph): WorkflowGraph {
   };
 }
 
-test('edge routing detours cleanup edges around middle nodes', () => {
+test('edge routing detours horizontal cleanup edges around middle nodes', () => {
   const start = workflowNode('start', 'start', 'Message enters');
   const sendText = workflowNode(
     'send-text',
@@ -107,15 +107,17 @@ test('edge routing detours cleanup edges around middle nodes', () => {
   const positionedSendText = positionedGraph.nodes.find((node) => (
     node._id === sendText._id
   ));
-  const route = getWorkflowEdgeRoutes(positionedGraph).get(directEdge._id);
+  const route = getWorkflowEdgeRoutes(positionedGraph, 'horizontal').get(directEdge._id);
+  const verticalRoute = getWorkflowEdgeRoutes(positionedGraph, 'vertical').get(directEdge._id);
 
   expect(positionedSendText).toBeDefined();
+  expect(verticalRoute).toBeUndefined();
   expect(route).toBeDefined();
 
   const sendTextSize = getWorkflowLayoutNodeSize(positionedSendText!);
-  const detourX = route![1].x;
+  const detourY = route![1].y;
   expect(
-    detourX < positionedSendText!.positionX ||
-      detourX > positionedSendText!.positionX + sendTextSize.width,
+    detourY < positionedSendText!.positionY ||
+      detourY > positionedSendText!.positionY + sendTextSize.height,
   ).toBe(true);
 });

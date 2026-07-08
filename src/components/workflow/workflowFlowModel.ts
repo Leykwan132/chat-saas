@@ -1,4 +1,4 @@
-import { MarkerType } from '@xyflow/react';
+import { MarkerType, Position } from '@xyflow/react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
   workflowConditionDisplayLabel,
@@ -12,6 +12,7 @@ import {
   type WorkflowFlowEdge,
   type WorkflowFlowNode,
   type WorkflowGraph,
+  type WorkflowLayoutOrientation,
   type WorkflowReminderSetupFlowNode,
   type WorkflowReminderSummaryFlowNode,
 } from './workflowTypes';
@@ -146,13 +147,21 @@ function getAutomationFlowEdges(): WorkflowFlowEdge[] {
   return [];
 }
 
+function getPersistedNodeHandlePositions(orientation: WorkflowLayoutOrientation) {
+  return orientation === 'horizontal'
+    ? { sourcePosition: Position.Right, targetPosition: Position.Left }
+    : { sourcePosition: Position.Bottom, targetPosition: Position.Top };
+}
+
 export function workflowGraphToFlow(
   graph: WorkflowGraph,
   onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void,
   onRemoveNode: (nodeId: Id<'workflowNodes'>) => void,
   selectedNodeId?: Id<'workflowNodes'>,
+  layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
-  const edgeRoutes = getWorkflowEdgeRoutes(graph);
+  const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
+  const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
 
   return {
     nodes: [
@@ -169,10 +178,13 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          layoutOrientation,
           onAddNode,
           onRemoveNode,
         },
         selected: node._id === selectedNodeId,
+        sourcePosition: handlePositions.sourcePosition,
+        targetPosition: handlePositions.targetPosition,
         zIndex: node._id === selectedNodeId
           ? WORKFLOW_SELECTED_NODE_Z_INDEX
           : WORKFLOW_NODE_Z_INDEX,

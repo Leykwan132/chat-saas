@@ -11,10 +11,10 @@ import type { WorkflowFlowEdge } from './workflowTypes';
 export function WorkflowEdge({
   sourceX,
   sourceY,
-  sourcePosition = Position.Bottom,
+  sourcePosition = Position.Right,
   targetX,
   targetY,
-  targetPosition = Position.Top,
+  targetPosition = Position.Left,
   markerEnd,
   markerStart,
   label,
@@ -84,18 +84,17 @@ function getRoutedEdgePath(
   target: { x: number; y: number },
 ): [string, number, number] {
   const sourceLead = routePoints[0];
-  const detourX = routePoints[1]?.x ?? source.x;
+  const detour = routePoints[1] ?? sourceLead;
   const targetLead = routePoints[routePoints.length - 1];
-  const midpointY = (sourceLead.y + targetLead.y) / 2;
+  const isHorizontal = sourceLead.y === source.y;
+  const labelPoint = isHorizontal
+    ? { x: (sourceLead.x + targetLead.x) / 2, y: detour.y }
+    : { x: detour.x, y: (sourceLead.y + targetLead.y) / 2 };
   const path = [
     `M ${source.x} ${source.y}`,
-    `C ${source.x} ${sourceLead.y} ${detourX} ${sourceLead.y} ${detourX} ${midpointY}`,
-    `C ${detourX} ${targetLead.y} ${target.x} ${targetLead.y} ${target.x} ${target.y}`,
+    ...routePoints.map((point) => `L ${point.x} ${point.y}`),
+    `L ${target.x} ${target.y}`,
   ].join(' ');
-  const labelPoint = {
-    x: detourX,
-    y: midpointY,
-  };
 
   return [path, labelPoint.x, labelPoint.y];
 }

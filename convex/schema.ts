@@ -2,7 +2,10 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
-import { workflowNodeKindValidator } from "./workflowValidators";
+import {
+  workflowLayoutOrientationValidator,
+  workflowNodeKindValidator,
+} from "./workflowValidators";
 import {
   webWidgetLayoutValidator,
   webWidgetThemeValidator,
@@ -370,6 +373,7 @@ export default defineSchema({
     orgId: v.string(),
     userId: v.string(),
     name: v.string(),
+    layoutOrientation: v.optional(workflowLayoutOrientationValidator),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

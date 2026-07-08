@@ -11,7 +11,8 @@ import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { WorkflowInspector } from '@/components/workflow/WorkflowInspector';
 import { WorkflowPageSkeleton } from '@/components/workflow/WorkflowPageSkeleton';
 import { workflowGraphToFlow } from '@/components/workflow/workflowFlowModel';
-import { getWorkflowCleanupPositions } from '@/components/workflow/workflowLayout';
+import { getNextWorkflowLayoutOrientation, getWorkflowCleanupPositions, type WorkflowLayoutOrientation } from '@/components/workflow/workflowLayout';
+import { getChangedWorkflowCleanupPositions } from './workflowPageArrangement';
 import { findNewWorkflowNodeId } from './workflowPageNodeSelection';
 
 export default function WorkflowPage() {
@@ -22,18 +23,24 @@ export default function WorkflowPage() {
   const [selectedNodeId, setSelectedNodeId] = useState<Id<'workflowNodes'>>();
   const [isSaving, setIsSaving] = useState(false);
   const [isCleaningUp, setIsCleaningUp] = useState(false);
+  const [layoutOrientationOverride, setLayoutOrientationOverride] = useState<{ workflowId: Id<'workflows'>; value: WorkflowLayoutOrientation }>();
+  const [arrangeFocusRequest, setArrangeFocusRequest] = useState(0);
   const [isResetting, setIsResetting] = useState(false);
-
   const graph = useQuery(
     api.workflows.getForAgent,
     typedAgentId && canManage ? { agentId: typedAgentId } : 'skip',
   );
+  const persistedLayoutOrientation = graph?.workflow.layoutOrientation ?? 'horizontal';
+  const layoutOrientation = graph && layoutOrientationOverride?.workflowId === graph.workflow._id
+    ? layoutOrientationOverride.value
+    : persistedLayoutOrientation;
   const ensureWorkflow = useMutation(api.workflows.ensureForAgent);
   const addNodeAfter = useMutation(api.workflows.addNodeAfter);
   const connectNodes = useMutation(api.workflows.connectNodes);
   const updateNode = useMutation(api.workflows.updateNode);
   const updateEdgeCondition = useMutation(api.workflows.updateEdgeCondition);
   const updateAllowedBookingServices = useMutation(api.workflowAppointmentServices.updateAllowedServices);
+  const updateLayoutOrientation = useMutation(api.workflowLayout.updateOrientation);
   const removeNode = useMutation(api.workflows.removeNode);
   const removeEdge = useMutation(api.workflows.removeEdge);
   const resetWorkflow = useMutation(api.workflowReset.resetForAgent);
@@ -69,7 +76,6 @@ export default function WorkflowPage() {
     },
     [addNodeAfter, graph, typedAgentId],
   );
-
   const handleRemoveNode = useCallback(
     async (nodeId: Id<'workflowNodes'>) => {
       if (!typedAgentId) return;
@@ -89,22 +95,18 @@ export default function WorkflowPage() {
     },
     [removeNode, typedAgentId],
   );
-
   const flow = useMemo(() => {
     if (!graph) return { nodes: [], edges: [] };
-    return workflowGraphToFlow(graph, handleAddNode, handleRemoveNode, selectedNodeId);
-  }, [graph, handleAddNode, handleRemoveNode, selectedNodeId]);
-
+    return workflowGraphToFlow(graph, handleAddNode, handleRemoveNode, selectedNodeId, layoutOrientation);
+  }, [graph, handleAddNode, handleRemoveNode, layoutOrientation, selectedNodeId]);
   const selectedNode = useMemo(() => {
     if (!graph || !selectedNodeId) return undefined;
     return graph.nodes.find((node) => node._id === selectedNodeId);
   }, [graph, selectedNodeId]);
-
   const selectedConditionEdge = useMemo(() => {
     if (!graph || !selectedNodeId || selectedNode?.kind === 'start') return undefined;
     return graph.edges.find((edge) => edge.targetNodeId === selectedNodeId);
   }, [graph, selectedNode?.kind, selectedNodeId]);
-
   const handleUpdatePosition = async (
     nodeId: Id<'workflowNodes'>,
     position: { x: number; y: number },
@@ -121,7 +123,6 @@ export default function WorkflowPage() {
       toast.error(error instanceof Error ? error.message : 'Could not move node');
     }
   };
-
   const handleConnectNodes = async (
     sourceNodeId: Id<'workflowNodes'>,
     targetNodeId: Id<'workflowNodes'>,
@@ -133,7 +134,6 @@ export default function WorkflowPage() {
       toast.error(error instanceof Error ? error.message : 'Could not connect nodes');
     }
   };
-
   const handleRemoveEdge = async (edgeId: Id<'workflowEdges'>) => {
     if (!typedAgentId) return;
     const toastId = toast.loading('Deleting edge…');
@@ -146,23 +146,18 @@ export default function WorkflowPage() {
       });
     }
   };
-
-  const handleCleanup = async () => {
+  const arrangeWorkflow = async (
+    orientation: WorkflowLayoutOrientation,
+    onSuccess?: () => void,
+  ) => {
     if (!typedAgentId || !graph) return;
-
     setIsCleaningUp(true);
     try {
-      const positions = getWorkflowCleanupPositions(graph);
+      const positions = getChangedWorkflowCleanupPositions(
+        graph,
+        getWorkflowCleanupPositions(graph, orientation),
+      );
       for (const { nodeId, position } of positions) {
-        const node = graph.nodes.find((candidate) => candidate._id === nodeId);
-        if (
-          !node ||
-          (Math.abs(node.positionX - position.x) < 1 &&
-            Math.abs(node.positionY - position.y) < 1)
-        ) {
-          continue;
-        }
-
         await updateNode({
           agentId: typedAgentId,
           nodeId,
@@ -170,17 +165,35 @@ export default function WorkflowPage() {
           positionY: position.y,
         });
       }
-      toast.success('Workflow cleaned up');
+      await updateLayoutOrientation({
+        agentId: typedAgentId,
+        layoutOrientation: orientation,
+      });
+      onSuccess?.();
+      toast.success(`Workflow arranged ${orientation}`);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not clean up workflow');
+      toast.error(error instanceof Error ? error.message : 'Could not arrange workflow');
     } finally {
       setIsCleaningUp(false);
     }
   };
-
+  const handleCleanup = () => {
+    void arrangeWorkflow(layoutOrientation);
+  };
+  const handleArrange = () => {
+    const nextOrientation = getNextWorkflowLayoutOrientation(layoutOrientation);
+    void arrangeWorkflow(nextOrientation, () => {
+      if (graph) {
+        setLayoutOrientationOverride({
+          workflowId: graph.workflow._id,
+          value: nextOrientation,
+        });
+      }
+      setArrangeFocusRequest((request) => request + 1);
+    });
+  };
   const handleReset = async () => {
     if (!typedAgentId) return;
-
     setIsResetting(true);
     const toastId = toast.loading('Resetting workflow…');
     try {
@@ -195,7 +208,6 @@ export default function WorkflowPage() {
       setIsResetting(false);
     }
   };
-
   const handleSaveNode = async (values: {
     name: string;
     description: string;
@@ -242,21 +254,17 @@ export default function WorkflowPage() {
       setIsSaving(false);
     }
   };
-
   const handleRemoveSelectedNode = () => {
     if (!selectedNodeId) return;
     void handleRemoveNode(selectedNodeId);
   };
-
   if (!typedAgentId) return null;
   if (!permissionsLoading && !canManage) {
     return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
   }
-
   if (permissionsLoading || graph === undefined || graph === null) {
     return <WorkflowPageSkeleton />;
   }
-
   return (
     <div className="relative flex h-full min-h-0 overflow-hidden bg-background">
       <WorkflowCanvas
@@ -266,9 +274,14 @@ export default function WorkflowPage() {
         onNodeMoved={handleUpdatePosition}
         onNodesConnected={handleConnectNodes}
         onEdgeRemoved={handleRemoveEdge}
+        layoutOrientation={layoutOrientation}
         onCleanup={handleCleanup}
+        onArrange={handleArrange}
         onReset={handleReset}
+        arrangeFocusRequest={arrangeFocusRequest}
         cleanupDisabled={isCleaningUp}
+        arrangeDisabled={isCleaningUp}
+        arrangeLoading={isCleaningUp}
         resetDisabled={isResetting || (graph.nodes.length === 1 && graph.edges.length === 0)}
       />
       <WorkflowInspector

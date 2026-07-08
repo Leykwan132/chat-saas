@@ -3,9 +3,10 @@ import { getWorkflowLayoutNodeSize } from './workflowLayout';
 import type {
   WorkflowEdgeRoutePoint,
   WorkflowGraph,
+  WorkflowLayoutOrientation,
 } from './workflowTypes';
 
-const DIRECT_EDGE_X_TOLERANCE = 24;
+const DIRECT_EDGE_Y_TOLERANCE = 24;
 const EDGE_NODE_CLEARANCE = 32;
 const EDGE_LEAD_DISTANCE = 45;
 const EDGE_MIN_DETOUR_DISTANCE = 96;
@@ -18,6 +19,7 @@ type NodeRect = {
   top: number;
   bottom: number;
   centerX: number;
+  centerY: number;
 };
 
 type EdgeEndpoint = {
@@ -35,83 +37,89 @@ function getNodeRect(node: Doc<'workflowNodes'>): NodeRect {
     top: node.positionY,
     bottom: node.positionY + size.height,
     centerX: node.positionX + size.width / 2,
+    centerY: node.positionY + size.height / 2,
   };
 }
 
-function crossesVerticalCorridor(
+function crossesHorizontalCorridor(
   rect: NodeRect,
-  x: number,
-  top: number,
-  bottom: number,
+  y: number,
+  left: number,
+  right: number,
 ) {
   return (
-    x >= rect.left - EDGE_NODE_CLEARANCE &&
-    x <= rect.right + EDGE_NODE_CLEARANCE &&
-    rect.top < bottom &&
-    rect.bottom > top
+    y >= rect.top - EDGE_NODE_CLEARANCE &&
+    y <= rect.bottom + EDGE_NODE_CLEARANCE &&
+    rect.left < right &&
+    rect.right > left
   );
 }
 
-function countVerticalIntersections(
+function countHorizontalIntersections(
   rects: NodeRect[],
-  x: number,
-  top: number,
-  bottom: number,
+  y: number,
+  left: number,
+  right: number,
 ) {
   return rects.filter((rect) => (
-    crossesVerticalCorridor(rect, x, top, bottom)
+    crossesHorizontalCorridor(rect, y, left, right)
   )).length;
 }
 
-function getDetourX(
+function getDetourY(
   source: EdgeEndpoint,
   blockers: NodeRect[],
   obstacleRects: NodeRect[],
-  top: number,
-  bottom: number,
+  left: number,
+  right: number,
 ) {
-  const leftX = Math.min(...blockers.map((rect) => rect.left)) - EDGE_NODE_CLEARANCE;
-  const rightX = Math.max(...blockers.map((rect) => rect.right)) + EDGE_NODE_CLEARANCE;
-  const leftScore = (
-    Math.abs(source.x - leftX) +
-    countVerticalIntersections(obstacleRects, leftX, top, bottom) * EDGE_INTERSECTION_PENALTY
+  const topY = Math.min(...blockers.map((rect) => rect.top)) - EDGE_NODE_CLEARANCE;
+  const bottomY = Math.max(...blockers.map((rect) => rect.bottom)) + EDGE_NODE_CLEARANCE;
+  const topScore = (
+    Math.abs(source.y - topY) +
+    countHorizontalIntersections(obstacleRects, topY, left, right) * EDGE_INTERSECTION_PENALTY
   );
-  const rightScore = (
-    Math.abs(source.x - rightX) +
-    countVerticalIntersections(obstacleRects, rightX, top, bottom) * EDGE_INTERSECTION_PENALTY
+  const bottomScore = (
+    Math.abs(source.y - bottomY) +
+    countHorizontalIntersections(obstacleRects, bottomY, left, right) * EDGE_INTERSECTION_PENALTY
   );
 
-  return leftScore <= rightScore ? leftX : rightX;
+  return topScore <= bottomScore ? topY : bottomY;
 }
 
-function getVerticalDetour(
+function getHorizontalDetour(
   source: EdgeEndpoint,
   target: EdgeEndpoint,
   obstacleRects: NodeRect[],
 ): WorkflowEdgeRoutePoint[] | undefined {
-  const distanceY = target.y - source.y;
-  if (distanceY < EDGE_MIN_DETOUR_DISTANCE) return undefined;
-  if (Math.abs(source.x - target.x) > DIRECT_EDGE_X_TOLERANCE) return undefined;
+  const distanceX = target.x - source.x;
+  if (distanceX < EDGE_MIN_DETOUR_DISTANCE) return undefined;
+  if (Math.abs(source.y - target.y) > DIRECT_EDGE_Y_TOLERANCE) return undefined;
 
   const blockers = obstacleRects.filter((rect) => (
-    crossesVerticalCorridor(rect, source.x, source.y, target.y)
+    crossesHorizontalCorridor(rect, source.y, source.x, target.x)
   ));
   if (blockers.length === 0) return undefined;
 
-  const leadDistance = Math.min(EDGE_LEAD_DISTANCE, Math.max(16, distanceY / 4));
-  const sourceLeadY = source.y + leadDistance;
-  const targetLeadY = target.y - leadDistance;
-  const detourX = getDetourX(source, blockers, obstacleRects, source.y, target.y);
+  const leadDistance = Math.min(EDGE_LEAD_DISTANCE, Math.max(16, distanceX / 4));
+  const sourceLeadX = source.x + leadDistance;
+  const targetLeadX = target.x - leadDistance;
+  const detourY = getDetourY(source, blockers, obstacleRects, source.x, target.x);
 
   return [
-    { x: source.x, y: sourceLeadY },
-    { x: detourX, y: sourceLeadY },
-    { x: detourX, y: targetLeadY },
-    { x: target.x, y: targetLeadY },
+    { x: sourceLeadX, y: source.y },
+    { x: sourceLeadX, y: detourY },
+    { x: targetLeadX, y: detourY },
+    { x: targetLeadX, y: target.y },
   ];
 }
 
-export function getWorkflowEdgeRoutes(graph: WorkflowGraph) {
+export function getWorkflowEdgeRoutes(
+  graph: WorkflowGraph,
+  orientation: WorkflowLayoutOrientation = 'horizontal',
+) {
+  if (orientation === 'vertical') return new Map<Id<'workflowEdges'>, WorkflowEdgeRoutePoint[]>();
+
   const rectsByNodeId = new Map(
     graph.nodes.map((node) => [node._id, getNodeRect(node)]),
   );
@@ -126,9 +134,9 @@ export function getWorkflowEdgeRoutes(graph: WorkflowGraph) {
       rect.nodeId !== sourceRect.nodeId &&
       rect.nodeId !== targetRect.nodeId
     ));
-    const source = { x: sourceRect.centerX, y: sourceRect.bottom };
-    const target = { x: targetRect.centerX, y: targetRect.top };
-    const routePoints = getVerticalDetour(source, target, obstacleRects);
+    const source = { x: sourceRect.right, y: sourceRect.centerY };
+    const target = { x: targetRect.left, y: targetRect.centerY };
+    const routePoints = getHorizontalDetour(source, target, obstacleRects);
 
     if (routePoints) {
       routes.set(edge._id, routePoints);

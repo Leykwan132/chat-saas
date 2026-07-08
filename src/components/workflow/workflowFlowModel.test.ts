@@ -1,3 +1,4 @@
+import { Position } from '@xyflow/react';
 import { expect, test } from 'vitest';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { WORKFLOW_CONDITION_EDGE_LABEL } from '../../../shared/workflows';
@@ -108,6 +109,34 @@ test('workflowGraphToFlow keeps nodes above edges', () => {
   expect(flow.nodes.every((node) => (
     (node.zIndex ?? 0) > WORKFLOW_EDGE_Z_INDEX
   ))).toBe(true);
+});
+
+test('workflowGraphToFlow uses orientation-specific handles for persisted workflow nodes', () => {
+  const horizontalFlow = workflowGraphToFlow(
+    workflowGraph(),
+    () => {},
+    () => {},
+    undefined,
+    'horizontal',
+  );
+  const verticalFlow = workflowGraphToFlow(
+    workflowGraph(),
+    () => {},
+    () => {},
+    undefined,
+    'vertical',
+  );
+  const horizontalNodes = horizontalFlow.nodes.filter((node) => node.type === 'workflow');
+  const verticalNodes = verticalFlow.nodes.filter((node) => node.type === 'workflow');
+
+  expect(horizontalNodes).toHaveLength(2);
+  expect(horizontalNodes.every((node) => node.sourcePosition === Position.Right)).toBe(true);
+  expect(horizontalNodes.every((node) => node.targetPosition === Position.Left)).toBe(true);
+  expect(horizontalNodes.every((node) => node.data.layoutOrientation === 'horizontal')).toBe(true);
+  expect(verticalNodes).toHaveLength(2);
+  expect(verticalNodes.every((node) => node.sourcePosition === Position.Bottom)).toBe(true);
+  expect(verticalNodes.every((node) => node.targetPosition === Position.Top)).toBe(true);
+  expect(verticalNodes.every((node) => node.data.layoutOrientation === 'vertical')).toBe(true);
 });
 
 test('workflowGraphToFlow anchors triggers horizontally after entry', () => {

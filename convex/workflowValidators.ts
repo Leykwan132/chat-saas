@@ -29,3 +29,8 @@ export const addableWorkflowNodeKindValidator = v.union(
   v.literal("humanEscalation"),
   v.literal("closeConversation"),
 );
+
+export const workflowLayoutOrientationValidator = v.union(
+  v.literal("horizontal"),
+  v.literal("vertical"),
+);
