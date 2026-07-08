@@ -67,6 +67,7 @@
 - 2026-07-08 [CODE] Now: workflow media final-response contract explicitly marks the matched Send Photo/Video or Send Files manifest rule with `This is important`.
 - 2026-07-08 [CODE] Now: agent sample templates use Role/About the business/Goal/Guardrails plus generic `# Error handling`; samples omit tools/tone/environment/workflow/refund wording; template library includes separate `Real estate sales agent` and product-focused `Sales agent` options; and backend workflow/tool handling is appended by backend prompt blocks.
 - 2026-07-08 [CODE] Now: Book appointment workflow nodes default the incoming condition to `Yes`, do not expose a Goal field in the inspector, and are described to the AI by selected Services instead of node goals.
+- 2026-07-08 [CODE] Now: Convex agent validators/schema accept `productSales`, matching the shared/frontend agent template keys; `bun run build` passes.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -164,15 +165,16 @@
 - 2026-07-08 [CODE] D190 ACTIVE: Agent prompt templates stay shared and omit tool/workflow/refund blocks; `sales` remains the real estate showroom booking template with non-pushy guidance for unclear prospects and no template-meta phrasing, `productSales` is the generic `Sales agent` template for selling products, and user-facing samples use a `# Error handling` section.
 - 2026-07-08 [CODE] D191 ACTIVE: Workflow handling rules are backend-enforced via `buildWorkflowBackendHandlingBlock()` for every agent prompt, even when no workflow graph exists; user-visible templates must not include workflow-handling sections.
 - 2026-07-08 [CODE] D192 ACTIVE: Book appointment workflow nodes are service-driven: the default incoming condition label is `Yes`, the inspector omits the Goal field, and runtime prompts omit `- Goal:` for booking nodes even if older nodes have descriptions.
+- 2026-07-08 [CODE] D193 ACTIVE: Agent template key support must stay aligned across `shared/agentPromptTemplates.ts`, frontend `AgentTemplateKey`, Convex `templateKeyValidator`, and `agents.templateKey` schema values.
 
 # Done (recent)
-- 2026-07-08 [CODE] Added real estate sales guidance: do not be pushy, but guide customers in every message when they have no clear intention.
 - 2026-07-08 [CODE] Added a product-focused `Sales agent` template alongside `Real estate sales agent` in the template library.
 - 2026-07-08 [CODE] Added `This is important` emphasis to the workflow final response contract for matched media/file nodes requiring `<media_to_send>`.
 - 2026-07-08 [CODE] Sales template renamed to `Real estate sales agent` and focused on booking real estate showroom viewings while preserving shared prompt sections/error handling.
 - 2026-07-08 [CODE] System prompt editor note now distinguishes prompt guidance for answering style/high-level goals/general guardrails from Workflow setup for reliable conditional actions.
 - 2026-07-08 [CODE] Shared sample templates now use `# Error handling`, and backend tool prompt error handling uses heading-style subsections.
 - 2026-07-08 [CODE] Book appointment workflow actions now show Services without a Goal field and use `Yes` as the default booking condition.
+- 2026-07-08 [CODE] Fixed product Sales agent build errors by adding `productSales` to Convex agent validators/schema and adding regression coverage.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -197,6 +199,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-08 [TOOL] Node 22.22.0 productSales Convex validator bug reproduced RED in `convex/agentTemplateKeys.test.ts`, then passed focused test, Convex codegen, full `bun run build`, `git diff --check`, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 Book appointment service-driven workflow change reproduced RED in inspector behavior/default-condition/runtime prompt tests, then passed 23 adjacent workflow tests, targeted ESLint, `git diff --check`, stale-copy scan, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 error-handling heading change reproduced RED in shared/frontend/tool prompt tests, then passed 10 focused tests, `git diff --check`, stale bold-label scan, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 backend workflow-handling default reproduced RED in `workflowBackendHandling.test.ts`, then passed 26 prompt/template/component tests, targeted ESLint, user-template stale scan, `git diff --check`, and touched-file LOC check.

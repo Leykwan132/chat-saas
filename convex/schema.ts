@@ -349,6 +349,7 @@ export default defineSchema({
     templateKey: v.union(
       v.literal("blank"),
       v.literal("sales"),
+      v.literal("productSales"),
       v.literal("support"),
     ),
     websiteUrls: v.optional(v.array(v.string())),

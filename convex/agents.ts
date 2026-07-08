@@ -18,6 +18,7 @@ const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 const templateKeyValidator = v.union(
   v.literal("blank"),
   v.literal("sales"),
+  v.literal("productSales"),
   v.literal("support"),
 );
 
