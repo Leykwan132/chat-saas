@@ -68,6 +68,7 @@
 - 2026-07-08 [CODE] Now: agent sample templates use Role/About the business/Goal/Guardrails plus generic `# Error handling`; samples omit tools/tone/environment/workflow/refund wording; template library includes separate `Real estate sales agent` and product-focused `Sales agent` options; and backend workflow/tool handling is appended by backend prompt blocks.
 - 2026-07-08 [CODE] Now: Book appointment workflow nodes default the incoming condition to `Yes`, do not expose a Goal field in the inspector, and are described to the AI by selected Services instead of node goals.
 - 2026-07-08 [CODE] Now: Convex agent validators/schema accept `productSales`, matching the shared/frontend agent template keys; `bun run build` passes.
+- 2026-07-08 [CODE] Now: `generateAiReply` no longer leaves dangling PostHog `fetch` operations because all `captureAIGeneration` calls in Convex actions are awaited.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -166,9 +167,10 @@
 - 2026-07-08 [CODE] D191 ACTIVE: Workflow handling rules are backend-enforced via `buildWorkflowBackendHandlingBlock()` for every agent prompt, even when no workflow graph exists; user-visible templates must not include workflow-handling sections.
 - 2026-07-08 [CODE] D192 ACTIVE: Book appointment workflow nodes are service-driven: the default incoming condition label is `Yes`, the inspector omits the Goal field, and runtime prompts omit `- Goal:` for booking nodes even if older nodes have descriptions.
 - 2026-07-08 [CODE] D193 ACTIVE: Agent template key support must stay aligned across `shared/agentPromptTemplates.ts`, frontend `AgentTemplateKey`, Convex `templateKeyValidator`, and `agents.templateKey` schema values.
+- 2026-07-08 [CODE] D194 ACTIVE: Convex actions must await `captureAIGeneration`; fire-and-forget analytics calls can leave dangling PostHog `fetch` operations and fail action execution.
 
 # Done (recent)
-- 2026-07-08 [CODE] Added a product-focused `Sales agent` template alongside `Real estate sales agent` in the template library.
+- 2026-07-08 [CODE] Fixed dangling PostHog `fetch` errors in `generateAiReply` by awaiting AI generation capture calls and adding regression coverage.
 - 2026-07-08 [CODE] Added `This is important` emphasis to the workflow final response contract for matched media/file nodes requiring `<media_to_send>`.
 - 2026-07-08 [CODE] Sales template renamed to `Real estate sales agent` and focused on booking real estate showroom viewings while preserving shared prompt sections/error handling.
 - 2026-07-08 [CODE] System prompt editor note now distinguishes prompt guidance for answering style/high-level goals/general guardrails from Workflow setup for reliable conditional actions.
@@ -185,7 +187,7 @@
 - 2026-07-06 [CODE] Leaderboard/model-list UI working set: `src/pages/LeaderboardPage.tsx`, `src/pages/leaderboardTencentIcon.test.ts`, `src/components/analytics/ModelLeaderboardPanel.tsx`, `src/components/analytics/ModelLeaderboardDisplay.tsx`, `src/components/analytics/modelLeaderboardUtils.ts`, `src/components/analytics/modelLeaderboardPanelExports.test.ts`, `src/components/ui/accordion.tsx`, `src/components/ui/accordion.test.ts`.
 - 2026-07-06 [CODE] Workspace agent entry working set: `src/components/workspace/AgentCards.tsx`, `src/components/workspace/agentWorkspaceRoutes.ts`, `src/components/workspace/agentWorkspaceRoutes.test.ts`.
 - 2026-07-06 [CODE] Launch Guide UI working set: `src/components/setup-checklist/WorkspaceSetupChecklist.tsx`, `src/components/setup-checklist/WorkspaceSetupChecklistPanel.tsx`, `src/components/setup-checklist/workspaceSetupChecklistLayout.ts`, `src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`.
-- 2026-07-07 [CODE] AI SDK/PostHog usage capture working set: `convex/agentUsage.ts`, `convex/agentUsage.test.ts`, `convex/chat/threads.ts`, `convex/posthog.ts`, `convex/analyticsSentiment.ts`, `convex/chat/inboxActions.ts`.
+- 2026-07-08 [CODE] AI SDK/PostHog usage capture working set: `convex/agentUsage.ts`, `convex/agentUsage.test.ts`, `convex/chat/threads.ts`, `convex/posthog.ts`, `convex/analyticsSentiment.ts`, `convex/chat/inboxActions.ts`, `convex/posthogDanglingPromises.test.ts`, `convex/doubleSave.test.ts`.
 - 2026-07-07 [CODE] Meta/AI reply cleanup working set: `convex/chat/agentOutputFormat.ts`, `convex/chat/agentOutputFormat.test.ts`, `convex/chat/aiReplyMedia.ts`, `convex/chat/aiReplyMedia.test.ts`, `convex/chat/mediaManifest.ts`, `convex/chat/mediaManifest.test.ts`, `convex/chat/workflowMatchArrayPrompt.test.ts`, `convex/chat/responseFormatting.ts`, `convex/chat/responseFormatting.test.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`, `convex/workflowRuntimeContext.ts`.
 - 2026-07-07 [CODE] Workflow Send message/modal working set: `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/workflowPrompt.test.ts`, `convex/workflowActions.test.ts`, `convex/workflowMedia.test.ts`, `convex/workflowMediaAccess.test.ts`, `src/components/workflow/WorkflowInspector.tsx`, `src/components/workflow/workflowCatalog.test.tsx`, `src/pages/WorkflowPage.tsx`, `src/pages/workflowPageNodeSelection.ts`, `src/pages/workflowPageNodeSelection.test.ts`.
 - 2026-07-07 [CODE] Workflow node deletion working set: `convex/workflows.ts`, `convex/workflowNodeRemoval.ts`, `convex/workflows.test.ts`, `convex/workflowNodeDeletion.test.ts`.
@@ -199,6 +201,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-08 [TOOL] Node 22.22.0 dangling PostHog `fetch` error reproduced RED with `convex/posthogDanglingPromises.test.ts`, then passed focused AI reply/PostHog tests, touched-file ESLint, full `bun run build`, and `git diff --check`.
 - 2026-07-08 [TOOL] Node 22.22.0 productSales Convex validator bug reproduced RED in `convex/agentTemplateKeys.test.ts`, then passed focused test, Convex codegen, full `bun run build`, `git diff --check`, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 Book appointment service-driven workflow change reproduced RED in inspector behavior/default-condition/runtime prompt tests, then passed 23 adjacent workflow tests, targeted ESLint, `git diff --check`, stale-copy scan, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 error-handling heading change reproduced RED in shared/frontend/tool prompt tests, then passed 10 focused tests, `git diff --check`, stale bold-label scan, and touched-file LOC check.

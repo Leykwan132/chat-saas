@@ -861,7 +861,7 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
 
       const fallbackDistinctId =
         userId !== undefined && !userId.startsWith("org:") ? userId : undefined;
-      void captureAIGeneration({
+      await captureAIGeneration({
         distinctId: trackedUsage?.workosUserId ?? fallbackDistinctId ?? 'anonymous',
         traceId: threadId ?? agentId,
         spanName: 'inbox_ai_reply',

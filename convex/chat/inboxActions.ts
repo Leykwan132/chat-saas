@@ -758,7 +758,7 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         prompt,
         system: systemPrompt,
       });
-      void captureAIGeneration({
+      await captureAIGeneration({
         distinctId: conv.assignedUserId ?? 'anonymous',
         traceId: args.conversationId,
         spanName: 'lead_temperature_classification',
@@ -835,7 +835,7 @@ Make it highly customer-centric and readable at a single glance.`;
         prompt,
         system: systemPrompt,
       });
-      void captureAIGeneration({
+      await captureAIGeneration({
         distinctId: conv.assignedUserId ?? 'anonymous',
         traceId: args.conversationId,
         spanName: 'thread_summary_generation',

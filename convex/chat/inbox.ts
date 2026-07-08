@@ -606,6 +606,7 @@ export const generateAiReplyWorker = internalAction({
         });
       }
 
+
       const result = await configuredAgent.generateText(
         ctx,
         { threadId: conv.threadId },
@@ -614,6 +615,11 @@ export const generateAiReplyWorker = internalAction({
           : { prompt: args.promptContent },
         { storageOptions: { saveMessages: "none" } },
       );
+
+
+      console.log("result", result);
+
+      console.log('result text', result.text);
 
       const convAfterGeneration = await ctx.runQuery(
         internal.chat.inbox.internalGetConversation,

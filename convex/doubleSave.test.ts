@@ -1,13 +1,13 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
+import { v } from "convex/values";
 import { expect, test, vi, beforeAll } from "vitest";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import schema from "./schema";
 import { withComponents } from "./testUtils";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
-import stripePlanSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
 
 beforeAll(() => {
@@ -42,13 +42,18 @@ vi.mock("./llm/openRouter", () => {
 
 // Mock the internalSendAiReply action to bypass Meta API calls
 vi.mock("./chat/inboxActions", () => {
-  const { v } = require("convex/values");
+  const channelMediaItemValidator = v.object({
+    url: v.string(),
+    mediaType: v.string(),
+    filename: v.optional(v.string()),
+  });
   return {
     internalSendAiReply: internalAction({
       args: {
         conversationId: v.id("conversations"),
         content: v.string(),
         mediaUrls: v.array(v.string()),
+        mediaItems: v.optional(v.array(channelMediaItemValidator)),
         allowHumanAgentTag: v.optional(v.boolean()),
       },
       handler: async () => {
@@ -115,6 +120,7 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -224,6 +230,7 @@ test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
 
   t.registerComponent("agent", agentSchema, {
     "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
@@ -355,6 +362,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
   t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
+  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -377,7 +385,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
     });
   });
 
-  const teamId = await t.run(async (ctx) => {
+  await t.run(async (ctx) => {
     const id = await ctx.db.insert("teams", {
       type: "organizational",
       name: "Mock Team",

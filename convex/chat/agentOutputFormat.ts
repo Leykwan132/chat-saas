@@ -1,6 +1,6 @@
 export function buildAgentOutputFormatBlock() {
   return `\n\n## Output Format — REQUIRED
-Every final answer MUST use exactly this envelope:
+Every final answer MUST use exactly this envelope (This is important!):
 \`<workflow_matches>
 []
 </workflow_matches>

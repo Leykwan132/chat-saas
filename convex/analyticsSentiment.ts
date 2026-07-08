@@ -128,7 +128,7 @@ Respond with ONLY this JSON object:
           system,
           prompt,
         });
-        void captureAIGeneration({
+        await captureAIGeneration({
           distinctId: candidate.conversationId,
           traceId: candidate.conversationId,
           spanName: 'sentiment_analysis',
