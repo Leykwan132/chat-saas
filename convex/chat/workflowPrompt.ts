@@ -70,10 +70,11 @@ function formatServices(services: RuntimeService[]) {
   ].join("\n");
 }
 
-function formatMediaAssets(mediaAssets: RuntimeMediaAsset[]) {
-  if (mediaAssets.length === 0) return "- Media assets: none uploaded";
+function formatMediaAssets(kind: string, mediaAssets: RuntimeMediaAsset[]) {
+  const label = kind === "sendFile" ? "Files to send" : "Your Photos/Videos";
+  if (mediaAssets.length === 0) return `- ${label}: none uploaded`;
   return [
-    "- Media assets:",
+    `- ${label}:`,
     ...mediaAssets.map((asset) => {
       const filename = asset.filename ? `, file: ${asset.filename}` : "";
       return `  - url: ${asset.url}${filename}, type: ${asset.mediaType}`;
@@ -124,12 +125,12 @@ Customer-visible text only.
 </media_to_send>\`
 
 Build the final response from these data sources, in this order:
-1. Workflow Runtime is the source of truth for which nodes are active. Match the latest customer message against all node goals and incoming conditions.
+1. Workflow Runtime is the source of truth for which nodes are active. Match the latest customer message against non-media node goals, media assets to send, and incoming conditions.
 2. After \`fetchContext\`, build \`<workflow_matches>\` as a JSON array. Put only a JSON array inside \`<workflow_matches>\`. Include every matching workflow node in \`<workflow_matches>\`, do not stop at the first match, and list each node once even if multiple conditions on that node match. Each item must set \`matched\` to true and copy the exact matching node \`nodeId\`, \`kind\` as \`nodeKind\`, and \`title\` as \`nodeTitle\`; if no node matches, output [].
 3. Execute every node listed in \`<workflow_matches>\`.
 4. Media assets listed under each matching workflow media node are the only valid source for media URLs. Copy the matching workflow node \`nodeId\` plus exact \`url\` and \`type\` values from each matching media node's Media assets into \`<media_to_send>\`.
 5. Use \`fetchContext\` only for customer-facing facts, names, labels, or short wording inside \`<customer_response>\`. Do not use it to invent media URLs.
-6. Use the workflow node goals and incoming conditions to decide whether media should be sent now, including repeat requests.
+6. Use the matching media node's assets and incoming conditions to decide whether media should be sent now, including repeat requests.
 7. After choosing the data, construct the final response envelope. Do not answer first and then decide media later.
 
 If a Send Photo/Video or Send Files node matches, \`<media_to_send>\` MUST contain a JSON array of objects using the matching workflow node \`nodeId\` plus exact workflow media \`url\` and \`type\` values, for example:
@@ -182,12 +183,13 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
             "- Incoming conditions:",
             ...node.incomingConditions.map((condition) => `  - ${formatCondition(condition)}`),
           ].join("\n");
-      const goal = node.goal ? `- Goal: ${node.goal}` : undefined;
+      const isMediaNode = node.kind === "sendImage" || node.kind === "sendFile";
+      const goal = node.goal && !isMediaNode ? `- Goal: ${node.goal}` : undefined;
       const notes = node.notes ? `- Notes: ${node.notes}` : undefined;
       const services = node.kind === "bookAppointment" ? formatServices(node.allowedServices) : undefined;
       const mediaAssets =
-        node.kind === "sendImage" || node.kind === "sendFile"
-          ? formatMediaAssets(node.mediaAssets)
+        isMediaNode
+          ? formatMediaAssets(node.kind, node.mediaAssets)
           : undefined;
       return [
         `### ${index + 1}. ${node.title} (${node.kind})`,
@@ -202,7 +204,7 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
     .join("\n\n");
 
   return `\n\n## Workflow Runtime
-Use this workflow as the source of truth for what stage the conversation is in and what you should do next. Infer the active node each turn from the latest customer message, the message history, each node goal, and the incoming edge conditions. Do not store or invent a persistent conversation stage.
+Use this workflow as the source of truth for what stage the conversation is in and what you should do next. Infer the active node each turn from the latest customer message, the message history, each non-media node goal, each media node's assets to send, and the incoming edge conditions. Do not store or invent a persistent conversation stage.
 
 Multiple workflow node conditions can match in one turn. Include every matching workflow node in \`<workflow_matches>\`. Execute every node listed in \`<workflow_matches>\`. Do not stop at the first match. If multiple conditions on the same node match, list that node once. If no action node condition matches, continue with the normal support/sales response rules.
 

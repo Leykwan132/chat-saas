@@ -70,6 +70,11 @@ function mediaForNode(
     }));
 }
 
+function goalForNode(node: Doc<"workflowNodes">) {
+  if (node.kind === "sendImage" || node.kind === "sendFile") return undefined;
+  return node.description?.trim() || workflowNodeDescription(node.kind);
+}
+
 export const loadForAgent = internalQuery({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
@@ -93,7 +98,7 @@ export const loadForAgent = internalQuery({
         nodeId: node._id,
         kind: node.kind,
         title: workflowNodeDisplayTitle(node.kind, node.title),
-        goal: node.description?.trim() || workflowNodeDescription(node.kind),
+        goal: goalForNode(node),
         notes: node.notes,
         incomingConditions: edges
           .filter((edge) => edge.targetNodeId === node._id)

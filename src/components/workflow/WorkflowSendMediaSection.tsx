@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { WorkflowMediaGrid } from './WorkflowMediaGrid';
 import { WorkflowMediaUploader } from './WorkflowMediaUploader';
+import { getWorkflowSendMediaCopy } from './workflowSendMediaCopy';
 import {
   shouldDisplayWorkflowMediaEntry,
   type WorkflowMediaEntry,
@@ -44,9 +45,7 @@ export function WorkflowSendMediaSection({
   const Icon = isFileNode ? FileText : ImagePlus;
   const itemLabel = isFileNode ? 'file' : 'photo/video';
   const itemLabelPlural = isFileNode ? 'files' : 'photos/videos';
-  const mediaUploadLabel = isLoading
-    ? `Loading ${itemLabelPlural}`
-    : `${mediaEntries.length} ${mediaEntries.length === 1 ? itemLabel : itemLabelPlural} uploaded`;
+  const mediaCopy = getWorkflowSendMediaCopy(nodeKind, mediaEntries.length, isLoading);
 
   const handleDelete = async (clientId: string) => {
     setDeletingClientId(clientId);
@@ -81,14 +80,13 @@ export function WorkflowSendMediaSection({
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <span className="flex size-7 shrink-0 items-center justify-center text-muted-foreground">
             <Icon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
             <h4 className="truncate text-sm font-semibold text-foreground">
-              {isFileNode ? 'Files to send' : 'Photos/videos to send'}
+              {mediaCopy.title}
             </h4>
-            <p className="truncate text-xs text-muted-foreground">{mediaUploadLabel}</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -136,6 +134,7 @@ export function WorkflowSendMediaSection({
           />
         </WorkflowMediaGrid>
       </div>
+      <p className="text-xs text-muted-foreground">{mediaCopy.status}</p>
     </div>
   );
 }

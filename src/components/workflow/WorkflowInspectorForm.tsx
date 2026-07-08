@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Loader2, Save, Trash2 } from 'lucide-react';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import {
-  isWorkflowActionNodeKind,
   workflowConditionDisplayLabel,
   workflowNodeTitle,
 } from '../../../shared/workflows';
@@ -17,6 +16,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
+import { getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -80,17 +80,20 @@ export function WorkflowInspectorForm({
   >(node.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined);
   const selectedTitle = name.trim() || workflowNodeTitle(node.kind);
   const conditionEnabled = conditionEdge !== undefined;
-  const isAction = isWorkflowActionNodeKind(node.kind);
-  const isSendTextAction = node.kind === 'sendText';
-  const isSendMediaAction = node.kind === 'sendImage';
-  const isSendFileAction = node.kind === 'sendFile';
-  const hasMediaSection = isSendMediaAction || isSendFileAction;
+  const {
+    isAction,
+    isSendTextAction,
+    isSendMediaAction,
+    isSendFileAction,
+    hasMediaSection,
+    hasGoalField,
+    saveRequiresDescription,
+    nameLabel,
+    goalLabel,
+  } = getWorkflowInspectorBehavior(node.kind, Boolean(node.description));
   const isCustomAction = node.kind === 'aiResponds';
   const isBookAppointmentAction = node.kind === 'bookAppointment';
   const isHumanEscalationAction = node.kind === 'humanEscalation';
-  const hasGoalField = isAction || Boolean(node.description);
-  const nameLabel = isAction ? 'Name' : 'Title';
-  const goalLabel = isSendTextAction ? 'Message' : isAction ? 'Goal' : 'Description';
   let conditionNamePlaceholder = 'e.g., Ready to book';
   let conditionDetailPlaceholder = 'Describe when this action should run';
   if (isSendTextAction) {
@@ -130,7 +133,7 @@ export function WorkflowInspectorForm({
       !sameOptionalIdSet(allowedAppointmentServiceIds, node.allowedAppointmentServiceIds)
     )
   );
-  const saveDisabled = isSaving || !name.trim() || (isAction && !goal.trim()) || !hasNodeChanges;
+  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || !hasNodeChanges;
 
   return (
     <>
@@ -238,19 +241,17 @@ export function WorkflowInspectorForm({
                   />
                 </div>
               ) : null}
+              {hasMediaSection && agentId ? (
+                <WorkflowSendMediaSection
+                  agentId={agentId}
+                  nodeId={node._id}
+                  nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
+                />
+              ) : null}
             </section>
           </div>
         </FieldGroup>
       </div>
-      {hasMediaSection && agentId ? (
-        <div className="shrink-0 border-t border-border bg-popover px-6 py-4">
-          <WorkflowSendMediaSection
-            agentId={agentId}
-            nodeId={node._id}
-            nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
-          />
-        </div>
-      ) : null}
       <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
         <Button
           type="button"
