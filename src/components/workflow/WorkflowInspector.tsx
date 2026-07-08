@@ -1,63 +1,20 @@
-import { useEffect, useState } from 'react';
-import { Loader2, Save, Trash2 } from 'lucide-react';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import {
-  isWorkflowActionNodeKind,
-  workflowConditionDisplayLabel,
-  workflowNodeTitle,
-} from '../../../shared/workflows';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
-import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
-
-const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
-  { name: 'Pricing question', detail: 'If the customer asks about pricing or packages' },
-  { name: 'Needs guidance', detail: 'If the customer needs help choosing an option' },
-  { name: 'Human support', detail: 'If the customer asks to speak with a human' },
-];
-
-function normalizedPersistedText(value: string | undefined) {
-  return value?.trim() ?? '';
-}
-
-function normalizedConditionName(value: string | undefined) {
-  return workflowConditionDisplayLabel(value) ?? '';
-}
-
-function sameOptionalIdSet<T extends string>(first: T[] | undefined, second: T[] | undefined) {
-  if (first === undefined || second === undefined) {
-    return first === second;
-  }
-  if (first.length !== second.length) {
-    return false;
-  }
-  const secondSet = new Set(second);
-  return first.every((id) => secondSet.has(id));
-}
+  WorkflowInspectorForm,
+  type WorkflowInspectorSaveValues,
+} from './WorkflowInspectorForm';
 
 type WorkflowInspectorProps = {
   agentId?: Id<'agents'>;
   node?: Doc<'workflowNodes'>;
   conditionEdge?: Doc<'workflowEdges'>;
+  contentClassName?: string;
   isSaving?: boolean;
-  onSave: (values: {
-    name: string;
-    description: string;
-    conditionName?: string;
-    conditionDetail?: string;
-    allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
-  }) => void;
+  overlayClassName?: string;
+  portalContainer?: HTMLElement | null;
+  onSave: (values: WorkflowInspectorSaveValues) => void;
   onRemove: () => void;
   onClose: () => void;
 };
@@ -66,232 +23,34 @@ export function WorkflowInspector({
   agentId,
   node,
   conditionEdge,
+  contentClassName,
   isSaving = false,
+  overlayClassName,
+  portalContainer,
   onSave,
   onRemove,
   onClose,
 }: WorkflowInspectorProps) {
-  const [name, setName] = useState('');
-  const [goal, setGoal] = useState('');
-  const [conditionName, setConditionName] = useState('');
-  const [conditionDetail, setConditionDetail] = useState('');
-  const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
-    Id<'appointmentServices'>[] | undefined
-  >();
-
-  useEffect(() => {
-    setName(node?.title ?? '');
-    setGoal(node?.description ?? '');
-    setConditionName(workflowConditionDisplayLabel(conditionEdge?.label) ?? '');
-    setConditionDetail(conditionEdge?.detail ?? '');
-    setAllowedAppointmentBookingServiceIds(
-      node?.kind === 'bookAppointment'
-        ? node.allowedAppointmentServiceIds
-        : undefined,
-    );
-  }, [conditionEdge?.detail, conditionEdge?.label, node]);
-
-  const selectedTitle = node ? name.trim() || workflowNodeTitle(node.kind) : '';
-  const conditionEnabled = conditionEdge !== undefined;
-  const isAction = node ? isWorkflowActionNodeKind(node.kind) : false;
-  const isSendTextAction = node?.kind === 'sendText';
-  const isSendMediaAction = node?.kind === 'sendImage';
-  const isSendFileAction = node?.kind === 'sendFile';
-  const hasMediaSection = isSendMediaAction || isSendFileAction;
-  const isCustomAction = node?.kind === 'aiResponds';
-  const isBookAppointmentAction = node?.kind === 'bookAppointment';
-  const isHumanEscalationAction = node?.kind === 'humanEscalation';
-  const hasGoalField = isAction || Boolean(node?.description);
-  const nameLabel = isAction ? 'Name' : 'Title';
-  const goalLabel = isSendTextAction ? 'Message' : isAction ? 'Goal' : 'Description';
-  let conditionNamePlaceholder = 'e.g., Ready to book';
-  let conditionDetailPlaceholder = 'Describe when this action should run';
-  if (isSendTextAction) {
-    conditionNamePlaceholder = 'e.g., After hours';
-    conditionDetailPlaceholder = 'If the customer reaches this step...';
-  } else if (isSendMediaAction) {
-    conditionNamePlaceholder = 'e.g., Product photos';
-    conditionDetailPlaceholder = 'If the customer asks for photos or videos about...';
-  } else if (isSendFileAction) {
-    conditionNamePlaceholder = 'e.g., Product brochure';
-    conditionDetailPlaceholder = 'If the customer asks for documents, files, or brochures about...';
-  } else if (isCustomAction) {
-    conditionNamePlaceholder = 'e.g., Pricing question';
-    conditionDetailPlaceholder = 'If the customer asks about...';
-  } else if (isHumanEscalationAction) {
-    conditionNamePlaceholder = 'e.g., Needs human';
-    conditionDetailPlaceholder = 'If the customer asks for a human or the AI cannot answer safely...';
-  }
-  const contentGridClassName = conditionEnabled
-    ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
-    : 'grid gap-8';
-  const hasNodeChanges = Boolean(node) && (
-    normalizedPersistedText(name) !== normalizedPersistedText(node?.title) ||
-    (
-      hasGoalField &&
-      normalizedPersistedText(goal) !== normalizedPersistedText(node?.description)
-    ) ||
-    (
-      conditionEnabled &&
-      (
-        normalizedConditionName(conditionName) !== normalizedConditionName(conditionEdge?.label) ||
-        normalizedPersistedText(conditionDetail) !== normalizedPersistedText(conditionEdge?.detail)
-      )
-    ) ||
-    (
-      isBookAppointmentAction &&
-      !sameOptionalIdSet(
-        allowedAppointmentServiceIds,
-        node?.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined,
-      )
-    )
-  );
-  const saveDisabled = isSaving || !name.trim() || (isAction && !goal.trim()) || !hasNodeChanges;
-
   return (
     <Dialog open={Boolean(node)} onOpenChange={(open) => !open && onClose()}>
       {node ? (
-        <DialogContent className="flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[920px]">
-          <DialogHeader className="shrink-0 border-b border-border px-6 py-5 pr-14">
-            <div className="min-w-0">
-              <DialogTitle className="truncate text-lg">{selectedTitle}</DialogTitle>
-              <DialogDescription>
-                Configure when this workflow node runs and what the AI should do.
-              </DialogDescription>
-            </div>
-          </DialogHeader>
-          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
-            <FieldGroup className="gap-6">
-              <div className={contentGridClassName}>
-                {conditionEnabled ? (
-                  <section className="flex flex-col gap-5 text-left">
-                    <h3 className="text-base font-semibold text-foreground">Condition</h3>
-                    <Field>
-                      <FieldLabel htmlFor="workflow-node-condition-name">Name</FieldLabel>
-                      <Input
-                        id="workflow-node-condition-name"
-                        value={conditionName}
-                        onChange={(event) => setConditionName(event.target.value)}
-                        placeholder={conditionNamePlaceholder}
-                      />
-                    </Field>
-                    <Field>
-                      <FieldLabel htmlFor="workflow-node-condition-detail">Detail</FieldLabel>
-                      <Textarea
-                        id="workflow-node-condition-detail"
-                        value={conditionDetail}
-                        onChange={(event) => setConditionDetail(event.target.value)}
-                        placeholder={conditionDetailPlaceholder}
-                        rows={6}
-                        style={{ minHeight: '11rem' }}
-                      />
-                      {isCustomAction ? (
-                        <div className="flex flex-wrap gap-2">
-                          {CUSTOM_ACTION_CONDITION_SUGGESTIONS.map((suggestion) => (
-                            <Button
-                              key={suggestion.name}
-                              type="button"
-                              variant="outline"
-                              size="xs"
-                              className="h-auto min-h-8 justify-start whitespace-normal rounded-md px-2 py-1.5 text-left leading-snug"
-                              onClick={() => {
-                                setConditionName(suggestion.name);
-                                setConditionDetail(suggestion.detail);
-                              }}
-                            >
-                              {suggestion.name}
-                            </Button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </Field>
-                  </section>
-                ) : null}
-                <section className="flex flex-col gap-5 text-left">
-                  <h3 className="text-base font-semibold text-foreground">Actions</h3>
-                  <Field className="items-start text-left">
-                    <FieldLabel className="text-left" htmlFor="workflow-node-title">{nameLabel}</FieldLabel>
-                    <Input
-                      id="workflow-node-title"
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      className="text-left"
-                    />
-                  </Field>
-                  {hasGoalField ? (
-                    <Field className="items-start text-left">
-                      <FieldLabel className="text-left" htmlFor="workflow-node-description">{goalLabel}</FieldLabel>
-                      <Textarea
-                        id="workflow-node-description"
-                        value={goal}
-                        onChange={(event) => setGoal(event.target.value)}
-                        className="text-left"
-                        rows={isAction ? 10 : 4}
-                        style={isAction ? { minHeight: '16rem' } : undefined}
-                      />
-                    </Field>
-                  ) : null}
-                  {isBookAppointmentAction && agentId ? (
-                    <div className="flex flex-col gap-4">
-                      <div className="flex flex-col gap-1">
-                        <h4 className="text-sm font-semibold text-foreground">Services</h4>
-                        <p className="text-xs leading-relaxed text-muted-foreground">
-                          AI will only book services that are available.
-                        </p>
-                      </div>
-                      <WorkflowBookingServicesSection
-                        agentId={agentId}
-                        allowedServiceIds={allowedAppointmentServiceIds}
-                        onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
-                      />
-                    </div>
-                  ) : null}
-                </section>
-              </div>
-            </FieldGroup>
-          </div>
-          {hasMediaSection && agentId ? (
-            <div className="shrink-0 border-t border-border bg-popover px-6 py-4">
-              <WorkflowSendMediaSection
-                agentId={agentId}
-                nodeId={node._id}
-                nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
-              />
-            </div>
-          ) : null}
-          <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="text-red-600 hover:bg-red-50 hover:text-red-700 focus-visible:ring-red-600/25 dark:hover:bg-red-950/30"
-              disabled={node.kind === 'start' || node.kind === 'end' || isSaving}
-              onClick={onRemove}
-            >
-              <Trash2 className="size-4" />
-              <span className="sr-only">Delete node</span>
-            </Button>
-            <Button
-              type="button"
-              disabled={saveDisabled}
-              onClick={() => onSave({
-                name,
-                description: hasGoalField ? goal : '',
-                conditionName: conditionEnabled ? conditionName : undefined,
-                conditionDetail: conditionEnabled ? conditionDetail : undefined,
-                allowedAppointmentServiceIds: isBookAppointmentAction
-                  ? allowedAppointmentServiceIds
-                  : undefined,
-              })}
-            >
-              {isSaving ? (
-                <Loader2 className="animate-spin" data-icon="inline-start" />
-              ) : (
-                <Save data-icon="inline-start" />
-              )}
-              Save
-            </Button>
-          </DialogFooter>
+        <DialogContent
+          className={cn(
+            'flex max-h-[min(90vh,760px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[920px]',
+            contentClassName,
+          )}
+          overlayClassName={overlayClassName}
+          portalContainer={portalContainer}
+        >
+          <WorkflowInspectorForm
+            key={`${node._id}:${conditionEdge?._id ?? 'no-edge'}`}
+            agentId={agentId}
+            node={node}
+            conditionEdge={conditionEdge}
+            isSaving={isSaving}
+            onSave={onSave}
+            onRemove={onRemove}
+          />
         </DialogContent>
       ) : null}
     </Dialog>

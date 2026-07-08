@@ -20,6 +20,7 @@ export function LandingAppPreviewWorkflow({
 }: {
   workflow: LandingPreviewWorkflowData;
 }) {
+  const [previewPortalContainer, setPreviewPortalContainer] = useState<HTMLDivElement | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<Id<'workflowNodes'>>();
   const [graph, setGraph] = useState(() => createLandingWorkflowGraph(workflow));
   const initialGraph = useMemo(() => createLandingWorkflowGraph(workflow), [workflow]);
@@ -83,8 +84,9 @@ export function LandingAppPreviewWorkflow({
 
   return (
     <div
+      ref={setPreviewPortalContainer}
       data-preview-section-content
-      className="flex min-h-0 flex-1 overflow-hidden bg-background"
+      className="relative flex min-h-0 flex-1 overflow-hidden bg-background"
     >
       <WorkflowCanvas
         nodes={flow.nodes}
@@ -99,6 +101,9 @@ export function LandingAppPreviewWorkflow({
       <WorkflowInspector
         node={selectedNode}
         conditionEdge={selectedConditionEdge}
+        contentClassName="!absolute !left-1/2 !top-1/2 !z-50 !max-h-[calc(100%-2rem)] !max-w-[min(calc(100%-2rem),820px)]"
+        overlayClassName="absolute inset-0 z-40 bg-black/15 backdrop-blur-[1px]"
+        portalContainer={previewPortalContainer}
         onSave={handleSaveNode}
         onRemove={() => {
           if (selectedNodeId) handleRemoveNode(selectedNodeId);

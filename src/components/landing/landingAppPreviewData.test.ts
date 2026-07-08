@@ -183,10 +183,13 @@ test('landing preview workflow renders the real workflow canvas with no API call
 
   expect(workflowSource).toContain('WorkflowCanvas');
   expect(workflowSource).toContain('WorkflowInspector');
+  expect(workflowSource).toContain('portalContainer={previewPortalContainer}');
+  expect(workflowSource).toContain('overlayClassName="absolute inset-0 z-40');
+  expect(workflowSource).toContain('contentClassName="!absolute');
   expect(workflowSource).toContain('workflowGraphToFlow');
   expect(workflowSource).toContain('addLandingPreviewWorkflowNode');
   expect(workflowSource).toContain('updateLandingPreviewWorkflowNode');
-  expect(workflowSource).toContain('className="flex min-h-0 flex-1 overflow-hidden bg-background"');
+  expect(workflowSource).toContain('className="relative flex min-h-0 flex-1 overflow-hidden bg-background"');
   expect(workflowSource).not.toContain('rounded-lg border border-zinc-200');
   expect(workflowSource).not.toContain('<svg aria-hidden="true" className="absolute inset-0"');
   expect(workflowSource).not.toContain('useQuery');

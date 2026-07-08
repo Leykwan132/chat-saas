@@ -62,6 +62,8 @@
 - 2026-07-08 [CODE] Now: landing preview workspace breadcrumb uses a building icon while the top-right avatar keeps the user icon.
 - 2026-07-08 [CODE] Now: landing preview Overview metric cards render plain static text values instead of `NumberTicker`.
 - 2026-07-08 [CODE] Now: landing preview Workflow keeps three nodes but branches Message enters directly into two sub-nodes: Qualify buyer intent and Book showroom visit.
+- 2026-07-08 [CODE] Now: landing preview Workflow inspector modal is scoped inside the demo app container instead of opening over the full landing page.
+- 2026-07-08 [CODE] Now: workflow inspector Condition and Actions sections each show a muted one-line explanation under the section heading.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -149,6 +151,7 @@
 - 2026-07-08 [CODE] D180 ACTIVE: Landing preview Overview cards do not render per-card sparklines; only the large selected metric chart visualizes trend data.
 - 2026-07-08 [CODE] D181 ACTIVE: Landing preview metric cards carry a data-backed `detail` string so supporting values are mock data, not hardcoded card copy.
 - 2026-07-08 [CODE] D182 ACTIVE: Landing preview numeric display strings are parsed into text/number segments and reuse the existing UI `NumberTicker`; nonnumeric suffix/prefix text remains static.
+- 2026-07-08 [CODE] D183 ACTIVE: Shared `DialogContent` accepts an optional portal container so landing/demo previews can scope modal overlays without changing default app-wide dialog behavior.
 
 # Done (recent)
 - 2026-07-07 [CODE] Ready workflow media public URLs are derived from `publicUrl` or `MEDIA_CDN_BASE_URL + r2Key`; missing both is an error.
@@ -249,3 +252,5 @@
 - 2026-07-08 [TOOL] Landing breadcrumb building icon swap reproduced RED with focused landing preview test, then passed focused test, targeted landing preview ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and LOC check under 300.
 - 2026-07-08 [TOOL] Landing Overview static metric values reproduced RED with focused landing preview test, then passed focused test, targeted landing preview ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, LOC check under 300, and browser verification showing four plain metric text spans with no ticker children.
 - 2026-07-08 [TOOL] Landing Workflow two-sub-node branching reproduced RED with focused landing preview test, then passed focused landing preview tests, targeted landing preview ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, LOC check under 300, and browser verification showing `entry-qualify` and `entry-booking` edges from the Message enters node.
+- 2026-07-08 [TOOL] Landing Workflow scoped modal reproduced RED with focused landing/dialog tests, then passed focused tests, targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, LOC check under 300, and browser verification showing absolute overlay/content contained within the preview frame.
+- 2026-07-08 [TOOL] Workflow inspector section helper text passed focused `WorkflowInspectorForm` test, targeted ESLint, LOC check under 300 for the form file, browser verification showing both helper lines in the node dialog, and `git diff --check`.
