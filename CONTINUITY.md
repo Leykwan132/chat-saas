@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-09 [USER] Current focus: landing workflow demo should remove services from cards and zoom out slightly after orientation switches so all nodes are visible.
+- 2026-07-09 [USER] Current focus: homepage header should be three components/regions with navigation centered, spacing distributed around the regions, and horizontal padding retained on desktop.
 - 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
 - 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
 - 2026-07-09 [CODE] Now: production prompt blocks no longer instruct the model to output `<workflow_matches>`, `<customer_response>`, or `<media_to_send>` tags; legacy tag parsers remain for compatibility tests/helpers.
@@ -123,13 +123,13 @@
 - 2026-07-09 [CODE] D208 ACTIVE: Workflow canvas view refits after `layoutOrientation` changes with a delayed extra-padded fit, not only explicit arrange focus requests, so vertical/horizontal switches zoom out enough to keep nodes visible.
 
 # Done (recent)
+- 2026-07-09 [CODE] Split the homepage `SiteHeader` desktop layout into Brand, Navigation, and Actions regions; navigation is the center component, wrapper spacing is distributed, and desktop horizontal padding is retained.
 - 2026-07-09 [CODE] Removed the fake showroom service pills from landing workflow node cards/data and made orientation refit delayed with extra padding.
 - 2026-07-09 [CODE] Made workflow canvas refocus visible nodes whenever layout orientation changes between vertical and horizontal.
 - 2026-07-09 [CODE] Removed Cleanup from the landing workflow demo and rendered three fake showroom service labels under Book showroom visit.
 - 2026-07-09 [CODE] Fixed landing workflow preview orientation inversion: initial top-down sample uses vertical handles, and arrange switches layout/order and connector anchors together.
 - 2026-07-09 [CODE] Included AI Agent Usage/Analytics section headers in the compact title/no-description treatment.
 - 2026-07-09 [CODE] Made Knowledge Base storage-limit cards clickable so Web/File/Text/Q&A counts switch to the matching tab.
-- 2026-07-09 [CODE] Tightened the bottom-right Website widget side-panel gap and simplified the bottom-right launcher to a single full-size icon button.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -154,6 +154,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-09 [TOOL] Node 22.22.0 homepage SiteHeader three-region layout plus desktop horizontal padding passed focused `SiteHeader.test.ts`, targeted ESLint for touched header files, `git diff --check`, and touched code-file LOC check under 300; full TypeScript check intentionally skipped for this small header-only task.
 - 2026-07-09 [TOOL] Node 22.22.0 landing service-card removal and delayed extra-padded orientation fit reproduced RED in landing/workflow source tests, then passed 30 focused/adjacent tests, targeted ESLint, `git diff --check`, touched-file LOC check under 300, and stale service-label scan clean except negative tests.
 - 2026-07-09 [TOOL] Node 22.22.0 workflow orientation refocus reproduced RED in `useWorkflowCanvasView.test.ts`, then passed focused hook/canvas tests, adjacent landing/page tests (12 tests), targeted ESLint, `git diff --check`, and touched-file LOC check under 300.
 - 2026-07-09 [TOOL] Node 22.22.0 landing demo Cleanup removal and fake showroom services reproduced RED in landing preview tests, then passed focused landing tests, adjacent workflow canvas/toolbar/node tests (24 tests), targeted ESLint, `git diff --check`, and touched-file LOC check under 300.
