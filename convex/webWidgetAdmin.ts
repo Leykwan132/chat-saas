@@ -1,9 +1,25 @@
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
-import { DEFAULT_WEB_WIDGET_LAYOUT, type WebWidgetLayout } from "../shared/webWidgetLayouts";
-import { DEFAULT_WEB_WIDGET_THEME, type WebWidgetTheme } from "../shared/webWidgetThemes";
-import { defaultWebWidgetPlaceholder, generateUniquePublicKey, getWebWidgetPlanState, isAgentInAuthScope, normalizeAgentDisplayName, normalizeWidgetPlaceholder, resolveWebWidgetBranding, resolveWidgetIconUrl } from "./webWidgetCore";
+import {
+  DEFAULT_WEB_WIDGET_LAYOUT,
+  normalizeWebWidgetLayout,
+  type WebWidgetLayout,
+} from "../shared/webWidgetLayouts";
+import {
+  DEFAULT_WEB_WIDGET_THEME,
+  type WebWidgetTheme,
+} from "../shared/webWidgetThemes";
+import {
+  defaultWebWidgetPlaceholder,
+  generateUniquePublicKey,
+  getWebWidgetPlanState,
+  isAgentInAuthScope,
+  normalizeAgentDisplayName,
+  normalizeWidgetPlaceholder,
+  resolveWebWidgetBranding,
+  resolveWidgetIconUrl,
+} from "./webWidgetCore";
 
 type AuthorizedAgent = {
   orgId: string;
@@ -42,7 +58,7 @@ async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<
     agentDisplayName: settings.agentDisplayName,
     placeholder:
       settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),
-    layout: DEFAULT_WEB_WIDGET_LAYOUT,
+    layout: normalizeWebWidgetLayout(settings.layout),
     theme: DEFAULT_WEB_WIDGET_THEME,
     iconUrl: await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon),
     ...branding,
@@ -211,10 +227,14 @@ export async function updateWidgetSettings(
   if (args.hidePoweredBy !== undefined) {
     patch.hidePoweredBy = args.hidePoweredBy;
   }
+  if (args.layout !== undefined) {
+    patch.layout = normalizeWebWidgetLayout(args.layout);
+  }
   if (
     patch.agentDisplayName === undefined &&
     patch.placeholder === undefined &&
-    patch.hidePoweredBy === undefined
+    patch.hidePoweredBy === undefined &&
+    patch.layout === undefined
   ) {
     throw new Error("No widget settings changes provided");
   }

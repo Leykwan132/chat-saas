@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
-import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { useUpgradeModal } from '@/components/UpgradeModal';
 import {
@@ -275,10 +274,7 @@ export default function ChannelsPage() {
     <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Channels</h1>
-          <PageDescription>
-            Website is available by default. Connect WhatsApp, Instagram, and Messenger to receive more messages.
-          </PageDescription>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Channels</h1>
         </div>
         <Button
           type="button"

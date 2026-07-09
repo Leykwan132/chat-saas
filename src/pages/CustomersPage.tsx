@@ -9,7 +9,6 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
-import { PageDescription } from '@/components/PageDescription';
 import { ImportCustomersDialog, ImportProgressBanner } from '@/components/ImportCustomersDialog';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -250,12 +249,9 @@ export default function CustomersPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
+          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
             Customers
           </h1>
-          <PageDescription>
-            Keep track of everyone who messages your business.
-          </PageDescription>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setImportDialogOpen(true)}>

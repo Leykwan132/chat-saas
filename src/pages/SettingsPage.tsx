@@ -162,7 +162,7 @@ export default function SettingsPage() {
     <div className="flex w-full flex-col gap-6">
       <header className="border-b border-border pb-6">
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Settings</h1>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Settings</h1>
         </div>
       </header>
 

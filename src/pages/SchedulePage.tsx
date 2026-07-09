@@ -5,7 +5,6 @@ import { Search, X, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import { PageDescription } from '@/components/PageDescription';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Toggle } from '@/components/ui/toggle';
@@ -173,10 +172,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     <div className="flex w-full max-w-5xl flex-col gap-6">
       {!hideHeader && (
         <div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Availability</h1>
-          <PageDescription>
-            Set when each team member is available to handle conversations.
-          </PageDescription>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Availability</h1>
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import type { QueryCtx, MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { getTeamStripePlanHelper } from "./plans";
-import { DEFAULT_WEB_WIDGET_LAYOUT } from "../shared/webWidgetLayouts";
+import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { DEFAULT_WEB_WIDGET_THEME } from "../shared/webWidgetThemes";
 
 export const RECENT_WIDGET_MESSAGES = 80;
@@ -115,7 +115,7 @@ export async function publicConfigForSettings(
   return {
     publicKey: settings.publicKey,
     agentDisplayName: settings.agentDisplayName,
-    layout: DEFAULT_WEB_WIDGET_LAYOUT,
+    layout: normalizeWebWidgetLayout(settings.layout),
     theme: DEFAULT_WEB_WIDGET_THEME,
     placeholder:
       settings.placeholder ?? defaultWebWidgetPlaceholder(settings.agentDisplayName),

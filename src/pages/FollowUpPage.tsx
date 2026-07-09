@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
 import { Plus, Check, X, Equal, MoreHorizontal, Trash2, Loader2 } from 'lucide-react';
-import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
@@ -234,10 +233,7 @@ export default function FollowUpPage() {
               WhatsApp only
             </span>
           </div>
-          <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Follow-ups</h1>
-          <PageDescription>
-            Automatically message customers who haven&apos;t replied yet.
-          </PageDescription>
+          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Follow-ups</h1>
         </div>
         {canManage && (
           <div className="flex shrink-0">

@@ -4,12 +4,12 @@ import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
-import { DEFAULT_WEB_WIDGET_LAYOUT } from '../../../shared/webWidgetLayouts';
 import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
 import { DEFAULT_WEB_WIDGET_THEME } from '../../../shared/webWidgetThemes';
 import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { WebWidgetAppearanceSection } from '@/components/channels/WebWidgetAppearanceSection';
 import { WebWidgetBrandingSection } from '@/components/channels/WebWidgetBrandingSection';
+import { WebWidgetLayoutPicker } from '@/components/channels/WebWidgetLayoutPicker';
 import { WebWidgetPreview } from '@/components/channels/WebWidgetPreview';
 import { WebWidgetScriptArtifact } from '@/components/channels/WebWidgetScriptArtifact';
 import { buildWebWidgetSnippet } from '@/components/channels/webWidgetSnippet';
@@ -51,8 +51,10 @@ export function WebWidgetSettingsPanel({
 }: WebWidgetSettingsPanelProps) {
   const [agentDisplayName, setAgentDisplayName] = useState(settings.agentDisplayName);
   const [placeholderText, setPlaceholderText] = useState(settings.placeholder);
+  const [placementLayout, setPlacementLayout] = useState(settings.layout);
   const [hidePoweredBy, setHidePoweredBy] = useState(settings.hidePoweredBy);
   const [savingAppearance, setSavingAppearance] = useState(false);
+  const [savingPlacement, setSavingPlacement] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
   const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
@@ -128,6 +130,31 @@ export function WebWidgetSettingsPanel({
     ],
   );
 
+  const savePlacement = useCallback(
+    (nextLayout: WebWidgetLayout) => {
+      if (!agentId || nextLayout === placementLayout || savingPlacement) return;
+      setPlacementLayout(nextLayout);
+      setSavingPlacement(true);
+      void updateSettings({
+        agentId,
+        layout: nextLayout,
+      })
+        .then(() => toast.success('Web widget placement updated'))
+        .catch((error) => {
+          setPlacementLayout(settings.layout);
+          toast.error(error instanceof Error ? error.message : String(error));
+        })
+        .finally(() => setSavingPlacement(false));
+    },
+    [
+      agentId,
+      placementLayout,
+      savingPlacement,
+      settings.layout,
+      updateSettings,
+    ],
+  );
+
   const copySnippet = useCallback(() => {
     void navigator.clipboard
       .writeText(snippet)
@@ -189,6 +216,12 @@ export function WebWidgetSettingsPanel({
               onIconFileSelected={uploadIcon}
             />
 
+            <WebWidgetLayoutPicker
+              value={placementLayout}
+              saving={savingPlacement}
+              onChange={savePlacement}
+            />
+
             <WebWidgetBrandingSection
               hidePoweredBy={hidePoweredBy}
               canHideBranding={settings.canHideBranding}
@@ -214,7 +247,7 @@ export function WebWidgetSettingsPanel({
             agentName={agentDisplayName || settings.agentDisplayName}
             placeholder={placeholderText.trim() || settings.placeholder}
             iconUrl={settings.iconUrl}
-            layout={DEFAULT_WEB_WIDGET_LAYOUT}
+            layout={placementLayout}
             theme={DEFAULT_WEB_WIDGET_THEME}
             poweredBy={previewPoweredBy}
             publicKey={settings.publicKey}

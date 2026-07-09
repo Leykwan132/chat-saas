@@ -8,7 +8,6 @@ import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { CreateServiceWizard } from '@/components/services/CreateServiceWizard';
 import { ServiceForm } from '@/components/ServiceForm';
 import { DetailPageActionFooter } from '@/components/automation/DetailPageActionFooter';
-import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -200,9 +199,6 @@ export default function ServicePage() {
             <h1 className="m-0 truncate text-3xl font-semibold tracking-tight text-foreground">
               {form.name.trim() || 'Edit service'}
             </h1>
-            <PageDescription>
-              Configure how the AI should collect details and book this appointment type.
-            </PageDescription>
           </div>
 
           {canManage ? (

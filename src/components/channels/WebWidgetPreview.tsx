@@ -96,7 +96,7 @@ export function WebWidgetPreview({
   const launcherWidgetHeight =
     mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[430px]' : 'h-14';
   const mobileInputPanelClassName = 'bottom-[4.5rem] left-0 right-0 top-0 w-full';
-  const mobileLauncherPanelClassName = 'bottom-20 left-0 right-0 top-0 w-full';
+  const mobileLauncherPanelClassName = 'bottom-16 left-0 right-0 top-0 w-full';
 
   const renderComposer = (variant: 'bar' | 'panel') => (
     <WebWidgetPreviewComposer
@@ -207,7 +207,7 @@ export function WebWidgetPreview({
                 mobilePreview
                   ? mobileLauncherPanelClassName
                   : cn(
-                      'bottom-20 w-full',
+                      'bottom-16 w-full',
                       layout === 'left_avatar' ? 'left-0' : 'right-0',
                     ),
               )}
@@ -225,17 +225,14 @@ export function WebWidgetPreview({
             </WebWidgetPreviewPanel>
             <div
               className={cn(
-                'absolute bottom-0 flex flex-col items-center gap-2',
+                'absolute bottom-0 flex items-center gap-2 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10',
                 layout === 'left_avatar' ? 'left-0' : 'right-0',
               )}
             >
               <button
                 type="button"
-                className={cn(
-                  'flex size-14 items-center justify-center rounded-full shadow-sm ring-1 ring-black/10 transition hover:scale-[1.03]',
-                  dark ? 'bg-black' : 'bg-white',
-                )}
-                aria-label="Open preview chat"
+                className="flex size-10 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
+                aria-label="Open preview chat icon"
                 onClick={() => {
                   setPanelOpen((current) => !current);
                   setFocused(true);

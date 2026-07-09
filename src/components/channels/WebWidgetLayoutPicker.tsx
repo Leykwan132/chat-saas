@@ -1,7 +1,6 @@
 import {
   Check,
   PanelBottom,
-  PanelLeft,
   PanelRight,
   type LucideIcon,
 } from 'lucide-react';
@@ -22,22 +21,16 @@ type LayoutOption = {
 
 const layoutOptions: LayoutOption[] = [
   {
-    value: 'right_avatar',
-    label: 'Right avatar',
-    description: 'Classic launcher on the lower right.',
-    Icon: PanelRight,
-  },
-  {
-    value: 'left_avatar',
-    label: 'Left avatar',
-    description: 'Launcher anchored on the lower left.',
-    Icon: PanelLeft,
-  },
-  {
     value: 'input_bar',
-    label: 'Input bar',
+    label: 'Middle',
     description: 'Signature centered bar that expands on focus.',
     Icon: PanelBottom,
+  },
+  {
+    value: 'right_avatar',
+    label: 'Bottom right',
+    description: 'Classic launcher on the lower right.',
+    Icon: PanelRight,
   },
 ];
 
@@ -56,7 +49,7 @@ export function WebWidgetLayoutPicker({
     <Field>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <FieldLabel>Layout</FieldLabel>
+          <FieldLabel>Placement</FieldLabel>
           <FieldDescription>
             Choose how the widget appears on the website.
           </FieldDescription>
@@ -65,7 +58,7 @@ export function WebWidgetLayoutPicker({
           <span className="text-xs text-muted-foreground">Saving</span>
         ) : null}
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {layoutOptions.map(({ value: optionValue, label, description, Icon }) => {
           const selected = value === optionValue;
           return (

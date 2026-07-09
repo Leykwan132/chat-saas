@@ -1,5 +1,4 @@
 import { useAuth } from '@workos-inc/authkit-react';
-import { Spinner } from '@/components/ui/spinner';
 import LandingPage from '@/pages/LandingPage';
 
 export default function HomePage() {
@@ -7,9 +6,7 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-[100svh] items-center justify-center bg-background text-foreground">
-        <Spinner className="h-8 w-8 text-zinc-500" />
-      </div>
+      <div className="landing-page min-h-[100svh] bg-white dark:bg-[#060606]" />
     );
   }
 

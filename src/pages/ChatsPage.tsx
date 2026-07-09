@@ -76,7 +76,6 @@ import {
   type InboxUIMessage,
 } from '@/lib/inboxOptimistic';
 import { Conversation } from '@/components/ai-elements/conversation';
-import { PageDescription } from '@/components/PageDescription';
 import { Shimmer } from '@/components/ai-elements/shimmer';
 import {
   InboxConversationList,
@@ -2341,12 +2340,9 @@ function ChatsPageHeader({ className }: { className?: string }) {
   return (
     <div className={cn('flex items-start justify-between', className)}>
       <div>
-        <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
           Inbox
         </h1>
-        <PageDescription>
-          View and reply to all your customer conversations in one place.
-        </PageDescription>
       </div>
     </div>
   );

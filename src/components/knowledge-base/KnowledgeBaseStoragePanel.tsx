@@ -1,9 +1,11 @@
 import type { ElementType } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { formatFileSize } from '@/components/knowledge-base/helpers';
+import type { KnowledgeType } from '@/components/knowledge-base/KnowledgeBaseNavigation';
 import { cn } from '@/lib/utils';
 
 export type KnowledgeBaseStorageStat = {
+  type: KnowledgeType;
   label: string;
   count: number;
   size: number;
@@ -14,6 +16,7 @@ type KnowledgeBaseStoragePanelProps = {
   rows: KnowledgeBaseStorageStat[];
   totalFileSize: number;
   maxTotalSize: number;
+  onSelect: (type: KnowledgeType) => void;
   className?: string;
 };
 
@@ -21,6 +24,7 @@ export function KnowledgeBaseStoragePanel({
   rows,
   totalFileSize,
   maxTotalSize,
+  onSelect,
   className,
 }: KnowledgeBaseStoragePanelProps) {
   return (
@@ -29,10 +33,12 @@ export function KnowledgeBaseStoragePanel({
         Storage limit
       </h2>
       <div className="flex w-full flex-col gap-3">
-        {rows.map(({ label, count, size, icon: Icon }) => (
-          <div
-            key={label}
-            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5"
+        {rows.map(({ type, label, count, size, icon: Icon }) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onSelect(type)}
+            className="flex w-full items-center justify-between gap-3 rounded-lg border border-border bg-card px-3 py-2.5 text-left transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex min-w-0 items-center gap-2">
               <Icon className="size-4 shrink-0 text-muted-foreground" />
@@ -43,7 +49,7 @@ export function KnowledgeBaseStoragePanel({
             <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
               {formatFileSize(size)}
             </span>
-          </div>
+          </button>
         ))}
       </div>
       <div className="flex w-full flex-col gap-1">

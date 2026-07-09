@@ -13,3 +13,11 @@ test('landing page hides the browser scrollbar indicator while keeping page scro
   expect(cssSource).toContain('display: none');
   expect(cssSource).not.toContain('html:has(.landing-page) {\\n    overflow-y: hidden;');
 });
+
+test('home page does not show a spinner while landing auth state loads', () => {
+  const homeSource = readFileSync(new URL('./HomePage.tsx', import.meta.url), 'utf8');
+
+  expect(homeSource).not.toContain("import { Spinner }");
+  expect(homeSource).not.toContain('<Spinner');
+  expect(homeSource).toContain('landing-page');
+});

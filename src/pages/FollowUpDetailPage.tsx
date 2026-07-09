@@ -680,12 +680,12 @@ export default function FollowUpDetailPage() {
                   setIsEditingTitle(false);
                 }}
                 autoFocus
-                className="max-w-2xl text-4xl font-semibold tracking-tight h-auto py-1 px-2"
+                className="max-w-2xl text-3xl font-semibold tracking-tight h-auto py-1 px-2"
                 aria-label="Follow-up name"
               />
             ) : (
               <>
-                <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">
+                <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
                   {name}
                 </h1>
                 {canManage && (

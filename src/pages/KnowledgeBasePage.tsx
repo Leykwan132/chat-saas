@@ -5,7 +5,6 @@ import { Globe, FileText, AlignLeft, HelpCircle, Info, XIcon } from 'lucide-reac
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import {
@@ -26,7 +25,10 @@ import {
   KnowledgeBaseNavigation,
   type KnowledgeType,
 } from '@/components/knowledge-base/KnowledgeBaseNavigation';
-import { KnowledgeBaseStoragePanel } from '@/components/knowledge-base/KnowledgeBaseStoragePanel';
+import {
+  KnowledgeBaseStoragePanel,
+  type KnowledgeBaseStorageStat,
+} from '@/components/knowledge-base/KnowledgeBaseStoragePanel';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
@@ -124,11 +126,15 @@ export default function KnowledgeBasePage() {
     }
   };
 
-  const statRows = [
-    { label: 'web', count: webCount, size: webSize, icon: Globe },
-    { label: 'file', count: fileCount, size: fileSizeVal, icon: FileText },
-    { label: 'text', count: textCount, size: textSize, icon: AlignLeft },
-    { label: 'Q&A', count: qaCount, size: qaSize, icon: HelpCircle },
+  const selectKnowledgeType = (nextType: KnowledgeType) => {
+    navigate(`/dashboard/${agentId}/knowledge-base/${nextType}`);
+  };
+
+  const statRows: KnowledgeBaseStorageStat[] = [
+    { type: 'web', label: 'web', count: webCount, size: webSize, icon: Globe },
+    { type: 'file', label: 'file', count: fileCount, size: fileSizeVal, icon: FileText },
+    { type: 'text', label: 'text', count: textCount, size: textSize, icon: AlignLeft },
+    { type: 'qa', label: 'Q&A', count: qaCount, size: qaSize, icon: HelpCircle },
   ];
   const deleteDialogTitle = deleteTarget?.type === 'web' && deleteTarget.isGroup
     ? 'Remove URL and linked pages'
@@ -139,17 +145,14 @@ export default function KnowledgeBasePage() {
       <div className="flex w-full flex-col gap-6">
         <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
           <div>
-            <h1 className="m-0 text-4xl font-semibold tracking-tight text-foreground">Knowledge Base</h1>
-            <PageDescription>
-              Add content your AI can reference when answering customer questions.
-            </PageDescription>
+            <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Knowledge Base</h1>
           </div>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
           <KnowledgeBaseNavigation
             activeType={type}
-            onSelect={(nextType) => navigate(`/dashboard/${agentId}/knowledge-base/${nextType}`)}
+            onSelect={selectKnowledgeType}
           />
 
           <div className="flex flex-col gap-4 min-w-0">
@@ -228,6 +231,7 @@ export default function KnowledgeBasePage() {
             rows={statRows}
             totalFileSize={totalFileSize}
             maxTotalSize={maxTotalSize}
+            onSelect={selectKnowledgeType}
             className="lg:col-start-2 xl:col-start-auto"
           />
         </div>

@@ -13,7 +13,6 @@ import {
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { PageDescription } from '@/components/PageDescription';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -207,9 +206,6 @@ export default function TemplatesPage() {
           <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground leading-tight">
             Message templates
           </h1>
-          <PageDescription>
-            Pre-approved WhatsApp messages for broadcasts and follow-ups.
-          </PageDescription>
         </div>
         <div className="flex items-center gap-2 mt-4 md:mt-0">
           <Button

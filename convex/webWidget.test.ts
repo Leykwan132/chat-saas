@@ -166,7 +166,7 @@ test("public config resolves by widget key and rejects disabled widgets", async 
   ).rejects.toThrow("Widget not found");
 });
 
-test("web widget layout and theme stay fixed while appearance updates", async () => {
+test("web widget placement can change while theme stays fixed", async () => {
   const t = initTest();
   const agentId = await createAgent(t, "user_web_layout", "Layout Agent");
   const setup = await t
@@ -189,7 +189,7 @@ test("web widget layout and theme stay fixed while appearance updates", async ()
     .mutation(api.webWidget.updateSettings, {
       agentId,
       agentDisplayName: "Left Concierge",
-      layout: "left_avatar",
+      layout: "right_avatar",
       theme: "dark",
       placeholder: "Ask the concierge anything",
     });
@@ -203,15 +203,17 @@ test("web widget layout and theme stay fixed while appearance updates", async ()
 
   expect(updatedDashboard).toMatchObject({
     agentDisplayName: "Left Concierge",
-    layout: "input_bar",
+    layout: "right_avatar",
     theme: "light",
   });
   expect(updatedConfig).toMatchObject({
     agentDisplayName: "Left Concierge",
-    layout: "input_bar",
+    layout: "right_avatar",
     theme: "light",
     placeholder: "Ask the concierge anything",
   });
+  expect(updatedDashboard).not.toHaveProperty("launcherLabel");
+  expect(updatedConfig).not.toHaveProperty("launcherLabel");
 });
 
 test("same visitor id reuses the web conversation", async () => {

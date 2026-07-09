@@ -1,10 +1,11 @@
 # Snapshot
-- 2026-07-09 [USER] Current focus: make AI reply/workflow media decisions more reliable with structured output instead of prompt-only tag envelopes.
+- 2026-07-09 [USER] Current focus: make Knowledge Base storage-limit cards switch tabs when clicked.
 - 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
 - 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
 - 2026-07-09 [CODE] Now: production prompt blocks no longer instruct the model to output `<workflow_matches>`, `<customer_response>`, or `<media_to_send>` tags; legacy tag parsers remain for compatibility tests/helpers.
 - 2026-07-09 [CODE] Recently done: prompt templates follow Role/About the business/Goal/Guardrails plus `# Error handling`; user-facing templates omit workflow/tool internals.
 - 2026-07-09 [CODE] Recently done: Book appointment workflow nodes default to `Yes`, omit Goal in the inspector, and expose selected Services to the AI.
+- 2026-07-09 [CODE] Recently done: Knowledge Base storage-limit cards are clickable tab shortcuts; app header and landing/widget polish is captured in Decisions/Receipts.
 - 2026-07-09 [CODE] Recently done: Convex agent validators/schema accept `productSales`; `captureAIGeneration` calls in Convex actions are awaited to avoid dangling PostHog fetches.
 - 2026-07-09 [CODE] Important context: landing preview, workflow layout, media send fixes, admin cost reporting, model catalog trimming, setup checklist, and Website widget milestones are captured in Decisions/Receipts.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
@@ -15,7 +16,7 @@
 - 2026-07-04 [CODE] D101 ACTIVE: Web widget runtime accepts `{ publicKey, visitorId, content, pageUrl }`; backend resolves `publicKey -> webWidgetSettings` and uses stored `channelId`/`agentId`, validating only that settings exist and are enabled.
 - 2026-07-04 [CODE] D102 ACTIVE: Web widget placeholder is optional persisted widget settings; public/dashboard config derives `What can {agentDisplayName} help with?` until the user saves custom placeholder text.
 - 2026-07-04 [CODE] D103 ACTIVE: Web widget Powered by branding is enforced server-side for free plans; paid-plan widgets can persist `hidePoweredBy`, and dashboard free-plan attempts open Adjust Plan instead of saving.
-- 2026-07-04 [CODE] D104 ACTIVE: Web widget layout/theme are fixed for now to the signature input-bar + light input defaults; dashboard/public config ignore stored layout/theme and the setup UI no longer exposes those pickers.
+- 2026-07-04 [CODE] D104 SUPERSEDED: Web widget layout/theme were fixed to signature input-bar + light defaults; D199 re-opens placement only while keeping theme fixed.
 - 2026-07-04 [CODE] D105 ACTIVE: Website is a built-in/default channel in Channels; users open Setup Info to lazily ensure widget settings, Website is not offered in the add-channel dialog, and web channels do not consume external channel capacity.
 - 2026-07-04 [CODE] D106 ACTIVE: Website setup preview is a live widget conversation: it stores `kilobot:widget-preview:{publicKey}:visitorId`, calls `api.webWidget.publicReceiveMessage`, subscribes to `api.webWidget.publicListMessages`, and never generates fake assistant replies.
 - 2026-07-04 [CODE] D107 ACTIVE: Website widget conversation rendering follows the playground chat style: assistant text is Markdown-rendered, pending AI is shown as a shimmer assistant row, and status-pill thinking UI is avoided.
@@ -109,15 +110,22 @@
 - 2026-07-09 [CODE] D195 ACTIVE: AI inbox replies no longer rely on prompt-level XML-style output envelopes. Workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only, and the backend resolves exact URLs/types from Workflow Runtime.
 - 2026-07-09 [CODE] D196 ACTIVE: When the workflow action planner returns a plan object, the AI reply worker must not require the final reply call to parse structured output. Final reply generation is plain text, and outbound media comes only from backend-resolved planner node IDs.
 - 2026-07-09 [CODE] D197 ACTIVE: When `mediaNodeIdsToSend` is non-empty, final AI reply guidance must say selected workflow media is being sent now; do not ask whether to send selected media or claim unselected matching workflow nodes are sent.
+- 2026-07-09 [CODE] D198 ACTIVE: Dashboard-generated Website widget install snippets include only `src` and `data-kilobot-widget`. The static widget runtime defaults to the production Convex site internally and keeps `data-kilobot-api` as an optional override for custom/dev installs.
+- 2026-07-09 [CODE] D199 ACTIVE: Website widget placement is configurable with two dashboard options: `input_bar` labeled Middle and `right_avatar` labeled Bottom right. Dashboard/public config return the stored placement; theme remains fixed to light.
+- 2026-07-09 [CODE] D200 ACTIVE: Public pasted widget root starts hidden (`opacity:0`, y-translate, `visibility:hidden`) and adds `ready` only after initial config/messages load renders, preserving `ready` across subsequent renders.
+- 2026-07-09 [CODE] D201 ACTIVE: Landing route auth-loading state renders a quiet landing-colored blank shell, not a spinner, before `LandingPage` can render.
+- 2026-07-09 [CODE] D202 ACTIVE: Bottom-right Website widget launchers render as a white rounded shell with one full-size avatar/icon button; the separate `Need help?` pill is removed from preview/runtime. Side-panel gap is tight: dashboard preview uses `bottom-16`, pasted desktop side panels use `bottom:64px`, mobile side panels use `bottom:76px`.
+- 2026-07-09 [CODE] D203 ACTIVE: Main app page headers use compact `text-3xl` titles; generic header `PageDescription` copy is removed from dashboard pages while functional detail-page metadata remains.
+- 2026-07-09 [CODE] D204 ACTIVE: Knowledge Base storage-limit rows carry `KnowledgeType` values and render as buttons that use the same route navigation as the left Sources tabs.
 
 # Done (recent)
-- 2026-07-09 [CODE] Added workflow action reply guidance so matched/selected workflow media is presented as being sent now, not as an offer to send later.
-- 2026-07-09 [CODE] Fixed empty workflow action plans so `generateAiReplyWorker` no longer crashes on final structured-output parsing when no workflow media should be sent.
-- 2026-07-09 [CODE] Replaced prompt-level workflow media envelopes with structured AI SDK output plus backend-resolved workflow media planning.
-- 2026-07-08 [CODE] Fixed dangling PostHog `fetch` errors in `generateAiReply` by awaiting AI generation capture calls and adding regression coverage.
-- 2026-07-08 [CODE] Added `This is important` emphasis to the workflow final response contract for matched media/file nodes requiring `<media_to_send>`.
-- 2026-07-08 [CODE] Sales template renamed to `Real estate sales agent` and focused on booking real estate showroom viewings while preserving shared prompt sections/error handling.
-- 2026-07-08 [CODE] System prompt editor note now distinguishes prompt guidance for answering style/high-level goals/general guardrails from Workflow setup for reliable conditional actions.
+- 2026-07-09 [CODE] Made Knowledge Base storage-limit cards clickable so Web/File/Text/Q&A counts switch to the matching tab.
+- 2026-07-09 [CODE] Compact dashboard/page titles and removed generic header descriptions across app pages, including agent setup and broadcast/follow-up detail titles.
+- 2026-07-09 [CODE] Removed the landing-page auth-loading spinner and replaced it with a quiet landing-colored shell.
+- 2026-07-09 [CODE] Tightened the bottom-right Website widget side-panel gap and simplified the bottom-right launcher to a single full-size icon button.
+- 2026-07-09 [CODE] Hid the public Website widget until initial readiness, then revealed it with a y-axis fade/translate animation.
+- 2026-07-09 [CODE] Added Website widget placement selection for Middle or Bottom right, with preview and pasted widget config using the stored placement.
+- 2026-07-09 [CODE] Simplified the Website widget copy/paste snippet by removing the explicit backend API attribute while preserving the runtime override path.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -142,6 +150,19 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-09 [TOOL] Node 22.22.0 Knowledge Base storage-card tab switching reproduced RED in `KnowledgeBaseStoragePanel.test.ts`, then passed focused test, targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and small touched-file LOC check.
+- 2026-07-09 [TOOL] Node 22.22.0 compact page-header change reproduced RED in `src/pages/pageHeaderChrome.test.ts`, then passed 16 focused header tests, narrowed ESLint for new/shared files, full `bunx tsc -b --pretty false`, `git diff --check`, source scans for stale `PageDescription`/`text-4xl` app header patterns, and LOC check for new/shared small files.
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget single-icon launcher reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget launcher preview/runtime alignment reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget launcher pill padding reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget launcher icon swap reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget launcher font weight reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget side-panel gap reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget launcher order reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 landing loading spinner removal reproduced RED in `LandingPage.test.ts`, then passed focused landing tests, targeted ESLint, `git diff --check`, and touched-file LOC check.
+- 2026-07-09 [TOOL] Node 22.22.0 public widget ready/fade-in behavior reproduced RED in `WebWidgetMobileLayout.test.ts`, then passed focused widget tests (12 tests), targeted ESLint, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` is 299 lines).
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget placement change reproduced RED in `convex/webWidget.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused widget tests (11 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check under 300.
+- 2026-07-09 [TOOL] Node 22.22.0 Website widget minimal snippet reproduced RED in `src/components/channels/webWidgetSnippet.test.ts`, then passed focused snippet/mobile widget tests, targeted ESLint, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` stayed 298 lines).
 - 2026-07-09 [TOOL] Node 22.22.0 selected workflow media reply-guidance change reproduced RED in `workflowActionPlanner.test.ts`, then passed focused planner test, related Vitest suite (`aiReplyOutput`, `workflowActionPlanner`, `doubleSave`) with 14 tests, full `bunx tsc -b --pretty false`, targeted ESLint, `git diff --check`, and debug-log scan.
 - 2026-07-09 [TOOL] Node 22.22.0 empty workflow action plan crash reproduced RED in `convex/chat/workflowActionPlanner.test.ts`, then passed focused planner tests, related Vitest suite (`aiReplyOutput`, `workflowActionPlanner`, `doubleSave`) with 12 tests, full `bunx tsc -b --pretty false`, `git diff --check`, and debug-log scan.
 - 2026-07-09 [TOOL] Node 22.22.0 added descriptions to every `workflowActionPlanSchema` field/item and removed stray workflow planner debug logging; RED/GREEN focused planner test passed, full `bunx tsc -b --pretty false` passed, targeted ESLint passed, console-log scan clean, and `git diff --check` passed.
