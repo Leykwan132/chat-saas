@@ -66,4 +66,16 @@ describe('page header chrome', () => {
     expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
   });
+
+  test('analytics section headers use compact titles without descriptions', () => {
+    const pageSource = readPage('AnalyticsPage.tsx');
+    const headerSource = readComponent('analytics/AnalyticsUi.tsx');
+
+    expect(pageSource).not.toContain('description:');
+    expect(pageSource).not.toContain('See how much token spend this agent has used across models over time.');
+    expect(headerSource).toMatch(/type AnalyticsSectionHeaderProps = \{\s+title: string;\s+action\?: ReactNode;\s+\};/);
+    expect(headerSource).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(headerSource).not.toContain('sm:text-4xl');
+    expect(headerSource).not.toMatch(/export function AnalyticsSectionHeader\([\s\S]*\{description\}[\s\S]*type AnalyticsBlockProps/);
+  });
 });

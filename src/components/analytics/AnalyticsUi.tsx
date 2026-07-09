@@ -661,22 +661,19 @@ export function AnalyticsRangeToggle<T extends string>({
 
 type AnalyticsSectionHeaderProps = {
   title: string;
-  description: string;
   action?: ReactNode;
 };
 
 export function AnalyticsSectionHeader({
   title,
-  description,
   action,
 }: AnalyticsSectionHeaderProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0 flex-1">
-        <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
           {title}
         </h2>
-        <p className="mt-2 text-base text-muted-foreground">{description}</p>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>

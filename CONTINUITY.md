@@ -1,11 +1,11 @@
 # Snapshot
-- 2026-07-09 [USER] Current focus: make Knowledge Base storage-limit cards switch tabs when clicked.
+- 2026-07-09 [USER] Current focus: include AI Agent Usage in the compact title/no-description page-header treatment.
 - 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
 - 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
 - 2026-07-09 [CODE] Now: production prompt blocks no longer instruct the model to output `<workflow_matches>`, `<customer_response>`, or `<media_to_send>` tags; legacy tag parsers remain for compatibility tests/helpers.
 - 2026-07-09 [CODE] Recently done: prompt templates follow Role/About the business/Goal/Guardrails plus `# Error handling`; user-facing templates omit workflow/tool internals.
 - 2026-07-09 [CODE] Recently done: Book appointment workflow nodes default to `Yes`, omit Goal in the inspector, and expose selected Services to the AI.
-- 2026-07-09 [CODE] Recently done: Knowledge Base storage-limit cards are clickable tab shortcuts; app header and landing/widget polish is captured in Decisions/Receipts.
+- 2026-07-09 [CODE] Recently done: AI Agent Usage analytics header is compact and description-free; Knowledge Base storage cards and landing/widget polish are captured in Decisions/Receipts.
 - 2026-07-09 [CODE] Recently done: Convex agent validators/schema accept `productSales`; `captureAIGeneration` calls in Convex actions are awaited to avoid dangling PostHog fetches.
 - 2026-07-09 [CODE] Important context: landing preview, workflow layout, media send fixes, admin cost reporting, model catalog trimming, setup checklist, and Website widget milestones are captured in Decisions/Receipts.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
@@ -117,15 +117,16 @@
 - 2026-07-09 [CODE] D202 ACTIVE: Bottom-right Website widget launchers render as a white rounded shell with one full-size avatar/icon button; the separate `Need help?` pill is removed from preview/runtime. Side-panel gap is tight: dashboard preview uses `bottom-16`, pasted desktop side panels use `bottom:64px`, mobile side panels use `bottom:76px`.
 - 2026-07-09 [CODE] D203 ACTIVE: Main app page headers use compact `text-3xl` titles; generic header `PageDescription` copy is removed from dashboard pages while functional detail-page metadata remains.
 - 2026-07-09 [CODE] D204 ACTIVE: Knowledge Base storage-limit rows carry `KnowledgeType` values and render as buttons that use the same route navigation as the left Sources tabs.
+- 2026-07-09 [CODE] D205 ACTIVE: Analytics page section headers, including AI Agent Usage, use compact `text-3xl` titles and no section-level description copy; inner analytics card descriptions may remain.
 
 # Done (recent)
+- 2026-07-09 [CODE] Included AI Agent Usage/Analytics section headers in the compact title/no-description treatment.
 - 2026-07-09 [CODE] Made Knowledge Base storage-limit cards clickable so Web/File/Text/Q&A counts switch to the matching tab.
 - 2026-07-09 [CODE] Compact dashboard/page titles and removed generic header descriptions across app pages, including agent setup and broadcast/follow-up detail titles.
 - 2026-07-09 [CODE] Removed the landing-page auth-loading spinner and replaced it with a quiet landing-colored shell.
 - 2026-07-09 [CODE] Tightened the bottom-right Website widget side-panel gap and simplified the bottom-right launcher to a single full-size icon button.
 - 2026-07-09 [CODE] Hid the public Website widget until initial readiness, then revealed it with a y-axis fade/translate animation.
 - 2026-07-09 [CODE] Added Website widget placement selection for Middle or Bottom right, with preview and pasted widget config using the stored placement.
-- 2026-07-09 [CODE] Simplified the Website widget copy/paste snippet by removing the explicit backend API attribute while preserving the runtime override path.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -150,6 +151,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-09 [TOOL] Node 22.22.0 AI Agent Usage header cleanup reproduced RED in `pageHeaderChrome.test.ts`, then passed 17 focused header tests, full `bunx tsc -b --pretty false`, targeted ESLint for page/test, `git diff --check`, and stale analytics description/title-growth scan.
 - 2026-07-09 [TOOL] Node 22.22.0 Knowledge Base storage-card tab switching reproduced RED in `KnowledgeBaseStoragePanel.test.ts`, then passed focused test, targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and small touched-file LOC check.
 - 2026-07-09 [TOOL] Node 22.22.0 compact page-header change reproduced RED in `src/pages/pageHeaderChrome.test.ts`, then passed 16 focused header tests, narrowed ESLint for new/shared files, full `bunx tsc -b --pretty false`, `git diff --check`, source scans for stale `PageDescription`/`text-4xl` app header patterns, and LOC check for new/shared small files.
 - 2026-07-09 [TOOL] Node 22.22.0 Website widget single-icon launcher reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPlacement.test.ts`, then passed focused launcher tests (7 tests), targeted ESLint, full `bunx tsc -b --pretty false`, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 299 lines).

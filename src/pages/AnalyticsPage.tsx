@@ -35,21 +35,18 @@ const ANALYTICS_SECTIONS: Array<{
   label: string;
   icon: React.ElementType;
   title: string;
-  description: string;
 }> = [
   {
     section: 'usage',
     label: 'AI Agent Usage',
     icon: Bot,
     title: 'AI Agent Usage',
-    description: 'See how much token spend this agent has used across models over time.',
   },
   {
     section: 'team',
     label: 'Team Analytics',
     icon: Users,
     title: 'Team Analytics',
-    description: 'Track team performance, channel conversions, and member outcomes.',
   },
 ];
 
@@ -163,7 +160,6 @@ export default function AnalyticsPage() {
             <>
               <AnalyticsSectionHeader
                 title={activeSection.title}
-                description={activeSection.description}
                 action={
                   section === 'usage' ? undefined : (
                     <AnalyticsRangeToggle
