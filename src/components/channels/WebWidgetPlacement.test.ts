@@ -34,3 +34,8 @@ test('bottom right placement uses a single icon launcher', () => {
   expect(previewSource).toContain('aria-label="Open preview chat icon"');
   expect(previewSource).not.toContain('aria-label="Open preview help"');
 });
+
+test('bottom right setup preview keeps the launcher icon visible while the panel is open', () => {
+  expect(previewSource).not.toContain('{!panelOpen ? (');
+  expect(previewSource).toContain('aria-label="Open preview chat icon"');
+});

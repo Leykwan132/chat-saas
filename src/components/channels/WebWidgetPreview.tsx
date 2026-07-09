@@ -234,7 +234,7 @@ export function WebWidgetPreview({
                 className="flex size-10 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
                 aria-label="Open preview chat icon"
                 onClick={() => {
-                  setPanelOpen((current) => !current);
+                  setPanelOpen(true);
                   setFocused(true);
                 }}
               >

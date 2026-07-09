@@ -80,7 +80,7 @@ export function WebWidgetPreviewPanel({
         >
           <div className="flex min-w-0 items-center gap-2">
             <WidgetAvatar iconUrl={iconUrl} name={agentName} theme={theme} />
-            <span className="truncate text-sm font-semibold">{agentName}</span>
+            <span className="truncate text-sm font-normal">{agentName}</span>
           </div>
           <button
             type="button"
@@ -123,11 +123,7 @@ export function WebWidgetPreviewPanel({
           </div>
         ) : null}
         {children ? (
-          <div
-            className={cn(
-              'relative z-10 border-t border-white/10 bg-transparent p-4',
-            )}
-          >
+          <div className="relative z-10 bg-transparent p-4">
             {children}
           </div>
         ) : null}
