@@ -285,7 +285,7 @@ export default function ChannelsPage() {
               setOpenAddDialog(true);
             }
           }}
-          className="gap-2 shrink-0 rounded-xl"
+          className="gap-2 shrink-0 rounded-full"
         >
           <Plus className="size-4" />
           Add new channel
