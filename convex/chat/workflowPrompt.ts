@@ -77,26 +77,9 @@ function formatMediaAssets(kind: string, mediaAssets: RuntimeMediaAsset[]) {
     `- ${label}:`,
     ...mediaAssets.map((asset) => {
       const filename = asset.filename ? `, file: ${asset.filename}` : "";
-      return `  - url: ${asset.url}${filename}, type: ${asset.mediaType}`;
+      return `  - clientId: ${asset.clientId}${filename}, type: ${asset.mediaType}`;
     }),
   ].join("\n");
-}
-
-function firstMediaAsset(context: NonNullable<WorkflowRuntimeContextForPrompt>) {
-  return firstMediaNodeWithAsset(context)?.asset;
-}
-
-function firstMediaNodeWithAsset(context: NonNullable<WorkflowRuntimeContextForPrompt>) {
-  return context.nodes
-    .filter((node) => node.kind === "sendImage" || node.kind === "sendFile")
-    .flatMap((node) =>
-      node.mediaAssets.map((asset) => ({ node, asset })),
-    )
-    .find(({ asset }) => asset.url.trim().length > 0);
-}
-
-function hasMediaNode(context: NonNullable<WorkflowRuntimeContextForPrompt>) {
-  return context.nodes.some((node) => node.kind === "sendImage" || node.kind === "sendFile");
 }
 
 export function buildWorkflowBackendHandlingBlock() {
@@ -108,56 +91,11 @@ If the customer asks for something that requires a workflow action, collect only
 If a workflow cannot complete successfully, apologize and escalate instead of pretending the action was completed.`;
 }
 
-export function buildWorkflowFinalResponseContractBlock(context: WorkflowRuntimeContextForPrompt) {
-  if (context === null || !hasMediaNode(context)) return "";
-
-  const mediaManifestAsset = firstMediaAsset(context);
-  const mediaManifestNode = firstMediaNodeWithAsset(context)?.node;
-  const mediaManifestUrl = mediaManifestAsset?.url ?? "exact-url-from-media-assets";
-  const mediaManifestType = mediaManifestAsset?.mediaType ?? "media/type-from-media-assets";
-  const mediaManifestNodeId = mediaManifestNode?.nodeId ?? "matching-node-id";
-  const mediaManifestNodeKind = mediaManifestNode?.kind ?? "sendImage-or-sendFile";
-  const mediaManifestNodeTitle = mediaManifestNode?.title ?? "Matching media node";
-
-  return `\n\n## Final Response Contract — REQUIRED
-This is the required final answer format for this workflow. Never output plain text as the final answer.
-
-Every final answer you send to the customer MUST use this envelope:
-\`<workflow_matches>
-[]
-</workflow_matches>
-<customer_response>
-Customer-visible text only.
-</customer_response>
-<media_to_send>
-[]
-</media_to_send>\`
-
-Build the final response from these data sources, in this order:
-1. Workflow Runtime is the source of truth for which nodes are active. Match the latest customer message against non-booking node goals, Book appointment Services, media assets to send, and incoming conditions.
-2. After \`fetchContext\`, build \`<workflow_matches>\` as a JSON array. Put only a JSON array inside \`<workflow_matches>\`. Include every matching workflow node in \`<workflow_matches>\`, do not stop at the first match, and list each node once even if multiple conditions on that node match. Each item must set \`matched\` to true and copy the exact matching node \`nodeId\`, \`kind\` as \`nodeKind\`, and \`title\` as \`nodeTitle\`; if no node matches, output [].
-3. Execute every node listed in \`<workflow_matches>\`.
-4. Media assets listed under each matching workflow media node are the only valid source for media URLs. Copy the matching workflow node \`nodeId\` plus exact \`url\` and \`type\` values from each matching media node's Media assets into \`<media_to_send>\`.
-5. Use \`fetchContext\` only for customer-facing facts, names, labels, or short wording inside \`<customer_response>\`. Do not use it to invent media URLs.
-6. Use the matching media node's assets and incoming conditions to decide whether media should be sent now, including repeat requests.
-7. After choosing the data, construct the final response envelope. Do not answer first and then decide media later.
-
-This is important: if a Send Photo/Video or Send Files node matches, \`<media_to_send>\` MUST contain a JSON array of objects using the matching workflow node \`nodeId\` plus exact workflow media \`url\` and \`type\` values, for example:
-\`<workflow_matches>
-[
-  { "matched": true, "nodeId": "${mediaManifestNodeId}", "nodeKind": "${mediaManifestNodeKind}", "nodeTitle": "${mediaManifestNodeTitle}" }
-]
-</workflow_matches>
-<customer_response>
-Here's the media.
-</customer_response>
-<media_to_send>
-[
-  { "nodeId": "${mediaManifestNodeId}", "url": "${mediaManifestUrl}", "type": "${mediaManifestType}" }
-]
-</media_to_send>\`
-
-If any item in \`workflow_matches\` has \`nodeKind\` \`sendImage\` or \`sendFile\`, \`<media_to_send>\` must contain at least one exact \`nodeId\`, \`url\`, and \`type\` object from each matching media node. Do not put any text outside these tags. Do not omit \`<media_to_send>\`; use [] when no media should be sent. The system strips these tags before the customer sees the message.`;
+export function buildWorkflowFinalResponseContractBlock(
+  _context: WorkflowRuntimeContextForPrompt,
+) {
+  void _context;
+  return "";
 }
 
 function buildServiceBoundaryRules() {
@@ -176,15 +114,6 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
   const backendHandlingBlock = buildWorkflowBackendHandlingBlock();
 
   if (context === null || context.nodes.length === 0) return backendHandlingBlock;
-
-  const mediaManifestNodeWithAsset = firstMediaNodeWithAsset(context);
-  const mediaManifestAsset = mediaManifestNodeWithAsset?.asset;
-  const mediaManifestNode = mediaManifestNodeWithAsset?.node;
-  const mediaManifestUrl = mediaManifestAsset?.url ?? "exact-url-from-media-assets";
-  const mediaManifestType = mediaManifestAsset?.mediaType ?? "media/type-from-media-assets";
-  const mediaManifestNodeId = mediaManifestNode?.nodeId ?? "matching-node-id";
-  const mediaManifestNodeKind = mediaManifestNode?.kind ?? "sendImage-or-sendFile";
-  const mediaManifestNodeTitle = mediaManifestNode?.title ?? "Matching media node";
 
   const nodeSections = context.nodes
     .map((node, index) => {
@@ -220,38 +149,21 @@ Use this workflow as the source of truth for what stage the conversation is in a
 
 ### When to use workflow nodes
 Infer active nodes each turn from the latest customer message, message history, each non-booking node goal, each Book appointment node's Services, each media node's assets to send, and incoming edge conditions. Do not store or invent a persistent conversation stage.
-Multiple workflow node conditions can match in one turn. Include every matching workflow node in \`<workflow_matches>\`. Execute every node listed in \`<workflow_matches>\`. Do not stop at the first match. If multiple conditions on the same node match, list that node once. If no action node condition matches, continue with the normal support/sales response rules.
+Multiple workflow node conditions can match in one turn. Follow every matching node; do not stop at the first match. If multiple conditions on the same node match, treat that node as matched once. If no action node condition matches, continue with the normal support/sales response rules.
 
 ### How to follow the workflow
 1. Match the latest customer message against node goals, Book appointment Services, media assets, and incoming conditions.
 2. Call \`fetchContext\` for customer-facing facts and wording.
-3. Build \`<workflow_matches>\` as a JSON array before writing the customer response.
-4. Execute every node listed in \`<workflow_matches>\`.
-5. Put customer-visible text inside \`<customer_response>\`.
-6. Put workflow media objects inside \`<media_to_send>\`.
-
-After \`fetchContext\`, build \`<workflow_matches>\` as a JSON array before writing the customer response. If workflow node conditions match the latest customer message, include one object for every matching workflow node. Each object must set \`matched\` to true and copy the exact matching node \`nodeId\`, \`kind\` as \`nodeKind\`, and \`title\` as \`nodeTitle\`; otherwise output []. Example:
-\`<workflow_matches>
-[
-  { "matched": true, "nodeId": "${mediaManifestNodeId}", "nodeKind": "${mediaManifestNodeKind}", "nodeTitle": "${mediaManifestNodeTitle}" }
-]
-</workflow_matches>\`
+3. Keep customer-visible text natural and brief.
+4. Do not paste workflow metadata, media URLs, media client IDs, or internal action notes into the customer response.
+5. Let the backend workflow planner handle reliable action metadata and media sending.
 
 ### Workflow guardrails
 For Send message nodes, send the configured message when the incoming condition matches. Keep the response focused on that configured message unless the customer asks for a necessary clarification.
 
-For Send Photo/Video and Send Files nodes, You MUST include the media in \`<media_to_send>\` every time the customer asks for that media and the incoming condition matches, even if the same asset was sent earlier. Do not answer that the media was already sent without declaring it. Use only the matching workflow node \`nodeId\` plus exact \`url\` and \`type\` values listed under that node's Media assets. Put the customer-visible message inside \`<customer_response>\` and put a JSON array inside \`<media_to_send>\`, like:
-\`<customer_response>
-Here it is.
-</customer_response>
-<media_to_send>
-[
-  { "nodeId": "${mediaManifestNodeId}", "url": "${mediaManifestUrl}", "type": "${mediaManifestType}" }
-]
-</media_to_send>\`
-If any item in \`workflow_matches\` has \`nodeKind\` \`sendImage\` or \`sendFile\`, \`<media_to_send>\` must contain at least one exact \`nodeId\`, \`url\`, and \`type\` object from each matching media node's Media assets.
-For sendFile nodes, customer words such as brochure, PDF, document, file, catalog, menu, or attachment mean the matching node's Media assets must be copied into \`<media_to_send>\`. Do not say "Here's the brochure", "I've attached the file", or similar unless \`<media_to_send>\` contains the exact file \`nodeId\`, \`url\`, and \`type\` from that sendFile node.
-The system strips these tags before sending, validates the media URLs against the active workflow, and sends the files separately. Do not include media URLs or \`[MEDIA:...]\` markers inside \`<customer_response>\`. Do not use tool calls for Send message, Q&A, booking, lead qualification, or custom action nodes.
+This is important: for Send Photo/Video and Send Files nodes, treat the media node as matched every time the customer asks for that media and the incoming condition matches, even if the same asset was sent earlier. Do not answer that the media was already sent. Do not paste media URLs or \`[MEDIA:...]\` markers in the customer response; the backend validates the matched workflow node and sends the assets separately.
+For sendFile nodes, customer words such as brochure, PDF, document, file, catalog, menu, or attachment mean the matching file node should be used. Do not say "Here's the brochure", "I've attached the file", or similar unless the workflow node has an uploaded file listed under it.
+Do not use tool calls for Send message, Q&A, booking, lead qualification, Send Photo/Video, Send Files, or custom action nodes.
 
 For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
 

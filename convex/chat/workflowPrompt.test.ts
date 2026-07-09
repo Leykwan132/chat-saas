@@ -36,7 +36,7 @@ test("workflow runtime tells send message nodes to send the configured message",
   expect(block).toContain("Thanks for reaching out");
 });
 
-test("workflow runtime tells media nodes to declare media on every matching customer request", () => {
+test("workflow runtime delegates media sends to the backend planner", () => {
   const block = buildWorkflowRuntimeBlock({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
@@ -66,46 +66,16 @@ test("workflow runtime tells media nodes to declare media on every matching cust
     ],
   });
 
-  expect(block).toContain("include the media in `<media_to_send>` every time");
+  expect(block).toContain("This is important: for Send Photo/Video and Send Files nodes");
   expect(block).toContain("even if the same asset was sent earlier");
-  expect(block).toContain("Do not answer that the media was already sent without declaring it");
+  expect(block).toContain("the backend validates the matched workflow node and sends the assets separately");
+  expect(block).toContain("clientId: layout-client-id");
+  expect(block).not.toContain("https://cdn.example.com/type-a-layout.png");
+  expect(block).not.toContain("<media_to_send>");
   expect(block).not.toContain("sendMedia");
 });
 
-test("workflow runtime tells media nodes to declare final media in a manifest", () => {
-  const block = buildWorkflowRuntimeBlock({
-    workflowId: "workflow-id" as Id<"workflows">,
-    edges: [],
-    nodes: [
-      {
-        nodeId: "media-node-id" as Id<"workflowNodes">,
-        kind: "sendFile",
-        title: "Send brochure",
-        goal: "Send the requested brochure.",
-        incomingConditions: [],
-        allowedServices: [],
-        mediaAssets: [
-          {
-            clientId: "brochure-client-id",
-            filename: "Sena Brochure.pdf",
-            mediaType: "application/pdf",
-            url: "https://cdn.example.com/sena-brochure.pdf",
-          },
-        ],
-      },
-    ],
-  });
-
-  expect(block).toContain("<customer_response>");
-  expect(block).toContain("<media_to_send>");
-  expect(block).toContain('"nodeId": "media-node-id", "url": "https://cdn.example.com/sena-brochure.pdf"');
-  expect(block).toContain('"type": "application/pdf"');
-  expect(block).not.toContain('"clientId"');
-  expect(block).not.toContain('"reason"');
-  expect(block).toContain("The system strips these tags before sending");
-});
-
-test("workflow runtime makes send file nodes copy brochure file URLs into media_to_send", () => {
+test("workflow runtime makes send file nodes use uploaded file assets without exposing URLs", () => {
   const block = buildWorkflowRuntimeBlock({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
@@ -113,22 +83,22 @@ test("workflow runtime makes send file nodes copy brochure file URLs into media_
       {
         nodeId: "file-node-id" as Id<"workflowNodes">,
         kind: "sendFile",
-        title: "Send Sena Residence Brochure",
+        title: "Send Arden Heights Brochure",
         goal: "Send node-owned files or documents to the customer when this condition matches.",
         incomingConditions: [
           {
             sourceNodeId: "source-id" as Id<"workflowNodes">,
-            name: "A brochure of Sena Residence",
-            detail: "If the user asks for a brochure for Sena residence, send this file.",
+            name: "A brochure of Arden Heights",
+            detail: "If the user asks for a brochure for Arden Heights, send this file.",
           },
         ],
         allowedServices: [],
         mediaAssets: [
           {
             clientId: "brochure-client-id",
-            filename: "LinkedIn_Posts__6_.pdf",
+            filename: "Arden_Brochure.pdf",
             mediaType: "application/pdf",
-            url: "https://cdn.example.com/sena-brochure.pdf",
+            url: "https://cdn.example.com/arden-brochure.pdf",
           },
         ],
       },
@@ -137,18 +107,19 @@ test("workflow runtime makes send file nodes copy brochure file URLs into media_
 
   expect(block).toContain("For sendFile nodes");
   expect(block).toContain("brochure, PDF, document, file, catalog, menu, or attachment");
+  expect(block).toContain("clientId: brochure-client-id, file: Arden_Brochure.pdf, type: application/pdf");
   expect(block).toContain("Do not say \"Here's the brochure\", \"I've attached the file\", or similar unless");
-  expect(block).toContain('"nodeId": "file-node-id", "url": "https://cdn.example.com/sena-brochure.pdf"');
-  expect(block).toContain('"type": "application/pdf"');
+  expect(block).not.toContain("https://cdn.example.com/arden-brochure.pdf");
+  expect(block).not.toContain("<customer_response>");
 });
 
-test("workflow runtime requires workflow match array and media URL cross-check", () => {
+test("workflow runtime tells the model to follow every matching node without tag envelopes", () => {
   const block = buildWorkflowRuntimeBlock({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
     nodes: [
       {
-        nodeId: "media-node-id" as Id<"workflowNodes">,
+        nodeId: "video-node-id" as Id<"workflowNodes">,
         kind: "sendImage",
         title: "Send Type B video",
         goal: "Send the requested Type B video.",
@@ -156,14 +127,14 @@ test("workflow runtime requires workflow match array and media URL cross-check",
           {
             sourceNodeId: "source-id" as Id<"workflowNodes">,
             name: "Customer asks for Type B video",
-            detail: "If the customer asks for Sena Residence Type B video, send this media.",
+            detail: "If the customer asks for Arden Heights Type B video, send this media.",
           },
         ],
         allowedServices: [],
         mediaAssets: [
           {
             clientId: "type-b-video",
-            filename: "Sena Residence Type B.mp4",
+            filename: "Arden Heights Type B.mp4",
             mediaType: "video/mp4",
             url: "https://cdn.example.com/type-b-video.mp4",
           },
@@ -172,120 +143,22 @@ test("workflow runtime requires workflow match array and media URL cross-check",
     ],
   });
 
-  expect(block).toContain("<workflow_matches>");
-  expect(block).toContain('"matched": true');
-  expect(block).toContain('"nodeId": "media-node-id"');
-  expect(block).toContain("After `fetchContext`, build `<workflow_matches>`");
-  expect(block).toContain("If any item in `workflow_matches` has `nodeKind` `sendImage` or `sendFile`");
-  expect(block).toContain("must contain at least one exact `nodeId`, `url`, and `type`");
+  expect(block).toContain("Multiple workflow node conditions can match in one turn");
+  expect(block).toContain("Follow every matching node");
+  expect(block).toContain("do not stop at the first match");
+  expect(block).toContain("Let the backend workflow planner handle reliable action metadata and media sending");
+  expect(block).not.toContain("<workflow_matches>");
 });
 
-test("workflow final response contract forbids plain text when media nodes exist", () => {
-  const block = buildWorkflowFinalResponseContractBlock({
-    workflowId: "workflow-id" as Id<"workflows">,
-    edges: [],
-    nodes: [
-      {
-        nodeId: "media-node-id" as Id<"workflowNodes">,
-        kind: "sendFile",
-        title: "Send Type B video",
-        goal: "Send the requested Type B video.",
-        incomingConditions: [],
-        allowedServices: [],
-        mediaAssets: [
-          {
-            clientId: "type-b-video",
-            filename: "Sena Residence Type B.mp4",
-            mediaType: "video/mp4",
-            url: "https://cdn.example.com/type-b-video.mp4",
-          },
-        ],
-      },
-    ],
-  });
-
-  expect(block).toContain("## Final Response Contract — REQUIRED");
-  expect(block).toContain("Never output plain text as the final answer");
-  expect(block).toContain("<customer_response>");
-  expect(block).toContain("<media_to_send>");
-  expect(block).toContain('"nodeId": "media-node-id", "url": "https://cdn.example.com/type-b-video.mp4"');
-  expect(block).toContain('"type": "video/mp4"');
-  expect(block).not.toContain('"clientId"');
-  expect(block).not.toContain('"reason"');
-});
-
-test("workflow final response contract includes workflow matches before media manifest", () => {
-  const block = buildWorkflowFinalResponseContractBlock({
-    workflowId: "workflow-id" as Id<"workflows">,
-    edges: [],
-    nodes: [
-      {
-        nodeId: "media-node-id" as Id<"workflowNodes">,
-        kind: "sendFile",
-        title: "Send brochure",
-        goal: "Send the requested brochure.",
-        incomingConditions: [],
-        allowedServices: [],
-        mediaAssets: [
-          {
-            clientId: "brochure-file",
-            filename: "Sena Residence Brochure.pdf",
-            mediaType: "application/pdf",
-            url: "https://cdn.example.com/sena-brochure.pdf",
-          },
-        ],
-      },
-    ],
-  });
-
-  expect(block.indexOf("<workflow_matches>")).toBeLessThan(
-    block.indexOf("<customer_response>"),
-  );
-  expect(block).toContain('"matched": true');
-  expect(block).toContain('"nodeKind": "sendFile"');
-  expect(block).toContain('"nodeId": "media-node-id", "url": "https://cdn.example.com/sena-brochure.pdf"');
-});
-
-test("workflow final response contract explains data sources before constructing the envelope", () => {
-  const block = buildWorkflowFinalResponseContractBlock({
-    workflowId: "workflow-id" as Id<"workflows">,
-    edges: [],
-    nodes: [
-      {
-        nodeId: "media-node-id" as Id<"workflowNodes">,
-        kind: "sendFile",
-        title: "Send Type B video",
-        goal: "Send the requested Type B video.",
-        incomingConditions: [],
-        allowedServices: [],
-        mediaAssets: [
-          {
-            clientId: "type-b-video",
-            filename: "Sena Residence Type B.mp4",
-            mediaType: "video/mp4",
-            url: "https://cdn.example.com/type-b-video.mp4",
-          },
-        ],
-      },
-    ],
-  });
-
-  expect(block).toContain("Build the final response from these data sources");
-  expect(block).toContain("Workflow Runtime is the source of truth");
-  expect(block).toContain("Media assets listed under each matching workflow media node are the only valid source");
-  expect(block).toContain("Use `fetchContext` only for customer-facing facts");
-  expect(block).toContain("After choosing the data, construct the final response envelope");
-});
-
-test("workflow final response contract is omitted when no media nodes exist", () => {
+test("workflow final response prompt contract is omitted because output is structured in code", () => {
   expect(buildWorkflowFinalResponseContractBlock({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
     nodes: [
       {
         nodeId: "node-id" as Id<"workflowNodes">,
-        kind: "sendText",
-        title: "Send message",
+        kind: "sendFile",
+        title: "Send brochure",
         incomingConditions: [],
         allowedServices: [],
         mediaAssets: [],

@@ -4,13 +4,12 @@ import {
   normalizeCustomerFacingResponseFormatting,
 } from "./responseFormatting";
 
-test("response formatting does not override the required output envelope", () => {
+test("response formatting keeps customer replies free of workflow internals", () => {
   expect(chatResponseFormattingBlock).toContain(
-    "If another instruction requires `<customer_response>` or `<media_to_send>`",
+    "Do not include workflow metadata, media URLs, or internal action markers",
   );
-  expect(chatResponseFormattingBlock).toContain(
-    "apply these formatting rules inside `<customer_response>`",
-  );
+  expect(chatResponseFormattingBlock).not.toContain("<customer_response>");
+  expect(chatResponseFormattingBlock).not.toContain("<media_to_send>");
   expect(chatResponseFormattingBlock).not.toContain(
     "Start with the customer-facing answer.",
   );

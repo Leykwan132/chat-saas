@@ -31,12 +31,10 @@ import { getOrCreateLeadAssignmentSettings } from "../leadRouting/helpers";
 import { DEFAULT_TEAM_TIME_ZONE, getUserByWorkosId, normalizeTimeZone } from "../teamHelpers";
 import { logConversationEvent } from "../conversationLogs";
 import {
-  buildWorkflowFinalResponseContractBlock,
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
 import { chatResponseFormattingBlock } from "./responseFormatting";
-import { buildAgentOutputFormatBlock } from "./agentOutputFormat";
 import { buildToolUsageBlock } from "./toolPrompt";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
@@ -778,7 +776,6 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     ? `${buildActiveBookingServicesBlock(activeBookingServices)}${buildBookingFlowBlock()}`
     : "";
   const workflowBlock = buildWorkflowRuntimeBlock(workflowRuntimeContext);
-  const outputContractBlocks = buildWorkflowOutputContractBlocks(workflowRuntimeContext);
 
   const noContextFallback = escalationConfigured
     ? "call `escalateToHuman` with the user's question and explain what information was missing. Do NOT send any message to the user."
@@ -830,7 +827,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
   })()}
 
 ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
-  ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}${outputContractBlocks}`;
+  ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
   return new Agent(components.agent, {
     name: agent.name,
@@ -875,13 +872,10 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
 }
 
 export function buildWorkflowOutputContractBlocks(
-  workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
+  _workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
 ) {
-  const outputFormatBlock = buildAgentOutputFormatBlock();
-  const workflowFinalResponseContractBlock =
-    buildWorkflowFinalResponseContractBlock(workflowRuntimeContext);
-
-  return `${outputFormatBlock}${workflowFinalResponseContractBlock}`;
+  void _workflowRuntimeContext;
+  return "";
 }
 
 export function normalizeLabel(s: string | undefined): string {

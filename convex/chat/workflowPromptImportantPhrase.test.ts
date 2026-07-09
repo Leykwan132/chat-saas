@@ -1,9 +1,9 @@
 import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
-import { buildWorkflowFinalResponseContractBlock } from "./workflowPrompt";
+import { buildWorkflowRuntimeBlock } from "./workflowPrompt";
 
-test("workflow final response contract marks the media manifest rule as important", () => {
-  const block = buildWorkflowFinalResponseContractBlock({
+test("workflow runtime marks the media planner rule as important", () => {
+  const block = buildWorkflowRuntimeBlock({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
     nodes: [
@@ -27,6 +27,7 @@ test("workflow final response contract marks the media manifest rule as importan
   });
 
   expect(block).toContain(
-    "This is important: if a Send Photo/Video or Send Files node matches",
+    "This is important: for Send Photo/Video and Send Files nodes",
   );
+  expect(block).toContain("the backend validates the matched workflow node and sends the assets separately");
 });

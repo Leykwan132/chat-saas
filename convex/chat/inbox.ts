@@ -27,10 +27,17 @@ import {
   inferMediaMimeType,
 } from "./threads";
 import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
+import { toChannelMediaItems } from "./aiReplyMedia";
 import {
-  extractAiReplyMedia,
-  toChannelMediaItems,
-} from "./aiReplyMedia";
+  aiReplyStructuredOutput,
+  extractAiReplyOutputMedia,
+} from "./aiReplyOutput";
+import {
+  aiReplyPromptArgs,
+  generateWorkflowActionPlan,
+  resolveWorkflowActionPlanMedia,
+  workflowActionPlanReplyPromptArgs,
+} from "./workflowActionPlanner";
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
@@ -606,20 +613,47 @@ export const generateAiReplyWorker = internalAction({
         });
       }
 
-
-      const result = await configuredAgent.generateText(
+      const workflowActionPlan = await generateWorkflowActionPlan(
         ctx,
-        { threadId: conv.threadId },
-        args.promptMessageId
-          ? { promptMessageId: args.promptMessageId }
-          : { prompt: args.promptContent },
-        { storageOptions: { saveMessages: "none" } },
+        configuredAgent,
+        conv.threadId,
+        args,
+        workflowRuntimeContext,
       );
+      const plannedMediaItems = workflowActionPlan
+        ? resolveWorkflowActionPlanMedia(workflowActionPlan, workflowRuntimeContext)
+        : [];
 
+      const promptArgs = aiReplyPromptArgs(args);
+      let cleanText: string;
+      let replyMediaItems: ReturnType<typeof extractAiReplyOutputMedia>["mediaItems"];
 
-      console.log("result", result);
-
-      console.log('result text', result.text);
+      if (workflowActionPlan) {
+        const result = await configuredAgent.generateText(
+          ctx,
+          { threadId: conv.threadId },
+          workflowActionPlanReplyPromptArgs(args, workflowActionPlan),
+          { storageOptions: { saveMessages: "none" } },
+        );
+        cleanText = result.text.trim();
+        replyMediaItems = [];
+      } else {
+        const result = await configuredAgent.generateText(
+          ctx,
+          { threadId: conv.threadId },
+          {
+            ...promptArgs,
+            output: aiReplyStructuredOutput,
+          },
+          { storageOptions: { saveMessages: "none" } },
+        );
+        const structuredReply = extractAiReplyOutputMedia(
+          result.output,
+          workflowRuntimeContext,
+        );
+        cleanText = structuredReply.text;
+        replyMediaItems = structuredReply.mediaItems;
+      }
 
       const convAfterGeneration = await ctx.runQuery(
         internal.chat.inbox.internalGetConversation,
@@ -632,11 +666,7 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
 
-      const replyText = result.text.trim();
-      const { text: cleanText, mediaItems: allMediaItems } = extractAiReplyMedia(
-        replyText,
-        workflowRuntimeContext,
-      );
+      const allMediaItems = workflowActionPlan ? plannedMediaItems : replyMediaItems;
       const channelMediaItems = toChannelMediaItems(allMediaItems);
 
       const allMediaUrls = allMediaItems.map((item) => item.url);

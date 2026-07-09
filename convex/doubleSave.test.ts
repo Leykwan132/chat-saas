@@ -34,7 +34,31 @@ vi.mock("./llm/openRouter", () => {
   return {
     openRouterModel: () => {
       return mockModel({
-        content: [{ type: "text", text: "Mock response text" }],
+        doGenerate: async () => ({
+          content: [{
+            type: "text",
+            text: JSON.stringify({
+              workflowMatches: [],
+              customerResponse: "Mock response text",
+              mediaToSend: [],
+            }),
+          }],
+          finishReason: { unified: "stop", raw: "stop" },
+          usage: {
+            inputTokens: {
+              total: 3,
+              noCache: 3,
+              cacheRead: 0,
+              cacheWrite: 0,
+            },
+            outputTokens: {
+              total: 10,
+              text: 10,
+              reasoning: 0,
+            },
+          },
+          warnings: [],
+        }),
       });
     },
   };

@@ -1,74 +1,12 @@
 # Snapshot
-- 2026-07-04 [USER] Goal: implement pasteable Website chat channel with Finn-style bottom input, setup dialog, Installation snippet, desktop/mobile preview, persisted visitor conversations, paid icon/branding controls, and real AI processing.
-- 2026-07-04 [CODE] Now: Website channel backend, public widget script, default Website card, setup UI, preview UI, and regression coverage are implemented in the working tree.
-- 2026-07-05 [USER] Current focus: implement a workspace setup checklist with Convex state, first-visit intro dialog, sidebar triggers, five inferred steps, and mark-all-complete hiding.
-- 2026-07-05 [CODE] Now: setup checklist backend, frontend components, workspace/agent sidebar wiring, navigation helper, and regression coverage are implemented in the working tree.
-- 2026-07-06 [USER] Current focus: rename admin contact surface to admin, add tabbed contact/cost admin views, and report raw agent usage cost by user, plan, and model.
-- 2026-07-06 [CODE] Now: `/admin` admin dashboard, contact/cost tabs, aggregate-backed raw usage USD cost report, MYR cost toggle, total/average/highest spend summaries, Stripe-subscription-derived plan mapping, compact spend tables, month filtering, and WorkOS-user-ID usage attribution are implemented; `/admin/contact` route/file are removed; dev DB historical raw usage rows and agent cost aggregate are backfilled.
-- 2026-07-06 [USER] Current focus: remove OpenRouter free-tier `:free` model tags from selectable/callable models because free variants are heavily rate limited.
-- 2026-07-06 [CODE] Now: enabled model catalog is trimmed to DeepSeek V4 Flash, Amazon Nova Micro, Tencent HY3 Preview, OpenAI GPT-OSS 120B, Xiaomi MiMo V2.5, and Google Gemini 3.1 Flash Lite; DeepSeek Flash is the only popular model; regression tests cover removed model IDs.
-- 2026-07-06 [CODE] Now: `workspaceSetupChecklistToasts.test.ts` no longer trips TS2349 during `tsc -b`; scheduled toast callbacks are captured in an array before invocation.
-- 2026-07-06 [CODE] Now: AI SDK usage capture sites use `LanguageModelUsage.inputTokens` / `outputTokens`; PostHog capture accepts optional token counts.
-- 2026-07-07 [CODE] Now: inbox `$ai_generation` PostHog distinct IDs resolve through `rawAgentUsage` attribution so agent-owner WorkOS user IDs are used instead of runtime `org:` thread IDs.
-- 2026-07-07 [USER] Current focus: inspect outbound media send code for Messenger, WhatsApp, and Instagram because media is not sending out.
-- 2026-07-07 [CODE] Now: AI media markers like `[Media: 750...]` are parsed case-insensitively with optional whitespace, so they resolve to media client IDs instead of being sent as customer-facing text.
-- 2026-07-07 [CODE] Now: customer-facing AI replies strip internal lookup/tool narration such as “Let me check the knowledge base…” before sending or persisting, and Messenger/Instagram now use the same formatter as WhatsApp.
-- 2026-07-07 [CODE] Now: workflow media sends use a strict final response envelope with stripped `<customer_response>` and `<media_to_send>` tags; the model no longer has a `sendMedia` tool and must declare matching Workflow Runtime media asset URL/type objects in the manifest.
-- 2026-07-07 [CODE] Now: AI reply media attachments are sourced only from validated `<media_to_send>` URL/type objects; missing-envelope replies still send as text, while customer-response URLs, `[MEDIA:...]` markers, tool-result media, and workflow text fallback no longer feed outbound AI media sends.
-- 2026-07-07 [CODE] Now: `buildAgent` includes a global required Output Format block so every final answer includes `<workflow_matches>`, `<customer_response>`, and `<media_to_send>`; every matched workflow node must be listed/executed, and matching media nodes must copy nodeId/URL/type into `<media_to_send>`.
-- 2026-07-07 [CODE] Now: WhatsApp-friendly response formatting no longer tells the model to start with raw customer-facing text when an output envelope is required; formatting rules apply inside `<customer_response>` so they do not override `<media_to_send>`.
-- 2026-07-07 [CODE] Now: WhatsApp multi-media replies use standard media endpoints, and Messenger media uses one singular `message.attachment` POST per item; `video/mp4` maps to attachment type `video`.
-- 2026-07-07 [CODE] Now: Workflow add-node menu uses business-controlled Send message instead of redundant Q&A; legacy Q&A nodes remain supported but hidden from new add choices.
-- 2026-07-07 [CODE] Now: deleting a workflow node bridges incoming parents to outgoing children and preserves the child edge condition instead of deleting the linked node's condition.
-- 2026-07-07 [CODE] Now: newly created workflow nodes are selected from the add-node mutation result so the existing inspector modal opens immediately after adding Send file/media/message/etc.
-- 2026-07-07 [CODE] Now: Landing feature card under “The new era of Sales” says “Agentic AI”; the feature section heading says “Multiply your sales with Kilobot” and stays one line on sm+ screens; the hero headline remains “AI Agent for Sales”.
-- 2026-07-08 [USER] Current focus: replace the landing hero desktop screenshot under the title with an interactive mocked Kilobot app preview; keep mobile on the current image; sidebar must be interactable and use prepared mock data with no real API calls.
-- 2026-07-08 [USER] Landing preview sidebar should switch between mocked sections, not just highlight one overview screen.
-- 2026-07-08 [CODE] Now: landing desktop hero uses an interactive local mock app preview with clickable sidebar sections and a workflow mock canvas; mobile keeps the hosted screenshot image.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup routes to a Configuration mock, Channels routes to a channels/cards mock, and Workflow routes to a closer dotted workflow-builder mock based on the provided references.
-- 2026-07-08 [CODE] Now: landing preview exposes Overview plus Agent Setup, Workflow, and Channels in the desktop mock sidebar and opens on Overview.
-- 2026-07-08 [CODE] Now: landing preview sidebar shows a compact “Explore full version” card below the three options with a Start for free action.
-- 2026-07-08 [CODE] Now: landing preview “Explore full version” card is bottom-aligned, taller, spaced from the sidebar edges, and uses a shiny gradient border.
-- 2026-07-08 [CODE] Now: landing preview content is rescaled to fit the framed preview, Overview uses the current 2/153 credits/1/0 dashboard metrics with a full-width chart, CTA border is light, and Workflow nodes expose drag handlers.
-- 2026-07-08 [CODE] Now: landing preview Workflow mock no longer renders the bottom “Get help from Kilo” prompt input.
-- 2026-07-08 [CODE] Now: landing preview Workflow route skips the preview page title/subtitle chrome and shows the dotted workflow canvas directly.
-- 2026-07-08 [CODE] Now: landing preview sidebar/mock data no longer includes Channels; the remaining desktop preview options are Overview, Agent Setup, and Workflow.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards are 104px selectors with smooth mini-charts; clicking a card changes the larger smooth chart, and Billing period/Daily controls are removed.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup Model & Style panel uses smaller labels/controls, no Triggers block, and fits without clipping in the mock frame.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards no longer render per-card mini graphs; cards still select and update the large chart.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards show small mock supporting values under each metric label.
-- 2026-07-08 [CODE] Now: landing preview numeric metric/card value strings use a mixed-text number ticker wrapper that preserves suffix text.
-- 2026-07-08 [CODE] Now: landing preview Workflow renders the real `WorkflowCanvas`/xyflow workflow nodes from local mock Convex-shaped graph data; add/delete/connect/cleanup/reset callbacks are no-ops so the product menu opens without backend writes.
-- 2026-07-08 [CODE] Now: landing preview Overview header no longer renders the `Jun 23 - Jul 23` subtitle, giving the preview content more balanced vertical space.
-- 2026-07-08 [CODE] Now: landing preview Overview metrics use realistic workspace-scale mock data (`1,460`, `27,781 credits`, `224`, `18`) with longer smooth trend series and better supporting detail text.
-- 2026-07-08 [CODE] Now: landing preview top breadcrumb uses `Sena Residence > Sales Concierge` instead of `Personal > TTT`, and Agent Setup uses the same agent name.
-- 2026-07-08 [CODE] Now: landing preview top-right header controls remove the light/dark buttons and show only a circular user-icon avatar.
-- 2026-07-08 [CODE] Now: landing preview sidebar Explore full version CTA uses a brighter conic shiny border while keeping the inner card white.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup Model & Style controls are roomier with a wider panel, larger labels, 36px controls, and more vertical spacing.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup header no longer shows the inert Test your agent and Publish buttons.
-- 2026-07-08 [CODE] Now: desktop landing header keeps mobile/tablet side padding but removes the extra inner horizontal padding from `md` upward.
-- 2026-07-08 [CODE] Now: landing preview Overview cards use the shared motion `NumberTicker` for main values and no longer render the third-line metric detail text.
-- 2026-07-08 [CODE] Now: landing preview Overview chart uses a keyed `AnimatePresence`/`motion.div` transition so changing metric cards animates the graph instead of snapping.
-- 2026-07-08 [CODE] Now: landing preview Workflow canvas wrapper is square and borderless so the dotted React Flow canvas fills the workflow content area.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup Model & Style controls use local shadcn/Radix Select dropdowns with mocked option state, so menus open and selected values update without backend calls.
-- 2026-07-08 [CODE] Now: landing preview Overview metric ticker digits use compact columns so card numbers no longer look overly spaced.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup Model & Style rows are slightly larger with 40px select controls, 13px value text, 11px detail text, and a 360px side panel.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards use normal static text instead of motion ticker digits.
-- 2026-07-08 [CODE] Now: landing page root has a `landing-page` class and imports a tiny page-scoped stylesheet that hides the vertical scrollbar indicator while preserving scroll.
-- 2026-07-08 [CODE] Now: landing preview demo workspace/project name is `Arden Heights` instead of `Sena Residence`, including workflow node labels and Agent Setup description copy.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards use `NumberTicker` for the numeric part only, with suffix text such as `credits` rendered as normal adjacent text.
-- 2026-07-08 [CODE] Now: landing preview sidebar “Explore full version” CTA title uses a slightly larger 14px/20px treatment for readability.
-- 2026-07-08 [CODE] Now: landing preview Agent Setup Select menus use transparent highlighted item backgrounds, and Workflow defaults to a new three-node mock that supports local plus-menu node creation and the existing inspector dialog without backend calls.
-- 2026-07-08 [CODE] Now: landing preview workspace breadcrumb uses a building icon while the top-right avatar keeps the user icon.
-- 2026-07-08 [CODE] Now: landing preview Overview metric cards render plain static text values instead of `NumberTicker`.
-- 2026-07-08 [CODE] Now: landing preview Workflow keeps three nodes but branches Message enters directly into two sub-nodes: Qualify buyer intent and Book showroom visit.
-- 2026-07-08 [CODE] Now: landing preview Workflow inspector modal is scoped inside the demo app container instead of opening over the full landing page.
-- 2026-07-08 [CODE] Now: workflow inspector Condition and Actions sections each show a muted one-line explanation under the section heading.
-- 2026-07-08 [CODE] Now: workflow media final-response contract explicitly marks the matched Send Photo/Video or Send Files manifest rule with `This is important`.
-- 2026-07-08 [CODE] Now: agent sample templates use Role/About the business/Goal/Guardrails plus generic `# Error handling`; samples omit tools/tone/environment/workflow/refund wording; template library includes separate `Real estate sales agent` and product-focused `Sales agent` options; and backend workflow/tool handling is appended by backend prompt blocks.
-- 2026-07-08 [CODE] Now: Book appointment workflow nodes default the incoming condition to `Yes`, do not expose a Goal field in the inspector, and are described to the AI by selected Services instead of node goals.
-- 2026-07-08 [CODE] Now: Convex agent validators/schema accept `productSales`, matching the shared/frontend agent template keys; `bun run build` passes.
-- 2026-07-08 [CODE] Now: `generateAiReply` no longer leaves dangling PostHog `fetch` operations because all `captureAIGeneration` calls in Convex actions are awaited.
+- 2026-07-09 [USER] Current focus: make AI reply/workflow media decisions more reliable with structured output instead of prompt-only tag envelopes.
+- 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
+- 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
+- 2026-07-09 [CODE] Now: production prompt blocks no longer instruct the model to output `<workflow_matches>`, `<customer_response>`, or `<media_to_send>` tags; legacy tag parsers remain for compatibility tests/helpers.
+- 2026-07-09 [CODE] Recently done: prompt templates follow Role/About the business/Goal/Guardrails plus `# Error handling`; user-facing templates omit workflow/tool internals.
+- 2026-07-09 [CODE] Recently done: Book appointment workflow nodes default to `Yes`, omit Goal in the inspector, and expose selected Services to the AI.
+- 2026-07-09 [CODE] Recently done: Convex agent validators/schema accept `productSales`; `captureAIGeneration` calls in Convex actions are awaited to avoid dangling PostHog fetches.
+- 2026-07-09 [CODE] Important context: landing preview, workflow layout, media send fixes, admin cost reporting, model catalog trimming, setup checklist, and Website widget milestones are captured in Decisions/Receipts.
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
 - 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
 - 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
@@ -168,15 +106,18 @@
 - 2026-07-08 [CODE] D192 ACTIVE: Book appointment workflow nodes are service-driven: the default incoming condition label is `Yes`, the inspector omits the Goal field, and runtime prompts omit `- Goal:` for booking nodes even if older nodes have descriptions.
 - 2026-07-08 [CODE] D193 ACTIVE: Agent template key support must stay aligned across `shared/agentPromptTemplates.ts`, frontend `AgentTemplateKey`, Convex `templateKeyValidator`, and `agents.templateKey` schema values.
 - 2026-07-08 [CODE] D194 ACTIVE: Convex actions must await `captureAIGeneration`; fire-and-forget analytics calls can leave dangling PostHog `fetch` operations and fail action execution.
+- 2026-07-09 [CODE] D195 ACTIVE: AI inbox replies no longer rely on prompt-level XML-style output envelopes. Workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only, and the backend resolves exact URLs/types from Workflow Runtime.
+- 2026-07-09 [CODE] D196 ACTIVE: When the workflow action planner returns a plan object, the AI reply worker must not require the final reply call to parse structured output. Final reply generation is plain text, and outbound media comes only from backend-resolved planner node IDs.
+- 2026-07-09 [CODE] D197 ACTIVE: When `mediaNodeIdsToSend` is non-empty, final AI reply guidance must say selected workflow media is being sent now; do not ask whether to send selected media or claim unselected matching workflow nodes are sent.
 
 # Done (recent)
+- 2026-07-09 [CODE] Added workflow action reply guidance so matched/selected workflow media is presented as being sent now, not as an offer to send later.
+- 2026-07-09 [CODE] Fixed empty workflow action plans so `generateAiReplyWorker` no longer crashes on final structured-output parsing when no workflow media should be sent.
+- 2026-07-09 [CODE] Replaced prompt-level workflow media envelopes with structured AI SDK output plus backend-resolved workflow media planning.
 - 2026-07-08 [CODE] Fixed dangling PostHog `fetch` errors in `generateAiReply` by awaiting AI generation capture calls and adding regression coverage.
 - 2026-07-08 [CODE] Added `This is important` emphasis to the workflow final response contract for matched media/file nodes requiring `<media_to_send>`.
 - 2026-07-08 [CODE] Sales template renamed to `Real estate sales agent` and focused on booking real estate showroom viewings while preserving shared prompt sections/error handling.
 - 2026-07-08 [CODE] System prompt editor note now distinguishes prompt guidance for answering style/high-level goals/general guardrails from Workflow setup for reliable conditional actions.
-- 2026-07-08 [CODE] Shared sample templates now use `# Error handling`, and backend tool prompt error handling uses heading-style subsections.
-- 2026-07-08 [CODE] Book appointment workflow actions now show Services without a Goal field and use `Yes` as the default booking condition.
-- 2026-07-08 [CODE] Fixed product Sales agent build errors by adding `productSales` to Convex agent validators/schema and adding regression coverage.
 
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
@@ -188,7 +129,7 @@
 - 2026-07-06 [CODE] Workspace agent entry working set: `src/components/workspace/AgentCards.tsx`, `src/components/workspace/agentWorkspaceRoutes.ts`, `src/components/workspace/agentWorkspaceRoutes.test.ts`.
 - 2026-07-06 [CODE] Launch Guide UI working set: `src/components/setup-checklist/WorkspaceSetupChecklist.tsx`, `src/components/setup-checklist/WorkspaceSetupChecklistPanel.tsx`, `src/components/setup-checklist/workspaceSetupChecklistLayout.ts`, `src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`.
 - 2026-07-08 [CODE] AI SDK/PostHog usage capture working set: `convex/agentUsage.ts`, `convex/agentUsage.test.ts`, `convex/chat/threads.ts`, `convex/posthog.ts`, `convex/analyticsSentiment.ts`, `convex/chat/inboxActions.ts`, `convex/posthogDanglingPromises.test.ts`, `convex/doubleSave.test.ts`.
-- 2026-07-07 [CODE] Meta/AI reply cleanup working set: `convex/chat/agentOutputFormat.ts`, `convex/chat/agentOutputFormat.test.ts`, `convex/chat/aiReplyMedia.ts`, `convex/chat/aiReplyMedia.test.ts`, `convex/chat/mediaManifest.ts`, `convex/chat/mediaManifest.test.ts`, `convex/chat/workflowMatchArrayPrompt.test.ts`, `convex/chat/responseFormatting.ts`, `convex/chat/responseFormatting.test.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`, `convex/workflowRuntimeContext.ts`.
+- 2026-07-09 [CODE] Meta/AI reply cleanup working set: `convex/chat/aiReplyOutput.ts`, `convex/chat/aiReplyOutput.test.ts`, `convex/chat/aiReplyMedia.ts`, `convex/chat/aiReplyMedia.test.ts`, `convex/chat/mediaManifest.ts`, `convex/chat/mediaManifest.test.ts`, `convex/chat/workflowActionPlanner.ts`, `convex/chat/workflowActionPlanner.test.ts`, `convex/chat/workflowMatchArrayPrompt.test.ts`, `convex/chat/responseFormatting.ts`, `convex/chat/responseFormatting.test.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`, `convex/workflowRuntimeContext.ts`.
 - 2026-07-07 [CODE] Workflow Send message/modal working set: `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/workflowPrompt.test.ts`, `convex/workflowActions.test.ts`, `convex/workflowMedia.test.ts`, `convex/workflowMediaAccess.test.ts`, `src/components/workflow/WorkflowInspector.tsx`, `src/components/workflow/workflowCatalog.test.tsx`, `src/pages/WorkflowPage.tsx`, `src/pages/workflowPageNodeSelection.ts`, `src/pages/workflowPageNodeSelection.test.ts`.
 - 2026-07-07 [CODE] Workflow node deletion working set: `convex/workflows.ts`, `convex/workflowNodeRemoval.ts`, `convex/workflows.test.ts`, `convex/workflowNodeDeletion.test.ts`.
 - 2026-07-08 [CODE] Landing preview working set: `src/pages/LandingPage.tsx`, `src/components/landing/LandingHero.tsx`, `src/components/landing/LandingAppPreview*.tsx`, `src/components/landing/landingAppPreviewData.ts`, `src/components/landing/landingAppPreviewData.test.ts`, `src/components/landing/landingAppPreviewNav.ts`, `src/components/landing/landingWorkflowMockGraph.ts`, `src/components/landing/LandingFeatureSections.tsx`, `src/components/landing/LandingConversionSections.tsx`.
@@ -201,6 +142,11 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-09 [TOOL] Node 22.22.0 selected workflow media reply-guidance change reproduced RED in `workflowActionPlanner.test.ts`, then passed focused planner test, related Vitest suite (`aiReplyOutput`, `workflowActionPlanner`, `doubleSave`) with 14 tests, full `bunx tsc -b --pretty false`, targeted ESLint, `git diff --check`, and debug-log scan.
+- 2026-07-09 [TOOL] Node 22.22.0 empty workflow action plan crash reproduced RED in `convex/chat/workflowActionPlanner.test.ts`, then passed focused planner tests, related Vitest suite (`aiReplyOutput`, `workflowActionPlanner`, `doubleSave`) with 12 tests, full `bunx tsc -b --pretty false`, `git diff --check`, and debug-log scan.
+- 2026-07-09 [TOOL] Node 22.22.0 added descriptions to every `workflowActionPlanSchema` field/item and removed stray workflow planner debug logging; RED/GREEN focused planner test passed, full `bunx tsc -b --pretty false` passed, targeted ESLint passed, console-log scan clean, and `git diff --check` passed.
+- 2026-07-09 [TOOL] Node 22.22.0 fixed `convex/doubleSave.test.ts` TS2322 by matching mock `LanguageModelV3GenerateResult.usage` nested token shape; passed focused `doubleSave` test, full `bunx tsc -b --pretty false`, targeted ESLint, and console-log scan.
+- 2026-07-09 [TOOL] Node 22.22.0 structured AI reply/workflow media planner change passed 11 focused chat prompt/media tests (42 tests), targeted ESLint, prompt-tag scan over production prompt files, `git diff --check`, touched-file LOC check, and full `bun run build` with only the existing Vite chunk-size warning.
 - 2026-07-08 [TOOL] Node 22.22.0 dangling PostHog `fetch` error reproduced RED with `convex/posthogDanglingPromises.test.ts`, then passed focused AI reply/PostHog tests, touched-file ESLint, full `bun run build`, and `git diff --check`.
 - 2026-07-08 [TOOL] Node 22.22.0 productSales Convex validator bug reproduced RED in `convex/agentTemplateKeys.test.ts`, then passed focused test, Convex codegen, full `bun run build`, `git diff --check`, and touched-file LOC check.
 - 2026-07-08 [TOOL] Node 22.22.0 Book appointment service-driven workflow change reproduced RED in inspector behavior/default-condition/runtime prompt tests, then passed 23 adjacent workflow tests, targeted ESLint, `git diff --check`, stale-copy scan, and touched-file LOC check.

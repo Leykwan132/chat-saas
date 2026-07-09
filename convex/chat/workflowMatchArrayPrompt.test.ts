@@ -1,9 +1,6 @@
 import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
-import {
-  buildWorkflowFinalResponseContractBlock,
-  buildWorkflowRuntimeBlock,
-} from "./workflowPrompt";
+import { buildWorkflowRuntimeBlock } from "./workflowPrompt";
 
 const workflowWithTwoMediaNodes = {
   workflowId: "workflow-id" as Id<"workflows">,
@@ -56,25 +53,24 @@ const workflowWithTwoMediaNodes = {
   ],
 };
 
-test("workflow runtime requires every matched node in workflow_matches", () => {
+test("workflow runtime requires following every matching node", () => {
   const block = buildWorkflowRuntimeBlock(workflowWithTwoMediaNodes);
 
   expect(block).toContain("Multiple workflow node conditions can match in one turn");
-  expect(block).toContain("Include every matching workflow node in `<workflow_matches>`");
-  expect(block).toContain("Do not stop at the first match");
-  expect(block).toContain("Execute every node listed in `<workflow_matches>`");
-  expect(block).toContain("from each matching media node");
+  expect(block).toContain("Follow every matching node");
+  expect(block).toContain("do not stop at the first match");
+  expect(block).toContain("Let the backend workflow planner handle reliable action metadata and media sending");
+  expect(block).toContain("the backend validates the matched workflow node and sends the assets separately");
+  expect(block).not.toContain("<workflow_matches>");
 });
 
-test("workflow final response contract models workflow_matches as an array", () => {
-  const block = buildWorkflowFinalResponseContractBlock(workflowWithTwoMediaNodes);
+test("workflow runtime lists media assets by node-owned client IDs", () => {
+  const block = buildWorkflowRuntimeBlock(workflowWithTwoMediaNodes);
 
-  expect(block).toContain("Put only a JSON array inside `<workflow_matches>`");
-  expect(block).toContain("Include every matching workflow node in `<workflow_matches>`");
-  expect(block).toContain(`[
-  { "matched": true, "nodeId": "video-node-id", "nodeKind": "sendImage", "nodeTitle": "Send Type B video" }
-]`);
-  expect(block).toContain(
-    `{ "nodeId": "video-node-id", "url": "https://cdn.example.com/type-b.mp4", "type": "video/mp4" }`,
-  );
+  expect(block).toContain("Node ID: video-node-id");
+  expect(block).toContain("clientId: type-b-video, file: Type B.mp4, type: video/mp4");
+  expect(block).toContain("Node ID: brochure-node-id");
+  expect(block).toContain("clientId: brochure, file: Brochure.pdf, type: application/pdf");
+  expect(block).not.toContain("https://cdn.example.com/type-b.mp4");
+  expect(block).not.toContain("https://cdn.example.com/brochure.pdf");
 });

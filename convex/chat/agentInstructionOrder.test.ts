@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import type { Id } from "../_generated/dataModel";
 import { buildWorkflowOutputContractBlocks } from "./threads";
 
-test("places workflow media contract after generic output format for send file nodes", () => {
+test("omits prompt-level output contract because AI replies use structured output", () => {
   const blocks = buildWorkflowOutputContractBlocks({
     workflowId: "workflow-id" as Id<"workflows">,
     edges: [],
@@ -32,13 +32,5 @@ test("places workflow media contract after generic output format for send file n
     ],
   });
 
-  expect(blocks.indexOf("## Output Format")).toBeGreaterThanOrEqual(0);
-  expect(blocks.indexOf("## Final Response Contract")).toBeGreaterThan(
-    blocks.indexOf("## Output Format"),
-  );
-  expect(blocks).toContain("<workflow_matches>");
-  expect(blocks).toContain(
-    '"url": "https://storage.kilobot.app/workflow-media/brochure.pdf"',
-  );
-  expect(blocks).toContain('"type": "application/pdf"');
+  expect(blocks).toBe("");
 });

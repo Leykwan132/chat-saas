@@ -4,7 +4,7 @@ export const chatResponseFormattingBlock = `\n\n## Response Formatting
 - Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
 - When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.
 - Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups.
-- If another instruction requires \`<customer_response>\` or \`<media_to_send>\`, apply these formatting rules inside \`<customer_response>\` and keep the required envelope tags.`;
+- Do not include workflow metadata, media URLs, or internal action markers in customer-facing replies.`;
 
 function parseMarkdownTableRow(line: string) {
   const trimmed = line.trim();

@@ -27,11 +27,10 @@ If escalation is unavailable, follow the no-context fallback instead of inventin
     ? `### Workflow-aware response order
 1. Call \`fetchContext\` with the user's original query.
 2. Match the latest message against all Workflow Runtime node goals, media assets, and incoming conditions.
-3. Build \`<workflow_matches>\` with every matching node; include every matching node and do not stop at the first match.
-4. Execute every listed workflow node.
-5. For matching Send Photo/Video or Send Files nodes, copy exact \`nodeId\`, \`url\`, and \`type\` values from Workflow Runtime media assets into \`<media_to_send>\`.
-6. Answer using only returned context and Workflow Runtime.
-7. If \`fetchContext\` returns nothing useful and no workflow media condition matches, ${noContextFallback}.`
+3. Follow every matching workflow node and do not stop at the first match.
+4. For matching Send Photo/Video or Send Files nodes, write a short customer response without media URLs; the backend workflow planner sends the assets separately.
+5. Answer using only returned context and Workflow Runtime.
+6. If \`fetchContext\` returns nothing useful and no workflow media condition matches, ${noContextFallback}.`
     : `### Response order
 1. Call \`fetchContext\` with the user's original query.
 2. Read the returned context carefully.

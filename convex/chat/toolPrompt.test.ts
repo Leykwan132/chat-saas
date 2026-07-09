@@ -17,7 +17,8 @@ test("tool usage block follows a when/how/parameters/error handling pattern", ()
   expect(block).not.toContain("**Error handling:**");
   expect(block).toContain("### `escalateToHuman`");
   expect(block).toContain("### Workflow-aware response order");
-  expect(block).toContain("include every matching node");
+  expect(block).toContain("Follow every matching workflow node");
+  expect(block).toContain("the backend workflow planner sends the assets separately");
 });
 
 test("tool usage block omits escalation tool instructions when escalation is unavailable", () => {
