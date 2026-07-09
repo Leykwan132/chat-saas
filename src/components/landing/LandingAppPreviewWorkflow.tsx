@@ -29,7 +29,7 @@ export function LandingAppPreviewWorkflow({
   const [selectedNodeId, setSelectedNodeId] = useState<Id<'workflowNodes'>>();
   const [graph, setGraph] = useState(() => createLandingWorkflowGraph(workflow));
   const [layoutOrientation, setLayoutOrientation] =
-    useState<WorkflowLayoutOrientation>('horizontal');
+    useState<WorkflowLayoutOrientation>('vertical');
   const initialGraph = useMemo(() => createLandingWorkflowGraph(workflow), [workflow]);
 
   const handleAddNode = useCallback(
@@ -72,9 +72,9 @@ export function LandingAppPreviewWorkflow({
     setSelectedNodeId(undefined);
   }, [initialGraph]);
   const handleArrange = useCallback(() => {
-    const orientation = layoutOrientation;
+    const nextOrientation = getNextWorkflowLayoutOrientation(layoutOrientation);
     const positionByNodeId = new Map(
-      getWorkflowCleanupPositions(graph, orientation).map((item) => [item.nodeId, item.position]),
+      getWorkflowCleanupPositions(graph, nextOrientation).map((item) => [item.nodeId, item.position]),
     );
     setGraph((currentGraph) => ({
       ...currentGraph,
@@ -85,7 +85,7 @@ export function LandingAppPreviewWorkflow({
           : node;
       }),
     }));
-    setLayoutOrientation(getNextWorkflowLayoutOrientation(orientation));
+    setLayoutOrientation(nextOrientation);
   }, [graph, layoutOrientation]);
   const flow = useMemo(
     () => workflowGraphToFlow(
@@ -123,6 +123,7 @@ export function LandingAppPreviewWorkflow({
         onCleanup={handleReset}
         onArrange={handleArrange}
         onReset={handleReset}
+        showCleanup={false}
       />
       <WorkflowInspector
         node={selectedNode}

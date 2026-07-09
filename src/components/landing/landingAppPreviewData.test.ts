@@ -39,6 +39,12 @@ test('landing preview includes an interactive workflow section with mocked graph
   ]);
 });
 
+test('landing preview workflow card data does not include fake services', () => {
+  const workflow = getLandingPreviewSection('workflow').workflow;
+
+  expect(workflow.nodes.some((node) => 'services' in node)).toBe(false);
+});
+
 test('landing preview section lookup fails for missing mock sections', () => {
   expect(() => getLandingPreviewSection('missing')).toThrow('Unknown landing preview section: missing');
 });

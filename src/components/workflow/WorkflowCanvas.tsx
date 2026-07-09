@@ -50,6 +50,7 @@ type WorkflowCanvasProps = {
   arrangeDisabled?: boolean;
   arrangeLoading?: boolean;
   resetDisabled?: boolean;
+  showCleanup?: boolean;
 };
 
 function WorkflowCanvasInner({
@@ -68,6 +69,7 @@ function WorkflowCanvasInner({
   arrangeDisabled = false,
   arrangeLoading = false,
   resetDisabled = false,
+  showCleanup = true,
 }: WorkflowCanvasProps) {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string>();
   const {
@@ -81,6 +83,7 @@ function WorkflowCanvasInner({
     nodes,
     edges,
     arrangeFocusRequest,
+    layoutOrientation,
     onSelectNode,
     onClearSelectedEdge: () => setSelectedEdgeId(undefined),
   });
@@ -221,6 +224,7 @@ function WorkflowCanvasInner({
         arrangeDisabled={arrangeDisabled || activeView !== 'messageHandling'}
         arrangeLoading={arrangeLoading}
         resetDisabled={resetDisabled}
+        showCleanup={showCleanup}
       />
     </ReactFlow>
   );

@@ -9,5 +9,6 @@ test('workflow canvas passes arrange loading and focus requests through to the v
   expect(source).toContain('arrangeFocusRequest');
   expect(source).toContain('useWorkflowCanvasView({');
   expect(source).toContain('arrangeFocusRequest,');
+  expect(source).toContain('layoutOrientation,');
   expect(source).toContain('arrangeLoading={arrangeLoading}');
 });

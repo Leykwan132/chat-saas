@@ -28,6 +28,7 @@ type WorkflowToolbarProps = {
   arrangeDisabled?: boolean;
   arrangeLoading?: boolean;
   resetDisabled?: boolean;
+  showCleanup?: boolean;
 };
 
 export function WorkflowToolbar({
@@ -41,6 +42,7 @@ export function WorkflowToolbar({
   arrangeDisabled = false,
   arrangeLoading = false,
   resetDisabled = false,
+  showCleanup = true,
 }: WorkflowToolbarProps) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const ArrangeIcon = arrangeLoading
@@ -75,16 +77,18 @@ export function WorkflowToolbar({
             <span className="sr-only">Fit view</span>
           </Button>
           <div className="mx-1 h-8 w-px bg-border" />
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={cleanupDisabled}
-            onClick={onCleanup}
-          >
-            <WandSparkles data-icon="inline-start" />
-            Cleanup
-          </Button>
+          {showCleanup ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={cleanupDisabled}
+              onClick={onCleanup}
+            >
+              <WandSparkles data-icon="inline-start" />
+              Cleanup
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"

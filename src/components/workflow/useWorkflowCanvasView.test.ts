@@ -11,3 +11,11 @@ test('workflow canvas view refocuses after an arrange focus request', () => {
   expect(source).toContain('duration: 320');
   expect(source).toContain('window.clearTimeout');
 });
+
+test('workflow canvas view refocuses after layout orientation changes with extra padding', () => {
+  expect(source).toContain('layoutOrientation');
+  expect(source).toContain('getWorkflowOrientationFitViewPadding');
+  expect(source).toContain('duration: 360');
+  expect(source).toContain('}, 120)');
+  expect(source).toContain('[activeView, fitView, layoutOrientation]');
+});

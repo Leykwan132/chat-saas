@@ -17,3 +17,7 @@ test('workflow node handles switch between vertical and horizontal anchors', () 
   expect(source).toContain('Position.Bottom');
   expect(source).toContain('vertical');
 });
+
+test('workflow node card does not render landing demo service labels', () => {
+  expect(source).not.toContain('serviceLabels');
+});

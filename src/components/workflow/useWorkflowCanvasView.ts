@@ -6,11 +6,13 @@ import {
   getWorkflowCanvasViewElements,
   type WorkflowCanvasView,
 } from './workflowCanvasViews';
+import type { WorkflowLayoutOrientation } from './workflowTypes';
 
 type UseWorkflowCanvasViewArgs = {
   nodes: WorkflowFlowNode[];
   edges: WorkflowFlowEdge[];
   arrangeFocusRequest?: number;
+  layoutOrientation: WorkflowLayoutOrientation;
   onSelectNode: (nodeId?: Id<'workflowNodes'>) => void;
   onClearSelectedEdge: () => void;
 };
@@ -19,10 +21,15 @@ function getWorkflowFitViewPadding(view: WorkflowCanvasView) {
   return view === 'messageHandling' ? 0.25 : 0.45;
 }
 
+function getWorkflowOrientationFitViewPadding(view: WorkflowCanvasView) {
+  return view === 'messageHandling' ? 0.4 : 0.55;
+}
+
 export function useWorkflowCanvasView({
   nodes,
   edges,
   arrangeFocusRequest = 0,
+  layoutOrientation,
   onSelectNode,
   onClearSelectedEdge,
 }: UseWorkflowCanvasViewArgs) {
@@ -54,6 +61,17 @@ export function useWorkflowCanvasView({
 
     return () => window.cancelAnimationFrame(frameId);
   }, [activeView, fitView]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void fitView({
+        padding: getWorkflowOrientationFitViewPadding(activeView),
+        duration: 360,
+      });
+    }, 120);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeView, fitView, layoutOrientation]);
 
   useEffect(() => {
     if (arrangeFocusRequest === 0) return undefined;
