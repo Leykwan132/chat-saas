@@ -1,28 +1,12 @@
 # Snapshot
-- 2026-07-10 [CODE] Blog post page uses Cursor-style layout (`Blog/Product`, editorial type); Ilmu post is longer, states Free-plan availability, and constrains the lead image size.
-- 2026-07-10 [CODE] Leaderboard ranking rows resolve chef and custom image from supported model metadata, so Ilmu Mini V3.3 shows “by YTL AI Labs” and the hosted PNG like Supported LLM Models.
-- 2026-07-10 [CODE] Workflow matches are backend-authoritative: matched sendImage/sendFile nodes always send their runtime assets, matched sendText nodes send their configured text verbatim, and media reply guidance includes the exact filename/type payload already being sent.
-- 2026-07-10 [CODE] Workflow action `generateObject` planning is pinned to `deepseek/deepseek-v4-flash` through an explicit per-call model override; customer-facing text still uses the selected agent model, and usage records the model's actual provider.
+- 2026-07-10 [USER] Current focus: remove Tencent model support (`tencent/hy3-preview`) from catalog, plan entitlements, and UI icon special-casing.
+- 2026-07-10 [CODE] Now: `tencent/hy3-preview` is removed from enabled catalog, display names, and paid plan entitlements; leaderboard logos no longer special-case Tencent icons.
 - 2026-07-10 [CODE] Ilmu Mini V3.3 is the only Free-plan model; Amazon Nova Micro and every other model require Starter+, while Ilmu remains available on paid plans. Model UI renders `https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png` with “by YTL AI Labs.”
-- 2026-07-10 [TOOL] Node 22.22.0 final verification passed Convex codegen/typecheck, 34 focused/adjacent tests, targeted ESLint, full `tsc`, production build, `git diff --check`, asset verification, and touched code-file LOC checks.
-- 2026-07-10 [CODE] Approved Ilmu Mini design is documented and committed at `docs/superpowers/specs/2026-07-10-ilmu-mini-model-design.md` in commit `6df4b945`; implementation and verification are complete in the working tree.
-- 2026-07-10 [USER] Approved the Ilmu Mini integration design and requested implementation.
-- 2026-07-10 [USER] `ilmu-mini-v3.3` costs RM0.20 per million input tokens and RM1.20 per million output tokens, must be included in Free, and one costlier current Free model must move to paid plans.
-- 2026-07-10 [TOOL] Current OpenRouter list prices are DeepSeek V4 Flash USD0.0983/M input and USD0.1966/M output, versus Amazon Nova Micro USD0.035/M input and USD0.14/M output; DeepSeek is the costlier current Free model.
-- 2026-07-10 [USER] Current focus: add `ilmu-mini-v3.3` through Ilmu's OpenAI-compatible API at `https://api.ilmu.ai/v1` and use the supplied Ilmu image in model UI.
-- 2026-07-10 [TOOL] The supplied Ilmu image is a valid 1600x1599 JPEG; `@ai-sdk/openai-compatible@3.0.7` is installed but targets provider v4, while this app's `ai@6` and `@convex-dev/agent@0.6.1` require provider v3; npm's official `ai-v6` tag is `2.0.59`.
-- 2026-07-09 [USER] Current focus: Website/Web Widget should show thinking/streaming polish, render media inline, support safe `*bold*` text, and support non-destructive reset chat.
-- 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
-- 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
-- 2026-07-09 [CODE] Now: production prompt blocks no longer instruct the model to output `<workflow_matches>`, `<customer_response>`, or `<media_to_send>` tags; legacy tag parsers remain for compatibility tests/helpers.
-- 2026-07-09 [CODE] Recently done: prompt templates follow Role/About the business/Goal/Guardrails plus `# Error handling`; user-facing templates omit workflow/tool internals.
-- 2026-07-09 [CODE] Recently done: Book appointment workflow nodes default to `Yes`, omit Goal in the inspector, and expose selected Services to the AI.
-- 2026-07-09 [CODE] Recently done: AI Agent Usage analytics header is compact and description-free; Knowledge Base storage cards and landing/widget polish are captured in Decisions/Receipts.
-- 2026-07-09 [CODE] Recently done: Convex agent validators/schema accept `productSales`; `captureAIGeneration` calls in Convex actions are awaited to avoid dangling PostHog fetches.
-- 2026-07-09 [CODE] Important context: landing preview, workflow layout, media send fixes, admin cost reporting, model catalog trimming, setup checklist, and Website widget milestones are captured in Decisions/Receipts.
-- 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply: validators on all functions, indexed bounded reads, schema changes in `convex/schema.ts`, auth-derived ownership checks for private surfaces.
-- 2026-07-04 [USER] Node v22 is required before scripts/tests; use `source ~/.nvm/nvm.sh && nvm use 22 && ...`.
-- 2026-07-04 [USER] Project rule: code files must stay under 300 LOC; keep feature code modular.
+- 2026-07-10 [CODE] Workflow matches are backend-authoritative; workflow `generateObject` planning is pinned to `deepseek/deepseek-v4-flash`.
+- 2026-07-10 [CODE] Blog/leaderboard Ilmu attribution and hosted PNG work is complete; design doc at `docs/superpowers/specs/2026-07-10-ilmu-mini-model-design.md` (`6df4b945`).
+- 2026-07-10 [USER] `ilmu-mini-v3.3` costs RM0.20/M input and RM1.20/M output via `https://api.ilmu.ai/v1`.
+- 2026-07-09 [CODE] Website widget thinking/streaming/media/bold/reset polish and AI structured-output planner milestones are captured in Decisions/Receipts.
+- 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply; Node v22 required before scripts/tests; code files must stay under 300 LOC.
 
 # Decisions
 - 2026-07-04 [CODE] D101 ACTIVE: Web widget runtime accepts `{ publicKey, visitorId, content, pageUrl }`; backend resolves `publicKey -> webWidgetSettings` and uses stored `channelId`/`agentId`, validating only that settings exist and are enabled.
@@ -51,7 +35,7 @@
 - 2026-07-06 [CODE] D124 SUPERSEDED: `tencent/hy3-preview` was enabled, then later removed during slim-catalog pruning; D139 restores it.
 - 2026-07-06 [CODE] D125 SUPERSEDED: `xiaomi/mimo-v2.5` was enabled, then later removed during slim-catalog pruning; D137 restores it.
 - 2026-07-06 [CODE] D126 ACTIVE: Shared accordion content must not pin the inner body to `h-(--radix-accordion-content-height)` because supported model lists can grow after Radix measures the open height.
-- 2026-07-06 [CODE] D127 ACTIVE: Tencent model icons use `Tencent.Color` from `@lobehub/icons` whenever a model ID starts with `tencent/`; generic `ModelIcon` remains the fallback.
+- 2026-07-06 [CODE] D127 SUPERSEDED by D236: Tencent model icons previously used `Tencent.Color` from `@lobehub/icons` for `tencent/` model IDs.
 - 2026-07-06 [CODE] D128 ACTIVE: Leaderboard analytics display pieces live in `ModelLeaderboardDisplay.tsx` and pure formatting/types live in `modelLeaderboardUtils.ts` so `ModelLeaderboardPanel.tsx` stays under 300 LOC.
 - 2026-07-06 [CODE] D129 ACTIVE: `ModelLeaderboardPanel.tsx` re-exports `ModelLeaderboardSkeleton` to keep existing page imports stable while the skeleton implementation lives in `ModelLeaderboardDisplay.tsx`.
 - 2026-07-06 [CODE] D130 SUPERSEDED: `mistralai/mistral-nemo` was enabled as “Mistral Nemo” with `chefSlug: "mistral"`, `requiredPlan: "free"`, labels `["basic"]`, and all plan model entitlements.
@@ -63,10 +47,11 @@
 - 2026-07-06 [CODE] D136 SUPERSEDED: Slimmed catalog previously excluded `xiaomi/mimo-v2.5`, `tencent/hy3-preview`, `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `openai/gpt-oss-120b`, and `minimax/minimax-m3`.
 - 2026-07-06 [CODE] D137 ACTIVE: `xiaomi/mimo-v2.5` is enabled as “Xiaomi MiMo V2.5” with `chefSlug: "xiaomi"`, `requiredPlan: "starter"`, labels `["advanced","latest"]`, and paid plan entitlements; `z-ai/glm-5.2` is not enabled, display-named, or plan-entitled.
 - 2026-07-06 [CODE] D138 SUPERSEDED: Slimmed catalog previously excluded `tencent/hy3-preview`, `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `openai/gpt-oss-120b`, `minimax/minimax-m3`, and `z-ai/glm-5.2`.
-- 2026-07-06 [CODE] D139 ACTIVE: `tencent/hy3-preview` is enabled as “Tencent HY3 Preview” with `chefSlug: "tencent"`, `requiredPlan: "starter"`, labels `["advanced","latest"]`, and paid plan entitlements; `meta-llama/llama-3.3-70b-instruct` is not enabled, display-named, or plan-entitled.
+- 2026-07-06 [CODE] D139 SUPERSEDED by D236: `tencent/hy3-preview` was previously enabled as “Tencent HY3 Preview” with paid plan entitlements; `meta-llama/llama-3.3-70b-instruct` remains not enabled.
+- 2026-07-10 [USER] D236 ACTIVE: `tencent/hy3-preview` is not enabled, display-named, or plan-entitled; leaderboard/model logos use generic `ModelIcon` only with no Tencent special-case.
 - 2026-07-06 [CODE] D140 SUPERSEDED: Slimmed catalog previously excluded `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `openai/gpt-oss-120b`, `minimax/minimax-m3`, `z-ai/glm-5.2`, and `meta-llama/llama-3.3-70b-instruct`.
 - 2026-07-06 [CODE] D141 ACTIVE: `openai/gpt-oss-120b` is enabled as “OpenAI GPT-OSS 120B” with `chefSlug: "openai"`, `requiredPlan: "starter"`, labels `["advanced"]`, and paid plan entitlements; `qwen/qwen3.7-plus` is not enabled, display-named, or plan-entitled.
-- 2026-07-06 [CODE] D142 ACTIVE: Current slimmed catalog excludes `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `minimax/minimax-m3`, `z-ai/glm-5.2`, `meta-llama/llama-3.3-70b-instruct`, and `qwen/qwen3.7-plus` from enabled catalog, display names, and plan entitlements.
+- 2026-07-06 [CODE] D142 ACTIVE: Slimmed catalog excludes `nvidia/nemotron-3-super-120b-a12b`, `mistralai/mistral-nemo`, `minimax/minimax-m3`, `z-ai/glm-5.2`, `meta-llama/llama-3.3-70b-instruct`, `qwen/qwen3.7-plus`, and `tencent/hy3-preview` from enabled catalog, display names, and plan entitlements.
 - 2026-07-07 [CODE] D143 ACTIVE: PostHog `$ai_generation` distinct IDs for inbox AI replies use the same resolved WorkOS user ID returned by `insertRawUsage`; raw Agent component thread IDs like `org:` are not analytics identities.
 - 2026-07-07 [CODE] D144 ACTIVE: Assistant media markers are treated as case-insensitive and whitespace-tolerant (`[MEDIA:id]`, `[Media: id]`, etc.) before channel sends; extracted IDs are resolved to media assets and removed from text.
 - 2026-07-07 [CODE] D145 ACTIVE: AI reply text is normalized for every channel before external send and persistence; the formatter removes internal process/tool/search/knowledge-base narration, not only WhatsApp markdown quirks.
@@ -162,33 +147,25 @@
 - 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-10 [CODE] Removed `tencent/hy3-preview` from model catalog, plan entitlements, display names, and Tencent leaderboard icon special-casing.
 - 2026-07-10 [CODE] Added landing announcement pill + Markdown blog post for Ilmu / YTL AI Labs.
 - 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
 - 2026-07-10 [CODE] Made matched workflow media and Send message actions deterministic from backend runtime payloads.
 - 2026-07-10 [CODE] Pinned workflow `generateObject` planning to DeepSeek and made usage tracking honor per-call model-provider overrides.
-- 2026-07-10 [CODE] Replaced the Ilmu model JPEG with the user-provided transparent YTL AI Labs PNG.
-- 2026-07-10 [CODE] Restricted Free model access to Ilmu Mini V3.3 and moved Amazon Nova Micro to Starter+.
-- 2026-07-10 [CODE] Fixed the Supported LLM Models Ilmu card to render its configured hosted image and “by YTL AI Labs.”
-- 2026-07-10 [CODE] Added provider-aware Ilmu inference, correct plan entitlements and provider persistence, configured usage costing, and the hosted YTL AI Labs model image.
-- 2026-07-09 [CODE] Kept the Website setup preview bottom-right launcher icon mounted after opening the preview panel.
+- 2026-07-10 [CODE] Restricted Free model access to Ilmu Mini V3.3; Ilmu uses hosted YTL AI Labs PNG and provider-aware inference.
+- 2026-07-09 [CODE] Website widget polish and AI structured-output planner milestones captured in Receipts.
 # Working set
-- 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
-- 2026-07-05 [CODE] `src/components/setup-checklist/*`.
-- 2026-07-05 [CODE] `src/components/workspace/AgentsSidebar.tsx`, `src/components/workspace/AgentCards.tsx`, `src/pages/WorkspacePage.tsx`, `src/components/app-sidebar.tsx`.
-- 2026-07-06 [CODE] Admin-cost working set: `convex/adminUsageCosts.ts`, `convex/adminUsageCostAggregateQuery.ts`, `convex/agentCostAggregateModel.ts`, `convex/adminUsageCosts.test.ts`, `convex/aggregates.ts`, `convex/triggers.ts`, `convex/convex.config.ts`, `src/pages/AdminPage.tsx`, `src/components/admin/*`, `src/main.tsx`, `convex/_generated/api.d.ts`; deleted `src/pages/AdminContactPage.tsx`.
-- 2026-07-06 [CODE] OpenRouter model-ID working set: `convex/llm/modelPricing.ts`, `convex/llm/modelPricing.test.ts`, `shared/planCatalog.ts`.
-- 2026-07-06 [CODE] Leaderboard/model-list UI working set: `src/pages/LeaderboardPage.tsx`, `src/pages/leaderboardTencentIcon.test.ts`, `src/components/analytics/ModelLeaderboardPanel.tsx`, `src/components/analytics/ModelLeaderboardDisplay.tsx`, `src/components/analytics/modelLeaderboardUtils.ts`, `src/components/analytics/modelLeaderboardPanelExports.test.ts`, `src/components/ui/accordion.tsx`, `src/components/ui/accordion.test.ts`.
-- 2026-07-06 [CODE] Workspace agent entry working set: `src/components/workspace/AgentCards.tsx`, `src/components/workspace/agentWorkspaceRoutes.ts`, `src/components/workspace/agentWorkspaceRoutes.test.ts`.
-- 2026-07-06 [CODE] Launch Guide UI working set: `src/components/setup-checklist/WorkspaceSetupChecklist.tsx`, `src/components/setup-checklist/WorkspaceSetupChecklistPanel.tsx`, `src/components/setup-checklist/workspaceSetupChecklistLayout.ts`, `src/components/setup-checklist/workspaceSetupChecklistLayout.test.ts`.
-- 2026-07-08 [CODE] AI SDK/PostHog usage capture working set: `convex/agentUsage.ts`, `convex/agentUsage.test.ts`, `convex/chat/threads.ts`, `convex/posthog.ts`, `convex/analyticsSentiment.ts`, `convex/chat/inboxActions.ts`, `convex/posthogDanglingPromises.test.ts`, `convex/doubleSave.test.ts`.
-- 2026-07-09 [CODE] Meta/AI reply cleanup working set: `convex/chat/aiReplyOutput.ts`, `convex/chat/aiReplyOutput.test.ts`, `convex/chat/aiReplyMedia.ts`, `convex/chat/aiReplyMedia.test.ts`, `convex/chat/mediaManifest.ts`, `convex/chat/mediaManifest.test.ts`, `convex/chat/workflowActionPlanner.ts`, `convex/chat/workflowActionPlanner.test.ts`, `convex/chat/workflowMatchArrayPrompt.test.ts`, `convex/chat/responseFormatting.ts`, `convex/chat/responseFormatting.test.ts`, `convex/chat/inbox.ts`, `convex/chat/channelSend.ts`, `convex/workflowRuntimeContext.ts`.
-- 2026-07-07 [CODE] Workflow Send message/modal working set: `shared/workflows.ts`, `convex/workflowValidators.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/workflowPrompt.test.ts`, `convex/workflowActions.test.ts`, `convex/workflowMedia.test.ts`, `convex/workflowMediaAccess.test.ts`, `src/components/workflow/WorkflowInspector.tsx`, `src/components/workflow/workflowCatalog.test.tsx`, `src/pages/WorkflowPage.tsx`, `src/pages/workflowPageNodeSelection.ts`, `src/pages/workflowPageNodeSelection.test.ts`.
-- 2026-07-07 [CODE] Workflow node deletion working set: `convex/workflows.ts`, `convex/workflowNodeRemoval.ts`, `convex/workflows.test.ts`, `convex/workflowNodeDeletion.test.ts`.
-- 2026-07-09 [CODE] Landing/workflow preview working set: `src/components/landing/LandingAppPreviewWorkflow.tsx`, `src/components/landing/LandingAppPreviewWorkflow.test.ts`, `src/components/landing/landingAppPreviewData.test.ts`, `src/components/workflow/Workflow{Canvas,Toolbar,Node}.tsx`, `src/components/workflow/useWorkflowCanvasView.ts`, `src/components/workflow/useWorkflowCanvasView.test.ts`.
-- 2026-07-08 [CODE] Workflow media goal/copy working set: `convex/chat/workflowPrompt.ts`, `convex/workflowRuntimeContext.ts`, `src/components/workflow/WorkflowInspectorForm.tsx`, `src/components/workflow/WorkflowSendMediaSection.tsx`, `src/components/workflow/WorkflowMediaGrid.tsx`, `src/components/workflow/workflowInspectorBehavior.ts`, `src/components/workflow/workflowSendMediaCopy.ts`, `convex/chat/workflowPromptMediaActions.test.ts`, `src/components/workflow/WorkflowSendMediaSection.test.ts`, `src/components/workflow/WorkflowMediaGrid.test.ts`, `src/components/workflow/workflowInspectorMediaActions.test.ts`, `src/components/workflow/workflowSendMediaCopy.test.ts`.
-- 2026-07-08 [CODE] Workflow UI working set: `convex/workflowLayout*`, `convex/workflowValidators.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`, `src/pages/WorkflowPage*`, `src/pages/workflowPageArrangement.ts`, `src/components/workflow/Workflow{Canvas,Toolbar,Node,Edge,PageSkeleton}*`, `src/components/workflow/useWorkflowCanvasView*`, `src/components/workflow/workflow{Layout,EdgeRouting,FlowModel,Types}*`, `src/components/landing/LandingAppPreviewWorkflow*`.
-- 2026-07-08 [CODE] ElevenLabs prompt-format working set: `shared/agentPromptTemplates.ts`, `src/lib/utils.ts`, `src/lib/agentTemplates*`, `src/components/agent-setup/agentSetupOptions*`, `src/components/agent-setup/AgentSetup{Panels,SystemPromptPanel}*`, `convex/agents.ts`, `convex/chat/toolPrompt.ts`, `convex/chat/threads.ts`, `convex/chat/workflowPrompt.ts`, `convex/chat/*Prompt*.test.ts`.
-- 2026-07-09 [CODE] Website widget rendering working set: `public/widget/v1.js`, `src/components/channels/WebWidgetPreviewConversation.tsx`, `src/components/channels/WebWidgetPreviewMessagePayload.tsx`, `src/components/channels/WebWidgetMobileLayout.test.ts`, `src/components/channels/WebWidgetPreviewConversation.test.ts`.
+- 2026-07-10 [CODE] Tencent removal: `convex/llm/modelPricing.ts`, `convex/llm/modelPricing.test.ts`, `shared/planCatalog.ts`, `src/pages/LeaderboardPage.tsx`, `src/components/analytics/ModelLeaderboardDisplay.tsx`, `src/pages/leaderboardTencentIcon.test.ts`.
+- 2026-07-06 [CODE] OpenRouter/model catalog: `convex/llm/modelPricing.ts`, `convex/llm/modelPricing.test.ts`, `shared/planCatalog.ts`.
+- 2026-07-06 [CODE] Leaderboard UI: `src/pages/LeaderboardPage.tsx`, `src/components/analytics/ModelLeaderboard{Panel,Display}.tsx`, `src/components/analytics/modelLeaderboardUtils.ts`.
+- 2026-07-10 [CODE] Ilmu/model entitlements: `convex/llm/*`, `shared/planCatalog.ts`, leaderboard/Supported LLM Models UI.
+- 2026-07-09 [CODE] Website widget: `public/widget/v1.js`, `src/components/channels/WebWidget*`.
+- 2026-07-09 [CODE] Workflow AI planner/media: `convex/chat/workflowActionPlanner*`, `convex/chat/aiReply*`, `convex/chat/mediaManifest*`.
+- 2026-07-08 [CODE] Workflow UI/layout: `src/components/workflow/*`, `src/pages/WorkflowPage*`, `convex/workflow*`.
+- 2026-07-08 [CODE] Landing preview: `src/components/landing/*`.
+- 2026-07-06 [CODE] Admin cost reporting: `convex/adminUsageCosts*`, `src/pages/AdminPage.tsx`, `src/components/admin/*`.
+- 2026-07-05 [CODE] Setup checklist/workspace: `convex/workspaceSetupChecklist*`, `src/components/setup-checklist/*`, `src/components/workspace/*`.
+- 2026-07-08 [CODE] Agent prompt templates: `shared/agentPromptTemplates.ts`, `src/components/agent-setup/*`, `convex/chat/*Prompt*`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: The production/development Convex deployments still need their actual `ILMU_API_KEY` secret value configured before a live Ilmu request can succeed.
@@ -196,6 +173,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-10 [TOOL] Tencent removal: Node 22 verification passed 16 focused tests across `modelPricing.test.ts` and `leaderboardTencentIcon.test.ts`; `git diff --check` clean; production source scan has no remaining `tencent/` catalog/UI references outside negative tests.
 - 2026-07-10 [TOOL] Landing announcement/blog: 2 focused tests passed; touched ESLint clean; Ilmu Mini PNG HEAD 200; LOC under 300; `git diff --check` clean.
 - 2026-07-10 [TOOL] Leaderboard ranking attribution fix: Node 22 verification passed 6 focused tests across 3 files, LOC under 300, and `git diff --check`.
 - 2026-07-10 [TOOL] Deterministic workflow-action regressions reproduced five RED gaps: Send message did not activate planning, action payloads were absent, matched media could resolve empty, media reply guidance lacked payload details, and Send message text was LLM-rewritten. Final Node 22 verification passed 34 tests across 8 files, targeted ESLint, full TypeScript, `git diff --check`, stale pasted-log scans, and touched code-file LOC checks at or below 266 lines.

@@ -7,11 +7,10 @@ const leaderboardDisplay = readFileSync(
   'utf8',
 );
 
-test('leaderboard uses the dedicated Tencent color icon for Tencent models', () => {
+test('leaderboard model logos do not special-case Tencent icons', () => {
   for (const source of [leaderboardPage, leaderboardDisplay]) {
-    expect(source).toContain('Tencent');
-    expect(source).toContain('model.startsWith(\'tencent/\')');
-    expect(source).toContain('<Tencent.Color');
+    expect(source).not.toContain('Tencent');
+    expect(source).not.toContain('tencent/');
   }
 });
 

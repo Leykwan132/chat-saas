@@ -114,6 +114,7 @@ test("trimmed model options are not enabled or included in plan entitlements", (
     "z-ai/glm-5.2",
     "meta-llama/llama-3.3-70b-instruct",
     "qwen/qwen3.7-plus",
+    "tencent/hy3-preview",
   ];
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
@@ -124,22 +125,6 @@ test("trimmed model options are not enabled or included in plan entitlements", (
     expect(planModelIds).not.toContain(modelId);
     expect(catalogModelIds).not.toContain(modelId);
   }
-});
-
-test("Tencent HY3 Preview is enabled and included in paid plan entitlements", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "tencent/hy3-preview");
-  const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("tencent/hy3-preview"))
-    .map(([planKey]) => planKey);
-
-  expect(model).toMatchObject({
-    label: "Tencent HY3 Preview",
-    chef: "Tencent",
-    chefSlug: "tencent",
-    requiredPlan: "starter",
-    labels: ["advanced", "latest"],
-  });
-  expect(plansWithModel).toEqual(["starter", "growth", "business"]);
 });
 
 test("OpenAI GPT-OSS 120B is enabled and included in paid plan entitlements", () => {

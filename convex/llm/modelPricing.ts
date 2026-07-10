@@ -84,16 +84,6 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced"],
   },
-  "tencent/hy3-preview": {
-    label: "Tencent HY3 Preview",
-    creditCost: 1,
-    enabled: true,
-    provider: "openrouter",
-    chef: "Tencent",
-    chefSlug: "tencent",
-    requiredPlan: "starter",
-    labels: ["advanced", "latest"],
-  },
 };
 
 export const DEFAULT_OPENROUTER_MODEL = "deepseek/deepseek-v4-flash";

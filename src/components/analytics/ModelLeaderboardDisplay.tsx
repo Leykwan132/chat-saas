@@ -1,4 +1,4 @@
-import { ModelIcon, Tencent } from '@lobehub/icons';
+import { ModelIcon } from '@lobehub/icons';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { MODEL_USAGE_OTHERS_COLOR } from '../../../shared/modelUsageChartColors';
@@ -27,10 +27,6 @@ export function ModelLogo({
         width={size}
       />
     );
-  }
-
-  if (model.startsWith('tencent/')) {
-    return <Tencent.Color className="select-none" size={size} />;
   }
 
   return (

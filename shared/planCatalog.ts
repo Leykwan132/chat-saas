@@ -69,7 +69,6 @@ export const ADVANCED_PLAN_MODELS = [
   "ilmu-mini-v3.3",
   "deepseek/deepseek-v4-flash",
   "google/gemini-3.1-flash-lite",
-  "tencent/hy3-preview",
   "openai/gpt-oss-120b",
   "xiaomi/mimo-v2.5",
   "amazon/nova-micro-v1",
@@ -80,7 +79,6 @@ export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
   "google/gemini-3.1-flash-lite": "Google Gemini 3.1 Flash Lite",
   "amazon/nova-micro-v1": "Amazon Nova Micro",
-  "tencent/hy3-preview": "Tencent HY3 Preview",
   "openai/gpt-oss-120b": "OpenAI GPT-OSS 120B",
   "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
 };
