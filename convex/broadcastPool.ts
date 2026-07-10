@@ -105,7 +105,6 @@ export const broadcastWorker = internalAction({
     }
 
     const url = `${graphBase()}/${phoneNumberId}/messages`;
-    console.log("Broadcast template send", { to, templateName: schedule.templateName, template });
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -120,7 +119,6 @@ export const broadcastWorker = internalAction({
       }),
     });
 
-    console.log("Broadcast template send response", res);
     const text = await res.text();
     let body: any = null;
     try {
