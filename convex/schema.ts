@@ -10,6 +10,10 @@ import {
   webWidgetLayoutValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
+import {
+  broadcastPresentationValidator,
+  messageKindValidator,
+} from "./broadcastMessageValidators";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -841,6 +845,8 @@ export default defineSchema({
     ),
     content: v.string(),
     mediaUrl: v.optional(v.string()),
+    messageKind: v.optional(messageKindValidator),
+    broadcastPresentation: v.optional(broadcastPresentationValidator),
     status: v.optional(
       v.union(
         v.literal("queued"),

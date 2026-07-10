@@ -36,6 +36,15 @@ import {
 } from "./workflowPrompt";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
+import type {
+  BroadcastMessageKind,
+  BroadcastPresentation,
+} from "../../shared/broadcastMessage";
+import {
+  broadcastPresentationValidator,
+  messageKindValidator,
+} from "../broadcastMessageValidators";
+import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -235,6 +244,7 @@ export async function saveHumanReply(
     files?: Array<{ url: string; mimeType: string }>;
     authorName?: string;
     channelName?: string;
+    messageMetadata?: Record<string, unknown>;
   },
 ): Promise<string> {
   const agentName = await resolveAssignedAgentName(ctx, opts.assignedAgentId);
@@ -268,6 +278,7 @@ export async function saveHumanReply(
             images: opts.images,
           })
         : undefined,
+    messageMetadata: opts.messageMetadata,
   });
 }
 
@@ -941,6 +952,8 @@ export const ingestChannelMessageArgs = {
   direction: directionValidator,
   content: v.string(),
   contentType: v.optional(contentTypeValidator),
+  messageKind: v.optional(messageKindValidator),
+  broadcastPresentation: v.optional(broadcastPresentationValidator),
   timestampMs: v.number(),
   isHistorical: v.optional(v.boolean()),
   outboundStatus: v.optional(
@@ -983,6 +996,8 @@ export type IngestChannelMessageArgs = {
   direction: "incoming" | "outgoing";
   content: string;
   contentType?: Doc<"messages">["contentType"];
+  messageKind?: BroadcastMessageKind;
+  broadcastPresentation?: BroadcastPresentation;
   timestampMs: number;
   isHistorical?: boolean;
   outboundStatus?: "sent" | "delivered" | "read" | "failed";
@@ -1079,7 +1094,12 @@ export async function ingestChannelMessage(
   });
 
   let agentMessageId: string | undefined;
-  if (trimmedContent.length > 0 || images.length > 0 || files.length > 0) {
+  const hasThreadMessage =
+    trimmedContent.length > 0 ||
+    images.length > 0 ||
+    files.length > 0 ||
+    args.messageKind === "broadcast";
+  if (hasThreadMessage) {
     if (args.direction === "incoming") {
       agentMessageId = await saveUserMessage(
         ctx,
@@ -1098,6 +1118,10 @@ export async function ingestChannelMessage(
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
         files: files.map(file => ({ url: file.url, mimeType: file.mimeType })),
         channelName: args.humanAgentName,
+        messageMetadata: broadcastAgentMetadata(
+          args.messageKind,
+          args.broadcastPresentation,
+        ),
       });
     }
   }
@@ -1113,6 +1137,12 @@ export async function ingestChannelMessage(
           statusUpdatedAt: now,
           ...(outboundStatus === "read" ? { readAt: now } : {}),
         };
+  const broadcastFields = {
+    ...(args.messageKind ? { messageKind: args.messageKind } : {}),
+    ...(args.broadcastPresentation
+      ? { broadcastPresentation: args.broadcastPresentation }
+      : {}),
+  };
   if (images.length > 0) {
     for (const img of images) {
       await ctx.db.insert("messages", {
@@ -1129,6 +1159,7 @@ export async function ingestChannelMessage(
         content: img.url,
         mediaUrl: img.url,
         agentMessageId,
+        ...broadcastFields,
         ...outboundStatusFields,
         createdAt: now,
       });
@@ -1151,6 +1182,7 @@ export async function ingestChannelMessage(
         content: file.url,
         mediaUrl: file.url,
         agentMessageId,
+        ...broadcastFields,
         ...outboundStatusFields,
         createdAt: now,
       });
@@ -1171,6 +1203,7 @@ export async function ingestChannelMessage(
       contentType: args.contentType ?? "text",
       content: args.content,
       agentMessageId,
+      ...broadcastFields,
       ...outboundStatusFields,
       createdAt: now,
     });

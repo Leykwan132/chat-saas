@@ -10,6 +10,11 @@ import {
 } from "../../shared/inboxAttachments";
 import type { InboxMessageReaction } from "../../shared/messageReactions";
 import { inferMediaMimeType } from "./mediaUrlExtractor";
+import type { BroadcastPresentation } from "../../shared/broadcastMessage";
+import {
+  resolveBroadcastMetadata,
+  type BroadcastAgentMessageMetadata,
+} from "./broadcastMessageMetadata";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -51,6 +56,8 @@ export type InboxMessageMetadata = {
   };
   llmModel?: string;
   creditsCharged?: number;
+  inboxMessageKind?: BroadcastAgentMessageMetadata["inboxMessageKind"];
+  broadcastPresentation?: BroadcastPresentation;
 };
 
 export type InboxUIMessage = UIMessage & {
@@ -63,6 +70,8 @@ export type InboxUIMessage = UIMessage & {
   readAt?: number;
   failureReason?: string;
   reactions?: InboxMessageReaction[];
+  isBroadcast?: boolean;
+  broadcastPresentation?: BroadcastPresentation;
 };
 
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
@@ -250,6 +259,10 @@ export async function messageDocsToInboxUIMessages(
       const sentAt = resolveSentAt(doc, sentAtByAgentMessageId);
       const docId = agentMessageDocId(doc);
       const ledger = docId ? ledgerByAgentMessageId.get(docId) : undefined;
+      const broadcastMetadata = resolveBroadcastMetadata(
+        doc as MessageDoc & InboxMessageMetadata,
+        ledger,
+      );
       const inboxAttachments =
         readInboxAttachments(doc) ??
         (docId ? ledgerAttachmentsByAgentMessageId.get(docId) : undefined);
@@ -273,6 +286,7 @@ export async function messageDocsToInboxUIMessages(
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
           ...(inboxAttachments !== undefined ? { inboxAttachments } : {}),
+          ...broadcastMetadata,
         },
       ];
     });

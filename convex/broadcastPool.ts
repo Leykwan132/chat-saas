@@ -11,7 +11,9 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
-import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
+import { buildWhatsAppTemplateSendPayloadWithContent } from "./whatsappTemplateSendPayload";
+import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
+import { formatBroadcastMessageContent } from "./broadcastChatContent";
 
 export const broadcastPool = new Workpool(
   components.broadcastWorkpool,
@@ -78,20 +80,13 @@ export const broadcastWorker = internalAction({
     if (!phoneNumberId) {
       throw new Error("Phone number ID is missing for this channel.");
     }
-    const to = customer.contactAddress.trim();
-    if (!to) {
+    const rawTo = customer.contactAddress.trim();
+    if (!rawTo) {
       throw new Error(`Customer ${customer._id} has no contactAddress`);
     }
+    const to = ensureWhatsAppRecipientPhone(rawTo);
 
-    const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
-    if (skipSend) {
-      return {
-        ok: true,
-        externalId: "demo-id-" + Math.random().toString(36).slice(2, 9),
-      };
-    }
-
-    const template = await buildWhatsAppTemplateSendPayload(ctx, {
+    const { template, renderedContent, headerAsset } = await buildWhatsAppTemplateSendPayloadWithContent(ctx, {
       orgId: schedule.orgId,
       channelId: schedule.channelId,
       templateName: schedule.templateName,
@@ -99,7 +94,18 @@ export const broadcastWorker = internalAction({
       customerId: customer._id,
     });
 
+    const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
+    if (skipSend) {
+      return {
+        ok: true,
+        externalId: "demo-id-" + Math.random().toString(36).slice(2, 9),
+        renderedContent,
+        ...(headerAsset ? { headerAsset } : {}),
+      };
+    }
+
     const url = `${graphBase()}/${phoneNumberId}/messages`;
+    console.log("Broadcast template send", { to, templateName: schedule.templateName, template });
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -114,11 +120,14 @@ export const broadcastWorker = internalAction({
       }),
     });
 
+    console.log("Broadcast template send response", res);
     const text = await res.text();
     let body: any = null;
     try {
       body = text.length ? JSON.parse(text) : null;
-    } catch {}
+    } catch {
+      body = null;
+    }
 
     if (!res.ok) {
       const errMsg = body?.error?.message ?? `HTTP ${res.status}: ${text}`;
@@ -126,7 +135,7 @@ export const broadcastWorker = internalAction({
     }
 
     const externalId = body?.messages?.[0]?.id;
-    return { ok: true, externalId };
+    return { ok: true, externalId, renderedContent, ...(headerAsset ? { headerAsset } : {}) };
   },
 });
 
@@ -161,14 +170,24 @@ export const broadcastComplete = internalMutation({
     if (isSuccess && args.result.kind === "success") {
       const returnValue = args.result.returnValue;
       try {
+        const renderedContent =
+          typeof returnValue.renderedContent === "string"
+            ? returnValue.renderedContent.trim()
+            : "";
+        const chatContent = formatBroadcastMessageContent(renderedContent);
+
         const ingestResult = await ingestChannelMessage(ctx, {
           channelId: schedule.channelId,
           externalId: returnValue.externalId,
           contactAddress: customer.contactAddress,
           contactName: customer.name ?? undefined,
           direction: "outgoing",
-          content: `Broadcast Template: ${schedule.templateName}`,
+          content: chatContent,
           contentType: "text",
+          messageKind: "broadcast",
+          broadcastPresentation: returnValue.headerAsset
+            ? { headerAsset: returnValue.headerAsset }
+            : {},
           timestampMs: Date.now(),
           assignedAgentId: schedule.agentId,
           authorUserId: schedule.createdBy,

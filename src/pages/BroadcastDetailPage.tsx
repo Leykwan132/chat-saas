@@ -38,39 +38,41 @@ function recipientStatusBadgeClass(label: string): {
   badge: string;
   dot: string;
 } {
+  const neutralBadge =
+    'border-neutral-200 bg-neutral-100/60 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-800/40 dark:text-neutral-300 font-medium';
+
   if (label === 'Delivered') {
     return {
-      badge:
-        'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+      badge: neutralBadge,
       dot: 'bg-emerald-500',
     };
   }
   if (label === 'Failed') {
     return {
-      badge: 'bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400',
+      badge: neutralBadge,
       dot: 'bg-rose-500',
     };
   }
   if (label === 'Scheduled') {
     return {
-      badge: 'bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400',
+      badge: neutralBadge,
       dot: 'bg-amber-500',
     };
   }
   if (label === 'Sending') {
     return {
-      badge: 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400',
+      badge: neutralBadge,
       dot: 'bg-blue-500',
     };
   }
   if (label === 'Cancelled') {
     return {
-      badge: 'bg-neutral-500/10 border-neutral-500/20 text-neutral-500',
+      badge: neutralBadge,
       dot: 'bg-neutral-400',
     };
   }
   return {
-    badge: 'bg-muted/40 border-border text-muted-foreground',
+    badge: neutralBadge,
     dot: 'bg-neutral-500',
   };
 }

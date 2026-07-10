@@ -64,6 +64,7 @@ import {
 } from '../../../shared/messageReactions';
 import { cn } from '@/lib/utils';
 import { splitWhatsAppText } from '@/lib/whatsappText';
+import { InboxBroadcastMessage } from './InboxBroadcastMessage';
 
 function getInboxMessageFileParts(
   message: InboxUIMessage,
@@ -358,6 +359,14 @@ function InboxMessageBody({
     text.length > 0 &&
     !(isAudioPlaceholder && audioFiles.length > 0) &&
     !(isImagePlaceholder && imageFiles.length > 0);
+
+  if (message.isBroadcast) {
+    return (
+      <InboxBroadcastMessage presentation={message.broadcastPresentation}>
+        {showText ? <WhatsAppFormattedText text={text} /> : null}
+      </InboxBroadcastMessage>
+    );
+  }
 
   return (
     <>

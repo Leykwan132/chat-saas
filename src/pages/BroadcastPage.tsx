@@ -198,7 +198,7 @@ export default function BroadcastPage() {
             <Button asChild className="gap-1.5 font-semibold">
               <Link to={`/dashboard/${agentId}/broadcast/new`}>
                 <Plus className="size-4" />
-                Create a new broadcast
+                New broadcast
               </Link>
             </Button>
           </div>
@@ -276,22 +276,18 @@ export default function BroadcastPage() {
                       timeStyle: 'short',
                     });
                     
-                    let statusBg = "bg-muted/40 border-border text-muted-foreground";
+                    const statusBg = "border-neutral-200 bg-neutral-100/60 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-800/40 dark:text-neutral-300 font-medium";
                     let statusDot = "bg-neutral-500";
+                    const statusLabel = bc.status.charAt(0).toUpperCase() + bc.status.slice(1);
                     if (bc.status === 'completed') {
-                      statusBg = "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400";
                       statusDot = "bg-emerald-500";
                     } else if (bc.status === 'processing') {
-                      statusBg = "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400";
                       statusDot = "bg-blue-500";
                     } else if (bc.status === 'pending') {
-                      statusBg = "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400";
                       statusDot = "bg-amber-500";
                     } else if (bc.status === 'failed') {
-                      statusBg = "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400";
                       statusDot = "bg-rose-500";
                     } else if (bc.status === 'cancelled') {
-                      statusBg = "bg-neutral-500/10 border-neutral-500/20 text-neutral-500";
                       statusDot = "bg-neutral-400";
                     }
 
@@ -324,7 +320,7 @@ export default function BroadcastPage() {
                             statusBg
                           )}>
                             <span className={cn("size-1.5 rounded-full", statusDot)} />
-                            {bc.status}
+                            {statusLabel}
                           </span>
                         </td>
                         <td className="px-5 py-4 align-middle text-center font-medium text-foreground">

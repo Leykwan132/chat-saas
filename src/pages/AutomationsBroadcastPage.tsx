@@ -63,6 +63,12 @@ import {
 } from '@/lib/scheduleUtils';
 
 import { getWhatsAppRateForCategory } from '@/lib/whatsappRates';
+import {
+  getLeadTemperatureStyle,
+  LEAD_TEMPERATURE_TAGS,
+  type LeadTemperature,
+} from '@/lib/leadTemperature';
+import { BroadcastMessagingLimitCard } from '@/components/broadcast/BroadcastMessagingLimitCard';
 
 const DEFAULT_TEMPLATE_LANGUAGE = 'en_US';
 
@@ -131,6 +137,7 @@ type BroadcastCustomerRow = {
   name?: string;
   phone: string;
   tags: string[];
+  leadTemperature?: LeadTemperature;
   service: 'whatsapp' | 'instagram' | 'messenger' | 'manual' | 'web';
   email?: string;
   assignedUserId?: string;
@@ -303,6 +310,9 @@ export default function AutomationsBroadcastPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState('ALL');
+  const [selectedLeadTemperature, setSelectedLeadTemperature] = useState<
+    'ALL' | LeadTemperature
+  >('ALL');
   const [balanceChecked, setBalanceChecked] = useState(false);
   const [insufficientBalanceUnderstood, setInsufficientBalanceUnderstood] = useState(false);
   const [showChecklistError, setShowChecklistError] = useState(false);
@@ -399,6 +409,13 @@ export default function AutomationsBroadcastPage() {
     if (!customers) return [];
     const q = searchQuery.trim().toLowerCase();
     return customers.filter((c) => {
+      if (
+        selectedLeadTemperature !== 'ALL' &&
+        c.leadTemperature !== selectedLeadTemperature
+      ) {
+        return false;
+      }
+
       if (selectedTag !== 'ALL' && !c.tags.includes(selectedTag)) {
         return false;
       }
@@ -411,7 +428,7 @@ export default function AutomationsBroadcastPage() {
         .toLowerCase();
       return haystack.includes(q);
     });
-  }, [customers, searchQuery, selectedTag]);
+  }, [customers, searchQuery, selectedLeadTemperature, selectedTag]);
 
   const selectedCount = selectedCustomerIds.size;
 
@@ -767,6 +784,10 @@ export default function AutomationsBroadcastPage() {
               </div>
             </div>
           </div>
+
+          <div className="relative z-10 mt-6">
+            <BroadcastMessagingLimitCard channelId={channelId} />
+          </div>
         </div>
 
         {/* RIGHT COLUMN: ACTIVE FLOW (md:col-span-3) */}
@@ -999,6 +1020,62 @@ export default function AutomationsBroadcastPage() {
                         )}
                       </div>
 
+                      <Select
+                        value={selectedLeadTemperature}
+                        onValueChange={(value) =>
+                          setSelectedLeadTemperature(value as 'ALL' | LeadTemperature)
+                        }
+                      >
+                        <SelectTrigger
+                          className="w-fit shrink-0 max-w-[220px] bg-background border-border"
+                        >
+                          <SelectValue asChild>
+                            <span className="flex items-center gap-1.5 min-w-0">
+                              {selectedLeadTemperature === 'ALL' ? (
+                                <span>All temperatures</span>
+                              ) : (
+                                (() => {
+                                  const style = getLeadTemperatureStyle(selectedLeadTemperature);
+                                  const Icon = style.icon;
+                                  return (
+                                    <>
+                                      <Icon
+                                        className={cn('size-3 shrink-0', style.iconClass)}
+                                      />
+                                      <span>{selectedLeadTemperature}</span>
+                                    </>
+                                  );
+                                })()
+                              )}
+                            </span>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent
+                          align="start"
+                          className="min-w-[var(--radix-select-trigger-width)]"
+                        >
+                          <SelectItem value="ALL">All temperatures</SelectItem>
+                          {LEAD_TEMPERATURE_TAGS.map((temperature) => {
+                            const style = getLeadTemperatureStyle(temperature);
+                            const Icon = style.icon;
+                            return (
+                              <SelectItem
+                                key={temperature}
+                                value={temperature}
+                                textValue={temperature}
+                              >
+                                <span className="flex items-center gap-1.5">
+                                  <Icon
+                                    className={cn('size-3.5 shrink-0', style.iconClass)}
+                                  />
+                                  <span>{temperature}</span>
+                                </span>
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+
                       {allTags.length > 0 && (
                         <Select value={selectedTag} onValueChange={setSelectedTag}>
                           <SelectTrigger
@@ -1084,6 +1161,9 @@ export default function AutomationsBroadcastPage() {
                               Source
                             </th>
                             <th className="px-3 py-3 text-left text-2xs font-bold text-muted-foreground">
+                              Temperature
+                            </th>
+                            <th className="px-3 py-3 text-left text-2xs font-bold text-muted-foreground">
                               Tags
                             </th>
                           </tr>
@@ -1091,7 +1171,7 @@ export default function AutomationsBroadcastPage() {
                         <tbody>
                           {filteredCustomers.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="text-center py-8 text-muted-foreground text-xs">
+                              <td colSpan={7} className="text-center py-8 text-muted-foreground text-xs">
                                 No customers match the current search filters.
                               </td>
                             </tr>
@@ -1163,6 +1243,39 @@ export default function AutomationsBroadcastPage() {
                                       />
                                       {sourceLabel}
                                     </Badge>
+                                  </td>
+                                  <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                                    {row.leadTemperature ? (
+                                      (() => {
+                                        const temperature = row.leadTemperature;
+                                        const style = getLeadTemperatureStyle(temperature);
+                                        const Icon = style.icon;
+                                        return (
+                                          <Badge
+                                            variant="secondary"
+                                            onClick={() => {
+                                              setSelectedLeadTemperature((current) =>
+                                                current === temperature
+                                                  ? 'ALL'
+                                                  : temperature,
+                                              );
+                                            }}
+                                            className={cn(
+                                              'cursor-pointer gap-1.5 py-0 px-1.5 text-[9px] font-semibold',
+                                              style.bg,
+                                              style.text,
+                                            )}
+                                          >
+                                            <Icon
+                                              className={cn('size-3 shrink-0', style.iconClass)}
+                                            />
+                                            {temperature}
+                                          </Badge>
+                                        );
+                                      })()
+                                    ) : (
+                                      <span className="text-muted-foreground/30 text-xs select-none">—</span>
+                                    )}
                                   </td>
                                   <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
                                     <div className="flex flex-wrap gap-1">
@@ -1508,6 +1621,7 @@ export default function AutomationsBroadcastPage() {
                       </p>
                     )}
                   </section>
+
                 </div>
 
                 <section className="flex min-h-0 flex-col gap-3">
@@ -1617,34 +1731,25 @@ export default function AutomationsBroadcastPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Non-dismissible Loading Dialog for Broadcaster setup progress */}
       <Dialog open={sendBusy} onOpenChange={() => {}}>
-        <DialogContent 
-          className="max-w-md pointer-events-none" 
+        <DialogContent
+          showCloseButton={false}
+          className="pointer-events-none gap-3 rounded-lg px-6 py-12 text-center sm:max-w-sm"
           onInteractOutside={(e: Event) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
           onKeyDown={(e) => e.preventDefault()}
         >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl font-bold">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              Preparing Broadcast
+          <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
+          <DialogHeader className="gap-1 text-center">
+            <DialogTitle className="text-lg font-semibold">
+              Preparing broadcast
             </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground mt-2">
-              We are setting up the recipient customer records and arranging the broadcasting work. Please don't close this page.
+            <DialogDescription className="text-sm leading-5 text-muted-foreground">
+              Setting up recipients and scheduling delivery.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col items-center justify-center p-6 gap-4">
-            <div className="relative w-24 h-24 flex items-center justify-center">
-              <div className="absolute inset-0 rounded-full border-4 border-primary/20 animate-pulse" />
-              <div className="absolute inset-2 rounded-full border-4 border-t-primary border-r-transparent border-b-transparent border-l-transparent animate-spin duration-1000" />
-              <div className="absolute inset-4 rounded-full border-4 border-b-primary/60 border-t-transparent border-r-transparent border-l-transparent animate-spin duration-700 reverse" />
-              <SiWhatsapp className="h-8 w-8 text-primary" />
-            </div>
-            <p className="text-sm font-medium text-muted-foreground animate-pulse">
-              Enqueuing recipients...
-            </p>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

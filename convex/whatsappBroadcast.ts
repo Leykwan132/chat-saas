@@ -12,6 +12,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { broadcastPool } from "./broadcastPool";
 import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
+import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const MAX_BATCH_SEND = 50;
@@ -75,7 +76,8 @@ async function sendTemplateBatchToPhones(
   const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
   const results: Array<{ phone: string; ok: boolean; error?: string; sentAt: number }> =
     [];
-  for (const to of unique) {
+  for (const rawTo of unique) {
+    const to = ensureWhatsAppRecipientPhone(rawTo);
     const sentAt = Date.now();
     if (skipSend) {
       results.push({ phone: to, ok: true, sentAt });
@@ -87,7 +89,7 @@ async function sendTemplateBatchToPhones(
         channelId,
         templateName,
         templateLanguage,
-        toPhone: to,
+        toPhone: rawTo,
       });
       const res = await fetch(`${graphBase()}/${phoneNumberId}/messages`, {
         method: "POST",

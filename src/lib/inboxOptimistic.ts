@@ -1,5 +1,6 @@
 import type { UIMessage } from '@convex-dev/agent/react';
 import type { InboxMessageReaction } from '../../shared/messageReactions';
+import type { BroadcastPresentation } from '../../shared/broadcastMessage';
 import {
   getInboxAudioAttachments,
   getInboxImageAttachments,
@@ -18,6 +19,8 @@ export type InboxUIMessage = UIMessage & {
   readAt?: number;
   failureReason?: string;
   reactions?: InboxMessageReaction[];
+  isBroadcast?: boolean;
+  broadcastPresentation?: BroadcastPresentation;
 };
 
 export function hasVisibleInboxContent(message: InboxUIMessage): boolean {

@@ -10,6 +10,7 @@ import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
 import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
+import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
 
 export const followUpPool = new Workpool(
   components.followUpWorkpool,
@@ -93,10 +94,11 @@ export const followUpWorker = internalAction({
     if (!phoneNumberId) {
       throw new Error("Phone number ID is missing for this channel.");
     }
-    const to = customer.contactAddress.trim() || customer.phone?.trim();
-    if (!to) {
+    const rawTo = customer.contactAddress.trim() || customer.phone?.trim();
+    if (!rawTo) {
       throw new Error(`Customer ${customer._id} has no valid contact address`);
     }
+    const to = ensureWhatsAppRecipientPhone(rawTo);
 
     const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
     if (skipSend) {

@@ -339,14 +339,7 @@ export function ServicesOverviewDialog({
               ))}
             </div>
             {isLastSlide ? (
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
-                  onClick={() => onOpenChange(false)}
-                >
-                  Maybe later
-                </button>
+              <div className="flex items-center">
                 {onAddService ? (
                   <Button
                     type="button"
@@ -358,7 +351,7 @@ export function ServicesOverviewDialog({
                     }}
                   >
                     <Plus className="size-3.5" />
-                    Add a service
+                    Create
                   </Button>
                 ) : (
                   <Button
@@ -419,9 +412,7 @@ function ScenarioCard({
 }: FeatureScenario) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-card/80 px-3.5 py-3">
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Icon className="size-4" strokeWidth={1.75} />
-      </div>
+      <Icon className="size-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-foreground">{title}</p>
         <p className="truncate text-xs text-muted-foreground">{description}</p>
@@ -505,9 +496,7 @@ function AvailabilityVisual({ isActive }: { isActive: boolean }) {
           style={{ transitionDelay: isActive ? `${i * 150}ms` : '0ms' }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <CalendarClock className="size-4" />
-            </div>
+            <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
             <div>
               <p className="text-xs font-semibold text-foreground">{slot.time}</p>
               <p className="text-[10px] text-muted-foreground">Available</p>

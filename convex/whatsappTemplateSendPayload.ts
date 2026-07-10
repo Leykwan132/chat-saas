@@ -9,10 +9,11 @@ import {
   type WhatsAppTemplateHeaderFormat,
   type WhatsAppTemplateSendMediaType,
 } from "../shared/whatsappTemplateMedia";
-import {
-  extractTemplateParameterKeys,
-  findUnknownTemplateParameters,
-} from "../shared/whatsappTemplateParameters";
+import { extractTemplateParameterKeys } from "../shared/whatsappTemplateParameters";
+import { renderWhatsAppTemplateBodyText } from "./whatsappTemplateRender";
+import { getPublicMediaUrl } from "./media/r2";
+import { buildWhatsAppTemplateHeaderAsset } from "./whatsappTemplatePresentation";
+import type { BroadcastHeaderAsset } from "../shared/broadcastMessage";
 
 type TemplateComponent = {
   type?: unknown;
@@ -39,6 +40,21 @@ type TemplateSendPayload = {
   name: string;
   language: { code: string };
   components?: TemplateSendComponent[];
+};
+
+type BuildWhatsAppTemplateSendPayloadArgs = {
+  orgId: string;
+  channelId: Id<"channels">;
+  templateName: string;
+  templateLanguage: string;
+  customerId?: Id<"customers">;
+  toPhone?: string;
+};
+
+type TemplateSendBuildResult = {
+  template: TemplateSendPayload;
+  renderedContent: string;
+  headerAsset?: BroadcastHeaderAsset;
 };
 
 function asComponentArray(value: unknown): TemplateComponent[] {
@@ -199,15 +215,16 @@ export const getTemplateSendPayloadContext = internalQuery({
 
 export async function buildWhatsAppTemplateSendPayload(
   ctx: ActionCtx,
-  args: {
-    orgId: string;
-    channelId: Id<"channels">;
-    templateName: string;
-    templateLanguage: string;
-    customerId?: Id<"customers">;
-    toPhone?: string;
-  },
+  args: BuildWhatsAppTemplateSendPayloadArgs,
 ): Promise<TemplateSendPayload> {
+  const result = await buildWhatsAppTemplateSendPayloadWithContent(ctx, args);
+  return result.template;
+}
+
+export async function buildWhatsAppTemplateSendPayloadWithContent(
+  ctx: ActionCtx,
+  args: BuildWhatsAppTemplateSendPayloadArgs,
+): Promise<TemplateSendBuildResult> {
   const queryArgs = {
     orgId: args.orgId,
     channelId: args.channelId,
@@ -225,14 +242,14 @@ export async function buildWhatsAppTemplateSendPayload(
     name: args.templateName.trim(),
     language: { code: args.templateLanguage.trim() },
   };
-  if (template === null) return payload;
+  if (template === null) return { template: payload, renderedContent: "" };
 
   const components: TemplateSendComponent[] = [];
   const bodyText = getBodyText(template);
-  const unknown = findUnknownTemplateParameters(bodyText);
-  if (unknown.length > 0) {
-    throw new Error(`Unknown WhatsApp template parameter: ${unknown.join(", ")}`);
-  }
+  const renderedContent = renderWhatsAppTemplateBodyText(
+    bodyText,
+    context.parameterValues,
+  );
   const bodyKeys = extractTemplateParameterKeys(bodyText);
   if (bodyKeys.length > 0) {
     components.push({
@@ -245,6 +262,7 @@ export async function buildWhatsAppTemplateSendPayload(
     });
   }
 
+  let headerAsset: BroadcastHeaderAsset | undefined;
   const headerFormat = getHeaderFormat(template);
   if (headerFormat !== null) {
     const mediaAsset = context.mediaAsset;
@@ -261,6 +279,10 @@ export async function buildWhatsAppTemplateSendPayload(
     if (spec.headerFormat !== headerFormat) {
       throw new Error("Prepared WhatsApp template media format is invalid.");
     }
+    headerAsset = buildWhatsAppTemplateHeaderAsset(
+      { mimeType: spec.mimeType, filename: mediaAsset.filename, headerFormat: spec.headerFormat },
+      getPublicMediaUrl(mediaAsset.r2Key),
+    );
     components.unshift({
       type: "header",
       parameters: [mediaParameter(spec.sendType, mediaAsset.mediaId.trim())],
@@ -270,5 +292,5 @@ export async function buildWhatsAppTemplateSendPayload(
   if (components.length > 0) {
     payload.components = components;
   }
-  return payload;
+  return { template: payload, renderedContent, ...(headerAsset ? { headerAsset } : {}) };
 }
