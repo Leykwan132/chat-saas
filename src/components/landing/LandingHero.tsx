@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { ArrowRight } from 'lucide-react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { BlurFade } from '@/components/ui/blur-fade';
+import { LandingAnnouncementPill } from './LandingAnnouncementPill';
 import { LandingAppPreview } from './LandingAppPreview';
 
 const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/Kilobot%20Landing%20-%20Mobile%20-%202.svg';
@@ -45,6 +46,7 @@ export function LandingHero({
     <section className="w-full bg-white px-5 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 dark:bg-[#060606]">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-center justify-center py-16 text-center sm:min-h-[70svh]">
+          <LandingAnnouncementPill />
           <h1 className="font-title text-balance text-[32px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
             AI Agent for Sales <br />
             in 5 minutes

@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-10 [CODE] Blog post page uses Cursor-style layout (`Blog/Product`, editorial type); Ilmu post is longer, states Free-plan availability, and constrains the lead image size.
 - 2026-07-10 [CODE] Leaderboard ranking rows resolve chef and custom image from supported model metadata, so Ilmu Mini V3.3 shows “by YTL AI Labs” and the hosted PNG like Supported LLM Models.
 - 2026-07-10 [CODE] Workflow matches are backend-authoritative: matched sendImage/sendFile nodes always send their runtime assets, matched sendText nodes send their configured text verbatim, and media reply guidance includes the exact filename/type payload already being sent.
 - 2026-07-10 [CODE] Workflow action `generateObject` planning is pinned to `deepseek/deepseek-v4-flash` through an explicit per-call model override; customer-facing text still uses the selected agent model, and usage records the model's actual provider.
@@ -161,6 +162,7 @@
 - 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-10 [CODE] Added landing announcement pill + Markdown blog post for Ilmu / YTL AI Labs.
 - 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
 - 2026-07-10 [CODE] Made matched workflow media and Send message actions deterministic from backend runtime payloads.
 - 2026-07-10 [CODE] Pinned workflow `generateObject` planning to DeepSeek and made usage tracking honor per-call model-provider overrides.
@@ -194,6 +196,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-10 [TOOL] Landing announcement/blog: 2 focused tests passed; touched ESLint clean; Ilmu Mini PNG HEAD 200; LOC under 300; `git diff --check` clean.
 - 2026-07-10 [TOOL] Leaderboard ranking attribution fix: Node 22 verification passed 6 focused tests across 3 files, LOC under 300, and `git diff --check`.
 - 2026-07-10 [TOOL] Deterministic workflow-action regressions reproduced five RED gaps: Send message did not activate planning, action payloads were absent, matched media could resolve empty, media reply guidance lacked payload details, and Send message text was LLM-rewritten. Final Node 22 verification passed 34 tests across 8 files, targeted ESLint, full TypeScript, `git diff --check`, stale pasted-log scans, and touched code-file LOC checks at or below 266 lines.
 - 2026-07-10 [TOOL] Dedicated planner regression reproduced RED because `generateObject` inherited the configured agent model; provider-accounting regression reproduced RED because usage used the configured provider. Final Node 22 verification passed 23 tests across 6 files, targeted ESLint, full TypeScript, `git diff --check`, single-call-site scan, and planner/test LOC checks at 210/202 lines.

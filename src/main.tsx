@@ -60,6 +60,7 @@ import AdminPage from './pages/AdminPage.tsx'
 import PrivacyPage from './pages/PrivacyPage.tsx'
 import PrivacyDeletionPage from './pages/PrivacyDeletionPage.tsx'
 import TermsPage from './pages/TermsPage.tsx'
+import BlogPostPage from './pages/BlogPostPage.tsx'
 import { useQuery } from 'convex/react'
 import { api } from '../convex/_generated/api'
 import { getDefaultAnalyticsSection, type PlanKey } from '../shared/planCatalog'
@@ -247,6 +248,7 @@ const router = createBrowserRouter(
       <Route path="/privacy" element={<PrivacyPage />} />
       <Route path="/privacy/deletion" element={<PrivacyDeletionPage />} />
       <Route path="/terms" element={<TermsPage />} />
+      <Route path="/blog/:slug" element={<BlogPostPage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/workspace" element={<WorkspacePage />}>
