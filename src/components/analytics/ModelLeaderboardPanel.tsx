@@ -27,6 +27,8 @@ import {
   buildModelColorMap,
   formatTokens,
   getCleanModelName,
+  getModelChef,
+  getModelImageUrl,
   type LifetimeModelUsageRow,
   type MonthlyModelUsageAggregates,
   type SupportedModelOption,
@@ -79,8 +81,8 @@ export function ModelLeaderboardPanel({
 
   const renderRankingRow = (item: LifetimeModelUsageRow, rank: number) => {
     const cleanName = getCleanModelName(item.model, supportedModels);
-    const parts = item.model.split('/');
-    const provider = parts.length > 1 ? parts[0] : 'openrouter';
+    const chef = getModelChef(item.model, supportedModels);
+    const imageUrl = getModelImageUrl(item.model, supportedModels);
 
     return (
       <div
@@ -92,14 +94,14 @@ export function ModelLeaderboardPanel({
             {rank}.
           </span>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full border border-zinc-200/80 bg-white dark:border-white/[0.08] dark:bg-zinc-900">
-            <ModelLogo model={item.model} />
+            <ModelLogo model={item.model} imageUrl={imageUrl} />
           </div>
           <div className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-[14px] font-semibold text-zinc-900 dark:text-white">
               {cleanName}
             </span>
             <span className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-              by <span className="font-medium text-zinc-600 dark:text-zinc-300">{provider}</span>
+              by <span className="font-medium text-zinc-600 dark:text-zinc-300">{chef}</span>
             </span>
           </div>
         </div>

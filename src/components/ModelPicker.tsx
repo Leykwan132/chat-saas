@@ -38,6 +38,7 @@ export type ModelPickerOption = {
   creditCost: number;
   chef: string;
   chefSlug: string;
+  imageUrl?: string;
   isPopular: boolean;
   labels?: ModelAccessLabel[];
   requiredPlan?: PlanKey;
@@ -89,7 +90,7 @@ const ModelPickerItem = memo(function ModelPickerItem({
       )}
       data-checked={selected}
     >
-      <ModelSelectorLogo provider={option.chefSlug} />
+      <ModelSelectorLogo provider={option.chefSlug} src={option.imageUrl} />
       <div className="flex min-w-0 flex-1 items-center gap-1.5">
         <ModelSelectorName className={cn('truncate flex-initial min-w-0', selected && 'font-semibold')}>
           {option.label}
@@ -205,7 +206,11 @@ export function ModelPicker({
         >
           {selectedModel ? (
             <>
-              <ModelSelectorLogo provider={selectedModel.chefSlug} className="size-4 shrink-0" />
+              <ModelSelectorLogo
+                provider={selectedModel.chefSlug}
+                src={selectedModel.imageUrl}
+                className="size-4 shrink-0"
+              />
               <ModelSelectorName className="min-w-0 flex-1 truncate text-left font-normal">
                 {selectedModel.label}
               </ModelSelectorName>

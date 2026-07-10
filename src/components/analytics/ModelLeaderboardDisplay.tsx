@@ -8,7 +8,27 @@ import {
   type SupportedModelOption,
 } from './modelLeaderboardUtils';
 
-export function ModelLogo({ model, size = 18 }: { model: string; size?: number }) {
+export function ModelLogo({
+  model,
+  imageUrl,
+  size = 18,
+}: {
+  model: string;
+  imageUrl?: string;
+  size?: number;
+}) {
+  if (imageUrl) {
+    return (
+      <img
+        alt=""
+        className="select-none object-contain"
+        height={size}
+        src={imageUrl}
+        width={size}
+      />
+    );
+  }
+
   if (model.startsWith('tencent/')) {
     return <Tencent.Color className="select-none" size={size} />;
   }

@@ -6,14 +6,14 @@ Kilobot currently routes every selectable model through OpenRouter. The applicat
 
 Ilmu exposes `ilmu-mini-v3.3` through an OpenAI-compatible endpoint at `https://api.ilmu.ai/v1`. The model costs RM0.20 per million input tokens and RM1.20 per million output tokens. It must be available on the Free plan and use the user-supplied Ilmu image in the model picker.
 
-The two current Free models are DeepSeek V4 Flash and Amazon Nova Micro. DeepSeek has the higher current OpenRouter list price, so it will move to paid plans while Amazon Nova Micro remains on Free.
+Ilmu Mini V3.3 is the only Free-plan model. Every OpenRouter model, including Amazon Nova Micro and DeepSeek V4 Flash, requires Starter or higher.
 
 ## Goals
 
 - Add `ilmu-mini-v3.3` as a fully usable model across agent creation, updates, playground responses, inbox replies, lead labeling, and thread summaries.
 - Route Ilmu requests through the OpenAI-compatible provider without changing OpenRouter behavior for existing models.
-- Make Ilmu Mini and Amazon Nova Micro the Free plan models.
-- Move DeepSeek V4 Flash to Starter, Growth, and Business while retaining its Popular designation.
+- Make Ilmu Mini the only Free plan model.
+- Keep every OpenRouter model on Starter, Growth, and Business, while retaining DeepSeek V4 Flash's Popular designation.
 - Record Ilmu usage under the correct provider and calculate its token cost for admin reporting.
 - Display the supplied Ilmu image reliably in every model-picker state.
 - Fail clearly when Ilmu credentials are missing or the provider request fails.
@@ -32,13 +32,13 @@ The model catalog will carry enough metadata to identify the inference provider 
 
 - Label: `Ilmu Mini V3.3`
 - Provider: `ilmu`
-- Chef: `Ilmu`
+- Chef: `YTL AI Labs`
 - Required plan: `free`
 - Labels: `basic` and `latest`
 - Credit cost: `1`
-- Image: `/models/ilmu-mini-v3-3.jpg`
+- Image: `https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png`
 
-The Free plan model list will contain `ilmu-mini-v3.3` and `amazon/nova-micro-v1`. All paid plans will contain those two models plus the existing advanced catalog.
+The Free plan model list will contain only `ilmu-mini-v3.3`. All paid plans will contain Ilmu Mini, Amazon Nova Micro, and the existing advanced catalog. Amazon Nova Micro uses required plan `starter` with an `advanced` label.
 
 DeepSeek V4 Flash will change to required plan `starter` with `advanced` and `popular` labels. It will remain the only model with `isPopular: true`.
 
@@ -76,9 +76,7 @@ Unrecognized providers without provider-reported cost or configured token rates 
 
 ## Model image
 
-The supplied 1600×1599 JPEG will be copied to `public/models/ilmu-mini-v3-3.jpg`. The catalog will expose that local URL and the shared model-logo component will accept an optional custom image source.
-
-Bundling the asset avoids runtime dependence on the signed Facebook CDN URL. Existing provider logos will continue using `models.dev`.
+The catalog exposes `https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png`, and every model-list surface consumes the optional custom image source. Existing provider logos continue using `models.dev`.
 
 ## Data flow
 
@@ -96,13 +94,13 @@ Bundling the asset avoids runtime dependence on the signed Facebook CDN URL. Exi
 - Unknown or disabled model IDs remain rejected by existing model validation.
 - Provider errors propagate to the existing chat failure path.
 - Ilmu never falls back to OpenRouter or another model.
-- The model image is served locally, avoiding remote asset expiration.
+- The model image uses the user-provided stable Kilobot storage URL.
 
 ## Testing strategy
 
 Implementation will follow red-green-refactor:
 
-1. Extend catalog tests to require Ilmu metadata, Free access, paid access, and the DeepSeek entitlement change.
+1. Extend catalog tests to require Ilmu metadata, exclusive Free access, paid access for every other model, and paid Amazon/DeepSeek entitlements.
 2. Add pure provider-routing tests for OpenRouter, Ilmu, unknown models, and missing credentials.
 3. Add cost tests for Ilmu input-only, output-only, combined usage, OpenRouter metadata precedence, and uncosted providers.
 4. Add model-logo source tests for the custom Ilmu image and default provider logos.

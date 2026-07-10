@@ -1,4 +1,8 @@
 import type { Doc } from "./_generated/dataModel";
+import {
+  calculateConfiguredModelCostUsd,
+  type ModelUsageTokens,
+} from "./llm/modelCost";
 
 export type AgentCostSortKey = [string, number];
 
@@ -39,6 +43,21 @@ export function extractOpenRouterCostUsd(providerMetadata: unknown): number | nu
 
 export function roundUsd(value: number): number {
   return Math.round(value * 1_000_000_000) / 1_000_000_000;
+}
+
+type AgentCostableRow = {
+  model: string;
+  providerMetadata?: unknown;
+  usage: ModelUsageTokens;
+};
+
+export function resolveAgentCostUsd(row: AgentCostableRow): number | null {
+  const providerCost = extractOpenRouterCostUsd(row.providerMetadata);
+  if (providerCost !== null) {
+    return providerCost;
+  }
+  const configuredCost = calculateConfiguredModelCostUsd(row.model, row.usage);
+  return configuredCost === null ? null : roundUsd(configuredCost);
 }
 
 export function costMonthKeyFromTimestamp(timestamp: number) {
@@ -95,7 +114,7 @@ export function parseAgentCostNamespace(namespace: string): AgentCostNamespace |
 }
 
 export function agentCostNamespace(row: Doc<"rawAgentUsage">) {
-  const costUsd = extractOpenRouterCostUsd(row.providerMetadata);
+  const costUsd = resolveAgentCostUsd(row);
   if (costUsd === null) {
     return UNCOSTED_AGENT_COST_NAMESPACE;
   }

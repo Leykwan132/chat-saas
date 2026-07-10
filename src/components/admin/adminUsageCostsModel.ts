@@ -63,8 +63,6 @@ export type UsageCostReport = {
   monthlyModelRows: UsageCostMonthlyModelRow[];
 };
 
-export const USD_TO_MYR_RATE = 4.7;
-
 function roundUsd(value: number) {
   return Math.round(value * 1_000_000_000) / 1_000_000_000;
 }
@@ -118,3 +116,6 @@ export function getCostRowsForMonth(report: UsageCostReport, monthKey: string) {
     modelRows: report.monthlyModelRows.filter((row) => row.monthKey === monthKey),
   };
 }
+import { USD_TO_MYR_RATE } from '../../../shared/currency';
+
+export { USD_TO_MYR_RATE } from '../../../shared/currency';

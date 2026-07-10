@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type { ComponentProps, ReactNode } from "react";
+import { getModelSelectorLogoSource } from "./modelSelectorLogo";
 
 export type ModelSelectorProps = ComponentProps<typeof Dialog>;
 
@@ -120,7 +121,7 @@ export const ModelSelectorSeparator = (props: ModelSelectorSeparatorProps) => (
 
 export type ModelSelectorLogoProps = Omit<
   ComponentProps<"img">,
-  "src" | "alt"
+  "alt"
 > & {
   provider:
     | "moonshotai-cn"
@@ -185,6 +186,7 @@ export type ModelSelectorLogoProps = Omit<
 
 export const ModelSelectorLogo = ({
   provider,
+  src,
   className,
   ...props
 }: ModelSelectorLogoProps) => (
@@ -193,7 +195,7 @@ export const ModelSelectorLogo = ({
     alt={`${provider} logo`}
     className={cn("size-3 dark:invert", className)}
     height={12}
-    src={`https://models.dev/logos/${provider}.svg`}
+    src={getModelSelectorLogoSource(provider, src)}
     width={12}
   />
 );

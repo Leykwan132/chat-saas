@@ -71,8 +71,20 @@ function mediaForNode(
 }
 
 function goalForNode(node: Doc<"workflowNodes">) {
-  if (node.kind === "sendImage" || node.kind === "sendFile" || node.kind === "bookAppointment") return undefined;
+  if (
+    node.kind === "sendImage" ||
+    node.kind === "sendFile" ||
+    node.kind === "sendText" ||
+    node.kind === "bookAppointment"
+  ) {
+    return undefined;
+  }
   return node.description?.trim() || workflowNodeDescription(node.kind);
+}
+
+function textToSendForNode(node: Doc<"workflowNodes">) {
+  if (node.kind !== "sendText") return undefined;
+  return node.description?.trim() || undefined;
 }
 
 export const loadForAgent = internalQuery({
@@ -99,6 +111,7 @@ export const loadForAgent = internalQuery({
         kind: node.kind,
         title: workflowNodeDisplayTitle(node.kind, node.title),
         goal: goalForNode(node),
+        textToSend: textToSendForNode(node),
         notes: node.notes,
         incomingConditions: edges
           .filter((edge) => edge.targetNodeId === node._id)

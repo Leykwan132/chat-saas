@@ -11,7 +11,7 @@ import {
   createTool,
 } from "@convex-dev/agent";
 import type { ToolSet } from "ai";
-import { openRouterModel } from "../llm/openRouter";
+import { resolveLanguageModel } from "../llm/languageModel";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import {
@@ -829,14 +829,24 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
 ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
   ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
+  const resolvedModel = resolveLanguageModel(agent.model);
+
   return new Agent(components.agent, {
     name: agent.name,
-    languageModel: openRouterModel(agent.model),
+    languageModel: resolvedModel.languageModel,
     instructions,
     stopWhen: stepCountIs(8),
     tools,
     usageHandler: async (ctx, args) => {
-      const { userId, threadId, agentName, model, provider, usage, providerMetadata } = args;
+      const {
+        userId,
+        threadId,
+        agentName,
+        model,
+        provider,
+        usage,
+        providerMetadata,
+      } = args;
       const u = usage as UsageWithTokenAliases;
       const normalizedUsage = {
         promptTokens: u.promptTokens ?? u.inputTokens ?? 0,
@@ -863,7 +873,7 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
         traceId: threadId ?? agentId,
         spanName: 'inbox_ai_reply',
         model,
-        provider: provider ?? 'openrouter',
+        provider,
         inputTokens: normalizedUsage.promptTokens,
         outputTokens: normalizedUsage.completionTokens,
       });

@@ -66,6 +66,7 @@ export const BASIC_LIMITED_MODELS_LABEL = "Basic models";
 export const ADVANCED_MODELS_LABEL = "Advanced models";
 
 export const ADVANCED_PLAN_MODELS = [
+  "ilmu-mini-v3.3",
   "deepseek/deepseek-v4-flash",
   "google/gemini-3.1-flash-lite",
   "tencent/hy3-preview",
@@ -75,6 +76,7 @@ export const ADVANCED_PLAN_MODELS = [
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
+  "ilmu-mini-v3.3": "Ilmu Mini V3.3",
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
   "google/gemini-3.1-flash-lite": "Google Gemini 3.1 Flash Lite",
   "amazon/nova-micro-v1": "Amazon Nova Micro",
@@ -131,7 +133,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "Basic Analytics",
     ],
     actionLabel: "Start for Free",
-    models: ["deepseek/deepseek-v4-flash", "amazon/nova-micro-v1"],
+    models: ["ilmu-mini-v3.3"],
     platforms: ["whatsapp", "instagram", "messenger", "web"],
     features: {
       broadcasting: true,

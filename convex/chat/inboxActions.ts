@@ -8,7 +8,7 @@ import { internal } from "../_generated/api";
 import { getAuthContext } from "../authUtils";
 import { metaIndicatorPool, metaReactionPool } from "../inboxPools";
 import { generateText } from "ai";
-import { openRouterModel } from "../llm/openRouter";
+import { resolveLanguageModel } from "../llm/languageModel";
 import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
 import { checkAiFeature } from "../plans";
 import type { Doc } from "../_generated/dataModel";
@@ -753,8 +753,9 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
 
     try {
       const leadLabelStart = Date.now();
+      const resolvedModel = resolveLanguageModel(modelId);
       const { text, usage: leadUsage } = await generateText({
-        model: openRouterModel(modelId),
+        model: resolvedModel.languageModel,
         prompt,
         system: systemPrompt,
       });
@@ -763,7 +764,7 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         traceId: args.conversationId,
         spanName: 'lead_temperature_classification',
         model: modelId,
-        provider: 'openrouter',
+        provider: resolvedModel.provider,
         inputTokens: leadUsage.inputTokens,
         outputTokens: leadUsage.outputTokens,
         latencySeconds: (Date.now() - leadLabelStart) / 1000,
@@ -830,8 +831,9 @@ Make it highly customer-centric and readable at a single glance.`;
 
     try {
       const summaryStart = Date.now();
+      const resolvedModel = resolveLanguageModel(modelId);
       const { text, usage: summaryUsage } = await generateText({
-        model: openRouterModel(modelId),
+        model: resolvedModel.languageModel,
         prompt,
         system: systemPrompt,
       });
@@ -840,7 +842,7 @@ Make it highly customer-centric and readable at a single glance.`;
         traceId: args.conversationId,
         spanName: 'thread_summary_generation',
         model: modelId,
-        provider: 'openrouter',
+        provider: resolvedModel.provider,
         inputTokens: summaryUsage.inputTokens,
         outputTokens: summaryUsage.outputTokens,
         latencySeconds: (Date.now() - summaryStart) / 1000,

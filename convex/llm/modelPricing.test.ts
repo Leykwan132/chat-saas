@@ -2,6 +2,12 @@ import { expect, test } from "vitest";
 import { MODEL_PRICING, listEnabledModels } from "./modelPricing";
 import { PLAN_CATALOG } from "../planCatalog";
 
+function plansWithModel(modelId: string) {
+  return Object.entries(PLAN_CATALOG)
+    .filter(([, plan]) => plan.models.includes(modelId))
+    .map(([planKey]) => planKey);
+}
+
 test("enabled OpenRouter model ids never use free-tier variants", () => {
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
@@ -11,7 +17,7 @@ test("enabled OpenRouter model ids never use free-tier variants", () => {
   expect(modelIds.filter((modelId) => modelId.endsWith(":free"))).toEqual([]);
 });
 
-test("Amazon Nova Micro is enabled and included in plan entitlements", () => {
+test("Amazon Nova Micro is available only on paid plans", () => {
   const model = listEnabledModels().find((entry) => entry.value === "amazon/nova-micro-v1");
   const plansWithModel = Object.entries(PLAN_CATALOG)
     .filter(([, plan]) => plan.models.includes("amazon/nova-micro-v1"))
@@ -21,10 +27,20 @@ test("Amazon Nova Micro is enabled and included in plan entitlements", () => {
     label: "Amazon Nova Micro",
     chef: "Amazon",
     chefSlug: "amazon-bedrock",
-    requiredPlan: "free",
-    labels: ["basic"],
+    requiredPlan: "starter",
+    labels: ["advanced"],
   });
-  expect(plansWithModel).toEqual(["free", "starter", "growth", "business"]);
+  expect(plansWithModel).toEqual(["starter", "growth", "business"]);
+});
+
+test("Free plan includes only Ilmu Mini V3.3", () => {
+  expect(PLAN_CATALOG.free.models).toEqual(["ilmu-mini-v3.3"]);
+
+  const otherModels = listEnabledModels().filter(
+    (model) => model.value !== "ilmu-mini-v3.3",
+  );
+
+  expect(otherModels.every((model) => model.requiredPlan !== "free")).toBe(true);
 });
 
 test("Google Gemma models are not enabled or included in plan entitlements", () => {
@@ -46,11 +62,48 @@ test("DeepSeek V4 Flash is the only popular model", () => {
 
   expect(model).toMatchObject({
     label: "DeepSeek V4 Flash",
-    requiredPlan: "free",
-    labels: ["basic", "popular"],
+    requiredPlan: "starter",
+    labels: ["advanced", "popular"],
     isPopular: true,
   });
   expect(popularModels.map((entry) => entry.value)).toEqual(["deepseek/deepseek-v4-flash"]);
+  expect(plansWithModel("deepseek/deepseek-v4-flash")).toEqual([
+    "starter",
+    "growth",
+    "business",
+  ]);
+});
+
+test("Ilmu Mini V3.3 is enabled for every plan", () => {
+  const model = listEnabledModels().find((entry) => entry.value === "ilmu-mini-v3.3");
+
+  expect(model).toMatchObject({
+    label: "Ilmu Mini V3.3",
+    provider: "ilmu",
+    chef: "YTL AI Labs",
+    chefSlug: "ilmu",
+    requiredPlan: "free",
+    labels: ["basic", "latest"],
+    imageUrl: "https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png",
+    inputCostMyrPerMillion: 0.2,
+    outputCostMyrPerMillion: 1.2,
+  });
+  expect(plansWithModel("ilmu-mini-v3.3")).toEqual([
+    "free",
+    "starter",
+    "growth",
+    "business",
+  ]);
+});
+
+test("models without custom metadata omit optional fields", () => {
+  const model = listEnabledModels().find(
+    (entry) => entry.value === "amazon/nova-micro-v1",
+  );
+
+  expect(model).not.toHaveProperty("imageUrl");
+  expect(model).not.toHaveProperty("inputCostMyrPerMillion");
+  expect(model).not.toHaveProperty("outputCostMyrPerMillion");
 });
 
 test("trimmed model options are not enabled or included in plan entitlements", () => {

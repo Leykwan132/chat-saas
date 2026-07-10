@@ -20,6 +20,7 @@ import {
 } from "./mediaUrlExtractor";
 import { isPlaygroundCreditsEnabled } from "../credits";
 import { checkModelAccess, getPlanFromStripe } from "../plans";
+import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
@@ -251,7 +252,7 @@ export const generatePlaygroundResponseAsync = internalAction({
       messageId: savedAssistant._id,
       patch: {
         model: usage.llmModel,
-        provider: "openrouter",
+        provider: getModelProvider(agent.model),
       },
     });
 

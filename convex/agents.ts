@@ -1,7 +1,11 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
-import { DEFAULT_OPENROUTER_MODEL, isEnabledModel } from "./llm/modelPricing";
+import {
+  DEFAULT_OPENROUTER_MODEL,
+  getModelProvider,
+  isEnabledModel,
+} from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
@@ -163,7 +167,7 @@ export const create = mutation({
 
     const agentId = await ctx.db.insert("agents", {
       name,
-      provider: "openrouter",
+      provider: getModelProvider(model),
       model,
       systemPrompt: getPrompt(args.templateKey, args.systemPrompt ?? null),
       templateKey: args.templateKey,
@@ -246,6 +250,7 @@ export const update = mutation({
 
     const patch: Partial<Doc<"agents">> = {
       name,
+      provider: getModelProvider(model),
       model,
       systemPrompt,
       templateKey: args.templateKey,

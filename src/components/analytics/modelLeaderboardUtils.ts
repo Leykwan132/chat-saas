@@ -12,6 +12,7 @@ export type SupportedModelOption = {
   value: string;
   label: string;
   chef?: string;
+  imageUrl?: string;
 };
 
 export function formatTokens(num: number, decimals = true): string {
@@ -34,17 +35,40 @@ export function formatTokens(num: number, decimals = true): string {
   return num.toLocaleString();
 }
 
+function findSupportedModel(
+  model: string,
+  supportedModels?: SupportedModelOption[],
+) {
+  return supportedModels?.find((entry) => entry.value === model);
+}
+
 export function getCleanModelName(
   model: string,
   supportedModels?: SupportedModelOption[],
 ): string {
-  if (supportedModels) {
-    const found = supportedModels.find((entry) => entry.value === model);
-    if (found) return found.label;
-  }
+  const found = findSupportedModel(model, supportedModels);
+  if (found) return found.label;
 
   const baseName = model.split('/').pop() || model;
   return baseName.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+}
+
+export function getModelChef(
+  model: string,
+  supportedModels?: SupportedModelOption[],
+): string {
+  const found = findSupportedModel(model, supportedModels);
+  if (found?.chef) return found.chef;
+
+  const parts = model.split('/');
+  return parts.length > 1 ? parts[0]! : 'openrouter';
+}
+
+export function getModelImageUrl(
+  model: string,
+  supportedModels?: SupportedModelOption[],
+): string | undefined {
+  return findSupportedModel(model, supportedModels)?.imageUrl;
 }
 
 export function buildModelColorMap(

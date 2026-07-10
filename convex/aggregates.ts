@@ -5,7 +5,7 @@ import { usageMonthKeyFromTimestamp, creditDailyUsageNamespace, toUtcDateKey } f
 import {
   agentCostNamespace,
   agentCostSortKey,
-  extractOpenRouterCostUsd,
+  resolveAgentCostUsd,
   type AgentCostSortKey,
 } from "./agentCostAggregateModel";
 
@@ -51,7 +51,7 @@ export const agentCostAggregator = new TableAggregate<{
   Namespace: string;
 }>(components.agentCostUsage, {
   sortKey: agentCostSortKey,
-  sumValue: (doc) => extractOpenRouterCostUsd(doc.providerMetadata) ?? 0,
+  sumValue: (doc) => resolveAgentCostUsd(doc) ?? 0,
   namespace: agentCostNamespace,
 });
 

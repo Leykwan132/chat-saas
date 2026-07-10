@@ -10,7 +10,27 @@ import {
   ModelLeaderboardSkeleton,
 } from '@/components/analytics/ModelLeaderboardPanel';
 
-function ModelLogo({ model, size = 20 }: { model: string; size?: number }) {
+function ModelLogo({
+  model,
+  imageUrl,
+  size = 20,
+}: {
+  model: string;
+  imageUrl?: string;
+  size?: number;
+}) {
+  if (imageUrl) {
+    return (
+      <img
+        alt=""
+        className="select-none object-contain"
+        height={size}
+        src={imageUrl}
+        width={size}
+      />
+    );
+  }
+
   if (model.startsWith('tencent/')) {
     return <Tencent.Color className="select-none" size={size} />;
   }
@@ -86,7 +106,7 @@ export default function LeaderboardPage() {
                           className="flex items-center gap-3 rounded-lg border border-zinc-100 bg-zinc-50/30 p-3 transition-colors duration-200 hover:bg-zinc-50 dark:border-white/[0.04] dark:bg-white/[0.005] dark:hover:bg-white/[0.01]"
                         >
                           <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-zinc-200/80 bg-white dark:border-white/[0.08] dark:bg-zinc-950">
-                            <ModelLogo model={model.value} />
+                            <ModelLogo model={model.value} imageUrl={model.imageUrl} />
                           </div>
                           <div className="flex min-w-0 flex-col leading-tight">
                             <span className="truncate text-[13px] font-semibold text-zinc-900 dark:text-white">

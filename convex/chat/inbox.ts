@@ -36,6 +36,7 @@ import {
   aiReplyPromptArgs,
   generateWorkflowActionPlan,
   resolveWorkflowActionPlanMedia,
+  resolveWorkflowActionPlanText,
   workflowActionPlanReplyPromptArgs,
 } from "./workflowActionPlanner";
 import { checkAiFeature } from "../plans";
@@ -623,20 +624,31 @@ export const generateAiReplyWorker = internalAction({
       const plannedMediaItems = workflowActionPlan
         ? resolveWorkflowActionPlanMedia(workflowActionPlan, workflowRuntimeContext)
         : [];
+      const plannedWorkflowText = workflowActionPlan
+        ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
+        : null;
 
       const promptArgs = aiReplyPromptArgs(args);
       let cleanText: string;
       let replyMediaItems: ReturnType<typeof extractAiReplyOutputMedia>["mediaItems"];
 
       if (workflowActionPlan) {
-        const result = await configuredAgent.generateText(
-          ctx,
-          { threadId: conv.threadId },
-          workflowActionPlanReplyPromptArgs(args, workflowActionPlan),
-          { storageOptions: { saveMessages: "none" } },
-        );
-        cleanText = result.text.trim();
         replyMediaItems = [];
+        if (plannedWorkflowText !== null) {
+          cleanText = plannedWorkflowText;
+        } else {
+          const result = await configuredAgent.generateText(
+            ctx,
+            { threadId: conv.threadId },
+            workflowActionPlanReplyPromptArgs(
+              args,
+              workflowActionPlan,
+              workflowRuntimeContext,
+            ),
+            { storageOptions: { saveMessages: "none" } },
+          );
+          cleanText = result.text.trim();
+        }
       } else {
         const result = await configuredAgent.generateText(
           ctx,

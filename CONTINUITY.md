@@ -1,4 +1,15 @@
 # Snapshot
+- 2026-07-10 [CODE] Leaderboard ranking rows resolve chef and custom image from supported model metadata, so Ilmu Mini V3.3 shows “by YTL AI Labs” and the hosted PNG like Supported LLM Models.
+- 2026-07-10 [CODE] Workflow matches are backend-authoritative: matched sendImage/sendFile nodes always send their runtime assets, matched sendText nodes send their configured text verbatim, and media reply guidance includes the exact filename/type payload already being sent.
+- 2026-07-10 [CODE] Workflow action `generateObject` planning is pinned to `deepseek/deepseek-v4-flash` through an explicit per-call model override; customer-facing text still uses the selected agent model, and usage records the model's actual provider.
+- 2026-07-10 [CODE] Ilmu Mini V3.3 is the only Free-plan model; Amazon Nova Micro and every other model require Starter+, while Ilmu remains available on paid plans. Model UI renders `https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png` with “by YTL AI Labs.”
+- 2026-07-10 [TOOL] Node 22.22.0 final verification passed Convex codegen/typecheck, 34 focused/adjacent tests, targeted ESLint, full `tsc`, production build, `git diff --check`, asset verification, and touched code-file LOC checks.
+- 2026-07-10 [CODE] Approved Ilmu Mini design is documented and committed at `docs/superpowers/specs/2026-07-10-ilmu-mini-model-design.md` in commit `6df4b945`; implementation and verification are complete in the working tree.
+- 2026-07-10 [USER] Approved the Ilmu Mini integration design and requested implementation.
+- 2026-07-10 [USER] `ilmu-mini-v3.3` costs RM0.20 per million input tokens and RM1.20 per million output tokens, must be included in Free, and one costlier current Free model must move to paid plans.
+- 2026-07-10 [TOOL] Current OpenRouter list prices are DeepSeek V4 Flash USD0.0983/M input and USD0.1966/M output, versus Amazon Nova Micro USD0.035/M input and USD0.14/M output; DeepSeek is the costlier current Free model.
+- 2026-07-10 [USER] Current focus: add `ilmu-mini-v3.3` through Ilmu's OpenAI-compatible API at `https://api.ilmu.ai/v1` and use the supplied Ilmu image in model UI.
+- 2026-07-10 [TOOL] The supplied Ilmu image is a valid 1600x1599 JPEG; `@ai-sdk/openai-compatible@3.0.7` is installed but targets provider v4, while this app's `ai@6` and `@convex-dev/agent@0.6.1` require provider v3; npm's official `ai-v6` tag is `2.0.59`.
 - 2026-07-09 [USER] Current focus: Website/Web Widget should show thinking/streaming polish, render media inline, support safe `*bold*` text, and support non-destructive reset chat.
 - 2026-07-09 [CODE] Now: AI replies use AI SDK `Output.object` for `workflowMatches`, `customerResponse`, and `mediaToSend`; the worker sends/persists `customerResponse`.
 - 2026-07-09 [CODE] Now: workflow media sends use a pre-generation `generateObject` planner that returns media node IDs only; when selected media is sent, final reply context says the backend is sending it now instead of asking permission.
@@ -34,7 +45,7 @@
 - 2026-07-06 [CODE] D119 ACTIVE: Raw agent usage reporting identity is the WorkOS user ID string, sourced from `agents.userId` when an agent is known; runtime values like `org:` are not reporting identities.
 - 2026-07-06 [CODE] D120 ACTIVE: Admin cost reporting uses one `agentCostUsage` TableAggregate over `rawAgentUsage`; namespace is WorkOS user/provider/model, sort key is `[monthKey, createdAt]`, `sum()` is USD cost, `count()` is request count, and `max()` is latest request.
 - 2026-07-06 [CODE] D121 ACTIVE: Selectable OpenRouter models must use paid/non-free IDs; enabled catalog entries and plan entitlement arrays must not end with `:free`.
-- 2026-07-06 [CODE] D122 ACTIVE: `amazon/nova-micro-v1` is enabled as “Amazon Nova Micro” with `chefSlug: "amazon-bedrock"`, `requiredPlan: "free"`, and remains a basic/free model entitlement.
+- 2026-07-06 [CODE] D122 SUPERSEDED by D232: `amazon/nova-micro-v1` was enabled as “Amazon Nova Micro” with `chefSlug: "amazon-bedrock"`, `requiredPlan: "free"`, and a basic/free model entitlement.
 - 2026-07-06 [CODE] D123 SUPERSEDED: Google basic model was `google/gemma-3-27b-it` labeled “Google Gemma 3 27B”; `google/gemma-4-31b-it` was not enabled or entitled.
 - 2026-07-06 [CODE] D124 SUPERSEDED: `tencent/hy3-preview` was enabled, then later removed during slim-catalog pruning; D139 restores it.
 - 2026-07-06 [CODE] D125 SUPERSEDED: `xiaomi/mimo-v2.5` was enabled, then later removed during slim-catalog pruning; D137 restores it.
@@ -141,16 +152,23 @@
 - 2026-07-09 [CODE] D226 SUPERSEDED: Website widget generic file attachments rendered a 16:9 document-style iframe (`aspect-ratio:16/9` runtime / `aspect-video` preview) with the icon-only open action vertically centered on the right; D227 corrects the document shape to 9:16 and removes iframe rounding.
 - 2026-07-09 [CODE] D227 ACTIVE: Website widget generic file attachments render a 9:16 portrait document iframe (`160px`/`aspect-ratio:9/16` runtime and `w-40 aspect-[9/16]` preview) with no iframe rounded corners, plus the icon-only open action vertically centered on the right in the same row.
 - 2026-07-09 [CODE] D228 ACTIVE: Dashboard Website setup preview bottom-right launcher icon remains visible after opening the preview panel; the setup preview composer area still has no top divider line.
+- 2026-07-10 [USER] D229 SUPERSEDED by D232: Free model access was `ilmu-mini-v3.3` plus Amazon Nova Micro; DeepSeek V4 Flash moved to Starter and above, Ilmu usage costs RM0.20/M input and RM1.20/M output, and Ilmu requests use its OpenAI-compatible endpoint without provider fallback.
+- 2026-07-10 [USER] D230 SUPERSEDED by D233: Ilmu Mini V3.3 model UI used the hosted `https://storage.kilobot.app/ytl_ai_labs.jpeg` image; the superseded bundled JPEG was removed.
+- 2026-07-10 [USER] D231 ACTIVE: The Supported LLM Models card must consume Ilmu's configured hosted image URL and attribute the model to “YTL AI Labs.”
+- 2026-07-10 [USER] D232 ACTIVE: Free model access contains only `ilmu-mini-v3.3`; Amazon Nova Micro and every other non-Ilmu model require Starter or higher, while paid plans retain Ilmu access.
+- 2026-07-10 [USER] D233 ACTIVE: Ilmu Mini V3.3 model UI uses the transparent hosted PNG at `https://storage.kilobot.app/ytl_ai_labs-removebg-preview.png`.
+- 2026-07-10 [USER] D234 ACTIVE: Structured workflow action planning always uses the dedicated `deepseek/deepseek-v4-flash` OpenRouter model and never inherits the selected customer-facing agent model.
+- 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
+- 2026-07-10 [CODE] Made matched workflow media and Send message actions deterministic from backend runtime payloads.
+- 2026-07-10 [CODE] Pinned workflow `generateObject` planning to DeepSeek and made usage tracking honor per-call model-provider overrides.
+- 2026-07-10 [CODE] Replaced the Ilmu model JPEG with the user-provided transparent YTL AI Labs PNG.
+- 2026-07-10 [CODE] Restricted Free model access to Ilmu Mini V3.3 and moved Amazon Nova Micro to Starter+.
+- 2026-07-10 [CODE] Fixed the Supported LLM Models Ilmu card to render its configured hosted image and “by YTL AI Labs.”
+- 2026-07-10 [CODE] Added provider-aware Ilmu inference, correct plan entitlements and provider persistence, configured usage costing, and the hosted YTL AI Labs model image.
 - 2026-07-09 [CODE] Kept the Website setup preview bottom-right launcher icon mounted after opening the preview panel.
-- 2026-07-09 [CODE] Corrected Website widget generic file previews to 9:16 portrait document iframes and removed iframe rounded corners.
-- 2026-07-09 [CODE] Changed Website widget generic file previews to 16:9 document-style iframes and vertically centered the right-side open icon.
-- 2026-07-09 [CODE] Reduced Website widget generic file preview width and moved the open-file icon beside the iframe, removing the extra file header text.
-- 2026-07-09 [CODE] Moved Website widget file open action into a right-side icon button in the file preview header for pasted runtime and dashboard preview.
-- 2026-07-09 [CODE] Rendered Website widget generic file attachments in iframes with an Open file fallback in pasted runtime and dashboard preview.
-- 2026-07-09 [CODE] Replaced Website widget thinking avatar with text-only white-gray shimmer in pasted runtime and dashboard preview.
-
 # Working set
 - 2026-07-05 [CODE] `convex/workspaceSetupChecklist.ts`, `convex/workspaceSetupChecklist.test.ts`, `convex/schema.ts`, `convex/_generated/api.d.ts`.
 - 2026-07-05 [CODE] `src/components/setup-checklist/*`.
@@ -171,10 +189,19 @@
 - 2026-07-09 [CODE] Website widget rendering working set: `public/widget/v1.js`, `src/components/channels/WebWidgetPreviewConversation.tsx`, `src/components/channels/WebWidgetPreviewMessagePayload.tsx`, `src/components/channels/WebWidgetMobileLayout.test.ts`, `src/components/channels/WebWidgetPreviewConversation.test.ts`.
 
 # Open questions
+- 2026-07-10 [USER] UNCONFIRMED: The production/development Convex deployments still need their actual `ILMU_API_KEY` secret value configured before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price ID values for `STRIPE_PRICE_EXTRA_CREDITS_2000`, `STRIPE_PRICE_EXTRA_CREDITS_5000`, and `STRIPE_PRICE_EXTRA_CREDITS_15000` are still pending.
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-10 [TOOL] Leaderboard ranking attribution fix: Node 22 verification passed 6 focused tests across 3 files, LOC under 300, and `git diff --check`.
+- 2026-07-10 [TOOL] Deterministic workflow-action regressions reproduced five RED gaps: Send message did not activate planning, action payloads were absent, matched media could resolve empty, media reply guidance lacked payload details, and Send message text was LLM-rewritten. Final Node 22 verification passed 34 tests across 8 files, targeted ESLint, full TypeScript, `git diff --check`, stale pasted-log scans, and touched code-file LOC checks at or below 266 lines.
+- 2026-07-10 [TOOL] Dedicated planner regression reproduced RED because `generateObject` inherited the configured agent model; provider-accounting regression reproduced RED because usage used the configured provider. Final Node 22 verification passed 23 tests across 6 files, targeted ESLint, full TypeScript, `git diff --check`, single-call-site scan, and planner/test LOC checks at 210/202 lines.
+- 2026-07-10 [TOOL] New YTL AI Labs asset verified as a 200x200 RGBA PNG (SHA-256 `a6d4ebddbac6ab13ebb4df1b10e7355917409fbca353717081090da1373d30ee`); catalog test reproduced RED on the previous JPEG URL, then 18 tests, targeted ESLint, full TypeScript, `git diff --check`, and production/docs stale-JPEG scans passed after switching to the transparent PNG.
+- 2026-07-10 [TOOL] Free-only-Ilmu regressions reproduced RED for Amazon's old Free/basic metadata and the two-model Free entitlement; final Node 22 verification passed 22 tests across 6 files, targeted ESLint, full TypeScript, `git diff --check`, and stale entitlement-document scans.
+- 2026-07-10 [TOOL] Supported-model regressions reproduced RED for the ignored custom image and old “Ilmu” attribution; final Node 22 verification passed 17 tests, targeted ESLint, full TypeScript, `git diff --check`, URL/attribution scans, and touched code-file LOC checks. Local browser verification loaded the exact hosted JPEG at 200x200, displayed “by YTL AI Labs,” and reported zero console errors.
+- 2026-07-10 [TOOL] Replacement image downloaded as a valid 200x200 progressive JPEG (SHA-256 `182a46a2dd3ebcb634803678b5bb4b8e465d5d4305b1ba6dfaf2136376569fae`); catalog test reproduced RED on the old local path, then 15 focused tests, targeted ESLint, `git diff --check`, hosted-URL scan, and local-asset absence check passed.
+- 2026-07-10 [TOOL] Ilmu integration reproduced RED across catalog, provider routing, provider persistence, configured cost, custom logo source, and optional-field serialization tests; GREEN verification passed 34 tests across 11 files, targeted ESLint, Convex codegen/typecheck, full `bunx tsc -b --pretty false`, full `bun run build` with only the existing chunk-size warning, `git diff --check`, and code-file LOC checks at or below 300 lines.
 - 2026-07-09 [TOOL] Node 22.22.0 Website setup preview persistent launcher regression reproduced RED in `WebWidgetPlacement.test.ts`, then passed related widget tests (29 tests), targeted ESLint, `git diff --check`, and touched-file LOC check (`WebWidgetPreview.tsx` 249 lines).
 - 2026-07-09 [TOOL] Node 22.22.0 Website widget 9:16 unrounded file iframe regressions reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPreviewConversation.test.ts`, then passed related widget tests (29 tests), targeted ESLint, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 263 lines; preview payload 185 lines).
 - 2026-07-09 [TOOL] Node 22.22.0 Website widget 16:9 file preview/centered icon regressions reproduced RED in `WebWidgetMobileLayout.test.ts` and `WebWidgetPreviewConversation.test.ts`, then passed related widget tests (29 tests), targeted ESLint, `git diff --check`, and touched-file LOC check (`public/widget/v1.js` 263 lines; preview payload 185 lines).

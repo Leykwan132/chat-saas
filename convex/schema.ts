@@ -343,7 +343,11 @@ export default defineSchema({
   }).index("by_token", ["token"]),
   agents: defineTable({
     name: v.string(),
-    provider: v.union(v.literal("google"), v.literal("openrouter")),
+    provider: v.union(
+      v.literal("google"),
+      v.literal("openrouter"),
+      v.literal("ilmu"),
+    ),
     model: v.string(),
     systemPrompt: v.string(),
     templateKey: v.union(

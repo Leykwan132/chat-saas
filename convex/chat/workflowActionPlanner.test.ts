@@ -6,10 +6,12 @@ import {
   buildWorkflowActionPlannerSystemPrompt,
   buildWorkflowActionPlanReplyGuidance,
   resolveWorkflowActionPlanMedia,
+  resolveWorkflowActionPlanText,
   shouldRunWorkflowActionPlanner,
   workflowActionPlanReplyPromptArgs,
   workflowActionPlanSchema,
 } from "./workflowActionPlanner";
+import { reconcileWorkflowActionPlan } from "./workflowActionExecution";
 
 const workflowContext = {
   workflowId: "workflow-id" as Id<"workflows">,
@@ -34,6 +36,7 @@ const workflowContext = {
       nodeId: "message-node-id" as Id<"workflowNodes">,
       kind: "sendText",
       title: "Send greeting",
+      textToSend: "Welcome to Sena Residence.",
       incomingConditions: [],
       allowedServices: [],
       mediaAssets: [],
@@ -41,19 +44,28 @@ const workflowContext = {
   ],
 };
 
-test("runs only when workflow has media assets to plan", () => {
+test("runs when workflow has executable media or Send message actions", () => {
   expect(shouldRunWorkflowActionPlanner(null)).toBe(false);
   expect(shouldRunWorkflowActionPlanner({ ...workflowContext, nodes: [] })).toBe(false);
+  expect(
+    shouldRunWorkflowActionPlanner({
+      ...workflowContext,
+      nodes: [workflowContext.nodes[1]!],
+    }),
+  ).toBe(true);
   expect(shouldRunWorkflowActionPlanner(workflowContext)).toBe(true);
 });
 
-test("builds a planner prompt that asks for node ids instead of media urls", () => {
+test("builds a planner prompt with definitive action payloads", () => {
   const prompt = buildWorkflowActionPlannerSystemPrompt(workflowContext);
 
   expect(prompt).toContain("structured workflow action planner");
   expect(prompt).toContain("mediaNodeIdsToSend");
   expect(prompt).toContain("video-node-id");
   expect(prompt).toContain("Arden Heights Type B.mp4");
+  expect(prompt).toContain("Welcome to Sena Residence.");
+  expect(prompt).toContain("will be sent automatically");
+  expect(prompt).toContain("will be sent exactly as configured");
   expect(prompt).toContain("Do not return media URLs");
   expect(prompt).not.toContain("https://cdn.example.com/type-b-video.mp4");
 });
@@ -81,11 +93,25 @@ test("validates planner output with a fixed schema", () => {
   ).toThrow();
 });
 
+test("pins structured workflow planning to a dedicated DeepSeek model", () => {
+  const plannerPath = fileURLToPath(
+    new URL("./workflowActionPlanner.ts", import.meta.url),
+  );
+  const plannerSource = readFileSync(plannerPath, "utf8");
+
+  expect(plannerSource).toContain(
+    'export const WORKFLOW_ACTION_PLANNER_MODEL = "deepseek/deepseek-v4-flash";',
+  );
+  expect(plannerSource).toContain(
+    "model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL)",
+  );
+});
+
 test("describes each workflow action plan schema item", () => {
   const matchSchema = workflowActionPlanSchema.shape.workflowMatches.element;
 
   expect(workflowActionPlanSchema.shape.workflowMatches.description).toContain(
-    "matching workflow media node",
+    "workflow action node",
   );
   expect(matchSchema.shape.matched.description).toContain("Always true");
   expect(matchSchema.shape.nodeId.description).toContain("exact Workflow Runtime node ID");
@@ -99,11 +125,18 @@ test("describes each workflow action plan schema item", () => {
   );
 });
 
-test("resolves planner media ids through backend workflow context", () => {
+test("sends every matched media node even when the model omits its send id", () => {
   const mediaItems = resolveWorkflowActionPlanMedia(
     {
-      workflowMatches: [],
-      mediaNodeIdsToSend: ["message-node-id", "unknown-node-id", "video-node-id"],
+      workflowMatches: [
+        {
+          matched: true,
+          nodeId: "video-node-id",
+          nodeKind: "sendImage",
+          nodeTitle: "Send Type B video",
+        },
+      ],
+      mediaNodeIdsToSend: [],
       responseGuidance: "Send the video.",
     },
     workflowContext,
@@ -118,31 +151,69 @@ test("resolves planner media ids through backend workflow context", () => {
   ]);
 });
 
-test("builds final reply guidance that treats selected workflow media as already sending", () => {
-  const guidance = buildWorkflowActionPlanReplyGuidance({
-    workflowMatches: [
-      {
-        matched: true,
-        nodeId: "type-a-node-id",
-        nodeKind: "sendImage",
-        nodeTitle: "Send Sena Residence Type A Layout",
-      },
-      {
-        matched: true,
-        nodeId: "type-b-node-id",
-        nodeKind: "sendImage",
-        nodeTitle: "Send Sena Residence Layout B",
-      },
-    ],
-    mediaNodeIdsToSend: ["type-a-node-id"],
-    responseGuidance: "Here's the Sena Residence Type A Layout photo.",
-  });
+test("reconciles matched media into the definitive send list", () => {
+  const plan = reconcileWorkflowActionPlan(
+    {
+      workflowMatches: [
+        {
+          matched: true as const,
+          nodeId: "video-node-id",
+          nodeKind: "sendImage",
+          nodeTitle: "Model supplied title",
+        },
+      ],
+      mediaNodeIdsToSend: [],
+      responseGuidance: "Send the video.",
+    },
+    workflowContext,
+  );
 
-  expect(guidance).toContain("Here's the Sena Residence Type A Layout photo.");
+  expect(plan.mediaNodeIdsToSend).toEqual(["video-node-id"]);
+  expect(plan.workflowMatches[0]?.nodeTitle).toBe("Send Type B video");
+});
+
+test("resolves matched Send message text exactly as configured", () => {
+  const text = resolveWorkflowActionPlanText(
+    {
+      workflowMatches: [
+        {
+          matched: true,
+          nodeId: "message-node-id",
+          nodeKind: "sendText",
+          nodeTitle: "Send greeting",
+        },
+      ],
+      mediaNodeIdsToSend: [],
+      responseGuidance: "Send the configured greeting.",
+    },
+    workflowContext,
+  );
+
+  expect(text).toBe("Welcome to Sena Residence.");
+});
+
+test("builds final reply guidance with the exact media payload being sent", () => {
+  const guidance = buildWorkflowActionPlanReplyGuidance(
+    {
+      workflowMatches: [
+        {
+          matched: true,
+          nodeId: "video-node-id",
+          nodeKind: "sendImage",
+          nodeTitle: "Send Type B video",
+        },
+      ],
+      mediaNodeIdsToSend: [],
+      responseGuidance: "Tell the customer the Type B video is being sent.",
+    },
+    workflowContext,
+  );
+
+  expect(guidance).toContain("Type B video is being sent");
   expect(guidance).toContain("The backend is sending the selected workflow media now");
-  expect(guidance).toContain("Send Sena Residence Type A Layout");
+  expect(guidance).toContain("Arden Heights Type B.mp4");
+  expect(guidance).toContain("video/mp4");
   expect(guidance).toContain("Do not ask whether the customer wants you to send it");
-  expect(guidance).toContain("Do not say selected-but-unsent workflow matches are being sent");
 });
 
 test("adds workflow action guidance as context without replacing the agent system prompt", () => {
@@ -180,9 +251,16 @@ test("AI reply worker uses plain text when workflow planner returns an empty med
   const inboxSource = readFileSync(inboxPath, "utf8");
 
   expect(inboxSource).toContain("if (workflowActionPlan) {");
-  expect(inboxSource).toContain(
-    "workflowActionPlanReplyPromptArgs(args, workflowActionPlan)",
-  );
+  expect(inboxSource).toContain("workflowActionPlanReplyPromptArgs(");
+  expect(inboxSource).toContain("workflowRuntimeContext,");
   expect(inboxSource).toContain("cleanText = result.text.trim();");
   expect(inboxSource).toContain("replyMediaItems = [];");
+});
+
+test("AI reply worker sends matched Send message text exactly", () => {
+  const inboxPath = fileURLToPath(new URL("./inbox.ts", import.meta.url));
+  const inboxSource = readFileSync(inboxPath, "utf8");
+
+  expect(inboxSource).toContain("resolveWorkflowActionPlanText(");
+  expect(inboxSource).toContain("cleanText = plannedWorkflowText;");
 });

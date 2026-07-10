@@ -27,6 +27,7 @@ export type WorkflowRuntimeContextForPrompt = {
     kind: string;
     title: string;
     goal?: string;
+    textToSend?: string;
     notes?: string;
     incomingConditions: Array<{
       sourceNodeId: Id<"workflowNodes">;
@@ -126,6 +127,9 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
       const isMediaNode = node.kind === "sendImage" || node.kind === "sendFile";
       const isBookAppointmentNode = node.kind === "bookAppointment";
       const goal = node.goal && !isMediaNode && !isBookAppointmentNode ? `- Goal: ${node.goal}` : undefined;
+      const textToSend = node.kind === "sendText" && node.textToSend
+        ? `- Exact text to send: ${node.textToSend}`
+        : undefined;
       const notes = node.notes ? `- Notes: ${node.notes}` : undefined;
       const services = node.kind === "bookAppointment" ? formatServices(node.allowedServices) : undefined;
       const mediaAssets =
@@ -137,6 +141,7 @@ export function buildWorkflowRuntimeBlock(context: WorkflowRuntimeContextForProm
         `- Node ID: ${node.nodeId}`,
         incoming,
         goal,
+        textToSend,
         notes,
         services,
         mediaAssets,
