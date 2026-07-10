@@ -39,3 +39,15 @@ test('landing pill links to the active blog post', () => {
   expect(mainSource).toContain('path="/blog/:slug"');
   expect(mainSource).toContain('BlogPostPage');
 });
+
+test('landing hero uses the concise description', () => {
+  const heroSource = readFileSync(new URL('./LandingHero.tsx', import.meta.url), 'utf8');
+
+  expect(heroSource).toContain(
+    'From first reply to booked meeting, handled in your sales inbox.',
+  );
+  expect(heroSource).not.toContain('Enterprise-grade');
+  expect(heroSource).not.toContain('Go live in 5 minutes');
+  expect(heroSource).not.toContain('Qualify, answer, close.');
+  expect(heroSource).not.toContain('Kilobot puts AI agents in your messaging inbox');
+});

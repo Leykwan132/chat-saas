@@ -9,7 +9,7 @@ export function LandingAnnouncementPill() {
   return (
     <Link
       to={`/blog/${slug}`}
-      className="group relative mb-6 inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border border-zinc-200/80 bg-white px-3.5 py-1.5 text-xs font-medium text-zinc-800 transition-colors hover:bg-zinc-50 sm:mb-8 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
+      className="group relative mb-6 inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-full border border-zinc-200/80 bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-50 sm:mb-8 sm:gap-2 sm:px-4 sm:py-2 sm:text-base dark:border-white/10 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900"
     >
       <ShineBorder
         borderWidth={1.5}
@@ -21,7 +21,7 @@ export function LandingAnnouncementPill() {
         <img
           src={logoUrl}
           alt={logoAlt}
-          className="mr-1 inline-block size-2.5 shrink-0 align-[-0.1em] object-contain sm:mr-1.5 sm:size-3"
+          className="mr-1 inline-block size-3 shrink-0 align-[-0.1em] object-contain sm:mr-1.5 sm:size-3.5"
         />
         {afterLogo}
       </span>
