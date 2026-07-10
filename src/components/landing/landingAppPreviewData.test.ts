@@ -146,13 +146,11 @@ test('landing preview sidebar CTA is bottom aligned, spacious, light bordered, a
   expect(landingPreviewSidebarCtaWrapperClass).toContain('pt-8');
   expect(landingPreviewSidebarCtaWrapperClass).toContain('pb-1');
   expect(landingPreviewSidebarCtaCardClass).toContain('min-h-[168px]');
-  expect(landingPreviewSidebarCtaCardClass).toContain('bg-[conic-gradient');
-  expect(landingPreviewSidebarCtaCardClass).toContain('#67e8f9');
-  expect(landingPreviewSidebarCtaCardClass).toContain('#f0abfc');
-  expect(landingPreviewSidebarCtaCardClass).toContain('p-[1.5px]');
-  expect(landingPreviewSidebarCtaCardClass).not.toContain('#22d3ee');
-  expect(landingPreviewSidebarCtaCardClass).not.toContain('#f472b6');
-  expect(landingPreviewSidebarCtaInnerClass).toContain('min-h-[166px]');
+  expect(landingPreviewSidebarCtaCardClass).toContain('border border-zinc-200');
+  expect(landingPreviewSidebarCtaCardClass).toContain('bg-white');
+  expect(landingPreviewSidebarCtaCardClass).not.toContain('bg-[conic-gradient');
+  expect(landingPreviewSidebarCtaCardClass).not.toContain('p-[1.5px]');
+  expect(landingPreviewSidebarCtaInnerClass).toContain('min-h-[168px]');
   expect(landingPreviewSidebarCtaInnerClass).toContain('justify-between');
 });
 
