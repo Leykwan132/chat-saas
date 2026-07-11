@@ -94,7 +94,7 @@ export function WebWidgetPreview({
   const widgetHeight =
     mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[440px]' : 'h-12';
   const launcherWidgetHeight =
-    mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[430px]' : 'h-14';
+    mobilePreview && panelOpen ? 'h-full' : panelOpen ? 'h-[430px]' : 'h-[58px]';
   const mobileInputPanelClassName = 'bottom-[4.5rem] left-0 right-0 top-0 w-full';
   const mobileLauncherPanelClassName = 'bottom-16 left-0 right-0 top-0 w-full';
 
@@ -225,13 +225,13 @@ export function WebWidgetPreview({
             </WebWidgetPreviewPanel>
             <div
               className={cn(
-                'absolute bottom-0 flex items-center gap-2 rounded-full bg-white p-1 shadow-sm ring-1 ring-black/10',
+                'absolute bottom-0 flex items-center gap-2 rounded-full bg-white p-[5px] shadow-sm ring-1 ring-black/10',
                 layout === 'left_avatar' ? 'left-0' : 'right-0',
               )}
             >
               <button
                 type="button"
-                className="flex size-10 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
+                className="flex size-12 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
                 aria-label="Open preview chat icon"
                 onClick={() => {
                   setPanelOpen(true);
