@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-12 [USER] Approved reducing the Free plan recurring allowance from 100 to 50 credits without changing current in-cycle grants; design: `docs/superpowers/specs/2026-07-12-free-plan-50-credits-design.md`.
 - 2026-07-11 [CODE] Contact page heading uses medium weight; footer Book a demo and Support navigation immediately scrolls to the top even when only the `/contact` query string changes. Spec: `docs/superpowers/specs/2026-07-11-contact-footer-navigation-design.md`.
 - 2026-07-11 [CODE] Public Website widget mobile `input_bar` uses a scoped 8px wrapper lift, producing a measured 12px focused panel gap without overlap; panel, avatar, desktop, and viewport-safe geometry remain unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-input-lift-design.md`.
 - 2026-07-11 [CODE] Public Website widget mobile viewport sizing is implemented on `main` (`20898e53`): dependency-free native inputs use 16px mobile text and keyboard hints; `VisualViewport` offsets plus safe areas position both composers, panels, and launchers; input-bar specificity is corrected; coarse-pointer landscape receives mobile rules; `100dvh` remains the fallback. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-viewport-design.md`.
@@ -26,6 +27,7 @@
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply; Node v22 required before scripts/tests; code files must stay under 300 LOC.
 
 # Decisions
+- 2026-07-12 [USER] D241 ACTIVE: Free grants 50 credits per month from the next new/reset credit period; existing in-cycle balances, paid plan allowances, purchased credits, and per-message credit costs remain unchanged.
 - 2026-07-11 [USER] D240 ACTIVE: The public Website widget's mobile `input_bar` composer is lifted 8px independently of its fixed chat panel; avatar layouts, desktop layout, dashboard preview, and viewport-safe panel geometry stay unchanged.
 - 2026-07-11 [USER] D239 ACTIVE: The public Website widget remains a dependency-free native-input Shadow DOM embed; mobile composer and expanded panel geometry follow `window.visualViewport` offsets plus safe-area insets, inputs use 16px mobile text to prevent iOS focus zoom, and existing fixed/`100dvh` layout remains the fallback.
 - 2026-07-04 [CODE] D101 ACTIVE: Web widget runtime accepts `{ publicKey, visitorId, content, pageUrl }`; backend resolves `publicKey -> webWidgetSettings` and uses stored `channelId`/`agentId`, validating only that settings exist and are enabled.
