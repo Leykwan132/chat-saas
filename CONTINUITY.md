@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-11 [USER] Approved an 8px upward lift for the public Website widget's mobile `input_bar` composer, reducing the focused panel gap from about 20px to about 12px while leaving panel, avatar, desktop, and viewport-safe geometry unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-input-lift-design.md`.
+- 2026-07-11 [CODE] Public Website widget mobile `input_bar` uses a scoped 8px wrapper lift, producing a measured 12px focused panel gap without overlap; panel, avatar, desktop, and viewport-safe geometry remain unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-input-lift-design.md`.
 - 2026-07-11 [CODE] Public Website widget mobile viewport sizing is implemented on `main` (`20898e53`): dependency-free native inputs use 16px mobile text and keyboard hints; `VisualViewport` offsets plus safe areas position both composers, panels, and launchers; input-bar specificity is corrected; coarse-pointer landscape receives mobile rules; `100dvh` remains the fallback. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-viewport-design.md`.
 - 2026-07-11 [CODE] Public Website widget scroll compaction is implemented on `codex/widget-scroll-compaction`: a passive capture scroll listener drives `page-scrolling`, the closed/unfocused `input_bar` eases to 132×40px and restores 600ms after the final scroll event, opening clears the compact state, reduced-motion disables the transition, and `.wrap` remains transform-free.
 - 2026-07-11 [USER] Approved timing update: the public Website widget `input_bar` stays compact until 600ms after the final host-page scroll event to avoid size oscillation during brief scrolling pauses; size, 220ms easing, avatar layouts, open/focused chat, backend/config, and dashboard preview remain unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-scroll-compaction-design.md`.
@@ -167,13 +167,13 @@
 - 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-11 [CODE] Lifted the public Website widget mobile input-bar composer 8px to create a measured 12px open-state gap below the panel.
 - 2026-07-11 [CODE] Made public Website widget native inputs and expanded panels follow the live mobile visual viewport for input-bar and avatar layouts.
 - 2026-07-10 [CODE] Added metadata-identified broadcast inbox messages with typed template header assets and a distinct neutral `Broadcast` frame.
 - 2026-07-10 [CODE] Removed `tencent/hy3-preview` from model catalog, plan entitlements, display names, and Tencent leaderboard icon special-casing.
 - 2026-07-10 [CODE] Added landing announcement pill + Markdown blog post for Ilmu / YTL AI Labs.
 - 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
 - 2026-07-10 [CODE] Made matched workflow media and Send message actions deterministic from backend runtime payloads.
-- 2026-07-10 [CODE] Pinned workflow `generateObject` planning to DeepSeek and made usage tracking honor per-call model-provider overrides.
 # Working set
 - 2026-07-10 [CODE] Broadcast inbox rendering/metadata: `shared/broadcastMessage.ts`, `convex/broadcastMessageValidators.ts`, `convex/whatsappTemplatePresentation.ts`, `convex/broadcastPool.ts`, `convex/chat/{threads,inboxMessageMapping,broadcastMessageMetadata}.ts`, `src/components/inbox/InboxBroadcastMessage.tsx`.
 - 2026-07-10 [CODE] WhatsApp template phone normalization: `convex/whatsappPhone.ts`, `convex/whatsappPhone.test.ts`, `convex/broadcastPool.ts`, `convex/followUpPool.ts`, `convex/whatsappBroadcast.ts`.
@@ -185,7 +185,7 @@
 - 2026-07-06 [CODE] OpenRouter/model catalog: `convex/llm/modelPricing.ts`, `convex/llm/modelPricing.test.ts`, `shared/planCatalog.ts`.
 - 2026-07-06 [CODE] Leaderboard UI: `src/pages/LeaderboardPage.tsx`, `src/components/analytics/ModelLeaderboard{Panel,Display}.tsx`, `src/components/analytics/modelLeaderboardUtils.ts`.
 - 2026-07-10 [CODE] Ilmu/model entitlements: `convex/llm/*`, `shared/planCatalog.ts`, leaderboard/Supported LLM Models UI.
-- 2026-07-11 [CODE] Website widget: `public/widget/v1.js`, `src/components/channels/WebWidget{VisualViewport,MobileLayout,Placement}.test.ts`, `docs/superpowers/{specs,plans}/2026-07-11-web-widget-mobile-viewport*`.
+- 2026-07-11 [CODE] Website widget: `public/widget/v1.js`, `src/components/channels/WebWidget{VisualViewport,MobileLayout,Placement}.test.ts`, `docs/superpowers/{specs,plans}/2026-07-11-web-widget-mobile-{viewport,input-lift}*`.
 - 2026-07-09 [CODE] Workflow AI planner/media: `convex/chat/workflowActionPlanner*`, `convex/chat/aiReply*`, `convex/chat/mediaManifest*`.
 - 2026-07-08 [CODE] Workflow UI/layout: `src/components/workflow/*`, `src/pages/WorkflowPage*`, `convex/workflow*`.
 - 2026-07-08 [CODE] Landing preview: `src/components/landing/*`.
@@ -199,6 +199,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-11 [TOOL] Mobile input lift followed RED/GREEN: the focused regression failed on the missing `--mobile-input-lift:8px`, then 29 adjacent widget tests passed after adding the scoped mobile `input_bar` bottom override. Rendered simulated-keyboard geometry measured panel bottom 438px and focused composer top 450px (12px gap, no overlap); avatar launcher remained at bottom 508px and browser errors were empty.
 - 2026-07-11 [TOOL] Mobile VisualViewport implementation followed RED/GREEN twice: the initial contract failed 5/6 tests, then browser simulation exposed the input-bar desktop `bottom:64px` specificity override and a focused regression failed before the scoped fix. Fresh Node 22 verification passed 28 tests across 3 widget suites, targeted ESLint, `git diff --check`, and LOC checks (`public/widget/v1.js` 295 lines). Rendered 390×844 and 390×500 checks plus simulated `{top:20,bottom:324,left:10,right:20}` keyboard geometry kept both layouts' panels and 16px inputs visible with zero browser errors; implementation commit `20898e53`.
 - 2026-07-11 [TOOL] Stash conflict on outdated local `main` cleared by hard-reset, fast-forward to `origin/main` (`7c09eb01` merge of scroll compaction), then re-applying the 600ms scroll-stop stash; conflict markers gone and the 180→600ms timing update is committed on `main`.
 - 2026-07-11 [TOOL] Scroll compaction followed RED/GREEN on Node 22: initial implementation passed 28 adjacent tests and browser verification measured desktop 280×48 idle → 132×40 scrolling → 280×48 restored and mobile 236×48 → 132×40 → 236×48; the follow-up anti-flicker contract failed against the old 180ms delay, then passed after changing the restore debounce to 600ms. Fresh follow-up verification passed 25 adjacent widget tests, targeted ESLint, `git diff --check`, and LOC checks at 283/224 lines.

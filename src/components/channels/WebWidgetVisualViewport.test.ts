@@ -45,6 +45,13 @@ test('input-bar panel overrides the desktop bottom offset on mobile', () => {
   );
 });
 
+test('mobile input-bar composer is lifted closer to the panel', () => {
+  expect(widgetScript).toContain('--mobile-input-lift:8px');
+  expect(widgetScript).toContain(
+    '.layout-input_bar{bottom:calc(var(--mobile-viewport-bottom) + max(var(--mobile-edge),env(safe-area-inset-bottom,0px)) + var(--mobile-input-lift))}',
+  );
+});
+
 test('public widget native inputs expose mobile keyboard and accessibility hints', () => {
   expect(widgetScript.match(/<input aria-label='Message' autocomplete='off' inputmode='text' enterkeyhint='send'\/>/g)).toHaveLength(2);
   expect(widgetScript).toContain('@media(max-width:480px)');
