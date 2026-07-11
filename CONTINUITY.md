@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-11 [USER] Approved public Website widget mobile viewport design: keep dependency-free native inputs, use `VisualViewport` offsets plus safe areas for keyboard/browser-chrome-aware composer and panel sizing, keep `100dvh` fallback, and push the verified implementation to `main`. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-viewport-design.md`.
 - 2026-07-11 [CODE] Public Website widget scroll compaction is implemented on `codex/widget-scroll-compaction`: a passive capture scroll listener drives `page-scrolling`, the closed/unfocused `input_bar` eases to 132×40px and restores 600ms after the final scroll event, opening clears the compact state, reduced-motion disables the transition, and `.wrap` remains transform-free.
 - 2026-07-11 [USER] Approved timing update: the public Website widget `input_bar` stays compact until 600ms after the final host-page scroll event to avoid size oscillation during brief scrolling pauses; size, 220ms easing, avatar layouts, open/focused chat, backend/config, and dashboard preview remain unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-scroll-compaction-design.md`.
 - 2026-07-11 [CODE] Mobile Website widget expanded panel now remains viewport-relative: the root wrapper readiness transition fades opacity/visibility only and never applies `translate`; the existing panel open/close transform remains unchanged.
@@ -23,6 +24,7 @@
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply; Node v22 required before scripts/tests; code files must stay under 300 LOC.
 
 # Decisions
+- 2026-07-11 [USER] D239 ACTIVE: The public Website widget remains a dependency-free native-input Shadow DOM embed; mobile composer and expanded panel geometry follow `window.visualViewport` offsets plus safe-area insets, inputs use 16px mobile text to prevent iOS focus zoom, and existing fixed/`100dvh` layout remains the fallback.
 - 2026-07-04 [CODE] D101 ACTIVE: Web widget runtime accepts `{ publicKey, visitorId, content, pageUrl }`; backend resolves `publicKey -> webWidgetSettings` and uses stored `channelId`/`agentId`, validating only that settings exist and are enabled.
 - 2026-07-04 [CODE] D102 ACTIVE: Web widget placeholder is optional persisted widget settings; public/dashboard config derives `What can {agentDisplayName} help with?` until the user saves custom placeholder text.
 - 2026-07-04 [CODE] D103 ACTIVE: Web widget Powered by branding is enforced server-side for free plans; paid-plan widgets can persist `hidePoweredBy`, and dashboard free-plan attempts open Adjust Plan instead of saving.
