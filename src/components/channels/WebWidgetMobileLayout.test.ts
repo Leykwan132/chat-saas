@@ -26,10 +26,14 @@ test('public widget expanded header uses centered icon treatment', () => {
   expect(widgetScript).not.toContain('.fallbackIcon{padding:3px;object-fit:contain}');
 });
 
-test('public widget stays hidden until ready and fades in from the y axis', () => {
-  expect(widgetScript).toContain('opacity:0;translate:0 14px');
-  expect(widgetScript).toContain('transition:opacity .28s ease,translate .28s ease');
-  expect(widgetScript).toContain('.ready{opacity:1;translate:0 0;visibility:visible');
+test('public widget fades in without translating the fixed panel wrapper', () => {
+  expect(widgetScript).toContain(
+    'pointer-events:none;opacity:0;visibility:hidden;transition:opacity .28s ease,visibility 0s .28s',
+  );
+  expect(widgetScript).toContain('.ready{opacity:1;visibility:visible;transition-delay:0s}');
+  expect(widgetScript).not.toContain('opacity:0;translate:');
+  expect(widgetScript).not.toContain('.ready{opacity:1;translate:');
+  expect(widgetScript).not.toContain('transition:opacity .28s ease,translate');
   expect(widgetScript).toContain(
     'loadConfig().then(loadMessages).then(function () { render(); wrap.classList.add("ready"); }).catch(function () { render(); wrap.classList.add("ready"); })',
   );
@@ -37,9 +41,11 @@ test('public widget stays hidden until ready and fades in from the y axis', () =
 
 test('public widget bottom right launcher renders a single icon button', () => {
   expect(widgetScript).toContain('.launcherIcon');
-  expect(widgetScript).toContain('.launcher .avatar{width:40px;height:40px;border:0;background:#000;color:#fff}');
+  expect(widgetScript).toContain('.launcher .avatar{width:48px;height:48px;border:0;background:#000;color:#fff}');
+  expect(widgetScript).not.toContain('.launcher .avatar{width:40px;height:40px');
   expect(widgetScript).not.toContain('.launcher .avatar{width:24px;height:24px');
-  expect(widgetScript).toContain('.launcherIcon{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border:0;border-radius:999px;background:#fff;color:#000;box-shadow:none;overflow:hidden;cursor:pointer}');
+  expect(widgetScript).toContain('background:#fff;padding:5px;box-shadow:0 4px 12px');
+  expect(widgetScript).toContain('.launcherIcon{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border:0;border-radius:999px;background:#fff;color:#000;box-shadow:none;overflow:hidden;cursor:pointer}');
   expect(widgetScript).not.toContain('.launcherLabel');
   expect(widgetScript).not.toContain('.launcherText');
   expect(widgetScript).not.toContain('Need help?');
@@ -192,4 +198,27 @@ test('public widget renders WhatsApp-style single-asterisk bold safely', () => {
   expect(widgetScript).toContain('if (message.mediaUrl || !full) return formatText(full)');
   expect(widgetScript).toContain('"<div class=\'caption\'>" + formatText(captionText) + "</div>"');
   expect(widgetScript).not.toContain('escapeHtml(visible) + (visible.length < full.length');
+});
+
+test('public widget compacts the closed input bar while the host page scrolls', () => {
+  expect(widgetScript).toContain('pageScrolling: false');
+  expect(widgetScript).toContain('pageScrollTimer: 0');
+  expect(widgetScript).toContain(
+    'window.addEventListener("scroll", handlePageScroll, { capture: true, passive: true })',
+  );
+  expect(widgetScript).toContain('function handlePageScroll()');
+  expect(widgetScript).toContain('state.open || root.activeElement === barInput');
+  expect(widgetScript).toContain('window.setTimeout(function ()');
+  expect(widgetScript).toContain('}, 180)');
+  expect(widgetScript).toContain('function clearPageScrolling()');
+  expect(widgetScript).toContain('(state.pageScrolling ? " page-scrolling" : "")');
+  expect(widgetScript).toContain(
+    '.page-scrolling.layout-input_bar:not(.open):not(:focus-within) .bar{width:132px;height:40px',
+  );
+  expect(widgetScript).toContain(
+    '.page-scrolling.layout-input_bar:not(.open):not(:focus-within) .bar .send{width:30px;height:30px}',
+  );
+  expect(widgetScript).toContain(
+    '@media(prefers-reduced-motion:reduce){.bar,.bar .send{transition:none}}',
+  );
 });

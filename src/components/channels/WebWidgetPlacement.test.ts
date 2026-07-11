@@ -31,6 +31,9 @@ test('bottom right placement uses a single icon launcher', () => {
   expect(previewSource).not.toContain('Need help?');
   expect(previewSource).toContain("const mobileLauncherPanelClassName = 'bottom-16");
   expect(previewSource).toContain("'bottom-16 w-full'");
+  expect(previewSource).toContain("panelOpen ? 'h-[430px]' : 'h-[58px]'");
+  expect(previewSource).toContain('rounded-full bg-white p-[5px] shadow-sm');
+  expect(previewSource).toContain('className="flex size-12 items-center');
   expect(previewSource).toContain('aria-label="Open preview chat icon"');
   expect(previewSource).not.toContain('aria-label="Open preview help"');
 });
