@@ -15,6 +15,10 @@ export function SiteFooter({ className }: SiteFooterProps) {
     void signIn({ state: { returnTo: POST_LOGIN_REDIRECT } });
   };
 
+  const scrollToPageTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  };
+
   return (
     <footer
       className={cn(
@@ -83,12 +87,14 @@ export function SiteFooter({ className }: SiteFooterProps) {
                 <nav className="flex flex-col gap-3">
                   <Link
                     to="/contact?intent=demo"
+                    onClick={scrollToPageTop}
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                   >
                     Book a demo
                   </Link>
                   <Link
                     to="/contact?intent=support"
+                    onClick={scrollToPageTop}
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                   >
                     Support

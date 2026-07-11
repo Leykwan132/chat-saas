@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { useMutation } from 'convex/react';
 import { Link, useSearchParams } from 'react-router';
 import { usePostHog } from '@posthog/react';
@@ -21,73 +21,33 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { pricingTableShellClass, pricingViewAllLinkClass } from '@/components/pricing/pricingStyles';
 import { isValidEmailFormat } from '../../shared/emailValidation';
-
-type ContactIntent = 'enterprise' | 'support' | 'demo';
-
-const intentLabels: Record<ContactIntent, string> = {
-  enterprise: 'Enterprise plan',
-  support: 'Support',
-  demo: 'Book a demo',
-};
-
-const numberOfUsersOptions = [
-  '1–10',
-  '11–50',
-  '51–200',
-  '201–1,000',
-  '1,000+',
-] as const;
-
-function normalizeIntent(value: string | null): ContactIntent {
-  if (value === 'support') return 'support';
-  if (value === 'demo') return 'demo';
-  return 'enterprise';
-}
-
-const contactFieldClass =
-  'h-9 w-full rounded-lg border border-transparent bg-input/50 px-3 text-sm shadow-none';
-
-const contactSelectTriggerClass = cn(
+import {
   contactFieldClass,
-  '!h-9 !w-full !max-w-none !py-0 !text-sm',
-  '[&_svg]:size-3.5',
-);
-
-const contactSelectContentClass =
-  'max-h-48 p-0.5 text-sm shadow-md data-open:zoom-in-100 data-closed:zoom-out-100';
-
-const contactSelectContentProps = {
-  position: 'popper' as const,
-  side: 'bottom' as const,
-  align: 'start' as const,
-  sideOffset: 4,
-};
-
-const contactSelectItemClass = 'py-1.5 pl-2 pr-7 text-sm';
-
-function RequiredLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-      {children}
-      <span className="text-red-500"> *</span>
-    </span>
-  );
-}
-
-function OptionalLabel({ children }: { children: ReactNode }) {
-  return (
-    <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{children}</span>
-  );
-}
+  contactSelectContentClass,
+  contactSelectContentProps,
+  contactSelectItemClass,
+  contactSelectTriggerClass,
+  intentLabels,
+  normalizeIntent,
+  numberOfUsersOptions,
+  type ContactIntent,
+} from './contactPageConfig';
+import { OptionalLabel, RequiredLabel } from './ContactFieldLabels';
 
 export default function ContactPage() {
   const [searchParams] = useSearchParams();
   const posthog = usePostHog();
   const submitContactRequest = useMutation(api.contactRequests.submit);
 
-  const [intent, setIntent] = useState<ContactIntent>(() =>
-    normalizeIntent(searchParams.get('intent')),
-  );
+  const intentSearchParam = searchParams.get('intent');
+  const [intentSelection, setIntentSelection] = useState(() => ({
+    searchParam: intentSearchParam,
+    intent: normalizeIntent(intentSearchParam),
+  }));
+  const intent =
+    intentSelection.searchParam === intentSearchParam
+      ? intentSelection.intent
+      : normalizeIntent(intentSearchParam);
   const [email, setEmail] = useState('');
   const [contactName, setContactName] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -96,10 +56,6 @@ export default function ContactPage() {
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    setIntent(normalizeIntent(searchParams.get('intent')));
-  }, [searchParams]);
 
   const showBusinessFields = intent === 'enterprise' || intent === 'demo';
 
@@ -163,7 +119,7 @@ export default function ContactPage() {
         <div className="mx-auto box-border w-full max-w-6xl shrink-0 px-5 sm:px-6">
           <div className="grid w-full items-start gap-y-6 lg:grid-cols-2 lg:gap-x-24 lg:gap-y-0">
           <section className="max-lg:mb-2">
-            <h1 className="font-title text-4xl font-semibold leading-tight tracking-tight text-zinc-950 dark:text-white sm:text-5xl">
+            <h1 className="font-title text-4xl font-medium leading-tight tracking-tight text-zinc-950 dark:text-white sm:text-5xl">
               Let&apos;s start a conversation
             </h1>
             <p className="mt-3 max-w-md text-base leading-relaxed text-zinc-500 dark:text-zinc-400 sm:mt-4">
@@ -213,7 +169,12 @@ export default function ContactPage() {
                     <RequiredLabel>Purpose</RequiredLabel>
                     <Select
                       value={intent}
-                      onValueChange={(value) => setIntent(value as ContactIntent)}
+                      onValueChange={(value) =>
+                        setIntentSelection({
+                          searchParam: intentSearchParam,
+                          intent: value as ContactIntent,
+                        })
+                      }
                     >
                       <SelectTrigger className={contactSelectTriggerClass}>
                         <SelectValue placeholder="Select purpose" />
