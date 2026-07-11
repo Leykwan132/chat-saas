@@ -6,7 +6,7 @@ test('public widget mobile layout keeps the expanded panel separated from the in
   expect(widgetScript).toContain('--mobile-panel-gap:22px');
   expect(widgetScript).toContain('@media(max-width:480px)');
   expect(widgetScript).toContain(
-    'bottom:calc(var(--mobile-edge) + var(--mobile-bar-height) + var(--mobile-panel-gap))',
+    'bottom:calc(var(--mobile-viewport-bottom) + max(var(--mobile-edge),env(safe-area-inset-bottom,0px)) + var(--mobile-bar-height) + var(--mobile-panel-gap))',
   );
   expect(widgetScript).toContain(
     'max-height:calc(100dvh - var(--mobile-edge) - var(--mobile-edge) - var(--mobile-bar-height) - var(--mobile-panel-gap))',
@@ -50,7 +50,9 @@ test('public widget bottom right launcher renders a single icon button', () => {
   expect(widgetScript).not.toContain('.launcherText');
   expect(widgetScript).not.toContain('Need help?');
   expect(widgetScript).toContain('.layout-right_avatar .panel{right:0;bottom:64px}');
-  expect(widgetScript).toContain('.layout-right_avatar .panel,.layout-left_avatar .panel{left:var(--mobile-edge);right:var(--mobile-edge);bottom:76px}');
+  expect(widgetScript).toContain(
+    '.layout-right_avatar .panel,.layout-left_avatar .panel{left:calc(var(--mobile-viewport-left) + max(var(--mobile-edge),env(safe-area-inset-left,0px)));right:calc(var(--mobile-viewport-right) + max(var(--mobile-edge),env(safe-area-inset-right,0px)));bottom:calc(var(--mobile-viewport-bottom) + max(var(--mobile-edge),env(safe-area-inset-bottom,0px)) + 64px)}',
+  );
   expect(widgetScript).not.toContain("<svg viewBox='0 0 24 24'");
   expect(widgetScript).not.toContain("M16 10a2 2 0 0 1-2 2H6.828");
   expect(widgetScript).not.toContain("M5 6.5h10v6H9");
