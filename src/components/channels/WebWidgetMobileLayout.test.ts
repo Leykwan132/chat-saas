@@ -209,7 +209,7 @@ test('public widget compacts the closed input bar while the host page scrolls', 
   expect(widgetScript).toContain('function handlePageScroll()');
   expect(widgetScript).toContain('state.open || root.activeElement === barInput');
   expect(widgetScript).toContain('window.setTimeout(function ()');
-  expect(widgetScript).toContain('}, 180)');
+  expect(widgetScript).toContain('}, 600)');
   expect(widgetScript).toContain('function clearPageScrolling()');
   expect(widgetScript).toContain('(state.pageScrolling ? " page-scrolling" : "")');
   expect(widgetScript).toContain(

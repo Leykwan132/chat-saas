@@ -1,7 +1,7 @@
 # Website Widget Scroll Compaction Design
 
 **Date:** 2026-07-11
-**Status:** Approved for planning
+**Status:** Approved for implementation
 
 ## Goal
 
@@ -18,8 +18,8 @@ No backend, persisted setting, embed API, or widget configuration changes are re
 - The normal input remains `280px × 48px` on desktop and `236px × 48px` on mobile.
 - The first host-page scroll event changes the closed, unfocused input to a compact `132px × 40px` pill.
 - The compact pill retains the input affordance and send control. Overflowing placeholder text is clipped rather than replaced with a different launcher.
-- Each additional scroll event restarts a `180ms` scroll-stop timer.
-- When no scroll event arrives for `180ms`, the input returns to its normal size.
+- Each additional scroll event restarts a `600ms` scroll-stop timer.
+- When no scroll event arrives for `600ms`, the input returns to its normal size.
 - Size, padding, gap, shadow, and send-control changes ease over `220ms`.
 - Focusing the input or opening the conversation immediately restores the full input, even if scrolling is still active.
 - Scrolling while the conversation is open does not compact either the panel or its input.
@@ -50,7 +50,7 @@ Implementation follows test-first development.
 Automated coverage must verify:
 
 - host scrolling enters the compact state;
-- repeated scroll events restart the `180ms` timer;
+- repeated scroll events restart the `600ms` timer;
 - the state clears after the timer expires;
 - open and focused widgets remain full size;
 - only the `input_bar` layout receives compact styling;

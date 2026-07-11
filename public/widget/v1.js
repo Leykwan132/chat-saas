@@ -156,7 +156,7 @@
     if (state.pageScrollTimer) window.clearTimeout(state.pageScrollTimer);
     state.pageScrollTimer = window.setTimeout(function () {
       if (clearPageScrolling()) render();
-    }, 180);
+    }, 600);
   }
   function clearPageScrolling() {
     if (state.pageScrollTimer) window.clearTimeout(state.pageScrollTimer);
