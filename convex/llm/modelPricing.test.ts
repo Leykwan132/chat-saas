@@ -43,6 +43,12 @@ test("Free plan includes only Ilmu Mini V3.3", () => {
   expect(otherModels.every((model) => model.requiredPlan !== "free")).toBe(true);
 });
 
+test("Free plan grants and advertises 50 monthly credits", () => {
+  expect(PLAN_CATALOG.free.monthlyCredits).toBe(50);
+  expect(PLAN_CATALOG.free.displayFeatures).toContain("50 credits / mo");
+  expect(PLAN_CATALOG.free.displayFeatures).not.toContain("100 credits / mo");
+});
+
 test("Google Gemma models are not enabled or included in plan entitlements", () => {
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
