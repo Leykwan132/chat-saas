@@ -3,7 +3,9 @@ import {
   ALL_MONTHS_VALUE,
   USD_TO_MYR_RATE,
   buildUserSpendSummary,
+  compareValues,
   formatCost,
+  formatTokenCount,
   getCostRowsForMonth,
 } from './adminUsageCostsModel';
 
@@ -19,6 +21,11 @@ test('formatCost can display USD or MYR estimates', () => {
   );
 });
 
+test('formatTokenCount displays exact and compact token totals', () => {
+  expect(formatTokenCount(1_250_000)).toBe('1,250,000');
+  expect(formatTokenCount(1_250_000, true)).toBe('1.3M');
+});
+
 test('buildUserSpendSummary returns total, average, and highest user spend', () => {
   const summary = buildUserSpendSummary([
     {
@@ -28,6 +35,7 @@ test('buildUserSpendSummary returns total, average, and highest user spend', () 
       planName: 'Free',
       requestCount: 2,
       totalCostUsd: 0.4,
+      totalTokens: 120,
       averageCostUsd: 0.2,
       topModel: 'model-a',
       lastRequestAt: 1,
@@ -39,6 +47,7 @@ test('buildUserSpendSummary returns total, average, and highest user spend', () 
       planName: 'Growth',
       requestCount: 3,
       totalCostUsd: 0.8,
+      totalTokens: 280,
       averageCostUsd: 0.266666667,
       topModel: 'model-b',
       lastRequestAt: 2,
@@ -46,9 +55,15 @@ test('buildUserSpendSummary returns total, average, and highest user spend', () 
   ]);
 
   expect(summary.totalSpendUsd).toBe(1.2);
+  expect(summary.totalTokens).toBe(400);
   expect(summary.averageSpendUsd).toBe(0.6);
   expect(summary.highestSpendUser?.email).toBe('b@example.com');
   expect(summary.highestSpendUser?.totalCostUsd).toBe(0.8);
+});
+
+test('compareValues sorts total tokens numerically', () => {
+  const rows = [{ totalTokens: 20 }, { totalTokens: 100 }];
+  expect([...rows].sort((a, b) => compareValues(a, b, 'totalTokens', 'desc'))[0].totalTokens).toBe(100);
 });
 
 test('getCostRowsForMonth returns all-time or selected month rows', () => {
@@ -65,6 +80,7 @@ test('getCostRowsForMonth returns all-time or selected month rows', () => {
         planName: 'Growth',
         requestCount: 3,
         totalCostUsd: 1.2,
+        totalTokens: 300,
         averageCostUsd: 0.4,
         topModel: 'model-a',
         lastRequestAt: 3,
@@ -81,6 +97,7 @@ test('getCostRowsForMonth returns all-time or selected month rows', () => {
         planName: 'Growth',
         requestCount: 1,
         totalCostUsd: 0.8,
+        totalTokens: 200,
         averageCostUsd: 0.8,
         topModel: 'model-a',
         lastRequestAt: 2,

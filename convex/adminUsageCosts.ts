@@ -74,6 +74,7 @@ function serializeModelRow(
     provider: model.provider,
     requestCount: model.requestCount,
     totalCostUsd: roundUsd(model.totalCostUsd),
+    totalTokens: model.totalTokens,
     averageCostUsd: roundUsd(model.totalCostUsd / model.requestCount),
     lastRequestAt: model.lastRequestAt,
   };
@@ -115,6 +116,7 @@ export const getAdminUsageCostReport = query({
         planName: plan.planName,
         requestCount: userTotals.requestCount,
         totalCostUsd: roundUsd(userTotals.totalCostUsd),
+        totalTokens: userTotals.totalTokens,
         averageCostUsd: roundUsd(userTotals.totalCostUsd / userTotals.requestCount),
         topModel: models[0]?.model ?? null,
         lastRequestAt: userTotals.lastRequestAt,
@@ -142,6 +144,7 @@ export const getAdminUsageCostReport = query({
         planName: plan.planName,
         requestCount: userTotals.requestCount,
         totalCostUsd: roundUsd(userTotals.totalCostUsd),
+        totalTokens: userTotals.totalTokens,
         averageCostUsd: roundUsd(userTotals.totalCostUsd / userTotals.requestCount),
         topModel: models[0]?.model ?? null,
         lastRequestAt: userTotals.lastRequestAt,

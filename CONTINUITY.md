@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-12 [CODE] Admin Costs token reporting uses permanent `agentTokenUsage` aggregation with month-aware card/table totals; the sole shared dev/test database reconciled 471 rows / 3,011,196 tokens, and the temporary backfill source was removed. Spec: `docs/superpowers/specs/2026-07-12-admin-cost-token-usage-design.md`.
 - 2026-07-12 [CODE] Free plan recurring allowance is 50 credits for new/reset periods; plan displays and pricing FAQ show 50, while existing in-cycle grants remain unchanged. Design: `docs/superpowers/specs/2026-07-12-free-plan-50-credits-design.md`.
 - 2026-07-11 [CODE] Contact page heading uses medium weight; footer Book a demo and Support navigation immediately scrolls to the top even when only the `/contact` query string changes. Spec: `docs/superpowers/specs/2026-07-11-contact-footer-navigation-design.md`.
 - 2026-07-11 [CODE] Public Website widget mobile `input_bar` uses a scoped 8px wrapper lift, producing a measured 12px focused panel gap without overlap; panel, avatar, desktop, and viewport-safe geometry remain unchanged. Spec: `docs/superpowers/specs/2026-07-11-web-widget-mobile-input-lift-design.md`.
@@ -170,6 +171,7 @@
 - 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-12 [CODE] Added aggregate-backed total-token reporting for Admin Costs, backfilled the shared database, verified totals, and removed the one-time migration source.
 - 2026-07-11 [CODE] Softened the contact-page heading and made footer demo/support intent links scroll the contact page to the top.
 - 2026-07-11 [CODE] Lifted the public Website widget mobile input-bar composer 8px to create a measured 12px open-state gap below the panel.
 - 2026-07-11 [CODE] Made public Website widget native inputs and expanded panels follow the live mobile visual viewport for input-bar and avatar layouts.
@@ -178,6 +180,7 @@
 - 2026-07-10 [CODE] Added landing announcement pill + Markdown blog post for Ilmu / YTL AI Labs.
 - 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
 # Working set
+- 2026-07-12 [CODE] Admin cost tokens: `convex/{aggregates,triggers,adminUsageCostAggregation,adminUsageCostAggregateQuery,adminUsageCosts}*`, `src/components/admin/{AdminUsageCostControls,AdminUsageCostsTab,adminUsageCostsModel}*`, `docs/superpowers/{specs,plans}/2026-07-12-admin-cost-token-usage*`.
 - 2026-07-11 [CODE] Contact/footer navigation: `src/components/SiteFooter.tsx`, `src/components/SiteFooter.test.ts`, `src/pages/ContactPage.tsx`, `src/pages/ContactPage.test.ts`, `src/pages/contactPageConfig.ts`, `src/pages/ContactFieldLabels.tsx`.
 - 2026-07-10 [CODE] Broadcast inbox rendering/metadata: `shared/broadcastMessage.ts`, `convex/broadcastMessageValidators.ts`, `convex/whatsappTemplatePresentation.ts`, `convex/broadcastPool.ts`, `convex/chat/{threads,inboxMessageMapping,broadcastMessageMetadata}.ts`, `src/components/inbox/InboxBroadcastMessage.tsx`.
 - 2026-07-10 [CODE] WhatsApp template phone normalization: `convex/whatsappPhone.ts`, `convex/whatsappPhone.test.ts`, `convex/broadcastPool.ts`, `convex/followUpPool.ts`, `convex/whatsappBroadcast.ts`.
@@ -202,6 +205,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-12 [TOOL] Admin Costs tokens followed RED/GREEN on Node 22: backend/UI/migration tests failed on missing token aggregate/helpers/module, then 7 migration-phase tests passed. Shared dev/test deployment `outstanding-rabbit-215` backfill completed in five bounded batches and independently reconciled 471 aggregate rows / 3,011,196 tokens; user confirmed there is no separate production database, then cleanup codegen removed migration functions and tightened the trigger. Final verification passed 6 permanent tests, TypeScript, Vite production build with `NODE_OPTIONS=--max-old-space-size=4096`, stale-migration scan, `git diff --check`, and all touched code files remain under 300 lines.
 - 2026-07-12 [TOOL] Free 50-credit allowance followed RED/GREEN on Node 22: the new catalog contract failed against the previous 100-credit grant, then all 14 focused model/pricing tests passed; active shared/frontend/Convex source contains no stale `100 credits` copy and `git diff --check` passed.
 - 2026-07-11 [TOOL] Contact/footer navigation followed RED/GREEN: both new regressions initially failed on the semibold heading and missing top-scroll handler; Node 22 verification then passed 6 tests across 4 files, targeted ESLint, `git diff --check`, and touched code LOC checks (`SiteFooter.tsx` 149, `ContactPage.tsx` 292, configuration/label modules 44/16).
 - 2026-07-11 [TOOL] Mobile input lift followed RED/GREEN: the focused regression failed on the missing `--mobile-input-lift:8px`, then 29 adjacent widget tests passed after adding the scoped mobile `input_bar` bottom override. Rendered simulated-keyboard geometry measured panel bottom 438px and focused composer top 450px (12px gap, no overlap); avatar launcher remained at bottom 508px and browser errors were empty.

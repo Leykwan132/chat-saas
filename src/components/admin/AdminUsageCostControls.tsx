@@ -17,6 +17,7 @@ import {
   USD_TO_MYR_RATE,
   buildUserSpendSummary,
   formatCost,
+  formatTokenCount,
 } from './adminUsageCostsModel';
 
 export function MonthFilter({
@@ -90,11 +91,17 @@ export function SpendSummaryCards({
   const highest = summary.highestSpendUser;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <div className={cn(pricingTableShellClass, 'p-4')}>
         <p className="text-xs font-medium text-muted-foreground">Total spend</p>
         <p className="mt-2 text-2xl font-semibold tabular-nums">
           {isLoading ? '-' : formatCost(summary.totalSpendUsd, currency)}
+        </p>
+      </div>
+      <div className={cn(pricingTableShellClass, 'p-4')}>
+        <p className="text-xs font-medium text-muted-foreground">Total tokens</p>
+        <p className="mt-2 text-2xl font-semibold tabular-nums">
+          {isLoading ? '-' : formatTokenCount(summary.totalTokens, true)}
         </p>
       </div>
       <div className={cn(pricingTableShellClass, 'p-4')}>

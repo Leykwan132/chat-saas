@@ -7,6 +7,7 @@ import {
   monthlyAggregator,
   agentMonthlyAggregator,
   agentCostAggregator,
+  agentTokenAggregator,
   creditAgentDailyUsageAggregator,
   creditWorkspaceDailyUsageAggregator,
   creditAccountDailyUsageAggregator,
@@ -23,6 +24,7 @@ triggers.register("rawAgentUsage", lifetimeAggregator.trigger());
 triggers.register("rawAgentUsage", monthlyAggregator.trigger());
 triggers.register("rawAgentUsage", agentMonthlyAggregator.trigger());
 triggers.register("rawAgentUsage", agentCostAggregator.trigger());
+triggers.register("rawAgentUsage", agentTokenAggregator.trigger());
 triggers.register("creditUsageEvents", creditAgentDailyUsageAggregator.trigger());
 triggers.register("creditUsageEvents", creditWorkspaceDailyUsageAggregator.trigger());
 triggers.register("creditUsageEvents", creditAccountDailyUsageAggregator.trigger());

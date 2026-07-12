@@ -457,6 +457,7 @@ export declare const components: {
   modelMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelMonthlyUsage">;
   agentMonthlyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentMonthlyUsage">;
   agentCostUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentCostUsage">;
+  agentTokenUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"agentTokenUsage">;
   creditDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditDailyUsage">;
   creditWorkspaceDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditWorkspaceDailyUsage">;
   creditAccountDailyUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"creditAccountDailyUsage">;

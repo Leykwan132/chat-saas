@@ -1,5 +1,5 @@
 import type { QueryCtx } from "./_generated/server";
-import { agentCostAggregator } from "./aggregates";
+import { agentCostAggregator, agentTokenAggregator } from "./aggregates";
 import {
   agentCostMonthBounds,
   costMonthRange,
@@ -40,8 +40,9 @@ async function getDimensionStats(
   ctx: QueryCtx,
   dimension: CostDimension,
 ): Promise<CostDimensionStats | null> {
-  const [totalCostUsd, requestCount, firstRequest, lastRequest] = await Promise.all([
+  const [totalCostUsd, totalTokens, requestCount, firstRequest, lastRequest] = await Promise.all([
     agentCostAggregator.sum(ctx, { namespace: dimension.namespace }),
+    agentTokenAggregator.sum(ctx, { namespace: dimension.namespace }),
     agentCostAggregator.count(ctx, { namespace: dimension.namespace }),
     agentCostAggregator.min(ctx, { namespace: dimension.namespace }),
     agentCostAggregator.max(ctx, { namespace: dimension.namespace }),
@@ -55,6 +56,7 @@ async function getDimensionStats(
     ...dimension,
     requestCount,
     totalCostUsd,
+    totalTokens,
     lastRequestAt: lastRequest.key[1],
     firstMonthKey: firstRequest.key[0],
     lastMonthKey: lastRequest.key[0],
@@ -78,8 +80,9 @@ async function addMonthlyRows(
   );
 
   const costRequests = requests.map(({ namespace, bounds }) => ({ namespace, bounds }));
-  const [costs, counts] = await Promise.all([
+  const [costs, tokens, counts] = await Promise.all([
     agentCostAggregator.sumBatch(ctx, costRequests),
+    agentTokenAggregator.sumBatch(ctx, costRequests),
     agentCostAggregator.countBatch(ctx, costRequests),
   ]);
 
@@ -105,6 +108,7 @@ async function addMonthlyRows(
       model: request.dimension.model,
       requestCount,
       totalCostUsd: costs[index] ?? 0,
+      totalTokens: tokens[index] ?? 0,
       lastRequestAt: latest.key[1],
       monthKey: request.monthKey,
     };

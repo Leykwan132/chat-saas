@@ -55,6 +55,17 @@ export const agentCostAggregator = new TableAggregate<{
   namespace: agentCostNamespace,
 });
 
+export const agentTokenAggregator = new TableAggregate<{
+  Key: AgentCostSortKey;
+  DataModel: DataModel;
+  TableName: "rawAgentUsage";
+  Namespace: string;
+}>(components.agentTokenUsage, {
+  sortKey: agentCostSortKey,
+  sumValue: (doc) => doc.usage.totalTokens,
+  namespace: agentCostNamespace,
+});
+
 export const creditAgentDailyUsageAggregator = new TableAggregate<{
   Key: number;
   DataModel: DataModel;

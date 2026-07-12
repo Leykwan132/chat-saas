@@ -1,9 +1,10 @@
 export type CostCurrency = 'usd' | 'myr';
 export const ALL_MONTHS_VALUE = 'all';
 export type SortDirection = 'asc' | 'desc';
-export type UserSortKey = 'totalCostUsd' | 'requestCount' | 'averageCostUsd' | 'lastRequestAt';
+export type UserSortKey = 'totalCostUsd' | 'totalTokens' | 'requestCount' | 'averageCostUsd' | 'lastRequestAt';
 export type ModelSortKey =
   | 'totalCostUsd'
+  | 'totalTokens'
   | 'requestCount'
   | 'averageCostUsd'
   | 'lastRequestAt'
@@ -18,6 +19,7 @@ export type UsageCostModelRow = {
   provider: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   averageCostUsd: number;
   lastRequestAt: number;
 };
@@ -29,6 +31,7 @@ export type UsageCostUserRow = {
   planName: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   averageCostUsd: number;
   topModel: string | null;
   lastRequestAt: number;
@@ -49,6 +52,7 @@ export type UsageCostMonthOption = {
   label: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   lastRequestAt: number;
 };
 
@@ -87,8 +91,18 @@ export function formatCost(valueUsd: number, currency: CostCurrency) {
   }).format(value);
 }
 
+export function formatTokenCount(value: number, compact = false) {
+  return new Intl.NumberFormat('en-US', compact ? {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  } : {
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export function buildUserSpendSummary(userRows: UsageCostUserRow[]) {
   const totalSpendUsd = userRows.reduce((sum, row) => sum + row.totalCostUsd, 0);
+  const totalTokens = userRows.reduce((sum, row) => sum + row.totalTokens, 0);
   const highestSpendUser = userRows.reduce<UsageCostUserRow | null>((highest, row) => {
     if (highest === null || row.totalCostUsd > highest.totalCostUsd) {
       return row;
@@ -98,6 +112,7 @@ export function buildUserSpendSummary(userRows: UsageCostUserRow[]) {
 
   return {
     totalSpendUsd: roundUsd(totalSpendUsd),
+    totalTokens,
     averageSpendUsd: userRows.length === 0 ? 0 : roundUsd(totalSpendUsd / userRows.length),
     highestSpendUser,
   };

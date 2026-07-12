@@ -6,6 +6,7 @@ export type ModelAccumulator = {
   provider: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   lastRequestAt: number;
 };
 
@@ -13,6 +14,7 @@ export type UserAccumulator = {
   userId: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   lastRequestAt: number;
   models: Map<string, ModelAccumulator>;
 };
@@ -27,6 +29,7 @@ export type MonthAccumulator = {
   label: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   lastRequestAt: number;
 };
 
@@ -36,6 +39,7 @@ export type CostAggregateInput = {
   provider: string;
   requestCount: number;
   totalCostUsd: number;
+  totalTokens: number;
   lastRequestAt: number;
 };
 
@@ -55,12 +59,14 @@ export function addCostAggregateRow(
       userId: input.userId,
       requestCount: 0,
       totalCostUsd: 0,
+      totalTokens: 0,
       lastRequestAt: 0,
       models: new Map<string, ModelAccumulator>(),
     };
 
   user.requestCount += input.requestCount;
   user.totalCostUsd += input.totalCostUsd;
+  user.totalTokens += input.totalTokens;
   user.lastRequestAt = Math.max(user.lastRequestAt, input.lastRequestAt);
 
   const modelAccumulatorKey = modelKey(input);
@@ -72,11 +78,13 @@ export function addCostAggregateRow(
       provider: input.provider,
       requestCount: 0,
       totalCostUsd: 0,
+      totalTokens: 0,
       lastRequestAt: 0,
     };
 
   model.requestCount += input.requestCount;
   model.totalCostUsd += input.totalCostUsd;
+  model.totalTokens += input.totalTokens;
   model.lastRequestAt = Math.max(model.lastRequestAt, input.lastRequestAt);
 
   user.models.set(modelAccumulatorKey, model);
@@ -107,10 +115,12 @@ export function addMonthOption(
       label: costMonthLabel(input.monthKey),
       requestCount: 0,
       totalCostUsd: 0,
+      totalTokens: 0,
       lastRequestAt: 0,
     };
   month.requestCount += input.requestCount;
   month.totalCostUsd += input.totalCostUsd;
+  month.totalTokens += input.totalTokens;
   month.lastRequestAt = Math.max(month.lastRequestAt, input.lastRequestAt);
   months.set(input.monthKey, month);
 }
@@ -123,6 +133,7 @@ export function serializeMonthOptions(months: Map<string, MonthAccumulator>) {
       label: month.label,
       requestCount: month.requestCount,
       totalCostUsd: roundUsd(month.totalCostUsd),
+      totalTokens: month.totalTokens,
       lastRequestAt: month.lastRequestAt,
     }));
 }
