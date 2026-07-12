@@ -73,7 +73,7 @@ test("plus actions create action nodes with expected default condition labels", 
   const startNode = graph.nodes.find((node) => node.kind === "start");
   expect(startNode).toBeDefined();
   expect(ADDABLE_WORKFLOW_NODE_KINDS).toEqual([
-    "sendText", "sendImage", "sendFile", "updateLeadsStatus", "bookAppointment", "humanEscalation", "closeConversation",
+    "sendText", "sendImage", "sendFile", "bookAppointment", "humanEscalation", "closeConversation",
   ]);
 
   for (const kind of ADDABLE_WORKFLOW_NODE_KINDS) {
@@ -126,13 +126,13 @@ test("connectNodes creates edges without default condition labels", async () => 
   const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
   const startNode = graph.nodes.find((node) => node.kind === "start");
 
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const qualifiedLeadsNode = withQualifiedLeads.nodes.find(
-    (node) => node.kind === "updateLeadsStatus",
+  const sendMessageNode = withSendMessage.nodes.find(
+    (node) => node.kind === "sendText",
   );
   const withBookAppointment = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
@@ -145,12 +145,12 @@ test("connectNodes creates edges without default condition labels", async () => 
 
   const connected = await authed.mutation(api.workflows.connectNodes, {
     agentId,
-    sourceNodeId: qualifiedLeadsNode!._id,
+    sourceNodeId: sendMessageNode!._id,
     targetNodeId: bookAppointmentNode!._id,
   });
   const connectedEdge = connected.edges.find(
     (edge) =>
-      edge.sourceNodeId === qualifiedLeadsNode!._id &&
+      edge.sourceNodeId === sendMessageNode!._id &&
       edge.targetNodeId === bookAppointmentNode!._id,
   );
   expect(connectedEdge?.label).toBeUndefined();
@@ -165,12 +165,12 @@ test("updateEdgeCondition sets and clears condition labels", async () => {
   const startNode = graph.nodes.find((node) => node.kind === "start");
   expect(startNode).toBeDefined();
 
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const edge = withQualifiedLeads.edges.find(
+  const edge = withSendMessage.edges.find(
     (candidate) => candidate.sourceNodeId === startNode!._id,
   );
   expect(edge).toBeDefined();
@@ -207,19 +207,19 @@ test("resetForAgent clears workflow graph back to the entry node", async () => {
   const startNode = graph.nodes.find((node) => node.kind === "start");
   expect(startNode).toBeDefined();
 
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const qualifiedLeadsNode = withQualifiedLeads.nodes.find(
-    (node) => node.kind === "updateLeadsStatus",
+  const sendMessageNode = withSendMessage.nodes.find(
+    (node) => node.kind === "sendText",
   );
-  expect(qualifiedLeadsNode).toBeDefined();
+  expect(sendMessageNode).toBeDefined();
 
   await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
-    sourceNodeId: qualifiedLeadsNode!._id,
+    sourceNodeId: sendMessageNode!._id,
     kind: "closeConversation",
   });
   await authed.mutation(api.workflows.updateNode, {
@@ -254,13 +254,13 @@ test("terminal workflow nodes cannot create outgoing edges", async () => {
   const closeConversationNode = withCloseConversation.nodes.find(
     (node) => node.kind === "closeConversation",
   );
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const qualifiedLeadsNode = withQualifiedLeads.nodes.find(
-    (node) => node.kind === "updateLeadsStatus",
+  const sendMessageNode = withSendMessage.nodes.find(
+    (node) => node.kind === "sendText",
   );
 
   await expect(
@@ -275,7 +275,7 @@ test("terminal workflow nodes cannot create outgoing edges", async () => {
     authed.mutation(api.workflows.connectNodes, {
       agentId,
       sourceNodeId: closeConversationNode!._id,
-      targetNodeId: qualifiedLeadsNode!._id,
+      targetNodeId: sendMessageNode!._id,
     }),
   ).rejects.toThrow("Cannot connect from a terminal node");
 
@@ -292,7 +292,7 @@ test("terminal workflow nodes cannot create outgoing edges", async () => {
     authed.mutation(api.workflows.connectNodes, {
       agentId,
       sourceNodeId: humanEscalationNode!._id,
-      targetNodeId: qualifiedLeadsNode!._id,
+      targetNodeId: sendMessageNode!._id,
     }),
   ).rejects.toThrow("Cannot connect from a terminal node");
 });

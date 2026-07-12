@@ -392,6 +392,7 @@ export const TOPIC_ANALYTICS_LABEL = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_INCLUDES = [
   "Common Topic Detection",
   "Customer Sentiment",
+  "Lead Temperature",
 ] as const;
 export const CREDITS_COMPARISON_LABEL = "Credits / mo";
 export const CHANNELS_COMPARISON_LABEL = "Channels";

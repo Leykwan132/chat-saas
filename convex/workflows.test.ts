@@ -77,6 +77,7 @@ test("agents.create provisions a default workflow", async () => {
   const agentId = await authed.mutation(api.agents.create, {
     name: "Created Agent",
     templateKey: "blank",
+    model: "ilmu-mini-v3.3",
   });
 
   const graph = await authed.query(api.workflows.getForAgent, { agentId });
@@ -136,17 +137,16 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   const startNode = graph.nodes.find((node) => node.kind === "start");
   expect(startNode).toBeDefined();
 
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const qualifiedLeadsNode = withQualifiedLeads.nodes.find(
-    (node) => node.kind === "updateLeadsStatus",
+  const sendMessageNode = withSendMessage.nodes.find(
+    (node) => node.kind === "sendText",
   );
-  expect(qualifiedLeadsNode).toBeDefined();
-  expect(qualifiedLeadsNode!.title).toBe("Qualify leads");
-  expect(qualifiedLeadsNode!.description).toContain("Hot leads show strong buying intent");
+  expect(sendMessageNode).toBeDefined();
+  expect(sendMessageNode!.title).toBe("Send message");
 
   const withBookAppointment = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
@@ -187,12 +187,12 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
     edge.sourceNodeId,
     edge.targetNodeId,
   ]);
-  expect(edgePairs).toContainEqual([startNode!._id, qualifiedLeadsNode!._id]);
+  expect(edgePairs).toContainEqual([startNode!._id, sendMessageNode!._id]);
   expect(edgePairs).toContainEqual([startNode!._id, bookAppointmentNode!._id]);
   expect(edgePairs).toContainEqual([startNode!._id, humanEscalationNode!._id]);
   expect(edgePairs).toContainEqual([startNode!._id, closeConversationNode!._id]);
   expect(
-    withCloseConversation.edges.some((edge) => edge.sourceNodeId === qualifiedLeadsNode!._id),
+    withCloseConversation.edges.some((edge) => edge.sourceNodeId === sendMessageNode!._id),
   ).toBe(false);
 });
 
@@ -204,23 +204,23 @@ test("removeEdge deletes a selected workflow edge", async () => {
   const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
   const startNode = graph.nodes.find((node) => node.kind === "start");
 
-  const withQualifiedLeads = await authed.mutation(api.workflows.addNodeAfter, {
+  const withSendMessage = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
     sourceNodeId: startNode!._id,
-    kind: "updateLeadsStatus",
+    kind: "sendText",
   });
-  const qualifiedLeadsEdge = withQualifiedLeads.edges.find(
+  const sendMessageEdge = withSendMessage.edges.find(
     (edge) => edge.sourceNodeId === startNode!._id,
   );
-  expect(qualifiedLeadsEdge).toBeDefined();
+  expect(sendMessageEdge).toBeDefined();
 
   const afterRemove = await authed.mutation(api.workflows.removeEdge, {
     agentId,
-    edgeId: qualifiedLeadsEdge!._id,
+    edgeId: sendMessageEdge!._id,
   });
 
-  expect(afterRemove.edges.some((edge) => edge._id === qualifiedLeadsEdge!._id)).toBe(false);
-  expect(afterRemove.edges).toHaveLength(withQualifiedLeads.edges.length - 1);
+  expect(afterRemove.edges.some((edge) => edge._id === sendMessageEdge!._id)).toBe(false);
+  expect(afterRemove.edges).toHaveLength(withSendMessage.edges.length - 1);
 });
 
 test("workflow APIs reject cross-org access", async () => {

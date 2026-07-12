@@ -82,9 +82,9 @@ const sharedWorkflow: LandingPreviewWorkflow = {
       y: 78,
     },
     {
-      id: 'qualify',
-      title: 'Qualify buyer intent',
-      description: 'AI checks budget, timeline, and unit preference before routing.',
+      id: 'details',
+      title: 'Send project details',
+      description: 'Share the configured project overview when a new lead arrives.',
       kind: 'ai',
       x: 328,
       y: 238,
@@ -99,7 +99,7 @@ const sharedWorkflow: LandingPreviewWorkflow = {
     },
   ],
   edges: [
-    { id: 'entry-qualify', source: 'entry', target: 'qualify', label: 'New inbound lead' },
+    { id: 'entry-details', source: 'entry', target: 'details', label: 'New inbound lead' },
     { id: 'entry-booking', source: 'entry', target: 'booking', label: 'Ready to visit' },
   ],
 };

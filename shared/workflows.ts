@@ -7,7 +7,6 @@ export const WORKFLOW_NODE_KINDS = [
   'sendText',
   'closeConversation',
   'humanEscalation',
-  'updateLeadsStatus',
   'bookAppointment',
   'subagent',
   'say',
@@ -24,7 +23,6 @@ export const ADDABLE_WORKFLOW_NODE_KINDS = [
   'sendText',
   'sendImage',
   'sendFile',
-  'updateLeadsStatus',
   'bookAppointment',
   'humanEscalation',
   'closeConversation',
@@ -47,7 +45,6 @@ export const WORKFLOW_ACTION_NODE_KINDS = [
   'sendImage',
   'sendFile',
   'aiResponds',
-  'updateLeadsStatus',
   'bookAppointment',
   'humanEscalation',
 ] as const satisfies readonly WorkflowNodeKind[];
@@ -84,10 +81,6 @@ export const WORKFLOW_NODE_META: Record<
   humanEscalation: {
     label: 'Human escalation',
     description: 'Pause AI replies and alert a teammate when the customer needs a human or the AI cannot answer with confidence.',
-  },
-  updateLeadsStatus: {
-    label: 'Qualify leads',
-    description: 'Qualify the customer as hot, warm, or cold. Hot leads show strong buying intent such as pricing, demos, availability, comparisons, or readiness to purchase. Warm leads are interested but still exploring. Cold leads are disengaged, only browsing, or are support conversations without purchase intent.',
   },
   bookAppointment: {
     label: 'Book appointment',

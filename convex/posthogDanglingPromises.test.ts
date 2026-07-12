@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 
 const filesWithAIGenerationCapture = [
-  "./analyticsSentiment.ts",
+  "./analyticsInsights.ts",
   "./chat/inboxActions.ts",
   "./chat/threads.ts",
 ];

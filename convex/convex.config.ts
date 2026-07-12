@@ -31,6 +31,7 @@ app.use(workpool, { name: "whatsappTemplateMediaWorkpool" });
 app.use(workpool, { name: "conversationLogWorkpool" });
 app.use(workpool, { name: "creditPeriodWorkpool" });
 app.use(workpool, { name: "customerImportWorkpool" });
+app.use(workpool, { name: "advancedAnalyticsWorkpool" });
 app.use(workOSAuthKit);
 app.use(crons);
 app.use(aggregate, { name: "modelLifetimeUsage" });

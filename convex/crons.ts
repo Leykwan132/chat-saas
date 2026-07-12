@@ -1,7 +1,11 @@
 import { cronJobs } from "convex/server";
 import { internal } from "./_generated/api";
+import { parseAdvancedAnalyticsCronUtc } from "./analyticsCronSchedule";
 
 const crons = cronJobs();
+const advancedAnalyticsCronSchedule = parseAdvancedAnalyticsCronUtc(
+  process.env.ADVANCED_ANALYTICS_CRON_UTC,
+);
 
 // Refresh long-lived Instagram tokens daily. Each token is valid for 60 days
 // but can be refreshed any time after it is 24 hours old, so we sweep every
@@ -24,19 +28,10 @@ crons.interval(
   {},
 );
 
-// Detect common conversation topics for Growth plan workspaces and above.
-crons.interval(
-  "conversation topic detection",
-  { hours: 24 },
-  internal.analyticsTopics.runDailyTopicDetection,
-  {},
-);
-
-// Analyze customer sentiment for Growth plan workspaces and above.
-crons.interval(
-  "conversation sentiment analysis",
-  { hours: 24 },
-  internal.analyticsSentiment.runDailySentimentAnalysis,
+crons.daily(
+  "combined advanced analytics",
+  advancedAnalyticsCronSchedule,
+  internal.analyticsInsights.runDailyAnalysis,
   {},
 );
 

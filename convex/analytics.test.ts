@@ -290,7 +290,7 @@ test("topic assignment supports multiple topics per conversation", async () => {
   expect(after.deliveryTopic?.totalCount).toBe(0);
 });
 
-test("conversation sentiment syncs to topic assignments", async () => {
+test("combined insights persist sentiment and advance the shared watermark", async () => {
   const t = convexTest(schema, modules);
   registerAnalyticsAggregate(t);
   const { conversationId, now } = await insertAnalyticsFixture(t);
@@ -306,7 +306,7 @@ test("conversation sentiment syncs to topic assignments", async () => {
     ],
   });
 
-  await t.mutation(internal.analyticsTopicRecords.assignConversationSentiment, {
+  await t.mutation(internal.analyticsInsightRecords.assignConversationInsights, {
     conversationId,
     sentiment: "negative",
     sourceMessageMaxCreatedAt: now + 60_000,
@@ -322,6 +322,10 @@ test("conversation sentiment syncs to topic assignments", async () => {
   });
 
   expect(result.conversation?.customerSentiment).toBe("negative");
+  expect(result.conversation?.advancedAnalyticsSourceMessageMaxCreatedAt).toBe(
+    now + 60_000,
+  );
+  expect(result.conversation?.advancedAnalyticsAnalyzedAt).toBeGreaterThan(0);
   expect(result.assignments).toHaveLength(1);
   expect(result.assignments[0]?.customerSentiment).toBe("negative");
 });

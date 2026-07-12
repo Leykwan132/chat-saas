@@ -798,6 +798,8 @@ export default defineSchema({
     customerSentiment: v.optional(customerSentimentValidator),
     sentimentAnalyzedAt: v.optional(v.number()),
     sentimentSourceMessageMaxCreatedAt: v.optional(v.number()),
+    advancedAnalyticsAnalyzedAt: v.optional(v.number()),
+    advancedAnalyticsSourceMessageMaxCreatedAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

@@ -168,7 +168,7 @@ For Send message nodes, send the configured message when the incoming condition 
 
 This is important: for Send Photo/Video and Send Files nodes, treat the media node as matched every time the customer asks for that media and the incoming condition matches, even if the same asset was sent earlier. Do not answer that the media was already sent. Do not paste media URLs or \`[MEDIA:...]\` markers in the customer response; the backend validates the matched workflow node and sends the assets separately.
 For sendFile nodes, customer words such as brochure, PDF, document, file, catalog, menu, or attachment mean the matching file node should be used. Do not say "Here's the brochure", "I've attached the file", or similar unless the workflow node has an uploaded file listed under it.
-Do not use tool calls for Send message, Q&A, booking, lead qualification, Send Photo/Video, Send Files, or custom action nodes.
+Do not use tool calls for Send message, Q&A, booking, Send Photo/Video, Send Files, or custom action nodes.
 
 For Human escalation nodes, call \`escalateToHuman\` when the incoming condition matches. Adding a Human escalation node enables human escalation mode for this workflow, so if you cannot answer safely or confidently while that node exists, escalate instead of guessing.
 

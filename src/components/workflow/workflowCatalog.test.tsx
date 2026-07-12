@@ -6,7 +6,6 @@ test('workflow add options start with business-controlled send message', () => {
     'sendText',
     'sendImage',
     'sendFile',
-    'updateLeadsStatus',
     'bookAppointment',
     'humanEscalation',
     'closeConversation',

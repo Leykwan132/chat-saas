@@ -29,9 +29,12 @@ import type * as agentUsageAggregatesModel from "../agentUsageAggregatesModel.js
 import type * as agents from "../agents.js";
 import type * as aggregates from "../aggregates.js";
 import type * as analytics from "../analytics.js";
-import type * as analyticsSentiment from "../analyticsSentiment.js";
+import type * as analyticsCronSchedule from "../analyticsCronSchedule.js";
+import type * as analyticsInsightRecords from "../analyticsInsightRecords.js";
+import type * as analyticsInsights from "../analyticsInsights.js";
+import type * as analyticsInsightsContract from "../analyticsInsightsContract.js";
+import type * as analyticsInsightsPool from "../analyticsInsightsPool.js";
 import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
-import type * as analyticsTopics from "../analyticsTopics.js";
 import type * as appointmentBooking_access from "../appointmentBooking/access.js";
 import type * as appointmentBooking_availability from "../appointmentBooking/availability.js";
 import type * as appointmentBooking_bookAppointment from "../appointmentBooking/bookAppointment.js";
@@ -229,9 +232,12 @@ declare const fullApi: ApiFromModules<{
   agents: typeof agents;
   aggregates: typeof aggregates;
   analytics: typeof analytics;
-  analyticsSentiment: typeof analyticsSentiment;
+  analyticsCronSchedule: typeof analyticsCronSchedule;
+  analyticsInsightRecords: typeof analyticsInsightRecords;
+  analyticsInsights: typeof analyticsInsights;
+  analyticsInsightsContract: typeof analyticsInsightsContract;
+  analyticsInsightsPool: typeof analyticsInsightsPool;
   analyticsTopicRecords: typeof analyticsTopicRecords;
-  analyticsTopics: typeof analyticsTopics;
   "appointmentBooking/access": typeof appointmentBooking_access;
   "appointmentBooking/availability": typeof appointmentBooking_availability;
   "appointmentBooking/bookAppointment": typeof appointmentBooking_bookAppointment;
@@ -451,6 +457,7 @@ export declare const components: {
   conversationLogWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"conversationLogWorkpool">;
   creditPeriodWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"creditPeriodWorkpool">;
   customerImportWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"customerImportWorkpool">;
+  advancedAnalyticsWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"advancedAnalyticsWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;

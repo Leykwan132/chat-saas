@@ -11,7 +11,7 @@ const mockWorkflowId = 'landing-preview-workflow' as Id<'workflows'>;
 
 const kindMap = {
   start: 'start',
-  ai: 'updateLeadsStatus',
+  ai: 'sendText',
   message: 'sendText',
   booking: 'bookAppointment',
   handoff: 'humanEscalation',

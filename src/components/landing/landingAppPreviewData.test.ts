@@ -30,11 +30,11 @@ test('landing preview includes an interactive workflow section with mocked graph
   expect(workflow.workflow.nodes).toHaveLength(3);
   expect(workflow.workflow.nodes.map((node) => node.title)).toEqual([
     'Message enters',
-    'Qualify buyer intent',
+    'Send project details',
     'Book showroom visit',
   ]);
   expect(workflow.workflow.edges).toEqual([
-    { id: 'entry-qualify', source: 'entry', target: 'qualify', label: 'New inbound lead' },
+    { id: 'entry-details', source: 'entry', target: 'details', label: 'New inbound lead' },
     { id: 'entry-booking', source: 'entry', target: 'booking', label: 'Ready to visit' },
   ]);
 });
@@ -160,18 +160,18 @@ test('landing preview workflow mock adapts to the real workflow graph shape', ()
   expect(graph.workflow.name).toBe('Landing preview workflow');
   expect(graph.nodes.map((node) => node.kind)).toEqual([
     'start',
-    'updateLeadsStatus',
+    'sendText',
     'bookAppointment',
   ]);
   expect(graph.nodes.map((node) => node._id)).toEqual([
     'landing-workflow-node-entry',
-    'landing-workflow-node-qualify',
+    'landing-workflow-node-details',
     'landing-workflow-node-booking',
   ]);
   expect(graph.edges[0]).toMatchObject({
-    _id: 'landing-workflow-edge-entry-qualify',
+    _id: 'landing-workflow-edge-entry-details',
     sourceNodeId: 'landing-workflow-node-entry',
-    targetNodeId: 'landing-workflow-node-qualify',
+    targetNodeId: 'landing-workflow-node-details',
     label: 'New inbound lead',
   });
 });
