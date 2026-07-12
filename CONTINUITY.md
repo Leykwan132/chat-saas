@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-12 [USER] Combined Advanced Analytics implementation scope also removes the Workflow `updateLeadsStatus`/“Qualify leads” capability completely, with no saved-workflow compatibility or migration; unrelated sales copy and lead-temperature UI/data remain.
 - 2026-07-12 [USER] Approved combining daily topic detection, customer sentiment, and lead temperature into one strict `generateObject` analysis for Growth/Business at 02:00 MYT; Starter keeps one-time sync labeling. Design: `docs/superpowers/specs/2026-07-12-combined-advanced-analytics-design.md`.
 - 2026-07-12 [CODE] Admin Costs token reporting uses permanent `agentTokenUsage` aggregation with month-aware card/table totals; the sole shared dev/test database reconciled 471 rows / 3,011,196 tokens, and the temporary backfill source was removed. Spec: `docs/superpowers/specs/2026-07-12-admin-cost-token-usage-design.md`.
 - 2026-07-12 [CODE] Free plan recurring allowance is 50 credits for new/reset periods; plan displays and pricing FAQ show 50, while existing in-cycle grants remain unchanged. Design: `docs/superpowers/specs/2026-07-12-free-plan-50-credits-design.md`.
@@ -29,6 +30,7 @@
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply; Node v22 required before scripts/tests; code files must stay under 300 LOC.
 
 # Decisions
+- 2026-07-12 [USER] D243 ACTIVE: `updateLeadsStatus` is removed from workflow types, validators, catalog, prompts, tests, and landing workflow mock; no legacy workflow compatibility or migration is required.
 - 2026-07-12 [USER] D242 ACTIVE: Advanced Analytics runs one fixed-schema AI call per eligible conversation for topics, sentiment, and lead temperature at 18:00 UTC daily; only a successful combined persistence advances its message watermark, and pricing lists Lead Temperature under Advanced Analytics.
 - 2026-07-12 [USER] D241 ACTIVE: Free grants 50 credits per month from the next new/reset credit period; existing in-cycle balances, paid plan allowances, purchased credits, and per-message credit costs remain unchanged.
 - 2026-07-11 [USER] D240 ACTIVE: The public Website widget's mobile `input_bar` composer is lifted 8px independently of its fixed chat panel; avatar layouts, desktop layout, dashboard preview, and viewport-safe panel geometry stay unchanged.

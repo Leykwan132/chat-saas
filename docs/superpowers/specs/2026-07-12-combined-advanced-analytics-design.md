@@ -49,8 +49,18 @@ The Advanced Analytics hover list will contain, in order:
 
 Advanced Analytics remains included only for Growth, Business, and Enterprise in the pricing comparison.
 
+## Workflow Lead Qualification Removal
+
+The `updateLeadsStatus` workflow node and its “Qualify leads” presentation will be removed completely. It will no longer exist in shared workflow kinds, addable kinds, action kinds, Convex validators, workflow catalog icons/options, workflow prompts, or workflow tests.
+
+Existing saved `updateLeadsStatus` nodes are not supported or migrated. The deployment assumes those legacy workflow documents can be discarded or are absent; no compatibility validator or runtime branch will remain.
+
+The landing-page workflow mock will stop mapping its AI step to `updateLeadsStatus` and will replace the qualification example with a supported workflow action that does not present lead qualification as a workflow capability. General sales-oriented copy outside workflow feature surfaces remains unchanged.
+
+Lead temperature remains available through Starter’s one-time Meta sync classification and the combined daily Growth/Business Advanced Analytics job. Removing the workflow node does not remove customer lead-temperature fields, filters, badges, manual editing, or automation audiences.
+
 ## Verification
 
-Tests will cover the strict combined schema, prompt contract, Growth/Business eligibility, Starter exclusion, new-message watermark behavior, successful combined persistence, retry behavior when processing fails, the single fixed 18:00 UTC cron entry, removal of the two separate analytics crons, and the third Advanced Analytics pricing item.
+Tests will cover the strict combined schema, prompt contract, Growth/Business eligibility, Starter exclusion, new-message watermark behavior, successful combined persistence, retry behavior when processing fails, the single fixed 18:00 UTC cron entry, removal of the two separate analytics crons, the third Advanced Analytics pricing item, and complete absence of `updateLeadsStatus` from workflow types, validators, catalogs, prompts, and landing workflow mocks.
 
 Verification will run under Node.js 22 and include focused tests, Convex code generation when public/internal function references change, TypeScript checking because this is a multi-module backend change, formatting checks, and code-file line-count checks.
