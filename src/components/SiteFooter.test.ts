@@ -10,3 +10,10 @@ test('footer demo and support links scroll the contact page to the top', () => {
   expect(siteFooterSource).toContain('to="/contact?intent=demo"');
   expect(siteFooterSource).toContain('to="/contact?intent=support"');
 });
+
+test('footer exposes direct email and phone support links', () => {
+  expect(siteFooterSource).toContain('href="mailto:support@kilobot.app"');
+  expect(siteFooterSource).toContain('support@kilobot.app');
+  expect(siteFooterSource).toContain('href="tel:+60129499394"');
+  expect(siteFooterSource).toContain('+60129499394 (Kwan)');
+});

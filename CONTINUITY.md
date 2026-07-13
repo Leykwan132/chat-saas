@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-13 [CODE] Footer copyright now includes a compact stacked Support group with direct email and regular-dialer phone links.
 - 2026-07-13 [USER] Footer support contacts are approved beneath the copyright: `support@kilobot.app` opens email and `+60129499394 (Kwan)` opens the regular dialer.
 - 2026-07-13 [CODE] Workflow editing is draft-first: graph changes, Cleanup, orientation, node edits, and template replacement remain local until the top-right Save is clicked.
 - 2026-07-13 [CODE] Dirty workflow drafts show a background-free red Discard changes action with a trash icon and enabled pointer cursor plus a dark semantic-primary Save control; discarding restores the latest persisted graph without deleting it.
@@ -42,16 +43,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Added direct footer support contacts for `support@kilobot.app` and `+60129499394 (Kwan)` with native email and dialer actions.
 - 2026-07-13 [CODE] Implemented workflow drafts, atomic primary Save, transparent pointer-enabled Discard changes, unsaved-navigation protection, fully clickable automatically spaced starter-template cards without forced messages, explicit template conditions, backend-only saved-template adoption, and Apply-style inspector edits.
 - 2026-07-13 [CODE] Added transactional Confirm behavior for reminder and follow-up message template selection.
 - 2026-07-13 [CODE] Added reminder/follow-up activation guards and accurate activation success feedback.
 - 2026-07-13 [CODE] Integrated editable booking lifecycle status controls.
 - 2026-07-12 [CODE] Combined daily Advanced Analytics and removed Qualify leads workflow behavior.
 - 2026-07-12 [CODE] Added aggregate-backed Admin token totals and reconciled the shared database.
-- 2026-07-11 [CODE] Completed mobile Website widget viewport and input-lift work.
 
 # Working set
-- 2026-07-13 [CODE] Footer contacts: `src/components/SiteFooter.tsx`, `src/components/SiteFooter.test.ts`, `docs/superpowers/specs/2026-07-13-footer-support-contacts-design.md`.
+- 2026-07-13 [CODE] Footer contacts: `src/components/SiteFooter.tsx`, `src/components/SiteFooter.test.ts`, `docs/superpowers/{specs/2026-07-13-footer-support-contacts-design,plans/2026-07-13-footer-support-contacts}.md`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 - 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
@@ -68,6 +69,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
+- 2026-07-13 [CODE] Footer support contacts implementation plan: `docs/superpowers/plans/2026-07-13-footer-support-contacts.md`.
 - 2026-07-13 [CODE] Footer support contacts design: `docs/superpowers/specs/2026-07-13-footer-support-contacts-design.md`.
 - 2026-07-13 [TOOL] Final discard/template refinement completed verified red-green cycles for transparent pointer styling, forced-message removal, and automatic spacing; 15 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Discard/template interactions completed three verified red-green cycles; 13 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
@@ -83,5 +86,4 @@
 - 2026-07-13 [TOOL] All touched code files remain below 300 lines and `git diff --check` passed.
 - 2026-07-13 [CODE] Workflow drafts/templates implementation plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
 - 2026-07-13 [CODE] Reminder/follow-up transactional confirmation changes are present on `main` in commit `cdb641c6`.
-- 2026-07-13 [CODE] Booking lifecycle integration source commit is `e5ebd6f1`.
 - 2026-07-12 [CODE] Advanced Analytics design: `docs/superpowers/specs/2026-07-12-combined-advanced-analytics-design.md`.
