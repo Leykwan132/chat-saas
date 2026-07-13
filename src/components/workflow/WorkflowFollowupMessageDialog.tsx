@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Check, ChevronLeft, ListOrdered, Repeat } from 'lucide-react';
 import { useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import {
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -80,29 +82,60 @@ export function WorkflowFollowupMessageDialog({
     setFollowupMessageStrategy,
     setFollowupSameTemplate,
   } = useWorkflowAutomationState();
+  const [pendingMessageStrategy, setPendingMessageStrategy] =
+    useState(followupMessageStrategy);
+  const [pendingSameTemplate, setPendingSameTemplate] =
+    useState(followupSameTemplate);
+  const [pendingAttemptTemplates, setPendingAttemptTemplates] =
+    useState([...followupAttemptTemplates]);
+  const confirmedConfigurationRef = useRef(false);
   const summary = useWorkflowFollowupSummary();
   const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates();
   const maxAttemptsCount = Math.max(1, Number(summary.maxAttemptsLabel) || 1);
   const attempts = Array.from({ length: maxAttemptsCount }, (_, index) => index);
-  const selectedTemplate = followupMessageStrategy === 'same'
-    ? followupSameTemplate
-    : followupAttemptTemplates[activeAttemptIndex];
+  const boundedActiveAttemptIndex = Math.min(activeAttemptIndex, maxAttemptsCount - 1);
+  const selectedTemplate = pendingMessageStrategy === 'same'
+    ? pendingSameTemplate
+    : pendingAttemptTemplates[boundedActiveAttemptIndex];
   const createTemplateHref = agentId ? `/dashboard/${agentId}/templates/new` : undefined;
-  const configureTitle = followupMessageStrategy === 'same'
+  const configureTitle = pendingMessageStrategy === 'same'
     ? 'Select a message'
     : 'Select messages';
-  const configureDescription = followupMessageStrategy === 'same'
+  const configureDescription = pendingMessageStrategy === 'same'
     ? `This message will be sent for all ${maxAttemptsCount} follow-up${maxAttemptsCount === 1 ? '' : 's'}.`
     : 'Choose a message for each follow-up.';
-
-  useEffect(() => {
-    if (activeAttemptIndex < maxAttemptsCount) return;
-    setActiveAttemptIndex(maxAttemptsCount - 1);
-  }, [activeAttemptIndex, maxAttemptsCount]);
+  const canConfirmTemplates = pendingMessageStrategy === 'same'
+    ? Boolean(pendingSameTemplate)
+    : attempts.every((attemptIndex) => Boolean(pendingAttemptTemplates[attemptIndex]));
+  const confirmTemplates = () => {
+    if (!canConfirmTemplates) return;
+    confirmedConfigurationRef.current = true;
+    setFollowupMessageStrategy(pendingMessageStrategy);
+    if (pendingMessageStrategy === 'same') {
+      if (pendingSameTemplate) setFollowupSameTemplate(pendingSameTemplate);
+      return;
+    }
+    attempts.forEach((attemptIndex) => {
+      const template = pendingAttemptTemplates[attemptIndex];
+      if (template) setFollowupAttemptTemplate(attemptIndex, template);
+    });
+  };
+  const resetPendingConfiguration = () => {
+    if (!confirmedConfigurationRef.current) {
+      setPendingMessageStrategy(followupMessageStrategy);
+      setPendingSameTemplate(followupSameTemplate);
+      setPendingAttemptTemplates([...followupAttemptTemplates]);
+    }
+    confirmedConfigurationRef.current = false;
+    setStage(initialStage);
+    setActiveAttemptIndex(0);
+    setTemplateSearchQuery('');
+  };
 
   return (
     <DialogContent
       className="flex h-[760px] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[980px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[980px]"
+      onCloseAutoFocus={resetPendingConfiguration}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >
@@ -123,7 +156,7 @@ export function WorkflowFollowupMessageDialog({
             <StrategyCard
               strategy="same"
               onSelect={(strategy) => {
-                setFollowupMessageStrategy(strategy);
+                setPendingMessageStrategy(strategy);
                 setActiveAttemptIndex(0);
                 setTemplateSearchQuery('');
                 setStage('configure');
@@ -132,7 +165,7 @@ export function WorkflowFollowupMessageDialog({
             <StrategyCard
               strategy="different"
               onSelect={(strategy) => {
-                setFollowupMessageStrategy(strategy);
+                setPendingMessageStrategy(strategy);
                 setActiveAttemptIndex(0);
                 setTemplateSearchQuery('');
                 setStage('configure');
@@ -144,15 +177,15 @@ export function WorkflowFollowupMessageDialog({
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden px-6 py-6">
           <div className="grid min-h-0 flex-1 grid-cols-1 gap-6 overflow-hidden lg:grid-cols-[minmax(320px,1fr)_minmax(320px,360px)] lg:items-stretch">
             <div className="flex h-full min-h-0 flex-col overflow-hidden">
-              {followupMessageStrategy === 'different' && (
+              {pendingMessageStrategy === 'different' && (
                 <>
                   <p className="mb-3 shrink-0 text-sm font-semibold text-foreground">
                     Follow-up
                   </p>
                   <div className="mb-4 flex flex-wrap justify-start gap-3">
                     {attempts.map((attemptIndex) => {
-                      const complete = Boolean(followupAttemptTemplates[attemptIndex]);
-                      const active = activeAttemptIndex === attemptIndex;
+                      const complete = Boolean(pendingAttemptTemplates[attemptIndex]);
+                      const active = boundedActiveAttemptIndex === attemptIndex;
                       return (
                         <button
                           key={attemptIndex}
@@ -196,11 +229,15 @@ export function WorkflowFollowupMessageDialog({
                 createTemplateHref={createTemplateHref}
                 onSelect={(template) => {
                   const selection = toWorkflowFollowupTemplateSelection(template);
-                  if (followupMessageStrategy === 'same') {
-                    setFollowupSameTemplate(selection);
+                  if (pendingMessageStrategy === 'same') {
+                    setPendingSameTemplate(selection);
                     return;
                   }
-                  setFollowupAttemptTemplate(activeAttemptIndex, selection);
+                  setPendingAttemptTemplates((current) => {
+                    const next = [...current];
+                    next[boundedActiveAttemptIndex] = selection;
+                    return next;
+                  });
                 }}
               />
             </div>
@@ -214,7 +251,7 @@ export function WorkflowFollowupMessageDialog({
               />
             </div>
           </div>
-          <div className="flex shrink-0 justify-between border-t border-border pt-5">
+          <DialogFooter className="shrink-0 flex-row justify-between border-t border-border pt-5 sm:justify-between">
             <Button
               type="button"
               variant="outline"
@@ -224,7 +261,16 @@ export function WorkflowFollowupMessageDialog({
               <ChevronLeft className="size-4" />
               Back
             </Button>
-          </div>
+            <DialogClose asChild>
+              <Button
+                type="button"
+                disabled={!canConfirmTemplates}
+                onClick={confirmTemplates}
+              >
+                Confirm
+              </Button>
+            </DialogClose>
+          </DialogFooter>
         </div>
       )}
     </DialogContent>

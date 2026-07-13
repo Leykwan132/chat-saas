@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { type NodeProps } from '@xyflow/react';
+import { toast } from 'sonner';
 import {
   CalendarClock,
   ChevronRight,
@@ -16,6 +17,10 @@ import { cn } from '@/lib/utils';
 import { WorkflowFollowupAudienceField } from './WorkflowFollowupAudienceField';
 import { WorkflowFollowupMessageDialog } from './WorkflowFollowupMessageDialog';
 import { WorkflowFollowupScheduleFields } from './WorkflowFollowupScheduleFields';
+import {
+  resolveWorkflowAutomationEnabledChange,
+  WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
+} from './workflowAutomationActivation';
 import { useWorkflowFollowupSummary } from './workflowFollowupSummary';
 import type { WorkflowFollowupSetupFlowNode } from './workflowTypes';
 
@@ -88,8 +93,17 @@ export function WorkflowFollowupSetupNode({
   data,
 }: NodeProps<WorkflowFollowupSetupFlowNode>) {
   const [enabled, setEnabled] = useState(false);
+  const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
   const summary = useWorkflowFollowupSummary();
   const messageMissing = summary.messageCardLabel === 'Choose message';
+  const handleEnabledChange = (nextEnabled: boolean) => {
+    const result = resolveWorkflowAutomationEnabledChange(nextEnabled, !messageMissing);
+    setEnabled(result.enabled);
+    setShowMessageRequiredError(result.messageRequired);
+    if (result.enabled && !enabled) {
+      toast.success('Follow-up is now turned on.');
+    }
+  };
 
   return (
     <div className="flex h-[644px] w-[420px] cursor-grab flex-col gap-4 rounded-xl border border-border/80 bg-card p-5 text-card-foreground active:cursor-grabbing">
@@ -100,7 +114,7 @@ export function WorkflowFollowupSetupNode({
         </h3>
         <Switch
           checked={enabled}
-          onCheckedChange={setEnabled}
+          onCheckedChange={handleEnabledChange}
           aria-label={`${data.title} enabled`}
           className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
           onPointerDown={(event) => event.stopPropagation()}
@@ -122,6 +136,11 @@ export function WorkflowFollowupSetupNode({
             valueClassName={messageMissing ? 'text-primary' : undefined}
             dialogContent={<WorkflowFollowupMessageDialog />}
           />
+          {showMessageRequiredError && messageMissing && (
+            <p className="m-0 text-[11px] font-semibold text-destructive">
+              {WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR}
+            </p>
+          )}
         </FollowupSetupSection>
       </div>
     </div>

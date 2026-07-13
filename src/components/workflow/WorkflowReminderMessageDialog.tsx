@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams } from 'react-router';
 import {
+  DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 import { WorkflowFollowupTemplatePicker } from './WorkflowFollowupTemplatePicker';
 import { useWorkflowAutomationState } from './workflowAutomationState';
@@ -18,12 +21,27 @@ export function WorkflowReminderMessageDialog() {
   const { agentId } = useParams();
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const { reminderTemplate, setReminderTemplate } = useWorkflowAutomationState();
+  const [pendingTemplate, setPendingTemplate] = useState(reminderTemplate);
+  const confirmedSelectionRef = useRef(false);
   const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates();
   const createTemplateHref = agentId ? `/dashboard/${agentId}/templates/new` : undefined;
+  const confirmTemplate = () => {
+    if (!pendingTemplate) return;
+    confirmedSelectionRef.current = true;
+    setReminderTemplate(pendingTemplate);
+  };
+  const resetPendingTemplate = () => {
+    if (!confirmedSelectionRef.current) {
+      setPendingTemplate(reminderTemplate);
+    }
+    confirmedSelectionRef.current = false;
+    setTemplateSearchQuery('');
+  };
 
   return (
     <DialogContent
       className="flex h-[720px] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[980px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[980px]"
+      onCloseAutoFocus={resetPendingTemplate}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >
@@ -39,25 +57,32 @@ export function WorkflowReminderMessageDialog() {
           <WorkflowFollowupTemplatePicker
             templates={approvedTemplates}
             templatesLoading={templatesLoading}
-            selectedTemplateKey={reminderTemplate?.key ?? ''}
+            selectedTemplateKey={pendingTemplate?.key ?? ''}
             searchQuery={templateSearchQuery}
             onSearchQueryChange={setTemplateSearchQuery}
             createTemplateHref={createTemplateHref}
             onSelect={(template) => {
-              setReminderTemplate(toWorkflowFollowupTemplateSelection(template));
+              setPendingTemplate(toWorkflowFollowupTemplateSelection(template));
             }}
           />
         </div>
         <div className="flex h-full min-h-0 w-full flex-col items-center justify-start">
           <WhatsAppTemplatePreview
-            templateName={reminderTemplate?.name}
-            components={reminderTemplate?.components}
+            templateName={pendingTemplate?.name}
+            components={pendingTemplate?.components}
             isLoading={templatesLoading}
             emptyMessage="Select a template to preview"
             className="w-full max-w-[360px]"
           />
         </div>
       </div>
+      <DialogFooter className="shrink-0 border-t border-border px-6 py-4">
+        <DialogClose asChild>
+          <Button type="button" disabled={!pendingTemplate} onClick={confirmTemplate}>
+            Confirm
+          </Button>
+        </DialogClose>
+      </DialogFooter>
     </DialogContent>
   );
 }

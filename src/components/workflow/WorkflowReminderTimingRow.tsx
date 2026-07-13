@@ -70,7 +70,10 @@ function getTimingSortValue(optionId: string) {
 function getReminderTimingSelectOptions(
   options: ReturnType<typeof useWorkflowReminderTimingField>['options'],
 ): SearchableSelectOption[] {
-  const sortedOptions = [...options]
+  const presetOptions = options.filter((option) => (
+    !option.id.startsWith('customReminderTiming:')
+  ));
+  const sortedOptions = [...presetOptions]
     .sort(
       (firstOption, secondOption) =>
         getTimingSortValue(firstOption.id) - getTimingSortValue(secondOption.id),
@@ -110,6 +113,7 @@ export function WorkflowReminderTimingRow({
     optionId.startsWith('customReminderTiming:')
       ? customReminderTimingValue
       : optionId;
+  const selectedOption = options.find((option) => option.id === optionId);
 
   const openCustomDialog = () => {
     const currentParts = getWorkflowReminderTimingParts(optionId);
@@ -140,6 +144,7 @@ export function WorkflowReminderTimingRow({
         placeholder="Select reminder time"
         emptyText="No reminder times found."
         options={getReminderTimingSelectOptions(options)}
+        triggerLabel={selectedOption?.label}
         onChange={(nextValue) => {
           if (nextValue === customReminderTimingValue) {
             openCustomDialog();
@@ -149,8 +154,8 @@ export function WorkflowReminderTimingRow({
         }}
         triggerClassName="h-10 rounded border-neutral-300 bg-background px-3 text-[11px] font-semibold dark:border-neutral-700"
         contentClassName="w-[var(--radix-popover-trigger-width)] rounded-xl"
-        listClassName="p-2"
-        optionClassName="px-3 py-2.5"
+        listClassName="p-1.5"
+        optionClassName="rounded-md px-3 py-2"
         scrollAreaClassName="h-auto max-h-60"
         showSelectedTag={false}
         showSearch={false}

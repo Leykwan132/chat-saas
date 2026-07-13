@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { type NodeProps } from '@xyflow/react';
+import { toast } from 'sonner';
 import {
   BellRing,
   CalendarCheck2,
@@ -15,6 +16,10 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { WorkflowReminderMessageDialog } from './WorkflowReminderMessageDialog';
 import { WorkflowReminderScheduleFields } from './WorkflowReminderScheduleFields';
+import {
+  resolveWorkflowAutomationEnabledChange,
+  WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
+} from './workflowAutomationActivation';
 import { useWorkflowReminderSummary } from './workflowReminderSummary';
 import type { WorkflowReminderSetupFlowNode } from './workflowTypes';
 
@@ -85,8 +90,17 @@ export function WorkflowReminderSetupNode({
   data,
 }: NodeProps<WorkflowReminderSetupFlowNode>) {
   const [enabled, setEnabled] = useState(false);
+  const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
   const summary = useWorkflowReminderSummary();
   const messageMissing = summary.messageCardLabel === 'Choose message';
+  const handleEnabledChange = (nextEnabled: boolean) => {
+    const result = resolveWorkflowAutomationEnabledChange(nextEnabled, !messageMissing);
+    setEnabled(result.enabled);
+    setShowMessageRequiredError(result.messageRequired);
+    if (result.enabled && !enabled) {
+      toast.success('Reminders are now turned on.');
+    }
+  };
 
   return (
     <div className="flex h-auto w-[400px] cursor-grab flex-col gap-4 rounded-xl border border-border/80 bg-card p-5 text-card-foreground active:cursor-grabbing">
@@ -97,7 +111,7 @@ export function WorkflowReminderSetupNode({
         </h3>
         <Switch
           checked={enabled}
-          onCheckedChange={setEnabled}
+          onCheckedChange={handleEnabledChange}
           aria-label={`${data.title} enabled`}
           className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
           onPointerDown={(event) => event.stopPropagation()}
@@ -122,6 +136,11 @@ export function WorkflowReminderSetupNode({
             valueClassName={messageMissing ? 'text-primary' : undefined}
             dialogContent={<WorkflowReminderMessageDialog />}
           />
+          {showMessageRequiredError && messageMissing && (
+            <p className="m-0 text-[11px] font-semibold text-destructive">
+              {WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR}
+            </p>
+          )}
         </ReminderSetupSection>
       </div>
     </div>
