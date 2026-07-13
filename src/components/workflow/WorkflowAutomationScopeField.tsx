@@ -62,7 +62,9 @@ export function WorkflowAutomationScopeField({
         </ToggleGroupItem>
       </ToggleGroup>
       {selectedDescription && (
-        <FieldDescription>{selectedDescription}</FieldDescription>
+        <FieldDescription className="text-[11px] leading-relaxed">
+          {selectedDescription}
+        </FieldDescription>
       )}
       {invalid && (
         <FieldDescription className="text-destructive">

@@ -16,7 +16,7 @@ Make the Reminder and Follow-up Apply to controls compact while preserving an ex
 
 - Each button contains only its short label: Current & future or Future only.
 - Both buttons share the available width equally, use a compact fixed height, and render labels with `text-xs font-medium`.
-- Show only the selected choice's existing one-sentence description below the group.
+- Show only the selected choice's existing one-sentence description below the group using `text-[11px] leading-relaxed`.
 - Before a choice is selected, show no scope description.
 - Keep validation text below the selected description.
 - Apply the same shared component to Reminder and Follow-up without changing their existing copy.

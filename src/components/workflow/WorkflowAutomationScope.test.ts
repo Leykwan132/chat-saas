@@ -60,6 +60,9 @@ describe('workflow automation scope cards', () => {
     expect(toggleItems.join('\n')).not.toContain('Description');
     expect(scopeFieldSource).toContain('const selectedDescription =');
     expect(scopeFieldSource).toContain('{selectedDescription && (');
+    expect(scopeFieldSource).toContain(
+      '<FieldDescription className="text-[11px] leading-relaxed">',
+    );
     expect(scopeFieldSource).toContain('onChange(nextValue);');
   });
 });
