@@ -4,7 +4,9 @@ import { ArrowRight, Info } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import { WorkflowReminderMessageDialog } from './WorkflowReminderMessageDialog';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
 import { useWorkflowReminderSummary } from './workflowReminderSummary';
 import type { WorkflowReminderSummaryFlowNode } from './workflowTypes';
 
@@ -63,15 +65,24 @@ function MessageSummaryValue({ value }: { value: string }) {
 export function WorkflowReminderSummaryNode({
   data,
 }: NodeProps<WorkflowReminderSummaryFlowNode>) {
+  const { agentId } = useWorkflowAutomationState();
   const summary = useWorkflowReminderSummary();
   const estimate = summary.templateEstimate?.label ?? 'Missing message';
   const estimateMissing = !summary.templateEstimate;
 
   return (
     <div className="flex w-[380px] cursor-default flex-col gap-4 rounded-xl border border-dashed border-border/80 bg-muted p-5 text-card-foreground">
-      <h3 className="m-0 truncate text-base font-semibold text-foreground">
-        {data.title}
-      </h3>
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="m-0 min-w-0 truncate text-base font-semibold text-foreground">
+          {data.title}
+        </h3>
+        {agentId && (
+          <WorkflowAutomationHistoryDialog
+            agentId={agentId}
+            automationKind="reminder"
+          />
+        )}
+      </div>
       <p className="m-0 text-[13px] leading-relaxed text-muted-foreground">
         Sends up to{' '}
         <SummaryHighlight>

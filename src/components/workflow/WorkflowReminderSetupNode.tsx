@@ -17,7 +17,6 @@ import { WorkflowReminderMessageDialog } from './WorkflowReminderMessageDialog';
 import { WorkflowReminderScheduleFields } from './WorkflowReminderScheduleFields';
 import { WorkflowAutomationScopeField } from './WorkflowAutomationScopeField';
 import { useWorkflowAutomationState } from './workflowAutomationContext';
-import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import {
   resolveWorkflowAutomationEnabledChange,
   WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
@@ -115,13 +114,6 @@ export function WorkflowReminderSetupNode({
           <BellRing className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{data.title}</span>
         </h3>
-        <div className="flex items-center gap-2">
-          {automationState.agentId && (
-            <WorkflowAutomationHistoryDialog
-              agentId={automationState.agentId}
-              automationKind="reminder"
-            />
-          )}
         <Switch
           checked={automation.enabled}
           onCheckedChange={handleEnabledChange}
@@ -130,7 +122,6 @@ export function WorkflowReminderSetupNode({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         />
-        </div>
       </div>
       <Separator />
       <div className="flex flex-col gap-8">

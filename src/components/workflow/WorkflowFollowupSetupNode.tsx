@@ -18,7 +18,6 @@ import { WorkflowFollowupMessageDialog } from './WorkflowFollowupMessageDialog';
 import { WorkflowFollowupScheduleFields } from './WorkflowFollowupScheduleFields';
 import { WorkflowAutomationScopeField } from './WorkflowAutomationScopeField';
 import { useWorkflowAutomationState } from './workflowAutomationContext';
-import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import {
   resolveWorkflowAutomationEnabledChange,
   WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
@@ -121,13 +120,6 @@ export function WorkflowFollowupSetupNode({
           <Repeat2 className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{data.title}</span>
         </h3>
-        <div className="flex items-center gap-2">
-          {automationState.agentId && (
-            <WorkflowAutomationHistoryDialog
-              agentId={automationState.agentId}
-              automationKind="followUp"
-            />
-          )}
         <Switch
           checked={automation.enabled}
           onCheckedChange={handleEnabledChange}
@@ -136,7 +128,6 @@ export function WorkflowFollowupSetupNode({
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         />
-        </div>
       </div>
       <Separator />
       <div className="flex min-h-0 flex-1 flex-col gap-7">
