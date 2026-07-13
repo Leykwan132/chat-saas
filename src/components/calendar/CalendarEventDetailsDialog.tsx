@@ -4,7 +4,7 @@ import { PencilLine, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { BookingDetailsPanelSkeleton } from '@/components/booking/BookingDetailsPanel';
+import { BookingDetailsPanelSkeleton } from '@/components/booking/BookingDetailsPanelSkeleton';
 import { CalendarEventDeleteDialog } from '@/components/calendar/CalendarEventDeleteDialog';
 import { CalendarEventDetailsEditBody } from '@/components/calendar/CalendarEventDetailsEditBody';
 import {

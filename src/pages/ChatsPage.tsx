@@ -90,6 +90,13 @@ import {
 import {
   InboxBookingDetailsCard,
 } from '@/components/inbox/InboxBookingDetailsCard';
+import { InboxCustomerBookingsSection } from '@/components/inbox/InboxCustomerBookingsSection';
+import { CreateCustomerBookingDialog } from '@/components/inbox/CreateCustomerBookingDialog';
+import { InboxCustomerBookingDetailsDialog } from '@/components/inbox/InboxCustomerBookingDetailsDialog';
+import {
+  getMostRecentCustomerBooking,
+  type CustomerBookingHistoryItem,
+} from '@/components/inbox/customerBookingsModel';
 import { BookedCheckIcon } from '@/components/booking/BookingDetailsPanel';
 import {
   InboxFilterSidebar,
@@ -603,6 +610,9 @@ export default function ChatsPage() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [tagsSectionOpen, setTagsSectionOpen] = useState(false);
   const [customerDetailsOpen, setCustomerDetailsOpen] = useState(false);
+  const [bookingsOpen, setBookingsOpen] = useState(false);
+  const [createBookingOpen, setCreateBookingOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [detailsPanelOpen, setDetailsPanelOpen] = useState(true);
   const [logSectionOpen, setLogSectionOpen] = useState(false);
   const ensureAssignedAgent = useMutation(api.conversations.ensureAssignedAgent);
@@ -637,10 +647,12 @@ export default function ChatsPage() {
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
   );
 
-  const conversationBooking = useQuery(
-    api.appointmentBooking.currentBooking.getCurrentBookingForConversation,
+  const customerBookings = useQuery(
+    api.appointmentBooking.customerBookings.listForConversation,
     selectedConversationId ? { conversationId: selectedConversationId } : 'skip',
-  );
+  ) as CustomerBookingHistoryItem[] | undefined;
+  const mostRecentBooking = getMostRecentCustomerBooking(customerBookings ?? []);
+  const selectedBooking = customerBookings?.find((booking) => booking.bookingId === selectedBookingId) ?? null;
 
   const conversationLogs = useQuery(
     api.conversationLogs.listByConversation,
@@ -1453,7 +1465,7 @@ export default function ChatsPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2.5">
                   {selectedConversation ? (
-                    <div className="inline-flex h-8 w-fit shrink-0 items-center gap-2 rounded-md border border-border bg-background px-2.5 shadow-none">
+                    <div className="inline-flex h-8 w-fit shrink-0 items-center gap-2 rounded-md bg-background px-2.5 shadow-none">
                       <label
                         htmlFor="ai-replies-switch-chat"
                         className={cn(
@@ -1472,18 +1484,6 @@ export default function ChatsPage() {
                         className="shrink-0 data-[state=checked]:bg-emerald-600"
                       />
                     </div>
-                  ) : null}
-                  {selectedConversation?.service === 'whatsapp' &&
-                    selectedConversation.channelId &&
-                    agentId ? (
-                    <Button variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 px-2.5 text-xs font-normal" asChild>
-                      <Link
-                        to={`/dashboard/${agentId}/channels/${selectedConversation.channelId}/templates`}
-                      >
-                        <FileText className="size-3.5" />
-                        Message templates
-                      </Link>
-                    </Button>
                   ) : null}
                 </div>
               </div>
@@ -1506,12 +1506,19 @@ export default function ChatsPage() {
 
               {/* Chat Input — pinned to bottom of the chat column */}
               <div className="row-start-3 flex w-full min-w-0 flex-col gap-3 border-t border-border bg-background p-4">
-                {conversationBooking ? (
+                {mostRecentBooking ? (
                   <InboxBookingDetailsCard
-                    booking={conversationBooking}
+                    booking={{
+                      ...mostRecentBooking,
+                      service: {
+                        name: mostRecentBooking.service.name,
+                        fields: mostRecentBooking.service.fields ?? [],
+                      },
+                    }}
                     variant="compact"
                     canManage={can(Permission.CALENDAR_MANAGE)}
                     agentId={agentId}
+                    onOpenDetails={() => setSelectedBookingId(mostRecentBooking.bookingId)}
                   />
                 ) : null}
                 {selectedConversation?.escalation && (
@@ -1655,7 +1662,7 @@ export default function ChatsPage() {
                   icon={Clock}
                   onClick={() => handleExpandDetailsSection('log')}
                 />
-                {conversationBooking ? (
+                {mostRecentBooking ? (
                   <DetailsPanelRailButton
                     label="Booked"
                     marker
@@ -1955,7 +1962,17 @@ export default function ChatsPage() {
                       ) : null}
                     </div>
 
+                    <Separator />
 
+                    <InboxCustomerBookingsSection
+                      bookings={customerBookings ?? []}
+                      loading={customerBookings === undefined}
+                      open={bookingsOpen}
+                      onOpenChange={setBookingsOpen}
+                      canManage={can(Permission.CALENDAR_MANAGE)}
+                      onCreate={() => setCreateBookingOpen(true)}
+                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
+                    />
 
                     <Separator />
 
@@ -2285,16 +2302,6 @@ export default function ChatsPage() {
                       ) : null}
                     </div>
 
-                    {conversationBooking ? (
-                      <div className="mt-5 px-4 pb-3">
-                        <InboxBookingDetailsCard
-                          booking={conversationBooking}
-                          canManage={can(Permission.CALENDAR_MANAGE)}
-                          agentId={agentId}
-                        />
-                      </div>
-                    ) : null}
-
                   </div>
                 )
               )}
@@ -2302,6 +2309,23 @@ export default function ChatsPage() {
             )}
           </div>
         )}
+
+      {selectedConversationId ? (
+        <CreateCustomerBookingDialog
+          open={createBookingOpen}
+          onOpenChange={setCreateBookingOpen}
+          conversationId={selectedConversationId}
+        />
+      ) : null}
+      <InboxCustomerBookingDetailsDialog
+        booking={selectedBooking}
+        open={selectedBookingId !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedBookingId(null);
+        }}
+        canManage={can(Permission.CALENDAR_MANAGE)}
+        agentId={agentId}
+      />
 
       <Dialog open={resolveConfirmOpen} onOpenChange={setResolveConfirmOpen}>
         <DialogContent className="sm:max-w-md">

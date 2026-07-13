@@ -81,6 +81,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { CalendarEventDetailsDialog } from '@/components/calendar/CalendarEventDetailsDialog';
 import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
+import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
+import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import {
   inboxSidebarCountClassName,
   inboxSidebarGroupLabelClassName,
@@ -853,8 +855,9 @@ export default function CalendarPage() {
     return !formStatesEqual(formState, savedFormState);
   }, [editingEvent, formState, savedFormState]);
 
-  const isEditingPastEvent = editingEvent !== null && isEventPast(editingEvent);
-  const canEditEventSheet = canManageCalendar && !isEditingPastEvent;
+  const canEditEventSheet = editingEvent
+    ? canEditCalendarEvent({ canManageCalendar, endAt: editingEvent.endAt })
+    : canManageCalendar;
 
   const filteredDayEvents = useMemo(() => {
     const query = dayEventSearchQuery.trim().toLowerCase();
@@ -1350,7 +1353,7 @@ export default function CalendarPage() {
                 </div>
 
                 <div className="grid gap-4 rounded-xl border border-border bg-card p-4">
-                  <DatePickerField
+                  <CalendarDatePickerField
                     value={formState.date}
                     onChange={(value) => updateForm({ date: value })}
                     disabled={!canEditEventSheet}
@@ -1637,53 +1640,6 @@ export default function CalendarPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function DatePickerField({
-  value,
-  onChange,
-  disabled = false,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const selected = new Date(`${value}T00:00:00`);
-
-  return (
-    <div className="grid gap-2">
-      <Label>Date</Label>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 w-full justify-between border-input bg-background text-left font-normal"
-            disabled={disabled}
-          >
-            {format(selected, 'MMM d, yyyy')}
-            <CalendarIcon className="size-4 text-muted-foreground" />
-          </Button>
-        </PopoverTrigger>
-        {!disabled ? (
-          <PopoverContent className="w-auto rounded-xl p-0" align="start">
-            <Calendar
-              mode="single"
-              selected={selected}
-              onSelect={(date) => {
-                if (!date) return;
-                onChange(dateKey(date));
-                setOpen(false);
-              }}
-              defaultMonth={selected}
-              className="rounded-xl border-0 bg-card p-2"
-            />
-          </PopoverContent>
-        ) : null}
-      </Popover>
     </div>
   );
 }

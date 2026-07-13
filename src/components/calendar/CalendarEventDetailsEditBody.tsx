@@ -3,13 +3,13 @@ import {
   AlignLeft,
   Calendar,
   Clock,
-  Hash,
   Link2,
   NotebookPen,
   Phone,
   User,
 } from 'lucide-react';
 import { TimeSelectInput } from '@/components/TimeSelectInput';
+import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { SearchableSelect } from '@/components/ui/searchable-select';
@@ -162,10 +162,10 @@ export function CalendarEventDetailsEditBody({
       <div className="grid grid-cols-1 gap-8 border-y border-border py-6 sm:grid-cols-2">
         <EditSection title="Date">
           <EditRow label="Date" icon={Calendar}>
-            <Input
-              type="date"
+            <CalendarDatePickerField
               value={form.date}
-              onChange={(event) => onFormChange({ date: event.target.value })}
+              onChange={(date) => onFormChange({ date })}
+              showLabel={false}
             />
           </EditRow>
           <EditRow label="All day" icon={Clock}>
@@ -197,9 +197,6 @@ export function CalendarEventDetailsEditBody({
               onChange={(event) => onFormChange({ link: event.target.value })}
               placeholder="https://meet.google.com/..."
             />
-          </EditRow>
-          <EditRow label="Booking reference" icon={Hash}>
-            <Input value="Saved after booking" disabled />
           </EditRow>
         </EditSection>
 
