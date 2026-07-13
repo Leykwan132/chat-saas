@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-13 [CODE] Follow-up activation now requires every configured message template on create, update, and activation paths; both activation switches stay off and show red inline `You need to select a message first.` when incomplete; inactive incomplete records remain allowed. Design/plan: `docs/superpowers/specs/2026-07-13-follow-up-message-activation-guard-design.md`, `docs/superpowers/plans/2026-07-13-follow-up-message-activation-guard.md`.
 - 2026-07-12 [CODE] Growth/Business Advanced Analytics enqueues one strict topics/sentiment/lead-temperature `generateObject` job per eligible conversation into a retrying Workpool with `maxParallelism: 1`, on the required `ADVANCED_ANALYTICS_CRON_UTC` daily schedule (`18:00` currently / 02:00 MYT), with PII-safe structured logs; pricing lists all three, Starter retains one-time sync labeling, and Workflow `updateLeadsStatus`/“Qualify leads” is fully removed. Design: `docs/superpowers/specs/2026-07-12-combined-advanced-analytics-design.md`.
 - 2026-07-12 [CODE] Admin Costs token reporting uses permanent `agentTokenUsage` aggregation with month-aware card/table totals; the sole shared dev/test database reconciled 471 rows / 3,011,196 tokens, and the temporary backfill source was removed. Spec: `docs/superpowers/specs/2026-07-12-admin-cost-token-usage-design.md`.
 - 2026-07-12 [CODE] Free plan recurring allowance is 50 credits for new/reset periods; plan displays and pricing FAQ show 50, while existing in-cycle grants remain unchanged. Design: `docs/superpowers/specs/2026-07-12-free-plan-50-credits-design.md`.
@@ -29,6 +30,7 @@
 - 2026-07-04 [CODE] Convex rules in `convex/_generated/ai/guidelines.md` apply; Node v22 required before scripts/tests; code files must stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D270 ACTIVE: Any create, update, or activation path that would make a follow-up active requires all templates for its configured Same/Different message strategy; invalid switch attempts remain off and show red inline `You need to select a message first.`, while inactive incomplete drafts are allowed.
 - 2026-07-12 [USER] D243 ACTIVE: `updateLeadsStatus` is removed from workflow types, validators, catalog, prompts, tests, and landing workflow mock; no legacy workflow compatibility or migration is required.
 - 2026-07-12 [USER] D242 ACTIVE: Advanced Analytics enqueues one fixed-schema AI call per eligible conversation for topics, sentiment, and lead temperature into a retrying Workpool with `maxParallelism: 1`, on a required strict `ADVANCED_ANALYTICS_CRON_UTC` daily schedule; only successful combined persistence advances its message watermark, and pricing lists Lead Temperature under Advanced Analytics.
 - 2026-07-12 [USER] D241 ACTIVE: Free grants 50 credits per month from the next new/reset credit period; existing in-cycle balances, paid plan allowances, purchased credits, and per-message credit costs remain unchanged.
@@ -174,6 +176,7 @@
 - 2026-07-10 [USER] D235 ACTIVE: A planner `workflowMatches` entry is an execution decision: matched sendImage/sendFile assets are sent unconditionally from backend runtime data, while matched sendText content is emitted exactly as configured without LLM rewriting.
 
 # Done (recent)
+- 2026-07-13 [CODE] Added shared and server-enforced message readiness plus inline activation feedback for new and existing follow-ups.
 - 2026-07-12 [CODE] Combined daily Advanced Analytics into one schema-validated AI request and removed the Qualify leads workflow node.
 - 2026-07-12 [CODE] Added aggregate-backed total-token reporting for Admin Costs, backfilled the shared database, verified totals, and removed the one-time migration source.
 - 2026-07-11 [CODE] Softened the contact-page heading and made footer demo/support intent links scroll the contact page to the top.
@@ -182,8 +185,8 @@
 - 2026-07-10 [CODE] Added metadata-identified broadcast inbox messages with typed template header assets and a distinct neutral `Broadcast` frame.
 - 2026-07-10 [CODE] Removed `tencent/hy3-preview` from model catalog, plan entitlements, display names, and Tencent leaderboard icon special-casing.
 - 2026-07-10 [CODE] Added landing announcement pill + Markdown blog post for Ilmu / YTL AI Labs.
-- 2026-07-10 [CODE] Fixed leaderboard ranking attribution/logo for Ilmu Mini to match Supported LLM Models.
 # Working set
+- 2026-07-13 [CODE] Follow-up activation guard: `shared/followUpMessageReadiness*`, `convex/whatsappFollowUp*`, `src/pages/{AutomationsFollowUp,FollowUpDetail}*`, `docs/superpowers/{specs,plans}/2026-07-13-follow-up-message-activation-guard*`.
 - 2026-07-12 [CODE] Admin cost tokens: `convex/{aggregates,triggers,adminUsageCostAggregation,adminUsageCostAggregateQuery,adminUsageCosts}*`, `src/components/admin/{AdminUsageCostControls,AdminUsageCostsTab,adminUsageCostsModel}*`, `docs/superpowers/{specs,plans}/2026-07-12-admin-cost-token-usage*`.
 - 2026-07-11 [CODE] Contact/footer navigation: `src/components/SiteFooter.tsx`, `src/components/SiteFooter.test.ts`, `src/pages/ContactPage.tsx`, `src/pages/ContactPage.test.ts`, `src/pages/contactPageConfig.ts`, `src/pages/ContactFieldLabels.tsx`.
 - 2026-07-10 [CODE] Broadcast inbox rendering/metadata: `shared/broadcastMessage.ts`, `convex/broadcastMessageValidators.ts`, `convex/whatsappTemplatePresentation.ts`, `convex/broadcastPool.ts`, `convex/chat/{threads,inboxMessageMapping,broadcastMessageMetadata}.ts`, `src/components/inbox/InboxBroadcastMessage.tsx`.
@@ -199,9 +202,6 @@
 - 2026-07-11 [CODE] Website widget: `public/widget/v1.js`, `src/components/channels/WebWidget{VisualViewport,MobileLayout,Placement}.test.ts`, `docs/superpowers/{specs,plans}/2026-07-11-web-widget-mobile-{viewport,input-lift}*`.
 - 2026-07-09 [CODE] Workflow AI planner/media: `convex/chat/workflowActionPlanner*`, `convex/chat/aiReply*`, `convex/chat/mediaManifest*`.
 - 2026-07-08 [CODE] Workflow UI/layout: `src/components/workflow/*`, `src/pages/WorkflowPage*`, `convex/workflow*`.
-- 2026-07-08 [CODE] Landing preview: `src/components/landing/*`.
-- 2026-07-05 [CODE] Setup checklist/workspace: `convex/workspaceSetupChecklist*`, `src/components/setup-checklist/*`, `src/components/workspace/*`.
-- 2026-07-08 [CODE] Agent prompt templates: `shared/agentPromptTemplates.ts`, `src/components/agent-setup/*`, `convex/chat/*Prompt*`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: The production/development Convex deployments still need their actual `ILMU_API_KEY` secret value configured before a live Ilmu request can succeed.
@@ -209,6 +209,7 @@
 - 2026-06-29 [USER] UNCONFIRMED: Whether prompt-only workflow guardrails are enough in production, or whether booking tools should also reject service IDs outside the current workflow-allowed set.
 
 # Receipts
+- 2026-07-13 [TOOL] Follow-up activation guard completed RED/GREEN on Node 22.22.0: shared readiness 5/5, Convex mutation guard 3/3, creation/detail UI contracts 3/3, and the existing follow-up flow 1/1; fresh combined verification passed 12/12, new/small-file ESLint passed, full `tsc -b` passed, and `git diff --check` passed. Targeting the three legacy implementation files still reports 17 pre-existing ESLint errors; the existing follow-up flow test also emits its baseline unregistered `conversationLogWorkpool` stderr while passing.
 - 2026-07-12 [TOOL] Combined Advanced Analytics and workflow cleanup followed RED/GREEN on Node 22: strict schema/prompt, unified action/cron, UTC environment parsing, structured logs, and serial Workpool contracts failed before implementation. The deployment variable is set to `18:00`; final verification passed 44 focused tests across 8 files, targeted ESLint, Convex component codegen/upload, full TypeScript, production build, `git diff --check`, stale action/workflow scans, and touched backend code LOC checks at 253 lines or fewer.
 - 2026-07-12 [TOOL] Admin Costs tokens followed RED/GREEN on Node 22: backend/UI/migration tests failed on missing token aggregate/helpers/module, then 7 migration-phase tests passed. Shared dev/test deployment `outstanding-rabbit-215` backfill completed in five bounded batches and independently reconciled 471 aggregate rows / 3,011,196 tokens; user confirmed there is no separate production database, then cleanup codegen removed migration functions and tightened the trigger. Final verification passed 6 permanent tests, TypeScript, Vite production build with `NODE_OPTIONS=--max-old-space-size=4096`, stale-migration scan, `git diff --check`, and all touched code files remain under 300 lines.
 - 2026-07-12 [TOOL] Free 50-credit allowance followed RED/GREEN on Node 22: the new catalog contract failed against the previous 100-credit grant, then all 14 focused model/pricing tests passed; active shared/frontend/Convex source contains no stale `100 credits` copy and `git diff --check` passed.

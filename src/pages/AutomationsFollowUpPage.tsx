@@ -37,6 +37,10 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { MultiSelect, type MultiSelectGroup } from '@/components/ui/multi-select';
 import { PlanFeatureGate } from '@/components/PlanFeatureGate';
+import {
+  FOLLOW_UP_MESSAGE_REQUIRED_ERROR,
+  hasCompleteFollowUpMessages,
+} from '../../shared/followUpMessageReadiness';
 
 const DELAY_OPTIONS = [
   { label: '1 day', value: 24 },
@@ -213,7 +217,9 @@ export default function AutomationsFollowUpPage() {
   const [balanceChecked, setBalanceChecked] = useState(false);
   const [insufficientBalanceUnderstood, setInsufficientBalanceUnderstood] = useState(false);
   const [showChecklistError, setShowChecklistError] = useState(false);
+  const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
   const [isActiveOnCreate, setIsActiveOnCreate] = useState(true);
+  const messagesReady = hasCompleteFollowUpMessages(attempts);
 
   // Queries & Actions
   const channels = useQuery(api.channels.listForCurrentOrg, {});
@@ -466,9 +472,8 @@ export default function AutomationsFollowUpPage() {
       return;
     }
 
-    const invalidAttempts = attempts.filter((att) => !att.templateName);
-    if (invalidAttempts.length > 0) {
-      toast.error('Please select a template for all attempts.');
+    if (isActiveOnCreate && !messagesReady) {
+      setShowMessageRequiredError(true);
       return;
     }
 
@@ -501,6 +506,15 @@ export default function AutomationsFollowUpPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleActiveOnCreateChange = (next: boolean) => {
+    if (next && !messagesReady) {
+      setShowMessageRequiredError(true);
+      return;
+    }
+    setShowMessageRequiredError(false);
+    setIsActiveOnCreate(next);
   };
 
   if (!typedAgentId) return null;
@@ -1185,12 +1199,17 @@ export default function AutomationsFollowUpPage() {
                         <span className="text-[11px] text-muted-foreground">Start sending follow-ups right away</span>
                         <Switch
                           checked={isActiveOnCreate}
-                          onCheckedChange={setIsActiveOnCreate}
+                          onCheckedChange={handleActiveOnCreateChange}
                           aria-label="Start sending follow-ups right away"
                           className="data-[state=checked]:bg-emerald-500 data-[state=unchecked]:bg-input"
                         />
                       </div>
                     </div>
+                    {showMessageRequiredError && !messagesReady && (
+                      <p className="text-[11px] font-semibold text-destructive">
+                        {FOLLOW_UP_MESSAGE_REQUIRED_ERROR}
+                      </p>
+                    )}
                     {showChecklistError && (
                       <p className="text-[11px] font-semibold text-destructive animate-fade-in">
                         Please confirm all checklist items before creating this follow-up.

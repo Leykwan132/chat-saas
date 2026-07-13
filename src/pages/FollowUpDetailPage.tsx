@@ -56,6 +56,10 @@ import {
   DetailSectionNav,
   type DetailSectionTab,
 } from '@/components/automation/DetailSectionNav';
+import {
+  FOLLOW_UP_MESSAGE_REQUIRED_ERROR,
+  hasCompleteFollowUpMessages,
+} from '../../shared/followUpMessageReadiness';
 
 const FOLLOW_UP_DETAIL_TABS: DetailSectionTab[] = [
   {
@@ -198,6 +202,7 @@ export default function FollowUpDetailPage() {
   const [activeConfirmOpen, setActiveConfirmOpen] = useState(false);
   const [pendingActive, setPendingActive] = useState<boolean | null>(null);
   const [activeChangeBusy, setActiveChangeBusy] = useState(false);
+  const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
 
   const [name, setName] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -210,6 +215,7 @@ export default function FollowUpDetailPage() {
   const [saving, setSaving] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
+  const messagesReady = hasCompleteFollowUpMessages(attempts);
   // Suppresses the attempts-rebuild effects while applyRuleToForm is setting
   // state, preventing a false-dirty on initial load and reset.
   const isApplyingRef = useRef(false);
@@ -539,6 +545,11 @@ export default function FollowUpDetailPage() {
 
   const requestActiveChange = (next: boolean) => {
     if (!canManage || next === isActive) return;
+    if (next && !messagesReady) {
+      setShowMessageRequiredError(true);
+      return;
+    }
+    setShowMessageRequiredError(false);
     setPendingActive(next);
     setActiveConfirmOpen(true);
   };
@@ -710,24 +721,31 @@ export default function FollowUpDetailPage() {
               : 'Inactive — no follow-up messages will be sent.'}
           </p>
         </div>
-        <div className="flex items-center gap-4 shrink-0">
-          <span
-            className={cn(
-              'font-semibold tracking-tight',
-              isActive
-                ? 'text-2xl text-emerald-600 dark:text-emerald-400'
-                : 'text-lg text-muted-foreground',
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <div className="flex items-center gap-4">
+            <span
+              className={cn(
+                'font-semibold tracking-tight',
+                isActive
+                  ? 'text-2xl text-emerald-600 dark:text-emerald-400'
+                  : 'text-lg text-muted-foreground',
+              )}
+            >
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+            {canManage && (
+              <Switch
+                checked={isActive}
+                onCheckedChange={(checked) => requestActiveChange(checked)}
+                className="scale-[1.35] data-[state=checked]:bg-emerald-500"
+                aria-label={isActive ? 'Set inactive' : 'Set active'}
+              />
             )}
-          >
-            {isActive ? 'Active' : 'Inactive'}
-          </span>
-          {canManage && (
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) => requestActiveChange(checked)}
-              className="scale-[1.35] data-[state=checked]:bg-emerald-500"
-              aria-label={isActive ? 'Set inactive' : 'Set active'}
-            />
+          </div>
+          {showMessageRequiredError && !messagesReady && (
+            <p className="text-xs font-semibold text-destructive">
+              {FOLLOW_UP_MESSAGE_REQUIRED_ERROR}
+            </p>
           )}
         </div>
       </header>

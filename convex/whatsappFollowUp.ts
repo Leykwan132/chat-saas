@@ -11,6 +11,19 @@ import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { followUpPool } from "./followUpPool";
 import { checkAiFeature, getTeamStripePlanHelper } from "./plans";
+import {
+  FOLLOW_UP_MESSAGE_REQUIRED_ERROR,
+  hasCompleteFollowUpMessages,
+} from "../shared/followUpMessageReadiness";
+
+function assertActiveFollowUpMessages(
+  isActive: boolean,
+  attempts: Array<{ templateName: string }>,
+) {
+  if (isActive && !hasCompleteFollowUpMessages(attempts)) {
+    throw new Error(FOLLOW_UP_MESSAGE_REQUIRED_ERROR);
+  }
+}
 
 async function assertFollowUpsAvailable(
   ctx: QueryCtx | MutationCtx,
@@ -83,6 +96,7 @@ export const createFollowUpRule = mutation({
     if (!orgId || !userId) {
       throw new Error("Unauthorized");
     }
+    assertActiveFollowUpMessages(args.isActive, args.attempts);
     const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     await assertFollowUpsAvailable(ctx, orgId, userId);
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
@@ -194,6 +208,7 @@ export const updateFollowUpRule = mutation({
     if (rule === null || rule.orgId !== resolvedOrgId) {
       throw new Error("Follow-up rule not found");
     }
+    assertActiveFollowUpMessages(args.isActive, args.attempts);
     if (args.isActive) {
       await assertFollowUpsAvailable(ctx, orgId, userId);
     }
@@ -209,11 +224,6 @@ export const updateFollowUpRule = mutation({
 
     if (args.attempts.length !== args.maxAttempts) {
       throw new Error("Attempts config length must match maxAttempts");
-    }
-
-    const invalidAttempts = args.attempts.filter((att) => !att.templateName.trim());
-    if (invalidAttempts.length > 0) {
-      throw new Error("Please select a template for all attempts");
     }
 
     if (args.audienceLeadTemperatures.length === 0 && (args.audienceTags?.length ?? 0) === 0) {
@@ -273,6 +283,7 @@ export const setFollowUpRuleActive = mutation({
     if (rule === null || rule.orgId !== resolvedOrgId) {
       throw new Error("Follow-up rule not found");
     }
+    assertActiveFollowUpMessages(args.isActive, rule.attempts);
     if (args.isActive) {
       await assertFollowUpsAvailable(ctx, orgId, userId);
     }
@@ -522,5 +533,4 @@ export const scheduleNextAttempt = internalMutation({
     );
   },
 });
-
 
