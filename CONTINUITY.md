@@ -1,5 +1,6 @@
 # Snapshot
 - 2026-07-13 [USER] Goal is for the Summary reminder notice to use a white, theme-aware background while keeping its current icon, text, border, and placement.
+- 2026-07-13 [CODE] The Summary reminder notice now uses semantic `bg-background`; its border, spacing, icon, copy, placement, and behavior are unchanged.
 - 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
 - 2026-07-13 [CODE] The reminder eligibility callout now appears only beneath the Summary description with Lucide `Info`; setup and backend behavior are unchanged.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
@@ -50,13 +51,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Changed the Summary reminder notice from muted fill to the theme-aware background surface.
 - 2026-07-13 [CODE] Moved the reminder booked-appointments notice from setup to Summary and replaced its calendar-check icon with `Info`.
 - 2026-07-13 [CODE] Replaced the scope ToggleGroup with a basic vertical RadioGroup and labelled descriptions.
 - 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
 - 2026-07-13 [CODE] Reduced Apply to label size/weight and replaced pill-shaped corners with a modest connected radius.
 - 2026-07-13 [CODE] Implemented separate reminder/follow-up Workpools, durable runs/timers/operations, reconciliation, cancellation, and reusable WhatsApp sending.
 - 2026-07-13 [CODE] Added booking/reschedule/status and WhatsApp inbound/outbound hooks with deduplication, one timer per conversation, source exclusions, and lead/tag eligibility.
-- 2026-07-13 [CODE] Added exact Apply to card choices, activation guards, draft Save/Reset integration, stale-save protection, and separate History dialogs.
 
 # Working set
 - 2026-07-13 [USER] Workflow automation and reminder notice: `src/components/workflow/{WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowReminderNoticePlacement.test}*`, other `*Automation*` files, backend hooks, schema/config, and focused tests.
@@ -77,6 +78,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Reminder notice background completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Reminder Summary notice completed a verified red-green cycle; 8 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Vertical RadioGroup scope selector passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks under Node v22.22.0.
 - 2026-07-13 [TOOL] Smaller selected-description styling passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
@@ -96,4 +98,3 @@
 - 2026-07-13 [TOOL] Template-card refinement passed 5 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and touched-file LOC checks.
 - 2026-07-13 [TOOL] Workflow drafts/templates passed 17 focused tests across toolbar, inspector, draft model, template definitions, persistence mapping, atomic Convex Save, validation, and existing workflow behavior.
 - 2026-07-13 [TOOL] Node 22 full `bunx tsc -b` and targeted ESLint passed for all workflow draft/template files.
-- 2026-07-13 [TOOL] `bunx convex codegen` completed and generated the workflow draft Save API binding.
