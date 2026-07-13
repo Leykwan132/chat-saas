@@ -2,6 +2,7 @@
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
+- 2026-07-13 [USER] Apply to is a compact left/right single-select control; only the selected option's description appears below it.
 - 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
@@ -12,6 +13,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D290 ACTIVE: Reminder and Follow-up scope use equal-width horizontal buttons with labels only; the selected scope's existing explanation appears beneath the group.
 - 2026-07-13 [USER] D289 ACTIVE: Reminder and Follow-up ongoing event hooks depend on saved enabled state and eligibility only; `activatedAt` is never compared, and Future only means no reconciliation scan.
 - 2026-07-13 [USER] D288 ACTIVE: Reminder and Follow-up are independent draft-first configurations with required Current & future or Future only scope, separate Workpools, durable Work IDs/runs, bounded cancellation, and separate paginated history dialogs.
 - 2026-07-13 [USER] D287 ACTIVE: The new support control appears beside dark mode only in authenticated dashboard and workspace headers, not public, blog, or legal headers.
