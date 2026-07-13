@@ -63,6 +63,7 @@ export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConf
   return {
     reminder: {
       enabled: false,
+      activationScope: 'futureOnly',
       revision: 0,
       selections: {
         maxAttempts: 'reminderCount1',
@@ -74,6 +75,7 @@ export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConf
     },
     followUp: {
       enabled: false,
+      activationScope: 'futureOnly',
       revision: 0,
       selections: {
         audience: 'hotWarmLeads',

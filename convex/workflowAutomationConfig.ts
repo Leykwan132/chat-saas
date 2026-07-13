@@ -15,8 +15,8 @@ export function resolveWorkflowAutomationConfigs(
   const stored = workflow as WorkflowWithAutomations;
   const initial = createInitialWorkflowAutomationConfigs();
   return {
-    reminder: stored.reminderAutomation ?? initial.reminder,
-    followUp: stored.followUpAutomation ?? initial.followUp,
+    reminder: { ...initial.reminder, ...stored.reminderAutomation },
+    followUp: { ...initial.followUp, ...stored.followUpAutomation },
   };
 }
 

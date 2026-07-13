@@ -57,7 +57,8 @@ test('atomically replaces a workflow draft, records saved template usage, and re
   const authed = testClient.withIdentity({ subject: workosUserId });
   const initial = await authed.mutation(api.workflows.ensureForAgent, { agentId });
   expect(initial.automations.reminder.enabled).toBe(false);
-  expect(initial.automations.reminder.activationScope).toBeUndefined();
+  expect(initial.automations.reminder.activationScope).toBe('futureOnly');
+  expect(initial.automations.followUp.activationScope).toBe('futureOnly');
   const startNode = initial.nodes[0];
   const automations = {
     ...initial.automations,
