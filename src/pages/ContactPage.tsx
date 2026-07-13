@@ -33,6 +33,7 @@ import {
   type ContactIntent,
 } from './contactPageConfig';
 import { OptionalLabel, RequiredLabel } from './ContactFieldLabels';
+import { DirectContactDetails } from '@/components/contact/DirectContactDetails';
 
 export default function ContactPage() {
   const [searchParams] = useSearchParams();
@@ -125,6 +126,7 @@ export default function ContactPage() {
             <p className="mt-3 max-w-md text-base leading-relaxed text-zinc-500 dark:text-zinc-400 sm:mt-4">
               Enterprise plans, demos, or support — the founder will reach out personally.
             </p>
+            <DirectContactDetails />
           </section>
 
           <section

@@ -40,25 +40,6 @@ export function SiteFooter({ className }: SiteFooterProps) {
             <span className="text-xs text-zinc-400 dark:text-zinc-500">
               Copyright &copy; {new Date().getFullYear()} Kilobot. All rights reserved.
             </span>
-            <div className="mt-2 flex flex-col items-start gap-2">
-              <span className="font-title text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                Support
-              </span>
-              <nav aria-label="Support contacts" className="flex flex-col items-start gap-1.5">
-                <a
-                  href="mailto:support@kilobot.app"
-                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                >
-                  support@kilobot.app
-                </a>
-                <a
-                  href="tel:+60129499394"
-                  className="text-sm text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
-                >
-                  +60129499394 (Kwan)
-                </a>
-              </nav>
-            </div>
           </div>
 
           {/* Right Side: Columns Grouped */}
