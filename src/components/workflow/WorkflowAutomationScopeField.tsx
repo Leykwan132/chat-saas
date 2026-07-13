@@ -46,17 +46,17 @@ export function WorkflowAutomationScopeField({
         aria-labelledby={labelId}
         aria-invalid={invalid || undefined}
         variant="outline"
-        className="nodrag nopan grid w-full grid-cols-2"
+        className="nodrag nopan grid w-full grid-cols-2 data-[spacing=0]:data-[variant=outline]:rounded-md"
       >
         <ToggleGroupItem
           value="currentAndFuture"
-          className="h-9 w-full font-semibold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          className="h-9 w-full text-xs font-medium group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
           {currentAndFutureLabel}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="futureOnly"
-          className="h-9 w-full font-semibold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+          className="h-9 w-full text-xs font-medium group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
           {futureOnlyLabel}
         </ToggleGroupItem>

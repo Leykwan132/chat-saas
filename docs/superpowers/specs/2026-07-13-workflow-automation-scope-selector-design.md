@@ -15,7 +15,7 @@ Make the Reminder and Follow-up Apply to controls compact while preserving an ex
 ## Layout and Copy
 
 - Each button contains only its short label: Current & future or Future only.
-- Both buttons share the available width equally and use a compact fixed height.
+- Both buttons share the available width equally, use a compact fixed height, and render labels with `text-xs font-medium`.
 - Show only the selected choice's existing one-sentence description below the group.
 - Before a choice is selected, show no scope description.
 - Keep validation text below the selected description.
@@ -23,7 +23,7 @@ Make the Reminder and Follow-up Apply to controls compact while preserving an ex
 
 ## Visual States
 
-- Unselected choices use the existing outline treatment.
+- Unselected choices use the existing outline treatment with modest `rounded-md` outer corners and a straight center divider.
 - The selected choice uses the ToggleGroup pressed state and remains visually distinct in light and dark themes.
 - Invalid state continues to expose `aria-invalid` and the existing destructive validation message.
 

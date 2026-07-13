@@ -44,7 +44,10 @@ describe('workflow automation scope cards', () => {
     expect(scopeFieldSource).toContain('type="single"');
     expect(scopeFieldSource).toContain('spacing={0}');
     expect(scopeFieldSource).toContain('grid-cols-2');
-    expect(scopeFieldSource).toContain('className="h-9 w-full font-semibold');
+    expect(scopeFieldSource).toContain('text-xs font-medium');
+    expect(scopeFieldSource).toContain('rounded-l-md');
+    expect(scopeFieldSource).toContain('rounded-r-md');
+    expect(scopeFieldSource).not.toContain('font-semibold');
     expect(scopeFieldSource).not.toContain('orientation="vertical"');
   });
 
