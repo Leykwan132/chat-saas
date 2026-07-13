@@ -1,6 +1,6 @@
 # Snapshot
-- 2026-07-13 [CODE] Direct email and regular-dialer phone links now appear beneath the Enterprise/demo/support introduction on the contact page; the footer contains no direct contact details.
-- 2026-07-13 [USER] Footer contact placement is superseded: `support@kilobot.app` and `+60129499394 (Kwan)` belong on the contact page below the Enterprise/demo/support copy.
+- 2026-07-13 [CODE] Direct email and regular-dialer phone links now appear immediately below the Contact our team card; the footer and left contact-page introduction contain no direct contact details.
+- 2026-07-13 [USER] Direct contact placement is below the Contact our team card on the contact page.
 - 2026-07-13 [CODE] Workflow editing is draft-first: graph changes, Cleanup, orientation, node edits, and template replacement remain local until the top-right Save is clicked.
 - 2026-07-13 [CODE] Dirty workflow drafts show a background-free red Discard changes action with a trash icon and enabled pointer cursor plus a dark semantic-primary Save control; discarding restores the latest persisted graph without deleting it.
 - 2026-07-13 [CODE] Discard changes also clears transient workflow selection/template state and requests the existing animated canvas fit so the restored saved graph fits the available screen.
@@ -21,7 +21,8 @@
 - 2026-07-04 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; code files stay under 300 LOC.
 
 # Decisions
-- 2026-07-13 [USER] D285 ACTIVE: Direct email and regular-dialer phone details live below the contact page's Enterprise/demo/support introduction, with explanatory direct-contact copy; the footer contains neither detail.
+- 2026-07-13 [USER] D286 ACTIVE: Direct email and regular-dialer phone details live immediately below the Contact our team card in the right contact-page column.
+- 2026-07-13 [USER] D285 SUPERSEDED by D286: Direct email and phone details lived below the contact page's Enterprise/demo/support introduction.
 - 2026-07-13 [USER] D284 SUPERSEDED by D285: The shared site footer used a compact stacked Support group beneath copyright with native `mailto:` and `tel:` actions.
 - 2026-07-13 [USER] D283 ACTIVE: Discard changes keeps red text/icon but has no background in any state and shows a pointer while enabled; starter templates remove forced `sendText` actions and use the standard size-aware horizontal layout.
 - 2026-07-13 [USER] D282 ACTIVE: Dirty workflow drafts use destructive red `Discard changes` with a trash icon; entire template cards apply instantly by pointer or keyboard and show a trailing `Try now` arrow cue; every template action uses a deliberate customer-intent condition label/detail.
@@ -44,7 +45,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-13 [CODE] Moved direct support contacts from the footer to a modular contact-page block beneath the Enterprise/demo/support introduction.
+- 2026-07-13 [CODE] Placed the modular direct support contact block immediately below the Contact our team card.
 - 2026-07-13 [CODE] Implemented workflow drafts, atomic primary Save, transparent pointer-enabled Discard changes, unsaved-navigation protection, fully clickable automatically spaced starter-template cards without forced messages, explicit template conditions, backend-only saved-template adoption, and Apply-style inspector edits.
 - 2026-07-13 [CODE] Added transactional Confirm behavior for reminder and follow-up message template selection.
 - 2026-07-13 [CODE] Added reminder/follow-up activation guards and accurate activation success feedback.
@@ -70,6 +71,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Below-card contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, placement checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [CODE] Footer support contacts implementation plan: `docs/superpowers/plans/2026-07-13-footer-support-contacts.md`.

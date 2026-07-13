@@ -19,12 +19,12 @@ test('contact page conversation heading uses a medium font weight', () => {
   expect(headingClass).not.toContain('font-semibold');
 });
 
-test('contact page offers direct email and phone details below its introduction', () => {
+test('contact page offers direct email and phone details below the form card', () => {
   expect(contactPageSource).toContain(
     "import { DirectContactDetails } from '@/components/contact/DirectContactDetails';",
   );
   expect(contactPageSource).toMatch(
-    /Enterprise plans, demos, or support[\s\S]+<DirectContactDetails \/>/,
+    /Contact our team[\s\S]+<\/section>\s+<DirectContactDetails \/>/,
   );
   expect(directContactDetailsSource).toContain('If you prefer to reach out directly');
   expect(directContactDetailsSource).toContain('href="mailto:support@kilobot.app"');

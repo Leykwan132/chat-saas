@@ -1,6 +1,6 @@
 export function DirectContactDetails() {
   return (
-    <div className="mt-8 max-w-md border-t border-zinc-200 pt-6 dark:border-white/[0.08]">
+    <div className="max-w-md border-t border-zinc-200 pt-6 dark:border-white/[0.08]">
       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
         If you prefer to reach out directly, here are the details.
       </p>
