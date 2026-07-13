@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-13 [USER] Footer support contacts are approved beneath the copyright: `support@kilobot.app` opens email and `+60129499394 (Kwan)` opens the regular dialer.
 - 2026-07-13 [CODE] Workflow editing is draft-first: graph changes, Cleanup, orientation, node edits, and template replacement remain local until the top-right Save is clicked.
 - 2026-07-13 [CODE] Dirty workflow drafts show a background-free red Discard changes action with a trash icon and enabled pointer cursor plus a dark semantic-primary Save control; discarding restores the latest persisted graph without deleting it.
 - 2026-07-13 [CODE] Discard changes also clears transient workflow selection/template state and requests the existing animated canvas fit so the restored saved graph fits the available screen.
@@ -19,6 +20,7 @@
 - 2026-07-04 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; code files stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D284 ACTIVE: The shared site footer uses a compact stacked Support group beneath copyright with native `mailto:` and `tel:` actions; the phone action opens the regular dialer.
 - 2026-07-13 [USER] D283 ACTIVE: Discard changes keeps red text/icon but has no background in any state and shows a pointer while enabled; starter templates remove forced `sendText` actions and use the standard size-aware horizontal layout.
 - 2026-07-13 [USER] D282 ACTIVE: Dirty workflow drafts use destructive red `Discard changes` with a trash icon; entire template cards apply instantly by pointer or keyboard and show a trailing `Try now` arrow cue; every template action uses a deliberate customer-intent condition label/detail.
 - 2026-07-13 [USER] D281 ACTIVE: Reset restores the saved workflow and fits the restored graph to the screen at the appropriate zoom by reusing the existing animated canvas fit behavior.
@@ -49,6 +51,7 @@
 - 2026-07-11 [CODE] Completed mobile Website widget viewport and input-lift work.
 
 # Working set
+- 2026-07-13 [CODE] Footer contacts: `src/components/SiteFooter.tsx`, `src/components/SiteFooter.test.ts`, `docs/superpowers/specs/2026-07-13-footer-support-contacts-design.md`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 - 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
@@ -65,6 +68,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [CODE] Footer support contacts design: `docs/superpowers/specs/2026-07-13-footer-support-contacts-design.md`.
 - 2026-07-13 [TOOL] Final discard/template refinement completed verified red-green cycles for transparent pointer styling, forced-message removal, and automatic spacing; 15 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Discard/template interactions completed three verified red-green cycles; 13 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Reset fit-view completed a verified red-green cycle; 8 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
