@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
@@ -14,6 +15,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D294 ACTIVE: The reminder eligibility callout moves unchanged from the setup card to directly below the Summary description, using Lucide `Info`; behavior remains unchanged.
 - 2026-07-13 [USER] D293 ACTIVE: Reminder and Follow-up scope use a basic vertical RadioGroup; both options always show their label and description in horizontal Field rows.
 - 2026-07-13 [USER] D292 SUPERSEDED by D293: Selected-only scope descriptions used `text-[11px] leading-relaxed`.
 - 2026-07-13 [USER] D291 SUPERSEDED by D293: Scope selection used connected `rounded-md` buttons.
