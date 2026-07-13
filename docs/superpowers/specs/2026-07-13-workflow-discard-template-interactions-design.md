@@ -6,7 +6,7 @@ Make unsaved workflow changes easier to understand and template selection faster
 
 ## Dirty workflow actions
 
-The top-right dirty-state toolbar keeps its existing shape, spacing, and placement. The secondary action changes from `Reset` to `Discard changes`, uses the existing shadcn destructive button variant, and displays a leading `Trash2` icon. Save remains the dark primary action.
+The top-right dirty-state toolbar keeps its existing shape, spacing, and placement. The secondary action changes from `Reset` to `Discard changes`, displays a leading `Trash2` icon, and uses a reusable background-free destructive ghost variant. Its text and icon remain red, while idle, hover, active, and dark-mode states remain transparent. A red semantic focus ring preserves keyboard visibility. Save remains the dark primary action.
 
 Discard changes keeps the current reset behavior: it restores the latest saved workflow, clears transient template and node selection state, and fits the restored graph to the available canvas with the existing animated fit-view behavior.
 
@@ -49,7 +49,8 @@ The template builder accepts optional explicit condition metadata per action and
 
 ## Testing
 
-- The dirty-action test verifies `Discard changes`, the destructive variant, and the leading trash icon while preserving Save.
+- The dirty-action test verifies `Discard changes`, the background-free destructive ghost variant, and the leading trash icon while preserving Save.
+- The shared button-variant test verifies the destructive ghost treatment contains red semantic foreground/focus styles and no background utilities.
 - The template-card test verifies the whole card applies the template, supports keyboard activation, closes the HoverCard, and shows the trailing `Try now` arrow cue without a nested action button.
 - The template-data test verifies every action edge has the exact intended label and a non-empty detail.
 - Existing Reset handler and canvas fit-view tests continue to verify restored-workflow behavior.
