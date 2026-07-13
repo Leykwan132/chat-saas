@@ -1,4 +1,6 @@
 # Snapshot
+- 2026-07-13 [USER] Goal is to move both Reminder and Follow-up History buttons beside their Summary titles with a lightly emphasized clickable treatment.
+- 2026-07-13 [TOOL] Custom reminder timing crash root cause is confirmed: sequential custom-option and timing-ID writes reuse one stale config snapshot, so the second write can drop `customTimingOptions`; no fix has been applied yet.
 - 2026-07-13 [USER] Goal is for both Reminder and Follow-up Apply to fields to default to Future only, including existing configurations whose scope is unset.
 - 2026-07-13 [CODE] Shared automation initialization and Convex resolution now default missing Reminder and Follow-up scopes to `futureOnly` while preserving explicit stored scopes.
 - 2026-07-13 [USER] Goal is for the Summary reminder notice to use a white, theme-aware background while keeping its current icon, text, border, and placement.
@@ -20,6 +22,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D297 ACTIVE: Reminder and Follow-up History actions move from setup headers to the right side of Summary headers using the existing small outline button with icon and label.
 - 2026-07-13 [USER] D296 ACTIVE: Shared Reminder and Follow-up defaults use `futureOnly`; resolver normalization supplies it only when stored scope is missing and preserves explicit scopes without rewriting stored documents.
 - 2026-07-13 [USER] D295 ACTIVE: The Summary reminder notice uses semantic `bg-background` for a white light-mode surface and theme-correct dark mode; all other notice styling remains unchanged.
 - 2026-07-13 [USER] D294 ACTIVE: The reminder eligibility callout moves unchanged from the setup card to directly below the Summary description, using Lucide `Info`; behavior remains unchanged.
@@ -77,6 +80,7 @@
 - 2026-07-12 [CODE] Admin usage aggregates: `convex/{aggregates,triggers,adminUsageCost*}*`, `src/components/admin/*UsageCost*`.
 
 # Open questions
+- 2026-07-13 [USER] UNCONFIRMED: The paused custom-timing fix still needs a decision on automatic recovery of already affected saved timing IDs versus requiring reselection.
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
