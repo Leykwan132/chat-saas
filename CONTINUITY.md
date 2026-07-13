@@ -7,7 +7,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 - 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
-- 2026-07-13 [TOOL] Implementation is isolated at `/private/tmp/chat-saas-workflow-automations` on `codex/workflow-automations`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
+- 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
 - 2026-07-13 [TOOL] Full Vitest has 515/519 passing; the four failures match the pre-implementation baseline (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
@@ -66,6 +66,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
 - 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.
 - 2026-07-13 [TOOL] Full Vitest ran 519 tests: 515 passed; the four failures exactly match the pre-implementation baseline and are outside workflow automation scope.
 - 2026-07-13 [TOOL] Isolated branch `codex/workflow-automations` created; 24 focused workflow files and 45 tests passed under Node v22.22.0 before implementation.
@@ -85,4 +86,3 @@
 - 2026-07-13 [TOOL] `bunx convex codegen` completed and generated the workflow draft Save API binding.
 - 2026-07-13 [TOOL] Local app loaded without browser console warnings/errors; authenticated workflow visual interaction was unavailable in the signed-out local browser session.
 - 2026-07-13 [TOOL] Focused atomic Save integration proved graph replacement plus stale-save rejection.
-- 2026-07-13 [TOOL] All touched code files remain below 300 lines and `git diff --check` passed.
