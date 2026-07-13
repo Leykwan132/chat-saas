@@ -40,29 +40,25 @@ describe('workflow automation scope cards', () => {
     expect(followUpSource).toContain('<WorkflowAutomationScopeField');
   });
 
-  test('renders compact equal-width left and right buttons', () => {
-    expect(scopeFieldSource).toContain('type="single"');
-    expect(scopeFieldSource).toContain('spacing={0}');
-    expect(scopeFieldSource).toContain('grid-cols-2');
-    expect(scopeFieldSource).toContain('text-xs font-medium');
-    expect(scopeFieldSource).toContain('rounded-l-md');
-    expect(scopeFieldSource).toContain('rounded-r-md');
-    expect(scopeFieldSource).not.toContain('font-semibold');
-    expect(scopeFieldSource).not.toContain('orientation="vertical"');
+  test('renders a vertical basic radio group', () => {
+    expect(scopeFieldSource).toContain("from '@/components/ui/radio-group'");
+    expect(scopeFieldSource).toContain('<RadioGroup');
+    expect(scopeFieldSource).toContain('<RadioGroupItem');
+    expect(scopeFieldSource.match(/<Field orientation="horizontal"/g)).toHaveLength(2);
+    expect(scopeFieldSource).toContain('<FieldContent>');
+    expect(scopeFieldSource).not.toContain('ToggleGroup');
   });
 
-  test('shows only the selected scope description below the buttons', () => {
-    const toggleItems = Array.from(
-      scopeFieldSource.matchAll(/<ToggleGroupItem[\s\S]*?<\/ToggleGroupItem>/g),
+  test('shows both descriptions with their labelled radio choices', () => {
+    const radioFields = Array.from(
+      scopeFieldSource.matchAll(/<Field orientation="horizontal"[\s\S]*?<\/Field>/g),
       (match) => match[0],
     );
-    expect(toggleItems).toHaveLength(2);
-    expect(toggleItems.join('\n')).not.toContain('Description');
-    expect(scopeFieldSource).toContain('const selectedDescription =');
-    expect(scopeFieldSource).toContain('{selectedDescription && (');
-    expect(scopeFieldSource).toContain(
-      '<FieldDescription className="text-[11px] leading-relaxed">',
-    );
+    expect(radioFields).toHaveLength(2);
+    expect(radioFields[0]).toContain('currentAndFutureDescription');
+    expect(radioFields[1]).toContain('futureOnlyDescription');
+    expect(scopeFieldSource).toContain('htmlFor={currentAndFutureId}');
+    expect(scopeFieldSource).toContain('htmlFor={futureOnlyId}');
     expect(scopeFieldSource).toContain('onChange(nextValue);');
   });
 });

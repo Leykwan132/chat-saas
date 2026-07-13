@@ -1,5 +1,10 @@
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from '@/components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import type { WorkflowAutomationActivationScope } from '../../../shared/workflowAutomations';
 
 type WorkflowAutomationScopeFieldProps = {
@@ -23,20 +28,15 @@ export function WorkflowAutomationScopeField({
   onChange,
   value,
 }: WorkflowAutomationScopeFieldProps) {
-  const selectedDescription = value === 'currentAndFuture'
-    ? currentAndFutureDescription
-    : value === 'futureOnly'
-      ? futureOnlyDescription
-      : undefined;
+  const currentAndFutureId = `${labelId}-current-and-future`;
+  const futureOnlyId = `${labelId}-future-only`;
 
   return (
     <Field data-invalid={invalid || undefined}>
       <FieldLabel id={labelId} className="sr-only">
         Apply to
       </FieldLabel>
-      <ToggleGroup
-        type="single"
-        spacing={0}
+      <RadioGroup
         value={value ?? ''}
         onValueChange={(nextValue) => {
           if (nextValue === 'currentAndFuture' || nextValue === 'futureOnly') {
@@ -45,27 +45,39 @@ export function WorkflowAutomationScopeField({
         }}
         aria-labelledby={labelId}
         aria-invalid={invalid || undefined}
-        variant="outline"
-        className="nodrag nopan grid w-full grid-cols-2 data-[spacing=0]:data-[variant=outline]:rounded-md"
+        className="nodrag nopan w-full gap-3"
       >
-        <ToggleGroupItem
-          value="currentAndFuture"
-          className="h-9 w-full text-xs font-medium group-data-horizontal/toggle-group:data-[spacing=0]:first:rounded-l-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-        >
-          {currentAndFutureLabel}
-        </ToggleGroupItem>
-        <ToggleGroupItem
-          value="futureOnly"
-          className="h-9 w-full text-xs font-medium group-data-horizontal/toggle-group:data-[spacing=0]:last:rounded-r-md data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
-        >
-          {futureOnlyLabel}
-        </ToggleGroupItem>
-      </ToggleGroup>
-      {selectedDescription && (
-        <FieldDescription className="text-[11px] leading-relaxed">
-          {selectedDescription}
-        </FieldDescription>
-      )}
+        <Field orientation="horizontal" className="gap-2">
+          <RadioGroupItem
+            value="currentAndFuture"
+            id={currentAndFutureId}
+            aria-invalid={invalid || undefined}
+          />
+          <FieldContent>
+            <FieldLabel htmlFor={currentAndFutureId} className="text-xs font-medium">
+              {currentAndFutureLabel}
+            </FieldLabel>
+            <FieldDescription className="text-[11px] leading-relaxed">
+              {currentAndFutureDescription}
+            </FieldDescription>
+          </FieldContent>
+        </Field>
+        <Field orientation="horizontal" className="gap-2">
+          <RadioGroupItem
+            value="futureOnly"
+            id={futureOnlyId}
+            aria-invalid={invalid || undefined}
+          />
+          <FieldContent>
+            <FieldLabel htmlFor={futureOnlyId} className="text-xs font-medium">
+              {futureOnlyLabel}
+            </FieldLabel>
+            <FieldDescription className="text-[11px] leading-relaxed">
+              {futureOnlyDescription}
+            </FieldDescription>
+          </FieldContent>
+        </Field>
+      </RadioGroup>
       {invalid && (
         <FieldDescription className="text-destructive">
           Choose what this automation should apply to first.

@@ -2,25 +2,22 @@
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
-- 2026-07-13 [USER] Apply to is a compact left/right single-select control; only the selected option's description appears below it.
-- 2026-07-13 [USER] Apply to buttons use smaller words and modest corners instead of bold pill-shaped styling.
-- 2026-07-13 [USER] The selected Apply to description uses smaller text than the button labels and validation message.
+- 2026-07-13 [USER] Apply to uses a basic vertical RadioGroup; each choice shows its own small label and description.
 - 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 - 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
-- 2026-07-13 [CODE] Apply to now uses compact equal-width horizontal buttons and shows only the selected scope's description below the group.
-- 2026-07-13 [CODE] Apply to labels use `text-xs font-medium`; connected outer corners override the shadcn pill radius with `rounded-md`.
-- 2026-07-13 [CODE] The selected Apply to helper sentence uses `text-[11px] leading-relaxed`; validation styling is unchanged.
+- 2026-07-13 [CODE] Apply to uses vertical RadioGroup semantics with two labelled Field rows, `text-xs` labels, `text-[11px]` descriptions, and unchanged validation behavior.
 - 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
 - 2026-07-13 [TOOL] Full Vitest has 515/519 passing; the four failures match the pre-implementation baseline (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
-- 2026-07-13 [USER] D292 ACTIVE: Selected scope descriptions use `text-[11px] leading-relaxed`; scope validation copy retains its existing destructive styling.
-- 2026-07-13 [USER] D291 ACTIVE: Scope selector labels use `text-xs font-medium`, with `rounded-md` outer corners and a straight center divider.
-- 2026-07-13 [USER] D290 ACTIVE: Reminder and Follow-up scope use equal-width horizontal buttons with labels only; the selected scope's existing explanation appears beneath the group.
+- 2026-07-13 [USER] D293 ACTIVE: Reminder and Follow-up scope use a basic vertical RadioGroup; both options always show their label and description in horizontal Field rows.
+- 2026-07-13 [USER] D292 SUPERSEDED by D293: Selected-only scope descriptions used `text-[11px] leading-relaxed`.
+- 2026-07-13 [USER] D291 SUPERSEDED by D293: Scope selection used connected `rounded-md` buttons.
+- 2026-07-13 [USER] D290 SUPERSEDED by D293: Scope selection used equal-width horizontal buttons with labels only.
 - 2026-07-13 [USER] D289 ACTIVE: Reminder and Follow-up ongoing event hooks depend on saved enabled state and eligibility only; `activatedAt` is never compared, and Future only means no reconciliation scan.
 - 2026-07-13 [USER] D288 ACTIVE: Reminder and Follow-up are independent draft-first configurations with required Current & future or Future only scope, separate Workpools, durable Work IDs/runs, bounded cancellation, and separate paginated history dialogs.
 - 2026-07-13 [USER] D287 ACTIVE: The new support control appears beside dark mode only in authenticated dashboard and workspace headers, not public, blog, or legal headers.
@@ -48,9 +45,9 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Replaced the scope ToggleGroup with a basic vertical RadioGroup and labelled descriptions.
 - 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
 - 2026-07-13 [CODE] Reduced Apply to label size/weight and replaced pill-shaped corners with a modest connected radius.
-- 2026-07-13 [CODE] Replaced the tall stacked scope cards with one compact left/right single-select ToggleGroup shared by Reminder and Follow-up.
 - 2026-07-13 [CODE] Implemented separate reminder/follow-up Workpools, durable runs/timers/operations, reconciliation, cancellation, and reusable WhatsApp sending.
 - 2026-07-13 [CODE] Added booking/reschedule/status and WhatsApp inbound/outbound hooks with deduplication, one timer per conversation, source exclusions, and lead/tag eligibility.
 - 2026-07-13 [CODE] Added exact Apply to card choices, activation guards, draft Save/Reset integration, stale-save protection, and separate History dialogs.
@@ -75,9 +72,9 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Vertical RadioGroup scope selector passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks under Node v22.22.0.
 - 2026-07-13 [TOOL] Smaller selected-description styling passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
 - 2026-07-13 [TOOL] Scope typography/radius refinement passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
-- 2026-07-13 [TOOL] Compact scope selector completed a verified red-green cycle; 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
 - 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.
 - 2026-07-13 [TOOL] Full Vitest ran 519 tests: 515 passed; the four failures exactly match the pre-implementation baseline and are outside workflow automation scope.
