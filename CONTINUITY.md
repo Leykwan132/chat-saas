@@ -8,6 +8,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 - 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
+- 2026-07-13 [CODE] Apply to now uses compact equal-width horizontal buttons and shows only the selected scope's description below the group.
 - 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
 - 2026-07-13 [TOOL] Full Vitest has 515/519 passing; the four failures match the pre-implementation baseline (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
@@ -41,13 +42,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Replaced the tall stacked scope cards with one compact left/right single-select ToggleGroup shared by Reminder and Follow-up.
 - 2026-07-13 [CODE] Implemented separate reminder/follow-up Workpools, durable runs/timers/operations, reconciliation, cancellation, and reusable WhatsApp sending.
 - 2026-07-13 [CODE] Added booking/reschedule/status and WhatsApp inbound/outbound hooks with deduplication, one timer per conversation, source exclusions, and lead/tag eligibility.
 - 2026-07-13 [CODE] Added exact Apply to card choices, activation guards, draft Save/Reset integration, stale-save protection, and separate History dialogs.
 - 2026-07-13 [CODE] Refactored the existing standalone follow-up sender to reuse the shared WhatsApp template sender without changing its rule behavior.
 - 2026-07-13 [CODE] Implemented workflow drafts/templates, transactional message selection, and editable appointment lifecycle controls.
 - 2026-07-13 [CODE] Added authenticated header support and direct contact placement.
-- 2026-07-12 [CODE] Combined daily Advanced Analytics and removed Qualify leads workflow behavior.
 
 # Working set
 - 2026-07-13 [USER] Workflow automation implementation: `src/components/workflow/*Automation*`, `src/pages/{useWorkflowDraft,workflowDraftPersistence}*`, `convex/workflow*Automation*`, booking/message hooks, schema/config, and focused tests.
@@ -68,6 +69,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Compact scope selector completed a verified red-green cycle; 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
 - 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.
 - 2026-07-13 [TOOL] Full Vitest ran 519 tests: 515 passed; the four failures exactly match the pre-implementation baseline and are outside workflow automation scope.
@@ -87,4 +89,3 @@
 - 2026-07-13 [TOOL] Node 22 full `bunx tsc -b` and targeted ESLint passed for all workflow draft/template files.
 - 2026-07-13 [TOOL] `bunx convex codegen` completed and generated the workflow draft Save API binding.
 - 2026-07-13 [TOOL] Local app loaded without browser console warnings/errors; authenticated workflow visual interaction was unavailable in the signed-out local browser session.
-- 2026-07-13 [TOOL] Focused atomic Save integration proved graph replacement plus stale-save rejection.

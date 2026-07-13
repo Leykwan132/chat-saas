@@ -9,6 +9,10 @@ const followUpSource = readFileSync(
   new URL('./WorkflowFollowupSetupNode.tsx', import.meta.url),
   'utf8',
 );
+const scopeFieldSource = readFileSync(
+  new URL('./WorkflowAutomationScopeField.tsx', import.meta.url),
+  'utf8',
+);
 
 describe('workflow automation scope cards', () => {
   test('shows the precise reminder scope choices', () => {
@@ -34,5 +38,25 @@ describe('workflow automation scope cards', () => {
   test('uses the shared single-select scope control on both cards', () => {
     expect(reminderSource).toContain('<WorkflowAutomationScopeField');
     expect(followUpSource).toContain('<WorkflowAutomationScopeField');
+  });
+
+  test('renders compact equal-width left and right buttons', () => {
+    expect(scopeFieldSource).toContain('type="single"');
+    expect(scopeFieldSource).toContain('spacing={0}');
+    expect(scopeFieldSource).toContain('grid-cols-2');
+    expect(scopeFieldSource).toContain('className="h-9 w-full font-semibold');
+    expect(scopeFieldSource).not.toContain('orientation="vertical"');
+  });
+
+  test('shows only the selected scope description below the buttons', () => {
+    const toggleItems = Array.from(
+      scopeFieldSource.matchAll(/<ToggleGroupItem[\s\S]*?<\/ToggleGroupItem>/g),
+      (match) => match[0],
+    );
+    expect(toggleItems).toHaveLength(2);
+    expect(toggleItems.join('\n')).not.toContain('Description');
+    expect(scopeFieldSource).toContain('const selectedDescription =');
+    expect(scopeFieldSource).toContain('{selectedDescription && (');
+    expect(scopeFieldSource).toContain('onChange(nextValue);');
   });
 });

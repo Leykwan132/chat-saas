@@ -23,6 +23,12 @@ export function WorkflowAutomationScopeField({
   onChange,
   value,
 }: WorkflowAutomationScopeFieldProps) {
+  const selectedDescription = value === 'currentAndFuture'
+    ? currentAndFutureDescription
+    : value === 'futureOnly'
+      ? futureOnlyDescription
+      : undefined;
+
   return (
     <Field data-invalid={invalid || undefined}>
       <FieldLabel id={labelId} className="sr-only">
@@ -30,37 +36,34 @@ export function WorkflowAutomationScopeField({
       </FieldLabel>
       <ToggleGroup
         type="single"
-        orientation="vertical"
+        spacing={0}
         value={value ?? ''}
-        onValueChange={(nextValue) => onChange(
-          nextValue === 'currentAndFuture' || nextValue === 'futureOnly'
-            ? nextValue
-            : undefined,
-        )}
+        onValueChange={(nextValue) => {
+          if (nextValue === 'currentAndFuture' || nextValue === 'futureOnly') {
+            onChange(nextValue);
+          }
+        }}
         aria-labelledby={labelId}
         aria-invalid={invalid || undefined}
         variant="outline"
-        className="nodrag nopan w-full items-stretch"
+        className="nodrag nopan grid w-full grid-cols-2"
       >
         <ToggleGroupItem
           value="currentAndFuture"
-          className="h-auto w-full flex-col items-start gap-1 whitespace-normal px-3 py-3 text-left"
+          className="h-9 w-full font-semibold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
-          <span className="font-semibold">{currentAndFutureLabel}</span>
-          <span className="text-xs font-normal text-muted-foreground">
-            {currentAndFutureDescription}
-          </span>
+          {currentAndFutureLabel}
         </ToggleGroupItem>
         <ToggleGroupItem
           value="futureOnly"
-          className="h-auto w-full flex-col items-start gap-1 whitespace-normal px-3 py-3 text-left"
+          className="h-9 w-full font-semibold data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
         >
-          <span className="font-semibold">{futureOnlyLabel}</span>
-          <span className="text-xs font-normal text-muted-foreground">
-            {futureOnlyDescription}
-          </span>
+          {futureOnlyLabel}
         </ToggleGroupItem>
       </ToggleGroup>
+      {selectedDescription && (
+        <FieldDescription>{selectedDescription}</FieldDescription>
+      )}
       {invalid && (
         <FieldDescription className="text-destructive">
           Choose what this automation should apply to first.
