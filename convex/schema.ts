@@ -1275,6 +1275,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_conversationId", ["conversationId"])
+    .index("by_calendarEventId", ["calendarEventId"])
     .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
   quickReplies: defineTable({
     teamId: v.id("teams"),

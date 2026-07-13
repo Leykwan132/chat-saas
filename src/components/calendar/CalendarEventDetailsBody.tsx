@@ -12,9 +12,9 @@ import {
 } from 'lucide-react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
-  formatCollectedFieldValue,
   type BookingDetailItem,
 } from '@/components/booking/BookingDetailsPanel';
+import { formatCollectedFieldValue } from '@/components/booking/bookingDetailFormatting';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 export type AppointmentDetails = {

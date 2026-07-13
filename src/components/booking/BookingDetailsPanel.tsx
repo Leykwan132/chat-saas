@@ -1,12 +1,18 @@
+import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { Check } from 'lucide-react';
-import { ShineBorder } from '@/components/ui/shine-border';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import {
+  BookingDetailsActionsBar,
+  type BookingDetailsPanelActions,
+} from './BookingDetailsActionsBar';
+import { BookingAccentBar } from './BookingAccentBar';
+import {
+  BOOKED_CHECK_BG_CLASS,
+  BOOKING_CARD_SURFACE_CLASS,
+} from './bookingDetailsStyles';
 
-export const BOOKING_SHINE_COLORS = ['#059669', '#10B981', '#34D399'] as const;
-export const BOOKED_CHECK_BG_CLASS = 'bg-emerald-500';
+export type { BookingDetailsPanelActions } from './BookingDetailsActionsBar';
 
 export function BookedCheckIcon({
   className,
@@ -72,59 +78,6 @@ export type BookingDetailSection = {
   rows: BookingDetailItem[];
 };
 
-export type BookingDetailsPanelActions = {
-  onAddRemarks?: () => void;
-  onEditBooking?: () => void;
-  addRemarksLabel?: string;
-  disableAddRemarks?: boolean;
-  disableEditBooking?: boolean;
-};
-
-function BookingDetailsActionsBar({
-  actions,
-  compact = false,
-}: {
-  actions: BookingDetailsPanelActions;
-  compact?: boolean;
-}) {
-  if (!actions.onAddRemarks && !actions.onEditBooking) {
-    return null;
-  }
-
-  return (
-    <div
-      className={cn(
-        'flex gap-2',
-        compact ? 'mt-3 flex-row justify-end' : 'mt-4 flex-col',
-      )}
-    >
-      {actions.onAddRemarks ? (
-        <Button
-          type="button"
-          size={compact ? 'sm' : 'default'}
-          className={compact ? undefined : 'w-full'}
-          disabled={actions.disableAddRemarks}
-          onClick={actions.onAddRemarks}
-        >
-          {actions.addRemarksLabel ?? 'Add remarks'}
-        </Button>
-      ) : null}
-      {actions.onEditBooking ? (
-        <Button
-          type="button"
-          variant="secondary"
-          size={compact ? 'sm' : 'default'}
-          className={compact ? undefined : 'w-full'}
-          disabled={actions.disableEditBooking}
-          onClick={actions.onEditBooking}
-        >
-          Edit booking
-        </Button>
-      ) : null}
-    </div>
-  );
-}
-
 function filterVisibleBookingRows(rows: BookingDetailItem[]) {
   return rows.filter((row) => row.value !== '—' && row.value.trim().length > 0);
 }
@@ -150,14 +103,6 @@ function BookingDetailSectionGroup({ title, rows }: BookingDetailSection) {
       </div>
     </div>
   );
-}
-
-export function formatCollectedFieldValue(
-  value: string | number | boolean | null | undefined,
-) {
-  if (value === null || value === undefined || value === '') return '—';
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
 }
 
 export function BookingDetailRow({
@@ -205,9 +150,10 @@ export function BookingDetailsPanel({
   sections,
   date,
   timeRange,
-  shineColors,
-  checkIconClassName,
   actions,
+  compactLabel,
+  compactStatus,
+  onOpenDetails,
   variant = 'panel',
   className,
 }: {
@@ -217,9 +163,10 @@ export function BookingDetailsPanel({
   sections?: BookingDetailSection[];
   date?: string;
   timeRange?: string;
-  shineColors?: readonly string[];
-  checkIconClassName?: string;
   actions?: BookingDetailsPanelActions;
+  compactLabel?: string;
+  compactStatus?: ReactNode;
+  onOpenDetails?: () => void;
   variant?: 'panel' | 'compact' | 'inline';
   className?: string;
 }) {
@@ -230,31 +177,50 @@ export function BookingDetailsPanel({
     return (
       <div
         className={cn(
-          'relative min-w-0 rounded-lg border border-border bg-muted/40 p-3 shadow-none',
+          'flex w-full min-w-0 items-stretch gap-2.5 px-3 py-2.5',
+          BOOKING_CARD_SURFACE_CLASS,
           className,
         )}
       >
-        {shineColors ? <ShineBorder shineColor={[...shineColors]} /> : null}
-        <div className="flex min-w-0 items-center gap-3">
-          <BookedCheckIcon size="md" className={cn('shrink-0', checkIconClassName)} />
+        <BookingAccentBar />
+        <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-            <p className="truncate text-sm font-semibold text-foreground">{title}</p>
-            {schedule ? (
-              <p className="truncate text-xs text-muted-foreground">{schedule}</p>
+            <div className="flex min-w-0 items-center gap-2">
+              {schedule ? (
+                onOpenDetails ? (
+                  <button
+                    type="button"
+                    onClick={onOpenDetails}
+                    className="min-w-0 truncate text-left text-xs font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={`View ${title} booking details`}
+                  >
+                    {schedule}
+                  </button>
+                ) : (
+                  <span className="min-w-0 truncate text-xs font-medium text-foreground">
+                    {schedule}
+                  </span>
+                )
+              ) : null}
+              {compactStatus}
+            </div>
+            {onOpenDetails ? (
+              <button
+                type="button"
+                onClick={onOpenDetails}
+                className="truncate text-left text-[11px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={schedule ? undefined : `View ${title} booking details`}
+              >
+                {title}
+              </button>
+            ) : (
+              <span className="truncate text-[11px] text-muted-foreground">{title}</span>
+            )}
+            {compactLabel ? (
+              <span className="truncate text-[10px] text-muted-foreground/80">{compactLabel}</span>
             ) : null}
           </div>
-          {actions?.onEditBooking ? (
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              className="shrink-0"
-              disabled={actions.disableEditBooking}
-              onClick={actions.onEditBooking}
-            >
-              Edit booking
-            </Button>
-          ) : null}
+          {actions ? <BookingDetailsActionsBar actions={actions} compact /> : null}
         </div>
       </div>
     );
@@ -262,7 +228,7 @@ export function BookingDetailsPanel({
 
   const header = (
     <div className="flex gap-3">
-      <BookedCheckIcon size="lg" className={cn('mt-0.5', checkIconClassName)} />
+      <BookedCheckIcon size="lg" className="mt-0.5" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-base font-semibold leading-snug text-foreground">{title}</h3>
@@ -297,108 +263,19 @@ export function BookingDetailsPanel({
     ) : null;
 
   const isInline = variant === 'inline';
-  const useContainer = Boolean(actions);
 
-  const panelBody = (
-    <>
+  return (
+    <div
+      className={cn(
+        isInline
+          ? 'relative overflow-hidden p-0 shadow-none'
+          : cn('p-4', BOOKING_CARD_SURFACE_CLASS),
+        className,
+      )}
+    >
       {header}
       {detailContent}
       {actions ? <BookingDetailsActionsBar actions={actions} /> : null}
-    </>
-  );
-
-  if (useContainer) {
-    return (
-      <div
-        className={cn(
-          'relative overflow-hidden rounded-lg border border-border bg-muted/40 p-4 shadow-none',
-          className,
-        )}
-      >
-        <ShineBorder shineColor={[...BOOKING_SHINE_COLORS]} />
-        {panelBody}
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        'relative overflow-hidden shadow-none',
-        isInline ? 'p-0' : 'rounded-lg border border-border bg-muted/40 p-4',
-        className,
-      )}
-    >
-      {!isInline && shineColors ? <ShineBorder shineColor={[...shineColors]} /> : null}
-      {panelBody}
-    </div>
-  );
-}
-
-function BookingDetailSectionSkeleton({ rowCount }: { rowCount: number }) {
-  return (
-    <div className="flex flex-col gap-2.5">
-      <Skeleton className="h-3 w-24 rounded-md" />
-      <div className="flex flex-col gap-3">
-        {Array.from({ length: rowCount }, (_, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <Skeleton className="mt-0.5 size-4 shrink-0 rounded-md" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Skeleton className="h-3 w-16 rounded-md" />
-              <Skeleton className="h-4 w-4/5 max-w-xs rounded-md" />
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function BookingDetailsPanelSkeleton({
-  variant = 'inline',
-  className,
-}: {
-  variant?: 'panel' | 'compact' | 'inline';
-  className?: string;
-}) {
-  if (variant === 'compact') {
-    return (
-      <div
-        className={cn(
-          'relative min-w-0 rounded-lg border border-border bg-muted/40 p-3 shadow-none',
-          className,
-        )}
-      >
-        <div className="flex min-w-0 gap-3">
-          <Skeleton className="size-5 shrink-0 rounded-full" />
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-            <Skeleton className="h-4 w-3/5 rounded-md" />
-            <Skeleton className="h-3 w-2/5 rounded-md" />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const isInline = variant === 'inline';
-
-  return (
-    <div
-      className={cn(
-        'relative overflow-hidden shadow-none',
-        isInline ? 'p-0' : 'rounded-lg border border-border bg-muted/40 p-4',
-        className,
-      )}
-    >
-      <div className="flex gap-3">
-        <Skeleton className="size-6 shrink-0 rounded-full" />
-        <Skeleton className="h-5 w-40 max-w-full rounded-md" />
-      </div>
-      <div className="mt-4 flex flex-col gap-4">
-        <BookingDetailSectionSkeleton rowCount={4} />
-        <BookingDetailSectionSkeleton rowCount={2} />
-        <BookingDetailSectionSkeleton rowCount={1} />
-      </div>
     </div>
   );
 }
