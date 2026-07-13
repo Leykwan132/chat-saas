@@ -3,6 +3,7 @@ import { internalMutation } from "../_generated/server";
 import { AppointmentBookingSessionStatus, isActiveAppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { logConversationEvent } from "../conversationLogs";
 import { getExistingBookingSession } from "./sessionStore";
+import { cancelWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 
 export const cancelBookingSession = internalMutation({
   args: { conversationId: v.id("conversations") },
@@ -30,6 +31,7 @@ export const cancelBookingSession = internalMutation({
         status: "cancelled",
         updatedAt: now,
       });
+      await cancelWorkflowRemindersForAppointment(ctx, event._id, "Appointment cancelled");
       await logConversationEvent(ctx, {
         conversationId: args.conversationId,
         action: "event_cancelled",
@@ -81,6 +83,11 @@ export const cancelBookingSession = internalMutation({
         status: "cancelled",
         updatedAt: now,
       });
+      await cancelWorkflowRemindersForAppointment(
+        ctx,
+        active.calendarEventId,
+        "Appointment cancelled",
+      );
       await logConversationEvent(ctx, {
         conversationId: args.conversationId,
         action: "event_cancelled",

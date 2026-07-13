@@ -1,7 +1,7 @@
 import {
   useWorkflowAutomationSelection,
   useWorkflowAutomationState,
-} from './workflowAutomationState';
+} from './workflowAutomationContext';
 import {
   getWorkflowReminderScheduleStep,
   type WorkflowReminderScheduleStepKey,

@@ -5,6 +5,10 @@ import { getAuthContext } from "../authUtils";
 import type { Id } from "../_generated/dataModel";
 import { mutation, type MutationCtx } from "../_generated/server";
 import { permissionsForCurrentUser } from "./access";
+import {
+  cancelWorkflowRemindersForAppointment,
+  scheduleWorkflowRemindersForAppointment,
+} from "../workflowReminderRuntime";
 
 export const editableBookingStatusValidator = v.union(
   v.literal(AppointmentBookingSessionStatus.Booked),
@@ -49,6 +53,15 @@ export const updateAppointmentBookingStatus = async (
     status: calendarStatusForBookingStatus(args.status),
     updatedAt: now,
   });
+  if (args.status === AppointmentBookingSessionStatus.Booked) {
+    await scheduleWorkflowRemindersForAppointment(ctx, event._id);
+  } else {
+    await cancelWorkflowRemindersForAppointment(
+      ctx,
+      event._id,
+      `Appointment marked ${args.status}`,
+    );
+  }
   return { success: true };
 };
 

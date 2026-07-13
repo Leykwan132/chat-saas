@@ -136,6 +136,9 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         onReset={handleReset}
         onTemplateApply={handleTemplateApply}
         arrangeFocusRequest={arrangeFocusRequest}
+        automations={draft.automations}
+        onAutomationsChange={workflowDraft.updateAutomations}
+        agentId={agentId}
       />
       <WorkflowInspector
         agentId={agentId}

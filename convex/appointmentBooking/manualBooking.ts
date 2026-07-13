@@ -18,6 +18,7 @@ import {
   serviceTimeZone,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
+import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 
 async function loadManualBookingScope(
   ctx: Parameters<typeof assertAppointmentBookingManage>[0],
@@ -171,6 +172,7 @@ export const create = mutation({
         updatedAt: now,
       });
     }
+    await scheduleWorkflowRemindersForAppointment(ctx, eventId);
     return { eventId, sessionId };
   },
 });

@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react';
 import { type NodeProps } from '@xyflow/react';
-import { toast } from 'sonner';
 import {
   BellRing,
   CalendarCheck2,
@@ -16,6 +15,9 @@ import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import { WorkflowReminderMessageDialog } from './WorkflowReminderMessageDialog';
 import { WorkflowReminderScheduleFields } from './WorkflowReminderScheduleFields';
+import { WorkflowAutomationScopeField } from './WorkflowAutomationScopeField';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
+import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import {
   resolveWorkflowAutomationEnabledChange,
   WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
@@ -89,17 +91,21 @@ function ReminderSetupSection({
 export function WorkflowReminderSetupNode({
   data,
 }: NodeProps<WorkflowReminderSetupFlowNode>) {
-  const [enabled, setEnabled] = useState(false);
   const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
+  const [showScopeRequiredError, setShowScopeRequiredError] = useState(false);
+  const automationState = useWorkflowAutomationState();
+  const automation = automationState.configs.reminder;
   const summary = useWorkflowReminderSummary();
   const messageMissing = summary.messageCardLabel === 'Choose message';
   const handleEnabledChange = (nextEnabled: boolean) => {
-    const result = resolveWorkflowAutomationEnabledChange(nextEnabled, !messageMissing);
-    setEnabled(result.enabled);
+    const result = resolveWorkflowAutomationEnabledChange(
+      nextEnabled,
+      !messageMissing,
+      automation.activationScope,
+    );
+    automationState.setEnabled('reminders', result.enabled);
     setShowMessageRequiredError(result.messageRequired);
-    if (result.enabled && !enabled) {
-      toast.success('Reminders are now turned on.');
-    }
+    setShowScopeRequiredError(result.scopeRequired);
   };
 
   return (
@@ -109,14 +115,22 @@ export function WorkflowReminderSetupNode({
           <BellRing className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{data.title}</span>
         </h3>
+        <div className="flex items-center gap-2">
+          {automationState.agentId && (
+            <WorkflowAutomationHistoryDialog
+              agentId={automationState.agentId}
+              automationKind="reminder"
+            />
+          )}
         <Switch
-          checked={enabled}
+          checked={automation.enabled}
           onCheckedChange={handleEnabledChange}
           aria-label={`${data.title} enabled`}
           className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         />
+        </div>
       </div>
       <Separator />
       <div className="flex items-start gap-3 rounded-md border border-dashed border-border/80 bg-muted/50 px-3 py-3">
@@ -126,6 +140,21 @@ export function WorkflowReminderSetupNode({
         </p>
       </div>
       <div className="flex flex-col gap-8">
+        <ReminderSetupSection title="Apply to" Icon={CalendarCheck2}>
+          <WorkflowAutomationScopeField
+            labelId="workflow-reminder-scope-label"
+            value={automation.activationScope}
+            invalid={showScopeRequiredError}
+            onChange={(activationScope) => {
+              automationState.setActivationScope('reminders', activationScope);
+              setShowScopeRequiredError(false);
+            }}
+            currentAndFutureDescription="Schedule remaining reminders for confirmed upcoming appointments and all new appointments."
+            currentAndFutureLabel="Current & future"
+            futureOnlyDescription="Schedule reminders for new appointments while reminders are on."
+            futureOnlyLabel="Future only"
+          />
+        </ReminderSetupSection>
         <ReminderSetupSection title="Schedule" Icon={CalendarClock}>
           <WorkflowReminderScheduleFields />
         </ReminderSetupSection>

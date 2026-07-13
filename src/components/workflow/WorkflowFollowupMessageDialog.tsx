@@ -16,7 +16,7 @@ import { WorkflowFollowupTemplatePicker } from './WorkflowFollowupTemplatePicker
 import {
   useWorkflowAutomationState,
   type WorkflowFollowupMessageStrategy,
-} from './workflowAutomationState';
+} from './workflowAutomationContext';
 import { useWorkflowFollowupSummary } from './workflowFollowupSummary';
 import {
   toWorkflowFollowupTemplateSelection,

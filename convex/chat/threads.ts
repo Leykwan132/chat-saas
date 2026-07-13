@@ -45,6 +45,7 @@ import {
   messageKindValidator,
 } from "../broadcastMessageValidators";
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
+import { handleWorkflowAutomationMessageActivity } from "../workflowAutomationMessageActivity";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -954,6 +955,10 @@ export const ingestChannelMessageArgs = {
   contentType: v.optional(contentTypeValidator),
   messageKind: v.optional(messageKindValidator),
   broadcastPresentation: v.optional(broadcastPresentationValidator),
+  workflowAutomationSource: v.optional(v.union(
+    v.literal("workflowReminder"),
+    v.literal("workflowFollowUp"),
+  )),
   timestampMs: v.number(),
   isHistorical: v.optional(v.boolean()),
   outboundStatus: v.optional(
@@ -998,6 +1003,7 @@ export type IngestChannelMessageArgs = {
   contentType?: Doc<"messages">["contentType"];
   messageKind?: BroadcastMessageKind;
   broadcastPresentation?: BroadcastPresentation;
+  workflowAutomationSource?: "workflowReminder" | "workflowFollowUp";
   timestampMs: number;
   isHistorical?: boolean;
   outboundStatus?: "sent" | "delivered" | "read" | "failed";
@@ -1142,10 +1148,14 @@ export async function ingestChannelMessage(
     ...(args.broadcastPresentation
       ? { broadcastPresentation: args.broadcastPresentation }
       : {}),
+    ...(args.workflowAutomationSource
+      ? { workflowAutomationSource: args.workflowAutomationSource }
+      : {}),
   };
+  const messageIds: Id<"messages">[] = [];
   if (images.length > 0) {
     for (const img of images) {
-      await ctx.db.insert("messages", {
+      messageIds.push(await ctx.db.insert("messages", {
         orgId: channel.orgId,
         conversationId,
         channelId: channel._id,
@@ -1162,13 +1172,13 @@ export async function ingestChannelMessage(
         ...broadcastFields,
         ...outboundStatusFields,
         createdAt: now,
-      });
+      }));
     }
   }
 
   if (files.length > 0) {
     for (const file of files) {
-      await ctx.db.insert("messages", {
+      messageIds.push(await ctx.db.insert("messages", {
         orgId: channel.orgId,
         conversationId,
         channelId: channel._id,
@@ -1185,12 +1195,12 @@ export async function ingestChannelMessage(
         ...broadcastFields,
         ...outboundStatusFields,
         createdAt: now,
-      });
+      }));
     }
   }
 
   if (trimmedContent.length > 0 || (images.length === 0 && files.length === 0)) {
-    await ctx.db.insert("messages", {
+    messageIds.push(await ctx.db.insert("messages", {
       orgId: channel.orgId,
       conversationId,
       channelId: channel._id,
@@ -1206,7 +1216,7 @@ export async function ingestChannelMessage(
       ...broadcastFields,
       ...outboundStatusFields,
       createdAt: now,
-    });
+    }));
   }
 
   await ctx.runMutation(internal.customers.internalSetLastConversation, {
@@ -1215,6 +1225,12 @@ export async function ingestChannelMessage(
   });
   await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
     conversationId,
+  });
+  await handleWorkflowAutomationMessageActivity(ctx, {
+    conversationId,
+    direction: args.direction,
+    isHistorical: args.isHistorical === true,
+    messageIds,
   });
 
   return {

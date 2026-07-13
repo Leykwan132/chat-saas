@@ -56,7 +56,24 @@ test('atomically replaces a workflow draft, records saved template usage, and re
   const agentId = await createAgent(testClient, workosUserId);
   const authed = testClient.withIdentity({ subject: workosUserId });
   const initial = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  expect(initial.automations.reminder.enabled).toBe(false);
+  expect(initial.automations.reminder.activationScope).toBeUndefined();
   const startNode = initial.nodes[0];
+  const automations = {
+    ...initial.automations,
+    reminder: {
+      ...initial.automations.reminder,
+      enabled: true,
+      activationScope: 'futureOnly' as const,
+      template: {
+        key: 'appointment_reminder\ten_US',
+        name: 'appointment_reminder',
+        language: 'en_US',
+        category: 'UTILITY',
+        components: [],
+      },
+    },
+  };
   const saveArgs = {
     agentId,
     baselineUpdatedAt: initial.workflow.updatedAt,
@@ -66,6 +83,7 @@ test('atomically replaces a workflow draft, records saved template usage, and re
       { clientId: 'draft-node:file', kind: 'sendFile' as const, title: 'Send brochure', positionX: 300, positionY: 0 },
     ],
     edges: [{ sourceClientId: startNode._id, targetClientId: 'draft-node:file', label: 'Brochure' }],
+    automations,
   };
   const saved = await authed.mutation(api.workflowDraftSave.save, {
     ...saveArgs,
@@ -73,6 +91,11 @@ test('atomically replaces a workflow draft, records saved template usage, and re
   });
   expect(saved.nodes.map((node) => node.kind).sort()).toEqual(['sendFile', 'start']);
   expect(saved.edges).toHaveLength(1);
+  expect(saved.automations.reminder).toEqual(expect.objectContaining({
+    enabled: true,
+    activationScope: 'futureOnly',
+    revision: 1,
+  }));
   await testClient.run(async (ctx) => {
     const usage = await ctx.db.query('workflowTemplateUsage').take(10);
     const totals = await ctx.db.query('workflowTemplateUsageTotals').take(10);
@@ -103,6 +126,7 @@ test('atomically replaces a workflow draft, records saved template usage, and re
       label: edge.label,
       detail: edge.detail,
     })),
+    automations: saved.automations,
   });
   expect(savedAgain.workflow.updatedAt).toBeGreaterThan(saved.workflow.updatedAt);
   await testClient.run(async (ctx) => {

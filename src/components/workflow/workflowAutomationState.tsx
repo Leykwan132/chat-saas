@@ -1,185 +1,81 @@
+import { useMemo, type ReactNode } from 'react';
+import type { WorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
+import type { Id } from '../../../convex/_generated/dataModel';
 import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from 'react';
-import type { WorkflowAutomationNodeKind } from './workflowTypes';
-import { DEFAULT_WORKFLOW_FOLLOWUP_AUDIENCE_FILTERS } from './workflowFollowupAudienceLabels';
-import { workflowFollowupScheduleSteps } from './workflowFollowupOptions';
-import {
-  DEFAULT_WORKFLOW_REMINDER_TIMING_OPTION_IDS,
-  type WorkflowReminderTimingUnit,
-} from './workflowReminderOptions';
-import {
-  workflowAutomationSteps,
-  type WorkflowAutomationStepKey,
-} from './workflowTriggerOptions';
-import type { WorkflowFollowupTemplateSelection } from './workflowWhatsappTemplates';
-
-type WorkflowAutomationSelections = Record<
-  WorkflowAutomationNodeKind,
-  Partial<Record<WorkflowAutomationStepKey, string>>
->;
-
-export type WorkflowFollowupMessageStrategy = 'same' | 'different';
-
-export type WorkflowReminderCustomTimingOption = {
-  amount: number;
-  id: string;
-  label: string;
-  summaryLabel: string;
-  unit: WorkflowReminderTimingUnit;
-};
-
-type WorkflowAutomationStateContextValue = {
-  selections: WorkflowAutomationSelections;
-  reminderCustomTimingOptions: WorkflowReminderCustomTimingOption[];
-  reminderTemplate?: WorkflowFollowupTemplateSelection;
-  reminderTimingOptionIds: string[];
-  followupAudienceFilters: string[];
-  followupMessageStrategy: WorkflowFollowupMessageStrategy;
-  followupSameTemplate?: WorkflowFollowupTemplateSelection;
-  followupAttemptTemplates: WorkflowFollowupTemplateSelection[];
-  setSelection: (
-    kind: WorkflowAutomationNodeKind,
-    stepKey: WorkflowAutomationStepKey,
-    optionId: string,
-  ) => void;
-  addReminderCustomTimingOption: (option: WorkflowReminderCustomTimingOption) => void;
-  setReminderTemplate: (template: WorkflowFollowupTemplateSelection) => void;
-  setReminderTimingOptionIds: (optionIds: string[]) => void;
-  setFollowupAudienceFilters: (filters: string[]) => void;
-  setFollowupMessageStrategy: (strategy: WorkflowFollowupMessageStrategy) => void;
-  setFollowupSameTemplate: (template: WorkflowFollowupTemplateSelection) => void;
-  setFollowupAttemptTemplate: (
-    attemptIndex: number,
-    template: WorkflowFollowupTemplateSelection,
-  ) => void;
-};
-
-const WorkflowAutomationStateContext =
-  createContext<WorkflowAutomationStateContextValue | null>(null);
-
-function createInitialSelections(): WorkflowAutomationSelections {
-  return {
-    reminders: Object.fromEntries(
-      workflowAutomationSteps.reminders.map((step) => [
-        step.key,
-        step.defaultOptionId ?? step.options[0].id,
-      ]),
-    ),
-    followups: Object.fromEntries(
-      [
-        ...workflowAutomationSteps.followups,
-        ...workflowFollowupScheduleSteps,
-      ].map((step) => [
-        step.key,
-        step.defaultOptionId ?? step.options[0].id,
-      ]),
-    ),
-  };
-}
+  WorkflowAutomationStateContext,
+  type WorkflowAutomationStateContextValue,
+} from './workflowAutomationContext';
 
 export function WorkflowAutomationStateProvider({
   children,
+  configs,
+  agentId,
+  onChange,
 }: {
   children: ReactNode;
+  configs: WorkflowAutomationConfigs;
+  agentId?: Id<'agents'>;
+  onChange: (configs: WorkflowAutomationConfigs) => void;
 }) {
-  const [selections, setSelections] = useState(createInitialSelections);
-  const [reminderCustomTimingOptions, setReminderCustomTimingOptions] = useState<
-    WorkflowReminderCustomTimingOption[]
-  >([]);
-  const [reminderTemplate, setReminderTemplate] =
-    useState<WorkflowFollowupTemplateSelection>();
-  const [reminderTimingOptionIds, setReminderTimingOptionIds] = useState<string[]>(
-    [...DEFAULT_WORKFLOW_REMINDER_TIMING_OPTION_IDS],
-  );
-  const [followupAudienceFilters, setFollowupAudienceFilters] = useState<string[]>(
-    [...DEFAULT_WORKFLOW_FOLLOWUP_AUDIENCE_FILTERS],
-  );
-  const [followupMessageStrategy, setFollowupMessageStrategy] =
-    useState<WorkflowFollowupMessageStrategy>('same');
-  const [followupSameTemplate, setFollowupSameTemplate] =
-    useState<WorkflowFollowupTemplateSelection>();
-  const [followupAttemptTemplates, setFollowupAttemptTemplates] =
-    useState<WorkflowFollowupTemplateSelection[]>([]);
-  const value = useMemo<WorkflowAutomationStateContextValue>(() => ({
-    selections,
-    reminderCustomTimingOptions,
-    reminderTemplate,
-    reminderTimingOptionIds,
-    followupAudienceFilters,
-    followupMessageStrategy,
-    followupSameTemplate,
-    followupAttemptTemplates,
+  const value = useMemo<WorkflowAutomationStateContextValue>(() => {
+    const updateReminder = (patch: Partial<WorkflowAutomationConfigs['reminder']>) => onChange({
+      ...configs,
+      reminder: { ...configs.reminder, ...patch },
+    });
+    const updateFollowUp = (patch: Partial<WorkflowAutomationConfigs['followUp']>) => onChange({
+      ...configs,
+      followUp: { ...configs.followUp, ...patch },
+    });
+    return ({
+    configs,
+    agentId,
+    selections: {
+      reminders: configs.reminder.selections,
+      followups: configs.followUp.selections,
+    },
+    reminderCustomTimingOptions: configs.reminder.customTimingOptions,
+    reminderTemplate: configs.reminder.template,
+    reminderTimingOptionIds: configs.reminder.timingOptionIds,
+    followupAudienceFilters: configs.followUp.audienceFilters,
+    followupMessageStrategy: configs.followUp.messageStrategy,
+    followupSameTemplate: configs.followUp.sameTemplate,
+    followupAttemptTemplates: configs.followUp.attemptTemplates,
+    setEnabled: (kind, enabled) => (
+      kind === 'reminders' ? updateReminder({ enabled }) : updateFollowUp({ enabled })
+    ),
+    setActivationScope: (kind, activationScope) => (
+      kind === 'reminders'
+        ? updateReminder({ activationScope })
+        : updateFollowUp({ activationScope })
+    ),
     setSelection: (kind, stepKey, optionId) => {
-      setSelections((current) => ({
-        ...current,
-        [kind]: {
-          ...current[kind],
-          [stepKey]: optionId,
-        },
-      }));
+      const current = kind === 'reminders' ? configs.reminder : configs.followUp;
+      const selections = { ...current.selections, [stepKey]: optionId };
+      if (kind === 'reminders') updateReminder({ selections });
+      else updateFollowUp({ selections });
     },
     addReminderCustomTimingOption: (option) => {
-      setReminderCustomTimingOptions((current) => (
-        current.some((currentOption) => currentOption.id === option.id)
-          ? current
-          : [...current, option]
-      ));
-    },
-    setReminderTemplate,
-    setReminderTimingOptionIds,
-    setFollowupAudienceFilters,
-    setFollowupMessageStrategy,
-    setFollowupSameTemplate,
-    setFollowupAttemptTemplate: (attemptIndex, template) => {
-      setFollowupAttemptTemplates((current) => {
-        const next = [...current];
-        next[attemptIndex] = template;
-        return next;
+      if (configs.reminder.customTimingOptions.some((item) => item.id === option.id)) return;
+      updateReminder({
+        customTimingOptions: [...configs.reminder.customTimingOptions, option],
       });
     },
-  }), [
-    followupAttemptTemplates,
-    followupAudienceFilters,
-    followupMessageStrategy,
-    followupSameTemplate,
-    reminderCustomTimingOptions,
-    reminderTemplate,
-    reminderTimingOptionIds,
-    selections,
-  ]);
+    setReminderTemplate: (template) => updateReminder({ template }),
+    setReminderTimingOptionIds: (timingOptionIds) => updateReminder({ timingOptionIds }),
+    setFollowupAudienceFilters: (audienceFilters) => updateFollowUp({ audienceFilters }),
+    setFollowupMessageStrategy: (messageStrategy) => updateFollowUp({ messageStrategy }),
+    setFollowupSameTemplate: (sameTemplate) => updateFollowUp({ sameTemplate }),
+    setFollowupAttemptTemplate: (attemptIndex, template) => {
+      const attemptTemplates = [...configs.followUp.attemptTemplates];
+      attemptTemplates[attemptIndex] = template;
+      updateFollowUp({ attemptTemplates });
+    },
+    });
+  }, [agentId, configs, onChange]);
 
   return (
     <WorkflowAutomationStateContext.Provider value={value}>
       {children}
     </WorkflowAutomationStateContext.Provider>
   );
-}
-
-export function useWorkflowAutomationState() {
-  const context = useContext(WorkflowAutomationStateContext);
-  if (!context) {
-    throw new Error('Workflow automation state is missing');
-  }
-
-  return context;
-}
-
-export function useWorkflowAutomationSelection(
-  kind: WorkflowAutomationNodeKind,
-  stepKey: WorkflowAutomationStepKey,
-  defaultOptionId: string,
-) {
-  const context = useWorkflowAutomationState();
-
-  return {
-    selectedOptionId: context.selections[kind][stepKey] ?? defaultOptionId,
-    setSelectedOptionId: (optionId: string) => (
-      context.setSelection(kind, stepKey, optionId)
-    ),
-  };
 }

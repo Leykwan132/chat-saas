@@ -1,4 +1,5 @@
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { createInitialWorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 import {
   workflowNodeDefaultCondition,
   workflowNodeDescription,
@@ -97,7 +98,12 @@ function buildTemplate(
       updatedAt: 0,
     };
   });
-  const graph: WorkflowGraph = { workflow, nodes: [startNode, ...nodes], edges };
+  const graph: WorkflowGraph = {
+    workflow,
+    automations: createInitialWorkflowAutomationConfigs(),
+    nodes: [startNode, ...nodes],
+    edges,
+  };
   return { id, name, description, graph: layoutTemplateGraph(graph) };
 }
 
@@ -205,6 +211,7 @@ export function replaceDraftWithTemplate(
   }));
   return {
     workflow: { ...currentGraph.workflow, layoutOrientation: 'horizontal' as const },
+    automations: structuredClone(currentGraph.automations),
     nodes,
     edges,
   };

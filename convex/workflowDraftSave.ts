@@ -8,6 +8,12 @@ import { workflowLayoutOrientationValidator, workflowNodeKindValidator } from '.
 import { validateWorkflowDraft } from './workflowDraftValidation';
 import { recordWorkflowTemplateUsage } from './workflowTemplateUsage';
 import { workflowTemplateIdValidator } from './workflowTemplateUsageSchema';
+import { workflowAutomationConfigsValidator } from './workflowAutomationValidators';
+import {
+  prepareWorkflowAutomationSave,
+  resolveWorkflowAutomationConfigs,
+} from './workflowAutomationConfig';
+import { applyWorkflowAutomationSaveEffects } from './workflowAutomationLifecycle';
 
 const draftNodeValidator = v.object({
   clientId: v.string(),
@@ -36,6 +42,7 @@ export const save = mutation({
     templateId: v.optional(workflowTemplateIdValidator),
     nodes: v.array(draftNodeValidator),
     edges: v.array(draftEdgeValidator),
+    automations: workflowAutomationConfigsValidator,
   },
   handler: async (ctx, args) => {
     const { agent } = await assertManageableAgent(ctx, args.agentId);
@@ -62,6 +69,11 @@ export const save = mutation({
       retainedNodeIds.add(node.persistedNodeId);
     }
     const now = Math.max(Date.now(), workflow.updatedAt + 1);
+    const currentAutomations = resolveWorkflowAutomationConfigs(workflow);
+    const automations = prepareWorkflowAutomationSave(
+      currentAutomations,
+      args.automations,
+    );
     const nodeIdByClientId = new Map<string, Id<'workflowNodes'>>();
     for (const edge of existingEdges) await ctx.db.delete(edge._id);
     for (const node of args.nodes) {
@@ -105,7 +117,18 @@ export const save = mutation({
         updatedAt: now,
       });
     }
-    await ctx.db.patch(workflow._id, { layoutOrientation: args.layoutOrientation, updatedAt: now });
+    await ctx.db.patch(workflow._id, {
+      layoutOrientation: args.layoutOrientation,
+      reminderAutomation: automations.reminder,
+      followUpAutomation: automations.followUp,
+      updatedAt: now,
+    });
+    await applyWorkflowAutomationSaveEffects(
+      ctx,
+      { ...workflow, reminderAutomation: automations.reminder, followUpAutomation: automations.followUp },
+      currentAutomations,
+      automations,
+    );
     if (args.templateId) {
       await recordWorkflowTemplateUsage(ctx, agent._id, args.templateId, now);
     }

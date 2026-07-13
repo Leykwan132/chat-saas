@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { WhatsAppTemplatePreview } from '@/components/WhatsAppTemplatePreview';
 import { WorkflowFollowupTemplatePicker } from './WorkflowFollowupTemplatePicker';
-import { useWorkflowAutomationState } from './workflowAutomationState';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
 import {
   toWorkflowFollowupTemplateSelection,
   useWorkflowWhatsappTemplates,

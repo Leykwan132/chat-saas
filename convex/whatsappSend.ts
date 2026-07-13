@@ -7,6 +7,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
+import { handleWorkflowFollowUpOutbound } from "./workflowFollowUpRuntime";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 
@@ -71,7 +72,7 @@ export const sendText = action({
       body: JSON.stringify(payload),
     });
     const text = await res.text();
-    let body: GraphSendResponse | null = null;
+    let body: GraphSendResponse | null;
     try {
       body = text.length ? (JSON.parse(text) as GraphSendResponse) : null;
     } catch {
@@ -180,6 +181,9 @@ export const internalRecordOutgoing = internalMutation({
         updatedAt: now,
       };
       await ctx.db.patch(args.conversationId, patch);
+    }
+    if (args.status === "sent" || args.status === "delivered" || args.status === "read") {
+      await handleWorkflowFollowUpOutbound(ctx, messageId);
     }
     return messageId;
   },

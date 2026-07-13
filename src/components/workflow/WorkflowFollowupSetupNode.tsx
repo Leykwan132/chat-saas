@@ -1,6 +1,5 @@
 import { useState, type ReactNode } from 'react';
 import { type NodeProps } from '@xyflow/react';
-import { toast } from 'sonner';
 import {
   CalendarClock,
   ChevronRight,
@@ -17,6 +16,9 @@ import { cn } from '@/lib/utils';
 import { WorkflowFollowupAudienceField } from './WorkflowFollowupAudienceField';
 import { WorkflowFollowupMessageDialog } from './WorkflowFollowupMessageDialog';
 import { WorkflowFollowupScheduleFields } from './WorkflowFollowupScheduleFields';
+import { WorkflowAutomationScopeField } from './WorkflowAutomationScopeField';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
+import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import {
   resolveWorkflowAutomationEnabledChange,
   WORKFLOW_AUTOMATION_MESSAGE_REQUIRED_ERROR,
@@ -92,37 +94,67 @@ function FollowupSetupSection({
 export function WorkflowFollowupSetupNode({
   data,
 }: NodeProps<WorkflowFollowupSetupFlowNode>) {
-  const [enabled, setEnabled] = useState(false);
   const [showMessageRequiredError, setShowMessageRequiredError] = useState(false);
+  const [showScopeRequiredError, setShowScopeRequiredError] = useState(false);
+  const automationState = useWorkflowAutomationState();
+  const automation = automationState.configs.followUp;
   const summary = useWorkflowFollowupSummary();
-  const messageMissing = summary.messageCardLabel === 'Choose message';
+  const messageMissing = automation.messageStrategy === 'same'
+    ? !automation.sameTemplate
+    : automation.attemptTemplates.slice(0, automation.maxAttempts).filter(Boolean).length <
+      automation.maxAttempts;
   const handleEnabledChange = (nextEnabled: boolean) => {
-    const result = resolveWorkflowAutomationEnabledChange(nextEnabled, !messageMissing);
-    setEnabled(result.enabled);
+    const result = resolveWorkflowAutomationEnabledChange(
+      nextEnabled,
+      !messageMissing,
+      automation.activationScope,
+    );
+    automationState.setEnabled('followups', result.enabled);
     setShowMessageRequiredError(result.messageRequired);
-    if (result.enabled && !enabled) {
-      toast.success('Follow-up is now turned on.');
-    }
+    setShowScopeRequiredError(result.scopeRequired);
   };
 
   return (
-    <div className="flex h-[644px] w-[420px] cursor-grab flex-col gap-4 rounded-xl border border-border/80 bg-card p-5 text-card-foreground active:cursor-grabbing">
+    <div className="flex h-auto min-h-[760px] w-[440px] cursor-grab flex-col gap-4 rounded-xl border border-border/80 bg-card p-5 text-card-foreground active:cursor-grabbing">
       <div className="flex items-start justify-between gap-4">
         <h3 className="m-0 flex min-w-0 items-center gap-2 text-base font-semibold text-foreground">
           <Repeat2 className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{data.title}</span>
         </h3>
+        <div className="flex items-center gap-2">
+          {automationState.agentId && (
+            <WorkflowAutomationHistoryDialog
+              agentId={automationState.agentId}
+              automationKind="followUp"
+            />
+          )}
         <Switch
-          checked={enabled}
+          checked={automation.enabled}
           onCheckedChange={handleEnabledChange}
           aria-label={`${data.title} enabled`}
           className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => event.stopPropagation()}
         />
+        </div>
       </div>
       <Separator />
       <div className="flex min-h-0 flex-1 flex-col gap-7">
+        <FollowupSetupSection title="Apply to" Icon={UsersRound}>
+          <WorkflowAutomationScopeField
+            labelId="workflow-follow-up-scope-label"
+            value={automation.activationScope}
+            invalid={showScopeRequiredError}
+            onChange={(activationScope) => {
+              automationState.setActivationScope('followups', activationScope);
+              setShowScopeRequiredError(false);
+            }}
+            currentAndFutureDescription="Schedule follow-ups still due for eligible existing conversations and after new messages."
+            currentAndFutureLabel="Current & future"
+            futureOnlyDescription="Schedule follow-ups after new eligible messages while follow-up is on."
+            futureOnlyLabel="Future only"
+          />
+        </FollowupSetupSection>
         <FollowupSetupSection title="Audience" Icon={UsersRound}>
           <WorkflowFollowupAudienceField compact />
         </FollowupSetupSection>

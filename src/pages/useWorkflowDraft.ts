@@ -9,6 +9,7 @@ import {
   removeDraftEdge,
   removeDraftNode,
   updateDraftEdge,
+  updateDraftAutomations,
   updateDraftNode,
   workflowDraftsEqual,
 } from '@/components/workflow/workflowDraftModel';
@@ -58,6 +59,9 @@ export function useWorkflowDraft(persistedGraph: WorkflowGraph) {
   const applyTemplate = useCallback((template: WorkflowTemplate) => {
     edit((current) => replaceDraftWithTemplate(current, template));
   }, [edit]);
+  const updateAutomations = useCallback((automations: WorkflowGraph['automations']) => {
+    edit((current) => updateDraftAutomations(current, automations));
+  }, [edit]);
   const applyInspector = useCallback((
     nodeId: Id<'workflowNodes'>,
     edgeId: Id<'workflowEdges'> | undefined,
@@ -90,6 +94,7 @@ export function useWorkflowDraft(persistedGraph: WorkflowGraph) {
     moveNode,
     arrange,
     applyTemplate,
+    updateAutomations,
     applyInspector,
-  }), [acceptSaved, addNode, applyInspector, applyTemplate, arrange, baseline, connectNodes, draft, isDirty, moveNode, removeEdge, removeNode, reset]);
+  }), [acceptSaved, addNode, applyInspector, applyTemplate, arrange, baseline, connectNodes, draft, isDirty, moveNode, removeEdge, removeNode, reset, updateAutomations]);
 }

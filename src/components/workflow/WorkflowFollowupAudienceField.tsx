@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { MultiSelect, type MultiSelectGroup } from '@/components/ui/multi-select';
 import { getLeadTemperatureStyle, LEAD_TEMPERATURE_TAGS } from '@/lib/leadTemperature';
 import { cn } from '@/lib/utils';
-import { useWorkflowAutomationState } from './workflowAutomationState';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
 
 function getTagDotClass(tag: string) {
   let hash = 0;

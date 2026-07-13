@@ -10,17 +10,14 @@ test.each([
   [
     './WorkflowReminderSetupNode.tsx',
     'dialogContent={<WorkflowReminderMessageDialog />}',
-    "toast.success('Reminders are now turned on.')",
   ],
   [
     './WorkflowFollowupSetupNode.tsx',
     'dialogContent={<WorkflowFollowupMessageDialog />}',
-    "toast.success('Follow-up is now turned on.')",
   ],
-])('%s guards activation and confirms successful activation', (
+])('%s guards draft activation without claiming it was saved', (
   filename,
   messageRowMarker,
-  successToast,
 ) => {
   const source = readSource(filename);
   const messageRowIndex = source.indexOf(messageRowMarker);
@@ -34,7 +31,6 @@ test.each([
   expect(source).toContain('text-destructive');
   expect(messageRowIndex).toBeGreaterThan(-1);
   expect(validationMessageIndex).toBeGreaterThan(messageRowIndex);
-  expect(source).toContain("import { toast } from 'sonner'");
-  expect(source).toContain('if (result.enabled && !enabled)');
-  expect(source).toContain(successToast);
+  expect(source).not.toContain("import { toast } from 'sonner'");
+  expect(source).not.toContain('toast.success(');
 });

@@ -1,5 +1,6 @@
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import type { WorkflowNodeKind } from '../../../shared/workflows';
+import { createInitialWorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 import type {
   LandingPreviewWorkflow,
   LandingPreviewWorkflowNode,
@@ -88,5 +89,6 @@ export function createLandingWorkflowGraph(workflow: LandingPreviewWorkflow): Wo
       createdAt: mockTimestamp,
       updatedAt: mockTimestamp,
     }) satisfies Doc<'workflowEdges'>),
+    automations: createInitialWorkflowAutomationConfigs(),
   };
 }

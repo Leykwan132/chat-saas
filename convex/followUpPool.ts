@@ -9,28 +9,12 @@ import type { Doc } from "./_generated/dataModel";
 import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
-import { buildWhatsAppTemplateSendPayload } from "./whatsappTemplateSendPayload";
-import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
+import { sendWorkflowWhatsappTemplate } from "./workflowWhatsappTemplateSender";
 
 export const followUpPool = new Workpool(
   components.followUpWorkpool,
   { maxParallelism: 3 }, // Meta Graph API rate limit safety
 );
-
-const DEFAULT_GRAPH_VERSION = "v22.0";
-
-function graphBase(): string {
-  const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
-  return `https://graph.facebook.com/${version}`;
-}
-
-function resolveAccessToken(channel: Doc<"channels">): string {
-  const token = (channel.accessToken ?? "").trim();
-  if (!token) {
-    throw new Error("WhatsApp channel has no access token. Reconnect in Channels.");
-  }
-  return token;
-}
 
 export const followUpWorker = internalAction({
   args: {
@@ -84,71 +68,25 @@ export const followUpWorker = internalAction({
     }
 
     const nextAttemptNumber = (customer.followUpAttempt ?? 0) + 1;
-    const attemptConfig = rule.attempts.find((a: any) => a.attemptNumber === nextAttemptNumber);
+    const attemptConfig = rule.attempts.find((attempt) => (
+      attempt.attemptNumber === nextAttemptNumber
+    ));
     if (!attemptConfig) {
       return { skipped: true, reason: `No configuration found for attempt number ${nextAttemptNumber}` };
     }
 
-    const token = resolveAccessToken(channel);
-    const phoneNumberId = channel.phoneNumberId?.trim();
-    if (!phoneNumberId) {
-      throw new Error("Phone number ID is missing for this channel.");
-    }
-    const rawTo = customer.contactAddress.trim() || customer.phone?.trim();
-    if (!rawTo) {
-      throw new Error(`Customer ${customer._id} has no valid contact address`);
-    }
-    const to = ensureWhatsAppRecipientPhone(rawTo);
-
-    const skipSend = process.env.SKIP_MESSAGE_TEMPLATE_SEND === "true";
-    if (skipSend) {
-      return {
-        ok: true,
-        externalId: "demo-followup-" + Math.random().toString(36).slice(2, 9),
-        templateName: attemptConfig.templateName,
-        templateLanguage: attemptConfig.templateLanguage,
-        attemptNumber: nextAttemptNumber,
-      };
-    }
-
-    const template = await buildWhatsAppTemplateSendPayload(ctx, {
+    const result = await sendWorkflowWhatsappTemplate(ctx, {
+      channel,
+      customer,
       orgId: rule.orgId,
-      channelId: rule.channelId,
-      templateName: attemptConfig.templateName,
-      templateLanguage: attemptConfig.templateLanguage,
-      customerId: customer._id,
-    });
-
-    const url = `${graphBase()}/${phoneNumberId}/messages`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+      template: {
+        name: attemptConfig.templateName,
+        language: attemptConfig.templateLanguage,
       },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "template",
-        template,
-      }),
     });
-
-    const text = await res.text();
-    let body: any = null;
-    try {
-      body = text.length ? JSON.parse(text) : null;
-    } catch {}
-
-    if (!res.ok) {
-      const errMsg = body?.error?.message ?? `HTTP ${res.status}: ${text}`;
-      throw new Error(errMsg);
-    }
-
-    const externalId = body?.messages?.[0]?.id;
     return {
       ok: true,
-      externalId,
+      externalId: result.providerMessageId,
       templateName: attemptConfig.templateName,
       templateLanguage: attemptConfig.templateLanguage,
       attemptNumber: nextAttemptNumber,
@@ -240,6 +178,7 @@ export const followUpComplete = internalMutation({
           timestampMs: Date.now(),
           assignedAgentId: rule.agentId,
           authorUserId: rule.createdBy,
+          workflowAutomationSource: 'workflowFollowUp',
         });
 
         // Log the followup_sent event
@@ -272,7 +211,7 @@ export const followUpComplete = internalMutation({
       const hasMoreAttempts = nextAttempt < rule.maxAttempts;
 
       if (hasMoreAttempts) {
-        await ctx.runMutation(internal.whatsappFollowUp.scheduleNextAttempt as any, {
+        await ctx.runMutation(internal.whatsappFollowUp.scheduleNextAttempt, {
           customerId,
           ruleId,
           nextAttemptNumber: nextAttempt + 1,

@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { createInitialWorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 import type { WorkflowNodeKind } from '../../../shared/workflows';
 import {
   getWorkflowCleanupPositions,
@@ -62,6 +63,7 @@ function workflowGraph(
       createdAt: 0,
       updatedAt: 0,
     } as Doc<'workflows'>,
+    automations: createInitialWorkflowAutomationConfigs(),
     nodes,
     edges,
   };

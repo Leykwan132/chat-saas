@@ -18,6 +18,15 @@ import {
   workflowTemplateUsageTable,
   workflowTemplateUsageTotalsTable,
 } from "./workflowTemplateUsageSchema";
+import {
+  workflowFollowUpAutomationConfigValidator,
+  workflowReminderAutomationConfigValidator,
+} from "./workflowAutomationValidators";
+import {
+  workflowAutomationRunsTable,
+  workflowAutomationOperationsTable,
+  workflowFollowUpTimersTable,
+} from "./workflowAutomationSchema";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -387,12 +396,17 @@ export default defineSchema({
     userId: v.string(),
     name: v.string(),
     layoutOrientation: v.optional(workflowLayoutOrientationValidator),
+    reminderAutomation: v.optional(workflowReminderAutomationConfigValidator),
+    followUpAutomation: v.optional(workflowFollowUpAutomationConfigValidator),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
+  workflowAutomationRuns: workflowAutomationRunsTable,
+  workflowAutomationOperations: workflowAutomationOperationsTable,
+  workflowFollowUpTimers: workflowFollowUpTimersTable,
   workflowTemplateUsage: workflowTemplateUsageTable,
   workflowTemplateUsageTotals: workflowTemplateUsageTotalsTable,
   workflowNodes: defineTable({
@@ -855,6 +869,10 @@ export default defineSchema({
     mediaUrl: v.optional(v.string()),
     messageKind: v.optional(messageKindValidator),
     broadcastPresentation: v.optional(broadcastPresentationValidator),
+    workflowAutomationSource: v.optional(v.union(
+      v.literal("workflowReminder"),
+      v.literal("workflowFollowUp"),
+    )),
     status: v.optional(
       v.union(
         v.literal("queued"),
@@ -1329,6 +1347,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_teamId_and_startAt", ["teamId", "startAt"])
+    .index("by_agentId_and_startAt", ["agentId", "startAt"])
     .index("by_agentId_and_bookingSource_and_startAt", [
       "agentId",
       "bookingSource",

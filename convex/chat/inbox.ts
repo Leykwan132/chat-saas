@@ -48,6 +48,7 @@ import {
   ensureWorkflowForAgent,
   workflowHasHumanEscalationNode,
 } from "../workflowCore";
+import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -217,8 +218,9 @@ export const internalPersistHumanReply = internalMutation({
           });
 
     const now = Date.now();
+    let latestMessageId: Id<"messages"> | undefined;
     for (const img of images) {
-      await ctx.db.insert("messages", {
+      latestMessageId = await ctx.db.insert("messages", {
         orgId: conv.orgId,
         conversationId: conv._id,
         channelId: conv.channelId,
@@ -238,7 +240,7 @@ export const internalPersistHumanReply = internalMutation({
     }
 
     if (trimmed.length > 0) {
-      await ctx.db.insert("messages", {
+      latestMessageId = await ctx.db.insert("messages", {
         orgId: conv.orgId,
         conversationId: conv._id,
         channelId: conv.channelId,
@@ -280,6 +282,7 @@ export const internalPersistHumanReply = internalMutation({
     await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
       conversationId: conv._id,
     });
+    if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
       agentMessageId,
@@ -326,7 +329,7 @@ export const internalPersistAiReply = internalMutation({
     const orgAddress =
       channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
 
-    await ctx.db.insert("messages", {
+    const messageId = await ctx.db.insert("messages", {
       orgId: conv.orgId,
       conversationId: conv._id,
       channelId: conv.channelId,
@@ -366,6 +369,7 @@ export const internalPersistAiReply = internalMutation({
     await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
       conversationId: conv._id,
     });
+    await handleWorkflowFollowUpOutbound(ctx, messageId);
 
     return replyPersistResult(
       agentMessageId,
@@ -409,11 +413,12 @@ export const internalPersistAiMediaReply = internalMutation({
       now,
       { inboxAttachments },
     );
+    let latestMessageId: Id<"messages"> | undefined;
 
     for (let i = 0; i < mediaItems.length; i++) {
       const item = mediaItems[i]!;
       const externalId = args.externalIds[i] ?? undefined;
-      await ctx.db.insert("messages", {
+      latestMessageId = await ctx.db.insert("messages", {
         orgId: conv.orgId,
         conversationId: conv._id,
         channelId: conv.channelId,
@@ -449,6 +454,7 @@ export const internalPersistAiMediaReply = internalMutation({
     await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
       conversationId: conv._id,
     });
+    if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
       agentMessageId,

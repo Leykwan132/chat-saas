@@ -20,6 +20,26 @@ function graph(): WorkflowGraph {
       { _id: nodeId, _creationTime: 2, workflowId, kind: 'sendText', title: 'Send message', positionX: 260, positionY: 0, createdAt: 2, updatedAt: 2 },
     ],
     edges: [{ _id: 'edge' as Id<'workflowEdges'>, _creationTime: 3, workflowId, sourceNodeId: startId, targetNodeId: nodeId, createdAt: 3, updatedAt: 3 }],
+    automations: {
+      reminder: {
+        enabled: false,
+        revision: 0,
+        selections: {},
+        timingOptionIds: ['threeHoursBeforeAppointment'],
+        customTimingOptions: [],
+      },
+      followUp: {
+        enabled: false,
+        revision: 0,
+        selections: {},
+        audienceFilters: ['lead:Hot', 'lead:Warm'],
+        startAfterHours: 24,
+        intervalHours: 24,
+        maxAttempts: 3,
+        messageStrategy: 'same',
+        attemptTemplates: [],
+      },
+    },
   };
 }
 
@@ -42,4 +62,12 @@ test('draft operations are immutable and removal bridges the graph', () => {
   expect(updated.nodes.find((node) => node._id === original.nodes[1]._id)?.title).toBe('Welcome');
   const removed = removeDraftNode(updated, original.nodes[1]._id);
   expect(removed.edges.some((edge) => edge.sourceNodeId === original.nodes[0]._id && edge.targetNodeId === newNode?._id)).toBe(true);
+});
+
+test('draft equality includes reminder and follow-up configuration', () => {
+  const first = graph();
+  const second = createWorkflowDraft(first);
+  second.automations.reminder.enabled = true;
+  second.automations.reminder.activationScope = 'futureOnly';
+  expect(workflowDraftsEqual(first, second)).toBe(false);
 });

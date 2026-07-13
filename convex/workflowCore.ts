@@ -5,6 +5,7 @@ import {
   workflowNodeDescription,
   workflowNodeTitle,
 } from "../shared/workflows";
+import { resolveWorkflowAutomationConfigs } from "./workflowAutomationConfig";
 
 type DbCtx = QueryCtx | MutationCtx;
 
@@ -55,7 +56,7 @@ export async function getWorkflowGraph(
 ) {
   const nodes = await listWorkflowNodes(ctx, workflow._id);
   const edges = await listWorkflowEdges(ctx, workflow._id);
-  return { workflow, nodes, edges };
+  return { workflow, nodes, edges, automations: resolveWorkflowAutomationConfigs(workflow) };
 }
 
 export async function workflowHasHumanEscalationNode(

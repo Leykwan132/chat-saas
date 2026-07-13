@@ -2,6 +2,7 @@ import type { Edge, Node } from '@xyflow/react';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import type { AddableWorkflowNodeKind, WorkflowNodeKind } from '../../../shared/workflows';
 import type { WorkflowAutomationStepKey } from './workflowTriggerOptions';
+import type { WorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 
 export const AUTOMATION_WORKFLOW_EDGE_PREFIX = 'automation:';
 
@@ -9,6 +10,7 @@ export type WorkflowGraph = {
   workflow: Doc<'workflows'>;
   nodes: Doc<'workflowNodes'>[];
   edges: Doc<'workflowEdges'>[];
+  automations: WorkflowAutomationConfigs;
 };
 
 export type WorkflowLayoutOrientation = 'horizontal' | 'vertical';

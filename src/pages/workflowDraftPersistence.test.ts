@@ -12,10 +12,39 @@ test('maps persisted and draft nodes to one atomic save payload', () => {
       { _id: 'draft-node:new' as Id<'workflowNodes'>, workflowId, kind: 'sendFile', title: 'File', positionX: 10, positionY: 20 } as Doc<'workflowNodes'>,
     ],
     edges: [{ _id: 'draft-edge:new' as Id<'workflowEdges'>, workflowId, sourceNodeId: 'persisted' as Id<'workflowNodes'>, targetNodeId: 'draft-node:new' as Id<'workflowNodes'> } as Doc<'workflowEdges'>],
+    automations: {
+      reminder: {
+        enabled: true,
+        activationScope: 'currentAndFuture',
+        revision: 2,
+        selections: {},
+        timingOptionIds: ['threeHoursBeforeAppointment'],
+        customTimingOptions: [],
+        template: {
+          key: 'appointment_reminder\ten_US',
+          name: 'appointment_reminder',
+          language: 'en_US',
+          category: 'UTILITY',
+          components: [],
+        },
+      },
+      followUp: {
+        enabled: false,
+        revision: 4,
+        selections: {},
+        audienceFilters: ['lead:Hot'],
+        startAfterHours: 24,
+        intervalHours: 24,
+        maxAttempts: 3,
+        messageStrategy: 'same',
+        attemptTemplates: [],
+      },
+    },
   } satisfies WorkflowGraph;
   expect(toWorkflowDraftSavePayload(graph)).toEqual({
     baselineUpdatedAt: 42,
     layoutOrientation: 'vertical',
+    automations: graph.automations,
     nodes: [
       expect.objectContaining({ clientId: 'persisted', persistedNodeId: 'persisted' }),
       expect.objectContaining({ clientId: 'draft-node:new', persistedNodeId: undefined }),

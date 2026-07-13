@@ -1,29 +1,19 @@
 # Snapshot
-- 2026-07-13 [USER] Requested a `message-circle-question-mark` support control beside dark mode, opening a HoverCard with fully clickable Report a bug, WhatsApp support, and email support cards.
-- 2026-07-13 [USER] Support-hover-card placement is limited to the authenticated dashboard and workspace headers.
-- 2026-07-13 [CODE] Dashboard and workspace desktop headers now show a support control before dark mode; its HoverCard contains fully clickable bug-report, WhatsApp, and email cards.
-- 2026-07-13 [CODE] Direct email and regular-dialer phone links now appear immediately below the Contact our team card; the footer and left contact-page introduction contain no direct contact details.
-- 2026-07-13 [USER] Direct contact placement is below the Contact our team card on the contact page.
-- 2026-07-13 [CODE] Workflow editing is draft-first: graph changes, Cleanup, orientation, node edits, and template replacement remain local until the top-right Save is clicked.
-- 2026-07-13 [CODE] Dirty workflow drafts show a background-free red Discard changes action with a trash icon and enabled pointer cursor plus a dark semantic-primary Save control; discarding restores the latest persisted graph without deleting it.
-- 2026-07-13 [CODE] Discard changes also clears transient workflow selection/template state and requests the existing animated canvas fit so the restored saved graph fits the available screen.
-- 2026-07-13 [CODE] Templates uses a 33.6rem maximum-width HoverCard beside Cleanup and presents Q&A, Real Estate, and E-commerce Product as fully clickable, keyboard-operable horizontal Cards with a trailing `Try now` arrow cue.
-- 2026-07-13 [CODE] Every starter-template action edge has an intentional customer-routing condition label and detail specific to Q&A, property, or product intent; templates contain neither forced `sendText` nor redundant `answerQuestions` actions.
-- 2026-07-13 [CODE] All templates include send file, booking, and escalation; Real Estate and E-commerce also include send image; property booking is explicitly a property viewing.
-- 2026-07-13 [CODE] Applied starter templates use the standard automatic horizontal Cleanup layout with size-aware spacing, then fit the graph to the screen.
-- 2026-07-13 [CODE] New template media nodes require the first workflow Save before images/files can be uploaded because uploads require persisted Convex node IDs.
-- 2026-07-13 [CODE] Workflow Save uses one authenticated atomic Convex replacement mutation with stale-version protection, retained-node/media preservation, removed-node media cleanup, and service ownership checks.
-- 2026-07-13 [CODE] Successful template-derived workflow Saves atomically update backend-only per-agent adoption and per-template unique-agent/save totals; template clicks, Discard changes, failed/stale Saves, and the frontend expose no usage data.
-- 2026-07-13 [CODE] Leaving the workflow page with changes opens the shared unsaved-changes dialog; browser unload is also protected.
-- 2026-07-13 [CODE] Workflow reminder and follow-up message selection is transactional: only Confirm commits the pending template/configuration; dismissal preserves the prior committed selection.
-- 2026-07-13 [CODE] Workflow reminder and follow-up activation require configured messages and show success only after an actual off-to-on transition.
-- 2026-07-13 [CODE] Editable booking lifecycle supports Scheduled, Completed, Cancelled, and No-show across inbox and calendar. Source commit: `e5ebd6f1`.
-- 2026-07-12 [CODE] Combined Advanced Analytics uses one strict topics/sentiment/lead-temperature AI job per eligible conversation; workflow lead-status action is removed.
-- 2026-07-12 [CODE] Admin token reporting uses permanent aggregate-backed usage totals; Free recurring allowance is 50 credits.
-- 2026-07-11 [CODE] Public Website widget mobile viewport, keyboard, and input-lift work is integrated on `main`; design files live under `docs/superpowers/specs/2026-07-11-web-widget-mobile-*`.
-- 2026-07-04 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; code files stay under 300 LOC.
+- 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
+- 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
+- 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
+- 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
+- 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
+- 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
+- 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
+- 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
+- 2026-07-13 [TOOL] Implementation is isolated at `/private/tmp/chat-saas-workflow-automations` on `codex/workflow-automations`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
+- 2026-07-13 [TOOL] Full Vitest has 515/519 passing; the four failures match the pre-implementation baseline (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
+- 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D289 ACTIVE: Reminder and Follow-up ongoing event hooks depend on saved enabled state and eligibility only; `activatedAt` is never compared, and Future only means no reconciliation scan.
+- 2026-07-13 [USER] D288 ACTIVE: Reminder and Follow-up are independent draft-first configurations with required Current & future or Future only scope, separate Workpools, durable Work IDs/runs, bounded cancellation, and separate paginated history dialogs.
 - 2026-07-13 [USER] D287 ACTIVE: The new support control appears beside dark mode only in authenticated dashboard and workspace headers, not public, blog, or legal headers.
 - 2026-07-13 [USER] D286 ACTIVE: Direct email and regular-dialer phone details live immediately below the Contact our team card in the right contact-page column.
 - 2026-07-13 [USER] D285 SUPERSEDED by D286: Direct email and phone details lived below the contact page's Enterprise/demo/support introduction.
@@ -49,15 +39,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-13 [CODE] Added the reusable authenticated-header support HoverCard with exact bug, WhatsApp, and email destinations.
-- 2026-07-13 [CODE] Placed the modular direct support contact block immediately below the Contact our team card.
-- 2026-07-13 [CODE] Implemented workflow drafts, atomic primary Save, transparent pointer-enabled Discard changes, unsaved-navigation protection, fully clickable automatically spaced starter-template cards without forced messages, explicit template conditions, backend-only saved-template adoption, and Apply-style inspector edits.
-- 2026-07-13 [CODE] Added transactional Confirm behavior for reminder and follow-up message template selection.
-- 2026-07-13 [CODE] Added reminder/follow-up activation guards and accurate activation success feedback.
-- 2026-07-13 [CODE] Integrated editable booking lifecycle status controls.
+- 2026-07-13 [CODE] Implemented separate reminder/follow-up Workpools, durable runs/timers/operations, reconciliation, cancellation, and reusable WhatsApp sending.
+- 2026-07-13 [CODE] Added booking/reschedule/status and WhatsApp inbound/outbound hooks with deduplication, one timer per conversation, source exclusions, and lead/tag eligibility.
+- 2026-07-13 [CODE] Added exact Apply to card choices, activation guards, draft Save/Reset integration, stale-save protection, and separate History dialogs.
+- 2026-07-13 [CODE] Refactored the existing standalone follow-up sender to reuse the shared WhatsApp template sender without changing its rule behavior.
+- 2026-07-13 [CODE] Implemented workflow drafts/templates, transactional message selection, and editable appointment lifecycle controls.
+- 2026-07-13 [CODE] Added authenticated header support and direct contact placement.
 - 2026-07-12 [CODE] Combined daily Advanced Analytics and removed Qualify leads workflow behavior.
 
 # Working set
+- 2026-07-13 [USER] Workflow automation implementation: `src/components/workflow/*Automation*`, `src/pages/{useWorkflowDraft,workflowDraftPersistence}*`, `convex/workflow*Automation*`, booking/message hooks, schema/config, and focused tests.
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
 - 2026-07-13 [CODE] Contact-page direct support: `src/components/contact/DirectContactDetails.tsx`, `src/pages/ContactPage*`, `src/components/SiteFooter*`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
@@ -69,20 +60,20 @@
 - 2026-07-13 [CODE] Reminder/follow-up confirmation and activation: workflow automation setup/message modal components plus `convex/whatsappFollowUp*`.
 - 2026-07-12 [CODE] Advanced Analytics: combined analytics workflow/Workpool modules and pricing copy.
 - 2026-07-12 [CODE] Admin usage aggregates: `convex/{aggregates,triggers,adminUsageCost*}*`, `src/components/admin/*UsageCost*`.
-- 2026-07-11 [CODE] Website widget: `public/widget/v1.js`, `src/components/channels/WebWidget*`, related specs/plans.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.
+- 2026-07-13 [TOOL] Full Vitest ran 519 tests: 515 passed; the four failures exactly match the pre-implementation baseline and are outside workflow automation scope.
+- 2026-07-13 [TOOL] Isolated branch `codex/workflow-automations` created; 24 focused workflow files and 45 tests passed under Node v22.22.0 before implementation.
 - 2026-07-13 [TOOL] Dashboard support HoverCard completed a verified red-green cycle; 3 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed on Node 22. Full Vitest ran 497 tests: 493 passed and 4 unrelated existing Convex tests failed (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [CODE] Dashboard support HoverCard design committed as `284e7a82` after placeholder, consistency, scope, ambiguity, and diff checks.
 - 2026-07-13 [TOOL] Below-card contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, placement checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
-- 2026-07-13 [CODE] Footer support contacts implementation plan: `docs/superpowers/plans/2026-07-13-footer-support-contacts.md`.
-- 2026-07-13 [CODE] Footer support contacts design: `docs/superpowers/specs/2026-07-13-footer-support-contacts-design.md`.
 - 2026-07-13 [TOOL] Final discard/template refinement completed verified red-green cycles for transparent pointer styling, forced-message removal, and automatic spacing; 15 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Discard/template interactions completed three verified red-green cycles; 13 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Reset fit-view completed a verified red-green cycle; 8 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
@@ -95,4 +86,3 @@
 - 2026-07-13 [TOOL] Local app loaded without browser console warnings/errors; authenticated workflow visual interaction was unavailable in the signed-out local browser session.
 - 2026-07-13 [TOOL] Focused atomic Save integration proved graph replacement plus stale-save rejection.
 - 2026-07-13 [TOOL] All touched code files remain below 300 lines and `git diff --check` passed.
-- 2026-07-13 [CODE] Workflow drafts/templates implementation plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.

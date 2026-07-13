@@ -129,6 +129,8 @@ export function LandingAppPreviewWorkflow({
         onTemplateApply={handleReset}
         showCleanup={false}
         showTemplates={false}
+        automations={graph.automations}
+        onAutomationsChange={() => undefined}
       />
       <WorkflowInspector
         node={selectedNode}

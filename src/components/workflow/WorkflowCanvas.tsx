@@ -20,6 +20,7 @@ import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
 import type { WorkflowLayoutOrientation } from './workflowLayout';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
 import type { WorkflowTemplate } from './workflowTemplates';
+import type { WorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 import { useWorkflowCanvasView } from './useWorkflowCanvasView';
 import {
   getDeletedWorkflowEdgeIds,
@@ -57,6 +58,9 @@ type WorkflowCanvasProps = {
   arrangeLoading?: boolean;
   showCleanup?: boolean;
   showTemplates?: boolean;
+  automations: WorkflowAutomationConfigs;
+  onAutomationsChange: (automations: WorkflowAutomationConfigs) => void;
+  agentId?: Id<'agents'>;
 };
 
 function WorkflowCanvasInner({
@@ -249,7 +253,11 @@ export function WorkflowCanvas(props: WorkflowCanvasProps) {
   return (
     <div className="min-h-0 flex-1 bg-background">
       <ReactFlowProvider>
-        <WorkflowAutomationStateProvider>
+        <WorkflowAutomationStateProvider
+          configs={props.automations}
+          agentId={props.agentId}
+          onChange={props.onAutomationsChange}
+        >
           <WorkflowCanvasInner {...props} />
         </WorkflowAutomationStateProvider>
       </ReactFlowProvider>

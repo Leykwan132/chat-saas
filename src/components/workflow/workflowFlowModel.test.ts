@@ -1,6 +1,7 @@
 import { Position } from '@xyflow/react';
 import { expect, test } from 'vitest';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
+import { createInitialWorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
 import { WORKFLOW_CONDITION_EDGE_LABEL } from '../../../shared/workflows';
 import {
   WORKFLOW_EDGE_Z_INDEX,
@@ -65,6 +66,7 @@ function workflowGraph(edgeLabel?: string, edgeDetail?: string): WorkflowGraph {
       createdAt: 0,
       updatedAt: 0,
     } as Doc<'workflows'>,
+    automations: createInitialWorkflowAutomationConfigs(),
     nodes: [
       workflowNode(startNodeId, 'start', 'Message enters'),
       workflowNode(textNodeId, 'sendText', 'Send text'),

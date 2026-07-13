@@ -20,7 +20,7 @@ import {
   SearchableSelect,
   type SearchableSelectOption,
 } from '@/components/ui/searchable-select';
-import { useWorkflowAutomationState } from './workflowAutomationState';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
 import {
   createWorkflowReminderTimingOption,
   getWorkflowReminderTimingParts,

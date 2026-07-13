@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { WorkflowFollowupAudienceDialog } from './WorkflowFollowupAudienceDialog';
 import { WorkflowFollowupMessageDialog } from './WorkflowFollowupMessageDialog';
 import { WorkflowFollowupScheduleDialog } from './WorkflowFollowupScheduleDialog';
-import { useWorkflowAutomationSelection } from './workflowAutomationState';
+import { useWorkflowAutomationSelection } from './workflowAutomationContext';
 import { useWorkflowFollowupSummary } from './workflowFollowupSummary';
 import type { WorkflowAutomationStepFlowNode } from './workflowTypes';
 import {

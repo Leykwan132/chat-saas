@@ -33,6 +33,26 @@ function cloneGraph(graph: WorkflowGraph): WorkflowGraph {
         : undefined,
     })),
     edges: graph.edges.map((edge) => ({ ...edge })),
+    automations: {
+      reminder: {
+        ...graph.automations.reminder,
+        selections: { ...graph.automations.reminder.selections },
+        timingOptionIds: [...graph.automations.reminder.timingOptionIds],
+        customTimingOptions: graph.automations.reminder.customTimingOptions.map((option) => ({ ...option })),
+        template: graph.automations.reminder.template
+          ? { ...graph.automations.reminder.template }
+          : undefined,
+      },
+      followUp: {
+        ...graph.automations.followUp,
+        selections: { ...graph.automations.followUp.selections },
+        audienceFilters: [...graph.automations.followUp.audienceFilters],
+        sameTemplate: graph.automations.followUp.sameTemplate
+          ? { ...graph.automations.followUp.sameTemplate }
+          : undefined,
+        attemptTemplates: graph.automations.followUp.attemptTemplates.map((template) => ({ ...template })),
+      },
+    },
   };
 }
 
@@ -56,6 +76,7 @@ function canonicalGraph(graph: WorkflowGraph) {
       label: edge.label,
       detail: edge.detail,
     })).sort((left, right) => left.id.localeCompare(right.id)),
+    automations: graph.automations,
   };
 }
 
@@ -131,6 +152,13 @@ export function updateDraftEdge(
   };
 }
 
+export function updateDraftAutomations(
+  graph: WorkflowGraph,
+  automations: WorkflowGraph['automations'],
+) {
+  return cloneGraph({ ...graph, automations });
+}
+
 export function connectDraftNodes(
   graph: WorkflowGraph,
   sourceNodeId: Id<'workflowNodes'>,
@@ -199,6 +227,7 @@ export function arrangeDraftWorkflow(
   );
   return {
     workflow: { ...graph.workflow, layoutOrientation: orientation },
+    automations: structuredClone(graph.automations),
     nodes: graph.nodes.map((node) => {
       const position = positionByNodeId.get(node._id);
       return position ? { ...node, positionX: position.x, positionY: position.y } : { ...node };

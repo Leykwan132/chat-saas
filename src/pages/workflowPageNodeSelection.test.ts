@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { createInitialWorkflowAutomationConfigs } from '../../shared/workflowAutomations';
 import { findNewWorkflowNodeId } from './workflowPageNodeSelection';
 import type { WorkflowGraph } from '@/components/workflow/workflowTypes';
 
@@ -58,6 +59,7 @@ function workflowGraph(
       createdAt: 0,
       updatedAt: 0,
     } as Doc<'workflows'>,
+    automations: createInitialWorkflowAutomationConfigs(),
     nodes,
     edges,
   };
