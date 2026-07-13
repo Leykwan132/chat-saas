@@ -13,11 +13,13 @@ import '@xyflow/react/dist/style.css';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { WorkflowBackground } from './WorkflowBackground';
 import { WorkflowToolbar } from './WorkflowToolbar';
+import { WorkflowDraftActions } from './WorkflowDraftActions';
 import { WorkflowAutomationStateProvider } from './workflowAutomationState';
 import { workflowCanvasEdgeTypes, workflowCanvasNodeTypes } from './workflowCanvasConfig';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
 import type { WorkflowLayoutOrientation } from './workflowLayout';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
+import type { WorkflowTemplate } from './workflowTemplates';
 import { useWorkflowCanvasView } from './useWorkflowCanvasView';
 import {
   getDeletedWorkflowEdgeIds,
@@ -44,13 +46,17 @@ type WorkflowCanvasProps = {
   layoutOrientation: WorkflowLayoutOrientation;
   onCleanup: () => void;
   onArrange: () => void;
+  isDirty: boolean;
+  isSaving: boolean;
+  onSave: () => void;
   onReset: () => void;
+  onTemplateApply: (template: WorkflowTemplate) => void;
   arrangeFocusRequest?: number;
   cleanupDisabled?: boolean;
   arrangeDisabled?: boolean;
   arrangeLoading?: boolean;
-  resetDisabled?: boolean;
   showCleanup?: boolean;
+  showTemplates?: boolean;
 };
 
 function WorkflowCanvasInner({
@@ -64,12 +70,16 @@ function WorkflowCanvasInner({
   onCleanup,
   onArrange,
   onReset,
+  isDirty,
+  isSaving,
+  onSave,
+  onTemplateApply,
   arrangeFocusRequest = 0,
   cleanupDisabled = false,
   arrangeDisabled = false,
   arrangeLoading = false,
-  resetDisabled = false,
   showCleanup = true,
+  showTemplates = true,
 }: WorkflowCanvasProps) {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string>();
   const {
@@ -219,12 +229,18 @@ function WorkflowCanvasInner({
         onViewChange={handleViewChange}
         onCleanup={onCleanup}
         onArrange={onArrange}
-        onReset={onReset}
+        onTemplateApply={onTemplateApply}
         cleanupDisabled={cleanupDisabled || activeView !== 'messageHandling'}
         arrangeDisabled={arrangeDisabled || activeView !== 'messageHandling'}
         arrangeLoading={arrangeLoading}
-        resetDisabled={resetDisabled}
         showCleanup={showCleanup}
+        showTemplates={showTemplates}
+      />
+      <WorkflowDraftActions
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={onSave}
+        onReset={onReset}
       />
     </ReactFlow>
   );

@@ -1,36 +1,38 @@
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
-const sourcePath = fileURLToPath(new URL('./WorkflowPage.tsx', import.meta.url));
-const source = readFileSync(sourcePath, 'utf8');
+const source = readFileSync(new URL('./WorkflowPage.tsx', import.meta.url), 'utf8');
 
-test('workflow cleanup follows the current layout orientation without toggling it', () => {
+test('workflow cleanup keeps the current draft orientation and refocuses the canvas', () => {
   const cleanupHandler = source.match(/const handleCleanup = \(\) => \{[\s\S]*?\n {2}\};/);
-
-  expect(cleanupHandler?.[0]).toContain('arrangeWorkflow(layoutOrientation)');
-  expect(cleanupHandler?.[0]).not.toContain("arrangeWorkflow('vertical')");
-  expect(cleanupHandler?.[0]).not.toContain('setLayoutOrientation');
-  expect(cleanupHandler?.[0]).not.toContain('setArrangeFocusRequest');
+  expect(cleanupHandler?.[0]).toContain('workflowDraft.arrange(layoutOrientation)');
+  expect(cleanupHandler?.[0]).toContain('setArrangeFocusRequest');
+  expect(cleanupHandler?.[0]).not.toContain('getNextWorkflowLayoutOrientation');
 });
 
-test('workflow arrange toggles orientation and requests a canvas refocus after success', () => {
+test('workflow arrange toggles the draft orientation and refocuses the canvas', () => {
   const arrangeHandler = source.match(/const handleArrange = \(\) => \{[\s\S]*?\n {2}\};/);
-
-  expect(source).toContain('arrangeFocusRequest');
-  expect(arrangeHandler?.[0]).toContain('setLayoutOrientation');
+  expect(arrangeHandler?.[0]).toContain('getNextWorkflowLayoutOrientation(layoutOrientation)');
   expect(arrangeHandler?.[0]).toContain('setArrangeFocusRequest');
   expect(source).toContain('arrangeFocusRequest={arrangeFocusRequest}');
 });
 
-test('workflow page passes current layout orientation into flow nodes', () => {
-  expect(source).toContain('workflowGraphToFlow(graph,');
-  expect(source).toContain('layoutOrientation');
+test('workflow reset restores the saved draft and fits it to the canvas', () => {
+  const resetHandler = source.match(/const handleReset = \(\) => \{[\s\S]*?\n {2}\};/);
+  expect(resetHandler?.[0]).toContain('workflowDraft.reset()');
+  expect(resetHandler?.[0]).toContain('setArrangeFocusRequest');
 });
 
-test('workflow page hydrates and saves layout orientation from the workflow document', () => {
-  expect(source).toContain('graph?.workflow.layoutOrientation');
-  expect(source).toContain('updateLayoutOrientation');
-  expect(source).toContain('const nextOrientation = getNextWorkflowLayoutOrientation(layoutOrientation)');
-  expect(source).toContain('arrangeWorkflow(nextOrientation');
+test('workflow page renders and saves the local draft orientation', () => {
+  expect(source).toContain('workflowGraphToFlow(draft,');
+  expect(source).toContain("draft.workflow.layoutOrientation ?? 'horizontal'");
+  expect(source).toContain('...toWorkflowDraftSavePayload(draft)');
+});
+
+test('workflow page records template origin only on successful Save and clears it on Reset', () => {
+  expect(source).toContain('templateId: appliedTemplateId');
+  expect(source).toContain('setAppliedTemplateId(setAppliedWorkflowTemplate(template.id))');
+  expect(source.match(/setAppliedTemplateId\(clearAppliedWorkflowTemplate\(\)\)/g)).toHaveLength(2);
+  const catchBlock = source.match(/catch \(error\) \{[\s\S]*?\n {4}\} finally/);
+  expect(catchBlock?.[0]).not.toContain('setAppliedTemplateId');
 });

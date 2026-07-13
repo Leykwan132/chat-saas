@@ -1,298 +1,186 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigate, useParams } from 'react-router';
+import { Navigate, useBlocker, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import type { Id } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import type { AddableWorkflowNodeKind } from '../../shared/workflows';
 import { Permission } from '../../shared/permissions';
-import { usePermissions } from '@/hooks/usePermissions';
+import { UnsavedChangesDialog } from '@/components/agent-setup/UnsavedChangesDialog';
 import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
 import { WorkflowInspector } from '@/components/workflow/WorkflowInspector';
 import { WorkflowPageSkeleton } from '@/components/workflow/WorkflowPageSkeleton';
 import { workflowGraphToFlow } from '@/components/workflow/workflowFlowModel';
-import { getNextWorkflowLayoutOrientation, getWorkflowCleanupPositions, type WorkflowLayoutOrientation } from '@/components/workflow/workflowLayout';
-import { getChangedWorkflowCleanupPositions } from './workflowPageArrangement';
-import { findNewWorkflowNodeId } from './workflowPageNodeSelection';
+import { getNextWorkflowLayoutOrientation } from '@/components/workflow/workflowLayout';
+import type { WorkflowTemplate } from '@/components/workflow/workflowTemplates';
+import type { WorkflowGraph } from '@/components/workflow/workflowTypes';
+import { usePermissions } from '@/hooks/usePermissions';
+import { toWorkflowDraftSavePayload } from './workflowDraftPersistence';
+import { useWorkflowDraft } from './useWorkflowDraft';
+import {
+  clearAppliedWorkflowTemplate,
+  setAppliedWorkflowTemplate,
+} from './workflowTemplateDraftState';
 
-export default function WorkflowPage() {
-  const { agentId } = useParams();
-  const typedAgentId = agentId as Id<'agents'> | undefined;
-  const { can, isLoading: permissionsLoading } = usePermissions();
-  const canManage = can(Permission.AGENTS_MANAGE);
+type WorkflowEditorProps = {
+  agentId: Id<'agents'>;
+  persistedGraph: WorkflowGraph;
+};
+
+function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<Id<'workflowNodes'>>();
   const [isSaving, setIsSaving] = useState(false);
-  const [isCleaningUp, setIsCleaningUp] = useState(false);
-  const [layoutOrientationOverride, setLayoutOrientationOverride] = useState<{ workflowId: Id<'workflows'>; value: WorkflowLayoutOrientation }>();
   const [arrangeFocusRequest, setArrangeFocusRequest] = useState(0);
-  const [isResetting, setIsResetting] = useState(false);
-  const graph = useQuery(
-    api.workflows.getForAgent,
-    typedAgentId && canManage ? { agentId: typedAgentId } : 'skip',
-  );
-  const persistedLayoutOrientation = graph?.workflow.layoutOrientation ?? 'horizontal';
-  const layoutOrientation = graph && layoutOrientationOverride?.workflowId === graph.workflow._id
-    ? layoutOrientationOverride.value
-    : persistedLayoutOrientation;
-  const ensureWorkflow = useMutation(api.workflows.ensureForAgent);
-  const addNodeAfter = useMutation(api.workflows.addNodeAfter);
-  const connectNodes = useMutation(api.workflows.connectNodes);
-  const updateNode = useMutation(api.workflows.updateNode);
-  const updateEdgeCondition = useMutation(api.workflows.updateEdgeCondition);
-  const updateAllowedBookingServices = useMutation(api.workflowAppointmentServices.updateAllowedServices);
-  const updateLayoutOrientation = useMutation(api.workflowLayout.updateOrientation);
-  const removeNode = useMutation(api.workflows.removeNode);
-  const removeEdge = useMutation(api.workflows.removeEdge);
-  const resetWorkflow = useMutation(api.workflowReset.resetForAgent);
+  const [appliedTemplateId, setAppliedTemplateId] = useState<WorkflowTemplate['id']>();
+  const saveWorkflow = useMutation(api.workflowDraftSave.save);
+  const workflowDraft = useWorkflowDraft(persistedGraph);
+  const { draft, isDirty } = workflowDraft;
 
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) => isDirty && currentLocation.pathname !== nextLocation.pathname,
+  );
   useEffect(() => {
-    if (!typedAgentId || permissionsLoading || !canManage) return;
-    if (graph !== null) return;
-    void ensureWorkflow({ agentId: typedAgentId }).catch((error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not create workflow');
-    });
-  }, [canManage, ensureWorkflow, graph, permissionsLoading, typedAgentId]);
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!isDirty) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
 
-  const handleAddNode = useCallback(
-    async (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => {
-      if (!typedAgentId) return;
-      setSelectedNodeId(undefined);
-      const toastId = toast.loading('Creating node…');
-      try {
-        const nextGraph = await addNodeAfter({
-          agentId: typedAgentId,
-          sourceNodeId: nodeId,
-          kind,
-        });
-        if (graph) {
-          setSelectedNodeId(findNewWorkflowNodeId(graph, nextGraph, nodeId, kind));
-        }
-        toast.success('Node created', { id: toastId });
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Could not add node', {
-          id: toastId,
-        });
-      }
-    },
-    [addNodeAfter, graph, typedAgentId],
+  const handleAddNode = useCallback((nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => {
+    workflowDraft.addNode(nodeId, kind);
+    setSelectedNodeId(undefined);
+  }, [workflowDraft]);
+  const handleRemoveNode = useCallback((nodeId: Id<'workflowNodes'>) => {
+    workflowDraft.removeNode(nodeId);
+    setSelectedNodeId(undefined);
+  }, [workflowDraft]);
+  const layoutOrientation = draft.workflow.layoutOrientation ?? 'horizontal';
+  const flow = useMemo(
+    () => workflowGraphToFlow(draft, handleAddNode, handleRemoveNode, selectedNodeId, layoutOrientation),
+    [draft, handleAddNode, handleRemoveNode, layoutOrientation, selectedNodeId],
   );
-  const handleRemoveNode = useCallback(
-    async (nodeId: Id<'workflowNodes'>) => {
-      if (!typedAgentId) return;
-      setIsSaving(true);
-      const toastId = toast.loading('Deleting node…');
-      try {
-        await removeNode({ agentId: typedAgentId, nodeId });
-        setSelectedNodeId(undefined);
-        toast.success('Node removed', { id: toastId });
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Could not remove node', {
-          id: toastId,
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    },
-    [removeNode, typedAgentId],
+  const selectedNode = useMemo(
+    () => draft.nodes.find((node) => node._id === selectedNodeId),
+    [draft, selectedNodeId],
   );
-  const flow = useMemo(() => {
-    if (!graph) return { nodes: [], edges: [] };
-    return workflowGraphToFlow(graph, handleAddNode, handleRemoveNode, selectedNodeId, layoutOrientation);
-  }, [graph, handleAddNode, handleRemoveNode, layoutOrientation, selectedNodeId]);
-  const selectedNode = useMemo(() => {
-    if (!graph || !selectedNodeId) return undefined;
-    return graph.nodes.find((node) => node._id === selectedNodeId);
-  }, [graph, selectedNodeId]);
   const selectedConditionEdge = useMemo(() => {
-    if (!graph || !selectedNodeId || selectedNode?.kind === 'start') return undefined;
-    return graph.edges.find((edge) => edge.targetNodeId === selectedNodeId);
-  }, [graph, selectedNode?.kind, selectedNodeId]);
-  const handleUpdatePosition = async (
-    nodeId: Id<'workflowNodes'>,
-    position: { x: number; y: number },
-  ) => {
-    if (!typedAgentId) return;
-    try {
-      await updateNode({
-        agentId: typedAgentId,
-        nodeId,
-        positionX: position.x,
-        positionY: position.y,
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not move node');
-    }
-  };
-  const handleConnectNodes = async (
-    sourceNodeId: Id<'workflowNodes'>,
-    targetNodeId: Id<'workflowNodes'>,
-  ) => {
-    if (!typedAgentId) return;
-    try {
-      await connectNodes({ agentId: typedAgentId, sourceNodeId, targetNodeId });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not connect nodes');
-    }
-  };
-  const handleRemoveEdge = async (edgeId: Id<'workflowEdges'>) => {
-    if (!typedAgentId) return;
-    const toastId = toast.loading('Deleting edge…');
-    try {
-      await removeEdge({ agentId: typedAgentId, edgeId });
-      toast.success('Edge removed', { id: toastId });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not remove edge', {
-        id: toastId,
-      });
-    }
-  };
-  const arrangeWorkflow = async (
-    orientation: WorkflowLayoutOrientation,
-    onSuccess?: () => void,
-  ) => {
-    if (!typedAgentId || !graph) return;
-    setIsCleaningUp(true);
-    try {
-      const positions = getChangedWorkflowCleanupPositions(
-        graph,
-        getWorkflowCleanupPositions(graph, orientation),
-      );
-      for (const { nodeId, position } of positions) {
-        await updateNode({
-          agentId: typedAgentId,
-          nodeId,
-          positionX: position.x,
-          positionY: position.y,
-        });
-      }
-      await updateLayoutOrientation({
-        agentId: typedAgentId,
-        layoutOrientation: orientation,
-      });
-      onSuccess?.();
-      toast.success(`Workflow arranged ${orientation}`);
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not arrange workflow');
-    } finally {
-      setIsCleaningUp(false);
-    }
-  };
-  const handleCleanup = () => {
-    void arrangeWorkflow(layoutOrientation);
-  };
-  const handleArrange = () => {
-    const nextOrientation = getNextWorkflowLayoutOrientation(layoutOrientation);
-    void arrangeWorkflow(nextOrientation, () => {
-      if (graph) {
-        setLayoutOrientationOverride({
-          workflowId: graph.workflow._id,
-          value: nextOrientation,
-        });
-      }
-      setArrangeFocusRequest((request) => request + 1);
-    });
-  };
-  const handleReset = async () => {
-    if (!typedAgentId) return;
-    setIsResetting(true);
-    const toastId = toast.loading('Resetting workflow…');
-    try {
-      await resetWorkflow({ agentId: typedAgentId });
-      setSelectedNodeId(undefined);
-      toast.success('Workflow reset', { id: toastId });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not reset workflow', {
-        id: toastId,
-      });
-    } finally {
-      setIsResetting(false);
-    }
-  };
-  const handleSaveNode = async (values: {
-    name: string;
-    description: string;
-    conditionName?: string;
-    conditionDetail?: string;
-    allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
-  }) => {
-    if (!typedAgentId || !selectedNodeId) return;
+    if (!selectedNodeId || selectedNode?.kind === 'start') return undefined;
+    return draft.edges.find((edge) => edge.targetNodeId === selectedNodeId);
+  }, [draft, selectedNode?.kind, selectedNodeId]);
+
+  const handleSave = async () => {
+    if (!isDirty || isSaving) return;
     setIsSaving(true);
+    const toastId = toast.loading('Saving workflow…');
     try {
-      const {
-        allowedAppointmentServiceIds,
-        conditionName,
-        conditionDetail,
-        name,
-        description,
-      } = values;
-      await updateNode({
-        agentId: typedAgentId,
-        nodeId: selectedNodeId,
-        title: name,
-        description,
+      const savedGraph = await saveWorkflow({
+        agentId,
+        ...toWorkflowDraftSavePayload(draft),
+        templateId: appliedTemplateId,
       });
-      if (selectedConditionEdge && conditionName !== undefined) {
-        await updateEdgeCondition({
-          agentId: typedAgentId,
-          edgeId: selectedConditionEdge._id,
-          label: conditionName,
-          detail: conditionDetail,
-        });
-      }
-      if (allowedAppointmentServiceIds !== undefined) {
-        await updateAllowedBookingServices({
-          agentId: typedAgentId,
-          nodeId: selectedNodeId,
-          serviceIds: allowedAppointmentServiceIds,
-        });
-      }
+      workflowDraft.acceptSaved(savedGraph);
+      setAppliedTemplateId(clearAppliedWorkflowTemplate());
       setSelectedNodeId(undefined);
-      toast.success('Saved');
+      toast.success('Workflow saved', { id: toastId });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not save node');
+      toast.error(error instanceof Error ? error.message : 'Could not save workflow', { id: toastId });
     } finally {
       setIsSaving(false);
     }
   };
-  const handleRemoveSelectedNode = () => {
-    if (!selectedNodeId) return;
-    void handleRemoveNode(selectedNodeId);
+  const handleReset = () => {
+    workflowDraft.reset();
+    setAppliedTemplateId(clearAppliedWorkflowTemplate());
+    setSelectedNodeId(undefined);
+    setArrangeFocusRequest((value) => value + 1);
   };
-  if (!typedAgentId) return null;
-  if (!permissionsLoading && !canManage) {
-    return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
-  }
-  if (permissionsLoading || graph === undefined || graph === null) {
-    return <WorkflowPageSkeleton />;
-  }
+  const handleTemplateApply = (template: WorkflowTemplate) => {
+    workflowDraft.applyTemplate(template);
+    setAppliedTemplateId(setAppliedWorkflowTemplate(template.id));
+    setSelectedNodeId(undefined);
+    setArrangeFocusRequest((value) => value + 1);
+    toast.success(`${template.name} replaced the current workflow draft`);
+  };
+  const handleCleanup = () => {
+    workflowDraft.arrange(layoutOrientation);
+    setArrangeFocusRequest((value) => value + 1);
+  };
+  const handleArrange = () => {
+    workflowDraft.arrange(getNextWorkflowLayoutOrientation(layoutOrientation));
+    setArrangeFocusRequest((value) => value + 1);
+  };
+  const handleApplyInspector = (values: Parameters<typeof workflowDraft.applyInspector>[2]) => {
+    if (!selectedNodeId) return;
+    workflowDraft.applyInspector(selectedNodeId, selectedConditionEdge?._id, values);
+    setSelectedNodeId(undefined);
+  };
+
   return (
     <div className="relative flex h-full min-h-0 overflow-hidden bg-background">
       <WorkflowCanvas
         nodes={flow.nodes}
         edges={flow.edges}
         onSelectNode={setSelectedNodeId}
-        onNodeMoved={handleUpdatePosition}
-        onNodesConnected={handleConnectNodes}
-        onEdgeRemoved={handleRemoveEdge}
+        onNodeMoved={workflowDraft.moveNode}
+        onNodesConnected={workflowDraft.connectNodes}
+        onEdgeRemoved={workflowDraft.removeEdge}
         layoutOrientation={layoutOrientation}
         onCleanup={handleCleanup}
         onArrange={handleArrange}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onSave={() => void handleSave()}
         onReset={handleReset}
+        onTemplateApply={handleTemplateApply}
         arrangeFocusRequest={arrangeFocusRequest}
-        cleanupDisabled={isCleaningUp}
-        arrangeDisabled={isCleaningUp}
-        arrangeLoading={isCleaningUp}
-        resetDisabled={isResetting || (graph.nodes.length === 1 && graph.edges.length === 0)}
       />
       <WorkflowInspector
-        agentId={typedAgentId}
+        agentId={agentId}
         node={selectedNode}
         conditionEdge={selectedConditionEdge}
-        isSaving={isSaving}
-        onSave={handleSaveNode}
-        onRemove={handleRemoveSelectedNode}
+        isSaving={false}
+        onSave={handleApplyInspector}
+        onRemove={() => selectedNodeId && handleRemoveNode(selectedNodeId)}
         onClose={() => setSelectedNodeId(undefined)}
+      />
+      <UnsavedChangesDialog
+        open={blocker.state === 'blocked'}
+        onOpenChange={(open) => !open && blocker.reset?.()}
+        onKeepEditing={() => blocker.reset?.()}
+        onDiscard={() => {
+          handleReset();
+          blocker.proceed?.();
+        }}
       />
     </div>
   );
+}
+
+export default function WorkflowPage() {
+  const { agentId } = useParams();
+  const typedAgentId = agentId as Id<'agents'> | undefined;
+  const { can, isLoading: permissionsLoading } = usePermissions();
+  const canManage = can(Permission.AGENTS_MANAGE);
+  const persistedGraph = useQuery(
+    api.workflows.getForAgent,
+    typedAgentId && canManage ? { agentId: typedAgentId } : 'skip',
+  );
+  const ensureWorkflow = useMutation(api.workflows.ensureForAgent);
+
+  useEffect(() => {
+    if (!typedAgentId || permissionsLoading || !canManage || persistedGraph !== null) return;
+    void ensureWorkflow({ agentId: typedAgentId }).catch((error) => {
+      toast.error(error instanceof Error ? error.message : 'Could not create workflow');
+    });
+  }, [canManage, ensureWorkflow, permissionsLoading, persistedGraph, typedAgentId]);
+
+  if (!typedAgentId) return null;
+  if (!permissionsLoading && !canManage) return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
+  if (permissionsLoading || persistedGraph === undefined || persistedGraph === null) {
+    return <WorkflowPageSkeleton />;
+  }
+  return <WorkflowEditor key={persistedGraph.workflow._id} agentId={typedAgentId} persistedGraph={persistedGraph} />;
 }

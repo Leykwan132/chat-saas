@@ -2,7 +2,6 @@ import {
   Columns3,
   LoaderCircle,
   Maximize2,
-  RotateCcw,
   Rows3,
   WandSparkles,
   ZoomIn,
@@ -16,6 +15,8 @@ import {
   type WorkflowCanvasView,
 } from './workflowCanvasViews';
 import type { WorkflowLayoutOrientation } from './workflowLayout';
+import type { WorkflowTemplate } from './workflowTemplates';
+import { WorkflowTemplateHoverCard } from './WorkflowTemplateHoverCard';
 
 type WorkflowToolbarProps = {
   activeView: WorkflowCanvasView;
@@ -23,12 +24,12 @@ type WorkflowToolbarProps = {
   onViewChange: (view: WorkflowCanvasView) => void;
   onCleanup: () => void;
   onArrange: () => void;
-  onReset: () => void;
+  onTemplateApply: (template: WorkflowTemplate) => void;
   cleanupDisabled?: boolean;
   arrangeDisabled?: boolean;
   arrangeLoading?: boolean;
-  resetDisabled?: boolean;
   showCleanup?: boolean;
+  showTemplates?: boolean;
 };
 
 export function WorkflowToolbar({
@@ -37,12 +38,12 @@ export function WorkflowToolbar({
   onViewChange,
   onCleanup,
   onArrange,
-  onReset,
+  onTemplateApply,
   cleanupDisabled = false,
   arrangeDisabled = false,
   arrangeLoading = false,
-  resetDisabled = false,
   showCleanup = true,
+  showTemplates = true,
 }: WorkflowToolbarProps) {
   const { fitView, zoomIn, zoomOut } = useReactFlow();
   const ArrangeIcon = arrangeLoading
@@ -89,6 +90,7 @@ export function WorkflowToolbar({
               Cleanup
             </Button>
           ) : null}
+          {showTemplates ? <WorkflowTemplateHoverCard onReplace={onTemplateApply} /> : null}
           <Button
             type="button"
             variant="ghost"
@@ -101,17 +103,6 @@ export function WorkflowToolbar({
               className={cn(arrangeLoading && 'animate-spin')}
             />
             {arrangeLabel}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            disabled={resetDisabled}
-            onClick={onReset}
-            className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-          >
-            <RotateCcw data-icon="inline-start" />
-            Reset
           </Button>
         </div>
       </Panel>

@@ -5,7 +5,7 @@ import { expect, test } from 'vitest';
 const sourcePath = fileURLToPath(new URL('./WorkflowToolbar.tsx', import.meta.url));
 const source = readFileSync(sourcePath, 'utf8');
 
-test('workflow toolbar exposes a toggle-style horizontal or vertical button before reset', () => {
+test('workflow toolbar exposes a toggle-style horizontal or vertical button', () => {
   expect(source).toContain('layoutOrientation');
   expect(source).toContain('onArrange');
   expect(source).toContain('LoaderCircle');
@@ -17,5 +17,4 @@ test('workflow toolbar exposes a toggle-style horizontal or vertical button befo
   expect(source).not.toContain('Arrange {arrangeLabel}');
   expect(source).not.toContain('aria-pressed={layoutOrientation ===');
   expect(source).not.toContain("layoutOrientation === 'vertical' && 'border-border bg-secondary");
-  expect(source.indexOf('{arrangeLabel}')).toBeLessThan(source.indexOf('Reset\n'));
 });

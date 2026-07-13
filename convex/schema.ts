@@ -14,6 +14,10 @@ import {
   broadcastPresentationValidator,
   messageKindValidator,
 } from "./broadcastMessageValidators";
+import {
+  workflowTemplateUsageTable,
+  workflowTemplateUsageTotalsTable,
+} from "./workflowTemplateUsageSchema";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -389,6 +393,8 @@ export default defineSchema({
     .index("by_agentId", ["agentId"])
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
+  workflowTemplateUsage: workflowTemplateUsageTable,
+  workflowTemplateUsageTotals: workflowTemplateUsageTotalsTable,
   workflowNodes: defineTable({
     workflowId: v.id("workflows"),
     kind: workflowNodeKindValidator,

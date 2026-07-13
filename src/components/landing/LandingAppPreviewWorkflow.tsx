@@ -123,7 +123,12 @@ export function LandingAppPreviewWorkflow({
         onCleanup={handleReset}
         onArrange={handleArrange}
         onReset={handleReset}
+        isDirty={false}
+        isSaving={false}
+        onSave={handleReset}
+        onTemplateApply={handleReset}
         showCleanup={false}
+        showTemplates={false}
       />
       <WorkflowInspector
         node={selectedNode}
