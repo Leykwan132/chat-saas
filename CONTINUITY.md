@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to reduce only the workflow History modal rounding and place only its empty state on a soft neutral inset panel; populated history remains unchanged.
 - 2026-07-13 [USER] Goal is to move both Reminder and Follow-up History buttons beside their Summary titles with a lightly emphasized clickable treatment.
 - 2026-07-13 [CODE] Reminder and Follow-up History actions now sit beside their Summary titles as small outline buttons and no longer appear in setup headers.
 - 2026-07-13 [TOOL] Custom reminder timing crash root cause is confirmed: sequential custom-option and timing-ID writes reuse one stale config snapshot, so the second write can drop `customTimingOptions`; no fix has been applied yet.
@@ -23,6 +24,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D298 ACTIVE: Workflow History uses a local `rounded-2xl` dialog override and a bordered `rounded-xl bg-muted/60` empty panel with tighter vertical padding; populated history stays unchanged.
 - 2026-07-13 [USER] D297 ACTIVE: Reminder and Follow-up History actions move from setup headers to the right side of Summary headers using the existing small outline button with icon and label.
 - 2026-07-13 [USER] D296 ACTIVE: Shared Reminder and Follow-up defaults use `futureOnly`; resolver normalization supplies it only when stored scope is missing and preserves explicit scopes without rewriting stored documents.
 - 2026-07-13 [USER] D295 ACTIVE: The Summary reminder notice uses semantic `bg-background` for a white light-mode surface and theme-correct dark mode; all other notice styling remains unchanged.
@@ -67,6 +69,7 @@
 - 2026-07-13 [CODE] Reduced Apply to label size/weight and replaced pill-shaped corners with a modest connected radius.
 
 # Working set
+- 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
 - 2026-07-13 [CODE] Workflow History placement: `src/components/workflow/{WorkflowAutomationHistoryDialog.test,WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowFollowupSetupNode,WorkflowFollowupSummaryNode}*` and `docs/superpowers/{specs,plans}/2026-07-13-workflow-summary-history-button*`.
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
 - 2026-07-13 [CODE] Contact-page direct support: `src/components/contact/DirectContactDetails.tsx`, `src/pages/ContactPage*`, `src/components/SiteFooter*`.
@@ -78,7 +81,6 @@
 - 2026-07-13 [CODE] Final discard/template refinement plan: `docs/superpowers/plans/2026-07-13-workflow-discard-template-refinement.md`.
 - 2026-07-13 [CODE] Reminder/follow-up confirmation and activation: workflow automation setup/message modal components plus `convex/whatsappFollowUp*`.
 - 2026-07-12 [CODE] Advanced Analytics: combined analytics workflow/Workpool modules and pricing copy.
-- 2026-07-12 [CODE] Admin usage aggregates: `convex/{aggregates,triggers,adminUsageCost*}*`, `src/components/admin/*UsageCost*`.
 
 # Open questions
 - 2026-07-13 [USER] UNCONFIRMED: The paused custom-timing fix still needs a decision on automatic recovery of already affected saved timing IDs versus requiring reselection.
