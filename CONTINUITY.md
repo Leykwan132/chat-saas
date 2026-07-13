@@ -1,4 +1,7 @@
 # Snapshot
+- 2026-07-13 [USER] Requested a `message-circle-question-mark` support control beside dark mode, opening a HoverCard with fully clickable Report a bug, WhatsApp support, and email support cards.
+- 2026-07-13 [USER] Support-hover-card placement is limited to the authenticated dashboard and workspace headers.
+- 2026-07-13 [CODE] Dashboard and workspace desktop headers now show a support control before dark mode; its HoverCard contains fully clickable bug-report, WhatsApp, and email cards.
 - 2026-07-13 [CODE] Direct email and regular-dialer phone links now appear immediately below the Contact our team card; the footer and left contact-page introduction contain no direct contact details.
 - 2026-07-13 [USER] Direct contact placement is below the Contact our team card on the contact page.
 - 2026-07-13 [CODE] Workflow editing is draft-first: graph changes, Cleanup, orientation, node edits, and template replacement remain local until the top-right Save is clicked.
@@ -21,6 +24,7 @@
 - 2026-07-04 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; code files stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D287 ACTIVE: The new support control appears beside dark mode only in authenticated dashboard and workspace headers, not public, blog, or legal headers.
 - 2026-07-13 [USER] D286 ACTIVE: Direct email and regular-dialer phone details live immediately below the Contact our team card in the right contact-page column.
 - 2026-07-13 [USER] D285 SUPERSEDED by D286: Direct email and phone details lived below the contact page's Enterprise/demo/support introduction.
 - 2026-07-13 [USER] D284 SUPERSEDED by D285: The shared site footer used a compact stacked Support group beneath copyright with native `mailto:` and `tel:` actions.
@@ -45,15 +49,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Added the reusable authenticated-header support HoverCard with exact bug, WhatsApp, and email destinations.
 - 2026-07-13 [CODE] Placed the modular direct support contact block immediately below the Contact our team card.
 - 2026-07-13 [CODE] Implemented workflow drafts, atomic primary Save, transparent pointer-enabled Discard changes, unsaved-navigation protection, fully clickable automatically spaced starter-template cards without forced messages, explicit template conditions, backend-only saved-template adoption, and Apply-style inspector edits.
 - 2026-07-13 [CODE] Added transactional Confirm behavior for reminder and follow-up message template selection.
 - 2026-07-13 [CODE] Added reminder/follow-up activation guards and accurate activation success feedback.
 - 2026-07-13 [CODE] Integrated editable booking lifecycle status controls.
 - 2026-07-12 [CODE] Combined daily Advanced Analytics and removed Qualify leads workflow behavior.
-- 2026-07-12 [CODE] Added aggregate-backed Admin token totals and reconciled the shared database.
 
 # Working set
+- 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
 - 2026-07-13 [CODE] Contact-page direct support: `src/components/contact/DirectContactDetails.tsx`, `src/pages/ContactPage*`, `src/components/SiteFooter*`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
@@ -71,6 +76,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Dashboard support HoverCard completed a verified red-green cycle; 3 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed on Node 22. Full Vitest ran 497 tests: 493 passed and 4 unrelated existing Convex tests failed (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
+- 2026-07-13 [CODE] Dashboard support HoverCard design committed as `284e7a82` after placeholder, consistency, scope, ambiguity, and diff checks.
 - 2026-07-13 [TOOL] Below-card contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, placement checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
@@ -89,5 +96,3 @@
 - 2026-07-13 [TOOL] Focused atomic Save integration proved graph replacement plus stale-save rejection.
 - 2026-07-13 [TOOL] All touched code files remain below 300 lines and `git diff --check` passed.
 - 2026-07-13 [CODE] Workflow drafts/templates implementation plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
-- 2026-07-13 [CODE] Reminder/follow-up transactional confirmation changes are present on `main` in commit `cdb641c6`.
-- 2026-07-12 [CODE] Advanced Analytics design: `docs/superpowers/specs/2026-07-12-combined-advanced-analytics-design.md`.

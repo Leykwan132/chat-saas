@@ -9,6 +9,7 @@ import { AppSidebar } from '@/components/app-sidebar';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
+import { SupportHoverCard } from '@/components/SupportHoverCard';
 import { ModeToggle } from '@/components/mode-toggle';
 import {
   Breadcrumb,
@@ -99,7 +100,8 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-3">
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-1 md:flex">
+          <SupportHoverCard />
           <ModeToggle />
         </div>
         <UserProfileButton settingsPath={settingsPath} />
