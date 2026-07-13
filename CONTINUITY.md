@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-13 [USER] Goal is for the Summary reminder notice to use a white, theme-aware background while keeping its current icon, text, border, and placement.
 - 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
 - 2026-07-13 [CODE] The reminder eligibility callout now appears only beneath the Summary description with Lucide `Info`; setup and backend behavior are unchanged.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
@@ -16,6 +17,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-13 [USER] D295 ACTIVE: The Summary reminder notice uses semantic `bg-background` for a white light-mode surface and theme-correct dark mode; all other notice styling remains unchanged.
 - 2026-07-13 [USER] D294 ACTIVE: The reminder eligibility callout moves unchanged from the setup card to directly below the Summary description, using Lucide `Info`; behavior remains unchanged.
 - 2026-07-13 [USER] D293 ACTIVE: Reminder and Follow-up scope use a basic vertical RadioGroup; both options always show their label and description in horizontal Field rows.
 - 2026-07-13 [USER] D292 SUPERSEDED by D293: Selected-only scope descriptions used `text-[11px] leading-relaxed`.
