@@ -1,4 +1,4 @@
-import { formatTimestampInTimeZone } from '@/lib/calendarTimeUtils';
+import { formatTimestampInTimeZone } from '../../lib/calendarTimeUtils';
 
 export function formatCompactBookingSchedule(
   startAt: number,
