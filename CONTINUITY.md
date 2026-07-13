@@ -1,5 +1,6 @@
 # Snapshot
 - 2026-07-14 [USER] Goal is to reduce only the workflow History modal rounding and place only its empty state on a soft neutral inset panel; populated history remains unchanged.
+- 2026-07-14 [CODE] The shared workflow History dialog now uses `rounded-2xl`; only its Empty state uses a bordered `rounded-xl bg-muted/60` inset panel with tighter padding.
 - 2026-07-13 [USER] Goal is to move both Reminder and Follow-up History buttons beside their Summary titles with a lightly emphasized clickable treatment.
 - 2026-07-13 [CODE] Reminder and Follow-up History actions now sit beside their Summary titles as small outline buttons and no longer appear in setup headers.
 - 2026-07-13 [TOOL] Custom reminder timing crash root cause is confirmed: sequential custom-option and timing-ID writes reuse one stale config snapshot, so the second write can drop `customTimingOptions`; no fix has been applied yet.
@@ -60,13 +61,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Refined both workflow History dialogs through their shared component with tighter modal corners and a neutral empty-only panel.
 - 2026-07-13 [CODE] Moved Reminder and Follow-up History actions into their Summary title rows with the shared small outline trigger.
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
 - 2026-07-13 [CODE] Changed the Summary reminder notice from muted fill to the theme-aware background surface.
 - 2026-07-13 [CODE] Moved the reminder booked-appointments notice from setup to Summary and replaced its calendar-check icon with `Info`.
 - 2026-07-13 [CODE] Replaced the scope ToggleGroup with a basic vertical RadioGroup and labelled descriptions.
 - 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
-- 2026-07-13 [CODE] Reduced Apply to label size/weight and replaced pill-shaped corners with a modest connected radius.
 
 # Working set
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
@@ -88,6 +89,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Workflow History empty-state refinement completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Summary History relocation completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Future-only defaults completed a verified red-green cycle; 12 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Reminder notice background completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -107,4 +109,3 @@
 - 2026-07-13 [TOOL] Reset fit-view completed a verified red-green cycle; 8 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Exact 20% workflow template HoverCard width reduction passed the focused toolbar test, targeted ESLint, `git diff --check`, and LOC verification.
 - 2026-07-13 [TOOL] Backend-only template usage and compact picker passed 15 focused tests, targeted ESLint, full TypeScript build, and Convex codegen/schema deployment.
-- 2026-07-13 [TOOL] Template-card refinement passed 5 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and touched-file LOC checks.

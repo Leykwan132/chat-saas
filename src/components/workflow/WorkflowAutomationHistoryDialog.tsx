@@ -58,7 +58,7 @@ export function WorkflowAutomationHistoryDialog({
           History
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl rounded-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
@@ -67,7 +67,7 @@ export function WorkflowAutomationHistoryDialog({
         </DialogHeader>
         <ScrollArea className="max-h-[60vh]">
           {results.length === 0 ? (
-            <Empty>
+            <Empty className="rounded-xl border bg-muted/60 px-8 py-10">
               <EmptyHeader>
                 <EmptyMedia variant="icon"><History /></EmptyMedia>
                 <EmptyTitle>No history yet</EmptyTitle>
