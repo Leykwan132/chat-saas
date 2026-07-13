@@ -133,12 +133,6 @@ export function WorkflowReminderSetupNode({
         </div>
       </div>
       <Separator />
-      <div className="flex items-start gap-3 rounded-md border border-dashed border-border/80 bg-muted/50 px-3 py-3">
-        <CalendarCheck2 className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-        <p className="m-0 text-[13px] leading-relaxed text-muted-foreground">
-          Reminders will only be sent to customers with booked appointments.
-        </p>
-      </div>
       <div className="flex flex-col gap-8">
         <ReminderSetupSection title="Apply to" Icon={CalendarCheck2}>
           <WorkflowAutomationScopeField

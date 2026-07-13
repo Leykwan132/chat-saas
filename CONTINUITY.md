@@ -1,5 +1,6 @@
 # Snapshot
 - 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
+- 2026-07-13 [CODE] The reminder eligibility callout now appears only beneath the Summary description with Lucide `Info`; setup and backend behavior are unchanged.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
@@ -47,16 +48,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-13 [CODE] Moved the reminder booked-appointments notice from setup to Summary and replaced its calendar-check icon with `Info`.
 - 2026-07-13 [CODE] Replaced the scope ToggleGroup with a basic vertical RadioGroup and labelled descriptions.
 - 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
 - 2026-07-13 [CODE] Reduced Apply to label size/weight and replaced pill-shaped corners with a modest connected radius.
 - 2026-07-13 [CODE] Implemented separate reminder/follow-up Workpools, durable runs/timers/operations, reconciliation, cancellation, and reusable WhatsApp sending.
 - 2026-07-13 [CODE] Added booking/reschedule/status and WhatsApp inbound/outbound hooks with deduplication, one timer per conversation, source exclusions, and lead/tag eligibility.
 - 2026-07-13 [CODE] Added exact Apply to card choices, activation guards, draft Save/Reset integration, stale-save protection, and separate History dialogs.
-- 2026-07-13 [CODE] Refactored the existing standalone follow-up sender to reuse the shared WhatsApp template sender without changing its rule behavior.
 
 # Working set
-- 2026-07-13 [USER] Workflow automation implementation: `src/components/workflow/*Automation*`, `src/pages/{useWorkflowDraft,workflowDraftPersistence}*`, `convex/workflow*Automation*`, booking/message hooks, schema/config, and focused tests.
+- 2026-07-13 [USER] Workflow automation and reminder notice: `src/components/workflow/{WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowReminderNoticePlacement.test}*`, other `*Automation*` files, backend hooks, schema/config, and focused tests.
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
 - 2026-07-13 [CODE] Contact-page direct support: `src/components/contact/DirectContactDetails.tsx`, `src/pages/ContactPage*`, `src/components/SiteFooter*`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
@@ -74,6 +75,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-13 [TOOL] Reminder Summary notice completed a verified red-green cycle; 8 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Vertical RadioGroup scope selector passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks under Node v22.22.0.
 - 2026-07-13 [TOOL] Smaller selected-description styling passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
 - 2026-07-13 [TOOL] Scope typography/radius refinement passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
@@ -93,4 +95,3 @@
 - 2026-07-13 [TOOL] Workflow drafts/templates passed 17 focused tests across toolbar, inspector, draft model, template definitions, persistence mapping, atomic Convex Save, validation, and existing workflow behavior.
 - 2026-07-13 [TOOL] Node 22 full `bunx tsc -b` and targeted ESLint passed for all workflow draft/template files.
 - 2026-07-13 [TOOL] `bunx convex codegen` completed and generated the workflow draft Save API binding.
-- 2026-07-13 [TOOL] Local app loaded without browser console warnings/errors; authenticated workflow visual interaction was unavailable in the signed-out local browser session.

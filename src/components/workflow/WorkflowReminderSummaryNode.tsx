@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { type NodeProps } from '@xyflow/react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Info } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -83,6 +83,12 @@ export function WorkflowReminderSummaryNode({
         </SummaryHighlight>{' '}
         the appointment.
       </p>
+      <div className="flex items-start gap-3 rounded-md border border-dashed border-border/80 bg-muted/50 px-3 py-3">
+        <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+        <p className="m-0 text-[13px] leading-relaxed text-muted-foreground">
+          Reminders will only be sent to customers with booked appointments.
+        </p>
+      </div>
       <Separator />
       <div className="flex flex-col gap-2 text-xs">
         <SummaryRow
