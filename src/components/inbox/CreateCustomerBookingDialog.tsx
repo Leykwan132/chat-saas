@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
-import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
@@ -10,10 +9,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
-import { TimeSelectInput } from '@/components/TimeSelectInput';
+import {
+  ManualBookingScheduleField,
+  type ManualBookingScheduleFeedback,
+} from './ManualBookingScheduleField';
 import {
   buildManualBookingCollectedFields,
+  defaultManualBookingEndTime,
   getManualBookingSelection,
   manualBookingCustomerFields,
   type ManualBookingCollectedFields,
@@ -42,11 +44,13 @@ export function CreateCustomerBookingDialog({
   const createBooking = useMutation(api.appointmentBooking.manualBooking.create);
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [time, setTime] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [fields, setFields] = useState<ManualBookingCollectedFields>({});
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
+  const endTimeCustomizedRef = useRef(false);
   const effectiveServiceId = serviceId || options?.services[0]?.serviceId || '';
   const effectiveFields = Object.keys(fields).length > 0
     ? fields
@@ -57,11 +61,24 @@ export function CreateCustomerBookingDialog({
       };
   const service = options?.services.find((item) => item.serviceId === effectiveServiceId);
   const selection = service
-    ? getManualBookingSelection(effectiveServiceId, date, time, service.timeZone)
-    : null;
-  const selectionAvailable = selection !== null
+    ? getManualBookingSelection(effectiveServiceId, date, startTime, endTime, service.timeZone)
+    : { kind: 'incomplete' as const };
+  const selectionAvailable = selection.kind === 'ready'
     && availability.kind === 'available'
     && availability.key === selection.key;
+  const scheduleFeedback: ManualBookingScheduleFeedback = selection.kind === 'invalid'
+    ? { kind: 'invalid', message: selection.message }
+    : selection.kind === 'ready'
+        && availability.kind !== 'idle'
+        && availability.key === selection.key
+      ? availability.kind === 'checking'
+        ? { kind: 'checking' }
+        : availability.kind === 'available'
+          ? { kind: 'available' }
+          : availability.kind === 'conflict'
+            ? { kind: 'conflict', message: availability.message }
+            : { kind: 'idle' }
+      : { kind: 'idle' };
 
   const updateField = (key: string, value: string | number | boolean) => {
     setFields((current) => ({
@@ -73,14 +90,21 @@ export function CreateCustomerBookingDialog({
   const runAvailabilityCheck = async (
     nextServiceId: string,
     nextDate: string,
-    nextTime: string,
+    nextStartTime: string,
+    nextEndTime: string,
   ) => {
     const requestId = ++availabilityRequestRef.current;
     const nextService = options?.services.find((item) => item.serviceId === nextServiceId);
     const nextSelection = nextService
-      ? getManualBookingSelection(nextServiceId, nextDate, nextTime, nextService.timeZone)
-      : null;
-    if (nextSelection === null) {
+      ? getManualBookingSelection(
+          nextServiceId,
+          nextDate,
+          nextStartTime,
+          nextEndTime,
+          nextService.timeZone,
+        )
+      : { kind: 'incomplete' as const };
+    if (nextSelection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
@@ -90,6 +114,7 @@ export function CreateCustomerBookingDialog({
         conversationId,
         serviceId: nextServiceId as Id<'appointmentServices'>,
         startAt: nextSelection.startAt,
+        endAt: nextSelection.endAt,
       });
       if (availabilityRequestRef.current !== requestId) return;
       setAvailability(result.available
@@ -103,14 +128,15 @@ export function CreateCustomerBookingDialog({
   };
 
   const handleCreate = async () => {
-    if (!effectiveServiceId || selection === null || !selectionAvailable) return;
+    if (!effectiveServiceId || selection.kind !== 'ready' || !selectionAvailable) return;
     setBusy(true);
     try {
       await createBooking({
         conversationId,
         serviceId: effectiveServiceId as Id<'appointmentServices'>,
-        collectedFields: buildManualBookingCollectedFields(effectiveFields, date, time),
+        collectedFields: buildManualBookingCollectedFields(effectiveFields, date, startTime),
         startAt: selection.startAt,
+        endAt: selection.endAt,
       });
       toast.success('Booking created');
       onOpenChange(false);
@@ -136,42 +162,42 @@ export function CreateCustomerBookingDialog({
             <div className="grid gap-2">
               <Label>Service</Label>
               <Select value={effectiveServiceId} onValueChange={(value) => {
+                const nextService = options.services.find((item) => item.serviceId === value);
+                const nextEndTime = nextService
+                  ? defaultManualBookingEndTime(startTime, nextService.durationMinutes)
+                  : '';
                 setServiceId(value);
-                void runAvailabilityCheck(value, date, time);
+                setEndTime(nextEndTime);
+                endTimeCustomizedRef.current = false;
+                void runAvailabilityCheck(value, date, startTime, nextEndTime);
               }}>
                 <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>{options.services.map((item) => <SelectItem key={item.serviceId} value={item.serviceId}>{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <CalendarDatePickerField
-              label="Booking Date"
-              value={date}
-              onChange={(value) => {
+            <ManualBookingScheduleField
+              date={date}
+              startTime={startTime}
+              endTime={endTime}
+              feedback={scheduleFeedback}
+              onDateChange={(value) => {
                 setDate(value);
-                void runAvailabilityCheck(effectiveServiceId, value, time);
+                void runAvailabilityCheck(effectiveServiceId, value, startTime, endTime);
+              }}
+              onStartTimeChange={(value) => {
+                const nextEndTime = !endTimeCustomizedRef.current && service
+                  ? defaultManualBookingEndTime(value, service.durationMinutes)
+                  : endTime;
+                setStartTime(value);
+                setEndTime(nextEndTime);
+                void runAvailabilityCheck(effectiveServiceId, date, value, nextEndTime);
+              }}
+              onEndTimeChange={(value) => {
+                endTimeCustomizedRef.current = true;
+                setEndTime(value);
+                void runAvailabilityCheck(effectiveServiceId, date, startTime, value);
               }}
             />
-            <TimeSelectInput
-              label="Booking Time"
-              value={time}
-              onChange={(value) => {
-                setTime(value);
-                void runAvailabilityCheck(effectiveServiceId, date, value);
-              }}
-            />
-            {availability.kind === 'checking' ? (
-              <p className="-mt-2 text-xs text-muted-foreground">Checking availability…</p>
-            ) : availability.kind === 'available' && availability.key === selection?.key ? (
-              <p className="-mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
-                <Check className="size-3.5 shrink-0" aria-hidden="true" />
-                Slot is available.
-              </p>
-            ) : availability.kind === 'conflict' && availability.key === selection?.key ? (
-              <p className="-mt-2 flex items-center gap-1.5 text-xs text-destructive">
-                <X className="size-3.5 shrink-0" aria-hidden="true" />
-                {availability.message}
-              </p>
-            ) : null}
             {manualBookingCustomerFields(service?.fields ?? []).map((field) => (
               <div key={field.key} className="grid gap-2">
                 <Label>{field.label}</Label>

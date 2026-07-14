@@ -4,7 +4,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { logConversationEvent } from "../conversationLogs";
-import { generateSlots } from "./availability";
+import { resolveAvailableInterval } from "./availability";
 import {
   assertAppointmentBookingManage,
   listActiveBookingServicesForAgent,
@@ -42,17 +42,23 @@ async function resolveManualBookingSlot(
     conversation: Doc<"conversations">;
     teamId: Id<"teams">;
     startAt: number;
+    endAt: number;
   },
 ) {
-  const slots = await generateSlots(ctx, {
+  return await resolveAvailableInterval(ctx, {
     service: args.service,
     conversation: args.conversation,
     teamId: args.teamId,
-    rangeStartAt: args.startAt,
-    rangeEndAt: args.startAt + args.service.durationMinutes * 60_000,
-    limit: 1,
+    startAt: args.startAt,
+    endAt: args.endAt,
   });
-  return slots.find((slot) => slot.startAt === args.startAt) ?? null;
+}
+
+function validateManualBookingInterval(startAt: number, endAt: number) {
+  if (endAt <= startAt) throw new Error("End time must be after start time.");
+  if (endAt - startAt > 24 * 60 * 60 * 1000) {
+    throw new Error("Booking duration cannot exceed 24 hours.");
+  }
 }
 
 export const getCreateOptions = query({
@@ -81,8 +87,10 @@ export const checkAvailability = mutation({
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
     startAt: v.number(),
+    endAt: v.number(),
   },
   handler: async (ctx, args) => {
+    validateManualBookingInterval(args.startAt, args.endAt);
     const { conversation, agent, team } = await loadManualBookingScope(ctx, args.conversationId);
     const service = await loadService(ctx, args.serviceId);
     if (service.agentId !== agent._id || !service.isActive) {
@@ -93,6 +101,7 @@ export const checkAvailability = mutation({
       conversation,
       teamId: team._id,
       startAt: args.startAt,
+      endAt: args.endAt,
     });
     if (slot === null) {
       return {
@@ -110,8 +119,10 @@ export const create = mutation({
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
     startAt: v.number(),
+    endAt: v.number(),
   },
   handler: async (ctx, args) => {
+    validateManualBookingInterval(args.startAt, args.endAt);
     const { conversation, agent, team } = await loadManualBookingScope(ctx, args.conversationId);
     const service = await loadService(ctx, args.serviceId);
     if (service.agentId !== agent._id || !service.isActive) {
@@ -126,6 +137,7 @@ export const create = mutation({
       conversation,
       teamId: team._id,
       startAt: args.startAt,
+      endAt: args.endAt,
     });
     if (selectedSlot === null) throw new Error("That slot is no longer available.");
     const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);

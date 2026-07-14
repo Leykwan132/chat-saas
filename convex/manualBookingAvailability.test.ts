@@ -9,7 +9,8 @@ const modules = import.meta.glob("./**/*.ts");
 test("manual booking checks and revalidates the exact selected slot", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "manual-booking-owner";
-  const startAt = Date.UTC(2026, 6, 14, 9, 0, 0);
+  const startAt = Date.UTC(2026, 6, 14, 9, 11, 0);
+  const endAt = Date.UTC(2026, 6, 14, 10, 26, 0);
   const fixture = await t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
@@ -87,6 +88,7 @@ test("manual booking checks and revalidates the exact selected slot", async () =
     conversationId: fixture.conversationId,
     serviceId: fixture.serviceId,
     startAt,
+    endAt,
   };
 
   await expect(authed.mutation(
@@ -100,7 +102,7 @@ test("manual booking checks and revalidates the exact selected slot", async () =
       teamId: fixture.teamId,
       title: "Existing booking",
       startAt,
-      endAt: startAt + 30 * 60_000,
+      endAt,
       timeZone: "UTC",
       status: "confirmed",
       createdBy: fixture.userId,
@@ -129,6 +131,11 @@ test("manual booking checks and revalidates the exact selected slot", async () =
   });
   await expect(authed.mutation(api.appointmentBooking.manualBooking.create, {
     ...selection,
-    collectedFields: { date: "2026-07-14", time: "9:00 AM" },
+    collectedFields: { date: "2026-07-14", time: "9:11 AM" },
   })).rejects.toThrow("That slot is no longer available.");
+
+  await expect(authed.mutation(
+    api.appointmentBooking.manualBooking.checkAvailability,
+    { ...selection, endAt: startAt },
+  )).rejects.toThrow("End time must be after start time.");
 });

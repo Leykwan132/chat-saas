@@ -249,3 +249,34 @@ export async function generateSlots(
   }
   return sortSlotsWithPreferredTime(slots, args.service).slice(0, args.limit);
 }
+
+export async function resolveAvailableInterval(
+  ctx: MutationCtx,
+  args: {
+    service: Doc<"appointmentServices">;
+    conversation: Doc<"conversations">;
+    teamId: Id<"teams">;
+    startAt: number;
+    endAt: number;
+  },
+): Promise<BookingSlot | null> {
+  if (args.endAt <= args.startAt) return null;
+  const entries = await loadRoster(ctx, args.service.agentId);
+  const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
+  const assignee = await chooseAssigneeForSlot(ctx, {
+    service: args.service,
+    conversation: args.conversation,
+    teamId: args.teamId,
+    entries,
+    startAt: args.startAt - bufferMs,
+    endAt: args.endAt + bufferMs,
+  });
+  if (assignee?.user === undefined || assignee.user === null) return null;
+  return {
+    startAt: args.startAt,
+    endAt: args.endAt,
+    assignedUserId: assignee.user._id,
+    assignedWorkosUserId: assignee.schedule.workosUserId,
+    assignedDisplayName: displayNameForUser(assignee.user),
+  };
+}
