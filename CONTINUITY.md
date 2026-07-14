@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [USER] Goal is for Calendar staff, Conversation Details staff, and AI booking creation to trigger one shared `Booking created` function that prepares reminder Workpool scheduling after persistence.
+- 2026-07-14 [USER] Goal is for Calendar and Inbox staff mutations to delegate to one shared `createStaffBooking` function, then for staff and AI creation to trigger one shared `handleBookingCreated` function that prepares reminder Workpool scheduling.
 - 2026-07-14 [USER] Goal is to simplify Available Hours timezone presentation and add a control below the weekday rows that makes the weekly schedule all-day while remaining unambiguous to AI booking availability checks.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking display stored customer context with platform icons and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
@@ -26,6 +26,7 @@
 - 2026-07-14 [CODE] Available Hours Save/read-back now preserves seven `0–1440` shifts, so the editor and Availability summary receive the stored 24/7 schedule unchanged.
 
 # Decisions
+- 2026-07-14 [USER] D326 ACTIVE: Calendar and Inbox retain distinct public validation/resolution mutations but both delegate persistence, optional Inbox bookkeeping, and the booking-created event to one shared `createStaffBooking` function; AI shares only the downstream `handleBookingCreated` event.
 - 2026-07-14 [USER] D325 ACTIVE: All three booking creators call one shared `handleBookingCreated(ctx, appointmentId)` domain-event function after persistence; it logs `booking_created` and owns delegation to reminder Workpool preparation without introducing a generic event bus or console-log assertion test.
 - 2026-07-14 [USER] D324 SUPERSEDED by D325: Calendar-only reminder preparation and its `workflow_reminder_scheduling_after_booking_created` log are replaced by the shared booking-created event used by all three creators.
 - 2026-07-14 [USER] D323 ACTIVE: Supersedes D322 for Calendar title emphasis. Every Today-list event with `endAt >= now` uses full foreground and medium weight; only events whose end time has passed retain the muted title treatment.
@@ -107,7 +108,7 @@
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
 - 2026-07-13 [CODE] Workflow History placement: `src/components/workflow/{WorkflowAutomationHistoryDialog.test,WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowFollowupSetupNode,WorkflowFollowupSummaryNode}*` and `docs/superpowers/{specs,plans}/2026-07-13-workflow-summary-history-button*`.
-- 2026-07-14 [CODE] Booking-created reminder event and workflow logging: `convex/appointmentBooking/{bookAppointment,manualBooking,calendarManualBooking,bookingEvents}*`, `convex/{workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test}*`, and `docs/superpowers/specs/2026-07-14-booking-created-reminder-event-design.md`.
+- 2026-07-14 [CODE] Shared staff booking, booking-created reminder event, and workflow logging: `convex/appointmentBooking/{bookAppointment,manualBooking,calendarManualBooking,staffBooking,bookingEvents}*`, `convex/{workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test}*`, and `docs/superpowers/specs/2026-07-14-booking-created-reminder-event-design.md`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 

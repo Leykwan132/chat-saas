@@ -1,8 +1,8 @@
-# Booking Created Reminder Event Design
+# Shared Staff Booking and Booking Created Reminder Event Design
 
 ## Goal
 
-Give every successful booking creation path one shared `Booking created` event boundary that prepares eligible reminder Workpool jobs.
+Give Calendar and Inbox staff bookings one shared creation function, then give every successful staff or AI booking one shared `Booking created` event boundary that prepares eligible reminder Workpool jobs.
 
 ## Scope
 
@@ -13,6 +13,18 @@ The event applies to all three booking creators:
 - AI agent booking through `bookAppointment`
 
 Generic Calendar events, appointment updates, rescheduling, reconciliation, and cancellation remain outside this creation event.
+
+## Shared Staff Booking Function
+
+Calendar and Inbox keep separate public mutations because their authorization, customer resolution, and availability inputs differ. After resolving those inputs, both mutations call one shared function:
+
+```ts
+createStaffBooking(ctx, resolvedBookingInput)
+```
+
+The shared function owns Calendar event creation, participant creation, booked-session persistence, round-robin state, optional Inbox conversation bookkeeping, and the `Booking created` event. Its input includes the already-resolved service, team, customer, optional eligible conversation, assignee, slot, collected fields, remarks, and whether the Inbox conversation should be marked booked.
+
+Calendar can attach an eligible existing conversation for reminder delivery while setting Inbox bookkeeping off. Conversation Details passes its conversation with Inbox bookkeeping on, preserving its existing status update and conversation event. This keeps the two staff entrypoints on the same creation path without making Calendar create or mutate an Inbox conversation.
 
 ## Shared Event Function
 
@@ -28,7 +40,9 @@ The function does not duplicate reminder eligibility, candidate calculation, ded
 
 ## Data Flow
 
-Each creator first completes all booking records and related state changes. Immediately before returning success, it calls `handleBookingCreated` with the new Calendar appointment ID.
+The Calendar and Inbox mutations validate their distinct inputs, then call `createStaffBooking`. That shared function completes all booking records and the source-specific Inbox bookkeeping. Immediately before returning success, it calls `handleBookingCreated` with the new Calendar appointment ID.
+
+The AI mutation keeps its AI-specific session and confirmation flow. After completing its booking records and related state, it calls the same `handleBookingCreated` function.
 
 The shared function emits the `booking_created` console event and invokes the existing reminder runtime. The runtime loads the persisted appointment and checks the saved automation configuration, appointment status, conversation, WhatsApp channel, customer, timing candidates, and deduplication state. Every successful enqueue continues to emit `workflow_reminder_workpool_scheduled` with its Workpool ID.
 
@@ -52,7 +66,7 @@ It contains no customer identity, contact address, or message content. Existing 
 
 ## Testing
 
-- Add a contract test that verifies all three booking creation entrypoints call `handleBookingCreated` after persistence and before returning success.
+- Add a contract test that verifies Calendar and Inbox call `createStaffBooking`, the staff function calls `handleBookingCreated`, and the AI booking path calls the same event handler after persistence.
 - Keep the existing reminder runtime tests for eligibility, deduplication, and Workpool scheduling.
 - Do not add a console-log assertion test.
 - Run the affected Calendar staff, Conversation Details staff, AI booking, and reminder runtime suites.
@@ -60,6 +74,7 @@ It contains no customer identity, contact address, or message content. Existing 
 ## Non-Goals
 
 - A generic event bus, event table, queue, or schema change.
+- Combining Calendar and Inbox authorization, customer resolution, availability checking, or public mutation arguments.
 - Moving rescheduling or reconciliation through the creation event.
 - Changing reminder eligibility, timing, templates, retries, or sending behavior.
 - Creating an Inbox conversation solely to support reminders.
