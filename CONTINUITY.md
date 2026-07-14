@@ -1,8 +1,8 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to replace duplicated manual-booking date/time inputs and Find available times with Calendar controls plus an automatic single-slot conflict check.
+- 2026-07-14 [USER] Service must visually match the full-width form controls; availability appears beneath Booking Time as checking, green available, or red conflict feedback.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
-- 2026-07-14 [USER] Goal is to prevent custom reminder timing UI metadata from reaching Convex and triggering the reserved `$$typeof` field error.
-- 2026-07-14 [CODE] Custom timing selection now projects rich UI options to the strict five-field shared data shape before storing them, excluding Lucide `Icon` and `description` metadata.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
 - 2026-07-14 [USER] Goal is to fix workflow Save rejecting valid WhatsApp BODY `example.body_text_named_params` metadata while preserving strict validation.
 - 2026-07-14 [CODE] Workflow template snapshots now strictly accept and preserve named BODY examples across Convex validation, shared types, and frontend template selection types.
@@ -26,6 +26,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D304 ACTIVE: Manual booking reuses Calendar date/time controls, derives end time from service duration, checks availability whenever Service/Date/Time form a complete combination, shows inline status, blocks conflicts, and revalidates on Create; Service uses full-width consistent styling.
 - 2026-07-14 [USER] D303 ACTIVE: Conversation Details places only the permission-gated Create booking button above Assignee; the Bookings section remains below Customer details and the collapsed Booked action retains its original order.
 - 2026-07-14 [USER] D302 SUPERSEDED by D303: The entire Bookings section and Booked rail action moved before Assignee.
 - 2026-07-14 [USER] D301 ACTIVE: Custom reminder timing is projected to `amount`, `id`, `label`, `summaryLabel`, and `unit` in the shared state helper; UI options retain `Icon` and `description`, and Convex validation stays strict.
@@ -76,6 +77,7 @@
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
 
 # Working set
+- 2026-07-14 [CODE] Manual booking schedule and availability: `src/components/inbox/CreateCustomerBookingDialog*`, `src/components/calendar/CalendarDatePickerField*`, `src/components/TimeSelectInput.tsx`, `convex/appointmentBooking/manualBooking*`, and `docs/superpowers/specs/2026-07-14-manual-booking-schedule-availability-design.md`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
@@ -87,7 +89,6 @@
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 - 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
 - 2026-07-13 [CODE] Reset fit-view design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-reset-fit-view*.md`.
-- 2026-07-13 [CODE] Discard/template interaction design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-discard-template-interactions*.md`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
