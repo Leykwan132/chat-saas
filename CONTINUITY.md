@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [CODE] Calendar customer search now filters immediately across stored identity fields and identifies WhatsApp, Instagram, Messenger, Web, and imported customers with source icons.
+- 2026-07-14 [CODE] Calendar customer search now supports bounded case-insensitive substring matching across stored identity fields and identifies WhatsApp, Instagram, Messenger, Web, and imported customers with source icons.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Customer search has a normalized workspace-filtered projection, atomic write maintenance, an official resumable Convex backfill, and bounded search.
@@ -76,7 +76,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Fixed Calendar customer Combobox filtering and added channel/import source icons with bounded server-result replacement.
+- 2026-07-14 [CODE] Fixed Calendar customer substring search by projecting bounded word suffixes into the Convex search index and backfilling existing development customers.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
@@ -85,7 +85,7 @@
 - 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
-- 2026-07-14 [CODE] Simplified Calendar/Inbox booking: `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `convex/{calendarManualBooking,manualBookingAvailability,manualBookingFields}.test.ts`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
+- 2026-07-14 [CODE] Simplified Calendar/Inbox booking and substring customer search: `convex/{customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -103,7 +103,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Simplified manual booking passed a verified red-green backend cycle, Convex codegen, 23/23 final focused tests across 14 files, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks under Node v22.22.0.
+- 2026-07-14 [TOOL] Customer substring search completed a verified red-green cycle reproducing `ah` → `Sarah`; Convex codegen, the active development backfill, 10/10 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.

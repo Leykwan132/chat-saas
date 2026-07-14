@@ -8,12 +8,25 @@ import { customerSearchText } from "./customerSearch";
 const modules = import.meta.glob("./**/*.ts");
 
 test("normalizes every customer identity field into searchable text", () => {
-  expect(customerSearchText({
+  const searchText = customerSearchText({
     name: "  Jessica Lee ",
     email: "JESSICA@EXAMPLE.COM",
     phone: "+60 12-345 6789",
     contactAddress: "wa:60123456789",
-  })).toBe("jessica lee jessica@example.com +60 12-345 6789 wa:60123456789");
+  });
+  expect(searchText).toContain("jessica lee");
+  expect(searchText).toContain("jessica@example.com");
+  expect(searchText).toContain("+60 12-345 6789");
+  expect(searchText).toContain("wa:60123456789");
+});
+
+test("projects word suffixes for customer-name substring search", () => {
+  const searchTerms = customerSearchText({
+    name: "Sarah Lee",
+    contactAddress: "customer-1",
+  }).split(" ");
+
+  expect(searchTerms).toContain("ah");
 });
 
 test("searches projected customers only inside the active workspace", async () => {
@@ -39,10 +52,15 @@ test("searches projected customers only inside the active workspace", async () =
       orgId: "",
       service: "manual",
       contactAddress: "60111111111",
-      name: "Jessica Lee",
-      email: "jessica@example.com",
+      name: "Sarah Lee",
+      email: "sarah@example.com",
       phone: "+60111111111",
-      searchText: "jessica lee jessica@example.com +60111111111 60111111111",
+      searchText: customerSearchText({
+        name: "Sarah Lee",
+        email: "sarah@example.com",
+        phone: "+60111111111",
+        contactAddress: "60111111111",
+      }),
       tags: [],
       source: "manual",
       firstSeenAt: now,
@@ -54,8 +72,11 @@ test("searches projected customers only inside the active workspace", async () =
       orgId: "another-workspace",
       service: "manual",
       contactAddress: "60222222222",
-      name: "Jessica Outside",
-      searchText: "jessica outside 60222222222",
+      name: "Sarah Outside",
+      searchText: customerSearchText({
+        name: "Sarah Outside",
+        contactAddress: "60222222222",
+      }),
       tags: [],
       source: "manual",
       firstSeenAt: now,
@@ -68,7 +89,7 @@ test("searches projected customers only inside the active workspace", async () =
   const authed = t.withIdentity({ subject: workosUserId });
 
   const results = await authed.query(api.calendarEvents.searchCustomerOptions, {
-    query: "jessica",
+    query: "ah",
     limit: 25,
   });
 
@@ -104,7 +125,7 @@ test("manual customer creation writes the search projection atomically", async (
   });
 
   const customer = await t.run(async (ctx) => await ctx.db.get(customerId));
-  expect(customer?.searchText).toBe(
-    "jessica writer writer@example.com +60129999999",
-  );
+  expect(customer?.searchText).toContain("jessica writer");
+  expect(customer?.searchText).toContain("writer@example.com");
+  expect(customer?.searchText).toContain("+60129999999");
 });
