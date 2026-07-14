@@ -19,7 +19,12 @@ import {
   SCHEDULE_TIMEZONE_OPTIONS,
   type ScheduleShift,
 } from '@/lib/scheduleUtils';
-import type { ShiftDraft } from '@/lib/scheduleShiftDrafts';
+import {
+  createAllDayShiftDrafts,
+  createStandardShiftDrafts,
+  isFullWeekAllDay,
+  type ShiftDraft,
+} from '@/lib/scheduleShiftDrafts';
 
 export type { ShiftDraft } from '@/lib/scheduleShiftDrafts';
 
@@ -30,6 +35,22 @@ function endTimeOptionsForStart(
   startMinutes: number,
 ): TimeOption[] {
   return timeOptions.filter((option) => Number(option.value) > startMinutes);
+}
+
+function createDefaultShiftDraft(dayOfWeek: number, drafts: ShiftDraft[]): ShiftDraft {
+  const existingKeys = new Set(drafts.map((shift) => shift.key));
+  let sequence = 0;
+  let key = `shift-${dayOfWeek}-${DEFAULT_SHIFT_START_MINUTES}-${DEFAULT_SHIFT_END_MINUTES}-${sequence}`;
+  while (existingKeys.has(key)) {
+    sequence += 1;
+    key = `shift-${dayOfWeek}-${DEFAULT_SHIFT_START_MINUTES}-${DEFAULT_SHIFT_END_MINUTES}-${sequence}`;
+  }
+  return {
+    key,
+    dayOfWeek,
+    startMinutes: DEFAULT_SHIFT_START_MINUTES,
+    endMinutes: DEFAULT_SHIFT_END_MINUTES,
+  };
 }
 
 function TimeSlotRow({
@@ -134,17 +155,20 @@ export function WeeklyAvailabilityEditor({
   onTimezoneChange: (timezone: string) => void;
   timeOptions: TimeOption[];
 }) {
+  const available24x7 = isFullWeekAllDay(shiftDrafts);
+
+  const setAvailable24x7 = (available: boolean) => {
+    onShiftDraftsChange(
+      available ? createAllDayShiftDrafts() : createStandardShiftDrafts(),
+    );
+  };
+
   const setDayAvailable = (dayOfWeek: number, available: boolean) => {
     onShiftDraftsChange(
       available
         ? [
             ...shiftDrafts.filter((shift) => shift.dayOfWeek !== dayOfWeek),
-            {
-              key: `shift-${dayOfWeek}-${Date.now()}`,
-              dayOfWeek,
-              startMinutes: DEFAULT_SHIFT_START_MINUTES,
-              endMinutes: DEFAULT_SHIFT_END_MINUTES,
-            },
+            createDefaultShiftDraft(dayOfWeek, shiftDrafts),
           ]
         : shiftDrafts.filter((shift) => shift.dayOfWeek !== dayOfWeek),
     );
@@ -153,12 +177,7 @@ export function WeeklyAvailabilityEditor({
   const addShiftToDay = (dayOfWeek: number) => {
     onShiftDraftsChange([
       ...shiftDrafts,
-      {
-        key: `shift-${dayOfWeek}-${Date.now()}`,
-        dayOfWeek,
-        startMinutes: DEFAULT_SHIFT_START_MINUTES,
-        endMinutes: DEFAULT_SHIFT_END_MINUTES,
-      },
+      createDefaultShiftDraft(dayOfWeek, shiftDrafts),
     ]);
   };
 
@@ -194,6 +213,7 @@ export function WeeklyAvailabilityEditor({
               <div className="flex shrink-0 items-center gap-2">
                 <Switch
                   checked={isAvailable}
+                  disabled={available24x7}
                   onCheckedChange={(checked) => setDayAvailable(day.dayOfWeek, checked)}
                   aria-label={`${day.label} available`}
                 />
@@ -207,7 +227,9 @@ export function WeeklyAvailabilityEditor({
                 </span>
               </div>
 
-              {isAvailable ? (
+              {available24x7 ? (
+                <span className="py-1.5 text-sm font-medium text-foreground">24 hours</span>
+              ) : isAvailable ? (
                 <div className="flex min-w-0 flex-col gap-4">
                   {dayDrafts.map((shift, index) => (
                     <TimeSlotRow
@@ -226,10 +248,26 @@ export function WeeklyAvailabilityEditor({
             </div>
           );
         })}
+          <div className="flex items-center justify-between gap-4 pt-4">
+            <div className="flex min-w-0 flex-col gap-1">
+              <Label htmlFor="available-24x7" className="text-sm font-medium">
+                Available 24/7
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Set availability to 24 hours for all seven days.
+              </p>
+            </div>
+            <Switch
+              id="available-24x7"
+              checked={available24x7}
+              onCheckedChange={setAvailable24x7}
+              aria-label="Available 24/7"
+            />
+          </div>
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2 self-start rounded-xl border border-border bg-card p-6">
+      <div className="flex shrink-0 flex-col gap-2 self-start">
         <Label htmlFor="schedule-timezone" className="text-sm font-medium">
           Timezone
         </Label>

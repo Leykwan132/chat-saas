@@ -238,10 +238,17 @@ function ScheduleUserAvailabilitySkeleton({
                 <Skeleton className="h-8 w-[6.75rem]" />
               </div>
             ))}
+            <div className="flex items-center justify-between gap-4 pt-4">
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-5 w-9 rounded-full" />
+            </div>
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col gap-2 self-start rounded-xl border border-border bg-card p-6">
+        <div className="flex shrink-0 flex-col gap-2 self-start">
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-9 w-56" />
         </div>
