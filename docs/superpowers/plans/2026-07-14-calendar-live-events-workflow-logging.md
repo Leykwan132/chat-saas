@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Emphasize an event title while it is happening in Calendar Today and add structured Convex console logs for outbound reminder/follow-up Workpool scheduling and immediately-before-send boundaries.
+**Goal:** Use a slightly darker title for every Calendar Today event whose end time has not passed and add structured Convex console logs for outbound reminder/follow-up Workpool scheduling and immediately-before-send boundaries.
 
-**Architecture:** Put the interval rule in a small pure calendar utility and pass a minute-refreshed timestamp from `CalendarPage` into Today-list rows. Add scheduling logs directly after successful Workpool enqueue calls and send logs immediately before the existing WhatsApp provider calls, without changing persistence or delivery flow.
+**Architecture:** Put the end-time rule in a small pure calendar utility and pass a minute-refreshed timestamp from `CalendarPage` into Today-list rows. Add scheduling logs directly after successful Workpool enqueue calls and send logs immediately before the existing WhatsApp provider calls, without changing persistence or delivery flow.
 
 **Tech Stack:** React 19, TypeScript, Tailwind CSS, Convex, `@convex-dev/workpool`, Vitest, `convex-test`.
 
@@ -13,7 +13,7 @@
 - Node.js v22 is required for every test or script command.
 - Code files must remain modular; new code files must stay below 300 lines.
 - Production code contains no comments unless an unavoidable workaround requires one.
-- Live means `event.startAt <= now && now < event.endAt`.
+- Not past means `event.endAt >= now`.
 - Logs use `console.log` only and never include customer names, phone numbers, message bodies, or template parameter values.
 - Scheduling logs emit only after a Workpool enqueue succeeds and returns its Workpool ID.
 - Send logs emit only after eligibility checks and immediately before the provider call.
@@ -21,7 +21,7 @@
 
 ---
 
-### Task 1: Calendar live-event title emphasis
+### Task 1: Calendar non-past title emphasis
 
 **Files:**
 - Create: `src/lib/calendarEventTiming.ts`
@@ -30,7 +30,7 @@
 - Modify: `src/pages/CalendarPage.tsx`
 
 **Interfaces:**
-- Produces: `isCalendarEventHappening(event: { startAt: number; endAt: number }, now: number): boolean`.
+- Produces: `isCalendarEventNotPast(event: { endAt: number }, now: number): boolean`.
 - Consumes: the existing `CalendarEvent` timestamps and `cn` class utility.
 
 - [ ] **Step 1: Write failing interval and Today-list contract tests**
@@ -39,19 +39,19 @@ Create `src/lib/calendarEventTiming.test.ts`:
 
 ```ts
 import { describe, expect, test } from 'vitest';
-import { isCalendarEventHappening } from './calendarEventTiming';
+import { isCalendarEventNotPast } from './calendarEventTiming';
 
-describe('isCalendarEventHappening', () => {
+describe('isCalendarEventNotPast', () => {
   const event = { startAt: 1_000, endAt: 2_000 };
 
   test.each([
-    [999, false],
+    [999, true],
     [1_000, true],
     [1_500, true],
-    [2_000, false],
+    [2_000, true],
     [2_001, false],
-  ])('returns the interval state at %i', (now, expected) => {
-    expect(isCalendarEventHappening(event, now)).toBe(expected);
+  ])('returns whether the event has not passed at %i', (now, expected) => {
+    expect(isCalendarEventNotPast(event, now)).toBe(expected);
   });
 });
 ```
@@ -64,9 +64,9 @@ import { expect, test } from 'vitest';
 
 const source = readFileSync(new URL('./CalendarPage.tsx', import.meta.url), 'utf8');
 
-test('emphasizes only Today-list event titles while they are happening', () => {
-  expect(source).toContain('isCalendarEventHappening(event, currentTimestamp)');
-  expect(source).toContain("isHappening ? 'font-semibold text-foreground' : 'font-normal text-foreground/80'");
+test('uses darker titles for Today-list events until their end time has passed', () => {
+  expect(source).toContain('isCalendarEventNotPast(event, currentTimestamp)');
+  expect(source).toContain("isNotPast ? 'font-medium text-foreground' : 'font-normal text-foreground/80'");
   expect(source).toContain('selectedDayKey === todayKey');
   expect(source).toContain('window.setInterval');
 });
@@ -87,11 +87,8 @@ Expected: FAIL because `calendarEventTiming.ts` and the live-row integration do 
 Create `src/lib/calendarEventTiming.ts`:
 
 ```ts
-export function isCalendarEventHappening(
-  event: { startAt: number; endAt: number },
-  now: number,
-) {
-  return event.startAt <= now && now < event.endAt;
+export function isCalendarEventNotPast(event: { endAt: number }, now: number) {
+  return event.endAt >= now;
 }
 ```
 
@@ -100,7 +97,7 @@ export function isCalendarEventHappening(
 In `src/pages/CalendarPage.tsx`:
 
 ```ts
-import { isCalendarEventHappening } from '@/lib/calendarEventTiming';
+import { isCalendarEventNotPast } from '@/lib/calendarEventTiming';
 ```
 
 Add state and cleanup near the existing Calendar page state:
@@ -114,13 +111,13 @@ useEffect(() => {
 }, []);
 ```
 
-Extend `CalendarDayEventRow` with `isHappening: boolean` and render its title with:
+Extend `CalendarDayEventRow` with `isNotPast: boolean` and render its title with:
 
 ```tsx
 <span
   className={cn(
     'block truncate text-[0.9375rem]',
-    isHappening ? 'font-semibold text-foreground' : 'font-normal text-foreground/80',
+    isNotPast ? 'font-medium text-foreground' : 'font-normal text-foreground/80',
   )}
 >
   {event.title}
@@ -130,8 +127,8 @@ Extend `CalendarDayEventRow` with `isHappening: boolean` and render its title wi
 Pass the state only from the Today list:
 
 ```tsx
-isHappening={
-  selectedDayKey === todayKey && isCalendarEventHappening(event, currentTimestamp)
+isNotPast={
+  selectedDayKey === todayKey && isCalendarEventNotPast(event, currentTimestamp)
 }
 ```
 

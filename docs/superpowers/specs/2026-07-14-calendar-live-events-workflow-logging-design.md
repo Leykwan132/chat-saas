@@ -1,28 +1,28 @@
-# Calendar Live Events and Workflow Logging Design
+# Calendar Non-Past Events and Workflow Logging Design
 
 ## Goal
 
-Make an event that is currently happening easier to recognize in the Calendar Today list, and add concise Convex console output that traces when reminder and follow-up message jobs are scheduled and when those messages are about to be sent.
+Make events whose end time has not passed easier to recognize in the Calendar Today list, and add concise Convex console output that traces when reminder and follow-up message jobs are scheduled and when those messages are about to be sent.
 
 ## Scope
 
-- Emphasize only the title of an event that is happening now in the Today list.
+- Use a slightly darker title for every Today-list event whose end time has not passed.
 - Log every outbound reminder Workpool job after it has been scheduled, including jobs created immediately after an appointment is created.
 - Log every outbound follow-up Workpool job after it has been scheduled.
 - Log immediately before each workflow reminder or workflow follow-up WhatsApp template is sent to the provider.
 - Keep logs in the Convex console only. Do not add persistent records, UI history rows, or new schema fields.
 
-## Live Event Presentation
+## Non-Past Event Presentation
 
-An event is happening when its interval contains the current timestamp:
+An event has not passed while its end timestamp is at or after the current timestamp:
 
 ```ts
-event.startAt <= now && now < event.endAt
+event.endAt >= now
 ```
 
-The start boundary is inclusive and the end boundary is exclusive. An ongoing event title uses the existing foreground color at full strength with semibold weight. Upcoming titles retain the current regular, slightly muted treatment. Past-row opacity remains unchanged.
+Upcoming and ongoing event titles use the existing foreground color at full strength with medium weight. The exact end boundary is included; only events whose end time is earlier than the current timestamp use the existing regular, slightly muted treatment. Past-row opacity remains unchanged.
 
-The Today list maintains a lightweight current timestamp that refreshes once per minute so a row becomes emphasized or returns to its normal state without requiring navigation or another user action. The time comparison is isolated in a small pure calendar helper and receives the current timestamp explicitly for deterministic tests.
+The Today list maintains a lightweight current timestamp that refreshes once per minute so a row returns to its past treatment without requiring navigation or another user action. The time comparison is isolated in a small pure calendar helper and receives the current timestamp explicitly for deterministic tests.
 
 Only the Today list receives this treatment. Month-grid items, dialogs, search behavior, event ordering, and the time/duration line do not change.
 
@@ -78,8 +78,8 @@ When either Workpool action executes, the worker reloads and validates its conte
 
 ## Testing
 
-- Pure calendar tests cover before-start, exact-start, during-event, exact-end, and after-end boundaries.
-- A Calendar Today-list contract test verifies that ongoing titles receive the darker semibold classes while other title and row treatments remain intact.
+- Pure calendar tests cover upcoming, exact-start, during-event, exact-end, and after-end boundaries.
+- A Calendar Today-list contract test verifies that upcoming and ongoing titles receive the darker medium-weight classes while past title and row treatments remain intact.
 - Reminder runtime coverage verifies that appointment-triggered Workpool scheduling includes the reminder scheduling log after enqueue.
 - Follow-up runtime coverage verifies that the shared enqueue path includes the follow-up scheduling log after enqueue.
 - Worker contract coverage verifies that both before-send logs appear immediately before their respective provider calls and contain no message content or customer contact fields.

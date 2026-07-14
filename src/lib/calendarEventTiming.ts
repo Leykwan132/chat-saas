@@ -1,6 +1,3 @@
-export function isCalendarEventHappening(
-  event: { startAt: number; endAt: number },
-  now: number,
-) {
-  return event.startAt <= now && now < event.endAt;
+export function isCalendarEventNotPast(event: { endAt: number }, now: number) {
+  return event.endAt >= now;
 }

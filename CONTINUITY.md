@@ -1,6 +1,6 @@
 # Snapshot
 - 2026-07-14 [USER] Goal is to simplify Available Hours timezone presentation and add a control below the weekday rows that makes the weekly schedule all-day while remaining unambiguous to AI booking availability checks.
-- 2026-07-14 [CODE] Calendar Today titles become full-foreground semibold while their event is happening; Convex logs outbound reminder/follow-up Workpool scheduling and immediately-before-send boundaries without customer contact or message content.
+- 2026-07-14 [CODE] Calendar Today titles use full foreground and medium weight until their end time has passed; Convex logs outbound reminder/follow-up Workpool scheduling and immediately-before-send boundaries without customer contact or message content.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking display stored customer context with platform icons and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
@@ -26,7 +26,8 @@
 - 2026-07-14 [CODE] Available Hours Save/read-back now preserves seven `0–1440` shifts, so the editor and Availability summary receive the stored 24/7 schedule unchanged.
 
 # Decisions
-- 2026-07-14 [USER] D322 ACTIVE: Today-list event titles become full-foreground semibold only while `startAt <= now < endAt`; outbound reminder/follow-up scheduling logs emit after Workpool returns an ID, and send logs emit immediately before the provider call. Reminder scheduling after appointment creation must be visible; maintenance Workpool jobs and message content remain unlogged.
+- 2026-07-14 [USER] D323 ACTIVE: Supersedes D322 for Calendar title emphasis. Every Today-list event with `endAt >= now` uses full foreground and medium weight; only events whose end time has passed retain the muted title treatment.
+- 2026-07-14 [USER] D322 PARTIALLY SUPERSEDED by D323: Outbound reminder/follow-up scheduling logs emit after Workpool returns an ID, and send logs emit immediately before the provider call. Reminder scheduling after appointment creation must be visible; maintenance Workpool jobs and message content remain unlogged.
 - 2026-07-14 [USER] D321 ACTIVE: Available Hours uses an `Available 24/7` global control with supporting text `Set availability to 24 hours for all seven days.`; on sets every day to `00:00–24:00`, and off resets every day to `09:00–17:00` rather than restoring prior custom hours.
 - 2026-07-14 [USER] D320 ACTIVE: Calendar Create booking replaces customer search with the shared Inbox-style platform-icon/name/contact summary after selection and provides a small Change action that clears the selection and restores search.
 - 2026-07-14 [USER] D319 ACTIVE: Inbox Create booking preserves the stored customer's `service` and `contactAddress` in its options payload and renders the shared labeled WhatsApp/Instagram/Messenger/Web/imported icon beside the fixed customer account.
@@ -92,7 +93,7 @@
 - 2026-07-14 [CODE] Anchored both Start and End popups to their complete visible InputGroups so each dropdown exactly matches its input width and edges.
 - 2026-07-14 [CODE] Corrected the customer popup anchor from the inner text input to the complete visible InputGroup so both edges match exactly.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
-- 2026-07-14 [CODE] Implemented minute-refreshed live-event title emphasis plus `workflow_{reminder,followup}_{workpool_scheduled,sending}` console logs; appointment-created reminder scheduling is included.
+- 2026-07-14 [CODE] Implemented minute-refreshed non-past Today title emphasis plus `workflow_{reminder,followup}_{workpool_scheduled,sending}` console logs; appointment-created reminder scheduling is included.
 
 # Working set
 - 2026-07-14 [CODE] Available Hours 24/7: `src/components/WeeklyAvailabilityEditor{,.test}.ts*`, `src/pages/ScheduleUserAvailabilityPage.tsx`, `src/lib/{scheduleUtils,scheduleShiftDrafts,scheduleShiftDrafts.test,scheduleTimeOffUtils}.ts`, `convex/{leadRouting/schedules,leadRoutingSchedules.test,calendarManualBooking.test}.ts`, and `docs/superpowers/{specs/2026-07-14-available-hours-all-day-design,plans/2026-07-14-available-hours-all-day}.md`.
@@ -104,7 +105,7 @@
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
 - 2026-07-13 [CODE] Workflow History placement: `src/components/workflow/{WorkflowAutomationHistoryDialog.test,WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowFollowupSetupNode,WorkflowFollowupSummaryNode}*` and `docs/superpowers/{specs,plans}/2026-07-13-workflow-summary-history-button*`.
-- 2026-07-14 [CODE] Calendar live-event and workflow logging: `src/pages/{CalendarPage,CalendarLiveEvent.test}.tsx?`, `src/lib/calendarEventTiming*`, `convex/{workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test}*`, and `docs/superpowers/{specs/2026-07-14-calendar-live-events-workflow-logging-design,plans/2026-07-14-calendar-live-events-workflow-logging}.md`.
+- 2026-07-14 [CODE] Calendar non-past title emphasis and workflow logging: `src/pages/{CalendarPage,CalendarLiveEvent.test}.tsx?`, `src/lib/calendarEventTiming*`, `convex/{workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test}*`, and `docs/superpowers/{specs/2026-07-14-calendar-live-events-workflow-logging-design,plans/2026-07-14-calendar-live-events-workflow-logging}.md`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 
@@ -113,6 +114,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Calendar non-past title correction completed a verified red-green cycle; 6 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and new-file LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning.
 - 2026-07-14 [TOOL] Calendar live-event and workflow logging completed verified red-green cycles; 11 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning and two pre-existing synchronous-effect errors excluded from targeted lint.
 - 2026-07-14 [TOOL] Calendar selected-customer summary completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Inbox booking platform-icon data flow completed a verified red-green cycle; 7 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -132,4 +134,3 @@
 - 2026-07-14 [TOOL] Manual-booking spacing completed two verified red-green cycles; 8 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Shared time Combobox completed a verified red-green cycle; 8 focused booking tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. Live protected-dialog interaction was unavailable because the local browser session was signed out.
 - 2026-07-14 [TOOL] Flexible manual booking completed verified red-green cycles; Convex codegen, 11 focused tests, targeted ESLint, production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Manual-booking status icons completed a verified red-green cycle; focused test, targeted ESLint, `git diff --check`, and touched-file LOC checks passed under Node v22.22.0.

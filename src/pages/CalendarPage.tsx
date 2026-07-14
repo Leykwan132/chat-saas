@@ -55,7 +55,7 @@ import {
   getClientTimeZone,
   normalizeCalendarTimeZone,
 } from '@/lib/calendarTimeUtils';
-import { isCalendarEventHappening } from '@/lib/calendarEventTiming';
+import { isCalendarEventNotPast } from '@/lib/calendarEventTiming';
 import { formatOrgRoleLabel } from '../../shared/teamRoleCatalog';
 import {
   Popover,
@@ -559,13 +559,13 @@ function CalendarDayGridCell({
 
 function CalendarDayEventRow({
   event,
-  isHappening,
+  isNotPast,
   stripeColor,
   timeZone,
   onSelect,
 }: {
   event: CalendarEvent;
-  isHappening: boolean;
+  isNotPast: boolean;
   stripeColor: string;
   timeZone: string;
   onSelect: () => void;
@@ -592,8 +592,8 @@ function CalendarDayEventRow({
         <span
           className={cn(
             'block truncate text-[0.9375rem]',
-            isHappening
-              ? 'font-semibold text-foreground'
+            isNotPast
+              ? 'font-medium text-foreground'
               : 'font-normal text-foreground/80',
           )}
         >
@@ -1311,9 +1311,9 @@ export default function CalendarPage() {
                     <CalendarDayEventRow
                       key={event._id}
                       event={event}
-                      isHappening={
+                      isNotPast={
                         selectedDayKey === todayKey &&
-                        isCalendarEventHappening(event, currentTimestamp)
+                        isCalendarEventNotPast(event, currentTimestamp)
                       }
                       timeZone={displayTimeZone}
                       stripeColor={getEventAssigneeColor(event)}
