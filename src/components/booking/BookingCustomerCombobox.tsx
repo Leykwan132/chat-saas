@@ -31,14 +31,14 @@ export function BookingCustomerCombobox({
   portalContainer?: React.RefObject<HTMLElement | null>;
 }) {
   return (
-    <Combobox
+    <Combobox<BookingCustomer>
       items={customers}
       value={value}
       inputValue={inputValue}
       onInputValueChange={onInputValueChange}
       onValueChange={onValueChange}
-      itemToStringLabel={bookingCustomerLabel}
-      itemToStringValue={bookingCustomerLabel}
+      itemToStringLabel={(customer) => bookingCustomerLabel(customer)}
+      itemToStringValue={(customer) => bookingCustomerLabel(customer)}
       isItemEqualToValue={(customer, selected) => customer._id === selected._id}
       filter={(customer, query) =>
         bookingCustomerSearchText(customer).includes(query.trim().toLowerCase())

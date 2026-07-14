@@ -91,7 +91,7 @@ export function CreateBookingDialog({
                   onInputValueChange={(value) => onCustomerQueryChange?.(value)}
                   onValueChange={(value) => {
                     setSelectedCustomer(value);
-                    controller.resetCustomerFields(value);
+                    controller.resetCustomerFields();
                   }}
                   portalContainer={comboboxPortalContainerRef}
                 />
