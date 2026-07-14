@@ -10,8 +10,8 @@ const modules = import.meta.glob("./**/*.ts");
 test("creates and transitions a customer-direct Calendar booking without a conversation", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "calendar-booking-owner";
-  const startAt = Date.UTC(2026, 6, 16, 9, 15, 0);
-  const endAt = Date.UTC(2026, 6, 16, 10, 0, 0);
+  const startAt = Date.UTC(2026, 6, 16, 1, 15, 0);
+  const endAt = Date.UTC(2026, 6, 16, 2, 0, 0);
   const fixture = await t.run(async (ctx) => {
     const now = Date.now();
     const userId = await ctx.db.insert("users", {
@@ -40,15 +40,21 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.insert("userSchedules", {
+    const userScheduleId = await ctx.db.insert("userSchedules", {
       agentId,
       workosUserId,
-      mode: "manual",
+      mode: "scheduled",
       manualStatus: "available",
       timezone: "UTC",
       enabled: true,
       createdAt: now,
       updatedAt: now,
+    });
+    await ctx.db.insert("userShifts", {
+      userScheduleId,
+      dayOfWeek: 4,
+      startMinutes: 0,
+      endMinutes: 1440,
     });
     const customerId = await ctx.db.insert("customers", {
       orgId: "",
@@ -83,7 +89,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       createdAt: now,
       updatedAt: now,
     });
-    return { agentId, customerId, serviceId, teamId, userId };
+    return { agentId, customerId, serviceId, teamId, userId, userScheduleId };
   });
   const authed = t.withIdentity({ subject: workosUserId });
   const selection = {
@@ -105,7 +111,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       ...selection,
       collectedFields: {
         date: "2026-07-16",
-        time: "9:15am",
+        time: "1:15am",
       },
       remarks: "  Customer prefers the window seat.  ",
     },
@@ -135,7 +141,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     status: AppointmentBookingSessionStatus.Booked,
     collectedFields: {
       date: "2026-07-16",
-      time: "9:15am",
+      time: "1:15am",
       name: "Calendar Customer",
       phone: "+60123456789",
       email: "customer@example.com",
@@ -147,6 +153,35 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     "assigned",
     "customer",
   ]);
+
+  await expect(authed.mutation(
+    api.appointmentBooking.calendarManualBooking.checkAvailability,
+    selection,
+  )).resolves.toEqual({
+    available: false,
+    message: "That slot is no longer available.",
+  });
+
+  const timeOffStartAt = Date.UTC(2026, 6, 16, 3, 0, 0);
+  const timeOffEndAt = Date.UTC(2026, 6, 16, 3, 45, 0);
+  await t.run(async (ctx) => {
+    await ctx.db.insert("userTimeOff", {
+      userScheduleId: fixture.userScheduleId,
+      startAt: timeOffStartAt,
+      endAt: timeOffEndAt,
+    });
+  });
+  await expect(authed.mutation(
+    api.appointmentBooking.calendarManualBooking.checkAvailability,
+    {
+      ...selection,
+      startAt: timeOffStartAt,
+      endAt: timeOffEndAt,
+    },
+  )).resolves.toEqual({
+    available: false,
+    message: "That slot is no longer available.",
+  });
 
   await expect(authed.mutation(
     api.appointmentBooking.statusTransition.updateBookingStatus,
