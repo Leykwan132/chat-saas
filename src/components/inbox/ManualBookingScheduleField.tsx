@@ -1,3 +1,4 @@
+import type * as React from 'react';
 import { Check, Clock, X } from 'lucide-react';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { EditableTimeCombobox } from '@/components/EditableTimeCombobox';
@@ -14,6 +15,7 @@ export function ManualBookingScheduleField({
   startTime,
   endTime,
   feedback,
+  portalContainer,
   onDateChange,
   onStartTimeChange,
   onEndTimeChange,
@@ -22,6 +24,7 @@ export function ManualBookingScheduleField({
   startTime: string;
   endTime: string;
   feedback: ManualBookingScheduleFeedback;
+  portalContainer?: React.RefObject<HTMLElement | null>;
   onDateChange: (value: string) => void;
   onStartTimeChange: (value: string) => void;
   onEndTimeChange: (value: string) => void;
@@ -44,6 +47,7 @@ export function ManualBookingScheduleField({
           onChange={onStartTimeChange}
           ariaLabel="Start time"
           invalid={invalid}
+          portalContainer={portalContainer}
         />
         <span className="text-muted-foreground" aria-hidden="true">–</span>
         <EditableTimeCombobox
@@ -51,6 +55,7 @@ export function ManualBookingScheduleField({
           onChange={onEndTimeChange}
           ariaLabel="End time"
           invalid={invalid}
+          portalContainer={portalContainer}
         />
       </div>
       {feedback.kind === 'checking' ? (

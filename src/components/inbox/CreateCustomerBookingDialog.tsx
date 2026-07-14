@@ -54,6 +54,7 @@ export function CreateCustomerBookingDialog({
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
   const endTimeCustomizedRef = useRef(false);
+  const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
   const effectiveServiceId = serviceId || options?.services[0]?.serviceId || '';
   const effectiveFields = Object.keys(fields).length > 0
     ? fields
@@ -156,7 +157,11 @@ export function CreateCustomerBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
+      <DialogContent
+        className="max-h-[85vh] overflow-y-auto sm:max-w-xl"
+        overlayClassName="bg-black/10 supports-backdrop-filter:backdrop-blur-none"
+      >
+        <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
         <DialogHeader><DialogTitle>Create booking</DialogTitle></DialogHeader>
         {options === undefined ? (
           <div className="h-32 rounded-md bg-muted motion-safe:animate-pulse" />
@@ -167,9 +172,9 @@ export function CreateCustomerBookingDialog({
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <Label>Service</Label>
-                <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+                <Button asChild variant="linkAccent" size="sm" className="h-auto p-0">
                   <Link to={`/dashboard/${agentId}/services/new`}>
-                    <Plus className="size-3.5" aria-hidden="true" />
+                    <Plus data-icon="inline-start" aria-hidden="true" />
                     Create new service
                   </Link>
                 </Button>
@@ -205,6 +210,7 @@ export function CreateCustomerBookingDialog({
               startTime={startTime}
               endTime={endTime}
               feedback={scheduleFeedback}
+              portalContainer={comboboxPortalContainerRef}
               onDateChange={(value) => {
                 setDate(value);
                 void runAvailabilityCheck(effectiveServiceId, value, startTime, endTime);
@@ -241,7 +247,7 @@ export function CreateCustomerBookingDialog({
           </div>
         )}
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button type="button" disabled={busy || !selectionAvailable} onClick={() => void handleCreate()}>Create booking</Button>
         </DialogFooter>
       </DialogContent>

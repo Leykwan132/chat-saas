@@ -1,4 +1,7 @@
 # Snapshot
+- 2026-07-14 [CODE] Create booking now uses a stable non-layout time-menu host, a 10% no-blur backdrop, a semantic blue Create new service link, and a ghost Cancel action.
+- 2026-07-14 [USER] Create booking requires a 10% no-blur backdrop, a non-layout time-popup portal host, a blue Create new service text action, and a neutral text Cancel action.
+- 2026-07-14 [CODE] Manual-booking time menus now portal inside the booking dialog so their 15-minute lists can scroll under modal scroll-lock; Create new service is a primary-colored text link.
 - 2026-07-14 [CODE] Shared time labels are compact with 15-minute options; manual booking shows a yearless date and links directly to Create new service.
 - 2026-07-14 [CODE] Manual Create booking now uses a wider modal, larger Service typography, increased field/control gaps, and wider single-line time dropdowns.
 - 2026-07-14 [CODE] Manual booking Start and End now use the shared shadcn/Base UI Combobox with a native scrollable list while retaining custom minute-level time text.
@@ -18,14 +21,13 @@
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
-- 2026-07-13 [USER] Apply to uses a basic vertical RadioGroup; each choice shows its own small label and description.
 - 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
-- 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
-- 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
 
 # Decisions
+- 2026-07-14 [USER] D311 ACTIVE: Create booking alone uses a 10% black no-blur overlay; time Comboboxes share an absolute pointer-transparent portal host; Create new service uses a semantic blue link variant; Cancel uses the neutral ghost variant.
+- 2026-07-14 [USER] D310 ACTIVE: Manual-booking time Combobox portals stay inside the booking dialog's scroll boundary; Create new service uses the semantic primary link-button treatment.
 - 2026-07-14 [USER] D309 ACTIVE: Shared time labels use compact lowercase meridiem and 15-minute options; manual booking alone displays `EEEE, d MMMM`; its Service label row links to `/dashboard/:agentId/services/new`.
 - 2026-07-14 [USER] D307 SUPERSEDED by D309 in option granularity and label format: the shared Combobox remains the scrolling primitive and valid custom minute values remain dynamically selectable.
 - 2026-07-14 [USER] D308 ACTIVE: Manual Create booking uses a balanced `sm:max-w-xl` layout with 20px section spacing, 12px label/control spacing, `text-sm` Service controls, wider schedule gaps, and time popups at least 176px wide with non-wrapping items.
@@ -73,15 +75,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Polished Create booking with a non-layout scrollable Combobox portal host, lighter backdrop, semantic blue service link, and neutral ghost Cancel.
+- 2026-07-14 [CODE] Fixed modal time-menu scrolling at the portal boundary and restyled Create new service as a primary text link.
 - 2026-07-14 [CODE] Added compact shared time labels, 96 quarter-hour options, `Thursday, 11 June` manual dates, and the Service-creation shortcut.
 - 2026-07-14 [CODE] Refined manual-booking spacing with a 576px modal, 14px Service controls, 12px schedule gaps, 128px time inputs, and 176px time menus.
 - 2026-07-14 [CODE] Replaced the non-scrolling custom time Popover/ScrollArea with the shared Combobox and preserved editable custom times.
 - 2026-07-14 [CODE] Added flexible manual-booking Start/End comboboxes with service-duration defaults and exact custom-interval availability enforcement.
 - 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
-- 2026-07-14 [CODE] Replaced manual booking slot search with shared date/time controls and automatic stale-safe conflict feedback backed by exact-slot Convex validation.
-- 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee and Bookings sits below Customer details.
 
 # Working set
+- 2026-07-14 [CODE] Create booking dialog polish: `docs/superpowers/{specs/2026-07-14-create-booking-dialog-polish-design,plans/2026-07-14-create-booking-dialog-polish}.md`; implementation remains in the existing manual-booking working set.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -93,13 +96,14 @@
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 - 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
-- 2026-07-13 [CODE] Reset fit-view design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-reset-fit-view*.md`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Create booking dialog polish completed two verified red-green cycles; 4 focused tests, targeted ESLint, Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Modal Combobox portal and service-link refinement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Compact booking controls completed three verified red-green cycles; 12 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Manual-booking spacing completed two verified red-green cycles; 8 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Shared time Combobox completed a verified red-green cycle; 8 focused booking tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. Live protected-dialog interaction was unavailable because the local browser session was signed out.
@@ -116,7 +120,5 @@
 - 2026-07-13 [TOOL] Reminder notice background completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Reminder Summary notice completed a verified red-green cycle; 8 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Vertical RadioGroup scope selector passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks under Node v22.22.0.
-- 2026-07-13 [TOOL] Smaller selected-description styling passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
-- 2026-07-13 [TOOL] Scope typography/radius refinement passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
 - 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
 - 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.

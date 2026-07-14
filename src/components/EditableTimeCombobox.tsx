@@ -1,3 +1,4 @@
+import type * as React from 'react';
 import {
   Combobox,
   ComboboxContent,
@@ -14,12 +15,14 @@ export function EditableTimeCombobox({
   ariaLabel,
   invalid = false,
   disabled = false,
+  portalContainer,
 }: {
   value: string;
   onChange: (value: string) => void;
   ariaLabel: string;
   invalid?: boolean;
   disabled?: boolean;
+  portalContainer?: React.RefObject<HTMLElement | null>;
 }) {
   const parsedValue = parseCalendarTimeLabel(value);
   const normalizedValue = parsedValue?.label ?? null;
@@ -57,7 +60,7 @@ export function EditableTimeCombobox({
           }
         }}
       />
-      <ComboboxContent className="min-w-44 rounded-xl">
+      <ComboboxContent portalContainer={portalContainer} className="min-w-44 rounded-xl">
         <ComboboxEmpty>Enter a valid time</ComboboxEmpty>
         <ComboboxList className="max-h-60">
           {(option) => (

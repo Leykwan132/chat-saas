@@ -24,3 +24,8 @@ test('supports editable custom times and standard dropdown options', () => {
   expect(source).not.toContain('PopoverAnchor');
   expect(source).not.toContain('<ScrollArea');
 });
+
+test('renders the dropdown inside an optional modal portal container', () => {
+  expect(source).toContain('portalContainer?: React.RefObject<HTMLElement | null>');
+  expect(source).toContain('<ComboboxContent portalContainer={portalContainer}');
+});

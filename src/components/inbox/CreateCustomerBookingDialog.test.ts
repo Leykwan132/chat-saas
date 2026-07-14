@@ -5,6 +5,12 @@ const source = readFileSync(
   new URL('./CreateCustomerBookingDialog.tsx', import.meta.url),
   'utf8',
 );
+const buttonVariantsSource = readFileSync(
+  new URL('../ui/buttonVariants.ts', import.meta.url),
+  'utf8',
+);
+const comboboxSource = readFileSync(new URL('../ui/combobox.tsx', import.meta.url), 'utf8');
+const themeSource = readFileSync(new URL('../../index.css', import.meta.url), 'utf8');
 
 test('uses shared schedule controls and automatic exact-slot availability', () => {
   expect(source).toContain('ManualBookingScheduleField');
@@ -26,6 +32,19 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain("throw new Error('Missing agent ID')");
   expect(source).toContain('to={`/dashboard/${agentId}/services/new`}');
   expect(source).toContain('Create new service');
+  expect(source).toContain('const comboboxPortalContainerRef = useRef<HTMLDivElement>(null)');
+  expect(source).toContain('portalContainer={comboboxPortalContainerRef}');
+  expect(source).toContain('variant="linkAccent"');
+  expect(source).not.toContain('className="h-auto p-0 text-primary"');
+  expect(buttonVariantsSource).toContain('linkAccent: "text-link underline-offset-4 hover:text-link/80 hover:underline"');
+  expect(themeSource).toContain('--color-link: var(--link);');
+  expect(themeSource.match(/--link:/g)).toHaveLength(2);
+  expect(source).toContain('overlayClassName="bg-black/10 supports-backdrop-filter:backdrop-blur-none"');
+  expect(source).toContain('<div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />');
+  expect(source).not.toContain('<DialogContent ref={comboboxPortalContainerRef}');
+  expect(source).toContain('<Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>');
+  expect(comboboxSource).toContain('className="pointer-events-auto isolate z-50"');
+  expect(source).not.toContain('variant="outline" size="sm" className="h-8 gap-1.5"');
   expect(source).not.toContain('CalendarDatePickerField');
   expect(source).not.toContain('TimeSelectInput');
   expect(source).not.toContain("import { Check, X } from 'lucide-react'");

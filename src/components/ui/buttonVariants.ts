@@ -17,6 +17,7 @@ const buttonVariants = cva(
         destructiveGhost:
           "cursor-pointer text-destructive hover:text-destructive focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        linkAccent: "text-link underline-offset-4 hover:text-link/80 hover:underline",
       },
       size: {
         default:
