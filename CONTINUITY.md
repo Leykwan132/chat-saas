@@ -23,7 +23,7 @@
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
 - 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
-- 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
+- 2026-07-14 [CODE] Approved Available Hours 24/7 design has a test-first implementation plan covering lossless shift drafts, UI behavior, timezone chrome, and AI booking-path characterization.
 
 # Decisions
 - 2026-07-14 [USER] D321 ACTIVE: Available Hours uses an `Available 24/7` global control with supporting text `Set availability to 24 hours for all seven days.`; on sets every day to `00:00–24:00`, and off resets every day to `09:00–17:00` rather than restoring prior custom hours.
@@ -94,7 +94,7 @@
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
 
 # Working set
-- 2026-07-14 [CODE] Available Hours all-day design discovery: `src/components/WeeklyAvailabilityEditor.tsx`, `src/pages/ScheduleUserAvailabilityPage.tsx`, `src/lib/{scheduleUtils,scheduleShiftDrafts}.ts`, `convex/{leadRouting/schedules,appointmentBooking/availability,leadRoutingSchedules.test}.ts`, and `docs/superpowers/specs/2026-07-14-available-hours-all-day-design.md`.
+- 2026-07-14 [CODE] Available Hours 24/7 design and plan: `src/components/WeeklyAvailabilityEditor.tsx`, `src/pages/ScheduleUserAvailabilityPage.tsx`, `src/lib/{scheduleUtils,scheduleShiftDrafts,scheduleTimeOffUtils}.ts`, `convex/{appointmentBooking/availability,calendarManualBooking.test}.ts`, and `docs/superpowers/{specs/2026-07-14-available-hours-all-day-design,plans/2026-07-14-available-hours-all-day}.md`.
 - 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
