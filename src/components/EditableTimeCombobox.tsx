@@ -1,4 +1,4 @@
-import type * as React from 'react';
+import * as React from 'react';
 import {
   Combobox,
   ComboboxContent,
@@ -26,6 +26,7 @@ export function EditableTimeCombobox({
   portalContainer?: React.RefObject<HTMLElement | null>;
   contentAlign?: 'start' | 'end';
 }) {
+  const inputAnchorRef = React.useRef<HTMLDivElement>(null);
   const parsedValue = parseCalendarTimeLabel(value);
   const normalizedValue = parsedValue?.label ?? null;
   const items =
@@ -49,24 +50,27 @@ export function EditableTimeCombobox({
       filter={null}
       disabled={disabled}
     >
-      <ComboboxInput
-        aria-label={ariaLabel}
-        aria-invalid={invalid}
-        placeholder="Time"
-        className="h-10 min-w-32 w-full rounded-md border-input bg-background"
-        onBlur={normalizeValue}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            normalizeValue();
-          }
-        }}
-      />
+      <div ref={inputAnchorRef} className="w-full">
+        <ComboboxInput
+          aria-label={ariaLabel}
+          aria-invalid={invalid}
+          placeholder="Time"
+          className="h-10 min-w-32 w-full rounded-md border-input bg-background"
+          onBlur={normalizeValue}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              normalizeValue();
+            }
+          }}
+        />
+      </div>
       <ComboboxContent
         portalContainer={portalContainer}
+        anchor={inputAnchorRef}
         align={contentAlign}
         collisionAvoidance={{ side: 'none', align: 'shift', fallbackAxisSide: 'none' }}
-        className="min-w-[8.8rem] rounded-xl"
+        className="w-(--anchor-width) min-w-(--anchor-width) rounded-xl"
       >
         <ComboboxEmpty>Enter a valid time</ComboboxEmpty>
         <ComboboxList className="max-h-60">

@@ -3,7 +3,7 @@
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
-- 2026-07-14 [CODE] Manual Start menus align left and End menus align right; both stay below their inputs, use 20%-narrower popups, and retain 15-minute options plus custom input.
+- 2026-07-14 [CODE] Manual Start and End menus stay below their inputs and anchor to each complete visible InputGroup so both popup edges and widths match perfectly.
 - 2026-07-14 [CODE] Service duration seeds End until customization; exact selected intervals drive stale-safe availability checks and creation.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
@@ -25,8 +25,9 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D318 ACTIVE: Start and End time popups each measure a full-width wrapper around their complete visible InputGroup and exactly match that anchor's width; End no longer offsets from a narrower inner input.
 - 2026-07-14 [USER] D317 ACTIVE: The Calendar customer popup measures an explicit full-width wrapper around the complete visible InputGroup; Base UI's narrower inner text-input anchor is not used for popup width.
-- 2026-07-14 [USER] D316 ACTIVE: Manual booking time dropdowns stay on the bottom side without vertical collision flipping and reduce their 11rem minimum width exactly 20% to 8.8rem; input widths remain unchanged.
+- 2026-07-14 [USER] D316 SUPERSEDED in popup width by D318: Manual booking time dropdowns still stay on the bottom side without vertical collision flipping; the 8.8rem minimum is removed.
 - 2026-07-14 [USER] D315 SUPERSEDED by D317 in anchor selection: The Calendar booking customer Combobox dropdown still exactly matches the visible input width without additional minimum-width expansion.
 - 2026-07-14 [USER] D314 ACTIVE: Calendar booking customer search is a standard client-side Combobox feature using loaded items and `itemToStringValue`/local filtering; Convex does not implement per-keystroke customer search.
 - 2026-07-14 [USER] D313 ACTIVE: Both staff-operated manual-booking dialogs display stored customer identity and expose only Customer context, Service, `Date & time`, and optional Remarks; manual booking does not require service data-collection questions.
@@ -80,7 +81,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Kept manual booking time menus below their inputs and reduced popup minimum width exactly 20% without changing time inputs.
+- 2026-07-14 [CODE] Anchored both Start and End popups to their complete visible InputGroups so each dropdown exactly matches its input width and edges.
 - 2026-07-14 [CODE] Corrected the customer popup anchor from the inner text input to the complete visible InputGroup so both edges match exactly.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
@@ -107,6 +108,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Exact Start/End InputGroup popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Full InputGroup customer-popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Bottom-only 20%-narrower time popups completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Customer Combobox width completed a verified red-green cycle; its focused 3-test suite, targeted ESLint, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.

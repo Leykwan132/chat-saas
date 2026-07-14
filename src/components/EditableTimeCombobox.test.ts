@@ -16,7 +16,11 @@ test('supports editable custom times and standard dropdown options', () => {
   expect(source).toContain('inputValue={value}');
   expect(source).toContain('onInputValueChange={onChange}');
   expect(source).toContain('min-w-32');
-  expect(source).toContain('min-w-[8.8rem]');
+  expect(source).toContain('const inputAnchorRef = React.useRef<HTMLDivElement>(null)');
+  expect(source).toContain('<div ref={inputAnchorRef} className="w-full">');
+  expect(source).toContain('anchor={inputAnchorRef}');
+  expect(source).toContain('w-(--anchor-width) min-w-(--anchor-width) rounded-xl');
+  expect(source).not.toContain('min-w-[8.8rem]');
   expect(source).toContain("collisionAvoidance={{ side: 'none', align: 'shift', fallbackAxisSide: 'none' }}");
   expect(source).toContain('whitespace-nowrap');
   expect(source).toContain('px-3 py-2.5');
