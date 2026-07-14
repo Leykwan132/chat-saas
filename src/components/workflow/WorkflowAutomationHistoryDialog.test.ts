@@ -31,5 +31,17 @@ test('adds separate paginated history dialogs to both workflow cards', () => {
   expect(dialog).toContain('<History data-icon="inline-start" />');
   expect(dialog).toContain('<DialogContent className="sm:max-w-3xl rounded-2xl">');
   expect(dialog).toContain('<Empty className="rounded-xl border bg-muted/60 px-8 py-10">');
-  expect(dialog).toContain('className="flex flex-col gap-2 rounded-xl border p-4"');
+  expect(dialog).toContain("from '@/components/ui/table'");
+  expect(dialog).toContain('<Table>');
+  expect(dialog).toContain('<TableHeader>');
+  expect(dialog).toContain('<TableBody>');
+  expect(dialog).toContain('<TableHead>Customer</TableHead>');
+  expect(dialog).toContain('<TableHead>Template</TableHead>');
+  expect(dialog).toContain('<TableHead>Scheduled</TableHead>');
+  expect(dialog).toContain('<TableHead>Sent</TableHead>');
+  expect(dialog).toContain('<TableHead>Status</TableHead>');
+  expect(dialog).toContain('showsOperationalReason(item.status) && item.reason');
+  expect(dialog).not.toContain('Scope:');
+  expect(dialog).not.toContain('Attempt:');
+  expect(dialog).not.toContain('className="flex flex-col gap-2 rounded-xl border p-4"');
 });

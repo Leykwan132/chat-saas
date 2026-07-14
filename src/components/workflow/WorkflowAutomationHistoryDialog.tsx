@@ -20,7 +20,14 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 type HistoryStatus = 'scheduled' | 'sent' | 'failed' | 'skipped' | 'cancelled';
 
@@ -28,6 +35,21 @@ function statusVariant(status: HistoryStatus) {
   if (status === 'failed') return 'destructive' as const;
   if (status === 'sent') return 'default' as const;
   return 'secondary' as const;
+}
+
+function showsOperationalReason(status: HistoryStatus) {
+  return status === 'failed' || status === 'skipped' || status === 'cancelled';
+}
+
+function customerPresentation(item: {
+  customerName?: string;
+  customerAddress?: string;
+  subjectLabel: string;
+}) {
+  const label = item.customerName ?? item.customerAddress ?? item.subjectLabel;
+  const context = [item.customerAddress, item.subjectLabel]
+    .find((value) => value && value !== label);
+  return { label, context };
 }
 
 export function WorkflowAutomationHistoryDialog({
@@ -75,28 +97,48 @@ export function WorkflowAutomationHistoryDialog({
               </EmptyHeader>
             </Empty>
           ) : (
-            <div className="flex flex-col gap-3 pr-4">
-              {results.map((item) => (
-                <div key={item.id} className="flex flex-col gap-2 rounded-xl border p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 flex-col gap-1">
-                      <p className="m-0 truncate font-medium">{item.customerName ?? item.customerAddress ?? item.subjectLabel}</p>
-                      <p className="m-0 truncate text-sm text-muted-foreground">{item.subjectLabel}</p>
-                    </div>
-                    <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
-                  </div>
-                  <Separator />
-                  <div className="grid gap-1 text-sm sm:grid-cols-2">
-                    <span>Template: {item.templateName} ({item.templateLanguage})</span>
-                    <span>Attempt: {item.attempt}</span>
-                    <span>Scheduled: {new Date(item.scheduledAt).toLocaleString()}</span>
-                    <span>Sent: {item.sentAt ? new Date(item.sentAt).toLocaleString() : '—'}</span>
-                    <span>Scope: {item.activationScope === 'currentAndFuture' ? 'Current & future' : 'Future only'}</span>
-                    <span>Reason: {item.reason ?? '—'}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Template</TableHead>
+                  <TableHead>Scheduled</TableHead>
+                  <TableHead>Sent</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {results.map((item) => {
+                  const customer = customerPresentation(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell>
+                        <div className="flex min-w-48 flex-col gap-1">
+                          <span className="font-medium">{customer.label}</span>
+                          {customer.context && <span className="text-muted-foreground">{customer.context}</span>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <span>{item.templateName}</span>
+                          <span className="text-muted-foreground">{item.templateLanguage}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(item.scheduledAt).toLocaleString()}</TableCell>
+                      <TableCell>{item.sentAt ? new Date(item.sentAt).toLocaleString() : '—'}</TableCell>
+                      <TableCell>
+                        <div className="flex max-w-56 flex-col items-start gap-1">
+                          <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
+                          {showsOperationalReason(item.status) && item.reason && (
+                            <span className="whitespace-normal text-muted-foreground">{item.reason}</span>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </ScrollArea>
         {status === 'CanLoadMore' && (
