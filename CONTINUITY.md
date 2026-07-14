@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [USER] Calendar customer selection must filter as the user types and show source icons; both Calendar and Conversation Details manual booking display stored customer data and expose only Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Calendar `New Booking` and Inbox now share one booking dialog/controller; Calendar adds a searchable all-workspace customer Combobox and dedicated customer-direct booking commands.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Customer search has a normalized workspace-filtered projection, atomic write maintenance, an official resumable Convex backfill, and bounded search.
@@ -24,6 +25,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D313 ACTIVE: Both staff-operated manual-booking dialogs display stored customer identity and expose only Customer context, Service, `Date & time`, and optional Remarks; manual booking does not require service data-collection questions.
 - 2026-07-14 [USER] D312 ACTIVE: Calendar shows all customers in a searchable Combobox and creates customer-direct bookings without creating Inbox conversations; generic `create event` remains an event-only command and is not repurposed for bookings.
 - 2026-07-14 [USER] D311 ACTIVE: Create booking alone uses a 10% black no-blur overlay; time Comboboxes share an absolute pointer-transparent portal host; Create new service uses a semantic blue link variant; Cancel uses the neutral ghost variant.
 - 2026-07-14 [USER] D310 ACTIVE: Manual-booking time Combobox portals stay inside the booking dialog's scroll boundary; Create new service uses the semantic primary link-button treatment.
@@ -83,7 +85,7 @@
 - 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
-- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `convex/{calendarEvents,customerSearchMigration,appointmentBooking/{calendarManualBooking,manualBookingCore,manualBooking}}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, `src/pages/CalendarPage.tsx`, and `docs/superpowers/{specs,plans}/2026-07-14-calendar-shared-booking*`.
+- 2026-07-14 [CODE] Shared Calendar/Inbox booking and customer-display correction: `convex/{calendarEvents,customerSearchMigration,appointmentBooking/{calendarManualBooking,manualBookingCore,manualBooking}}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, `src/pages/CalendarPage.tsx`, and `docs/superpowers/{specs,plans}/2026-07-14-{calendar-shared-booking,manual-booking-customer-display}*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
