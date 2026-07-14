@@ -1,6 +1,6 @@
 # Snapshot
-- 2026-07-14 [USER] Calendar customer selection must filter as the user types and show source icons; both Calendar and Conversation Details manual booking display stored customer data and expose only Service, `Date & time`, and optional Remarks.
-- 2026-07-14 [CODE] Calendar `New Booking` and Inbox now share one booking dialog/controller; Calendar adds a searchable all-workspace customer Combobox and dedicated customer-direct booking commands.
+- 2026-07-14 [CODE] Calendar customer search now filters immediately across stored identity fields and identifies WhatsApp, Instagram, Messenger, Web, and imported customers with source icons.
+- 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Customer search has a normalized workspace-filtered projection, atomic write maintenance, an official resumable Convex backfill, and bounded search.
 - 2026-07-14 [CODE] Manual Start menus align left and End menus align right; shared booking controls retain the scrollable in-dialog portal, 15-minute options, and custom time input.
@@ -76,16 +76,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Added dedicated Calendar customer-direct booking commands and conversation-optional booking persistence while preserving Inbox side effects only in the Inbox adapter.
-- 2026-07-14 [CODE] Extracted a shared booking dialog/controller, added the searchable customer Combobox, and changed the Calendar primary action to `New Booking`.
-- 2026-07-14 [CODE] Removed booking/conversation logging from generic event creation and preserved the day-cell `Create event` path.
+- 2026-07-14 [CODE] Fixed Calendar customer Combobox filtering and added channel/import source icons with bounded server-result replacement.
+- 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
+- 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
 - 2026-07-14 [CODE] Backfilled the normalized customer search projection on the active Convex development deployment.
 - 2026-07-14 [CODE] Polished Create booking with a scrollable modal portal, lighter backdrop, semantic blue service link, and neutral ghost Cancel.
 - 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
-- 2026-07-14 [CODE] Shared Calendar/Inbox booking and customer-display correction: `convex/{calendarEvents,customerSearchMigration,appointmentBooking/{calendarManualBooking,manualBookingCore,manualBooking}}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, `src/pages/CalendarPage.tsx`, and `docs/superpowers/{specs,plans}/2026-07-14-{calendar-shared-booking,manual-booking-customer-display}*`.
+- 2026-07-14 [CODE] Simplified Calendar/Inbox booking: `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `convex/{calendarManualBooking,manualBookingAvailability,manualBookingFields}.test.ts`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -103,8 +103,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Simplified manual-booking implementation plan passed spec-coverage, placeholder, type-consistency, and module-boundary review and is ready for inline execution.
-- 2026-07-14 [TOOL] Shared booking completion gate passed 19 focused tests across customer search, Calendar/Inbox booking, lifecycle/status, customer history, time alignment, and placement; targeted ESLint, TypeScript/Vite build, Convex codegen, migration execution, and `git diff --check` passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Simplified manual booking passed a verified red-green backend cycle, Convex codegen, 23/23 final focused tests across 14 files, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks under Node v22.22.0.
+- 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking implementation plan passed spec-coverage, placeholder, and interface consistency review and is ready for inline execution.
