@@ -4,6 +4,7 @@ import type {
   WorkflowReminderAutomationConfig,
   WorkflowReminderCustomTiming,
 } from '../../../shared/workflowAutomations';
+import { createWorkflowReminderTimingOption } from './workflowReminderOptions';
 
 type ApplyCustomTiming = (
   reminder: WorkflowReminderAutomationConfig,
@@ -20,7 +21,8 @@ test('commits a custom reminder option and selected ID atomically without duplic
   expect(applyCustomTiming).toBeTypeOf('function');
   if (!applyCustomTiming) return;
   const reminder = workflowAutomations.createInitialWorkflowAutomationConfigs().reminder;
-  const option: WorkflowReminderCustomTiming = {
+  const option = createWorkflowReminderTimingOption({ amount: 15, unit: 'minutes' });
+  const storedOption: WorkflowReminderCustomTiming = {
     amount: 15,
     id: 'customReminderTiming:15:minutes',
     label: '15 minutes before',
@@ -32,6 +34,8 @@ test('commits a custom reminder option and selected ID atomically without duplic
   const selectedAgain = applyCustomTiming(selected, option);
 
   expect(selected.timingOptionIds).toEqual([option.id]);
-  expect(selected.customTimingOptions).toEqual([option]);
-  expect(selectedAgain.customTimingOptions).toEqual([option]);
+  expect(selected.customTimingOptions).toEqual([storedOption]);
+  expect(selected.customTimingOptions[0]).not.toHaveProperty('Icon');
+  expect(selected.customTimingOptions[0]).not.toHaveProperty('description');
+  expect(selectedAgain.customTimingOptions).toEqual([storedOption]);
 });

@@ -69,11 +69,18 @@ export function applyWorkflowReminderCustomTiming(
   reminder: WorkflowReminderAutomationConfig,
   option: WorkflowReminderCustomTiming,
 ): WorkflowReminderAutomationConfig {
+  const storedOption: WorkflowReminderCustomTiming = {
+    amount: option.amount,
+    id: option.id,
+    label: option.label,
+    summaryLabel: option.summaryLabel,
+    unit: option.unit,
+  };
   const customTimingOptions = reminder.customTimingOptions.some(
-    (current) => current.id === option.id,
+    (current) => current.id === storedOption.id,
   )
     ? reminder.customTimingOptions
-    : [...reminder.customTimingOptions, option];
+    : [...reminder.customTimingOptions, storedOption];
   return {
     ...reminder,
     customTimingOptions,

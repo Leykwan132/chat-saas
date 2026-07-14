@@ -29,7 +29,7 @@
 - Consumes: `createWorkflowReminderTimingOption({ amount, unit }): WorkflowReminderTimingOption`
 - Produces: `applyWorkflowReminderCustomTiming(reminder, option): WorkflowReminderAutomationConfig`, with `customTimingOptions` containing only `WorkflowReminderCustomTiming` fields
 
-- [ ] **Step 1: Write the failing regression test**
+- [x] **Step 1: Write the failing regression test**
 
 Import the real UI factory and replace the plain test fixture with the presentation-ready option. Assert the persisted value is a plain timing object and does not retain UI fields.
 
@@ -55,7 +55,7 @@ expect(selected.customTimingOptions[0]).not.toHaveProperty('description');
 expect(selectedAgain.customTimingOptions).toEqual([storedOption]);
 ```
 
-- [ ] **Step 2: Run the focused test and confirm the leak**
+- [x] **Step 2: Run the focused test and confirm the leak**
 
 Run:
 
@@ -65,7 +65,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/wo
 
 Expected: FAIL because the stored object still contains `Icon` and `description`.
 
-- [ ] **Step 3: Add the strict projection at the shared state boundary**
+- [x] **Step 3: Add the strict projection at the shared state boundary**
 
 Create the persisted value before deduplication and store that value instead of the incoming rich UI option.
 
@@ -86,7 +86,7 @@ const customTimingOptions = reminder.customTimingOptions.some(
 
 Keep `timingOptionIds: [option.id]` unchanged so selection remains atomic.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -99,7 +99,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && wc -l shared/workflowAutomations.ts src/co
 
 Expected: all focused tests and ESLint pass, `git diff --check` reports no output, and both code files remain below 300 lines.
 
-- [ ] **Step 5: Commit the verified fix**
+- [x] **Step 5: Commit the verified fix**
 
 ```bash
 git add shared/workflowAutomations.ts src/components/workflow/workflowReminderCustomTiming.test.ts CONTINUITY.md
