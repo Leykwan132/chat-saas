@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [CODE] Manual booking now uses shared Calendar date/time controls, a full-width Service selector, and event-driven exact-slot availability beneath Booking Time.
+- 2026-07-14 [CODE] Manual booking uses shared Calendar controls, a full-width Service selector, and event-driven availability with a green check or red X beneath Booking Time.
 - 2026-07-14 [CODE] Create remains disabled until the current selection is available, derives strict date/time fields, and revalidates the exact slot server-side before insertion.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
@@ -26,6 +26,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D305 ACTIVE: Manual-booking available feedback uses an inline green Lucide `Check`; unavailable and failed checks use an inline red Lucide `X` while preserving existing text.
 - 2026-07-14 [USER] D304 ACTIVE: Manual booking reuses Calendar date/time controls, derives end time from service duration, checks availability whenever Service/Date/Time form a complete combination, shows inline status, blocks conflicts, and revalidates on Create; Service uses full-width consistent styling.
 - 2026-07-14 [USER] D303 ACTIVE: Conversation Details places only the permission-gated Create booking button above Assignee; the Bookings section remains below Customer details and the collapsed Booked action retains its original order.
 - 2026-07-14 [USER] D302 SUPERSEDED by D303: The entire Bookings section and Booked rail action moved before Assignee.
@@ -68,13 +69,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
 - 2026-07-14 [CODE] Replaced manual booking slot search with shared date/time controls and automatic stale-safe conflict feedback backed by exact-slot Convex validation.
 - 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee and Bookings sits below Customer details.
 - 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 - 2026-07-14 [CODE] Fixed new custom reminder timing selection to atomically store metadata and the selected ID without duplicates.
 - 2026-07-14 [CODE] Fixed workflow Save compatibility for valid Meta named BODY examples without weakening the snapshot validator.
 - 2026-07-14 [CODE] Refined both workflow History dialogs through their shared component with tighter modal corners and a neutral empty-only panel.
-- 2026-07-13 [CODE] Moved Reminder and Follow-up History actions into their Summary title rows with the shared small outline trigger.
 
 # Working set
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/components/inbox/{CreateCustomerBookingDialog,manualBookingScheduleModel}*`, `src/components/calendar/CalendarDatePickerField*`, `src/components/TimeSelectInput.tsx`, `convex/{appointmentBooking/manualBooking,manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-schedule-availability*`.
@@ -95,6 +96,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Manual-booking status icons completed a verified red-green cycle; focused test, targeted ESLint, `git diff --check`, and touched-file LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Manual booking availability completed verified red-green cycles; Convex codegen, 7 focused tests, targeted ESLint, production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Corrected booking placement completed verified red-green cycles for the standalone Create booking action and Customer details → Bookings ordering; 7 related tests, targeted ESLint, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Custom timing serialization completed a verified red-green cycle: the regression exposed `Icon.$$typeof` and `description`, then 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -114,4 +116,3 @@
 - 2026-07-13 [TOOL] Dashboard support HoverCard completed a verified red-green cycle; 3 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed on Node 22. Full Vitest ran 497 tests: 493 passed and 4 unrelated existing Convex tests failed (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [TOOL] Below-card contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, placement checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
-- 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.

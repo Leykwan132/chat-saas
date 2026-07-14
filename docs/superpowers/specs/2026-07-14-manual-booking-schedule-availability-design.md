@@ -14,8 +14,8 @@ Make inbox manual booking creation use the Calendar page's schedule controls, re
 - Keep availability idle until Service, Booking Date, and Booking Time are selected.
 - Check the selected combination automatically when any of those three values changes and all three are present.
 - Show `Checking availability…` beneath Booking Time while the request is running.
-- Show `Slot is available.` beneath Booking Time in semantic green when the current combination is available.
-- Show the conflict response beneath Booking Time in destructive red when unavailable.
+- Show a Lucide `Check` beside `Slot is available.` beneath Booking Time in semantic green when the current combination is available.
+- Show a Lucide `X` beside the conflict response beneath Booking Time in destructive red when unavailable or when the check fails.
 - Disable Create booking unless the current Service, Date, and Time combination has a successful availability result.
 
 ## Schedule Data

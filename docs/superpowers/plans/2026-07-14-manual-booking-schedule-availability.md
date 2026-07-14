@@ -194,3 +194,37 @@ Expected: focused tests, targeted ESLint, and diff checks pass; every touched co
 git add CONTINUITY.md convex/appointmentBooking/manualBooking.ts convex/manualBookingAvailability.test.ts convex/_generated/api.d.ts src/components/inbox/CreateCustomerBookingDialog.tsx src/components/inbox/CreateCustomerBookingDialog.test.ts src/components/inbox/manualBookingScheduleModel.ts src/components/inbox/manualBookingScheduleModel.test.ts src/components/calendar/CalendarDatePickerField.tsx docs/superpowers/plans/2026-07-14-manual-booking-schedule-availability.md
 git commit -m "Streamline manual booking availability"
 ```
+
+---
+
+### Task 4: Availability Status Icons
+
+**Files:**
+- Modify: `src/components/inbox/CreateCustomerBookingDialog.test.ts`
+- Modify: `src/components/inbox/CreateCustomerBookingDialog.tsx`
+
+**Interfaces:**
+- Consumes: existing `available` and `conflict` inline availability branches
+- Produces: Lucide `Check` for available status and Lucide `X` for unavailable or failed status
+
+- [x] **Step 1: Extend the source regression test**
+
+Require `Check` and `X` imports and require each icon immediately before its matching status text.
+
+- [x] **Step 2: Run the focused test and verify RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/inbox/CreateCustomerBookingDialog.test.ts
+```
+
+Expected: FAIL because the availability messages do not render icons.
+
+- [x] **Step 3: Render the status icons**
+
+Import `Check` and `X` from `lucide-react`. Render each icon with `aria-hidden="true"` inside an inline flex status message with the existing semantic text color.
+
+- [x] **Step 4: Verify and commit**
+
+Run the focused test, targeted ESLint, `git diff --check`, and the touched-file line-count check under Node v22, then commit the change on `main`.

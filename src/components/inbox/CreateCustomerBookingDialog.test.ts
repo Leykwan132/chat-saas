@@ -13,6 +13,9 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('label="Booking Time"');
   expect(source).toContain('Checking availability…');
   expect(source).toContain('Slot is available.');
+  expect(source).toContain("import { Check, X } from 'lucide-react'");
+  expect(source).toMatch(/<Check[^>]*aria-hidden="true"[^>]*\/>\s*Slot is available\./);
+  expect(source).toMatch(/<X[^>]*aria-hidden="true"[^>]*\/>\s*\{availability\.message\}/);
   expect(source).toContain('checkAvailability');
   expect(source).toContain('className="h-10 w-full"');
   expect(source).not.toContain('Find available times');

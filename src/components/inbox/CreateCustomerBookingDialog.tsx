@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
+import { Check, X } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
@@ -161,9 +162,15 @@ export function CreateCustomerBookingDialog({
             {availability.kind === 'checking' ? (
               <p className="-mt-2 text-xs text-muted-foreground">Checking availability…</p>
             ) : availability.kind === 'available' && availability.key === selection?.key ? (
-              <p className="-mt-2 text-xs text-emerald-600 dark:text-emerald-400">Slot is available.</p>
+              <p className="-mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
+                <Check className="size-3.5 shrink-0" aria-hidden="true" />
+                Slot is available.
+              </p>
             ) : availability.kind === 'conflict' && availability.key === selection?.key ? (
-              <p className="-mt-2 text-xs text-destructive">{availability.message}</p>
+              <p className="-mt-2 flex items-center gap-1.5 text-xs text-destructive">
+                <X className="size-3.5 shrink-0" aria-hidden="true" />
+                {availability.message}
+              </p>
             ) : null}
             {manualBookingCustomerFields(service?.fields ?? []).map((field) => (
               <div key={field.key} className="grid gap-2">
