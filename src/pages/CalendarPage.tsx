@@ -835,8 +835,8 @@ export default function CalendarPage() {
   );
 
   const todayKey = useMemo(
-    () => dateKeyInTimeZone(Date.now(), displayTimeZone),
-    [displayTimeZone],
+    () => dateKeyInTimeZone(currentTimestamp, displayTimeZone),
+    [currentTimestamp, displayTimeZone],
   );
 
   const eventsByDay = useMemo(() => {

@@ -9,4 +9,5 @@ test('emphasizes only Today-list event titles while they are happening', () => {
   expect(source).toContain(": 'font-normal text-foreground/80'");
   expect(source).toContain('selectedDayKey === todayKey');
   expect(source).toContain('window.setInterval');
+  expect(source).toContain('dateKeyInTimeZone(currentTimestamp, displayTimeZone)');
 });
