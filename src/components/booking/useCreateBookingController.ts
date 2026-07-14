@@ -5,7 +5,6 @@ import {
   buildManualBookingCollectedFields,
   defaultManualBookingEndTime,
   getManualBookingSelection,
-  type ManualBookingCollectedFields,
 } from '@/components/inbox/manualBookingScheduleModel';
 import type { ManualBookingScheduleFeedback } from '@/components/inbox/ManualBookingScheduleField';
 import type {
@@ -39,13 +38,13 @@ export function useCreateBookingController({
   const [date, setDate] = useState(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [fields, setFields] = useState<ManualBookingCollectedFields>({});
+  const [remarks, setRemarks] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
   const endTimeCustomizedRef = useRef(false);
   const effectiveServiceId = serviceId || services[0]?.serviceId || '';
-  const effectiveFields = Object.keys(fields).length > 0 ? fields : {
+  const effectiveFields = {
     name: customer?.name ?? '',
     email: customer?.email ?? '',
     phone: customer?.phone ?? '',
@@ -93,22 +92,13 @@ export function useCreateBookingController({
     }
   };
 
-  const updateField = (key: string, value: string | number | boolean) => {
-    setFields((current) => ({ ...(Object.keys(current).length > 0 ? current : effectiveFields), [key]: value }));
-  };
-
-  const resetCustomerFields = (nextCustomer: BookingCustomerDetails | null) => {
-    setFields(nextCustomer ? {
-      name: nextCustomer.name ?? '',
-      email: nextCustomer.email ?? '',
-      phone: nextCustomer.phone ?? '',
-    } : {});
+  const resetCustomerFields = () => {
     setAvailability({ kind: 'idle' });
   };
 
   return {
-    serviceId: effectiveServiceId, date, startTime, endTime, fields: effectiveFields, service,
-    feedback, selectionAvailable, busy, resetCustomerFields, updateField,
+    serviceId: effectiveServiceId, date, startTime, endTime, remarks,
+    feedback, selectionAvailable, busy, resetCustomerFields, setRemarks,
     setService(value: string) {
       const nextService = services.find((item) => item.serviceId === value);
       const nextEnd = nextService ? defaultManualBookingEndTime(startTime, nextService.durationMinutes) : '';
@@ -133,6 +123,7 @@ export function useCreateBookingController({
           collectedFields: buildManualBookingCollectedFields(effectiveFields, date, startTime),
           startAt: selection.startAt,
           endAt: selection.endAt,
+          remarks: remarks.trim() || undefined,
         });
         return true;
       } catch (error) {

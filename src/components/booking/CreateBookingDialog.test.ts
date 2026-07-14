@@ -14,6 +14,11 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(calendarDialogSource).toContain('searchCustomerOptions');
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');
   expect(dialogSource).toContain('BookingCustomerCombobox');
+  expect(dialogSource).toContain('<BookingCustomerSummary customer={fixedCustomer} />');
+  expect(dialogSource).toContain('<Label htmlFor="manual-booking-remarks">Remarks</Label>');
+  expect(dialogSource).toContain('placeholder="Add optional internal notes"');
+  expect(dialogSource).not.toContain('manualBookingCustomerFields');
+  expect(dialogSource).not.toContain('controller.updateField');
 });
 
 test('uses a searchable scrollable customer Combobox', () => {

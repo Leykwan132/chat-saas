@@ -40,6 +40,7 @@ export type BookingIntervalInput = {
 
 export type BookingCreateInput = BookingIntervalInput & {
   collectedFields: ManualBookingCollectedFields;
+  remarks?: string;
 };
 
 export type BookingAvailabilityResult =

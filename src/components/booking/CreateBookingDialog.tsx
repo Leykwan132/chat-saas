@@ -4,12 +4,12 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 import { ManualBookingScheduleField } from '@/components/inbox/ManualBookingScheduleField';
-import { manualBookingCustomerFields } from '@/components/inbox/manualBookingScheduleModel';
 import { BookingCustomerCombobox } from './BookingCustomerCombobox';
+import { BookingCustomerSummary } from './BookingCustomerSummary';
 import type {
   BookingAvailabilityResult,
   BookingCreateInput,
@@ -96,7 +96,12 @@ export function CreateBookingDialog({
                   portalContainer={comboboxPortalContainerRef}
                 />
               </div>
-            ) : null}
+            ) : (
+              <div className="grid gap-3">
+                <Label>Customer</Label>
+                <BookingCustomerSummary customer={fixedCustomer} />
+              </div>
+            )}
             <div className="grid gap-3">
               <div className="flex items-center justify-between gap-3">
                 <Label>Service</Label>
@@ -130,41 +135,16 @@ export function CreateBookingDialog({
               onStartTimeChange={controller.setStartTime}
               onEndTimeChange={controller.setEndTime}
             />
-            {manualBookingCustomerFields(controller.service?.fields ?? []).map((field) => (
-              <div key={field.key} className="grid gap-2">
-                <Label>{field.label}</Label>
-                {field.type === 'select' ? (
-                  <Select
-                    value={String(controller.fields[field.key] ?? '')}
-                    onValueChange={(value) => controller.updateField(field.key, value)}
-                  >
-                    <SelectTrigger className="h-10 w-full">
-                      <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {field.options?.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                ) : field.type === 'boolean' ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => controller.updateField(field.key, controller.fields[field.key] !== true)}
-                  >
-                    {controller.fields[field.key] === true ? 'Yes' : 'No'}
-                  </Button>
-                ) : (
-                  <Input
-                    type={field.type === 'number' ? 'number' : field.type === 'phone' ? 'tel' : field.type}
-                    value={String(controller.fields[field.key] ?? '')}
-                    onChange={(event) => controller.updateField(
-                      field.key,
-                      field.type === 'number' ? Number(event.target.value) : event.target.value,
-                    )}
-                  />
-                )}
-              </div>
-            ))}
+            <div className="grid gap-2">
+              <Label htmlFor="manual-booking-remarks">Remarks</Label>
+              <Textarea
+                id="manual-booking-remarks"
+                value={controller.remarks}
+                onChange={(event) => controller.setRemarks(event.target.value)}
+                placeholder="Add optional internal notes"
+                className="min-h-20"
+              />
+            </div>
           </div>
         )}
         <DialogFooter>

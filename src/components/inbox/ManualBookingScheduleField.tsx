@@ -33,7 +33,7 @@ export function ManualBookingScheduleField({
 
   return (
     <div className="grid gap-3">
-      <Label>Schedule</Label>
+      <Label>Date & time</Label>
       <div className="grid grid-cols-[auto_minmax(0,1.45fr)_minmax(8rem,0.9fr)_auto_minmax(8rem,0.9fr)] items-center gap-3">
         <Clock className="size-4 text-muted-foreground" aria-hidden="true" />
         <CalendarDatePickerField

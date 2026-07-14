@@ -52,4 +52,8 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).not.toContain('setSlots');
   expect(source).not.toContain('type="date"');
   expect(source).not.toContain('type="time"');
+  expect(source).toContain("const [remarks, setRemarks] = useState('')");
+  expect(source).toContain('remarks: remarks.trim() || undefined');
+  expect(source).not.toContain('manualBookingCustomerFields');
+  expect(source).not.toContain('controller.updateField');
 });
