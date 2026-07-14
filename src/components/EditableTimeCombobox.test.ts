@@ -16,7 +16,8 @@ test('supports editable custom times and standard dropdown options', () => {
   expect(source).toContain('inputValue={value}');
   expect(source).toContain('onInputValueChange={onChange}');
   expect(source).toContain('min-w-32');
-  expect(source).toContain('min-w-44');
+  expect(source).toContain('min-w-[8.8rem]');
+  expect(source).toContain("collisionAvoidance={{ side: 'none', align: 'shift', fallbackAxisSide: 'none' }}");
   expect(source).toContain('whitespace-nowrap');
   expect(source).toContain('px-3 py-2.5');
   expect(source).toContain('onBlur={normalizeValue}');
@@ -28,5 +29,7 @@ test('supports editable custom times and standard dropdown options', () => {
 test('renders the dropdown inside an optional modal portal container', () => {
   expect(source).toContain('portalContainer?: React.RefObject<HTMLElement | null>');
   expect(source).toContain("contentAlign?: 'start' | 'end'");
-  expect(source).toContain('<ComboboxContent portalContainer={portalContainer} align={contentAlign}');
+  expect(source).toContain('<ComboboxContent');
+  expect(source).toContain('portalContainer={portalContainer}');
+  expect(source).toContain('align={contentAlign}');
 });

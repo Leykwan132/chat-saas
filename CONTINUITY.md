@@ -3,7 +3,7 @@
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
-- 2026-07-14 [CODE] Manual Start menus align left and End menus align right; shared booking controls retain the scrollable in-dialog portal, 15-minute options, and custom time input.
+- 2026-07-14 [CODE] Manual Start menus align left and End menus align right; both stay below their inputs, use 20%-narrower popups, and retain 15-minute options plus custom input.
 - 2026-07-14 [CODE] Service duration seeds End until customization; exact selected intervals drive stale-safe availability checks and creation.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
@@ -25,6 +25,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D316 ACTIVE: Manual booking time dropdowns stay on the bottom side without vertical collision flipping and reduce their 11rem minimum width exactly 20% to 8.8rem; input widths remain unchanged.
 - 2026-07-14 [USER] D315 ACTIVE: The Calendar booking customer Combobox dropdown must exactly match its input width without the shared popup's additional minimum-width expansion.
 - 2026-07-14 [USER] D314 ACTIVE: Calendar booking customer search is a standard client-side Combobox feature using loaded items and `itemToStringValue`/local filtering; Convex does not implement per-keystroke customer search.
 - 2026-07-14 [USER] D313 ACTIVE: Both staff-operated manual-booking dialogs display stored customer identity and expose only Customer context, Service, `Date & time`, and optional Remarks; manual booking does not require service data-collection questions.
@@ -33,7 +34,7 @@
 - 2026-07-14 [USER] D310 ACTIVE: Manual-booking time Combobox portals stay inside the booking dialog's scroll boundary; Create new service uses the semantic primary link-button treatment.
 - 2026-07-14 [USER] D309 ACTIVE: Shared time labels use compact lowercase meridiem and 15-minute options; manual booking alone displays `EEEE, d MMMM`; its Service label row links to `/dashboard/:agentId/services/new`.
 - 2026-07-14 [USER] D307 SUPERSEDED by D309 in option granularity and label format: the shared Combobox remains the scrolling primitive and valid custom minute values remain dynamically selectable.
-- 2026-07-14 [USER] D308 ACTIVE: Manual Create booking uses a balanced `sm:max-w-xl` layout with 20px section spacing, 12px label/control spacing, `text-sm` Service controls, wider schedule gaps, and time popups at least 176px wide with non-wrapping items.
+- 2026-07-14 [USER] D308 SUPERSEDED in time-popup width by D316: Manual Create booking retains its balanced layout, spacing, Service sizing, schedule gaps, and non-wrapping time items.
 - 2026-07-14 [USER] D306 ACTIVE: Manual booking uses one clock-led Date/Start/End row; Start and End are editable comboboxes, service duration only defaults End, and custom exact intervals drive conflict checks and creation.
 - 2026-07-14 [USER] D305 ACTIVE: Manual-booking available feedback uses an inline green Lucide `Check`; unavailable and failed checks use an inline red Lucide `X` while preserving existing text.
 - 2026-07-14 [USER] D304 ACTIVE: Manual booking reuses Calendar date/time controls, derives end time from service duration, checks availability whenever Service/Date/Time form a complete combination, shows inline status, blocks conflicts, and revalidates on Create; Service uses full-width consistent styling.
@@ -78,13 +79,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Kept manual booking time menus below their inputs and reduced popup minimum width exactly 20% without changing time inputs.
 - 2026-07-14 [CODE] Corrected Calendar customer search to use local Combobox filtering and made its popup exactly match the customer input width.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
 - 2026-07-14 [CODE] Backfilled the normalized customer search projection on the active Convex development deployment.
 - 2026-07-14 [CODE] Polished Create booking with a scrollable modal portal, lighter backdrop, semantic blue service link, and neutral ghost Cancel.
-- 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
 - 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
@@ -105,6 +106,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Bottom-only 20%-narrower time popups completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Customer Combobox width completed a verified red-green cycle; its focused 3-test suite, targeted ESLint, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.

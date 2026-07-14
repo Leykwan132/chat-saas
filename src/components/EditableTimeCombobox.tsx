@@ -62,7 +62,12 @@ export function EditableTimeCombobox({
           }
         }}
       />
-      <ComboboxContent portalContainer={portalContainer} align={contentAlign} className="min-w-44 rounded-xl">
+      <ComboboxContent
+        portalContainer={portalContainer}
+        align={contentAlign}
+        collisionAvoidance={{ side: 'none', align: 'shift', fallbackAxisSide: 'none' }}
+        className="min-w-[8.8rem] rounded-xl"
+      >
         <ComboboxEmpty>Enter a valid time</ComboboxEmpty>
         <ComboboxList className="max-h-60">
           {(option) => (
