@@ -103,6 +103,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Simplified manual-booking implementation plan passed spec-coverage, placeholder, type-consistency, and module-boundary review and is ready for inline execution.
 - 2026-07-14 [TOOL] Shared booking completion gate passed 19 focused tests across customer search, Calendar/Inbox booking, lifecycle/status, customer history, time alignment, and placement; targeted ESLint, TypeScript/Vite build, Convex codegen, migration execution, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.
@@ -122,4 +123,3 @@
 - 2026-07-14 [TOOL] Atomic custom reminder timing completed a verified red-green cycle; 7 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
 - 2026-07-14 [TOOL] Workflow History empty-state refinement completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-13 [TOOL] Summary History relocation completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
