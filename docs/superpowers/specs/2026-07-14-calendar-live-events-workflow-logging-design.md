@@ -30,6 +30,8 @@ Only the Today list receives this treatment. Month-grid items, dialogs, search b
 
 The log is emitted after `enqueueAction` returns successfully so it includes the actual Workpool ID and never claims that a failed enqueue was scheduled.
 
+Calendar Create booking emits `workflow_reminder_scheduling_after_booking_created` after the appointment records exist and immediately before invoking reminder scheduling. It contains the appointment ID and the eligible existing conversation ID, or `null` when the customer has no eligible conversation. This makes the booking-to-reminder boundary visible even when no Workpool job can be scheduled.
+
 Reminder scheduling logs live in the existing appointment reminder scheduling path. This is the path called after an eligible appointment is created, and it may schedule multiple reminder jobs for one appointment. Emit one log for each scheduled job with:
 
 - event name `workflow_reminder_workpool_scheduled`
@@ -63,7 +65,7 @@ All entries use `console.log` with a stable event-name string and one structured
 
 ## Data Flow
 
-Appointment creation continues to invoke the existing reminder runtime. For every eligible reminder candidate, the runtime creates or updates its durable run, enqueues the reminder Workpool action, logs the returned Workpool ID and schedule details, then persists the Workpool ID on the run.
+Appointment creation continues to invoke the existing reminder runtime. Calendar Create booking preserves an eligible existing customer conversation without creating or mutating one, logs the scheduling request, and invokes the runtime. For every eligible reminder candidate, the runtime creates or updates its durable run, enqueues the reminder Workpool action, logs the returned Workpool ID and schedule details, then persists the Workpool ID on the run.
 
 Eligible outbound conversations continue to invoke the existing follow-up runtime. Its shared enqueue function schedules the initial or next wake, logs the returned Workpool ID and schedule details, then persists the Workpool ID on the timer and run.
 

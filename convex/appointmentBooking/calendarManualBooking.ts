@@ -16,6 +16,7 @@ import {
 } from "./manualBookingCore";
 import { manualBookingFieldsForCustomer } from "./manualBookingFields";
 import { collectedFieldsValidator } from "./validators";
+import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 
 async function loadCalendarBookingScope(
   ctx: MutationCtx,
@@ -127,15 +128,22 @@ export const create = mutation({
       scope.customer,
       args.collectedFields,
     );
-    return await createManualBookingRecords(ctx, {
+    const { eventId, sessionId } = await createManualBookingRecords(ctx, {
       service,
       team: scope.team,
       customer: scope.customer,
+      conversation: scope.conversation,
       assignedUser,
       selectedSlot,
       collectedFields,
       remarks: args.remarks,
       bookingSource: "manual",
     });
+    console.log("workflow_reminder_scheduling_after_booking_created", {
+      appointmentId: eventId,
+      conversationId: scope.conversation?._id ?? null,
+    });
+    await scheduleWorkflowRemindersForAppointment(ctx, eventId);
+    return { eventId, sessionId };
   },
 });
