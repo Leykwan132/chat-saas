@@ -15,6 +15,7 @@ import {
   formatCalendarDateTime,
 } from "./calendarFormatUtils";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
+import { customerSearchText } from "./customerSearch";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -393,6 +394,31 @@ export const listCustomerOptions = query({
   },
 });
 
+const customerOption = (customer: Doc<"customers">) => ({
+  _id: customer._id,
+  name: customer.name,
+  email: customer.email,
+  phone: customer.phone,
+  contactAddress: customer.contactAddress,
+  service: customer.service,
+});
+
+export const searchCustomerOptions = query({
+  args: { query: v.string(), limit: v.number() },
+  handler: async (ctx, args) => {
+    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
+    const resolvedOrgId = resolveChannelOrgId(auth.orgId, auth.userId);
+    const limit = Math.max(1, Math.min(50, Math.floor(args.limit)));
+    const customers = await ctx.db
+      .query("customers")
+      .withSearchIndex("search_searchText", (q) =>
+        q.search("searchText", args.query.trim()).eq("orgId", resolvedOrgId),
+      )
+      .take(limit);
+    return customers.map(customerOption);
+  },
+});
+
 async function getConversationIdByCustomerId(
   ctx: MutationCtx,
   customerId: Id<"customers">
@@ -597,6 +623,12 @@ export const update = mutation({
           if (typeof mergedCollectedFields.phone === "string") {
             customerPatch.phone = mergedCollectedFields.phone.trim() || undefined;
           }
+          customerPatch.searchText = customerSearchText({
+            name: customerPatch.name ?? customer.name,
+            email: customer.email,
+            phone: customerPatch.phone ?? customer.phone,
+            contactAddress: customer.contactAddress,
+          });
           await ctx.db.patch(customer._id, customerPatch);
         }
       }

@@ -739,6 +739,7 @@ export default defineSchema({
     name: v.optional(v.string()),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
+    searchText: v.optional(v.string()),
     tags: v.array(v.string()),
     leadTemperature: v.optional(
       v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
@@ -757,6 +758,10 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_orgId_and_lastSeenAt", ["orgId", "lastSeenAt"])
+    .searchIndex("search_searchText", {
+      searchField: "searchText",
+      filterFields: ["orgId"],
+    })
     .index("by_orgId_and_service_and_contactAddress", [
       "orgId",
       "service",

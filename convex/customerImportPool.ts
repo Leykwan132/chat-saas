@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { customerSearchText } from "./customerSearch";
 
 // ─── Workpool instance ─────────────────────────────────────
 export const customerImportPool = new Workpool(
@@ -215,6 +216,12 @@ export const importBatchWorker = internalMutation({
           name,
           email: email || undefined,
           phone: phone || undefined,
+          searchText: customerSearchText({
+            name,
+            email: email || undefined,
+            phone: phone || undefined,
+            contactAddress,
+          }),
           notes: notes || undefined,
           customFields: Object.keys(customFields).length > 0 ? customFields : undefined,
           tags: [...job.tags],

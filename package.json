@@ -17,6 +17,7 @@
     "@convex-dev/agent": "^0.6.1",
     "@convex-dev/aggregate": "^0.2.1",
     "@convex-dev/crons": "^0.2.0",
+    "@convex-dev/migrations": "^0.3.5",
     "@convex-dev/r2": "^0.10.1",
     "@convex-dev/stripe": "^0.1.4",
     "@convex-dev/workos": "^0.0.1",

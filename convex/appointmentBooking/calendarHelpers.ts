@@ -2,6 +2,7 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { displayNameForUser } from "./fields";
 import type { CollectedFields } from "./types";
+import { customerSearchText } from "../customerSearch";
 
 export async function resolveCustomerForConversation(
   ctx: MutationCtx,
@@ -18,13 +19,20 @@ export async function resolveCustomerForConversation(
 
   const now = Date.now();
   const service = conversation.service === "playground" ? "manual" : conversation.service;
+  const name = typeof fields.name === "string" ? fields.name.trim() || undefined : undefined;
+  const phone = typeof fields.phone === "string" ? fields.phone.trim() || undefined : undefined;
   const customerId = await ctx.db.insert("customers", {
     orgId: conversation.orgId,
     service,
     contactAddress: conversation.contactAddress,
-    name: typeof fields.name === "string" ? fields.name.trim() || undefined : undefined,
+    name,
     email: undefined,
-    phone: typeof fields.phone === "string" ? fields.phone.trim() || undefined : undefined,
+    phone,
+    searchText: customerSearchText({
+      name,
+      phone,
+      contactAddress: conversation.contactAddress,
+    }),
     tags: [],
     source: service,
     firstSeenAt: now,

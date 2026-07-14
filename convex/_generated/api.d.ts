@@ -107,6 +107,8 @@ import type * as creditUsageAnalytics from "../creditUsageAnalytics.js";
 import type * as credits from "../credits.js";
 import type * as crons from "../crons.js";
 import type * as customerImportPool from "../customerImportPool.js";
+import type * as customerSearch from "../customerSearch.js";
+import type * as customerSearchMigration from "../customerSearchMigration.js";
 import type * as customers from "../customers.js";
 import type * as devReset from "../devReset.js";
 import type * as followUpPool from "../followUpPool.js";
@@ -336,6 +338,8 @@ declare const fullApi: ApiFromModules<{
   credits: typeof credits;
   crons: typeof crons;
   customerImportPool: typeof customerImportPool;
+  customerSearch: typeof customerSearch;
+  customerSearchMigration: typeof customerSearchMigration;
   customers: typeof customers;
   devReset: typeof devReset;
   followUpPool: typeof followUpPool;
@@ -487,6 +491,7 @@ export declare const internal: FilterApi<
 >;
 
 export declare const components: {
+  migrations: import("@convex-dev/migrations/_generated/component.js").ComponentApi<"migrations">;
   stripe: import("@convex-dev/stripe/_generated/component.js").ComponentApi<"stripe">;
   r2: import("@convex-dev/r2/_generated/component.js").ComponentApi<"r2">;
   agent: import("@convex-dev/agent/_generated/component.js").ComponentApi<"agent">;

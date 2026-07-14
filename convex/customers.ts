@@ -11,6 +11,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { logConversationEvent } from "./conversationLogs";
+import { customerSearchText } from "./customerSearch";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -430,6 +431,8 @@ export const addManually = mutation({
     }
     const now = Date.now();
     const tags = args.tags ?? [];
+    const email = args.email?.trim() || undefined;
+    const phone = args.phone?.trim() || undefined;
     for (const tag of tags) {
       assertNotLeadTemperatureTag(tag);
     }
@@ -438,8 +441,9 @@ export const addManually = mutation({
       service: "manual",
       contactAddress: "",
       name,
-      email: args.email?.trim() || undefined,
-      phone: args.phone?.trim() || undefined,
+      email,
+      phone,
+      searchText: customerSearchText({ name, email, phone, contactAddress: "" }),
       tags: tags.map((t) => t.trim()).filter(Boolean),
       leadTemperature: args.leadTemperature,
       source: "manual",
@@ -522,6 +526,14 @@ export const update = mutation({
     }
     if (args.customFields !== undefined) {
       patch.customFields = args.customFields;
+    }
+    if (args.name !== undefined || args.email !== undefined || args.phone !== undefined) {
+      patch.searchText = customerSearchText({
+        name: args.name === undefined ? customer.name : args.name.trim() || undefined,
+        email: args.email === undefined ? customer.email : args.email.trim() || undefined,
+        phone: args.phone === undefined ? customer.phone : args.phone.trim() || undefined,
+        contactAddress: customer.contactAddress,
+      });
     }
     await ctx.db.patch(args.customerId, patch);
 
@@ -622,6 +634,8 @@ async function upsertCustomer(
   }
 
   if (existing === null) {
+    const phone =
+      args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined);
     return await ctx.db.insert("customers", {
       orgId: args.orgId,
       userId: args.userId,
@@ -630,8 +644,13 @@ async function upsertCustomer(
       contactAddress: args.contactAddress,
       name: resolvedName,
       email: inputEmail,
-      phone:
-        args.phone?.trim() || (args.service === "whatsapp" ? args.contactAddress : undefined),
+      phone,
+      searchText: customerSearchText({
+        name: resolvedName,
+        email: inputEmail,
+        phone,
+        contactAddress: args.contactAddress,
+      }),
       tags: [],
       source: args.service,
       firstSeenAt: now,
@@ -656,6 +675,12 @@ async function upsertCustomer(
   if (!existing.phone && args.phone) {
     patch.phone = args.phone.trim();
   }
+  patch.searchText = customerSearchText({
+    name: (patch.name as string | undefined) ?? existing.name,
+    email: (patch.email as string | undefined) ?? existing.email,
+    phone: (patch.phone as string | undefined) ?? existing.phone,
+    contactAddress: existing.contactAddress,
+  });
   await ctx.db.patch(existing._id, patch);
   return existing._id;
 }

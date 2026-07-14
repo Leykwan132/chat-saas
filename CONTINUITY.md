@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [CODE] Customer search now has a normalized workspace-filtered projection, atomic write maintenance, and an official resumable Convex migration backfill.
 - 2026-07-14 [USER] Calendar `New Booking` must share the Inbox booking form, add searchable all-customer and service selection, support customers without conversations, and keep generic event creation strictly separate.
 - 2026-07-14 [TOOL] The wider 176px time menu's start alignment triggers right-edge collision shifting; the approved correction is Start-left and End-right alignment.
 - 2026-07-14 [CODE] Create booking uses a non-layout in-dialog scrollable Combobox host, a 10% no-blur backdrop, a semantic blue service link, a ghost Cancel action, and compact 15-minute labels.
@@ -101,6 +102,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking implementation plan passed spec-coverage, placeholder, and interface consistency review and is ready for inline execution.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking design was self-reviewed for placeholders, contradictions, scope, ambiguity, event/booking command separation, and bounded customer search.
 - 2026-07-14 [TOOL] Popup-alignment diagnosis compared the screenshot, current portal geometry, recent `bff04c9a` changes, shared Combobox implementation, and official shadcn/Base UI positioning contracts; the protected local dialog remains unavailable in the signed-out browser session.
