@@ -1,5 +1,8 @@
 import { useMemo, type ReactNode } from 'react';
-import type { WorkflowAutomationConfigs } from '../../../shared/workflowAutomations';
+import {
+  applyWorkflowReminderCustomTiming,
+  type WorkflowAutomationConfigs,
+} from '../../../shared/workflowAutomations';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
   WorkflowAutomationStateContext,
@@ -54,11 +57,8 @@ export function WorkflowAutomationStateProvider({
       if (kind === 'reminders') updateReminder({ selections });
       else updateFollowUp({ selections });
     },
-    addReminderCustomTimingOption: (option) => {
-      if (configs.reminder.customTimingOptions.some((item) => item.id === option.id)) return;
-      updateReminder({
-        customTimingOptions: [...configs.reminder.customTimingOptions, option],
-      });
+    setReminderCustomTimingOption: (option) => {
+      updateReminder(applyWorkflowReminderCustomTiming(configs.reminder, option));
     },
     setReminderTemplate: (template) => updateReminder({ template }),
     setReminderTimingOptionIds: (timingOptionIds) => updateReminder({ timingOptionIds }),

@@ -18,3 +18,9 @@ test('uses compact, even spacing inside the reminder timing menu', () => {
   expect(source).toContain('listClassName="p-1.5"');
   expect(source).toContain('optionClassName="rounded-md px-3 py-2"');
 });
+
+test('commits custom timing through one atomic context action', () => {
+  expect(source).toContain('setReminderCustomTimingOption(option);');
+  expect(source).not.toContain('addReminderCustomTimingOption(option);');
+  expect(source).not.toContain('onUpdateOptionId(option.id);');
+});

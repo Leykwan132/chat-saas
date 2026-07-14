@@ -104,7 +104,7 @@ export function WorkflowReminderTimingRow({
   optionId: string;
 }) {
   const { options } = useWorkflowReminderTimingField();
-  const { addReminderCustomTimingOption } = useWorkflowAutomationState();
+  const { setReminderCustomTimingOption } = useWorkflowAutomationState();
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
   const [customAmount, setCustomAmount] = useState('3');
   const [customUnit, setCustomUnit] =
@@ -132,8 +132,7 @@ export function WorkflowReminderTimingRow({
       amount,
       unit: customUnit,
     });
-    addReminderCustomTimingOption(option);
-    onUpdateOptionId(option.id);
+    setReminderCustomTimingOption(option);
     setCustomDialogOpen(false);
   };
 

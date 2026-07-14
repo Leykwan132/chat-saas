@@ -65,6 +65,22 @@ export type WorkflowAutomationConfigs = {
   followUp: WorkflowFollowUpAutomationConfig;
 };
 
+export function applyWorkflowReminderCustomTiming(
+  reminder: WorkflowReminderAutomationConfig,
+  option: WorkflowReminderCustomTiming,
+): WorkflowReminderAutomationConfig {
+  const customTimingOptions = reminder.customTimingOptions.some(
+    (current) => current.id === option.id,
+  )
+    ? reminder.customTimingOptions
+    : [...reminder.customTimingOptions, option];
+  return {
+    ...reminder,
+    customTimingOptions,
+    timingOptionIds: [option.id],
+  };
+}
+
 export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConfigs {
   return {
     reminder: {

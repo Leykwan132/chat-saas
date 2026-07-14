@@ -32,7 +32,7 @@ export type WorkflowAutomationStateContextValue = {
     stepKey: WorkflowAutomationStepKey,
     optionId: string,
   ) => void;
-  addReminderCustomTimingOption: (option: WorkflowReminderCustomTimingOption) => void;
+  setReminderCustomTimingOption: (option: WorkflowReminderCustomTimingOption) => void;
   setReminderTemplate: (template: WorkflowFollowupTemplateSelection) => void;
   setReminderTimingOptionIds: (optionIds: string[]) => void;
   setFollowupAudienceFilters: (filters: string[]) => void;
