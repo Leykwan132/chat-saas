@@ -13,3 +13,15 @@ test('the Booking created event delegates reminder preparation', () => {
 
   expect(events).toContain('scheduleWorkflowRemindersForAppointment(ctx, appointmentId)');
 });
+
+test('Calendar and Inbox use the same staff booking function', () => {
+  const calendar = source('./appointmentBooking/calendarManualBooking.ts');
+  const inbox = source('./appointmentBooking/manualBooking.ts');
+  const staff = source('./appointmentBooking/staffBooking.ts');
+
+  expect(calendar).toContain('createStaffBooking(ctx,');
+  expect(inbox).toContain('createStaffBooking(ctx,');
+  expect(staff).toContain('handleBookingCreated(ctx, eventId)');
+  expect(calendar).not.toContain('scheduleWorkflowRemindersForAppointment');
+  expect(inbox).not.toContain('scheduleWorkflowRemindersForAppointment');
+});

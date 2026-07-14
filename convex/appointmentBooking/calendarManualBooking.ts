@@ -10,13 +10,10 @@ import {
   resolveTeamForAgent,
 } from "./access";
 import { serviceSnapshot, serviceTimeZone } from "./fields";
-import {
-  createManualBookingRecords,
-  validateManualBookingInterval,
-} from "./manualBookingCore";
+import { validateManualBookingInterval } from "./manualBookingCore";
 import { manualBookingFieldsForCustomer } from "./manualBookingFields";
+import { createStaffBooking } from "./staffBooking";
 import { collectedFieldsValidator } from "./validators";
-import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 
 async function loadCalendarBookingScope(
   ctx: MutationCtx,
@@ -128,7 +125,7 @@ export const create = mutation({
       scope.customer,
       args.collectedFields,
     );
-    const { eventId, sessionId } = await createManualBookingRecords(ctx, {
+    return await createStaffBooking(ctx, {
       service,
       team: scope.team,
       customer: scope.customer,
@@ -137,13 +134,7 @@ export const create = mutation({
       selectedSlot,
       collectedFields,
       remarks: args.remarks,
-      bookingSource: "manual",
+      recordInboxBooking: false,
     });
-    console.log("workflow_reminder_scheduling_after_booking_created", {
-      appointmentId: eventId,
-      conversationId: scope.conversation?._id ?? null,
-    });
-    await scheduleWorkflowRemindersForAppointment(ctx, eventId);
-    return { eventId, sessionId };
   },
 });

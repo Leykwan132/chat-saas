@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { logConversationEvent } from "../conversationLogs";
 import { resolveAvailableInterval } from "./availability";
 import {
   assertAppointmentBookingManage,
@@ -12,17 +11,13 @@ import {
 } from "./access";
 import { resolveCustomerForConversation } from "./calendarHelpers";
 import {
-  bookingDisplayName,
   serviceSnapshot,
   serviceTimeZone,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
-import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
-import {
-  createManualBookingRecords,
-  validateManualBookingInterval,
-} from "./manualBookingCore";
+import { validateManualBookingInterval } from "./manualBookingCore";
 import { manualBookingFieldsForCustomer } from "./manualBookingFields";
+import { createStaffBooking } from "./staffBooking";
 
 async function loadManualBookingScope(
   ctx: Parameters<typeof assertAppointmentBookingManage>[0],
@@ -138,8 +133,7 @@ export const create = mutation({
     if (assignedUser === null) throw new Error("Assigned teammate not found");
     const customer = await resolveCustomerForConversation(ctx, conversation, args.collectedFields);
     const collectedFields = manualBookingFieldsForCustomer(customer, args.collectedFields);
-    const attendeeName = bookingDisplayName(collectedFields);
-    const { eventId, sessionId } = await createManualBookingRecords(ctx, {
+    return await createStaffBooking(ctx, {
       service,
       team,
       customer,
@@ -148,15 +142,7 @@ export const create = mutation({
       selectedSlot,
       collectedFields,
       remarks: args.remarks,
-      bookingSource: "manual",
+      recordInboxBooking: true,
     });
-    await ctx.db.patch(conversation._id, { status: "booked", updatedAt: Date.now() });
-    await logConversationEvent(ctx, {
-      conversationId: conversation._id,
-      action: "event_booked",
-      metadata: { eventId, eventTitle: `${service.name} - ${attendeeName}`, startAt: selectedSlot.startAt },
-    });
-    await scheduleWorkflowRemindersForAppointment(ctx, eventId);
-    return { eventId, sessionId };
   },
 });
