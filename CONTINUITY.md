@@ -83,7 +83,7 @@
 - 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
 
 # Working set
-- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `docs/superpowers/specs/2026-07-14-calendar-shared-booking-design.md`; prior dialog polish remains in `docs/superpowers/{specs/2026-07-14-create-booking-dialog-polish-design,plans/2026-07-14-create-booking-dialog-polish}.md` and the existing manual-booking working set.
+- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `docs/superpowers/{specs/2026-07-14-calendar-shared-booking-design,plans/2026-07-14-calendar-shared-booking}.md`; prior dialog polish and the existing manual-booking working set remain relevant.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -101,6 +101,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Shared Calendar/Inbox booking implementation plan passed spec-coverage, placeholder, and interface consistency review and is ready for inline execution.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking design was self-reviewed for placeholders, contradictions, scope, ambiguity, event/booking command separation, and bounded customer search.
 - 2026-07-14 [TOOL] Popup-alignment diagnosis compared the screenshot, current portal geometry, recent `bff04c9a` changes, shared Combobox implementation, and official shadcn/Base UI positioning contracts; the protected local dialog remains unavailable in the signed-out browser session.
 - 2026-07-14 [TOOL] Create booking dialog polish completed two verified red-green cycles; 4 focused tests, targeted ESLint, Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
