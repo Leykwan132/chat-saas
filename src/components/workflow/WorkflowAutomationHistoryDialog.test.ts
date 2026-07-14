@@ -29,7 +29,9 @@ test('adds separate paginated history dialogs to both workflow cards', () => {
   expect(dialog).toContain('variant="outline"');
   expect(dialog).toContain('size="sm"');
   expect(dialog).toContain('<History data-icon="inline-start" />');
-  expect(dialog).toContain('<DialogContent className="sm:max-w-3xl rounded-2xl">');
+  expect(dialog).toContain('<DialogContent className="w-fit rounded-2xl p-6 sm:max-w-[calc(100%-4rem)] sm:p-8">');
+  expect(dialog).toContain('<ScrollArea className="min-w-0 max-h-[60vh]">');
+  expect(dialog).not.toContain('sm:max-w-3xl');
   expect(dialog).toContain('<Empty className="rounded-xl border bg-muted/60 px-8 py-10">');
   expect(dialog).toContain("from '@/components/ui/table'");
   expect(dialog).toContain('<Table>');

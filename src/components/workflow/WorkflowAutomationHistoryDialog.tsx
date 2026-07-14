@@ -80,14 +80,14 @@ export function WorkflowAutomationHistoryDialog({
           History
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-3xl rounded-2xl">
+      <DialogContent className="w-fit rounded-2xl p-6 sm:max-w-[calc(100%-4rem)] sm:p-8">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
             Scheduled and completed automation activity for this agent.
           </DialogDescription>
         </DialogHeader>
-        <ScrollArea className="max-h-[60vh]">
+        <ScrollArea className="min-w-0 max-h-[60vh]">
           {results.length === 0 ? (
             <Empty className="rounded-xl border bg-muted/60 px-8 py-10">
               <EmptyHeader>
