@@ -28,7 +28,7 @@ describe('manual booking schedule model', () => {
   });
 
   it('defaults the end time from a flexible start and service duration', () => {
-    expect(defaultManualBookingEndTime('11:41am', 60)).toBe('12:41 PM');
+    expect(defaultManualBookingEndTime('11:41am', 60)).toBe('12:41pm');
     expect(defaultManualBookingEndTime('not a time', 60)).toBe('');
   });
 

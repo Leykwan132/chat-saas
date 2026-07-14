@@ -96,13 +96,13 @@ export function combineDateTimeInTimeZone(
 export function formatCalendarTimeOption(totalMinutes: number) {
   const hours24 = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  const period = hours24 >= 12 ? 'PM' : 'AM';
+  const period = hours24 >= 12 ? 'pm' : 'am';
   const hours12 = hours24 % 12 || 12;
-  return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`;
+  return `${hours12}:${minutes.toString().padStart(2, '0')}${period}`;
 }
 
-export const CALENDAR_TIME_OPTIONS = Array.from({ length: 48 }, (_, index) =>
-  formatCalendarTimeOption(index * 30),
+export const CALENDAR_TIME_OPTIONS = Array.from({ length: 96 }, (_, index) =>
+  formatCalendarTimeOption(index * 15),
 );
 
 export function parseCalendarTimeLabel(value: string) {

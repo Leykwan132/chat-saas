@@ -33,7 +33,12 @@ export function ManualBookingScheduleField({
       <Label>Schedule</Label>
       <div className="grid grid-cols-[auto_minmax(0,1.45fr)_minmax(8rem,0.9fr)_auto_minmax(8rem,0.9fr)] items-center gap-3">
         <Clock className="size-4 text-muted-foreground" aria-hidden="true" />
-        <CalendarDatePickerField value={date} onChange={onDateChange} showLabel={false} />
+        <CalendarDatePickerField
+          value={date}
+          onChange={onDateChange}
+          showLabel={false}
+          displayFormat="EEEE, d MMMM"
+        />
         <EditableTimeCombobox
           value={startTime}
           onChange={onStartTimeChange}

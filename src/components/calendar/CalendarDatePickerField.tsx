@@ -12,12 +12,14 @@ export function CalendarDatePickerField({
   disabled = false,
   showLabel = true,
   label = 'Date',
+  displayFormat = 'MMM d, yyyy',
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   showLabel?: boolean;
   label?: string;
+  displayFormat?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = new Date(`${value}T00:00:00`);
@@ -33,7 +35,7 @@ export function CalendarDatePickerField({
             className="h-10 w-full justify-between border-input bg-background text-left font-normal"
             disabled={disabled}
           >
-            {format(selected, 'MMM d, yyyy')}
+            {format(selected, displayFormat)}
             <CalendarIcon className="size-4 text-muted-foreground" />
           </Button>
         </PopoverTrigger>

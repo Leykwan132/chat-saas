@@ -21,6 +21,11 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('className="h-10 w-full px-3 text-sm"');
   expect(source).toContain('<SelectContent className="text-sm">');
   expect(source).toContain('className="py-2.5 text-sm"');
+  expect(source).toContain("import { Link, useParams } from 'react-router'");
+  expect(source).toContain("import { Plus } from 'lucide-react'");
+  expect(source).toContain("throw new Error('Missing agent ID')");
+  expect(source).toContain('to={`/dashboard/${agentId}/services/new`}');
+  expect(source).toContain('Create new service');
   expect(source).not.toContain('CalendarDatePickerField');
   expect(source).not.toContain('TimeSelectInput');
   expect(source).not.toContain("import { Check, X } from 'lucide-react'");

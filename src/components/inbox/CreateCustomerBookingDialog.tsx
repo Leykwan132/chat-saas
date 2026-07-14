@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
+import { Plus } from 'lucide-react';
+import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
@@ -36,6 +38,7 @@ export function CreateCustomerBookingDialog({
   onOpenChange: (open: boolean) => void;
   conversationId: Id<'conversations'>;
 }) {
+  const { agentId } = useParams();
   const options = useQuery(
     api.appointmentBooking.manualBooking.getCreateOptions,
     open ? { conversationId } : 'skip',
@@ -149,6 +152,8 @@ export function CreateCustomerBookingDialog({
     }
   };
 
+  if (!agentId) throw new Error('Missing agent ID');
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
@@ -160,7 +165,15 @@ export function CreateCustomerBookingDialog({
         ) : (
           <div className="grid gap-5">
             <div className="grid gap-3">
-              <Label>Service</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label>Service</Label>
+                <Button asChild variant="outline" size="sm" className="h-8 gap-1.5">
+                  <Link to={`/dashboard/${agentId}/services/new`}>
+                    <Plus className="size-3.5" aria-hidden="true" />
+                    Create new service
+                  </Link>
+                </Button>
+              </div>
               <Select value={effectiveServiceId} onValueChange={(value) => {
                 const nextService = options.services.find((item) => item.serviceId === value);
                 const nextEndTime = nextService

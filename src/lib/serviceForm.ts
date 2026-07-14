@@ -77,7 +77,7 @@ export type ServiceRow = {
   specificWorkosUserId?: string;
 };
 
-export const DEFAULT_PREFERRED_TIME = '10:00 AM';
+export const DEFAULT_PREFERRED_TIME = '10:00am';
 
 export const DEFAULT_SERVICE_FORM: ServiceForm = {
   name: '',

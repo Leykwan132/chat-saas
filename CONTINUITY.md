@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [USER] Approved compact shared time labels, 15-minute time options, a yearless manual-booking date label, and a direct Create new service action.
+- 2026-07-14 [CODE] Shared time labels are compact with 15-minute options; manual booking shows a yearless date and links directly to Create new service.
 - 2026-07-14 [CODE] Manual Create booking now uses a wider modal, larger Service typography, increased field/control gaps, and wider single-line time dropdowns.
 - 2026-07-14 [CODE] Manual booking Start and End now use the shared shadcn/Base UI Combobox with a native scrollable list while retaining custom minute-level time text.
 - 2026-07-14 [CODE] Service duration seeds End until customization; preview and Create validate and persist the exact selected interval with stale-response protection.
@@ -73,13 +73,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Added compact shared time labels, 96 quarter-hour options, `Thursday, 11 June` manual dates, and the Service-creation shortcut.
 - 2026-07-14 [CODE] Refined manual-booking spacing with a 576px modal, 14px Service controls, 12px schedule gaps, 128px time inputs, and 176px time menus.
 - 2026-07-14 [CODE] Replaced the non-scrolling custom time Popover/ScrollArea with the shared Combobox and preserved editable custom times.
 - 2026-07-14 [CODE] Added flexible manual-booking Start/End comboboxes with service-duration defaults and exact custom-interval availability enforcement.
 - 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
 - 2026-07-14 [CODE] Replaced manual booking slot search with shared date/time controls and automatic stale-safe conflict feedback backed by exact-slot Convex validation.
 - 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee and Bookings sits below Customer details.
-- 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 
 # Working set
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
@@ -100,6 +100,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Compact booking controls completed three verified red-green cycles; 12 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Manual-booking spacing completed two verified red-green cycles; 8 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Shared time Combobox completed a verified red-green cycle; 8 focused booking tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. Live protected-dialog interaction was unavailable because the local browser session was signed out.
 - 2026-07-14 [TOOL] Flexible manual booking completed verified red-green cycles; Convex codegen, 11 focused tests, targeted ESLint, production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -119,4 +120,3 @@
 - 2026-07-13 [TOOL] Scope typography/radius refinement passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, and `git diff --check` under Node v22.22.0.
 - 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
 - 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.
-- 2026-07-13 [TOOL] Full Vitest ran 519 tests: 515 passed; the four failures exactly match the pre-implementation baseline and are outside workflow automation scope.
