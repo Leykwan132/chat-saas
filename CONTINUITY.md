@@ -1,8 +1,8 @@
 # Snapshot
-- 2026-07-14 [CODE] Calendar customer search now supports bounded case-insensitive substring matching across stored identity fields and identifies WhatsApp, Instagram, Messenger, Web, and imported customers with source icons.
+- 2026-07-14 [CODE] Calendar customer search uses the shared Combobox's local filter over the loaded customer list, matching case-insensitive name, email, phone, and contact address while preserving source icons.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
-- 2026-07-14 [CODE] Customer search has a normalized workspace-filtered projection, atomic write maintenance, an official resumable Convex backfill, and bounded search.
+- 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
 - 2026-07-14 [CODE] Manual Start menus align left and End menus align right; shared booking controls retain the scrollable in-dialog portal, 15-minute options, and custom time input.
 - 2026-07-14 [CODE] Service duration seeds End until customization; exact selected intervals drive stale-safe availability checks and creation.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
@@ -25,6 +25,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D314 ACTIVE: Calendar booking customer search is a standard client-side Combobox feature using loaded items and `itemToStringValue`/local filtering; Convex does not implement per-keystroke customer search.
 - 2026-07-14 [USER] D313 ACTIVE: Both staff-operated manual-booking dialogs display stored customer identity and expose only Customer context, Service, `Date & time`, and optional Remarks; manual booking does not require service data-collection questions.
 - 2026-07-14 [USER] D312 ACTIVE: Calendar shows all customers in a searchable Combobox and creates customer-direct bookings without creating Inbox conversations; generic `create event` remains an event-only command and is not repurposed for bookings.
 - 2026-07-14 [USER] D311 ACTIVE: Create booking alone uses a 10% black no-blur overlay; time Comboboxes share an absolute pointer-transparent portal host; Create new service uses a semantic blue link variant; Cancel uses the neutral ghost variant.
@@ -76,7 +77,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Fixed Calendar customer substring search by projecting bounded word suffixes into the Convex search index and backfilling existing development customers.
+- 2026-07-14 [CODE] Corrected Calendar customer search to use the shared Combobox's local item filtering and removed the remote search endpoint and suffix-index workaround.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
@@ -85,7 +86,7 @@
 - 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
-- 2026-07-14 [CODE] Simplified Calendar/Inbox booking and substring customer search: `convex/{customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
+- 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -103,7 +104,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Customer substring search completed a verified red-green cycle reproducing `ah` → `Sarah`; Convex codegen, the active development backfill, 10/10 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and LOC checks passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Local Combobox search completed verified red-green cycles reproducing `ah` → `Sarah`; Convex codegen, 9/9 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC inspection passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.

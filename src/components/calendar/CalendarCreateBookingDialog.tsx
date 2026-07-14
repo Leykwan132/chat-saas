@@ -20,11 +20,7 @@ export function CalendarCreateBookingDialog({
     api.appointmentBooking.calendarManualBooking.getCreateOptions,
     open ? { agentId } : 'skip',
   );
-  const recentCustomers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
-  const searchResults = useQuery(
-    api.calendarEvents.searchCustomerOptions,
-    open && customerQuery.trim() ? { query: customerQuery, limit: 50 } : 'skip',
-  );
+  const customers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
   const checkAvailability = useMutation(api.appointmentBooking.calendarManualBooking.checkAvailability);
   const createBooking = useMutation(api.appointmentBooking.calendarManualBooking.create);
 
@@ -35,7 +31,7 @@ export function CalendarCreateBookingDialog({
       agentId={agentId}
       initialDate={initialDate}
       services={services}
-      customers={customerQuery.trim() ? searchResults ?? recentCustomers : recentCustomers}
+      customers={customers}
       customerQuery={customerQuery}
       onCustomerQueryChange={setCustomerQuery}
       checkAvailability={(input) => {

@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
+  bookingCustomerMatchesQuery,
   bookingCustomerSearchText,
   bookingCustomerSource,
 } from './bookingCustomerPresentation';
@@ -18,6 +19,12 @@ test('builds one normalized search value from every customer identity field', ()
   expect(bookingCustomerSearchText(customer)).toBe(
     'kwan main 60129499394 kwan@example.com wa:60129499394',
   );
+});
+
+test('matches partial customer identity queries locally', () => {
+  expect(bookingCustomerMatchesQuery({ ...customer, name: 'Sarah Lee' }, 'ah')).toBe(true);
+  expect(bookingCustomerMatchesQuery(customer, '4993')).toBe(true);
+  expect(bookingCustomerMatchesQuery(customer, 'missing')).toBe(false);
 });
 
 test('maps every customer source to its visible label', () => {

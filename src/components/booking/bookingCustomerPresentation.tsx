@@ -11,6 +11,10 @@ export function bookingCustomerSearchText(customer: BookingCustomer) {
     .join(' ');
 }
 
+export function bookingCustomerMatchesQuery(customer: BookingCustomer, query: string) {
+  return bookingCustomerSearchText(customer).includes(query.trim().toLowerCase());
+}
+
 export function bookingCustomerLabel(customer: BookingCustomerDetails) {
   return customer.name?.trim()
     || customer.email

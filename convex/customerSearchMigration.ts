@@ -15,14 +15,3 @@ export const backfillCustomerSearchText = migrations.define({
 export const runBackfillCustomerSearchText = migrations.runner(
   internal.customerSearchMigration.backfillCustomerSearchText,
 );
-
-export const backfillCustomerSubstringSearchText = migrations.define({
-  table: "customers",
-  migrateOne: (_, customer) => ({
-    searchText: customerSearchText(customer),
-  }),
-});
-
-export const runBackfillCustomerSubstringSearchText = migrations.runner(
-  internal.customerSearchMigration.backfillCustomerSubstringSearchText,
-);

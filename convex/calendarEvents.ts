@@ -382,7 +382,7 @@ export const listCustomerOptions = query({
       .query("customers")
       .withIndex("by_orgId_and_lastSeenAt", (q) => q.eq("orgId", resolvedOrgId))
       .order("desc")
-      .take(100);
+      .collect();
     return customers.map((customer) => ({
       _id: customer._id,
       name: customer.name,
@@ -391,31 +391,6 @@ export const listCustomerOptions = query({
       contactAddress: customer.contactAddress,
       service: customer.service,
     }));
-  },
-});
-
-const customerOption = (customer: Doc<"customers">) => ({
-  _id: customer._id,
-  name: customer.name,
-  email: customer.email,
-  phone: customer.phone,
-  contactAddress: customer.contactAddress,
-  service: customer.service,
-});
-
-export const searchCustomerOptions = query({
-  args: { query: v.string(), limit: v.number() },
-  handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
-    const resolvedOrgId = resolveChannelOrgId(auth.orgId, auth.userId);
-    const limit = Math.max(1, Math.min(50, Math.floor(args.limit)));
-    const customers = await ctx.db
-      .query("customers")
-      .withSearchIndex("search_searchText", (q) =>
-        q.search("searchText", args.query.trim()).eq("orgId", resolvedOrgId),
-      )
-      .take(limit);
-    return customers.map(customerOption);
   },
 });
 

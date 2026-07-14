@@ -6,12 +6,13 @@ const customerSource = readFileSync(new URL('./BookingCustomerCombobox.tsx', imp
 const inboxSource = readFileSync(new URL('../inbox/CreateCustomerBookingDialog.tsx', import.meta.url), 'utf8');
 const calendarDialogSource = readFileSync(new URL('../calendar/CalendarCreateBookingDialog.tsx', import.meta.url), 'utf8');
 const calendarPageSource = readFileSync(new URL('../../pages/CalendarPage.tsx', import.meta.url), 'utf8');
+const calendarEventsSource = readFileSync(new URL('../../../convex/calendarEvents.ts', import.meta.url), 'utf8');
 
 test('shares the booking dialog between Inbox and Calendar', () => {
   expect(inboxSource).toContain('<CreateBookingDialog');
   expect(calendarDialogSource).toContain('<CreateBookingDialog');
   expect(calendarDialogSource).toContain('api.appointmentBooking.calendarManualBooking');
-  expect(calendarDialogSource).toContain('searchCustomerOptions');
+  expect(calendarDialogSource).not.toContain('searchCustomerOptions');
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');
   expect(dialogSource).toContain('BookingCustomerCombobox');
   expect(dialogSource).toContain('<BookingCustomerSummary customer={fixedCustomer} />');
@@ -27,9 +28,10 @@ test('uses a searchable scrollable customer Combobox', () => {
   expect(customerSource).toContain('<ComboboxList');
   expect(customerSource).toContain('overflow-y-auto');
   expect(customerSource).not.toContain('filter={null}');
-  expect(customerSource).toContain('bookingCustomerSearchText(customer)');
+  expect(customerSource).toContain('filter={bookingCustomerMatchesQuery}');
   expect(customerSource).toContain('bookingCustomerSource(customer)');
-  expect(calendarDialogSource).toContain('searchResults ?? recentCustomers');
+  expect(calendarDialogSource).toContain('customers={customers}');
+  expect(calendarEventsSource).toContain('.collect()');
 });
 
 test('keeps generic event creation separate from the primary booking action', () => {

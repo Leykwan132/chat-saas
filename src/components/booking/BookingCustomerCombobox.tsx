@@ -11,7 +11,7 @@ import type { BookingCustomer } from './bookingDialogTypes';
 import {
   bookingCustomerDetail,
   bookingCustomerLabel,
-  bookingCustomerSearchText,
+  bookingCustomerMatchesQuery,
   bookingCustomerSource,
 } from './bookingCustomerPresentation';
 
@@ -40,9 +40,7 @@ export function BookingCustomerCombobox({
       itemToStringLabel={(customer) => bookingCustomerLabel(customer)}
       itemToStringValue={(customer) => bookingCustomerLabel(customer)}
       isItemEqualToValue={(customer, selected) => customer._id === selected._id}
-      filter={(customer, query) =>
-        bookingCustomerSearchText(customer).includes(query.trim().toLowerCase())
-      }
+      filter={bookingCustomerMatchesQuery}
     >
       <ComboboxInput
         aria-label="Customer"
