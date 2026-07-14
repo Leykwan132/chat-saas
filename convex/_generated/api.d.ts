@@ -50,6 +50,7 @@ import type * as appointmentBooking_editing from "../appointmentBooking/editing.
 import type * as appointmentBooking_fields from "../appointmentBooking/fields.js";
 import type * as appointmentBooking_manualBooking from "../appointmentBooking/manualBooking.js";
 import type * as appointmentBooking_manualBookingCore from "../appointmentBooking/manualBookingCore.js";
+import type * as appointmentBooking_manualBookingFields from "../appointmentBooking/manualBookingFields.js";
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
@@ -283,6 +284,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/fields": typeof appointmentBooking_fields;
   "appointmentBooking/manualBooking": typeof appointmentBooking_manualBooking;
   "appointmentBooking/manualBookingCore": typeof appointmentBooking_manualBookingCore;
+  "appointmentBooking/manualBookingFields": typeof appointmentBooking_manualBookingFields;
   "appointmentBooking/services": typeof appointmentBooking_services;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;

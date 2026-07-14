@@ -9,11 +9,12 @@ import {
   loadService,
   resolveTeamForAgent,
 } from "./access";
-import { missingServiceFields, serviceSnapshot, serviceTimeZone } from "./fields";
+import { serviceSnapshot, serviceTimeZone } from "./fields";
 import {
   createManualBookingRecords,
   validateManualBookingInterval,
 } from "./manualBookingCore";
+import { manualBookingFieldsForCustomer } from "./manualBookingFields";
 import { collectedFieldsValidator } from "./validators";
 
 async function loadCalendarBookingScope(
@@ -101,6 +102,7 @@ export const create = mutation({
     customerId: v.id("customers"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),
   },
@@ -110,10 +112,6 @@ export const create = mutation({
     const service = await loadService(ctx, args.serviceId);
     if (service.agentId !== scope.agent._id || !service.isActive) {
       throw new Error("Selected service is not available");
-    }
-    const missing = missingServiceFields(service, args.collectedFields);
-    if (missing.length > 0) {
-      throw new Error(`Missing required booking details: ${missing.join(", ")}`);
     }
     const selectedSlot = await resolveCalendarSlot(ctx, {
       service,
@@ -125,13 +123,18 @@ export const create = mutation({
     if (selectedSlot === null) throw new Error("That slot is no longer available.");
     const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
     if (assignedUser === null) throw new Error("Assigned teammate not found");
+    const collectedFields = manualBookingFieldsForCustomer(
+      scope.customer,
+      args.collectedFields,
+    );
     return await createManualBookingRecords(ctx, {
       service,
       team: scope.team,
       customer: scope.customer,
       assignedUser,
       selectedSlot,
-      collectedFields: args.collectedFields,
+      collectedFields,
+      remarks: args.remarks,
       bookingSource: "manual",
     });
   },

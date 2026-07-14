@@ -26,12 +26,14 @@ export async function createManualBookingRecords(
     assignedUser: Doc<"users">;
     selectedSlot: BookingSlot;
     collectedFields: CollectedFields;
+    remarks?: string;
     bookingSource: "manual" | "ai";
   },
 ) {
   const now = Date.now();
   const attendeeName = bookingDisplayName(args.collectedFields);
   const timeZone = serviceTimeZone(args.service, args.team);
+  const remarks = args.remarks?.trim() || undefined;
   const eventId = await ctx.db.insert("calendarEvents", {
     teamId: args.team._id,
     title: `${args.service.name} - ${attendeeName}`,
@@ -50,6 +52,7 @@ export async function createManualBookingRecords(
     conversationId: args.conversation?._id,
     appointmentServiceId: args.service._id,
     bookingSource: args.bookingSource,
+    remarks,
     customFieldResponses: args.collectedFields,
     createdAt: now,
     updatedAt: now,

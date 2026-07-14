@@ -75,6 +75,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       fields: [
         { key: "date", label: "Booking Date", type: "date" },
         { key: "time", label: "Booking Time", type: "time" },
+        { key: "requirements", label: "Requirements", type: "text" },
       ],
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
@@ -103,11 +104,10 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     {
       ...selection,
       collectedFields: {
-        name: "Calendar Customer",
-        phone: "+60123456789",
         date: "2026-07-16",
         time: "9:15am",
       },
+      remarks: "  Customer prefers the window seat.  ",
     },
   );
 
@@ -125,6 +125,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     agentId: fixture.agentId,
     appointmentServiceId: fixture.serviceId,
     bookingSource: "manual",
+    remarks: "Customer prefers the window seat.",
     startAt,
     endAt,
   });
@@ -132,6 +133,13 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     customerId: fixture.customerId,
     calendarEventId: result.eventId,
     status: AppointmentBookingSessionStatus.Booked,
+    collectedFields: {
+      date: "2026-07-16",
+      time: "9:15am",
+      name: "Calendar Customer",
+      phone: "+60123456789",
+      email: "customer@example.com",
+    },
   });
   expect(records.session).not.toHaveProperty("conversationId");
   expect(records.conversations).toEqual([]);

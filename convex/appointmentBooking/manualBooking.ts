@@ -13,7 +13,6 @@ import {
 import { resolveCustomerForConversation } from "./calendarHelpers";
 import {
   bookingDisplayName,
-  missingServiceFields,
   serviceSnapshot,
   serviceTimeZone,
 } from "./fields";
@@ -23,6 +22,7 @@ import {
   createManualBookingRecords,
   validateManualBookingInterval,
 } from "./manualBookingCore";
+import { manualBookingFieldsForCustomer } from "./manualBookingFields";
 
 async function loadManualBookingScope(
   ctx: Parameters<typeof assertAppointmentBookingManage>[0],
@@ -113,6 +113,7 @@ export const create = mutation({
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),
   },
@@ -122,10 +123,6 @@ export const create = mutation({
     const service = await loadService(ctx, args.serviceId);
     if (service.agentId !== agent._id || !service.isActive) {
       throw new Error("Selected service is not available");
-    }
-    const missingFields = missingServiceFields(service, args.collectedFields);
-    if (missingFields.length > 0) {
-      throw new Error(`Missing required booking details: ${missingFields.join(", ")}`);
     }
     const selectedSlot = await resolveManualBookingSlot(ctx, {
       service,
@@ -138,7 +135,8 @@ export const create = mutation({
     const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
     if (assignedUser === null) throw new Error("Assigned teammate not found");
     const customer = await resolveCustomerForConversation(ctx, conversation, args.collectedFields);
-    const attendeeName = bookingDisplayName(args.collectedFields);
+    const collectedFields = manualBookingFieldsForCustomer(customer, args.collectedFields);
+    const attendeeName = bookingDisplayName(collectedFields);
     const { eventId, sessionId } = await createManualBookingRecords(ctx, {
       service,
       team,
@@ -146,7 +144,8 @@ export const create = mutation({
       conversation,
       assignedUser,
       selectedSlot,
-      collectedFields: args.collectedFields,
+      collectedFields,
+      remarks: args.remarks,
       bookingSource: "manual",
     });
     await ctx.db.patch(conversation._id, { status: "booked", updatedAt: Date.now() });
