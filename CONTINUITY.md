@@ -1,11 +1,9 @@
 # Snapshot
-- 2026-07-14 [CODE] Create booking now uses a stable non-layout time-menu host, a 10% no-blur backdrop, a semantic blue Create new service link, and a ghost Cancel action.
-- 2026-07-14 [USER] Create booking requires a 10% no-blur backdrop, a non-layout time-popup portal host, a blue Create new service text action, and a neutral text Cancel action.
-- 2026-07-14 [CODE] Manual-booking time menus now portal inside the booking dialog so their 15-minute lists can scroll under modal scroll-lock; Create new service is a primary-colored text link.
-- 2026-07-14 [CODE] Shared time labels are compact with 15-minute options; manual booking shows a yearless date and links directly to Create new service.
-- 2026-07-14 [CODE] Manual Create booking now uses a wider modal, larger Service typography, increased field/control gaps, and wider single-line time dropdowns.
-- 2026-07-14 [CODE] Manual booking Start and End now use the shared shadcn/Base UI Combobox with a native scrollable list while retaining custom minute-level time text.
-- 2026-07-14 [CODE] Service duration seeds End until customization; preview and Create validate and persist the exact selected interval with stale-response protection.
+- 2026-07-14 [USER] Calendar `New Booking` must share the Inbox booking form, add searchable all-customer and service selection, support customers without conversations, and keep generic event creation strictly separate.
+- 2026-07-14 [TOOL] The wider 176px time menu's start alignment triggers right-edge collision shifting; the approved correction is Start-left and End-right alignment.
+- 2026-07-14 [CODE] Create booking uses a non-layout in-dialog scrollable Combobox host, a 10% no-blur backdrop, a semantic blue service link, a ghost Cancel action, and compact 15-minute labels.
+- 2026-07-14 [CODE] Manual booking uses a wider dialog with yearless date display, larger Service typography, increased gaps, and wider editable time controls.
+- 2026-07-14 [CODE] Service duration seeds End until customization; exact selected intervals drive stale-safe availability checks and creation.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
@@ -26,6 +24,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D312 ACTIVE: Calendar shows all customers in a searchable Combobox and creates customer-direct bookings without creating Inbox conversations; generic `create event` remains an event-only command and is not repurposed for bookings.
 - 2026-07-14 [USER] D311 ACTIVE: Create booking alone uses a 10% black no-blur overlay; time Comboboxes share an absolute pointer-transparent portal host; Create new service uses a semantic blue link variant; Cancel uses the neutral ghost variant.
 - 2026-07-14 [USER] D310 ACTIVE: Manual-booking time Combobox portals stay inside the booking dialog's scroll boundary; Create new service uses the semantic primary link-button treatment.
 - 2026-07-14 [USER] D309 ACTIVE: Shared time labels use compact lowercase meridiem and 15-minute options; manual booking alone displays `EEEE, d MMMM`; its Service label row links to `/dashboard/:agentId/services/new`.
@@ -84,7 +83,7 @@
 - 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
 
 # Working set
-- 2026-07-14 [CODE] Create booking dialog polish: `docs/superpowers/{specs/2026-07-14-create-booking-dialog-polish-design,plans/2026-07-14-create-booking-dialog-polish}.md`; implementation remains in the existing manual-booking working set.
+- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `docs/superpowers/specs/2026-07-14-calendar-shared-booking-design.md`; prior dialog polish remains in `docs/superpowers/{specs/2026-07-14-create-booking-dialog-polish-design,plans/2026-07-14-create-booking-dialog-polish}.md` and the existing manual-booking working set.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -102,6 +101,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Shared Calendar/Inbox booking design was self-reviewed for placeholders, contradictions, scope, ambiguity, event/booking command separation, and bounded customer search.
+- 2026-07-14 [TOOL] Popup-alignment diagnosis compared the screenshot, current portal geometry, recent `bff04c9a` changes, shared Combobox implementation, and official shadcn/Base UI positioning contracts; the protected local dialog remains unavailable in the signed-out browser session.
 - 2026-07-14 [TOOL] Create booking dialog polish completed two verified red-green cycles; 4 focused tests, targeted ESLint, Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Modal Combobox portal and service-link refinement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Compact booking controls completed three verified red-green cycles; 12 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
