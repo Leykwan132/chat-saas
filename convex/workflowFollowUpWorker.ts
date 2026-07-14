@@ -82,6 +82,12 @@ export const wakeFollowUp = internalAction({
     if ('skipped' in context) return { skipped: true as const, reason: context.skipped };
     const decision = getWorkflowFollowUpWakeDecision({ now: Date.now(), dueAt: context.timer.dueAt });
     if (decision.kind === 'reschedule') return { reschedule: true as const, dueAt: decision.dueAt };
+    console.log('workflow_followup_sending', {
+      runId: context.run._id,
+      conversationId: context.run.conversationId,
+      attempt: context.run.attempt,
+      templateName: context.run.templateSnapshot.name,
+    });
     const result = await sendWorkflowWhatsappTemplate(ctx, {
       channel: context.channel,
       customer: context.customer,

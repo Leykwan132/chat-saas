@@ -60,6 +60,12 @@ export const sendReminder = internalAction({
       args,
     );
     if ('skipped' in context) return { skipped: true as const, reason: context.skipped };
+    console.log('workflow_reminder_sending', {
+      appointmentId: context.run.appointmentId,
+      runId: context.run._id,
+      conversationId: context.run.conversationId,
+      templateName: context.run.templateSnapshot.name,
+    });
     const result = await sendWorkflowWhatsappTemplate(ctx, {
       channel: context.channel,
       customer: context.customer,
