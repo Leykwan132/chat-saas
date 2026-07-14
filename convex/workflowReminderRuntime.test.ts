@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from 'convex-test';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import workpoolSchema from '../node_modules/@convex-dev/workpool/dist/component/schema.js';
 import schema from './schema';
 import {
@@ -25,6 +25,7 @@ const workpoolModules = {
 };
 
 test('schedules one idempotent reminder run and persists its Workpool ID', async () => {
+  const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   const t = convexTest(schema, modules);
   t.registerComponent('workflowReminderWorkpool', workpoolSchema, workpoolModules);
   const appointmentId = await t.run(async (ctx) => {
@@ -134,6 +135,14 @@ test('schedules one idempotent reminder run and persists its Workpool ID', async
     });
   });
   await t.run((ctx) => scheduleWorkflowRemindersForAppointment(ctx, appointmentId));
+  expect(consoleLog).toHaveBeenCalledWith(
+    'workflow_reminder_workpool_scheduled',
+    expect.objectContaining({
+      appointmentId,
+      timingOptionId: 'oneHourBeforeAppointment',
+      templateName: 'appointment_reminder',
+    }),
+  );
   await t.run((ctx) => scheduleWorkflowRemindersForAppointment(ctx, appointmentId));
   await t.run(async (ctx) => {
     const runs = await ctx.db.query('workflowAutomationRuns').collect();
@@ -183,4 +192,5 @@ test('schedules one idempotent reminder run and persists its Workpool ID', async
       reason: 'Appointment cancelled',
     }));
   });
+  consoleLog.mockRestore();
 });

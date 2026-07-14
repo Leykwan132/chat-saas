@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from 'convex-test';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 import workpoolSchema from '../node_modules/@convex-dev/workpool/dist/component/schema.js';
 import schema from './schema';
 import {
@@ -25,6 +25,7 @@ const workpoolModules = {
 };
 
 test('maintains one follow-up timer, updates its baseline, and cancels on reply', async () => {
+  const consoleLog = vi.spyOn(console, 'log').mockImplementation(() => undefined);
   const t = convexTest(schema, modules);
   t.registerComponent('workflowFollowUpWorkpool', workpoolSchema, workpoolModules);
   const fixture = await t.run(async (ctx) => {
@@ -139,6 +140,14 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
     return { conversationId, firstMessageId, secondMessageId };
   });
   await t.run((ctx) => handleWorkflowFollowUpOutbound(ctx, fixture.firstMessageId));
+  expect(consoleLog).toHaveBeenCalledWith(
+    'workflow_followup_workpool_scheduled',
+    expect.objectContaining({
+      conversationId: fixture.conversationId,
+      attempt: 1,
+      templateName: 'follow_up',
+    }),
+  );
   await t.run((ctx) => handleWorkflowFollowUpOutbound(ctx, fixture.secondMessageId));
   await t.run(async (ctx) => {
     const timers = await ctx.db.query('workflowFollowUpTimers').collect();
@@ -160,4 +169,5 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
     expect(timer?.status).toBe('closed');
     expect(run?.status).toBe('cancelled');
   });
+  consoleLog.mockRestore();
 });

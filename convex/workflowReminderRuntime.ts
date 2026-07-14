@@ -87,6 +87,14 @@ export async function scheduleWorkflowRemindersForAppointment(
         retry: false,
       },
     );
+    console.log('workflow_reminder_workpool_scheduled', {
+      appointmentId,
+      runId,
+      workId,
+      scheduledAt: candidate.scheduledAt,
+      timingOptionId: candidate.timingOptionId,
+      templateName: config.template.name,
+    });
     await ctx.db.patch(runId, {
       currentWorkId: workId,
       workIds: [...values.workIds, workId],

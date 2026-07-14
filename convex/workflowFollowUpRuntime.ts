@@ -29,6 +29,8 @@ export async function enqueueWorkflowFollowUpWake(
     priorWorkIds: string[];
   },
 ) {
+  const run = await ctx.db.get(args.runId);
+  if (!run) throw new Error('Follow-up run not found');
   const workId = await workflowFollowUpWorkpool.enqueueAction(
     ctx,
     internal.workflowFollowUpWorker.wakeFollowUp,
@@ -40,6 +42,15 @@ export async function enqueueWorkflowFollowUpWake(
       retry: false,
     },
   );
+  console.log('workflow_followup_workpool_scheduled', {
+    conversationId: run.conversationId,
+    timerId: args.timerId,
+    runId: args.runId,
+    workId,
+    scheduledAt: args.dueAt,
+    attempt: run.attempt,
+    templateName: run.templateSnapshot.name,
+  });
   const workIds = [...args.priorWorkIds, workId];
   await ctx.db.patch(args.timerId, { currentWorkId: workId, workIds, updatedAt: Date.now() });
   await ctx.db.patch(args.runId, { currentWorkId: workId, workIds, updatedAt: Date.now() });
