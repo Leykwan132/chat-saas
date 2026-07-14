@@ -18,6 +18,13 @@ const workflowWhatsappTemplateButtonValidator = v.object({
   example: v.optional(v.string()),
 });
 
+const workflowWhatsappTemplateNamedBodyExampleValidator = v.object({
+  body_text_named_params: v.array(v.object({
+    param_name: v.string(),
+    example: v.string(),
+  })),
+});
+
 export const workflowWhatsappTemplateSnapshotValidator = v.object({
   key: v.string(),
   name: v.string(),
@@ -28,6 +35,7 @@ export const workflowWhatsappTemplateSnapshotValidator = v.object({
     format: v.optional(v.string()),
     text: v.optional(v.string()),
     r2Key: v.optional(v.string()),
+    example: v.optional(workflowWhatsappTemplateNamedBodyExampleValidator),
     buttons: v.optional(v.array(workflowWhatsappTemplateButtonValidator)),
   }))),
 });

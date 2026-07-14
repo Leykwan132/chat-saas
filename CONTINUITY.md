@@ -1,5 +1,6 @@
 # Snapshot
 - 2026-07-14 [USER] Goal is to fix workflow Save rejecting valid WhatsApp BODY `example.body_text_named_params` metadata while preserving strict validation.
+- 2026-07-14 [CODE] Workflow template snapshots now strictly accept and preserve named BODY examples across Convex validation, shared types, and frontend template selection types.
 - 2026-07-14 [USER] Goal is to reduce only the workflow History modal rounding and place only its empty state on a soft neutral inset panel; populated history remains unchanged.
 - 2026-07-14 [CODE] The shared workflow History dialog now uses `rounded-2xl`; only its Empty state uses a bordered `rounded-xl bg-muted/60` inset panel with tighter padding.
 - 2026-07-13 [USER] Goal is to move both Reminder and Follow-up History buttons beside their Summary titles with a lightly emphasized clickable treatment.
@@ -22,7 +23,6 @@
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
 - 2026-07-13 [CODE] Apply to uses vertical RadioGroup semantics with two labelled Field rows, `text-xs` labels, `text-[11px]` descriptions, and unchanged validation behavior.
 - 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
-- 2026-07-13 [TOOL] Full Vitest has 515/519 passing; the four failures match the pre-implementation baseline (`whatsappFollowUp`, `creditPeriodPool`, `agentUsage`, `agentTemplateKeys`).
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
@@ -63,13 +63,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Fixed workflow Save compatibility for valid Meta named BODY examples without weakening the snapshot validator.
 - 2026-07-14 [CODE] Refined both workflow History dialogs through their shared component with tighter modal corners and a neutral empty-only panel.
 - 2026-07-13 [CODE] Moved Reminder and Follow-up History actions into their Summary title rows with the shared small outline trigger.
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
 - 2026-07-13 [CODE] Changed the Summary reminder notice from muted fill to the theme-aware background surface.
 - 2026-07-13 [CODE] Moved the reminder booked-appointments notice from setup to Summary and replaced its calendar-check icon with `Info`.
 - 2026-07-13 [CODE] Replaced the scope ToggleGroup with a basic vertical RadioGroup and labelled descriptions.
-- 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
 
 # Working set
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
@@ -91,6 +91,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
 - 2026-07-14 [TOOL] Workflow History empty-state refinement completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Summary History relocation completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Future-only defaults completed a verified red-green cycle; 12 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -110,4 +111,3 @@
 - 2026-07-13 [TOOL] Discard/template interactions completed three verified red-green cycles; 13 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Reset fit-view completed a verified red-green cycle; 8 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Exact 20% workflow template HoverCard width reduction passed the focused toolbar test, targeted ESLint, `git diff --check`, and LOC verification.
-- 2026-07-13 [TOOL] Backend-only template usage and compact picker passed 15 focused tests, targeted ESLint, full TypeScript build, and Convex codegen/schema deployment.

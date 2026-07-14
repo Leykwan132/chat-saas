@@ -71,7 +71,18 @@ test('atomically replaces a workflow draft, records saved template usage, and re
         name: 'appointment_reminder',
         language: 'en_US',
         category: 'UTILITY',
-        components: [],
+        components: [{
+          type: 'BODY',
+          text: 'Dear {{customer_name}}, your {{booking_service}} is on {{booking_date}} at {{booking_time}}.',
+          example: {
+            body_text_named_params: [
+              { param_name: 'customer_name', example: 'Jessica Lee' },
+              { param_name: 'booking_service', example: 'Consultation' },
+              { param_name: 'booking_date', example: 'July 18 (Saturday)' },
+              { param_name: 'booking_time', example: '2:00 PM - 3:00 PM' },
+            ],
+          },
+        }],
       },
     },
   };
@@ -97,6 +108,18 @@ test('atomically replaces a workflow draft, records saved template usage, and re
     activationScope: 'futureOnly',
     revision: 1,
   }));
+  expect(saved.automations.reminder.template?.components?.[0]).toEqual(
+    expect.objectContaining({
+      example: {
+        body_text_named_params: [
+          { param_name: 'customer_name', example: 'Jessica Lee' },
+          { param_name: 'booking_service', example: 'Consultation' },
+          { param_name: 'booking_date', example: 'July 18 (Saturday)' },
+          { param_name: 'booking_time', example: '2:00 PM - 3:00 PM' },
+        ],
+      },
+    }),
+  );
   await testClient.run(async (ctx) => {
     const usage = await ctx.db.query('workflowTemplateUsage').take(10);
     const totals = await ctx.db.query('workflowTemplateUsageTotals').take(10);

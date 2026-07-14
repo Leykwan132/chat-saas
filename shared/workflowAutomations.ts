@@ -5,6 +5,12 @@ export type WorkflowWhatsappTemplateComponent = {
   format?: string;
   text?: string;
   r2Key?: string;
+  example?: {
+    body_text_named_params: Array<{
+      param_name: string;
+      example: string;
+    }>;
+  };
   buttons?: Array<{
     type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
     text: string;
