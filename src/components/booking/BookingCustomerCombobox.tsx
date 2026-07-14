@@ -8,14 +8,12 @@ import {
   ComboboxList,
 } from '@/components/ui/combobox';
 import type { BookingCustomer } from './bookingDialogTypes';
-
-function customerLabel(customer: BookingCustomer) {
-  return customer.name?.trim() || customer.email || customer.phone || customer.contactAddress || 'Unnamed customer';
-}
-
-function customerDetail(customer: BookingCustomer) {
-  return customer.email || customer.phone || customer.contactAddress;
-}
+import {
+  bookingCustomerDetail,
+  bookingCustomerLabel,
+  bookingCustomerSearchText,
+  bookingCustomerSource,
+} from './bookingCustomerPresentation';
 
 export function BookingCustomerCombobox({
   customers,
@@ -39,10 +37,12 @@ export function BookingCustomerCombobox({
       inputValue={inputValue}
       onInputValueChange={onInputValueChange}
       onValueChange={onValueChange}
-      itemToStringLabel={customerLabel}
-      itemToStringValue={customerLabel}
+      itemToStringLabel={bookingCustomerLabel}
+      itemToStringValue={bookingCustomerLabel}
       isItemEqualToValue={(customer, selected) => customer._id === selected._id}
-      filter={null}
+      filter={(customer, query) =>
+        bookingCustomerSearchText(customer).includes(query.trim().toLowerCase())
+      }
     >
       <ComboboxInput
         aria-label="Customer"
@@ -52,16 +52,22 @@ export function BookingCustomerCombobox({
       <ComboboxContent portalContainer={portalContainer} className="min-w-72 rounded-xl">
         <ComboboxEmpty>No customers found.</ComboboxEmpty>
         <ComboboxList className="max-h-64 overflow-y-auto">
-          {(customer) => (
-            <ComboboxItem key={customer._id} value={customer} className="rounded-lg px-3 py-2.5">
-              <span className="min-w-0">
-                <span className="block truncate font-medium">{customerLabel(customer)}</span>
-                {customerDetail(customer) ? (
-                  <span className="block truncate text-xs text-muted-foreground">{customerDetail(customer)}</span>
-                ) : null}
-              </span>
-            </ComboboxItem>
-          )}
+          {(customer) => {
+            const source = bookingCustomerSource(customer);
+            const Icon = source.Icon;
+            const detail = bookingCustomerDetail(customer);
+            return (
+              <ComboboxItem key={customer._id} value={customer} className="rounded-lg px-3 py-2.5">
+                <Icon aria-label={source.label} className={source.iconClassName} />
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{bookingCustomerLabel(customer)}</span>
+                  {detail ? (
+                    <span className="block truncate text-xs text-muted-foreground">{detail}</span>
+                  ) : null}
+                </span>
+              </ComboboxItem>
+            );
+          }}
         </ComboboxList>
       </ComboboxContent>
     </Combobox>

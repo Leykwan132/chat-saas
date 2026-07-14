@@ -7,9 +7,13 @@ export type BookingCustomerDetails = {
   email?: string;
   phone?: string;
   contactAddress?: string;
+  service?: 'whatsapp' | 'instagram' | 'messenger' | 'web' | 'manual';
 };
 
-export type BookingCustomer = BookingCustomerDetails & { _id: Id<'customers'> };
+export type BookingCustomer = BookingCustomerDetails & {
+  _id: Id<'customers'>;
+  service: NonNullable<BookingCustomerDetails['service']>;
+};
 
 export type BookingServiceField = {
   key: string;

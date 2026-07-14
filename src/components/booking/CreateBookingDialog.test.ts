@@ -21,7 +21,10 @@ test('uses a searchable scrollable customer Combobox', () => {
   expect(customerSource).toContain('<ComboboxInput');
   expect(customerSource).toContain('<ComboboxList');
   expect(customerSource).toContain('overflow-y-auto');
-  expect(customerSource).toContain('filter={null}');
+  expect(customerSource).not.toContain('filter={null}');
+  expect(customerSource).toContain('bookingCustomerSearchText(customer)');
+  expect(customerSource).toContain('bookingCustomerSource(customer)');
+  expect(calendarDialogSource).toContain('searchResults ?? recentCustomers');
 });
 
 test('keeps generic event creation separate from the primary booking action', () => {

@@ -35,7 +35,7 @@ export function CalendarCreateBookingDialog({
       agentId={agentId}
       initialDate={initialDate}
       services={services}
-      customers={customerQuery.trim() ? searchResults : recentCustomers}
+      customers={customerQuery.trim() ? searchResults ?? recentCustomers : recentCustomers}
       customerQuery={customerQuery}
       onCustomerQueryChange={setCustomerQuery}
       checkAvailability={(input) => {
