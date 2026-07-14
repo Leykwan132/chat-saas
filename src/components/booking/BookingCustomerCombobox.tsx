@@ -1,4 +1,4 @@
-import type * as React from 'react';
+import * as React from 'react';
 import {
   Combobox,
   ComboboxContent,
@@ -30,6 +30,8 @@ export function BookingCustomerCombobox({
   onValueChange: (value: BookingCustomer | null) => void;
   portalContainer?: React.RefObject<HTMLElement | null>;
 }) {
+  const inputAnchorRef = React.useRef<HTMLDivElement>(null);
+
   return (
     <Combobox<BookingCustomer>
       items={customers}
@@ -42,13 +44,16 @@ export function BookingCustomerCombobox({
       isItemEqualToValue={(customer, selected) => customer._id === selected._id}
       filter={bookingCustomerMatchesQuery}
     >
-      <ComboboxInput
-        aria-label="Customer"
-        placeholder="Search customers"
-        className="h-10 w-full rounded-md border-input bg-background"
-      />
+      <div ref={inputAnchorRef} className="w-full">
+        <ComboboxInput
+          aria-label="Customer"
+          placeholder="Search customers"
+          className="h-10 w-full rounded-md border-input bg-background"
+        />
+      </div>
       <ComboboxContent
         portalContainer={portalContainer}
+        anchor={inputAnchorRef}
         className="w-(--anchor-width) min-w-(--anchor-width) rounded-xl"
       >
         <ComboboxEmpty>No customers found.</ComboboxEmpty>
