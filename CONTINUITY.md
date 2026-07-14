@@ -77,7 +77,7 @@
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
 
 # Working set
-- 2026-07-14 [CODE] Manual booking schedule and availability: `src/components/inbox/CreateCustomerBookingDialog*`, `src/components/calendar/CalendarDatePickerField*`, `src/components/TimeSelectInput.tsx`, `convex/appointmentBooking/manualBooking*`, and `docs/superpowers/specs/2026-07-14-manual-booking-schedule-availability-design.md`.
+- 2026-07-14 [CODE] Manual booking schedule and availability: `src/components/inbox/{CreateCustomerBookingDialog,manualBookingScheduleModel}*`, `src/components/calendar/CalendarDatePickerField*`, `src/components/TimeSelectInput.tsx`, `convex/{appointmentBooking/manualBooking,manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-schedule-availability*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
