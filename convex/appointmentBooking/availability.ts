@@ -123,7 +123,7 @@ async function chooseAssigneeForSlot(
   ctx: MutationCtx,
   args: {
     service: Doc<"appointmentServices">;
-    conversation: Doc<"conversations">;
+    conversation?: Doc<"conversations">;
     teamId: Id<"teams">;
     entries: RosterEntry[];
     startAt: number;
@@ -143,8 +143,9 @@ async function chooseAssigneeForSlot(
     return available.find((entry) => entry.schedule.workosUserId === args.service.specificWorkosUserId) ?? null;
   }
 
-  if (args.service.assignmentStrategy === "conversation_owner" && args.conversation.assignedUserId) {
-    const owner = available.find((entry) => entry.schedule.workosUserId === args.conversation.assignedUserId);
+  const conversationOwnerWorkosUserId = args.conversation?.assignedUserId;
+  if (args.service.assignmentStrategy === "conversation_owner" && conversationOwnerWorkosUserId) {
+    const owner = available.find((entry) => entry.schedule.workosUserId === conversationOwnerWorkosUserId);
     if (owner) return owner;
   }
 
@@ -209,7 +210,7 @@ export async function generateSlots(
   ctx: MutationCtx,
   args: {
     service: Doc<"appointmentServices">;
-    conversation: Doc<"conversations">;
+    conversation?: Doc<"conversations">;
     teamId: Id<"teams">;
     rangeStartAt: number;
     rangeEndAt: number;
@@ -254,7 +255,7 @@ export async function resolveAvailableInterval(
   ctx: MutationCtx,
   args: {
     service: Doc<"appointmentServices">;
-    conversation: Doc<"conversations">;
+    conversation?: Doc<"conversations">;
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;

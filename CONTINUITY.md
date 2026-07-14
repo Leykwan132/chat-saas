@@ -1,9 +1,8 @@
 # Snapshot
-- 2026-07-14 [CODE] Customer search now has a normalized workspace-filtered projection, atomic write maintenance, and an official resumable Convex migration backfill.
-- 2026-07-14 [USER] Calendar `New Booking` must share the Inbox booking form, add searchable all-customer and service selection, support customers without conversations, and keep generic event creation strictly separate.
-- 2026-07-14 [TOOL] The wider 176px time menu's start alignment triggers right-edge collision shifting; the approved correction is Start-left and End-right alignment.
-- 2026-07-14 [CODE] Create booking uses a non-layout in-dialog scrollable Combobox host, a 10% no-blur backdrop, a semantic blue service link, a ghost Cancel action, and compact 15-minute labels.
-- 2026-07-14 [CODE] Manual booking uses a wider dialog with yearless date display, larger Service typography, increased gaps, and wider editable time controls.
+- 2026-07-14 [CODE] Calendar `New Booking` and Inbox now share one booking dialog/controller; Calendar adds a searchable all-workspace customer Combobox and dedicated customer-direct booking commands.
+- 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
+- 2026-07-14 [CODE] Customer search has a normalized workspace-filtered projection, atomic write maintenance, an official resumable Convex backfill, and bounded search.
+- 2026-07-14 [CODE] Manual Start menus align left and End menus align right; shared booking controls retain the scrollable in-dialog portal, 15-minute options, and custom time input.
 - 2026-07-14 [CODE] Service duration seeds End until customization; exact selected intervals drive stale-safe availability checks and creation.
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
 - 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
@@ -75,16 +74,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Polished Create booking with a non-layout scrollable Combobox portal host, lighter backdrop, semantic blue service link, and neutral ghost Cancel.
-- 2026-07-14 [CODE] Fixed modal time-menu scrolling at the portal boundary and restyled Create new service as a primary text link.
-- 2026-07-14 [CODE] Added compact shared time labels, 96 quarter-hour options, `Thursday, 11 June` manual dates, and the Service-creation shortcut.
-- 2026-07-14 [CODE] Refined manual-booking spacing with a 576px modal, 14px Service controls, 12px schedule gaps, 128px time inputs, and 176px time menus.
-- 2026-07-14 [CODE] Replaced the non-scrolling custom time Popover/ScrollArea with the shared Combobox and preserved editable custom times.
-- 2026-07-14 [CODE] Added flexible manual-booking Start/End comboboxes with service-duration defaults and exact custom-interval availability enforcement.
-- 2026-07-14 [CODE] Added compact semantic Check and X icons to manual-booking availability feedback.
+- 2026-07-14 [CODE] Added dedicated Calendar customer-direct booking commands and conversation-optional booking persistence while preserving Inbox side effects only in the Inbox adapter.
+- 2026-07-14 [CODE] Extracted a shared booking dialog/controller, added the searchable customer Combobox, and changed the Calendar primary action to `New Booking`.
+- 2026-07-14 [CODE] Removed booking/conversation logging from generic event creation and preserved the day-cell `Create event` path.
+- 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
+- 2026-07-14 [CODE] Backfilled the normalized customer search projection on the active Convex development deployment.
+- 2026-07-14 [CODE] Polished Create booking with a scrollable modal portal, lighter backdrop, semantic blue service link, and neutral ghost Cancel.
+- 2026-07-14 [CODE] Added flexible Start/End controls with duration defaults, exact availability enforcement, and semantic status icons.
 
 # Working set
-- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `docs/superpowers/{specs/2026-07-14-calendar-shared-booking-design,plans/2026-07-14-calendar-shared-booking}.md`; prior dialog polish and the existing manual-booking working set remain relevant.
+- 2026-07-14 [CODE] Shared Calendar/Inbox booking: `convex/{calendarEvents,customerSearchMigration,appointmentBooking/{calendarManualBooking,manualBookingCore,manualBooking}}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, `src/pages/CalendarPage.tsx`, and `docs/superpowers/{specs,plans}/2026-07-14-calendar-shared-booking*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
@@ -102,6 +101,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Shared booking completion gate passed 19 focused tests across customer search, Calendar/Inbox booking, lifecycle/status, customer history, time alignment, and placement; targeted ESLint, TypeScript/Vite build, Convex codegen, migration execution, and `git diff --check` passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking implementation plan passed spec-coverage, placeholder, and interface consistency review and is ready for inline execution.
 - 2026-07-14 [TOOL] Shared Calendar/Inbox booking design was self-reviewed for placeholders, contradictions, scope, ambiguity, event/booking command separation, and bounded customer search.
@@ -120,9 +121,3 @@
 - 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
 - 2026-07-14 [TOOL] Workflow History empty-state refinement completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-13 [TOOL] Summary History relocation completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-13 [TOOL] Future-only defaults completed a verified red-green cycle; 12 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-13 [TOOL] Reminder notice background completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-13 [TOOL] Reminder Summary notice completed a verified red-green cycle; 8 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-13 [TOOL] Vertical RadioGroup scope selector passed a red-green cycle, 11 focused tests, full TypeScript, targeted ESLint, `git diff --check`, and LOC checks under Node v22.22.0.
-- 2026-07-13 [TOOL] `main` fast-forwarded from `9cc9af3b` to workflow automation commit `c76c9cde`; post-merge verification passed 42 focused tests and the production build under Node v22.22.0.
-- 2026-07-13 [TOOL] Workflow automations passed Convex codegen with server TypeScript, `bun run build`, targeted ESLint, `git diff --check`, and 41 focused automation/UI tests under Node v22.22.0.

@@ -12,7 +12,9 @@ test('composes one clock-led date start and end schedule row', () => {
   expect(source).toContain('showLabel={false}');
   expect(source).toContain('displayFormat="EEEE, d MMMM"');
   expect(source).toContain('ariaLabel="Start time"');
+  expect(source).toContain('contentAlign="start"');
   expect(source).toContain('ariaLabel="End time"');
+  expect(source).toContain('contentAlign="end"');
   expect(source).toContain('aria-hidden="true">–</span>');
   expect(source).toContain('Slot is available.');
 });

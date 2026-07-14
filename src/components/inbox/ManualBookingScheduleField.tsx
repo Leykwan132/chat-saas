@@ -48,6 +48,7 @@ export function ManualBookingScheduleField({
           ariaLabel="Start time"
           invalid={invalid}
           portalContainer={portalContainer}
+          contentAlign="start"
         />
         <span className="text-muted-foreground" aria-hidden="true">–</span>
         <EditableTimeCombobox
@@ -56,6 +57,7 @@ export function ManualBookingScheduleField({
           ariaLabel="End time"
           invalid={invalid}
           portalContainer={portalContainer}
+          contentAlign="end"
         />
       </div>
       {feedback.kind === 'checking' ? (

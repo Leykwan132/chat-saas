@@ -27,5 +27,6 @@ test('supports editable custom times and standard dropdown options', () => {
 
 test('renders the dropdown inside an optional modal portal container', () => {
   expect(source).toContain('portalContainer?: React.RefObject<HTMLElement | null>');
-  expect(source).toContain('<ComboboxContent portalContainer={portalContainer}');
+  expect(source).toContain("contentAlign?: 'start' | 'end'");
+  expect(source).toContain('<ComboboxContent portalContainer={portalContainer} align={contentAlign}');
 });

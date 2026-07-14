@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'vitest';
 
-const source = readFileSync(
-  new URL('./CreateCustomerBookingDialog.tsx', import.meta.url),
-  'utf8',
-);
+const source = [
+  readFileSync(new URL('../booking/CreateBookingDialog.tsx', import.meta.url), 'utf8'),
+  readFileSync(new URL('../booking/useCreateBookingController.ts', import.meta.url), 'utf8'),
+].join('\n');
 const buttonVariantsSource = readFileSync(
   new URL('../ui/buttonVariants.ts', import.meta.url),
   'utf8',
@@ -27,9 +27,8 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('className="h-10 w-full px-3 text-sm"');
   expect(source).toContain('<SelectContent className="text-sm">');
   expect(source).toContain('className="py-2.5 text-sm"');
-  expect(source).toContain("import { Link, useParams } from 'react-router'");
+  expect(source).toContain("import { Link } from 'react-router'");
   expect(source).toContain("import { Plus } from 'lucide-react'");
-  expect(source).toContain("throw new Error('Missing agent ID')");
   expect(source).toContain('to={`/dashboard/${agentId}/services/new`}');
   expect(source).toContain('Create new service');
   expect(source).toContain('const comboboxPortalContainerRef = useRef<HTMLDivElement>(null)');

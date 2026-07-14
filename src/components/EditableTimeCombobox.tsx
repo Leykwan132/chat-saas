@@ -16,6 +16,7 @@ export function EditableTimeCombobox({
   invalid = false,
   disabled = false,
   portalContainer,
+  contentAlign = 'start',
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -23,6 +24,7 @@ export function EditableTimeCombobox({
   invalid?: boolean;
   disabled?: boolean;
   portalContainer?: React.RefObject<HTMLElement | null>;
+  contentAlign?: 'start' | 'end';
 }) {
   const parsedValue = parseCalendarTimeLabel(value);
   const normalizedValue = parsedValue?.label ?? null;
@@ -60,7 +62,7 @@ export function EditableTimeCombobox({
           }
         }}
       />
-      <ComboboxContent portalContainer={portalContainer} className="min-w-44 rounded-xl">
+      <ComboboxContent portalContainer={portalContainer} align={contentAlign} className="min-w-44 rounded-xl">
         <ComboboxEmpty>Enter a valid time</ComboboxEmpty>
         <ComboboxList className="max-h-60">
           {(option) => (

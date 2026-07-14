@@ -1292,7 +1292,8 @@ export default defineSchema({
     .index("by_agentId_and_sortOrder", ["agentId", "sortOrder"])
     .index("by_agentId_and_isActive", ["agentId", "isActive"]),
   appointmentBookingSessions: defineTable({
-    conversationId: v.id("conversations"),
+    conversationId: v.optional(v.id("conversations")),
+    customerId: v.optional(v.id("customers")),
     agentId: v.id("agents"),
     serviceId: v.optional(v.id("appointmentServices")),
     status: appointmentBookingSessionStatusValidator,

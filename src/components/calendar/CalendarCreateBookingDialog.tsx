@@ -1,0 +1,64 @@
+import { useState } from 'react';
+import { useMutation, useQuery } from 'convex/react';
+import type { Id } from '../../../convex/_generated/dataModel';
+import { api } from '../../../convex/_generated/api';
+import { CreateBookingDialog } from '@/components/booking/CreateBookingDialog';
+
+export function CalendarCreateBookingDialog({
+  open,
+  onOpenChange,
+  agentId,
+  initialDate,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  agentId: Id<'agents'>;
+  initialDate: string;
+}) {
+  const [customerQuery, setCustomerQuery] = useState('');
+  const services = useQuery(
+    api.appointmentBooking.calendarManualBooking.getCreateOptions,
+    open ? { agentId } : 'skip',
+  );
+  const recentCustomers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
+  const searchResults = useQuery(
+    api.calendarEvents.searchCustomerOptions,
+    open && customerQuery.trim() ? { query: customerQuery, limit: 50 } : 'skip',
+  );
+  const checkAvailability = useMutation(api.appointmentBooking.calendarManualBooking.checkAvailability);
+  const createBooking = useMutation(api.appointmentBooking.calendarManualBooking.create);
+
+  return (
+    <CreateBookingDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      agentId={agentId}
+      initialDate={initialDate}
+      services={services}
+      customers={customerQuery.trim() ? searchResults : recentCustomers}
+      customerQuery={customerQuery}
+      onCustomerQueryChange={setCustomerQuery}
+      checkAvailability={(input) => {
+        if (!input.customerId) throw new Error('Select a customer');
+        return checkAvailability({
+          agentId,
+          customerId: input.customerId,
+          serviceId: input.serviceId,
+          startAt: input.startAt,
+          endAt: input.endAt,
+        });
+      }}
+      createBooking={(input) => {
+        if (!input.customerId) throw new Error('Select a customer');
+        return createBooking({
+          agentId,
+          customerId: input.customerId,
+          serviceId: input.serviceId,
+          collectedFields: input.collectedFields,
+          startAt: input.startAt,
+          endAt: input.endAt,
+        });
+      }}
+    />
+  );
+}

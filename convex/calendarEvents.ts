@@ -503,19 +503,6 @@ export const create = mutation({
       now,
     });
 
-    const conversationId = await getConversationIdByCustomerId(ctx, args.customerId);
-    if (conversationId) {
-      await logConversationEvent(ctx, {
-        conversationId,
-        action: "event_booked",
-        metadata: {
-          eventId,
-          eventTitle: title,
-          startAt: args.startAt,
-        },
-      });
-    }
-
     return eventId;
   },
 });

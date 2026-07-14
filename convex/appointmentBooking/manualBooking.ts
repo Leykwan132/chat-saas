@@ -2,7 +2,6 @@ import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { logConversationEvent } from "../conversationLogs";
 import { resolveAvailableInterval } from "./availability";
 import {
@@ -11,16 +10,19 @@ import {
   loadService,
   resolveTeamForAgent,
 } from "./access";
-import { insertCalendarParticipants, resolveCustomerForConversation } from "./calendarHelpers";
+import { resolveCustomerForConversation } from "./calendarHelpers";
 import {
   bookingDisplayName,
-  buildCalendarEventDescription,
   missingServiceFields,
   serviceSnapshot,
   serviceTimeZone,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
 import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
+import {
+  createManualBookingRecords,
+  validateManualBookingInterval,
+} from "./manualBookingCore";
 
 async function loadManualBookingScope(
   ctx: Parameters<typeof assertAppointmentBookingManage>[0],
@@ -52,13 +54,6 @@ async function resolveManualBookingSlot(
     startAt: args.startAt,
     endAt: args.endAt,
   });
-}
-
-function validateManualBookingInterval(startAt: number, endAt: number) {
-  if (endAt <= startAt) throw new Error("End time must be after start time.");
-  if (endAt - startAt > 24 * 60 * 60 * 1000) {
-    throw new Error("Booking duration cannot exceed 24 hours.");
-  }
 }
 
 export const getCreateOptions = query({
@@ -143,64 +138,23 @@ export const create = mutation({
     const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
     if (assignedUser === null) throw new Error("Assigned teammate not found");
     const customer = await resolveCustomerForConversation(ctx, conversation, args.collectedFields);
-    const now = Date.now();
     const attendeeName = bookingDisplayName(args.collectedFields);
-    const timeZone = serviceTimeZone(service, team);
-    const eventId = await ctx.db.insert("calendarEvents", {
-      teamId: team._id,
-      title: `${service.name} - ${attendeeName}`,
-      description: buildCalendarEventDescription({
-        service,
-        customer,
-        conversation,
-        collectedFields: args.collectedFields,
-      }),
-      startAt: selectedSlot.startAt,
-      endAt: selectedSlot.endAt,
-      timeZone,
-      status: "confirmed",
-      createdBy: assignedUser._id,
-      agentId: agent._id,
-      conversationId: conversation._id,
-      appointmentServiceId: service._id,
-      bookingSource: "manual",
-      customFieldResponses: args.collectedFields,
-      createdAt: now,
-      updatedAt: now,
-    });
-    await insertCalendarParticipants(ctx, {
-      eventId,
-      teamId: team._id,
+    const { eventId, sessionId } = await createManualBookingRecords(ctx, {
+      service,
+      team,
       customer,
+      conversation,
       assignedUser,
-      bookingDisplayName: attendeeName,
-      eventStartAt: selectedSlot.startAt,
-      now,
-    });
-    const sessionId = await ctx.db.insert("appointmentBookingSessions", {
-      conversationId: conversation._id,
-      agentId: agent._id,
-      serviceId: service._id,
-      status: AppointmentBookingSessionStatus.Booked,
-      collectedFields: args.collectedFields,
       selectedSlot,
-      calendarEventId: eventId,
-      createdAt: now,
-      updatedAt: now,
+      collectedFields: args.collectedFields,
+      bookingSource: "manual",
     });
-    await ctx.db.patch(conversation._id, { status: "booked", updatedAt: now });
+    await ctx.db.patch(conversation._id, { status: "booked", updatedAt: Date.now() });
     await logConversationEvent(ctx, {
       conversationId: conversation._id,
       action: "event_booked",
       metadata: { eventId, eventTitle: `${service.name} - ${attendeeName}`, startAt: selectedSlot.startAt },
     });
-    if (service.assignmentStrategy === "round_robin") {
-      await ctx.db.patch(service._id, {
-        lastAssignedWorkosUserId: selectedSlot.assignedWorkosUserId,
-        lastAssignedAt: now,
-        updatedAt: now,
-      });
-    }
     await scheduleWorkflowRemindersForAppointment(ctx, eventId);
     return { eventId, sessionId };
   },

@@ -155,7 +155,7 @@ function section(title: string, lines: string[]) {
 export function buildCalendarEventDescription(args: {
   service: Doc<"appointmentServices">;
   customer: Doc<"customers">;
-  conversation: Doc<"conversations">;
+  conversation?: Doc<"conversations">;
   collectedFields: CollectedFields;
 }) {
   const interestLines: string[] = [];
@@ -170,7 +170,7 @@ export function buildCalendarEventDescription(args: {
   appendDetailLine(
     customerLines,
     "Name",
-    collectedName || args.customer.name || args.conversation.contactName,
+    collectedName || args.customer.name || args.conversation?.contactName,
   );
   appendDetailLine(customerLines, "Phone", collectedPhone || args.customer.phone);
   appendDetailLine(customerLines, "Email", collectedEmail || args.customer.email);
@@ -183,7 +183,9 @@ export function buildCalendarEventDescription(args: {
   if (contactAddress && !shownContacts.has(contactAddress.toLowerCase())) {
     appendDetailLine(customerLines, "Contact address", contactAddress);
   }
-  appendDetailLine(customerLines, "Channel", formatChannelName(args.conversation.service));
+  if (args.conversation) {
+    appendDetailLine(customerLines, "Channel", formatChannelName(args.conversation.service));
+  }
   appendDetailLine(customerLines, "Lead temperature", args.customer.leadTemperature);
   appendDetailLine(customerLines, "Tags", args.customer.tags.join(", "));
   appendDetailLine(customerLines, "Customer notes", args.customer.notes);

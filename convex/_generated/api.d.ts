@@ -39,6 +39,7 @@ import type * as appointmentBooking_access from "../appointmentBooking/access.js
 import type * as appointmentBooking_availability from "../appointmentBooking/availability.js";
 import type * as appointmentBooking_bookAppointment from "../appointmentBooking/bookAppointment.js";
 import type * as appointmentBooking_calendarHelpers from "../appointmentBooking/calendarHelpers.js";
+import type * as appointmentBooking_calendarManualBooking from "../appointmentBooking/calendarManualBooking.js";
 import type * as appointmentBooking_cancellations from "../appointmentBooking/cancellations.js";
 import type * as appointmentBooking_completion from "../appointmentBooking/completion.js";
 import type * as appointmentBooking_confirmations from "../appointmentBooking/confirmations.js";
@@ -48,6 +49,7 @@ import type * as appointmentBooking_editBookingStatus from "../appointmentBookin
 import type * as appointmentBooking_editing from "../appointmentBooking/editing.js";
 import type * as appointmentBooking_fields from "../appointmentBooking/fields.js";
 import type * as appointmentBooking_manualBooking from "../appointmentBooking/manualBooking.js";
+import type * as appointmentBooking_manualBookingCore from "../appointmentBooking/manualBookingCore.js";
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
@@ -270,6 +272,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/availability": typeof appointmentBooking_availability;
   "appointmentBooking/bookAppointment": typeof appointmentBooking_bookAppointment;
   "appointmentBooking/calendarHelpers": typeof appointmentBooking_calendarHelpers;
+  "appointmentBooking/calendarManualBooking": typeof appointmentBooking_calendarManualBooking;
   "appointmentBooking/cancellations": typeof appointmentBooking_cancellations;
   "appointmentBooking/completion": typeof appointmentBooking_completion;
   "appointmentBooking/confirmations": typeof appointmentBooking_confirmations;
@@ -279,6 +282,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/editing": typeof appointmentBooking_editing;
   "appointmentBooking/fields": typeof appointmentBooking_fields;
   "appointmentBooking/manualBooking": typeof appointmentBooking_manualBooking;
+  "appointmentBooking/manualBookingCore": typeof appointmentBooking_manualBookingCore;
   "appointmentBooking/services": typeof appointmentBooking_services;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;

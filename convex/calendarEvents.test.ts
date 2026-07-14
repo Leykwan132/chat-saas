@@ -46,7 +46,7 @@ async function createPersonalCalendarFixture(
       createdAt: now,
       updatedAt: now,
     });
-    return { customerId };
+    return { customerId, teamId, userId };
   });
 }
 
@@ -67,4 +67,52 @@ test("personal workspace calendar customer options include personal contacts", a
       service: "manual",
     }),
   ]);
+});
+
+test("generic event creation has no booking lifecycle or conversation log side effects", async () => {
+  const t = convexTest(schema, modules);
+  const workosUserId = "generic-event-owner";
+  const fixture = await createPersonalCalendarFixture(t, workosUserId);
+  const conversationId = await t.run(async (ctx) => {
+    const now = Date.now();
+    return await ctx.db.insert("conversations", {
+      orgId: "",
+      service: "whatsapp",
+      orgAddress: "business",
+      contactAddress: "+60123456789",
+      customerId: fixture.customerId,
+      status: "open",
+      assignToAiAgent: false,
+      threadId: "generic-event-thread",
+      lastMessageAt: now,
+      unreadCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+  const authed = t.withIdentity({ subject: workosUserId });
+
+  const eventId = await authed.mutation(api.calendarEvents.create, {
+    title: "Internal event",
+    startAt: Date.UTC(2026, 6, 18, 8, 0, 0),
+    endAt: Date.UTC(2026, 6, 18, 9, 0, 0),
+    timeZone: "UTC",
+    customerId: fixture.customerId,
+    assignedUserId: fixture.userId,
+  });
+
+  const effects = await t.run(async (ctx) => ({
+    session: await ctx.db
+      .query("appointmentBookingSessions")
+      .withIndex("by_calendarEventId", (q) => q.eq("calendarEventId", eventId))
+      .unique(),
+    logs: await ctx.db
+      .query("conversationLogs")
+      .withIndex("by_conversationId_and_performedAt", (q) =>
+        q.eq("conversationId", conversationId),
+      )
+      .take(10),
+  }));
+  expect(effects.session).toBeNull();
+  expect(effects.logs).toEqual([]);
 });

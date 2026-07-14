@@ -83,6 +83,7 @@ import { CalendarEventDetailsDialog } from '@/components/calendar/CalendarEventD
 import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
+import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
 import {
   inboxSidebarCountClassName,
   inboxSidebarGroupLabelClassName,
@@ -749,6 +750,7 @@ export default function CalendarPage() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [assignedToMeOnly, setAssignedToMeOnly] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
+  const [createBookingOpen, setCreateBookingOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [formState, setFormState] = useState<EventFormState>(() =>
     createInitialFormState(new Date(), initialClientTimeZone),
@@ -932,7 +934,7 @@ export default function CalendarPage() {
     }
   };
 
-  const openCreateSheet = (date = selectedDate) => {
+  const openCreateEventSheet = (date = selectedDate) => {
     setEditingEvent(null);
     setFormState(
       createInitialFormState(
@@ -1120,10 +1122,10 @@ export default function CalendarPage() {
                 type="button"
                 size="lg"
                 className="mt-2 h-11 w-full gap-2 px-5 py-3"
-                onClick={() => openCreateSheet()}
+                onClick={() => setCreateBookingOpen(true)}
               >
                 <Plus data-icon="inline-start" />
-                New Event
+                New Booking
               </Button>
             </div>
           )}
@@ -1241,7 +1243,7 @@ export default function CalendarPage() {
               }}
               onCreateEvent={(nextDay) => {
                 handleSelectDate(nextDay);
-                openCreateSheet(nextDay);
+                openCreateEventSheet(nextDay);
               }}
             />
           ))}
@@ -1320,6 +1322,15 @@ export default function CalendarPage() {
           )}
         </div>
       </aside>
+
+      {agentId ? (
+        <CalendarCreateBookingDialog
+          open={createBookingOpen}
+          onOpenChange={setCreateBookingOpen}
+          agentId={agentId as Id<'agents'>}
+          initialDate={format(selectedDate, 'yyyy-MM-dd')}
+        />
+      ) : null}
 
       <Sheet
         open={eventSheetOpen}
