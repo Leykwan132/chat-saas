@@ -1,4 +1,6 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to prevent custom reminder timing UI metadata from reaching Convex and triggering the reserved `$$typeof` field error.
+- 2026-07-14 [CODE] Root cause is the rich timing option's Lucide `Icon` being stored unchanged in `customTimingOptions`; the approved boundary design projects it to the strict shared data shape.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
 - 2026-07-14 [USER] Goal is to fix workflow Save rejecting valid WhatsApp BODY `example.body_text_named_params` metadata while preserving strict validation.
 - 2026-07-14 [CODE] Workflow template snapshots now strictly accept and preserve named BODY examples across Convex validation, shared types, and frontend template selection types.
@@ -11,7 +13,6 @@
 - 2026-07-13 [USER] Goal is for the Summary reminder notice to use a white, theme-aware background while keeping its current icon, text, border, and placement.
 - 2026-07-13 [CODE] The Summary reminder notice now uses semantic `bg-background`; its border, spacing, icon, copy, placement, and behavior are unchanged.
 - 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
-- 2026-07-13 [CODE] The reminder eligibility callout now appears only beneath the Summary description with Lucide `Info`; setup and backend behavior are unchanged.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
@@ -21,11 +22,11 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 - 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
-- 2026-07-13 [CODE] Apply to uses vertical RadioGroup semantics with two labelled Field rows, `text-xs` labels, `text-[11px]` descriptions, and unchanged validation behavior.
 - 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D301 ACTIVE: Custom reminder timing is projected to `amount`, `id`, `label`, `summaryLabel`, and `unit` in the shared state helper; UI options retain `Icon` and `description`, and Convex validation stays strict.
 - 2026-07-14 [USER] D300 ACTIVE: Custom reminder timing selection uses one atomic state transition for option metadata and `timingOptionIds`; existing corrupted configurations are not reconstructed or silently repaired.
 - 2026-07-14 [USER] D299 ACTIVE: Workflow template snapshots preserve and strictly validate Meta named BODY examples; the field is not stripped and validation is not weakened to arbitrary objects.
 - 2026-07-14 [USER] D298 ACTIVE: Workflow History uses a local `rounded-2xl` dialog override and a bordered `rounded-xl bg-muted/60` empty panel with tighter vertical padding; populated history stays unchanged.
@@ -73,6 +74,7 @@
 - 2026-07-13 [CODE] Moved the reminder booked-appointments notice from setup to Summary and replaced its calendar-check icon with `Info`.
 
 # Working set
+- 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/specs/2026-07-14-workflow-custom-reminder-timing-serialization-design.md`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
