@@ -36,11 +36,14 @@
 Create `convex/bookingCreatedEvent.test.ts`:
 
 ```ts
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { expect, test } from 'vitest';
 
 function source(path: string) {
-  return readFileSync(new URL(path, import.meta.url), 'utf8');
+  const fileUrl = new URL(path, import.meta.url);
+  expect(existsSync(fileURLToPath(fileUrl))).toBe(true);
+  return readFileSync(fileUrl, 'utf8');
 }
 
 test('the Booking created event delegates reminder preparation', () => {
