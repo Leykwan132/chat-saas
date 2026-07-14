@@ -1846,16 +1846,6 @@ export default function ChatsPage() {
 
                     <Separator />
 
-                    <InboxCustomerBookingsSection
-                      bookings={customerBookings ?? []}
-                      loading={customerBookings === undefined}
-                      open={bookingsOpen}
-                      onOpenChange={setBookingsOpen}
-                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
-                    />
-
-                    <Separator />
-
                     <div className="flex flex-col">
                       <button
                         type="button"
@@ -1983,6 +1973,16 @@ export default function ChatsPage() {
                         </div>
                       ) : null}
                     </div>
+
+                    <Separator />
+
+                    <InboxCustomerBookingsSection
+                      bookings={customerBookings ?? []}
+                      loading={customerBookings === undefined}
+                      open={bookingsOpen}
+                      onOpenChange={setBookingsOpen}
+                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
+                    />
 
                     <Separator />
 

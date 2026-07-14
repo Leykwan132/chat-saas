@@ -1,6 +1,6 @@
 # Snapshot
 - 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
-- 2026-07-14 [CODE] Create booking is now a standalone permission-gated action above Assignee; the Bookings section no longer contains it.
+- 2026-07-14 [CODE] Create booking is a standalone permission-gated action above Assignee, while the Bookings section sits directly below Customer details.
 - 2026-07-14 [USER] Goal is to prevent custom reminder timing UI metadata from reaching Convex and triggering the reserved `$$typeof` field error.
 - 2026-07-14 [CODE] Custom timing selection now projects rich UI options to the strict five-field shared data shape before storing them, excluding Lucide `Icon` and `description` metadata.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
@@ -67,7 +67,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee.
+- 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee and Bookings sits below Customer details.
 - 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 - 2026-07-14 [CODE] Fixed new custom reminder timing selection to atomically store metadata and the selected ID without duplicates.
 - 2026-07-14 [CODE] Fixed workflow Save compatibility for valid Meta named BODY examples without weakening the snapshot validator.
@@ -94,7 +94,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Corrected Create booking placement completed a verified red-green cycle; both wrong placements failed first, then 7 related tests, targeted ESLint, and `git diff --check` passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Corrected booking placement completed verified red-green cycles for the standalone Create booking action and Customer details → Bookings ordering; 7 related tests, targeted ESLint, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Custom timing serialization completed a verified red-green cycle: the regression exposed `Icon.$$typeof` and `description`, then 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Atomic custom reminder timing completed a verified red-green cycle; 7 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
