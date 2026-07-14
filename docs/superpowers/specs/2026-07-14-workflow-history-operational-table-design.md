@@ -10,6 +10,12 @@ Replace the populated Reminder and Follow-up History card lists with one shared 
 
 The dialog keeps its title, description, rounded treatment, scroll boundary, 25-row pagination, Load more action, and existing empty state.
 
+## Responsive Dialog Layout
+
+The shared dialog sizes to its table content instead of using a fixed `3xl` width. `DialogContent` uses `w-fit`, retains the existing small-screen viewport maximum, increases desktop padding from `p-6` to `sm:p-8`, and replaces the default desktop cap with `sm:max-w-[calc(100%-4rem)]`.
+
+The vertical `ScrollArea` uses `min-w-0`. When the table cannot fit within the viewport-safe dialog maximum, the Table component's existing horizontal overflow container keeps every column inside the dialog rather than allowing the Status column to escape.
+
 ## Columns
 
 The table contains five columns in this order:
@@ -32,4 +38,4 @@ Reminder and Follow-up continue passing their automation kind into the same dial
 
 ## Verification
 
-A focused source contract requires the shared shadcn table composition and the five operational headers. It also verifies that populated history no longer renders the card-list treatment or the audit-only Scope and Attempt fields. Existing coverage continues to verify separate Reminder and Follow-up usage and pagination.
+A focused source contract requires the shared shadcn table composition, the five operational headers, content-fit dialog width, viewport-safe desktop maximum, responsive padding, and shrinkable scroll region. It also verifies that populated history no longer renders the card-list treatment or the audit-only Scope and Attempt fields. Existing coverage continues to verify separate Reminder and Follow-up usage and pagination.
