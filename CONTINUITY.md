@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to simplify Available Hours timezone presentation and add a control below the weekday rows that makes the weekly schedule all-day while remaining unambiguous to AI booking availability checks.
 - 2026-07-14 [CODE] Calendar customer search uses local Combobox filtering; after selection it swaps to the shared platform-icon customer summary with a Change action.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking display stored customer context with platform icons and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
@@ -25,6 +26,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D321 ACTIVE: Available Hours uses an `Available 24/7` global control with supporting text `Set availability to 24 hours for all seven days.`; on sets every day to `00:00–24:00`, and off resets every day to `09:00–17:00` rather than restoring prior custom hours.
 - 2026-07-14 [USER] D320 ACTIVE: Calendar Create booking replaces customer search with the shared Inbox-style platform-icon/name/contact summary after selection and provides a small Change action that clears the selection and restores search.
 - 2026-07-14 [USER] D319 ACTIVE: Inbox Create booking preserves the stored customer's `service` and `contactAddress` in its options payload and renders the shared labeled WhatsApp/Instagram/Messenger/Web/imported icon beside the fixed customer account.
 - 2026-07-14 [USER] D318 ACTIVE: Start and End time popups each measure a full-width wrapper around their complete visible InputGroup and exactly match that anchor's width; End no longer offsets from a narrower inner input.
@@ -92,6 +94,7 @@
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
 
 # Working set
+- 2026-07-14 [CODE] Available Hours all-day design discovery: `src/components/WeeklyAvailabilityEditor.tsx`, `src/pages/ScheduleUserAvailabilityPage.tsx`, `src/lib/{scheduleUtils,scheduleShiftDrafts}.ts`, `convex/{leadRouting/schedules,appointmentBooking/availability,leadRoutingSchedules.test}.ts`, and `docs/superpowers/specs/2026-07-14-available-hours-all-day-design.md`.
 - 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
 - 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
@@ -103,7 +106,6 @@
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
-- 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
@@ -130,8 +132,3 @@
 - 2026-07-14 [TOOL] Flexible manual booking completed verified red-green cycles; Convex codegen, 11 focused tests, targeted ESLint, production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Manual-booking status icons completed a verified red-green cycle; focused test, targeted ESLint, `git diff --check`, and touched-file LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Manual booking availability completed verified red-green cycles; Convex codegen, 7 focused tests, targeted ESLint, production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Corrected booking placement completed verified red-green cycles for the standalone Create booking action and Customer details → Bookings ordering; 7 related tests, targeted ESLint, and `git diff --check` passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Custom timing serialization completed a verified red-green cycle: the regression exposed `Icon.$$typeof` and `description`, then 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Atomic custom reminder timing completed a verified red-green cycle; 7 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
-- 2026-07-14 [TOOL] Workflow History empty-state refinement completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
