@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [CODE] Calendar customer search uses local Combobox filtering, preserves source icons, and anchors its dropdown to the complete visible InputGroup width including the chevron area.
+- 2026-07-14 [CODE] Calendar customer search uses local Combobox filtering; after selection it swaps to the shared platform-icon customer summary with a Change action.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking display stored customer context with platform icons and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
@@ -25,6 +25,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D320 ACTIVE: Calendar Create booking replaces customer search with the shared Inbox-style platform-icon/name/contact summary after selection and provides a small Change action that clears the selection and restores search.
 - 2026-07-14 [USER] D319 ACTIVE: Inbox Create booking preserves the stored customer's `service` and `contactAddress` in its options payload and renders the shared labeled WhatsApp/Instagram/Messenger/Web/imported icon beside the fixed customer account.
 - 2026-07-14 [USER] D318 ACTIVE: Start and End time popups each measure a full-width wrapper around their complete visible InputGroup and exactly match that anchor's width; End no longer offsets from a narrower inner input.
 - 2026-07-14 [USER] D317 ACTIVE: The Calendar customer popup measures an explicit full-width wrapper around the complete visible InputGroup; Base UI's narrower inner text-input anchor is not used for popup width.
@@ -82,13 +83,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Added the Inbox-style selected-customer summary to Calendar Create booking with platform icon, contact context, and a reversible Change action.
 - 2026-07-14 [CODE] Added the shared platform icon beside the fixed customer account in Inbox Create booking by preserving customer service metadata through the Convex options query.
 - 2026-07-14 [CODE] Anchored both Start and End popups to their complete visible InputGroups so each dropdown exactly matches its input width and edges.
 - 2026-07-14 [CODE] Corrected the customer popup anchor from the inner text input to the complete visible InputGroup so both edges match exactly.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
-- 2026-07-14 [CODE] Backfilled the normalized customer search projection on the active Convex development deployment.
 
 # Working set
 - 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
@@ -109,6 +110,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Calendar selected-customer summary completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Inbox booking platform-icon data flow completed a verified red-green cycle; 7 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Exact Start/End InputGroup popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Full InputGroup customer-popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.

@@ -17,6 +17,10 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');
   expect(dialogSource).toContain('BookingCustomerCombobox');
   expect(dialogSource).toContain('<BookingCustomerSummary customer={fixedCustomer} />');
+  expect(dialogSource).toContain('customer={selectedCustomer}');
+  expect(dialogSource).toContain('aria-label="Change customer"');
+  expect(dialogSource).toContain("onCustomerQueryChange?.('')");
+  expect(customerSummarySource).toContain('action?: ReactNode');
   expect(customerSummarySource).toContain('bookingCustomerSource');
   expect(customerSummarySource).toContain('<Icon aria-label={source.label}');
   expect(dialogSource).toContain('<Label htmlFor="manual-booking-remarks">Remarks</Label>');

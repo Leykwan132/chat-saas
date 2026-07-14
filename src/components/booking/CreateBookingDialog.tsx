@@ -84,17 +84,38 @@ export function CreateBookingDialog({
             {fixedCustomer === undefined ? (
               <div className="grid gap-3">
                 <Label>Customer</Label>
-                <BookingCustomerCombobox
-                  customers={customers ?? []}
-                  value={selectedCustomer}
-                  inputValue={customerQuery ?? ''}
-                  onInputValueChange={(value) => onCustomerQueryChange?.(value)}
-                  onValueChange={(value) => {
-                    setSelectedCustomer(value);
-                    controller.resetCustomerFields();
-                  }}
-                  portalContainer={comboboxPortalContainerRef}
-                />
+                {selectedCustomer === null ? (
+                  <BookingCustomerCombobox
+                    customers={customers ?? []}
+                    value={selectedCustomer}
+                    inputValue={customerQuery ?? ''}
+                    onInputValueChange={(value) => onCustomerQueryChange?.(value)}
+                    onValueChange={(value) => {
+                      setSelectedCustomer(value);
+                      controller.resetCustomerFields();
+                    }}
+                    portalContainer={comboboxPortalContainerRef}
+                  />
+                ) : (
+                  <BookingCustomerSummary
+                    customer={selectedCustomer}
+                    action={(
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Change customer"
+                        onClick={() => {
+                          setSelectedCustomer(null);
+                          onCustomerQueryChange?.('');
+                          controller.resetCustomerFields();
+                        }}
+                      >
+                        Change
+                      </Button>
+                    )}
+                  />
+                )}
               </div>
             ) : (
               <div className="grid gap-3">

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { BookingCustomer, BookingCustomerDetails } from './bookingDialogTypes';
 import {
   bookingCustomerDetail,
@@ -5,7 +6,13 @@ import {
   bookingCustomerSource,
 } from './bookingCustomerPresentation';
 
-export function BookingCustomerSummary({ customer }: { customer: BookingCustomerDetails }) {
+export function BookingCustomerSummary({
+  customer,
+  action,
+}: {
+  customer: BookingCustomerDetails;
+  action?: ReactNode;
+}) {
   const source = customer.service
     ? bookingCustomerSource({ service: customer.service } as Pick<BookingCustomer, 'service'>)
     : null;
@@ -21,6 +28,7 @@ export function BookingCustomerSummary({ customer }: { customer: BookingCustomer
           <span className="block truncate text-xs text-muted-foreground">{detail}</span>
         ) : null}
       </span>
+      {action ? <span className="ml-auto shrink-0">{action}</span> : null}
     </div>
   );
 }
