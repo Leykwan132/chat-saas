@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { ManualBookingScheduleField } from '@/components/inbox/ManualBookingScheduleField';
 import { BookingCustomerCombobox } from './BookingCustomerCombobox';
@@ -175,6 +176,7 @@ export function CreateBookingDialog({
             disabled={controller.busy || !controller.selectionAvailable}
             onClick={() => void handleCreate()}
           >
+            {controller.busy && <Spinner data-icon="inline-start" />}
             Create booking
           </Button>
         </DialogFooter>

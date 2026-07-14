@@ -29,6 +29,13 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(dialogSource).not.toContain('controller.updateField');
 });
 
+test('shows a spinner without changing the label while creating a booking', () => {
+  expect(dialogSource).toContain("import { Spinner } from '@/components/ui/spinner';");
+  expect(dialogSource).toContain('{controller.busy && <Spinner data-icon="inline-start" />}');
+  expect(dialogSource).toContain('Create booking');
+  expect(dialogSource).not.toContain('Creating...');
+});
+
 test('uses a searchable scrollable customer Combobox', () => {
   expect(customerSource).toContain('<Combobox');
   expect(customerSource).toContain('<ComboboxInput');
