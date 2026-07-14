@@ -15,6 +15,10 @@ test('supports editable custom times and standard dropdown options', () => {
   expect(source).toContain('parseCalendarTimeLabel');
   expect(source).toContain('inputValue={value}');
   expect(source).toContain('onInputValueChange={onChange}');
+  expect(source).toContain('min-w-32');
+  expect(source).toContain('min-w-44');
+  expect(source).toContain('whitespace-nowrap');
+  expect(source).toContain('px-3 py-2.5');
   expect(source).toContain('onBlur={normalizeValue}');
   expect(source).toContain("event.key === 'Enter'");
   expect(source).not.toContain('PopoverAnchor');

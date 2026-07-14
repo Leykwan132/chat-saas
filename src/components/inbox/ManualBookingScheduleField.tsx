@@ -29,9 +29,9 @@ export function ManualBookingScheduleField({
   const invalid = feedback.kind === 'invalid';
 
   return (
-    <div className="grid gap-2">
+    <div className="grid gap-3">
       <Label>Schedule</Label>
-      <div className="grid grid-cols-[auto_minmax(0,1.35fr)_minmax(0,0.8fr)_auto_minmax(0,0.8fr)] items-center gap-2">
+      <div className="grid grid-cols-[auto_minmax(0,1.45fr)_minmax(8rem,0.9fr)_auto_minmax(8rem,0.9fr)] items-center gap-3">
         <Clock className="size-4 text-muted-foreground" aria-hidden="true" />
         <CalendarDatePickerField value={date} onChange={onDateChange} showLabel={false} />
         <EditableTimeCombobox

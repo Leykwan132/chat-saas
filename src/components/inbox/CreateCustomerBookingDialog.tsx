@@ -151,15 +151,15 @@ export function CreateCustomerBookingDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader><DialogTitle>Create booking</DialogTitle></DialogHeader>
         {options === undefined ? (
           <div className="h-32 rounded-md bg-muted motion-safe:animate-pulse" />
         ) : options.services.length === 0 ? (
           <p className="text-sm text-muted-foreground">No active Services are configured.</p>
         ) : (
-          <div className="grid gap-4">
-            <div className="grid gap-2">
+          <div className="grid gap-5">
+            <div className="grid gap-3">
               <Label>Service</Label>
               <Select value={effectiveServiceId} onValueChange={(value) => {
                 const nextService = options.services.find((item) => item.serviceId === value);
@@ -171,8 +171,20 @@ export function CreateCustomerBookingDialog({
                 endTimeCustomizedRef.current = false;
                 void runAvailabilityCheck(value, date, startTime, nextEndTime);
               }}>
-                <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Select a service" /></SelectTrigger>
-                <SelectContent>{options.services.map((item) => <SelectItem key={item.serviceId} value={item.serviceId}>{item.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger className="h-10 w-full px-3 text-sm">
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent className="text-sm">
+                  {options.services.map((item) => (
+                    <SelectItem
+                      key={item.serviceId}
+                      value={item.serviceId}
+                      className="py-2.5 text-sm"
+                    >
+                      {item.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <ManualBookingScheduleField

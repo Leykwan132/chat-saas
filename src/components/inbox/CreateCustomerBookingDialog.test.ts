@@ -15,7 +15,12 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('endAt: nextSelection.endAt');
   expect(source).toContain('endAt: selection.endAt');
   expect(source).toContain('checkAvailability');
-  expect(source).toContain('className="h-10 w-full"');
+  expect(source).toContain('sm:max-w-xl');
+  expect(source).toContain('<div className="grid gap-5">');
+  expect(source).toContain('<div className="grid gap-3">');
+  expect(source).toContain('className="h-10 w-full px-3 text-sm"');
+  expect(source).toContain('<SelectContent className="text-sm">');
+  expect(source).toContain('className="py-2.5 text-sm"');
   expect(source).not.toContain('CalendarDatePickerField');
   expect(source).not.toContain('TimeSelectInput');
   expect(source).not.toContain("import { Check, X } from 'lucide-react'");

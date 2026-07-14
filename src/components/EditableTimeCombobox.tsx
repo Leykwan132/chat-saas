@@ -48,7 +48,7 @@ export function EditableTimeCombobox({
         aria-label={ariaLabel}
         aria-invalid={invalid}
         placeholder="Time"
-        className="h-10 w-full rounded-md border-input bg-background"
+        className="h-10 min-w-32 w-full rounded-md border-input bg-background"
         onBlur={normalizeValue}
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
@@ -57,11 +57,15 @@ export function EditableTimeCombobox({
           }
         }}
       />
-      <ComboboxContent className="rounded-xl">
+      <ComboboxContent className="min-w-44 rounded-xl">
         <ComboboxEmpty>Enter a valid time</ComboboxEmpty>
         <ComboboxList className="max-h-60">
           {(option) => (
-            <ComboboxItem key={option} value={option} className="rounded-lg font-normal">
+            <ComboboxItem
+              key={option}
+              value={option}
+              className="whitespace-nowrap rounded-lg px-3 py-2.5 font-normal"
+            >
               {option}
             </ComboboxItem>
           )}
