@@ -67,6 +67,8 @@ export const getCreateOptions = query({
         name: customer?.name,
         email: customer?.email,
         phone: customer?.phone,
+        contactAddress: customer?.contactAddress,
+        service: customer?.service,
       },
       services: services.map((service) => ({
         ...serviceSnapshot(service),

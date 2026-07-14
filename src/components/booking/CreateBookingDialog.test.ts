@@ -3,6 +3,7 @@ import { expect, test } from 'vitest';
 
 const dialogSource = readFileSync(new URL('./CreateBookingDialog.tsx', import.meta.url), 'utf8');
 const customerSource = readFileSync(new URL('./BookingCustomerCombobox.tsx', import.meta.url), 'utf8');
+const customerSummarySource = readFileSync(new URL('./BookingCustomerSummary.tsx', import.meta.url), 'utf8');
 const inboxSource = readFileSync(new URL('../inbox/CreateCustomerBookingDialog.tsx', import.meta.url), 'utf8');
 const calendarDialogSource = readFileSync(new URL('../calendar/CalendarCreateBookingDialog.tsx', import.meta.url), 'utf8');
 const calendarPageSource = readFileSync(new URL('../../pages/CalendarPage.tsx', import.meta.url), 'utf8');
@@ -16,6 +17,8 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');
   expect(dialogSource).toContain('BookingCustomerCombobox');
   expect(dialogSource).toContain('<BookingCustomerSummary customer={fixedCustomer} />');
+  expect(customerSummarySource).toContain('bookingCustomerSource');
+  expect(customerSummarySource).toContain('<Icon aria-label={source.label}');
   expect(dialogSource).toContain('<Label htmlFor="manual-booking-remarks">Remarks</Label>');
   expect(dialogSource).toContain('placeholder="Add optional internal notes"');
   expect(dialogSource).not.toContain('manualBookingCustomerFields');

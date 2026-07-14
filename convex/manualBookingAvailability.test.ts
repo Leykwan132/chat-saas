@@ -124,6 +124,14 @@ test("manual booking checks and revalidates the exact selected slot", async () =
     endAt,
   };
 
+  const options = await authed.query(api.appointmentBooking.manualBooking.getCreateOptions, {
+    conversationId: fixture.conversationId,
+  });
+  expect(options.customer).toMatchObject({
+    service: "whatsapp",
+    contactAddress: "+60123456789",
+  });
+
   await expect(authed.mutation(
     api.appointmentBooking.manualBooking.checkAvailability,
     selection,
