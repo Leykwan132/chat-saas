@@ -26,6 +26,7 @@ import {
   CheckCircle2,
   Flame,
   MessageSquarePlus,
+  Plus,
   Eraser,
   CalendarCheck,
   CalendarClock,
@@ -1637,13 +1638,6 @@ export default function ChatsPage() {
                     onClick={() => handleExpandDetailsSection('assignee')}
                   />
                 ) : null}
-                {mostRecentBooking ? (
-                  <DetailsPanelRailButton
-                    label="Booked"
-                    marker
-                    onClick={() => setDetailsPanelOpen(true)}
-                  />
-                ) : null}
                 <DetailsPanelRailButton
                   label="Assignee"
                   icon={User}
@@ -1669,6 +1663,13 @@ export default function ChatsPage() {
                   icon={Clock}
                   onClick={() => handleExpandDetailsSection('log')}
                 />
+                {mostRecentBooking ? (
+                  <DetailsPanelRailButton
+                    label="Booked"
+                    marker
+                    onClick={() => setDetailsPanelOpen(true)}
+                  />
+                ) : null}
               </div>
             ) : (
             <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
@@ -1677,18 +1678,6 @@ export default function ChatsPage() {
               ) : (
                 selectedConversation && (
                   <div className="flex min-h-0 flex-col pb-4">
-                    <InboxCustomerBookingsSection
-                      bookings={customerBookings ?? []}
-                      loading={customerBookings === undefined}
-                      open={bookingsOpen}
-                      onOpenChange={setBookingsOpen}
-                      canManage={can(Permission.CALENDAR_MANAGE)}
-                      onCreate={() => setCreateBookingOpen(true)}
-                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
-                    />
-
-                    <Separator />
-
                     <div className="px-4 pb-3 pt-4">
                       {selectedConversation.escalation && (
                         <div className="relative mb-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2.5 shadow-none">
@@ -1720,6 +1709,17 @@ export default function ChatsPage() {
                         </div>
                       )}
                       <div className="flex flex-col gap-3">
+                        {can(Permission.CALENDAR_MANAGE) ? (
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-10 w-full gap-2 px-4"
+                            onClick={() => setCreateBookingOpen(true)}
+                          >
+                            <Plus className="size-3.5" />
+                            Create booking
+                          </Button>
+                        ) : null}
                         <div>
                           <div className="mb-1.5 flex items-center justify-between">
                             <p className="text-xs text-muted-foreground">Assignee</p>
@@ -1843,6 +1843,16 @@ export default function ChatsPage() {
                         </div>
                       </div>
                     </div>
+
+                    <Separator />
+
+                    <InboxCustomerBookingsSection
+                      bookings={customerBookings ?? []}
+                      loading={customerBookings === undefined}
+                      open={bookingsOpen}
+                      onOpenChange={setBookingsOpen}
+                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
+                    />
 
                     <Separator />
 

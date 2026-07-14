@@ -6,7 +6,8 @@ const source = readFileSync(
   'utf8',
 );
 
-test('create booking has comfortable outer and inner spacing', () => {
+test('booking list retains comfortable spacing without the create action', () => {
   expect(source).toContain('flex flex-col gap-3 px-4 pb-4 pt-2');
-  expect(source).toContain('className="h-10 w-full gap-2 px-4"');
+  expect(source).not.toContain('Create booking');
+  expect(source).not.toContain('onCreate');
 });

@@ -1,5 +1,4 @@
-import { CalendarDays, ChevronDown, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { CalendarDays, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InboxCustomerBookingRow } from './InboxCustomerBookingRow';
 import type { CustomerBookingHistoryItem } from './customerBookingsModel';
@@ -9,16 +8,12 @@ export function InboxCustomerBookingsSection({
   loading,
   open,
   onOpenChange,
-  canManage,
-  onCreate,
   onSelect,
 }: {
   bookings: CustomerBookingHistoryItem[];
   loading: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  canManage: boolean;
-  onCreate: () => void;
   onSelect: (booking: CustomerBookingHistoryItem) => void;
 }) {
   return (
@@ -41,12 +36,6 @@ export function InboxCustomerBookingsSection({
       </button>
       {open ? (
         <div className="flex flex-col gap-3 px-4 pb-4 pt-2">
-          {canManage ? (
-            <Button type="button" size="sm" className="h-10 w-full gap-2 px-4" onClick={onCreate}>
-              <Plus className="size-3.5" />
-              Create booking
-            </Button>
-          ) : null}
           {loading ? (
             <div className="flex flex-col gap-2 py-1" aria-label="Loading bookings">
               <div className="h-10 rounded-md bg-muted motion-safe:animate-pulse" />

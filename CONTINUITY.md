@@ -1,6 +1,6 @@
 # Snapshot
-- 2026-07-14 [USER] Goal is to move the booking control above Assignee in the conversation Details panel without changing its behavior or styling.
-- 2026-07-14 [CODE] The expanded Bookings section and collapsed Booked rail action now both appear before Assignee.
+- 2026-07-14 [USER] Goal correction: move only the Create booking button above Assignee; keep the Bookings section and collapsed Booked action in their original positions.
+- 2026-07-14 [CODE] Create booking is now a standalone permission-gated action above Assignee; the Bookings section no longer contains it.
 - 2026-07-14 [USER] Goal is to prevent custom reminder timing UI metadata from reaching Convex and triggering the reserved `$$typeof` field error.
 - 2026-07-14 [CODE] Custom timing selection now projects rich UI options to the strict five-field shared data shape before storing them, excluding Lucide `Icon` and `description` metadata.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
@@ -26,7 +26,8 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
-- 2026-07-14 [USER] D302 ACTIVE: Conversation Details orders the existing Bookings section and Booked rail action before Assignee in expanded and collapsed states; props, permissions, click behavior, and styling remain unchanged.
+- 2026-07-14 [USER] D303 ACTIVE: Conversation Details places only the permission-gated Create booking button above Assignee; the Bookings section remains below Customer details and the collapsed Booked action retains its original order.
+- 2026-07-14 [USER] D302 SUPERSEDED by D303: The entire Bookings section and Booked rail action moved before Assignee.
 - 2026-07-14 [USER] D301 ACTIVE: Custom reminder timing is projected to `amount`, `id`, `label`, `summaryLabel`, and `unit` in the shared state helper; UI options retain `Icon` and `description`, and Convex validation stays strict.
 - 2026-07-14 [USER] D300 ACTIVE: Custom reminder timing selection uses one atomic state transition for option metadata and `timingOptionIds`; existing corrupted configurations are not reconstructed or silently repaired.
 - 2026-07-14 [USER] D299 ACTIVE: Workflow template snapshots preserve and strictly validate Meta named BODY examples; the field is not stripped and validation is not weakened to arbitrary objects.
@@ -66,7 +67,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Moved the conversation Details booking control above Assignee in both expanded and collapsed panel states.
+- 2026-07-14 [CODE] Corrected conversation Details placement so only Create booking appears above Assignee.
 - 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 - 2026-07-14 [CODE] Fixed new custom reminder timing selection to atomically store metadata and the selected ID without duplicates.
 - 2026-07-14 [CODE] Fixed workflow Save compatibility for valid Meta named BODY examples without weakening the snapshot validator.
@@ -75,7 +76,7 @@
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
 
 # Working set
-- 2026-07-14 [CODE] Conversation Details booking placement: `src/pages/ChatsPage.tsx` and `src/pages/ChatsPageCustomerBookings.test.ts`.
+- 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
@@ -93,7 +94,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Details booking placement completed a verified red-green cycle; 7 related tests, changed-test ESLint, `git diff --check`, and source placement checks passed under Node v22.22.0. The same 11 unrelated `ChatsPage.tsx` lint errors reproduce from `HEAD`.
+- 2026-07-14 [TOOL] Corrected Create booking placement completed a verified red-green cycle; both wrong placements failed first, then 7 related tests, targeted ESLint, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Custom timing serialization completed a verified red-green cycle: the regression exposed `Icon.$$typeof` and `description`, then 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Atomic custom reminder timing completed a verified red-green cycle; 7 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
