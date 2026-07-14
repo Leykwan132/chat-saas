@@ -55,6 +55,7 @@ import {
   getClientTimeZone,
   normalizeCalendarTimeZone,
 } from '@/lib/calendarTimeUtils';
+import { isCalendarEventHappening } from '@/lib/calendarEventTiming';
 import { formatOrgRoleLabel } from '../../shared/teamRoleCatalog';
 import {
   Popover,
@@ -558,11 +559,13 @@ function CalendarDayGridCell({
 
 function CalendarDayEventRow({
   event,
+  isHappening,
   stripeColor,
   timeZone,
   onSelect,
 }: {
   event: CalendarEvent;
+  isHappening: boolean;
   stripeColor: string;
   timeZone: string;
   onSelect: () => void;
@@ -586,7 +589,14 @@ function CalendarDayEventRow({
         style={{ backgroundColor: stripeColor }}
       />
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-[0.9375rem] font-normal text-foreground/80">
+        <span
+          className={cn(
+            'block truncate text-[0.9375rem]',
+            isHappening
+              ? 'font-semibold text-foreground'
+              : 'font-normal text-foreground/80',
+          )}
+        >
           {event.title}
         </span>
         <span className="mt-0.5 block truncate text-sm leading-snug text-muted-foreground">
@@ -742,6 +752,7 @@ export default function CalendarPage() {
 
   const initialClientTimeZone = useMemo(() => normalizeCalendarTimeZone(getClientTimeZone()), []);
   const [displayTimeZone, setDisplayTimeZone] = useState(initialClientTimeZone);
+  const [currentTimestamp, setCurrentTimestamp] = useState(() => Date.now());
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()));
   const [selectedDayKey, setSelectedDayKey] = useState(() =>
@@ -805,6 +816,11 @@ export default function CalendarPage() {
   const customerServiceFields = customerDetailServiceFields(
     editingAppointmentDetails?.serviceFields ?? [],
   );
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setCurrentTimestamp(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (activeTeam === undefined) return;
@@ -1295,6 +1311,10 @@ export default function CalendarPage() {
                     <CalendarDayEventRow
                       key={event._id}
                       event={event}
+                      isHappening={
+                        selectedDayKey === todayKey &&
+                        isCalendarEventHappening(event, currentTimestamp)
+                      }
                       timeZone={displayTimeZone}
                       stripeColor={getEventAssigneeColor(event)}
                       onSelect={() => handleSelectEvent(event)}
