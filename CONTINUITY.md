@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-14 [CODE] Calendar customer search uses the shared Combobox's local filter over the loaded customer list, matching case-insensitive name, email, phone, and contact address while preserving source icons.
+- 2026-07-14 [CODE] Calendar customer search uses the shared Combobox's local filter over the loaded customer list, preserves source icons, and sizes its dropdown exactly to the input anchor width.
 - 2026-07-14 [CODE] Calendar and Conversation Details manual booking now display stored customer context and expose only Service, `Date & time`, and optional Remarks; backend persistence derives identity authoritatively and skips service questionnaires.
 - 2026-07-14 [CODE] Generic `calendarEvents.create` is event-only; Calendar bookings create conversation-optional sessions without creating or mutating Inbox conversations.
 - 2026-07-14 [CODE] Convex supplies the complete workspace customer options list for Calendar booking; no remote customer-search query participates in Combobox filtering.
@@ -25,6 +25,7 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 
 # Decisions
+- 2026-07-14 [USER] D315 ACTIVE: The Calendar booking customer Combobox dropdown must exactly match its input width without the shared popup's additional minimum-width expansion.
 - 2026-07-14 [USER] D314 ACTIVE: Calendar booking customer search is a standard client-side Combobox feature using loaded items and `itemToStringValue`/local filtering; Convex does not implement per-keystroke customer search.
 - 2026-07-14 [USER] D313 ACTIVE: Both staff-operated manual-booking dialogs display stored customer identity and expose only Customer context, Service, `Date & time`, and optional Remarks; manual booking does not require service data-collection questions.
 - 2026-07-14 [USER] D312 ACTIVE: Calendar shows all customers in a searchable Combobox and creates customer-direct bookings without creating Inbox conversations; generic `create event` remains an event-only command and is not repurposed for bookings.
@@ -77,7 +78,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-14 [CODE] Corrected Calendar customer search to use the shared Combobox's local item filtering and removed the remote search endpoint and suffix-index workaround.
+- 2026-07-14 [CODE] Corrected Calendar customer search to use local Combobox filtering and made its popup exactly match the customer input width.
 - 2026-07-14 [CODE] Simplified the shared manual-booking dialog to stored customer context, Service, `Date & time`, and optional Remarks.
 - 2026-07-14 [CODE] Made both staff manual-booking mutations derive customer identity from stored records, ignore service questionnaire requirements, and persist trimmed event remarks.
 - 2026-07-14 [CODE] Applied Start-left and End-right time-menu alignment without changing editable custom times or 15-minute options.
@@ -104,7 +105,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-14 [TOOL] Local Combobox search completed verified red-green cycles reproducing `ah` → `Sarah`; Convex codegen, 9/9 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC inspection passed under Node v22.22.0.
+- 2026-07-14 [TOOL] Customer Combobox width completed a verified red-green cycle; its focused 3-test suite, targeted ESLint, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
 - 2026-07-14 [TOOL] Full repository Vitest run passed 546/550 tests; four failures are in untouched follow-up, credit-period, agent-usage component registration, and model-plan fixture tests.
 - 2026-07-14 [TOOL] Customer search projection passed 4 focused tests and Convex code generation under Node v22.22.0; `@convex-dev/migrations@0.3.5` is installed and configured.

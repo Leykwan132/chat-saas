@@ -47,7 +47,10 @@ export function BookingCustomerCombobox({
         placeholder="Search customers"
         className="h-10 w-full rounded-md border-input bg-background"
       />
-      <ComboboxContent portalContainer={portalContainer} className="min-w-72 rounded-xl">
+      <ComboboxContent
+        portalContainer={portalContainer}
+        className="w-(--anchor-width) min-w-(--anchor-width) rounded-xl"
+      >
         <ComboboxEmpty>No customers found.</ComboboxEmpty>
         <ComboboxList className="max-h-64 overflow-y-auto">
           {(customer) => {

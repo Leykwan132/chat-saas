@@ -30,6 +30,7 @@ test('uses a searchable scrollable customer Combobox', () => {
   expect(customerSource).not.toContain('filter={null}');
   expect(customerSource).toContain('filter={bookingCustomerMatchesQuery}');
   expect(customerSource).toContain('bookingCustomerSource(customer)');
+  expect(customerSource).toContain('w-(--anchor-width) min-w-(--anchor-width) rounded-xl');
   expect(calendarDialogSource).toContain('customers={customers}');
   expect(calendarEventsSource).toContain('.collect()');
 });
