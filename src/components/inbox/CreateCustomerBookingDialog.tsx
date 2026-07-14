@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -10,8 +10,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
+import { TimeSelectInput } from '@/components/TimeSelectInput';
+import {
+  buildManualBookingCollectedFields,
+  getManualBookingSelection,
+  manualBookingCustomerFields,
+  type ManualBookingCollectedFields,
+} from './manualBookingScheduleModel';
 
-type CollectedFields = Record<string, string | number | boolean | null>;
+type AvailabilityStatus =
+  | { kind: 'idle' }
+  | { kind: 'checking'; key: string }
+  | { kind: 'available'; key: string }
+  | { kind: 'conflict'; key: string; message: string };
 
 export function CreateCustomerBookingDialog({
   open,
@@ -26,14 +37,15 @@ export function CreateCustomerBookingDialog({
     api.appointmentBooking.manualBooking.getCreateOptions,
     open ? { conversationId } : 'skip',
   );
-  const listSlots = useMutation(api.appointmentBooking.manualBooking.listAvailableSlots);
+  const checkAvailability = useMutation(api.appointmentBooking.manualBooking.checkAvailability);
   const createBooking = useMutation(api.appointmentBooking.manualBooking.create);
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [fields, setFields] = useState<CollectedFields>({});
-  const [slots, setSlots] = useState<Array<{ startAt: number; endAt: number; assignedDisplayName?: string }>>([]);
-  const [selectedStartAt, setSelectedStartAt] = useState<number | null>(null);
+  const [time, setTime] = useState('');
+  const [fields, setFields] = useState<ManualBookingCollectedFields>({});
+  const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
+  const availabilityRequestRef = useRef(0);
   const effectiveServiceId = serviceId || options?.services[0]?.serviceId || '';
   const effectiveFields = Object.keys(fields).length > 0
     ? fields
@@ -43,61 +55,68 @@ export function CreateCustomerBookingDialog({
         phone: options?.customer.phone ?? '',
       };
   const service = options?.services.find((item) => item.serviceId === effectiveServiceId);
-
-  const dayRange = useMemo(() => {
-    const start = new Date(`${date}T00:00:00`);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    return { startAt: start.getTime(), endAt: end.getTime() };
-  }, [date]);
+  const selection = service
+    ? getManualBookingSelection(effectiveServiceId, date, time, service.timeZone)
+    : null;
+  const selectionAvailable = selection !== null
+    && availability.kind === 'available'
+    && availability.key === selection.key;
 
   const updateField = (key: string, value: string | number | boolean) => {
     setFields((current) => ({
       ...(Object.keys(current).length > 0 ? current : effectiveFields),
       [key]: value,
     }));
-    setSlots([]);
-    setSelectedStartAt(null);
   };
 
-  const handleFindTimes = async () => {
-    if (!effectiveServiceId) return;
-    setBusy(true);
+  const runAvailabilityCheck = async (
+    nextServiceId: string,
+    nextDate: string,
+    nextTime: string,
+  ) => {
+    const requestId = ++availabilityRequestRef.current;
+    const nextService = options?.services.find((item) => item.serviceId === nextServiceId);
+    const nextSelection = nextService
+      ? getManualBookingSelection(nextServiceId, nextDate, nextTime, nextService.timeZone)
+      : null;
+    if (nextSelection === null) {
+      setAvailability({ kind: 'idle' });
+      return;
+    }
+    setAvailability({ kind: 'checking', key: nextSelection.key });
     try {
-      const result = await listSlots({
+      const result = await checkAvailability({
         conversationId,
-        serviceId: effectiveServiceId as Id<'appointmentServices'>,
-        collectedFields: effectiveFields,
-        rangeStartAt: dayRange.startAt,
-        rangeEndAt: dayRange.endAt,
+        serviceId: nextServiceId as Id<'appointmentServices'>,
+        startAt: nextSelection.startAt,
       });
-      if (!result.success) {
-        toast.error(result.message);
-        return;
-      }
-      setSlots(result.slots);
-      setSelectedStartAt(null);
+      if (availabilityRequestRef.current !== requestId) return;
+      setAvailability(result.available
+        ? { kind: 'available', key: nextSelection.key }
+        : { kind: 'conflict', key: nextSelection.key, message: result.message });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not load available times');
-    } finally {
-      setBusy(false);
+      if (availabilityRequestRef.current !== requestId) return;
+      if (!(error instanceof Error)) throw error;
+      setAvailability({ kind: 'conflict', key: nextSelection.key, message: error.message });
     }
   };
 
   const handleCreate = async () => {
-    if (!effectiveServiceId || selectedStartAt === null) return;
+    if (!effectiveServiceId || selection === null || !selectionAvailable) return;
     setBusy(true);
     try {
       await createBooking({
         conversationId,
         serviceId: effectiveServiceId as Id<'appointmentServices'>,
-        collectedFields: effectiveFields,
-        startAt: selectedStartAt,
+        collectedFields: buildManualBookingCollectedFields(effectiveFields, date, time),
+        startAt: selection.startAt,
       });
       toast.success('Booking created');
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not create booking');
+      if (!(error instanceof Error)) throw error;
+      setAvailability({ kind: 'conflict', key: selection.key, message: error.message });
+      toast.error(error.message);
     } finally {
       setBusy(false);
     }
@@ -115,17 +134,43 @@ export function CreateCustomerBookingDialog({
           <div className="grid gap-4">
             <div className="grid gap-2">
               <Label>Service</Label>
-              <Select value={effectiveServiceId} onValueChange={(value) => { setServiceId(value); setSlots([]); setSelectedStartAt(null); }}>
-                <SelectTrigger><SelectValue placeholder="Select a service" /></SelectTrigger>
+              <Select value={effectiveServiceId} onValueChange={(value) => {
+                setServiceId(value);
+                void runAvailabilityCheck(value, date, time);
+              }}>
+                <SelectTrigger className="h-10 w-full"><SelectValue placeholder="Select a service" /></SelectTrigger>
                 <SelectContent>{options.services.map((item) => <SelectItem key={item.serviceId} value={item.serviceId}>{item.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            {(service?.fields ?? []).map((field) => (
+            <CalendarDatePickerField
+              label="Booking Date"
+              value={date}
+              onChange={(value) => {
+                setDate(value);
+                void runAvailabilityCheck(effectiveServiceId, value, time);
+              }}
+            />
+            <TimeSelectInput
+              label="Booking Time"
+              value={time}
+              onChange={(value) => {
+                setTime(value);
+                void runAvailabilityCheck(effectiveServiceId, date, value);
+              }}
+            />
+            {availability.kind === 'checking' ? (
+              <p className="-mt-2 text-xs text-muted-foreground">Checking availability…</p>
+            ) : availability.kind === 'available' && availability.key === selection?.key ? (
+              <p className="-mt-2 text-xs text-emerald-600 dark:text-emerald-400">Slot is available.</p>
+            ) : availability.kind === 'conflict' && availability.key === selection?.key ? (
+              <p className="-mt-2 text-xs text-destructive">{availability.message}</p>
+            ) : null}
+            {manualBookingCustomerFields(service?.fields ?? []).map((field) => (
               <div key={field.key} className="grid gap-2">
                 <Label>{field.label}</Label>
                 {field.type === 'select' ? (
                   <Select value={String(effectiveFields[field.key] ?? '')} onValueChange={(value) => updateField(field.key, value)}>
-                    <SelectTrigger><SelectValue placeholder={`Select ${field.label.toLowerCase()}`} /></SelectTrigger>
+                    <SelectTrigger className="h-10 w-full"><SelectValue placeholder={`Select ${field.label.toLowerCase()}`} /></SelectTrigger>
                     <SelectContent>{field.options?.map((option) => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent>
                   </Select>
                 ) : field.type === 'boolean' ? (
@@ -135,18 +180,11 @@ export function CreateCustomerBookingDialog({
                 )}
               </div>
             ))}
-            <CalendarDatePickerField value={date} onChange={(value) => { setDate(value); setSlots([]); setSelectedStartAt(null); }} />
-            <Button type="button" variant="outline" disabled={busy} onClick={() => void handleFindTimes()}>{busy ? 'Loading…' : 'Find available times'}</Button>
-            {slots.length > 0 ? (
-              <div className="grid grid-cols-2 gap-2">
-                {slots.map((slot) => <Button key={slot.startAt} type="button" variant={selectedStartAt === slot.startAt ? 'default' : 'outline'} onClick={() => setSelectedStartAt(slot.startAt)}>{format(new Date(slot.startAt), 'h:mm a')}</Button>)}
-              </div>
-            ) : null}
           </div>
         )}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button type="button" disabled={busy || selectedStartAt === null} onClick={() => void handleCreate()}>Create booking</Button>
+          <Button type="button" disabled={busy || !selectionAvailable} onClick={() => void handleCreate()}>Create booking</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

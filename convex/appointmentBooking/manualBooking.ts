@@ -1,5 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "../_generated/server";
+import type { Doc, Id } from "../_generated/dataModel";
+import type { MutationCtx } from "../_generated/server";
 import { AppointmentBookingSessionStatus } from "../appointmentBookingSessionStatus";
 import { logConversationEvent } from "../conversationLogs";
 import { generateSlots } from "./availability";
@@ -33,6 +35,26 @@ async function loadManualBookingScope(
   return { conversation, agent, team };
 }
 
+async function resolveManualBookingSlot(
+  ctx: MutationCtx,
+  args: {
+    service: Doc<"appointmentServices">;
+    conversation: Doc<"conversations">;
+    teamId: Id<"teams">;
+    startAt: number;
+  },
+) {
+  const slots = await generateSlots(ctx, {
+    service: args.service,
+    conversation: args.conversation,
+    teamId: args.teamId,
+    rangeStartAt: args.startAt,
+    rangeEndAt: args.startAt + args.service.durationMinutes * 60_000,
+    limit: 1,
+  });
+  return slots.find((slot) => slot.startAt === args.startAt) ?? null;
+}
+
 export const getCreateOptions = query({
   args: { conversationId: v.id("conversations") },
   handler: async (ctx, args) => {
@@ -54,13 +76,11 @@ export const getCreateOptions = query({
   },
 });
 
-export const listAvailableSlots = mutation({
+export const checkAvailability = mutation({
   args: {
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
-    collectedFields: collectedFieldsValidator,
-    rangeStartAt: v.number(),
-    rangeEndAt: v.number(),
+    startAt: v.number(),
   },
   handler: async (ctx, args) => {
     const { conversation, agent, team } = await loadManualBookingScope(ctx, args.conversationId);
@@ -68,19 +88,19 @@ export const listAvailableSlots = mutation({
     if (service.agentId !== agent._id || !service.isActive) {
       throw new Error("Selected service is not available");
     }
-    const missingFields = missingServiceFields(service, args.collectedFields);
-    if (missingFields.length > 0) {
-      return { success: false as const, message: "Complete the required booking details.", missingFields, slots: [] };
-    }
-    const slots = await generateSlots(ctx, {
+    const slot = await resolveManualBookingSlot(ctx, {
       service,
       conversation,
       teamId: team._id,
-      rangeStartAt: args.rangeStartAt,
-      rangeEndAt: args.rangeEndAt,
-      limit: 20,
+      startAt: args.startAt,
     });
-    return { success: true as const, slots };
+    if (slot === null) {
+      return {
+        available: false as const,
+        message: "That slot is no longer available.",
+      };
+    }
+    return { available: true as const };
   },
 });
 
@@ -101,16 +121,13 @@ export const create = mutation({
     if (missingFields.length > 0) {
       throw new Error(`Missing required booking details: ${missingFields.join(", ")}`);
     }
-    const slots = await generateSlots(ctx, {
+    const selectedSlot = await resolveManualBookingSlot(ctx, {
       service,
       conversation,
       teamId: team._id,
-      rangeStartAt: args.startAt,
-      rangeEndAt: args.startAt + service.durationMinutes * 60_000,
-      limit: 1,
+      startAt: args.startAt,
     });
-    const selectedSlot = slots.find((slot) => slot.startAt === args.startAt);
-    if (!selectedSlot) throw new Error("That slot is no longer available.");
+    if (selectedSlot === null) throw new Error("That slot is no longer available.");
     const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
     if (assignedUser === null) throw new Error("Assigned teammate not found");
     const customer = await resolveCustomerForConversation(ctx, conversation, args.collectedFields);

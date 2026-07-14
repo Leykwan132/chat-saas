@@ -11,18 +11,20 @@ export function CalendarDatePickerField({
   onChange,
   disabled = false,
   showLabel = true,
+  label = 'Date',
 }: {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
   showLabel?: boolean;
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const selected = new Date(`${value}T00:00:00`);
 
   return (
     <div className="grid gap-2">
-      {showLabel ? <Label>Date</Label> : null}
+      {showLabel ? <Label>{label}</Label> : null}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

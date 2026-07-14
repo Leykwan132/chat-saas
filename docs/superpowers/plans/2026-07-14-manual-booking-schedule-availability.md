@@ -30,7 +30,7 @@
 - Produces: `buildManualBookingCollectedFields(fields, date, time)` with derived schedule values
 - Produces: `getManualBookingSelection(serviceId, date, time, timeZone)` returning `{ key, startAt } | null`
 
-- [ ] **Step 1: Write failing pure tests**
+- [x] **Step 1: Write failing pure tests**
 
 ```ts
 expect(manualBookingCustomerFields([
@@ -52,7 +52,7 @@ expect(getManualBookingSelection('service-1', '2026-07-14', '2:00 PM', 'Asia/Kua
 expect(getManualBookingSelection('service-1', '2026-07-14', '', 'Asia/Kuala_Lumpur')).toBeNull();
 ```
 
-- [ ] **Step 2: Run the tests and verify RED**
+- [x] **Step 2: Run the tests and verify RED**
 
 Run:
 
@@ -62,11 +62,11 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/inbox/manua
 
 Expected: FAIL because the model module does not exist.
 
-- [ ] **Step 3: Implement the pure model**
+- [x] **Step 3: Implement the pure model**
 
 Use `combineDateTimeInTimeZone` for `startAt`, case-insensitive schedule-key filtering, and a stable selection key containing service, date, time, and time zone.
 
-- [ ] **Step 4: Run the pure tests and verify GREEN**
+- [x] **Step 4: Run the pure tests and verify GREEN**
 
 Run the same Vitest command. Expected: all model tests pass.
 
@@ -84,7 +84,7 @@ Run the same Vitest command. Expected: all model tests pass.
 - Returns: `{ available: true } | { available: false, message: string }`
 - Produces: shared private `resolveManualBookingSlot` used by both preview checking and `create`
 
-- [ ] **Step 1: Write the failing Convex test**
+- [x] **Step 1: Write the failing Convex test**
 
 Build an authenticated fixture with one active service, one available manual schedule, and a conversation assigned to the agent. Assert the exact slot is available, then insert an overlapping confirmed event and assigned participant and assert:
 
@@ -109,7 +109,7 @@ await expect(authed.mutation(api.appointmentBooking.manualBooking.create, {
 })).rejects.toThrow('That slot is no longer available.');
 ```
 
-- [ ] **Step 2: Run the Convex test and verify RED**
+- [x] **Step 2: Run the Convex test and verify RED**
 
 Run:
 
@@ -119,11 +119,11 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/manualBookingAvaila
 
 Expected: FAIL because `checkAvailability` does not exist.
 
-- [ ] **Step 3: Implement the exact-slot resolver and mutation**
+- [x] **Step 3: Implement the exact-slot resolver and mutation**
 
 Replace `listAvailableSlots` with `checkAvailability`. Validate the conversation/service scope, resolve exactly one service-duration slot through `generateSlots`, and return the strict union. Change `create` to call the same resolver before inserting records.
 
-- [ ] **Step 4: Regenerate the Convex API and verify GREEN**
+- [x] **Step 4: Regenerate the Convex API and verify GREEN**
 
 Run:
 
@@ -148,11 +148,11 @@ Expected: code generation and all availability tests pass.
 - Consumes: `api.appointmentBooking.manualBooking.checkAvailability`
 - Extends: `CalendarDatePickerField` with optional `label?: string`, defaulting to `Date`
 
-- [ ] **Step 1: Write the failing UI regression test**
+- [x] **Step 1: Write the failing UI regression test**
 
 Read the dialog source and assert it contains `CalendarDatePickerField`, `TimeSelectInput`, `label="Booking Date"`, `label="Booking Time"`, the three availability messages/states, and a full-width Service trigger. Assert it does not contain `Find available times`, `listAvailableSlots`, slot-grid state, `type="date"`, or `type="time"`.
 
-- [ ] **Step 2: Run the UI test and verify RED**
+- [x] **Step 2: Run the UI test and verify RED**
 
 Run:
 
@@ -162,7 +162,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/inbox/Creat
 
 Expected: FAIL because the current dialog still contains the slot-search flow.
 
-- [ ] **Step 3: Implement shared labels and dialog interaction**
+- [x] **Step 3: Implement shared labels and dialog interaction**
 
 Add `label = 'Date'` to `CalendarDatePickerField`. In the dialog:
 
@@ -175,7 +175,7 @@ Add `label = 'Date'` to `CalendarDatePickerField`. In the dialog:
 - render availability feedback directly beneath Booking Time;
 - create with derived schedule fields and disable submission until the current selection is available.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -188,7 +188,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && wc -l src/components/inbox/CreateCustomerB
 
 Expected: focused tests, targeted ESLint, and diff checks pass; every touched code file remains below 300 lines.
 
-- [ ] **Step 5: Update continuity and commit**
+- [x] **Step 5: Update continuity and commit**
 
 ```bash
 git add CONTINUITY.md convex/appointmentBooking/manualBooking.ts convex/manualBookingAvailability.test.ts convex/_generated/api.d.ts src/components/inbox/CreateCustomerBookingDialog.tsx src/components/inbox/CreateCustomerBookingDialog.test.ts src/components/inbox/manualBookingScheduleModel.ts src/components/inbox/manualBookingScheduleModel.test.ts src/components/calendar/CalendarDatePickerField.tsx docs/superpowers/plans/2026-07-14-manual-booking-schedule-availability.md
