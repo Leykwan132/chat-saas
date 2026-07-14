@@ -1,4 +1,4 @@
-import { formatTimeZoneDisplayLabel } from '@/lib/calendarTimeUtils';
+import { formatTimeZoneDisplayLabel } from './calendarTimeUtils';
 
 export const SCHEDULE_DAYS = [
   { dayOfWeek: 0, label: 'Sunday' },
@@ -138,20 +138,6 @@ export function isAllDayShift(shift: ScheduleShift): boolean {
   return shift.startMinutes === 0 && shift.endMinutes === MINUTES_PER_DAY;
 }
 
-/** Maps legacy all-day (midnight–midnight) rows to the standard 9am–5pm default. */
-export function normalizeScheduleShift(shift: ScheduleShift): ScheduleShift {
-  if (!isAllDayShift(shift)) return shift;
-  return {
-    dayOfWeek: shift.dayOfWeek,
-    startMinutes: DEFAULT_SHIFT_START_MINUTES,
-    endMinutes: DEFAULT_SHIFT_END_MINUTES,
-  };
-}
-
-export function normalizeScheduleShifts(shifts: ScheduleShift[]): ScheduleShift[] {
-  return shifts.map(normalizeScheduleShift);
-}
-
 export const DEFAULT_SCHEDULE_TIMEZONE = 'Asia/Kuala_Lumpur';
 
 export function resolveScheduleTimezone(timezone: string | undefined | null): string {
@@ -210,8 +196,7 @@ export const DEFAULT_SCHEDULE_SHIFTS: ScheduleShift[] = SCHEDULE_DAYS.map((day) 
 }));
 
 export function shiftsForDisplay(shifts: ScheduleShift[]): ScheduleShift[] {
-  const source = shifts.length > 0 ? shifts : DEFAULT_SCHEDULE_SHIFTS;
-  return normalizeScheduleShifts(source);
+  return shifts.length > 0 ? shifts : DEFAULT_SCHEDULE_SHIFTS;
 }
 
 export function memberLabel(u: {
@@ -253,74 +238,11 @@ export function groupShiftsByDay(shifts: ScheduleShift[]) {
   return grouped;
 }
 
-export function formatDateRangePreview(range: { from?: Date; to?: Date } | undefined) {
-  if (!range?.from) return null;
-  const end = range.to ?? range.from;
-  const opts: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  };
-  const fmt = (date: Date) => date.toLocaleDateString(undefined, opts);
-  if (
-    range.to === undefined ||
-    startOfDay(range.from).getTime() === startOfDay(end).getTime()
-  ) {
-    return fmt(range.from);
-  }
-  return `${fmt(range.from)} – ${fmt(end)}`;
-}
-
-export function formatTimeOffRange(startAt: number, endAt: number) {
-  const fmt = (ts: number) =>
-    new Date(ts).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  return `${fmt(startAt)} – ${fmt(endAt)}`;
-}
-
-export function isCurrentlyOnTimeOff(
-  timeOff: Array<{ startAt: number; endAt: number }>,
-  now = Date.now(),
-) {
-  return timeOff.some((row) => now >= row.startAt && now <= row.endAt);
-}
-
-export function startOfDay(date: Date) {
-  const value = new Date(date);
-  value.setHours(0, 0, 0, 0);
-  return value;
-}
-
-export function endOfDay(date: Date) {
-  const value = new Date(date);
-  value.setHours(23, 59, 59, 999);
-  return value;
-}
-
-/** Each calendar day covered by a time-off entry (for highlighting on the picker). */
-export function calendarDaysForTimeOff(
-  timeOff: Array<{ startAt: number; endAt: number }>,
-): Date[] {
-  const seen = new Set<string>();
-  const days: Date[] = [];
-
-  for (const entry of timeOff) {
-    const cursor = startOfDay(new Date(entry.startAt));
-    const last = startOfDay(new Date(entry.endAt));
-
-    while (cursor <= last) {
-      const key = cursor.toISOString().slice(0, 10);
-      if (!seen.has(key)) {
-        seen.add(key);
-        days.push(new Date(cursor));
-      }
-      cursor.setDate(cursor.getDate() + 1);
-    }
-  }
-
-  return days;
-}
+export {
+  calendarDaysForTimeOff,
+  endOfDay,
+  formatDateRangePreview,
+  formatTimeOffRange,
+  isCurrentlyOnTimeOff,
+  startOfDay,
+} from './scheduleTimeOffUtils';

@@ -12,7 +12,6 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
   DEFAULT_SCHEDULE_TIMEZONE,
-  normalizeScheduleShifts,
   resolveScheduleTimezone,
   SCHEDULE_TIME_OPTIONS,
 } from '@/lib/scheduleUtils';
@@ -72,13 +71,12 @@ export default function ScheduleUserAvailabilityPage() {
   }, [detail]);
 
   const savedTimezone = resolveScheduleTimezone(detail?.schedule?.timezone);
-  const savedShifts = normalizeScheduleShifts(detail?.shifts ?? []);
-
   const hasChanges = useMemo(() => {
     if (!isContentReady) return false;
     if (timezoneDraft !== savedTimezone) return true;
+    const savedShifts = detail?.shifts ?? [];
     return !areScheduleShiftsEqual(draftsToShifts(shiftDrafts), savedShifts);
-  }, [isContentReady, timezoneDraft, savedTimezone, shiftDrafts, savedShifts]);
+  }, [isContentReady, timezoneDraft, savedTimezone, shiftDrafts, detail?.shifts]);
 
   const detailPath =
     typedAgentId && decodedWorkosUserId
