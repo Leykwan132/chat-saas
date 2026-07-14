@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [USER] Approved compact shared time labels, 15-minute time options, a yearless manual-booking date label, and a direct Create new service action.
 - 2026-07-14 [CODE] Manual Create booking now uses a wider modal, larger Service typography, increased field/control gaps, and wider single-line time dropdowns.
 - 2026-07-14 [CODE] Manual booking Start and End now use the shared shadcn/Base UI Combobox with a native scrollable list while retaining custom minute-level time text.
 - 2026-07-14 [CODE] Service duration seeds End until customization; preview and Create validate and persist the exact selected interval with stale-response protection.
@@ -23,11 +24,11 @@
 - 2026-07-13 [CODE] Separate Workpools persist every Work ID; workers revalidate revision, subject eligibility, channel, audience, attempts, and run state before sending.
 - 2026-07-13 [CODE] Deactivation invalidates by revision, cancels reconciliation, and drains pending jobs in bounded batches; reschedules cancel and replace reminder jobs.
 - 2026-07-13 [CODE] Reminder/follow-up History dialogs use authenticated agent-isolated queries and 25-record pagination.
-- 2026-07-13 [TOOL] Workflow automation implementation is merged locally to `main` at `c76c9cde`; codegen, production build, focused tests, lint, and diff checks pass under Node 22.
 
 # Decisions
+- 2026-07-14 [USER] D309 ACTIVE: Shared time labels use compact lowercase meridiem and 15-minute options; manual booking alone displays `EEEE, d MMMM`; its Service label row links to `/dashboard/:agentId/services/new`.
+- 2026-07-14 [USER] D307 SUPERSEDED by D309 in option granularity and label format: the shared Combobox remains the scrolling primitive and valid custom minute values remain dynamically selectable.
 - 2026-07-14 [USER] D308 ACTIVE: Manual Create booking uses a balanced `sm:max-w-xl` layout with 20px section spacing, 12px label/control spacing, `text-sm` Service controls, wider schedule gaps, and time popups at least 176px wide with non-wrapping items.
-- 2026-07-14 [USER] D307 ACTIVE: Manual booking Start and End use the shared Combobox component; its list owns scrolling, standard half-hour options remain available, and valid custom times are dynamically included as selectable values.
 - 2026-07-14 [USER] D306 ACTIVE: Manual booking uses one clock-led Date/Start/End row; Start and End are editable comboboxes, service duration only defaults End, and custom exact intervals drive conflict checks and creation.
 - 2026-07-14 [USER] D305 ACTIVE: Manual-booking available feedback uses an inline green Lucide `Check`; unavailable and failed checks use an inline red Lucide `X` while preserving existing text.
 - 2026-07-14 [USER] D304 ACTIVE: Manual booking reuses Calendar date/time controls, derives end time from service duration, checks availability whenever Service/Date/Time form a complete combination, shows inline status, blocks conflicts, and revalidates on Create; Service uses full-width consistent styling.
@@ -81,7 +82,7 @@
 - 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 
 # Working set
-- 2026-07-14 [CODE] Manual booking schedule and availability: `src/components/{EditableTimeCombobox,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing}*`.
+- 2026-07-14 [CODE] Manual booking schedule and availability: `src/{lib/calendarTimeUtils,components/{EditableTimeCombobox,calendar/CalendarDatePickerField,ui/combobox,inbox/{CreateCustomerBookingDialog,ManualBookingScheduleField,manualBookingScheduleModel}}}*`, `package.json`, `bun.lock`, `convex/{appointmentBooking/{availability,manualBooking},manualBookingAvailability.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-{schedule-availability,flexible-schedule,control-spacing,compact-time-date-service-action}*`.
 - 2026-07-14 [CODE] Conversation Details Create booking placement: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*` and `src/components/inbox/{InboxCustomerBookingsSection,InboxCustomerBookingsSpacing.test}.*`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
