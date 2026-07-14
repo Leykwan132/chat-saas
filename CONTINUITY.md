@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to fix workflow Save rejecting valid WhatsApp BODY `example.body_text_named_params` metadata while preserving strict validation.
 - 2026-07-14 [USER] Goal is to reduce only the workflow History modal rounding and place only its empty state on a soft neutral inset panel; populated history remains unchanged.
 - 2026-07-14 [CODE] The shared workflow History dialog now uses `rounded-2xl`; only its Empty state uses a bordered `rounded-xl bg-muted/60` inset panel with tighter padding.
 - 2026-07-13 [USER] Goal is to move both Reminder and Follow-up History buttons beside their Summary titles with a lightly emphasized clickable treatment.
@@ -25,6 +26,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D299 ACTIVE: Workflow template snapshots preserve and strictly validate Meta named BODY examples; the field is not stripped and validation is not weakened to arbitrary objects.
 - 2026-07-14 [USER] D298 ACTIVE: Workflow History uses a local `rounded-2xl` dialog override and a bordered `rounded-xl bg-muted/60` empty panel with tighter vertical padding; populated history stays unchanged.
 - 2026-07-13 [USER] D297 ACTIVE: Reminder and Follow-up History actions move from setup headers to the right side of Summary headers using the existing small outline button with icon and label.
 - 2026-07-13 [USER] D296 ACTIVE: Shared Reminder and Follow-up defaults use `futureOnly`; resolver normalization supplies it only when stored scope is missing and preserves explicit scopes without rewriting stored documents.
@@ -70,6 +72,7 @@
 - 2026-07-13 [CODE] Reduced the selected scope helper sentence without changing validation typography.
 
 # Working set
+- 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
 - 2026-07-13 [CODE] Workflow History placement: `src/components/workflow/{WorkflowAutomationHistoryDialog.test,WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowFollowupSetupNode,WorkflowFollowupSummaryNode}*` and `docs/superpowers/{specs,plans}/2026-07-13-workflow-summary-history-button*`.
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
@@ -81,7 +84,6 @@
 - 2026-07-13 [CODE] Discard/template interaction design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-discard-template-interactions*.md`.
 - 2026-07-13 [CODE] Final discard/template refinement plan: `docs/superpowers/plans/2026-07-13-workflow-discard-template-refinement.md`.
 - 2026-07-13 [CODE] Reminder/follow-up confirmation and activation: workflow automation setup/message modal components plus `convex/whatsappFollowUp*`.
-- 2026-07-12 [CODE] Advanced Analytics: combined analytics workflow/Workpool modules and pricing copy.
 
 # Open questions
 - 2026-07-13 [USER] UNCONFIRMED: The paused custom-timing fix still needs a decision on automatic recovery of already affected saved timing IDs versus requiring reselection.
