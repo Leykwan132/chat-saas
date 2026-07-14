@@ -38,6 +38,7 @@ import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
 import type * as appointmentBooking_access from "../appointmentBooking/access.js";
 import type * as appointmentBooking_availability from "../appointmentBooking/availability.js";
 import type * as appointmentBooking_bookAppointment from "../appointmentBooking/bookAppointment.js";
+import type * as appointmentBooking_bookingEvents from "../appointmentBooking/bookingEvents.js";
 import type * as appointmentBooking_calendarHelpers from "../appointmentBooking/calendarHelpers.js";
 import type * as appointmentBooking_calendarManualBooking from "../appointmentBooking/calendarManualBooking.js";
 import type * as appointmentBooking_cancellations from "../appointmentBooking/cancellations.js";
@@ -54,6 +55,7 @@ import type * as appointmentBooking_manualBookingFields from "../appointmentBook
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
+import type * as appointmentBooking_staffBooking from "../appointmentBooking/staffBooking.js";
 import type * as appointmentBooking_statusTransition from "../appointmentBooking/statusTransition.js";
 import type * as appointmentBooking_types from "../appointmentBooking/types.js";
 import type * as appointmentBooking_updateAppointment from "../appointmentBooking/updateAppointment.js";
@@ -272,6 +274,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/access": typeof appointmentBooking_access;
   "appointmentBooking/availability": typeof appointmentBooking_availability;
   "appointmentBooking/bookAppointment": typeof appointmentBooking_bookAppointment;
+  "appointmentBooking/bookingEvents": typeof appointmentBooking_bookingEvents;
   "appointmentBooking/calendarHelpers": typeof appointmentBooking_calendarHelpers;
   "appointmentBooking/calendarManualBooking": typeof appointmentBooking_calendarManualBooking;
   "appointmentBooking/cancellations": typeof appointmentBooking_cancellations;
@@ -288,6 +291,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/services": typeof appointmentBooking_services;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;
+  "appointmentBooking/staffBooking": typeof appointmentBooking_staffBooking;
   "appointmentBooking/statusTransition": typeof appointmentBooking_statusTransition;
   "appointmentBooking/types": typeof appointmentBooking_types;
   "appointmentBooking/updateAppointment": typeof appointmentBooking_updateAppointment;

@@ -12,7 +12,7 @@ import {
   serviceTimeZone,
 } from "./fields";
 import { getActiveSession } from "./sessionStore";
-import { scheduleWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
+import { handleBookingCreated } from "./bookingEvents";
 
 export const bookAppointment = internalMutation({
   args: {
@@ -134,7 +134,7 @@ export const bookAppointment = internalMutation({
         updatedAt: now,
       });
     }
-    await scheduleWorkflowRemindersForAppointment(ctx, eventId);
+    await handleBookingCreated(ctx, eventId);
     return {
       success: true,
       bookingId: eventId,

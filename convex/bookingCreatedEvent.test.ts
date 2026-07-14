@@ -25,3 +25,10 @@ test('Calendar and Inbox use the same staff booking function', () => {
   expect(calendar).not.toContain('scheduleWorkflowRemindersForAppointment');
   expect(inbox).not.toContain('scheduleWorkflowRemindersForAppointment');
 });
+
+test('AI booking uses the shared Booking created event', () => {
+  const ai = source('./appointmentBooking/bookAppointment.ts');
+
+  expect(ai).toContain('handleBookingCreated(ctx, eventId)');
+  expect(ai).not.toContain('scheduleWorkflowRemindersForAppointment');
+});
