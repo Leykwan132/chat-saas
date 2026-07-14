@@ -3,13 +3,17 @@ import { expect, test } from 'vitest';
 
 const source = readFileSync(new URL('./ChatsPage.tsx', import.meta.url), 'utf8');
 
-test('places customer bookings below customer details and uses most recent above the prompt', () => {
-  const customerDetails = source.indexOf('Customer details');
+test('places customer bookings above assignee and uses most recent above the prompt', () => {
   const bookingsSection = source.indexOf('<InboxCustomerBookingsSection');
-  const tagsSection = source.indexOf('Tags (');
-  expect(customerDetails).toBeGreaterThan(-1);
-  expect(bookingsSection).toBeGreaterThan(customerDetails);
-  expect(tagsSection).toBeGreaterThan(bookingsSection);
+  const assigneeSection = source.indexOf(
+    '<p className="text-xs text-muted-foreground">Assignee</p>',
+  );
+  const bookedRailAction = source.indexOf('label="Booked"');
+  const assigneeRailAction = source.indexOf('label="Assignee"');
+  expect(bookingsSection).toBeGreaterThan(-1);
+  expect(bookingsSection).toBeLessThan(assigneeSection);
+  expect(bookedRailAction).toBeGreaterThan(-1);
+  expect(bookedRailAction).toBeLessThan(assigneeRailAction);
   expect(source).toContain('const mostRecentBooking = getMostRecentCustomerBooking');
   expect(source).toContain('onOpenDetails={() => setSelectedBookingId(mostRecentBooking.bookingId)}');
   expect(source).toContain('<CreateCustomerBookingDialog');

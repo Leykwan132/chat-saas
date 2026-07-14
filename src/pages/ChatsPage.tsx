@@ -1637,6 +1637,13 @@ export default function ChatsPage() {
                     onClick={() => handleExpandDetailsSection('assignee')}
                   />
                 ) : null}
+                {mostRecentBooking ? (
+                  <DetailsPanelRailButton
+                    label="Booked"
+                    marker
+                    onClick={() => setDetailsPanelOpen(true)}
+                  />
+                ) : null}
                 <DetailsPanelRailButton
                   label="Assignee"
                   icon={User}
@@ -1662,13 +1669,6 @@ export default function ChatsPage() {
                   icon={Clock}
                   onClick={() => handleExpandDetailsSection('log')}
                 />
-                {mostRecentBooking ? (
-                  <DetailsPanelRailButton
-                    label="Booked"
-                    marker
-                    onClick={() => setDetailsPanelOpen(true)}
-                  />
-                ) : null}
               </div>
             ) : (
             <div className={cn(inboxColumnScrollClassName, 'no-scrollbar')}>
@@ -1677,6 +1677,18 @@ export default function ChatsPage() {
               ) : (
                 selectedConversation && (
                   <div className="flex min-h-0 flex-col pb-4">
+                    <InboxCustomerBookingsSection
+                      bookings={customerBookings ?? []}
+                      loading={customerBookings === undefined}
+                      open={bookingsOpen}
+                      onOpenChange={setBookingsOpen}
+                      canManage={can(Permission.CALENDAR_MANAGE)}
+                      onCreate={() => setCreateBookingOpen(true)}
+                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
+                    />
+
+                    <Separator />
+
                     <div className="px-4 pb-3 pt-4">
                       {selectedConversation.escalation && (
                         <div className="relative mb-4 overflow-hidden rounded-lg border border-border bg-muted/40 p-3 text-xs space-y-2.5 shadow-none">
@@ -1961,18 +1973,6 @@ export default function ChatsPage() {
                         </div>
                       ) : null}
                     </div>
-
-                    <Separator />
-
-                    <InboxCustomerBookingsSection
-                      bookings={customerBookings ?? []}
-                      loading={customerBookings === undefined}
-                      open={bookingsOpen}
-                      onOpenChange={setBookingsOpen}
-                      canManage={can(Permission.CALENDAR_MANAGE)}
-                      onCreate={() => setCreateBookingOpen(true)}
-                      onSelect={(booking) => setSelectedBookingId(booking.bookingId)}
-                    />
 
                     <Separator />
 

@@ -1,4 +1,6 @@
 # Snapshot
+- 2026-07-14 [USER] Goal is to move the booking control above Assignee in the conversation Details panel without changing its behavior or styling.
+- 2026-07-14 [CODE] The expanded Bookings section and collapsed Booked rail action now both appear before Assignee.
 - 2026-07-14 [USER] Goal is to prevent custom reminder timing UI metadata from reaching Convex and triggering the reserved `$$typeof` field error.
 - 2026-07-14 [CODE] Custom timing selection now projects rich UI options to the strict five-field shared data shape before storing them, excluding Lucide `Icon` and `description` metadata.
 - 2026-07-14 [USER] Goal is prevention-only for new custom reminder timing corruption: metadata and selected ID must commit atomically; legacy recovery is out of scope.
@@ -10,8 +12,6 @@
 - 2026-07-14 [CODE] Custom reminder timing now commits option metadata and its selected ID through one atomic state transition; legacy recovery remains intentionally out of scope.
 - 2026-07-13 [USER] Goal is for both Reminder and Follow-up Apply to fields to default to Future only, including existing configurations whose scope is unset.
 - 2026-07-13 [CODE] Shared automation initialization and Convex resolution now default missing Reminder and Follow-up scopes to `futureOnly` while preserving explicit stored scopes.
-- 2026-07-13 [USER] Goal is for the Summary reminder notice to use a white, theme-aware background while keeping its current icon, text, border, and placement.
-- 2026-07-13 [CODE] The Summary reminder notice now uses semantic `bg-background`; its border, spacing, icon, copy, placement, and behavior are unchanged.
 - 2026-07-13 [USER] Goal is to move the booked-appointments reminder notice below the Summary description and change its icon to the standard notice `Info` icon.
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] Reminder and Follow-up cards require explicit Current & future or Future only scope; scope affects only the off-to-on reconciliation scan, never ongoing event eligibility.
@@ -26,6 +26,7 @@
 - 2026-07-13 [CODE] Convex generated AI guidelines apply; Node v22 is mandatory; new workflow automation modules stay under 300 LOC.
 
 # Decisions
+- 2026-07-14 [USER] D302 ACTIVE: Conversation Details orders the existing Bookings section and Booked rail action before Assignee in expanded and collapsed states; props, permissions, click behavior, and styling remain unchanged.
 - 2026-07-14 [USER] D301 ACTIVE: Custom reminder timing is projected to `amount`, `id`, `label`, `summaryLabel`, and `unit` in the shared state helper; UI options retain `Icon` and `description`, and Convex validation stays strict.
 - 2026-07-14 [USER] D300 ACTIVE: Custom reminder timing selection uses one atomic state transition for option metadata and `timingOptionIds`; existing corrupted configurations are not reconstructed or silently repaired.
 - 2026-07-14 [USER] D299 ACTIVE: Workflow template snapshots preserve and strictly validate Meta named BODY examples; the field is not stripped and validation is not weakened to arbitrary objects.
@@ -65,34 +66,34 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-14 [CODE] Moved the conversation Details booking control above Assignee in both expanded and collapsed panel states.
 - 2026-07-14 [CODE] Prevented custom reminder timing UI metadata and React `$$typeof` values from entering persisted workflow automation state.
 - 2026-07-14 [CODE] Fixed new custom reminder timing selection to atomically store metadata and the selected ID without duplicates.
 - 2026-07-14 [CODE] Fixed workflow Save compatibility for valid Meta named BODY examples without weakening the snapshot validator.
 - 2026-07-14 [CODE] Refined both workflow History dialogs through their shared component with tighter modal corners and a neutral empty-only panel.
 - 2026-07-13 [CODE] Moved Reminder and Follow-up History actions into their Summary title rows with the shared small outline trigger.
 - 2026-07-13 [CODE] Defaulted both Apply to fields to Future only for new and previously unset workflow configurations.
-- 2026-07-13 [CODE] Changed the Summary reminder notice from muted fill to the theme-aware background surface.
 
 # Working set
+- 2026-07-14 [CODE] Conversation Details booking placement: `src/pages/ChatsPage.tsx` and `src/pages/ChatsPageCustomerBookings.test.ts`.
 - 2026-07-14 [CODE] Custom reminder timing serialization: `shared/workflowAutomations.ts`, `src/components/workflow/{workflowReminderOptions,workflowReminderCustomTiming.test}*`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-serialization*`.
 - 2026-07-14 [CODE] Atomic custom reminder timing: `src/components/workflow/{workflowAutomationState,workflowAutomationContext,workflowReminderCustomTiming,WorkflowReminderTimingRow}*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-custom-reminder-timing-atomic*`.
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-14 [CODE] Workflow History empty-state refinement: `src/components/workflow/WorkflowAutomationHistoryDialog*` and `docs/superpowers/{specs,plans}/2026-07-14-workflow-history-empty-state*`.
 - 2026-07-13 [CODE] Workflow History placement: `src/components/workflow/{WorkflowAutomationHistoryDialog.test,WorkflowReminderSetupNode,WorkflowReminderSummaryNode,WorkflowFollowupSetupNode,WorkflowFollowupSummaryNode}*` and `docs/superpowers/{specs,plans}/2026-07-13-workflow-summary-history-button*`.
 - 2026-07-13 [CODE] Dashboard support HoverCard: `docs/superpowers/{specs,plans}/2026-07-13-dashboard-support-hover-card*`, `src/components/SupportHoverCard*`, `src/layouts/DashboardLayout.tsx`, `src/pages/WorkspacePage.tsx`.
-- 2026-07-13 [CODE] Contact-page direct support: `src/components/contact/DirectContactDetails.tsx`, `src/pages/ContactPage*`, `src/components/SiteFooter*`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
 - 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 - 2026-07-13 [CODE] Workflow plan: `docs/superpowers/plans/2026-07-13-workflow-drafts-and-templates.md`.
 - 2026-07-13 [CODE] Reset fit-view design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-reset-fit-view*.md`.
 - 2026-07-13 [CODE] Discard/template interaction design/plan: `docs/superpowers/{specs,plans}/2026-07-13-workflow-discard-template-interactions*.md`.
-- 2026-07-13 [CODE] Final discard/template refinement plan: `docs/superpowers/plans/2026-07-13-workflow-discard-template-refinement.md`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-14 [TOOL] Details booking placement completed a verified red-green cycle; 7 related tests, changed-test ESLint, `git diff --check`, and source placement checks passed under Node v22.22.0. The same 11 unrelated `ChatsPage.tsx` lint errors reproduce from `HEAD`.
 - 2026-07-14 [TOOL] Custom timing serialization completed a verified red-green cycle: the regression exposed `Icon.$$typeof` and `description`, then 4 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Atomic custom reminder timing completed a verified red-green cycle; 7 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Workflow BODY-example compatibility completed a verified red-green cycle; 2 focused Convex tests, validator/test/shared targeted ESLint, `git diff --check`, and LOC checks passed under Node v22.22.0. The frontend mirror retains a pre-existing `react-hooks/set-state-in-effect` error reproduced from `HEAD`.
@@ -112,4 +113,3 @@
 - 2026-07-13 [TOOL] Contact placement completed a verified red-green cycle; 4 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Footer contacts completed a verified red-green cycle; 2 focused tests, targeted ESLint, `git diff --check`, exact-target checks, and LOC checks passed on Node 22.
 - 2026-07-13 [TOOL] Final discard/template refinement completed verified red-green cycles for transparent pointer styling, forced-message removal, and automatic spacing; 15 focused tests, targeted ESLint, full TypeScript build, `git diff --check`, and LOC checks passed on Node 22.
-- 2026-07-13 [TOOL] Discard/template interactions completed three verified red-green cycles; 13 focused workflow tests, targeted ESLint, `git diff --check`, and touched-file LOC checks passed on Node 22.
