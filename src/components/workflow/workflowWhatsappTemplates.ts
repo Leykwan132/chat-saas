@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useAction, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
+import type { WorkflowWhatsappTemplateExample } from '../../../shared/workflowAutomations';
 
 type WorkflowWhatsappTemplateButton = {
   type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
@@ -16,12 +17,7 @@ export type WorkflowWhatsappTemplateComponent = {
   format?: string;
   text?: string;
   r2Key?: string;
-  example?: {
-    body_text_named_params: Array<{
-      param_name: string;
-      example: string;
-    }>;
-  };
+  example?: WorkflowWhatsappTemplateExample;
   buttons?: WorkflowWhatsappTemplateButton[];
 };
 

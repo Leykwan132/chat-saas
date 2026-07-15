@@ -1,16 +1,27 @@
 export type WorkflowAutomationActivationScope = 'currentAndFuture' | 'futureOnly';
 
+export type WorkflowWhatsappTemplateNamedParameterExample = {
+  param_name: string;
+  example: string;
+};
+
+export type WorkflowWhatsappTemplateExample =
+  | { header_handle: string[] }
+  | { header_text: string[] }
+  | {
+      header_text_named_params: WorkflowWhatsappTemplateNamedParameterExample[];
+    }
+  | { body_text: string[][] }
+  | {
+      body_text_named_params: WorkflowWhatsappTemplateNamedParameterExample[];
+    };
+
 export type WorkflowWhatsappTemplateComponent = {
   type: string;
   format?: string;
   text?: string;
   r2Key?: string;
-  example?: {
-    body_text_named_params: Array<{
-      param_name: string;
-      example: string;
-    }>;
-  };
+  example?: WorkflowWhatsappTemplateExample;
   buttons?: Array<{
     type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
     text: string;

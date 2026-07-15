@@ -18,12 +18,26 @@ const workflowWhatsappTemplateButtonValidator = v.object({
   example: v.optional(v.string()),
 });
 
-const workflowWhatsappTemplateNamedBodyExampleValidator = v.object({
-  body_text_named_params: v.array(v.object({
-    param_name: v.string(),
-    example: v.string(),
-  })),
+const workflowWhatsappTemplateNamedParameterExampleValidator = v.object({
+  param_name: v.string(),
+  example: v.string(),
 });
+
+const workflowWhatsappTemplateExampleValidator = v.union(
+  v.object({ header_handle: v.array(v.string()) }),
+  v.object({ header_text: v.array(v.string()) }),
+  v.object({
+    header_text_named_params: v.array(
+      workflowWhatsappTemplateNamedParameterExampleValidator,
+    ),
+  }),
+  v.object({ body_text: v.array(v.array(v.string())) }),
+  v.object({
+    body_text_named_params: v.array(
+      workflowWhatsappTemplateNamedParameterExampleValidator,
+    ),
+  }),
+);
 
 export const workflowWhatsappTemplateSnapshotValidator = v.object({
   key: v.string(),
@@ -35,7 +49,7 @@ export const workflowWhatsappTemplateSnapshotValidator = v.object({
     format: v.optional(v.string()),
     text: v.optional(v.string()),
     r2Key: v.optional(v.string()),
-    example: v.optional(workflowWhatsappTemplateNamedBodyExampleValidator),
+    example: v.optional(workflowWhatsappTemplateExampleValidator),
     buttons: v.optional(v.array(workflowWhatsappTemplateButtonValidator)),
   }))),
 });

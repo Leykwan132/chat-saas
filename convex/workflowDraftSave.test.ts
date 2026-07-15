@@ -85,6 +85,53 @@ test('atomically replaces a workflow draft, records saved template usage, and re
         }],
       },
     },
+    followUp: {
+      ...initial.automations.followUp,
+      messageStrategy: 'same' as const,
+      sameTemplate: {
+        key: 'final_sending_with_image\ten_US',
+        name: 'final_sending_with_image',
+        language: 'en_US',
+        category: 'MARKETING',
+        components: [
+          {
+            type: 'HEADER',
+            format: 'IMAGE',
+            example: { header_handle: ['https://scontent.whatsapp.net/example.jpg'] },
+          },
+          {
+            type: 'HEADER',
+            format: 'TEXT',
+            text: '{{1}}',
+            example: { header_text: ['Summer sale'] },
+          },
+          {
+            type: 'HEADER',
+            format: 'TEXT',
+            text: '{{campaign}}',
+            example: {
+              header_text_named_params: [
+                { param_name: 'campaign', example: 'Summer sale' },
+              ],
+            },
+          },
+          {
+            type: 'BODY',
+            text: 'Hi {{1}}, your {{2}} is ready.',
+            example: { body_text: [['Jessica Lee', 'Consultation']] },
+          },
+          {
+            type: 'BODY',
+            text: 'Hi {{customer_name}}.',
+            example: {
+              body_text_named_params: [
+                { param_name: 'customer_name', example: 'Jessica Lee' },
+              ],
+            },
+          },
+        ],
+      },
+    },
   };
   const saveArgs = {
     agentId,
@@ -120,6 +167,23 @@ test('atomically replaces a workflow draft, records saved template usage, and re
       },
     }),
   );
+  expect(saved.automations.followUp.sameTemplate?.components?.map(
+    (component) => component.example,
+  )).toEqual([
+    { header_handle: ['https://scontent.whatsapp.net/example.jpg'] },
+    { header_text: ['Summer sale'] },
+    {
+      header_text_named_params: [
+        { param_name: 'campaign', example: 'Summer sale' },
+      ],
+    },
+    { body_text: [['Jessica Lee', 'Consultation']] },
+    {
+      body_text_named_params: [
+        { param_name: 'customer_name', example: 'Jessica Lee' },
+      ],
+    },
+  ]);
   await testClient.run(async (ctx) => {
     const usage = await ctx.db.query('workflowTemplateUsage').take(10);
     const totals = await ctx.db.query('workflowTemplateUsageTotals').take(10);
@@ -130,10 +194,10 @@ test('atomically replaces a workflow draft, records saved template usage, and re
       expect.objectContaining({ templateId: 'real-estate', uniqueAgentCount: 1, saveCount: 1 }),
     ]);
   });
-  const savedAgain = await authed.mutation(api.workflowDraftSave.save, {
+  const currentSaveArgs = {
     agentId,
     baselineUpdatedAt: saved.workflow.updatedAt,
-    layoutOrientation: 'horizontal',
+    layoutOrientation: 'horizontal' as const,
     templateId: 'real-estate',
     nodes: saved.nodes.map((node) => ({
       clientId: node._id,
@@ -151,6 +215,26 @@ test('atomically replaces a workflow draft, records saved template usage, and re
       detail: edge.detail,
     })),
     automations: saved.automations,
+  };
+  await expect(authed.mutation(api.workflowDraftSave.save, {
+    ...currentSaveArgs,
+    automations: {
+      ...saved.automations,
+      followUp: {
+        ...saved.automations.followUp,
+        sameTemplate: {
+          ...saved.automations.followUp.sameTemplate!,
+          components: [{
+            type: 'HEADER',
+            format: 'IMAGE',
+            example: { unsupported: [] } as never,
+          }],
+        },
+      },
+    },
+  })).rejects.toThrow();
+  const savedAgain = await authed.mutation(api.workflowDraftSave.save, {
+    ...currentSaveArgs,
   });
   expect(savedAgain.workflow.updatedAt).toBeGreaterThan(saved.workflow.updatedAt);
   await testClient.run(async (ctx) => {
