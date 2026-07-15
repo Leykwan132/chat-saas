@@ -5,6 +5,7 @@ import {
 } from '@/components/booking/bookingDetailsStyles';
 import { formatCompactBookingSchedule } from '@/components/booking/formatCompactBookingSchedule';
 import { BookingStatusTag } from '@/components/booking/BookingStatusTag';
+import { appointmentBookingStatusAccentColor } from '@/lib/appointmentBookingStatusPresentation';
 import { cn } from '@/lib/utils';
 import type { CustomerBookingHistoryItem } from './customerBookingsModel';
 
@@ -32,7 +33,7 @@ export function InboxCustomerBookingRow({
       aria-label={`View ${booking.title} booking details`}
       onClick={() => onSelect(booking)}
     >
-      <BookingAccentBar />
+      <BookingAccentBar color={appointmentBookingStatusAccentColor(booking.status)} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex min-w-0 items-center gap-2">
           <span className="min-w-0 truncate text-xs font-medium text-foreground">{schedule}</span>

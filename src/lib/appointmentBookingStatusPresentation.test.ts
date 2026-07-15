@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'vitest';
+import { readFileSync } from 'node:fs';
 import type { Infer } from 'convex/values';
 import {
   APPOINTMENT_BOOKING_STATUS_OPTIONS,
+  appointmentBookingStatusAccentColor,
   appointmentBookingStatusClass,
   appointmentBookingStatusLabel,
 } from './appointmentBookingStatusPresentation';
@@ -27,10 +29,26 @@ describe('appointment booking status presentation', () => {
     expect(appointmentBookingStatusLabel('no_show')).toBe('No-show');
   });
 
-  test('uses dark green for completed', () => {
-    expect(appointmentBookingStatusClass('completed')).toContain('bg-green-800');
-    expect(appointmentBookingStatusClass('completed')).toContain('text-white');
-    expect(appointmentBookingStatusClass('completed')).not.toContain('zinc');
+  test('uses a white tag surface for every status', () => {
+    for (const status of APPOINTMENT_BOOKING_STATUS_OPTIONS.map(({ value }) => value)) {
+      expect(appointmentBookingStatusClass(status)).toContain('bg-background');
+      expect(appointmentBookingStatusClass(status)).toContain('text-foreground');
+      expect(appointmentBookingStatusClass(status)).not.toContain('bg-muted');
+      expect(appointmentBookingStatusClass(status)).not.toContain('text-white');
+    }
+  });
+
+  test('uses a distinct Inbox accent color for every lifecycle status', () => {
+    expect(appointmentBookingStatusAccentColor('booked')).toBe('#eab308');
+    expect(appointmentBookingStatusAccentColor('completed')).toBe('#15803d');
+    expect(appointmentBookingStatusAccentColor('cancelled')).toBe('#dc2626');
+    expect(appointmentBookingStatusAccentColor('no_show')).toBe('#f97316');
+
+    const rowSource = readFileSync(
+      new URL('../components/inbox/InboxCustomerBookingRow.tsx', import.meta.url),
+      'utf8',
+    );
+    expect(rowSource).toContain('appointmentBookingStatusAccentColor(booking.status)');
   });
 
   test('exposes no-show in the frontend session contract', () => {

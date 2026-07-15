@@ -19,6 +19,7 @@ export async function logConversationEvent(
     action:
       | "thread_created"
       | "broadcast_sent"
+      | "reminder_sent"
       | "followup_sent"
       | "ai_enabled"
       | "ai_disabled"
@@ -94,6 +95,7 @@ export const internalLogEventAction = internalAction({
     action: v.union(
       v.literal("thread_created"),
       v.literal("broadcast_sent"),
+      v.literal("reminder_sent"),
       v.literal("followup_sent"),
       v.literal("ai_enabled"),
       v.literal("ai_disabled"),
@@ -133,6 +135,7 @@ export const logEvent = internalMutation({
     action: v.union(
       v.literal("thread_created"),
       v.literal("broadcast_sent"),
+      v.literal("reminder_sent"),
       v.literal("followup_sent"),
       v.literal("ai_enabled"),
       v.literal("ai_disabled"),

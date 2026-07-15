@@ -41,6 +41,8 @@ export const workflowAutomationRunsTable = defineTable({
   templateSnapshot: workflowWhatsappTemplateSnapshotValidator,
   reason: v.optional(v.string()),
   providerMessageId: v.optional(v.string()),
+  estimatedCostMyr: v.optional(v.number()),
+  costAccountingStatus: v.optional(v.union(v.literal('priced'), v.literal('unpriced'))),
   attemptedAt: v.optional(v.number()),
   sentAt: v.optional(v.number()),
   createdAt: v.number(),
@@ -59,6 +61,15 @@ export const workflowAutomationRunsTable = defineTable({
   ])
   .index('by_appointmentId', ['appointmentId'])
   .index('by_conversationId', ['conversationId']);
+
+export const workflowAutomationCostTotalsTable = defineTable({
+  agentId: v.id('agents'),
+  automationKind: v.union(v.literal('reminder'), v.literal('followUp')),
+  estimatedTotalSpentMyr: v.number(),
+  pricedSentCount: v.number(),
+  unpricedSentCount: v.number(),
+  updatedAt: v.number(),
+}).index('by_agentId_and_automationKind', ['agentId', 'automationKind']);
 
 export const workflowFollowUpTimersTable = defineTable({
   workflowId: v.id('workflows'),

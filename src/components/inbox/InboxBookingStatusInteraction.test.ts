@@ -34,6 +34,15 @@ describe('inbox booking status interaction', () => {
     expect(rowSource).toContain('BookingStatusTag');
     expect(rowSource).not.toContain('STATUS_TAG_CLASSES');
     expect(tagSource).toContain('appointmentBookingStatusClass');
+    expect(tagSource).toContain('appointmentBookingStatusAccentColor');
+    expect(tagSource).toContain('size-1.5 shrink-0 rounded-full');
+    expect(tagSource).toContain('<StatusIndicator color={accentColor} />');
+    expect(tagSource).toContain('variant="outline"');
+    expect(tagSource).not.toContain('border-0');
+    expect(tagSource).not.toContain('className={className} style={{ backgroundColor: accentColor }}');
+    expect(cardSource).toContain('accentColor={appointmentBookingStatusAccentColor(booking.status)}');
+    expect(panelSource).toContain('accentColor?: string;');
+    expect(panelSource).toContain('<BookingAccentBar color={accentColor} />');
   });
 
   test('editing is permission-only while completion is scheduled-only', () => {

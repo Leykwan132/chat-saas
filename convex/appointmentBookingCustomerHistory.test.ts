@@ -82,6 +82,8 @@ test("lists all completed booking statuses for a customer across conversations n
     }
     const statuses = ["booked", "completed", "cancelled", "no_show"] as const;
     const starts = [now + 1_000, now + 2_000, now + 3_000, now + 4_000];
+    const eventUpdatedTimes = [now + 100, now + 200, now + 300, now + 400];
+    const sessionUpdatedTimes = [now + 900, now + 200, now + 500, now + 400];
     for (let index = 0; index < statuses.length; index += 1) {
       const eventId = await ctx.db.insert("calendarEvents", {
         teamId,
@@ -96,7 +98,7 @@ test("lists all completed booking statuses for a customer across conversations n
         appointmentServiceId: serviceId,
         bookingSource: "manual",
         createdAt: now,
-        updatedAt: now,
+        updatedAt: eventUpdatedTimes[index]!,
       });
       await ctx.db.insert("appointmentBookingSessions", {
         conversationId: conversationIds[index]!,
@@ -106,7 +108,7 @@ test("lists all completed booking statuses for a customer across conversations n
         collectedFields: { name: "Aisha" },
         calendarEventId: eventId,
         createdAt: now,
-        updatedAt: now,
+        updatedAt: sessionUpdatedTimes[index]!,
       });
       await ctx.db.insert("calendarEventParticipants", {
         eventId,
@@ -121,7 +123,7 @@ test("lists all completed booking statuses for a customer across conversations n
         updatedAt: now,
       });
     }
-    return { conversationId: conversationIds[0]! };
+    return { conversationId: conversationIds[0]!, now };
   });
 
   const history = await t.withIdentity({ subject: workosUserId }).query(
@@ -131,5 +133,11 @@ test("lists all completed booking statuses for a customer across conversations n
 
   expect(history.map((item) => item.status)).toEqual(["no_show", "cancelled", "completed", "booked"]);
   expect(history.map((item) => item.startAt)).toEqual([...history.map((item) => item.startAt)].sort((a, b) => b - a));
+  expect(history.map((item) => item.updatedAt)).toEqual([
+    fixture.now + 400,
+    fixture.now + 500,
+    fixture.now + 200,
+    fixture.now + 900,
+  ]);
   expect(history.every((item) => item.bookingReference === item.bookingId)).toBe(true);
 });

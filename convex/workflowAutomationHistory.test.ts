@@ -3,6 +3,7 @@ import { convexTest } from 'convex-test';
 import { expect, test } from 'vitest';
 import { api } from './_generated/api';
 import schema from './schema';
+import { recordWorkflowAutomationSentCost } from './workflowAutomationCost';
 
 const modules = import.meta.glob('./**/*.ts');
 
@@ -46,7 +47,7 @@ test('returns 25 newest agent-isolated workflow automation history records', asy
       updatedAt: now,
     });
     for (let index = 0; index < 30; index += 1) {
-      await ctx.db.insert('workflowAutomationRuns', {
+      const runId = await ctx.db.insert('workflowAutomationRuns', {
         workflowId,
         agentId,
         orgId: '',
@@ -70,6 +71,10 @@ test('returns 25 newest agent-isolated workflow automation history records', asy
         createdAt: now + index,
         updatedAt: now + index,
       });
+      if (index % 2 === 0) {
+        const run = await ctx.db.get(runId);
+        await recordWorkflowAutomationSentCost(ctx, run!);
+      }
     }
     return { agentId };
   });
@@ -81,7 +86,15 @@ test('returns 25 newest agent-isolated workflow automation history records', asy
   });
   expect(firstPage.page).toHaveLength(25);
   expect(firstPage.page[0].subjectKey).toBe('appointment-29');
+  expect(firstPage.page[0].estimatedCostMyr).toBeUndefined();
+  expect(firstPage.page[1].estimatedCostMyr).toBe(0.07);
   expect(firstPage.isDone).toBe(false);
+  const estimatedTotal = await authed.query(api.workflowAutomationHistory.estimatedTotal, {
+    agentId: fixture.agentId,
+    automationKind: 'reminder',
+  });
+  expect(estimatedTotal.estimatedTotalSpentMyr).toBe(1.05);
+  expect(estimatedTotal.sentCount).toBe(15);
   await expect(t.withIdentity({ subject: 'intruder' }).query(
     api.workflowAutomationHistory.list,
     {
@@ -89,5 +102,9 @@ test('returns 25 newest agent-isolated workflow automation history records', asy
       automationKind: 'reminder',
       paginationOpts: { numItems: 25, cursor: null },
     },
+  )).rejects.toThrow();
+  await expect(t.withIdentity({ subject: 'intruder' }).query(
+    api.workflowAutomationHistory.estimatedTotal,
+    { agentId: fixture.agentId, automationKind: 'reminder' },
   )).rejects.toThrow();
 });

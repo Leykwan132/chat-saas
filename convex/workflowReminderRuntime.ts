@@ -11,18 +11,64 @@ export async function scheduleWorkflowRemindersForAppointment(
   appointmentId: Id<'calendarEvents'>,
 ) {
   const appointment = await ctx.db.get(appointmentId);
-  if (!appointment || appointment.status !== 'confirmed' || !appointment.agentId) return 0;
+  if (!appointment || appointment.status !== 'confirmed' || !appointment.agentId) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      reason: 'appointment_missing_or_not_confirmed',
+      status: appointment?.status,
+    });
+    return 0;
+  }
   const workflow = await getWorkflowForAgent(ctx, appointment.agentId);
-  if (!workflow) return 0;
+  if (!workflow) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      agentId: appointment.agentId,
+      reason: 'no_workflow',
+    });
+    return 0;
+  }
   const config = resolveWorkflowAutomationConfigs(workflow).reminder;
-  if (!config.enabled) return 0;
+  if (!config.enabled) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      workflowId: workflow._id,
+      reason: 'reminder_disabled',
+    });
+    return 0;
+  }
   if (!config.activationScope || !config.template) throw new Error('Reminder configuration is incomplete');
-  if (!appointment.conversationId) return 0;
+  if (!appointment.conversationId) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      reason: 'no_conversation',
+    });
+    return 0;
+  }
   const conversation = await ctx.db.get(appointment.conversationId);
-  if (!conversation || conversation.service !== 'whatsapp' || !conversation.channelId || !conversation.customerId) return 0;
+  if (!conversation || conversation.service !== 'whatsapp' || !conversation.channelId || !conversation.customerId) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      conversationId: appointment.conversationId,
+      reason: 'conversation_not_whatsapp_eligible',
+      service: conversation?.service,
+    });
+    return 0;
+  }
   const channel = await ctx.db.get(conversation.channelId);
   const customer = await ctx.db.get(conversation.customerId);
-  if (!channel || channel.service !== 'whatsapp' || channel.status !== 'connected' || !customer) return 0;
+  if (!channel || channel.service !== 'whatsapp' || channel.status !== 'connected' || !customer) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      conversationId: conversation._id,
+      channelId: conversation.channelId,
+      reason: 'channel_or_customer_ineligible',
+      channelService: channel?.service,
+      channelStatus: channel?.status,
+      hasCustomer: Boolean(customer),
+    });
+    return 0;
+  }
   const now = Date.now();
   const candidates = getReminderScheduleCandidates({
     appointmentId,
@@ -30,20 +76,52 @@ export async function scheduleWorkflowRemindersForAppointment(
     now,
     timingOptionIds: config.timingOptionIds,
   });
+  if (candidates.length === 0) {
+    console.log('workflow_reminder_scheduling_skipped', {
+      appointmentId,
+      reason: 'no_future_timing_candidates',
+      appointmentStartAt: appointment.startAt,
+      timingOptionIds: config.timingOptionIds,
+    });
+    return 0;
+  }
   let scheduledCount = 0;
   for (const candidate of candidates) {
     const existing = await ctx.db
       .query('workflowAutomationRuns')
       .withIndex('by_deduplicationKey', (q) => q.eq('deduplicationKey', candidate.deduplicationKey))
       .unique();
-    if (existing?.status === 'sent') continue;
+    if (existing?.status === 'sent') {
+      console.log('workflow_reminder_candidate_skipped', {
+        appointmentId,
+        timingOptionId: candidate.timingOptionId,
+        reason: 'already_sent',
+        runId: existing._id,
+      });
+      continue;
+    }
     if (
       existing?.status === 'scheduled' &&
       existing.scheduledAt === candidate.scheduledAt &&
       existing.configurationRevision === config.revision
-    ) continue;
+    ) {
+      console.log('workflow_reminder_candidate_skipped', {
+        appointmentId,
+        timingOptionId: candidate.timingOptionId,
+        reason: 'already_scheduled',
+        runId: existing._id,
+        scheduledAt: candidate.scheduledAt,
+      });
+      continue;
+    }
     if (existing?.currentWorkId) {
       await workflowReminderWorkpool.cancel(ctx, existing.currentWorkId as never);
+      console.log('workflow_reminder_workpool_cancelled', {
+        appointmentId,
+        runId: existing._id,
+        workId: existing.currentWorkId,
+        reason: 'reschedule',
+      });
     }
     const values = {
       workflowId: workflow._id,
@@ -102,6 +180,11 @@ export async function scheduleWorkflowRemindersForAppointment(
     });
     scheduledCount += 1;
   }
+  console.log('workflow_reminder_scheduling_complete', {
+    appointmentId,
+    candidateCount: candidates.length,
+    scheduledCount,
+  });
   return scheduledCount;
 }
 
@@ -126,7 +209,20 @@ export async function cancelWorkflowRemindersForAppointment(
       reason,
       updatedAt: now,
     });
+    console.log('workflow_reminder_cancelled', {
+      appointmentId,
+      runId: run._id,
+      workId: run.currentWorkId,
+      reason,
+    });
     cancelledCount += 1;
+  }
+  if (cancelledCount > 0) {
+    console.log('workflow_reminder_cancel_complete', {
+      appointmentId,
+      cancelledCount,
+      reason,
+    });
   }
   return cancelledCount;
 }

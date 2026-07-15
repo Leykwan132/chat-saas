@@ -7,6 +7,7 @@ export type CustomerBookingHistoryItem = {
   title: string;
   status: AppointmentBookingDisplayStatus;
   startAt: number;
+  updatedAt: number;
   endAt: number;
   date: string;
   timeRange: string;
@@ -27,6 +28,6 @@ export function getMostRecentCustomerBooking(
 ) {
   if (bookings.length === 0) return null;
   return bookings.reduce((mostRecent, booking) =>
-    booking.startAt > mostRecent.startAt ? booking : mostRecent,
+    booking.updatedAt > mostRecent.updatedAt ? booking : mostRecent,
   );
 }

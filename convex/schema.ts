@@ -23,6 +23,7 @@ import {
   workflowReminderAutomationConfigValidator,
 } from "./workflowAutomationValidators";
 import {
+  workflowAutomationCostTotalsTable,
   workflowAutomationRunsTable,
   workflowAutomationOperationsTable,
   workflowFollowUpTimersTable,
@@ -405,6 +406,7 @@ export default defineSchema({
     .index("by_orgId", ["orgId"])
     .index("by_userId_and_orgId", ["userId", "orgId"]),
   workflowAutomationRuns: workflowAutomationRunsTable,
+  workflowAutomationCostTotals: workflowAutomationCostTotalsTable,
   workflowAutomationOperations: workflowAutomationOperationsTable,
   workflowFollowUpTimers: workflowFollowUpTimersTable,
   workflowTemplateUsage: workflowTemplateUsageTable,
@@ -1528,6 +1530,7 @@ export default defineSchema({
       // Conversation lifecycle
       v.literal("thread_created"),
       v.literal("broadcast_sent"),
+      v.literal("reminder_sent"),
       v.literal("followup_sent"),
       v.literal("ai_enabled"),
       v.literal("ai_disabled"),

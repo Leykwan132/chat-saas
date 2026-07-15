@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test, beforeAll } from "vitest";
-import { api, internal } from "./_generated/api";
+import { afterEach, beforeAll, expect, test, vi } from "vitest";
+import { internal } from "./_generated/api";
 import schema from "./schema";
 import { withComponents } from "./testUtils";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
@@ -16,7 +16,12 @@ beforeAll(() => {
   process.env.WHATSAPP_BROADCAST_ESTIMATE_MYR_PER_MESSAGE = "0.35";
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
+  vi.useFakeTimers();
   const t = convexTest(schema, modules);
 
   // Register the workpool component
@@ -80,6 +85,26 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
+  });
+
+  await t.run(async (ctx) => {
+    const now = Date.now();
+    for (const [name, text] of [
+      ["followup_temp_1", "Hi, are you still interested?"],
+      ["followup_temp_2", "Would you like more information?"],
+    ] as const) {
+      await ctx.db.insert("whatsappTemplates", {
+        orgId: "org-123",
+        channelId,
+        name,
+        language: "en",
+        purpose: "follow_up",
+        category: "MARKETING",
+        components: [{ type: "BODY", text }],
+        status: "submitted",
+        createdAt: now,
+      });
+    }
   });
 
   // 3. Setup mock Customer (Hot lead, tag "interested")

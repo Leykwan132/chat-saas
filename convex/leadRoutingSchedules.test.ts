@@ -70,6 +70,36 @@ test("personal user can initialize their own availability schedule", async () =>
   expect(detail?.shifts).toHaveLength(7);
 });
 
+test("all-day availability survives the save and detail-query round trip", async () => {
+  const t = convexTest(schema, modules);
+  const workosUserId = "user-all-day-availability";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+
+  const userScheduleId = await authed.mutation(api.leadRouting.schedules.addUser, {
+    agentId,
+    workosUserId,
+  });
+
+  const allDayShifts = Array.from({ length: 7 }, (_, dayOfWeek) => ({
+    dayOfWeek,
+    startMinutes: 0,
+    endMinutes: 24 * 60,
+  }));
+
+  await authed.mutation(api.leadRouting.schedules.setShifts, {
+    userScheduleId,
+    shifts: allDayShifts,
+  });
+
+  const detail = await authed.query(api.leadRouting.schedules.getForAgentUser, {
+    agentId,
+    workosUserId,
+  });
+
+  expect(detail?.shifts).toMatchObject(allDayShifts);
+});
+
 test("personal user cannot initialize another user's availability schedule", async () => {
   const t = convexTest(schema, modules);
   const workosUserId = "user-personal-owner";

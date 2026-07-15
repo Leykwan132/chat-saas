@@ -16,3 +16,13 @@ test.each([
     /contactAddress|phoneNumber|messageBody|components/,
   );
 });
+
+test.each([reminder, followUp])(
+  'records estimated cost before marking a workflow run sent',
+  (source) => {
+    const accountingIndex = source.indexOf('await recordWorkflowAutomationSentCost(ctx, run)');
+    const sentIndex = source.indexOf("status: 'sent'", accountingIndex);
+    expect(accountingIndex).toBeGreaterThan(-1);
+    expect(sentIndex).toBeGreaterThan(accountingIndex);
+  },
+);

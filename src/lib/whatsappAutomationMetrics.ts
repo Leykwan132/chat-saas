@@ -1,4 +1,4 @@
-export const MARKETING_RATE_MYR = 0.3467;
+export { MARKETING_RATE_MYR } from './whatsappRates';
 
 export function formatReplyRate(
   messagesSentCount: number | undefined,

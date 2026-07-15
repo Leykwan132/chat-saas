@@ -19,7 +19,10 @@ import {
 import { formatCollectedFieldValue } from '@/components/booking/bookingDetailFormatting';
 import { formatCompactBookingSchedule } from '@/components/booking/formatCompactBookingSchedule';
 import { BookingStatusTag } from '@/components/booking/BookingStatusTag';
-import type { AppointmentBookingDisplayStatus } from '@/lib/appointmentBookingStatusPresentation';
+import {
+  appointmentBookingStatusAccentColor,
+  type AppointmentBookingDisplayStatus,
+} from '@/lib/appointmentBookingStatusPresentation';
 import { cn } from '@/lib/utils';
 import { EditBookingDialog } from '../calendar/EditBookingDialog';
 import { api } from '../../../convex/_generated/api';
@@ -151,6 +154,7 @@ export function InboxBookingDetailsCard({
               onClick={canManage ? handleEditBooking : undefined}
             />
           }
+          accentColor={appointmentBookingStatusAccentColor(booking.status)}
           actions={compactActions}
           onOpenDetails={onOpenDetails}
           variant="compact"

@@ -2,11 +2,14 @@ import { paginationOptsValidator } from 'convex/server';
 import { v } from 'convex/values';
 import { query } from './_generated/server';
 import { assertManageableAgent } from './agentAccess';
+import { getWorkflowAutomationCostTotal } from './workflowAutomationCost';
+
+const automationKindValidator = v.union(v.literal('reminder'), v.literal('followUp'));
 
 export const list = query({
   args: {
     agentId: v.id('agents'),
-    automationKind: v.union(v.literal('reminder'), v.literal('followUp')),
+    automationKind: automationKindValidator,
     paginationOpts: paginationOptsValidator,
   },
   handler: async (ctx, args) => {
@@ -39,10 +42,27 @@ export const list = query({
         sentAt: run.sentAt,
         activationScope: run.activationScope,
         status: run.status,
+        estimatedCostMyr: run.estimatedCostMyr,
         reason: run.reason,
         updatedAt: run.updatedAt,
       };
     }));
     return { ...result, page };
+  },
+});
+
+export const estimatedTotal = query({
+  args: {
+    agentId: v.id('agents'),
+    automationKind: automationKindValidator,
+  },
+  handler: async (ctx, args) => {
+    await assertManageableAgent(ctx, args.agentId);
+    const total = await getWorkflowAutomationCostTotal(ctx, args.agentId, args.automationKind);
+    return {
+      estimatedTotalSpentMyr: total?.estimatedTotalSpentMyr ?? 0,
+      sentCount: (total?.pricedSentCount ?? 0) + (total?.unpricedSentCount ?? 0),
+      unpricedSentCount: total?.unpricedSentCount ?? 0,
+    };
   },
 });

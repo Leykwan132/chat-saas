@@ -15,6 +15,11 @@ import {
   resolveBroadcastMetadata,
   type BroadcastAgentMessageMetadata,
 } from "./broadcastMessageMetadata";
+import type {
+  WorkflowAutomationMessageMetadata,
+  WorkflowAutomationSource,
+} from "../../shared/workflowAutomationMessage";
+import { resolveWorkflowAutomationSource } from "./workflowAutomationMessageMetadata";
 
 /** Invisible user turn so each outbound assistant message gets its own `order`. */
 export const INBOX_ORDER_SPACER_TEXT = "\u200B";
@@ -58,6 +63,7 @@ export type InboxMessageMetadata = {
   creditsCharged?: number;
   inboxMessageKind?: BroadcastAgentMessageMetadata["inboxMessageKind"];
   broadcastPresentation?: BroadcastPresentation;
+  workflowAutomationSource?: WorkflowAutomationSource;
 };
 
 export type InboxUIMessage = UIMessage & {
@@ -72,6 +78,7 @@ export type InboxUIMessage = UIMessage & {
   reactions?: InboxMessageReaction[];
   isBroadcast?: boolean;
   broadcastPresentation?: BroadcastPresentation;
+  workflowAutomationSource?: WorkflowAutomationSource;
 };
 
 export function isInboxOrderSpacerDoc(doc: MessageDoc): boolean {
@@ -263,6 +270,10 @@ export async function messageDocsToInboxUIMessages(
         doc as MessageDoc & InboxMessageMetadata,
         ledger,
       );
+      const workflowAutomationSource = resolveWorkflowAutomationSource(
+        doc as MessageDoc & WorkflowAutomationMessageMetadata,
+        ledger,
+      );
       const inboxAttachments =
         readInboxAttachments(doc) ??
         (docId ? ledgerAttachmentsByAgentMessageId.get(docId) : undefined);
@@ -286,6 +297,7 @@ export async function messageDocsToInboxUIMessages(
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
           ...(inboxAttachments !== undefined ? { inboxAttachments } : {}),
+          ...(workflowAutomationSource ? { workflowAutomationSource } : {}),
           ...broadcastMetadata,
         },
       ];

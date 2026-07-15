@@ -2,8 +2,12 @@ import { v } from 'convex/values';
 import { internalAction, internalMutation, internalQuery } from './_generated/server';
 import { internal } from './_generated/api';
 import { resolveWorkflowAutomationConfigs } from './workflowAutomationConfig';
-import { sendWorkflowWhatsappTemplate } from './workflowWhatsappTemplateSender';
-import { recordWorkflowAutomationOutbound } from './workflowAutomationMessageRecord';
+import {
+  sendWorkflowWhatsappTemplate,
+  type WorkflowWhatsappSendResult,
+} from './workflowWhatsappTemplateSender';
+import { recordWorkflowAutomationOutbound } from './workflowAutomationOutbound';
+import { recordWorkflowAutomationSentCost } from './workflowAutomationCost';
 import type { Doc } from './_generated/dataModel';
 
 type ReminderContext =
@@ -16,7 +20,7 @@ type ReminderContext =
 
 type ReminderActionResult =
   | { skipped: true; reason: string }
-  | { ok: true; providerMessageId?: string };
+  | ({ ok: true } & WorkflowWhatsappSendResult);
 
 export const getReminderContext = internalQuery({
   args: { runId: v.id('workflowAutomationRuns') },
@@ -91,6 +95,11 @@ export const completeReminder = internalMutation({
     if (!run || run.currentWorkId !== args.workId) return;
     const now = Date.now();
     if (args.result.kind === 'success' && args.result.returnValue?.ok) {
+      await recordWorkflowAutomationOutbound(ctx, {
+        run,
+        result: args.result.returnValue,
+      });
+      await recordWorkflowAutomationSentCost(ctx, run);
       await ctx.db.patch(run._id, {
         status: 'sent',
         providerMessageId: args.result.returnValue.providerMessageId,
@@ -98,14 +107,6 @@ export const completeReminder = internalMutation({
         sentAt: now,
         updatedAt: now,
       });
-      if (run.conversationId) {
-        await recordWorkflowAutomationOutbound(ctx, {
-          conversationId: run.conversationId,
-          providerMessageId: args.result.returnValue.providerMessageId,
-          source: 'workflowReminder',
-          templateName: run.templateSnapshot.name,
-        });
-      }
       return;
     }
     if (args.result.kind === 'success' && args.result.returnValue?.skipped) {

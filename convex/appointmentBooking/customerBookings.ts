@@ -65,6 +65,7 @@ export const listForConversation = query({
         bookingReference: event._id,
         timeZone: event.timeZone,
         title: event.title,
+        updatedAt: Math.max(event.updatedAt, session.updatedAt),
       });
     }
     return bookings;

@@ -21,17 +21,7 @@ import {
   UserX,
   Check,
   AlertCircle,
-  Megaphone,
-  UserCheck,
-  CheckCircle2,
-  Flame,
-  MessageSquarePlus,
   Plus,
-  Eraser,
-  CalendarCheck,
-  CalendarClock,
-  CalendarX,
-  Trash2,
   type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
@@ -112,6 +102,10 @@ import {
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
+import {
+  formatConversationActionHistoryText,
+  getConversationActionHistoryStyle,
+} from '@/components/inbox/conversationActionHistoryPresentation';
 import { type PromptInputMessage } from '@/components/ai-elements/prompt-input';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
@@ -178,233 +172,13 @@ function formatTimelineRelative(timestamp: number): string {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-const formatLogActionText = (action: string, metadata: any): React.ReactNode => {
-  switch (action) {
-    case 'thread_created': {
-      const serviceName = metadata?.service
-        ? metadata.service.charAt(0).toUpperCase() + metadata.service.slice(1)
-        : 'chat';
-      return (
-        <span>
-          Conversation started via <span className="font-semibold text-foreground dark:text-white">{serviceName}</span>
-        </span>
-      );
-    }
-    case 'broadcast_sent':
-      return (
-        <span>
-          Broadcast sent: <span className="font-semibold text-foreground dark:text-white">"{metadata?.templateName || 'Template'}"</span>
-        </span>
-      );
-    case 'followup_sent':
-      return (
-        <span>
-          Follow-up sent: <span className="font-semibold text-foreground dark:text-white">"{metadata?.templateName || 'Template'}"</span> <span className="text-muted-foreground/80 dark:text-muted-foreground/60 font-normal">(attempt #{metadata?.attemptNumber || 1})</span>
-        </span>
-      );
-    case 'user_details_changed': {
-      const changes = metadata?.changes;
-      if (!changes) return <span>Updated user details</span>;
-      const parts: React.ReactNode[] = [];
-      if (changes.name) {
-        parts.push(
-          <span key="name">
-            name from <span className="font-semibold text-foreground dark:text-white">"{changes.name.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.name.to ?? ''}"</span>
-          </span>
-        );
-      }
-      if (changes.phone) {
-        if (parts.length > 0) parts.push(<span key="p-sep">, </span>);
-        parts.push(
-          <span key="phone">
-            phone from <span className="font-semibold text-foreground dark:text-white">"{changes.phone.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.phone.to ?? ''}"</span>
-          </span>
-        );
-      }
-      if (changes.email) {
-        if (parts.length > 0) parts.push(<span key="e-sep">, </span>);
-        parts.push(
-          <span key="email">
-            email from <span className="font-semibold text-foreground dark:text-white">"{changes.email.from ?? ''}"</span> to <span className="font-semibold text-foreground dark:text-white">"{changes.email.to ?? ''}"</span>
-          </span>
-        );
-      }
-      return (
-        <span>
-          Updated user details: {parts}
-        </span>
-      );
-    }
-    case 'ai_enabled':
-      return (
-        <span>
-          AI replies <span className="font-semibold text-foreground dark:text-white">turned on</span>
-        </span>
-      );
-    case 'ai_disabled':
-      return (
-        <span>
-          AI replies <span className="font-semibold text-foreground dark:text-white">turned off</span>
-        </span>
-      );
-    case 'assignee_changed':
-      return (
-        <span>
-          Assigned to <span className="font-semibold text-foreground dark:text-white">{metadata?.assigneeName || 'someone'}</span>
-        </span>
-      );
-    case 'escalation_raised':
-      return (
-        <span>
-          Human escalation <span className="font-semibold text-foreground dark:text-white">raised</span>
-        </span>
-      );
-    case 'escalation_resolved':
-      return (
-        <span>
-          Human escalation <span className="font-semibold text-foreground dark:text-white">resolved</span>
-        </span>
-      );
-    case 'tag_added':
-      return (
-        <span>
-          Tag added: <span className="font-semibold text-foreground dark:text-white">"{metadata?.tag}"</span>
-        </span>
-      );
-    case 'tag_removed':
-      return (
-        <span>
-          Tag removed: <span className="font-semibold text-foreground dark:text-white">"{metadata?.tag}"</span>
-        </span>
-      );
-    case 'event_booked':
-      return (
-        <span>
-          Event booked: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
-        </span>
-      );
-    case 'event_updated':
-      return (
-        <span>
-          Event updated: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
-        </span>
-      );
-    case 'event_cancelled':
-      return (
-        <span>
-          Event cancelled: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
-        </span>
-      );
-    case 'event_deleted':
-      return (
-        <span>
-          Event deleted: <span className="font-semibold text-foreground dark:text-white">"{metadata?.eventTitle || 'Appointment'}"</span>
-        </span>
-      );
-    case 'lead_status_changed':
-      return (
-        <span>
-          Lead status: <span className="font-medium text-muted-foreground">{metadata?.from || 'None'}</span> to <span className="font-semibold text-foreground dark:text-white">{metadata?.to || 'None'}</span>
-        </span>
-      );
-    default:
-      return <span>{action}</span>;
-  }
-};
-
-const getLogActionStyle = (action: string): { icon: LucideIcon; classes: string } => {
-  switch (action) {
-    case 'thread_created':
-      return {
-        icon: MessageSquarePlus,
-        classes: 'text-white bg-slate-800 border-slate-800 dark:bg-slate-900 dark:border-slate-900',
-      };
-    case 'broadcast_sent':
-      return {
-        icon: Megaphone,
-        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
-      };
-    case 'followup_sent':
-      return {
-        icon: Clock,
-        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
-      };
-    case 'ai_enabled':
-    case 'ai_disabled':
-      return {
-        icon: Bot,
-        classes: 'text-white bg-violet-900 border-violet-900 dark:bg-violet-950 dark:border-violet-950',
-      };
-    case 'assignee_changed':
-      return {
-        icon: UserCheck,
-        classes: 'text-white bg-slate-800 border-slate-800 dark:bg-slate-900 dark:border-slate-900',
-      };
-    case 'escalation_raised':
-      return {
-        icon: AlertCircle,
-        classes: 'text-white bg-amber-800 border-amber-800 dark:bg-amber-950 dark:border-amber-950',
-      };
-    case 'escalation_resolved':
-      return {
-        icon: CheckCircle2,
-        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
-      };
-    case 'tag_added':
-      return {
-        icon: Tag,
-        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
-      };
-    case 'tag_removed':
-      return {
-        icon: Eraser,
-        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
-      };
-    case 'event_booked':
-      return {
-        icon: CalendarCheck,
-        classes: 'text-white bg-emerald-800 border-emerald-800 dark:bg-emerald-950 dark:border-emerald-950',
-      };
-    case 'event_updated':
-      return {
-        icon: CalendarClock,
-        classes: 'text-white bg-indigo-900 border-indigo-900 dark:bg-indigo-950 dark:border-indigo-950',
-      };
-    case 'event_cancelled':
-      return {
-        icon: CalendarX,
-        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
-      };
-    case 'event_deleted':
-      return {
-        icon: Trash2,
-        classes: 'text-white bg-rose-800 border-rose-800 dark:bg-rose-950 dark:border-rose-950',
-      };
-    case 'lead_status_changed':
-      return {
-        icon: Flame,
-        classes: 'text-white bg-amber-800 border-amber-800 dark:bg-amber-950 dark:border-amber-950',
-      };
-    case 'user_details_changed':
-      return {
-        icon: Contact,
-        classes: 'text-white bg-zinc-700 border-zinc-700 dark:bg-zinc-800 dark:border-zinc-800',
-      };
-    default:
-      return {
-        icon: Clock,
-        classes: 'text-white bg-zinc-700 border-zinc-700 dark:bg-zinc-800 dark:border-zinc-800',
-      };
-  }
-};
-
-function formatOrgMemberDisplayName(u: Doc<'users'>): string {
-  const parts = [u.firstName, u.lastName].filter(Boolean);
+function formatOrgMemberDisplayName(user: Doc<'users'>): string {
+  const parts = [user.firstName, user.lastName].filter(Boolean);
   if (parts.length > 0) return parts.join(' ');
-  return u.email;
+  return user.email;
 }
 
-function getTagColorClass(_tag: string): { bg: string; text: string; dot: string } {
+function getTagColorClass(): { bg: string; text: string; dot: string } {
   return {
     bg: 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-200/80 dark:border-zinc-700/60 shadow-none',
     text: 'text-zinc-600 dark:text-zinc-400',
@@ -2009,7 +1783,7 @@ export default function ChatsPage() {
                           {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length > 0 ? (
                             <div className="flex flex-wrap gap-1.5 py-1.5">
                               {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).map((tag: any) => {
-                                const colors = getTagColorClass(tag);
+                                const colors = getTagColorClass();
                                 return (
                                   <span
                                     key={tag}
@@ -2088,7 +1862,7 @@ export default function ChatsPage() {
                                                 className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                               >
                                                 <div className="flex items-center gap-2">
-                                                  <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(tag).dot)} />
+                                                  <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass().dot)} />
                                                   <span>{tag}</span>
                                                 </div>
                                                 {isSelected && <Check className="size-3 text-foreground shrink-0" />}
@@ -2116,7 +1890,7 @@ export default function ChatsPage() {
                                                 className="flex items-center justify-between text-xs cursor-pointer py-1.5 px-3 rounded-xl data-[selected=true]:bg-muted"
                                               >
                                                 <div className="flex items-center gap-2">
-                                                  <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass(entry.title).dot)} />
+                                                  <span className={cn("size-1.5 rounded-full shrink-0", getTagColorClass().dot)} />
                                                   <span>{entry.title}</span>
                                                 </div>
                                                 {isSelected && <Check className="size-3 text-foreground shrink-0" />}
@@ -2196,7 +1970,7 @@ export default function ChatsPage() {
 
                                   {/* Middle: Dot and Connecting Line */}
                                   {(() => {
-                                    const styleInfo = getLogActionStyle(log.action);
+                                    const styleInfo = getConversationActionHistoryStyle(log.action);
                                     return (
                                       <div className="flex flex-col items-center shrink-0">
                                         <div className={cn(
@@ -2215,7 +1989,7 @@ export default function ChatsPage() {
                                   {/* Right: Content */}
                                   <div className="flex-1 pb-4 pt-0.5">
                                     <div className="font-normal text-muted-foreground text-[13px] leading-snug">
-                                      {formatLogActionText(log.action, log.metadata)}
+                                      {formatConversationActionHistoryText(log.action, log.metadata)}
                                     </div>
                                     <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground">
                                       <span>by</span>

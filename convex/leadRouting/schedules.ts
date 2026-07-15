@@ -6,24 +6,8 @@ import { getAuthContext } from "../authUtils";
 import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
 
 const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
-const MINUTES_PER_DAY = 24 * 60;
 const DEFAULT_SHIFT_START_MINUTES = 9 * 60;
 const DEFAULT_SHIFT_END_MINUTES = 17 * 60;
-
-function normalizeShift(shift: {
-  dayOfWeek: number;
-  startMinutes: number;
-  endMinutes: number;
-}) {
-  if (shift.startMinutes === 0 && shift.endMinutes === MINUTES_PER_DAY) {
-    return {
-      dayOfWeek: shift.dayOfWeek,
-      startMinutes: DEFAULT_SHIFT_START_MINUTES,
-      endMinutes: DEFAULT_SHIFT_END_MINUTES,
-    };
-  }
-  return shift;
-}
 
 const DEFAULT_WEEKLY_SHIFTS = Array.from({ length: 7 }, (_, dayOfWeek) => ({
   dayOfWeek,
@@ -214,7 +198,7 @@ export const getForAgentUser = query({
         ...schedule,
         timezone: schedule.timezone.trim() || DEFAULT_TIMEZONE,
       },
-      shifts: shifts.map((shift) => normalizeShift(shift)),
+      shifts,
       timeOff,
     };
   },

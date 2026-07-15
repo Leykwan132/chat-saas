@@ -65,6 +65,7 @@ import {
 import { cn } from '@/lib/utils';
 import { splitWhatsAppText } from '@/lib/whatsappText';
 import { InboxBroadcastMessage } from './InboxBroadcastMessage';
+import { InboxWorkflowAutomationMessage } from './InboxWorkflowAutomationMessage';
 
 function getInboxMessageFileParts(
   message: InboxUIMessage,
@@ -368,7 +369,7 @@ function InboxMessageBody({
     );
   }
 
-  return (
+  const messageContent = (
     <>
       {audioFiles.map((file) => (
         <AudioPlayer
@@ -401,7 +402,9 @@ function InboxMessageBody({
         <div
           className={cn(
             'w-fit max-w-full px-3 py-1.5 text-sm leading-snug whitespace-pre-wrap break-words',
-            isCustomer
+            message.workflowAutomationSource
+              ? 'text-foreground'
+              : isCustomer
               ? 'rounded-[2px_16px_16px_16px] border border-border bg-card text-foreground'
               : cn(
                   'rounded-[16px_16px_2px_16px] bg-blue-50 dark:bg-blue-950/40 text-blue-950 dark:text-blue-200',
@@ -414,6 +417,14 @@ function InboxMessageBody({
       ) : null}
     </>
   );
+  if (message.workflowAutomationSource) {
+    return (
+      <InboxWorkflowAutomationMessage source={message.workflowAutomationSource}>
+        {messageContent}
+      </InboxWorkflowAutomationMessage>
+    );
+  }
+  return messageContent;
 }
 
 type SelectedReaction = {

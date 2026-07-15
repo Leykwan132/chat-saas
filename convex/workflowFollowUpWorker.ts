@@ -4,8 +4,12 @@ import { internalAction, internalMutation, internalQuery } from './_generated/se
 import { resolveWorkflowAutomationConfigs } from './workflowAutomationConfig';
 import { matchesWorkflowFollowUpAudience } from './workflowFollowUpTimer';
 import { enqueueWorkflowFollowUpWake } from './workflowFollowUpRuntime';
-import { sendWorkflowWhatsappTemplate } from './workflowWhatsappTemplateSender';
-import { recordWorkflowAutomationOutbound } from './workflowAutomationMessageRecord';
+import {
+  sendWorkflowWhatsappTemplate,
+  type WorkflowWhatsappSendResult,
+} from './workflowWhatsappTemplateSender';
+import { recordWorkflowAutomationOutbound } from './workflowAutomationOutbound';
+import { recordWorkflowAutomationSentCost } from './workflowAutomationCost';
 import type { Doc } from './_generated/dataModel';
 import type { WorkflowWhatsappTemplateSnapshot } from '../shared/workflowAutomations';
 
@@ -24,7 +28,7 @@ type FollowUpWakeContext =
 type FollowUpWakeResult =
   | { skipped: true; reason: string }
   | { reschedule: true; dueAt: number }
-  | { ok: true; providerMessageId?: string };
+  | ({ ok: true } & WorkflowWhatsappSendResult);
 
 export function getWorkflowFollowUpWakeDecision({ now, dueAt }: { now: number; dueAt: number }) {
   return now < dueAt ? { kind: 'reschedule' as const, dueAt } : { kind: 'send' as const };
@@ -187,18 +191,17 @@ export const completeFollowUpWake = internalMutation({
     }
     const now = Date.now();
     if (args.result.kind === 'success' && args.result.returnValue?.ok) {
+      await recordWorkflowAutomationOutbound(ctx, {
+        run,
+        result: args.result.returnValue,
+      });
+      await recordWorkflowAutomationSentCost(ctx, run);
       await ctx.db.patch(run._id, {
         status: 'sent',
         providerMessageId: args.result.returnValue.providerMessageId,
         attemptedAt: now,
         sentAt: now,
         updatedAt: now,
-      });
-      await recordWorkflowAutomationOutbound(ctx, {
-        conversationId: timer.conversationId,
-        providerMessageId: args.result.returnValue.providerMessageId,
-        source: 'workflowFollowUp',
-        templateName: run.templateSnapshot.name,
       });
       const workflow = await ctx.db.get(run.workflowId);
       if (!workflow) return;

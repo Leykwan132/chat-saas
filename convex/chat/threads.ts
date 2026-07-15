@@ -1124,10 +1124,12 @@ export async function ingestChannelMessage(
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
         files: files.map(file => ({ url: file.url, mimeType: file.mimeType })),
         channelName: args.humanAgentName,
-        messageMetadata: broadcastAgentMetadata(
-          args.messageKind,
-          args.broadcastPresentation,
-        ),
+        messageMetadata: {
+          ...broadcastAgentMetadata(args.messageKind, args.broadcastPresentation),
+          ...(args.workflowAutomationSource
+            ? { workflowAutomationSource: args.workflowAutomationSource }
+            : {}),
+        },
       });
     }
   }

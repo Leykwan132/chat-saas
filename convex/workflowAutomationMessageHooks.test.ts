@@ -13,6 +13,9 @@ test('records outbound hooks and inbound cancellation at message persistence bou
 
 test('marks automated follow-ups with structured source metadata', () => {
   expect(source('./followUpPool.ts')).toContain("workflowAutomationSource: 'workflowFollowUp'");
-  expect(source('./workflowAutomationMessageRecord.ts')).toContain('workflowAutomationSource: args.source');
-  expect(source('./workflowReminderWorker.ts')).toContain("source: 'workflowReminder'");
+  expect(source('./workflowAutomationOutbound.ts')).toContain('workflowAutomationSource: projected.source');
+  expect(source('./workflowReminderWorker.ts')).toContain('recordWorkflowAutomationOutbound(ctx');
+  expect(source('./workflowFollowUpWorker.ts')).toContain('recordWorkflowAutomationOutbound(ctx');
+  expect(source('./workflowReminderWorker.ts')).not.toContain("source: 'workflowReminder'");
+  expect(source('./workflowFollowUpWorker.ts')).not.toContain("source: 'workflowFollowUp'");
 });
