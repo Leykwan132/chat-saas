@@ -198,7 +198,7 @@ test('atomically replaces a workflow draft, records saved template usage, and re
     agentId,
     baselineUpdatedAt: saved.workflow.updatedAt,
     layoutOrientation: 'horizontal' as const,
-    templateId: 'real-estate',
+    templateId: 'real-estate' as const,
     nodes: saved.nodes.map((node) => ({
       clientId: node._id,
       persistedNodeId: node._id,
