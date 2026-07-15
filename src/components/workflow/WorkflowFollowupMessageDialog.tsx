@@ -71,9 +71,6 @@ export function WorkflowFollowupMessageDialog({
   initialStage?: MessageStage;
 }) {
   const { agentId } = useParams();
-  const [stage, setStage] = useState<MessageStage>(initialStage);
-  const [activeAttemptIndex, setActiveAttemptIndex] = useState(0);
-  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const {
     followupAttemptTemplates,
     followupMessageStrategy,
@@ -82,16 +79,25 @@ export function WorkflowFollowupMessageDialog({
     setFollowupMessageStrategy,
     setFollowupSameTemplate,
   } = useWorkflowAutomationState();
+  const summary = useWorkflowFollowupSummary();
+  const maxAttemptsCount = Math.max(1, Number(summary.maxAttemptsLabel) || 1);
+  const singleAttempt = maxAttemptsCount === 1;
+  const initialMessageStage = singleAttempt ? 'configure' : initialStage;
+  const initialMessageStrategy = singleAttempt ? 'same' : followupMessageStrategy;
+  const initialSameTemplate = singleAttempt && followupMessageStrategy === 'different'
+    ? followupAttemptTemplates[0]
+    : followupSameTemplate;
+  const [stage, setStage] = useState<MessageStage>(initialMessageStage);
+  const [activeAttemptIndex, setActiveAttemptIndex] = useState(0);
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const [pendingMessageStrategy, setPendingMessageStrategy] =
-    useState(followupMessageStrategy);
+    useState(initialMessageStrategy);
   const [pendingSameTemplate, setPendingSameTemplate] =
-    useState(followupSameTemplate);
+    useState(initialSameTemplate);
   const [pendingAttemptTemplates, setPendingAttemptTemplates] =
     useState([...followupAttemptTemplates]);
   const confirmedConfigurationRef = useRef(false);
-  const summary = useWorkflowFollowupSummary();
   const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates();
-  const maxAttemptsCount = Math.max(1, Number(summary.maxAttemptsLabel) || 1);
   const attempts = Array.from({ length: maxAttemptsCount }, (_, index) => index);
   const boundedActiveAttemptIndex = Math.min(activeAttemptIndex, maxAttemptsCount - 1);
   const selectedTemplate = pendingMessageStrategy === 'same'
@@ -101,9 +107,11 @@ export function WorkflowFollowupMessageDialog({
   const configureTitle = pendingMessageStrategy === 'same'
     ? 'Select a message'
     : 'Select messages';
-  const configureDescription = pendingMessageStrategy === 'same'
-    ? `This message will be sent for all ${maxAttemptsCount} follow-up${maxAttemptsCount === 1 ? '' : 's'}.`
-    : 'Choose a message for each follow-up.';
+  const configureDescription = singleAttempt
+    ? 'This message will be sent for the follow-up.'
+    : pendingMessageStrategy === 'same'
+      ? `This message will be sent for all ${maxAttemptsCount} follow-ups.`
+      : 'Choose a message for each follow-up.';
   const canConfirmTemplates = pendingMessageStrategy === 'same'
     ? Boolean(pendingSameTemplate)
     : attempts.every((attemptIndex) => Boolean(pendingAttemptTemplates[attemptIndex]));
@@ -122,12 +130,12 @@ export function WorkflowFollowupMessageDialog({
   };
   const resetPendingConfiguration = () => {
     if (!confirmedConfigurationRef.current) {
-      setPendingMessageStrategy(followupMessageStrategy);
-      setPendingSameTemplate(followupSameTemplate);
+      setPendingMessageStrategy(initialMessageStrategy);
+      setPendingSameTemplate(initialSameTemplate);
       setPendingAttemptTemplates([...followupAttemptTemplates]);
     }
     confirmedConfigurationRef.current = false;
-    setStage(initialStage);
+    setStage(initialMessageStage);
     setActiveAttemptIndex(0);
     setTemplateSearchQuery('');
   };
@@ -136,6 +144,7 @@ export function WorkflowFollowupMessageDialog({
     <DialogContent
       className="flex h-[988px] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[1274px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1274px]"
       onCloseAutoFocus={resetPendingConfiguration}
+      onOpenAutoFocus={resetPendingConfiguration}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
     >
@@ -251,16 +260,23 @@ export function WorkflowFollowupMessageDialog({
               />
             </div>
           </div>
-          <DialogFooter className="shrink-0 flex-row justify-between border-t border-border pt-5 sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setStage('strategy')}
-              className="h-10 gap-2 px-4 font-bold transition-all active:scale-[0.98]"
-            >
-              <ChevronLeft className="size-4" />
-              Back
-            </Button>
+          <DialogFooter
+            className={cn(
+              'shrink-0 flex-row border-t border-border pt-5',
+              singleAttempt ? 'justify-end sm:justify-end' : 'justify-between sm:justify-between',
+            )}
+          >
+            {!singleAttempt && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStage('strategy')}
+                className="h-10 gap-2 px-4 font-bold transition-all active:scale-[0.98]"
+              >
+                <ChevronLeft className="size-4" />
+                Back
+              </Button>
+            )}
             <DialogClose asChild>
               <Button
                 type="button"
