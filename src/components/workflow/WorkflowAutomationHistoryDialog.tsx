@@ -38,10 +38,25 @@ const PAGE_SIZE = 25;
 
 type HistoryStatus = 'scheduled' | 'sent' | 'failed' | 'skipped' | 'cancelled';
 
-function statusVariant(status: HistoryStatus) {
-  if (status === 'failed') return 'destructive' as const;
-  if (status === 'sent') return 'default' as const;
-  return 'secondary' as const;
+const HISTORY_STATUS_INDICATOR_COLORS: Record<HistoryStatus, string> = {
+  scheduled: '#eab308',
+  sent: '#15803d',
+  failed: '#dc2626',
+  skipped: '#f97316',
+  cancelled: '#dc2626',
+};
+
+function WorkflowAutomationHistoryStatusBadge({ status }: { status: HistoryStatus }) {
+  return (
+    <Badge variant="outline" className="gap-1.5 bg-muted text-foreground">
+      <span
+        aria-hidden
+        className="size-1.5 shrink-0 rounded-full"
+        style={{ backgroundColor: HISTORY_STATUS_INDICATOR_COLORS[status] }}
+      />
+      {status}
+    </Badge>
+  );
 }
 
 function showsOperationalReason(status: HistoryStatus) {
@@ -175,7 +190,7 @@ export function WorkflowAutomationHistoryDialog({
                       <TableCell>{item.sentAt ? new Date(item.sentAt).toLocaleString() : '—'}</TableCell>
                       <TableCell>
                         <div className="flex max-w-56 flex-col items-start gap-1">
-                          <Badge variant={statusVariant(item.status)}>{item.status}</Badge>
+                          <WorkflowAutomationHistoryStatusBadge status={item.status} />
                           {showsOperationalReason(item.status) && item.reason && (
                             <span className="whitespace-normal text-muted-foreground">{item.reason}</span>
                           )}

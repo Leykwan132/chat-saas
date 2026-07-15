@@ -6,6 +6,11 @@ import { getWorkflowAutomationCostTotal } from './workflowAutomationCost';
 
 const automationKindValidator = v.union(v.literal('reminder'), v.literal('followUp'));
 
+function userFacingReason(reason: string | undefined) {
+  if (reason?.toLowerCase().includes('workpool')) return undefined;
+  return reason;
+}
+
 export const list = query({
   args: {
     agentId: v.id('agents'),
@@ -43,7 +48,7 @@ export const list = query({
         activationScope: run.activationScope,
         status: run.status,
         estimatedCostMyr: run.estimatedCostMyr,
-        reason: run.reason,
+        reason: userFacingReason(run.reason),
         updatedAt: run.updatedAt,
       };
     }));

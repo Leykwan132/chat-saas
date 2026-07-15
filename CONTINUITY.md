@@ -1,8 +1,8 @@
 # Snapshot
 - 2026-07-15 [CODE] Every successfully sent workflow Reminder or Follow-up appears in its Inbox thread and Action History with the exact provider-facing text; thread cards use `border-primary/20 bg-primary/5` and a labeled BellRing/Clock3 footer.
-- 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding the internal `Workpool job cancelled` reason from users.
+- 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding every Workpool-related reason from users.
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
-- 2026-07-15 [CODE] Reminder and Follow-up History use shared shadcn cursor pagination in 25-row pages; captions show exact all-time sent counts alongside per-message estimated MYR cost and an all-time spend footer.
+- 2026-07-15 [CODE] Reminder and Follow-up History use shared shadcn cursor pagination in 25-row pages; muted-neutral outlined status labels use normal text with a small semantic status dot, and captions show exact all-time sent counts alongside per-message estimated MYR cost and an all-time spend footer.
 - 2026-07-15 [CODE] Shared Reminder and Follow-up History dialogs use unrestricted intrinsic table sizing with no internal ScrollArea or table scrollbar.
 - 2026-07-14 [CODE] Calendar and Inbox staff mutations delegate to one `createStaffBooking` function; staff and AI creation trigger one `handleBookingCreated` event that logs `booking_created` and prepares reminder Workpool scheduling.
 - 2026-07-14 [USER] Goal is to simplify Available Hours timezone presentation and add a control below the weekday rows that makes the weekly schedule all-day while remaining unambiguous to AI booking availability checks.
@@ -27,6 +27,9 @@
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 
 # Decisions
+- 2026-07-15 [USER] D346 ACTIVE: Reminder and Follow-up History status labels use a neutral `bg-muted` outlined Badge with normal foreground text; only a small leading dot carries status color: sent green, failed/cancelled red, scheduled yellow, and skipped orange.
+- 2026-07-15 [USER] D345 SUPERSEDED by D346 for fill: The History Badge keeps its outline, normal text, and status dot while the surface changes from `bg-background` to `bg-muted`.
+- 2026-07-15 [USER] D344 ACTIVE: The shared Workflow History API omits any reason containing `workpool`, case-insensitively, while preserving cancelled rows/statuses and meaningful non-Workpool reasons.
 - 2026-07-15 [USER] D343 ACTIVE: Before merging to `main`, stale full-suite fixtures must align with the 50-credit Free plan, register the current token aggregate, and use the Free-entitled Ilmu model when testing template-key acceptance.
 - 2026-07-15 [USER] D342 ACTIVE: Inbox booking status labels use semantic `bg-background`, producing a white light-theme surface while retaining the outline border, normal text, and small status-colored dot.
 - 2026-07-15 [USER] D341 SUPERSEDED by D342 for fill: The Badge outline border remains, but the muted fill changes to the semantic background surface.
@@ -34,7 +37,7 @@
 - 2026-07-15 [USER] D339 SUPERSEDED by D340: Status color remains on accent rails and moves from the full tag background to a small indicator dot.
 - 2026-07-15 [USER] D338 SUPERSEDED by D339: Status colors now cover tags and the compact card above the prompt, not only booking-history rails.
 - 2026-07-15 [USER] D337 ACTIVE: Successful workflow Reminder and Follow-up sends record the actual resolved customer-facing message in a subtly distinctive Inbox presentation and add a corresponding Action History event; template-name placeholders are insufficient.
-- 2026-07-15 [USER] D336 ACTIVE: The shared Workflow History API redacts only the exact `Workpool job cancelled` reason for Reminder and Follow-up records; rows and cancelled badges remain visible, while meaningful cancellation and failure reasons remain available.
+- 2026-07-15 [USER] D336 SUPERSEDED by D344: Redaction expands from the exact `Workpool job cancelled` phrase to every Workpool-related reason.
 - 2026-07-15 [USER] D335 ACTIVE: The compact booking above the Inbox reply prompt selects by `max(calendarEvent.updatedAt, appointmentBookingSession.updatedAt)`; expanded booking history remains scheduled-start ordered, and equal timestamps preserve the backend's first item.
 - 2026-07-15 [USER] D334 ACTIVE: Workflow History uses the installed shadcn Pagination with Previous, bounded page links, ellipses, and Next over accumulated 25-row Convex cursor batches; captions say the exact all-time Reminder or Follow-up count `sent so far.`
 - 2026-07-15 [USER] D333 SUPERSEDED by D334: Loaded-row counts and `+` suffixes are replaced by exact all-time sent counts independent of the active page.
@@ -108,13 +111,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-15 [CODE] Restyled shared Reminder and Follow-up History status labels as muted-neutral outlined badges with normal text and compact semantic status dots.
+- 2026-07-15 [CODE] Prevented all Workpool-related reasons from reaching Reminder and Follow-up History while preserving cancelled rows and meaningful operational reasons.
 - 2026-07-15 [CODE] Cleared the three tracked full-suite baselines by aligning Free-plan credit expectations, registering `agentTokenUsage` in its test harness, and isolating the product-sales template test from paid-model access.
 - 2026-07-15 [CODE] Made booking labels bordered with a white light-theme surface, normal text, and a small status-colored dot while retaining status-colored rails in Conversation Details history and the compact booking card above the prompt.
 - 2026-07-15 [CODE] Persisted successful workflow Reminder/Follow-up content and media to the existing Inbox conversation, logged the exact sent text in Action History, and added distinct source-aware thread cards.
 - 2026-07-15 [CODE] Changed the compact Inbox booking selector from latest scheduled start to the greatest effective event/session update time.
 - 2026-07-15 [CODE] Replaced Workflow History Load more actions with shared 25-row shadcn Pagination and exact `sent so far.` Reminder/Follow-up captions.
-- 2026-07-15 [CODE] Replaced descriptive Workflow History captions with tested counts such as `1 reminder`, `8 follow-ups`, and `25+ reminders`.
-- 2026-07-15 [CODE] Removed Workflow History internal scrolling and made both shared dialogs and tables expand automatically to their full content width.
 
 # Working set
 - 2026-07-15 [CODE] Full-suite baseline repairs: `convex/{creditPeriodPool.test,agentUsage.test,agentTemplateKeys.test}.ts`.
@@ -135,6 +138,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-15 [TOOL] Muted-neutral Workflow History status labels completed a verified red-green cycle after reviewing the official shadcn Badge API; the focused regression, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0, following the earlier complete 599/599-test verification.
+- 2026-07-15 [TOOL] Workpool-reason redaction completed a verified red-green cycle; the complete 599/599-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Bordered white-surface Inbox booking labels, status indicator dots, and colored rails completed verified red-green cycles; 14 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Workflow automation thread/history recording plus the three repaired baseline fixtures passed the complete 599/599-test suite, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and focused red-green checks under Node v22.22.0; verified `main` was fast-forwarded and pushed to `origin/main`.
 - 2026-07-15 [TOOL] Inbox most-recently-updated booking completed verified frontend/backend red-green cycles; 3 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -143,7 +148,6 @@
 - 2026-07-15 [TOOL] Workflow History intrinsic sizing completed a verified red-green cycle; focused test, targeted ESLint, diff/LOC checks passed under Node v22.22.0. Local browser reached the app but the authenticated route was unavailable in its signed-out session.
 - 2026-07-14 [TOOL] Workflow History captions completed a verified red-green cycle; the focused test, targeted ESLint, `git diff --check`, and code-file LOC checks passed under Node v22.22.0 after reviewing official shadcn Table composition.
 - 2026-07-14 [TOOL] Workflow History estimated spend completed verified red-green cycles; 8 focused tests, targeted ESLint, TypeScript/Vite build, `git diff --check`, Convex codegen, migration dry run, and the configured development backfill passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Shared staff booking and booking-created event completed three verified red-green cycles; 7 focused tests, targeted ESLint, code-file LOC checks, and `git diff --check` passed under Node v22.22.0 without a console-log assertion test.
 - 2026-07-14 [TOOL] Calendar Create booking reminder integration emitted `workflow_reminder_scheduling_after_booking_created` in the existing booking test; Calendar booking and reminder runtime tests passed, targeted ESLint passed, and no new console-log test was added under Node v22.22.0.
 - 2026-07-14 [TOOL] Calendar non-past title correction completed a verified red-green cycle; 6 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and new-file LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning.
 - 2026-07-14 [TOOL] Calendar live-event and workflow logging completed verified red-green cycles; 11 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning and two pre-existing synchronous-effect errors excluded from targeted lint.
@@ -154,4 +158,3 @@
 - 2026-07-14 [TOOL] Bottom-only 20%-narrower time popups completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Customer Combobox width completed a verified red-green cycle; its focused 3-test suite, targeted ESLint, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.
-- 2026-07-14 [TOOL] Workflow History table and responsive dialog completed verified red-green cycles; focused tests, targeted ESLint, diff/LOC checks passed, and the full Vitest run passed 570/573 tests including the responsive contract. Three failures remain in unrelated credit-period, agent-usage component registration, and model-plan fixture tests.

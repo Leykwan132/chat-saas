@@ -20,6 +20,18 @@ test('adds separate paginated history dialogs to both workflow cards', () => {
   expect(dialog).toContain('failed');
   expect(dialog).toContain('skipped');
   expect(dialog).toContain('cancelled');
+  expect(dialog).toContain('const HISTORY_STATUS_INDICATOR_COLORS: Record<HistoryStatus, string>');
+  expect(dialog).toContain("sent: '#15803d'");
+  expect(dialog).toContain("failed: '#dc2626'");
+  expect(dialog).toContain("cancelled: '#dc2626'");
+  expect(dialog).toContain("scheduled: '#eab308'");
+  expect(dialog).toContain("skipped: '#f97316'");
+  expect(dialog).toContain('className="gap-1.5 bg-muted text-foreground"');
+  expect(dialog).not.toContain('className="gap-1.5 bg-background text-foreground"');
+  expect(dialog).toContain('className="size-1.5 shrink-0 rounded-full"');
+  expect(dialog).toContain('backgroundColor: HISTORY_STATUS_INDICATOR_COLORS[status]');
+  expect(dialog).toContain('<WorkflowAutomationHistoryStatusBadge status={item.status} />');
+  expect(dialog).not.toContain('statusVariant(');
   expect(reminderSetup).not.toContain('<WorkflowAutomationHistoryDialog');
   expect(followupSetup).not.toContain('<WorkflowAutomationHistoryDialog');
   expect(reminderSummary).toContain('<WorkflowAutomationHistoryDialog');
