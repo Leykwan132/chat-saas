@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import {
   BUTTON_TYPE_OPTIONS,
   createTemplateInputClass,
@@ -18,6 +17,7 @@ import {
   createTemplateSelectTriggerClass,
 } from './templateBuilderConstants';
 import type { ButtonType, TemplateButton } from './templateBuilderTypes';
+import { TemplateSectionSwitch } from './TemplateSectionSwitch';
 
 type TemplateButtonsSectionProps = {
   enabled: boolean;
@@ -75,7 +75,11 @@ export function TemplateButtonsSection({
             Add interactive actions to the message.
           </p>
         </div>
-        <Switch checked={enabled} onCheckedChange={onEnabledChange} />
+        <TemplateSectionSwitch
+          enabled={enabled}
+          label="Buttons"
+          onEnabledChange={onEnabledChange}
+        />
       </div>
 
       {enabled && (

@@ -237,11 +237,14 @@ export const listTemplates = action({
         `${graphBase()}/${wabaId}/message_templates?fields=name,status,language,category,components&limit=200`,
         { headers: { Authorization: `Bearer ${token}` } },
       );
+      console.log('meta template from meta res', res);
       const body = (await readGraphJson(res)) as { data?: MetaTemplateRow[] };
       rows = body.data ?? [];
     } catch (e) {
       console.error("Failed to list templates from Meta:", e);
     }
+    
+    console.log('meta template from meta rows', rows);
 
     const remoteTemplates: ListedTemplate[] = rows
       .map((r) => ({

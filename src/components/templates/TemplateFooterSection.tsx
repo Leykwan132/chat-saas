@@ -1,7 +1,7 @@
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { createTemplateInputClass } from './templateBuilderConstants';
+import { TemplateSectionSwitch } from './TemplateSectionSwitch';
 
 type TemplateFooterSectionProps = {
   enabled: boolean;
@@ -25,7 +25,11 @@ export function TemplateFooterSection({
             Optional grey text shown below the message body.
           </p>
         </div>
-        <Switch checked={enabled} onCheckedChange={onEnabledChange} />
+        <TemplateSectionSwitch
+          enabled={enabled}
+          label="Footer"
+          onEnabledChange={onEnabledChange}
+        />
       </div>
 
       {enabled && (

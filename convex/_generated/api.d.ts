@@ -193,6 +193,7 @@ import type * as whatsappTemplateMetaUpload from "../whatsappTemplateMetaUpload.
 import type * as whatsappTemplatePresentation from "../whatsappTemplatePresentation.js";
 import type * as whatsappTemplateRender from "../whatsappTemplateRender.js";
 import type * as whatsappTemplateSendPayload from "../whatsappTemplateSendPayload.js";
+import type * as whatsappTemplateSendPayloadBuild from "../whatsappTemplateSendPayloadBuild.js";
 import type * as whatsappTemplateUpdate from "../whatsappTemplateUpdate.js";
 import type * as whatsappTemplateUpdateHelpers from "../whatsappTemplateUpdateHelpers.js";
 import type * as whatsappTemplates from "../whatsappTemplates.js";
@@ -433,6 +434,7 @@ declare const fullApi: ApiFromModules<{
   whatsappTemplatePresentation: typeof whatsappTemplatePresentation;
   whatsappTemplateRender: typeof whatsappTemplateRender;
   whatsappTemplateSendPayload: typeof whatsappTemplateSendPayload;
+  whatsappTemplateSendPayloadBuild: typeof whatsappTemplateSendPayloadBuild;
   whatsappTemplateUpdate: typeof whatsappTemplateUpdate;
   whatsappTemplateUpdateHelpers: typeof whatsappTemplateUpdateHelpers;
   whatsappTemplates: typeof whatsappTemplates;

@@ -4,7 +4,7 @@ import { renderWhatsAppTemplateBodyText } from "./whatsappTemplateRender";
 
 test("template payload builder returns prepared header presentation", () => {
   const source = readFileSync(
-    new URL("./whatsappTemplateSendPayload.ts", import.meta.url),
+    new URL("./whatsappTemplateSendPayloadBuild.ts", import.meta.url),
     "utf8",
   );
   expect(source).toContain("buildWhatsAppTemplateHeaderAsset");

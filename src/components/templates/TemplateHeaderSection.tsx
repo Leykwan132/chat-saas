@@ -9,7 +9,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 import {
   assertWhatsAppTemplateMediaSpec,
@@ -18,6 +17,7 @@ import {
   type WhatsAppTemplateHeaderFormat,
 } from '../../../shared/whatsappTemplateMedia';
 import { createTemplateInputClass } from './templateBuilderConstants';
+import { TemplateSectionSwitch } from './TemplateSectionSwitch';
 import type { HeaderMediaByType, HeaderMediaState, HeaderType } from './templateBuilderTypes';
 import {
   headerMediaForType,
@@ -152,7 +152,11 @@ export function TemplateHeaderSection({
             {description}
           </p>
         </div>
-        <Switch checked={enabled} onCheckedChange={onEnabledChange} />
+        <TemplateSectionSwitch
+          enabled={enabled}
+          label="Header"
+          onEnabledChange={onEnabledChange}
+        />
       </div>
 
       {enabled && (
