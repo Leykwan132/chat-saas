@@ -29,6 +29,7 @@ test("agents.create accepts the product sales template key", async () => {
   const agentId = await authed.mutation(api.agents.create, {
     name: "Product Sales Agent",
     templateKey: "productSales",
+    model: "ilmu-mini-v3.3",
   });
 
   const agent = await authed.query(api.agents.get, { agentId });

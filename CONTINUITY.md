@@ -27,6 +27,7 @@
 - 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 
 # Decisions
+- 2026-07-15 [USER] D343 ACTIVE: Before merging to `main`, stale full-suite fixtures must align with the 50-credit Free plan, register the current token aggregate, and use the Free-entitled Ilmu model when testing template-key acceptance.
 - 2026-07-15 [USER] D342 ACTIVE: Inbox booking status labels use semantic `bg-background`, producing a white light-theme surface while retaining the outline border, normal text, and small status-colored dot.
 - 2026-07-15 [USER] D341 SUPERSEDED by D342 for fill: The Badge outline border remains, but the muted fill changes to the semantic background surface.
 - 2026-07-15 [USER] D340 ACTIVE: Inbox booking labels are neutral muted pills with normal text and a small leading dot using the shared status color; booking-history and compact-card rails retain that status color.
@@ -107,15 +108,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-15 [CODE] Cleared the three tracked full-suite baselines by aligning Free-plan credit expectations, registering `agentTokenUsage` in its test harness, and isolating the product-sales template test from paid-model access.
 - 2026-07-15 [CODE] Made booking labels bordered with a white light-theme surface, normal text, and a small status-colored dot while retaining status-colored rails in Conversation Details history and the compact booking card above the prompt.
 - 2026-07-15 [CODE] Persisted successful workflow Reminder/Follow-up content and media to the existing Inbox conversation, logged the exact sent text in Action History, and added distinct source-aware thread cards.
 - 2026-07-15 [CODE] Changed the compact Inbox booking selector from latest scheduled start to the greatest effective event/session update time.
 - 2026-07-15 [CODE] Replaced Workflow History Load more actions with shared 25-row shadcn Pagination and exact `sent so far.` Reminder/Follow-up captions.
 - 2026-07-15 [CODE] Replaced descriptive Workflow History captions with tested counts such as `1 reminder`, `8 follow-ups`, and `25+ reminders`.
 - 2026-07-15 [CODE] Removed Workflow History internal scrolling and made both shared dialogs and tables expand automatically to their full content width.
-- 2026-07-14 [CODE] Added dynamic Reminder and Follow-up captions to the shared Workflow History table using the documented shadcn composition.
 
 # Working set
+- 2026-07-15 [CODE] Full-suite baseline repairs: `convex/{creditPeriodPool.test,agentUsage.test,agentTemplateKeys.test}.ts`.
 - 2026-07-15 [CODE] Workflow automation thread/history records: `convex/{workflowWhatsappTemplateSender,workflowAutomationOutbound,workflowReminderWorker,workflowFollowUpWorker,conversationLogs,schema}*`, `convex/chat/{threads,inboxMessageMapping,workflowAutomationMessageMetadata}*`, `shared/workflowAutomationMessage.ts`, `src/{lib/inboxOptimistic,components/inbox/{InboxThreadMessages,InboxWorkflowAutomationMessage,conversationActionHistoryPresentation},pages/ChatsPage}*`, and `docs/superpowers/{specs,plans}/2026-07-15-workflow-automation-thread-history*`.
 - 2026-07-14 [CODE] Available Hours 24/7: `src/components/WeeklyAvailabilityEditor{,.test}.ts*`, `src/pages/ScheduleUserAvailabilityPage.tsx`, `src/lib/{scheduleUtils,scheduleShiftDrafts,scheduleShiftDrafts.test,scheduleTimeOffUtils}.ts`, `convex/{leadRouting/schedules,leadRoutingSchedules.test,calendarManualBooking.test}.ts`, and `docs/superpowers/{specs/2026-07-14-available-hours-all-day-design,plans/2026-07-14-available-hours-all-day}.md`.
 - 2026-07-14 [CODE] Simplified Calendar/Inbox booking and local Combobox customer search: `convex/{calendarEvents,customerSearch,customerSearchMigration,customerSearch.test}*`, `convex/appointmentBooking/{calendarManualBooking,manualBooking,manualBookingCore,manualBookingFields}*`, `src/components/{booking/{CreateBookingDialog,BookingCustomerCombobox,BookingCustomerSummary,bookingCustomerPresentation,useCreateBookingController},calendar/CalendarCreateBookingDialog,inbox/CreateCustomerBookingDialog}*`, and `docs/superpowers/{specs,plans}/2026-07-14-manual-booking-customer-display*`.
@@ -127,7 +129,6 @@
 - 2026-07-15 [CODE] Workflow History UI, pagination, and spend accounting: `src/components/workflow/{WorkflowAutomationHistoryDialog,WorkflowAutomationHistoryPager,workflowAutomationHistoryCaption,workflowAutomationHistoryPagination}*`, `convex/{workflowAutomationCost,workflowAutomationCostMigration,workflowAutomationHistory,workflowAutomationSchema,workflowReminderWorker,workflowFollowUpWorker}*`, `shared/whatsappTemplatePricing.ts`, and `docs/superpowers/{specs/2026-07-14-workflow-history-operational-table-design,plans/{2026-07-14-workflow-history-estimated-spend,2026-07-15-workflow-history-pagination}}.md`.
 - 2026-07-14 [CODE] Shared staff booking, booking-created reminder event, and workflow logging: `convex/appointmentBooking/{bookAppointment,manualBooking,calendarManualBooking,staffBooking,bookingEvents}*`, `convex/{bookingCreatedEvent.test,workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test,_generated/api.d.ts}`, and `docs/superpowers/{specs,plans}/2026-07-14-booking-created-reminder-event*`.
 - 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
-- 2026-07-13 [CODE] Atomic workflow Save/usage: `convex/{workflowDraftSave,workflowDraftValidation,workflowTemplateUsage,workflowTemplateUsageSchema}*`, `convex/schema.ts`, `convex/_generated/*`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
@@ -135,7 +136,7 @@
 
 # Receipts
 - 2026-07-15 [TOOL] Bordered white-surface Inbox booking labels, status indicator dots, and colored rails completed verified red-green cycles; 14 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-15 [TOOL] Workflow automation thread/history recording completed verified red-green cycles; 20 focused tests, the related legacy Follow-up flow, changed-module ESLint, Convex codegen, TypeScript/Vite production build, `git diff --check`, and new-code LOC checks passed under Node v22.22.0. Full suite: 595/598 passed; the three failures are the tracked credit-period, agent-usage component registration, and model-plan fixture baselines.
+- 2026-07-15 [TOOL] Workflow automation thread/history recording plus the three repaired baseline fixtures passed the complete 599/599-test suite, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and focused red-green checks under Node v22.22.0.
 - 2026-07-15 [TOOL] Inbox most-recently-updated booking completed verified frontend/backend red-green cycles; 3 focused tests, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Workflow History shadcn cursor pagination and exact sent captions completed verified red-green cycles; 11 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0 after correcting a build-detected filename casing collision.
 - 2026-07-15 [TOOL] Workflow History count captions completed a verified red-green cycle; 5 focused tests, targeted ESLint, diff checks, and touched-code LOC checks passed under Node v22.22.0 after reviewing official shadcn Table composition.

@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import schema from "./schema";
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
@@ -53,7 +53,7 @@ test("Admin Quota Reset Flow", async () => {
     await ensureFirstCreditPeriod(ctx, userId);
   });
 
-  // Check the initial period has 500 granted and 0 used credits (default free plan)
+  // Check the initial period has 50 granted and 0 used credits (default free plan)
   const initialSnapshot = await t.run(async (ctx) => {
     return await ctx.db
       .query("userCreditPeriods")
@@ -61,7 +61,7 @@ test("Admin Quota Reset Flow", async () => {
       .unique();
   });
   expect(initialSnapshot).not.toBeNull();
-  expect(initialSnapshot?.grantedCredits).toBe(100);
+  expect(initialSnapshot?.grantedCredits).toBe(50);
   expect(initialSnapshot?.usedCredits).toBe(0);
 
   // Simulate spending some credits (e.g. 30 used credits)
@@ -88,7 +88,7 @@ test("Admin Quota Reset Flow", async () => {
   // Trigger admin manual reset
   await t.mutation(internal.creditPeriodPool.resetUserQuotaAdmin, { userId });
 
-  // Verify that the credits are reset back to 0 used and 100 granted
+  // Verify that the credits are reset back to 0 used and 50 granted
   const resetSnapshot = await t.run(async (ctx) => {
     return await ctx.db
       .query("userCreditPeriods")
@@ -96,7 +96,7 @@ test("Admin Quota Reset Flow", async () => {
       .unique();
   });
   expect(resetSnapshot?.usedCredits).toBe(0);
-  expect(resetSnapshot?.grantedCredits).toBe(100);
+  expect(resetSnapshot?.grantedCredits).toBe(50);
 
   // Verify an admin_reset or monthly_reset credit log was added
   const logs = await t.run(async (ctx) => {

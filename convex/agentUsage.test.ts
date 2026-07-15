@@ -21,6 +21,7 @@ function initTest() {
   t.registerComponent("modelMonthlyUsage", aggregateSchema, aggregateModules);
   t.registerComponent("agentMonthlyUsage", aggregateSchema, aggregateModules);
   t.registerComponent("agentCostUsage", aggregateSchema, aggregateModules);
+  t.registerComponent("agentTokenUsage", aggregateSchema, aggregateModules);
   return t;
 }
 
