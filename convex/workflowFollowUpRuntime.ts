@@ -31,6 +31,13 @@ export async function enqueueWorkflowFollowUpWake(
 ) {
   const run = await ctx.db.get(args.runId);
   if (!run) throw new Error('Follow-up run not found');
+  console.log('workflow_followup_workpool_enqueue', {
+    conversationId: run.conversationId,
+    timerId: args.timerId,
+    runId: args.runId,
+    dueAt: args.dueAt,
+    priorWorkIds: args.priorWorkIds,
+  });
   const workId = await workflowFollowUpWorkpool.enqueueAction(
     ctx,
     internal.workflowFollowUpWorker.wakeFollowUp,
