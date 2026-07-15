@@ -40,18 +40,18 @@ body {
     font-family: var(--font-sans);
 }
 
-body[data-scroll-locked] {
+main:has([data-templates-page]) {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+main:has([data-templates-page])::-webkit-scrollbar {
+    display: none;
+}
+
+html:has([data-templates-page]) body[data-scroll-locked] {
     --removed-body-scroll-bar-size: 0px !important;
     margin-right: 0 !important;
-    padding-right: 0 !important;
-}
-
-body[data-scroll-locked] .width-before-scroll-bar {
-    margin-right: 0 !important;
-}
-
-body[data-scroll-locked] .right-scroll-bar-position {
-    right: 0 !important;
 }
 
 /* ── Sidebar nav-link styles ── */
