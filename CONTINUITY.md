@@ -27,6 +27,7 @@
 - 2026-07-13 [CODE] Shared automation initialization and Convex resolution now default missing Reminder and Follow-up scopes to `futureOnly` while preserving explicit stored scopes.
 
 # Decisions
+- 2026-07-15 [USER] D353 ACTIVE: Workflow Reminder and Follow-up setup headers show a fixed-width status label immediately before their Switch; `Active` uses semantic success green and `Inactive` uses neutral muted text, without changing activation behavior.
 - 2026-07-15 [USER] D352 ACTIVE: When maximum Follow-up attempts is one, every message-selection entry bypasses the strategy choice and behaves as a single Same-message selection; multi-attempt strategy selection remains available.
 - 2026-07-15 [USER] D351 ACTIVE: The approximately 30% template-preview modal enlargement applies to both Workflow Reminder and Follow-up message selectors.
 - 2026-07-15 [USER] D350 ACTIVE: Workflow Follow-up `Start after` alone gains a Reminder-style Custom amount/unit option for minutes, hours, days, or weeks; canonical integer minutes drive scheduling, preset/custom choice and duration update atomically, retry cadence stays unchanged, and summary copy says `if the customer didn't reply after [duration]`, followed by `and reattempts every [interval]` when repeats are enabled.
