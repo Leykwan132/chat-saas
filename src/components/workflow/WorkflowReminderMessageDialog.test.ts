@@ -17,3 +17,13 @@ test('reminder message dialog commits its pending template only on confirm', () 
   expect(source).toContain('disabled={!pendingTemplate}');
   expect(source).toContain('Confirm');
 });
+
+test('reminder message dialog uses the enlarged viewport-safe preview layout', () => {
+  expect(source).toContain('h-[936px]');
+  expect(source).toContain('max-h-[calc(100vh-2rem)]');
+  expect(source).toContain('w-[calc(100vw-2rem)]');
+  expect(source).toContain('max-w-[1274px]');
+  expect(source).toContain('sm:max-w-[1274px]');
+  expect(source).not.toContain('h-[720px]');
+  expect(source).not.toContain('max-w-[980px]');
+});

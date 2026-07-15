@@ -134,7 +134,7 @@ export function WorkflowFollowupMessageDialog({
 
   return (
     <DialogContent
-      className="flex h-[760px] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[980px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[980px]"
+      className="flex h-[988px] max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)] max-w-[1274px] flex-col gap-0 overflow-hidden p-0 sm:max-w-[1274px]"
       onCloseAutoFocus={resetPendingConfiguration}
       onPointerDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}

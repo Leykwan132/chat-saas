@@ -18,3 +18,13 @@ test('follow-up message dialog commits pending templates only on confirm', () =>
   expect(source).toContain('DialogClose asChild');
   expect(source).toContain('Confirm');
 });
+
+test('follow-up message dialog uses the enlarged viewport-safe preview layout', () => {
+  expect(source).toContain('h-[988px]');
+  expect(source).toContain('max-h-[calc(100vh-2rem)]');
+  expect(source).toContain('w-[calc(100vw-2rem)]');
+  expect(source).toContain('max-w-[1274px]');
+  expect(source).toContain('sm:max-w-[1274px]');
+  expect(source).not.toContain('h-[760px]');
+  expect(source).not.toContain('max-w-[980px]');
+});
