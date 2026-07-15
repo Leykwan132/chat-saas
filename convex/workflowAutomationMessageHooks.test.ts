@@ -11,6 +11,15 @@ test('records outbound hooks and inbound cancellation at message persistence bou
   expect(source('./whatsappSend.ts')).toContain('handleWorkflowFollowUpOutbound');
 });
 
+test('gates follow-up outbound on enabled state before customer scheduling context', () => {
+  const runtime = source('./workflowFollowUpRuntime.ts');
+  const enabledGate = runtime.indexOf('if (!config.enabled) return false');
+  const customerLookup = runtime.indexOf('const customer =');
+  expect(enabledGate).toBeGreaterThan(-1);
+  expect(customerLookup).toBeGreaterThan(-1);
+  expect(enabledGate).toBeLessThan(customerLookup);
+});
+
 test('marks automated follow-ups with structured source metadata', () => {
   expect(source('./followUpPool.ts')).toContain("workflowAutomationSource: 'workflowFollowUp'");
   expect(source('./workflowAutomationOutbound.ts')).toContain('workflowAutomationSource: projected.source');

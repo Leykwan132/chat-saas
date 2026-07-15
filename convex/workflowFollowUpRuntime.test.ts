@@ -173,5 +173,24 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
     expect(timer?.status).toBe('closed');
     expect(run?.status).toBe('cancelled');
   });
+  await t.run(async (ctx) => {
+    const workflow = await ctx.db.query('workflows').unique();
+    if (!workflow?.followUpAutomation) throw new Error('Follow-up configuration not found');
+    await ctx.db.patch(workflow._id, {
+      followUpAutomation: {
+        ...workflow.followUpAutomation,
+        enabled: false,
+      },
+      updatedAt: Date.now(),
+    });
+  });
+  const disabledResult = await t.run((ctx) => (
+    handleWorkflowFollowUpOutbound(ctx, fixture.secondMessageId)
+  ));
+  expect(disabledResult).toBe(false);
+  await t.run(async (ctx) => {
+    expect(await ctx.db.query('workflowFollowUpTimers').collect()).toHaveLength(1);
+    expect(await ctx.db.query('workflowAutomationRuns').collect()).toHaveLength(1);
+  });
   consoleLog.mockRestore();
 });

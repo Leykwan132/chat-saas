@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-15 [CODE] Outbound Follow-up handling resolves the assigned agent's workflow and returns immediately when Follow-up is disabled before loading customer/audience context or touching timers, runs, or Workpool.
 - 2026-07-15 [CODE] Workflow template snapshots now strictly accept and preserve media-header, positional/named text-header, and positional/named BODY examples; malformed or unknown example objects remain rejected.
 - 2026-07-15 [CODE] Workflow Reminder and Follow-up setup headers show a fixed-width state label immediately before their Switch: green `Active` when enabled and muted-neutral `Inactive` when disabled.
 - 2026-07-15 [CODE] A one-attempt Workflow Follow-up opens every message-selection entry directly in the single-message template picker, refreshes from the latest saved configuration on open, and omits Same/Different strategy navigation.
@@ -23,9 +24,9 @@
 - 2026-07-14 [USER] Goal is to fix workflow Save rejecting valid WhatsApp BODY `example.body_text_named_params` metadata while preserving strict validation.
 - 2026-07-14 [CODE] Workflow template snapshots now strictly accept and preserve named BODY examples across Convex validation, shared types, and frontend template selection types.
 - 2026-07-14 [CODE] The shared workflow History dialog now uses `rounded-2xl`; only its Empty state uses a bordered `rounded-xl bg-muted/60` inset panel with tighter padding.
-- 2026-07-13 [CODE] Reminder and Follow-up History actions now sit beside their Summary titles as small outline buttons and no longer appear in setup headers.
 
 # Decisions
+- 2026-07-15 [USER] D355 ACTIVE: Outbound Follow-up handling must gate on the saved Follow-up enabled state at the earliest safe point, after eligible message and assigned conversation resolution but before customer/audience work or any scheduling state.
 - 2026-07-15 [USER] D354 ACTIVE: Workflow WhatsApp template snapshots strictly accept Meta media-header, positional/named text-header, and positional/named BODY example shapes; shared/frontend types and Convex validation stay aligned, while malformed or unknown example objects remain rejected.
 - 2026-07-15 [USER] D353 ACTIVE: Workflow Reminder and Follow-up setup headers show a fixed-width status label immediately before their Switch; `Active` uses semantic success green and `Inactive` uses neutral muted text, without changing activation behavior.
 - 2026-07-15 [USER] D352 ACTIVE: When maximum Follow-up attempts is one, every message-selection entry bypasses the strategy choice and behaves as a single Same-message selection; multi-attempt strategy selection remains available.
@@ -118,13 +119,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-15 [CODE] Moved the outbound Follow-up enabled-state gate ahead of customer/audience processing and added regressions proving gate ordering and zero new scheduling records while disabled.
 - 2026-07-15 [CODE] Fixed Follow-up draft saves for media templates by aligning the shared/frontend example union with strict Convex validation and covering all five supported shapes plus unknown-shape rejection through the public save mutation.
 - 2026-07-15 [CODE] Added fixed-width green Active and muted-neutral Inactive labels before both Workflow Reminder and Follow-up setup switches without changing their activation behavior.
 - 2026-07-15 [CODE] Made one-attempt Workflow Follow-up message selection open directly in the single-message picker, preserve the first saved Different-message template, use singular copy, and hide strategy/back navigation.
 - 2026-07-15 [CODE] Enlarged both Workflow template-selection dialogs by 30% on sufficiently large screens while preserving their viewport-safe limits and existing WhatsApp preview scale.
 - 2026-07-15 [CODE] Implemented the custom Follow-up Start-after selector, atomic canonical-minute state, exact-minute runtime, legacy-hours migration runner, and clearer no-reply summary wording; the design is commit `11606fcf`.
 - 2026-07-15 [CODE] Reused Select audience's aligned Flame/Sun icons and semantic colors inside the separate Hot and Warm Follow-up summary highlights while leaving `leads` and other audience combinations unhighlighted.
-- 2026-07-15 [CODE] Hid Workflow Follow-up cadence controls and repeat summary language when the maximum is one attempt, while preserving cadence state for multi-attempt selection.
 
 # Working set
 - 2026-07-15 [CODE] Full-suite baseline repairs: `convex/{creditPeriodPool.test,agentUsage.test,agentTemplateKeys.test}.ts`.
@@ -145,6 +146,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-15 [TOOL] Early Follow-up enabled-state gating completed a verified red-green cycle; 4 focused hook/runtime tests, Convex-project TypeScript, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Strict Workflow template example-shape support completed verified runtime and compile-time red-green cycles: the reported `header_handle` save failure and the widened reusable `templateId` fixture both failed before their fixes; the focused mutation regression, 620/620 tests, Convex-project TypeScript, production build, scoped ESLint with one unrelated pre-existing effect rule isolated, `git diff --check`, and code-file LOC checks passed under Node v22.22.0. Convex codegen generated no tracked API delta but its deployment-backed upload remained blocked by the environment's security review.
 - 2026-07-15 [TOOL] Workflow Reminder and Follow-up Active/Inactive switch labels completed a verified red-green cycle after reviewing official shadcn Switch composition; targeted ESLint, 620/620 tests, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] One-attempt Follow-up single-message selection completed two verified red-green cycles, including mounted-dialog state refresh; targeted ESLint, 618/618 tests, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -164,4 +166,3 @@
 - 2026-07-14 [TOOL] Workflow History estimated spend completed verified red-green cycles; 8 focused tests, targeted ESLint, TypeScript/Vite build, `git diff --check`, Convex codegen, migration dry run, and the configured development backfill passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Calendar Create booking reminder integration emitted `workflow_reminder_scheduling_after_booking_created` in the existing booking test; Calendar booking and reminder runtime tests passed, targeted ESLint passed, and no new console-log test was added under Node v22.22.0.
 - 2026-07-14 [TOOL] Calendar non-past title correction completed a verified red-green cycle; 6 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and new-file LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning.
-- 2026-07-14 [TOOL] Calendar live-event and workflow logging completed verified red-green cycles; 11 focused tests, targeted ESLint with zero errors, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0. CalendarPage retains one pre-existing exhaustive-deps warning and two pre-existing synchronous-effect errors excluded from targeted lint.

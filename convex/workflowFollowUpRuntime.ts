@@ -71,12 +71,12 @@ export async function handleWorkflowFollowUpOutbound(
   })) return false;
   const conversation = await ctx.db.get(message.conversationId);
   if (!conversation?.assignedAgentId || !conversation.customerId || !conversation.channelId) return false;
-  const customer = await ctx.db.get(conversation.customerId);
-  if (!customer) return false;
   const workflow = await getWorkflowForAgent(ctx, conversation.assignedAgentId);
   if (!workflow) return false;
   const config = resolveWorkflowAutomationConfigs(workflow).followUp;
   if (!config.enabled) return false;
+  const customer = await ctx.db.get(conversation.customerId);
+  if (!customer) return false;
   if (!config.activationScope) throw new Error('Follow-up configuration has no activation scope');
   if (!matchesWorkflowFollowUpAudience({
     filters: config.audienceFilters,
