@@ -84,6 +84,7 @@ import {
 import { InboxCustomerBookingsSection } from '@/components/inbox/InboxCustomerBookingsSection';
 import { CreateCustomerBookingDialog } from '@/components/inbox/CreateCustomerBookingDialog';
 import { InboxCustomerBookingDetailsDialog } from '@/components/inbox/InboxCustomerBookingDetailsDialog';
+import { runInboxLeadStatusUpdate } from '@/components/inbox/inboxLeadStatusToast';
 import {
   getMostRecentCustomerBooking,
   type CustomerBookingHistoryItem,
@@ -904,14 +905,11 @@ export default function ChatsPage() {
     if (!customerId) return;
     setLeadStatusSaving(true);
     try {
-      await updateCustomer({
+      await runInboxLeadStatusUpdate(() => updateCustomer({
         customerId,
         leadTemperature: value === 'None' ? null : (value as LeadTemperature),
         conversationId: selectedConversation._id,
-      });
-      toast.success('Lead status updated');
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not update lead status');
+      }));
     } finally {
       setLeadStatusSaving(false);
     }
