@@ -3,6 +3,7 @@ import { type NodeProps } from '@xyflow/react';
 import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { getLeadTemperatureStyle, type LeadTemperature } from '@/lib/leadTemperature';
 import { cn } from '@/lib/utils';
 import { WorkflowAutomationHistoryDialog } from './WorkflowAutomationHistoryDialog';
 import { WorkflowFollowupMessageDialog } from './WorkflowFollowupMessageDialog';
@@ -38,6 +39,27 @@ function SummaryHighlight({ children }: { children: ReactNode }) {
     <span className="inline-flex items-center rounded-md border border-border/70 bg-background/80 px-1.5 py-0.5 text-[13px] font-semibold leading-none text-foreground">
       {children}
     </span>
+  );
+}
+
+function LeadTemperatureSummaryHighlight({
+  temperature,
+}: {
+  temperature: LeadTemperature;
+}) {
+  const style = getLeadTemperatureStyle(temperature);
+  const Icon = style.icon;
+
+  return (
+    <SummaryHighlight>
+      <span className="inline-flex items-center gap-1.5">
+        <Icon
+          aria-hidden
+          className={cn('size-3 shrink-0', style.iconClass)}
+        />
+        <span>{temperature.toLowerCase()}</span>
+      </span>
+    </SummaryHighlight>
   );
 }
 
@@ -88,20 +110,34 @@ export function WorkflowFollowupSummaryNode({
         <SummaryHighlight>
           {summary.maxAttemptsLabel} {summary.followupMessageLabel}
         </SummaryHighlight>{' '}
-        to {summary.audience.label.toLowerCase()}, starting{' '}
+        to {summary.isHotAndWarmAudience ? (
+          <>
+            <LeadTemperatureSummaryHighlight temperature="Hot" />{' '}
+            and{' '}
+            <LeadTemperatureSummaryHighlight temperature="Warm" />{' '}
+            leads
+          </>
+        ) : summary.audience.label.toLowerCase()}, starting{' '}
         <SummaryHighlight>
           {summary.startAfter.summaryLabel ?? summary.startAfter.label}
         </SummaryHighlight>{' '}
-        after no reply and will reattempt every{' '}
-        <SummaryHighlight>
-          {summary.interval.summaryLabel ?? summary.interval.label}
-        </SummaryHighlight>.
+        after no reply
+        {summary.hasRepeatAttempts && (
+          <>
+            {' '}and will reattempt every{' '}
+            <SummaryHighlight>
+              {summary.interval.summaryLabel ?? summary.interval.label}
+            </SummaryHighlight>
+          </>
+        )}.
       </p>
       <Separator />
       <div className="flex flex-col gap-2 text-xs">
         <SummaryRow label="Audience" value={summary.audience.label} />
         <SummaryRow label="Starts" value={summary.startAfter.label} />
-        <SummaryRow label="Repeats" value={summary.interval.label} />
+        {summary.hasRepeatAttempts && (
+          <SummaryRow label="Repeats" value={summary.interval.label} />
+        )}
         <SummaryRow label="Limit" value={summary.maxAttempts.label} />
         <SummaryRow
           label="Message"

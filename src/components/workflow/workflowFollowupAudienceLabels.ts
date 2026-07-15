@@ -5,6 +5,12 @@ export const DEFAULT_WORKFLOW_FOLLOWUP_AUDIENCE_FILTERS = [
   'lead:Warm',
 ] as const;
 
+export function isWorkflowFollowupHotAndWarmAudience(filters: string[]) {
+  return filters.length === 2
+    && filters.includes('lead:Hot')
+    && filters.includes('lead:Warm');
+}
+
 export function getWorkflowFollowupAudienceFilterLabel(filter: string) {
   if (filter.startsWith('lead:')) {
     const temperature = filter.slice(5);

@@ -3,6 +3,7 @@
 - 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding every Workpool-related reason from users.
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
 - 2026-07-15 [CODE] Reminder and Follow-up History use shared shadcn cursor pagination in 25-row pages; muted-neutral outlined status labels use normal text with a small semantic status dot, and captions show exact all-time sent counts alongside per-message estimated MYR cost and an all-time spend footer.
+- 2026-07-15 [CODE] A one-attempt Workflow Follow-up hides its interval selector and omits cadence/reattempt wording and the Repeats row while retaining the saved interval; the exact Hot+Warm audience renders separate highlighted words with the shared aligned Flame/Sun audience icons and plain `leads` text.
 - 2026-07-15 [CODE] Shared Reminder and Follow-up History dialogs use unrestricted intrinsic table sizing with no internal ScrollArea or table scrollbar.
 - 2026-07-14 [CODE] Calendar and Inbox staff mutations delegate to one `createStaffBooking` function; staff and AI creation trigger one `handleBookingCreated` event that logs `booking_created` and prepares reminder Workpool scheduling.
 - 2026-07-14 [USER] Goal is to simplify Available Hours timezone presentation and add a control below the weekday rows that makes the weekly schedule all-day while remaining unambiguous to AI booking availability checks.
@@ -24,9 +25,11 @@
 - 2026-07-13 [USER] Goal is operational Workflow WhatsApp Reminders and Follow-up using separate Convex Workpools, durable runs, event hooks, reconciliation, cancellation, and history dialogs.
 - 2026-07-13 [USER] New bookings and eligible one-to-one WhatsApp outbounds schedule only while the corresponding saved automation is enabled; `activatedAt` is not an eligibility gate.
 - 2026-07-13 [CODE] Reminder/follow-up configuration is draft-first, versioned, atomically saved with stale-version rejection, and independently enabled.
-- 2026-07-13 [CODE] Current & future enqueues bounded reconciliation; Future only performs no scan; all new-event hooks use saved enabled state without activation timestamps.
 
 # Decisions
+- 2026-07-15 [USER] D349 ACTIVE: Exact Hot+Warm Follow-up summary highlights reuse Select audience's shared Flame/Sun icons, semantic icon colors, `size-3` sizing, and `gap-1.5` alignment; the words stay highlighted, `leads` stays plain, and other audience combinations remain unchanged.
+- 2026-07-15 [USER] D348 SUPERSEDED by D349 for indicator treatment: The exact Hot+Warm summary retains separate highlighted words and plain `leads`, but shared selector icons replace emoji.
+- 2026-07-15 [USER] D347 ACTIVE: Workflow Follow-up cadence is relevant only when maximum attempts exceeds one; one attempt hides `Follow up every`, removes `reattempt every` and `Repeats` summary content, and preserves the stored interval so increasing the limit restores it.
 - 2026-07-15 [USER] D346 ACTIVE: Reminder and Follow-up History status labels use a neutral `bg-muted` outlined Badge with normal foreground text; only a small leading dot carries status color: sent green, failed/cancelled red, scheduled yellow, and skipped orange.
 - 2026-07-15 [USER] D345 SUPERSEDED by D346 for fill: The History Badge keeps its outline, normal text, and status dot while the surface changes from `bg-background` to `bg-muted`.
 - 2026-07-15 [USER] D344 ACTIVE: The shared Workflow History API omits any reason containing `workpool`, case-insensitively, while preserving cancelled rows/statuses and meaningful non-Workpool reasons.
@@ -111,13 +114,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-15 [CODE] Reused Select audience's aligned Flame/Sun icons and semantic colors inside the separate Hot and Warm Follow-up summary highlights while leaving `leads` and other audience combinations unhighlighted.
+- 2026-07-15 [CODE] Hid Workflow Follow-up cadence controls and repeat summary language when the maximum is one attempt, while preserving cadence state for multi-attempt selection.
 - 2026-07-15 [CODE] Restyled shared Reminder and Follow-up History status labels as muted-neutral outlined badges with normal text and compact semantic status dots.
 - 2026-07-15 [CODE] Prevented all Workpool-related reasons from reaching Reminder and Follow-up History while preserving cancelled rows and meaningful operational reasons.
 - 2026-07-15 [CODE] Cleared the three tracked full-suite baselines by aligning Free-plan credit expectations, registering `agentTokenUsage` in its test harness, and isolating the product-sales template test from paid-model access.
 - 2026-07-15 [CODE] Made booking labels bordered with a white light-theme surface, normal text, and a small status-colored dot while retaining status-colored rails in Conversation Details history and the compact booking card above the prompt.
 - 2026-07-15 [CODE] Persisted successful workflow Reminder/Follow-up content and media to the existing Inbox conversation, logged the exact sent text in Action History, and added distinct source-aware thread cards.
-- 2026-07-15 [CODE] Changed the compact Inbox booking selector from latest scheduled start to the greatest effective event/session update time.
-- 2026-07-15 [CODE] Replaced Workflow History Load more actions with shared 25-row shadcn Pagination and exact `sent so far.` Reminder/Follow-up captions.
 
 # Working set
 - 2026-07-15 [CODE] Full-suite baseline repairs: `convex/{creditPeriodPool.test,agentUsage.test,agentTemplateKeys.test}.ts`.
@@ -131,13 +134,15 @@
 - 2026-07-14 [CODE] Workflow template BODY example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-14-workflow-template-body-examples*`.
 - 2026-07-15 [CODE] Workflow History UI, pagination, and spend accounting: `src/components/workflow/{WorkflowAutomationHistoryDialog,WorkflowAutomationHistoryPager,workflowAutomationHistoryCaption,workflowAutomationHistoryPagination}*`, `convex/{workflowAutomationCost,workflowAutomationCostMigration,workflowAutomationHistory,workflowAutomationSchema,workflowReminderWorker,workflowFollowUpWorker}*`, `shared/whatsappTemplatePricing.ts`, and `docs/superpowers/{specs/2026-07-14-workflow-history-operational-table-design,plans/{2026-07-14-workflow-history-estimated-spend,2026-07-15-workflow-history-pagination}}.md`.
 - 2026-07-14 [CODE] Shared staff booking, booking-created reminder event, and workflow logging: `convex/appointmentBooking/{bookAppointment,manualBooking,calendarManualBooking,staffBooking,bookingEvents}*`, `convex/{bookingCreatedEvent.test,workflowReminderRuntime,workflowFollowUpRuntime,workflowReminderWorker,workflowFollowUpWorker,workflowAutomationSendLogging.test,_generated/api.d.ts}`, and `docs/superpowers/{specs,plans}/2026-07-14-booking-created-reminder-event*`.
-- 2026-07-13 [CODE] Workflow drafts/templates: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm}*`.
+- 2026-07-15 [CODE] Workflow drafts/templates and Follow-up summary presentation: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm,WorkflowFollowupScheduleFields,WorkflowFollowupSummaryNode,workflowFollowupSummary,workflowFollowupAudienceLabels,WorkflowFollowupSingleAttempt.test,WorkflowFollowupAudienceHighlight.test}*`.
 
 # Open questions
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-15 [TOOL] Exact Hot+Warm Follow-up summary highlighting with aligned shared selector icons completed a verified red-green cycle; the complete 601/601-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
+- 2026-07-15 [TOOL] Single-attempt Workflow Follow-up cadence suppression completed a verified red-green cycle after reviewing current shadcn Popover/Command/Separator composition; the complete 600/600-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Muted-neutral Workflow History status labels completed a verified red-green cycle after reviewing the official shadcn Badge API; the focused regression, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0, following the earlier complete 599/599-test verification.
 - 2026-07-15 [TOOL] Workpool-reason redaction completed a verified red-green cycle; the complete 599/599-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Bordered white-surface Inbox booking labels, status indicator dots, and colored rails completed verified red-green cycles; 14 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
@@ -156,5 +161,3 @@
 - 2026-07-14 [TOOL] Exact Start/End InputGroup popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Full InputGroup customer-popup anchoring completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-14 [TOOL] Bottom-only 20%-narrower time popups completed a verified red-green cycle; 6 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Customer Combobox width completed a verified red-green cycle; its focused 3-test suite, targeted ESLint, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.
-- 2026-07-14 [TOOL] Production build exposed and verification fixed two integration type boundaries: Base UI Combobox generic inference and a stale controller callback argument; 6 affected tests, targeted lint, and the rebuilt production bundle passed.

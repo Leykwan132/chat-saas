@@ -5,6 +5,7 @@ import {
 import {
   getWorkflowFollowupAudienceDetail,
   getWorkflowFollowupAudienceLabel,
+  isWorkflowFollowupHotAndWarmAudience,
 } from './workflowFollowupAudienceLabels';
 import {
   getWorkflowFollowupScheduleStep,
@@ -76,6 +77,7 @@ export function useWorkflowFollowupSummary() {
   const maxAttempts = useWorkflowFollowupScheduleField('maxAttempts').selectedOption;
   const maxAttemptsLabel = maxAttempts.summaryLabel ?? maxAttempts.label;
   const maxAttemptsCount = Number(maxAttemptsLabel);
+  const hasRepeatAttempts = maxAttemptsCount > 1;
   const followupMessageLabel = Number.isFinite(maxAttemptsCount) && maxAttemptsCount === 1
     ? 'follow-up message'
     : 'follow-up messages';
@@ -119,9 +121,13 @@ export function useWorkflowFollowupSummary() {
       label: getWorkflowFollowupAudienceLabel(followupAudienceFilters),
       detail: getWorkflowFollowupAudienceDetail(followupAudienceFilters),
     },
+    isHotAndWarmAudience: isWorkflowFollowupHotAndWarmAudience(
+      followupAudienceFilters,
+    ),
     configuredAttemptCount,
     followupMessageStrategy,
     followupSameTemplate,
+    hasRepeatAttempts,
     startAfter,
     interval,
     maxAttempts,
@@ -133,6 +139,8 @@ export function useWorkflowFollowupSummary() {
     audienceCardLabel: getWorkflowFollowupAudienceLabel(followupAudienceFilters),
     audienceCardDetail: getWorkflowFollowupAudienceDetail(followupAudienceFilters),
     scheduleCardLabel: startAfter.label,
-    scheduleCardDetail: `Every ${interval.summaryLabel ?? interval.label}, max ${maxAttemptsLabel}`,
+    scheduleCardDetail: hasRepeatAttempts
+      ? `Every ${interval.summaryLabel ?? interval.label}, max ${maxAttemptsLabel}`
+      : maxAttempts.label,
   };
 }

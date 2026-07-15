@@ -104,6 +104,10 @@ export function WorkflowFollowupScheduleFields({
 }: {
   compact?: boolean;
 }) {
+  const maxAttempts = useWorkflowFollowupScheduleField('maxAttempts').selectedOption;
+  const maxAttemptsCount = Number(maxAttempts.summaryLabel ?? maxAttempts.label);
+  const hasRepeatAttempts = maxAttemptsCount > 1;
+
   if (compact) {
     return (
       <div
@@ -112,9 +116,15 @@ export function WorkflowFollowupScheduleFields({
         onClick={(event) => event.stopPropagation()}
       >
         <FollowupScheduleSelect stepKey="maxAttempts" compact />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className={cn(
+          'grid grid-cols-1 gap-4',
+          hasRepeatAttempts && 'sm:grid-cols-2',
+        )}
+        >
           <FollowupScheduleSelect stepKey="startAfter" compact />
-          <FollowupScheduleSelect stepKey="interval" compact />
+          {hasRepeatAttempts && (
+            <FollowupScheduleSelect stepKey="interval" compact />
+          )}
         </div>
       </div>
     );
@@ -132,9 +142,15 @@ export function WorkflowFollowupScheduleFields({
         <h3 className="text-base font-bold text-foreground">
           Trigger schedule
         </h3>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(280px,1.35fr)_minmax(190px,1fr)]">
+        <div className={cn(
+          'grid grid-cols-1 gap-6',
+          hasRepeatAttempts && 'sm:grid-cols-[minmax(280px,1.35fr)_minmax(190px,1fr)]',
+        )}
+        >
           <FollowupScheduleSelect stepKey="startAfter" />
-          <FollowupScheduleSelect stepKey="interval" />
+          {hasRepeatAttempts && (
+            <FollowupScheduleSelect stepKey="interval" />
+          )}
         </div>
       </section>
     </div>
