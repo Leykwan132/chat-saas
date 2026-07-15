@@ -118,14 +118,6 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
     ...(args.customerId !== undefined ? { customerId: args.customerId } : {}),
     ...(args.toPhone !== undefined ? { toPhone: args.toPhone } : {}),
   };
-  console.log("whatsapp_template_send_payload_build_start", {
-    orgId: args.orgId,
-    channelId: args.channelId,
-    templateName: args.templateName,
-    templateLanguage: args.templateLanguage,
-    hasCustomerId: args.customerId !== undefined,
-    hasToPhone: args.toPhone !== undefined,
-  });
   const context = await ctx.runQuery(
     internal.whatsappTemplateSendPayload.getTemplateSendPayloadContext,
     queryArgs,
@@ -135,17 +127,6 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
     name: args.templateName.trim(),
     language: { code: args.templateLanguage.trim() },
   };
-  if (template === null) {
-    console.log("whatsapp_template_send_payload_build_skipped", {
-      channelId: args.channelId,
-      templateName: args.templateName,
-      templateLanguage: args.templateLanguage,
-      reason: "template_not_found",
-      parameterKeyCount: Object.keys(context.parameterValues).length,
-    });
-    return { template: payload, renderedContent: "" };
-  }
-
   const components: TemplateSendComponent[] = [];
   const bodyText = getBodyText(template);
   const renderedContent = renderWhatsAppTemplateBodyText(
@@ -153,9 +134,6 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
     context.parameterValues,
   );
   const bodyKeys = extractTemplateParameterKeys(bodyText);
-  const filledParameterKeys = bodyKeys.filter(
-    (key) => Boolean(context.parameterValues[key]?.trim()),
-  );
   if (bodyKeys.length > 0) {
     components.push({
       type: "body",
@@ -172,25 +150,9 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
   if (headerFormat !== null) {
     const mediaAsset = context.mediaAsset;
     if (mediaAsset === null) {
-      console.log("whatsapp_template_send_payload_build_failed", {
-        channelId: args.channelId,
-        templateName: args.templateName,
-        templateLanguage: args.templateLanguage,
-        headerFormat,
-        reason: "media_asset_missing",
-      });
       throw new Error("WhatsApp template media is still preparing.");
     }
     if (mediaAsset.status !== "ready" || !mediaAsset.mediaId?.trim()) {
-      console.log("whatsapp_template_send_payload_build_failed", {
-        channelId: args.channelId,
-        templateName: args.templateName,
-        templateLanguage: args.templateLanguage,
-        headerFormat,
-        mediaAssetId: mediaAsset._id,
-        mediaStatus: mediaAsset.status,
-        reason: "media_asset_not_ready",
-      });
       throw new Error(
         mediaAsset.lastError?.trim() ||
           "WhatsApp template media is still preparing.",
@@ -198,14 +160,6 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
     }
     const spec = assertWhatsAppTemplateMediaSpec(mediaAsset.mimeType);
     if (spec.headerFormat !== headerFormat) {
-      console.log("whatsapp_template_send_payload_build_failed", {
-        channelId: args.channelId,
-        templateName: args.templateName,
-        templateLanguage: args.templateLanguage,
-        headerFormat,
-        mediaHeaderFormat: spec.headerFormat,
-        reason: "media_format_mismatch",
-      });
       throw new Error("Prepared WhatsApp template media format is invalid.");
     }
     headerAsset = buildWhatsAppTemplateHeaderAsset(
@@ -221,17 +175,5 @@ export async function buildWhatsAppTemplateSendPayloadWithContent(
   if (components.length > 0) {
     payload.components = components;
   }
-  console.log("whatsapp_template_send_payload_build_complete", {
-    channelId: args.channelId,
-    templateId: template._id,
-    templateName: payload.name,
-    templateLanguage: payload.language.code,
-    bodyParameterKeys: bodyKeys,
-    filledParameterKeys,
-    headerFormat,
-    hasHeaderAsset: headerAsset !== undefined,
-    componentTypes: components.map((component) => component.type),
-    renderedContentLength: renderedContent.length,
-  });
   return { template: payload, renderedContent, ...(headerAsset ? { headerAsset } : {}) };
 }

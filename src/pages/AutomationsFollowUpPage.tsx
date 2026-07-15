@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import {
   ArrowLeft,
   Loader2,
@@ -224,7 +224,6 @@ export default function AutomationsFollowUpPage() {
   // Queries & Actions
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const createFollowUp = useMutation(api.whatsappFollowUp.createFollowUpRule);
-  const listTemplatesAction = useAction(api.whatsappBroadcast.listTemplates);
   
   // Candidates for live count preview
   const candidates = useQuery(
@@ -232,8 +231,6 @@ export default function AutomationsFollowUpPage() {
     typedAgentId ? { agentId: typedAgentId } : 'skip'
   );
 
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
 
   // Filter connected WhatsApp channels with required credentials
   const whatsappChannels = useMemo(() => {
@@ -261,25 +258,12 @@ export default function AutomationsFollowUpPage() {
 
 
 
-  // Load templates for selected channel
-  useEffect(() => {
-    if (!channelId) return;
-    setTemplatesLoading(true);
-    listTemplatesAction({ channelId })
-      .then((res) => {
-        setTemplates(res.templates ?? []);
-      })
-      .catch((err) => {
-        toast.error('Failed to load templates: ' + err.message);
-      })
-      .finally(() => {
-        setTemplatesLoading(false);
-      });
-  }, [channelId, listTemplatesAction]);
-
-  const approvedTemplates = useMemo(() => {
-    return templates.filter((t) => t.status === 'APPROVED');
-  }, [templates]);
+  const templatesQuery = useQuery(
+    api.whatsappTemplateQueries.listApprovedForChannel,
+    channelId ? { channelId } : 'skip',
+  );
+  const approvedTemplates = useMemo(() => templatesQuery ?? [], [templatesQuery]);
+  const templatesLoading = Boolean(channelId) && templatesQuery === undefined;
 
   const filteredTemplates = useMemo(() => {
     const query = templateSearchQuery.trim().toLowerCase();
@@ -329,14 +313,14 @@ export default function AutomationsFollowUpPage() {
     if (useSameMessage) {
       if (!singleTemplateKey) return null;
       const [name, language] = singleTemplateKey.split('\t');
-      return templates.find((t) => t.name === name && t.language === language);
+      return approvedTemplates.find((t) => t.name === name && t.language === language);
     }
     const activeAttempt = attempts[activePreviewIndex];
     if (!activeAttempt) return null;
-    return templates.find(
+    return approvedTemplates.find(
       (t) => t.name === activeAttempt.templateName && t.language === activeAttempt.templateLanguage
     );
-  }, [activePreviewIndex, templates, useSameMessage, singleTemplateKey, attempts]);
+  }, [activePreviewIndex, approvedTemplates, useSameMessage, singleTemplateKey, attempts]);
 
   // Live count matching leads
   // Extract unique customer tags for filtering
@@ -1225,7 +1209,7 @@ export default function AutomationsFollowUpPage() {
                   <WhatsAppTemplatePreview
                     templateName={attempts[0]?.templateName}
                     components={
-                      templates.find(
+                      approvedTemplates.find(
                         (t) =>
                           t.name === attempts[0]?.templateName &&
                           t.language === attempts[0]?.templateLanguage,

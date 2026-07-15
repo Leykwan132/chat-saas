@@ -48,17 +48,21 @@ export const getTemplateSendPayloadContext = internalQuery({
           .eq("name", args.templateName.trim())
           .eq("language", args.templateLanguage.trim()),
       )
-      .take(1);
-    const localTemplate = template[0] ?? null;
-
-    let mediaAsset: Doc<"whatsappTemplateMediaAssets"> | null = null;
-    if (localTemplate !== null) {
-      const mediaRows = await ctx.db
-        .query("whatsappTemplateMediaAssets")
-        .withIndex("by_templateId", (q) => q.eq("templateId", localTemplate._id))
-        .take(1);
-      mediaAsset = mediaRows[0] ?? null;
+      .unique();
+    const localTemplate = template;
+    if (
+      localTemplate === null ||
+      localTemplate.orgId !== args.orgId ||
+      localTemplate.status !== "approved"
+    ) {
+      throw new Error("WhatsApp template is not approved.");
     }
+
+    const mediaRows = await ctx.db
+      .query("whatsappTemplateMediaAssets")
+      .withIndex("by_templateId", (q) => q.eq("templateId", localTemplate._id))
+      .take(1);
+    const mediaAsset: Doc<"whatsappTemplateMediaAssets"> | null = mediaRows[0] ?? null;
 
     const customer =
       args.customerId !== undefined

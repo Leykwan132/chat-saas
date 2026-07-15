@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
-import { useAction, useQuery } from 'convex/react';
-import { ArrowLeft, FileText, Loader2, RefreshCw } from 'lucide-react';
+import { useMutation, useQuery } from 'convex/react';
+import { ArrowLeft, FileText, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -9,15 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { getWhatsAppTemplateStatusPresentation } from '@/components/templates/whatsappTemplateStatus';
 
 const DEFAULT_TEMPLATE_LANGUAGE = 'en_US';
-
-type TemplateRow = {
-  name: string;
-  language: string;
-  status: string;
-  category: string;
-};
 
 function channelLabel(displayPhoneNumber?: string, phoneNumberId?: string, wabaId?: string) {
   return displayPhoneNumber ?? phoneNumberId ?? wabaId ?? 'WhatsApp';
@@ -26,11 +20,8 @@ function channelLabel(displayPhoneNumber?: string, phoneNumberId?: string, wabaI
 export default function ChannelWhatsAppTemplatesPage() {
   const { agentId, channelId } = useParams();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
-  const createTemplate = useAction(api.whatsappBroadcast.createTemplate);
+  const createTemplate = useMutation(api.whatsappTemplates.createLocalTemplate);
 
-  const [rows, setRows] = useState<TemplateRow[]>([]);
-  const [loading, setLoading] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
   const [name, setName] = useState('');
   const [language, setLanguage] = useState(DEFAULT_TEMPLATE_LANGUAGE);
@@ -39,30 +30,12 @@ export default function ChannelWhatsAppTemplatesPage() {
   const [rawExpanded, setRawExpanded] = useState(false);
 
   const channel = channels?.find((c: any) => c._id === (channelId as Id<'channels'> | undefined));
-
-  const load = useCallback(async () => {
-    if (!channelId) return;
-    setLoading(true);
-    try {
-      const { templates } = await listTemplates({
-        channelId: channelId as Id<'channels'>,
-      });
-      setRows(templates);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-      setRows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [channelId, listTemplates]);
-
-  useEffect(() => {
-    if (!channel || channel.service !== 'whatsapp') return;
-    if (channel.status !== 'connected') return;
-    if (!channel.wabaId?.trim() || !channel.phoneNumberId?.trim()) return;
-    void load();
-  }, [channel, load]);
+  const rowsQuery = useQuery(
+    api.whatsappTemplateQueries.listForChannel,
+    channelId ? { channelId: channelId as Id<'channels'> } : 'skip',
+  );
+  const rows = rowsQuery ?? [];
+  const loading = Boolean(channelId) && rowsQuery === undefined;
 
   if (channels === undefined) {
     return (
@@ -123,11 +96,10 @@ export default function ChannelWhatsAppTemplatesPage() {
         channelId: channelId as Id<'channels'>,
         name: trimmedName,
         language: language.trim() || DEFAULT_TEMPLATE_LANGUAGE,
-        category: category.trim() || 'UTILITY',
-        bodyText: trimmedBody,
+        purpose: category === 'MARKETING' ? 'broadcasting' : 'follow_up',
+        components: [{ type: 'BODY', text: trimmedBody }],
       });
       toast.success('Template submitted to Meta for review.');
-      await load();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error(msg);
@@ -177,21 +149,6 @@ export default function ChannelWhatsAppTemplatesPage() {
         WhatsApp channel from Channels.
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={loading}
-          onClick={() => {
-            void load().then(() => toast.success('Templates refreshed'));
-          }}
-        >
-          {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-          <span className="ml-1.5">Refresh list</span>
-        </Button>
-      </div>
-
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="m-0 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Templates on this account
@@ -232,7 +189,9 @@ export default function ChannelWhatsAppTemplatesPage() {
                   >
                     <td className="px-4 py-2.5 font-medium text-foreground">{r.name}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{r.language}</td>
-                    <td className="px-4 py-2.5 text-muted-foreground">{r.status}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">
+                      {getWhatsAppTemplateStatusPresentation(r.status).label}
+                    </td>
                     <td className="px-4 py-2.5 text-muted-foreground">{r.category || '—'}</td>
                   </tr>
                 ))}

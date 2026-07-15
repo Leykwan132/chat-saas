@@ -200,9 +200,6 @@ http.route({
 const whatsappDispatch = httpAction(async (ctx, req) => {
   const rawBody = await req.text();
 
-  console.log('whatsapp_dispatch', {
-    rawBody,
-  });
   // const sig = await verifyMetaSignature(req, rawBody);
   // if (!sig.ok) {
   //   return new Response(sig.message, { status: sig.status });

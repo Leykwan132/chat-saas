@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import {
   ArrowLeft,
   Loader2,
@@ -90,13 +90,6 @@ const BROADCAST_DETAIL_TABS: DetailSectionTab[] = [
   },
 ];
 
-type TemplateRow = {
-  name: string;
-  language: string;
-  status: string;
-  components?: Array<{ type: string; text?: string }>;
-};
-
 function channelLabel(ch: {
   displayPhoneNumber?: string;
   phoneNumberId?: string;
@@ -125,10 +118,7 @@ export default function BroadcastDetailPage() {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
   const cancelSchedule = useMutation(api.whatsappBroadcast.cancelScheduledBatch);
   const deleteSchedule = useMutation(api.whatsappBroadcast.deleteScheduleRecord);
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
 
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmMode, setConfirmMode] = useState<'cancel' | 'delete'>('delete');
   const [actionBusy, setActionBusy] = useState(false);
@@ -139,33 +129,17 @@ export default function BroadcastDetailPage() {
     return channels.find((c) => c._id === schedule.channelId) ?? null;
   }, [channels, schedule]);
 
-  const loadTemplates = useCallback(async () => {
-    if (!schedule?.channelId) return;
-    setTemplatesLoading(true);
-    try {
-      const { templates: rows } = await listTemplates({ channelId: schedule.channelId });
-      setTemplates(rows);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-    } finally {
-      setTemplatesLoading(false);
-    }
-  }, [schedule?.channelId, listTemplates]);
-
-  useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
-
-  const template = useMemo(() => {
-    if (!schedule) return null;
-    return (
-      templates.find(
-        (t) =>
-          t.name === schedule.templateName && t.language === schedule.templateLanguage,
-      ) ?? null
-    );
-  }, [templates, schedule]);
+  const template = useQuery(
+    api.whatsappTemplateQueries.getForChannelByNameAndLanguage,
+    schedule
+      ? {
+          channelId: schedule.channelId,
+          name: schedule.templateName,
+          language: schedule.templateLanguage,
+        }
+      : 'skip',
+  );
+  const templatesLoading = Boolean(schedule) && template === undefined;
 
   if (!typedAgentId || !typedScheduleId) {
     return <Navigate to="/workspace" replace />;

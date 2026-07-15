@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, Navigate, useParams, useSearchParams } from 'react-router';
 import { useAction, useQuery } from 'convex/react';
 import {
@@ -12,16 +12,8 @@ import { Button } from '@/components/ui/button';
 import { TemplateDetailDetailsTab } from '@/components/templates/TemplateDetailDetailsTab';
 import { TemplateDetailPageSkeleton } from '@/components/templates/TemplateDetailPageSkeleton';
 import type {
-  TemplateDetailComponentInput,
   TemplateDetailUpdateComponent,
 } from '@/components/templates/templateDetailEditorHelpers';
-
-type TemplateRow = {
-  name: string;
-  language: string;
-  category: string;
-  components?: TemplateDetailComponentInput[];
-};
 
 function TemplateAnalyticsPanel() {
   return (
@@ -65,13 +57,10 @@ export default function TemplateDetailPage() {
   const targetLanguage = searchParams.get('lang') || '';
 
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
   const updateTemplateComponents = useAction(
     api.whatsappTemplateUpdate.updateTemplateComponents,
   );
 
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [loading, setLoading] = useState(false);
   const [savingChanges, setSavingChanges] = useState(false);
 
   const whatsappReady = useMemo(() => {
@@ -86,47 +75,17 @@ export default function TemplateDetailPage() {
   }, [channels]);
 
   const activeChannelId = whatsappReady[0]?._id ?? null;
-
-  useEffect(() => {
-    if (!activeChannelId) return;
-    let cancelled = false;
-
-    async function loadTemplatesForChannel() {
-      await Promise.resolve();
-      if (cancelled) return;
-      setLoading(true);
-      try {
-        const { templates: rows } = await listTemplates({
+  const template = useQuery(
+    api.whatsappTemplateQueries.getForChannelByNameAndLanguage,
+    activeChannelId && templateName && targetLanguage
+      ? {
           channelId: activeChannelId,
-        });
-        if (!cancelled) setTemplates(rows);
-      } catch (e) {
-        if (!cancelled) {
-          const msg = e instanceof Error ? e.message : String(e);
-          toast.error(msg);
+          name: templateName,
+          language: targetLanguage,
         }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void loadTemplatesForChannel();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeChannelId, listTemplates]);
-
-  const template = useMemo(() => {
-    if (!templateName) return null;
-    return (
-      templates.find(
-        (t) =>
-          t.name === templateName &&
-          (!targetLanguage || t.language === targetLanguage)
-      ) ?? null
-    );
-  }, [templates, templateName, targetLanguage]);
+      : 'skip',
+  );
+  const loading = Boolean(activeChannelId && templateName && targetLanguage) && template === undefined;
 
   const handleSaveTemplateChanges = async (
     components: TemplateDetailUpdateComponent[],
@@ -143,23 +102,21 @@ export default function TemplateDetailPage() {
         category: template.category,
         components,
       });
-      const { templates: rows } = await listTemplates({ channelId: activeChannelId });
-      setTemplates(rows);
-      toast.success('Template updated in Meta.');
+      toast.success('Template submitted to Meta for review.');
     } finally {
       setSavingChanges(false);
     }
   };
 
-  if (channels === undefined || (loading && templates.length === 0)) {
+  if (channels === undefined || loading) {
     return <TemplateDetailPageSkeleton />;
   }
 
-  if (!templateName || !agentId) {
+  if (!templateName || !agentId || !targetLanguage) {
     return <Navigate to="/workspace" replace />;
   }
 
-  if (templates.length > 0 && !template) {
+  if (!template) {
     return (
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
         <Button variant="ghost" size="sm" className="-ml-2 w-fit gap-1 text-muted-foreground" asChild>

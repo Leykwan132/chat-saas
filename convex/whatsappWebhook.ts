@@ -7,6 +7,10 @@ import {
   type MutationCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
+import {
+  normalizeMetaTemplateId,
+  normalizeWhatsAppTemplateCategory,
+} from "./whatsappTemplateLifecycle";
 import type { Id } from "./_generated/dataModel";
 import {
   resolveInboxLedgerContentType,
@@ -91,6 +95,92 @@ export async function receive(
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
+      if (change.field === "template_category_update") {
+        const value = change.value;
+        const metaTemplateId = normalizeMetaTemplateId(value.message_template_id);
+        const newCategory = value.new_category
+          ? normalizeWhatsAppTemplateCategory(value.new_category)
+          : undefined;
+        if (
+          !entry.id ||
+          !value.message_template_name ||
+          !value.message_template_language ||
+          !newCategory
+        ) {
+          console.warn("WhatsApp template category webhook was malformed", {
+            wabaId: entry.id,
+          });
+          continue;
+        }
+        try {
+          const result: { matched: number; updated: number } = await ctx.runMutation(
+            internal.whatsappTemplateWebhook.handleTemplateCategoryUpdate,
+            {
+              wabaId: entry.id,
+              metaTemplateId,
+              name: value.message_template_name,
+              language: value.message_template_language,
+              newCategory,
+            },
+          );
+          if (result.matched === 0) {
+            console.warn("WhatsApp template category webhook had no local match", {
+              wabaId: entry.id,
+              metaTemplateId,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to apply WhatsApp template category webhook", {
+            wabaId: entry.id,
+            metaTemplateId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        continue;
+      }
+
+      if (change.field === "message_template_status_update") {
+        const value = change.value;
+        const metaTemplateId = normalizeMetaTemplateId(value.message_template_id);
+        if (
+          !entry.id ||
+          !value.event ||
+          !value.message_template_name ||
+          !value.message_template_language
+        ) {
+          console.warn("WhatsApp template status webhook was malformed", {
+            wabaId: entry.id,
+          });
+          continue;
+        }
+        try {
+          const result: { matched: number; updated: number } = await ctx.runMutation(
+            internal.whatsappTemplateWebhook.handleTemplateStatusUpdate,
+            {
+              wabaId: entry.id,
+              event: value.event,
+              metaTemplateId,
+              name: value.message_template_name,
+              language: value.message_template_language,
+              reason: value.reason,
+            },
+          );
+          if (result.matched === 0) {
+            console.warn("WhatsApp template status webhook had no local match", {
+              wabaId: entry.id,
+              metaTemplateId,
+            });
+          }
+        } catch (error) {
+          console.error("Failed to apply WhatsApp template status webhook", {
+            wabaId: entry.id,
+            metaTemplateId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+        continue;
+      }
+
       if (change.field === "account_update") {
         const value = change.value;
         const wabaId = value.waba_info?.waba_id ?? entry.id;
@@ -997,6 +1087,14 @@ type WhatsAppWebhookPayload = {
 
 type WhatsAppChangeValue = {
   event?: string;
+  message_template_id?: string | number;
+  message_template_name?: string;
+  message_template_language?: string;
+  reason?: string;
+  previous_category?: string;
+  new_category?: string;
+  correct_category?: string;
+  category_appeal_status?: string;
   phone_number?: string;
   waba_info?: {
     waba_id?: string;

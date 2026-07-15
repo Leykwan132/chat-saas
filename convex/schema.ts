@@ -28,6 +28,7 @@ import {
   workflowAutomationOperationsTable,
   workflowFollowUpTimersTable,
 } from "./workflowAutomationSchema";
+import { whatsappTemplateStatusValidator } from "./whatsappTemplateLifecycle";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -1574,17 +1575,17 @@ export default defineSchema({
     category: v.union(v.literal("MARKETING"), v.literal("UTILITY")),
     parameterFormat: v.optional(whatsappTemplateParameterFormatValidator),
     components: v.any(),
-    status: v.union(
-      v.literal("submitting"),
-      v.literal("submitted"),
-      v.literal("failed"),
-    ),
+    status: whatsappTemplateStatusValidator,
     error: v.optional(v.string()),
+    metaTemplateId: v.optional(v.string()),
+    statusUpdatedAt: v.optional(v.number()),
     createdAt: v.number(),
   })
     .index("by_channelId", ["channelId"])
     .index("by_orgId_and_channelId", ["orgId", "channelId"])
-    .index("by_channelId_and_name_and_language", ["channelId", "name", "language"]),
+    .index("by_channelId_and_name_and_language", ["channelId", "name", "language"])
+    .index("by_orgId_and_channelId_and_status", ["orgId", "channelId", "status"])
+    .index("by_channelId_and_metaTemplateId", ["channelId", "metaTemplateId"]),
   whatsappTemplateMediaAssets: defineTable({
     orgId: v.string(),
     channelId: v.id("channels"),

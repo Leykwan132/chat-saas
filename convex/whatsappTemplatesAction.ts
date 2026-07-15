@@ -31,16 +31,19 @@ export const submitTemplateToMeta = internalAction({
     templateId: v.id("whatsappTemplates"),
   },
   handler: async (ctx, args) => {
-    const template = await ctx.runQuery(internal.whatsappTemplates.internalGetTemplate, {
+    const template = await ctx.runQuery(internal.whatsappTemplateQueries.getById, {
       templateId: args.templateId,
     });
     if (!template) {
-      console.error(`Template not found: ${args.templateId}`);
+      console.error('WhatsApp template submission failed', {
+        templateId: args.templateId,
+        error: 'Template not found',
+      });
       return;
     }
 
     try {
-      const channel = await ctx.runQuery(internal.whatsappTemplates.internalGetChannel, {
+      const channel = await ctx.runQuery(internal.whatsappTemplateQueries.getChannelById, {
         channelId: template.channelId,
       });
       if (!channel) {
@@ -80,7 +83,6 @@ export const submitTemplateToMeta = internalAction({
         delete comp.mimeType;
       }
 
-      console.log(`Submitting template ${template.name} to Meta...`);
       const payload: Record<string, unknown> = {
         name: template.name.trim(),
         category: template.category,
@@ -98,23 +100,28 @@ export const submitTemplateToMeta = internalAction({
         },
         body: JSON.stringify(payload),
       });
-      await readGraphObject(metaRes, "Meta template creation failed");
+      const result = await readGraphObject(metaRes, "Meta template creation failed");
+      const metaTemplateId = typeof result.id === "string" ? result.id.trim() : "";
+      if (!metaTemplateId) {
+        throw new Error("Meta template creation returned no template ID.");
+      }
 
-      await ctx.runMutation(internal.whatsappTemplates.updateTemplateStatus, {
+      await ctx.runMutation(internal.whatsappTemplates.completeTemplateSubmission, {
         templateId: args.templateId,
-        status: "submitted",
+        metaTemplateId,
       });
       await ctx.runMutation(internal.whatsappTemplateMediaPool.enqueueTemplateMediaPreparation, {
         templateId: args.templateId,
       });
-      console.log(`Template ${template.name} submitted successfully.`);
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : String(error);
-      console.error(`Error submitting template ${template.name}:`, errMsg);
-
-      await ctx.runMutation(internal.whatsappTemplates.updateTemplateStatus, {
+      console.error('WhatsApp template submission failed', {
         templateId: args.templateId,
-        status: "failed",
+        error: errMsg,
+      });
+
+      await ctx.runMutation(internal.whatsappTemplates.failTemplateSubmission, {
+        templateId: args.templateId,
         error: errMsg,
       });
     }

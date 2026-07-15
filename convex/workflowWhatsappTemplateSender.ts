@@ -46,10 +46,6 @@ export async function sendWorkflowWhatsappTemplate(
       customerId: args.customer._id,
     });
 
-  console.log('workflow_whatsapp_template_sender', {
-    renderedContent,
-    headerAsset,
-  });
   if (!renderedContent.trim() && !headerAsset) {
     throw new Error('WhatsApp template has no resolved content');
   }

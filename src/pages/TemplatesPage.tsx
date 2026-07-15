@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { useAction, useQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import {
   Loader2,
   Plus,
@@ -8,7 +8,6 @@ import {
   X,
   FileText,
   Info,
-  RefreshCw,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -33,14 +32,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
-import { cn } from '@/lib/utils';
-type TemplateRow = {
-  name: string;
-  language: string;
-  status: string;
-  category: string;
-  components?: Array<{ type: string; text?: string }>;
-};
+import { getWhatsAppTemplateStatusPresentation } from '@/components/templates/whatsappTemplateStatus';
 
 function TemplatesTableSkeleton() {
   return (
@@ -113,11 +105,8 @@ export default function TemplatesPage() {
   const { agentId } = useParams();
   const navigate = useNavigate();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
 
   const [channelId, setChannelId] = useState<Id<'channels'> | ''>('');
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<string>('ALL');
@@ -139,29 +128,12 @@ export default function TemplatesPage() {
     }
   }, [channelId, whatsappReady]);
 
-  const loadTemplates = useCallback(async () => {
-    if (!channelId) {
-      setTemplates([]);
-      return;
-    }
-    setLoading(true);
-    try {
-      const { templates: rows } = await listTemplates({
-        channelId: channelId as Id<'channels'>,
-      });
-      setTemplates(rows);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-      setTemplates([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [channelId, listTemplates]);
-
-  useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
+  const templatesQuery = useQuery(
+    api.whatsappTemplateQueries.listForChannel,
+    channelId ? { channelId: channelId as Id<'channels'> } : 'skip',
+  );
+  const templates = templatesQuery ?? [];
+  const loading = Boolean(channelId) && templatesQuery === undefined;
 
   const filteredTemplates = useMemo(() => {
     return templates.filter((t) => {
@@ -171,9 +143,9 @@ export default function TemplatesPage() {
       let statusMatch = true;
       if (selectedStatus !== 'ALL') {
         if (selectedStatus === 'APPROVED') {
-          statusMatch = t.status === 'APPROVED';
+          statusMatch = t.status === 'approved';
         } else if (selectedStatus === 'IN_REVIEW') {
-          statusMatch = t.status !== 'APPROVED' && t.status !== 'SUBMISSION_FAILED';
+          statusMatch = t.status === 'in_review' || t.status === 'submitted';
         }
       }
 
@@ -208,16 +180,6 @@ export default function TemplatesPage() {
           </h1>
         </div>
         <div className="flex items-center gap-2 mt-4 md:mt-0">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void loadTemplates().then(() => toast.success('Templates refreshed'))}
-            disabled={loading}
-            className="h-9 px-3 gap-1.5"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
           <Button
             onClick={() => navigate(`/dashboard/${agentId}/templates/new`)}
             className="h-9 px-4 gap-1.5 font-semibold text-sm shadow-sm"
@@ -352,10 +314,12 @@ export default function TemplatesPage() {
               </thead>
               <tbody className="divide-y divide-border/60">
                 {filteredTemplates.map((t, index) => {
-                  const bodyPreview = t.components?.find((c) => c.type === 'BODY')?.text ?? '';
-                  const isApproved = t.status === 'APPROVED';
-                  const isSubmitting = t.status === 'SUBMITTING';
-                  const isFailed = t.status === 'SUBMISSION_FAILED';
+                  const bodyPreview = t.components?.find(
+                    (c: { type?: string; text?: string }) => c.type === 'BODY',
+                  )?.text ?? '';
+                  const isSubmitting = t.status === 'submitting';
+                  const isFailed = t.status === 'failed';
+                  const status = getWhatsAppTemplateStatusPresentation(t.status);
 
                   const sentCount = 0;
                   const openedCount = 0;
@@ -369,7 +333,7 @@ export default function TemplatesPage() {
                           return;
                         }
                         if (isFailed) {
-                          toast.error(`Submission failed: ${(t as any).error || 'Unknown error'}`);
+                          toast.error(`Submission failed: ${t.error || 'Unknown error'}`);
                           return;
                         }
                         navigate(`/dashboard/${agentId}/templates/${t.name}?lang=${t.language}`);
@@ -393,22 +357,11 @@ export default function TemplatesPage() {
                       <td className="px-4 py-4 text-center">
                         <div
                           className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-100/60 dark:bg-neutral-800/40 px-2.5 py-0.5 text-xs text-neutral-600 dark:text-neutral-300 font-medium"
-                          title={isFailed ? ((t as any).error || 'Submission failed') : undefined}
+                          title={isFailed ? (t.error || 'Submission failed') : undefined}
                           style={{ cursor: isFailed ? 'help' : 'default' }}
                         >
-                          {isSubmitting ? (
-                            <span className="size-1.5 rounded-full shrink-0 bg-amber-500 animate-pulse" />
-                          ) : isFailed ? (
-                            <span className="size-1.5 rounded-full shrink-0 bg-rose-500" />
-                          ) : (
-                            <span className={cn(
-                              "size-1.5 rounded-full shrink-0",
-                              isApproved ? "bg-emerald-500" : "bg-amber-500 animate-pulse"
-                            )} />
-                          )}
-                          <span>
-                            {isSubmitting ? 'Submitting' : isFailed ? 'Failed' : isApproved ? 'Approved' : 'In review'}
-                          </span>
+                          <span className={`size-1.5 shrink-0 rounded-full ${status.indicatorClassName} ${status.pending ? 'animate-pulse' : ''}`} />
+                          <span>{status.label}</span>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-center text-muted-foreground font-mono font-medium text-sm">

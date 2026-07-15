@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import {
   ArrowLeft,
   Loader2,
@@ -190,7 +190,6 @@ export default function FollowUpDetailPage() {
   );
   const updateRule = useMutation(api.whatsappFollowUp.updateFollowUpRule);
   const setRuleActive = useMutation(api.whatsappFollowUp.setFollowUpRuleActive);
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
   const [activeTab, setActiveTab] = useState('overview');
   const [activePreviewIndex, setActivePreviewIndex] = useState(0);
   const [useSameMessage, setUseSameMessage] = useState(true);
@@ -213,8 +212,6 @@ export default function FollowUpDetailPage() {
   const [selectedAudience, setSelectedAudience] = useState<string[]>([]);
   const [initialized, setInitialized] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [templates, setTemplates] = useState<any[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
   const messagesReady = hasCompleteFollowUpMessages(attempts);
   // Suppresses the attempts-rebuild effects while applyRuleToForm is setting
   // state, preventing a false-dirty on initial load and reset.
@@ -274,27 +271,12 @@ export default function FollowUpDetailPage() {
     return channels.find((c) => c._id === rule.channelId) ?? null;
   }, [channels, rule]);
 
-  const loadTemplates = useCallback(async () => {
-    if (!rule?.channelId) return;
-    setTemplatesLoading(true);
-    try {
-      const { templates: rows } = await listTemplates({ channelId: rule.channelId });
-      setTemplates(rows);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : String(e));
-    } finally {
-      setTemplatesLoading(false);
-    }
-  }, [rule?.channelId, listTemplates]);
-
-  useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
-
-  const approvedTemplates = useMemo(
-    () => templates.filter((t) => t.status === 'APPROVED'),
-    [templates],
+  const templatesQuery = useQuery(
+    api.whatsappTemplateQueries.listApprovedForChannel,
+    rule?.channelId ? { channelId: rule.channelId } : 'skip',
   );
+  const approvedTemplates = templatesQuery ?? [];
+  const templatesLoading = Boolean(rule?.channelId) && templatesQuery === undefined;
 
   const filteredTemplates = useMemo(() => {
     const query = templateSearchQuery.trim().toLowerCase();

@@ -122,6 +122,13 @@ The Meta application must be subscribed to the `message_template_status_update` 
 - A missing local webhook match is logged with non-sensitive identifiers and acknowledged so Meta retries do not create an endless failure loop.
 - Selectors never expose submitting, in-review, or failed templates.
 
+## Logging
+
+- Remove template-list debug output, including raw Meta responses and template rows.
+- Remove routine template submission start and success `console.log` calls.
+- Keep only concise warning/error diagnostics for malformed or unknown webhook events, missing local webhook matches, and provider request failures.
+- Diagnostics must not include access tokens, signed media URLs, request/response payloads, template components, or customer-facing message content.
+
 ## Testing
 
 Backend regressions cover:
@@ -136,6 +143,7 @@ Backend regressions cover:
 - the approval-before-action-completion race not being downgraded to `in_review`;
 - migration of legacy `submitted` records to `in_review`;
 - update resolution using the stored Meta template ID without a Meta list request.
+- template source and submission modules contain no routine or raw-response `console.log` calls.
 
 Frontend/source regressions verify that every former `whatsappBroadcast.listTemplates` consumer uses the intended local query, only approved templates appear in selectors, the management page shows `In review`, and the obsolete Refresh control is absent.
 

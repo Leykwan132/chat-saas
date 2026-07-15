@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, internalMutation, query, internalQuery } from "./_generated/server";
+import { mutation, internalMutation } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 
@@ -24,6 +24,7 @@ export const createLocalTemplate = mutation({
     const category: "MARKETING" | "UTILITY" =
       args.purpose === "broadcasting" ? "MARKETING" : "UTILITY";
     
+    const now = Date.now();
     const templateData = {
       orgId: resolvedOrgId,
       channelId: args.channelId,
@@ -33,7 +34,8 @@ export const createLocalTemplate = mutation({
       category,
       components: args.components,
       status: "submitting" as const,
-      createdAt: Date.now(),
+      statusUpdatedAt: now,
+      createdAt: now,
       ...(args.parameterFormat !== undefined
         ? { parameterFormat: args.parameterFormat }
         : {}),
@@ -49,21 +51,32 @@ export const createLocalTemplate = mutation({
   },
 });
 
-export const updateTemplateStatus = internalMutation({
+export const completeTemplateSubmission = internalMutation({
   args: {
     templateId: v.id("whatsappTemplates"),
-    status: v.union(v.literal("submitted"), v.literal("failed")),
-    error: v.optional(v.string()),
+    metaTemplateId: v.string(),
   },
   handler: async (ctx, args) => {
+    const template = await ctx.db.get(args.templateId);
+    if (template === null) throw new Error("Template not found");
+    const metaTemplateId = args.metaTemplateId.trim();
+    if (!metaTemplateId) {
+      throw new Error("Meta template creation returned no template ID.");
+    }
+    if (template.status !== "submitting") {
+      await ctx.db.patch(args.templateId, { metaTemplateId });
+      return;
+    }
     await ctx.db.patch(args.templateId, {
-      status: args.status,
-      ...(args.error !== undefined ? { error: args.error } : {}),
+      metaTemplateId,
+      status: "in_review",
+      error: undefined,
+      statusUpdatedAt: Date.now(),
     });
   },
 });
 
-export const upsertLocalTemplateComponents = internalMutation({
+export const beginTemplateUpdate = internalMutation({
   args: {
     orgId: v.string(),
     channelId: v.id("channels"),
@@ -74,7 +87,7 @@ export const upsertLocalTemplateComponents = internalMutation({
     parameterFormat: v.optional(v.union(v.literal("named"))),
   },
   handler: async (ctx, args) => {
-    const existing = await ctx.db
+    const template = await ctx.db
       .query("whatsappTemplates")
       .withIndex("by_channelId_and_name_and_language", (q) =>
         q
@@ -83,90 +96,36 @@ export const upsertLocalTemplateComponents = internalMutation({
           .eq("language", args.language.trim()),
       )
       .unique();
-
-    const common = {
+    if (template === null || template.orgId !== args.orgId) {
+      throw new Error("Template not found");
+    }
+    const metaTemplateId = template.metaTemplateId?.trim();
+    if (!metaTemplateId) throw new Error("Template has no Meta template ID.");
+    await ctx.db.patch(template._id, {
       category: args.category,
       components: args.components,
-      status: "submitted" as const,
-      ...(args.parameterFormat !== undefined
-        ? { parameterFormat: args.parameterFormat }
-        : {}),
-    };
-
-    if (existing !== null) {
-      await ctx.db.patch(existing._id, common);
-      return { templateId: existing._id };
-    }
-
-    const templateId = await ctx.db.insert("whatsappTemplates", {
-      orgId: args.orgId,
-      channelId: args.channelId,
-      name: args.name.trim(),
-      language: args.language.trim(),
-      purpose: args.category === "MARKETING" ? "broadcasting" : "follow_up",
-      createdAt: Date.now(),
-      ...common,
+      parameterFormat: args.parameterFormat,
+      status: "submitting",
+      error: undefined,
+      statusUpdatedAt: Date.now(),
     });
-
-    return { templateId };
+    return { templateId: template._id, metaTemplateId };
   },
 });
 
-export const deleteLocalTemplate = internalMutation({
+export const failTemplateSubmission = internalMutation({
   args: {
     templateId: v.id("whatsappTemplates"),
+    error: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.delete(args.templateId);
-  },
-});
-
-export const listLocalTemplates = query({
-  args: {
-    channelId: v.id("channels"),
-  },
-  handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx);
-    const resolvedOrgId = resolveChannelOrgId(orgId, userId);
-    return await ctx.db
-      .query("whatsappTemplates")
-      .withIndex("by_orgId_and_channelId", (q) =>
-        q.eq("orgId", resolvedOrgId).eq("channelId", args.channelId)
-      )
-      .collect();
-  },
-});
-
-// Internal queries for background actions
-export const internalGetTemplate = internalQuery({
-  args: { templateId: v.id("whatsappTemplates") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.templateId);
-  },
-});
-
-export const internalGetChannel = internalQuery({
-  args: { channelId: v.id("channels") },
-  handler: async (ctx, args) => {
-    return await ctx.db.get(args.channelId);
-  },
-});
-
-export const internalGetTemplateByChannelAndName = internalQuery({
-  args: {
-    channelId: v.id("channels"),
-    name: v.string(),
-    language: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db
-      .query("whatsappTemplates")
-      .withIndex("by_channelId_and_name_and_language", (q) =>
-        q
-          .eq("channelId", args.channelId)
-          .eq("name", args.name.trim())
-          .eq("language", args.language.trim()),
-      )
-      .unique();
+    const template = await ctx.db.get(args.templateId);
+    if (template === null) throw new Error("Template not found");
+    if (template.status === "approved") return;
+    await ctx.db.patch(args.templateId, {
+      status: "failed",
+      error: args.error,
+      statusUpdatedAt: Date.now(),
+    });
   },
 });

@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router';
-import { useAction, useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import {
   ArrowLeft,
   Loader2,
@@ -290,8 +290,7 @@ export default function AutomationsBroadcastPage() {
   const { agentId } = useParams();
   const navigate = useNavigate();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
-  const createTemplate = useAction(api.whatsappBroadcast.createTemplate);
+  const createTemplate = useMutation(api.whatsappTemplates.createLocalTemplate);
   const scheduleTemplateBatch = useMutation(api.whatsappBroadcast.scheduleTemplateBatch);
 
   const whatsappReady = useMemo(() => {
@@ -326,9 +325,7 @@ export default function AutomationsBroadcastPage() {
   );
 
   const [channelId, setChannelId] = useState<Id<'channels'> | ''>('');
-  const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
-  const [templateKey, setTemplateKey] = useState(''); // "name\tlanguage"
+  const [selectedTemplateKey, setTemplateKey] = useState(''); // "name\tlanguage"
   const [selectedCustomerIds, setSelectedCustomerIds] = useState<Set<string>>(new Set());
   const [sendBusy, setSendBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
@@ -351,37 +348,19 @@ export default function AutomationsBroadcastPage() {
   const teamUsers = useQuery(api.users.getUsers, {});
 
 
-  const loadTemplates = useCallback(async () => {
-    if (!channelId) {
-      setTemplates([]);
-      setTemplateKey('');
-      return;
-    }
-    setTemplatesLoading(true);
-    setTemplateKey('');
-    try {
-      const { templates: rows } = await listTemplates({
-        channelId: channelId as Id<'channels'>,
-      });
-      setTemplates(rows);
-      const approved = rows.find((t: any) => t.status === 'APPROVED');
-      if (approved) {
-        setTemplateKey(`${approved.name}\t${approved.language}`);
-      } else if (rows[0]) {
-        setTemplateKey(`${rows[0].name}\t${rows[0].language}`);
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      toast.error(msg);
-      setTemplates([]);
-    } finally {
-      setTemplatesLoading(false);
-    }
-  }, [channelId, listTemplates]);
-
-  useEffect(() => {
-    void loadTemplates();
-  }, [loadTemplates]);
+  const templatesQuery = useQuery(
+    api.whatsappTemplateQueries.listApprovedForChannel,
+    channelId ? { channelId: channelId as Id<'channels'> } : 'skip',
+  );
+  const templates: TemplateRow[] = useMemo(() => templatesQuery ?? [], [templatesQuery]);
+  const templatesLoading = Boolean(channelId) && templatesQuery === undefined;
+  const templateKey = templates.some(
+    (template) => `${template.name}\t${template.language}` === selectedTemplateKey,
+  )
+    ? selectedTemplateKey
+    : templates[0]
+      ? `${templates[0].name}\t${templates[0].language}`
+      : '';
 
   useEffect(() => {
     setShowChecklistError(false);
@@ -520,12 +499,11 @@ export default function AutomationsBroadcastPage() {
         channelId: channelId as Id<'channels'>,
         name: n,
         language: tplLang.trim() || DEFAULT_TEMPLATE_LANGUAGE,
-        category: tplCategory.trim() || 'UTILITY',
-        bodyText: b,
+        purpose: tplCategory === 'MARKETING' ? 'broadcasting' : 'follow_up',
+        components: [{ type: 'BODY', text: b }],
       });
       toast.success('Template submitted to Meta for review.');
       setCreateOpen(false);
-      await loadTemplates();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       toast.error(msg);
@@ -619,18 +597,11 @@ export default function AutomationsBroadcastPage() {
   const approvedTemplates = useMemo(() => {
     return templates.filter(
       (t) =>
-        t.status === 'APPROVED' &&
         t.name.toLowerCase().includes(templateSearchQuery.toLowerCase())
     );
   }, [templates, templateSearchQuery]);
 
-  const underReviewTemplates = useMemo(() => {
-    return templates.filter(
-      (t) =>
-        t.status !== 'APPROVED' &&
-        t.name.toLowerCase().includes(templateSearchQuery.toLowerCase())
-    );
-  }, [templates, templateSearchQuery]);
+  const underReviewTemplates: TemplateRow[] = [];
 
   if (channels === undefined) {
     return (

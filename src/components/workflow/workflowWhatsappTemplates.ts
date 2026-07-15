@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useAction, useQuery } from 'convex/react';
-import { toast } from 'sonner';
+import { useMemo } from 'react';
+import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { WorkflowWhatsappTemplateExample } from '../../../shared/workflowAutomations';
 
@@ -91,9 +90,6 @@ export function toWorkflowFollowupTemplateSelection(
 
 export function useWorkflowWhatsappTemplates() {
   const channels = useQuery(api.channels.listForCurrentOrg, {});
-  const listTemplates = useAction(api.whatsappBroadcast.listTemplates);
-  const [templates, setTemplates] = useState<WorkflowWhatsappTemplate[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(false);
 
   const whatsappChannels = useMemo(() => {
     if (!channels) return [];
@@ -107,49 +103,20 @@ export function useWorkflowWhatsappTemplates() {
   }, [channels]);
 
   const channelId = whatsappChannels[0]?._id;
-
-  useEffect(() => {
-    if (!channelId) {
-      setTemplates([]);
-      setTemplatesLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setTemplatesLoading(true);
-
-    listTemplates({ channelId })
-      .then((result) => {
-        if (cancelled) return;
-        setTemplates(
-          (result.templates ?? [])
-            .map((row) => normalizeTemplate(row))
-            .filter((template): template is WorkflowWhatsappTemplate => template !== null),
-        );
-      })
-      .catch((error) => {
-        if (cancelled) return;
-        setTemplates([]);
-        toast.error(error instanceof Error ? error.message : 'Failed to load templates');
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setTemplatesLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [channelId, listTemplates]);
-
+  const templatesQuery = useQuery(
+    api.whatsappTemplateQueries.listApprovedForChannel,
+    channelId ? { channelId } : 'skip',
+  );
   const approvedTemplates = useMemo(() => (
-    templates.filter((template) => template.status === 'APPROVED')
-  ), [templates]);
+    (templatesQuery ?? [])
+      .map((row) => normalizeTemplate(row))
+      .filter((template): template is WorkflowWhatsappTemplate => template !== null)
+  ), [templatesQuery]);
 
   return {
     approvedTemplates,
-    templatesLoading: channels === undefined || templatesLoading,
+    templatesLoading:
+      channels === undefined || (Boolean(channelId) && templatesQuery === undefined),
     whatsappChannelCount: whatsappChannels.length,
   };
 }

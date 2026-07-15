@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { graphBase, readGraphObject } from "./whatsappTemplateMetaUpload";
 import {
@@ -12,7 +11,6 @@ import {
   normalizeCategory,
   normalizeUpdateComponent,
   prepareMetaUpdateComponents,
-  resolveRemoteTemplate,
   templateUpdateComponentValidator,
 } from "./whatsappTemplateUpdateHelpers";
 
@@ -29,7 +27,6 @@ export const updateTemplateComponents = action({
     const resolvedOrgId = resolveChannelOrgId(orgId, userId);
     const channel = await getOrgWhatsAppChannel(ctx, args.channelId, resolvedOrgId);
     const token = channel.accessToken!.trim();
-    const wabaId = channel.wabaId!.trim();
     const category = normalizeCategory(args.category);
     const components = args.components.map(normalizeUpdateComponent);
 
@@ -37,28 +34,19 @@ export const updateTemplateComponents = action({
       throw new Error("Choose at least one template component to update.");
     }
 
-    const remoteTemplate = await resolveRemoteTemplate({
-      wabaId,
-      token,
-      templateName: args.templateName,
-      templateLanguage: args.templateLanguage,
-    });
-    const remoteTemplateId = remoteTemplate.id?.trim();
-    if (!remoteTemplateId) throw new Error("Template could not be found on Meta.");
-
-    const metaComponents = await prepareMetaUpdateComponents(components, token);
-    const res = await fetch(`${graphBase()}/${remoteTemplateId}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+    const localTemplate = await ctx.runQuery(
+      internal.whatsappTemplateQueries.getByChannelAndNameAndLanguage,
+      {
+        channelId: args.channelId,
+        name: args.templateName,
+        language: args.templateLanguage,
       },
-      body: JSON.stringify({ category, components: metaComponents }),
-    });
-    await readGraphObject(res, "Meta template update failed");
-
-    const fullComponents = mergeTemplateComponents(remoteTemplate.components, components);
-    const mutationArgs = {
+    );
+    if (localTemplate === null || localTemplate.orgId !== resolvedOrgId) {
+      throw new Error("Template not found");
+    }
+    const fullComponents = mergeTemplateComponents(localTemplate.components, components);
+    const update = await ctx.runMutation(internal.whatsappTemplates.beginTemplateUpdate, {
       orgId: resolvedOrgId,
       channelId: args.channelId,
       name: args.templateName,
@@ -68,16 +56,36 @@ export const updateTemplateComponents = action({
       ...(hasNamedBodyParameters(fullComponents)
         ? { parameterFormat: "named" as const }
         : {}),
-    };
-    const result: { templateId: Id<"whatsappTemplates"> } = await ctx.runMutation(
-      internal.whatsappTemplates.upsertLocalTemplateComponents,
-      mutationArgs,
-    );
+    });
+
+    try {
+      const metaComponents = await prepareMetaUpdateComponents(components, token);
+      const res = await fetch(`${graphBase()}/${update.metaTemplateId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ category, components: metaComponents }),
+      });
+      await readGraphObject(res, "Meta template update failed");
+      await ctx.runMutation(internal.whatsappTemplates.completeTemplateSubmission, {
+        templateId: update.templateId,
+        metaTemplateId: update.metaTemplateId,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await ctx.runMutation(internal.whatsappTemplates.failTemplateSubmission, {
+        templateId: update.templateId,
+        error: message,
+      });
+      throw error;
+    }
 
     if (hasMediaHeaderUpdate(components)) {
       await ctx.runMutation(
         internal.whatsappTemplateMediaPool.enqueueTemplateMediaPreparation,
-        { templateId: result.templateId },
+        { templateId: update.templateId },
       );
     }
 

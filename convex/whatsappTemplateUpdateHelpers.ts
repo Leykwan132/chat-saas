@@ -8,8 +8,6 @@ import {
   type WhatsAppTemplateMediaMimeType,
 } from "../shared/whatsappTemplateMedia";
 import {
-  graphBase,
-  readGraphObject,
   resolveMetaAppId,
   uploadHeaderAssetToMeta,
 } from "./whatsappTemplateMetaUpload";
@@ -103,14 +101,6 @@ export type TemplateUpdateComponent =
       }>;
     };
 
-type MetaTemplateRow = {
-  id?: string;
-  name?: string;
-  language?: string | { code?: string };
-  category?: string;
-  components?: unknown;
-};
-
 type StoredComponent = Record<string, unknown> & { type: string };
 
 export function normalizeCategory(category: string): "MARKETING" | "UTILITY" {
@@ -135,36 +125,6 @@ export async function getOrgWhatsAppChannel(
     throw new Error("WhatsApp channel has no access token. Reconnect in Channels.");
   }
   return channel;
-}
-
-function normalizeLanguage(lang: MetaTemplateRow["language"]): string {
-  if (typeof lang === "string" && lang.trim()) return lang.trim();
-  if (lang && typeof lang === "object" && typeof lang.code === "string") {
-    return lang.code.trim();
-  }
-  return "";
-}
-
-export async function resolveRemoteTemplate(args: {
-  wabaId: string;
-  token: string;
-  templateName: string;
-  templateLanguage: string;
-}) {
-  const url = `${graphBase()}/${args.wabaId}/message_templates?fields=id,name,language,category,components&limit=200`;
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${args.token}` },
-  });
-  const body = (await readGraphObject(res, "Meta template lookup failed")) as {
-    data?: MetaTemplateRow[];
-  };
-  const template = (body.data ?? []).find(
-    (row) =>
-      row.name?.trim() === args.templateName.trim() &&
-      normalizeLanguage(row.language) === args.templateLanguage.trim(),
-  );
-  if (!template?.id?.trim()) throw new Error("Template could not be found on Meta.");
-  return template;
 }
 
 function normalizeStoredComponents(value: unknown): StoredComponent[] {

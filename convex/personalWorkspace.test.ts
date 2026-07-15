@@ -106,13 +106,12 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   expect(templateId).toBeDefined();
 
   // 2. List WhatsApp local templates
-  const templates = await testWithAuth.query(api.whatsappTemplates.listLocalTemplates, {
+  const templates = await testWithAuth.query(api.whatsappTemplateQueries.listForChannel, {
     channelId,
   });
   expect(templates.length).toBe(1);
   expect(templates[0]).toMatchObject({
     name: "personal_template",
-    orgId: "",
   });
 
   // 3. Setup mock Customer under the personal account (orgId = "")

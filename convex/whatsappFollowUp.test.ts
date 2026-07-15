@@ -101,7 +101,7 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
         purpose: "follow_up",
         category: "MARKETING",
         components: [{ type: "BODY", text }],
-        status: "submitted",
+        status: "approved",
         createdAt: now,
       });
     }
