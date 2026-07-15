@@ -214,6 +214,7 @@ import type * as workflowDraftSave from "../workflowDraftSave.js";
 import type * as workflowDraftValidation from "../workflowDraftValidation.js";
 import type * as workflowFollowUpPool from "../workflowFollowUpPool.js";
 import type * as workflowFollowUpRuntime from "../workflowFollowUpRuntime.js";
+import type * as workflowFollowUpStartAfterMigration from "../workflowFollowUpStartAfterMigration.js";
 import type * as workflowFollowUpTimer from "../workflowFollowUpTimer.js";
 import type * as workflowFollowUpWorker from "../workflowFollowUpWorker.js";
 import type * as workflowLayout from "../workflowLayout.js";
@@ -453,6 +454,7 @@ declare const fullApi: ApiFromModules<{
   workflowDraftValidation: typeof workflowDraftValidation;
   workflowFollowUpPool: typeof workflowFollowUpPool;
   workflowFollowUpRuntime: typeof workflowFollowUpRuntime;
+  workflowFollowUpStartAfterMigration: typeof workflowFollowUpStartAfterMigration;
   workflowFollowUpTimer: typeof workflowFollowUpTimer;
   workflowFollowUpWorker: typeof workflowFollowUpWorker;
   workflowLayout: typeof workflowLayout;

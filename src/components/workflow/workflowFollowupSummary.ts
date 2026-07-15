@@ -9,8 +9,10 @@ import {
 } from './workflowFollowupAudienceLabels';
 import {
   getWorkflowFollowupScheduleStep,
+  workflowFollowupStartAfterStep,
   type WorkflowFollowupScheduleStepKey,
 } from './workflowFollowupOptions';
+import { createWorkflowFollowupStartAfterOption } from './workflowFollowupStartAfterOptions';
 import {
   getWorkflowAutomationOption,
   getWorkflowAutomationStep,
@@ -65,6 +67,37 @@ export function useWorkflowFollowupScheduleField(
   return useFollowupSelectedOption(step, stepKey);
 }
 
+export function useWorkflowFollowupStartAfterField() {
+  const step = workflowFollowupStartAfterStep;
+
+  const {
+    configs,
+    followupCustomStartAfter,
+    setFollowupStartAfterOption,
+  } = useWorkflowAutomationState();
+  const selectedOptionId =
+    configs.followUp.selections.startAfter ?? step.options[0].id;
+  const customOption = followupCustomStartAfter
+    ? createWorkflowFollowupStartAfterOption(followupCustomStartAfter)
+    : undefined;
+  if (customOption && customOption.id !== followupCustomStartAfter?.id) {
+    throw new Error('Invalid custom follow-up start delay');
+  }
+  const options = customOption ? [...step.options, customOption] : step.options;
+  const selectedOption = options.find((option) => option.id === selectedOptionId);
+  if (!selectedOption) {
+    throw new Error(`Unknown follow-up option: startAfter.${selectedOptionId}`);
+  }
+
+  return {
+    options,
+    selectedOption,
+    selectedOptionId,
+    setFollowupStartAfterOption,
+    step,
+  };
+}
+
 export function useWorkflowFollowupSummary() {
   const {
     followupAttemptTemplates,
@@ -72,7 +105,7 @@ export function useWorkflowFollowupSummary() {
     followupMessageStrategy,
     followupSameTemplate,
   } = useWorkflowAutomationState();
-  const startAfter = useWorkflowFollowupScheduleField('startAfter').selectedOption;
+  const startAfter = useWorkflowFollowupStartAfterField().selectedOption;
   const interval = useWorkflowFollowupScheduleField('interval').selectedOption;
   const maxAttempts = useWorkflowFollowupScheduleField('maxAttempts').selectedOption;
   const maxAttemptsLabel = maxAttempts.summaryLabel ?? maxAttempts.label;

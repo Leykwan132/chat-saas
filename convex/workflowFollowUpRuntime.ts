@@ -98,7 +98,7 @@ export async function handleWorkflowFollowUpOutbound(
       ? existingTimer.currentWorkId
       : undefined,
     latestOutboundAt: message.createdAt,
-    startAfterMs: config.startAfterHours * 60 * 60 * 1000,
+    startAfterMs: config.startAfterMinutes * 60 * 1000,
   });
   const now = Date.now();
   if (existingTimer?.status === 'active' && existingTimer.configurationRevision === config.revision) {

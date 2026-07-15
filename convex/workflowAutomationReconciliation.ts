@@ -105,7 +105,7 @@ export const reconcileFollowUpBatch = internalMutation({
         source: message.workflowAutomationSource ?? (message.messageKind === 'broadcast' ? 'broadcast' : message.agentId ? 'ai' : 'human'),
         broadcast: message.messageKind === 'broadcast',
       })) continue;
-      if (message.createdAt + config.startAfterHours * 60 * 60 * 1000 <= now) continue;
+      if (message.createdAt + config.startAfterMinutes * 60 * 1000 <= now) continue;
       await handleWorkflowFollowUpOutbound(ctx, message._id);
     }
     if (page.isDone) {

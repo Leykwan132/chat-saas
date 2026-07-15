@@ -11,18 +11,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import type { WorkflowFollowupScheduleStepKey } from './workflowFollowupOptions';
 import { useWorkflowFollowupScheduleField } from './workflowFollowupSummary';
+import { WorkflowFollowupStartAfterField } from './WorkflowFollowupStartAfterField';
+
+type RepeatScheduleStepKey = Exclude<
+  WorkflowFollowupScheduleStepKey,
+  'startAfter'
+>;
 
 const followupScheduleFields = {
   maxAttempts: {
     label: 'Maximum follow-ups per customer',
   },
-  startAfter: {
-    label: 'Start after',
-  },
   interval: {
     label: 'Follow up every',
   },
-} satisfies Record<WorkflowFollowupScheduleStepKey, { label: string }>;
+} satisfies Record<RepeatScheduleStepKey, { label: string }>;
 
 function FollowupScheduleSelect({
   className,
@@ -31,7 +34,7 @@ function FollowupScheduleSelect({
 }: {
   className?: string;
   compact?: boolean;
-  stepKey: WorkflowFollowupScheduleStepKey;
+  stepKey: RepeatScheduleStepKey;
 }) {
   const field = followupScheduleFields[stepKey];
   const [open, setOpen] = useState(false);
@@ -121,7 +124,7 @@ export function WorkflowFollowupScheduleFields({
           hasRepeatAttempts && 'sm:grid-cols-2',
         )}
         >
-          <FollowupScheduleSelect stepKey="startAfter" compact />
+          <WorkflowFollowupStartAfterField compact />
           {hasRepeatAttempts && (
             <FollowupScheduleSelect stepKey="interval" compact />
           )}
@@ -147,7 +150,7 @@ export function WorkflowFollowupScheduleFields({
           hasRepeatAttempts && 'sm:grid-cols-[minmax(280px,1.35fr)_minmax(190px,1fr)]',
         )}
         >
-          <FollowupScheduleSelect stepKey="startAfter" />
+          <WorkflowFollowupStartAfterField />
           {hasRepeatAttempts && (
             <FollowupScheduleSelect stepKey="interval" />
           )}

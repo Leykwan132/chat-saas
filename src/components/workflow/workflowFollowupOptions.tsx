@@ -15,6 +15,7 @@ import type {
   WorkflowAutomationStepKey,
   WorkflowAutomationStepOption,
 } from './workflowTriggerOptions';
+import type { WorkflowFollowupStartAfterOption } from './workflowFollowupStartAfterOptions';
 
 export const workflowFollowupScheduleStepKeys = [
   'startAfter',
@@ -41,6 +42,31 @@ const FOLLOWUP_DAY_OPTIONS = [
   { hours: 168, label: '7 days' },
 ] as const;
 
+function createFollowupStartAfterPreset(
+  option: (typeof FOLLOWUP_DAY_OPTIONS)[number],
+): WorkflowFollowupStartAfterOption {
+  return {
+    id: `startAfter${option.hours}h`,
+    label: option.label,
+    description: 'Start the follow-up sequence after the conversation goes quiet.',
+    summaryLabel: option.label,
+    Icon: CalendarClock,
+    amount: option.hours,
+    unit: 'hours',
+    startAfterMinutes: option.hours * 60,
+  };
+}
+
+const [firstFollowupDayOption, ...remainingFollowupDayOptions] =
+  FOLLOWUP_DAY_OPTIONS;
+const followupStartAfterOptions: [
+  WorkflowFollowupStartAfterOption,
+  ...WorkflowFollowupStartAfterOption[],
+] = [
+  createFollowupStartAfterPreset(firstFollowupDayOption),
+  ...remainingFollowupDayOptions.map(createFollowupStartAfterPreset),
+];
+
 const followupMaxAttemptOptions = Array.from({ length: 10 }, (_, index) => {
   const count = index + 1;
   return {
@@ -52,20 +78,16 @@ const followupMaxAttemptOptions = Array.from({ length: 10 }, (_, index) => {
   };
 }) as [WorkflowAutomationStepOption, ...WorkflowAutomationStepOption[]];
 
+export const workflowFollowupStartAfterStep = {
+  key: 'startAfter',
+  label: 'Start after',
+  emptyLabel: 'Choose start delay',
+  menuLabel: 'When should the first follow-up start?',
+  options: followupStartAfterOptions,
+} satisfies WorkflowAutomationStep;
+
 export const workflowFollowupScheduleSteps = [
-  {
-    key: 'startAfter',
-    label: 'Start after',
-    emptyLabel: 'Choose start delay',
-    menuLabel: 'When should the first follow-up start?',
-    options: FOLLOWUP_DAY_OPTIONS.map((option) => ({
-      id: `startAfter${option.hours}h`,
-      label: `${option.label} after no reply`,
-      description: 'Start the follow-up sequence after the conversation goes quiet.',
-      summaryLabel: option.label,
-      Icon: CalendarClock,
-    })) as [WorkflowAutomationStepOption, ...WorkflowAutomationStepOption[]],
-  },
+  workflowFollowupStartAfterStep,
   {
     key: 'interval',
     label: 'Follow up every',
@@ -130,7 +152,7 @@ export const workflowFollowupSteps = [
     options: [
       {
         id: 'followupSchedule',
-        label: '1 day after no reply',
+        label: '1 day',
         description: 'Starts after 1 day, repeats every 1 day, and stops after 3 follow-ups.',
         summaryLabel: '1 day',
         Icon: CalendarClock,

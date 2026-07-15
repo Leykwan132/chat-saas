@@ -6,17 +6,50 @@ import {
 
 type WorkflowWithAutomations = Doc<'workflows'> & {
   reminderAutomation?: WorkflowAutomationConfigs['reminder'];
-  followUpAutomation?: WorkflowAutomationConfigs['followUp'];
+  followUpAutomation?: Omit<
+    WorkflowAutomationConfigs['followUp'],
+    'startAfterMinutes'
+  > & {
+    startAfterMinutes?: number;
+  };
 };
+
+export function resolveWorkflowFollowUpStartAfterMinutes(stored: {
+  startAfterMinutes?: number;
+  startAfterHours?: number;
+}) {
+  if (
+    Number.isInteger(stored.startAfterMinutes) &&
+    (stored.startAfterMinutes ?? 0) > 0
+  ) {
+    return stored.startAfterMinutes as number;
+  }
+  if (
+    Number.isInteger(stored.startAfterHours) &&
+    (stored.startAfterHours ?? 0) > 0
+  ) {
+    return (stored.startAfterHours as number) * 60;
+  }
+  throw new Error('Follow-up start delay is missing');
+}
 
 export function resolveWorkflowAutomationConfigs(
   workflow: Doc<'workflows'>,
 ): WorkflowAutomationConfigs {
   const stored = workflow as WorkflowWithAutomations;
   const initial = createInitialWorkflowAutomationConfigs();
+  const followUp = stored.followUpAutomation
+    ? {
+        ...initial.followUp,
+        ...stored.followUpAutomation,
+        startAfterMinutes: resolveWorkflowFollowUpStartAfterMinutes(
+          stored.followUpAutomation,
+        ),
+      }
+    : initial.followUp;
   return {
     reminder: { ...initial.reminder, ...stored.reminderAutomation },
-    followUp: { ...initial.followUp, ...stored.followUpAutomation },
+    followUp,
   };
 }
 
@@ -34,7 +67,7 @@ export function validateWorkflowAutomationConfigs(configs: WorkflowAutomationCon
   if (Number.isInteger(reminderCount) && configs.reminder.timingOptionIds.length !== reminderCount) {
     throw new Error(`Choose exactly ${reminderCount} reminder times`);
   }
-  requirePositiveInteger(configs.followUp.startAfterHours, 'Follow-up start delay');
+  requirePositiveInteger(configs.followUp.startAfterMinutes, 'Follow-up start delay');
   requirePositiveInteger(configs.followUp.intervalHours, 'Follow-up interval');
   requirePositiveInteger(configs.followUp.maxAttempts, 'Follow-up attempt limit');
   if (configs.followUp.maxAttempts > 10) throw new Error('Follow-up attempt limit cannot exceed 10');

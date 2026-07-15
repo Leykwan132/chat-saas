@@ -33,7 +33,7 @@ function graph(): WorkflowGraph {
         revision: 0,
         selections: {},
         audienceFilters: ['lead:Hot', 'lead:Warm'],
-        startAfterHours: 24,
+        startAfterMinutes: 1440,
         intervalHours: 24,
         maxAttempts: 3,
         messageStrategy: 'same',

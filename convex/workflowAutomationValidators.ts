@@ -61,21 +61,46 @@ export const workflowReminderAutomationConfigValidator = v.object({
   template: v.optional(workflowWhatsappTemplateSnapshotValidator),
 });
 
-export const workflowFollowUpAutomationConfigValidator = v.object({
+const workflowFollowupCustomStartAfterValidator = v.object({
+  amount: v.number(),
+  id: v.string(),
+  label: v.string(),
+  summaryLabel: v.string(),
+  unit: v.union(
+    v.literal('minutes'),
+    v.literal('hours'),
+    v.literal('days'),
+    v.literal('weeks'),
+  ),
+});
+
+const workflowFollowUpAutomationConfigFields = {
   enabled: v.boolean(),
   activationScope: v.optional(workflowAutomationActivationScopeValidator),
   revision: v.number(),
   selections: v.record(v.string(), v.string()),
   audienceFilters: v.array(v.string()),
-  startAfterHours: v.number(),
+  customStartAfter: v.optional(workflowFollowupCustomStartAfterValidator),
   intervalHours: v.number(),
   maxAttempts: v.number(),
   messageStrategy: v.union(v.literal('same'), v.literal('different')),
   sameTemplate: v.optional(workflowWhatsappTemplateSnapshotValidator),
   attemptTemplates: v.array(workflowWhatsappTemplateSnapshotValidator),
+};
+
+export const workflowFollowUpAutomationConfigValidator = v.object({
+  ...workflowFollowUpAutomationConfigFields,
+  startAfterMinutes: v.optional(v.number()),
+  startAfterHours: v.optional(v.number()),
+});
+
+const workflowFollowUpAutomationSaveConfigValidator = v.object({
+  ...workflowFollowUpAutomationConfigFields,
+  startAfterMinutes: v.number(),
+  startAfterHours: v.optional(v.number()),
 });
 
 export const workflowAutomationConfigsValidator = v.object({
   reminder: workflowReminderAutomationConfigValidator,
-  followUp: workflowFollowUpAutomationConfigValidator,
+  followUp: workflowFollowUpAutomationSaveConfigValidator,
 });

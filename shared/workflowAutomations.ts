@@ -46,13 +46,34 @@ export type WorkflowReminderAutomationConfig = {
   template?: WorkflowWhatsappTemplateSnapshot;
 };
 
+export type WorkflowFollowupStartAfterUnit =
+  | 'minutes'
+  | 'hours'
+  | 'days'
+  | 'weeks';
+
+export type WorkflowFollowupCustomStartAfter = {
+  amount: number;
+  id: string;
+  label: string;
+  summaryLabel: string;
+  unit: WorkflowFollowupStartAfterUnit;
+};
+
+export type WorkflowFollowupStartAfterSelection =
+  WorkflowFollowupCustomStartAfter & {
+    startAfterMinutes: number;
+  };
+
 export type WorkflowFollowUpAutomationConfig = {
   enabled: boolean;
   activationScope?: WorkflowAutomationActivationScope;
   revision: number;
   selections: Record<string, string>;
   audienceFilters: string[];
-  startAfterHours: number;
+  startAfterMinutes: number;
+  startAfterHours?: number;
+  customStartAfter?: WorkflowFollowupCustomStartAfter;
   intervalHours: number;
   maxAttempts: number;
   messageStrategy: 'same' | 'different';
@@ -88,6 +109,27 @@ export function applyWorkflowReminderCustomTiming(
   };
 }
 
+export function applyWorkflowFollowupStartAfter(
+  followUp: WorkflowFollowUpAutomationConfig,
+  option: WorkflowFollowupStartAfterSelection,
+): WorkflowFollowUpAutomationConfig {
+  const customStartAfter = option.id.startsWith('customFollowupStartAfter:')
+    ? {
+        amount: option.amount,
+        id: option.id,
+        label: option.label,
+        summaryLabel: option.summaryLabel,
+        unit: option.unit,
+      }
+    : undefined;
+  return {
+    ...followUp,
+    selections: { ...followUp.selections, startAfter: option.id },
+    startAfterMinutes: option.startAfterMinutes,
+    customStartAfter,
+  };
+}
+
 export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConfigs {
   return {
     reminder: {
@@ -115,7 +157,7 @@ export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConf
         template: 'noReplyFollowup',
       },
       audienceFilters: ['lead:Hot', 'lead:Warm'],
-      startAfterHours: 24,
+      startAfterMinutes: 1440,
       intervalHours: 24,
       maxAttempts: 3,
       messageStrategy: 'same',

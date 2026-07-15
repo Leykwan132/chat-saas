@@ -3,6 +3,8 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import type {
   WorkflowAutomationActivationScope,
   WorkflowAutomationConfigs,
+  WorkflowFollowupCustomStartAfter,
+  WorkflowFollowupStartAfterSelection,
   WorkflowReminderCustomTiming as WorkflowReminderCustomTimingOption,
 } from '../../../shared/workflowAutomations';
 import type { WorkflowAutomationNodeKind } from './workflowTypes';
@@ -19,6 +21,7 @@ export type WorkflowAutomationStateContextValue = {
   reminderTemplate?: WorkflowFollowupTemplateSelection;
   reminderTimingOptionIds: string[];
   followupAudienceFilters: string[];
+  followupCustomStartAfter?: WorkflowFollowupCustomStartAfter;
   followupMessageStrategy: WorkflowFollowupMessageStrategy;
   followupSameTemplate?: WorkflowFollowupTemplateSelection;
   followupAttemptTemplates: WorkflowFollowupTemplateSelection[];
@@ -36,6 +39,9 @@ export type WorkflowAutomationStateContextValue = {
   setReminderTemplate: (template: WorkflowFollowupTemplateSelection) => void;
   setReminderTimingOptionIds: (optionIds: string[]) => void;
   setFollowupAudienceFilters: (filters: string[]) => void;
+  setFollowupStartAfterOption: (
+    option: WorkflowFollowupStartAfterSelection,
+  ) => void;
   setFollowupMessageStrategy: (strategy: WorkflowFollowupMessageStrategy) => void;
   setFollowupSameTemplate: (template: WorkflowFollowupTemplateSelection) => void;
   setFollowupAttemptTemplate: (

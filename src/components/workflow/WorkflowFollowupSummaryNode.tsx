@@ -117,14 +117,14 @@ export function WorkflowFollowupSummaryNode({
             <LeadTemperatureSummaryHighlight temperature="Warm" />{' '}
             leads
           </>
-        ) : summary.audience.label.toLowerCase()}, starting{' '}
+        ) : summary.audience.label.toLowerCase()}{' '}
+        if the customer didn't reply after{' '}
         <SummaryHighlight>
           {summary.startAfter.summaryLabel ?? summary.startAfter.label}
-        </SummaryHighlight>{' '}
-        after no reply
+        </SummaryHighlight>
         {summary.hasRepeatAttempts && (
           <>
-            {' '}and will reattempt every{' '}
+            {', and reattempts every '}
             <SummaryHighlight>
               {summary.interval.summaryLabel ?? summary.interval.label}
             </SummaryHighlight>

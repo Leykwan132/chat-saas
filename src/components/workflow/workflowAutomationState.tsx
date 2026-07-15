@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import {
+  applyWorkflowFollowupStartAfter,
   applyWorkflowReminderCustomTiming,
   type WorkflowAutomationConfigs,
 } from '../../../shared/workflowAutomations';
@@ -40,6 +41,7 @@ export function WorkflowAutomationStateProvider({
     reminderTemplate: configs.reminder.template,
     reminderTimingOptionIds: configs.reminder.timingOptionIds,
     followupAudienceFilters: configs.followUp.audienceFilters,
+    followupCustomStartAfter: configs.followUp.customStartAfter,
     followupMessageStrategy: configs.followUp.messageStrategy,
     followupSameTemplate: configs.followUp.sameTemplate,
     followupAttemptTemplates: configs.followUp.attemptTemplates,
@@ -63,6 +65,9 @@ export function WorkflowAutomationStateProvider({
     setReminderTemplate: (template) => updateReminder({ template }),
     setReminderTimingOptionIds: (timingOptionIds) => updateReminder({ timingOptionIds }),
     setFollowupAudienceFilters: (audienceFilters) => updateFollowUp({ audienceFilters }),
+    setFollowupStartAfterOption: (option) => {
+      updateFollowUp(applyWorkflowFollowupStartAfter(configs.followUp, option));
+    },
     setFollowupMessageStrategy: (messageStrategy) => updateFollowUp({ messageStrategy }),
     setFollowupSameTemplate: (sameTemplate) => updateFollowUp({ sameTemplate }),
     setFollowupAttemptTemplate: (attemptIndex, template) => {

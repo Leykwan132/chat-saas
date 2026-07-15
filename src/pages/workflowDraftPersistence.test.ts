@@ -33,7 +33,7 @@ test('maps persisted and draft nodes to one atomic save payload', () => {
         revision: 4,
         selections: {},
         audienceFilters: ['lead:Hot'],
-        startAfterHours: 24,
+        startAfterMinutes: 1440,
         intervalHours: 24,
         maxAttempts: 3,
         messageStrategy: 'same',

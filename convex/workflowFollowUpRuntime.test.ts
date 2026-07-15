@@ -93,7 +93,7 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
         revision: 2,
         selections: {},
         audienceFilters: ['lead:Warm'],
-        startAfterHours: 24,
+        startAfterMinutes: 15,
         intervalHours: 24,
         maxAttempts: 3,
         messageStrategy: 'same',
@@ -137,7 +137,7 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
       status: 'sent',
       createdAt: now + 1_000,
     });
-    return { conversationId, firstMessageId, secondMessageId };
+    return { conversationId, firstMessageAt: now, firstMessageId, secondMessageId };
   });
   await t.run((ctx) => handleWorkflowFollowUpOutbound(ctx, fixture.firstMessageId));
   expect(consoleLog).toHaveBeenCalledWith(
@@ -148,6 +148,10 @@ test('maintains one follow-up timer, updates its baseline, and cancels on reply'
       templateName: 'follow_up',
     }),
   );
+  await t.run(async (ctx) => {
+    const timer = await ctx.db.query('workflowFollowUpTimers').unique();
+    expect(timer?.dueAt).toBe(fixture.firstMessageAt + 15 * 60 * 1000);
+  });
   await t.run((ctx) => handleWorkflowFollowUpOutbound(ctx, fixture.secondMessageId));
   await t.run(async (ctx) => {
     const timers = await ctx.db.query('workflowFollowUpTimers').collect();
