@@ -114,14 +114,25 @@ export function WorkflowReminderSetupNode({
           <BellRing className="size-4 shrink-0 text-muted-foreground" />
           <span className="min-w-0 truncate">{data.title}</span>
         </h3>
-        <Switch
-          checked={automation.enabled}
-          onCheckedChange={handleEnabledChange}
-          aria-label={`${data.title} enabled`}
-          className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={(event) => event.stopPropagation()}
-        />
+        <div className="flex shrink-0 items-center gap-2">
+          <span
+            aria-hidden="true"
+            className={cn(
+              'w-14 text-right text-xs font-medium',
+              automation.enabled ? 'text-emerald-600' : 'text-muted-foreground',
+            )}
+          >
+            {automation.enabled ? 'Active' : 'Inactive'}
+          </span>
+          <Switch
+            checked={automation.enabled}
+            onCheckedChange={handleEnabledChange}
+            aria-label={`${data.title} enabled`}
+            className="nodrag nopan shrink-0 data-[state=checked]:bg-emerald-600"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
       </div>
       <Separator />
       <div className="flex flex-col gap-8">

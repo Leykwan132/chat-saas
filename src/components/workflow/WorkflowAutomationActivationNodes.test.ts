@@ -34,3 +34,18 @@ test.each([
   expect(source).not.toContain("import { toast } from 'sonner'");
   expect(source).not.toContain('toast.success(');
 });
+
+test.each([
+  './WorkflowReminderSetupNode.tsx',
+  './WorkflowFollowupSetupNode.tsx',
+])('%s shows a color-coded state label before its switch', (filename) => {
+  const source = readSource(filename);
+  const statusLabelIndex = source.indexOf("automation.enabled ? 'Active' : 'Inactive'");
+  const switchIndex = source.indexOf('<Switch', statusLabelIndex);
+
+  expect(source).toContain("automation.enabled ? 'text-emerald-600' : 'text-muted-foreground'");
+  expect(source).toContain("'w-14 text-right text-xs font-medium'");
+  expect(source).toContain('aria-hidden="true"');
+  expect(statusLabelIndex).toBeGreaterThan(-1);
+  expect(switchIndex).toBeGreaterThan(statusLabelIndex);
+});
