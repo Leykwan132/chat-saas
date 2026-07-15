@@ -1,10 +1,17 @@
 import type { ActionCtx } from './_generated/server';
 import type { Doc } from './_generated/dataModel';
 import type { WorkflowWhatsappTemplateSnapshot } from '../shared/workflowAutomations';
-import { buildWhatsAppTemplateSendPayload } from './whatsappTemplateSendPayload';
+import type { BroadcastHeaderAsset } from '../shared/broadcastMessage';
+import { buildWhatsAppTemplateSendPayloadWithContent } from './whatsappTemplateSendPayload';
 import { ensureWhatsAppRecipientPhone } from './whatsappPhone';
 
 const DEFAULT_GRAPH_VERSION = 'v22.0';
+
+export type WorkflowWhatsappSendResult = {
+  providerMessageId?: string;
+  renderedContent: string;
+  headerAsset?: BroadcastHeaderAsset;
+};
 
 function parseProviderResponse(text: string) {
   if (!text) return null;
@@ -29,9 +36,27 @@ export async function sendWorkflowWhatsappTemplate(
     orgId: string;
     template: Pick<WorkflowWhatsappTemplateSnapshot, 'name' | 'language'>;
   },
-) {
+): Promise<WorkflowWhatsappSendResult> {
+  const { template, renderedContent, headerAsset } =
+    await buildWhatsAppTemplateSendPayloadWithContent(ctx, {
+      orgId: args.orgId,
+      channelId: args.channel._id,
+      templateName: args.template.name,
+      templateLanguage: args.template.language,
+      customerId: args.customer._id,
+    });
+  if (!renderedContent.trim() && !headerAsset) {
+    throw new Error('WhatsApp template has no resolved content');
+  }
+  const resultPresentation = {
+    renderedContent,
+    ...(headerAsset ? { headerAsset } : {}),
+  };
   if (process.env.SKIP_MESSAGE_TEMPLATE_SEND === 'true') {
-    return { providerMessageId: `workflow-${crypto.randomUUID()}` };
+    return {
+      providerMessageId: `workflow-${crypto.randomUUID()}`,
+      ...resultPresentation,
+    };
   }
   const accessToken = args.channel.accessToken?.trim();
   if (!accessToken) throw new Error('WhatsApp channel has no access token');
@@ -39,13 +64,6 @@ export async function sendWorkflowWhatsappTemplate(
   if (!phoneNumberId) throw new Error('WhatsApp channel has no phone number ID');
   const rawRecipient = args.customer.contactAddress.trim() || args.customer.phone?.trim();
   if (!rawRecipient) throw new Error('Customer has no WhatsApp phone number');
-  const template = await buildWhatsAppTemplateSendPayload(ctx, {
-    orgId: args.orgId,
-    channelId: args.channel._id,
-    templateName: args.template.name,
-    templateLanguage: args.template.language,
-    customerId: args.customer._id,
-  });
   const graphVersion = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
   const response = await fetch(`https://graph.facebook.com/${graphVersion}/${phoneNumberId}/messages`, {
     method: 'POST',
@@ -65,5 +83,8 @@ export async function sendWorkflowWhatsappTemplate(
   if (!response.ok) {
     throw new Error(body?.error?.message ?? `WhatsApp HTTP ${response.status}: ${text}`);
   }
-  return { providerMessageId: body?.messages?.[0]?.id };
+  return {
+    providerMessageId: body?.messages?.[0]?.id,
+    ...resultPresentation,
+  };
 }
