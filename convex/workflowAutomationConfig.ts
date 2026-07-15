@@ -1,5 +1,6 @@
 import type { Doc } from './_generated/dataModel';
 import {
+  applyWorkflowFollowupScheduleSelection,
   createInitialWorkflowAutomationConfigs,
   type WorkflowAutomationConfigs,
 } from '../shared/workflowAutomations';
@@ -108,10 +109,21 @@ export function prepareWorkflowAutomationSave(
   current: WorkflowAutomationConfigs,
   proposed: WorkflowAutomationConfigs,
 ): WorkflowAutomationConfigs {
-  validateWorkflowAutomationConfigs(proposed);
+  const followUpWithInterval = applyWorkflowFollowupScheduleSelection(
+    proposed.followUp,
+    'interval',
+    proposed.followUp.selections.interval,
+  );
+  const followUp = applyWorkflowFollowupScheduleSelection(
+    followUpWithInterval,
+    'maxAttempts',
+    proposed.followUp.selections.maxAttempts,
+  );
+  const normalized = { ...proposed, followUp };
+  validateWorkflowAutomationConfigs(normalized);
   return {
     reminder: withNextRevision(current.reminder, proposed.reminder),
-    followUp: withNextRevision(current.followUp, proposed.followUp),
+    followUp: withNextRevision(current.followUp, followUp),
   };
 }
 
@@ -127,9 +139,15 @@ export function getWorkflowAutomationSaveEffects(
     next.reminder.activationScope === 'currentAndFuture'
   ) reconcile.push('reminder');
   if (
-    !current.followUp.enabled &&
-    next.followUp.enabled &&
-    next.followUp.activationScope === 'currentAndFuture'
+    (
+      !current.followUp.enabled &&
+      next.followUp.enabled &&
+      next.followUp.activationScope === 'currentAndFuture'
+    ) || (
+      current.followUp.enabled &&
+      next.followUp.enabled &&
+      current.followUp.revision !== next.followUp.revision
+    )
   ) reconcile.push('followUp');
   if (current.reminder.enabled && !next.reminder.enabled) cancel.push('reminder');
   if (current.followUp.enabled && !next.followUp.enabled) cancel.push('followUp');

@@ -96,7 +96,7 @@ export function WorkflowFollowupCostCalculatorDialog({
 
             {canManage ? (
               <Button asChild className="h-11 w-full rounded-xl bg-[#1a1a1a] text-sm font-semibold text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-neutral-200">
-                <Link to={`/dashboard/${agentId}/follow-ups/new`} onClick={() => onOpenChange(false)}>
+                <Link to={`/dashboard/${agentId}/workflow`} onClick={() => onOpenChange(false)}>
                   Get started
                 </Link>
               </Button>

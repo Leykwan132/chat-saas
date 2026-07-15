@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import {
+  applyWorkflowFollowupScheduleSelection,
   applyWorkflowFollowupStartAfter,
   applyWorkflowReminderCustomTiming,
   type WorkflowAutomationConfigs,
@@ -57,7 +58,9 @@ export function WorkflowAutomationStateProvider({
       const current = kind === 'reminders' ? configs.reminder : configs.followUp;
       const selections = { ...current.selections, [stepKey]: optionId };
       if (kind === 'reminders') updateReminder({ selections });
-      else updateFollowUp({ selections });
+      else if (stepKey === 'interval' || stepKey === 'maxAttempts') {
+        updateFollowUp(applyWorkflowFollowupScheduleSelection(configs.followUp, stepKey, optionId));
+      } else updateFollowUp({ selections });
     },
     setReminderCustomTimingOption: (option) => {
       updateReminder(applyWorkflowReminderCustomTiming(configs.reminder, option));

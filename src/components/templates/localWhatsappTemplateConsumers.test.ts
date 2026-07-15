@@ -17,8 +17,6 @@ const exactDetailSources = [
 
 const selectorSources = [
   '../../../src/pages/AutomationsBroadcastPage.tsx',
-  '../../../src/pages/AutomationsFollowUpPage.tsx',
-  '../../../src/pages/FollowUpDetailPage.tsx',
   '../workflow/workflowWhatsappTemplates.ts',
 ];
 

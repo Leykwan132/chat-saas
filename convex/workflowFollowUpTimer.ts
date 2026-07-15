@@ -56,3 +56,15 @@ export function planWorkflowFollowUpOutbound({
     workId: existingWorkId,
   };
 }
+
+export function shouldReconcileWorkflowFollowUpOutbound({
+  hasActiveTimer,
+  dueAt,
+  now,
+}: {
+  hasActiveTimer: boolean;
+  dueAt: number;
+  now: number;
+}) {
+  return hasActiveTimer || dueAt > now;
+}

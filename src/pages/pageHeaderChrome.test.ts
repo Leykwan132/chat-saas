@@ -14,7 +14,6 @@ const compactHeaderPages = [
   'ChannelsPage.tsx',
   'ChatsPage.tsx',
   'CustomersPage.tsx',
-  'FollowUpPage.tsx',
   'KnowledgeBasePage.tsx',
   'LeadAssignmentPage.tsx',
   'QuickRepliesPage.tsx',
@@ -24,7 +23,6 @@ const compactHeaderPages = [
 
 const compactDetailPages = [
   'BroadcastDetailPage.tsx',
-  'FollowUpDetailPage.tsx',
 ];
 
 describe('page header chrome', () => {

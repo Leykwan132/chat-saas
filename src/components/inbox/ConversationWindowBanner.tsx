@@ -163,7 +163,7 @@ function ConversationWindowBannerInner({
                 <div className="flex flex-col gap-0.5">
                   <span className="text-muted-foreground font-normal">Need to send a follow-up?</span>
                   <Link
-                    to={`/dashboard/${agentId}/follow-ups`}
+                    to={`/dashboard/${agentId}/workflow`}
                     className="text-blue-600 dark:text-blue-400 hover:underline font-medium w-fit inline-flex items-center gap-1"
                   >
                     Try Follow-ups

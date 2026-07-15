@@ -21,7 +21,6 @@ test('gates follow-up outbound on enabled state before customer scheduling conte
 });
 
 test('marks automated follow-ups with structured source metadata', () => {
-  expect(source('./followUpPool.ts')).toContain("workflowAutomationSource: 'workflowFollowUp'");
   expect(source('./workflowAutomationOutbound.ts')).toContain('workflowAutomationSource: projected.source');
   expect(source('./workflowReminderWorker.ts')).toContain('recordWorkflowAutomationOutbound(ctx');
   expect(source('./workflowFollowUpWorker.ts')).toContain('recordWorkflowAutomationOutbound(ctx');

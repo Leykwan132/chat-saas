@@ -3,6 +3,7 @@ import {
   isEligibleWorkflowFollowUpOutbound,
   matchesWorkflowFollowUpAudience,
   planWorkflowFollowUpOutbound,
+  shouldReconcileWorkflowFollowUpOutbound,
 } from './workflowFollowUpTimer';
 
 describe('workflow follow-up timers', () => {
@@ -63,5 +64,23 @@ describe('workflow follow-up timers', () => {
       enqueue: true,
       workId: undefined,
     });
+  });
+
+  test('reconciles elapsed delays only when replacing an active timer', () => {
+    expect(shouldReconcileWorkflowFollowUpOutbound({
+      hasActiveTimer: true,
+      dueAt: 900,
+      now: 1_000,
+    })).toBe(true);
+    expect(shouldReconcileWorkflowFollowUpOutbound({
+      hasActiveTimer: false,
+      dueAt: 900,
+      now: 1_000,
+    })).toBe(false);
+    expect(shouldReconcileWorkflowFollowUpOutbound({
+      hasActiveTimer: false,
+      dueAt: 1_100,
+      now: 1_000,
+    })).toBe(true);
   });
 });

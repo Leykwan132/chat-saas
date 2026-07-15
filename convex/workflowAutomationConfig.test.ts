@@ -3,6 +3,7 @@ import { createInitialWorkflowAutomationConfigs } from '../shared/workflowAutoma
 import type { Doc, Id } from './_generated/dataModel';
 import {
   getWorkflowAutomationSaveEffects,
+  prepareWorkflowAutomationSave,
   resolveWorkflowAutomationConfigs,
 } from './workflowAutomationConfig';
 
@@ -57,6 +58,18 @@ test('preserves explicit stored activation scopes', () => {
   expect(resolved.followUp.activationScope).toBe('currentAndFuture');
 });
 
+test('derives canonical follow-up schedule values from saved selections', () => {
+  const current = createInitialWorkflowAutomationConfigs();
+  const proposed = createInitialWorkflowAutomationConfigs();
+  proposed.followUp.selections.interval = 'interval48h';
+  proposed.followUp.selections.maxAttempts = 'maxAttempts1';
+
+  const saved = prepareWorkflowAutomationSave(current, proposed);
+
+  expect(saved.followUp.intervalHours).toBe(48);
+  expect(saved.followUp.maxAttempts).toBe(1);
+});
+
 describe('workflow automation save effects', () => {
   test('reconciles only an off-to-on current and future activation', () => {
     const current = createInitialWorkflowAutomationConfigs();
@@ -74,6 +87,34 @@ describe('workflow automation save effects', () => {
     const next = createInitialWorkflowAutomationConfigs();
     next.followUp.enabled = true;
     next.followUp.activationScope = 'futureOnly';
+    expect(getWorkflowAutomationSaveEffects(current, next)).toEqual({
+      reconcile: [],
+      cancel: [],
+    });
+  });
+
+  test('reconciles an enabled follow-up configuration revision change', () => {
+    const current = createInitialWorkflowAutomationConfigs();
+    current.followUp.enabled = true;
+    current.followUp.revision = 6;
+    const next = createInitialWorkflowAutomationConfigs();
+    next.followUp.enabled = true;
+    next.followUp.revision = 7;
+
+    expect(getWorkflowAutomationSaveEffects(current, next)).toEqual({
+      reconcile: ['followUp'],
+      cancel: [],
+    });
+  });
+
+  test('does not reconcile an unchanged enabled follow-up revision', () => {
+    const current = createInitialWorkflowAutomationConfigs();
+    current.followUp.enabled = true;
+    current.followUp.revision = 6;
+    const next = createInitialWorkflowAutomationConfigs();
+    next.followUp.enabled = true;
+    next.followUp.revision = 6;
+
     expect(getWorkflowAutomationSaveEffects(current, next)).toEqual({
       reconcile: [],
       cancel: [],

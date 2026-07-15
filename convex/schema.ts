@@ -752,10 +752,6 @@ export default defineSchema({
     firstSeenAt: v.number(),
     lastSeenAt: v.number(),
     lastConversationId: v.optional(v.id("conversations")),
-    followUpPending: v.optional(v.boolean()),
-    followUpAttempt: v.optional(v.number()),
-    followUpPendingRuleId: v.optional(v.id("followUpRules")),
-    followUpScheduledAt: v.optional(v.number()),
     customFields: v.optional(v.record(v.string(), v.string())),
     createdAt: v.number(),
     updatedAt: v.number(),
@@ -1461,52 +1457,6 @@ export default defineSchema({
     .index("by_scheduleId", ["scheduleId"])
     .index("by_scheduleId_and_status", ["scheduleId", "status"])
     .index("by_orgId", ["orgId"]),
-  followUpRules: defineTable({
-    agentId: v.id("agents"),
-    orgId: v.string(),
-    channelId: v.id("channels"),
-    name: v.string(),
-    attempts: v.array(
-      v.object({
-        attemptNumber: v.number(),
-        templateName: v.string(),
-        templateLanguage: v.string(),
-      })
-    ),
-    maxAttempts: v.number(),
-    triggerDelayHours: v.number(),
-    intervalHours: v.number(),
-    audienceLeadTemperatures: v.array(
-      v.union(v.literal("Hot"), v.literal("Warm"), v.literal("Cold"))
-    ),
-    audienceTags: v.optional(v.array(v.string())),
-    isActive: v.boolean(),
-    messagesSentCount: v.optional(v.number()),
-    repliesReceivedCount: v.optional(v.number()),
-    estimatedCostPerCustomer: v.optional(v.number()),
-    createdBy: v.string(),
-    createdAt: v.number(),
-    updatedAt: v.number(),
-  })
-    .index("by_agentId", ["agentId"])
-    .index("by_orgId_and_isActive", ["orgId", "isActive"]),
-  followUpSends: defineTable({
-    ruleId: v.id("followUpRules"),
-    orgId: v.string(),
-    recipientPhone: v.string(),
-    recipientName: v.optional(v.string()),
-    attemptNumber: v.number(),
-    templateName: v.string(),
-    templateLanguage: v.string(),
-    sentAt: v.number(),
-    status: v.union(
-      v.literal("sent"),
-      v.literal("delivered"),
-      v.literal("failed"),
-    ),
-    estCostMyr: v.number(),
-    errorMessage: v.optional(v.string()),
-  }).index("by_ruleId_and_sentAt", ["ruleId", "sentAt"]),
   rawAgentUsage: defineTable({
     userId: v.optional(v.string()),
     threadId: v.optional(v.string()),

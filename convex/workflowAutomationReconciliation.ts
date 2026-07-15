@@ -8,6 +8,7 @@ import { handleWorkflowFollowUpOutbound } from './workflowFollowUpRuntime';
 import {
   isEligibleWorkflowFollowUpOutbound,
   matchesWorkflowFollowUpAudience,
+  shouldReconcileWorkflowFollowUpOutbound,
 } from './workflowFollowUpTimer';
 import { workflowReminderWorkpool } from './workflowReminderPool';
 import { workflowFollowUpWorkpool } from './workflowFollowUpPool';
@@ -105,7 +106,18 @@ export const reconcileFollowUpBatch = internalMutation({
         source: message.workflowAutomationSource ?? (message.messageKind === 'broadcast' ? 'broadcast' : message.agentId ? 'ai' : 'human'),
         broadcast: message.messageKind === 'broadcast',
       })) continue;
-      if (message.createdAt + config.startAfterMinutes * 60 * 1000 <= now) continue;
+      const dueAt = message.createdAt + config.startAfterMinutes * 60 * 1000;
+      const existingTimer = await ctx.db
+        .query('workflowFollowUpTimers')
+        .withIndex('by_workflowId_and_conversationId', (q) => (
+          q.eq('workflowId', workflow._id).eq('conversationId', conversation._id)
+        ))
+        .unique();
+      if (!shouldReconcileWorkflowFollowUpOutbound({
+        hasActiveTimer: existingTimer?.status === 'active',
+        dueAt,
+        now,
+      })) continue;
       await handleWorkflowFollowUpOutbound(ctx, message._id);
     }
     if (page.isDone) {

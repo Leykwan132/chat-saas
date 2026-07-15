@@ -141,6 +141,32 @@ export function applyWorkflowFollowupStartAfter(
   };
 }
 
+export function applyWorkflowFollowupScheduleSelection(
+  followUp: WorkflowFollowUpAutomationConfig,
+  stepKey: 'interval' | 'maxAttempts',
+  optionId: string,
+): WorkflowFollowUpAutomationConfig {
+  const invalidOption = () => {
+    throw new Error(`Unknown follow-up schedule option: ${stepKey}.${optionId}`);
+  };
+  if (stepKey === 'interval') {
+    const intervalHours = Number(optionId.match(/^interval(24|48|72|120|168)h$/)?.[1]);
+    if (!Number.isInteger(intervalHours)) return invalidOption();
+    return {
+      ...followUp,
+      selections: { ...followUp.selections, interval: optionId },
+      intervalHours,
+    };
+  }
+  const maxAttempts = Number(optionId.match(/^maxAttempts([1-9]|10)$/)?.[1]);
+  if (!Number.isInteger(maxAttempts)) return invalidOption();
+  return {
+    ...followUp,
+    selections: { ...followUp.selections, maxAttempts: optionId },
+    maxAttempts,
+  };
+}
+
 export function createInitialWorkflowAutomationConfigs(): WorkflowAutomationConfigs {
   return {
     reminder: {

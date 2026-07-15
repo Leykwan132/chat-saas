@@ -33,11 +33,8 @@ import TemplatesPage from './pages/TemplatesPage.tsx'
 import CreateTemplatePage from './pages/CreateTemplatePage.tsx'
 import TemplateDetailPage from './pages/TemplateDetailPage.tsx'
 import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
-import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
 import BroadcastPage from './pages/BroadcastPage.tsx'
 import BroadcastDetailPage from './pages/BroadcastDetailPage.tsx'
-import FollowUpPage from './pages/FollowUpPage.tsx'
-import FollowUpDetailPage from './pages/FollowUpDetailPage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
 import CalendarPage from './pages/CalendarPage.tsx'
 import ServicesPage from './pages/ServicesPage.tsx'
@@ -68,6 +65,13 @@ import { usePermissions } from './hooks/usePermissions'
 import { PromptInputProvider } from '@/components/ai-elements/prompt-input'
 import { Permission } from '../shared/permissions'
 import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
+import {
+  ChatsToInboxRedirect,
+  FollowUpRedirect,
+  KnowledgeBaseIndex,
+  OldAgentRedirect,
+  PlaygroundRedirect,
+} from './routing/dashboardRouteRedirects.tsx'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
@@ -94,21 +98,6 @@ if (!WORKOS_CLIENT_ID) {
   throw new Error('Missing VITE_WORKOS_CLIENT_ID')
 }
 
-function OldAgentRedirect() {
-  const { agentId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/agent-setup`} replace />
-}
-
-function PlaygroundRedirect() {
-  const { agentId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/agent-setup`} replace />
-}
-
-function KnowledgeBaseIndex() {
-  const { agentId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/knowledge-base/web`} replace />
-}
-
 function AnalyticsIndex() {
   const { agentId } = useParams()
   const planAndUsage = useQuery(api.plans.getPlanAndUsage, {})
@@ -126,11 +115,6 @@ function AnalyticsIndex() {
 }
 
 
-
-function ChatsToInboxRedirect() {
-  const { agentId } = useParams()
-  return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
-}
 
 function DashboardIndexRedirect() {
   const { agentId } = useParams()
@@ -275,9 +259,9 @@ const router = createBrowserRouter(
         <Route path="channels/:channelId/templates" element={<ChannelWhatsAppTemplatesPage />} />
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:customerId" element={<CustomerDetailPage />} />
-        <Route path="follow-ups" element={<FollowUpPage />} />
-        <Route path="follow-ups/new" element={<AutomationsFollowUpPage />} />
-        <Route path="follow-ups/:ruleId" element={<FollowUpDetailPage />} />
+        <Route path="follow-ups" element={<FollowUpRedirect />} />
+        <Route path="follow-ups/new" element={<FollowUpRedirect />} />
+        <Route path="follow-ups/:ruleId" element={<FollowUpRedirect />} />
         <Route path="broadcast" element={<BroadcastPage />} />
         <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
         <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />

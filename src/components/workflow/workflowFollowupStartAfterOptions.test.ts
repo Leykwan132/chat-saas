@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import {
+  applyWorkflowFollowupScheduleSelection,
   applyWorkflowFollowupStartAfter,
   createInitialWorkflowAutomationConfigs,
 } from '../../../shared/workflowAutomations';
@@ -87,4 +88,44 @@ test('selecting a preset clears custom metadata and updates canonical minutes', 
   expect(next.selections.startAfter).toBe('startAfter48h');
   expect(next.startAfterMinutes).toBe(2880);
   expect(next.customStartAfter).toBeUndefined();
+});
+
+test('atomically applies the canonical follow-up interval', () => {
+  const followUp = createInitialWorkflowAutomationConfigs().followUp;
+
+  const next = applyWorkflowFollowupScheduleSelection(
+    followUp,
+    'interval',
+    'interval48h',
+  );
+
+  expect(next.selections.interval).toBe('interval48h');
+  expect(next.intervalHours).toBe(48);
+  expect(next.maxAttempts).toBe(followUp.maxAttempts);
+});
+
+test('atomically applies the canonical follow-up attempt limit', () => {
+  const followUp = createInitialWorkflowAutomationConfigs().followUp;
+
+  const next = applyWorkflowFollowupScheduleSelection(
+    followUp,
+    'maxAttempts',
+    'maxAttempts1',
+  );
+
+  expect(next.selections.maxAttempts).toBe('maxAttempts1');
+  expect(next.maxAttempts).toBe(1);
+  expect(next.intervalHours).toBe(followUp.intervalHours);
+});
+
+test.each([
+  ['interval', 'interval0h'],
+  ['interval', 'interval48days'],
+  ['maxAttempts', 'maxAttempts0'],
+  ['maxAttempts', 'maxAttempts11'],
+] as const)('rejects invalid %s option %s', (stepKey, optionId) => {
+  const followUp = createInitialWorkflowAutomationConfigs().followUp;
+
+  expect(() => applyWorkflowFollowupScheduleSelection(followUp, stepKey, optionId))
+    .toThrow(`Unknown follow-up schedule option: ${stepKey}.${optionId}`);
 });

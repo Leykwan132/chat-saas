@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { type NodeProps } from '@xyflow/react';
 import { useParams } from 'react-router';
 import {
   FollowUpOverviewDialog,
@@ -8,7 +7,6 @@ import {
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../../shared/permissions';
 import { WorkflowFollowupCostCalculatorDialog } from './WorkflowFollowupCostCalculatorDialog';
-import type { WorkflowFollowupGuidesFlowNode } from './workflowTypes';
 
 type BookCardProps = {
   tag: string;
@@ -72,9 +70,7 @@ function BookCard({ tag, title, onClick, isDark }: BookCardProps) {
   );
 }
 
-export function WorkflowFollowupGuidesNode(
-  _props: NodeProps<WorkflowFollowupGuidesFlowNode>,
-) {
+export function WorkflowFollowupGuidesNode() {
   const { agentId } = useParams();
   const { can } = usePermissions();
   const canManage = can(Permission.FOLLOWUPS_MANAGE);
@@ -110,7 +106,7 @@ export function WorkflowFollowupGuidesNode(
         onOpenChange={setIsWalkthroughOpen}
         step={walkthroughStep}
         onStepChange={setWalkthroughStep}
-        ctaHref={canManage ? `/dashboard/${agentId}/follow-ups/new` : undefined}
+        ctaHref={canManage ? `/dashboard/${agentId}/workflow` : undefined}
       />
 
       <WorkflowFollowupCostCalculatorDialog

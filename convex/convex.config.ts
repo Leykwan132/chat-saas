@@ -28,7 +28,6 @@ app.use(workpool, { name: "mediaDeleteWorkpool" });
 app.use(workpool, { name: "threadSummarizerWorkpool" });
 app.use(workpool, { name: "leadLabelWorkpool" });
 app.use(workpool, { name: "broadcastWorkpool" });
-app.use(workpool, { name: "followUpWorkpool" });
 app.use(workpool, { name: "workflowReminderWorkpool" });
 app.use(workpool, { name: "workflowFollowUpWorkpool" });
 app.use(workpool, { name: "whatsappTemplateMediaWorkpool" });
