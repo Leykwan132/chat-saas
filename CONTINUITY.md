@@ -26,6 +26,7 @@
 - 2026-07-14 [CODE] Custom reminder timing now commits option metadata and its selected ID through one atomic state transition; legacy recovery remains intentionally out of scope.
 
 # Decisions
+- 2026-07-15 [USER] D354 ACTIVE: Workflow WhatsApp template snapshots strictly accept Meta media-header, positional/named text-header, and positional/named BODY example shapes; shared/frontend types and Convex validation stay aligned, while malformed or unknown example objects remain rejected.
 - 2026-07-15 [USER] D353 ACTIVE: Workflow Reminder and Follow-up setup headers show a fixed-width status label immediately before their Switch; `Active` uses semantic success green and `Inactive` uses neutral muted text, without changing activation behavior.
 - 2026-07-15 [USER] D352 ACTIVE: When maximum Follow-up attempts is one, every message-selection entry bypasses the strategy choice and behaves as a single Same-message selection; multi-attempt strategy selection remains available.
 - 2026-07-15 [USER] D351 ACTIVE: The approximately 30% template-preview modal enlargement applies to both Workflow Reminder and Follow-up message selectors.
