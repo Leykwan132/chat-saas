@@ -1,0 +1,57 @@
+---
+title: Message Templates
+description: Create and manage approved WhatsApp templates for broadcasts, reminders, and follow-ups.
+slug: /engage/message-templates
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Message Templates
+
+WhatsApp Message Templates are provider-approved messages used for outbound communication such as **Broadcasts**, appointment **Reminders**, and **Follow-ups**.
+
+KiloBot stores the local template record and updates its lifecycle from Meta events.
+
+## Create a template
+
+Headers can contain supported text or media. The body may use positional or named variables with examples. Buttons and Footer must follow the options accepted by Meta.
+
+<ol className="steps">
+  <li>Open <strong>Message Templates</strong>.</li>
+  <li>Choose <strong>New template</strong>.</li>
+  <li>Enter the template name, language, category, and message body.</li>
+  <li>Optionally enable <strong>Header</strong>, <strong>Buttons</strong>, or <strong>Footer</strong> sections — each shows <strong>Active</strong> when enabled and <strong>Inactive</strong> when disabled.</li>
+  <li>Submit the template.</li>
+</ol>
+
+## Understand status
+
+A template moves through the following practical states:
+
+- **Submitting** while KiloBot sends the request
+- **In review** while Meta evaluates it
+- **Approved** when it can be selected for sending
+- **Failed** when submission or a terminal provider event is unsuccessful
+
+A category update from Meta can change the saved category without changing an approved status. Only **Approved** templates are available in sending and Workflow selectors.
+
+## Preview and maintain
+
+<ol className="steps">
+  <li>Open a template to review the current local content, examples, category, language, and status.</li>
+  <li>Use the available update flow when copy needs to change, and expect provider review where required.</li>
+</ol>
+
+## Costs and policy
+
+Meta bills WhatsApp template charges by category and destination. KiloBot may show estimated MYR rates — see [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
+
+<DocCard
+  to="/engage/broadcast"
+  title="Broadcast"
+  description="Send an approved template to a selected audience"
+/>
+
+:::warning
+Do not plan a time-sensitive **Broadcast**, **Reminder**, or **Follow-up** around a template that is still **In review**. Approve required templates before activation.
+:::

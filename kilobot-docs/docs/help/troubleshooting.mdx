@@ -1,0 +1,93 @@
+---
+title: Troubleshooting
+description: Diagnose common setup, channel, AI reply, booking, template, and permission problems.
+slug: /help/troubleshooting
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Troubleshooting
+
+Match your symptom below.
+
+Most issues come from missing configuration, provider status, permissions, or an unsaved draft.
+
+## Fix incomplete or incorrect answers
+
+When the agent misses a fact or contradicts your documentation, start with knowledge and prompt alignment before expanding **Workflow**.
+
+<ol className="steps">
+  <li>Open <strong>Knowledge Base</strong> and confirm the relevant fact exists for the selected agent.</li>
+  <li>Remove or fix any source that contradicts it.</li>
+  <li>Review the system prompt in <strong>Agent Setup</strong>.</li>
+  <li>Choose <strong>Test agent</strong> with the same question.</li>
+  <li>If the request should trigger an action, review the <strong>Workflow</strong> condition instead of adding more general knowledge.</li>
+</ol>
+
+## Restore missing customer messages
+
+A connected channel, finished synchronization, and the correct agent context are required before messages appear in **Inbox**.
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and confirm the correct channel is connected.</li>
+  <li>For a new WhatsApp connection, wait for initial synchronization to finish.</li>
+  <li>Send a fresh customer-side message.</li>
+  <li>Verify you are viewing the correct agent and <strong>Inbox</strong> filters.</li>
+</ol>
+
+## Restore AI replies
+
+Human escalation intentionally pauses AI replies. When the AI should be answering, check reply mode, credits, routing, and workflow branches.
+
+<ol className="steps">
+  <li>Check the conversation's AI reply state.</li>
+  <li>Review <strong>Agent Setup</strong> <strong>Reply mode</strong>.</li>
+  <li>Confirm routing permissions, available credits, and the connected channel.</li>
+  <li>Review <strong>Workflow</strong> for a branch that should handle the message.</li>
+</ol>
+
+## Restore booking availability
+
+Booking times depend on the active **Service**, assignment strategy, teammate **Availability**, and **Calendar** conflicts.
+
+<ol className="steps">
+  <li>Confirm the <strong>Service</strong> is active and selected in the <strong>Book appointment</strong> action.</li>
+  <li>Check Service duration, buffer, and assignment strategy.</li>
+  <li>Review teammate <strong>Availability</strong>, timezone, and <strong>Calendar</strong> conflicts.</li>
+</ol>
+
+## Select an approved WhatsApp template
+
+Only **Approved** templates are selectable for **Broadcast**, **Reminders**, and **Follow-ups**.
+
+<ol className="steps">
+  <li>Open <strong>Message Templates</strong>.</li>
+  <li>Check whether the template is <strong>Submitting</strong>, <strong>In review</strong>, <strong>Failed</strong>, or <strong>Approved</strong>.</li>
+  <li>Confirm the template belongs to the intended channel and use case.</li>
+</ol>
+
+## Restore page or action access
+
+KiloBot hides or disables controls when the user lacks permission.
+
+<ol className="steps">
+  <li>Review workspace membership and role permissions.</li>
+  <li>Confirm the teammate has read or manage permission for that area.</li>
+</ol>
+
+## Recover unsaved changes
+
+Many product areas require an explicit **Save**, **Publish**, or **Confirm** before changes become live.
+
+<ol className="steps">
+  <li>Look for a required <strong>Save</strong>, <strong>Publish</strong>, or <strong>Confirm</strong> action.</li>
+  <li>Check <strong>Workflow</strong>, <strong>Agent Setup</strong>, reminder or follow-up message dialogs, <strong>Services</strong>, and <strong>Availability</strong> for unsaved drafts.</li>
+</ol>
+
+If the issue remains, collect the agent name, affected screen, approximate time, expected result, actual result, and a screenshot without sensitive customer data, then [contact support](/help/contact-support).
+
+<DocCard
+  to="/help/contact-support"
+  title="Contact support"
+  description="Report a bug or reach the team when troubleshooting is not enough"
+/>

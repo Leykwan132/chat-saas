@@ -1,0 +1,59 @@
+---
+title: Workflow overview
+description: Design how your KiloBot agent routes customer intent and performs actions.
+slug: /automate/workflow-overview
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Workflow overview
+
+Workflow gives your AI agent an explicit operating path. It starts when a customer message enters, evaluates the intent described on each connection, and runs the action whose condition matches.
+
+## Choose a Workflow view
+
+**Workflow** has three views, each for a different kind of automation. **Message handling** responds to a current message. **Reminders** are based on appointment time. **Follow-ups** are based on the absence of a reply.
+
+Open **Workflow**, then use the view selector to move between **Message handling**, **Reminders**, and **Follow-ups**.
+
+## Build the graph
+
+Write conditions from the customer's perspective. "Pricing question" with detail about asking for pricing is clearer than a generic "Yes." Avoid overlapping conditions that could both describe the same message.
+
+<ol className="steps">
+  <li>Start from <strong>Message enters</strong>.</li>
+  <li>Add an action from a node using the connection control.</li>
+  <li>Select the new node to configure it in the inspector.</li>
+  <li>Write a short condition <strong>Name</strong> and a detailed instruction on the connection.</li>
+</ol>
+
+## Start from a template or from scratch
+
+Applying a template changes the draft; it does not become live until you **Save**.
+
+<ol className="steps">
+  <li>Choose a <strong>Workflow</strong> template for a practical starting graph, or add individual actions manually.</li>
+  <li>Use <strong>Arrange</strong> when the graph becomes difficult to read.</li>
+  <li>Use <strong>Discard changes</strong> to return to the last saved workflow.</li>
+</ol>
+
+## Save and test
+
+Every coherent change should be saved before you validate behavior in **Test agent**.
+
+<ol className="steps">
+  <li><strong>Save</strong> after every coherent change.</li>
+  <li>Open <strong>Agent Setup</strong> and choose <strong>Test agent</strong>.</li>
+  <li>Send messages that should enter each branch, including near-misses.</li>
+  <li>Verify terminal actions such as escalation or closing occur only when intended.</li>
+</ol>
+
+:::note
+**Book appointment** needs an active **Service** and usable **Availability** — see [Services](/bookings/services).
+:::
+
+<DocCard
+  to="/automate/workflow-actions"
+  title="Workflow actions and conditions"
+  description="Configure message, media, booking, escalation, and close actions"
+/>

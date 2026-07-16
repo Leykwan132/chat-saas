@@ -1,0 +1,62 @@
+---
+title: Lead Assignment
+description: Route conversations and bookings to teammates with manual or automatic strategies.
+slug: /team/lead-assignment
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Lead Assignment
+
+Lead Assignment determines who is responsible for customer conversations.
+
+A clear assignment model prevents duplicate replies and gives **Inbox** filters, **Services**, and **Analytics** meaningful ownership data.
+
+## Choose an operating model
+
+KiloBot supports manual and automatic assignment patterns.
+
+Use manual assignment when a coordinator decides ownership or when volume is low. Use an automatic strategy when new leads should be distributed without waiting for a teammate.
+
+Available routing behavior can include balanced distribution and round robin. Balanced assignment considers current distribution, while round robin rotates through eligible teammates. Your active plan and permissions determine which controls are available.
+
+## Configure eligible teammates
+
+Before turning on automatic routing, confirm who can receive work and that each person has the right access.
+
+<ol className="steps">
+  <li>Open <strong>Lead Assignment</strong> for the agent.</li>
+  <li>Review the teammates who can receive work.</li>
+  <li>Select the routing strategy.</li>
+  <li>Confirm each person has the right workspace membership, permissions, and operational responsibility.</li>
+</ol>
+
+For appointment booking, **Service** assignment adds another layer. A Service can prefer the conversation owner, use balanced or round-robin assignment, or choose a specific teammate. The assigned person must also have valid **Availability**.
+
+## Reassign a conversation
+
+When ownership changes, update the assignee in **Inbox** so filters, analytics, and follow-up routing stay accurate.
+
+<ol className="steps">
+  <li>Open the conversation in <strong>Inbox</strong>.</li>
+  <li>Change the assignee from conversation details if permitted.</li>
+</ol>
+
+The change is recorded in **Action History**. Reassign intentionally and communicate when the new owner needs context beyond the visible thread.
+
+## Review the outcome
+
+Use **Inbox** and **Analytics** together to confirm routing is distributing work fairly.
+
+<ol className="steps">
+  <li>Use <strong>Inbox</strong> filters to compare assigned and unassigned work.</li>
+  <li>Review response time and conversion information in <strong>Analytics</strong>.</li>
+</ol>
+
+If one person receives too much work, confirm eligibility, schedule, and routing settings before changing the strategy.
+
+<DocCard
+  to="/engage/inbox"
+  title="Inbox"
+  description="Filters, assignments, and conversation details for daily work"
+/>

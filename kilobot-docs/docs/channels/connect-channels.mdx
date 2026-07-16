@@ -1,0 +1,66 @@
+---
+title: Connect channels
+description: Connect Website, WhatsApp, Instagram, and Messenger conversations to KiloBot.
+slug: /channels/connect-channels
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Connect channels
+
+Channels connect customers to an agent. Messages appear in **Inbox**.
+
+## Supported channels
+
+KiloBot supports:
+
+- **Website** through the KiloBot web widget
+- **WhatsApp** through Meta's connection flow
+- **Instagram** for connected professional messaging
+- **Messenger** for connected Facebook Page messaging
+
+The number of channels available depends on the workspace plan.
+
+## Add a channel
+
+The connected channel card shows its identity and connection state. A WhatsApp connection can move through signup, token, connection, and initial synchronization stages before it is ready. If mobile coexistence is used, follow the in-product coexistence guide and allow contact and history synchronization to finish.
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> for the agent.</li>
+  <li>Choose <strong>Connect another channel</strong>.</li>
+  <li>Select a platform and complete the provider or widget setup.</li>
+  <li>Do not close an external authorization flow until it reports completion.</li>
+</ol>
+
+## Set up the Website widget
+
+The snippet includes the public widget key.
+
+<ol className="steps">
+  <li>Create the <strong>Website</strong> channel.</li>
+  <li>Configure its appearance.</li>
+  <li>Copy the provided script snippet to the website.</li>
+  <li>Publish the site change.</li>
+  <li>Open the page in a private browser window to test a new visitor conversation.</li>
+</ol>
+
+## Verify a connection
+
+Test an outbound reply before announcing the channel.
+
+<ol className="steps">
+  <li>Send a message from the customer side.</li>
+  <li>Open <strong>Inbox</strong> and confirm the message appears.</li>
+  <li>Verify it is associated with the correct agent and contact.</li>
+  <li>Test an outbound reply before announcing the channel.</li>
+</ol>
+
+:::warning
+Connecting or reconnecting a Meta channel may require administrator access to the relevant business, WhatsApp account, Instagram account, or Facebook Page.
+:::
+
+<DocCard
+  to="/engage/inbox"
+  title="Inbox"
+  description="Work with conversations from every connected channel"
+/>

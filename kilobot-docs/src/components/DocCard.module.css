@@ -1,0 +1,36 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 1rem 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--kilobot-border);
+  border-radius: 0.65rem;
+  color: inherit;
+  text-decoration: none;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.card:hover {
+  background: var(--kilobot-muted);
+  border-color: color-mix(in srgb, var(--kilobot-border) 70%, var(--ifm-font-color-base));
+  color: inherit;
+  text-decoration: none;
+}
+
+.title {
+  color: var(--ifm-font-color-base);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.description {
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+[data-theme='dark'] .card:hover {
+  background: #1f1f1f;
+}

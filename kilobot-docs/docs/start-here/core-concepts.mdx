@@ -1,0 +1,53 @@
+---
+title: Core concepts
+description: Understand how workspaces, agents, channels, workflows, contacts, and bookings relate.
+slug: /start-here/core-concepts
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Core concepts
+
+These terms describe how KiloBot organizes your team, agents, and customer work.
+
+## Workspace
+
+A workspace is the home for your organization. It contains team members, agents, plan usage, roles, and permissions. A teammate's role determines what they can view or manage.
+
+## AI agent
+
+An agent is the customer-facing assistant you configure. It has a name, AI model, system prompt, communication style, knowledge sources, workflow, channels, and performance data. A workspace can contain one or more agents depending on its plan.
+
+## Knowledge and behavior
+
+- **[Knowledge Base](/build-your-agent/knowledge-base)** — trusted business facts from websites, files, text, and Q&A
+- **[Agent Setup](/build-your-agent/agent-setup)** — role, model, tone, response length, emoji use, and reply mode
+- **[Workflow](/automate/workflow-overview)** — explicit conditions and actions for important customer intents
+
+## Channels, conversations, and contacts
+
+A channel is where a customer reaches you: Website, WhatsApp, Instagram, or Messenger. Messages appear as conversations in **Inbox**. The person behind a conversation is a **Contact**, with identity, channel details, tags, lead temperature, and history.
+
+## Services, availability, and bookings
+
+A **Service** defines what a customer can book, its duration, required details, and teammate assignment. **Availability** defines when each teammate can receive appointments. KiloBot combines both when Workflow runs **Book appointment**. Confirmed appointments appear in **Calendar** and in the conversation.
+
+## Workflow and automation
+
+Workflow decides what happens after a message enters. Conditions route intent to actions such as sending a message or file, booking, escalating, or closing the conversation. Separate Workflow views configure appointment **Reminders** and no-reply **Follow-ups**.
+
+## Credits and permissions
+
+AI activity consumes workspace credits. Models, features, member limits, channel limits, and Knowledge Base storage depend on the active plan. Permissions determine what each teammate can access.
+
+<DocCard
+  to="/insights/usage-and-billing"
+  title="Usage and billing"
+  description="How credits, plans, and limits show up in the product"
+/>
+
+<DocCard
+  to="/team/roles-and-permissions"
+  title="Roles and permissions"
+  description="What each role can view or manage in a workspace"
+/>

@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { useAuth } from '@workos-inc/authkit-react';
 import { POST_LOGIN_REDIRECT } from '@/constants';
 import { cn } from '@/lib/utils';
+import { KILOBOT_DOCS_URL } from '@/lib/docsLinks';
 
 type SiteFooterProps = {
   className?: string;
@@ -64,6 +65,12 @@ export function SiteFooter({ className }: SiteFooterProps) {
                   >
                     Leaderboard
                   </Link>
+                  <a
+                    href={KILOBOT_DOCS_URL}
+                    className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    Docs
+                  </a>
                   <Link
                     to="/early-adopter-program"
                     className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"

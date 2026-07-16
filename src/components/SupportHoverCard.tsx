@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, Bug, Mail, MessageCircleQuestionMark } from 'lucide-react';
+import { ArrowRight, BookOpenText, Bug, Mail, MessageCircleQuestionMark } from 'lucide-react';
 import { SiWhatsapp } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,8 +10,18 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { KILOBOT_DOCS_URL } from '@/lib/docsLinks';
 
 const SUPPORT_OPTIONS = [
+  {
+    title: 'Help center',
+    description: 'Find setup guides and answers for every KiloBot feature.',
+    action: 'Browse docs',
+    href: KILOBOT_DOCS_URL,
+    icon: BookOpenText,
+    target: undefined,
+    rel: undefined,
+  },
   {
     title: 'Report a bug',
     description: 'Tell us what went wrong so we can investigate.',
@@ -67,7 +77,7 @@ export function SupportHoverCard() {
           <p className="font-medium">How can we help?</p>
           <p className="text-xs text-muted-foreground">Choose the fastest way to reach us.</p>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {SUPPORT_OPTIONS.map((option) => {
             const Icon = option.icon;
             return (

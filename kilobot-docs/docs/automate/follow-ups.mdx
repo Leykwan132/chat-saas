@@ -1,0 +1,65 @@
+---
+title: Follow-ups
+description: Configure no-reply follow-up timing, audience, attempts, and WhatsApp messages.
+slug: /automate/follow-ups
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Follow-ups
+
+Follow-ups re-engage eligible customers after they have not replied. Configure the automation from the **Follow-ups** view in **Workflow**. A customer reply prevents later no-reply attempts from continuing.
+
+## Choose the activation scope
+
+Use **Future only** when you want a clean launch boundary. Use **Current & future** only after reviewing the audience and message carefully. Reminder scope works the same way — see [Appointment reminders](/automate/reminders).
+
+<ol className="steps">
+  <li>Open <strong>Workflow</strong> and switch to <strong>Follow-ups</strong>.</li>
+  <li>Choose <strong>Current & future</strong> to schedule follow-ups still due for eligible existing conversations and after new messages, or <strong>Future only</strong> to schedule follow-ups after new eligible messages while the automation is on.</li>
+</ol>
+
+## Define the audience
+
+Review audience filters that control which leads may enter the follow-up sequence. Check lead temperature and other available filters before activation.
+
+## Configure timing and attempts
+
+When there is more than one attempt, choose how often to reattempt. A one-attempt sequence does not need an interval.
+
+<ol className="steps">
+  <li>Choose <strong>Start after</strong> to define how long KiloBot waits without a customer reply.</li>
+  <li>Select a preset or a custom positive whole duration in minutes, hours, days, or weeks.</li>
+  <li>Set the maximum number of attempts.</li>
+  <li>When there is more than one attempt, choose how often to reattempt.</li>
+</ol>
+
+## Select messages
+
+Pending selections are saved only after you **Confirm** the dialog.
+
+<ol className="steps">
+  <li>For one attempt, select one approved WhatsApp template.</li>
+  <li>For multiple attempts, choose whether every attempt uses the same template or different templates.</li>
+  <li><strong>Confirm</strong> the dialog to save pending selections.</li>
+</ol>
+
+## Activate and monitor
+
+Keep copy useful and spaced appropriately. Test a high-attempt sequence with a controlled group before broad activation.
+
+<ol className="steps">
+  <li>Review the <strong>Summary</strong>.</li>
+  <li>Turn <strong>Follow-ups</strong> on.</li>
+  <li>Open <strong>History</strong> to review scheduling and send results with estimated Meta cost when the template category can be priced.</li>
+</ol>
+
+:::warning
+Follow-ups require approved WhatsApp **Message Templates**. Provider charges are separate from KiloBot credits — see [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
+:::
+
+<DocCard
+  to="/automate/reminders"
+  title="Appointment reminders"
+  description="Schedule approved WhatsApp messages before booked appointments"
+/>

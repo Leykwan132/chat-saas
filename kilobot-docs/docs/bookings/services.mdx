@@ -1,0 +1,65 @@
+---
+title: Services
+description: Define what customers can book, what information to collect, and who receives appointments.
+slug: /bookings/services
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Services
+
+Services define the appointments KiloBot can offer.
+
+A Service combines the customer-facing description, timing rules, booking fields, sales style, and teammate assignment strategy used by the **Book appointment** Workflow action.
+
+## Create a Service
+
+<ol className="steps">
+  <li>Open <strong>Services</strong> and choose <strong>Add a service</strong>.</li>
+  <li>Complete <strong>Details</strong> — enter the Service name, description, and active state.</li>
+  <li>Complete <strong>Timing</strong> — set appointment duration, buffer, timezone, and optional preferred times.</li>
+  <li>Complete <strong>Data collection</strong> — choose the fields KiloBot collects during booking.</li>
+  <li>Complete <strong>Assignment</strong> — choose the sales style and teammate assignment strategy.</li>
+  <li><strong>Save</strong> the Service.</li>
+</ol>
+
+Default booking fields include Booking Date, Booking Time, Customer Name, and Phone Number. You can add text, number, select, yes/no, date, time, and phone fields. Keep the form short enough for a customer to finish in conversation.
+
+## Choose an assignment strategy
+
+Assignment decides which teammate receives a booked appointment. Availability is still required — an assignment strategy does not make an unavailable teammate bookable.
+
+- **Conversation owner first** prefers the teammate already responsible for the conversation.
+- **Balanced** distributes bookings based on available workload.
+- **Round robin** rotates assignment through eligible teammates.
+- **Specific teammate** sends the Service to one selected person.
+
+## Activate and connect the Service
+
+Before customers can book, the Service must be active, connected to a **Book appointment** action, and backed by usable teammate availability.
+
+<ol className="steps">
+  <li>Confirm the Service is active.</li>
+  <li>Open <strong>Workflow</strong>, select a <strong>Book appointment</strong> node, and choose which Services that action may use.</li>
+  <li>Open <strong>Agent Setup</strong> and test a complete booking.</li>
+</ol>
+
+<DocCard
+  to="/bookings/availability"
+  title="Availability"
+  description="Set weekly hours and timezones so booked slots are real"
+/>
+
+## Review bookings
+
+The **Services** page lists your Services and booked appointments, including customer, assignee, appointment time, status, booking ID, and creation time. You can also manage the appointment from **Calendar**.
+
+<DocCard
+  to="/bookings/calendar"
+  title="Calendar"
+  description="View, create, and update appointments in the shared calendar"
+/>
+
+:::note
+An active Service without **Availability** cannot produce a usable slot — see [Availability](/bookings/availability).
+:::

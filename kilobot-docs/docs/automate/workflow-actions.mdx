@@ -1,0 +1,69 @@
+---
+title: Workflow actions and conditions
+description: Configure message, media, booking, escalation, and close-conversation actions.
+slug: /automate/workflow-actions
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Workflow actions and conditions
+
+Actions define what KiloBot does after a workflow condition matches. Use distinct intent boundaries, mention exclusions when a nearby branch is similar, and keep exact customer-facing copy in the action rather than inside the condition detail.
+
+## Add and configure an action
+
+Each connection has two parts: a short **Name** shown on the graph and a **Detail** that tells the AI exactly when the action applies.
+
+<ol className="steps">
+  <li>Add an action from the connection control beside a node.</li>
+  <li>Select the new node to open the inspector.</li>
+  <li>Enable the condition and set a short <strong>Name</strong> for the connection, such as "Product brochure."</li>
+  <li>Write the <strong>Detail</strong> that tells the AI exactly when the action applies, such as "If the customer asks for the current product brochure or a downloadable specification."</li>
+  <li>Configure the action type and <strong>Save</strong>.</li>
+</ol>
+
+## Send a fixed message
+
+Use **Send message** for operating hours, next steps, qualification prompts, and fixed disclosures.
+
+<ol className="steps">
+  <li>Choose <strong>Send message</strong>.</li>
+  <li>Enter the exact message the AI should send.</li>
+</ol>
+
+## Send media or files
+
+Upload media to the action itself and confirm the uploaded item belongs to that node.
+
+<ol className="steps">
+  <li>Choose <strong>Send Photo/Video</strong> for images and video, or <strong>Send Files</strong> for documents and other supported files.</li>
+  <li>Upload media to the action itself.</li>
+  <li>Describe when the customer should receive the asset.</li>
+</ol>
+
+## Book an appointment
+
+The action guides the customer through choosing a service, collecting configured fields, checking teammate availability, confirming a slot, and creating the appointment. See [Services](/bookings/services) and [Availability](/bookings/availability).
+
+<ol className="steps">
+  <li>Choose <strong>Book appointment</strong>.</li>
+  <li>Select the active <strong>Services</strong> the customer may book.</li>
+</ol>
+
+## Escalate to a teammate
+
+Choose **Human escalation** when the customer asks for a person, the AI lacks confidence, or the request should not be automated. The action pauses AI replies and brings the conversation to the team's attention in **Inbox**.
+
+## Close the conversation
+
+Choose **Close conversation** only for a terminal outcome where no more automated handling is required. Put it behind a narrow condition so an active customer request is not closed early.
+
+:::tip
+Prefer a small number of precise branches over a large graph of vague conditions. You can add more branches after reviewing real **Inbox** conversations.
+:::
+
+<DocCard
+  to="/automate/workflow-overview"
+  title="Workflow overview"
+  description="Views, graph building, templates, and testing"
+/>

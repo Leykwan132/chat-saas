@@ -1,0 +1,62 @@
+---
+title: Agent Setup
+description: Configure your AI agent's prompt, model, style, reply mode, and test behavior.
+slug: /build-your-agent/agent-setup
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Agent Setup
+
+Agent Setup controls the general behavior of one AI agent — use it for the agent's role and communication style, and use **Workflow** for specific customer intents and actions.
+
+## Write the system prompt
+
+The system prompt defines who the agent is, who it serves, and how it should behave. Keep business facts in the **Knowledge Base** instead of repeating them in the prompt.
+
+<ol className="steps">
+  <li>Open <strong>Agent Setup</strong>.</li>
+  <li>Apply a starter template or write your own system prompt.</li>
+  <li>Include the agent's role, audience, goals, conversation flow, tone, safety boundaries, and when to involve a human.</li>
+</ol>
+
+## Tune the model and style
+
+These settings tune the default presentation. A **Workflow** action can still require an exact message or behavior for a specific condition.
+
+<ol className="steps">
+  <li>Open <strong>Model & Style</strong>.</li>
+  <li>Set the <strong>Name</strong> shown in the workspace.</li>
+  <li>Choose a <strong>Model</strong> from those enabled for your plan.</li>
+  <li>Adjust <strong>Response length</strong>, <strong>Emoji use</strong>, <strong>Formality</strong>, and <strong>Humor level</strong>.</li>
+</ol>
+
+## Control when the AI replies
+
+**Reply mode** determines whether the AI automatically answers inbound messages or waits for a teammate to enable it. Availability of this control depends on routing permissions and plan features.
+
+<ol className="steps">
+  <li>Open <strong>Triggers</strong>.</li>
+  <li>Set <strong>Reply mode</strong> to the behavior you want.</li>
+</ol>
+
+## Test and publish
+
+Validate behavior before customers see it. If you navigate away with unpublished changes, KiloBot warns that the draft has not been published.
+
+<ol className="steps">
+  <li>Open <strong>Test agent</strong>.</li>
+  <li>Send a normal question, a missing-knowledge question, an escalation request, and any important workflow intent.</li>
+  <li>Update the prompt or <strong>Knowledge Base</strong> based on what you observe.</li>
+  <li>Choose <strong>Publish</strong> to save the configuration.</li>
+</ol>
+
+:::tip
+Test with customer wording, abbreviations, and incomplete questions rather than only the exact phrases used in your documentation.
+:::
+
+<DocCard
+  to="/build-your-agent/knowledge-base"
+  title="Knowledge Base"
+  description="Add the trusted facts your agent should answer from"
+/>

@@ -1,0 +1,87 @@
+---
+title: Launch Guide
+description: Set up and test your first KiloBot agent in the recommended order.
+slug: /start-here/launch-guide
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Launch Guide
+
+Complete these milestones in order. Each one gives the next step useful context.
+
+## Create your first agent
+
+<ol className="steps">
+  <li>From the workspace, choose <strong>Create agent</strong>.</li>
+  <li>Select a template or start blank, and give it a clear internal name.</li>
+  <li>After creation, KiloBot opens the agent workspace. Use the workspace switcher whenever you need another agent.</li>
+</ol>
+
+## Add knowledge
+
+Open **Knowledge Base** and add current product, policy, hours, and escalation facts. Prefer one focused website, file, text note, or Q&A entry over conflicting sources.
+
+<ol className="steps">
+  <li>Open <strong>Knowledge Base</strong>.</li>
+  <li>Add the facts your agent should answer from first.</li>
+  <li>Keep sources focused so answers stay consistent.</li>
+</ol>
+
+<DocCard
+  to="/build-your-agent/knowledge-base"
+  title="Knowledge Base"
+  description="Source types, testing, and how knowledge affects replies"
+/>
+
+## Test Agent Setup
+
+Review the prompt, model, and style controls in **Agent Setup**, then test with realistic customer messages — including a question knowledge cannot answer. Choose **Publish** only when behavior matches your intent.
+
+<ol className="steps">
+  <li>Open <strong>Agent Setup</strong>.</li>
+  <li>Review the prompt, model, and style controls.</li>
+  <li>Choose <strong>Test agent</strong> with realistic messages.</li>
+  <li>Choose <strong>Publish</strong> when the behavior is ready.</li>
+</ol>
+
+<DocCard
+  to="/build-your-agent/agent-setup"
+  title="Agent Setup"
+  description="Prompt, model, tone, and publish controls in detail"
+/>
+
+## Create the workflow
+
+Open **Workflow** and start from a template or add actions to **Message enters**. Name conditions clearly, add only the first-release actions, then **Save**. If the agent should book appointments, create **Services** and **Availability** first.
+
+<ol className="steps">
+  <li>Open <strong>Workflow</strong>.</li>
+  <li>Start from a template or add actions to <strong>Message enters</strong>.</li>
+  <li>Name conditions clearly, keep the first release small, then <strong>Save</strong>.</li>
+</ol>
+
+## Connect a channel
+
+Connect Website, WhatsApp, Instagram, or Messenger from **Channels**, wait until the channel shows as connected, then send a real customer-side test message and confirm it appears in **Inbox**.
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and connect a channel.</li>
+  <li>Wait until the channel shows as connected.</li>
+  <li>Send a real customer-side test message.</li>
+  <li>Confirm it appears in <strong>Inbox</strong>.</li>
+</ol>
+
+:::tip
+The in-product **Launch Guide** in the sidebar tracks these same milestones and opens each setup screen.
+:::
+
+## Before you invite the team
+
+Test common questions, escalation, booking, and an unknown request. Then configure roles, lead assignment, availability, and Inbox habits for the teammates who will operate conversations.
+
+<DocCard
+  to="/team/roles-and-permissions"
+  title="Roles and permissions"
+  description="What each teammate can view or manage before you invite them"
+/>

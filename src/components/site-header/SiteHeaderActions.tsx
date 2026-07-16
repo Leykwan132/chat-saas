@@ -103,17 +103,28 @@ export function SiteHeaderActions({
           <div className="flex flex-col gap-6">
             <nav className="flex flex-col">
               {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setIsOpen(false)}
-                  className={cn(
-                    'flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium transition-colors hover:text-zinc-950 dark:border-white/[0.03] dark:hover:text-white',
-                    isActive(link.to) ? 'text-zinc-950 font-semibold dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
-                  )}
-                >
-                  <span>{link.label}</span>
-                </Link>
+                link.external ? (
+                  <a
+                    key={link.to}
+                    href={link.to}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium text-zinc-500 transition-colors hover:text-zinc-950 dark:border-white/[0.03] dark:text-zinc-400 dark:hover:text-white"
+                  >
+                    <span>{link.label}</span>
+                  </a>
+                ) : (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={() => setIsOpen(false)}
+                    className={cn(
+                      'flex items-center justify-between border-b border-zinc-100 py-3.5 text-base font-medium transition-colors hover:text-zinc-950 dark:border-white/[0.03] dark:hover:text-white',
+                      isActive(link.to) ? 'text-zinc-950 font-semibold dark:text-white' : 'text-zinc-500 dark:text-zinc-400'
+                    )}
+                  >
+                    <span>{link.label}</span>
+                  </Link>
+                )
               ))}
             </nav>
           </div>

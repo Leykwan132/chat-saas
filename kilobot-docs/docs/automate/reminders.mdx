@@ -1,0 +1,63 @@
+---
+title: Appointment reminders
+description: Schedule approved WhatsApp reminder messages for booked appointments.
+slug: /automate/reminders
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Appointment reminders
+
+Reminders send an approved message before a booked appointment. Configure them from the **Reminders** view in **Workflow**.
+
+## Before you begin
+
+Confirm you have active **Services**, booked appointments, a connected WhatsApp channel, and an approved **Message Template**. Provider charges are covered in [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
+
+## Choose the activation scope
+
+The scope controls which appointments enter scheduling; it does not change the appointment itself. Follow-ups use the same scope pattern — see [Follow-ups](/automate/follow-ups).
+
+<ol className="steps">
+  <li>Open <strong>Workflow</strong> and switch to <strong>Reminders</strong>.</li>
+  <li>Choose <strong>Current & future</strong> to schedule remaining eligible reminders for confirmed upcoming and new appointments, or <strong>Future only</strong> to schedule reminders only for appointments created while the automation is on.</li>
+</ol>
+
+## Set the schedule
+
+Keep reminder times far enough apart that customers are not overwhelmed.
+
+<ol className="steps">
+  <li>Choose the number of reminders.</li>
+  <li>Set when each reminder should go out.</li>
+  <li>Use predefined timing options or a custom positive duration in minutes, hours, days, or weeks.</li>
+</ol>
+
+## Select the message
+
+The template must remain **Approved** to be sent. Review the **Summary** before turning the automation on.
+
+<ol className="steps">
+  <li>Choose an approved WhatsApp <strong>Message Template</strong>.</li>
+  <li><strong>Confirm</strong> the selection.</li>
+  <li>Review the <strong>Summary</strong> before turning the automation on.</li>
+</ol>
+
+## Monitor reminder history
+
+Sent, failed, cancelled, scheduled, and skipped outcomes use separate status indicators. The footer summarizes all-time sent activity and estimated spend where pricing is known.
+
+<ol className="steps">
+  <li>Open <strong>History</strong> from the reminder <strong>Summary</strong>.</li>
+  <li>Review the customer, template, scheduled time, sent time, status, and estimated cost.</li>
+</ol>
+
+:::warning
+Turning reminders on without a selected approved message is blocked. Complete the message step first.
+:::
+
+<DocCard
+  to="/automate/follow-ups"
+  title="Follow-ups"
+  description="Re-engage customers who have not replied"
+/>

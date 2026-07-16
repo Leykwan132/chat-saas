@@ -1,0 +1,69 @@
+---
+title: Availability
+description: Configure teammate working hours, timezones, and all-day availability for bookings.
+slug: /bookings/availability
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Availability
+
+Availability tells KiloBot when each teammate can receive an appointment.
+
+It is evaluated together with Service duration, buffer, timezone, existing Calendar events, and assignment strategy.
+
+## Open a teammate schedule
+
+<ol className="steps">
+  <li>Choose <strong>Availability</strong> from the agent sidebar.</li>
+  <li>Select a teammate to view their schedule.</li>
+  <li>Choose the edit action if you have permission.</li>
+</ol>
+
+A teammate can edit their own available hours; broader schedule management depends on workspace permissions.
+
+## Set weekly hours
+
+<ol className="steps">
+  <li>For each day, enable or disable availability.</li>
+  <li>Choose a start and end time for each enabled day.</li>
+  <li>Set the schedule timezone that matches the teammate's working hours.</li>
+  <li><strong>Save</strong> after reviewing every day.</li>
+</ol>
+
+The **Available 24/7** control sets all seven days to `00:00–24:00`. Turning it off resets all seven days to `09:00–17:00`; it does not restore a previous custom schedule.
+
+## How availability affects booking
+
+When a customer books, KiloBot checks the selected Service and assigned teammate against:
+
+- Weekly available hours
+- The schedule timezone
+- Service duration and buffer
+- Existing **Calendar** conflicts
+- Any required assignment rule
+
+The customer must explicitly confirm a valid slot before the appointment is created.
+
+## Troubleshoot missing slots
+
+If a time is not offered, work through the most common causes in order.
+
+<ol className="steps">
+  <li>Confirm the <strong>Service</strong> is active.</li>
+  <li>Confirm the teammate is eligible.</li>
+  <li>Check timezone and weekly hours.</li>
+  <li>Review <strong>Calendar</strong> for conflicts.</li>
+</ol>
+
+See [Troubleshooting](/help/troubleshooting#restore-booking-availability) for more detail.
+
+<DocCard
+  to="/bookings/services"
+  title="Services"
+  description="Active Services, booking fields, and assignment rules"
+/>
+
+:::tip
+Test one booking near the start of the day and another near the end to catch timezone, duration, and buffer mistakes.
+:::

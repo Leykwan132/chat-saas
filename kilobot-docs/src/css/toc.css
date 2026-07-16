@@ -1,0 +1,59 @@
+.theme-doc-toc-desktop {
+  top: calc(
+    var(--ifm-navbar-height) + var(--doc-content-pad-top, calc(2.75rem * 1.15))
+  ) !important;
+  max-height: calc(
+    100vh -
+      (
+        var(--ifm-navbar-height) + var(--doc-content-pad-top, calc(2.75rem * 1.15)) +
+          1rem
+      )
+  ) !important;
+}
+
+.table-of-contents {
+  font-size: 0.8125rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.table-of-contents,
+.table-of-contents ul {
+  padding-left: 0.85rem;
+}
+
+.table-of-contents li {
+  margin: 0.45rem 0;
+}
+
+.table-of-contents__link {
+  color: var(--ifm-font-color-secondary);
+  line-height: 1.35;
+}
+
+.table-of-contents__link:hover,
+.table-of-contents__link:hover code {
+  color: var(--ifm-font-color-base);
+}
+
+.table-of-contents__link--active,
+.table-of-contents__link--active code {
+  position: relative;
+  color: var(--ifm-font-color-base);
+  font-weight: 500;
+}
+
+.table-of-contents__left-border {
+  border-left-color: var(--kilobot-border);
+}
+
+.table-of-contents__link--active::before {
+  content: '';
+  position: absolute;
+  top: 0.1rem;
+  bottom: 0.1rem;
+  left: calc(-0.85rem - 1px);
+  width: 2px;
+  border-radius: 1px;
+  background: var(--ifm-font-color-base);
+}

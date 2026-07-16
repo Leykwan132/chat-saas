@@ -13,7 +13,8 @@ const siteHeaderSource = readSource('./site-header/SiteHeaderActions.tsx');
 const legalHeaderSource = readSource('./LegalDocumentLayout.tsx');
 const blogHeaderSource = readSource('./BlogPostLayout.tsx');
 
-test('offers the exact bug, WhatsApp, and email support destinations', () => {
+test('offers the help center and exact direct support destinations', () => {
+  expect(componentSource).toContain('KILOBOT_DOCS_URL');
   expect(componentSource).toContain('https://forms.gle/Hoo56T7Qj3yEBEeZ9');
   expect(componentSource).toContain('https://wa.me/60129499394');
   expect(componentSource).toContain('mailto:support@kilobot.app');
@@ -25,7 +26,7 @@ test('uses the requested icons and fully clickable three-card composition', () =
   expect(componentSource).toContain('MessageCircleQuestionMark');
   expect(componentSource).toContain('SiWhatsapp');
   expect(componentSource).toContain('aria-label="Contact support"');
-  expect(componentSource).toContain('grid grid-cols-3 gap-3');
+  expect(componentSource).toContain('grid grid-cols-2 gap-3');
   expect(componentSource).toContain('SUPPORT_OPTIONS.map');
   expect(componentSource).toContain('<a');
   expect(componentSource).toContain('<Card');

@@ -1,0 +1,72 @@
+---
+title: Roles and permissions
+description: Give teammates the access they need while protecting sensitive KiloBot configuration.
+slug: /team/roles-and-permissions
+---
+
+import DocCard from '@site/src/components/DocCard';
+
+# Roles and permissions
+
+Roles group permissions that control what a teammate can read or manage.
+
+Navigation and actions are permission-aware, so users may see different KiloBot screens inside the same workspace.
+
+## Start with responsibility
+
+Define what each teammate must do before choosing a role. Common responsibilities include:
+
+- Work in **Inbox** and **Contacts**
+- Manage **Calendar** and **Availability**
+- Create **Services** and automation
+- Configure **Agent Setup**, **Workflow**, **Knowledge Base**, and **Channels**
+- View **Analytics** and workspace **Usage**
+- Invite members or edit roles
+
+Separate read access from management access where the role editor allows it. A teammate who needs to view **Analytics** may not need permission to change routing or publish an agent configuration.
+
+## Use built-in and custom roles
+
+Assign the broadest authority only where it is required, then narrow access for daily operators.
+
+<ol className="steps">
+  <li>Open <strong>Settings → Teams</strong> to review available roles.</li>
+  <li>Assign workspace owners the broadest authority.</li>
+  <li>Give administrators operational and configuration access as needed.</li>
+  <li>Give members the narrower access needed for daily work.</li>
+</ol>
+
+When custom roles are available, name them after responsibility, such as "Inbox operator" or "Booking manager," rather than after one person.
+
+## Test a role
+
+After changing a role, confirm the teammate sees the right pages and cannot reach sensitive controls.
+
+<ol className="steps">
+  <li>After changing a role, confirm the teammate can open every required page.</li>
+  <li>Verify they can perform the needed action.</li>
+  <li>Confirm that sensitive controls they should not manage are absent or disabled.</li>
+</ol>
+
+Permissions can affect **Agent Setup**, routing, channels, customers, broadcasts, bookings, analytics, and team administration. A redirect or missing action may be intentional when access is not granted.
+
+## Maintain access
+
+Remove broad temporary access once setup or an incident is complete.
+
+<ol className="steps">
+  <li>Review membership and roles regularly.</li>
+  <li>Remove unused roles.</li>
+  <li>Revoke access when someone leaves.</li>
+  <li>Reduce broad temporary access after a setup or incident is complete.</li>
+</ol>
+
+:::warning
+Do not use shared user accounts to avoid permission setup. Individual membership provides clearer responsibility and safer access removal.
+:::
+
+<DocCard
+  to="/team/workspace-and-team"
+  title="Workspace and team"
+  description="Invite teammates and manage membership at the workspace level"
+/>
