@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-16 [CODE] Product quickstart right panel is pure HTML/CSS (Gilda headline + icon wordmark), not CDN PNG; site og/twitter still use `preview-image-v2.png`; responsive pad-x retained; not deployed.
+- 2026-07-16 [TOOL] Help center + product docs links shipped on `main` as `82647f72`; site og/twitter use `preview-image-v2.png`; docs not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` Welcome: dark “Start here” banner (copy + CTAs only), path grid, resource row; roomier page/card padding; no Next pagination; docs tests + build pass, not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` guide copy was tightened (deduped billing/prereqs, fixed Usage labels, removed filler), the `Docs` label uses a muted rounded badge beside the wordmark, and search uses a compact Algolia detached control styled to the zinc chrome; 16/16 docs tests and build pass, not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` uses Google Sans Flex for content/UI and Gilda Display for the Kilobot wordmark; dashboard zinc tokens, text-3xl article H1, h-14 top bar; docs tests pass, not deployed.
