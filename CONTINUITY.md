@@ -1,4 +1,6 @@
 # Snapshot
+- 2026-07-16 [CODE] `kilobot-docs` has a standalone Wrangler static-assets configuration targeting Docusaurus `./build`; its Node 22 production build and Wrangler 4.103.0 deployment dry run pass.
+- 2026-07-16 [USER] Design the new `kilobot-docs` Docusaurus site to match Kilobot's current product language and document the complete customer journey: core concepts, Workflow, Services, Availability, configuration, engagement, bookings, and operational areas; design is in progress before implementation.
 - 2026-07-16 [CODE] Broadcast History uses shared shadcn Table/Pagination over `usePaginatedQuery`, initially fetches 10 and loads additional 10-record cursor batches through numbered Previous/Next navigation; implementation is complete on `main` in `0c28ef65`, `1b3e1d32`, `37d7a860`, `81d95b1e`, and `cebadfb3`.
 - 2026-07-16 [CODE] Broadcast detail Recipients uses shared shadcn Table and numbered Pagination with fixed 10-row client-side pages, reactive page clamping, and all-recipient count/cost totals; implementation is complete on `main` pending the user's git handoff choice.
 - 2026-07-16 [CODE] Broadcast hides its dashboard content panel's vertical scrollbar the same way Message Templates does, while preserving scroll and suppressing Radix body-margin shift.
@@ -22,9 +24,9 @@
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
 - 2026-07-15 [CODE] Reminder and Follow-up History use shared shadcn cursor pagination in 25-row pages; muted-neutral outlined status labels use normal text with a small semantic status dot, and captions show exact all-time sent counts alongside per-message estimated MYR cost and an all-time spend footer.
 - 2026-07-15 [CODE] A one-attempt Workflow Follow-up hides its interval selector and omits cadence/reattempt wording and the Repeats row while retaining the saved interval; the exact Hot+Warm audience renders separate highlighted words with the shared aligned Flame/Sun audience icons and plain `leads` text.
-- 2026-07-15 [CODE] Shared Reminder and Follow-up History dialogs use unrestricted intrinsic table sizing with no internal ScrollArea or table scrollbar.
-- 2026-07-14 [CODE] Calendar and Inbox staff mutations delegate to one `createStaffBooking` function; staff and AI creation trigger one `handleBookingCreated` event that logs `booking_created` and prepares reminder Workpool scheduling.
 # Decisions
+- 2026-07-16 [USER] D372 ACTIVE: `kilobot-docs` launches as a public, searchable help center at `docs.kilobot.app`; KiloBot's public and product navigation should link users to routes on that subdomain.
+- 2026-07-16 [USER] D371 ACTIVE: The first KiloBot docs release is a broad product guide for both setup owners and day-to-day users; it must explain the product's core concepts and all major workflows rather than stop at the initial Launch Guide.
 - 2026-07-16 [USER] D370 ACTIVE: Broadcast History keeps numbered Previous/Next navigation while replacing its latest-100 query with Convex cursor pagination; `usePaginatedQuery` initially fetches 10 and loads each additional 10-record batch at the loaded edge.
 - 2026-07-16 [USER] D369 ACTIVE: Broadcast detail Recipients uses shared shadcn Table and numbered Pagination components over the existing bounded recipient query, with a fixed 10-row page size and all-recipient footer totals.
 - 2026-07-16 [USER] D368 ACTIVE: Broadcast joins Message Templates in hiding the dashboard content panel's vertical scrollbar without disabling scrolling; while either page is mounted, Radix scroll locking must not add compensating body margin.
@@ -133,15 +135,18 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-16 [CODE] Added a docs-local Wrangler configuration that deploys the Docusaurus `build` output as the `kilobot-docs` static Worker and serves its generated 404 page for unmatched routes.
 - 2026-07-16 [CODE] Replaced Broadcast History's native latest-100 table with a modular shadcn table and unbounded Convex cursor pagination in fixed 10-record numbered pages.
 - 2026-07-16 [CODE] Replaced the Broadcast detail native recipients table with a modular shadcn Table and fixed 10-row numbered pagination while preserving all-recipient totals.
 - 2026-07-16 [CODE] Broadcast reuses the Message Templates hidden-scrollbar pattern via `data-broadcast-page`.
 - 2026-07-16 [CODE] Reminder Summary Est. cost unit changed from `/ booked appointment` to `/ reminder message` using the single-message rate.
 - 2026-07-15 [CODE] Fixed Follow-up schedule persistence drift and active-timer staleness with shared option normalization, save-boundary repair, and revision-change reconciliation.
 - 2026-07-15 [CODE] Scoped hidden-scrollbar styling and zero Radix body-margin compensation to Message Templates, preserving normal scrolling and every other page's scrollbar behavior.
-- 2026-07-15 [CODE] Local WhatsApp template lifecycle, category/status webhooks, numeric Meta IDs, and Create Template New section labels shipped (see Receipts / Working set).
 
 # Working set
+- 2026-07-16 [CODE] `kilobot-docs/`
+- 2026-07-16 [CODE] `src/components/app-sidebar-nav.ts`
+- 2026-07-16 [CODE] `src/components/setup-checklist/`
 - 2026-07-16 [CODE] Broadcast History Convex pagination: `convex/{whatsappBroadcast,whatsappBroadcastPagination.test,personalWorkspace.test}.ts`, `src/pages/BroadcastPage{,Structure.test}.tsx`, `src/components/broadcast/{BroadcastHistoryTable,BroadcastHistoryRow,BroadcastGuideCard,BroadcastCostCalculatorDialog,broadcastHistoryPagination}*`, and `docs/superpowers/{specs,plans}/2026-07-16-broadcast-history-convex-pagination*.md`.
 - 2026-07-16 [CODE] Broadcast recipient table pagination: `src/pages/BroadcastDetailPage.tsx`, `src/components/broadcast/{BroadcastDetailOverview,BroadcastRecipientsTable,broadcastRecipientPagination}*`, and `docs/superpowers/{specs/2026-07-16-broadcast-recipient-table-pagination-design,plans/2026-07-16-broadcast-recipient-table-pagination}.md`.
 - 2026-07-16 [CODE] Broadcast hidden scrollbar: `src/pages/BroadcastPage.tsx`, `src/index.css`, `src/indexScrollLock.test.ts`.
@@ -157,12 +162,14 @@
 - 2026-07-15 [CODE] Workflow drafts/templates and Follow-up schedule persistence/reconciliation: `src/pages/{WorkflowPage,useWorkflowDraft,workflowDraftPersistence}*`, `src/components/workflow/{WorkflowDraftActions,WorkflowTemplateHoverCard,workflowDraftModel,workflowTemplates,WorkflowToolbar,WorkflowCanvas,WorkflowInspectorForm,WorkflowReminderSetupNode,WorkflowFollowupSetupNode,WorkflowAutomationActivationNodes.test,WorkflowFollowupScheduleFields,WorkflowFollowupSummaryNode,workflowFollowupSummary,workflowFollowupAudienceLabels,WorkflowFollowupSingleAttempt.test,WorkflowFollowupAudienceHighlight.test,WorkflowReminderMessageDialog,WorkflowFollowupMessageDialog,workflowAutomationState,workflowFollowupStartAfterOptions.test}*`, `shared/workflowAutomations.ts`, `convex/{workflowAutomationConfig,workflowAutomationReconciliation,workflowFollowUpTimer}*`, and `docs/superpowers/{specs,plans}/2026-07-15-{workflow-automation-active-state-labels,followup-schedule-save-reconciliation}*`.
 
 # Open questions
+- 2026-07-16 [ASSUMPTION] UNCONFIRMED: the first public help-center release targets product users and workspace administrators, not an external developer/API audience.
 - 2026-07-15 [TOOL] UNCONFIRMED: Meta App Dashboard subscription to `message_template_status_update` cannot be verified from the local workspace and must be confirmed before production webhook-driven approval is relied upon.
 - 2026-07-15 [TOOL] UNCONFIRMED: The WhatsApp template lifecycle migration passed a six-record dry run but the live backfill was not authorized or executed; legacy schema compatibility remains until rollout completes.
 - 2026-07-10 [USER] UNCONFIRMED: Production/development Convex deployments still need the actual `ILMU_API_KEY` before a live Ilmu request can succeed.
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-16 [TOOL] `kilobot-docs` assets configuration completed a verified red-green cycle; Docusaurus generated 138 static files and Wrangler 4.103.0 read `kilobot-docs/build` and completed `deploy --dry-run` under Node v22.22.0 without the missing-directory error.
 - 2026-07-16 [TOOL] Broadcast History Convex pagination completed verified red-green backend, pagination-model, table, and modularity cycles; 12 focused tests and the complete 228-file/697-test suite passed, targeted ESLint passed, the TypeScript/Vite production build passed with only its existing chunk-size warning, `git diff --check` passed, and touched code files remained under 300 lines on Node v22.22.0.
 - 2026-07-16 [TOOL] Broadcast recipient Table/pagination completed three verified red-green checkpoints; 10 focused tests and the complete 224-file/688-test suite passed, targeted ESLint passed, the TypeScript/Vite production build completed with only its existing chunk-size warning, `git diff --check` passed, and touched code files measured 293/147/224/51 lines under Node v22.22.0.
 - 2026-07-15 [TOOL] Page-scoped Message Templates scrollbar suppression completed a verified red-green cycle; the focused test, TypeScript/Vite production build, and `git diff --check` passed under Node v22.22.0.
@@ -182,4 +189,3 @@
 - 2026-07-15 [TOOL] Single-attempt Workflow Follow-up cadence suppression completed a verified red-green cycle after reviewing current shadcn Popover/Command/Separator composition; the complete 600/600-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
 - 2026-07-15 [TOOL] Muted-neutral Workflow History status labels completed a verified red-green cycle after reviewing the official shadcn Badge API; the focused regression, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0, following the earlier complete 599/599-test verification.
 - 2026-07-15 [TOOL] Workpool-reason redaction completed a verified red-green cycle; the complete 599/599-test suite, TypeScript/Vite production build, targeted ESLint, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
-- 2026-07-15 [TOOL] Bordered white-surface Inbox booking labels, status indicator dots, and colored rails completed verified red-green cycles; 14 focused tests, targeted ESLint, TypeScript/Vite production build, `git diff --check`, and touched-code LOC checks passed under Node v22.22.0.
