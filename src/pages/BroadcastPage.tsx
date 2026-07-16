@@ -1,9 +1,8 @@
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
-import { Plus, Check, ChevronRight, X, Equal, Loader2, Trash2, MoreHorizontal } from 'lucide-react';
+import { Plus, Check, ChevronRight, X, Equal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
@@ -14,12 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
 import {
   BroadcastOverviewDialog,
@@ -29,11 +22,13 @@ import {
   BAN_GUIDE_META,
   WhatsAppBanGuideDialog,
 } from '@/components/WhatsAppBanGuideDialog';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
+import type { Id } from '../../convex/_generated/dataModel';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
+import { BroadcastHistoryTable } from '@/components/broadcast/BroadcastHistoryTable';
+import { BROADCAST_HISTORY_PAGE_SIZE } from '@/components/broadcast/broadcastHistoryPagination';
 
 
 
@@ -128,32 +123,27 @@ const CUSTOMER_STEPS = [
   2000, 3000, 4000, 5000, 10000, 15000, 20000, 25000, 50000, 75000, 100000
 ];
 
-function formatReplyRate(
-  messagesSentCount: number | undefined,
-  repliesReceivedCount: number | undefined,
-): string {
-  const sent = messagesSentCount ?? 0;
-  const replied = repliesReceivedCount ?? 0;
-  if (sent === 0) return '—';
-  return `${((replied / sent) * 100).toFixed(1)}%`;
-}
-
 export default function BroadcastPage() {
   const { agentId } = useParams();
-  const navigate = useNavigate();
   const { can } = usePermissions();
   const canManage = can(Permission.BROADCAST_MANAGE);
 
-  const schedules = useQuery(api.whatsappBroadcast.listSchedulesForAgent, {
-    agentId: agentId as any,
-  });
+  const { results: schedules, status, loadMore } = usePaginatedQuery(
+    api.whatsappBroadcast.listSchedulesForAgent,
+    { agentId: agentId as Id<'agents'> },
+    { initialNumItems: BROADCAST_HISTORY_PAGE_SIZE },
+  );
   const deleteSchedule = useMutation(api.whatsappBroadcast.deleteScheduleRecord);
 
 
 
-  const [deletingIds, setDeletingIds] = useState<string[]>([]);
+  const [deletingIds, setDeletingIds] = useState<
+    Id<'whatsappBroadcastSchedules'>[]
+  >([]);
 
-  const handleDelete = async (scheduleId: any) => {
+  const handleDelete = async (
+    scheduleId: Id<'whatsappBroadcastSchedules'>,
+  ) => {
     setDeletingIds((prev) => [...prev, scheduleId]);
     await new Promise((resolve) => setTimeout(resolve, 350));
     try {
@@ -174,7 +164,10 @@ export default function BroadcastPage() {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [calculatorCustomersIndex, setCalculatorCustomersIndex] = useState(13); // Default index for 5000
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [targetSchedule, setTargetSchedule] = useState<{ id: string; isPending: boolean } | null>(null);
+  const [targetSchedule, setTargetSchedule] = useState<{
+    id: Id<'whatsappBroadcastSchedules'>;
+    isPending: boolean;
+  } | null>(null);
 
   const calculatorCustomers = CUSTOMER_STEPS[calculatorCustomersIndex];
   const estimatedPrice = calculatorCustomers * MARKETING_RATE_MYR;
@@ -231,149 +224,18 @@ export default function BroadcastPage() {
         </div>
       </section>
 
-      {/* Bottom Part: Historical Broadcasts */}
-      <section className="flex flex-col gap-4 mt-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Broadcast History</h2>
-          <Separator className="mt-3" />
-        </div>
-
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-sm">
-              <thead>
-                <tr className="border-b border-border bg-muted/30">
-                  <th className="px-5 py-3.5 text-left align-middle font-semibold text-muted-foreground">Campaign Name</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Scheduled Time</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Recipients</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Status</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Reply rate</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Est. Cost</th>
-                  <th className="px-5 py-3.5 text-center align-middle font-semibold text-muted-foreground">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {schedules === undefined ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
-                      <div className="flex items-center justify-center gap-2">
-                        <Loader2 className="size-4 animate-spin text-primary" />
-                        Loading schedules...
-                      </div>
-                    </td>
-                  </tr>
-                ) : schedules.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-muted-foreground">
-                      No broadcast campaigns found.
-                    </td>
-                  </tr>
-                ) : (
-                  schedules.map((bc) => {
-                    const totalRecipients = bc.totalCount;
-                    const dateFormatted = new Date(bc.scheduledAt).toLocaleString([], {
-                      dateStyle: 'medium',
-                      timeStyle: 'short',
-                    });
-                    
-                    const statusBg = "border-neutral-200 bg-neutral-100/60 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-800/40 dark:text-neutral-300 font-medium";
-                    let statusDot = "bg-neutral-500";
-                    const statusLabel = bc.status.charAt(0).toUpperCase() + bc.status.slice(1);
-                    if (bc.status === 'completed') {
-                      statusDot = "bg-emerald-500";
-                    } else if (bc.status === 'processing') {
-                      statusDot = "bg-blue-500";
-                    } else if (bc.status === 'pending') {
-                      statusDot = "bg-amber-500";
-                    } else if (bc.status === 'failed') {
-                      statusDot = "bg-rose-500";
-                    } else if (bc.status === 'cancelled') {
-                      statusDot = "bg-neutral-400";
-                    }
-
-                    // Estimate cost (RM 0.3467 per template send)
-                    const costRm = totalRecipients * 0.3467;
-
-                    const isDeleting = deletingIds.includes(bc._id);
-
-                    return (
-                      <tr 
-                        key={bc._id} 
-                        onClick={() => navigate(`/dashboard/${agentId}/broadcast/${bc._id}`)}
-                        className={cn(
-                          "cursor-pointer transition-colors hover:bg-muted/10",
-                          isDeleting && "animate-row-delete pointer-events-none"
-                        )}
-                      >
-                        <td className="px-5 py-4 align-middle text-left font-semibold text-foreground truncate max-w-[200px]">
-                          {bc.templateName}
-                        </td>
-                        <td className="px-5 py-4 align-middle text-center text-muted-foreground">{dateFormatted}</td>
-                        <td className="px-5 py-4 align-middle text-center text-foreground">
-                          {bc.status === 'completed'
-                            ? `${bc.okCount ?? 0} / ${totalRecipients}`
-                            : totalRecipients}
-                        </td>
-                        <td className="px-5 py-4 align-middle text-center">
-                          <span className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold",
-                            statusBg
-                          )}>
-                            <span className={cn("size-1.5 rounded-full", statusDot)} />
-                            {statusLabel}
-                          </span>
-                        </td>
-                        <td className="px-5 py-4 align-middle text-center font-medium text-foreground">
-                          {formatReplyRate(
-                            bc.status === 'completed' ? bc.okCount : undefined,
-                            undefined,
-                          )}
-                        </td>
-                        <td className="px-5 py-4 align-middle text-center font-medium text-foreground">
-                          RM {costRm.toFixed(2)}
-                        </td>
-                        <td
-                          className="px-5 py-4 align-middle text-center"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {canManage ? (
-                            <div className="flex justify-center">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer"
-                                  title="Actions"
-                                >
-                                  <MoreHorizontal className="size-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setTargetSchedule({ id: bc._id, isPending: bc.status === 'pending' });
-                                    setConfirmDialogOpen(true);
-                                  }}
-                                  className="cursor-pointer font-medium text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                >
-                                  <Trash2 className="size-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            </div>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+      <BroadcastHistoryTable
+        agentId={agentId as Id<'agents'>}
+        schedules={schedules}
+        status={status}
+        loadMore={loadMore}
+        canManage={canManage}
+        deletingIds={deletingIds}
+        onDeleteRequest={(schedule) => {
+          setTargetSchedule(schedule);
+          setConfirmDialogOpen(true);
+        }}
+      />
 
       <BroadcastOverviewDialog
         open={isWalkthroughOpen}
