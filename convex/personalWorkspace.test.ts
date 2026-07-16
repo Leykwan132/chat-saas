@@ -48,7 +48,7 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   });
 
   // Setup database records
-  const { userDbId, teamId, agentId, channelId } = await t.run(async (ctx) => {
+  const { agentId, channelId } = await t.run(async (ctx) => {
     const userDbId = await ctx.db.insert("users", {
       workosUserId,
       email: "personal@example.com",
@@ -130,7 +130,7 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   });
 
   // 4. List WhatsApp broadcast candidates
-  const candidates = await testWithAuth.query(api.customers.listWhatsAppBroadcastCandidates, {
+  await testWithAuth.query(api.customers.listWhatsAppBroadcastCandidates, {
     channelId,
   });
   // Since there is no conversation yet, candidate list will have customerId = undefined but list the address
