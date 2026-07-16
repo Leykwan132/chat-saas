@@ -1,18 +1,8 @@
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
-import {
-  ArrowLeft,
-  Loader2,
-  Trash2,
-  Users,
-  AlertCircle,
-  LayoutList,
-} from 'lucide-react';
-import { SiWhatsapp } from 'react-icons/si';
+import { AlertCircle, ArrowLeft, LayoutList, Loader2, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
@@ -32,62 +22,12 @@ import {
   DetailSectionNav,
   type DetailSectionTab,
 } from '@/components/automation/DetailSectionNav';
-import { cn } from '@/lib/utils';
-
-function recipientStatusBadgeClass(label: string): {
-  badge: string;
-  dot: string;
-} {
-  const neutralBadge =
-    'border-neutral-200 bg-neutral-100/60 text-neutral-600 dark:border-neutral-800 dark:bg-neutral-800/40 dark:text-neutral-300 font-medium';
-
-  if (label === 'Delivered') {
-    return {
-      badge: neutralBadge,
-      dot: 'bg-emerald-500',
-    };
-  }
-  if (label === 'Failed') {
-    return {
-      badge: neutralBadge,
-      dot: 'bg-rose-500',
-    };
-  }
-  if (label === 'Scheduled') {
-    return {
-      badge: neutralBadge,
-      dot: 'bg-amber-500',
-    };
-  }
-  if (label === 'Sending') {
-    return {
-      badge: neutralBadge,
-      dot: 'bg-blue-500',
-    };
-  }
-  if (label === 'Cancelled') {
-    return {
-      badge: neutralBadge,
-      dot: 'bg-neutral-400',
-    };
-  }
-  return {
-    badge: neutralBadge,
-    dot: 'bg-neutral-500',
-  };
-}
+import { BroadcastDetailOverview } from '@/components/broadcast/BroadcastDetailOverview';
+import { BroadcastRecipientsTable } from '@/components/broadcast/BroadcastRecipientsTable';
 
 const BROADCAST_DETAIL_TABS: DetailSectionTab[] = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    icon: LayoutList,
-  },
-  {
-    id: 'recipients',
-    label: 'Recipients',
-    icon: Users,
-  },
+  { id: 'overview', label: 'Overview', icon: LayoutList },
+  { id: 'recipients', label: 'Recipients', icon: Users },
 ];
 
 function channelLabel(ch: {
@@ -280,203 +220,39 @@ export default function BroadcastDetailPage() {
         <div className="flex min-w-0 flex-col gap-6">
           <DetailSectionHeading title={activeTabMeta.label} />
 
-          {activeTab === 'overview' && (
-            <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)]">
-              <div className="flex min-w-0 flex-col">
-                {/* Stat cards */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Sent
-                    </span>
-                    <div className="mt-1 text-3xl font-semibold tabular-nums text-foreground">
-                      {sentCount !== undefined ? sentCount.toLocaleString() : totalRecipients.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Delivered
-                    </span>
-                    <div className="mt-1 text-3xl font-semibold tabular-nums text-foreground">
-                      {schedule.status === 'completed' && totalRecipients > 0
-                        ? `${Math.round(((schedule.okCount ?? 0) / totalRecipients) * 100)}%`
-                        : '—'}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 rounded-xl border border-border bg-card p-5 text-center">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Est. cost
-                    </span>
-                    <div className="mt-1 text-3xl font-semibold tabular-nums text-foreground">
-                      RM {costRm.toFixed(2)}
-                    </div>
-                  </div>
-                </div>
+          {activeTab === 'overview' ? (
+            <BroadcastDetailOverview
+              totalRecipients={totalRecipients}
+              sentCount={sentCount}
+              deliveredPercent={
+                schedule.status === 'completed' && totalRecipients > 0
+                  ? Math.round(
+                      ((schedule.okCount ?? 0) / totalRecipients) * 100,
+                    )
+                  : undefined
+              }
+              costRm={costRm}
+              channelLabel={channel ? channelLabel(channel) : '—'}
+              templateName={schedule.templateName}
+              templateLanguage={schedule.templateLanguage}
+              scheduledLabel={scheduledLabel}
+              deliverySummary={
+                schedule.status === 'completed'
+                  ? `${schedule.okCount ?? 0} sent · ${schedule.failCount ?? 0} failed`
+                  : `${totalRecipients} planned`
+              }
+              status={schedule.status}
+              errorMessage={schedule.errorMessage}
+              preview={whatsAppPreview}
+            />
+          ) : null}
 
-                <Separator className="my-8" />
-
-                <div className="flex w-full flex-col gap-8">
-                  {/* WhatsApp account */}
-                  <div className="flex max-w-xl flex-col gap-2.5">
-                    <Label className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                      <SiWhatsapp className="size-3.5 shrink-0 text-[#25D366]" aria-hidden />
-                      WhatsApp account
-                    </Label>
-                    <p className="m-0 text-sm font-semibold text-foreground">
-                      {channel ? channelLabel(channel) : '—'}
-                    </p>
-                  </div>
-
-                  {/* Template & Schedule / Recipients & Status */}
-                  <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8">
-                    <div className="w-full space-y-4 lg:col-span-5">
-                      <h3 className="text-base font-bold text-foreground">Message</h3>
-                      <div className="flex flex-col gap-2.5">
-                        <Label className="text-xs font-semibold text-foreground">Template</Label>
-                        <p className="m-0 text-sm font-semibold text-foreground font-mono">
-                          {schedule.templateName}
-                          <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                            ({schedule.templateLanguage})
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="w-full space-y-4 border-t border-border pt-6 lg:col-span-7 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
-                      <h3 className="text-base font-bold text-foreground">Delivery</h3>
-                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <div className="flex flex-col gap-2.5">
-                          <Label className="text-xs font-semibold text-foreground">Scheduled time</Label>
-                          <p className="m-0 text-sm font-semibold text-foreground">{scheduledLabel}</p>
-                        </div>
-                        <div className="flex flex-col gap-2.5">
-                          <Label className="text-xs font-semibold text-foreground">Recipients</Label>
-                          <p className="m-0 text-sm font-semibold text-foreground">
-                            {schedule.status === 'completed'
-                              ? `${schedule.okCount ?? 0} sent · ${schedule.failCount ?? 0} failed`
-                              : `${totalRecipients} planned`}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2.5">
-                          <Label className="text-xs font-semibold text-foreground">Status</Label>
-                          <p className="m-0 text-sm font-semibold text-foreground capitalize">
-                            {schedule.status}
-                          </p>
-                        </div>
-                        {schedule.errorMessage && (
-                          <div className="flex flex-col gap-2.5 sm:col-span-2">
-                            <Label className="text-xs font-semibold text-rose-600 dark:text-rose-400">Error</Label>
-                            <p className="m-0 text-sm font-semibold text-rose-600 dark:text-rose-400">
-                              {schedule.errorMessage}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full lg:justify-self-end lg:border-l lg:border-border lg:pl-8">
-                {whatsAppPreview}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'recipients' && (
-            <div className="overflow-hidden rounded-xl border border-border bg-card">
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="px-5 py-3.5 text-left font-semibold text-muted-foreground">
-                        Recipient
-                      </th>
-                      <th className="px-5 py-3.5 text-left font-semibold text-muted-foreground">
-                        Date & time
-                      </th>
-                      <th className="px-5 py-3.5 text-left font-semibold text-muted-foreground">
-                        Status
-                      </th>
-                      <th className="px-5 py-3.5 text-right font-semibold text-muted-foreground">
-                        Est. cost
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {recipientRows === null || recipientRows.length === 0 ? (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="px-5 py-8 text-center text-muted-foreground"
-                        >
-                          No recipients for this broadcast.
-                        </td>
-                      </tr>
-                    ) : (
-                      recipientRows.map((row) => {
-                        const dateLabel = new Date(row.sentAt).toLocaleString([], {
-                          dateStyle: 'medium',
-                          timeStyle: 'short',
-                        });
-                        const statusStyle = recipientStatusBadgeClass(row.deliveryLabel);
-
-                        return (
-                          <tr key={row.phone} className="hover:bg-muted/20">
-                            <td className="px-5 py-3.5 align-middle">
-                              <div className="font-medium text-foreground">
-                                {row.name ?? row.phone}
-                              </div>
-                              {row.name ? (
-                                <div className="mt-0.5 font-mono text-xs text-muted-foreground">
-                                  {row.phone}
-                                </div>
-                              ) : null}
-                            </td>
-                            <td className="px-5 py-3.5 align-middle text-foreground tabular-nums">
-                              {dateLabel}
-                            </td>
-                            <td className="px-5 py-3.5 align-middle">
-                              <span
-                                className={cn(
-                                  'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold',
-                                  statusStyle.badge,
-                                )}
-                              >
-                                <span
-                                  className={cn('size-1.5 rounded-full', statusStyle.dot)}
-                                />
-                                {row.deliveryLabel}
-                              </span>
-                            </td>
-                            <td className="px-5 py-3.5 align-middle text-right font-medium tabular-nums text-foreground">
-                              RM {row.estCostMyr.toFixed(2)}
-                            </td>
-                          </tr>
-                        );
-                      })
-                    )}
-                  </tbody>
-                  {recipientRows && recipientRows.length > 0 ? (
-                    <tfoot>
-                      <tr className="border-t border-border bg-muted/20">
-                        <td
-                          colSpan={3}
-                          className="px-5 py-3 text-right text-sm font-semibold text-muted-foreground"
-                        >
-                          Total ({recipientRows.length} recipients)
-                        </td>
-                        <td className="px-5 py-3 text-right text-sm font-semibold tabular-nums text-foreground">
-                          RM {costRm.toFixed(2)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  ) : null}
-                </table>
-              </div>
-            </div>
-          )}
-
+          {activeTab === 'recipients' ? (
+            <BroadcastRecipientsTable
+              rows={recipientRows ?? []}
+              totalCostMyr={costRm}
+            />
+          ) : null}
         </div>
       </div>
 

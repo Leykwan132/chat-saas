@@ -122,8 +122,8 @@ export function useWorkflowReminderSummary() {
     Number.isFinite(maxReminderCount) && maxReminderCount === 1
       ? 'reminder message'
       : 'reminder messages';
-  const estimateCost = reminderTemplate && Number.isFinite(maxReminderCount)
-    ? getWhatsAppRateForCategory(reminderTemplate.category) * maxReminderCount
+  const estimateCost = reminderTemplate
+    ? getWhatsAppRateForCategory(reminderTemplate.category)
     : undefined;
   const templateEstimate = estimateCost === undefined
     ? undefined
@@ -131,7 +131,7 @@ export function useWorkflowReminderSummary() {
       label: `~RM ${estimateCost.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-      })} / booked appointment`,
+      })} / reminder message`,
     };
   const messageCardLabel = reminderTemplate?.name ?? 'Choose message';
   const messageCardDetail = reminderTemplate

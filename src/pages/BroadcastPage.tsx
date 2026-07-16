@@ -75,7 +75,7 @@ export default function BroadcastPage() {
 
   return (
     <WhatsAppFeatureGate feature="Broadcast">
-      <div className="flex w-full flex-col gap-8">
+      <div data-broadcast-page className="flex w-full flex-col gap-8">
         <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-1.5">

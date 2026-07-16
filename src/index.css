@@ -40,16 +40,19 @@ body {
     font-family: var(--font-sans);
 }
 
-main:has([data-templates-page]) {
+main:has([data-templates-page]),
+main:has([data-broadcast-page]) {
     -ms-overflow-style: none;
     scrollbar-width: none;
 }
 
-main:has([data-templates-page])::-webkit-scrollbar {
+main:has([data-templates-page])::-webkit-scrollbar,
+main:has([data-broadcast-page])::-webkit-scrollbar {
     display: none;
 }
 
-html:has([data-templates-page]) body[data-scroll-locked] {
+html:has([data-templates-page]) body[data-scroll-locked],
+html:has([data-broadcast-page]) body[data-scroll-locked] {
     --removed-body-scroll-bar-size: 0px !important;
     margin-right: 0 !important;
 }
