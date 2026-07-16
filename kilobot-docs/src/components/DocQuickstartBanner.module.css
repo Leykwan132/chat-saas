@@ -85,7 +85,7 @@
 }
 
 .media {
-  display: flex;
+  display: none;
   flex-direction: column;
   justify-content: space-between;
   gap: 3.5rem;
@@ -177,6 +177,7 @@
   }
 
   .media {
+    display: flex;
     border-top: 0;
     min-height: 100%;
   }

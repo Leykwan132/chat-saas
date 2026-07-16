@@ -101,6 +101,16 @@ test('matches the product header spacing between the icon and title', () => {
   assert.ok(productHeader.includes('items-center gap-2'));
   assert.match(navbarCss, /\.navbar__brand \{[\s\S]*gap: 8px;[\s\S]*\}/);
   assert.match(navbarCss, /\.navbar__logo \{[\s\S]*margin-right: 0;[\s\S]*\}/);
+  assert.ok(navbarCss.includes('.navbar__toggle svg'));
+  assert.ok(navbarCss.includes('.navbar-sidebar__back'));
+  assert.match(
+    navbarCss,
+    /\.navbar-sidebar__back \{[\s\S]*display: none;/,
+  );
+  assert.match(
+    navbarCss,
+    /@media \(max-width: 996px\) \{[\s\S]*\.navbar__brand \{[\s\S]*display: none;/,
+  );
 });
 
 test('opens the documentation shell at the root without a custom home page', () => {

@@ -8,8 +8,6 @@ function readSource(relativePath: string) {
 
 const docsLinksSource = readSource('./docsLinks.ts');
 const headerLinksSource = readSource('../components/site-header/siteHeaderLinks.ts');
-const desktopNavigationSource = readSource('../components/site-header/SiteHeaderNavigation.tsx');
-const mobileNavigationSource = readSource('../components/site-header/SiteHeaderActions.tsx');
 const footerSource = readSource('../components/SiteFooter.tsx');
 const supportSource = readSource('../components/SupportHoverCard.tsx');
 
@@ -17,14 +15,11 @@ test('defines the canonical public KiloBot help center URL', () => {
   expect(docsLinksSource).toContain("export const KILOBOT_DOCS_URL = 'https://docs.kilobot.app'");
 });
 
-test('links the public desktop, mobile, and footer navigation to Docs', () => {
-  expect(headerLinksSource).toContain("label: 'Docs'");
-  expect(headerLinksSource).toContain('KILOBOT_DOCS_URL');
-  expect(desktopNavigationSource).toContain("link.external ? (");
-  expect(desktopNavigationSource).toContain('<a');
-  expect(mobileNavigationSource).toContain("link.external ? (");
-  expect(mobileNavigationSource).toContain('<a');
+test('keeps Docs in the footer and out of the site header', () => {
+  expect(headerLinksSource).not.toContain("label: 'Docs'");
+  expect(headerLinksSource).not.toContain('KILOBOT_DOCS_URL');
   expect(footerSource).toContain('href={KILOBOT_DOCS_URL}');
+  expect(footerSource).toContain('Docs');
 });
 
 test('offers the help center from authenticated support', () => {
