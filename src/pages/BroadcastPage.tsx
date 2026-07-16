@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
-import { Plus, Check, ChevronRight, X, Equal } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
@@ -13,7 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
 import {
   BroadcastOverviewDialog,
   OVERVIEW_VARIANT_META,
@@ -29,99 +28,8 @@ import { toast } from 'sonner';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
 import { BroadcastHistoryTable } from '@/components/broadcast/BroadcastHistoryTable';
 import { BROADCAST_HISTORY_PAGE_SIZE } from '@/components/broadcast/broadcastHistoryPagination';
-
-
-
-interface BookCardProps {
-  tag: string;
-  title: React.ReactNode;
-  onClick?: () => void;
-  to?: string;
-  disabled?: boolean;
-  isDark?: boolean;
-}
-
-function BookCard({ tag, title, onClick, to, disabled, isDark }: BookCardProps) {
-  const cardContent = (
-    <>
-      {/* Book Body (Inside Pages/Back) - Single container instead of a growing-smaller stack */}
-      <div className="absolute inset-0 rounded-r-[14px] rounded-l-sm bg-white dark:bg-[#1a1a1a] border border-neutral-200/80 dark:border-neutral-800/80 shadow-inner z-0 transition-transform duration-500 ease-out group-hover:translate-x-1.5" />
-
-      {/* Front Cover */}
-      <div 
-        style={{ transformOrigin: 'left center', transformStyle: 'preserve-3d' }}
-        className={`absolute inset-0 rounded-r-[14px] rounded-l-sm border pl-[25px] pr-3.5 py-3.5 flex flex-col justify-between transition-transform duration-500 ease-out group-hover:[transform:rotateY(-24deg)] z-20 shadow-md group-hover:shadow-lg origin-left ${
-          isDark 
-            ? 'bg-neutral-950 dark:bg-black border-neutral-900 text-white' 
-            : 'bg-[#fafafa] dark:bg-[#202020] border-neutral-200/80 dark:border-neutral-800/80 text-neutral-800 dark:text-neutral-100'
-        }`}
-      >
-        <div className="flex flex-col gap-2">
-          {/* App Logo */}
-          <img 
-            src="/icon.svg" 
-            className={`size-5 shrink-0 ${isDark ? 'invert' : 'dark:invert'}`} 
-            alt="App Logo" 
-          />
-          <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[9px] font-semibold border ${
-            isDark 
-              ? 'bg-neutral-900 text-neutral-400 border-neutral-800/50' 
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border-neutral-200/30 dark:border-neutral-700/30'
-          }`}>
-            {tag}
-          </span>
-        </div>
-        <h3 className={`text-sm font-semibold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-neutral-800 dark:text-neutral-100'}`}>
-          {title}
-        </h3>
-
-        {/* Binder / spine crease */}
-        {/* 1. Binder spine gradient shadow */}
-        <div className={`absolute left-0 top-0 bottom-0 w-[17px] rounded-l-sm bg-gradient-to-r pointer-events-none ${
-          isDark 
-            ? 'from-white/[0.04] via-transparent to-black/[0.3]' 
-            : 'from-black/[0.08] via-transparent to-black/[0.12] dark:from-white/[0.03] dark:to-black/[0.2]'
-        }`} />
-        {/* 2. Spine crease line */}
-        <div className={`absolute left-[17px] top-0 bottom-0 w-[1px] pointer-events-none ${
-          isDark ? 'bg-neutral-800/80' : 'bg-neutral-300/60 dark:bg-neutral-800/60'
-        }`} />
-        {/* 3. Highlight adjacent to crease */}
-        <div className={`absolute left-[18px] top-0 bottom-0 w-[1px] pointer-events-none ${
-          isDark ? 'bg-white/[0.02]' : 'bg-white/50 dark:bg-white/[0.02]'
-        }`} />
-      </div>
-    </>
-  );
-
-  if (to) {
-    return (
-      <Link 
-        to={to} 
-        className={`group relative select-none w-[140px] h-[182px] [perspective:1000px] block ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-      >
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return (
-    <div 
-      onClick={disabled ? undefined : onClick}
-      className={`group relative select-none w-[140px] h-[182px] [perspective:1000px] ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-    >
-      {cardContent}
-    </div>
-  );
-}
-
-// Estimated pricing based on WhatsApp Marketing conversation rates in Malaysia (RM 0.3467)
-const MARKETING_RATE_MYR = 0.3467;
-
-const CUSTOMER_STEPS = [
-  100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
-  2000, 3000, 4000, 5000, 10000, 15000, 20000, 25000, 50000, 75000, 100000
-];
+import { BroadcastGuideCard } from '@/components/broadcast/BroadcastGuideCard';
+import { BroadcastCostCalculatorDialog } from '@/components/broadcast/BroadcastCostCalculatorDialog';
 
 export default function BroadcastPage() {
   const { agentId } = useParams();
@@ -134,8 +42,6 @@ export default function BroadcastPage() {
     { initialNumItems: BROADCAST_HISTORY_PAGE_SIZE },
   );
   const deleteSchedule = useMutation(api.whatsappBroadcast.deleteScheduleRecord);
-
-
 
   const [deletingIds, setDeletingIds] = useState<
     Id<'whatsappBroadcastSchedules'>[]
@@ -156,27 +62,21 @@ export default function BroadcastPage() {
     }
   };
 
-  // Dialog States
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
   const [isBanGuideOpen, setIsBanGuideOpen] = useState(false);
   const [banGuideStep, setBanGuideStep] = useState(0);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
-  const [calculatorCustomersIndex, setCalculatorCustomersIndex] = useState(13); // Default index for 5000
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [targetSchedule, setTargetSchedule] = useState<{
     id: Id<'whatsappBroadcastSchedules'>;
     isPending: boolean;
   } | null>(null);
 
-  const calculatorCustomers = CUSTOMER_STEPS[calculatorCustomersIndex];
-  const estimatedPrice = calculatorCustomers * MARKETING_RATE_MYR;
-
   return (
     <WhatsAppFeatureGate feature="Broadcast">
-    <div className="flex w-full flex-col gap-8">
-      {/* Page Header */}
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+      <div className="flex w-full flex-col gap-8">
+        <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
@@ -190,39 +90,43 @@ export default function BroadcastPage() {
           <div className="flex shrink-0">
             <Button asChild className="gap-1.5 font-semibold">
               <Link to={`/dashboard/${agentId}/broadcast/new`}>
-                <Plus className="size-4" />
+                <Plus data-icon="inline-start" />
                 New broadcast
               </Link>
             </Button>
           </div>
         )}
-      </header>
+        </header>
 
-      {/* Top Part: Interactive book cards */}
-      <section className="flex flex-col gap-4">
+        <section className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
         <div className="flex flex-wrap items-end gap-6 max-w-[920px]">
-          <BookCard
+          <BroadcastGuideCard
             tag={OVERVIEW_VARIANT_META.broadcast.tag}
             title={OVERVIEW_VARIANT_META.broadcast.bookTitle}
-            onClick={() => { setWalkthroughStep(0); setIsWalkthroughOpen(true); }}
+            onClick={() => {
+              setWalkthroughStep(0);
+              setIsWalkthroughOpen(true);
+            }}
           />
 
-          <BookCard
+          <BroadcastGuideCard
             tag={BAN_GUIDE_META.tag}
             title={BAN_GUIDE_META.bookTitle}
-            onClick={() => { setBanGuideStep(0); setIsBanGuideOpen(true); }}
+            onClick={() => {
+              setBanGuideStep(0);
+              setIsBanGuideOpen(true);
+            }}
           />
 
-          {/* Estimate Cost Calculator */}
-          <BookCard
+          <BroadcastGuideCard
             tag="Calculator"
             title="Cost Calculator"
             onClick={() => setIsCalculatorOpen(true)}
           />
 
         </div>
-      </section>
+        </section>
 
       <BroadcastHistoryTable
         agentId={agentId as Id<'agents'>}
@@ -252,138 +156,13 @@ export default function BroadcastPage() {
         onStepChange={setBanGuideStep}
       />
 
-      {/* Cost Estimator Calculator Dialog */}
-      <Dialog open={isCalculatorOpen} onOpenChange={setIsCalculatorOpen}>
-        <DialogContent className="sm:max-w-[680px] rounded-3xl bg-white dark:bg-[#121212] border border-border/60 p-8">
-          <DialogHeader className="mb-2">
-            <DialogTitle className="text-3xl font-semibold tracking-tight text-foreground">
-              Cost Calculator
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-5">
-              {/* Slider 1: Number of Customers */}
-              <div className="flex flex-col gap-3">
-                <div className="flex justify-between items-baseline">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Number of Customers
-                  </h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-semibold tracking-tight text-foreground">
-                      {calculatorCustomers.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-muted-foreground font-semibold">
-                      {calculatorCustomers === 1 ? 'customer' : 'customers'}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <Slider
-                    value={[calculatorCustomersIndex]}
-                    onValueChange={(val) => setCalculatorCustomersIndex(val[0])}
-                    min={0}
-                    max={CUSTOMER_STEPS.length - 1}
-                    step={1}
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground/80 font-semibold mt-0.5">
-                    <span>100</span>
-                    <span>100k</span>
-                  </div>
-                </div>
-              </div>
+      <BroadcastCostCalculatorDialog
+        open={isCalculatorOpen}
+        onOpenChange={setIsCalculatorOpen}
+        agentId={agentId as Id<'agents'>}
+        canManage={canManage}
+      />
 
-            </div>
- 
-             {/* Layout box identical to the user mockup screenshot */}
-             <div className="rounded-3xl border border-border bg-white dark:bg-[#1a1a1a] p-6 flex flex-col gap-6">
-                <div className="flex items-start justify-between">
-                  {/* Total Messages */}
-                  <div className="flex flex-col shrink-0">
-                    <span className="text-lg font-medium tracking-tight text-foreground whitespace-nowrap">
-                      {calculatorCustomers.toLocaleString()}
-                    </span>
-                    <span className="text-xs text-muted-foreground/80 mt-1 whitespace-nowrap">
-                      Total Messages
-                    </span>
-                  </div>
-
-                  <X className="size-3.5 text-muted-foreground/60 shrink-0" />
-
-                  {/* Rate per message */}
-                  <div className="flex flex-col shrink-0">
-                    <span className="text-lg font-medium tracking-tight text-foreground whitespace-nowrap">
-                      ~ RM 0.3467
-                    </span>
-                    <span className="text-xs text-muted-foreground/80 mt-1 whitespace-nowrap">
-                      Est. Rate / Msg
-                    </span>
-                  </div>
-
-                  <Equal className="size-3.5 text-muted-foreground/60 shrink-0" />
-
-                  {/* Final estimated cost — largest and boldest */}
-                  <div className="flex flex-col items-end shrink-0">
-                    <span className="text-3xl font-semibold tracking-tight text-foreground whitespace-nowrap">
-                      ~ RM {estimatedPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </span>
-                    <span className="text-xs text-muted-foreground mt-1 whitespace-nowrap">Est. Total Cost</span>
-                  </div>
-                </div>
- 
-               <div className="border-t border-border/60 pt-4">
-                 <p className="text-sm text-foreground leading-relaxed">
-                   We will broadcast to <strong className="font-semibold">{calculatorCustomers.toLocaleString()}</strong> customers.
-                 </p>
-               </div>
-
-              {canManage ? (
-                <Button asChild className="w-full bg-[#1a1a1a] text-white hover:bg-black dark:bg-white dark:text-black dark:hover:bg-neutral-200 rounded-xl h-11 text-sm font-semibold">
-                  <Link to={`/dashboard/${agentId}/broadcast/new`} onClick={() => setIsCalculatorOpen(false)}>
-                    Get started
-                  </Link>
-                </Button>
-              ) : (
-                <Button disabled className="w-full rounded-xl h-11 text-sm font-semibold">
-                  Get started
-                </Button>
-              )}
-
-              <ul className="flex flex-col gap-2.5 pt-2">
-                <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                  <div className="flex size-4 shrink-0 items-center justify-center text-foreground mt-0.5">
-                    <Check className="size-3 stroke-[2.5]" />
-                  </div>
-                  <span>
-                    Based on official WhatsApp marketing rate (RM 0.3467 / message). See{' '}
-                    <a 
-                      href="https://whatsappbusiness.com/products/platform-pricing/?country=Malaysia&currency=Malaysian%20Ringgit%20(MYR)&category=Marketing"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-foreground hover:underline inline-flex items-center gap-0.5 font-semibold"
-                    >
-                      Official WhatsApp Pricing <ChevronRight className="size-2.5" />
-                    </a>
-                  </span>
-                </li>
-                <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                  <div className="flex size-4 shrink-0 items-center justify-center text-foreground mt-0.5">
-                    <Check className="size-3 stroke-[2.5]" />
-                  </div>
-                  <span>RM0 platform fee — pay exactly what Meta charges you</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-xs text-muted-foreground">
-                  <div className="flex size-4 shrink-0 items-center justify-center text-foreground mt-0.5">
-                    <Check className="size-3 stroke-[2.5]" />
-                  </div>
-                  <span>Billed directly by Meta (no payment through Kilobot)</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Confirm Action Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent className="rounded-3xl bg-white dark:bg-[#121212] border border-border/60 p-6 sm:max-w-md">
           <DialogHeader>
@@ -444,7 +223,7 @@ export default function BroadcastPage() {
           animation: row-delete 350ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
       `}</style>
-    </div>
+      </div>
     </WhatsAppFeatureGate>
   );
 }
