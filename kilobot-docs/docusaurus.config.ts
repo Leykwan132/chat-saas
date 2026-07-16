@@ -24,7 +24,7 @@ const config: Config = {
     },
   ],
   stylesheets: [
-    'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Gilda+Display&display=swap',
+    'https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&family=Gilda+Display&display=swap',
   ],
   organizationName: 'kilobot',
   projectName: 'kilobot-docs',
@@ -43,7 +43,7 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
           breadcrumbs: false,
-          showLastUpdateTime: true,
+          showLastUpdateTime: false,
         },
         blog: false,
         theme: {
@@ -51,6 +51,7 @@ const config: Config = {
             './src/css/custom.css',
             './src/css/navbar.css',
             './src/css/toc.css',
+            './src/css/pagination.css',
           ],
         },
         sitemap: {

@@ -1,20 +1,18 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import {existsSync, readFileSync} from 'node:fs';
+import {test} from 'node:test';
+import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const requiredDocs = [
   'docs/start-here/welcome.mdx',
-  'docs/start-here/core-concepts.mdx',
   'docs/start-here/launch-guide.mdx',
   'docs/start-here/workspaces-and-agents.mdx',
   'docs/build-your-agent/agent-setup.mdx',
   'docs/build-your-agent/knowledge-base.mdx',
   'docs/automate/workflow-overview.mdx',
-  'docs/automate/workflow-actions.mdx',
   'docs/automate/reminders.mdx',
   'docs/automate/follow-ups.mdx',
   'docs/channels/connect-channels.mdx',
@@ -35,20 +33,46 @@ const requiredDocs = [
   'docs/help/contact-support.mdx',
 ];
 
+const coreConceptDocs = [
+  'build-your-agent/agent-setup',
+  'build-your-agent/knowledge-base',
+  'automate/workflow-overview',
+  'bookings/services',
+  'bookings/availability',
+  'channels/connect-channels',
+];
+
+const resourceDocs = [
+  'engage/inbox',
+  'engage/contacts',
+  'bookings/calendar',
+  'engage/message-templates',
+  'automate/reminders',
+  'automate/follow-ups',
+  'engage/quick-replies',
+  'engage/broadcast',
+  'team/workspace-and-team',
+  'team/roles-and-permissions',
+  'team/lead-assignment',
+  'insights/overview-and-analytics',
+  'insights/usage-and-billing',
+];
+
 const requiredSidebarLabels = [
   'Getting started',
-  'AI agent',
-  'Workflow automation',
-  'Channels',
-  'Bookings',
-  'Inbox and engagement',
-  'Team management',
-  'Insights and billing',
+  'Core Concepts',
+  'Resources',
   'Help and support',
 ];
 
 function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
+}
+
+function sidebarItemsBlock(sidebar, label) {
+  return sidebar.match(
+    new RegExp(`label: '${label}',[\\s\\S]*?items: \\[([\\s\\S]*?)\\],`),
+  )?.[1];
 }
 
 test('ships every required product guide with useful front matter', () => {
@@ -57,7 +81,43 @@ test('ships every required product guide with useful front matter', () => {
     const source = read(relativePath);
     assert.match(source, /^---\n[\s\S]*title: .+[\s\S]*description: .+[\s\S]*---/);
     assert.ok(source.split(/\s+/).length >= 90, `${relativePath} is too thin`);
+    if (relativePath !== 'docs/start-here/welcome.mdx') {
+      assert.ok(
+        source.includes('## Overview'),
+        `${relativePath} is missing ## Overview`,
+      );
+    }
   }
+  assert.equal(existsSync(path.join(root, 'docs/start-here/core-concepts.mdx')), false);
+  assert.equal(existsSync(path.join(root, 'docs/automate/workflow-actions.mdx')), false);
+  assert.ok(
+    read('docs/automate/workflow-overview.mdx').includes('## Choose an action type'),
+  );
+});
+
+test('keeps Core Concepts to the essentials and the rest in Resources', () => {
+  const sidebar = read('sidebars.ts');
+  const coreBlock = sidebarItemsBlock(sidebar, 'Core Concepts');
+  const resourceBlock = sidebarItemsBlock(sidebar, 'Resources');
+  assert.ok(coreBlock, 'Core Concepts items block is missing');
+  assert.ok(resourceBlock, 'Resources items block is missing');
+
+  const coreIds = [...coreBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+  assert.equal(coreIds.length, coreConceptDocs.length);
+  assert.deepEqual(coreIds, coreConceptDocs);
+  for (const docId of coreConceptDocs) {
+    assert.ok(coreBlock.includes(`'${docId}'`), `Core Concepts missing ${docId}`);
+  }
+  for (const docId of resourceDocs) {
+    assert.ok(resourceBlock.includes(`'${docId}'`), `Resources missing ${docId}`);
+    assert.equal(
+      coreBlock.includes(`'${docId}'`),
+      false,
+      `${docId} should not be in Core Concepts`,
+    );
+  }
+  assert.equal(coreBlock.includes('team/workspace-and-team'), false);
+  assert.equal(coreBlock.includes('team/roles-and-permissions'), false);
 });
 
 test('uses an explicit task-oriented sidebar', () => {

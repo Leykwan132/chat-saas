@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-16 [CODE] Docs use Geist for all UI/content (no Gilda/Google Sans Flex); Core Concepts = agent flow; Resources = the rest; not committed/deployed.
 - 2026-07-16 [TOOL] Help center + product docs links shipped on `main` as `82647f72`; site og/twitter use `preview-image-v2.png`; docs not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` Welcome: dark “Start here” banner (copy + CTAs only), path grid, resource row; roomier page/card padding; no Next pagination; docs tests + build pass, not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` guide copy was tightened (deduped billing/prereqs, fixed Usage labels, removed filler), the `Docs` label uses a muted rounded badge beside the wordmark, and search uses a compact Algolia detached control styled to the zinc chrome; 16/16 docs tests and build pass, not deployed.

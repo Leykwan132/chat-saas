@@ -47,12 +47,12 @@ test('uses a Docs brand pill instead of Guides and Core concepts navbar links', 
   assert.ok(read(navbarLogoStylesPath).includes('align-items: center'));
 });
 
-test('uses Google Sans Flex for body text and dashboard-aligned color tokens', () => {
+test('uses Geist for body text and dashboard-aligned color tokens', () => {
   const css = read('src/css/custom.css');
 
-  assert.match(css, /--ifm-font-family-base:\s*"Google Sans Flex"/);
+  assert.match(css, /--ifm-font-family-base:\s*"Geist"/);
   assert.equal(css.includes('Open Sans'), false);
-  assert.equal(css.includes('Geist'), false);
+  assert.equal(css.includes('Google Sans Flex'), false);
   assert.equal(css.includes('Inter,'), false);
   assert.ok(css.includes('--ifm-font-color-secondary: #71717a'));
   assert.ok(css.includes('--ifm-background-color: #212121'));
@@ -77,20 +77,22 @@ test('styles the top bar like the product header chrome', () => {
   assert.ok(navbarCss.includes('height: 2.25rem'));
 });
 
-test('uses Gilda for the Kilobot title and Google Sans Flex for docs content', () => {
+test('uses Geist for docs content and Gilda for Kilobot marketing titles', () => {
   const config = read('docusaurus.config.ts');
   const css = read('src/css/custom.css');
   const navbarCss = read('src/css/navbar.css');
-  const productCss = read('../src/index.css');
+  const bannerCss = read('src/components/DocQuickstartBanner.module.css');
   const docsFontsUrl =
-    'https://fonts.googleapis.com/css2?family=Google+Sans+Flex:opsz,wght@6..144,1..1000&family=Gilda+Display&display=swap';
+    'https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&family=Gilda+Display&display=swap';
 
   assert.ok(config.includes(docsFontsUrl));
   assert.ok(config.includes("rel: 'preconnect'"));
   assert.equal(config.includes('family=Open+Sans'), false);
-  assert.ok(productCss.includes('--font-title: "Gilda Display", serif;'));
+  assert.equal(config.includes('Google+Sans+Flex'), false);
   assert.ok(css.includes('--kilobot-font-title: "Gilda Display", serif;'));
-  assert.match(css, /--ifm-font-family-base:\s*"Google Sans Flex"/);
+  assert.match(css, /--ifm-font-family-base:\s*"Geist"/);
+  assert.match(navbarCss, /\.navbar__title \{[\s\S]*font-family: var\(--kilobot-font-title\);/);
+  assert.ok(bannerCss.includes('font-family: var(--kilobot-font-title)'));
   assert.match(navbarCss, /\.navbar__title \{[\s\S]*font-size: 20px;[\s\S]*font-weight: 600;[\s\S]*\}/);
 });
 
@@ -134,11 +136,12 @@ test('opens the documentation shell at the root without a custom home page', () 
   assert.ok(welcome.includes('DocPathGrid'));
   assert.ok(welcome.includes('DocPathTile'));
   assert.equal(welcome.includes('DocResourceRow'), false);
-  assert.ok(welcome.includes('pagination_next: null'));
+  assert.equal(welcome.includes('pagination_next: null'), false);
   assert.ok(welcome.includes('pagination_prev: null'));
   assert.ok(welcome.includes('hide_table_of_contents: true'));
   assert.ok(welcome.includes("to: '/start-here/launch-guide'"));
-  assert.ok(welcome.includes('to="/start-here/core-concepts"'));
+  assert.ok(welcome.includes('to="/build-your-agent/agent-setup"'));
+  assert.ok(welcome.includes('title="Core Concepts"'));
   assert.ok(welcome.includes('from \'lucide-react\''));
   assert.equal(existsSync(path.join(root, 'src/pages/index.tsx')), false);
   assert.equal(existsSync(path.join(root, 'src/pages/index.module.css')), false);
@@ -148,11 +151,31 @@ test('opens the documentation shell at the root without a custom home page', () 
 
 test('scopes circular step badges and ships path/card components', () => {
   const css = read('src/css/custom.css');
+  const paginationCss = read('src/css/pagination.css');
   const launchGuide = read('docs/start-here/launch-guide.mdx');
   const packageJson = read('package.json');
 
   assert.ok(css.includes('.theme-doc-markdown ol.steps'));
   assert.equal(css.includes('.theme-doc-markdown ol > li::before'), false);
+  assert.ok(
+    paginationCss.includes(
+      ".pagination-nav__link--prev .pagination-nav__label::before",
+    ),
+  );
+  assert.ok(paginationCss.includes("content: '← '"));
+  assert.ok(paginationCss.includes("content: ' →'"));
+  assert.match(
+    paginationCss,
+    /\.pagination-nav__label \{[\s\S]*font-weight: 600;/,
+  );
+  assert.match(
+    paginationCss,
+    /\.pagination-nav__sublabel \{[\s\S]*font-weight: 500;/,
+  );
+  assert.match(
+    paginationCss,
+    /\.pagination-nav__link,\s*\.pagination-nav__link:hover \{[\s\S]*border: none;/,
+  );
   assert.ok(launchGuide.includes('className="steps"'));
   assert.ok(packageJson.includes('"lucide-react"'));
   assert.equal(existsSync(path.join(root, 'src/components/DocPathGrid.tsx')), true);
@@ -180,6 +203,7 @@ test('uses heading hierarchy with an unlabeled page outline', () => {
   assert.ok(config.includes('tableOfContents:'));
   assert.ok(config.includes('maxHeadingLevel: 4'));
   assert.ok(config.includes('./src/css/toc.css'));
+  assert.ok(config.includes('./src/css/pagination.css'));
   assert.equal(tocButton.includes('On this page'), false);
   assert.ok(tocButton.includes('aria-label="Page sections"'));
   assert.equal(tocCss.includes('display: none'), false);
@@ -223,6 +247,7 @@ test('keeps all new code modules below the workspace limit', () => {
     'src/css/custom.css',
     'src/css/navbar.css',
     'src/css/toc.css',
+    'src/css/pagination.css',
     'src/theme/Navbar/Logo/index.tsx',
     'src/theme/Navbar/Logo/styles.module.css',
     'src/theme/TOCCollapsible/CollapseButton/index.tsx',
