@@ -186,7 +186,9 @@ test("Personal Workspace Broadcast & Template Flow", async () => {
   // 7. Verify listing schedules for agent
   const schedulesList = await testWithAuth.query(api.whatsappBroadcast.listSchedulesForAgent, {
     agentId,
+    paginationOpts: { numItems: 10, cursor: null },
   });
-  expect(schedulesList.length).toBe(1);
-  expect(schedulesList[0]._id).toBe(scheduleId);
+  expect(schedulesList.page).toHaveLength(1);
+  expect(schedulesList.page[0]._id).toBe(scheduleId);
+  expect(schedulesList.isDone).toBe(true);
 });

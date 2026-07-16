@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { paginationOptsValidator } from "convex/server";
 import {
   action,
   mutation,
@@ -282,7 +283,10 @@ export const getBroadcastEstimateUnitUsd = action({
 });
 
 export const listSchedulesForAgent = query({
-  args: { agentId: v.id("agents") },
+  args: {
+    agentId: v.id("agents"),
+    paginationOpts: paginationOptsValidator,
+  },
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
     await assertAgentInOrg(ctx, args.agentId, orgId, userId);
@@ -291,7 +295,7 @@ export const listSchedulesForAgent = query({
       .query("whatsappBroadcastSchedules")
       .withIndex("by_agentId_and_scheduledAt", (q) => q.eq("agentId", args.agentId))
       .order("desc")
-      .take(100);
+      .paginate(args.paginationOpts);
   },
 });
 
