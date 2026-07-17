@@ -20,18 +20,20 @@ test('shows primary Save and destructive Discard changes actions only for dirty 
   expect(toolbarSource).not.toContain('text-destructive');
 });
 
-test('uses fully clickable horizontal template cards with Try now cues', () => {
+test('uses fully clickable horizontal template cards with Preview cues', () => {
   expect(templateSource).toContain('side="top"');
   expect(templateSource).toContain('CardFooter');
   expect(templateSource).toContain('grid grid-cols-3 gap-3');
   expect(templateSource).toContain('w-[min(33.6rem,calc(100vw-2rem))]');
-  expect(templateSource).toContain("import { ArrowRight, LayoutTemplate } from 'lucide-react'");
+  expect(templateSource).toContain("import { Eye, LayoutTemplate } from 'lucide-react'");
   expect(templateSource).toContain('role="button"');
   expect(templateSource).toContain('tabIndex={0}');
-  expect(templateSource).toContain('onClick={() => applyTemplate(template)}');
+  expect(templateSource).toContain('onClick={() => previewTemplate(template)}');
   expect(templateSource).toContain('onKeyDown={(event) => handleTemplateKeyDown(event, template)}');
-  expect(templateSource).toContain('Try now');
-  expect(templateSource).toContain('<ArrowRight data-icon="inline-end" />');
+  expect(templateSource).toContain('Preview');
+  expect(templateSource).not.toContain('Try now');
+  expect(templateSource).toContain('<Eye data-icon="inline-start" />');
+  expect(templateSource).toContain('aria-label={`Preview ${template.name} template`}');
   expect(templateSource).not.toContain('Replace current');
   expect(templateSource).not.toContain('Message enters');
   expect(templateSource).not.toContain('template.graph.nodes.length');

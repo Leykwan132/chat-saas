@@ -28,6 +28,7 @@ type WorkflowToolbarProps = {
   cleanupDisabled?: boolean;
   arrangeDisabled?: boolean;
   arrangeLoading?: boolean;
+  templatesDisabled?: boolean;
   showCleanup?: boolean;
   showTemplates?: boolean;
 };
@@ -42,6 +43,7 @@ export function WorkflowToolbar({
   cleanupDisabled = false,
   arrangeDisabled = false,
   arrangeLoading = false,
+  templatesDisabled = false,
   showCleanup = true,
   showTemplates = true,
 }: WorkflowToolbarProps) {
@@ -90,7 +92,12 @@ export function WorkflowToolbar({
               Cleanup
             </Button>
           ) : null}
-          {showTemplates ? <WorkflowTemplateHoverCard onReplace={onTemplateApply} /> : null}
+          {showTemplates ? (
+            <WorkflowTemplateHoverCard
+              disabled={templatesDisabled}
+              onPreview={onTemplateApply}
+            />
+          ) : null}
           <Button
             type="button"
             variant="ghost"

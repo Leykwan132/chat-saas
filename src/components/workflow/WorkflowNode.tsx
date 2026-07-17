@@ -32,7 +32,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           targetHandleClassName,
           isVertical ? verticalTargetHandleClassName : horizontalTargetHandleClassName,
         )}
-        isConnectable={!isEntry}
+        isConnectable={!isEntry && !data.disabled}
       />
       <div
         className={cn(
@@ -71,6 +71,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
         <div className="nodrag nopan absolute left-full top-1/2 z-20 ml-4 flex -translate-y-1/2 items-center gap-2">
           {!isTerminal ? (
             <WorkflowAddNodeMenu
+              disabled={data.disabled}
               onSelect={(kind) => data.onAddNode(data.nodeId, kind)}
             />
           ) : null}
@@ -80,6 +81,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
               variant="outline"
               size="icon"
               className="cursor-pointer rounded-xl border-destructive bg-destructive text-white hover:bg-destructive/90 hover:text-white"
+              disabled={data.disabled}
               onClick={(event) => {
                 event.stopPropagation();
                 data.onRemoveNode(data.nodeId);

@@ -1,121 +1,167 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Navigate, useBlocker, useParams } from 'react-router';
-import { useMutation, useQuery } from 'convex/react';
-import { toast } from 'sonner';
-import type { Id } from '../../convex/_generated/dataModel';
-import { api } from '../../convex/_generated/api';
-import type { AddableWorkflowNodeKind } from '../../shared/workflows';
-import { Permission } from '../../shared/permissions';
-import { UnsavedChangesDialog } from '@/components/agent-setup/UnsavedChangesDialog';
-import { WorkflowCanvas } from '@/components/workflow/WorkflowCanvas';
-import { WorkflowInspector } from '@/components/workflow/WorkflowInspector';
-import { WorkflowPageSkeleton } from '@/components/workflow/WorkflowPageSkeleton';
-import { workflowGraphToFlow } from '@/components/workflow/workflowFlowModel';
-import { getNextWorkflowLayoutOrientation } from '@/components/workflow/workflowLayout';
-import type { WorkflowTemplate } from '@/components/workflow/workflowTemplates';
-import type { WorkflowGraph } from '@/components/workflow/workflowTypes';
-import { usePermissions } from '@/hooks/usePermissions';
-import { toWorkflowDraftSavePayload } from './workflowDraftPersistence';
-import { useWorkflowDraft } from './useWorkflowDraft';
+import { useEffect, useMemo, useState } from "react";
+import { Navigate, useBlocker, useParams } from "react-router";
+import { useMutation, useQuery } from "convex/react";
+import { toast } from "sonner";
+import type { Id } from "../../convex/_generated/dataModel";
+import { api } from "../../convex/_generated/api";
+import { Permission } from "../../shared/permissions";
+import { UnsavedChangesDialog } from "@/components/agent-setup/UnsavedChangesDialog";
+import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
+import { WorkflowInspector } from "@/components/workflow/WorkflowInspector";
+import type { WorkflowInspectorSaveValues } from "@/components/workflow/WorkflowInspectorForm";
+import { WorkflowPageSkeleton } from "@/components/workflow/WorkflowPageSkeleton";
+import { workflowGraphToFlow } from "@/components/workflow/workflowFlowModel";
+import { getNextWorkflowLayoutOrientation } from "@/components/workflow/workflowLayout";
+import type { WorkflowTemplate } from "@/components/workflow/workflowTemplates";
 import {
-  clearAppliedWorkflowTemplate,
-  setAppliedWorkflowTemplate,
-} from './workflowTemplateDraftState';
+  createWorkflowTemplatePreview,
+  type WorkflowTemplatePreview,
+} from "@/components/workflow/workflowTemplatePreviewModel";
+import type { WorkflowGraph } from "@/components/workflow/workflowTypes";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toWorkflowAutomationSavePayload } from "./workflowAutomationPersistence";
+import { useWorkflowAutomationDraft } from "./useWorkflowAutomationDraft";
+import { useWorkflowMessageActions } from "./useWorkflowMessageActions";
 
 type WorkflowEditorProps = {
-  agentId: Id<'agents'>;
+  agentId: Id<"agents">;
   persistedGraph: WorkflowGraph;
 };
 
 function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
-  const [selectedNodeId, setSelectedNodeId] = useState<Id<'workflowNodes'>>();
+  const [localGraph, setLocalGraph] = useState(persistedGraph);
+  const latestGraph =
+    persistedGraph.workflow.updatedAt > localGraph.workflow.updatedAt
+      ? persistedGraph
+      : localGraph;
+  const [selectedNodeId, setSelectedNodeId] = useState<Id<"workflowNodes">>();
+  const [templatePreview, setTemplatePreview] =
+    useState<WorkflowTemplatePreview>();
   const [isSaving, setIsSaving] = useState(false);
   const [arrangeFocusRequest, setArrangeFocusRequest] = useState(0);
-  const [appliedTemplateId, setAppliedTemplateId] = useState<WorkflowTemplate['id']>();
-  const saveWorkflow = useMutation(api.workflowDraftSave.save);
-  const workflowDraft = useWorkflowDraft(persistedGraph);
-  const { draft, isDirty } = workflowDraft;
+  const saveAutomations = useMutation(api.workflowAutomationSave.save);
+  const automationDraft = useWorkflowAutomationDraft(latestGraph.automations);
+  const messageActions = useWorkflowMessageActions({
+    agentId,
+    graph: latestGraph,
+    onGraph: setLocalGraph,
+    onSelectNode: setSelectedNodeId,
+  });
 
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => isDirty && currentLocation.pathname !== nextLocation.pathname,
+    ({ currentLocation, nextLocation }) =>
+      automationDraft.isDirty &&
+      currentLocation.pathname !== nextLocation.pathname,
   );
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!isDirty) return;
+      if (!automationDraft.isDirty) return;
       event.preventDefault();
-      event.returnValue = '';
+      event.returnValue = "";
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty]);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [automationDraft.isDirty]);
 
-  const handleAddNode = useCallback((nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => {
-    const addedNodeId = workflowDraft.addNode(nodeId, kind);
-    setSelectedNodeId(addedNodeId);
-  }, [workflowDraft]);
-  const handleRemoveNode = useCallback((nodeId: Id<'workflowNodes'>) => {
-    workflowDraft.removeNode(nodeId);
-    setSelectedNodeId(undefined);
-  }, [workflowDraft]);
-  const layoutOrientation = draft.workflow.layoutOrientation ?? 'horizontal';
+  const displayedGraph = templatePreview
+    ? templatePreview.graph
+    : latestGraph;
+  const layoutOrientation =
+    displayedGraph.workflow.layoutOrientation ?? "horizontal";
   const flow = useMemo(
-    () => workflowGraphToFlow(draft, handleAddNode, handleRemoveNode, selectedNodeId, layoutOrientation),
-    [draft, handleAddNode, handleRemoveNode, layoutOrientation, selectedNodeId],
+    () =>
+      workflowGraphToFlow(
+        displayedGraph,
+        (nodeId, kind) => void messageActions.addNode(nodeId, kind),
+        (nodeId) => void messageActions.removeNode(nodeId),
+        selectedNodeId,
+        layoutOrientation,
+        messageActions.isGraphMutating || templatePreview !== undefined,
+      ),
+    [
+      displayedGraph,
+      layoutOrientation,
+      messageActions,
+      selectedNodeId,
+      templatePreview,
+    ],
   );
   const selectedNode = useMemo(
-    () => draft.nodes.find((node) => node._id === selectedNodeId),
-    [draft, selectedNodeId],
+    () => latestGraph.nodes.find((node) => node._id === selectedNodeId),
+    [latestGraph.nodes, selectedNodeId],
   );
   const selectedConditionEdge = useMemo(() => {
-    if (!selectedNodeId || selectedNode?.kind === 'start') return undefined;
-    return draft.edges.find((edge) => edge.targetNodeId === selectedNodeId);
-  }, [draft, selectedNode?.kind, selectedNodeId]);
+    if (!selectedNodeId || selectedNode?.kind === "start") return undefined;
+    return latestGraph.edges.find(
+      (edge) => edge.targetNodeId === selectedNodeId,
+    );
+  }, [latestGraph.edges, selectedNode?.kind, selectedNodeId]);
 
   const handleSave = async () => {
-    if (!isDirty || isSaving) return;
+    if (!automationDraft.isDirty || isSaving) return;
     setIsSaving(true);
-    const toastId = toast.loading('Saving workflow…');
+    const toastId = toast.loading("Saving workflow automations…");
     try {
-      const savedGraph = await saveWorkflow({
+      const savedGraph = await saveAutomations({
         agentId,
-        ...toWorkflowDraftSavePayload(draft),
-        templateId: appliedTemplateId,
+        ...toWorkflowAutomationSavePayload(
+          latestGraph,
+          automationDraft.automations,
+        ),
       });
-      workflowDraft.acceptSaved(savedGraph);
-      setAppliedTemplateId(clearAppliedWorkflowTemplate());
-      setSelectedNodeId(undefined);
-      toast.success('Workflow saved', { id: toastId });
+      setLocalGraph(savedGraph);
+      automationDraft.acceptSaved();
+      toast.success("Workflow automations saved", { id: toastId });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not save workflow', { id: toastId });
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not save workflow automations",
+        { id: toastId },
+      );
     } finally {
       setIsSaving(false);
     }
   };
   const handleReset = () => {
-    workflowDraft.reset();
-    setAppliedTemplateId(clearAppliedWorkflowTemplate());
-    setSelectedNodeId(undefined);
-    setArrangeFocusRequest((value) => value + 1);
+    automationDraft.reset();
   };
   const handleTemplateApply = (template: WorkflowTemplate) => {
-    workflowDraft.applyTemplate(template);
-    setAppliedTemplateId(setAppliedWorkflowTemplate(template.id));
+    setTemplatePreview(
+      createWorkflowTemplatePreview(latestGraph, template),
+    );
     setSelectedNodeId(undefined);
     setArrangeFocusRequest((value) => value + 1);
-    toast.success(`${template.name} replaced the current workflow draft`);
   };
-  const handleCleanup = () => {
-    workflowDraft.arrange(layoutOrientation);
+  const handleTemplateReplace = async () => {
+    if (!templatePreview) return;
+    const graph = await messageActions.replaceTemplate(
+      templatePreview.template,
+    );
+    if (!graph) return;
+    setTemplatePreview(undefined);
     setArrangeFocusRequest((value) => value + 1);
   };
-  const handleArrange = () => {
-    workflowDraft.arrange(getNextWorkflowLayoutOrientation(layoutOrientation));
-    setArrangeFocusRequest((value) => value + 1);
+  const handleCleanup = async () => {
+    const graph = await messageActions.applyLayout(layoutOrientation);
+    if (graph) setArrangeFocusRequest((value) => value + 1);
   };
-  const handleApplyInspector = (values: Parameters<typeof workflowDraft.applyInspector>[2]) => {
+  const handleArrange = async () => {
+    const graph = await messageActions.applyLayout(
+      getNextWorkflowLayoutOrientation(layoutOrientation),
+    );
+    if (graph) setArrangeFocusRequest((value) => value + 1);
+  };
+  const handleApplyInspector = async (
+    values: WorkflowInspectorSaveValues,
+  ) => {
     if (!selectedNodeId) return;
-    workflowDraft.applyInspector(selectedNodeId, selectedConditionEdge?._id, values);
-    setSelectedNodeId(undefined);
+    const saved = await messageActions.applyNode(
+      selectedNodeId,
+      selectedConditionEdge?._id,
+      values,
+    );
+    if (saved) setSelectedNodeId(undefined);
   };
 
   return (
@@ -124,33 +170,49 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         nodes={flow.nodes}
         edges={flow.edges}
         onSelectNode={setSelectedNodeId}
-        onNodeMoved={workflowDraft.moveNode}
-        onNodesConnected={workflowDraft.connectNodes}
-        onEdgeRemoved={workflowDraft.removeEdge}
+        onNodesConnected={(sourceNodeId, targetNodeId) =>
+          void messageActions.connectNodes(sourceNodeId, targetNodeId)
+        }
+        onEdgeRemoved={(edgeId) => void messageActions.removeEdge(edgeId)}
         layoutOrientation={layoutOrientation}
-        onCleanup={handleCleanup}
-        onArrange={handleArrange}
-        isDirty={isDirty}
+        onCleanup={() => void handleCleanup()}
+        onArrange={() => void handleArrange()}
+        isDirty={automationDraft.isDirty}
         isSaving={isSaving}
         onSave={() => void handleSave()}
         onReset={handleReset}
         onTemplateApply={handleTemplateApply}
+        templatePreview={
+          templatePreview
+            ? {
+                name: templatePreview.template.name,
+                isReplacing: messageActions.isGraphMutating,
+                onReplace: () => void handleTemplateReplace(),
+                onSkip: () => setTemplatePreview(undefined),
+              }
+            : undefined
+        }
         arrangeFocusRequest={arrangeFocusRequest}
-        automations={draft.automations}
-        onAutomationsChange={workflowDraft.updateAutomations}
+        cleanupDisabled={messageActions.isGraphMutating}
+        arrangeDisabled={messageActions.isGraphMutating}
+        arrangeLoading={messageActions.isGraphMutating}
+        automations={automationDraft.automations}
+        onAutomationsChange={automationDraft.update}
         agentId={agentId}
       />
       <WorkflowInspector
         agentId={agentId}
         node={selectedNode}
         conditionEdge={selectedConditionEdge}
-        isSaving={false}
+        isSaving={messageActions.isApplyingNode}
         onSave={handleApplyInspector}
-        onRemove={() => selectedNodeId && handleRemoveNode(selectedNodeId)}
+        onRemove={() =>
+          selectedNodeId && void messageActions.removeNode(selectedNodeId)
+        }
         onClose={() => setSelectedNodeId(undefined)}
       />
       <UnsavedChangesDialog
-        open={blocker.state === 'blocked'}
+        open={blocker.state === "blocked"}
         onOpenChange={(open) => !open && blocker.reset?.()}
         onKeepEditing={() => blocker.reset?.()}
         onDiscard={() => {
@@ -164,26 +226,53 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
 
 export default function WorkflowPage() {
   const { agentId } = useParams();
-  const typedAgentId = agentId as Id<'agents'> | undefined;
+  const typedAgentId = agentId as Id<"agents"> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canManage = can(Permission.AGENTS_MANAGE);
   const persistedGraph = useQuery(
     api.workflows.getForAgent,
-    typedAgentId && canManage ? { agentId: typedAgentId } : 'skip',
+    typedAgentId && canManage ? { agentId: typedAgentId } : "skip",
   );
   const ensureWorkflow = useMutation(api.workflows.ensureForAgent);
 
   useEffect(() => {
-    if (!typedAgentId || permissionsLoading || !canManage || persistedGraph !== null) return;
+    if (
+      !typedAgentId ||
+      permissionsLoading ||
+      !canManage ||
+      persistedGraph !== null
+    ) {
+      return;
+    }
     void ensureWorkflow({ agentId: typedAgentId }).catch((error) => {
-      toast.error(error instanceof Error ? error.message : 'Could not create workflow');
+      toast.error(
+        error instanceof Error ? error.message : "Could not create workflow",
+      );
     });
-  }, [canManage, ensureWorkflow, permissionsLoading, persistedGraph, typedAgentId]);
+  }, [
+    canManage,
+    ensureWorkflow,
+    permissionsLoading,
+    persistedGraph,
+    typedAgentId,
+  ]);
 
   if (!typedAgentId) return null;
-  if (!permissionsLoading && !canManage) return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
-  if (permissionsLoading || persistedGraph === undefined || persistedGraph === null) {
+  if (!permissionsLoading && !canManage) {
+    return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
+  }
+  if (
+    permissionsLoading ||
+    persistedGraph === undefined ||
+    persistedGraph === null
+  ) {
     return <WorkflowPageSkeleton />;
   }
-  return <WorkflowEditor key={persistedGraph.workflow._id} agentId={typedAgentId} persistedGraph={persistedGraph} />;
+  return (
+    <WorkflowEditor
+      key={persistedGraph.workflow._id}
+      agentId={typedAgentId}
+      persistedGraph={persistedGraph}
+    />
+  );
 }

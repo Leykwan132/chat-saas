@@ -21,6 +21,7 @@ export type WorkflowNodeData = Record<string, unknown> & {
   title: string;
   description?: string;
   layoutOrientation: WorkflowLayoutOrientation;
+  disabled: boolean;
   onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void;
   onRemoveNode: (nodeId: Id<'workflowNodes'>) => void;
 };

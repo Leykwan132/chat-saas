@@ -10,3 +10,11 @@ test('workflow inspector explains condition and action sections', () => {
   expect(source).toContain('Define what the AI should do after the condition matches.');
   expect(source).toContain('FieldDescription className="text-xs"');
 });
+
+test('workflow inspector allows immediate media and keeps Apply icon-free', () => {
+  expect(source).not.toContain('Save the workflow first');
+  expect(source).not.toContain('isDraftWorkflowNodeId');
+  expect(source).not.toContain('<Check');
+  expect(source).toContain('hasMediaSection && agentId');
+  expect(source).toContain('<Loader2');
+});

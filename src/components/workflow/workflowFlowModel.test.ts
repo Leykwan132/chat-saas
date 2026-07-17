@@ -113,6 +113,23 @@ test('workflowGraphToFlow keeps nodes above edges', () => {
   ))).toBe(true);
 });
 
+test('workflowGraphToFlow disables direct node controls while mutating', () => {
+  const flow = workflowGraphToFlow(
+    workflowGraph(),
+    () => {},
+    () => {},
+    undefined,
+    'horizontal',
+    true,
+  );
+
+  expect(
+    flow.nodes
+      .filter((node) => node.type === 'workflow')
+      .every((node) => node.data.disabled === true),
+  ).toBe(true);
+});
+
 test('workflowGraphToFlow uses orientation-specific handles for persisted workflow nodes', () => {
   const horizontalFlow = workflowGraphToFlow(
     workflowGraph(),

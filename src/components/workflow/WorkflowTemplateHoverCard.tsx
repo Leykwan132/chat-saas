@@ -1,5 +1,5 @@
 import { useState, type KeyboardEvent } from 'react';
-import { ArrowRight, LayoutTemplate } from 'lucide-react';
+import { Eye, LayoutTemplate } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,13 +12,17 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { WORKFLOW_TEMPLATES, type WorkflowTemplate } from './workflowTemplates';
 
 type WorkflowTemplateHoverCardProps = {
-  onReplace: (template: WorkflowTemplate) => void;
+  disabled?: boolean;
+  onPreview: (template: WorkflowTemplate) => void;
 };
 
-export function WorkflowTemplateHoverCard({ onReplace }: WorkflowTemplateHoverCardProps) {
+export function WorkflowTemplateHoverCard({
+  disabled = false,
+  onPreview,
+}: WorkflowTemplateHoverCardProps) {
   const [open, setOpen] = useState(false);
-  const applyTemplate = (template: WorkflowTemplate) => {
-    onReplace(template);
+  const previewTemplate = (template: WorkflowTemplate) => {
+    onPreview(template);
     setOpen(false);
   };
   const handleTemplateKeyDown = (
@@ -27,12 +31,12 @@ export function WorkflowTemplateHoverCard({ onReplace }: WorkflowTemplateHoverCa
   ) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
-    applyTemplate(template);
+    previewTemplate(template);
   };
   return (
     <HoverCard open={open} onOpenChange={setOpen} openDelay={100} closeDelay={180}>
       <HoverCardTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(true)}>
+        <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={() => setOpen(true)}>
           <LayoutTemplate data-icon="inline-start" />
           Templates
         </Button>
@@ -44,7 +48,7 @@ export function WorkflowTemplateHoverCard({ onReplace }: WorkflowTemplateHoverCa
       >
         <div className="px-1 pb-3">
           <p className="font-medium">Start with a template</p>
-          <p className="text-xs text-muted-foreground">This replaces your current workflow draft.</p>
+          <p className="text-xs text-muted-foreground">Preview before replacing your current workflow.</p>
         </div>
         <div className="grid grid-cols-3 gap-3">
           {WORKFLOW_TEMPLATES.map((template) => (
@@ -53,8 +57,8 @@ export function WorkflowTemplateHoverCard({ onReplace }: WorkflowTemplateHoverCa
               size="sm"
               role="button"
               tabIndex={0}
-              aria-label={`Try ${template.name} template`}
-              onClick={() => applyTemplate(template)}
+              aria-label={`Preview ${template.name} template`}
+              onClick={() => previewTemplate(template)}
               onKeyDown={(event) => handleTemplateKeyDown(event, template)}
               className="h-full cursor-pointer gap-3 rounded-xl shadow-none outline-none transition-colors hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/30"
             >
@@ -66,8 +70,8 @@ export function WorkflowTemplateHoverCard({ onReplace }: WorkflowTemplateHoverCa
               </CardHeader>
               <CardFooter className="mt-auto justify-end">
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-primary [&_svg]:size-4">
-                  Try now
-                  <ArrowRight data-icon="inline-end" />
+                  <Eye data-icon="inline-start" />
+                  Preview
                 </span>
               </CardFooter>
             </Card>

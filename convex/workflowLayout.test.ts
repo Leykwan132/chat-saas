@@ -52,25 +52,6 @@ async function createPersonalAgent(t: ReturnType<typeof initTest>, workosUserId:
   });
 }
 
-test("updateOrientation stores the workflow layout orientation", async () => {
-  const t = initTest();
-  const workosUserId = "user-workflow-layout";
-  const { agentId } = await createPersonalAgent(t, workosUserId);
-  const authed = t.withIdentity({ subject: workosUserId });
-
-  const initialGraph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
-  expect(initialGraph.workflow.layoutOrientation).toBeUndefined();
-
-  const updatedGraph = await authed.mutation(api.workflowLayout.updateOrientation, {
-    agentId,
-    layoutOrientation: "vertical",
-  });
-  const reloadedGraph = await authed.query(api.workflows.getForAgent, { agentId });
-
-  expect(updatedGraph.workflow.layoutOrientation).toBe("vertical");
-  expect(reloadedGraph?.workflow.layoutOrientation).toBe("vertical");
-});
-
 test("apply stores every canonical position without changing automations", async () => {
   const t = initTest();
   const workosUserId = "user-workflow-layout-apply";

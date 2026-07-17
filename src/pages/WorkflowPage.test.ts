@@ -1,48 +1,41 @@
-import { readFileSync } from 'node:fs';
-import { expect, test } from 'vitest';
+import { readFileSync } from "node:fs";
+import { expect, test } from "vitest";
 
-const source = readFileSync(new URL('./WorkflowPage.tsx', import.meta.url), 'utf8');
+const source = readFileSync(new URL("./WorkflowPage.tsx", import.meta.url), "utf8");
 
-test('workflow cleanup keeps the current draft orientation and refocuses the canvas', () => {
-  const cleanupHandler = source.match(/const handleCleanup = \(\) => \{[\s\S]*?\n {2}\};/);
-  expect(cleanupHandler?.[0]).toContain('workflowDraft.arrange(layoutOrientation)');
-  expect(cleanupHandler?.[0]).toContain('setArrangeFocusRequest');
-  expect(cleanupHandler?.[0]).not.toContain('getNextWorkflowLayoutOrientation');
+test("workflow page isolates automation drafts from direct graph actions", () => {
+  expect(source).toContain("useWorkflowAutomationDraft(");
+  expect(source).toContain("useWorkflowMessageActions({");
+  expect(source).toContain("automations={automationDraft.automations}");
+  expect(source).toContain("isDirty={automationDraft.isDirty}");
+  expect(source).not.toContain("useWorkflowDraft");
+  expect(source).not.toContain("workflowDraft.addNode");
+  expect(source).not.toContain("workflowDraft.removeNode");
 });
 
-test('workflow arrange toggles the draft orientation and refocuses the canvas', () => {
-  const arrangeHandler = source.match(/const handleArrange = \(\) => \{[\s\S]*?\n {2}\};/);
-  expect(arrangeHandler?.[0]).toContain('getNextWorkflowLayoutOrientation(layoutOrientation)');
-  expect(arrangeHandler?.[0]).toContain('setArrangeFocusRequest');
-  expect(source).toContain('arrangeFocusRequest={arrangeFocusRequest}');
+test("workflow page saves and discards only automation settings", () => {
+  expect(source).toContain("api.workflowAutomationSave.save");
+  expect(source).toContain("toWorkflowAutomationSavePayload(");
+  expect(source).toContain("automationDraft.acceptSaved()");
+  expect(source).toContain("automationDraft.reset()");
 });
 
-test('workflow reset restores the saved draft and fits it to the canvas', () => {
-  const resetHandler = source.match(/const handleReset = \(\) => \{[\s\S]*?\n {2}\};/);
-  expect(resetHandler?.[0]).toContain('workflowDraft.reset()');
-  expect(resetHandler?.[0]).toContain('setArrangeFocusRequest');
+test("workflow page leaves manual node movement transient", () => {
+  expect(source).not.toContain("onNodeMoved=");
+  expect(source).toContain("onCleanup={() => void handleCleanup()}");
+  expect(source).toContain("onArrange={() => void handleArrange()}");
 });
 
-test('workflow page renders and saves the local draft orientation', () => {
-  expect(source).toContain('workflowGraphToFlow(draft,');
-  expect(source).toContain("draft.workflow.layoutOrientation ?? 'horizontal'");
-  expect(source).toContain('...toWorkflowDraftSavePayload(draft)');
+test("workflow page selects the real node returned by direct Add", () => {
+  expect(source).toContain("messageActions.addNode(nodeId, kind)");
+  expect(source).toContain("onSelectNode: setSelectedNodeId");
 });
 
-test('workflow page records template origin only on successful Save and clears it on Reset', () => {
-  expect(source).toContain('templateId: appliedTemplateId');
-  expect(source).toContain('setAppliedTemplateId(setAppliedWorkflowTemplate(template.id))');
-  expect(source.match(/setAppliedTemplateId\(clearAppliedWorkflowTemplate\(\)\)/g)).toHaveLength(2);
-  const catchBlock = source.match(/catch \(error\) \{[\s\S]*?\n {4}\} finally/);
-  expect(catchBlock?.[0]).not.toContain('setAppliedTemplateId');
-});
-
-test('workflow page selects a newly added draft node so its inspector opens', () => {
-  const addNodeHandler = source.match(
-    /const handleAddNode = useCallback\([\s\S]*?\n {2}\}, \[workflowDraft\]\);/,
-  );
-
-  expect(addNodeHandler?.[0]).toContain('const addedNodeId = workflowDraft.addNode(nodeId, kind)');
-  expect(addNodeHandler?.[0]).toContain('setSelectedNodeId(addedNodeId)');
-  expect(addNodeHandler?.[0]).not.toContain('setSelectedNodeId(undefined)');
+test("workflow page previews templates before direct replacement", () => {
+  expect(source).toContain("createWorkflowTemplatePreview(");
+  expect(source).toContain("templatePreview.graph");
+  expect(source).toContain("displayedGraph.workflow.layoutOrientation");
+  expect(source).toContain("templatePreview={");
+  expect(source).toContain("await messageActions.replaceTemplate(");
+  expect(source).toContain("setTemplatePreview(undefined)");
 });

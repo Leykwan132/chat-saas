@@ -11,10 +11,14 @@ import {
 import { workflowAddOptions } from './workflowCatalog';
 
 type WorkflowAddNodeMenuProps = {
+  disabled?: boolean;
   onSelect: (kind: AddableWorkflowNodeKind) => void;
 };
 
-export function WorkflowAddNodeMenu({ onSelect }: WorkflowAddNodeMenuProps) {
+export function WorkflowAddNodeMenu({
+  disabled = false,
+  onSelect,
+}: WorkflowAddNodeMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -22,6 +26,7 @@ export function WorkflowAddNodeMenu({ onSelect }: WorkflowAddNodeMenuProps) {
           type="button"
           variant="outline"
           size="icon"
+          disabled={disabled}
           className="cursor-pointer rounded-xl border-black bg-black text-white hover:bg-black hover:text-white active:bg-black active:text-white aria-expanded:bg-black aria-expanded:text-white focus-visible:border-black focus-visible:ring-0"
           aria-label="Add workflow node"
           onPointerDown={(event) => event.stopPropagation()}
@@ -40,6 +45,7 @@ export function WorkflowAddNodeMenu({ onSelect }: WorkflowAddNodeMenuProps) {
           {workflowAddOptions.map(({ kind, label, Icon }) => (
             <DropdownMenuItem
               key={kind}
+              disabled={disabled}
               onClick={(event) => event.stopPropagation()}
               onSelect={(event) => {
                 event.stopPropagation();

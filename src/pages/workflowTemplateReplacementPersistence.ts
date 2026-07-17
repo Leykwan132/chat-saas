@@ -1,14 +1,11 @@
-import type { WorkflowGraph } from '../components/workflow/workflowTypes';
-import { isDraftWorkflowNodeId } from '../components/workflow/workflowDraftModel';
+import type { WorkflowGraph } from "../components/workflow/workflowTypes";
 
-export function toWorkflowDraftSavePayload(graph: WorkflowGraph) {
+export function toWorkflowTemplateReplacementPayload(graph: WorkflowGraph) {
   return {
     baselineUpdatedAt: graph.workflow.updatedAt,
-    layoutOrientation: graph.workflow.layoutOrientation ?? 'horizontal' as const,
-    automations: graph.automations,
+    layoutOrientation: graph.workflow.layoutOrientation ?? "horizontal",
     nodes: graph.nodes.map((node) => ({
       clientId: node._id,
-      persistedNodeId: isDraftWorkflowNodeId(node._id) ? undefined : node._id,
       kind: node.kind,
       title: node.title,
       description: node.description,

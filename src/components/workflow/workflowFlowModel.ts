@@ -159,6 +159,7 @@ export function workflowGraphToFlow(
   onRemoveNode: (nodeId: Id<'workflowNodes'>) => void,
   selectedNodeId?: Id<'workflowNodes'>,
   layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
+  disabled = false,
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
   const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
@@ -179,6 +180,7 @@ export function workflowGraphToFlow(
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
           layoutOrientation,
+          disabled,
           onAddNode,
           onRemoveNode,
         },

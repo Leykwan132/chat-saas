@@ -14,7 +14,7 @@ type WorkflowInspectorProps = {
   isSaving?: boolean;
   overlayClassName?: string;
   portalContainer?: HTMLElement | null;
-  onSave: (values: WorkflowInspectorSaveValues) => void;
+  onSave: (values: WorkflowInspectorSaveValues) => Promise<void> | void;
   onRemove: () => void;
   onClose: () => void;
 };

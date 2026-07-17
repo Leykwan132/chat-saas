@@ -181,14 +181,14 @@ export const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
   ]),
 ];
 
-export function replaceDraftWithTemplate(
+export function createWorkflowGraphFromTemplate(
   currentGraph: WorkflowGraph,
   template: WorkflowTemplate,
 ) {
   const nodeIdMap = new Map<Id<'workflowNodes'>, Id<'workflowNodes'>>();
   const now = Date.now();
   const nodes = template.graph.nodes.map((node) => {
-    const nodeId = `draft-node:${crypto.randomUUID()}` as Id<'workflowNodes'>;
+    const nodeId = `template-preview-node:${crypto.randomUUID()}` as Id<'workflowNodes'>;
     nodeIdMap.set(node._id, nodeId);
     return {
       ...node,
@@ -201,7 +201,7 @@ export function replaceDraftWithTemplate(
   });
   const edges = template.graph.edges.map((edge) => ({
     ...edge,
-    _id: `draft-edge:${crypto.randomUUID()}` as Id<'workflowEdges'>,
+    _id: `template-preview-edge:${crypto.randomUUID()}` as Id<'workflowEdges'>,
     _creationTime: now,
     workflowId: currentGraph.workflow._id,
     sourceNodeId: nodeIdMap.get(edge.sourceNodeId)!,

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, Loader2, Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import {
   workflowConditionDisplayLabel,
@@ -18,7 +18,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
 import { getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
-import { isDraftWorkflowNodeId } from './workflowDraftModel';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
   { name: 'Pricing question', detail: 'If the customer asks about pricing or packages' },
@@ -39,7 +38,7 @@ type WorkflowInspectorFormProps = {
   node: Doc<'workflowNodes'>;
   conditionEdge?: Doc<'workflowEdges'>;
   isSaving: boolean;
-  onSave: (values: WorkflowInspectorSaveValues) => void;
+  onSave: (values: WorkflowInspectorSaveValues) => Promise<void> | void;
   onRemove: () => void;
 };
 
@@ -95,7 +94,6 @@ export function WorkflowInspectorForm({
   const isCustomAction = node.kind === 'aiResponds';
   const isBookAppointmentAction = node.kind === 'bookAppointment';
   const isHumanEscalationAction = node.kind === 'humanEscalation';
-  const isDraftNode = isDraftWorkflowNodeId(node._id);
   let conditionNamePlaceholder = 'e.g., Yes';
   let conditionDetailPlaceholder = 'Describe when this action should run';
   if (isSendTextAction) {
@@ -243,17 +241,12 @@ export function WorkflowInspectorForm({
                   />
                 </div>
               ) : null}
-              {hasMediaSection && agentId && !isDraftNode ? (
+              {hasMediaSection && agentId ? (
                 <WorkflowSendMediaSection
                   agentId={agentId}
                   nodeId={node._id}
                   nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
                 />
-              ) : null}
-              {hasMediaSection && isDraftNode ? (
-                <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm text-muted-foreground">
-                  Save the workflow first, then reopen this node to add images or files.
-                </div>
               ) : null}
             </section>
           </div>
@@ -286,9 +279,7 @@ export function WorkflowInspectorForm({
         >
           {isSaving ? (
             <Loader2 className="animate-spin" data-icon="inline-start" />
-          ) : (
-            <Check data-icon="inline-start" />
-          )}
+          ) : null}
           Apply
         </Button>
       </DialogFooter>
