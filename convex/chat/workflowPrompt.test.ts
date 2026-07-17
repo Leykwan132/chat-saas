@@ -69,6 +69,7 @@ test("workflow runtime delegates media sends to the backend planner", () => {
   expect(block).toContain("This is important: for Send Photo/Video and Send Files nodes");
   expect(block).toContain("even if the same asset was sent earlier");
   expect(block).toContain("the backend validates the matched workflow node and sends the assets separately");
+  expect(block).toContain("uploaded filenames are internal metadata");
   expect(block).toContain("clientId: layout-client-id");
   expect(block).not.toContain("https://cdn.example.com/type-a-layout.png");
   expect(block).not.toContain("<media_to_send>");

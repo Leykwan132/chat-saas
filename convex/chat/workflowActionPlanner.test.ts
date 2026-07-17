@@ -44,6 +44,23 @@ const workflowContext = {
   ],
 };
 
+const workflowFilenamePrivacyContext = {
+  ...workflowContext,
+  nodes: [
+    {
+      ...workflowContext.nodes[0]!,
+      title: "Send Type A layout",
+      mediaAssets: [
+        {
+          ...workflowContext.nodes[0]!.mediaAssets[0]!,
+          filename: "Type_A_layout.jpg",
+          mediaType: "image/jpeg",
+        },
+      ],
+    },
+  ],
+};
+
 test("runs when workflow has executable media or Send message actions", () => {
   expect(shouldRunWorkflowActionPlanner(null)).toBe(false);
   expect(shouldRunWorkflowActionPlanner({ ...workflowContext, nodes: [] })).toBe(false);
@@ -67,6 +84,9 @@ test("builds a planner prompt with definitive action payloads", () => {
   expect(prompt).toContain("will be sent automatically");
   expect(prompt).toContain("will be sent exactly as configured");
   expect(prompt).toContain("Do not return media URLs");
+  expect(prompt).toContain(
+    "responseGuidance must never include uploaded filenames",
+  );
   expect(prompt).not.toContain("https://cdn.example.com/type-b-video.mp4");
 });
 
@@ -200,19 +220,22 @@ test("builds final reply guidance with the exact media payload being sent", () =
           matched: true,
           nodeId: "video-node-id",
           nodeKind: "sendImage",
-          nodeTitle: "Send Type B video",
+          nodeTitle: "Send Type A layout",
         },
       ],
       mediaNodeIdsToSend: [],
-      responseGuidance: "Tell the customer the Type B video is being sent.",
+      responseGuidance: "Tell the customer the Type A layout is being sent.",
     },
-    workflowContext,
+    workflowFilenamePrivacyContext,
   );
 
-  expect(guidance).toContain("Type B video is being sent");
+  expect(guidance).toContain("Type A layout is being sent");
   expect(guidance).toContain("The backend is sending the selected workflow media now");
-  expect(guidance).toContain("Arden Heights Type B.mp4");
-  expect(guidance).toContain("video/mp4");
+  expect(guidance).not.toContain("Type_A_layout.jpg");
+  expect(guidance).toContain("Send Type A layout (image/jpeg)");
+  expect(guidance).toContain(
+    "Never mention uploaded filenames in customer-visible content",
+  );
   expect(guidance).toContain("Do not ask whether the customer wants you to send it");
 });
 

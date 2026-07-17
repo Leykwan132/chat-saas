@@ -160,7 +160,7 @@ Multiple workflow node conditions can match in one turn. Follow every matching n
 1. Match the latest customer message against node goals, Book appointment Services, media assets, and incoming conditions.
 2. Call \`fetchContext\` for customer-facing facts and wording.
 3. Keep customer-visible text natural and brief.
-4. Do not paste workflow metadata, media URLs, media client IDs, or internal action notes into the customer response.
+4. Do not paste workflow metadata, media URLs, media client IDs, uploaded filenames, or internal action notes into the customer response; uploaded filenames are internal metadata.
 5. Let the backend workflow planner handle reliable action metadata and media sending.
 
 ### Workflow guardrails

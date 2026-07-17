@@ -31,7 +31,7 @@ export const workflowActionPlanSchema = z.object({
     z.string().describe("A Workflow Runtime media node ID whose uploaded assets should be sent now."),
   ).describe("Node IDs for workflow media nodes whose assets the backend must send now."),
   responseGuidance: z.string().describe(
-    "A short instruction for the later customer-visible reply, without URLs or internal metadata.",
+    "A short instruction for the later customer-visible reply, without URLs, uploaded filenames, or internal metadata.",
   ),
 });
 
@@ -80,11 +80,9 @@ export function buildWorkflowActionPlanReplyGuidance(
     ].join("\n");
   }
 
-  const selectedList = matchedMediaNodes.flatMap((node) =>
-    node.mediaAssets.map((asset) => {
-      const filename = asset.filename?.trim() || asset.clientId;
-      return `  - ${node.title}: ${filename} (${asset.mediaType})`;
-    }),
+  const selectedList = matchedMediaNodes.map(
+    (node) =>
+      `  - ${node.title} (${node.mediaAssets.map((asset) => asset.mediaType).join(", ")})`,
   );
 
   return [
@@ -94,6 +92,7 @@ export function buildWorkflowActionPlanReplyGuidance(
     "- These exact assets are being sent automatically:",
     ...selectedList,
     "- This is important: write the customer-visible response as an action already happening.",
+    "- Never mention uploaded filenames in customer-visible content, including parenthetical status text, markdown, captions, or attachment descriptions.",
     "- Do not ask whether the customer wants you to send it.",
     '- Do not say "I can send it", "Would you like me to send it", or "Let me know if you want me to send it" for selected media.',
   ].join("\n");
@@ -148,6 +147,7 @@ Return a strict object matching the schema:
 
 Rules:
 - Do not return media URLs. The backend resolves URLs from node IDs.
+- responseGuidance must never include uploaded filenames or instruct the later reply to display them.
 - Use only exact Node IDs listed below.
 - Include an action in workflowMatches only when it should execute now.
 - Every matched sendImage/sendFile asset will be sent automatically, for sure. Never ask whether the customer wants it sent.
