@@ -10,7 +10,7 @@ This design supersedes only the full-canvas preview presentation in `2026-07-17-
 
 ### Large centered dialog
 
-Use the existing shadcn Dialog with a dedicated header, preview canvas, and footer. This cleanly separates the proposed template from the actual workflow while preserving context behind the modal. This is the selected approach.
+Use the existing shadcn Dialog with a dedicated header, preview canvas, and footer. Expand it to the viewport minus 32px horizontally and approximately `92vh` vertically. This cleanly separates the proposed template from the actual workflow while giving the graph enough width for readable node content. This is the selected approach.
 
 ### Full-screen dialog
 
@@ -22,13 +22,13 @@ A sheet could keep more of the current map visible, but the preview becomes too 
 
 ## Dialog Structure
 
-The dialog uses a large centered surface approximately `90vw` wide and `80vh` tall, bounded by the viewport. It contains:
+The dialog uses a nearly edge-to-edge centered surface: `calc(100vw - 2rem)` wide and approximately `92vh` tall. Its component classes must explicitly override the installed Dialog's responsive `sm:max-w-md` constraint; otherwise desktop viewports collapse the preview to the default narrow modal width. It contains:
 
 - a header with the template name and a concise read-only preview description;
 - a flexible preview body containing a dedicated React Flow canvas;
-- a footer with `Skip` as the secondary outline action and `Replace Current` as the primary action.
+- a footer with `Skip` as a borderless ghost/text action and `Replace Current` as the primary action.
 
-The dialog has an accessible title. The preview canvas fits the complete template graph when it opens and uses a subtle semantic background treatment to distinguish it from the live workflow.
+The dialog has an accessible title. The preview canvas fits the complete template graph when it opens with minimal fit padding so node titles and descriptions remain readable. The existing backdrop and preview-canvas background treatments remain unchanged.
 
 ## Preview Isolation
 
@@ -76,6 +76,9 @@ Frontend regression coverage verifies:
 - selecting Preview keeps the live canvas bound to the current graph;
 - the selected template graph is passed only to the dialog;
 - the dialog has an accessible title, separate read-only canvas, and footer actions;
+- the dialog overrides the installed responsive maximum width and uses the viewport minus 32px;
+- fit-view padding is small enough to keep node content readable;
+- Skip uses the ghost/text button variant with no outline;
 - the preview canvas disables dragging, connecting, selection, and deletion;
 - Skip, close, Escape, and outside dismissal do not mutate;
 - replacement pending state disables dismissal and both actions;
@@ -87,11 +90,11 @@ The focused workflow suite, complete application suite, TypeScript/Vite build, t
 
 ## Acceptance Criteria
 
-- Preview opens in a large centered dialog.
+- Preview opens in a centered dialog spanning the viewport width minus 32px and approximately `92vh`.
 - The actual workflow map remains unchanged behind the dialog.
 - The template graph appears only inside the dialog.
-- The dialog preview is fully read-only and automatically fits the graph.
+- The dialog preview is fully read-only, automatically fits the graph with minimal padding, and keeps node content readable.
 - Replace Current remains primary and persists directly.
-- Skip and normal dialog dismissal return to the current workflow without mutation.
+- Skip is a borderless text action; it and normal dialog dismissal return to the current workflow without mutation.
 - Replacement failures keep the preview available.
 - Unsaved automation drafts remain intact.

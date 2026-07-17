@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-17 [CODE] Starter workflow templates preview in a large centered dialog with a separate read-only map; the live workflow remains unchanged behind it. Replace Current persists directly, while Skip or normal dialog dismissal returns unchanged. Implemented on `main` in `6823dabd` and `07140e8e`.
+- 2026-07-17 [USER] Starter workflow preview must expand to the viewport width minus 32px and about `92vh`, override the inherited narrow responsive max-width, and use minimal graph-fit padding so node content is readable. Skip becomes a borderless text action; the backdrop stays unchanged.
 - 2026-07-16 [CODE] Docs use Geist for all UI/content (no Gilda/Google Sans Flex); Core Concepts = agent flow; Resources = the rest; not committed/deployed.
 - 2026-07-16 [TOOL] Help center + product docs links shipped on `main` as `82647f72`; site og/twitter use `preview-image-v2.png`; docs not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
@@ -25,7 +25,8 @@
 - 2026-07-15 [CODE] Reminder and Follow-up History use shared shadcn cursor pagination in 25-row pages; muted-neutral outlined status labels use normal text with a small semantic status dot, and captions show exact all-time sent counts alongside per-message estimated MYR cost and an all-time spend footer.
 - 2026-07-15 [CODE] A one-attempt Workflow Follow-up hides its interval selector and omits cadence/reattempt wording and the Repeats row while retaining the saved interval; the exact Hot+Warm audience renders separate highlighted words with the shared aligned Flame/Sun audience icons and plain `leads` text.
 # Decisions
-- 2026-07-17 [USER] D389 ACTIVE: Template Preview uses a large centered dialog with its own read-only React Flow canvas; the live workflow remains unchanged behind the modal, Replace Current persists directly, and Skip/close/Escape/outside dismissal return without mutation.
+- 2026-07-17 [USER] D390 ACTIVE: Template Preview uses `calc(100vw - 2rem)` width, approximately `92vh` height, an explicit responsive max-width override, minimal fit padding for readable nodes, and a ghost/text Skip action; its existing backdrop remains unchanged.
+- 2026-07-17 [USER] D389 PARTIALLY SUPERSEDED by D390 for dialog sizing and Skip styling: the separate read-only dialog, direct replacement, and no-mutation dismissal behavior remain active.
 - 2026-07-17 [USER] D388 SUPERSEDED by D389 for presentation: Template preview no longer replaces or tints the live Message Handling canvas; its direct replacement and no-mutation dismissal behavior remain active.
 - 2026-07-17 [USER] D387 ACTIVE: Message Handling node/edge/template/configuration operations persist directly; Add opens the real node for immediate media upload, Apply needs no second Save and has no check icon, manual dragging is transient and never dirty, Cleanup/Arrange alone persist layout, and direct graph mutations preserve unsaved Reminder/Follow-up drafts.
 - 2026-07-16 [USER] D386 ACTIVE: Docs content uses OpenAI-style variants — Welcome Lucide path grid, circular numbered `ol.steps` only when order matters, prose/H2 explainers, and quiet DocCards for related links.
