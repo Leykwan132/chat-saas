@@ -54,9 +54,18 @@ export async function getWorkflowGraph(
   ctx: DbCtx,
   workflow: Doc<"workflows">,
 ) {
-  const nodes = await listWorkflowNodes(ctx, workflow._id);
-  const edges = await listWorkflowEdges(ctx, workflow._id);
-  return { workflow, nodes, edges, automations: resolveWorkflowAutomationConfigs(workflow) };
+  const currentWorkflow = await ctx.db.get(workflow._id);
+  if (currentWorkflow === null) {
+    throw new Error("Workflow not found");
+  }
+  const nodes = await listWorkflowNodes(ctx, currentWorkflow._id);
+  const edges = await listWorkflowEdges(ctx, currentWorkflow._id);
+  return {
+    workflow: currentWorkflow,
+    nodes,
+    edges,
+    automations: resolveWorkflowAutomationConfigs(currentWorkflow),
+  };
 }
 
 export async function workflowHasHumanEscalationNode(
