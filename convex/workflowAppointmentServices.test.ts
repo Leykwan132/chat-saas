@@ -1,4 +1,5 @@
 /// <reference types="vite/client" />
+import { readFileSync } from "node:fs";
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api, internal } from "./_generated/api";
@@ -7,6 +8,17 @@ import type { Id } from "./_generated/dataModel";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
+
+test("exports the appointment service selection normalizer", () => {
+  const source = readFileSync(
+    new URL("./workflowAppointmentServices.ts", import.meta.url),
+    "utf8",
+  );
+
+  expect(source).toContain(
+    "export async function normalizeAllowedAppointmentServiceIds",
+  );
+});
 
 function initTest() {
   const t = convexTest(schema, modules);

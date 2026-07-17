@@ -22,7 +22,7 @@ async function getWorkflowBookAppointmentNodes(ctx: DbCtx, agentId: Id<"agents">
   return bookAppointmentNodes;
 }
 
-async function normalizeServiceIds(
+export async function normalizeAllowedAppointmentServiceIds(
   ctx: MutationCtx,
   agentId: Id<"agents">,
   serviceIds: Id<"appointmentServices">[],
@@ -131,7 +131,11 @@ export const updateAllowedServices = mutation({
       throw new Error("Services can only be configured on Book appointment actions");
     }
 
-    const serviceIds = await normalizeServiceIds(ctx, agent._id, args.serviceIds);
+    const serviceIds = await normalizeAllowedAppointmentServiceIds(
+      ctx,
+      agent._id,
+      args.serviceIds,
+    );
     const now = Date.now();
     await ctx.db.patch(node._id, {
       allowedAppointmentServiceIds: serviceIds,
