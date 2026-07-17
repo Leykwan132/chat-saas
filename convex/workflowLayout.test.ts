@@ -70,3 +70,66 @@ test("updateOrientation stores the workflow layout orientation", async () => {
   expect(updatedGraph.workflow.layoutOrientation).toBe("vertical");
   expect(reloadedGraph?.workflow.layoutOrientation).toBe("vertical");
 });
+
+test("apply stores every canonical position without changing automations", async () => {
+  const t = initTest();
+  const workosUserId = "user-workflow-layout-apply";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const initial = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const graph = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: initial.nodes[0]._id,
+    kind: "sendText",
+  });
+  const positions = graph.nodes.map((node, index) => ({
+    nodeId: node._id,
+    positionX: index * 100,
+    positionY: index * 200,
+  }));
+
+  const arranged = await authed.mutation(api.workflowLayout.apply, {
+    agentId,
+    layoutOrientation: "vertical",
+    positions,
+  });
+
+  expect(arranged.workflow.layoutOrientation).toBe("vertical");
+  expect(arranged.automations).toEqual(graph.automations);
+  expect(
+    arranged.nodes.map((node) => ({
+      nodeId: node._id,
+      positionX: node.positionX,
+      positionY: node.positionY,
+    })),
+  ).toEqual(positions);
+});
+
+test("apply rejects duplicate node positions without partially moving nodes", async () => {
+  const t = initTest();
+  const workosUserId = "user-workflow-layout-duplicates";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const initial = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const graph = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: initial.nodes[0]._id,
+    kind: "sendText",
+  });
+  const firstNode = graph.nodes[0];
+
+  await expect(
+    authed.mutation(api.workflowLayout.apply, {
+      agentId,
+      layoutOrientation: "vertical",
+      positions: graph.nodes.map(() => ({
+        nodeId: firstNode._id,
+        positionX: 999,
+        positionY: 999,
+      })),
+    }),
+  ).rejects.toThrow("Workflow layout nodes do not match");
+
+  const reloaded = await authed.query(api.workflows.getForAgent, { agentId });
+  expect(reloaded?.nodes).toEqual(graph.nodes);
+});
