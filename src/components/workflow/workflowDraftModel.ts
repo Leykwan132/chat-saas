@@ -98,7 +98,9 @@ export function addDraftNodeAfter(
   kind: AddableWorkflowNodeKind,
 ) {
   const sourceNode = graph.nodes.find((node) => node._id === sourceNodeId);
-  if (!sourceNode || isWorkflowTerminalNodeKind(sourceNode.kind)) return graph;
+  if (!sourceNode || isWorkflowTerminalNodeKind(sourceNode.kind)) {
+    return { graph, nodeId: undefined };
+  }
   const siblingCount = graph.edges.filter((edge) => edge.sourceNodeId === sourceNodeId).length;
   const nodeId = draftId<'workflowNodes'>(DRAFT_NODE_PREFIX);
   const edgeId = draftId<'workflowEdges'>(DRAFT_EDGE_PREFIX);
@@ -127,7 +129,14 @@ export function addDraftNodeAfter(
     createdAt: now,
     updatedAt: now,
   };
-  return { ...cloneGraph(graph), nodes: [...graph.nodes, node], edges: [...graph.edges, edge] };
+  return {
+    graph: {
+      ...cloneGraph(graph),
+      nodes: [...graph.nodes, node],
+      edges: [...graph.edges, edge],
+    },
+    nodeId,
+  };
 }
 
 export function updateDraftNode(

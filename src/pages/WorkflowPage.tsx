@@ -50,8 +50,8 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
   }, [isDirty]);
 
   const handleAddNode = useCallback((nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => {
-    workflowDraft.addNode(nodeId, kind);
-    setSelectedNodeId(undefined);
+    const addedNodeId = workflowDraft.addNode(nodeId, kind);
+    setSelectedNodeId(addedNodeId);
   }, [workflowDraft]);
   const handleRemoveNode = useCallback((nodeId: Id<'workflowNodes'>) => {
     workflowDraft.removeNode(nodeId);

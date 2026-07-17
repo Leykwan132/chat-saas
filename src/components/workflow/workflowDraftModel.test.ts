@@ -54,11 +54,12 @@ test('draft equality ignores timestamps and ordering', () => {
 
 test('draft operations are immutable and removal bridges the graph', () => {
   const original = graph();
-  const added = addDraftNodeAfter(original, original.nodes[1]._id, 'bookAppointment');
-  const newNode = added.nodes.find((node) => node.kind === 'bookAppointment');
+  const addition = addDraftNodeAfter(original, original.nodes[1]._id, 'bookAppointment');
+  const newNode = addition.graph.nodes.find((node) => node.kind === 'bookAppointment');
+  expect(addition.nodeId).toBe(newNode?._id);
   expect(newNode?._id).toMatch(/^draft-node:/);
   expect(original.nodes).toHaveLength(2);
-  const updated = updateDraftNode(added, original.nodes[1]._id, { title: 'Welcome' });
+  const updated = updateDraftNode(addition.graph, original.nodes[1]._id, { title: 'Welcome' });
   expect(updated.nodes.find((node) => node._id === original.nodes[1]._id)?.title).toBe('Welcome');
   const removed = removeDraftNode(updated, original.nodes[1]._id);
   expect(removed.edges.some((edge) => edge.sourceNodeId === original.nodes[0]._id && edge.targetNodeId === newNode?._id)).toBe(true);

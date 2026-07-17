@@ -39,8 +39,10 @@ export function useWorkflowDraft(persistedGraph: WorkflowGraph) {
     setStoredDraft(createWorkflowDraft(graph));
   }, []);
   const addNode = useCallback((nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => {
-    edit((current) => addDraftNodeAfter(current, nodeId, kind));
-  }, [edit]);
+    const addition = addDraftNodeAfter(draft, nodeId, kind);
+    edit(() => addition.graph);
+    return addition.nodeId;
+  }, [draft, edit]);
   const removeNode = useCallback((nodeId: Id<'workflowNodes'>) => {
     edit((current) => removeDraftNode(current, nodeId));
   }, [edit]);

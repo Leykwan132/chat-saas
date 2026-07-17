@@ -36,3 +36,13 @@ test('workflow page records template origin only on successful Save and clears i
   const catchBlock = source.match(/catch \(error\) \{[\s\S]*?\n {4}\} finally/);
   expect(catchBlock?.[0]).not.toContain('setAppliedTemplateId');
 });
+
+test('workflow page selects a newly added draft node so its inspector opens', () => {
+  const addNodeHandler = source.match(
+    /const handleAddNode = useCallback\([\s\S]*?\n {2}\}, \[workflowDraft\]\);/,
+  );
+
+  expect(addNodeHandler?.[0]).toContain('const addedNodeId = workflowDraft.addNode(nodeId, kind)');
+  expect(addNodeHandler?.[0]).toContain('setSelectedNodeId(addedNodeId)');
+  expect(addNodeHandler?.[0]).not.toContain('setSelectedNodeId(undefined)');
+});
