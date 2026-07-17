@@ -58,7 +58,7 @@ function WorkflowTemplatePreviewCanvas({
         nodeTypes={workflowCanvasNodeTypes}
         edgeTypes={workflowCanvasEdgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.25 }}
+        fitViewOptions={{ padding: 0.08 }}
         minZoom={0.35}
         maxZoom={1.6}
         nodesDraggable={false}
@@ -92,7 +92,7 @@ export function WorkflowTemplatePreviewDialog({
       }}
     >
       <DialogContent
-        className="flex h-[80vh] w-[90vw] max-w-[90vw] flex-col gap-0 overflow-hidden p-0"
+        className="flex h-[92vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:!max-w-[calc(100vw-2rem)]"
         showCloseButton={!isReplacing}
         onEscapeKeyDown={(event) => {
           if (isReplacing) event.preventDefault();
@@ -113,7 +113,7 @@ export function WorkflowTemplatePreviewDialog({
         <DialogFooter className="shrink-0 border-t p-4">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             disabled={isReplacing}
             onClick={onSkip}
           >

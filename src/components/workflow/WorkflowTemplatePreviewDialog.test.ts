@@ -25,3 +25,12 @@ test("replacement pending state blocks every dismissal path", () => {
   expect(source).toContain("showCloseButton={!isReplacing}");
   expect(source).toContain("disabled={isReplacing}");
 });
+
+test("preview uses nearly the full viewport and keeps node content readable", () => {
+  expect(source).toContain("fitViewOptions={{ padding: 0.08 }}");
+  expect(source).toContain("h-[92vh]");
+  expect(source).toContain("w-[calc(100vw-2rem)]");
+  expect(source).toContain("sm:!max-w-[calc(100vw-2rem)]");
+  expect(source).toContain('variant="ghost"');
+  expect(source).not.toContain('variant="outline"');
+});
