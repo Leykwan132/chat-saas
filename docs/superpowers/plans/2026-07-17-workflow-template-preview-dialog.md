@@ -13,7 +13,9 @@
 - Run every script with `source ~/.nvm/nvm.sh && nvm use 22` in the same shell.
 - Keep every authored code file at or below 300 lines.
 - Use the installed shadcn Dialog and Button components; do not add dependencies.
-- The dialog is approximately `90vw` by `80vh`, bounded by the viewport.
+- The dialog uses `calc(100vw - 2rem)` width and `92vh` height, with an explicit responsive max-width override.
+- The preview uses minimal fit padding so node content remains readable.
+- Skip is a borderless ghost/text action; the existing dialog backdrop remains unchanged.
 - The template canvas is read-only and separate from the live workflow canvas.
 - Replace Current persists directly; Skip, close, Escape, and outside dismissal never mutate.
 - Block dialog dismissal while replacement is pending.
@@ -505,6 +507,143 @@ Update `CONTINUITY.md` with:
 ```bash
 git add CONTINUITY.md
 git commit -m "Document workflow preview dialog verification"
+```
+
+Do not stage `docs/kilobot-launch-video-script.md`.
+
+---
+
+### Task 4: Expand the preview for readable node content
+
+Tasks 1–3 were completed in commits `6823dabd`, `07140e8e`, and `7384cd0b`. This task supersedes only their dialog sizing, graph-fit padding, and Skip-button styling.
+
+**Files:**
+- Modify: `src/components/workflow/WorkflowTemplatePreviewDialog.test.ts`
+- Modify: `src/components/workflow/WorkflowTemplatePreviewDialog.tsx`
+
+**Interfaces:**
+- Keeps the existing `WorkflowTemplatePreviewDialogProps` contract unchanged.
+- Produces a near-full-viewport preview with readable node content and a text-style Skip action.
+
+- [ ] **Step 1: Write the failing sizing and readability contract**
+
+Add this test to `src/components/workflow/WorkflowTemplatePreviewDialog.test.ts`:
+
+```ts
+test("preview uses nearly the full viewport and keeps node content readable", () => {
+  expect(source).toContain("fitViewOptions={{ padding: 0.08 }}");
+  expect(source).toContain("h-[92vh]");
+  expect(source).toContain("w-[calc(100vw-2rem)]");
+  expect(source).toContain("sm:!max-w-[calc(100vw-2rem)]");
+  expect(source).toContain('variant="ghost"');
+  expect(source).not.toContain('variant="outline"');
+});
+```
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/WorkflowTemplatePreviewDialog.test.ts
+```
+
+Expected: FAIL because the current dialog still uses `0.25` fit padding, `80vh`, `90vw`, and an outlined Skip button.
+
+- [ ] **Step 3: Implement the approved viewport sizing**
+
+In `src/components/workflow/WorkflowTemplatePreviewDialog.tsx`:
+
+- change `fitViewOptions` to `{ padding: 0.08 }`;
+- set `DialogContent` to:
+
+```tsx
+className="flex h-[92vh] w-[calc(100vw-2rem)] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:!max-w-[calc(100vw-2rem)]"
+```
+
+- change the Skip button from `variant="outline"` to `variant="ghost"`;
+- leave the dialog backdrop and every dismissal/replacement behavior unchanged.
+
+- [ ] **Step 4: Run the focused test and verify GREEN**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/WorkflowTemplatePreviewDialog.test.ts
+```
+
+Expected: 3 tests pass.
+
+- [ ] **Step 5: Run focused workflow verification**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/WorkflowPage.test.ts src/pages/workflowMessageActions.test.ts src/pages/workflowTemplateReplacementPersistence.test.ts src/components/workflow
+source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/workflow/WorkflowTemplatePreviewDialog.tsx src/components/workflow/WorkflowTemplatePreviewDialog.test.ts
+```
+
+Expected: all focused workflow tests pass and ESLint exits 0.
+
+- [ ] **Step 6: Commit the readable preview**
+
+```bash
+git add src/components/workflow/WorkflowTemplatePreviewDialog.tsx src/components/workflow/WorkflowTemplatePreviewDialog.test.ts
+git commit -m "Make workflow preview nodes readable"
+```
+
+---
+
+### Task 5: Verify the sizing amendment and continuity
+
+**Files:**
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: the completed sizing amendment.
+- Produces: full verification evidence and bounded continuity state.
+
+- [ ] **Step 1: Run the complete app and docs test suites**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --exclude 'kilobot-docs/**' --reporter=dot
+source ~/.nvm/nvm.sh && nvm use 22 && bun test kilobot-docs/tests/help-center-brand.test.mjs kilobot-docs/tests/help-center-structure.test.mjs
+```
+
+Expected: every app test and all 17 docs tests pass.
+
+- [ ] **Step 2: Run the production build**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bun run build
+```
+
+Expected: TypeScript and Vite build exit 0; the existing large-chunk warning may remain.
+
+- [ ] **Step 3: Check the final source and workspace**
+
+Run:
+
+```bash
+rg -n "fitViewOptions|h-\[92vh\]|w-\[calc\(100vw-2rem\)\]|sm:!max-w|variant=\"ghost\"" src/components/workflow/WorkflowTemplatePreviewDialog.tsx
+git diff --check -- . ':(exclude)docs/kilobot-launch-video-script.md'
+wc -l src/components/workflow/WorkflowTemplatePreviewDialog.tsx src/components/workflow/WorkflowTemplatePreviewDialog.test.ts
+git status --short
+```
+
+Expected: the source contains every approved contract, the scoped diff check passes, both files remain at or below 300 lines, and the unrelated video-script edit remains unstaged.
+
+- [ ] **Step 4: Update and commit continuity**
+
+Update `CONTINUITY.md` with the implemented near-full-viewport preview and fresh verification counts while preserving its section limits.
+
+```bash
+git add CONTINUITY.md
+git commit -m "Document readable workflow preview verification"
 ```
 
 Do not stage `docs/kilobot-launch-video-script.md`.
