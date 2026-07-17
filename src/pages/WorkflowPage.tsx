@@ -10,6 +10,7 @@ import { WorkflowCanvas } from "@/components/workflow/WorkflowCanvas";
 import { WorkflowInspector } from "@/components/workflow/WorkflowInspector";
 import type { WorkflowInspectorSaveValues } from "@/components/workflow/WorkflowInspectorForm";
 import { WorkflowPageSkeleton } from "@/components/workflow/WorkflowPageSkeleton";
+import { WorkflowTemplatePreviewDialog } from "@/components/workflow/WorkflowTemplatePreviewDialog";
 import { workflowGraphToFlow } from "@/components/workflow/workflowFlowModel";
 import { getNextWorkflowLayoutOrientation } from "@/components/workflow/workflowLayout";
 import type { WorkflowTemplate } from "@/components/workflow/workflowTemplates";
@@ -63,27 +64,23 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, [automationDraft.isDirty]);
 
-  const displayedGraph = templatePreview
-    ? templatePreview.graph
-    : latestGraph;
   const layoutOrientation =
-    displayedGraph.workflow.layoutOrientation ?? "horizontal";
+    latestGraph.workflow.layoutOrientation ?? "horizontal";
   const flow = useMemo(
     () =>
       workflowGraphToFlow(
-        displayedGraph,
+        latestGraph,
         (nodeId, kind) => void messageActions.addNode(nodeId, kind),
         (nodeId) => void messageActions.removeNode(nodeId),
         selectedNodeId,
         layoutOrientation,
-        messageActions.isGraphMutating || templatePreview !== undefined,
+        messageActions.isGraphMutating,
       ),
     [
-      displayedGraph,
+      latestGraph,
       layoutOrientation,
       messageActions,
       selectedNodeId,
-      templatePreview,
     ],
   );
   const selectedNode = useMemo(
@@ -182,16 +179,6 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         onSave={() => void handleSave()}
         onReset={handleReset}
         onTemplateApply={handleTemplateApply}
-        templatePreview={
-          templatePreview
-            ? {
-                name: templatePreview.template.name,
-                isReplacing: messageActions.isGraphMutating,
-                onReplace: () => void handleTemplateReplace(),
-                onSkip: () => setTemplatePreview(undefined),
-              }
-            : undefined
-        }
         arrangeFocusRequest={arrangeFocusRequest}
         cleanupDisabled={messageActions.isGraphMutating}
         arrangeDisabled={messageActions.isGraphMutating}
@@ -199,6 +186,12 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         automations={automationDraft.automations}
         onAutomationsChange={automationDraft.update}
         agentId={agentId}
+      />
+      <WorkflowTemplatePreviewDialog
+        preview={templatePreview}
+        isReplacing={messageActions.isGraphMutating}
+        onReplace={() => void handleTemplateReplace()}
+        onSkip={() => setTemplatePreview(undefined)}
       />
       <WorkflowInspector
         agentId={agentId}

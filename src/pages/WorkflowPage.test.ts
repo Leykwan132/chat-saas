@@ -31,11 +31,14 @@ test("workflow page selects the real node returned by direct Add", () => {
   expect(source).toContain("onSelectNode: setSelectedNodeId");
 });
 
-test("workflow page previews templates before direct replacement", () => {
+test("workflow page previews templates in a dialog separate from the live canvas", () => {
   expect(source).toContain("createWorkflowTemplatePreview(");
-  expect(source).toContain("templatePreview.graph");
-  expect(source).toContain("displayedGraph.workflow.layoutOrientation");
-  expect(source).toContain("templatePreview={");
+  expect(source).toContain("<WorkflowTemplatePreviewDialog");
+  expect(source).toContain("preview={templatePreview}");
+  expect(source).toContain("workflowGraphToFlow(");
+  expect(source).toContain("latestGraph,");
+  expect(source).not.toContain("displayedGraph");
+  expect(source).not.toContain("templatePreview={");
   expect(source).toContain("await messageActions.replaceTemplate(");
   expect(source).toContain("setTemplatePreview(undefined)");
 });

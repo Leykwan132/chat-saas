@@ -20,12 +20,12 @@ test('workflow canvas passes arrange loading and focus requests through to the v
   expect(source).toContain('arrangeLoading={arrangeLoading}');
 });
 
-test('workflow canvas becomes visibly read-only during template preview', () => {
-  expect(source).toContain('nodesDraggable={!isPreviewing}');
-  expect(source).toContain('nodesConnectable={!isPreviewing}');
-  expect(source).toContain('elementsSelectable={!isPreviewing}');
-  expect(source).toContain("isPreviewing ? null : ['Backspace', 'Delete']");
-  expect(source).toContain('bg-primary/[0.04]');
-  expect(source).toContain('<WorkflowTemplatePreviewOverlay');
-  expect(source).toContain('useWorkflowTemplatePreviewEscape(templatePreview)');
+test('workflow canvas contains no template preview presentation', () => {
+  expect(source).not.toContain('templatePreview');
+  expect(source).not.toContain('isPreviewing');
+  expect(source).not.toContain('WorkflowTemplatePreviewOverlay');
+  expect(source).not.toContain('useWorkflowTemplatePreviewEscape');
+  expect(source).toContain('nodesDraggable');
+  expect(source).toContain('nodesConnectable');
+  expect(source).toContain('elementsSelectable');
 });
