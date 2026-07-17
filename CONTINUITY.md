@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-17 [USER] Starter workflow preview must expand to the viewport width minus 32px and about `92vh`, override the inherited narrow responsive max-width, and use minimal graph-fit padding so node content is readable. Skip becomes a borderless text action; the backdrop stays unchanged.
+- 2026-07-17 [CODE] Starter workflow preview now uses viewport width minus 32px and `92vh`, overrides the inherited narrow responsive max-width, and uses minimal graph-fit padding so node content is readable; Skip is a borderless text action and the backdrop is unchanged.
 - 2026-07-16 [CODE] Docs use Geist for all UI/content (no Gilda/Google Sans Flex); Core Concepts = agent flow; Resources = the rest; not committed/deployed.
 - 2026-07-16 [TOOL] Help center + product docs links shipped on `main` as `82647f72`; site og/twitter use `preview-image-v2.png`; docs not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
@@ -153,7 +153,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
-- 2026-07-17 [CODE] Completed direct Message Handling persistence and isolated starter-template preview: real-node inspection/media, transient drag positions, explicit layout persistence, automation-only Save/Discard, and a separate read-only preview dialog with direct replacement.
+- 2026-07-17 [CODE] Completed direct Message Handling persistence and isolated starter-template preview: real-node inspection/media, transient drag positions, explicit layout persistence, automation-only Save/Discard, and a near-full-viewport read-only preview dialog with direct replacement.
 - 2026-07-16 [CODE] Rewrote all 26 help-center guides with task-oriented path cards, step flows, concise copy, and related-resource cards.
 - 2026-07-16 [CODE] Aligned docs typography, colors, spacing, navbar, and sidebar chrome with the dashboard using Geist and a Gilda Display wordmark.
 - 2026-07-16 [CODE] Restored the unlabeled sticky page-outline TOC and icon-only mobile toggle.
@@ -181,7 +181,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-17 [TOOL] Separate workflow template-preview dialog completed verified red-green cycles and passed 37 workflow files/94 tests, targeted ESLint, the complete 235-file/716-test app suite, 17 native docs tests, TypeScript/Vite production build, source/whitespace scans, and 271/266/134-line module checks on Node v22.22.0; Vite retained only its existing chunk-size warning.
+- 2026-07-17 [TOOL] Readable near-full-viewport workflow preview completed a verified red-green cycle and passed 37 workflow files/95 tests, targeted ESLint, the complete 235-file/717-test app suite, 17 native docs tests, TypeScript/Vite production build, source/whitespace scans, and 134/36-line module checks on Node v22.22.0; Vite retained only its existing chunk-size warning.
 - 2026-07-17 [TOOL] Direct workflow persistence implementation passed 235/235 Vitest files and 715/715 app tests, 17/17 native docs tests, targeted ESLint, TypeScript and Vite production build, scoped whitespace/source-contract scans, and authored-module ≤300-line checks on Node v22.22.0; Vite retained only its existing chunk-size warning.
 - 2026-07-17 [TOOL] Direct workflow persistence specification, template-preview amendment, and eight-task TDD implementation plan passed placeholder, consistency, scope, ambiguity, and `git diff --check` review; commits are `58f2575f`, `dc02e5cd`, and `317a5290`.
 - 2026-07-17 [TOOL] Workflow create-node dialog restoration completed a verified red-green cycle: 37 workflow-focused files and 90 tests passed, targeted ESLint passed, `git diff --check` passed, and all touched code files remained under 300 lines on Node v22.22.0.
