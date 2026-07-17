@@ -8,6 +8,8 @@ Manual dragging remains temporary canvas state. It does not write node positions
 
 Reminder and Follow-up configuration remain draft-based. Direct message-graph actions must preserve any unsaved automation settings and must never save them implicitly.
 
+Starter templates use a read-only canvas preview before replacement. Previewing never mutates the current workflow. The user explicitly chooses `Replace Current` to persist the template or `Skip` to return unchanged.
+
 This design supersedes the draft-only Message Handling behavior in `2026-07-13-workflow-discard-template-interactions-design.md`. Its visual styling decisions remain active where they still apply.
 
 ## Goals
@@ -19,6 +21,8 @@ This design supersedes the draft-only Message Handling behavior in `2026-07-13-w
 - Remove the leading check icon from Apply while retaining its loading spinner.
 - Keep manual node dragging transient and outside dirty-state calculation.
 - Persist positions only through Cleanup or Arrange.
+- Preview starter templates on the canvas before replacing the current message graph.
+- Make template preview visually distinct and read-only, with centered `Replace Current` and `Skip` actions.
 - Preserve unsaved Reminder and Follow-up configuration across every direct Message Handling mutation.
 - Keep backend authorization, node limits, terminal-node restrictions, media validation, and workflow concurrency protection.
 
@@ -30,14 +34,17 @@ This design supersedes the draft-only Message Handling behavior in `2026-07-13-w
 - Changing media type, size, quota, deletion, or storage rules.
 - Changing landing-page workflow-preview persistence.
 - Adding a new confirmation dialog for routine node operations.
+- Using a modal or side-by-side panel for starter-template preview.
+- Removing Save/Discard from Reminder and Follow-up automation drafts.
 
 ## Persistence Boundary
 
-The editor has three independent state categories:
+The editor has four independent state categories:
 
 1. **Persisted message graph:** workflow nodes, edges, node configuration, incoming edge conditions, selected appointment services, applied starter templates, layout orientation, and canonical Cleanup/Arrange positions.
 2. **Draft automation configuration:** Reminder and Follow-up settings remain local until their existing Save action is used.
 3. **Transient canvas state:** positions created by manual dragging exist only inside the current React Flow canvas session.
+4. **Transient template preview:** a selected starter template replaces only the canvas presentation until the user confirms or skips it.
 
 Message graph mutations return the latest persisted graph. The editor adopts the returned nodes, edges, and layout immediately while retaining the current automation draft unchanged.
 
@@ -68,6 +75,29 @@ The mutation validates all fields before writing and returns the latest persiste
 
 The Apply button contains only the `Apply` label while idle. The leading check icon is removed. The loading spinner remains visible during persistence.
 
+## Template Preview
+
+Each starter-template card replaces the existing `Try now` cue with `Preview`. The whole card remains pointer- and keyboard-activatable. Selecting it closes the template picker and enters a client-only preview state.
+
+Preview state:
+
+- renders the selected template graph across the existing Message Handling canvas;
+- fits the complete template into view;
+- uses a low-opacity semantic primary tint over the canvas background, including a stronger dark-mode tint;
+- shows a visible `Previewing: [Template name]` label;
+- disables adding, deleting, connecting, dragging, edge selection, node inspectors, media upload, Cleanup, Arrange, and other graph-editing controls;
+- preserves the current persisted graph, canvas state, and automation draft unchanged; and
+- exposes only the centered preview decision panel for template actions.
+
+The centered decision panel uses the normal background surface and contains:
+
+- `Replace Current` as the primary button; and
+- `Skip` as the secondary outline button.
+
+`Replace Current` invokes the direct message-graph replacement mutation. While pending, both actions are disabled and the primary action shows a loading spinner. On success, the editor adopts the returned persisted graph, exits preview, fits the replacement graph into view, records template usage, and shows one success toast. On failure, the editor remains in preview, the existing workflow stays unchanged, and one error toast appears.
+
+`Skip` exits preview and restores the exact current workflow without a mutation. Escape performs the same action. Leaving the Message Handling view also skips the preview. No Save/Discard state is created by entering or leaving preview.
+
 ## Other Message Graph Actions
 
 Message Handling must not mix direct and draft-only graph operations. The following actions persist immediately and adopt the returned graph:
@@ -75,7 +105,7 @@ Message Handling must not mix direct and draft-only graph operations. The follow
 - deleting a node;
 - connecting two nodes;
 - deleting an edge;
-- applying a starter template; and
+- confirming `Replace Current` from a starter-template preview; and
 - Cleanup or Arrange.
 
 Starter-template application replaces only the persisted message graph and records template usage. It does not write Reminder or Follow-up settings.
@@ -141,6 +171,9 @@ Media APIs remain unchanged because newly created media nodes now have real `wor
 - The inspector opens only after Convex returns the real node.
 - Media sections never show “Save the workflow first, then reopen this node.”
 - Apply has no idle check icon.
+- Template cards say `Preview` instead of `Try now`.
+- Template preview is visibly tinted, read-only, and identified by template name.
+- The centered preview panel contains primary `Replace Current` and secondary `Skip` actions.
 - Message Handling does not show Save/Discard for direct graph changes.
 - Reminder and Follow-up continue showing Save/Discard only when their automation draft is dirty.
 - Manual dragging never changes toolbar actions.
@@ -157,6 +190,12 @@ Frontend regression coverage verifies:
 - drag stop does not call a persistence or draft callback.
 - dragging does not create dirty state.
 - Cleanup and Arrange call their deliberate persisted-layout boundary.
+- template card activation enters preview without mutating the workflow.
+- preview renders the template graph with its distinct canvas treatment and centered actions.
+- preview blocks every graph-editing interaction.
+- Skip, Escape, and leaving Message Handling restore the current workflow without a mutation.
+- Replace Current persists only the message graph and exits preview after success.
+- replacement failure keeps preview active and leaves the current workflow unchanged.
 - direct graph results preserve a dirty automation draft.
 - Message Handling direct changes do not show Save/Discard.
 
@@ -165,8 +204,8 @@ Convex coverage verifies:
 - Add Node returns a real child and edge.
 - Apply updates node, edge condition, and appointment services atomically.
 - Apply rejects cross-workflow nodes, edges, and services without partial writes.
-- template replacement preserves automation configuration.
 - Cleanup and Arrange persist only canonical layout fields.
+- template replacement occurs only after confirmation and preserves automation configuration.
 - direct message mutations preserve media associations and existing authorization.
 
 The focused workflow suite, Convex TypeScript, frontend TypeScript/build, targeted ESLint, `git diff --check`, and the complete test suite must pass under Node v22. Touched code files must remain at or below 300 lines.
@@ -179,5 +218,10 @@ The focused workflow suite, Convex TypeScript, frontend TypeScript/build, target
 - Apply has no check icon.
 - Manual dragging never saves, never marks dirty, and resets on reload.
 - Cleanup and Arrange are the only controls that persist layout positions.
+- Template cards say `Preview` and never replace the workflow on initial click.
+- Preview is full-canvas, read-only, visibly distinct, and names the selected template.
+- Preview presents centered `Replace Current` and `Skip` buttons.
+- Replace Current directly persists the template; Skip, Escape, and view changes restore the existing graph unchanged.
+- Save/Discard remain available only for dirty Reminder and Follow-up automation configuration.
 - Direct Message Handling operations never save or discard pending Reminder or Follow-up edits.
 - No “save first and reopen” media instruction remains.
