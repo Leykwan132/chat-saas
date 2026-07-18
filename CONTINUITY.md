@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-18 [CODE] Direct `@convex-dev/workpool` is pinned to 0.4.8; this reduces loop contention but retains minute recovery wake-ups for future work. Dev has 3 pending future credit jobs and `CREDIT_RESET_PERIOD=months`.
 - 2026-07-18 [CODE] Workflow action planner now returns `responseLanguage` from the latest user message and final-reply guidance always includes `You must respond in {language} strictly.`; global `chatResponseFormattingBlock` same-language rules remain.
 
 - 2026-07-17 [CODE] Workflow media reply prompts omit uploaded filenames from final-reply context and explicitly forbid filename disclosure in planner, final-reply, and runtime instructions; enforcement remains prompt-only.
@@ -27,6 +28,7 @@
 - 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding every Workpool-related reason from users.
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
 # Decisions
+- 2026-07-18 [USER] D394 ACTIVE: Pin the direct `@convex-dev/workpool` dependency exactly to 0.4.8.
 - 2026-07-18 [USER] D393 ACTIVE: Same-language response behavior is enforced through the global `chatResponseFormattingBlock` plus workflow planner `responseLanguage` injected into final-reply guidance as a strict language constraint; stored agent prompts and response post-processing remain unchanged.
 
 - 2026-07-17 [USER] D392 ACTIVE: Workflow media filename privacy is enforced only through prompt contracts: planner guidance must be filename-free, final-reply context omits filenames and explicitly bans them, and media delivery remains unchanged.
@@ -159,15 +161,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-18 [CODE] Diagnosed credit-period Workpool call amplification and upgraded the direct Workpool dependency from 0.4.6 to exact 0.4.8; no application code or deployment changed.
 - 2026-07-18 [CODE] Added and verified the global same-language response prompt contract with Chinese and English examples.
 - 2026-07-17 [CODE] Made workflow media reply prompts filename-private without changing media matching, delivery, or generated-message post-processing.
 - 2026-07-17 [CODE] Restored and uploaded the legacy atomic Workflow save endpoint with a focused regression test, generated API binding, and no changes to current split-persistence callers.
 - 2026-07-17 [CODE] Completed direct Message Handling persistence and isolated starter-template preview: real-node inspection/media, transient drag positions, explicit layout persistence, automation-only Save/Discard, and a near-full-viewport read-only preview dialog with direct replacement.
 - 2026-07-16 [CODE] Rewrote all 26 help-center guides with task-oriented path cards, step flows, concise copy, and related-resource cards.
 - 2026-07-16 [CODE] Aligned docs typography, colors, spacing, navbar, and sidebar chrome with the dashboard using Geist and a Gilda Display wordmark.
-- 2026-07-16 [CODE] Restored the unlabeled sticky page-outline TOC and icon-only mobile toggle.
 
 # Working set
+- 2026-07-18 [CODE] Credit-period Workpool investigation/upgrade: `convex/{creditPeriodPool,creditPeriodPool.test,schema,credits,users,stripe}.ts`, `convex/convex.config.ts`, `package.json`, `bun.lock`, and installed `@convex-dev/workpool` 0.4.8 sources.
 - 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 - 2026-07-17 [CODE] Workflow media filename prompt privacy: `convex/chat/{workflowActionPlanner,workflowActionPlanner.test,workflowPrompt,workflowPrompt.test}.ts` and `docs/superpowers/{specs/2026-07-17-workflow-media-filename-prompt-privacy-design,plans/2026-07-17-workflow-media-filename-prompt-privacy}.md`.
 - 2026-07-17 [CODE] Workflow save rollout compatibility: `convex/{workflowDraftSave,workflowDraftSave.test,_generated/api.d}.ts`.
@@ -179,7 +182,6 @@
 - 2026-07-15 [CODE] Workflow automation thread/history records: `convex/{workflowWhatsappTemplateSender,workflowAutomationOutbound,workflowReminderWorker,workflowFollowUpWorker,conversationLogs,schema}*`, `convex/chat/{threads,inboxMessageMapping,workflowAutomationMessageMetadata}*`, `shared/workflowAutomationMessage.ts`, `src/{lib/inboxOptimistic,components/inbox/{InboxThreadMessages,InboxWorkflowAutomationMessage,conversationActionHistoryPresentation},pages/ChatsPage}*`, and `docs/superpowers/{specs,plans}/2026-07-15-workflow-automation-thread-history*`.
 - 2026-07-15 [CODE] Conversation Details bookings, most-recently-updated selection, and shared status colors: `src/pages/{ChatsPage,ChatsPageCustomerBookings.test}.*`, `src/components/booking/{BookingStatusTag,BookingDetailsPanel}*`, `src/components/inbox/{InboxBookingDetailsCard,InboxCustomerBookingsSection,InboxCustomerBookingRow,InboxCustomerBookingsSpacing,customerBookingsModel}*`, `src/lib/appointmentBookingStatusPresentation*`, `convex/{appointmentBooking/customerBookings,appointmentBookingCustomerHistory.test}.ts`, and `docs/superpowers/{specs,plans}/2026-07-15-inbox-{most-recently-updated-booking,booking-status-accent}*`.
 - 2026-07-15 [CODE] Workflow template example compatibility: `convex/{workflowAutomationValidators,workflowDraftSave.test}*`, `shared/workflowAutomations.ts`, `src/components/workflow/workflowWhatsappTemplates.ts`, and `docs/superpowers/{specs,plans}/2026-07-{14-workflow-template-body-examples,15-workflow-template-example-shapes}*`.
-- 2026-07-15 [CODE] Workflow History UI, pagination, and spend accounting: `src/components/workflow/{WorkflowAutomationHistoryDialog,WorkflowAutomationHistoryPager,workflowAutomationHistoryCaption,workflowAutomationHistoryPagination}*`, `convex/{workflowAutomationCost,workflowAutomationCostMigration,workflowAutomationHistory,workflowAutomationSchema,workflowReminderWorker,workflowFollowUpWorker}*`, `shared/whatsappTemplatePricing.ts`, and `docs/superpowers/{specs/2026-07-14-workflow-history-operational-table-design,plans/{2026-07-14-workflow-history-estimated-spend,2026-07-15-workflow-history-pagination}}.md`.
 - 2026-07-17 [CODE] Workflow direct persistence and isolated template preview: `src/pages/{WorkflowPage,useWorkflowAutomationDraft,useWorkflowMessageActions,workflowAutomationDraftModel,workflowAutomationPersistence,workflowTemplateReplacementPersistence}*`, `src/components/workflow/{WorkflowCanvas,WorkflowInspectorForm,WorkflowTemplateHoverCard,WorkflowTemplatePreviewDialog,workflowTemplatePreviewModel,workflowFlowModel,workflowTemplates}*`, `convex/{workflowNodeConfig,workflowMessageGraphSave,workflowAutomationSave,workflowLayout}*`, and `docs/superpowers/{specs,plans}/2026-07-17-workflow-{direct-node-persistence,template-preview-dialog}*.md`.
 
 # Open questions
@@ -189,6 +191,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-18 [TOOL] Direct Workpool 0.4.8 upgrade verified under Node v22.22.0: frozen Bun install made no changes, installed package reports 0.4.8, 2 focused credit-period tests passed, and `git diff --check` passed. Earlier Dev inspection found 3 future credit jobs and only 2 OCC retries over 72 hours; 0.4.8 reduces contention but retains minute recovery wake-ups.
 - 2026-07-18 [TOOL] The same-language response prompt completed a verified red-green cycle: the new contract failed on the missing instruction, then 8 focused tests, the 236-file/719-test app suite, and 17 native docs tests passed under Node v22.22.0; scoped `git diff --check` passed and the two code files measured 125/106 lines.
 - 2026-07-17 [TOOL] Workflow media filename prompt privacy completed a verified red-green cycle and was uploaded to the configured Convex deployment: the exact `Type_A_layout.jpg` leak and missing prompt rules failed first; 4 focused files/27 tests, targeted ESLint, scoped checks, the 236-file/718-test app suite, and 17 native docs tests passed on Node v22.22.0; prompt modules measured 189/179 lines.
 - 2026-07-17 [TOOL] Restored `workflowDraftSave.save` completed a verified red-green cycle: the focused test first failed with missing module, then the legacy and two split save tests passed; Convex codegen uploaded functions and regenerated bindings, targeted ESLint passed, and new modules measured 160/74 lines on Node v22.22.0.
