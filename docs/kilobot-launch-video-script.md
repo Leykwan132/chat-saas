@@ -1,6 +1,6 @@
 # KiloBot launch video script
 
-**Runtime:** ~2:25–2:45  
+**Runtime:** ~2:10–2:30  
 **Flow:** Intro → WhatsApp hook → Prompt (Ilmu + free) → Knowledge → Workflow → Payoff → Feature montage → CTA
 
 ---
@@ -26,17 +26,15 @@
 
 **VO:**
 
-> Hi, I’m Kwan — and this is KiloBot.
+> Hi, I’m Kwan.
 >
-> I started as a backend engineer, then moved into sales. That’s when I saw how much time businesses waste on the same questions, the same follow-ups, the same repetitive work.
+> Six months ago, I transitioned from backend engineering into sales. After speaking with business owners, I kept hearing the same thing: everyone was excited about AI agents, but they kept trying out new tools and got disappointed.
 >
-> I tried the tools out there. Most weren’t built for sales. A lot aren’t truly AI — or aren’t smart enough. Many are built for team inbox… but they’re not truly agentic. They don’t take action end to end.
+> Most of them were too complicated to set up, required engineers to build workflows, or simply couldn’t handle real sales conversations.
 >
-> There’s a lot of manual setup — sometimes you even need engineers involved. And then there are extra charges on top of your subscription.
+> That’s why I built KiloBot — an AI sales agent you can set up in under five minutes.
 >
-> So I built KiloBot — AI sales agents you can set up in minutes, and that handle conversations 24/7.
->
-> Instead of talking about it… let me show you.
+> Let me show you how it works.
 
 ---
 
@@ -46,11 +44,7 @@
 
 **VO:**
 
-> This is what your customer sees.
->
-> Not a stiff chatbot — an agent that replies like a human, on WhatsApp, day or night.
->
-> It answers naturally and keeps the lead warm… even when you’re offline.
+> Here, I’ve got a KiloBot on WhatsApp. Let me send a quick message — it reacts like a real person, with typing and seen.
 
 ---
 
@@ -60,11 +54,9 @@
 
 **VO:**
 
-> And you control how it sounds.
+> You can customize your agent’s system prompt, tone, formality, and more — tailored to your business — and test it out.
 >
-> Pick your model — including Ilmu Mini v3.3, a sovereign model by YTL AI Labs. KiloBot starts free, so anyone can try sales AI with Ilmu.
->
-> Set the tone, formality, and emoji style… then test it live, and publish when it feels like your brand.
+> You can also pick whatever model works best for you. We support Ilmu Mini v3.3, a sovereign model by YTL AI Labs — available even on free plans.
 
 ---
 
@@ -74,11 +66,11 @@
 
 **VO:**
 
-> Then give it your business knowledge.
+> Knowledge Base is how you build the brain for your agent.
 >
-> Upload files, add a website, or drop in Q&A — pricing, hours, products, policies.
+> We can auto-scrape your website, read your files, or take simple text inputs.
 >
-> So it answers from *your* information… not generic AI guesses.
+> All of that information is available to the agent in minutes.
 
 ---
 
@@ -88,27 +80,23 @@
 
 **VO:**
 
-> When the chat needs to go somewhere, Workflows take over.
+> Workflow is where you give your agent actionable tasks with conditions.
 >
-> Design the path once — send a message, share a photo, book a meeting, or hand off to your team.
->
-> Your real sales process… just automated.
+> You describe the conditions, and your agent executes — booking, sending assets, and more.
 
 ---
 
-## 2:05–2:15 — Payoff
+## 2:05–2:20 — Booking payoff
 
-**Visual:** WhatsApp confirmation → booking on Calendar / Inbox. Optional: Reminder or Follow-up set to Active.
+**Visual:** Calendar or Inbox — a booked appointment lands. Customer name, time, and service visible.
 
 **VO:**
 
-> From first reply… to a booked meeting. That’s end to end — not just chat.
->
-> Reminders and follow-ups keep running after — so leads don’t go cold overnight.
+> And just like that — from the first reply to a booked meeting on your calendar.
 
 ---
 
-## 2:15–2:25 — Feature montage
+## 2:20–2:30 — Feature montage
 
 **Visual:** Fast cuts / collage — throw everything on screen. Don’t explain each one. Suggested pack:
 
@@ -122,25 +110,17 @@
 
 **VO (one-liner):**
 
-> And that’s just the core — you’ve also got inbox, broadcasts, analytics, lead scoring, multi-channel… the full sales stack.
-
-**VO (two-liner, if you want a beat longer):**
-
-> And that’s just the core.
->
-> Inbox, broadcasts, analytics, lead scoring, multi-channel — it’s all in here too.
+> And that’s just the core — we’ve got a lot more for you to explore. Whether you’re a solopreneur or a large team.
 
 ---
 
-## 2:25–2:40 — CTA (on camera or end card)
+## 2:30–2:45 — CTA (on camera or end card)
 
 **Visual:** You on camera, then end card with form link.
 
 **VO:**
 
-> That’s KiloBot — AI sales agents that feel human, built for how sales actually works.
->
-> It starts free for everyone. And if you join our early adopter program, submit the form and get 3 months free.
+> It starts free for everyone. Join our early adopter program, submit the form, and get three months free.
 >
 > Link’s in the description — join early, and let’s build this together.
 
@@ -194,3 +174,6 @@ kilobot.app
 | “Next —” felt tutorial-y | Softened to “Then…” |
 | 60s cut was one long run-on | Split into short spoken beats |
 | End card stacked too many free claims | Cleared hierarchy: starts free / Ilmu / early adopter 3 months |
+| Spoken English (articles, agreement, idioms, could→can) | Full VO pass for natural delivery |
+| Booking shot had no VO | Added short Calendar/Inbox payoff beat |
+| Intro named KiloBot twice; actions/free/CTA restated mid-demo | Story → pain → name once; WhatsApp = human feel only; free once with Ilmu; CTA = offer only |

@@ -216,6 +216,7 @@ import type * as workflowAutomationSave from "../workflowAutomationSave.js";
 import type * as workflowAutomationSchema from "../workflowAutomationSchema.js";
 import type * as workflowAutomationValidators from "../workflowAutomationValidators.js";
 import type * as workflowCore from "../workflowCore.js";
+import type * as workflowDraftSave from "../workflowDraftSave.js";
 import type * as workflowDraftValidation from "../workflowDraftValidation.js";
 import type * as workflowFollowUpPool from "../workflowFollowUpPool.js";
 import type * as workflowFollowUpRuntime from "../workflowFollowUpRuntime.js";
@@ -464,6 +465,7 @@ declare const fullApi: ApiFromModules<{
   workflowAutomationSchema: typeof workflowAutomationSchema;
   workflowAutomationValidators: typeof workflowAutomationValidators;
   workflowCore: typeof workflowCore;
+  workflowDraftSave: typeof workflowDraftSave;
   workflowDraftValidation: typeof workflowDraftValidation;
   workflowFollowUpPool: typeof workflowFollowUpPool;
   workflowFollowUpRuntime: typeof workflowFollowUpRuntime;
