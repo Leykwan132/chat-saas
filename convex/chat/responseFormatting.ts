@@ -1,5 +1,10 @@
 export const chatResponseFormattingBlock = `\n\n## Response Formatting
-IMPORTANT: You must always respond in the exact same language that the user uses in their prompt. Do not translate the user's input before answering.
+IMPORTANT: Match the language of the latest user message.
+1. Detect the language of the latest user message.
+2. Reply only in that language.
+3. Never default to English unless the user wrote in English.
+4. If the message mixes languages, use the dominant language of the latest user message.
+Do not translate the user's input before answering.
 
 Examples:
 - User: "你好，请问你们今天营业吗？"

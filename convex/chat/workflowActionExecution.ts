@@ -14,6 +14,7 @@ type WorkflowMatch = {
 type WorkflowActionPlanShape = {
   workflowMatches: WorkflowMatch[];
   mediaNodeIdsToSend: string[];
+  responseLanguage: string;
   responseGuidance: string;
 };
 

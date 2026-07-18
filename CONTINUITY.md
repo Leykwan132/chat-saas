@@ -1,5 +1,6 @@
 # Snapshot
-- 2026-07-18 [CODE] Every generated customer reply receives a global prompt rule requiring the exact same language as the user's prompt, reinforced by Chinese and English examples; stored agent prompts and response post-processing are unchanged.
+- 2026-07-18 [CODE] Workflow action planner now returns `responseLanguage` from the latest user message and final-reply guidance always includes `You must respond in {language} strictly.`; global `chatResponseFormattingBlock` same-language rules remain.
+
 - 2026-07-17 [CODE] Workflow media reply prompts omit uploaded filenames from final-reply context and explicitly forbid filename disclosure in planner, final-reply, and runtime instructions; enforcement remains prompt-only.
 - 2026-07-17 [CODE] Restored public `workflowDraftSave.save` as a backward-compatible atomic graph-plus-automation mutation after the direct-persistence split removed it; Convex codegen uploaded the function to the configured deployment.
 - 2026-07-17 [CODE] Starter workflow preview now uses viewport width minus 32px and `92vh`, overrides the inherited narrow responsive max-width, and uses minimal graph-fit padding so node content is readable; Skip is a borderless text action and the backdrop is unchanged.
@@ -26,7 +27,8 @@
 - 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding every Workpool-related reason from users.
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
 # Decisions
-- 2026-07-18 [USER] D393 ACTIVE: Same-language response behavior is enforced through the global `chatResponseFormattingBlock` with the exact user-approved instruction plus Chinese and English examples; stored agent prompts and response post-processing remain unchanged.
+- 2026-07-18 [USER] D393 ACTIVE: Same-language response behavior is enforced through the global `chatResponseFormattingBlock` plus workflow planner `responseLanguage` injected into final-reply guidance as a strict language constraint; stored agent prompts and response post-processing remain unchanged.
+
 - 2026-07-17 [USER] D392 ACTIVE: Workflow media filename privacy is enforced only through prompt contracts: planner guidance must be filename-free, final-reply context omits filenames and explicitly bans them, and media delivery remains unchanged.
 - 2026-07-17 [CODE] D391 ACTIVE: `workflowDraftSave.save` remains a stable public compatibility entrypoint for older loaded clients; current clients continue using `workflowMessageGraphSave.replace` and `workflowAutomationSave.save`.
 - 2026-07-17 [USER] D390 ACTIVE: Template Preview uses `calc(100vw - 2rem)` width, approximately `92vh` height, an explicit responsive max-width override, minimal fit padding for readable nodes, and a ghost/text Skip action; its existing backdrop remains unchanged.

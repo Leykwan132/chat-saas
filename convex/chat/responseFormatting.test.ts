@@ -17,7 +17,22 @@ test("response formatting keeps customer replies free of workflow internals", ()
 
 test("requires customer replies to match the user's language", () => {
   expect(chatResponseFormattingBlock).toContain(
-    "IMPORTANT: You must always respond in the exact same language that the user uses in their prompt. Do not translate the user's input before answering.",
+    "IMPORTANT: Match the language of the latest user message.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "1. Detect the language of the latest user message.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "2. Reply only in that language.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "3. Never default to English unless the user wrote in English.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "4. If the message mixes languages, use the dominant language of the latest user message.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "Do not translate the user's input before answering.",
   );
   expect(chatResponseFormattingBlock).toContain(
     'User: "你好，请问你们今天营业吗？"',

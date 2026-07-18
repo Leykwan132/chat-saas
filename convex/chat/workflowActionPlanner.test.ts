@@ -87,6 +87,10 @@ test("builds a planner prompt with definitive action payloads", () => {
   expect(prompt).toContain(
     "responseGuidance must never include uploaded filenames",
   );
+  expect(prompt).toContain("responseLanguage");
+  expect(prompt).toContain(
+    "Detect the language of the latest user message and set responseLanguage",
+  );
   expect(prompt).not.toContain("https://cdn.example.com/type-b-video.mp4");
 });
 
@@ -101,10 +105,12 @@ test("validates planner output with a fixed schema", () => {
       },
     ],
     mediaNodeIdsToSend: ["video-node-id"],
+    responseLanguage: "English",
     responseGuidance: "Tell the customer the Type B video is attached.",
   });
 
   expect(plan.mediaNodeIdsToSend).toEqual(["video-node-id"]);
+  expect(plan.responseLanguage).toBe("English");
   expect(() =>
     workflowActionPlanSchema.parse({
       workflowMatches: [],
@@ -140,6 +146,9 @@ test("describes each workflow action plan schema item", () => {
   expect(workflowActionPlanSchema.shape.mediaNodeIdsToSend.description).toContain(
     "Node IDs",
   );
+  expect(workflowActionPlanSchema.shape.responseLanguage.description).toContain(
+    "latest user message",
+  );
   expect(workflowActionPlanSchema.shape.responseGuidance.description).toContain(
     "customer-visible reply",
   );
@@ -157,6 +166,7 @@ test("sends every matched media node even when the model omits its send id", () 
         },
       ],
       mediaNodeIdsToSend: [],
+      responseLanguage: "English",
       responseGuidance: "Send the video.",
     },
     workflowContext,
@@ -183,6 +193,7 @@ test("reconciles matched media into the definitive send list", () => {
         },
       ],
       mediaNodeIdsToSend: [],
+      responseLanguage: "English",
       responseGuidance: "Send the video.",
     },
     workflowContext,
@@ -204,6 +215,7 @@ test("resolves matched Send message text exactly as configured", () => {
         },
       ],
       mediaNodeIdsToSend: [],
+      responseLanguage: "English",
       responseGuidance: "Send the configured greeting.",
     },
     workflowContext,
@@ -224,12 +236,14 @@ test("builds final reply guidance with the exact media payload being sent", () =
         },
       ],
       mediaNodeIdsToSend: [],
+      responseLanguage: "English",
       responseGuidance: "Tell the customer the Type A layout is being sent.",
     },
     workflowFilenamePrivacyContext,
   );
 
   expect(guidance).toContain("Type A layout is being sent");
+  expect(guidance).toContain("You must respond in English strictly.");
   expect(guidance).toContain("The backend is sending the selected workflow media now");
   expect(guidance).not.toContain("Type_A_layout.jpg");
   expect(guidance).toContain("Send Type A layout (image/jpeg)");
@@ -239,12 +253,29 @@ test("builds final reply guidance with the exact media payload being sent", () =
   expect(guidance).toContain("Do not ask whether the customer wants you to send it");
 });
 
+test("final reply guidance requires the planner-detected response language", () => {
+  const guidance = buildWorkflowActionPlanReplyGuidance(
+    {
+      workflowMatches: [],
+      mediaNodeIdsToSend: [],
+      responseLanguage: "Chinese",
+      responseGuidance:
+        "用户再次表达兴趣但未明确需求，请回复时引导用户选择布局图片或预约参观。",
+    },
+    workflowContext,
+  );
+
+  expect(guidance).toContain("You must respond in Chinese strictly.");
+  expect(guidance).toContain("No workflow media is being sent in this turn.");
+});
+
 test("adds workflow action guidance as context without replacing the agent system prompt", () => {
   const promptArgs = workflowActionPlanReplyPromptArgs(
     { promptMessageId: "message-id" },
     {
       workflowMatches: [],
       mediaNodeIdsToSend: ["video-node-id"],
+      responseLanguage: "English",
       responseGuidance: "Tell the customer the video is being sent now.",
     },
   );

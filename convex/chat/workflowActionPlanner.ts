@@ -30,6 +30,9 @@ export const workflowActionPlanSchema = z.object({
   mediaNodeIdsToSend: z.array(
     z.string().describe("A Workflow Runtime media node ID whose uploaded assets should be sent now."),
   ).describe("Node IDs for workflow media nodes whose assets the backend must send now."),
+  responseLanguage: z.string().describe(
+    "Common English name of the language used in the latest user message, such as Chinese, English, or Malay.",
+  ),
   responseGuidance: z.string().describe(
     "A short instruction for the later customer-visible reply, without URLs, uploaded filenames, or internal metadata.",
   ),
@@ -70,11 +73,13 @@ export function buildWorkflowActionPlanReplyGuidance(
 ) {
   const matchedMediaNodes = getMatchedWorkflowActionNodes(plan, context)
     .filter((node) => node.kind === "sendImage" || node.kind === "sendFile");
+  const languageLine = `- You must respond in ${plan.responseLanguage.trim()} strictly.`;
 
   if (matchedMediaNodes.length === 0) {
     return [
       "Workflow action plan for this reply:",
       `- Planner guidance: ${plan.responseGuidance}`,
+      languageLine,
       "- No workflow media is being sent in this turn.",
       "- Do not claim that an image, video, file, brochure, or attachment is attached or sent unless it is selected to send.",
     ].join("\n");
@@ -88,6 +93,7 @@ export function buildWorkflowActionPlanReplyGuidance(
   return [
     "Workflow action plan for this reply:",
     `- Planner guidance: ${plan.responseGuidance}`,
+    languageLine,
     "- The backend is sending the selected workflow media now.",
     "- These exact assets are being sent automatically:",
     ...selectedList,
@@ -143,9 +149,11 @@ Analyze the current conversation and latest customer message. Decide which liste
 Return a strict object matching the schema:
 - workflowMatches: every workflow action whose condition/customer intent matches this turn. Every listed match will execute.
 - mediaNodeIdsToSend: every matched sendImage/sendFile node ID. The backend validates and reconciles this field from workflowMatches.
+- responseLanguage: common English name of the language used in the latest user message (e.g. Chinese, English, Malay).
 - responseGuidance: one short instruction for the later customer-visible reply.
 
 Rules:
+- Detect the language of the latest user message and set responseLanguage to that language. If the message mixes languages, use the dominant language. Never default to English unless the user wrote in English.
 - Do not return media URLs. The backend resolves URLs from node IDs.
 - responseGuidance must never include uploaded filenames or instruct the later reply to display them.
 - Use only exact Node IDs listed below.
