@@ -15,6 +15,24 @@ test("response formatting keeps customer replies free of workflow internals", ()
   );
 });
 
+test("requires customer replies to match the user's language", () => {
+  expect(chatResponseFormattingBlock).toContain(
+    "IMPORTANT: You must always respond in the exact same language that the user uses in their prompt. Do not translate the user's input before answering.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    'User: "你好，请问你们今天营业吗？"',
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    'Assistant: "你好！我们今天营业。请问有什么可以帮助你？"',
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    'User: "Hello, are you open today?"',
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    'Assistant: "Hello! Yes, we are open today. How can I help you?"',
+  );
+});
+
 test("normalizes markdown bold to WhatsApp bold", () => {
   const input = [
     "Yes, absolutely! Let me get started on booking a **Sena Residence Showroom Viewing** for you!",

@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-18 [USER] Generated customer replies must use the exact same language as the user's prompt and must not translate the input before answering; the global runtime prompt will include Chinese and English examples.
+- 2026-07-18 [CODE] Every generated customer reply receives a global prompt rule requiring the exact same language as the user's prompt, reinforced by Chinese and English examples; stored agent prompts and response post-processing are unchanged.
 - 2026-07-17 [CODE] Workflow media reply prompts omit uploaded filenames from final-reply context and explicitly forbid filename disclosure in planner, final-reply, and runtime instructions; enforcement remains prompt-only.
 - 2026-07-17 [CODE] Restored public `workflowDraftSave.save` as a backward-compatible atomic graph-plus-automation mutation after the direct-persistence split removed it; Convex codegen uploaded the function to the configured deployment.
 - 2026-07-17 [CODE] Starter workflow preview now uses viewport width minus 32px and `92vh`, overrides the inherited narrow responsive max-width, and uses minimal graph-fit padding so node content is readable; Skip is a borderless text action and the backdrop is unchanged.
@@ -157,16 +157,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-18 [CODE] Added and verified the global same-language response prompt contract with Chinese and English examples.
 - 2026-07-17 [CODE] Made workflow media reply prompts filename-private without changing media matching, delivery, or generated-message post-processing.
 - 2026-07-17 [CODE] Restored and uploaded the legacy atomic Workflow save endpoint with a focused regression test, generated API binding, and no changes to current split-persistence callers.
 - 2026-07-17 [CODE] Completed direct Message Handling persistence and isolated starter-template preview: real-node inspection/media, transient drag positions, explicit layout persistence, automation-only Save/Discard, and a near-full-viewport read-only preview dialog with direct replacement.
 - 2026-07-16 [CODE] Rewrote all 26 help-center guides with task-oriented path cards, step flows, concise copy, and related-resource cards.
 - 2026-07-16 [CODE] Aligned docs typography, colors, spacing, navbar, and sidebar chrome with the dashboard using Geist and a Gilda Display wordmark.
 - 2026-07-16 [CODE] Restored the unlabeled sticky page-outline TOC and icon-only mobile toggle.
-- 2026-07-16 [CODE] Standardized `kilobot-docs` on Bun 1.3.6 and standalone Wrangler static-assets configuration.
 
 # Working set
-- 2026-07-18 [CODE] Same-language runtime prompt design: `docs/superpowers/specs/2026-07-18-same-language-response-prompt-design.md`; planned implementation in `convex/chat/{responseFormatting,responseFormatting.test}.ts`.
+- 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 - 2026-07-17 [CODE] Workflow media filename prompt privacy: `convex/chat/{workflowActionPlanner,workflowActionPlanner.test,workflowPrompt,workflowPrompt.test}.ts` and `docs/superpowers/{specs/2026-07-17-workflow-media-filename-prompt-privacy-design,plans/2026-07-17-workflow-media-filename-prompt-privacy}.md`.
 - 2026-07-17 [CODE] Workflow save rollout compatibility: `convex/{workflowDraftSave,workflowDraftSave.test,_generated/api.d}.ts`.
 - 2026-07-16 [CODE] Docs visual alignment: `kilobot-docs/src/css/{custom,navbar}.css`, `kilobot-docs/docusaurus.config.ts`, `kilobot-docs/src/theme/{Navbar/Logo,TOCCollapsible/CollapseButton}/index.tsx`, `kilobot-docs/tests/help-center-{brand,structure}.test.mjs`.
@@ -187,6 +187,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-18 [TOOL] The same-language response prompt completed a verified red-green cycle: the new contract failed on the missing instruction, then all 8 focused tests passed under Node v22.22.0; `git diff --check` passed and the two code files measured 125/106 lines.
 - 2026-07-17 [TOOL] Workflow media filename prompt privacy completed a verified red-green cycle and was uploaded to the configured Convex deployment: the exact `Type_A_layout.jpg` leak and missing prompt rules failed first; 4 focused files/27 tests, targeted ESLint, scoped checks, the 236-file/718-test app suite, and 17 native docs tests passed on Node v22.22.0; prompt modules measured 189/179 lines.
 - 2026-07-17 [TOOL] Restored `workflowDraftSave.save` completed a verified red-green cycle: the focused test first failed with missing module, then the legacy and two split save tests passed; Convex codegen uploaded functions and regenerated bindings, targeted ESLint passed, and new modules measured 160/74 lines on Node v22.22.0.
 - 2026-07-17 [TOOL] Readable near-full-viewport workflow preview completed a verified red-green cycle and passed 37 workflow files/95 tests, targeted ESLint, the complete 235-file/717-test app suite, 17 native docs tests, TypeScript/Vite production build, source/whitespace scans, and 134/36-line module checks on Node v22.22.0; Vite retained only its existing chunk-size warning.
@@ -206,4 +207,3 @@
 - 2026-07-16 [TOOL] Root-level documentation shell completed a verified red-green cycle: 6/6 docs contract tests and the Docusaurus production build passed under Node v22.22.0; generated `/index.html` is the Welcome doc and contains the complete `Docs sidebar`; 142 documents were indexed. Deployment was not run.
 - 2026-07-16 [TOOL] KiloBot public help center completed verified red-green content, branding, search, and navigation cycles: 6/6 docs contract tests and 6/6 focused app tests passed; docs TypeScript and Docusaurus production build passed with 142 indexed documents; main TypeScript and Vite production build passed with its existing chunk-size warning; targeted ESLint, `git diff --check`, static HTML/search-index inspection, and all touched-code ≤300-line checks passed under Node v22.22.0. Deployment was not run.
 - 2026-07-16 [TOOL] `kilobot-docs` assets configuration completed a verified red-green cycle; Docusaurus generated 138 static files and Wrangler 4.103.0 read `kilobot-docs/build` and completed `deploy --dry-run` under Node v22.22.0 without the missing-directory error.
-- 2026-07-16 [TOOL] Broadcast History Convex pagination completed verified red-green backend, pagination-model, table, and modularity cycles; 12 focused tests and the complete 228-file/697-test suite passed, targeted ESLint passed, the TypeScript/Vite production build passed with only its existing chunk-size warning, `git diff --check` passed, and touched code files remained under 300 lines on Node v22.22.0.

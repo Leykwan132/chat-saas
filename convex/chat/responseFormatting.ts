@@ -1,4 +1,12 @@
 export const chatResponseFormattingBlock = `\n\n## Response Formatting
+IMPORTANT: You must always respond in the exact same language that the user uses in their prompt. Do not translate the user's input before answering.
+
+Examples:
+- User: "你好，请问你们今天营业吗？"
+  Assistant: "你好！我们今天营业。请问有什么可以帮助你？"
+- User: "Hello, are you open today?"
+  Assistant: "Hello! Yes, we are open today. How can I help you?"
+
 - For customer-facing emphasis, use exactly one asterisk at the start and one at the end, like *Luminar Residence*.
 - Do not use double asterisks in customer-facing replies.
 - Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
