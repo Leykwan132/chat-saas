@@ -1,7 +1,7 @@
 # KiloBot launch video script
 
-**Runtime:** ~2:10–2:30  
-**Flow:** Intro → WhatsApp hook → Prompt (Ilmu + free) → Knowledge → Workflow → Payoff → Feature montage → CTA
+**Runtime:** ~2:40–3:00  
+**Flow:** Intro → WhatsApp hook → Prompt (Ilmu + free) → Knowledge → Workflow → Payoff → Channels + coexistence → Feature montage → CTA
 
 ---
 
@@ -15,8 +15,9 @@
 | 4 | Knowledge Base + grounded answer | ~20s |
 | 5 | Workflow graph + path | ~25s |
 | 6 | Booking on Calendar / Inbox | ~15s |
-| 7 | Feature montage (quick cuts) | ~8–12s |
-| 8 | CTA + end card | ~20s |
+| 7 | Channels + WhatsApp coexistence | ~20s |
+| 8 | Feature montage (quick cuts) | ~8–12s |
+| 9 | CTA + end card | ~20s |
 
 ---
 
@@ -96,7 +97,21 @@
 
 ---
 
-## 2:20–2:30 — Feature montage
+## 2:20–2:40 — Channels + WhatsApp coexistence
+
+**Visual:** Channels page. Connect WhatsApp (or show a connected WhatsApp card). Optional quick flash of Instagram / Messenger / website as other options. Hold on WhatsApp — coexistence / sync ready state if visible.
+
+**VO:**
+
+> Kilobot supports WhatsApp, Instagram, Messenger, & website integration.
+>
+> On WhatsApp, we support coexistence from day one — even if you’re on the free plan.
+>
+> That simply means you keep using WhatsApp Business on your phone, and KiloBot runs on the same number beside it. No complex migration needed, just a couple click and it just works.
+
+---
+
+## 2:40–2:50 — Feature montage
 
 **Visual:** Fast cuts / collage — throw everything on screen. Don’t explain each one. Suggested pack:
 
@@ -105,7 +120,6 @@
 - Broadcast + Message Templates
 - Analytics
 - Calendar / Services
-- Instagram / Messenger / Website widget
 - Team / assignment
 
 **VO (one-liner):**
@@ -114,7 +128,7 @@
 
 ---
 
-## 2:30–2:45 — CTA (on camera or end card)
+## 2:50–3:05 — CTA (on camera or end card)
 
 **Visual:** You on camera, then end card with form link.
 
@@ -147,7 +161,7 @@ kilobot.app
 >
 > It starts free, so anyone can try sales AI with Ilmu Mini v3.3 — a sovereign model by YTL AI Labs.
 >
-> Control the voice, add your knowledge, automate the workflow… and go from first reply to a booked meeting. Plus inbox, broadcasts, analytics, and more.
+> Control the voice, add your knowledge, automate the workflow… and go from first reply to a booked meeting. Connect WhatsApp with coexistence — keep your phone app, same number — plus inbox, broadcasts, analytics, and more.
 >
 > Early adopters get 3 months free — submit the form in the description.
 
@@ -159,7 +173,8 @@ kilobot.app
 - Slightly slower on the WhatsApp hook and the booking payoff.
 - On Agent Setup, say the Ilmu + free line as one breath — don’t rush “sovereign.”
 - On CTA, stress the difference: **starts free for everyone** → **early adopters get 3 months free**.
-- On the montage: let the screen carry it — say the line once, don’t name every flash.
+- On Channels: one breath for “connect a channel,” then slow slightly on coexistence so “same number / keep your phone” lands.
+- On the montage: let the screen carry it — say the line once, don’t name every flash. Channels already covered platforms — don’t re-list them here.
 - One breath between sections so it doesn’t sound like a feature list.
 
 ---
@@ -177,3 +192,4 @@ kilobot.app
 | Spoken English (articles, agreement, idioms, could→can) | Full VO pass for natural delivery |
 | Booking shot had no VO | Added short Calendar/Inbox payoff beat |
 | Intro named KiloBot twice; actions/free/CTA restated mid-demo | Story → pain → name once; WhatsApp = human feel only; free once with Ilmu; CTA = offer only |
+| Channels / coexistence missing after the workflow story | Added Channels beat after booking payoff: connect where customers are, WhatsApp coexistence from day one on free, plain-English “same number + keep the phone app”; montage no longer re-lists platforms |
