@@ -1,6 +1,6 @@
 import { StrictMode, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider, createRoutesFromElements, Outlet, Navigate, Route, useParams, useLocation } from 'react-router'
+import { createBrowserRouter, RouterProvider, createRoutesFromElements, Outlet, Navigate, Route, useParams } from 'react-router'
 import { AuthKitProvider, useAuth } from '@workos-inc/authkit-react'
 import posthog from 'posthog-js'
 import { PostHogProvider } from '@posthog/react'
@@ -67,7 +67,11 @@ import { getDefaultAnalyticsSection, type PlanKey } from '../shared/planCatalog'
 import { usePermissions } from './hooks/usePermissions'
 import { PromptInputProvider } from '@/components/ai-elements/prompt-input'
 import { Permission } from '../shared/permissions'
-import QuickRepliesPage from './pages/QuickRepliesPage.tsx'
+import {
+  PostHogIdentifier,
+  ScrollToTop,
+} from '@/components/AppRuntimeEffects'
+import { QuickRepliesFeatureRoute } from '@/router/QuickRepliesFeatureRoute'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
@@ -77,15 +81,6 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string)
 const WORKOS_CLIENT_ID = import.meta.env.VITE_WORKOS_CLIENT_ID as string
 
-function ScrollToTop() {
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  return null;
-}
 const WORKOS_REDIRECT_URI = import.meta.env.VITE_WORKOS_REDIRECT_URI as
   | string
   | undefined
@@ -171,10 +166,6 @@ function DashboardIndexRedirect() {
   return <Navigate to={`/dashboard/${agentId}/inbox`} replace />
 }
 
-// Sign-in endpoint registered with WorkOS as the "Sign-in endpoint" on the
-// Redirects page. WorkOS-initiated flows (impersonation, third-party login)
-// land here, and we kick off the OAuth flow immediately. Pass the post-login
-// destination as `state.returnTo` so onRedirectCallback knows where to land.
 function LoginRoute() {
   const { signIn } = useAuth()
   useEffect(() => {
@@ -195,19 +186,6 @@ function CallbackRoute() {
   }
 
   return <Navigate to={user ? POST_LOGIN_REDIRECT : '/'} replace />
-}
-
-function PostHogIdentifier() {
-  const { user } = useAuth()
-  useEffect(() => {
-    if (user) {
-      posthog.identify(user.id, {
-        email: user.email,
-        name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || undefined,
-      })
-    }
-  }, [user])
-  return null
 }
 
 function RootLayout() {
@@ -265,7 +243,7 @@ const router = createBrowserRouter(
         <Route index element={<DashboardIndexRedirect />} />
         <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
         <Route path="chats" element={<ChatsToInboxRedirect />} />
-        <Route path="quick-replies" element={<QuickRepliesPage />} />
+        <Route path="quick-replies" element={<QuickRepliesFeatureRoute />} />
         <Route path="overview" element={<AgentOverviewPage />} />
         <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
         <Route path="playground/:threadId?" element={<PlaygroundRedirect />} />
