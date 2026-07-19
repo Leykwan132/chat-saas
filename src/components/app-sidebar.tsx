@@ -22,6 +22,10 @@ import { usePermissions } from '../hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { getNavItems, type NavItem } from './app-sidebar-nav';
 import { SidebarNavMenuItem } from './app-sidebar-nav-item';
+import {
+  isProductFeatureEnabled,
+  useShowSavedReplies,
+} from '@/lib/posthogFeatureFlags';
 
 function formatUnreadBadgeCount(count: number): string {
   return count > 99 ? '99+' : String(count);
@@ -34,7 +38,10 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const { can, isLoading } = usePermissions();
-  const navItems = getNavItems(agent._id);
+  const savedRepliesState = useShowSavedReplies();
+  const navItems = getNavItems(agent._id, {
+    showSavedReplies: isProductFeatureEnabled(savedRepliesState),
+  });
   const canReadChats = !isLoading && can(Permission.CHATS_READ);
   const totalUnread = useQuery(
     api.conversations.getTotalUnreadForAgent,

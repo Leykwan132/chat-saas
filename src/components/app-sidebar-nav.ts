@@ -28,7 +28,14 @@ export type NavItem = {
   badge?: ReactNode;
 };
 
-export function getNavItems(agentId: string): {
+export type NavFeatureOptions = {
+  showSavedReplies: boolean;
+};
+
+export function getNavItems(
+  agentId: string,
+  { showSavedReplies }: NavFeatureOptions,
+): {
   topLevel: NavItem[];
   engagement: NavItem[];
   bookings: NavItem[];
@@ -50,7 +57,14 @@ export function getNavItems(agentId: string): {
       { to: `/dashboard/${agentId}/services`, icon: CalendarCheck, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
     ],
     tools: [
-      { to: `/dashboard/${agentId}/quick-replies`, icon: ReplyAll, label: 'Quick Replies', requiredPermission: Permission.CHATS_READ },
+      ...(showSavedReplies
+        ? [{
+            to: `/dashboard/${agentId}/quick-replies`,
+            icon: ReplyAll,
+            label: 'Quick Replies',
+            requiredPermission: Permission.CHATS_READ,
+          }]
+        : []),
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
       { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
