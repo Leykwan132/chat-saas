@@ -1,6 +1,7 @@
 import { useState, type RefObject } from 'react';
 import { Link, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
+import type { FunctionReturnType } from 'convex/server';
 import {
   ChevronDown,
   ChevronUp,
@@ -8,7 +9,6 @@ import {
   ReplyAll,
 } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
-import type { Doc } from '../../../convex/_generated/dataModel';
 import {
   useOptionalPromptInputController,
   usePromptInputAttachments,
@@ -26,6 +26,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
+
+type QuickReply = FunctionReturnType<typeof api.quickReplies.list>[number];
 
 export type ChatPromptInputQuickRepliesButtonProps = {
   disabled?: boolean;
@@ -46,7 +48,7 @@ export function ChatPromptInputQuickRepliesButton({
   const controller = useOptionalPromptInputController();
   const [open, setOpen] = useState(false);
 
-  const handleSelectQuickReply = (reply: Doc<'quickReplies'>) => {
+  const handleSelectQuickReply = (reply: QuickReply) => {
     attachments.clear();
 
     if (textareaRef.current) {
