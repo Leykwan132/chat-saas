@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Gate the landing-page token statistic and every Quick Replies entry point with the two existing PostHog feature flags.
+**Goal:** Gate the complete landing-page “Our numbers” section and every Quick Replies entry point with the two existing PostHog feature flags.
 
-**Architecture:** Centralize exact PostHog keys and tri-state hooks in one frontend module. Consumers fail closed while flags resolve, skip gated Convex queries, and use a loading-aware route component for direct Quick Replies URLs. Narrow extractions bring every touched code file below 300 lines without changing unrelated behavior.
+**Architecture:** Centralize exact PostHog keys and tri-state hooks in one frontend module. A lightweight landing wrapper mounts the query-owning stats component only when enabled; Quick Replies consumers fail closed and use a loading-aware route component for direct URLs. Narrow extractions bring every touched code file below 300 lines without changing unrelated behavior.
 
 **Tech Stack:** React 19, TypeScript 6, PostHog React, Convex React, React Router 7, Vitest 1, Bun, Node.js 22.
 
@@ -119,7 +119,7 @@ git commit -m "Add typed PostHog feature flags"
 
 ---
 
-### Task 2: Gate the landing token statistic and query
+### Task 2: Gate the complete landing stats section
 
 **Files:**
 - Create: `src/components/landing/LandingStatsFeatureFlag.test.ts`
@@ -127,7 +127,7 @@ git commit -m "Add typed PostHog feature flags"
 
 **Interfaces:**
 - Consumes: `useShowTokenUsage(): boolean | undefined` and `isProductFeatureEnabled(state): state is true`.
-- Produces: a two-stat or three-stat landing model and a skipped lifetime usage query while disabled or unresolved.
+- Produces: `StatsSection` as a flag wrapper and `EnabledStatsSection` as the sole owner of both landing stats queries and all three statistics.
 
 - [ ] **Step 1: Write the failing integration contract**
 
@@ -143,17 +143,26 @@ const source = readFileSync(
 );
 
 describe('landing token usage feature flag', () => {
-  test('skips lifetime token usage until the flag is enabled', () => {
+  test('mounts the complete stats section only when enabled', () => {
     expect(source).toContain('useShowTokenUsage()');
     expect(source).toContain(
-      "showTokenUsage ? {} : 'skip'",
+      'if (!isProductFeatureEnabled(tokenUsageState)) return null',
     );
+    expect(source).toContain('return <EnabledStatsSection />');
   });
 
-  test('adds the token statistic and third column only when enabled', () => {
-    expect(source).toContain('...(showTokenUsage');
-    expect(source).toContain("'md:grid-cols-3': showTokenUsage");
-    expect(source).toContain("'md:grid-cols-2': !showTokenUsage");
+  test('keeps both queries and all three statistics inside the enabled component', () => {
+    const enabledSectionStart = source.indexOf('function EnabledStatsSection()');
+    const wrapperStart = source.indexOf('export function StatsSection()');
+    const enabledSection = source.slice(enabledSectionStart, wrapperStart);
+
+    expect(enabledSectionStart).toBeGreaterThan(-1);
+    expect(enabledSection).toContain('api.agentUsage.getLifetimeModelUsage');
+    expect(enabledSection).toContain('api.llm.modelPricing.listEnabled');
+    expect(enabledSection).toContain("label: 'Models Supported'");
+    expect(enabledSection).toContain("label: 'Total Token Used'");
+    expect(enabledSection).toContain("label: 'Businesses Onboarded'");
+    expect(enabledSection).toContain('md:grid-cols-3');
   });
 });
 ```
@@ -166,68 +175,116 @@ Run:
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingStatsFeatureFlag.test.ts
 ```
 
-Expected: FAIL because `LandingStatsSection.tsx` does not read the feature flag or skip the query.
+Expected: FAIL because `LandingStatsSection.tsx` does not read the feature flag or isolate the query-owning section.
 
-- [ ] **Step 3: Implement the gated statistic**
+- [ ] **Step 3: Implement the gated section**
 
-Update imports in `src/components/landing/LandingStatsSection.tsx`:
+Replace `src/components/landing/LandingStatsSection.tsx` with:
 
-```ts
+```tsx
+import { useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import { NumberTicker } from '@/components/motion/number-ticker';
+import { BlurFade } from '@/components/ui/blur-fade';
 import {
   isProductFeatureEnabled,
   useShowTokenUsage,
 } from '@/lib/posthogFeatureFlags';
-```
+import { cn } from '@/lib/utils';
 
-Replace the start of `StatsSection` through `stats` with:
+type LandingStat = {
+  value: number;
+  label: string;
+};
 
-```ts
-export function StatsSection() {
-  const tokenUsageState = useShowTokenUsage();
-  const showTokenUsage = isProductFeatureEnabled(tokenUsageState);
-  const aggregates = useQuery(
-    api.agentUsage.getLifetimeModelUsage,
-    showTokenUsage ? {} : 'skip',
+const businessesOnboarded = 10;
+
+function SectionHeading({
+  title,
+  className,
+}: {
+  title: string;
+  className?: string;
+}) {
+  return (
+    <BlurFade inView className={cn('max-w-xl', className)}>
+      <h2 className="font-title text-balance text-3xl font-normal tracking-tight text-zinc-950 dark:text-white sm:text-4xl md:text-5xl">
+        {title}
+      </h2>
+    </BlurFade>
   );
-  const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
+}
 
+function formatStatValue(value: number) {
+  return value.toLocaleString();
+}
+
+function EnabledStatsSection() {
+  const aggregates = useQuery(api.agentUsage.getLifetimeModelUsage);
+  const supportedModels = useQuery(api.llm.modelPricing.listEnabled);
   const totalTokens = aggregates?.reduce(
     (sum, item) => sum + item.totalTokens,
     0,
   ) ?? 0;
   const modelsCount = supportedModels?.length ?? 0;
-
   const stats: LandingStat[] = [
     {
       value: modelsCount,
       label: 'Models Supported',
     },
-    ...(showTokenUsage
-      ? [{
-          value: totalTokens,
-          label: 'Total Token Used',
-        }]
-      : []),
+    {
+      value: totalTokens,
+      label: 'Total Token Used',
+    },
     {
       value: businessesOnboarded,
       label: 'Businesses Onboarded',
     },
   ];
+
+  return (
+    <section className="bg-zinc-50/20 px-6 py-24 dark:bg-[#060606]/20 sm:px-8 sm:py-32">
+      <div className="mx-auto max-w-6xl">
+        <div className="mx-auto mb-16 max-w-3xl text-center sm:mb-20">
+          <SectionHeading
+            title="Our numbers"
+            className="mx-auto items-center text-center"
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-12 text-center sm:gap-16 md:grid-cols-3">
+          {stats.map((stat) => (
+            <div
+              key={stat.label}
+              className="animate-fade-in flex flex-col items-center gap-6"
+            >
+              <div className="font-title flex select-none items-center justify-center text-4xl font-medium leading-none tracking-tight text-zinc-950 dark:text-white sm:text-5xl md:text-6xl">
+                <NumberTicker
+                  value={stat.value}
+                  format={formatStatValue}
+                  className="font-title font-medium text-zinc-950 dark:text-white"
+                />
+              </div>
+              <div className="font-sans mx-auto max-w-xs text-sm font-normal leading-relaxed text-zinc-700 dark:text-zinc-300 sm:text-base">
+                {stat.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function StatsSection() {
+  const tokenUsageState = useShowTokenUsage();
+
+  if (!isProductFeatureEnabled(tokenUsageState)) return null;
+
+  return <EnabledStatsSection />;
+}
 ```
 
-Replace the grid class with:
-
-```tsx
-<div
-  className={cn(
-    'grid grid-cols-1 gap-12 text-center sm:gap-16',
-    {
-      'md:grid-cols-3': showTokenUsage,
-      'md:grid-cols-2': !showTokenUsage,
-    },
-  )}
->
-```
+The wrapper owns only the PostHog hook. `EnabledStatsSection` owns both Convex hooks, so React never conditionally calls hooks and neither query mounts while the flag is false or unresolved.
 
 - [ ] **Step 4: Run focused and existing landing tests**
 
@@ -243,7 +300,7 @@ Expected: 2 files and 4 tests PASS.
 
 ```bash
 git add src/components/landing/LandingStatsSection.tsx src/components/landing/LandingStatsFeatureFlag.test.ts
-git commit -m "Gate landing token usage with PostHog"
+git commit -m "Gate landing stats section with PostHog"
 ```
 
 ---

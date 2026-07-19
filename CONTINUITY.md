@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-19 [USER] Approved the centralized frontend PostHog design and authorized planning; the six-task test-first implementation plan is written and awaits the execution-mode choice.
+- 2026-07-19 [USER] Corrected the approved PostHog scope: `show-token-usage` hides or shows the complete three-stat “Our numbers” landing section, not only Total Token Used; the amended six-task plan awaits execution.
 - 2026-07-18 [CODE] Direct `@convex-dev/workpool` is pinned to 0.4.8; this reduces loop contention but retains minute recovery wake-ups for future work. Dev has 3 pending future credit jobs and `CREDIT_RESET_PERIOD=months`.
 - 2026-07-18 [CODE] Workflow action planner now returns `responseLanguage` from the latest user message and final-reply guidance always includes `You must respond in {language} strictly.`; global `chatResponseFormattingBlock` same-language rules remain.
 
@@ -29,7 +29,7 @@
 - 2026-07-15 [USER] Reminder and Follow-up History must keep cancelled rows/statuses while withholding every Workpool-related reason from users.
 - 2026-07-15 [CODE] Inbox booking labels use bordered white/light-theme background pills with normal foreground text and a small status-colored dot; booking-history and compact-card rails retain Scheduled yellow, Completed green, Cancelled red, and No-show orange.
 # Decisions
-- 2026-07-19 [USER] D395 ACTIVE: Centralize the exact `show-token-usage` and `show-saved-replies` PostHog keys; unresolved ordinary UI fails closed, the Quick Replies route waits for resolution before rendering or redirecting, disabled token/reply queries do not run, and Convex data/APIs remain unchanged.
+- 2026-07-19 [USER] D395 ACTIVE: Centralize the exact `show-token-usage` and `show-saved-replies` PostHog keys; `show-token-usage` mounts the complete three-stat “Our numbers” section and both of its Convex reads only when enabled; unresolved ordinary UI fails closed; the Quick Replies route waits for resolution; Convex data/APIs remain unchanged.
 - 2026-07-18 [USER] D394 ACTIVE: Pin the direct `@convex-dev/workpool` dependency exactly to 0.4.8.
 - 2026-07-18 [USER] D393 ACTIVE: Same-language response behavior is enforced through the global `chatResponseFormattingBlock` plus workflow planner `responseLanguage` injected into final-reply guidance as a strict language constraint; stored agent prompts and response post-processing remain unchanged.
 
@@ -195,7 +195,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-19 [TOOL] The six-task PostHog feature-gate implementation plan passed spec-coverage, placeholder, type/interface, exact-key, command, file-size, and `git diff --check` review; it includes five red-green feature cycles plus full verification.
+- 2026-07-19 [TOOL] The amended six-task PostHog feature-gate plan passed spec-coverage, placeholder, type/interface, exact-key, hook-order, command, file-size, and `git diff --check` review; its landing wrapper leaves both stats queries unmounted unless the full three-stat section is enabled.
 - 2026-07-19 [TOOL] PostHog feature-gate design passed placeholder, consistency, scope, ambiguity, and `git diff --check` review; it specifies fail-closed ordinary UI, a loading-aware Quick Replies route, query skipping, and data-preserving frontend-only rollout gates.
 - 2026-07-18 [TOOL] Direct Workpool 0.4.8 upgrade verified under Node v22.22.0: frozen Bun install made no changes, installed package reports 0.4.8, 2 focused credit-period tests passed, and `git diff --check` passed. Earlier Dev inspection found 3 future credit jobs and only 2 OCC retries over 72 hours; 0.4.8 reduces contention but retains minute recovery wake-ups.
 - 2026-07-18 [TOOL] The same-language response prompt completed a verified red-green cycle: the new contract failed on the missing instruction, then 8 focused tests, the 236-file/719-test app suite, and 17 native docs tests passed under Node v22.22.0; scoped `git diff --check` passed and the two code files measured 125/106 lines.

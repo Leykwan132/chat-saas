@@ -4,7 +4,7 @@
 
 Use the existing PostHog frontend client to control two product surfaces:
 
-- `show-token-usage` controls the public home-page token-usage statistic.
+- `show-token-usage` controls the complete public home-page “Our numbers” section.
 - `show-saved-replies` controls the complete Quick Replies feature.
 
 The flags are rollout controls. They do not replace permissions or authorize backend access.
@@ -35,24 +35,23 @@ The shared API will preserve all three PostHog evaluation states:
 
 Ordinary UI surfaces will show a feature only when its value is exactly `true`. This fail-closed behavior prevents a disabled feature from flashing while PostHog loads.
 
-### Token usage gate
+### Landing stats gate
 
 `StatsSection` will read `show-token-usage`.
 
 When the flag is `true`:
 
-- the existing lifetime model-usage query runs;
-- Total Token Used renders with the existing ticker and formatting;
-- the stats grid contains three items.
+- the existing lifetime model-usage and enabled-model queries run;
+- the complete “Our numbers” section renders;
+- Models Supported, Total Token Used, and Businesses Onboarded retain their existing appearance, values, and three-column layout.
 
 When the flag is `false` or unresolved:
 
-- the lifetime model-usage query is skipped;
-- Total Token Used is omitted;
-- Models Supported and Businesses Onboarded remain visible;
-- the grid uses a balanced two-column layout at the existing desktop breakpoint.
+- the complete “Our numbers” section is absent;
+- neither of the section’s Convex queries runs;
+- no empty section spacing or heading remains.
 
-The enabled appearance and data calculation remain unchanged.
+The gate will be a lightweight wrapper around an enabled-only stats component. This keeps React hooks unconditional within each mounted component while preventing both Convex queries from mounting when the section is disabled.
 
 ### Quick Replies gates
 
@@ -80,7 +79,7 @@ Each gated surface subscribes to the shared flag API. Flag changes propagate thr
 
 Convex reads occur only when their gated component is enabled:
 
-- lifetime token aggregation runs only when `show-token-usage` is enabled;
+- lifetime token aggregation and enabled-model reads run only when `show-token-usage` is enabled;
 - the composer Quick Replies list runs only when `show-saved-replies` is enabled;
 - Quick Replies management reads and mutations are available only after the enabled route mounts the page.
 
@@ -88,7 +87,7 @@ Convex reads occur only when their gated component is enabled:
 
 An unresolved flag is not treated as enabled.
 
-The public stats section and ordinary dashboard controls omit their gated content while flags resolve. This avoids layout flashes and accidental access.
+The complete public stats section and ordinary dashboard controls are absent while flags resolve. This avoids layout flashes, empty section space, unnecessary reads, and accidental access.
 
 The direct Quick Replies route must distinguish unresolved from disabled so it can wait before deciding whether to render or redirect.
 
@@ -99,8 +98,9 @@ PostHog flag outages therefore fail closed for both features. Existing ungated l
 Focused tests will verify:
 
 - the two exact PostHog flag keys are centralized;
-- token usage is rendered and queried only when `show-token-usage` is enabled;
-- the landing stats layout supports both two- and three-item states;
+- the complete “Our numbers” section renders only when `show-token-usage` is enabled;
+- both landing stats queries remain unmounted while the flag is disabled or unresolved;
+- the enabled section retains all three existing statistics and its three-column layout;
 - the sidebar excludes Quick Replies when `show-saved-replies` is not enabled;
 - the Inbox composer does not mount its Quick Replies picker when the flag is not enabled;
 - the Quick Replies route waits while unresolved, renders when enabled, and redirects to the agent Inbox when disabled;
