@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-19 [USER] Approved the centralized frontend PostHog design: `show-token-usage` gates the public token statistic/query; `show-saved-replies` gates the Quick Replies sidebar, Inbox picker/query, and loading-aware direct route. Written spec awaits user review.
+- 2026-07-19 [USER] Approved the centralized frontend PostHog design and authorized planning; the six-task test-first implementation plan is written and awaits the execution-mode choice.
 - 2026-07-18 [CODE] Direct `@convex-dev/workpool` is pinned to 0.4.8; this reduces loop contention but retains minute recovery wake-ups for future work. Dev has 3 pending future credit jobs and `CREDIT_RESET_PERIOD=months`.
 - 2026-07-18 [CODE] Workflow action planner now returns `responseLanguage` from the latest user message and final-reply guidance always includes `You must respond in {language} strictly.`; global `chatResponseFormattingBlock` same-language rules remain.
 
@@ -173,7 +173,7 @@
 - 2026-07-16 [CODE] Aligned docs typography, colors, spacing, navbar, and sidebar chrome with the dashboard using Geist and a Gilda Display wordmark.
 
 # Working set
-- 2026-07-19 [CODE] PostHog feature-flag gates: `docs/superpowers/specs/2026-07-19-posthog-feature-flag-gates-design.md`, `src/components/landing/LandingStatsSection.tsx`, `src/components/{ChatPromptInput,app-sidebar}.tsx`, `src/main.tsx`, and the planned shared flag/gate modules and focused tests.
+- 2026-07-19 [CODE] PostHog feature-flag gates: `docs/superpowers/{specs/2026-07-19-posthog-feature-flag-gates-design,plans/2026-07-19-posthog-feature-flag-gates}.md`, `src/components/landing/LandingStatsSection.tsx`, `src/components/{ChatPromptInput,app-sidebar}.tsx`, `src/main.tsx`, and the planned shared flag/gate modules and focused tests.
 - 2026-07-19 [USER] Launch video script: `docs/kilobot-launch-video-script.md`.
 - 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 - 2026-07-17 [CODE] Workflow media filename prompt privacy: `convex/chat/{workflowActionPlanner,workflowActionPlanner.test,workflowPrompt,workflowPrompt.test}.ts` and `docs/superpowers/{specs/2026-07-17-workflow-media-filename-prompt-privacy-design,plans/2026-07-17-workflow-media-filename-prompt-privacy}.md`.
@@ -195,6 +195,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-19 [TOOL] The six-task PostHog feature-gate implementation plan passed spec-coverage, placeholder, type/interface, exact-key, command, file-size, and `git diff --check` review; it includes five red-green feature cycles plus full verification.
 - 2026-07-19 [TOOL] PostHog feature-gate design passed placeholder, consistency, scope, ambiguity, and `git diff --check` review; it specifies fail-closed ordinary UI, a loading-aware Quick Replies route, query skipping, and data-preserving frontend-only rollout gates.
 - 2026-07-18 [TOOL] Direct Workpool 0.4.8 upgrade verified under Node v22.22.0: frozen Bun install made no changes, installed package reports 0.4.8, 2 focused credit-period tests passed, and `git diff --check` passed. Earlier Dev inspection found 3 future credit jobs and only 2 OCC retries over 72 hours; 0.4.8 reduces contention but retains minute recovery wake-ups.
 - 2026-07-18 [TOOL] The same-language response prompt completed a verified red-green cycle: the new contract failed on the missing instruction, then 8 focused tests, the 236-file/719-test app suite, and 17 native docs tests passed under Node v22.22.0; scoped `git diff --check` passed and the two code files measured 125/106 lines.
