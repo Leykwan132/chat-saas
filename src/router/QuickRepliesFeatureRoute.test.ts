@@ -29,4 +29,9 @@ describe('Quick Replies direct route feature flag', () => {
   test('keeps the application entrypoint below the file-size limit', () => {
     expect(mainSource.split('\n').length).toBeLessThanOrEqual(300);
   });
+
+  test('keeps React route components out of the application entrypoint', () => {
+    expect(mainSource).toContain("from '@/router/AppRouteComponents'");
+    expect(mainSource).not.toMatch(/^function [A-Z]/m);
+  });
 });
