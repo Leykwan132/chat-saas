@@ -8,10 +8,7 @@ import {
 } from "../_generated/server";
 import { internal } from "../_generated/api";
 import type { Doc, Id } from "../_generated/dataModel";
-import {
-  INBOX_IMAGE_PLACEHOLDER,
-  inboxPromptContent,
-} from "../../shared/inboxAttachments";
+import { INBOX_IMAGE_PLACEHOLDER } from "../../shared/inboxAttachments";
 import { components } from "../_generated/api";
 import { syncStreams, vStreamArgs } from "@convex-dev/agent";
 import { messageDocsToInboxUIMessages, listMessages, getChannelName } from "./inboxMessageMapping";
@@ -26,7 +23,7 @@ import {
   saveAiReply,
   inferMediaMimeType,
 } from "./threads";
-import { inboxAiReplyPool, metaIndicatorPool } from "../inboxPools";
+import { metaIndicatorPool } from "../inboxPools";
 import { toChannelMediaItems } from "./aiReplyMedia";
 import {
   aiReplyStructuredOutput,
@@ -49,6 +46,7 @@ import {
   workflowHasHumanEscalationNode,
 } from "../workflowCore";
 import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
+import { requestConversationAnalyticsRefresh } from "../analyticsRefreshRequest";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -77,51 +75,7 @@ function contentTypeForMediaItem(item: ChannelMediaItem) {
 export const internalIngestChannelMessage = internalMutation({
   args: ingestChannelMessageArgs,
   handler: async (ctx, args) => {
-    const result = await ingestChannelMessage(ctx, args);
-    if (result.skipped) {
-      return result;
-    }
-
-    const conv = await ctx.db.get(result.conversationId);
-
-    if (!result.shouldEnqueueAi) {
-      return result;
-    }
-
-    if (
-      conv === null ||
-      !conv.assignToAiAgent ||
-      !conv.assignedAgentId
-    ) {
-      return result;
-    }
-
-    await metaIndicatorPool.enqueueAction(
-      ctx,
-      internal.chat.inboxActions.internalSendMetaMarkSeen,
-      {
-        conversationId: result.conversationId,
-        messageExternalId: args.externalId,
-        requireAiHandled: true,
-      },
-    );
-
-    await inboxAiReplyPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.generateAiReplyWorker,
-      {
-        conversationId: result.conversationId,
-        promptContent: inboxPromptContent(
-          args.content,
-          args.images,
-          args.files,
-        ),
-        promptMessageId: result.agentMessageId,
-        inboundExternalId: args.externalId,
-      },
-    );
-
-    return result;
+    return await ingestChannelMessage(ctx, args);
   },
 });
 
@@ -279,9 +233,7 @@ export const internalPersistHumanReply = internalMutation({
       patch.escalation = undefined;
     }
     await ctx.db.patch(conv._id, patch);
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: conv._id,
-    });
+    await requestConversationAnalyticsRefresh(ctx, conv._id);
     if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
@@ -366,9 +318,7 @@ export const internalPersistAiReply = internalMutation({
       patch.lastMessagePreview = preview;
     }
     await ctx.db.patch(conv._id, patch);
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: conv._id,
-    });
+    await requestConversationAnalyticsRefresh(ctx, conv._id);
     await handleWorkflowFollowUpOutbound(ctx, messageId);
 
     return replyPersistResult(
@@ -451,9 +401,7 @@ export const internalPersistAiMediaReply = internalMutation({
       unreadCount: 0,
       updatedAt: now,
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: conv._id,
-    });
+    await requestConversationAnalyticsRefresh(ctx, conv._id);
     if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
@@ -506,9 +454,7 @@ export const internalEscalateConversation = internalMutation({
         question: args.question,
       },
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: args.conversationId,
-    });
+    await requestConversationAnalyticsRefresh(ctx, args.conversationId);
   },
 });
 

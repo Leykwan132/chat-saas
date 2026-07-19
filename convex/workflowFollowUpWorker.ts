@@ -125,12 +125,12 @@ async function scheduleNextAttempt(
   if (!template) throw new Error(`Follow-up attempt ${nextAttempt} has no template`);
   const now = Date.now();
   const dueAt = now + args.intervalHours * 60 * 60 * 1000;
-  const nextRunId = await ctx.db.insert('workflowAutomationRuns', {
+  const runValues = {
     workflowId: args.run.workflowId,
     agentId: args.run.agentId,
     orgId: args.run.orgId,
-    automationKind: 'followUp',
-    subjectType: 'conversation',
+    automationKind: 'followUp' as const,
+    subjectType: 'conversation' as const,
     subjectKey: args.run.subjectKey,
     deduplicationKey: `followUp:${args.run.workflowId}:${args.timer.conversationId}:${args.run.configurationRevision}:${nextAttempt}`,
     conversationId: args.timer.conversationId,
@@ -141,12 +141,13 @@ async function scheduleNextAttempt(
     activationScope: args.run.activationScope,
     attempt: nextAttempt,
     scheduledAt: dueAt,
-    status: 'scheduled',
+    status: 'scheduled' as const,
     workIds: [],
     templateSnapshot: template,
     createdAt: now,
     updatedAt: now,
-  });
+  };
+  const nextRunId = await ctx.db.insert('workflowAutomationRuns', runValues);
   await ctx.db.patch(args.timer._id, {
     currentRunId: nextRunId,
     currentWorkId: undefined,
@@ -157,7 +158,7 @@ async function scheduleNextAttempt(
   });
   await enqueueWorkflowFollowUpWake(ctx, {
     timerId: args.timer._id,
-    runId: nextRunId,
+    run: { ...runValues, _id: nextRunId },
     dueAt,
     priorWorkIds: [],
   });
@@ -183,7 +184,7 @@ export const completeFollowUpWake = internalMutation({
     if (args.result.kind === 'success' && args.result.returnValue?.reschedule) {
       await enqueueWorkflowFollowUpWake(ctx, {
         timerId: timer._id,
-        runId: run._id,
+        run,
         dueAt: args.result.returnValue.dueAt,
         priorWorkIds: run.workIds,
       });

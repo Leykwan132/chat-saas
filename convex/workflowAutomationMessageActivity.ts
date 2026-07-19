@@ -5,7 +5,7 @@ import {
   handleWorkflowFollowUpOutbound,
 } from './workflowFollowUpRuntime';
 
-export async function handleWorkflowAutomationMessageActivity(
+export async function cancelOrScheduleWorkflowFollowUpForMessages(
   ctx: MutationCtx,
   args: {
     conversationId: Id<'conversations'>;

@@ -45,7 +45,6 @@ import {
   messageKindValidator,
 } from "../broadcastMessageValidators";
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
-import { handleWorkflowAutomationMessageActivity } from "../workflowAutomationMessageActivity";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -1015,16 +1014,19 @@ export type IngestChannelMessageArgs = {
   files?: Array<{ url: string; mimeType: string }>;
 };
 
+export type IngestChannelMessageResult = {
+  conversationId: Id<"conversations">;
+  messageIds: Id<"messages">[];
+  skipped: boolean;
+  shouldEnqueueAi: boolean;
+  isNew?: boolean;
+  agentMessageId?: string;
+};
+
 export async function ingestChannelMessage(
   ctx: MutationCtx,
   args: IngestChannelMessageArgs,
-): Promise<{
-  conversationId: Id<"conversations">;
-  skipped: boolean;
-  shouldEnqueueAi?: boolean;
-  isNew?: boolean;
-  agentMessageId?: string;
-}> {
+): Promise<IngestChannelMessageResult> {
   if (args.externalId) {
     const existingLedger = await ctx.db
       .query("messages")
@@ -1033,6 +1035,7 @@ export async function ingestChannelMessage(
     if (existingLedger !== null) {
       return {
         conversationId: existingLedger.conversationId,
+        messageIds: [],
         skipped: true,
         shouldEnqueueAi: false,
       };
@@ -1083,7 +1086,13 @@ export async function ingestChannelMessage(
           ? "Audio"
           : "";
 
-  const { conversationId, threadId, isNew } = await upsertInboxConversation(ctx, {
+  const {
+    conversationId,
+    threadId,
+    isNew,
+    assignedAgentId,
+    assignToAiAgent,
+  } = await upsertInboxConversation(ctx, {
     orgId: channel.orgId,
     channelId: channel._id,
     service,
@@ -1116,9 +1125,8 @@ export async function ingestChannelMessage(
         files,
       );
     } else {
-      const conv = await ctx.db.get(conversationId);
       agentMessageId = await saveHumanReply(ctx, threadId, trimmedContent, {
-        assignedAgentId: conv?.assignedAgentId ?? args.assignedAgentId,
+        assignedAgentId,
         authorUserId: args.authorUserId,
         sentAt: args.timestampMs,
         images: images.map(img => ({ url: img.url, mimeType: img.mimeType })),
@@ -1225,22 +1233,16 @@ export async function ingestChannelMessage(
     customerId,
     conversationId,
   });
-  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-    conversationId,
-  });
-  await handleWorkflowAutomationMessageActivity(ctx, {
-    conversationId,
-    direction: args.direction,
-    isHistorical: args.isHistorical === true,
-    messageIds,
-  });
 
   return {
     conversationId,
+    messageIds,
     skipped: false,
     shouldEnqueueAi:
       !args.isHistorical &&
       args.direction === "incoming" &&
+      assignToAiAgent &&
+      assignedAgentId !== undefined &&
       Boolean(agentMessageId && (trimmedContent.length > 0 || images.length > 0 || files.length > 0)),
     isNew,
     agentMessageId,
@@ -1264,7 +1266,13 @@ async function upsertInboxConversation(
     metaConversationId?: string;
     isHistorical?: boolean;
   },
-): Promise<{ conversationId: Id<"conversations">; threadId: string; isNew: boolean }> {
+): Promise<{
+  conversationId: Id<"conversations">;
+  threadId: string;
+  isNew: boolean;
+  assignedAgentId?: Id<"agents">;
+  assignToAiAgent: boolean;
+}> {
   const existing = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>
@@ -1373,7 +1381,13 @@ async function upsertInboxConversation(
       });
     }
 
-    return { conversationId, threadId, isNew: true };
+    return {
+      conversationId,
+      threadId,
+      isNew: true,
+      assignedAgentId: routingAgentId,
+      assignToAiAgent,
+    };
   }
 
   const patch: Record<string, unknown> = {
@@ -1402,5 +1416,11 @@ async function upsertInboxConversation(
   }
   await ctx.db.patch(existing._id, patch);
 
-  return { conversationId: existing._id, threadId: existing.threadId, isNew: false };
+  return {
+    conversationId: existing._id,
+    threadId: existing.threadId,
+    isNew: false,
+    assignedAgentId: existing.assignedAgentId ?? args.assignedAgentId,
+    assignToAiAgent: existing.assignToAiAgent,
+  };
 }

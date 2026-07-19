@@ -1,4 +1,4 @@
-import type { Id } from './_generated/dataModel';
+import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx } from './_generated/server';
 import { internal } from './_generated/api';
 import { resolveWorkflowAutomationConfigs } from './workflowAutomationConfig';
@@ -9,6 +9,11 @@ import {
   planWorkflowFollowUpOutbound,
 } from './workflowFollowUpTimer';
 import { workflowFollowUpWorkpool } from './workflowFollowUpPool';
+
+type WorkflowFollowUpWakeRun = Pick<
+  Doc<'workflowAutomationRuns'>,
+  '_id' | 'conversationId' | 'attempt' | 'templateSnapshot'
+>;
 
 function messageSource(message: {
   workflowAutomationSource?: 'workflowReminder' | 'workflowFollowUp';
@@ -24,43 +29,41 @@ export async function enqueueWorkflowFollowUpWake(
   ctx: MutationCtx,
   args: {
     timerId: Id<'workflowFollowUpTimers'>;
-    runId: Id<'workflowAutomationRuns'>;
+    run: WorkflowFollowUpWakeRun;
     dueAt: number;
     priorWorkIds: string[];
   },
 ) {
-  const run = await ctx.db.get(args.runId);
-  if (!run) throw new Error('Follow-up run not found');
   console.log('workflow_followup_workpool_enqueue', {
-    conversationId: run.conversationId,
+    conversationId: args.run.conversationId,
     timerId: args.timerId,
-    runId: args.runId,
+    runId: args.run._id,
     dueAt: args.dueAt,
     priorWorkIds: args.priorWorkIds,
   });
   const workId = await workflowFollowUpWorkpool.enqueueAction(
     ctx,
     internal.workflowFollowUpWorker.wakeFollowUp,
-    { timerId: args.timerId, runId: args.runId },
+    { timerId: args.timerId, runId: args.run._id },
     {
       runAt: args.dueAt,
       onComplete: internal.workflowFollowUpWorker.completeFollowUpWake,
-      context: { timerId: args.timerId, runId: args.runId },
+      context: { timerId: args.timerId, runId: args.run._id },
       retry: false,
     },
   );
   console.log('workflow_followup_workpool_scheduled', {
-    conversationId: run.conversationId,
+    conversationId: args.run.conversationId,
     timerId: args.timerId,
-    runId: args.runId,
+    runId: args.run._id,
     workId,
     scheduledAt: args.dueAt,
-    attempt: run.attempt,
-    templateName: run.templateSnapshot.name,
+    attempt: args.run.attempt,
+    templateName: args.run.templateSnapshot.name,
   });
   const workIds = [...args.priorWorkIds, workId];
   await ctx.db.patch(args.timerId, { currentWorkId: workId, workIds, updatedAt: Date.now() });
-  await ctx.db.patch(args.runId, { currentWorkId: workId, workIds, updatedAt: Date.now() });
+  await ctx.db.patch(args.run._id, { currentWorkId: workId, workIds, updatedAt: Date.now() });
   return workId;
 }
 
@@ -155,12 +158,12 @@ export async function handleWorkflowFollowUpOutbound(
     createdAt: now,
   });
   if (existingTimer) await ctx.db.patch(existingTimer._id, timerValues);
-  const runId = await ctx.db.insert('workflowAutomationRuns', {
+  const runValues = {
     workflowId: workflow._id,
     agentId: conversation.assignedAgentId,
     orgId: workflow.orgId,
-    automationKind: 'followUp',
-    subjectType: 'conversation',
+    automationKind: 'followUp' as const,
+    subjectType: 'conversation' as const,
     subjectKey: conversation._id,
     deduplicationKey: `followUp:${workflow._id}:${conversation._id}:${config.revision}:1`,
     conversationId: conversation._id,
@@ -171,14 +174,20 @@ export async function handleWorkflowFollowUpOutbound(
     activationScope: config.activationScope,
     attempt: 1,
     scheduledAt: plan.dueAt,
-    status: 'scheduled',
+    status: 'scheduled' as const,
     workIds: [],
     templateSnapshot: template,
     createdAt: now,
     updatedAt: now,
-  });
+  };
+  const runId = await ctx.db.insert('workflowAutomationRuns', runValues);
   await ctx.db.patch(timerId, { currentRunId: runId });
-  await enqueueWorkflowFollowUpWake(ctx, { timerId, runId, dueAt: plan.dueAt, priorWorkIds: [] });
+  await enqueueWorkflowFollowUpWake(ctx, {
+    timerId,
+    run: { ...runValues, _id: runId },
+    dueAt: plan.dueAt,
+    priorWorkIds: [],
+  });
   return true;
 }
 

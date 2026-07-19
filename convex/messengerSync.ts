@@ -8,7 +8,6 @@ import {
   resolveInboxLedgerContentType,
   resolveSyncAudioFiles,
 } from "./chat/inboxAudioIngest";
-import { inboxPromptContent } from "../shared/inboxAttachments";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { messengerSyncPool } from "./channelSyncPools";
@@ -17,7 +16,7 @@ import {
   resolveSyncMessageDirection,
   businessAgentName,
 } from "./chat/threads";
-import { inboxAiReplyPool } from "./inboxPools";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -335,7 +334,7 @@ export const internalIngestMessage = internalMutation({
     const channel = await ctx.db.get(args.channelId);
     if (channel === null) return null;
 
-    let contentType = resolveInboxLedgerContentType(
+    const contentType = resolveInboxLedgerContentType(
       args.content,
       args.images,
       args.files,
@@ -358,26 +357,9 @@ export const internalIngestMessage = internalMutation({
       images: args.images,
       files: args.files,
     });
-    if (result.skipped || !result.shouldEnqueueAi) {
-      return result;
+    if (!result.skipped) {
+      await requestConversationAnalyticsRefresh(ctx, result.conversationId);
     }
-    const conv = await ctx.db.get(result.conversationId);
-    if (conv === null || !conv.assignToAiAgent || !conv.assignedAgentId) {
-      return result;
-    }
-    await inboxAiReplyPool.enqueueAction(
-      ctx,
-      internal.chat.inbox.generateAiReplyWorker,
-      {
-        conversationId: result.conversationId,
-        promptContent: inboxPromptContent(
-          args.content,
-          args.images,
-          args.files,
-        ),
-        promptMessageId: result.agentMessageId,
-      },
-    );
     return result;
   },
 });

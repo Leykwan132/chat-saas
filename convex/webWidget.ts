@@ -27,6 +27,8 @@ import {
   webWidgetLayoutValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 
 type ReceiveWidgetMessageArgs = {
   publicKey: string;
@@ -183,23 +185,26 @@ async function receiveWidgetMessage(
     assignedAgentId: settings.agentId,
   });
 
-  if (result.shouldEnqueueAi && result.agentMessageId) {
-    const conversation = await ctx.db.get(result.conversationId);
-    if (
-      conversation !== null &&
-      conversation.assignToAiAgent &&
-      conversation.assignedAgentId
-    ) {
-      await inboxAiReplyPool.enqueueAction(
-        ctx,
-        internal.chat.inbox.generateAiReplyWorker,
-        {
-          conversationId: result.conversationId,
-          promptContent: inboxPromptContent(trimmed),
-          promptMessageId: result.agentMessageId,
-        },
-      );
-    }
+  if (!result.skipped) {
+    await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+    await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+      conversationId: result.conversationId,
+      direction: "incoming",
+      isHistorical: false,
+      messageIds: result.messageIds,
+    });
+  }
+
+  if (result.shouldEnqueueAi) {
+    await inboxAiReplyPool.enqueueAction(
+      ctx,
+      internal.chat.inbox.generateAiReplyWorker,
+      {
+        conversationId: result.conversationId,
+        promptContent: inboxPromptContent(trimmed),
+        promptMessageId: result.agentMessageId,
+      },
+    );
   }
 
   return {

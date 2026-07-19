@@ -594,6 +594,9 @@ export const syncHistoryIngestThreads = internalAction({
             },
           );
           if (!result.skipped) {
+            await ctx.runMutation(internal.analyticsRefreshRequest.request, {
+              conversationId: result.conversationId,
+            });
             touchedConversations.add(result.conversationId);
           }
         }

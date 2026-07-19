@@ -7,6 +7,11 @@ import {
   resolveWebhookAudioFiles,
 } from "./chat/inboxAudioIngest";
 import { markOutboundReadThroughExternalId } from "./chat/readReceipts";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
+import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
+import { inboxPromptContent } from "../shared/inboxAttachments";
+import type { IngestChannelMessageResult } from "./chat/threads";
 
 // POST handler for the product-specific /webhook/instagram route.
 // The caller (convex/http.ts) has already read the raw body and checked the
@@ -167,7 +172,10 @@ export const handleIncoming = internalMutation({
       )
     ),
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<IngestChannelMessageResult | undefined> => {
     const existingMsg = await ctx.db
       .query("messages")
       .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
@@ -216,18 +224,58 @@ export const handleIncoming = internalMutation({
       args.files,
     );
 
-    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
-      channelId: channel._id,
-      externalId: args.externalId,
-      contactAddress,
+    const result: IngestChannelMessageResult = await ctx.runMutation(
+      internal.chat.inbox.internalIngestChannelMessage,
+      {
+        channelId: channel._id,
+        externalId: args.externalId,
+        contactAddress,
+        direction: "incoming",
+        content,
+        contentType,
+        timestampMs: args.timestampMs,
+        isHistorical: false,
+        images: args.images,
+        files: args.files,
+      },
+    );
+    if (result.skipped) return result;
+
+    await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+    await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+      conversationId: result.conversationId,
       direction: "incoming",
-      content,
-      contentType,
-      timestampMs: args.timestampMs,
       isHistorical: false,
-      images: args.images,
-      files: args.files,
+      messageIds: result.messageIds,
     });
+
+    if (result.shouldEnqueueAi) {
+      await metaIndicatorPool.enqueueAction(
+        ctx,
+        internal.chat.inboxActions.internalSendMetaMarkSeen,
+        {
+          conversationId: result.conversationId,
+          messageExternalId: args.externalId,
+          requireAiHandled: true,
+        },
+      );
+      await inboxAiReplyPool.enqueueAction(
+        ctx,
+        internal.chat.inbox.generateAiReplyWorker,
+        {
+          conversationId: result.conversationId,
+          promptContent: inboxPromptContent(
+            content,
+            args.images,
+            args.files,
+          ),
+          promptMessageId: result.agentMessageId,
+          inboundExternalId: args.externalId,
+        },
+      );
+    }
+
+    return result;
   },
 });
 

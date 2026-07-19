@@ -10,6 +10,8 @@ import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
 import { sendWorkflowWhatsappTemplate } from "./workflowWhatsappTemplateSender";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 
 export const followUpPool = new Workpool(
   components.followUpWorkpool,
@@ -180,6 +182,18 @@ export const followUpComplete = internalMutation({
           authorUserId: rule.createdBy,
           workflowAutomationSource: 'workflowFollowUp',
         });
+        if (!ingestResult.skipped) {
+          await requestConversationAnalyticsRefresh(
+            ctx,
+            ingestResult.conversationId,
+          );
+          await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+            conversationId: ingestResult.conversationId,
+            direction: "outgoing",
+            isHistorical: false,
+            messageIds: ingestResult.messageIds,
+          });
+        }
 
         // Log the followup_sent event
         const userDoc = rule.createdBy ? await getUserByWorkosId(ctx, rule.createdBy) : null;

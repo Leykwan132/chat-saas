@@ -14,6 +14,28 @@ import { logConversationEvent } from "./conversationLogs";
 import { buildWhatsAppTemplateSendPayloadWithContent } from "./whatsappTemplateSendPayload";
 import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
 import { formatBroadcastMessageContent } from "./broadcastChatContent";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
+import type { BroadcastHeaderAsset } from "../shared/broadcastMessage";
+
+type BroadcastWorkerContext = {
+  recipient: Doc<"whatsappBroadcastRecipients">;
+  schedule: Doc<"whatsappBroadcastSchedules">;
+  customer: Doc<"customers">;
+  channel: Doc<"channels">;
+};
+
+type BroadcastWorkerResult =
+  | {
+      skipped: true;
+      msg: string;
+    }
+  | {
+      ok: true;
+      externalId?: string;
+      renderedContent: string;
+      headerAsset?: BroadcastHeaderAsset;
+    };
 
 export const broadcastPool = new Workpool(
   components.broadcastWorkpool,
@@ -61,8 +83,8 @@ export const broadcastWorker = internalAction({
   args: {
     recipientId: v.id("whatsappBroadcastRecipients"),
   },
-  handler: async (ctx, args) => {
-    const context = await ctx.runQuery(
+  handler: async (ctx, args): Promise<BroadcastWorkerResult> => {
+    const context: BroadcastWorkerContext | null = await ctx.runQuery(
       internal.broadcastPool.getBroadcastWorkerContext,
       { recipientId: args.recipientId },
     );
@@ -120,9 +142,17 @@ export const broadcastWorker = internalAction({
     });
 
     const text = await res.text();
-    let body: any = null;
+    let body: {
+      error?: { message?: string };
+      messages?: Array<{ id?: string }>;
+    } | null;
     try {
-      body = text.length ? JSON.parse(text) : null;
+      body = text.length
+        ? (JSON.parse(text) as {
+            error?: { message?: string };
+            messages?: Array<{ id?: string }>;
+          })
+        : null;
     } catch {
       body = null;
     }
@@ -190,6 +220,18 @@ export const broadcastComplete = internalMutation({
           assignedAgentId: schedule.agentId,
           authorUserId: schedule.createdBy,
         });
+        if (!ingestResult.skipped) {
+          await requestConversationAnalyticsRefresh(
+            ctx,
+            ingestResult.conversationId,
+          );
+          await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+            conversationId: ingestResult.conversationId,
+            direction: "outgoing",
+            isHistorical: false,
+            messageIds: ingestResult.messageIds,
+          });
+        }
 
         // Resolve message ID
         if (returnValue.externalId) {
@@ -242,7 +284,7 @@ export const broadcastComplete = internalMutation({
     const newOk = isSuccess ? currentOk + 1 : currentOk;
     const newFail = isSuccess ? currentFail : currentFail + 1;
 
-    const patch: any = {
+    const patch: Partial<Doc<"whatsappBroadcastSchedules">> = {
       okCount: newOk,
       failCount: newFail,
     };

@@ -302,7 +302,7 @@ async function getConversationTopicAssignments(
   );
 }
 
-async function syncConversationAnalyticsHandler(
+export async function syncConversationAnalyticsHandler(
   ctx: MutationCtx,
   args: { conversationId: Id<"conversations"> },
 ) {

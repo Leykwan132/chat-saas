@@ -996,6 +996,11 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     .index("by_orgId_and_updatedAt", ["orgId", "updatedAt"])
     .index("by_orgId_and_conversationId", ["orgId", "conversationId"]),
+  conversationAnalyticsRefreshRequests: defineTable({
+    conversationId: v.id("conversations"),
+    revision: v.number(),
+    requestedAt: v.number(),
+  }).index("by_conversationId", ["conversationId"]),
   analyticsMetricEntries: defineTable({
     namespace: v.string(),
     sortKey: v.number(),

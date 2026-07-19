@@ -1,49 +1,55 @@
 /// <reference types="vite/client" />
-import { convexTest } from "convex-test";
-import { v } from "convex/values";
-import { expect, test, vi, beforeAll } from "vitest";
-import { internal } from "./_generated/api";
-import schema from "./schema";
-import { withComponents } from "./testUtils";
-import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
-import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
-import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
-import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/component/schema.js";
+import { convexTest } from 'convex-test';
+import { v } from 'convex/values';
+import { afterEach, expect, test, vi, beforeAll } from 'vitest';
+import { internal } from './_generated/api';
+import schema from './schema';
+import { withComponents } from './testUtils';
+import workpoolSchema from '../node_modules/@convex-dev/workpool/dist/component/schema.js';
+import agentSchema from '../node_modules/@convex-dev/agent/dist/component/schema.js';
+import stripeSchema from '../node_modules/@convex-dev/stripe/dist/component/schema.js';
+import aggregateSchema from '../node_modules/@convex-dev/aggregate/dist/component/schema.js';
 
 beforeAll(() => {
   // Mock Stripe price env vars required by resolvePlanKeyFromStripePriceId
-  process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
-  process.env.STRIPE_PRICE_STARTER_ANNUAL = "price_starter_annual";
-  process.env.STRIPE_PRICE_GROWTH_MONTHLY = "price_growth_monthly";
-  process.env.STRIPE_PRICE_GROWTH_ANNUAL = "price_growth_annual";
-  process.env.STRIPE_PRICE_BUSINESS_MONTHLY = "price_business_monthly";
-  process.env.STRIPE_PRICE_BUSINESS_ANNUAL = "price_business_annual";
-  process.env.STRIPE_PRICE_EXTRA_CREDITS_2000 = "price_extra_credits_2000";
-  process.env.STRIPE_PRICE_EXTRA_CREDITS_5000 = "price_extra_credits_5000";
-  process.env.STRIPE_PRICE_EXTRA_CREDITS_15000 = "price_extra_credits_15000";
+  process.env.STRIPE_PRICE_STARTER_MONTHLY = 'price_starter_monthly';
+  process.env.STRIPE_PRICE_STARTER_ANNUAL = 'price_starter_annual';
+  process.env.STRIPE_PRICE_GROWTH_MONTHLY = 'price_growth_monthly';
+  process.env.STRIPE_PRICE_GROWTH_ANNUAL = 'price_growth_annual';
+  process.env.STRIPE_PRICE_BUSINESS_MONTHLY = 'price_business_monthly';
+  process.env.STRIPE_PRICE_BUSINESS_ANNUAL = 'price_business_annual';
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_2000 = 'price_extra_credits_2000';
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_5000 = 'price_extra_credits_5000';
+  process.env.STRIPE_PRICE_EXTRA_CREDITS_15000 = 'price_extra_credits_15000';
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const { mockModel, internalAction } = await vi.hoisted(async () => {
-  const agent = await import("@convex-dev/agent");
-  const server = await import("./_generated/server");
+  const agent = await import('@convex-dev/agent');
+  const server = await import('./_generated/server');
   return { mockModel: agent.mockModel, internalAction: server.internalAction };
 });
 
 // Mock the openRouterModel call to return a mock model that vitest can run without API keys
-vi.mock("./llm/openRouter", () => {
+vi.mock('./llm/openRouter', () => {
   return {
     openRouterModel: () => {
       return mockModel({
         doGenerate: async () => ({
-          content: [{
-            type: "text",
-            text: JSON.stringify({
-              workflowMatches: [],
-              customerResponse: "Mock response text",
-              mediaToSend: [],
-            }),
-          }],
-          finishReason: { unified: "stop", raw: "stop" },
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                workflowMatches: [],
+                customerResponse: 'Mock response text',
+                mediaToSend: [],
+              }),
+            },
+          ],
+          finishReason: { unified: 'stop', raw: 'stop' },
           usage: {
             inputTokens: {
               total: 3,
@@ -65,7 +71,7 @@ vi.mock("./llm/openRouter", () => {
 });
 
 // Mock the internalSendAiReply action to bypass Meta API calls
-vi.mock("./chat/inboxActions", () => {
+vi.mock('./chat/inboxActions', () => {
   const channelMediaItemValidator = v.object({
     url: v.string(),
     mediaType: v.string(),
@@ -74,7 +80,7 @@ vi.mock("./chat/inboxActions", () => {
   return {
     internalSendAiReply: internalAction({
       args: {
-        conversationId: v.id("conversations"),
+        conversationId: v.id('conversations'),
         content: v.string(),
         mediaUrls: v.array(v.string()),
         mediaItems: v.optional(v.array(channelMediaItemValidator)),
@@ -83,91 +89,121 @@ vi.mock("./chat/inboxActions", () => {
       handler: async () => {
         return {
           ok: true,
-          textExternalId: "mock-external-id",
+          textExternalId: 'mock-external-id',
         };
       },
     }),
     internalSendMetaTypingOn: internalAction({
       args: {
-        conversationId: v.id("conversations"),
+        conversationId: v.id('conversations'),
         messageExternalId: v.optional(v.string()),
       },
       handler: async () => ({ ok: true }),
     }),
     internalSendMetaTypingOff: internalAction({
       args: {
-        conversationId: v.id("conversations"),
+        conversationId: v.id('conversations'),
       },
       handler: async () => ({ ok: true }),
     }),
   };
 });
 
-const modules = import.meta.glob("./**/*.ts");
+const modules = import.meta.glob('./**/*.ts');
 
-test("Incoming message is saved exactly once to the agent thread", async () => {
+test('Incoming message is saved exactly once to the agent thread', async () => {
+  vi.useFakeTimers();
   const t = convexTest(schema, modules);
 
   // Register Stripe component
-  t.registerComponent("stripe", stripeSchema, {
-    "public": () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-    "private": () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  t.registerComponent('stripe', stripeSchema, {
+    public: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/public.js'),
+    private: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/private.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/_generated/server.js'),
   });
 
   // Register workpools
   const mockWorkpool = {
-    "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
-    "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
-    "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
-    "danger": () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
-    "kick": () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
-    "lib": () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
-    "logging": () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
-    "loop": () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
-    "recovery": () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
-    "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
-    "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+    complete: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/complete.js'),
+    config: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/config.js'),
+    crons: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/crons.js'),
+    danger: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/danger.js'),
+    kick: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/kick.js'),
+    lib: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/lib.js'),
+    logging: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/logging.js'),
+    loop: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/loop.js'),
+    recovery: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/recovery.js'),
+    stats: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/stats.js'),
+    worker: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/worker.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/_generated/server.js'),
   };
 
-  t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent('inboxAiReplyWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('metaIndicatorWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('threadSummarizerWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('conversationLogWorkpool', workpoolSchema, mockWorkpool);
 
   const mockAggregate = {
-    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+    public: () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/public.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js'),
   };
-  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
-  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
+  t.registerComponent('analyticsMetrics', aggregateSchema, mockAggregate);
+  t.registerComponent('modelLifetimeUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent(
+    'agentOverviewAiAssistedDaily',
+    aggregateSchema,
+    mockAggregate,
+  );
 
   // Register the agent component
-  t.registerComponent("agent", agentSchema, {
-    "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
-    "files": () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
-    "messages": () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
-    "streams": () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
-    "threads": () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
-    "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  t.registerComponent('agent', agentSchema, {
+    apiKeys: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/apiKeys.js'),
+    files: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/files.js'),
+    messages: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/messages.js'),
+    streams: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/streams.js'),
+    threads: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/threads.js'),
+    users: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/users.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/agent/dist/component/_generated/server.js'),
   });
 
   // 1. Setup mock Agent
   const agentId = await t.run(async (ctx) => {
-    return await ctx.db.insert("agents", {
-      name: "Support Agent",
-      provider: "openrouter",
-      model: "deepseek/deepseek-v4-flash",
-      systemPrompt: "You are a support agent.",
-      templateKey: "blank",
+    return await ctx.db.insert('agents', {
+      name: 'Support Agent',
+      provider: 'openrouter',
+      model: 'deepseek/deepseek-v4-flash',
+      systemPrompt: 'You are a support agent.',
+      templateKey: 'blank',
       fileSize: 0,
-      userId: "user-123",
-      orgId: "org-123",
+      userId: 'user-123',
+      orgId: 'org-123',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -175,13 +211,13 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
 
   // 2. Setup mock Channel
   const channelId = await t.run(async (ctx) => {
-    return await ctx.db.insert("channels", {
-      orgId: "org-123",
-      service: "whatsapp",
-      phoneNumberId: "phone-id-123",
-      accessToken: "token-123",
-      status: "connected",
-      connectedByUserId: "user-123",
+    return await ctx.db.insert('channels', {
+      orgId: 'org-123',
+      service: 'whatsapp',
+      phoneNumberId: 'phone-id-123',
+      accessToken: 'token-123',
+      status: 'connected',
+      connectedByUserId: 'user-123',
       defaultAgentId: agentId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -189,17 +225,20 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   });
 
   // 3. Ingest an incoming message
-  const result = await t.mutation(internal.chat.inbox.internalIngestChannelMessage, {
-    channelId,
-    externalId: "ext-msg-123",
-    contactAddress: "+60123456789",
-    contactName: "John Doe",
-    direction: "incoming",
-    content: "Hello there",
-    contentType: "text",
-    timestampMs: Date.now(),
-    isHistorical: true,
-  });
+  const result = await t.mutation(
+    internal.chat.inbox.internalIngestChannelMessage,
+    {
+      channelId,
+      externalId: 'ext-msg-123',
+      contactAddress: '+60123456789',
+      contactName: 'John Doe',
+      direction: 'incoming',
+      content: 'Hello there',
+      contentType: 'text',
+      timestampMs: Date.now(),
+      isHistorical: true,
+    },
+  );
 
   // Fetch the conversation and check the thread
   const conv = await t.run(async (ctx) => {
@@ -208,86 +247,205 @@ test("Incoming message is saved exactly once to the agent thread", async () => {
   expect(conv).not.toBeNull();
 
   // Query the agent component's messages for this thread
-  const agentMessages = await withComponents(t).runInComponent("agent", async (ctx) => {
-    return await ctx.db.query("messages").collect();
-  });
+  const agentMessages = await withComponents(t).runInComponent(
+    'agent',
+    async (ctx) => {
+      return await ctx.db.query('messages').collect();
+    },
+  );
 
   // We should have exactly ONE message in the thread (the incoming user message)
   expect(agentMessages.length).toBe(1);
-  expect(agentMessages[0].message.role).toBe("user");
-  expect(agentMessages[0].text).toBe("Hello there");
+  expect(agentMessages[0].message.role).toBe('user');
+  expect(agentMessages[0].text).toBe('Hello there');
+
+  const ingestionState = await t.run(async (ctx) => {
+    const messages = await ctx.db
+      .query('messages')
+      .withIndex('by_externalId', (q) => q.eq('externalId', 'ext-msg-123'))
+      .collect();
+    const analyticsRequests = await ctx.db
+      .query('conversationAnalyticsRefreshRequests')
+      .collect();
+    return { messages, analyticsRequests };
+  });
+
+  expect(result.messageIds).toEqual(
+    ingestionState.messages.map((message) => message._id),
+  );
+  expect(ingestionState.analyticsRequests).toHaveLength(0);
+
+  const liveResult = await t.mutation(
+    internal.whatsappWebhook
+      .ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi,
+    {
+      phoneNumberId: 'phone-id-123',
+      externalId: 'live-whatsapp-1',
+      from: '+60123456790',
+      timestampMs: Date.now(),
+      content: 'Help me',
+      profileName: 'Jane Doe',
+    },
+  );
+
+  const analyticsRequests = await t.run(async (ctx) => {
+    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+  });
+  const aiWork = await withComponents(t).runInComponent(
+    'inboxAiReplyWorkpool',
+    async (ctx) => await ctx.db.query('work').collect(),
+  );
+  const indicatorWork = await withComponents(t).runInComponent(
+    'metaIndicatorWorkpool',
+    async (ctx) => await ctx.db.query('work').collect(),
+  );
+
+  expect(liveResult?.skipped).toBe(false);
+  expect(analyticsRequests).toHaveLength(1);
+  expect(aiWork).toHaveLength(1);
+  expect(indicatorWork).toHaveLength(1);
+
+  await t.run(async (ctx) => {
+    await ctx.db.patch(result.conversationId, {
+      assignToAiAgent: false,
+    });
+  });
+  const aiDisabledResult = await t.mutation(
+    internal.chat.inbox.internalIngestChannelMessage,
+    {
+      channelId,
+      externalId: 'ai-disabled-message',
+      contactAddress: '+60123456789',
+      direction: 'incoming',
+      content: 'Do not enqueue AI',
+      contentType: 'text',
+      timestampMs: Date.now(),
+      isHistorical: false,
+    },
+  );
+  expect(aiDisabledResult.shouldEnqueueAi).toBe(false);
+
+  await t.run(async (ctx) => {
+    await ctx.db.patch(result.conversationId, {
+      assignToAiAgent: true,
+      assignedAgentId: undefined,
+    });
+  });
+  const unassignedResult = await t.mutation(
+    internal.chat.inbox.internalIngestChannelMessage,
+    {
+      channelId,
+      externalId: 'ai-unassigned-message',
+      contactAddress: '+60123456789',
+      direction: 'incoming',
+      content: 'No assigned agent',
+      contentType: 'text',
+      timestampMs: Date.now(),
+      isHistorical: false,
+    },
+  );
+  expect(unassignedResult.shouldEnqueueAi).toBe(false);
 });
 
-test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply or mark-seen", async () => {
+test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply or mark-seen', async () => {
+  vi.useFakeTimers();
   const t = convexTest(schema, modules);
 
-  t.registerComponent("stripe", stripeSchema, {
-    "public": () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-    "private": () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  t.registerComponent('stripe', stripeSchema, {
+    public: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/public.js'),
+    private: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/private.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/_generated/server.js'),
   });
 
   const mockWorkpool = {
-    "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
-    "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
-    "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
-    "danger": () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
-    "kick": () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
-    "lib": () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
-    "logging": () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
-    "loop": () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
-    "recovery": () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
-    "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
-    "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+    complete: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/complete.js'),
+    config: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/config.js'),
+    crons: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/crons.js'),
+    danger: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/danger.js'),
+    kick: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/kick.js'),
+    lib: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/lib.js'),
+    logging: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/logging.js'),
+    loop: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/loop.js'),
+    recovery: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/recovery.js'),
+    stats: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/stats.js'),
+    worker: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/worker.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/_generated/server.js'),
   };
-  t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent('inboxAiReplyWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('threadSummarizerWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('conversationLogWorkpool', workpoolSchema, mockWorkpool);
 
   const mockAggregate = {
-    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+    public: () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/public.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js'),
   };
-  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
-  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
+  t.registerComponent('analyticsMetrics', aggregateSchema, mockAggregate);
+  t.registerComponent('modelLifetimeUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent(
+    'agentOverviewAiAssistedDaily',
+    aggregateSchema,
+    mockAggregate,
+  );
 
-  t.registerComponent("agent", agentSchema, {
-    "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
-    "files": () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
-    "messages": () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
-    "streams": () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
-    "threads": () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
-    "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  t.registerComponent('agent', agentSchema, {
+    apiKeys: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/apiKeys.js'),
+    files: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/files.js'),
+    messages: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/messages.js'),
+    streams: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/streams.js'),
+    threads: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/threads.js'),
+    users: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/users.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/agent/dist/component/_generated/server.js'),
   });
 
   const agentId = await t.run(async (ctx) => {
-    return await ctx.db.insert("agents", {
-      name: "Support Agent",
-      provider: "openrouter",
-      model: "deepseek/deepseek-v4-flash",
-      systemPrompt: "You are a support agent.",
-      templateKey: "blank",
+    return await ctx.db.insert('agents', {
+      name: 'Support Agent',
+      provider: 'openrouter',
+      model: 'deepseek/deepseek-v4-flash',
+      systemPrompt: 'You are a support agent.',
+      templateKey: 'blank',
       fileSize: 0,
-      userId: "user-123",
-      orgId: "org-123",
+      userId: 'user-123',
+      orgId: 'org-123',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
   });
   const channelId = await t.run(async (ctx) => {
-    return await ctx.db.insert("channels", {
-      orgId: "org-123",
-      service: "whatsapp",
-      phoneNumberId: "phone-id-123",
-      accessToken: "token-123",
-      status: "connected",
-      connectedByUserId: "user-123",
+    return await ctx.db.insert('channels', {
+      orgId: 'org-123',
+      service: 'whatsapp',
+      phoneNumberId: 'phone-id-123',
+      accessToken: 'token-123',
+      status: 'connected',
+      connectedByUserId: 'user-123',
       defaultAgentId: agentId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -300,12 +458,12 @@ test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
     internal.chat.inbox.internalIngestHistoricalChannelMessage,
     {
       channelId,
-      externalId: "hist-msg-1",
-      contactAddress: "+60123456789",
-      contactName: "Jane Doe",
-      direction: "incoming",
-      content: "Historical hello",
-      contentType: "text",
+      externalId: 'hist-msg-1',
+      contactAddress: '+60123456789',
+      contactName: 'Jane Doe',
+      direction: 'incoming',
+      content: 'Historical hello',
+      contentType: 'text',
       timestampMs: Date.now(),
       isHistorical: false,
     },
@@ -316,17 +474,40 @@ test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
 
   const message = await t.run(async (ctx) => {
     return await ctx.db
-      .query("messages")
-      .withIndex("by_externalId", (q) => q.eq("externalId", "hist-msg-1"))
+      .query('messages')
+      .withIndex('by_externalId', (q) => q.eq('externalId', 'hist-msg-1'))
       .unique();
   });
   expect(message).not.toBeNull();
-  expect(message?.content).toBe("Historical hello");
+  expect(message?.content).toBe('Historical hello');
+
+  const directAnalyticsRequests = await t.run(async (ctx) => {
+    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+  });
+  expect(directAnalyticsRequests).toHaveLength(0);
+
+  const syncResult = await t.mutation(
+    internal.instagramSync.internalIngestMessage,
+    {
+      channelId,
+      externalId: 'hist-sync-msg-1',
+      contactAddress: '+60123456790',
+      direction: 'incoming',
+      content: 'Synced historical hello',
+      timestampMs: Date.now(),
+    },
+  );
+  const syncAnalyticsRequests = await t.run(async (ctx) => {
+    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+  });
+
+  expect(syncResult?.skipped).toBe(false);
+  expect(syncAnalyticsRequests).toHaveLength(1);
 
   // No AI reply work was enqueued onto the workpool.
   const enqueuedWork = await withComponents(t).runInComponent(
-    "inboxAiReplyWorkpool",
-    async (ctx) => await ctx.db.query("work").collect(),
+    'inboxAiReplyWorkpool',
+    async (ctx) => await ctx.db.query('work').collect(),
   );
   expect(enqueuedWork.length).toBe(0);
 
@@ -335,11 +516,11 @@ test("internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
     internal.chat.inbox.internalIngestHistoricalChannelMessage,
     {
       channelId,
-      externalId: "hist-msg-1",
-      contactAddress: "+60123456789",
-      direction: "incoming",
-      content: "Historical hello",
-      contentType: "text",
+      externalId: 'hist-msg-1',
+      contactAddress: '+60123456789',
+      direction: 'incoming',
+      content: 'Historical hello',
+      contentType: 'text',
       timestampMs: Date.now(),
       isHistorical: false,
     },
@@ -351,71 +532,99 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   const t = convexTest(schema, modules);
 
   // Register Stripe component
-  t.registerComponent("stripe", stripeSchema, {
-    "public": () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
-    "private": () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  t.registerComponent('stripe', stripeSchema, {
+    public: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/public.js'),
+    private: () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/private.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/stripe/dist/component/_generated/server.js'),
   });
 
   // Register workpools
   const mockWorkpool = {
-    "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
-    "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
-    "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
-    "danger": () => import("../node_modules/@convex-dev/workpool/dist/component/danger.js"),
-    "kick": () => import("../node_modules/@convex-dev/workpool/dist/component/kick.js"),
-    "lib": () => import("../node_modules/@convex-dev/workpool/dist/component/lib.js"),
-    "logging": () => import("../node_modules/@convex-dev/workpool/dist/component/logging.js"),
-    "loop": () => import("../node_modules/@convex-dev/workpool/dist/component/loop.js"),
-    "recovery": () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
-    "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
-    "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+    complete: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/complete.js'),
+    config: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/config.js'),
+    crons: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/crons.js'),
+    danger: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/danger.js'),
+    kick: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/kick.js'),
+    lib: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/lib.js'),
+    logging: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/logging.js'),
+    loop: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/loop.js'),
+    recovery: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/recovery.js'),
+    stats: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/stats.js'),
+    worker: () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/worker.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/workpool/dist/component/_generated/server.js'),
   };
 
-  t.registerComponent("inboxAiReplyWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("threadSummarizerWorkpool", workpoolSchema, mockWorkpool);
-  t.registerComponent("conversationLogWorkpool", workpoolSchema, mockWorkpool);
+  t.registerComponent('inboxAiReplyWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('threadSummarizerWorkpool', workpoolSchema, mockWorkpool);
+  t.registerComponent('conversationLogWorkpool', workpoolSchema, mockWorkpool);
 
   const mockAggregate = {
-    "public": () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+    public: () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/public.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js'),
   };
-  t.registerComponent("analyticsMetrics", aggregateSchema, mockAggregate);
-  t.registerComponent("modelLifetimeUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("modelMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentMonthlyUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentCostUsage", aggregateSchema, mockAggregate);
-  t.registerComponent("agentOverviewAiAssistedDaily", aggregateSchema, mockAggregate);
+  t.registerComponent('analyticsMetrics', aggregateSchema, mockAggregate);
+  t.registerComponent('modelLifetimeUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent(
+    'agentOverviewAiAssistedDaily',
+    aggregateSchema,
+    mockAggregate,
+  );
 
   // Register the agent component
-  t.registerComponent("agent", agentSchema, {
-    "apiKeys": () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
-    "files": () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
-    "messages": () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
-    "streams": () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
-    "threads": () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
-    "users": () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
-    "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  t.registerComponent('agent', agentSchema, {
+    apiKeys: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/apiKeys.js'),
+    files: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/files.js'),
+    messages: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/messages.js'),
+    streams: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/streams.js'),
+    threads: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/threads.js'),
+    users: () =>
+      import('../node_modules/@convex-dev/agent/dist/component/users.js'),
+    '_generated/server': () =>
+      import('../node_modules/@convex-dev/agent/dist/component/_generated/server.js'),
   });
 
   // 1. Setup mock User & Team & Agent & Channel & Conversation
   const userId = await t.run(async (ctx) => {
-    return await ctx.db.insert("users", {
-      workosUserId: "user-123",
-      email: "test@example.com",
+    return await ctx.db.insert('users', {
+      workosUserId: 'user-123',
+      email: 'test@example.com',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
   });
 
   await t.run(async (ctx) => {
-    const id = await ctx.db.insert("teams", {
-      type: "organizational",
-      name: "Mock Team",
+    const id = await ctx.db.insert('teams', {
+      type: 'organizational',
+      name: 'Mock Team',
       ownerId: userId,
-      workosOrgId: "org-123",
-      stripeSubscriptionId: "sub-123",
+      workosOrgId: 'org-123',
+      stripeSubscriptionId: 'sub-123',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
@@ -424,28 +633,28 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   });
 
   const agentId = await t.run(async (ctx) => {
-    return await ctx.db.insert("agents", {
-      name: "Support Agent",
-      provider: "openrouter",
-      model: "deepseek/deepseek-v4-flash",
-      systemPrompt: "You are a support agent.",
-      templateKey: "blank",
+    return await ctx.db.insert('agents', {
+      name: 'Support Agent',
+      provider: 'openrouter',
+      model: 'deepseek/deepseek-v4-flash',
+      systemPrompt: 'You are a support agent.',
+      templateKey: 'blank',
       fileSize: 0,
-      userId: "user-123",
-      orgId: "org-123",
+      userId: 'user-123',
+      orgId: 'org-123',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     });
   });
 
   const channelId = await t.run(async (ctx) => {
-    return await ctx.db.insert("channels", {
-      orgId: "org-123",
-      service: "whatsapp",
-      phoneNumberId: "phone-id-123",
-      accessToken: "token-123",
-      status: "connected",
-      connectedByUserId: "user-123",
+    return await ctx.db.insert('channels', {
+      orgId: 'org-123',
+      service: 'whatsapp',
+      phoneNumberId: 'phone-id-123',
+      accessToken: 'token-123',
+      status: 'connected',
+      connectedByUserId: 'user-123',
       defaultAgentId: agentId,
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -453,34 +662,37 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   });
 
   // Mock Stripe Subscription inside stripe component
-  await withComponents(t).runInComponent("stripe", async (ctx) => {
-    await ctx.db.insert("subscriptions", {
-      stripeSubscriptionId: "sub-123",
-      stripeCustomerId: "cust-123",
-      status: "active",
+  await withComponents(t).runInComponent('stripe', async (ctx) => {
+    await ctx.db.insert('subscriptions', {
+      stripeSubscriptionId: 'sub-123',
+      stripeCustomerId: 'cust-123',
+      status: 'active',
       currentPeriodEnd: Math.floor(Date.now() / 1000) + 86400 * 30,
       cancelAtPeriodEnd: false,
-      priceId: "price_growth_monthly",
+      priceId: 'price_growth_monthly',
     });
   });
 
   // Ingest incoming message to create the conversation and save it to the agent thread
-  const result = await t.mutation(internal.chat.inbox.internalIngestChannelMessage, {
-    channelId,
-    externalId: "ext-msg-456",
-    contactAddress: "+60123456789",
-    contactName: "Jane Doe",
-    direction: "incoming",
-    content: "Help me",
-    contentType: "text",
-    timestampMs: Date.now(),
-    isHistorical: true,
-  });
+  const result = await t.mutation(
+    internal.chat.inbox.internalIngestChannelMessage,
+    {
+      channelId,
+      externalId: 'ext-msg-456',
+      contactAddress: '+60123456789',
+      contactName: 'Jane Doe',
+      direction: 'incoming',
+      content: 'Help me',
+      contentType: 'text',
+      timestampMs: Date.now(),
+      isHistorical: true,
+    },
+  );
 
   // Mock Stripe Subscription and credits so that checkAiFeature and credits pass
   await t.run(async (ctx) => {
     const now = Date.now();
-    await ctx.db.insert("userCreditPeriods", {
+    await ctx.db.insert('userCreditPeriods', {
       userId,
       periodStart: now,
       periodEnd: now + 30 * 24 * 60 * 60 * 1000,
@@ -494,14 +706,17 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   // Directly run generateAiReplyWorker (normally run by the workpool)
   await t.action(internal.chat.inbox.generateAiReplyWorker, {
     conversationId: result.conversationId,
-    promptContent: "Help me",
+    promptContent: 'Help me',
     promptMessageId: result.agentMessageId,
   });
 
   // Query messages inside the agent component
-  const agentMessages = await withComponents(t).runInComponent("agent", async (ctx) => {
-    return await ctx.db.query("messages").collect();
-  });
+  const agentMessages = await withComponents(t).runInComponent(
+    'agent',
+    async (ctx) => {
+      return await ctx.db.query('messages').collect();
+    },
+  );
 
   // Check the messages in the agent thread
   // There should be exactly 3 messages:
@@ -510,9 +725,9 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   // 3. Assistant message "Mock response text" (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
   // If the agent component had automatically saved prompt/outputs, there would be duplicates.
   expect(agentMessages.length).toBe(3);
-  expect(agentMessages[0].message.role).toBe("user");
-  expect(agentMessages[0].text).toBe("Help me");
-  expect(agentMessages[1].message.role).toBe("user"); // spacer
-  expect(agentMessages[2].message.role).toBe("assistant");
-  expect(agentMessages[2].text).toBe("Mock response text");
+  expect(agentMessages[0].message.role).toBe('user');
+  expect(agentMessages[0].text).toBe('Help me');
+  expect(agentMessages[1].message.role).toBe('user'); // spacer
+  expect(agentMessages[2].message.role).toBe('assistant');
+  expect(agentMessages[2].text).toBe('Mock response text');
 });

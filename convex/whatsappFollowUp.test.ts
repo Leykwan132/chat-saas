@@ -24,8 +24,7 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
   vi.useFakeTimers();
   const t = convexTest(schema, modules);
 
-  // Register the workpool component
-  t.registerComponent("followUpWorkpool", workpoolSchema, {
+  const workpoolModules = {
     "complete": () => import("../node_modules/@convex-dev/workpool/dist/component/complete.js"),
     "config": () => import("../node_modules/@convex-dev/workpool/dist/component/config.js"),
     "crons": () => import("../node_modules/@convex-dev/workpool/dist/component/crons.js"),
@@ -38,7 +37,9 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
     "stats": () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
     "worker": () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
     "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
-  });
+  };
+  t.registerComponent("followUpWorkpool", workpoolSchema, workpoolModules);
+  t.registerComponent("conversationLogWorkpool", workpoolSchema, workpoolModules);
 
   // Register the agent component
   t.registerComponent("agent", agentSchema, {
@@ -223,6 +224,13 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
     },
     result: { kind: "success", returnValue: workerResult },
   });
+
+  const analyticsRequests = await t.run(async (ctx) => {
+    return await ctx.db
+      .query("conversationAnalyticsRefreshRequests")
+      .collect();
+  });
+  expect(analyticsRequests).toHaveLength(1);
 
   // Verify rule messages count and send logs
   const updatedRule = await t.run(async (ctx) => {

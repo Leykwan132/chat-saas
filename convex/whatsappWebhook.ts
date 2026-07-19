@@ -11,16 +11,24 @@ import {
   normalizeMetaTemplateId,
   normalizeWhatsAppTemplateCategory,
 } from "./whatsappTemplateLifecycle";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import {
   resolveInboxLedgerContentType,
   resolveWhatsAppAudioFiles,
 } from "./chat/inboxAudioIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { whatsappSyncPool } from "./channelSyncPools";
-import { isOpenWhatsAppConnectionAttempt, maybeCompleteWhatsAppConnectionAttempt } from "./whatsappConnectionAttemptUtils";
+import {
+  isOpenWhatsAppConnectionAttempt,
+  maybeCompleteWhatsAppConnectionAttempt,
+} from "./whatsappConnectionAttemptUtils";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 import { isSkippedWhatsAppContact } from "./whatsappSkipContacts";
+import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
+import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
+import { inboxPromptContent } from "../shared/inboxAttachments";
+import type { IngestChannelMessageResult } from "./chat/threads";
 const messageStatusValidator = v.union(
   v.literal("queued"),
   v.literal("sent"),
@@ -62,7 +70,6 @@ export const verify = httpAction(async (_ctx, req) => {
   const token = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
 
-  
   const expected = process.env.META_APP_VERIFY_TOKEN;
   if (!expected) {
     console.error("META_APP_VERIFY_TOKEN is not configured");
@@ -93,11 +100,15 @@ export async function receive(
     return new Response("invalid json", { status: 400 });
   }
 
+  let incomingPersistenceFailed = false;
+
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       if (change.field === "template_category_update") {
         const value = change.value;
-        const metaTemplateId = normalizeMetaTemplateId(value.message_template_id);
+        const metaTemplateId = normalizeMetaTemplateId(
+          value.message_template_id,
+        );
         const newCategory = value.new_category
           ? normalizeWhatsAppTemplateCategory(value.new_category)
           : undefined;
@@ -113,21 +124,25 @@ export async function receive(
           continue;
         }
         try {
-          const result: { matched: number; updated: number } = await ctx.runMutation(
-            internal.whatsappTemplateWebhook.handleTemplateCategoryUpdate,
-            {
-              wabaId: entry.id,
-              metaTemplateId,
-              name: value.message_template_name,
-              language: value.message_template_language,
-              newCategory,
-            },
-          );
+          const result: { matched: number; updated: number } =
+            await ctx.runMutation(
+              internal.whatsappTemplateWebhook.handleTemplateCategoryUpdate,
+              {
+                wabaId: entry.id,
+                metaTemplateId,
+                name: value.message_template_name,
+                language: value.message_template_language,
+                newCategory,
+              },
+            );
           if (result.matched === 0) {
-            console.warn("WhatsApp template category webhook had no local match", {
-              wabaId: entry.id,
-              metaTemplateId,
-            });
+            console.warn(
+              "WhatsApp template category webhook had no local match",
+              {
+                wabaId: entry.id,
+                metaTemplateId,
+              },
+            );
           }
         } catch (error) {
           console.error("Failed to apply WhatsApp template category webhook", {
@@ -141,7 +156,9 @@ export async function receive(
 
       if (change.field === "message_template_status_update") {
         const value = change.value;
-        const metaTemplateId = normalizeMetaTemplateId(value.message_template_id);
+        const metaTemplateId = normalizeMetaTemplateId(
+          value.message_template_id,
+        );
         if (
           !entry.id ||
           !value.event ||
@@ -154,22 +171,26 @@ export async function receive(
           continue;
         }
         try {
-          const result: { matched: number; updated: number } = await ctx.runMutation(
-            internal.whatsappTemplateWebhook.handleTemplateStatusUpdate,
-            {
-              wabaId: entry.id,
-              event: value.event,
-              metaTemplateId,
-              name: value.message_template_name,
-              language: value.message_template_language,
-              reason: value.reason,
-            },
-          );
+          const result: { matched: number; updated: number } =
+            await ctx.runMutation(
+              internal.whatsappTemplateWebhook.handleTemplateStatusUpdate,
+              {
+                wabaId: entry.id,
+                event: value.event,
+                metaTemplateId,
+                name: value.message_template_name,
+                language: value.message_template_language,
+                reason: value.reason,
+              },
+            );
           if (result.matched === 0) {
-            console.warn("WhatsApp template status webhook had no local match", {
-              wabaId: entry.id,
-              metaTemplateId,
-            });
+            console.warn(
+              "WhatsApp template status webhook had no local match",
+              {
+                wabaId: entry.id,
+                metaTemplateId,
+              },
+            );
           }
         } catch (error) {
           console.error("Failed to apply WhatsApp template status webhook", {
@@ -240,16 +261,22 @@ export async function receive(
         const historyError = firstHistoryError(value);
         if (historyError) {
           if (historyError.code === 2593109) {
-            await ctx.runMutation(internal.whatsappSync.internalMarkHistoryNotShared, {
-              phoneNumberId,
-              errorCode: historyError.code,
-              errorMessage:
-                historyError.message ??
-                historyError.title ??
-                "WhatsApp history sync was not shared by the business.",
-            });
+            await ctx.runMutation(
+              internal.whatsappSync.internalMarkHistoryNotShared,
+              {
+                phoneNumberId,
+                errorCode: historyError.code,
+                errorMessage:
+                  historyError.message ??
+                  historyError.title ??
+                  "WhatsApp history sync was not shared by the business.",
+              },
+            );
           } else {
-            console.warn("WhatsApp history webhook contained an error", historyError);
+            console.warn(
+              "WhatsApp history webhook contained an error",
+              historyError,
+            );
           }
           continue;
         }
@@ -264,11 +291,17 @@ export async function receive(
         const historyItems = value.history ?? [];
         for (const item of historyItems) {
           const metadata = item.metadata;
-          if (metadata?.phase === undefined || metadata.chunk_order === undefined) {
-            console.warn("WhatsApp history item missing phase/chunk_order; skipping", {
-              phoneNumberId,
-              progress: metadata?.progress,
-            });
+          if (
+            metadata?.phase === undefined ||
+            metadata.chunk_order === undefined
+          ) {
+            console.warn(
+              "WhatsApp history item missing phase/chunk_order; skipping",
+              {
+                phoneNumberId,
+                progress: metadata?.progress,
+              },
+            );
             continue;
           }
           const result = await ctx.runMutation(
@@ -374,9 +407,7 @@ export async function receive(
             continue;
           }
 
-          let files:
-            | Array<{ url: string; mimeType: string }>
-            | undefined;
+          let files: Array<{ url: string; mimeType: string }> | undefined;
           if (message.type === "audio" && message.audio?.id) {
             const channel = await ctx.runQuery(
               internal.channels.internalGetChannelByPhoneNumberId,
@@ -394,17 +425,22 @@ export async function receive(
             }
           }
 
-          await ctx.runMutation(internal.whatsappWebhook.handleIncoming, {
-            phoneNumberId,
-            externalId: message.id,
-            from: message.from,
-            timestampMs: parseTimestamp(message.timestamp),
-            content: extractContent(message),
-            profileName: nameByWaId.get(message.from),
-            files,
-          });
+          await ctx.runMutation(
+            internal.whatsappWebhook
+              .ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi,
+            {
+              phoneNumberId,
+              externalId: message.id,
+              from: message.from,
+              timestampMs: parseTimestamp(message.timestamp),
+              content: extractContent(message),
+              profileName: nameByWaId.get(message.from),
+              files,
+            },
+          );
         } catch (err) {
           console.error("Failed to persist incoming WhatsApp message", err);
+          incomingPersistenceFailed = true;
         }
       }
 
@@ -424,7 +460,10 @@ export async function receive(
     }
   }
 
-  return new Response(null, { status: 200 });
+  return new Response(
+    incomingPersistenceFailed ? "message persistence failed" : null,
+    { status: incomingPersistenceFailed ? 500 : 200 },
+  );
 }
 
 export const handleAccountUpdate = internalMutation({
@@ -571,7 +610,9 @@ async function deleteWhatsAppConnectionForWaba(
   ctx: MutationCtx,
   wabaId: string,
 ) {
-  console.log(`[deleteWhatsAppConnectionForWaba] Deleting all data for WABA ID: ${wabaId}`);
+  console.log(
+    `[deleteWhatsAppConnectionForWaba] Deleting all data for WABA ID: ${wabaId}`,
+  );
 
   // 1. Find all channels for this WABA
   const channels = await ctx.db
@@ -715,9 +756,12 @@ export const handleStateSync = internalMutation({
   handler: async (ctx, args) => {
     const channels = await ctx.db
       .query("channels")
-      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
+      .withIndex("by_phoneNumberId", (q) =>
+        q.eq("phoneNumberId", args.phoneNumberId),
+      )
       .collect();
-    const channel = channels.find((c) => c.status === "connected") ?? channels[0];
+    const channel =
+      channels.find((c) => c.status === "connected") ?? channels[0];
     if (channel === undefined) return;
 
     let lastEventAt: number | undefined;
@@ -779,59 +823,11 @@ export const handleMessageEcho = internalMutation({
     content: v.string(),
     contentType: contentTypeValidator,
   },
-  handler: async (ctx, args) => {
+  handler: async (
+    ctx,
+    args,
+  ): Promise<IngestChannelMessageResult | undefined> => {
     if (isSkippedWhatsAppContact(args.to)) return;
-
-    const channels = await ctx.db
-      .query("channels")
-      .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
-      .collect();
-    const channel = channels.find((c) => c.status === "connected") ?? channels[0];
-    if (channel === undefined) return;
-
-    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
-      channelId: channel._id,
-      externalId: args.externalId,
-      contactAddress: args.to,
-      contactPhone: args.to,
-      direction: "outgoing",
-      content: args.content,
-      contentType: args.contentType,
-      timestampMs: args.timestampMs,
-      isHistorical: false,
-      humanAgentName: "WhatsApp Business app",
-    });
-  },
-});
-
-// Persist one inbound message + upsert its conversation + customer. Wrapped
-// in a single internal mutation so all three writes happen atomically.
-export const handleIncoming = internalMutation({
-  args: {
-    phoneNumberId: v.string(),
-    externalId: v.string(),
-    from: v.string(),
-    timestampMs: v.number(),
-    content: v.string(),
-    profileName: v.optional(v.string()),
-    files: v.optional(
-      v.array(
-        v.object({
-          url: v.string(),
-          mimeType: v.string(),
-        }),
-      ),
-    ),
-  },
-  handler: async (ctx, args) => {
-    if (isSkippedWhatsAppContact(args.from)) return;
-
-    // Dedupe — if Meta retries the same delivery we'll have already saved it.
-    const existingMsg = await ctx.db
-      .query("messages")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
-      .unique();
-    if (existingMsg !== null) return;
 
     const channels = await ctx.db
       .query("channels")
@@ -839,55 +835,172 @@ export const handleIncoming = internalMutation({
         q.eq("phoneNumberId", args.phoneNumberId),
       )
       .collect();
+    const channel =
+      channels.find((c) => c.status === "connected") ?? channels[0];
+    if (channel === undefined) return;
 
-    let channel = null;
-    if (channels.length === 1) {
-      channel = channels[0];
-    } else if (channels.length > 1) {
-      for (const c of channels) {
-        const conv = await ctx.db
-          .query("conversations")
-          .withIndex("by_channel_and_contactAddress", (q) =>
-            q.eq("channelId", c._id).eq("contactAddress", args.from),
-          )
-          .unique();
-        if (conv !== null) {
-          channel = c;
-          break;
-        }
-      }
-      if (channel === null) {
-        channel = channels.find((c) => c.status === "connected") ?? channels[0];
-      }
-    }
-
-    if (channel === null) {
-      console.warn(
-        `Webhook for unknown phone_number_id=${args.phoneNumberId}; skipping`,
-      );
-      return;
-    }
-
-    const contentType = resolveInboxLedgerContentType(
-      args.content,
-      undefined,
-      args.files,
+    const result: IngestChannelMessageResult = await ctx.runMutation(
+      internal.chat.inbox.internalIngestChannelMessage,
+      {
+        channelId: channel._id,
+        externalId: args.externalId,
+        contactAddress: args.to,
+        contactPhone: args.to,
+        direction: "outgoing",
+        content: args.content,
+        contentType: args.contentType,
+        timestampMs: args.timestampMs,
+        isHistorical: false,
+        humanAgentName: "WhatsApp Business app",
+      },
     );
+    if (result.skipped) return result;
 
-    await ctx.runMutation(internal.chat.inbox.internalIngestChannelMessage, {
-      channelId: channel._id,
-      externalId: args.externalId,
-      contactAddress: args.from,
-      contactName: args.profileName,
-      direction: "incoming",
-      content: args.content,
-      contentType,
-      timestampMs: args.timestampMs,
+    await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+    await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+      conversationId: result.conversationId,
+      direction: "outgoing",
       isHistorical: false,
-      files: args.files,
+      messageIds: result.messageIds,
     });
+    return result;
   },
 });
+
+async function resolveIncomingWhatsAppChannel(
+  ctx: MutationCtx,
+  args: {
+    phoneNumberId: string;
+    externalId: string;
+    from: string;
+  },
+): Promise<Doc<"channels"> | null> {
+  if (isSkippedWhatsAppContact(args.from)) return null;
+
+  const existingMessage = await ctx.db
+    .query("messages")
+    .withIndex("by_externalId", (q) => q.eq("externalId", args.externalId))
+    .unique();
+  if (existingMessage !== null) return null;
+
+  const channels = await ctx.db
+    .query("channels")
+    .withIndex("by_phoneNumberId", (q) =>
+      q.eq("phoneNumberId", args.phoneNumberId),
+    )
+    .collect();
+
+  if (channels.length === 1) return channels[0];
+
+  for (const channel of channels) {
+    const conversation = await ctx.db
+      .query("conversations")
+      .withIndex("by_channel_and_contactAddress", (q) =>
+        q.eq("channelId", channel._id).eq("contactAddress", args.from),
+      )
+      .unique();
+    if (conversation !== null) return channel;
+  }
+
+  const channel =
+    channels.find((candidate) => candidate.status === "connected") ??
+    channels[0] ??
+    null;
+
+  if (channel === null) {
+    console.warn(
+      `Webhook for unknown phone_number_id=${args.phoneNumberId}; skipping`,
+    );
+  }
+
+  return channel;
+}
+
+export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
+  internalMutation({
+    args: {
+      phoneNumberId: v.string(),
+      externalId: v.string(),
+      from: v.string(),
+      timestampMs: v.number(),
+      content: v.string(),
+      profileName: v.optional(v.string()),
+      files: v.optional(
+        v.array(
+          v.object({
+            url: v.string(),
+            mimeType: v.string(),
+          }),
+        ),
+      ),
+    },
+    handler: async (
+      ctx,
+      args,
+    ): Promise<IngestChannelMessageResult | undefined> => {
+      const channel = await resolveIncomingWhatsAppChannel(ctx, args);
+      if (channel === null) return;
+
+      const contentType = resolveInboxLedgerContentType(
+        args.content,
+        undefined,
+        args.files,
+      );
+
+      const result: IngestChannelMessageResult = await ctx.runMutation(
+        internal.chat.inbox.internalIngestChannelMessage,
+        {
+          channelId: channel._id,
+          externalId: args.externalId,
+          contactAddress: args.from,
+          contactName: args.profileName,
+          direction: "incoming",
+          content: args.content,
+          contentType,
+          timestampMs: args.timestampMs,
+          isHistorical: false,
+          files: args.files,
+        },
+      );
+      if (result.skipped) return result;
+
+      await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+      await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
+        conversationId: result.conversationId,
+        direction: "incoming",
+        isHistorical: false,
+        messageIds: result.messageIds,
+      });
+
+      if (result.shouldEnqueueAi) {
+        await metaIndicatorPool.enqueueAction(
+          ctx,
+          internal.chat.inboxActions.internalSendMetaMarkSeen,
+          {
+            conversationId: result.conversationId,
+            messageExternalId: args.externalId,
+            requireAiHandled: true,
+          },
+        );
+        await inboxAiReplyPool.enqueueAction(
+          ctx,
+          internal.chat.inbox.generateAiReplyWorker,
+          {
+            conversationId: result.conversationId,
+            promptContent: inboxPromptContent(
+              args.content,
+              undefined,
+              args.files,
+            ),
+            promptMessageId: result.agentMessageId,
+            inboundExternalId: args.externalId,
+          },
+        );
+      }
+
+      return result;
+    },
+  });
 
 // Apply a sent/delivered/read/failed status update to an existing outgoing
 // message. No-op if we don't have the original (e.g. it was sent from a
@@ -950,7 +1063,9 @@ export const handleReaction = internalMutation({
   handler: async (ctx, args) => {
     const target = await ctx.db
       .query("messages")
-      .withIndex("by_externalId", (q) => q.eq("externalId", args.targetExternalId))
+      .withIndex("by_externalId", (q) =>
+        q.eq("externalId", args.targetExternalId),
+      )
       .first();
     if (target === null) {
       return;

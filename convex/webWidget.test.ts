@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test, beforeAll } from "vitest";
+import { afterEach, expect, test, beforeAll, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import { withComponents } from "./testUtils";
@@ -21,6 +21,10 @@ beforeAll(() => {
   process.env.STRIPE_PRICE_EXTRA_CREDITS_2000 = "price_extra_credits_2000";
   process.env.STRIPE_PRICE_EXTRA_CREDITS_5000 = "price_extra_credits_5000";
   process.env.STRIPE_PRICE_EXTRA_CREDITS_15000 = "price_extra_credits_15000";
+});
+
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 const stripeModules = {
@@ -217,6 +221,7 @@ test("web widget placement can change while theme stays fixed", async () => {
 });
 
 test("same visitor id reuses the web conversation", async () => {
+  vi.useFakeTimers();
   const t = initTest();
   const agentId = await createAgent(t, "user_web_visitor");
   const setup = await t
@@ -247,8 +252,15 @@ test("same visitor id reuses the web conversation", async () => {
   const state = await t.run(async (ctx) => {
     const conversations = await ctx.db.query("conversations").collect();
     const messages = await ctx.db.query("messages").collect();
-    return { conversations, messages };
+    const analyticsRequests = await ctx.db
+      .query("conversationAnalyticsRefreshRequests")
+      .collect();
+    return { conversations, messages, analyticsRequests };
   });
+  const indicatorWork = await withComponents(t).runInComponent(
+    "metaIndicatorWorkpool",
+    async (ctx) => await ctx.db.query("work").collect(),
+  );
 
   expect(state.conversations).toHaveLength(2);
   expect(state.conversations[0]).toMatchObject({
@@ -258,6 +270,8 @@ test("same visitor id reuses the web conversation", async () => {
     assignToAiAgent: true,
   });
   expect(state.messages.filter((m) => m.conversationId === first.conversationId)).toHaveLength(2);
+  expect(state.analyticsRequests).toHaveLength(2);
+  expect(indicatorWork).toHaveLength(0);
 });
 
 test("web replies persist without requiring Meta channel send", async () => {
