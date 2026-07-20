@@ -19,6 +19,7 @@ import {
   serviceAnalyticsNamespace,
   teamAnalyticsNamespace,
   topicAnalyticsNamespace,
+  V2_SOURCE_PREFIX,
   type AnalyticsMetric,
   type ConversationService,
 } from "./analyticsMetricModel";
@@ -294,8 +295,10 @@ async function deleteMetricEntriesForConversation(
 ) {
   const rows = await ctx.db
     .query("analyticsMetricEntries")
-    .withIndex("by_sourceConversationId", (q) =>
-      q.eq("sourceConversationId", conversationId),
+    .withIndex("by_sourceConversationId_and_sourceKey", (q) =>
+      q
+        .eq("sourceConversationId", conversationId)
+        .lt("sourceKey", V2_SOURCE_PREFIX),
     )
     .take(200);
   for (const row of rows) {

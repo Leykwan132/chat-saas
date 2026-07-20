@@ -46,6 +46,7 @@ import type * as analyticsProjectionMigration from "../analyticsProjectionMigrat
 import type * as analyticsProjectionRepair from "../analyticsProjectionRepair.js";
 import type * as analyticsProjectionState from "../analyticsProjectionState.js";
 import type * as analyticsProjectionStateModel from "../analyticsProjectionStateModel.js";
+import type * as analyticsProjectionVerification from "../analyticsProjectionVerification.js";
 import type * as analyticsProjectionWorker from "../analyticsProjectionWorker.js";
 import type * as analyticsRefreshRequest from "../analyticsRefreshRequest.js";
 import type * as analyticsRefreshWorker from "../analyticsRefreshWorker.js";
@@ -311,6 +312,7 @@ declare const fullApi: ApiFromModules<{
   analyticsProjectionRepair: typeof analyticsProjectionRepair;
   analyticsProjectionState: typeof analyticsProjectionState;
   analyticsProjectionStateModel: typeof analyticsProjectionStateModel;
+  analyticsProjectionVerification: typeof analyticsProjectionVerification;
   analyticsProjectionWorker: typeof analyticsProjectionWorker;
   analyticsRefreshRequest: typeof analyticsRefreshRequest;
   analyticsRefreshWorker: typeof analyticsRefreshWorker;

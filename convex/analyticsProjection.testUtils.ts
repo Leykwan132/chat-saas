@@ -11,6 +11,8 @@ const modules = import.meta.glob("./**/*.ts");
 const mockAggregate = {
   public: () =>
     import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
+  btree: () =>
+    import("../node_modules/@convex-dev/aggregate/dist/component/btree.js"),
   "_generated/server": () =>
     import(
       "../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"

@@ -213,6 +213,9 @@ test("topic assignment supports multiple topics per conversation", async () => {
       },
     ],
   });
+  await t.mutation(internal.analytics.syncConversationAnalytics, {
+    conversationId,
+  });
 
   const result = await t.run(async (ctx) => {
     const assignments = await ctx.db
@@ -256,6 +259,9 @@ test("topic assignment supports multiple topics per conversation", async () => {
         summary: "Customer asked about pricing.",
       },
     ],
+  });
+  await t.mutation(internal.analytics.syncConversationAnalytics, {
+    conversationId,
   });
 
   const after = await t.run(async (ctx) => {

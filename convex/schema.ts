@@ -1040,6 +1040,10 @@ export default defineSchema({
   })
     .index("by_sourceKey", ["sourceKey"])
     .index("by_sourceConversationId", ["sourceConversationId"])
+    .index("by_sourceConversationId_and_sourceKey", [
+      "sourceConversationId",
+      "sourceKey",
+    ])
     .index("by_sourceConversationId_and_metric_and_sourceKey", [
       "sourceConversationId",
       "metric",
