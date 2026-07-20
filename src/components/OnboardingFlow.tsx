@@ -39,6 +39,7 @@ import {
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
+import { PlanSelectionLayout } from '@/components/pricing/PlanSelectionLayout';
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -271,47 +272,42 @@ export function OnboardingFlow() {
           <div className={cn('mx-auto w-full', step === 4 ? 'max-w-[96rem]' : 'max-w-lg')}>
             {step === 4 ? (
               <motion.div {...fadeInMotion} className="flex flex-col gap-8">
-                <div className="flex flex-col gap-5">
-                  <h1 className="font-title text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-                    Choose your plan
-                  </h1>
-
+                <PlanSelectionLayout>
                   <SubscriptionPlanPicker
-                  variant="pricing"
-                  density="compact"
-                  enterpriseLayout="column"
-                  includeEnterprise
-                  billingInterval={billingInterval}
-                  onBillingIntervalChange={setBillingInterval}
-                  disabled={submitting}
-                  renderPlanAction={(p) => {
-                    if (p.isEnterprise) {
-                      return (
-                        <EnterprisePlanAction label="Contact our sales" />
-                      );
-                    }
-
-                    return (
-                    <SubscriptionPlanActionButton
-                      planId={p.id}
-                      disabled={submitting}
-                      loading={submitting && selectedPlan === p.id}
-                      label={
-                        submitting && selectedPlan === p.id ? (
-                          <Spinner className="size-3.5" />
-                        ) : (
-                          p.actionLabel
-                        )
+                    variant="pricing"
+                    enterpriseLayout="column"
+                    includeEnterprise
+                    billingInterval={billingInterval}
+                    onBillingIntervalChange={setBillingInterval}
+                    disabled={submitting}
+                    renderPlanAction={(p) => {
+                      if (p.isEnterprise) {
+                        return (
+                          <EnterprisePlanAction label="Contact our sales" />
+                        );
                       }
-                      onClick={() => {
-                        setSelectedPlan(p.id);
-                        void handleComplete(p.id);
-                      }}
-                    />
-                    );
-                  }}
-                />
-                </div>
+
+                      return (
+                        <SubscriptionPlanActionButton
+                          planId={p.id}
+                          disabled={submitting}
+                          loading={submitting && selectedPlan === p.id}
+                          label={
+                            submitting && selectedPlan === p.id ? (
+                              <Spinner className="size-3.5" />
+                            ) : (
+                              p.actionLabel
+                            )
+                          }
+                          onClick={() => {
+                            setSelectedPlan(p.id);
+                            void handleComplete(p.id);
+                          }}
+                        />
+                      );
+                    }}
+                  />
+                </PlanSelectionLayout>
 
                 <div className="flex items-center justify-start">
                   <button

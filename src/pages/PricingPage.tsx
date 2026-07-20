@@ -15,6 +15,7 @@ import {
   SubscriptionPlanActionButton,
   SubscriptionPlanPicker,
 } from '@/components/SubscriptionPlanPicker';
+import { PlanSelectionLayout } from '@/components/pricing/PlanSelectionLayout';
 import { PlanComparisonTable } from '@/components/pricing/PlanComparisonTable';
 import { PricingFaqSection } from '@/components/pricing/PricingFaqSection';
 import { SiteFooter } from '@/components/SiteFooter';
@@ -80,11 +81,7 @@ export default function PricingPage() {
 
       <main className="flex flex-1 flex-col items-center px-5 py-32 sm:px-6 sm:py-40">
         <div className="flex w-full max-w-[96rem] flex-col gap-28 sm:gap-32">
-          <div className="flex flex-col gap-10">
-            <h1 className="text-center text-4xl font-normal tracking-tight sm:text-5xl font-title">
-              Choose your plan
-            </h1>
-
+          <PlanSelectionLayout>
             <SubscriptionPlanPicker
               variant="pricing"
               enterpriseLayout="column"
@@ -115,7 +112,7 @@ export default function PricingPage() {
                 );
               }}
             />
-          </div>
+          </PlanSelectionLayout>
 
           <PricingFaqSection />
 
