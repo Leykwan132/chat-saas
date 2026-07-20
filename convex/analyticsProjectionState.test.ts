@@ -126,7 +126,7 @@ test("conversion and drop transitions preserve observation until reversal", () =
   expect(reversed.droppedAt).toBeUndefined();
 });
 
-test("legacy fact initializes one persistent projection state", async () => {
+test("missing v2 state initializes empty without reading legacy facts", async () => {
   const convex = analyticsProjectionTest();
   const fixture = await convex.run(async (ctx) => {
     const createdAt = 1000;
@@ -194,15 +194,6 @@ test("legacy fact initializes one persistent projection state", async () => {
   if (fixture.conversation === null) {
     throw new Error("Conversation fixture was not created");
   }
-  const expectedFirstHumanMessageId =
-    fixture.firstInsertedMessageId < fixture.secondInsertedMessageId
-      ? fixture.firstInsertedMessageId
-      : fixture.secondInsertedMessageId;
-  const expectedFirstHumanMemberUserId =
-    expectedFirstHumanMessageId === fixture.firstInsertedMessageId
-      ? "member-z"
-      : "member-a";
-
   const first = await convex.run(async (ctx) =>
     await loadOrCreateProjectionState(ctx, fixture.conversation!),
   );
@@ -213,14 +204,14 @@ test("legacy fact initializes one persistent projection state", async () => {
   expect(second._id).toBe(first._id);
   expect(first).toMatchObject({
     conversationId: fixture.conversationId,
-    firstCustomerMessageAt: 1200,
-    firstOutgoingAt: 1500,
-    firstHumanOutgoingAt: 1600,
-    firstHumanMessageId: expectedFirstHumanMessageId,
-    firstHumanMemberUserId: expectedFirstHumanMemberUserId,
-    convertedAt: 1700,
-    droppedAt: 1800,
   });
+  expect(first.firstCustomerMessageAt).toBeUndefined();
+  expect(first.firstOutgoingAt).toBeUndefined();
+  expect(first.firstHumanOutgoingAt).toBeUndefined();
+  expect(first.firstHumanMessageId).toBeUndefined();
+  expect(first.firstHumanMemberUserId).toBeUndefined();
+  expect(first.convertedAt).toBeUndefined();
+  expect(first.droppedAt).toBeUndefined();
 
   await convex.run(async (ctx) =>
     await replaceProjectionState(ctx, first._id, {

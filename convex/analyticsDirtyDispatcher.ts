@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation } from "./_generated/server";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
 
 export const DIRTY_DISPATCH_BATCH_SIZE = 25;
 export const DIRTY_RETRY_INTERVAL_MS = 15 * 60 * 1000;
@@ -26,7 +25,6 @@ export const dispatchDue = internalMutation({
       await ctx.db.patch(request._id, {
         nextAttemptAt: now + DIRTY_RETRY_INTERVAL_MS,
       });
-      await requestConversationAnalyticsRefresh(ctx, request.conversationId);
       await ctx.scheduler.runAfter(
         0,
         internal.analyticsProjectionWorker.run,

@@ -19,43 +19,6 @@ function projectionStateFields(
   };
 }
 
-async function legacyFirstHumanIdentity(
-  ctx: MutationCtx,
-  conversationId: Id<"conversations">,
-  firstHumanOutgoingAt: number | undefined,
-) {
-  if (firstHumanOutgoingAt === undefined) {
-    return {
-      firstHumanMessageId: undefined,
-      firstHumanMemberUserId: undefined,
-    };
-  }
-  const messages = await ctx.db
-    .query("messages")
-    .withIndex("by_conversationId_and_createdAt", (query) =>
-      query
-        .eq("conversationId", conversationId)
-        .eq("createdAt", firstHumanOutgoingAt),
-    )
-    .take(10);
-  const firstHumanMessage = messages
-    .filter(
-      (message) =>
-        message.direction === "outgoing" &&
-        message.authorUserId !== undefined,
-    )
-    .sort((left, right) => left._id.localeCompare(right._id))[0];
-  if (firstHumanMessage?.authorUserId === undefined) {
-    throw new Error(
-      `Missing first human message for conversation ${conversationId}`,
-    );
-  }
-  return {
-    firstHumanMessageId: firstHumanMessage._id,
-    firstHumanMemberUserId: firstHumanMessage.authorUserId,
-  };
-}
-
 export async function loadOrCreateProjectionState(
   ctx: MutationCtx,
   conversation: Doc<"conversations">,
@@ -68,28 +31,11 @@ export async function loadOrCreateProjectionState(
     .unique();
   if (existing !== null) return existing;
 
-  const legacyFact = await ctx.db
-    .query("conversationAnalyticsFacts")
-    .withIndex("by_conversationId", (query) =>
-      query.eq("conversationId", conversation._id),
-    )
-    .unique();
-  const firstHumanIdentity = await legacyFirstHumanIdentity(
-    ctx,
-    conversation._id,
-    legacyFact?.firstHumanOutgoingAt,
-  );
   const now = Date.now();
   const stateId = await ctx.db.insert(
     "conversationAnalyticsProjectionStates",
     {
       conversationId: conversation._id,
-      firstCustomerMessageAt: legacyFact?.firstCustomerMessageAt,
-      firstOutgoingAt: legacyFact?.firstOutgoingAt,
-      firstHumanOutgoingAt: legacyFact?.firstHumanOutgoingAt,
-      ...firstHumanIdentity,
-      convertedAt: legacyFact?.convertedAt,
-      droppedAt: legacyFact?.droppedAt,
       createdAt: now,
       updatedAt: now,
     },

@@ -83,3 +83,8 @@ test("the dirty dispatcher is the only canonical scheduler and runs every 15 min
   expect(crons).toContain('"dispatch dirty conversation analytics"');
   expect(crons).toContain("{ minutes: 15 }");
 });
+
+test("cutover helpers do not request legacy refreshes", () => {
+  const dispatcher = source("./analyticsDirtyDispatcher.ts");
+  expect(dispatcher).not.toContain("requestConversationAnalyticsRefresh");
+});

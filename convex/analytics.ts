@@ -35,7 +35,8 @@ const rangeValidator = v.union(
 
 type RangeKey = "7d" | "30d" | "90d" | "all";
 
-const DASHBOARD_ANALYTICS_VERSION = "v1" as const;
+const DASHBOARD_ANALYTICS_VERSION = "v2" as const;
+const LEGACY_ANALYTICS_VERSION = "v1" as const;
 const CONVERTED_TAG = "converted";
 const TOPIC_RANGE_LIMIT = 250;
 const MESSAGE_ANALYTICS_LIMIT = 500;
@@ -159,6 +160,60 @@ function channelNamespace(orgId: string, channelId: Id<"channels">, metric: Anal
 function topicNamespace(orgId: string, topicId: Id<"conversationTopics">) {
   return topicAnalyticsNamespace(
     DASHBOARD_ANALYTICS_VERSION,
+    orgId,
+    topicId,
+  );
+}
+
+function legacyTeamNamespace(orgId: string, metric: AnalyticsMetric) {
+  return teamAnalyticsNamespace(LEGACY_ANALYTICS_VERSION, orgId, metric);
+}
+
+function legacyMemberNamespace(
+  orgId: string,
+  memberUserId: string,
+  metric: AnalyticsMetric,
+) {
+  return memberAnalyticsNamespace(
+    LEGACY_ANALYTICS_VERSION,
+    orgId,
+    memberUserId,
+    metric,
+  );
+}
+
+function legacyServiceNamespace(
+  orgId: string,
+  service: ConversationService,
+  metric: AnalyticsMetric,
+) {
+  return serviceAnalyticsNamespace(
+    LEGACY_ANALYTICS_VERSION,
+    orgId,
+    service,
+    metric,
+  );
+}
+
+function legacyChannelNamespace(
+  orgId: string,
+  channelId: Id<"channels">,
+  metric: AnalyticsMetric,
+) {
+  return channelAnalyticsNamespace(
+    LEGACY_ANALYTICS_VERSION,
+    orgId,
+    channelId,
+    metric,
+  );
+}
+
+function legacyTopicNamespace(
+  orgId: string,
+  topicId: Id<"conversationTopics">,
+) {
+  return topicAnalyticsNamespace(
+    LEGACY_ANALYTICS_VERSION,
     orgId,
     topicId,
   );
@@ -438,7 +493,7 @@ export async function syncConversationAnalyticsHandler(
     push(metricEntry({
       orgId: conversation.orgId,
       metric: "conversationCount",
-      namespace: teamNamespace(conversation.orgId, "conversationCount"),
+      namespace: legacyTeamNamespace(conversation.orgId, "conversationCount"),
       sortKey: startedAt,
       value: 1,
       service: conversation.service,
@@ -450,7 +505,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "activeConversationCount",
-        namespace: teamNamespace(conversation.orgId, "activeConversationCount"),
+        namespace: legacyTeamNamespace(conversation.orgId, "activeConversationCount"),
         sortKey: conversation.lastMessageAt,
         value: 1,
         service: conversation.service,
@@ -463,7 +518,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "convertedCount",
-        namespace: teamNamespace(conversation.orgId, "convertedCount"),
+        namespace: legacyTeamNamespace(conversation.orgId, "convertedCount"),
         sortKey: startedAt,
         value: 1,
         service: conversation.service,
@@ -474,7 +529,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "conversionDurationMs",
-        namespace: teamNamespace(conversation.orgId, "conversionDurationMs"),
+        namespace: legacyTeamNamespace(conversation.orgId, "conversionDurationMs"),
         sortKey: startedAt,
         value: conversionDurationMs ?? 0,
         service: conversation.service,
@@ -487,7 +542,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "droppedCount",
-        namespace: teamNamespace(conversation.orgId, "droppedCount"),
+        namespace: legacyTeamNamespace(conversation.orgId, "droppedCount"),
         sortKey: startedAt,
         value: 1,
         service: conversation.service,
@@ -500,7 +555,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "firstReplyCount",
-        namespace: teamNamespace(conversation.orgId, "firstReplyCount"),
+        namespace: legacyTeamNamespace(conversation.orgId, "firstReplyCount"),
         sortKey: firstOutgoingAt,
         value: 1,
         service: conversation.service,
@@ -511,7 +566,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "firstReplyDurationMs",
-        namespace: teamNamespace(conversation.orgId, "firstReplyDurationMs"),
+        namespace: legacyTeamNamespace(conversation.orgId, "firstReplyDurationMs"),
         sortKey: firstOutgoingAt,
         value: firstReplyDurationMs,
         service: conversation.service,
@@ -524,7 +579,7 @@ export async function syncConversationAnalyticsHandler(
     push(metricEntry({
       orgId: conversation.orgId,
       metric: "channelConversationCount",
-      namespace: serviceNamespace(conversation.orgId, conversation.service, "channelConversationCount"),
+      namespace: legacyServiceNamespace(conversation.orgId, conversation.service, "channelConversationCount"),
       sortKey: startedAt,
       value: 1,
       service: conversation.service,
@@ -536,7 +591,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "channelConvertedCount",
-        namespace: serviceNamespace(conversation.orgId, conversation.service, "channelConvertedCount"),
+        namespace: legacyServiceNamespace(conversation.orgId, conversation.service, "channelConvertedCount"),
         sortKey: startedAt,
         value: 1,
         service: conversation.service,
@@ -549,7 +604,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "channelConversationCount",
-        namespace: channelNamespace(conversation.orgId, conversation.channelId, "channelConversationCount"),
+        namespace: legacyChannelNamespace(conversation.orgId, conversation.channelId, "channelConversationCount"),
         sortKey: startedAt,
         value: 1,
         service: conversation.service,
@@ -561,7 +616,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "channelConvertedCount",
-          namespace: channelNamespace(conversation.orgId, conversation.channelId, "channelConvertedCount"),
+          namespace: legacyChannelNamespace(conversation.orgId, conversation.channelId, "channelConvertedCount"),
           sortKey: startedAt,
           value: 1,
           service: conversation.service,
@@ -577,7 +632,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "assignedConversationCount",
-        namespace: memberNamespace(conversation.orgId, memberId, "assignedConversationCount"),
+        namespace: legacyMemberNamespace(conversation.orgId, memberId, "assignedConversationCount"),
         sortKey: startedAt,
         value: 1,
         memberUserId: memberId,
@@ -589,7 +644,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "avgMessagesPerConversationDenominator",
-        namespace: memberNamespace(conversation.orgId, memberId, "avgMessagesPerConversationDenominator"),
+        namespace: legacyMemberNamespace(conversation.orgId, memberId, "avgMessagesPerConversationDenominator"),
         sortKey: startedAt,
         value: 1,
         memberUserId: memberId,
@@ -602,7 +657,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "activeConversationCount",
-          namespace: memberNamespace(conversation.orgId, memberId, "activeConversationCount"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "activeConversationCount"),
           sortKey: conversation.lastMessageAt,
           value: 1,
           memberUserId: memberId,
@@ -616,7 +671,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "convertedCount",
-          namespace: memberNamespace(conversation.orgId, memberId, "convertedCount"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "convertedCount"),
           sortKey: startedAt,
           value: 1,
           memberUserId: memberId,
@@ -628,7 +683,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "conversionDurationMs",
-          namespace: memberNamespace(conversation.orgId, memberId, "conversionDurationMs"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "conversionDurationMs"),
           sortKey: startedAt,
           value: conversionDurationMs ?? 0,
           memberUserId: memberId,
@@ -642,7 +697,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "droppedCount",
-          namespace: memberNamespace(conversation.orgId, memberId, "droppedCount"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "droppedCount"),
           sortKey: startedAt,
           value: 1,
           memberUserId: memberId,
@@ -666,7 +721,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "firstHumanReplyCount",
-          namespace: memberNamespace(conversation.orgId, memberId, "firstHumanReplyCount"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "firstHumanReplyCount"),
           sortKey: firstHumanOutgoingAt,
           value: 1,
           memberUserId: memberId,
@@ -679,7 +734,7 @@ export async function syncConversationAnalyticsHandler(
         push(metricEntry({
           orgId: conversation.orgId,
           metric: "firstHumanReplyDurationMs",
-          namespace: memberNamespace(conversation.orgId, memberId, "firstHumanReplyDurationMs"),
+          namespace: legacyMemberNamespace(conversation.orgId, memberId, "firstHumanReplyDurationMs"),
           sortKey: firstHumanOutgoingAt,
           value: firstHumanReplyDurationMs,
           memberUserId: memberId,
@@ -697,7 +752,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "messageSentCount",
-        namespace: memberNamespace(conversation.orgId, message.authorUserId, "messageSentCount"),
+        namespace: legacyMemberNamespace(conversation.orgId, message.authorUserId, "messageSentCount"),
         sortKey: message.createdAt,
         value: 1,
         memberUserId: message.authorUserId,
@@ -713,7 +768,7 @@ export async function syncConversationAnalyticsHandler(
       push(metricEntry({
         orgId: conversation.orgId,
         metric: "topicMentionCount",
-        namespace: topicNamespace(conversation.orgId, assignment.topicId),
+        namespace: legacyTopicNamespace(conversation.orgId, assignment.topicId),
         sortKey: assignment.detectedAt,
         value: 1,
         topicId: assignment.topicId,
