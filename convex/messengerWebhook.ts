@@ -7,7 +7,7 @@ import {
   resolveWebhookAudioFiles,
 } from "./chat/inboxAudioIngest";
 import { markOutboundReadThroughTimestamp } from "./chat/readReceipts";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
@@ -295,7 +295,10 @@ export const handleIncoming = internalMutation({
     );
     if (result.skipped) return result;
 
-    await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: result.conversationId,
+      earliestDirtyMessageAt: args.timestampMs,
+    });
     await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
       conversationId: result.conversationId,
       direction: "incoming",

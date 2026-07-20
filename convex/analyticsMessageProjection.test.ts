@@ -3,7 +3,7 @@ import { projectConversationMessagePage } from "./analyticsMessageProjection";
 import {
   createProjectionFixture,
   type AnalyticsProjectionFixture,
-} from "./analyticsProjectionTestUtils";
+} from "./analyticsProjection.testUtils";
 
 async function runMessageProjectionPage(
   fixture: AnalyticsProjectionFixture,

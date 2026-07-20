@@ -16,7 +16,7 @@ import {
   resolveSyncMessageDirection,
   businessAgentName,
 } from "./chat/threads";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 
 const DEFAULT_GRAPH_VERSION = "v25.0";
 
@@ -380,7 +380,10 @@ export const internalIngestMessage = internalMutation({
       files: args.files,
     });
     if (!result.skipped) {
-      await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+      await markConversationAnalyticsDirty(ctx, {
+        conversationId: result.conversationId,
+        earliestDirtyMessageAt: args.timestampMs,
+      });
     }
     return result;
   },

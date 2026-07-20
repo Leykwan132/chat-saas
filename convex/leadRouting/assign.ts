@@ -1,6 +1,5 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { internal } from "../_generated/api";
 import { logConversationEvent } from "../conversationLogs";
 import { isUserEligible } from "./eligibility";
 import { getOrCreateLeadAssignmentSettings } from "./helpers";
@@ -177,9 +176,6 @@ export async function applyInboundLeadRouting(
         assignmentMethod: method,
       },
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: args.conversationId,
-    });
     return;
   }
 
@@ -225,10 +221,6 @@ export async function applyInboundLeadRouting(
       fallback: usedFallback,
     },
   });
-  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-    conversationId: args.conversationId,
-  });
-
   if (method === "round_robin" && pool.length > 0) {
     await ctx.db.patch(settings._id, {
       lastAssignedWorkosUserId: workosUserId,

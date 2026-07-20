@@ -10,7 +10,7 @@ import {
 import {
   analyticsProjectionTest,
   type AnalyticsProjectionTest,
-} from "./analyticsProjectionTestUtils";
+} from "./analyticsProjection.testUtils";
 
 function teamConversationContribution(
   conversationId: Id<"conversations">,

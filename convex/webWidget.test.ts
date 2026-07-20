@@ -253,7 +253,7 @@ test("same visitor id reuses the web conversation", async () => {
     const conversations = await ctx.db.query("conversations").collect();
     const messages = await ctx.db.query("messages").collect();
     const analyticsRequests = await ctx.db
-      .query("conversationAnalyticsRefreshRequests")
+      .query("conversationAnalyticsDirtyRequests")
       .collect();
     return { conversations, messages, analyticsRequests };
   });

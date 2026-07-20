@@ -10,7 +10,7 @@ import { ingestChannelMessage } from "./chat/threads";
 import { getUserByWorkosId } from "./teamHelpers";
 import { logConversationEvent } from "./conversationLogs";
 import { sendWorkflowWhatsappTemplate } from "./workflowWhatsappTemplateSender";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 
 export const followUpPool = new Workpool(
@@ -169,6 +169,7 @@ export const followUpComplete = internalMutation({
       });
 
       try {
+        const sentAt = Date.now();
         const ingestResult = await ingestChannelMessage(ctx, {
           channelId: rule.channelId,
           externalId,
@@ -177,16 +178,16 @@ export const followUpComplete = internalMutation({
           direction: "outgoing",
           content: `Follow-up Template: ${templateName}`,
           contentType: "text",
-          timestampMs: Date.now(),
+          timestampMs: sentAt,
           assignedAgentId: rule.agentId,
           authorUserId: rule.createdBy,
           workflowAutomationSource: 'workflowFollowUp',
         });
         if (!ingestResult.skipped) {
-          await requestConversationAnalyticsRefresh(
-            ctx,
-            ingestResult.conversationId,
-          );
+          await markConversationAnalyticsDirty(ctx, {
+            conversationId: ingestResult.conversationId,
+            earliestDirtyMessageAt: sentAt,
+          });
           await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
             conversationId: ingestResult.conversationId,
             direction: "outgoing",

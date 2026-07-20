@@ -71,7 +71,7 @@ export async function createProjectionFixture(
     status?: Doc<"conversations">["status"];
     tags?: string[];
     leadTemperature?: Doc<"customers">["leadTemperature"];
-    service?: Doc<"conversations">["service"];
+    service?: Exclude<Doc<"conversations">["service"], "playground">;
   } = {},
 ): Promise<AnalyticsProjectionFixture> {
   const t = analyticsProjectionTest();

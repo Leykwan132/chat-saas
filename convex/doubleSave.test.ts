@@ -265,7 +265,7 @@ test('Incoming message is saved exactly once to the agent thread', async () => {
       .withIndex('by_externalId', (q) => q.eq('externalId', 'ext-msg-123'))
       .collect();
     const analyticsRequests = await ctx.db
-      .query('conversationAnalyticsRefreshRequests')
+      .query('conversationAnalyticsDirtyRequests')
       .collect();
     return { messages, analyticsRequests };
   });
@@ -289,7 +289,7 @@ test('Incoming message is saved exactly once to the agent thread', async () => {
   );
 
   const analyticsRequests = await t.run(async (ctx) => {
-    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+    return await ctx.db.query('conversationAnalyticsDirtyRequests').collect();
   });
   const aiWork = await withComponents(t).runInComponent(
     'inboxAiReplyWorkpool',
@@ -482,7 +482,7 @@ test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   expect(message?.content).toBe('Historical hello');
 
   const directAnalyticsRequests = await t.run(async (ctx) => {
-    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+    return await ctx.db.query('conversationAnalyticsDirtyRequests').collect();
   });
   expect(directAnalyticsRequests).toHaveLength(0);
 
@@ -498,7 +498,7 @@ test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
     },
   );
   const syncAnalyticsRequests = await t.run(async (ctx) => {
-    return await ctx.db.query('conversationAnalyticsRefreshRequests').collect();
+    return await ctx.db.query('conversationAnalyticsDirtyRequests').collect();
   });
 
   expect(syncResult?.skipped).toBe(false);

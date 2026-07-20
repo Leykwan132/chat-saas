@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { CUSTOMER_SENTIMENTS, type CustomerSentiment } from "../shared/customerSentiment";
 import { isAdvancedAnalyticsPlan } from "../shared/planCatalog";
@@ -118,9 +117,6 @@ export const assignConversationInsights = internalMutation({
       updatedAt: now,
     });
     await syncAssignmentSentiments(ctx, args.conversationId, args.sentiment, now);
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: args.conversationId,
-    });
     return { sentiment: args.sentiment };
   },
 });

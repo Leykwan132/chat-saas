@@ -227,7 +227,7 @@ test("WhatsApp Automated Follow-up Scan & Schedule Flow", async () => {
 
   const analyticsRequests = await t.run(async (ctx) => {
     return await ctx.db
-      .query("conversationAnalyticsRefreshRequests")
+      .query("conversationAnalyticsDirtyRequests")
       .collect();
   });
   expect(analyticsRequests).toHaveLength(1);

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { createProjectionFixture } from "./analyticsProjectionTestUtils";
+import { createProjectionFixture } from "./analyticsProjection.testUtils";
 
 test("topic add remove and reorder remain idempotent", async () => {
   const fixture = await createProjectionFixture();

@@ -6,6 +6,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext } from "./authUtils";
 import { metaIndicatorPool } from "./inboxPools";
 import { logConversationEvent } from "./conversationLogs";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 
 export async function getLinkedInboxConversationDocs(
   ctx: QueryCtx,
@@ -306,9 +307,6 @@ export const ensureAssignedAgent = mutation({
       assignedAgentId: args.agentId,
       updatedAt: Date.now(),
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-      conversationId: args.conversationId,
-    });
   },
 });
 
@@ -373,9 +371,6 @@ async function setConversationAiEnabledHandler(
     conversationId,
     action: enabled ? "ai_enabled" : "ai_disabled",
   });
-  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-    conversationId,
-  });
 }
 
 async function setConversationLeadOwnerHandler(
@@ -430,7 +425,7 @@ async function setConversationLeadOwnerHandler(
       assigneeName,
     },
   });
-  await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+  await markConversationAnalyticsDirty(ctx, {
     conversationId,
   });
 }
@@ -490,7 +485,7 @@ export const addConversationTag = mutation({
       action: "tag_added",
       metadata: { tag: normalized },
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
   },
@@ -517,7 +512,7 @@ export const removeConversationTag = mutation({
       action: "tag_removed",
       metadata: { tag: args.tag },
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
   },
@@ -547,7 +542,7 @@ export const resolveEscalation = mutation({
       conversationId: args.conversationId,
       action: "escalation_resolved",
     });
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
   },

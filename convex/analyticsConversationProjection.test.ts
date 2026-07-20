@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import {
   createProjectionFixture,
   type AnalyticsProjectionFixture,
-} from "./analyticsProjectionTestUtils";
+} from "./analyticsProjection.testUtils";
 
 async function insertReplyState(fixture: AnalyticsProjectionFixture) {
   const firstHumanMessageId = await fixture.insertMessage(

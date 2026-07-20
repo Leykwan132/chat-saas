@@ -14,7 +14,7 @@ import { logConversationEvent } from "./conversationLogs";
 import { buildWhatsAppTemplateSendPayloadWithContent } from "./whatsappTemplateSendPayload";
 import { ensureWhatsAppRecipientPhone } from "./whatsappPhone";
 import { formatBroadcastMessageContent } from "./broadcastChatContent";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 import type { BroadcastHeaderAsset } from "../shared/broadcastMessage";
 
@@ -204,6 +204,7 @@ export const broadcastComplete = internalMutation({
             : "";
         const chatContent = formatBroadcastMessageContent(renderedContent);
 
+        const sentAt = Date.now();
         const ingestResult = await ingestChannelMessage(ctx, {
           channelId: schedule.channelId,
           externalId: returnValue.externalId,
@@ -216,15 +217,15 @@ export const broadcastComplete = internalMutation({
           broadcastPresentation: returnValue.headerAsset
             ? { headerAsset: returnValue.headerAsset }
             : {},
-          timestampMs: Date.now(),
+          timestampMs: sentAt,
           assignedAgentId: schedule.agentId,
           authorUserId: schedule.createdBy,
         });
         if (!ingestResult.skipped) {
-          await requestConversationAnalyticsRefresh(
-            ctx,
-            ingestResult.conversationId,
-          );
+          await markConversationAnalyticsDirty(ctx, {
+            conversationId: ingestResult.conversationId,
+            earliestDirtyMessageAt: sentAt,
+          });
           await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
             conversationId: ingestResult.conversationId,
             direction: "outgoing",

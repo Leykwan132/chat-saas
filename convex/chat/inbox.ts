@@ -46,7 +46,7 @@ import {
   workflowHasHumanEscalationNode,
 } from "../workflowCore";
 import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
-import { requestConversationAnalyticsRefresh } from "../analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "../analyticsDirtyRequest";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -233,7 +233,10 @@ export const internalPersistHumanReply = internalMutation({
       patch.escalation = undefined;
     }
     await ctx.db.patch(conv._id, patch);
-    await requestConversationAnalyticsRefresh(ctx, conv._id);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: conv._id,
+      earliestDirtyMessageAt: now,
+    });
     if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
@@ -318,7 +321,10 @@ export const internalPersistAiReply = internalMutation({
       patch.lastMessagePreview = preview;
     }
     await ctx.db.patch(conv._id, patch);
-    await requestConversationAnalyticsRefresh(ctx, conv._id);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: conv._id,
+      earliestDirtyMessageAt: now,
+    });
     await handleWorkflowFollowUpOutbound(ctx, messageId);
 
     return replyPersistResult(
@@ -401,7 +407,10 @@ export const internalPersistAiMediaReply = internalMutation({
       unreadCount: 0,
       updatedAt: now,
     });
-    await requestConversationAnalyticsRefresh(ctx, conv._id);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: conv._id,
+      earliestDirtyMessageAt: now,
+    });
     if (latestMessageId) await handleWorkflowFollowUpOutbound(ctx, latestMessageId);
 
     return replyPersistResult(
@@ -454,7 +463,9 @@ export const internalEscalateConversation = internalMutation({
         question: args.question,
       },
     });
-    await requestConversationAnalyticsRefresh(ctx, args.conversationId);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: args.conversationId,
+    });
   },
 });
 

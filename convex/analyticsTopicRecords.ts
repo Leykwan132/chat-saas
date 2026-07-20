@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery, type MutationCtx } from "./_generated/server";
-import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 
 const TOPIC_CONTEXT_MESSAGE_LIMIT = 80;
 const MAX_TOPICS_PER_CONVERSATION = 5;
@@ -244,7 +244,7 @@ export const assignConversationTopic = internalMutation({
       }
     }
 
-    await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
+    await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
 

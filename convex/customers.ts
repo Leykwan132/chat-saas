@@ -7,11 +7,11 @@ import {
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
-import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
 import { logConversationEvent } from "./conversationLogs";
 import { customerSearchText } from "./customerSearch";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 
 const customerServiceValidator = v.union(
   v.literal("whatsapp"),
@@ -568,9 +568,12 @@ export const update = mutation({
           },
         });
       }
-      await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-        conversationId,
-      });
+      if (
+        args.leadTemperature !== undefined &&
+        args.leadTemperature !== customer.leadTemperature
+      ) {
+        await markConversationAnalyticsDirty(ctx, { conversationId });
+      }
     }
   },
 });
@@ -815,9 +818,11 @@ export const internalSetLeadTemperature = internalMutation({
           },
         });
       }
-      await ctx.runMutation(internal.analytics.syncConversationAnalytics, {
-        conversationId: customer.lastConversationId,
-      });
+      if (customer.leadTemperature !== args.temperature) {
+        await markConversationAnalyticsDirty(ctx, {
+          conversationId: customer.lastConversationId,
+        });
+      }
     }
   },
 });

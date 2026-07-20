@@ -576,6 +576,10 @@ export const syncHistoryIngestThreads = internalAction({
       );
       if (work === null) break;
 
+      const dirtyMessageAtByConversation = new Map<
+        Id<"conversations">,
+        number
+      >();
       try {
         for (const message of work.messages) {
           const result = await ctx.runMutation(
@@ -593,14 +597,29 @@ export const syncHistoryIngestThreads = internalAction({
               outboundStatus: message.outboundStatus,
             },
           );
+          const currentEarliest = dirtyMessageAtByConversation.get(
+            result.conversationId,
+          );
+          dirtyMessageAtByConversation.set(
+            result.conversationId,
+            currentEarliest === undefined
+              ? message.timestampMs
+              : Math.min(currentEarliest, message.timestampMs),
+          );
           if (!result.skipped) {
-            await ctx.runMutation(internal.analyticsRefreshRequest.request, {
-              conversationId: result.conversationId,
-            });
             touchedConversations.add(result.conversationId);
           }
         }
 
+        for (const [
+          conversationId,
+          earliestDirtyMessageAt,
+        ] of dirtyMessageAtByConversation) {
+          await ctx.runMutation(internal.analyticsDirtyRequest.request, {
+            conversationId,
+            earliestDirtyMessageAt,
+          });
+        }
         await ctx.runMutation(internal.whatsappSync.internalCompleteIngestContact, {
           channelId: args.channelId,
           whatsappThreadId: nextContact,

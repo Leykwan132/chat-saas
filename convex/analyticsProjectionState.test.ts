@@ -9,7 +9,7 @@ import {
   loadOrCreateProjectionState,
   replaceProjectionState,
 } from "./analyticsProjectionState";
-import { analyticsProjectionTest } from "./analyticsProjectionTestUtils";
+import { analyticsProjectionTest } from "./analyticsProjection.testUtils";
 
 function emptyProjectionState(
   conversationId: Id<"conversations">,

@@ -27,7 +27,7 @@ import {
   webWidgetLayoutValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
-import { requestConversationAnalyticsRefresh } from "./analyticsRefreshRequest";
+import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
 
 type ReceiveWidgetMessageArgs = {
@@ -174,6 +174,7 @@ async function receiveWidgetMessage(
   if (!trimmed) {
     throw new Error("Message is required");
   }
+  const receivedAt = Date.now();
   const result = await ingestChannelMessage(ctx, {
     channelId: settings.channelId,
     contactAddress: args.visitorId,
@@ -181,12 +182,15 @@ async function receiveWidgetMessage(
     direction: "incoming",
     content: trimmed,
     contentType: "text",
-    timestampMs: Date.now(),
+    timestampMs: receivedAt,
     assignedAgentId: settings.agentId,
   });
 
   if (!result.skipped) {
-    await requestConversationAnalyticsRefresh(ctx, result.conversationId);
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: result.conversationId,
+      earliestDirtyMessageAt: receivedAt,
+    });
     await cancelOrScheduleWorkflowFollowUpForMessages(ctx, {
       conversationId: result.conversationId,
       direction: "incoming",

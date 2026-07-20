@@ -28,6 +28,13 @@ crons.interval(
   {},
 );
 
+crons.interval(
+  "dispatch dirty conversation analytics",
+  { minutes: 15 },
+  internal.analyticsDirtyDispatcher.dispatchDue,
+  {},
+);
+
 crons.daily(
   "combined advanced analytics",
   advancedAnalyticsCronSchedule,
