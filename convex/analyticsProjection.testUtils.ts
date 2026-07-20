@@ -131,7 +131,7 @@ export async function createProjectionFixture(
         .withIndex("by_sourceConversationId", (query) =>
           query.eq("sourceConversationId", ids.conversationId),
         )
-        .take(100);
+        .take(500);
       return metric === undefined
         ? rows
         : rows.filter((row) => row.metric === metric);

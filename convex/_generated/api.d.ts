@@ -42,6 +42,8 @@ import type * as analyticsInsightsPool from "../analyticsInsightsPool.js";
 import type * as analyticsMessageProjection from "../analyticsMessageProjection.js";
 import type * as analyticsMetricContributions from "../analyticsMetricContributions.js";
 import type * as analyticsMetricModel from "../analyticsMetricModel.js";
+import type * as analyticsProjectionMigration from "../analyticsProjectionMigration.js";
+import type * as analyticsProjectionRepair from "../analyticsProjectionRepair.js";
 import type * as analyticsProjectionState from "../analyticsProjectionState.js";
 import type * as analyticsProjectionStateModel from "../analyticsProjectionStateModel.js";
 import type * as analyticsProjectionWorker from "../analyticsProjectionWorker.js";
@@ -305,6 +307,8 @@ declare const fullApi: ApiFromModules<{
   analyticsMessageProjection: typeof analyticsMessageProjection;
   analyticsMetricContributions: typeof analyticsMetricContributions;
   analyticsMetricModel: typeof analyticsMetricModel;
+  analyticsProjectionMigration: typeof analyticsProjectionMigration;
+  analyticsProjectionRepair: typeof analyticsProjectionRepair;
   analyticsProjectionState: typeof analyticsProjectionState;
   analyticsProjectionStateModel: typeof analyticsProjectionStateModel;
   analyticsProjectionWorker: typeof analyticsProjectionWorker;
