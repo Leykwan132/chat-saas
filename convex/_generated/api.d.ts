@@ -34,6 +34,7 @@ import type * as analyticsInsightRecords from "../analyticsInsightRecords.js";
 import type * as analyticsInsights from "../analyticsInsights.js";
 import type * as analyticsInsightsContract from "../analyticsInsightsContract.js";
 import type * as analyticsInsightsPool from "../analyticsInsightsPool.js";
+import type * as analyticsMetricModel from "../analyticsMetricModel.js";
 import type * as analyticsRefreshRequest from "../analyticsRefreshRequest.js";
 import type * as analyticsRefreshWorker from "../analyticsRefreshWorker.js";
 import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
@@ -285,6 +286,7 @@ declare const fullApi: ApiFromModules<{
   analyticsInsights: typeof analyticsInsights;
   analyticsInsightsContract: typeof analyticsInsightsContract;
   analyticsInsightsPool: typeof analyticsInsightsPool;
+  analyticsMetricModel: typeof analyticsMetricModel;
   analyticsRefreshRequest: typeof analyticsRefreshRequest;
   analyticsRefreshWorker: typeof analyticsRefreshWorker;
   analyticsTopicRecords: typeof analyticsTopicRecords;

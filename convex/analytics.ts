@@ -13,6 +13,15 @@ import {
   CUSTOMER_SENTIMENTS,
   type CustomerSentiment,
 } from "../shared/customerSentiment";
+import {
+  channelAnalyticsNamespace,
+  memberAnalyticsNamespace,
+  serviceAnalyticsNamespace,
+  teamAnalyticsNamespace,
+  topicAnalyticsNamespace,
+  type AnalyticsMetric,
+  type ConversationService,
+} from "./analyticsMetricModel";
 
 const CHANNEL_SERVICES: ConversationService[] = ["whatsapp", "instagram", "messenger", "web"];
 
@@ -23,10 +32,9 @@ const rangeValidator = v.union(
   v.literal("all"),
 );
 
-type AnalyticsMetric = Doc<"analyticsMetricEntries">["metric"];
-type ConversationService = Doc<"conversations">["service"];
 type RangeKey = "7d" | "30d" | "90d" | "all";
 
+const DASHBOARD_ANALYTICS_VERSION = "v1" as const;
 const CONVERTED_TAG = "converted";
 const TOPIC_RANGE_LIMIT = 250;
 const MESSAGE_ANALYTICS_LIMIT = 500;
@@ -117,23 +125,42 @@ function hasConvertedTag(tags: string[] | undefined) {
 }
 
 function teamNamespace(orgId: string, metric: AnalyticsMetric) {
-  return `team:${orgId}:metric:${metric}`;
+  return teamAnalyticsNamespace(DASHBOARD_ANALYTICS_VERSION, orgId, metric);
 }
 
 function memberNamespace(orgId: string, memberUserId: string, metric: AnalyticsMetric) {
-  return `member:${orgId}:${memberUserId}:metric:${metric}`;
+  return memberAnalyticsNamespace(
+    DASHBOARD_ANALYTICS_VERSION,
+    orgId,
+    memberUserId,
+    metric,
+  );
 }
 
 function serviceNamespace(orgId: string, service: ConversationService, metric: AnalyticsMetric) {
-  return `channel:${orgId}:service:${service}:metric:${metric}`;
+  return serviceAnalyticsNamespace(
+    DASHBOARD_ANALYTICS_VERSION,
+    orgId,
+    service,
+    metric,
+  );
 }
 
 function channelNamespace(orgId: string, channelId: Id<"channels">, metric: AnalyticsMetric) {
-  return `channel:${orgId}:id:${channelId}:metric:${metric}`;
+  return channelAnalyticsNamespace(
+    DASHBOARD_ANALYTICS_VERSION,
+    orgId,
+    channelId,
+    metric,
+  );
 }
 
 function topicNamespace(orgId: string, topicId: Id<"conversationTopics">) {
-  return `topic:${orgId}:${topicId}:metric:topicMentionCount`;
+  return topicAnalyticsNamespace(
+    DASHBOARD_ANALYTICS_VERSION,
+    orgId,
+    topicId,
+  );
 }
 
 function rangeStart(range: RangeKey, now = Date.now()) {

@@ -1001,6 +1001,27 @@ export default defineSchema({
     revision: v.number(),
     requestedAt: v.number(),
   }).index("by_conversationId", ["conversationId"]),
+  conversationAnalyticsDirtyRequests: defineTable({
+    conversationId: v.id("conversations"),
+    revision: v.number(),
+    requestedAt: v.number(),
+    nextAttemptAt: v.number(),
+    earliestDirtyMessageAt: v.optional(v.number()),
+  })
+    .index("by_conversationId", ["conversationId"])
+    .index("by_nextAttemptAt", ["nextAttemptAt"]),
+  conversationAnalyticsProjectionStates: defineTable({
+    conversationId: v.id("conversations"),
+    firstCustomerMessageAt: v.optional(v.number()),
+    firstOutgoingAt: v.optional(v.number()),
+    firstHumanOutgoingAt: v.optional(v.number()),
+    firstHumanMessageId: v.optional(v.id("messages")),
+    firstHumanMemberUserId: v.optional(v.string()),
+    convertedAt: v.optional(v.number()),
+    droppedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  }).index("by_conversationId", ["conversationId"]),
   analyticsMetricEntries: defineTable({
     namespace: v.string(),
     sortKey: v.number(),
@@ -1019,6 +1040,11 @@ export default defineSchema({
   })
     .index("by_sourceKey", ["sourceKey"])
     .index("by_sourceConversationId", ["sourceConversationId"])
+    .index("by_sourceConversationId_and_metric_and_sourceKey", [
+      "sourceConversationId",
+      "metric",
+      "sourceKey",
+    ])
     .index("by_orgId_and_metric_and_sortKey", ["orgId", "metric", "sortKey"]),
   conversationTopics: defineTable({
     orgId: v.string(),
