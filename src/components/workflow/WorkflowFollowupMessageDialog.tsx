@@ -72,6 +72,7 @@ export function WorkflowFollowupMessageDialog({
 }) {
   const { agentId } = useParams();
   const {
+    dataMode,
     followupAttemptTemplates,
     followupMessageStrategy,
     followupSameTemplate,
@@ -97,7 +98,7 @@ export function WorkflowFollowupMessageDialog({
   const [pendingAttemptTemplates, setPendingAttemptTemplates] =
     useState([...followupAttemptTemplates]);
   const confirmedConfigurationRef = useRef(false);
-  const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates();
+  const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates(dataMode);
   const attempts = Array.from({ length: maxAttemptsCount }, (_, index) => index);
   const boundedActiveAttemptIndex = Math.min(activeAttemptIndex, maxAttemptsCount - 1);
   const selectedTemplate = pendingMessageStrategy === 'same'

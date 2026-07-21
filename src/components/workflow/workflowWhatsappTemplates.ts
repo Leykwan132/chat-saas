@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { WorkflowWhatsappTemplateExample } from '../../../shared/workflowAutomations';
+import type { WorkflowCanvasDataMode } from './workflowAutomationContext';
 
 type WorkflowWhatsappTemplateButton = {
   type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
@@ -88,8 +89,11 @@ export function toWorkflowFollowupTemplateSelection(
   };
 }
 
-export function useWorkflowWhatsappTemplates() {
-  const channels = useQuery(api.channels.listForCurrentOrg, {});
+export function useWorkflowWhatsappTemplates(dataMode: WorkflowCanvasDataMode) {
+  const channels = useQuery(
+    api.channels.listForCurrentOrg,
+    dataMode === 'authenticated' ? {} : 'skip',
+  );
 
   const whatsappChannels = useMemo(() => {
     if (!channels) return [];
@@ -116,7 +120,9 @@ export function useWorkflowWhatsappTemplates() {
   return {
     approvedTemplates,
     templatesLoading:
-      channels === undefined || (Boolean(channelId) && templatesQuery === undefined),
+      dataMode === 'authenticated' && (
+        channels === undefined || (Boolean(channelId) && templatesQuery === undefined)
+      ),
     whatsappChannelCount: whatsappChannels.length,
   };
 }

@@ -20,10 +20,10 @@ import {
 export function WorkflowReminderMessageDialog() {
   const { agentId } = useParams();
   const [templateSearchQuery, setTemplateSearchQuery] = useState('');
-  const { reminderTemplate, setReminderTemplate } = useWorkflowAutomationState();
+  const { dataMode, reminderTemplate, setReminderTemplate } = useWorkflowAutomationState();
   const [pendingTemplate, setPendingTemplate] = useState(reminderTemplate);
   const confirmedSelectionRef = useRef(false);
-  const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates();
+  const { approvedTemplates, templatesLoading } = useWorkflowWhatsappTemplates(dataMode);
   const createTemplateHref = agentId ? `/dashboard/${agentId}/templates/new` : undefined;
   const confirmTemplate = () => {
     if (!pendingTemplate) return;

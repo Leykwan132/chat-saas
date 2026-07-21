@@ -35,3 +35,18 @@ test('landing uses local data while dashboard uses authenticated data', () => {
   expect(landingSource).toContain('dataMode="local"');
   expect(dashboardSource).toContain('dataMode="authenticated"');
 });
+
+test('local workflow template consumers skip organization-scoped queries', () => {
+  const templatesSource = readWorkflowSource('./workflowWhatsappTemplates.ts');
+  const reminderSource = readWorkflowSource('./WorkflowReminderMessageDialog.tsx');
+  const followupSource = readWorkflowSource('./WorkflowFollowupMessageDialog.tsx');
+
+  expect(templatesSource).toContain(
+    "dataMode === 'authenticated' ? {} : 'skip'",
+  );
+  expect(templatesSource).toContain(
+    "dataMode === 'authenticated' && (",
+  );
+  expect(reminderSource).toContain('useWorkflowWhatsappTemplates(dataMode)');
+  expect(followupSource).toContain('useWorkflowWhatsappTemplates(dataMode)');
+});
