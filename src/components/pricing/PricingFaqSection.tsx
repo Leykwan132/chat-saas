@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { pricingFaqs } from '@/content/pricingFaqs';
 import { cn } from '@/lib/utils';
+import { pricingSectionHeadingClass } from './pricingStyles';
 
 export function PricingFaqSection() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   return (
     <section id="faq" className="scroll-mt-28 pt-8">
-      <h2 className="font-title text-[38px] sm:text-4xl font-normal text-zinc-950 dark:text-white mb-10 text-center">
+      <h2
+        className={cn(
+          pricingSectionHeadingClass,
+          'mb-10 text-center text-zinc-950 dark:text-white',
+        )}
+      >
         FAQ
       </h2>
       <div className="max-w-2xl mx-auto border-t border-zinc-200 dark:border-white/[0.08]">

@@ -8,6 +8,7 @@ import { renderPricingComparisonRowLabel } from './pricingFeatureHover';
 import {
   pricingFeatureGroupTitleClass,
   pricingSectionBorderClass,
+  pricingSectionHeadingClass,
   pricingTableShellClass,
 } from './pricingStyles';
 import {
@@ -105,7 +106,7 @@ export function PlanComparisonTable({
 
   return (
     <section id={id} className={cn('w-full', className)}>
-      <h2 className="mb-10 text-center text-4xl font-normal tracking-tight text-foreground sm:text-5xl font-title">
+      <h2 className={cn(pricingSectionHeadingClass, 'mb-10 text-center text-foreground')}>
         Compare plans
       </h2>
 

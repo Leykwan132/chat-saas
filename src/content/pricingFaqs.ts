@@ -12,7 +12,7 @@ export const pricingFaqs: PricingFaq[] = [
   {
     question: 'What happens if I use up my credits?',
     answer:
-      'AI usage pauses once your monthly credits are used up. You can wait for the next billing cycle, buy extra credits, or upgrade to a plan with a larger monthly allowance.',
+      'We offer credit top-ups whenever you need extra usage. If your monthly credits run out, AI usage pauses until you top up, wait for the next billing cycle, or upgrade to a plan with a larger monthly allowance.',
   },
   {
     question: 'Do I get agentic follow-up / booking in the Free plan?',

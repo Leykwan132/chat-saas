@@ -7,6 +7,8 @@ export type PlanPickerCompactSpacing = 'default' | 'roomy';
 export const pricingTableShellClass =
   'overflow-hidden rounded-xl border border-border/70 bg-card shadow-none';
 
+export const pricingSectionHeadingClass = 'font-title text-[38px] font-normal';
+
 export function pricingColumnClass(isEnterprise?: boolean) {
   return cn(
     'flex min-w-0 flex-col',
