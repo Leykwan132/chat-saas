@@ -8,16 +8,19 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import {
   WorkflowAutomationStateContext,
   type WorkflowAutomationStateContextValue,
+  type WorkflowCanvasDataMode,
 } from './workflowAutomationContext';
 
 export function WorkflowAutomationStateProvider({
   children,
   configs,
+  dataMode,
   agentId,
   onChange,
 }: {
   children: ReactNode;
   configs: WorkflowAutomationConfigs;
+  dataMode: WorkflowCanvasDataMode;
   agentId?: Id<'agents'>;
   onChange: (configs: WorkflowAutomationConfigs) => void;
 }) {
@@ -32,6 +35,7 @@ export function WorkflowAutomationStateProvider({
     });
     return ({
     configs,
+    dataMode,
     agentId,
     selections: {
       reminders: configs.reminder.selections,
@@ -76,7 +80,7 @@ export function WorkflowAutomationStateProvider({
       updateFollowUp({ attemptTemplates });
     },
     });
-  }, [agentId, configs, onChange]);
+  }, [agentId, configs, dataMode, onChange]);
 
   return (
     <WorkflowAutomationStateContext.Provider value={value}>

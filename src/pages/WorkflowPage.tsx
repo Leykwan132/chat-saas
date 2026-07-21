@@ -185,6 +185,7 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         arrangeLoading={messageActions.isGraphMutating}
         automations={automationDraft.automations}
         onAutomationsChange={automationDraft.update}
+        dataMode="authenticated"
         agentId={agentId}
       />
       <WorkflowTemplatePreviewDialog

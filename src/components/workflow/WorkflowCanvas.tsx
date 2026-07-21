@@ -15,6 +15,7 @@ import { WorkflowBackground } from './WorkflowBackground';
 import { WorkflowToolbar } from './WorkflowToolbar';
 import { WorkflowDraftActions } from './WorkflowDraftActions';
 import { WorkflowAutomationStateProvider } from './workflowAutomationState';
+import type { WorkflowCanvasDataMode } from './workflowAutomationContext';
 import { workflowCanvasEdgeTypes, workflowCanvasNodeTypes } from './workflowCanvasConfig';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
 import type { WorkflowLayoutOrientation } from './workflowLayout';
@@ -60,6 +61,7 @@ type WorkflowCanvasProps = {
   showTemplates?: boolean;
   automations: WorkflowAutomationConfigs;
   onAutomationsChange: (automations: WorkflowAutomationConfigs) => void;
+  dataMode: WorkflowCanvasDataMode;
   agentId?: Id<'agents'>;
 };
 
@@ -255,6 +257,7 @@ export function WorkflowCanvas(props: WorkflowCanvasProps) {
       <ReactFlowProvider>
         <WorkflowAutomationStateProvider
           configs={props.automations}
+          dataMode={props.dataMode}
           agentId={props.agentId}
           onChange={props.onAutomationsChange}
         >

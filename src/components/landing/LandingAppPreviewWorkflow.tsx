@@ -133,6 +133,7 @@ export function LandingAppPreviewWorkflow({
         showTemplates={false}
         automations={graph.automations}
         onAutomationsChange={() => undefined}
+        dataMode="local"
       />
       <WorkflowInspector
         node={selectedNode}

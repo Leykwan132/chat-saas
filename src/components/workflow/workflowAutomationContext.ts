@@ -12,9 +12,11 @@ import type { WorkflowAutomationStepKey } from './workflowTriggerOptions';
 import type { WorkflowFollowupTemplateSelection } from './workflowWhatsappTemplates';
 
 export type WorkflowFollowupMessageStrategy = 'same' | 'different';
+export type WorkflowCanvasDataMode = 'authenticated' | 'local';
 
 export type WorkflowAutomationStateContextValue = {
   configs: WorkflowAutomationConfigs;
+  dataMode: WorkflowCanvasDataMode;
   agentId?: Id<'agents'>;
   selections: Record<WorkflowAutomationNodeKind, Record<string, string>>;
   reminderCustomTimingOptions: WorkflowReminderCustomTimingOption[];
