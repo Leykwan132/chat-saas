@@ -11,11 +11,13 @@ import {
 import { workflowAddOptions } from './workflowCatalog';
 
 type WorkflowAddNodeMenuProps = {
+  compact?: boolean;
   disabled?: boolean;
   onSelect: (kind: AddableWorkflowNodeKind) => void;
 };
 
 export function WorkflowAddNodeMenu({
+  compact = false,
   disabled = false,
   onSelect,
 }: WorkflowAddNodeMenuProps) {
@@ -25,7 +27,7 @@ export function WorkflowAddNodeMenu({
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size={compact ? 'icon-sm' : 'icon'}
           disabled={disabled}
           className="cursor-pointer rounded-xl border-black bg-black text-white hover:bg-black hover:text-white active:bg-black active:text-white aria-expanded:bg-black aria-expanded:text-white focus-visible:border-black focus-visible:ring-0"
           aria-label="Add workflow node"
