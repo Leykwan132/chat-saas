@@ -14,12 +14,14 @@ export type WorkflowGraph = {
 };
 
 export type WorkflowLayoutOrientation = 'horizontal' | 'vertical';
+export type WorkflowNodeDensity = 'standard' | 'compact';
 
 export type WorkflowNodeData = Record<string, unknown> & {
   nodeId: Id<'workflowNodes'>;
   kind: WorkflowNodeKind;
   title: string;
   description?: string;
+  density?: WorkflowNodeDensity;
   layoutOrientation: WorkflowLayoutOrientation;
   disabled: boolean;
   onAddNode: (nodeId: Id<'workflowNodes'>, kind: AddableWorkflowNodeKind) => void;

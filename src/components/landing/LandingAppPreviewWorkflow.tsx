@@ -94,6 +94,8 @@ export function LandingAppPreviewWorkflow({
       handleRemoveNode,
       selectedNodeId,
       layoutOrientation,
+      false,
+      'compact',
     ),
     [graph, handleAddNode, handleRemoveNode, layoutOrientation, selectedNodeId],
   );

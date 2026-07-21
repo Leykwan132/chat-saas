@@ -130,6 +130,33 @@ test('workflowGraphToFlow disables direct node controls while mutating', () => {
   ).toBe(true);
 });
 
+test('workflowGraphToFlow defaults persisted nodes to standard density', () => {
+  const flow = workflowGraphToFlow(workflowGraph(), () => {}, () => {});
+  const persistedNodes = flow.nodes.filter((node) => node.type === 'workflow');
+
+  expect(persistedNodes.every((node) => node.data.density === 'standard')).toBe(true);
+});
+
+test('workflowGraphToFlow propagates compact density to persisted nodes only', () => {
+  const flow = workflowGraphToFlow(
+    workflowGraph(),
+    () => {},
+    () => {},
+    undefined,
+    'vertical',
+    false,
+    'compact',
+  );
+  const persistedNodes = flow.nodes.filter((node) => node.type === 'workflow');
+
+  expect(persistedNodes.every((node) => node.data.density === 'compact')).toBe(true);
+  expect(
+    flow.nodes
+      .filter((node) => node.type !== 'workflow')
+      .every((node) => !('density' in node.data)),
+  ).toBe(true);
+});
+
 test('workflowGraphToFlow uses orientation-specific handles for persisted workflow nodes', () => {
   const horizontalFlow = workflowGraphToFlow(
     workflowGraph(),

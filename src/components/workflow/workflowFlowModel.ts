@@ -13,6 +13,7 @@ import {
   type WorkflowFlowNode,
   type WorkflowGraph,
   type WorkflowLayoutOrientation,
+  type WorkflowNodeDensity,
   type WorkflowReminderSetupFlowNode,
   type WorkflowReminderSummaryFlowNode,
 } from './workflowTypes';
@@ -160,6 +161,7 @@ export function workflowGraphToFlow(
   selectedNodeId?: Id<'workflowNodes'>,
   layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
   disabled = false,
+  nodeDensity: WorkflowNodeDensity = 'standard',
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
   const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
@@ -179,6 +181,7 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          density: nodeDensity,
           layoutOrientation,
           disabled,
           onAddNode,

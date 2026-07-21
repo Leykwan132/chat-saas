@@ -10,6 +10,10 @@ test('landing workflow preview passes layout orientation into workflow flow node
   expect(source).toContain('layoutOrientation');
 });
 
+test('landing workflow preview requests compact persisted nodes', () => {
+  expect(source).toContain("'compact',");
+});
+
 test('landing workflow preview starts with vertical handles for its top-down sample graph', () => {
   expect(source).toContain("useState<WorkflowLayoutOrientation>('vertical')");
 });
