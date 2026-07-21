@@ -4,6 +4,10 @@ import { expect, test } from 'vitest';
 
 const sourcePath = fileURLToPath(new URL('./WorkflowNode.tsx', import.meta.url));
 const source = readFileSync(sourcePath, 'utf8');
+const addMenuSource = readFileSync(
+  fileURLToPath(new URL('./WorkflowAddNodeMenu.tsx', import.meta.url)),
+  'utf8',
+);
 
 test('workflow node handles switch between vertical and horizontal anchors', () => {
   expect(source).toContain('data.layoutOrientation');
@@ -42,4 +46,9 @@ test('workflow node standard density keeps the existing production classes', () 
   expect(source).toContain("'gap-2.5 text-base'");
   expect(source).toContain("'size-8 rounded-lg'");
   expect(source).toContain("'text-xs leading-relaxed'");
+});
+
+test('workflow add control applies the compact button size and radius together', () => {
+  expect(addMenuSource).toContain("size={compact ? 'icon-sm' : 'icon'}");
+  expect(addMenuSource).toContain("compact ? 'rounded-lg' : 'rounded-xl'");
 });
