@@ -6,6 +6,7 @@ import { internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { openRouterModel } from "./llm/openRouter";
 import { DEFAULT_OPENROUTER_MODEL } from "./llm/modelPricing";
+import { AI_GENERATION_MAX_RETRIES } from "./llm/retryPolicy";
 import { captureAIGeneration } from "./posthog";
 import {
   analyticsInsightsSchema,
@@ -61,6 +62,7 @@ export const processConversation = internalAction({
         schema: analyticsInsightsSchema,
         system: buildAnalyticsInsightsSystemPrompt(context.existingTopics),
         prompt: buildAnalyticsInsightsPrompt(context.transcript),
+        maxRetries: AI_GENERATION_MAX_RETRIES,
       });
       await captureAIGeneration({
         distinctId: args.assignedUserId ?? args.conversationId,

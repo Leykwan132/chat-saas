@@ -12,6 +12,7 @@ import {
 } from "@convex-dev/agent";
 import type { ToolSet } from "ai";
 import { resolveLanguageModel } from "../llm/languageModel";
+import { AI_GENERATION_MAX_RETRIES } from "../llm/retryPolicy";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import {
@@ -845,6 +846,7 @@ ${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
   return new Agent(components.agent, {
     name: agent.name,
     languageModel: resolvedModel.languageModel,
+    callSettings: { maxRetries: AI_GENERATION_MAX_RETRIES },
     instructions,
     stopWhen: stepCountIs(8),
     tools,

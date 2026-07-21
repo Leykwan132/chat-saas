@@ -10,6 +10,7 @@ import { metaIndicatorPool, metaReactionPool } from "../inboxPools";
 import { generateText } from "ai";
 import { resolveLanguageModel } from "../llm/languageModel";
 import { DEFAULT_OPENROUTER_MODEL } from "../llm/modelPricing";
+import { AI_GENERATION_MAX_RETRIES } from "../llm/retryPolicy";
 import { checkAiFeature } from "../plans";
 import type { Doc } from "../_generated/dataModel";
 import {
@@ -758,6 +759,7 @@ You MUST respond with ONLY a JSON object in this exact format, no other text:
         model: resolvedModel.languageModel,
         prompt,
         system: systemPrompt,
+        maxRetries: AI_GENERATION_MAX_RETRIES,
       });
       await captureAIGeneration({
         distinctId: conv.assignedUserId ?? 'anonymous',
@@ -836,6 +838,7 @@ Make it highly customer-centric and readable at a single glance.`;
         model: resolvedModel.languageModel,
         prompt,
         system: systemPrompt,
+        maxRetries: AI_GENERATION_MAX_RETRIES,
       });
       await captureAIGeneration({
         distinctId: conv.assignedUserId ?? 'anonymous',

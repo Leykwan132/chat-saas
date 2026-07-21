@@ -156,6 +156,7 @@ import type * as llm_languageModel from "../llm/languageModel.js";
 import type * as llm_modelCost from "../llm/modelCost.js";
 import type * as llm_modelPricing from "../llm/modelPricing.js";
 import type * as llm_openRouter from "../llm/openRouter.js";
+import type * as llm_retryPolicy from "../llm/retryPolicy.js";
 import type * as media_attachments from "../media/attachments.js";
 import type * as media_publicUrls from "../media/publicUrls.js";
 import type * as media_r2 from "../media/r2.js";
@@ -422,6 +423,7 @@ declare const fullApi: ApiFromModules<{
   "llm/modelCost": typeof llm_modelCost;
   "llm/modelPricing": typeof llm_modelPricing;
   "llm/openRouter": typeof llm_openRouter;
+  "llm/retryPolicy": typeof llm_retryPolicy;
   "media/attachments": typeof media_attachments;
   "media/publicUrls": typeof media_publicUrls;
   "media/r2": typeof media_r2;
