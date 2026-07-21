@@ -36,7 +36,7 @@ export function WorkflowAutomationStateProvider({
     return ({
     configs,
     dataMode,
-    agentId,
+    agentId: dataMode === 'authenticated' ? agentId : undefined,
     selections: {
       reminders: configs.reminder.selections,
       followups: configs.followUp.selections,

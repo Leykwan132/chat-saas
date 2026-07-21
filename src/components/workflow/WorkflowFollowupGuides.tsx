@@ -7,6 +7,7 @@ import {
 } from '@/components/WhatsAppFeatureOverviewDialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../../shared/permissions';
+import { useWorkflowAutomationState } from './workflowAutomationContext';
 import { WorkflowFollowupCostCalculatorDialog } from './WorkflowFollowupCostCalculatorDialog';
 import type { WorkflowFollowupGuidesFlowNode } from './workflowTypes';
 
@@ -72,12 +73,13 @@ function BookCard({ tag, title, onClick, isDark }: BookCardProps) {
   );
 }
 
-export function WorkflowFollowupGuidesNode(
-  _props: NodeProps<WorkflowFollowupGuidesFlowNode>,
-) {
-  const { agentId } = useParams();
-  const { can } = usePermissions();
-  const canManage = can(Permission.FOLLOWUPS_MANAGE);
+function WorkflowFollowupGuidesContent({
+  agentId,
+  canManage,
+}: {
+  agentId?: string;
+  canManage: boolean;
+}) {
   const [walkthroughStep, setWalkthroughStep] = useState(0);
   const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
@@ -121,4 +123,28 @@ export function WorkflowFollowupGuidesNode(
       />
     </>
   );
+}
+
+function AuthenticatedWorkflowFollowupGuides({ agentId }: { agentId?: string }) {
+  const { can } = usePermissions();
+
+  return (
+    <WorkflowFollowupGuidesContent
+      agentId={agentId}
+      canManage={can(Permission.FOLLOWUPS_MANAGE)}
+    />
+  );
+}
+
+export function WorkflowFollowupGuidesNode(
+  _props: NodeProps<WorkflowFollowupGuidesFlowNode>,
+) {
+  const { agentId } = useParams();
+  const { dataMode } = useWorkflowAutomationState();
+
+  if (dataMode === 'local') {
+    return <WorkflowFollowupGuidesContent canManage={false} />;
+  }
+
+  return <AuthenticatedWorkflowFollowupGuides agentId={agentId} />;
 }

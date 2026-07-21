@@ -50,3 +50,29 @@ test('local workflow template consumers skip organization-scoped queries', () =>
   expect(reminderSource).toContain('useWorkflowWhatsappTemplates(dataMode)');
   expect(followupSource).toContain('useWorkflowWhatsappTemplates(dataMode)');
 });
+
+test('local workflow state strips agent identity from descendants', () => {
+  const stateSource = readWorkflowSource('./workflowAutomationState.tsx');
+
+  expect(stateSource).toContain(
+    "agentId: dataMode === 'authenticated' ? agentId : undefined,",
+  );
+});
+
+test('local follow-up guides do not mount permission checks', () => {
+  const guidesSource = readWorkflowSource('./WorkflowFollowupGuides.tsx');
+
+  expect(guidesSource).toContain('function AuthenticatedWorkflowFollowupGuides(');
+  expect(guidesSource).toContain('const { can } = usePermissions();');
+  expect(guidesSource).toContain("if (dataMode === 'local') {");
+  expect(guidesSource).toContain('canManage={false}');
+  expect(guidesSource).toContain('<AuthenticatedWorkflowFollowupGuides');
+});
+
+test('local follow-up audience skips customer queries regardless of route', () => {
+  const audienceSource = readWorkflowSource('./WorkflowFollowupAudienceField.tsx');
+
+  expect(audienceSource).toContain("dataMode === 'authenticated' && agentId");
+  expect(audienceSource).toContain("? { agentId: agentId as Id<'agents'> }");
+  expect(audienceSource).toContain(": 'skip'");
+});

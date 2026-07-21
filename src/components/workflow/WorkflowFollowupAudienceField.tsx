@@ -27,9 +27,12 @@ function getTagDotClass(tag: string) {
 
 function useWorkflowAudienceGroups(): MultiSelectGroup[] {
   const { agentId } = useParams();
+  const { dataMode } = useWorkflowAutomationState();
   const candidates = useQuery(
     api.customers.listForAgentBroadcast,
-    agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
+    dataMode === 'authenticated' && agentId
+      ? { agentId: agentId as Id<'agents'> }
+      : 'skip',
   );
 
   return useMemo(() => {
