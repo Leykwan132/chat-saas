@@ -72,6 +72,7 @@ export function WorkflowReminderMessageDialog() {
             components={pendingTemplate?.components}
             isLoading={templatesLoading}
             emptyMessage="Select a template to preview"
+            overrideHeaderMediaPreviewUrl={dataMode === 'local' ? null : undefined}
             className="w-full max-w-[360px]"
           />
         </div>

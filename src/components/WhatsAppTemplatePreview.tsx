@@ -128,10 +128,13 @@ export function WhatsAppTemplatePreview({
   const headerR2Key = headerComp?.r2Key;
   const publicMediaUrl = useQuery(
     api.media.attachments.getPublicUrl,
-    headerR2Key ? { r2Key: headerR2Key } : 'skip',
+    overrideHeaderMediaPreviewUrl === undefined && headerR2Key
+      ? { r2Key: headerR2Key }
+      : 'skip',
   );
-  const headerMediaPreviewUrl =
-    overrideHeaderMediaPreviewUrl ?? headerComp?.previewUrl ?? publicMediaUrl ?? null;
+  const headerMediaPreviewUrl = overrideHeaderMediaPreviewUrl !== undefined
+    ? overrideHeaderMediaPreviewUrl
+    : headerComp?.previewUrl ?? publicMediaUrl ?? null;
   const bodyText = overrideBodyText ?? bodyComp?.text ?? '';
   const footerText = footerComp?.text ?? '';
   const templateButtons = buttonsComp?.buttons ?? [];

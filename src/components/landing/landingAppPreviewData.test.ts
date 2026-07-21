@@ -215,7 +215,9 @@ test('landing preview workflow renders the real workflow canvas with no API call
   expect(workflowSource).not.toContain('<svg aria-hidden="true" className="absolute inset-0"');
   expect(workflowSource).not.toContain('useQuery');
   expect(workflowSource).not.toContain('useMutation');
+  expect(workflowSource).not.toContain('useAction');
   expect(workflowSource).not.toContain('api.');
+  expect(workflowSource).not.toContain('agentId=');
 });
 
 test('landing preview workflow renders as a canvas without page header copy', () => {

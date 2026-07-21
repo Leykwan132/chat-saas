@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from 'react';
-import { type NodeProps } from '@xyflow/react';
 import { useParams } from 'react-router';
 import {
   FollowUpOverviewDialog,
@@ -9,7 +8,6 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../../shared/permissions';
 import { useWorkflowAutomationState } from './workflowAutomationContext';
 import { WorkflowFollowupCostCalculatorDialog } from './WorkflowFollowupCostCalculatorDialog';
-import type { WorkflowFollowupGuidesFlowNode } from './workflowTypes';
 
 type BookCardProps = {
   tag: string;
@@ -136,9 +134,7 @@ function AuthenticatedWorkflowFollowupGuides({ agentId }: { agentId?: string }) 
   );
 }
 
-export function WorkflowFollowupGuidesNode(
-  _props: NodeProps<WorkflowFollowupGuidesFlowNode>,
-) {
+export function WorkflowFollowupGuidesNode() {
   const { agentId } = useParams();
   const { dataMode } = useWorkflowAutomationState();
 

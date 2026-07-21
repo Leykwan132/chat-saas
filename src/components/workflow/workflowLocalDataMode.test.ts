@@ -76,3 +76,25 @@ test('local follow-up audience skips customer queries regardless of route', () =
   expect(audienceSource).toContain("? { agentId: agentId as Id<'agents'> }");
   expect(audienceSource).toContain(": 'skip'");
 });
+
+test('local workflow template previews cannot request signed media URLs', () => {
+  const previewSource = readFileSync(
+    new URL('../WhatsAppTemplatePreview.tsx', import.meta.url),
+    'utf8',
+  );
+  const reminderSource = readWorkflowSource('./WorkflowReminderMessageDialog.tsx');
+  const followupSource = readWorkflowSource('./WorkflowFollowupMessageDialog.tsx');
+
+  expect(previewSource).toContain(
+    'overrideHeaderMediaPreviewUrl === undefined && headerR2Key',
+  );
+  expect(previewSource).toContain(
+    'overrideHeaderMediaPreviewUrl !== undefined',
+  );
+  expect(reminderSource).toContain(
+    "overrideHeaderMediaPreviewUrl={dataMode === 'local' ? null : undefined}",
+  );
+  expect(followupSource).toContain(
+    "overrideHeaderMediaPreviewUrl={dataMode === 'local' ? null : undefined}",
+  );
+});

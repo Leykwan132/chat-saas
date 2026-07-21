@@ -254,10 +254,11 @@ export function WorkflowFollowupMessageDialog({
             <div className="flex h-full min-h-0 w-full flex-col items-center justify-start">
               <WhatsAppTemplatePreview
                 templateName={selectedTemplate?.name}
-                components={selectedTemplate?.components}
-                isLoading={templatesLoading}
-                emptyMessage="Select a template to preview"
-                className="w-full max-w-[360px]"
+              components={selectedTemplate?.components}
+              isLoading={templatesLoading}
+              emptyMessage="Select a template to preview"
+              overrideHeaderMediaPreviewUrl={dataMode === 'local' ? null : undefined}
+              className="w-full max-w-[360px]"
               />
             </div>
           </div>
