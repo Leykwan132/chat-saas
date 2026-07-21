@@ -22,6 +22,23 @@ import { createLandingWorkflowGraph } from './landingWorkflowMockGraph';
 const readComponentSource = (fileName: string) =>
   readFileSync(new URL(`./${fileName}`, import.meta.url), 'utf8');
 
+test('landing application preview opens on workflow by default', () => {
+  const previewSource = readComponentSource('LandingAppPreview.tsx');
+
+  expect(previewSource).toContain(
+    "useState<LandingPreviewNavKey>('workflow')",
+  );
+  expect(previewSource).toContain(
+    "useState<LandingPreviewSectionId>('workflow')",
+  );
+  expect(previewSource).not.toContain(
+    "useState<LandingPreviewNavKey>('overview')",
+  );
+  expect(previewSource).not.toContain(
+    "useState<LandingPreviewSectionId>('overview')",
+  );
+});
+
 test('landing preview includes an interactive workflow section with mocked graph data', () => {
   const workflow = getLandingPreviewSection('workflow');
 

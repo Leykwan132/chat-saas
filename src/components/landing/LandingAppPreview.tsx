@@ -18,8 +18,8 @@ export function LandingAppPreview({
   hasSession: boolean;
   onSignUp: () => void;
 }) {
-  const [activeNavKey, setActiveNavKey] = useState<LandingPreviewNavKey>('overview');
-  const [activeSectionId, setActiveSectionId] = useState<LandingPreviewSectionId>('overview');
+  const [activeNavKey, setActiveNavKey] = useState<LandingPreviewNavKey>('workflow');
+  const [activeSectionId, setActiveSectionId] = useState<LandingPreviewSectionId>('workflow');
   const section = useMemo(
     () => getLandingPreviewSection(activeSectionId),
     [activeSectionId],
