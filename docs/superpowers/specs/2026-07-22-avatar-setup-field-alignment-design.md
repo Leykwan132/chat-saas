@@ -11,6 +11,7 @@ Make the Language and Voice controls in Avatar setup look like one coordinated p
 - The Voice control keeps opening the existing picker dialog with inline previews.
 - First-time setup uses the button label `Create avatar`.
 - Editing an existing configuration continues to use `Save changes`.
+- The selected-avatar summary uses a 208px-wide 16:9 preview, increased from 144px, with its label and avatar name retained beside it.
 - Loading skeletons retain the same field and action dimensions.
 
 ## Scope
@@ -21,4 +22,5 @@ This is presentation and copy only. Provider catalogs, selected values, validati
 
 - Add a source contract requiring the shared field classes on both controls.
 - Require `Create avatar` and reject `Create embed link` in setup.
+- Require the selected-avatar preview to use the 208px width contract.
 - Run focused Avatar setup tests, scoped lint, and the production build.
