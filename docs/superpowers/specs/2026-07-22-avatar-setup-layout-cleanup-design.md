@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make the Avatar creation flow visually quieter without changing its catalog, selection, preview, or embed behavior.
+Make the Avatar creation flow visually quieter while reducing avatar selection to one direct action.
 
 ## Avatar Step
 
@@ -11,13 +11,15 @@ Make the Avatar creation flow visually quieter without changing its catalog, sel
 - The progress timeline is removed.
 - The outer Card around the avatar options is removed.
 - Avatar tiles render directly beneath the description in the existing responsive grid.
-- The Continue action remains below the grid and advances to voice selection.
+- Avatar tiles do not display a selected check icon.
+- Clicking an avatar stores that choice and immediately advances to voice selection; there is no Continue action.
 
 ## Voice Step
 
 - The voice step uses the same borderless page structure.
 - Its only introductory content is `Choose your voice` and one description line explaining preview and later editing.
-- Back returns to avatar selection; the save or embed action remains unchanged.
+- Back returns to avatar selection with the previous choice retained so the owner can choose a different avatar.
+- The save or embed action remains unchanged.
 
 ## Loading and Empty States
 
@@ -34,5 +36,5 @@ Make the Avatar creation flow visually quieter without changing its catalog, sel
 
 ## Verification
 
-- A focused source contract verifies the short Back label, the absence of the progress timeline and Card wrapper, and the presence of Skeleton-based loading states.
+- A focused source contract verifies the short Back label, the absence of the progress timeline, Card wrapper, Continue action, and selected check icon, direct advancement after avatar selection, retained Back navigation, and Skeleton-based loading states.
 - Scoped lint, TypeScript/Vite build, and the existing Avatar tests must pass under Node.js 22.
