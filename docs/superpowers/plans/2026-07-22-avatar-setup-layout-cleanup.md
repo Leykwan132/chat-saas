@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the Avatar setup Card/timeline with a minimal two-view flow that advances on avatar selection and uses layout-matching skeletons.
+**Goal:** Keep the Avatar setup flow minimal while confirming the selected avatar on the voice step and grouping voice preview with the final embed action.
 
 **Architecture:** Keep the existing `AvatarCreatePage` state and provider actions. Change only its presentation and local step transition, extracting no new backend behavior and reusing the installed shadcn `Skeleton` and `Empty` components.
 
@@ -28,7 +28,7 @@
 
 - [ ] **Step 1: Write the failing source contract**
 
-Add assertions requiring `Choose your avatar`, the concise description, `Skeleton`, `AvatarGridSkeleton`, `VoiceFormSkeleton`, direct `setStep(2)` from avatar selection, and `setStep(1)` from voice Back. Assert the source omits `Back to Avatar`, `StepMarker`, Card composition, the `Check` icon, and the avatar-step `Continue` button.
+Add assertions requiring `Choose your avatar`, the concise description, `Skeleton`, `AvatarGridSkeleton`, `VoiceFormSkeleton`, direct `setStep(2)` from avatar selection, and `setStep(1)` from voice Back. Require `Back to Avatar`, a selected-avatar summary before `Choose your voice`, and the preview action before the embed action. Assert the source omits `StepMarker`, Card composition, the `Check` icon, and the avatar-step `Continue` button.
 
 - [ ] **Step 2: Run the contract and confirm RED**
 
@@ -38,7 +38,7 @@ Run:
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/AvatarEmbedPage.test.ts
 ```
 
-Expected: FAIL because the existing source still contains the Card, timeline, check icon, Continue button, spinner loading, and long Back label.
+Expected: FAIL because the selected-avatar summary and final preview action placement are missing and the Back label is outdated.
 
 ### Task 2: Implement the borderless two-view flow
 
@@ -53,9 +53,9 @@ Expected: FAIL because the existing source still contains the Card, timeline, ch
 
 Import `Skeleton`, render a compact page header skeleton before configuration resolves, render eight tile skeletons in the responsive avatar grid, and render label/control/button skeletons for the voice form.
 
-- [ ] **Step 2: Remove duplicate chrome**
+- [ ] **Step 2: Keep navigation and voice context explicit**
 
-Remove Card imports and wrappers, remove `StepMarker`, change the top navigation text to `Back`, and render exactly one heading plus one description for the current step.
+Keep Card imports and wrappers absent, keep `StepMarker` removed, use `Back to Avatar` for both views, and render a compact selected-avatar thumbnail and name above the voice heading.
 
 - [ ] **Step 3: Advance directly from avatar selection**
 
@@ -70,7 +70,11 @@ onSelect={() => {
 
 Remove the selected check icon and Continue action. Preserve the voice-step Back action as `onClick={() => setStep(1)}` so the prior selection remains in state.
 
-- [ ] **Step 4: Run focused GREEN verification**
+- [ ] **Step 4: Group the voice actions**
+
+Move voice preview out of the voice field and into the bottom-right action row immediately before the save or embed action. Keep its loading, stop, and disabled behavior unchanged.
+
+- [ ] **Step 5: Run focused GREEN verification**
 
 Run:
 

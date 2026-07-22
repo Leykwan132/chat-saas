@@ -6,7 +6,7 @@ Make the Avatar creation flow visually quieter while reducing avatar selection t
 
 ## Avatar Step
 
-- The page begins with a compact `Back` action.
+- The page begins with a compact `Back to Avatar` action that returns to the Avatar overview.
 - The only introductory content is the heading `Choose your avatar` and one description line: `Select the face visitors will see during a conversation. You can change this later.`
 - The progress timeline is removed.
 - The outer Card around the avatar options is removed.
@@ -17,9 +17,10 @@ Make the Avatar creation flow visually quieter while reducing avatar selection t
 ## Voice Step
 
 - The voice step uses the same borderless page structure.
+- A compact 16:9 thumbnail and avatar name appear directly above the voice heading without an outer container.
 - Its only introductory content is `Choose your voice` and one description line explaining preview and later editing.
-- Back returns to avatar selection with the previous choice retained so the owner can choose a different avatar.
-- The save or embed action remains unchanged.
+- `Back to Avatar` returns to avatar selection with the previous choice retained so the owner can choose a different avatar.
+- Voice preview appears in the final action row immediately before the save or embed action.
 
 ## Loading and Empty States
 
@@ -36,5 +37,5 @@ Make the Avatar creation flow visually quieter while reducing avatar selection t
 
 ## Verification
 
-- A focused source contract verifies the short Back label, the absence of the progress timeline, Card wrapper, Continue action, and selected check icon, direct advancement after avatar selection, retained Back navigation, and Skeleton-based loading states.
+- A focused source contract verifies the `Back to Avatar` label, selected-avatar summary, preview and embed action order, absence of the progress timeline, Card wrapper, Continue action, and selected check icon, direct advancement after avatar selection, retained Back navigation, and Skeleton-based loading states.
 - Scoped lint, TypeScript/Vite build, and the existing Avatar tests must pass under Node.js 22.
