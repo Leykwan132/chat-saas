@@ -2,6 +2,10 @@ const avatarEmbedBaseUrl = (
   import.meta.env.VITE_AVATAR_EMBED_BASE_URL as string | undefined
 )?.trim() || 'https://kilobot.app';
 
+function avatarEmbedSource(publicKey: string) {
+  return `${avatarEmbedBaseUrl}/avatar/embed/${encodeURIComponent(publicKey)}`;
+}
+
 export function buildProviderEmbedSnippet(embedUrl: string) {
   const source = new URL(embedUrl);
   if (source.protocol !== 'https:') throw new Error('Avatar embed URL must use HTTPS');
@@ -10,8 +14,22 @@ export function buildProviderEmbedSnippet(embedUrl: string) {
 }
 
 export function buildAvatarEmbedSnippet(publicKey: string) {
-  const source = `${avatarEmbedBaseUrl}/avatar/embed/${encodeURIComponent(publicKey)}`;
+  const source = avatarEmbedSource(publicKey);
   return `<iframe src="${source}" title="KiloBot Avatar" allow="microphone; autoplay" style="width:100%;aspect-ratio:16/9;border:0"></iframe>`;
+}
+
+export function buildAvatarReactEmbedSnippet(publicKey: string) {
+  const source = avatarEmbedSource(publicKey);
+  return `<iframe
+  src="${source}"
+  title="KiloBot Avatar"
+  allow="microphone; autoplay"
+  style={{
+    width: '100%',
+    aspectRatio: '16 / 9',
+    border: 0,
+  }}
+/>`;
 }
 
 export function visitorStorageKey(publicKey: string) {

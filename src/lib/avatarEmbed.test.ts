@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildAvatarEmbedSnippet,
+  buildAvatarReactEmbedSnippet,
   getAvatarVisitorId,
   splitAvatarSpeech,
   visitorStorageKey,
@@ -26,6 +27,16 @@ describe('avatar embed helpers', () => {
     expect(snippet).toContain('/avatar/embed/av_public');
     expect(snippet).toContain('allow="microphone; autoplay"');
     expect(snippet).toContain('aspect-ratio:16/9');
+  });
+
+  it('builds a React-compatible responsive iframe', () => {
+    const snippet = buildAvatarReactEmbedSnippet('avatar public');
+
+    expect(snippet).toContain('src="https://kilobot.app/avatar/embed/avatar%20public"');
+    expect(snippet).toContain('allow="microphone; autoplay"');
+    expect(snippet).toContain("aspectRatio: '16 / 9'");
+    expect(snippet).toContain('border: 0');
+    expect(snippet).not.toContain('style="');
   });
 
   it('scopes visitor identity to the embed key', () => {
