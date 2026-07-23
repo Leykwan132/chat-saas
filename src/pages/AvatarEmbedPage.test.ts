@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const source = readFileSync(new URL('./AvatarEmbedPage.tsx', import.meta.url), 'utf8');
+const sessionHookSource = readFileSync(new URL('../components/avatar/useAvatarSession.ts', import.meta.url), 'utf8');
+const runtimeSource = readFileSync(new URL('../components/avatar/avatarSessionRuntime.ts', import.meta.url), 'utf8');
 const settingsSource = readFileSync(new URL('./AvatarPage.tsx', import.meta.url), 'utf8');
 const createSource = readFileSync(new URL('./AvatarCreatePage.tsx', import.meta.url), 'utf8');
 const previewMediaSource = readFileSync(new URL('../components/avatar/AvatarPreviewMedia.tsx', import.meta.url), 'utf8');
@@ -16,16 +18,19 @@ const routerSource = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8
 describe('Avatar embed runtime', () => {
   it('starts only from a visitor action and uses verbatim speech', () => {
     expect(source).toContain('Start conversation');
-    expect(source).toContain('.repeat(');
+    expect(source).toContain('useAvatarSession(publicKey)');
+    expect(source).not.toContain('new LiveAvatarSession');
+    expect(sessionHookSource).toContain('api.avatarSession.begin');
+    expect(sessionHookSource).toContain('api.avatarConversation.receiveTranscript');
+    expect(sessionHookSource).toContain('api.avatarConversation.listMessages');
+    expect(runtimeSource).toContain('this.client.repeat(');
     expect(source).not.toContain('.message(');
   });
 
   it('handles transcription and interruption events', () => {
-    expect(source).toContain('AgentEventsEnum.USER_TRANSCRIPTION');
-    expect(source).toContain('AgentEventsEnum.USER_SPEAK_STARTED');
-    expect(source).toContain('.interrupt()');
-    expect(source).toContain('activeSourceEventIdRef.current = event.event_id');
-    expect(source).toContain('message.sourceEventId !== activeSourceEventIdRef.current');
+    expect(runtimeSource).toContain('receiveTranscript(this.snapshot.identity, event)');
+    expect(runtimeSource).toContain('this.client.interrupt()');
+    expect(runtimeSource).toContain('message.sourceEventId !== this.activeSourceEventId');
   });
 
   it('keeps sandbox mode in the backend without exposing it in the UI or public session result', () => {
