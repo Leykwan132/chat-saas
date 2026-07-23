@@ -8,14 +8,16 @@ const stageSource = readFileSync(
 );
 
 describe('Avatar configured overview', () => {
-  it('presents the custom video stage with edit navigation in the page header', () => {
+  it('presents the custom preview and website embed handoff', () => {
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageSource).toContain('Edit avatar');
     expect(pageSource).toContain('configuration.configured && canManage ?');
     expect(pageSource).toContain('configuration.configured ?');
+    expect(pageSource).toContain('lg:grid-cols-[minmax(0,1fr)_22rem]');
+    expect(pageSource).toContain('>Preview</h2>');
     expect(pageSource).toContain('<AvatarVideoStage');
     expect(pageSource).toContain('publicKey={configuration.publicKey}');
-    expect(pageSource).not.toContain('AvatarEmbedCard');
+    expect(pageSource).toContain('<AvatarEmbedCard publicKey={configuration.publicKey} />');
     expect(pageSource).not.toContain('updateSettings');
     expect(pageSource).not.toContain('enabledOverride');
     expect(pageSource).not.toContain('onEnabledChange');

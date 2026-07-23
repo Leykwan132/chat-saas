@@ -4,6 +4,7 @@ import { Pencil, ScanFace } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { AvatarEmbedCard } from '@/components/avatar/AvatarEmbedCard';
 import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,10 +47,16 @@ export default function AvatarPage() {
         ) : null}
       </div>
       {configuration.configured ? (
-        <AvatarVideoStage
-          publicKey={configuration.publicKey}
-          previewUrl={configuration.avatarPreviewUrl}
-        />
+        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+          <section className="flex min-w-0 flex-col gap-3">
+            <h2 className="text-sm font-semibold">Preview</h2>
+            <AvatarVideoStage
+              publicKey={configuration.publicKey}
+              previewUrl={configuration.avatarPreviewUrl}
+            />
+          </section>
+          <AvatarEmbedCard publicKey={configuration.publicKey} />
+        </div>
       ) : (
         <Empty className="min-h-[420px] border">
           <EmptyHeader>
