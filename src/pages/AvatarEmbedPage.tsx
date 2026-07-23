@@ -1,18 +1,13 @@
 import { useQuery } from 'convex/react';
-import { Mic, ScanFace } from 'lucide-react';
 import { useParams } from 'react-router';
 import { api } from '../../convex/_generated/api';
 import { AvatarUnavailableState } from '@/components/avatar/AvatarUnavailableState';
-import { useAvatarSession } from '@/components/avatar/useAvatarSession';
-import { Button } from '@/components/ui/button';
+import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';
 import { Spinner } from '@/components/ui/spinner';
 
 export default function AvatarEmbedPage() {
   const { publicKey = '' } = useParams();
   const config = useQuery(api.avatar.publicGetConfig, { publicKey });
-  const { phase, error, videoRef, start } = useAvatarSession(publicKey);
-  const starting = phase === 'starting';
-  const ended = phase === 'ended';
 
   if (config === undefined) {
     return (
@@ -25,31 +20,11 @@ export default function AvatarEmbedPage() {
   if (config === null) return <AvatarUnavailableState />;
 
   return (
-    <main className="relative flex min-h-svh w-full items-center justify-center overflow-hidden bg-zinc-950 text-white">
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        className="absolute inset-0 size-full object-cover"
+    <main className="w-full">
+      <AvatarVideoStage
+        publicKey={publicKey}
+        previewUrl={config.avatarPreviewUrl}
       />
-      {phase !== 'active' ? (
-        <div className="relative z-10 mx-5 flex max-w-sm flex-col items-center rounded-2xl border border-white/10 bg-black/60 p-7 text-center backdrop-blur">
-          <ScanFace className="mb-3 size-10" />
-          <h1 className="text-xl font-semibold">Talk with KiloBot</h1>
-          <p className="mt-2 text-sm text-zinc-300">
-            Start a live voice conversation. Your browser will ask for microphone access.
-          </p>
-          <Button
-            className="mt-5"
-            onClick={() => void start()}
-            disabled={starting || ended}
-          >
-            {starting ? <Spinner className="mr-2 size-4" /> : <Mic className="mr-2 size-4" />}
-            {ended ? 'Conversation ended' : 'Start conversation'}
-          </Button>
-          {error ? <p className="mt-3 text-xs text-red-300">{error}</p> : null}
-        </div>
-      ) : null}
     </main>
   );
 }

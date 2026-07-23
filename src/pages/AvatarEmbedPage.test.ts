@@ -9,6 +9,10 @@ const unavailableSource = readFileSync(
   'utf8',
 );
 const settingsSource = readFileSync(new URL('./AvatarPage.tsx', import.meta.url), 'utf8');
+const stageSource = readFileSync(
+  new URL('../components/avatar/AvatarVideoStage.tsx', import.meta.url),
+  'utf8',
+);
 const createSource = readFileSync(new URL('./AvatarCreatePage.tsx', import.meta.url), 'utf8');
 const previewMediaSource = readFileSync(new URL('../components/avatar/AvatarPreviewMedia.tsx', import.meta.url), 'utf8');
 const voiceDialogSource = readFileSync(new URL('../components/avatar/AvatarVoicePickerDialog.tsx', import.meta.url), 'utf8');
@@ -28,10 +32,28 @@ describe('Avatar embed runtime', () => {
     );
   });
 
-  it('starts only from a visitor action and uses verbatim speech', () => {
-    expect(source).toContain('Start conversation');
-    expect(source).toContain('useAvatarSession(publicKey)');
-    expect(source).not.toContain('new LiveAvatarSession');
+  it('reuses the dashboard video stage with the configured preview image', () => {
+    expect(source).toContain(
+      "import { AvatarVideoStage } from '@/components/avatar/AvatarVideoStage';",
+    );
+    expect(source).toContain('<AvatarVideoStage');
+    expect(source).toContain('publicKey={publicKey}');
+    expect(source).toContain('previewUrl={config.avatarPreviewUrl}');
+    expect(source).not.toContain('useAvatarSession(publicKey)');
+    expect(source).not.toContain('Talk with KiloBot');
+    expect(source).not.toContain('Start conversation');
+    expect(source).not.toContain('<video');
+    expect(settingsSource).toContain('<AvatarVideoStage');
+    expect(settingsSource).toContain(
+      'previewUrl={configuration.avatarPreviewUrl}',
+    );
+    expect(stageSource).toContain('Start Chat');
+    expect(stageSource).toContain('Mute microphone');
+    expect(stageSource).toContain('Unmute microphone');
+    expect(stageSource).toContain('End chat');
+  });
+
+  it('keeps visitor-started sessions and verbatim speech in the shared runtime', () => {
     expect(sessionHookSource).toContain('api.avatarSession.begin');
     expect(sessionHookSource).toContain('api.avatarConversation.receiveTranscript');
     expect(sessionHookSource).toContain('api.avatarConversation.listMessages');
