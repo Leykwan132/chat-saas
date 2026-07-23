@@ -2,6 +2,9 @@
   var script = document.currentScript;
   if (!script) return;
 
+  var excludedPathPrefix = script.getAttribute("data-kilobot-exclude-path-prefix") || "";
+  if (excludedPathPrefix && window.location.pathname.startsWith(excludedPathPrefix)) return;
+
   var publicKey = script.getAttribute("data-kilobot-widget") || "";
   var apiBase = (script.getAttribute("data-kilobot-api") || "https://outstanding-rabbit-215.convex.site").replace(/\/+$/, "");
   if (!publicKey || !apiBase) return;
