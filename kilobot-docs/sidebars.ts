@@ -50,6 +50,13 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Releases',
+      collapsed: false,
+      collapsible: false,
+      items: ['releases/changelog'],
+    },
+    {
+      type: 'category',
       label: 'Help and support',
       collapsed: false,
       collapsible: false,

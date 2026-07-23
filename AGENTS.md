@@ -25,6 +25,18 @@ Convex agent skills for common tasks can be installed by running `npx convex ai-
 - Only add comments if absolutely required (e.g., explaining a non-obvious workaround or complex algorithm that cannot be simplified)
 - If code needs a comment to be understood, refactor it first
 
+## Daily release changelog
+
+- At the end of every task, determine whether the work introduced a confirmed customer-facing change.
+- When it did, add or update that production date's entry in `kilobot-docs/docs/releases/changelog.mdx`.
+- Reuse an existing entry for the same date, product, and release title instead of creating duplicates.
+- Keep entries newest first and use only the product labels `Kilobot`, `Avatar`, or `Docs`.
+- Keep change categories in this order and omit empty categories: `New features`, `Improvements`, `Performance improvements`, `Bug fixes`.
+- Write concise outcome-focused bullets in customer language without internal implementation names.
+- Do not publish plans, tests, refactors, migrations, internal operations, unconfirmed changes, unshipped work, or unavailable feature-flagged work.
+- If a customer-facing change is not yet released, record it in `CONTINUITY.md` and add it to the changelog only when its production availability date is confirmed.
+- When adding a new month, add its explicit month link to the changelog navigation and preserve reverse chronological order.
+
 ## Continuity Ledger (compaction-safe)
 
 Maintain a single continuity file for this workspace: `CONTINUITY.md`.
