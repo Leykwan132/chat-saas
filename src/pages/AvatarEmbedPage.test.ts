@@ -4,6 +4,10 @@ import { describe, expect, it } from 'vitest';
 const source = readFileSync(new URL('./AvatarEmbedPage.tsx', import.meta.url), 'utf8');
 const sessionHookSource = readFileSync(new URL('../components/avatar/useAvatarSession.ts', import.meta.url), 'utf8');
 const runtimeSource = readFileSync(new URL('../components/avatar/avatarSessionRuntime.ts', import.meta.url), 'utf8');
+const unavailableSource = readFileSync(
+  new URL('../components/avatar/AvatarUnavailableState.tsx', import.meta.url),
+  'utf8',
+);
 const settingsSource = readFileSync(new URL('./AvatarPage.tsx', import.meta.url), 'utf8');
 const createSource = readFileSync(new URL('./AvatarCreatePage.tsx', import.meta.url), 'utf8');
 const previewMediaSource = readFileSync(new URL('../components/avatar/AvatarPreviewMedia.tsx', import.meta.url), 'utf8');
@@ -16,6 +20,14 @@ const avatarSessionSource = readFileSync(new URL('../../convex/avatarSession.ts'
 const routerSource = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 describe('Avatar embed runtime', () => {
+  it('shares the unavailable presentation with the public feature gate', () => {
+    expect(source).toContain('<AvatarUnavailableState />');
+    expect(unavailableSource).toContain('Avatar unavailable');
+    expect(unavailableSource).toContain(
+      'This Avatar embed is disabled or no longer exists.',
+    );
+  });
+
   it('starts only from a visitor action and uses verbatim speech', () => {
     expect(source).toContain('Start conversation');
     expect(source).toContain('useAvatarSession(publicKey)');
@@ -60,7 +72,7 @@ describe('Avatar setup', () => {
     expect(settingsSource).toContain('No avatar yet');
     expect(settingsSource).toContain('Create avatar');
     expect(routerSource).toContain('path="avatar/create"');
-    expect(routerSource).toContain('<AvatarCreatePage />');
+    expect(routerSource).toContain('<AvatarCreateFeatureRoute />');
   });
 
   it('persists Web SDK configuration without requiring Embed V2', () => {

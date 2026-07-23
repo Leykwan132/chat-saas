@@ -66,6 +66,11 @@ import {
   PlaygroundRedirect,
 } from '@/router/AppRouteComponents'
 import { QuickRepliesFeatureRoute } from '@/router/QuickRepliesFeatureRoute'
+import {
+  AvatarCreateFeatureRoute,
+  AvatarEmbedFeatureRoute,
+  AvatarOverviewFeatureRoute,
+} from '@/router/AvatarFeatureRoutes'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN as string, {
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST as string,
@@ -108,6 +113,7 @@ const router = createBrowserRouter(
       <Route path="/terms" element={<TermsPage />} />
       <Route path="/blog/:slug" element={<BlogPostPage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
+      <Route path="/avatar/embed/:publicKey" element={<AvatarEmbedFeatureRoute />} />
       <Route path="/onboarding" element={<OnboardingFlow />} />
       <Route path="/workspace" element={<WorkspacePage />}>
         <Route index element={<AgentsIndex />} />
@@ -124,6 +130,8 @@ const router = createBrowserRouter(
         <Route path="inbox" element={<PromptInputProvider><ChatsPage /></PromptInputProvider>} />
         <Route path="chats" element={<ChatsToInboxRedirect />} />
         <Route path="quick-replies" element={<QuickRepliesFeatureRoute />} />
+        <Route path="avatar" element={<AvatarOverviewFeatureRoute />} />
+        <Route path="avatar/create" element={<AvatarCreateFeatureRoute />} />
         <Route path="overview" element={<AgentOverviewPage />} />
         <Route path="agent/:threadId?" element={<OldAgentRedirect />} />
         <Route path="playground/:threadId?" element={<PlaygroundRedirect />} />
