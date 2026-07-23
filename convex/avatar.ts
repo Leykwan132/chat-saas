@@ -189,13 +189,27 @@ export const saveProviderEmbed = internalMutation({
 
 export const publicGetConfig = query({
   args: { publicKey: v.string() },
+  returns: v.union(
+    v.null(),
+    v.object({
+      publicKey: v.string(),
+      language: v.string(),
+      avatarPreviewUrl: v.optional(v.string()),
+    }),
+  ),
   handler: async (ctx, args) => {
     const configuration = await ctx.db
       .query('avatarConfigurations')
       .withIndex('by_publicKey', (q) => q.eq('publicKey', args.publicKey))
       .unique();
     if (!configuration?.enabled) return null;
-    return { publicKey: configuration.publicKey, language: configuration.language };
+    return {
+      publicKey: configuration.publicKey,
+      language: configuration.language,
+      ...(configuration.avatarPreviewUrl
+        ? { avatarPreviewUrl: configuration.avatarPreviewUrl }
+        : {}),
+    };
   },
 });
 

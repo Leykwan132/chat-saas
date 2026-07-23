@@ -110,7 +110,11 @@ test('validated Avatar metadata configures the Web SDK runtime without an embed'
   expect(configured?.embedUrl).toBeUndefined();
   expect(await t.query(api.avatar.publicGetConfig, {
     publicKey: initial.publicKey,
-  })).toEqual({ publicKey: initial.publicKey, language: 'en' });
+  })).toEqual({
+    publicKey: initial.publicKey,
+    language: 'en',
+    avatarPreviewUrl: 'https://example.com/avatar.png',
+  });
 });
 
 test('Avatar setup is unique per workspace', async () => {
