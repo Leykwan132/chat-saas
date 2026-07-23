@@ -375,7 +375,6 @@ export default function CustomersPage() {
                       </span>
                     )}
                   </span>
-                  <iframe src="https://kilobot.app/avatar/embed/avatar_5661abbf2f9648b0926f2f053326fcd2" title="KiloBot Avatar" allow="microphone; autoplay" style="width:100%;aspect-ratio:16/9;border:0"></iframe>
                   <ChevronDown className="size-3.5 shrink-0 opacity-50 ml-1" />
                 </Button>
               </PopoverTrigger>
