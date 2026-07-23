@@ -12,6 +12,7 @@ import {
   MessageSquare,
   Plug,
   ReplyAll,
+  ScanFace,
   UserRoundCheck,
   Users,
   Workflow,
@@ -26,15 +27,17 @@ export type NavItem = {
   end?: boolean;
   requiredPermission: PermissionSlug;
   badge?: ReactNode;
+  badgeLabel?: string;
 };
 
 export type NavFeatureOptions = {
   showSavedReplies: boolean;
+  enableAvatarFeature: boolean;
 };
 
 export function getNavItems(
   agentId: string,
-  { showSavedReplies }: NavFeatureOptions,
+  { showSavedReplies, enableAvatarFeature }: NavFeatureOptions,
 ): {
   topLevel: NavItem[];
   engagement: NavItem[];
@@ -57,6 +60,15 @@ export function getNavItems(
       { to: `/dashboard/${agentId}/services`, icon: CalendarCheck, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
     ],
     tools: [
+      ...(enableAvatarFeature
+        ? [{
+            to: `/dashboard/${agentId}/avatar`,
+            icon: ScanFace,
+            label: 'Avatar',
+            badgeLabel: 'Beta',
+            requiredPermission: Permission.CHANNELS_READ,
+          }]
+        : []),
       ...(showSavedReplies
         ? [{
             to: `/dashboard/${agentId}/quick-replies`,

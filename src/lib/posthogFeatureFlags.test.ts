@@ -9,6 +9,7 @@ describe('PostHog product feature flags', () => {
     expect(POSTHOG_FEATURE_FLAGS).toEqual({
       showTokenUsage: 'show-token-usage',
       showSavedReplies: 'show-saved-replies',
+      enableAvatarFeature: 'enable_avatar_feature',
     });
   });
 

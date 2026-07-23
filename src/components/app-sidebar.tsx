@@ -24,6 +24,7 @@ import { getNavItems, type NavItem } from './app-sidebar-nav';
 import { SidebarNavMenuItem } from './app-sidebar-nav-item';
 import {
   isProductFeatureEnabled,
+  useEnableAvatarFeature,
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
 
@@ -39,8 +40,10 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
   const { state, toggleSidebar } = useSidebar();
   const { can, isLoading } = usePermissions();
   const savedRepliesState = useShowSavedReplies();
+  const avatarFeatureState = useEnableAvatarFeature();
   const navItems = getNavItems(agent._id, {
     showSavedReplies: isProductFeatureEnabled(savedRepliesState),
+    enableAvatarFeature: isProductFeatureEnabled(avatarFeatureState),
   });
   const canReadChats = !isLoading && can(Permission.CHATS_READ);
   const totalUnread = useQuery(
@@ -52,7 +55,9 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     api.channels.getConnectedForCurrentOrg,
     canReadChannels ? {} : 'skip',
   );
-  const connectedChannelCount = connectedChannels?.length;
+  const connectedChannelCount = connectedChannels?.filter(
+    (channel) => channel.service !== 'avatar',
+  ).length;
 
   const filterItems = (items: NavItem[]) => {
     if (isLoading) return [];
@@ -126,6 +131,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                 icon={item.icon}
                 label={item.label}
                 badge={item.badge}
+                badgeLabel={item.badgeLabel}
               />
             ))}
           </SidebarMenu>
@@ -153,6 +159,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                       tooltip={tooltip}
                       icon={item.icon}
                       label={item.label}
+                      badgeLabel={item.badgeLabel}
                       badge={
                         item.badge ??
                         (showChannelCount ? (
@@ -183,6 +190,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     icon={item.icon}
                     label={item.label}
                     badge={item.badge}
+                    badgeLabel={item.badgeLabel}
                   />
                 ))}
               </SidebarMenu>
@@ -213,6 +221,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                       tooltip={tooltip}
                       icon={item.icon}
                       label={item.label}
+                      badgeLabel={item.badgeLabel}
                       badge={
                         showUnreadBadge ? (
                           <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold leading-none text-white">
@@ -241,6 +250,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     tooltip={item.label}
                     icon={item.icon}
                     label={item.label}
+                    badgeLabel={item.badgeLabel}
                   />
                 ))}
               </SidebarMenu>
@@ -258,10 +268,11 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
                     key={item.to}
                     to={item.to}
                     end={item.end}
-                    tooltip={item.label}
+                    tooltip={item.badgeLabel ? `${item.label} (${item.badgeLabel})` : item.label}
                     icon={item.icon}
                     label={item.label}
                     badge={item.badge}
+                    badgeLabel={item.badgeLabel}
                   />
                 ))}
               </SidebarMenu>

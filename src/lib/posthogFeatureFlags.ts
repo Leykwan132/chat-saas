@@ -3,6 +3,7 @@ import { useFeatureFlagEnabled } from '@posthog/react';
 export const POSTHOG_FEATURE_FLAGS = {
   showTokenUsage: 'show-token-usage',
   showSavedReplies: 'show-saved-replies',
+  enableAvatarFeature: 'enable_avatar_feature',
 } as const;
 
 export type ProductFeatureFlagState = boolean | undefined;
@@ -19,4 +20,8 @@ export function useShowTokenUsage(): ProductFeatureFlagState {
 
 export function useShowSavedReplies(): ProductFeatureFlagState {
   return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.showSavedReplies);
+}
+
+export function useEnableAvatarFeature(): ProductFeatureFlagState {
+  return useFeatureFlagEnabled(POSTHOG_FEATURE_FLAGS.enableAvatarFeature);
 }

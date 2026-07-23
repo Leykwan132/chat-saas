@@ -1,16 +1,32 @@
 import { describe, expect, test } from 'vitest';
 import { getNavItems } from './app-sidebar-nav';
 
-describe('Quick Replies sidebar feature flag', () => {
-  test('includes Quick Replies when enabled', () => {
-    const items = getNavItems('agent-id', { showSavedReplies: true });
+describe('sidebar feature flags', () => {
+  test('includes Quick Replies only when enabled', () => {
+    const enabled = getNavItems('agent-id', {
+      showSavedReplies: true,
+      enableAvatarFeature: false,
+    });
+    const disabled = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: false,
+    });
 
-    expect(items.tools.map((item) => item.label)).toContain('Quick Replies');
+    expect(enabled.tools.map((item) => item.label)).toContain('Quick Replies');
+    expect(disabled.tools.map((item) => item.label)).not.toContain('Quick Replies');
   });
 
-  test('omits Quick Replies when disabled', () => {
-    const items = getNavItems('agent-id', { showSavedReplies: false });
+  test('includes Avatar only when enabled', () => {
+    const enabled = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: true,
+    });
+    const disabled = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: false,
+    });
 
-    expect(items.tools.map((item) => item.label)).not.toContain('Quick Replies');
+    expect(enabled.tools.map((item) => item.label)).toContain('Avatar');
+    expect(disabled.tools.map((item) => item.label)).not.toContain('Avatar');
   });
 });
