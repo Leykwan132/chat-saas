@@ -16,12 +16,12 @@ The Avatar page retains its title, Beta badge, product description, permission-a
 
 When an avatar is configured, the page renders one responsive 16:9 video stage instead of an embed snippet. The stage has these states:
 
-- `idle`: Show the selected avatar preview and a centered `Start conversation` button.
-- `starting`: Show a restrained spinner and `Starting conversation…`.
+- `idle`: Show the selected avatar preview and a neutral `Start Chat` button near the bottom center.
+- `starting`: Keep the control position stable while showing a restrained spinner and `Starting…`.
 - `active`: Render the attached LiveAvatar video with a small `Listening` or `KiloBot is speaking` status and two bottom controls.
 - `stopping`: Disable controls while the session is being closed.
-- `ended`: Restore the avatar preview and offer `Start again`.
-- `error`: Restore the avatar preview, show a concise failure message, and allow retry.
+- `ended`: Restore the avatar preview and the neutral `Start Chat` button.
+- `error`: Restore the avatar preview, show a concise failure message, and retain the neutral `Start Chat` retry button.
 
 The active controls are:
 
@@ -46,7 +46,7 @@ The page remains in its existing responsive `max-w-6xl` dashboard container. The
 
 The video stage is centered below the header, fills the available content width up to a readable maximum, and retains a 16:9 aspect ratio. It uses a dark background, clipped rounded corners, and no surrounding Card. The video fills the stage using cover behavior.
 
-Idle, starting, ended, and error content appears as a restrained centered overlay. Active controls float near the bottom center with enough safe-area spacing for narrow mobile screens. The status sits away from the controls and remains legible over light or dark video frames.
+The neutral `Start Chat` control is horizontally centered near the bottom of the stage with a deliberate inset from the bottom edge. It must not sit in the visual center or cover the avatar's face. Starting, ended, and error states preserve this bottom-center control position so the layout stays stable. Active controls use the same bottom-center zone with enough safe-area spacing for narrow mobile screens. Status and error text sit away from the controls and remain legible over light or dark video frames.
 
 ## Architecture
 
@@ -234,6 +234,8 @@ Verify:
 - The configured Avatar page renders the custom video stage.
 - The embed-code handoff and provider iframe are absent.
 - Idle, starting, active, ended, and error presentations are reachable from engine state.
+- Idle, ended, and retry states use the exact `Start Chat` label with a neutral bottom-center control and deliberate bottom spacing.
+- The start control does not appear in the visual center of the stage.
 - Active UI contains only mute or unmute and End controls.
 - No typed chat, transcript, diagnostics, IDs, or sandbox labels appear.
 - `Edit avatar` remains permission-gated in the page header.
