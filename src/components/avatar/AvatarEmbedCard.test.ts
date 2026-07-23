@@ -14,4 +14,11 @@ describe('AvatarEmbedCard', () => {
     expect(cardSource).not.toContain('buildProviderEmbedSnippet');
     expect(cardSource).not.toContain('embedUrl');
   });
+
+  it('aligns with the preview through a borderless outer section', () => {
+    expect(cardSource).toContain(
+      '<section className="flex min-w-0 flex-col gap-4">',
+    );
+    expect(cardSource).not.toContain('rounded-xl border bg-card p-5');
+  });
 });

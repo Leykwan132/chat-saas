@@ -16,7 +16,7 @@ export function AvatarEmbedCard({ publicKey }: { publicKey: string }) {
   }
 
   return (
-    <section className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5">
+    <section className="flex min-w-0 flex-col gap-4">
       <div className="space-y-1">
         <h2 className="font-semibold">Embed on your website</h2>
         <p className="text-sm text-muted-foreground">
