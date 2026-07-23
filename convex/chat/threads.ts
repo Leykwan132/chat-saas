@@ -1054,7 +1054,8 @@ export async function ingestChannelMessage(
     service !== "whatsapp" &&
     service !== "instagram" &&
     service !== "messenger" &&
-    service !== "web"
+    service !== "web" &&
+    service !== "avatar"
   ) {
     throw new Error(`Unsupported channel service: ${service}`);
   }
@@ -1074,7 +1075,7 @@ export async function ingestChannelMessage(
   );
 
   const orgAddress =
-    channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? "web";
+    channel.phoneNumberId ?? channel.igUserId ?? channel.pageId ?? service;
 
   const trimmedContent = args.content.trim();
   const images = args.images ?? [];
@@ -1256,7 +1257,7 @@ async function upsertInboxConversation(
   args: {
     orgId: string;
     channelId: Id<"channels">;
-    service: "whatsapp" | "instagram" | "messenger" | "web";
+    service: "whatsapp" | "instagram" | "messenger" | "web" | "avatar";
     orgAddress: string;
     contactAddress: string;
     contactName?: string;
@@ -1275,14 +1276,16 @@ async function upsertInboxConversation(
   assignedAgentId?: Id<"agents">;
   assignToAiAgent: boolean;
 }> {
-  const existing = await ctx.db
+  const latest = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>
       q
         .eq("channelId", args.channelId)
         .eq("contactAddress", args.contactAddress),
     )
-    .unique();
+    .order("desc")
+    .first();
+  const existing = selectReusableInboxConversation(latest, args.service);
 
   const now = Date.now();
   const channel = await ctx.db.get(args.channelId);
@@ -1425,4 +1428,11 @@ async function upsertInboxConversation(
     assignedAgentId: existing.assignedAgentId ?? args.assignedAgentId,
     assignToAiAgent: existing.assignToAiAgent,
   };
+}
+
+export function selectReusableInboxConversation(
+  latest: Doc<"conversations"> | null,
+  service: Doc<"conversations">["service"],
+) {
+  return latest?.status === "closed" && service === "avatar" ? null : latest;
 }

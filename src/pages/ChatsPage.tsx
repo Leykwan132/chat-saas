@@ -22,6 +22,7 @@ import {
   Check,
   AlertCircle,
   Plus,
+  ScanFace,
   type LucideIcon,
 } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, isReservedTemperatureTag, type LeadTemperature } from '@/lib/leadTemperature';
@@ -103,6 +104,7 @@ import {
 import { InboxReplyInput } from '@/components/inbox/InboxReplyInput';
 import { ConversationWindowBanner } from '@/components/inbox/ConversationWindowBanner';
 import { InboxThreadMessages } from '@/components/inbox/InboxThreadMessages';
+import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
 import {
   formatConversationActionHistoryText,
   getConversationActionHistoryStyle,
@@ -118,6 +120,7 @@ const INBOX_PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   instagram: 'Instagram',
   messenger: 'Messenger',
   web: 'Web',
+  avatar: 'Avatar',
 };
 
 type InboxChatListItem = Chat & {
@@ -207,6 +210,8 @@ function PlatformMenuIcon({
       return <SiMessenger {...common} />;
     case 'web':
       return <Globe size={size} className={getPlatformIconClassName(platform)} />;
+    case 'avatar':
+      return <ScanFace size={size} className={getPlatformIconClassName(platform)} />;
   }
 }
 
@@ -437,7 +442,7 @@ export default function ChatsPage() {
 
   const connectedPlatforms = useMemo(() => {
     const seen = new Set<ConversationPlatform>();
-    const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger', 'web'];
+    const order: ConversationPlatform[] = ['whatsapp', 'instagram', 'messenger', 'web', 'avatar'];
     for (const ch of connectedChannels ?? []) {
       if (ch.status === 'connected') seen.add(ch.service);
     }
@@ -1706,7 +1711,8 @@ export default function ChatsPage() {
                                   {selectedConversation?.service === 'whatsapp' ||
                                   selectedConversation?.service === 'instagram' ||
                                   selectedConversation?.service === 'messenger' ||
-                                  selectedConversation?.service === 'web' ? (
+                                  selectedConversation?.service === 'web' ||
+                                  selectedConversation?.service === 'avatar' ? (
                                     <PlatformMenuIcon
                                       platform={selectedConversation.service}
                                       size={14}
@@ -1767,7 +1773,7 @@ export default function ChatsPage() {
                       >
                         <Tag className="size-4 shrink-0 text-muted-foreground" aria-hidden />
                         <span className="flex-1 text-sm font-semibold text-foreground">
-                          Tags ({((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length})
+                          Tags ({((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length + (selectedConversation.service === 'avatar' ? 1 : 0)})
                         </span>
                         <ChevronDown
                           className={cn(
@@ -1778,6 +1784,11 @@ export default function ChatsPage() {
                       </button>
                       {tagsSectionOpen ? (
                         <div className="px-4 pb-3">
+                          {selectedConversation.service === 'avatar' ? (
+                            <div className="flex flex-wrap gap-1.5 py-1.5">
+                              <AvatarConversationTag />
+                            </div>
+                          ) : null}
                           {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).length > 0 ? (
                             <div className="flex flex-wrap gap-1.5 py-1.5">
                               {((selectedConversation.tags ?? []).filter((t: string) => !isLeadTemperatureTag(t))).map((tag: any) => {
@@ -1808,11 +1819,11 @@ export default function ChatsPage() {
                                 );
                               })}
                             </div>
-                          ) : (
+                          ) : selectedConversation.service !== 'avatar' ? (
                             <p className="m-0 py-2 text-xs text-muted-foreground">
                               No tags yet.
                             </p>
-                          )}
+                          ) : null}
                           {can(Permission.CHATS_TAG) && (
                             <div className="mt-3 flex gap-2">
                               <Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>

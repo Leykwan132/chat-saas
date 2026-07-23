@@ -255,6 +255,7 @@ export const internalPersistAiReply = internalMutation({
     externalId: v.optional(v.string()),
     llmModel: v.optional(v.string()),
     creditsCharged: v.optional(v.number()),
+    sourceEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
@@ -297,6 +298,7 @@ export const internalPersistAiReply = internalMutation({
       contentType: "text",
       content: trimmed,
       agentMessageId,
+      sourceEventId: args.sourceEventId,
       llmModel: args.llmModel,
       creditsCharged: args.creditsCharged,
       status: "sent",
@@ -475,6 +477,7 @@ export const generateAiReplyWorker = internalAction({
     promptContent: v.optional(v.string()),
     promptMessageId: v.optional(v.string()),
     inboundExternalId: v.optional(v.string()),
+    avatarSourceEventId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     if (!args.promptMessageId && !args.promptContent) {
@@ -501,7 +504,11 @@ export const generateAiReplyWorker = internalAction({
       userId: agent.userId,
     });
 
-    if (conv.service !== "web" && !checkAiFeature(stripeInfo.plan, "auto_reply")) {
+    if (
+      conv.service !== "web" &&
+      conv.service !== "avatar" &&
+      !checkAiFeature(stripeInfo.plan, "auto_reply")
+    ) {
       console.warn("AI reply skipped: auto-reply feature disabled for plan tier", {
         billingUserId: agent.userId,
         plan: stripeInfo.plan,
@@ -720,6 +727,7 @@ export const generateAiReplyWorker = internalAction({
           externalId: sendResult.textExternalId,
           llmModel: usage.llmModel,
           creditsCharged: usage.creditsCharged,
+          sourceEventId: args.avatarSourceEventId,
         });
         await enqueueMetaMarkSeenIfRead(persistResult);
       }

@@ -1,5 +1,5 @@
 import type { ElementType } from 'react';
-import { Globe, UserRoundPlus } from 'lucide-react';
+import { Globe, ScanFace, UserRoundPlus } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { getPlatformIconClassName } from '../../lib/platformIconStyles';
 import type { BookingCustomer, BookingCustomerDetails } from './bookingDialogTypes';
@@ -47,6 +47,11 @@ const sourceMeta = {
     label: 'Web',
     Icon: Globe,
     iconClassName: getPlatformIconClassName('web'),
+  },
+  avatar: {
+    label: 'Avatar',
+    Icon: ScanFace,
+    iconClassName: getPlatformIconClassName('avatar'),
   },
   manual: {
     label: 'Imported',

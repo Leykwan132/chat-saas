@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { usePaginatedQuery } from 'convex-helpers/react';
-import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown, Upload } from 'lucide-react';
+import { Users, Search, Plus, Mail, Loader2, User, Check, ChevronDown, Upload, ScanFace } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle, type LeadTemperature } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -74,6 +74,7 @@ const sourceBadgeInfo = {
   WhatsApp: { icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
   Instagram: { icon: SiInstagram, colorClass: 'text-[#E4405F]' },
   Messenger: { icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+  Avatar: { icon: ScanFace, colorClass: 'text-muted-foreground' },
   Manual: { icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
 } as const;
 
@@ -85,6 +86,8 @@ function serviceLabel(service: Customer['service']): keyof typeof sourceBadgeInf
       return 'Instagram';
     case 'messenger':
       return 'Messenger';
+    case 'avatar':
+      return 'Avatar';
     default:
       return 'Manual';
   }
@@ -372,6 +375,7 @@ export default function CustomersPage() {
                       </span>
                     )}
                   </span>
+                  <iframe src="https://kilobot.app/avatar/embed/avatar_5661abbf2f9648b0926f2f053326fcd2" title="KiloBot Avatar" allow="microphone; autoplay" style="width:100%;aspect-ratio:16/9;border:0"></iframe>
                   <ChevronDown className="size-3.5 shrink-0 opacity-50 ml-1" />
                 </Button>
               </PopoverTrigger>

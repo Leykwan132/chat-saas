@@ -24,7 +24,7 @@ import {
   type ConversationService,
 } from "./analyticsMetricModel";
 
-const CHANNEL_SERVICES: ConversationService[] = ["whatsapp", "instagram", "messenger", "web"];
+const CHANNEL_SERVICES: ConversationService[] = ["whatsapp", "instagram", "messenger", "web", "avatar"];
 
 const rangeValidator = v.union(
   v.literal("7d"),
@@ -1104,7 +1104,7 @@ export const getChannelConversions = query({
       .query("channels")
       .withIndex("by_orgId_and_service", (q) => q.eq("orgId", orgId))
       .take(100);
-    const services: ConversationService[] = ["whatsapp", "instagram", "messenger", "web"];
+    const services: ConversationService[] = ["whatsapp", "instagram", "messenger", "web", "avatar"];
     const serviceNamespaces = services.flatMap((service) => [
       serviceNamespace(orgId, service, "channelConversationCount"),
       serviceNamespace(orgId, service, "channelConvertedCount"),

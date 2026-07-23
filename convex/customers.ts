@@ -18,6 +18,7 @@ const customerServiceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
   v.literal("web"),
+  v.literal("avatar"),
   v.literal("manual"),
 );
 
@@ -26,6 +27,7 @@ const channelServiceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
   v.literal("web"),
+  v.literal("avatar"),
 );
 
 function assertNotLeadTemperatureTag(tag: string) {
@@ -274,6 +276,8 @@ export const getSidebarDetailsForConversation = query({
           ? "Instagram"
           : conv.service === "messenger"
             ? "Messenger"
+            : conv.service === "avatar"
+              ? "Avatar"
             : conv.service === "playground"
               ? "Playground"
               : conv.service;
@@ -608,7 +612,7 @@ async function upsertCustomer(
   ctx: MutationCtx,
   args: {
     orgId: string;
-    service: "whatsapp" | "instagram" | "messenger" | "web";
+    service: "whatsapp" | "instagram" | "messenger" | "web" | "avatar";
     contactAddress: string;
     profileName?: string;
     email?: string;

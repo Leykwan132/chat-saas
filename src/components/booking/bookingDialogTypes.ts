@@ -1,4 +1,4 @@
-import type { Id } from '../../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import type { ManualBookingCollectedFields } from '@/components/inbox/manualBookingScheduleModel';
 
 export type BookingCustomerDetails = {
@@ -7,7 +7,7 @@ export type BookingCustomerDetails = {
   email?: string;
   phone?: string;
   contactAddress?: string;
-  service?: 'whatsapp' | 'instagram' | 'messenger' | 'web' | 'manual';
+  service?: Doc<'customers'>['service'];
 };
 
 export type BookingCustomer = BookingCustomerDetails & {

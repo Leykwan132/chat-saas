@@ -10,5 +10,7 @@ export function getPlatformIconClassName(platform: ConversationPlatform): string
       return 'text-[#E4405F]';
     case 'web':
       return 'text-foreground';
+    case 'avatar':
+      return 'text-muted-foreground';
   }
 }

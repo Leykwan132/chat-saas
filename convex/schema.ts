@@ -39,6 +39,7 @@ const serviceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
   v.literal("web"),
+  v.literal("avatar"),
 );
 
 const conversationServiceValidator = v.union(
@@ -47,6 +48,7 @@ const conversationServiceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
   v.literal("web"),
+  v.literal("avatar"),
 );
 
 const analyticsMetricValidator = v.union(
@@ -72,6 +74,7 @@ const customerServiceValidator = v.union(
   v.literal("instagram"),
   v.literal("messenger"),
   v.literal("web"),
+  v.literal("avatar"),
   v.literal("manual"),
 );
 
@@ -597,6 +600,59 @@ export default defineSchema({
     .index("by_publicKey", ["publicKey"])
     .index("by_channelId", ["channelId"])
     .index("by_agentId", ["agentId"]),
+  avatarConfigurations: defineTable({
+    channelId: v.id("channels"),
+    agentId: v.id("agents"),
+    orgId: v.string(),
+    connectedByUserId: v.string(),
+    publicKey: v.string(),
+    enabled: v.boolean(),
+    avatarId: v.optional(v.string()),
+    avatarName: v.optional(v.string()),
+    avatarPreviewUrl: v.optional(v.string()),
+    voiceId: v.optional(v.string()),
+    voiceName: v.optional(v.string()),
+    voiceLanguage: v.optional(v.string()),
+    voiceGender: v.optional(v.string()),
+    language: v.string(),
+    providerContextId: v.optional(v.string()),
+    providerEmbedId: v.optional(v.string()),
+    providerEmbedUrl: v.optional(v.string()),
+    providerEmbedScript: v.optional(v.string()),
+    providerEmbedSandbox: v.optional(v.boolean()),
+    embedCreatedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_publicKey", ["publicKey"])
+    .index("by_channelId", ["channelId"])
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"])
+    .index("by_connectedByUserId", ["connectedByUserId"]),
+  avatarSessions: defineTable({
+    configurationId: v.id("avatarConfigurations"),
+    sessionId: v.string(),
+    visitorId: v.string(),
+    conversationId: v.optional(v.id("conversations")),
+    isSandbox: v.boolean(),
+    status: v.union(v.literal("active"), v.literal("stopped"), v.literal("failed")),
+    startedAt: v.number(),
+    stoppedAt: v.optional(v.number()),
+    durationMs: v.optional(v.number()),
+    endReason: v.optional(v.string()),
+    updatedAt: v.number(),
+  })
+    .index("by_sessionId", ["sessionId"])
+    .index("by_configurationId_and_startedAt", ["configurationId", "startedAt"]),
+  avatarEvents: defineTable({
+    sessionId: v.string(),
+    eventId: v.string(),
+    eventType: v.string(),
+    sourceEventId: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_eventId", ["eventId"])
+    .index("by_sessionId_and_createdAt", ["sessionId", "createdAt"]),
   whatsappSyncRequests: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),
@@ -906,6 +962,7 @@ export default defineSchema({
     ),
     failureReason: v.optional(v.string()),
     agentMessageId: v.optional(v.string()),
+    sourceEventId: v.optional(v.string()),
     llmModel: v.optional(v.string()),
     creditsCharged: v.optional(v.number()),
     reactions: v.optional(

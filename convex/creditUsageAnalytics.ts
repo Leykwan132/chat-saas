@@ -48,6 +48,7 @@ const SERVICE_LABELS: Record<string, string> = {
   whatsapp: "WhatsApp",
   instagram: "Instagram",
   messenger: "Messenger",
+  avatar: "Avatar",
 };
 
 function formatCreditSpentOn(conversation: Doc<"conversations">): string {

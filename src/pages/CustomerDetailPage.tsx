@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
-import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check, Save, Flame, Sun, Snowflake, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, User, Mail, Phone, Globe, Calendar, Plus, Check, Save, Flame, Sun, Snowflake, Trash2, Loader2, CheckCircle2, ScanFace } from 'lucide-react';
 import { isLeadTemperatureTag, isReservedTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -53,6 +53,7 @@ const sourceBadgeInfo = {
   WhatsApp: { icon: SiWhatsapp, colorClass: 'text-[#25D366]' },
   Instagram: { icon: SiInstagram, colorClass: 'text-[#E4405F]' },
   Messenger: { icon: SiMessenger, colorClass: 'text-[#0866FF]' },
+  Avatar: { icon: ScanFace, colorClass: 'text-muted-foreground' },
   Manual: { icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
 } as const;
 
@@ -64,6 +65,8 @@ function serviceLabel(service: string): keyof typeof sourceBadgeInfo {
       return 'Instagram';
     case 'messenger':
       return 'Messenger';
+    case 'avatar':
+      return 'Avatar';
     default:
       return 'Manual';
   }

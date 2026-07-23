@@ -222,7 +222,9 @@ export default function ChannelsPage() {
   );
 
   const externalConnectedChannelsList = useMemo(
-    () => connectedChannelsList.filter((channel) => channel.service !== 'web'),
+    () => connectedChannelsList.filter(
+      (channel) => channel.service !== 'web' && channel.service !== 'avatar',
+    ),
     [connectedChannelsList],
   );
   const activeCount = externalConnectedChannelsList.length;

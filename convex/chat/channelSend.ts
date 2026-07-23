@@ -308,6 +308,7 @@ export async function sendMediaToChannel(
 
   switch (conversation.service) {
     case "web":
+    case "avatar":
       return { ok: true, externalId: undefined, externalIds: [] };
     case "instagram":
       return sendMetaMediaThenText(conversation, channel, mediaItems, trimmed, options);
@@ -337,6 +338,7 @@ export async function sendTextToChannel(
 
   switch (conversation.service) {
     case "web":
+    case "avatar":
       return { ok: true, externalId: undefined };
     case "whatsapp":
       return sendWhatsApp(conversation, channel, trimmed);

@@ -1,4 +1,4 @@
-import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle, Globe } from 'lucide-react';
+import { Pin, PinOff, Image as ImageIcon, Volume2, AlertCircle, Globe, ScanFace } from 'lucide-react';
 import { isLeadTemperatureTag, getLeadTemperatureStyle } from '@/lib/leadTemperature';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import {
@@ -10,6 +10,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import { BookedListLabel } from '@/components/booking/BookingDetailsPanel';
+import { AvatarConversationTag } from '@/components/inbox/AvatarConversationTag';
 import type { Id } from '../../convex/_generated/dataModel';
 
 function getTagColorClass(): { bg: string; text: string; dot: string } {
@@ -20,7 +21,7 @@ function getTagColorClass(): { bg: string; text: string; dot: string } {
   };
 }
 
-export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger' | 'web';
+export type ConversationPlatform = 'whatsapp' | 'instagram' | 'messenger' | 'web' | 'avatar';
 
 export type Chat = {
   id: Id<'conversations'>;
@@ -52,6 +53,8 @@ function PlatformGlyph({ platform }: { platform: ConversationPlatform }) {
       return <SiMessenger {...common} title="Messenger" />;
     case 'web':
       return <Globe size={14} className={getPlatformIconClassName(platform)} />;
+    case 'avatar':
+      return <ScanFace size={14} className={getPlatformIconClassName(platform)} />;
   }
 }
 
@@ -120,10 +123,11 @@ export function ChatRow({ chat, index, total, isSelected, isPinned, onSelect, on
                 </span>
               )}
             </div>
-            {((chat.leadTemperature) || (chat.tags && chat.tags.length > 0) || chat.escalation || chat.hasBooking) && (
+            {(chat.platform === 'avatar' || chat.leadTemperature || (chat.tags && chat.tags.length > 0) || chat.escalation || chat.hasBooking) && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {chat.hasBooking ? <BookedListLabel /> : null}
+                  {chat.platform === 'avatar' ? <AvatarConversationTag compact /> : null}
                   {chat.escalation && (
                     <span
                       className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 dark:border-amber-900/50 dark:bg-amber-950/40 px-1.5 py-0.2 text-[10px] font-semibold text-amber-700 dark:text-amber-400 transition-all shadow-none"

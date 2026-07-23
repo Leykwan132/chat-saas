@@ -7,6 +7,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  ScanFace,
   Tag,
   User,
   UserX,
@@ -62,6 +63,7 @@ const PLATFORM_LABEL: Record<ConversationPlatform, string> = {
   instagram: 'Instagram',
   messenger: 'Messenger',
   web: 'Web',
+  avatar: 'Avatar',
 };
 
 function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
@@ -76,6 +78,8 @@ function PlatformIcon({ platform }: { platform: ConversationPlatform }) {
       return <SiMessenger {...common} />;
     case 'web':
       return <Globe className={className} />;
+    case 'avatar':
+      return <ScanFace className={className} />;
   }
 }
 

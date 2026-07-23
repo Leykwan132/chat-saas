@@ -17,6 +17,7 @@ import {
   User,
   CalendarClock,
   Globe,
+  ScanFace,
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
@@ -138,7 +139,7 @@ type BroadcastCustomerRow = {
   phone: string;
   tags: string[];
   leadTemperature?: LeadTemperature;
-  service: 'whatsapp' | 'instagram' | 'messenger' | 'manual' | 'web';
+  service: Doc<'customers'>['service'];
   email?: string;
   assignedUserId?: string;
   assignToAiAgent?: boolean;
@@ -171,6 +172,7 @@ const sourceBadgeInfo = {
   Instagram: { icon: SiInstagram, colorClass: 'text-[#E4405F]' },
   Messenger: { icon: SiMessenger, colorClass: 'text-[#0866FF]' },
   Web: { icon: Globe, colorClass: 'text-foreground' },
+  Avatar: { icon: ScanFace, colorClass: 'text-muted-foreground' },
   Manual: { icon: User, colorClass: 'text-zinc-500 dark:text-zinc-400' },
 } as const;
 
@@ -186,6 +188,8 @@ function customerSourceLabel(
       return 'Messenger';
     case 'web':
       return 'Web';
+    case 'avatar':
+      return 'Avatar';
     default:
       return 'Manual';
   }

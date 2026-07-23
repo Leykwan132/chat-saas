@@ -80,6 +80,12 @@ import type * as appointmentBooking_validators from "../appointmentBooking/valid
 import type * as appointmentBookingSessionStatus from "../appointmentBookingSessionStatus.js";
 import type * as auth from "../auth.js";
 import type * as authUtils from "../authUtils.js";
+import type * as avatar from "../avatar.js";
+import type * as avatarConversation from "../avatarConversation.js";
+import type * as avatarCore from "../avatarCore.js";
+import type * as avatarEmbed from "../avatarEmbed.js";
+import type * as avatarProvider from "../avatarProvider.js";
+import type * as avatarSession from "../avatarSession.js";
 import type * as backfillEvents from "../backfillEvents.js";
 import type * as billingAddOns from "../billingAddOns.js";
 import type * as billingScope from "../billingScope.js";
@@ -347,6 +353,12 @@ declare const fullApi: ApiFromModules<{
   appointmentBookingSessionStatus: typeof appointmentBookingSessionStatus;
   auth: typeof auth;
   authUtils: typeof authUtils;
+  avatar: typeof avatar;
+  avatarConversation: typeof avatarConversation;
+  avatarCore: typeof avatarCore;
+  avatarEmbed: typeof avatarEmbed;
+  avatarProvider: typeof avatarProvider;
+  avatarSession: typeof avatarSession;
   backfillEvents: typeof backfillEvents;
   billingAddOns: typeof billingAddOns;
   billingScope: typeof billingScope;
