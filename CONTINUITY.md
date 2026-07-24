@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-23 [CODE] Website markdown scraping and link discovery retain their separate Workpools, each configured with `maxParallelism: 1`; the earlier custom 10-second request hold and shared-pool design were removed before deployment.
 - 2026-07-23 [CODE] CustomersPage no longer renders the accidental hard-coded Avatar iframe inside its filter button; removing the copied HTML snippet resolves the React `style` TS2559 production-build failure while preserving the intended Avatar source badge.
 - 2026-07-23 [CODE] The public Kilobot changelog now includes today's `Avatar — Voice avatar preview` release, with selected-workspace feature-flag availability expressed inside New features rather than as a standalone notice; it covers guided avatar/language/voice setup, voice-only sessions, HTML/React website embedding, and Inbox continuity.
 - 2026-07-23 [CODE] Root agent instructions now require every completed task to evaluate public changelog impact and update the matching daily MDX release entry only for confirmed customer-facing production changes; unreleased work stays in continuity until availability is confirmed.
@@ -19,13 +20,14 @@
 - 2026-07-16 [CODE] Docs use Geist for all UI/content (no Gilda/Google Sans Flex); Core Concepts = agent flow; Resources = the rest; not committed/deployed.
 - 2026-07-16 [TOOL] Help center + product docs links shipped on `main` as `82647f72`; site og/twitter use `preview-image-v2.png`; docs not deployed.
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
-- 2026-07-16 [CODE] Broadcast History uses shared shadcn Table/Pagination over `usePaginatedQuery`, initially fetches 10 and loads additional 10-record cursor batches through numbered Previous/Next navigation; implementation is complete on `main` in `0c28ef65`, `1b3e1d32`, `37d7a860`, `81d95b1e`, and `cebadfb3`.
-- 2026-07-16 [CODE] Broadcast detail Recipients uses shared shadcn Table and numbered Pagination with fixed 10-row client-side pages, reactive page clamping, and all-recipient count/cost totals; implementation is complete on `main` pending the user's git handoff choice.
+- 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 - 2026-07-16 [CODE] Broadcast hides its dashboard content panel's vertical scrollbar the same way Message Templates does, while preserving scroll and suppressing Radix body-margin shift.
 - 2026-07-16 [CODE] Workflow Reminder Summary Est. cost shows the per-message WhatsApp rate as `~RM X.XX / reminder message` instead of a per-booked-appointment total.
 - 2026-07-16 [USER] Workflow needs a new Enrich Contact action configured after node creation to collect any of name, email, and phone; it must collect only selected fields missing from the customer record and preserve existing values, with the exact trigger condition still under design.
 - 2026-07-15 [USER] Workflow Follow-up must become the sole follow-up engine and source of attempt limits, timing, templates, and sends; retire the standalone pages, legacy cron/Workpool/runtime, `followUpRules`, `followUpSends`, and customer legacy scheduling fields through a safe schema migration. The user approved permanently deleting legacy data and the staged design is committed at `5b43703c` in `docs/superpowers/specs/2026-07-15-workflow-followup-legacy-retirement-design.md`.
 # Decisions
+- 2026-07-23 [USER] D441 ACTIVE: Keep website scrape throttling simple by setting both the markdown and link-discovery Workpools to `maxParallelism: 1`; do not add a custom timing helper.
+- 2026-07-23 [USER] D440 SUPERSEDED by D441: The original request described Cloudflare Browser Rendering's account limit as one request every 10 seconds; D441 selects concurrency-only throttling even though it does not enforce a temporal gap.
 - 2026-07-23 [USER] D439 ACTIVE: Express selected-workspace feature-flag availability within the Avatar release's New features list, with no standalone feature-flag notice.
 - 2026-07-23 [USER] D438 PARTIALLY SUPERSEDED by D439 for presentation: Publish today's Avatar capabilities in the public changelog even though access is feature flagged; selected-workspace availability remains, while D439 moves it from a standalone notice into New features.
 - 2026-07-23 [USER] D437 ACTIVE: At task completion, agents must update the daily public MDX changelog for confirmed customer-facing production changes, reuse same-date/product/title entries, preserve the existing product/category/date contract, and keep internal, unconfirmed, unshipped, or unavailable feature-flagged work out until release is confirmed.
@@ -204,15 +206,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-23 [CODE] Set both website scrape Workpools to `maxParallelism: 1` and removed the superseded custom 10-second timing layer.
 - 2026-07-23 [CODE] Removed the accidental hard-coded Avatar iframe from the Customers filter control, restoring the production TypeScript build.
 - 2026-07-23 [CODE] Published today's selected-workspace Avatar preview in the MDX changelog with an explicit feature-flag notice and customer-facing capability summary.
 - 2026-07-23 [CODE] Added the root daily-release workflow requiring agents to maintain the public changelog when tasks introduce confirmed customer-facing production changes.
 - 2026-07-23 [CODE] Added the Markdown-based Kilobot changelog, Releases sidebar group, responsive scoped presentation, initial Docs release, and structural authoring-contract tests.
 - 2026-07-23 [CODE] Gated Avatar navigation, dashboard routes, and public embeds with `enable_avatar_feature`; the configured home page shows a labeled custom preview beside HTML/React snippets, and the isolated public iframe reuses that exact image-first `AvatarVideoStage` without mounting the regular website widget.
 - 2026-07-23 [CODE] Made LiveAvatar duration sandbox-aware (60 seconds sandbox, 600 seconds production) and removed sandbox flags/badges/overlays from dashboard configuration, public action results, frontend types, and end-user UI while retaining backend persistence and lifecycle use.
-- 2026-07-23 [CODE] SUPERSEDED by D422: The initial global 60-second LiveAvatar maximum was narrowed to sandbox requests only.
 
 # Working set
+- 2026-07-23 [CODE] Browser Rendering concurrency: `convex/{workpool,webScraperWorkpool.test}.ts`.
 - 2026-07-23 [CODE] Avatar: `docs/superpowers/{specs,plans}/2026-07-23-avatar-web-sdk-demo*.md`, prior copy-handoff design/plan, `convex/{avatar,avatarEmbed,avatarConversation,avatarCore,avatarProvider,avatarSession,schema}.ts`, `src/pages/{AvatarPage,AvatarCreatePage,AvatarEmbedPage,CustomersPage}.tsx`, `src/components/avatar/*`, `src/lib/avatar*`, dashboard navigation/routes, Inbox source presentation, `package.json`, and `bun.lock`.
 - 2026-07-21 [CODE] Pricing heading/copy updates: `src/components/pricing/{PlanComparisonTable,PricingFaqSection,PricingSectionHeading.test,pricingStyles}.ts*` and `src/content/pricingFaqs*`.
 - 2026-07-21 [CODE] Landing workflow preview: `docs/superpowers/{specs/2026-07-21-landing-workflow-preview-density-design,specs/2026-07-21-landing-workflow-local-data-design,specs/2026-07-21-landing-demo-zero-backend-design,plans/2026-07-21-landing-workflow-preview-density,plans/2026-07-21-landing-workflow-local-data,plans/2026-07-21-landing-demo-zero-backend}.md`, `src/components/landing/{LandingAppPreview,LandingAppPreviewWorkflow,landingAppPreviewData.test}*`, `src/pages/WorkflowPage.tsx`, `src/components/WhatsAppTemplatePreview.tsx`, and `src/components/workflow/{WorkflowCanvas,workflowAutomationContext,workflowAutomationState,WorkflowFollowupGuides,WorkflowFollowupAudienceField,WorkflowReminderMessageDialog,WorkflowFollowupMessageDialog,workflowWhatsappTemplates,workflowLocalDataMode.test,WorkflowNode,WorkflowAddNodeMenu,workflowFlowModel,workflowTypes}*`.
@@ -223,7 +226,6 @@
 - 2026-07-19 [USER] Launch video script: `docs/kilobot-launch-video-script.md`.
 - 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 - 2026-07-17 [CODE] Workflow media filename prompt privacy: `convex/chat/{workflowActionPlanner,workflowActionPlanner.test,workflowPrompt,workflowPrompt.test}.ts` and `docs/superpowers/{specs/2026-07-17-workflow-media-filename-prompt-privacy-design,plans/2026-07-17-workflow-media-filename-prompt-privacy}.md`.
-- 2026-07-17 [CODE] Workflow save rollout compatibility: `convex/{workflowDraftSave,workflowDraftSave.test,_generated/api.d}.ts`.
 - 2026-07-23 [CODE] Public help center and changelog workflow: `AGENTS.md`, `kilobot-docs/{docs/releases/changelog.mdx,sidebars.ts,src/components/ChangelogContent*,tests/changelog.test.mjs}`, `src/lib/docsLinks*`, `src/components/{SiteFooter,SupportHoverCard}*`, and `src/components/site-header/{siteHeaderLinks,SiteHeaderNavigation,SiteHeaderActions}.ts*`.
 
 # Open questions
@@ -236,6 +238,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-23 [TOOL] D441 simplification completed a RED/GREEN worker-source contract under Node v22.22.0: it first failed while link discovery aliased the markdown pool and both workers used the custom timing helper, then passed 1 file/2 tests after restoring separate pools with `maxParallelism: 1` and removing the helper. No deployment ran.
+- 2026-07-23 [TOOL] Browser Rendering worker throttling completed two RED/GREEN contracts under Node v22.22.0: the helper test first failed because the rate-limit boundary was absent, and the worker contract then failed while link discovery used its own parallel pool and neither request retained a slot. Final verification passed 2 files/4 tests, scoped ESLint, `git diff --check`, and ≤242-line touched-code checks. No deployment ran, so no public changelog entry was added.
 - 2026-07-23 [TOOL] CustomersPage build repair completed a compiler RED/GREEN under Node v22.22.0: `bun run build` first reproduced TS2559 at the accidental string-style iframe, then `tsc -b && vite build` exited 0 after its removal; `git diff --check` also passed. No changelog entry was added because the fix addresses an unshipped build regression.
 - 2026-07-23 [TOOL] Avatar changelog feature-flag copy completed a focused RED/GREEN contract: the test rejected the standalone notice before the copy moved into the first New features bullet.
 - 2026-07-23 [TOOL] The feature-flagged Avatar changelog entry completed a focused RED/GREEN content contract under Node v22.22.0; its five tests validate the date, title, selected-workspace notice, setup, voice-only sessions, HTML/React embedding, Inbox continuity, entry completeness, category order, and chronology.

@@ -27,7 +27,7 @@ export const webScraperPool = new Workpool(components.webScraperWorkpool, {
 });
 
 export const linkDiscovererPool = new Workpool(components.linkDiscovererWorkpool, {
-  maxParallelism: 2,
+  maxParallelism: 1,
 });
 
 // ─── CF Upload Worker ─────────────────────────────────────
