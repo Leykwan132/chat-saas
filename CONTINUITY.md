@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-24 [USER] Stripe test-catalog design is approved: plain `curl` creates six products and nine MYR prices for Starter/Growth/Business monthly and annual subscriptions plus three separately named one-time credit packs, then maps generated IDs to all required Convex price variables.
+- 2026-07-24 [USER] Stripe test-catalog design is approved and its implementation plan is ready: plain `curl` creates six products and nine MYR prices for Starter/Growth/Business monthly and annual subscriptions plus three separately named one-time credit packs, then maps generated IDs to all required Convex price variables.
 - 2026-07-23 [CODE] Website markdown scraping and link discovery retain their separate Workpools, each configured with `maxParallelism: 1`; the earlier custom 10-second request hold and shared-pool design were removed before deployment.
 - 2026-07-23 [CODE] CustomersPage no longer renders the accidental hard-coded Avatar iframe inside its filter button; removing the copied HTML snippet resolves the React `style` TS2559 production-build failure while preserving the intended Avatar source badge.
 - 2026-07-23 [CODE] The public Kilobot changelog now includes today's `Avatar — Voice avatar preview` release, with selected-workspace feature-flag availability expressed inside New features rather than as a standalone notice; it covers guided avatar/language/voice setup, voice-only sessions, HTML/React website embedding, and Inbox continuity.
@@ -215,7 +215,7 @@
 - 2026-07-23 [CODE] Made LiveAvatar duration sandbox-aware (60 seconds sandbox, 600 seconds production) and removed sandbox flags/badges/overlays from dashboard configuration, public action results, frontend types, and end-user UI while retaining backend persistence and lifecycle use.
 
 # Working set
-- 2026-07-24 [CODE] Stripe test-catalog curl design: `docs/superpowers/specs/2026-07-24-stripe-test-catalog-curl-design.md`; implementation will provide a copyable command set without changing runtime billing code.
+- 2026-07-24 [CODE] Stripe test catalog: `docs/superpowers/{specs,plans}/2026-07-24-stripe-test-catalog-curl*.md`; implementation will provide a copyable command set without changing runtime billing code.
 - 2026-07-23 [CODE] Browser Rendering concurrency: `convex/{workpool,webScraperWorkpool.test}.ts`.
 - 2026-07-23 [CODE] Avatar: `docs/superpowers/{specs,plans}/2026-07-23-avatar-web-sdk-demo*.md`, prior copy-handoff design/plan, `convex/{avatar,avatarEmbed,avatarConversation,avatarCore,avatarProvider,avatarSession,schema}.ts`, `src/pages/{AvatarPage,AvatarCreatePage,AvatarEmbedPage,CustomersPage}.tsx`, `src/components/avatar/*`, `src/lib/avatar*`, dashboard navigation/routes, Inbox source presentation, `package.json`, and `bun.lock`.
 - 2026-07-21 [CODE] Pricing heading/copy updates: `src/components/pricing/{PlanComparisonTable,PricingFaqSection,PricingSectionHeading.test,pricingStyles}.ts*` and `src/content/pricingFaqs*`.
@@ -238,6 +238,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-24 [TOOL] The Stripe test-catalog implementation plan covers the exact test-key guard, authentication probe, six product calls, nine price calls, field-level read-only verification, complete Convex variable mapping, static checks, ledger update, and commit; spec coverage, identifier/amount consistency, placeholder guidance, and whitespace passed.
 - 2026-07-23 [TOOL] D441 simplification completed a RED/GREEN worker-source contract under Node v22.22.0: it first failed while link discovery aliased the markdown pool and both workers used the custom timing helper, then passed 1 file/2 tests after restoring separate pools with `maxParallelism: 1` and removing the helper. No deployment ran.
 - 2026-07-23 [TOOL] Browser Rendering worker throttling completed two RED/GREEN contracts under Node v22.22.0: the helper test first failed because the rate-limit boundary was absent, and the worker contract then failed while link discovery used its own parallel pool and neither request retained a slot. Final verification passed 2 files/4 tests, scoped ESLint, `git diff --check`, and ≤242-line touched-code checks. No deployment ran, so no public changelog entry was added.
 - 2026-07-23 [TOOL] CustomersPage build repair completed a compiler RED/GREEN under Node v22.22.0: `bun run build` first reproduced TS2559 at the accidental string-style iframe, then `tsc -b && vite build` exited 0 after its removal; `git diff --check` also passed. No changelog entry was added because the fix addresses an unshipped build regression.
