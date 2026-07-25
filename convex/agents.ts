@@ -1,23 +1,18 @@
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
-import {
-  DEFAULT_OPENROUTER_MODEL,
-  getModelProvider,
-  isEnabledModel,
-} from "./llm/modelPricing";
+import { getModelProvider, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
 import { AGENT_PROMPT_TEMPLATES } from "../shared/agentPromptTemplates";
+import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
 import {
   assertCanCreateAgent,
   assertCanManageAgent,
   getOwnedAgent,
 } from "./agentAccess";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-
-const DEFAULT_MODEL = DEFAULT_OPENROUTER_MODEL;
 
 const templateKeyValidator = v.union(
   v.literal("blank"),
@@ -158,7 +153,7 @@ export const create = mutation({
       throw new Error("Agent name is required");
     }
 
-    const model = args.model?.trim() || DEFAULT_MODEL;
+    const model = args.model?.trim() || DEFAULT_AGENT_MODEL;
     await assertEnabledModel(model);
 
     if (!checkModelAccess(plan, model)) {

@@ -33,8 +33,7 @@ import { RequireOrganization } from '@/components/RequireOrganization';
 import { ModelPicker } from '@/components/ModelPicker';
 import { cn } from '@/lib/utils';
 import { TypingAnimation as LoopingTypingAnimation } from '@/components/ui/typing-animation';
-
-const RECOMMENDED_MODEL = 'deepseek/deepseek-v4-flash';
+import { DEFAULT_AGENT_MODEL } from '../../shared/agentModelDefaults';
 
 const CREATING_AGENT_PHRASES = [
   'Cooking your agent…',
@@ -122,7 +121,7 @@ function CreateAgentForm() {
   const createStartedRef = useRef(false);
   useEffect(() => {
     if (!enabledModels || enabledModels.length === 0 || model) return;
-    const recommended = enabledModels.find((m: any) => m.value === RECOMMENDED_MODEL);
+    const recommended = enabledModels.find((m: any) => m.value === DEFAULT_AGENT_MODEL);
     setModel(recommended?.value ?? enabledModels[0].value);
   }, [enabledModels, model]);
 
@@ -194,7 +193,7 @@ function CreateAgentForm() {
         : 'cursor-not-allowed bg-secondary text-muted-foreground',
     );
 
-  const recommendedModel = enabledModels?.find((m: any) => m.value === RECOMMENDED_MODEL);
+  const recommendedModel = enabledModels?.find((m: any) => m.value === DEFAULT_AGENT_MODEL);
 
   const goToNextStep = () => {
     if (step === 1 && name.trim()) setStep(2);

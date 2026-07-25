@@ -1,6 +1,7 @@
 import { expect, test } from "vitest";
 import { MODEL_PRICING, listEnabledModels } from "./modelPricing";
 import { PLAN_CATALOG } from "../planCatalog";
+import { DEFAULT_AGENT_MODEL } from "../../shared/agentModelDefaults";
 
 function plansWithModel(modelId: string) {
   return Object.entries(PLAN_CATALOG)
@@ -41,6 +42,11 @@ test("Free plan includes only Ilmu Mini V3.3", () => {
   );
 
   expect(otherModels.every((model) => model.requiredPlan !== "free")).toBe(true);
+});
+
+test("Ilmu Mini V3.3 is the default agent model", () => {
+  expect(DEFAULT_AGENT_MODEL).toBe("ilmu-mini-v3.3");
+  expect(listEnabledModels().some((model) => model.value === DEFAULT_AGENT_MODEL)).toBe(true);
 });
 
 test("Free plan grants and advertises 50 monthly credits", () => {
