@@ -128,8 +128,13 @@ registerRoutes(http, components.stripe, {
       }
     },
     "payment_intent.succeeded": async (ctx, event: unknown) => {
+      console.log("payment_intent.succeeded", event);
       const paymentIntent = getStripeEventObject<StripePaymentIntentPayload>(event);
       if (paymentIntent.status !== "succeeded") {
+        console.log("payment_intent.succeeded exit: status not succeeded", {
+          stripePaymentIntentId: paymentIntent.id,
+          status: paymentIntent.status,
+        });
         return;
       }
 
@@ -137,10 +142,11 @@ registerRoutes(http, components.stripe, {
         stripePaymentIntentId: paymentIntent.id,
       });
       if (!storedPayment || storedPayment.status !== "succeeded") {
-        console.warn(
-          "payment_intent.succeeded without stored succeeded payment:",
-          paymentIntent.id,
-        );
+        console.warn("payment_intent.succeeded exit: no stored succeeded payment", {
+          stripePaymentIntentId: paymentIntent.id,
+          hasStoredPayment: Boolean(storedPayment),
+          storedPaymentStatus: storedPayment?.status,
+        });
         return;
       }
 
@@ -149,26 +155,38 @@ registerRoutes(http, components.stripe, {
         ...(paymentIntent.metadata ?? {}),
       };
       if (metadata.type !== STRIPE_EXTRA_CREDITS_METADATA_TYPE) {
+        console.log("payment_intent.succeeded exit: not extra-credits payment", {
+          stripePaymentIntentId: paymentIntent.id,
+          metadataType: metadata.type,
+        });
         return;
       }
 
       const creditsRaw =
         metadata[STRIPE_CREDITS_AMOUNT_METADATA_KEY] ?? metadata.creditsAmount;
       if (creditsRaw === undefined) {
-        console.warn("Missing credits metadata for payment intent:", paymentIntent.id);
+        console.warn("payment_intent.succeeded exit: missing credits metadata", {
+          stripePaymentIntentId: paymentIntent.id,
+        });
         return;
       }
 
       const creditsToGrant = Number.parseInt(String(creditsRaw), 10);
       if (!Number.isFinite(creditsToGrant) || creditsToGrant <= 0) {
-        console.warn("Invalid credits metadata for payment intent:", paymentIntent.id);
+        console.warn("payment_intent.succeeded exit: invalid credits metadata", {
+          stripePaymentIntentId: paymentIntent.id,
+          creditsRaw,
+          creditsToGrant,
+        });
         return;
       }
 
       const stripeCustomerId =
         getStripeCustomerId(paymentIntent.customer ?? null) ?? storedPayment.stripeCustomerId;
       if (!stripeCustomerId) {
-        console.warn("payment_intent.succeeded missing customer:", paymentIntent.id);
+        console.warn("payment_intent.succeeded exit: missing customer", {
+          stripePaymentIntentId: paymentIntent.id,
+        });
         return;
       }
 
@@ -176,12 +194,20 @@ registerRoutes(http, components.stripe, {
         stripeCustomerId,
       });
       if (!customer?.userId) {
-        console.warn("payment_intent.succeeded customer not mapped:", stripeCustomerId);
+        console.warn("payment_intent.succeeded exit: customer not mapped", {
+          stripePaymentIntentId: paymentIntent.id,
+          stripeCustomerId,
+        });
         return;
       }
 
       const orgId = (metadata.orgId as string | undefined) ?? customer.userId;
 
+      console.log("payment_intent.succeeded granting credits", {
+        stripePaymentIntentId: paymentIntent.id,
+        orgId,
+        creditsToGrant,
+      });
       await ctx.runMutation(internal.stripe.handlePaymentIntentSucceededInternal, {
         stripePaymentIntentId: paymentIntent.id,
         orgId,
@@ -190,6 +216,7 @@ registerRoutes(http, components.stripe, {
     },
   },
 });
+
 
 http.route({
   path: "/webhook/workos",
