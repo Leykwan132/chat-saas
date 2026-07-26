@@ -66,6 +66,7 @@ test("Stripe top-up processing grants each configured credit package", async () 
     expect(state.topUps).toHaveLength(1);
     expect(state.topUps[0]).toMatchObject({
       userId,
+      source: "purchase",
       grantedCredits: pack.credits,
       usedCredits: 0,
       stripePaymentIntentId: paymentIntentId,

@@ -100,6 +100,25 @@ Supported values:
 - `hours`: Resets after 1 hour.
 - `minutes`: Resets after 1 minute.
 
+### Configuring Referrals
+
+The referral program requires both values to be positive safe integers:
+
+```bash
+bunx convex env set REFERRAL_REWARD_CREDITS 1000
+bunx convex env set REFERRAL_MAX_SUCCESSFUL_REFERRALS 10
+```
+
+Configuration changes apply to future referral awards. Existing redemption
+history retains the reward granted at completion.
+
+Dry-run the data backfills before enabling the referral interface:
+
+```bash
+bunx convex run topUpEntrySourceMigration:runBackfillTopUpEntrySources '{"dryRun":true}'
+bunx convex run referralCodeMigration:runBackfillReferralCodes '{"dryRun":true}'
+```
+
 If you have existing contact requests with legacy statuses (`new`, `reviewed`), run the one-off migration:
 
 ```bash
@@ -191,4 +210,3 @@ The lifecycle transitions through the following statuses:
 | **`completed`** | Initial sync is finished (both contacts and history are synced). | Checked and set by `maybeCompleteWhatsAppConnectionAttempt` once both contact and history sync status reach terminal states. |
 | **`cancelled`** | Connection attempt cancelled by the user. | Updated via `cancelConnectionAttempt` mutation when the user clicks **Cancel** on the Channels page. |
 | **`error`** | Flow failed (invalid credentials, API error, or sync crash). | Updated when an error is caught during token exchange, during webhook disconnect events, or if a sync task encounters a fatal failure. |
-

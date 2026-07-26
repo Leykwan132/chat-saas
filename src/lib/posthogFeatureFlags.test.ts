@@ -10,6 +10,7 @@ describe('PostHog product feature flags', () => {
       showTokenUsage: 'show-token-usage',
       showSavedReplies: 'show-saved-replies',
       enableAvatarFeature: 'enable_avatar_feature',
+      enableReferralProgram: 'enable_referral_program',
     });
   });
 

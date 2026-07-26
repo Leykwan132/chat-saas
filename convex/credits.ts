@@ -1,7 +1,6 @@
 import { v } from "convex/values";
 import {
   query,
-  mutation,
   internalQuery,
   internalMutation,
   type MutationCtx,
@@ -230,17 +229,12 @@ export const internalDeductCredits = internalMutation({
   },
 });
 
-export const topUp = mutation({
+export const topUp = internalMutation({
   args: {
-    orgId: v.optional(v.union(v.string(), v.null())),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    const { userId } = await getAuthContext(ctx, args.orgId);
-
-    const userObj = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", userId))
-      .unique();
+    const userObj = await ctx.db.get(args.userId);
     if (!userObj) {
       throw new Error("User not found");
     }
@@ -248,10 +242,12 @@ export const topUp = mutation({
     const { billingUser } = await getBillingEntityForUser(ctx, userObj);
     const before = await snapshotUserCredit(ctx, billingUser._id);
     const topUpEntryId = await createTopUpEntry(ctx, billingUser._id, {
+      source: "manual",
       grantedCredits: 500,
       label: buildTopUpLabel(500),
     });
-    const after = await snapshotUserCredit(ctx, billingUser._id);
+    const balanceAfter = before.totalRemaining + 500;
+    const nonMonthlyAfter = before.purchasedRemaining + 500;
 
     await insertCreditLog(ctx, {
       orgId: "",
@@ -260,17 +256,17 @@ export const topUp = mutation({
       label: buildTopUpLabel(500),
       amount: 500,
       balanceBefore: before.totalRemaining,
-      balanceAfter: after.totalRemaining,
+      balanceAfter,
       monthlyCreditsBefore: before.monthlyRemaining,
-      monthlyCreditsAfter: after.monthlyRemaining,
+      monthlyCreditsAfter: before.monthlyRemaining,
       purchasedCreditsBefore: before.purchasedRemaining,
-      purchasedCreditsAfter: after.purchasedRemaining,
+      purchasedCreditsAfter: nonMonthlyAfter,
       creditCost: 500,
       topUpEntryId,
       reason: "User topped up credits (manual/test)",
     });
 
-    return { success: true, newCredits: after.totalRemaining };
+    return { success: true, newCredits: balanceAfter };
   },
 });
 

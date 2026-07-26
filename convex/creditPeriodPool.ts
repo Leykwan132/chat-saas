@@ -7,6 +7,10 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { getPlanFromStripe } from "./plans";
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
 import { insertCreditLog } from "./creditLogs";
+import {
+  summarizeTopUpEntries,
+  type TopUpCreditBreakdown,
+} from "./creditSourceBreakdown";
 
 export const creditPeriodPool = new Workpool(
   components.creditPeriodWorkpool,
@@ -128,14 +132,7 @@ export async function getTopUpRemaining(
   ctx: QueryCtx,
   userId: Id<"users">,
 ): Promise<number> {
-  const entries = await ctx.db
-    .query("topUpEntries")
-    .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
-    .collect();
-  return entries.reduce(
-    (sum, e) => sum + ((e.grantedCredits ?? 0) - (e.usedCredits ?? 0)),
-    0,
-  );
+  return (await getTopUpBreakdown(ctx, userId)).totalRemaining;
 }
 
 /** Sum of granted top-up credits for a user. */
@@ -143,11 +140,21 @@ export async function getTopUpGranted(
   ctx: QueryCtx,
   userId: Id<"users">,
 ): Promise<number> {
-  const entries = await ctx.db
+  return (await getTopUpBreakdown(ctx, userId)).totalGranted;
+}
+
+async function getTopUpBreakdown(
+  ctx: QueryCtx,
+  userId: Id<"users">,
+): Promise<TopUpCreditBreakdown> {
+  const entries = [];
+  const query = ctx.db
     .query("topUpEntries")
-    .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId))
-    .collect();
-  return entries.reduce((sum, e) => sum + (e.grantedCredits ?? 0), 0);
+    .withIndex("by_userId_and_createdAt", (q) => q.eq("userId", userId));
+  for await (const entry of query) {
+    entries.push(entry);
+  }
+  return summarizeTopUpEntries(entries);
 }
 
 export type UserCreditSnapshot = {
@@ -157,6 +164,10 @@ export type UserCreditSnapshot = {
   monthlyUsed: number;
   purchasedRemaining: number;
   purchasedGranted: number;
+  additionalRemaining: number;
+  additionalGranted: number;
+  referralRemaining: number;
+  referralGranted: number;
   totalRemaining: number;
 };
 
@@ -171,16 +182,19 @@ export async function snapshotUserCredit(
   const monthlyGranted = current?.grantedCredits ?? 0;
   const monthlyUsed = current?.usedCredits ?? 0;
   const monthlyRemaining = current ? monthlyGranted - monthlyUsed : 0;
-  const purchasedRemaining = await getTopUpRemaining(ctx, userId);
-  const purchasedGranted = await getTopUpGranted(ctx, userId);
+  const topUpBreakdown = await getTopUpBreakdown(ctx, userId);
   return {
     period: current,
     monthlyRemaining,
     monthlyGranted,
     monthlyUsed,
-    purchasedRemaining,
-    purchasedGranted,
-    totalRemaining: monthlyRemaining + purchasedRemaining,
+    purchasedRemaining: topUpBreakdown.totalRemaining,
+    purchasedGranted: topUpBreakdown.totalGranted,
+    additionalRemaining: topUpBreakdown.additionalRemaining,
+    additionalGranted: topUpBreakdown.additionalGranted,
+    referralRemaining: topUpBreakdown.referralRemaining,
+    referralGranted: topUpBreakdown.referralGranted,
+    totalRemaining: monthlyRemaining + topUpBreakdown.totalRemaining,
   };
 }
 

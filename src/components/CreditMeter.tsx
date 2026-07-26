@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { cn } from '@/lib/utils';
+import { buildCreditBalanceRows } from '@/lib/creditBalanceRows';
 
 function topUpProgressValue(remaining: number, granted: number) {
   if (granted <= 0) {
@@ -50,15 +51,23 @@ export function CreditMeter() {
 
   const isLoading = isAuthLoading || planAndUsage === undefined;
   const monthlyCredits = planAndUsage?.monthlyCredits ?? 0;
-  const purchasedCredits = planAndUsage?.purchasedCredits ?? 0;
-  const purchasedCreditsGranted = planAndUsage?.purchasedCreditsGranted ?? 0;
+  const additionalCredits = planAndUsage?.additionalCredits ?? 0;
+  const additionalCreditsGranted = planAndUsage?.additionalCreditsGranted ?? 0;
+  const referralCredits = planAndUsage?.referralCredits ?? 0;
+  const referralCreditsGranted = planAndUsage?.referralCreditsGranted ?? 0;
   const monthlyAllowance = planAndUsage?.planConfig.monthlyCredits ?? 0;
   const monthlyPct =
     monthlyAllowance > 0
       ? Math.min(100, Math.round((monthlyCredits / monthlyAllowance) * 100))
       : 0;
-  const topUpPct = topUpProgressValue(purchasedCredits, purchasedCreditsGranted);
-  const hasTopUps = purchasedCredits > 0;
+  const creditRows = buildCreditBalanceRows({
+    monthlyRemaining: monthlyCredits,
+    monthlyGranted: monthlyAllowance,
+    additionalRemaining: additionalCredits,
+    additionalGranted: additionalCreditsGranted,
+    referralRemaining: referralCredits,
+    referralGranted: referralCreditsGranted,
+  });
   const showUpgradePlan =
     !isLoading &&
     planAndUsage?.canManageBilling &&
@@ -101,57 +110,62 @@ export function CreditMeter() {
             goToUsage();
           }
         }}
-        className="rounded-lg border border-border/60 bg-sidebar-accent/40 px-[0.675rem] py-[0.5625rem] space-y-[0.675rem] cursor-pointer transition-colors hover:bg-sidebar-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex cursor-pointer flex-col gap-[0.675rem] rounded-lg border border-border/60 bg-sidebar-accent/40 px-[0.675rem] py-[0.5625rem] transition-colors hover:bg-sidebar-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div className="space-y-[0.45rem]">
-          <div className="flex items-center justify-between">
-            {!isLoading && planAndUsage?.plan ? (
-              <Badge
-                variant="secondary"
-                className="h-[0.9rem] rounded px-[0.225rem] text-[8.1px] font-semibold uppercase bg-primary/10 text-primary border-none select-none tracking-wider"
-              >
-                {planAndUsage.plan}
-              </Badge>
-            ) : null}
-            <span
-              className={cn(
-                'text-[0.675rem] font-semibold tabular-nums',
-                (!isLoading && !planAndUsage?.plan) || isLoading ? 'ml-auto' : null,
-                !isLoading && monthlyPct <= 10 && 'text-red-500',
-                !isLoading && monthlyPct > 10 && monthlyPct <= 30 && 'text-amber-500',
-                (isLoading || monthlyPct > 30) && 'text-muted-foreground',
-              )}
-            >
-              {isLoading
-                ? '…'
-                : `${monthlyCredits.toLocaleString()} / ${monthlyAllowance.toLocaleString()}`}
-            </span>
-          </div>
-          <Progress
-            value={isLoading ? 0 : monthlyPct}
-            className={cn(
-              'h-[0.3375rem]',
-              !isLoading && monthlyPct <= 10 && '[&>[data-slot=progress-indicator]]:bg-red-500',
-              !isLoading && monthlyPct > 10 && monthlyPct <= 30 && '[&>[data-slot=progress-indicator]]:bg-amber-400',
-              !isLoading && monthlyPct > 30 && '[&>[data-slot=progress-indicator]]:bg-primary',
-            )}
-          />
-        </div>
-
-        {!isLoading && hasTopUps ? (
-          <div className="space-y-[0.45rem]">
-            <div className="flex items-center justify-between">
-              <span className="text-[0.675rem] font-medium text-muted-foreground">Add-on</span>
-              <span className="text-[0.675rem] font-medium tabular-nums text-muted-foreground">
-                {purchasedCredits.toLocaleString()} / {purchasedCreditsGranted.toLocaleString()}
-              </span>
+        {(isLoading ? creditRows.slice(0, 1) : creditRows).map((row) => {
+          const progressValue =
+            row.key === 'plan'
+              ? monthlyPct
+              : topUpProgressValue(row.remaining, row.granted);
+          return (
+            <div key={row.key} className="flex flex-col gap-[0.45rem]">
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-[0.675rem] font-medium text-muted-foreground">
+                  {row.label}
+                  {row.key === 'plan' && !isLoading && planAndUsage?.plan ? (
+                    <Badge
+                      variant="secondary"
+                      className="h-[0.9rem] rounded border-none bg-primary/10 px-[0.225rem] text-[8.1px] font-semibold uppercase tracking-wider text-primary select-none"
+                    >
+                      {planAndUsage.plan}
+                    </Badge>
+                  ) : null}
+                </span>
+                <span
+                  className={cn(
+                    'text-[0.675rem] font-semibold tabular-nums',
+                    row.key === 'plan' &&
+                      !isLoading &&
+                      monthlyPct <= 10 &&
+                      'text-destructive',
+                    row.key === 'plan' &&
+                      !isLoading &&
+                      monthlyPct > 10 &&
+                      monthlyPct <= 30 &&
+                      'text-muted-foreground',
+                    (row.key !== 'plan' || isLoading || monthlyPct > 30) &&
+                      'text-muted-foreground',
+                  )}
+                >
+                  {isLoading
+                    ? '…'
+                    : `${row.remaining.toLocaleString()} / ${row.granted.toLocaleString()}`}
+                </span>
+              </div>
+              <Progress
+                value={isLoading ? 0 : progressValue}
+                className={cn(
+                  'h-[0.3375rem]',
+                  row.key === 'plan' &&
+                    !isLoading &&
+                    monthlyPct <= 10 &&
+                    '[&>[data-slot=progress-indicator]]:bg-destructive',
+                  row.key === 'additional' && TOP_UP_PROGRESS_CLASS,
+                )}
+              />
             </div>
-            <Progress
-              value={topUpPct}
-              className={cn('h-[0.3375rem]', TOP_UP_PROGRESS_CLASS)}
-            />
-          </div>
-        ) : null}
+          );
+        })}
 
         {!isLoading && planAndUsage?.canManageBilling ? (
           <Button

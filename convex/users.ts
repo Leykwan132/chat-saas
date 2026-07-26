@@ -9,6 +9,7 @@ import {
 } from "./creditPeriodPool";
 import { getBillingEntityForUser } from "./plans";
 import { ensureUserAccount } from "./teamHelpers";
+import { redeemReferralDuringOnboarding } from "./referralRedemption";
 
 /** Debug / introspection: Convex auth identity (WorkOS JWT claims) for the current socket. */
 export const getAuthUser = query({
@@ -115,7 +116,12 @@ export const completeOnboarding = mutation({
     role: v.string(),
     useCase: v.array(v.string()),
     channels: v.array(v.string()),
+    referralCode: v.optional(v.string()),
   },
+  returns: v.object({
+    success: v.boolean(),
+    referralRewardCredits: v.union(v.number(), v.null()),
+  }),
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (identity === null) {
@@ -131,22 +137,30 @@ export const completeOnboarding = mutation({
       throw new Error("User not found in database");
     }
 
-    await ctx.db.patch(user._id, {
-      onboarded: true,
-      onboardingAnswers: {
-        role: args.role,
-        useCase: args.useCase,
-        channels: args.channels,
-      },
-      updatedAt: Date.now(),
-    });
-
     // Ensure a credit period exists for the user's billing account. The first
     // period grants the plan's monthly credits as the welcome allocation.
     const { billingUser } = await getBillingEntityForUser(ctx, user);
     await ensureFirstCreditPeriod(ctx, billingUser._id);
     await getOrCreateCurrentPeriod(ctx, billingUser._id);
 
-    return { success: true };
+    const referralRewardCredits = await redeemReferralDuringOnboarding(
+      ctx,
+      user,
+      args.referralCode,
+    );
+
+    if (!user.onboarded) {
+      await ctx.db.patch(user._id, {
+        onboarded: true,
+        onboardingAnswers: {
+          role: args.role,
+          useCase: args.useCase,
+          channels: args.channels,
+        },
+        updatedAt: Date.now(),
+      });
+    }
+
+    return { success: true, referralRewardCredits };
   },
 });

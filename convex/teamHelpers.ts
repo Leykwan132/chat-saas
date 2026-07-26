@@ -2,6 +2,7 @@ import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 
 import { PLAN_CATALOG, type PlanKey } from "./planCatalog";
+import { ensureReferralCodeForUser } from "./referralCodeRecords";
 
 export const PERSONAL_ORG_ID = "";
 
@@ -268,6 +269,7 @@ export async function ensureUserAccount(
     if ((await getPersonalTeamForUser(ctx, existing._id)) === null) {
       await createPersonalTeamForUser(ctx, existing._id, args.timeZone);
     }
+    await ensureReferralCodeForUser(ctx, existing._id);
 
     return existing._id;
   }
@@ -282,6 +284,7 @@ export async function ensureUserAccount(
     updatedAt: now,
   });
   await createPersonalTeamForUser(ctx, userId, args.timeZone);
+  await ensureReferralCodeForUser(ctx, userId);
   return userId;
 }
 
@@ -325,4 +328,3 @@ export async function ensureOrganizationalTeam(
 
   return team._id;
 }
-

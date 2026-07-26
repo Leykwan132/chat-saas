@@ -1226,6 +1226,13 @@ export default defineSchema({
   // validate until migrated; new code reads grantedCredits/usedCredits.
   topUpEntries: defineTable({
     userId: v.optional(v.id("users")),
+    source: v.optional(
+      v.union(
+        v.literal("purchase"),
+        v.literal("referral"),
+        v.literal("manual"),
+      ),
+    ),
     grantedCredits: v.optional(v.number()),
     usedCredits: v.optional(v.number()),
     label: v.optional(v.string()),
@@ -1241,6 +1248,29 @@ export default defineSchema({
   })
     .index("by_userId_and_createdAt", ["userId", "createdAt"])
     .index("by_stripePaymentIntentId", ["stripePaymentIntentId"]),
+  referralCodes: defineTable({
+    userId: v.id("users"),
+    code: v.string(),
+    successfulReferralCount: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_code", ["code"]),
+  referralRedemptions: defineTable({
+    referralCodeId: v.id("referralCodes"),
+    referrerUserId: v.id("users"),
+    referredUserId: v.id("users"),
+    rewardCredits: v.number(),
+    referrerTopUpEntryId: v.id("topUpEntries"),
+    referredTopUpEntryId: v.id("topUpEntries"),
+    completedAt: v.number(),
+  })
+    .index("by_referredUserId", ["referredUserId"])
+    .index("by_referrerUserId_and_completedAt", [
+      "referrerUserId",
+      "completedAt",
+    ]),
   creditLogs: defineTable({
     teamId: v.optional(v.id("teams")),
     orgId: v.string(),

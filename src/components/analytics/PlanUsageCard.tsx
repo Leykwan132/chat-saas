@@ -14,6 +14,10 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import {
+  buildCreditBalanceRows,
+  type CreditBalanceRow,
+} from '@/lib/creditBalanceRows';
 
 function planProgressValue(remaining: number, allowance: number) {
   if (allowance <= 0) {
@@ -109,40 +113,33 @@ function CreditUsageRow({
 }
 
 function PlanUsageBody({
-  monthlyCredits,
-  monthlyAllowance,
-  purchasedCredits,
-  purchasedCreditsGranted,
-  monthlyProgressValue,
+  rows,
   monthlyProgressClassName,
-  topUpProgressPct,
 }: {
-  monthlyCredits: number;
-  monthlyAllowance: number;
-  purchasedCredits: number;
-  purchasedCreditsGranted: number;
-  monthlyProgressValue: number;
+  rows: CreditBalanceRow[];
   monthlyProgressClassName?: string;
-  topUpProgressPct: number;
 }) {
   return (
-    <div className="space-y-6">
-      <CreditUsageRow
-        title="Credits"
-        remaining={monthlyCredits}
-        total={monthlyAllowance}
-        progressValue={monthlyProgressValue}
-        progressClassName={monthlyProgressClassName}
-      />
-      {purchasedCredits > 0 ? (
+    <div className="flex flex-col gap-6">
+      {rows.map((row) => (
         <CreditUsageRow
-          title="Top-ups"
-          remaining={purchasedCredits}
-          total={purchasedCreditsGranted}
-          progressValue={topUpProgressPct}
-          progressClassName={TOP_UP_PROGRESS_CLASS}
+          key={row.key}
+          title={row.label}
+          remaining={row.remaining}
+          total={row.granted}
+          progressValue={topUpProgressValue(
+            row.remaining,
+            row.granted,
+          )}
+          progressClassName={
+            row.key === 'plan'
+              ? monthlyProgressClassName
+              : row.key === 'additional'
+                ? TOP_UP_PROGRESS_CLASS
+                : undefined
+          }
         />
-      ) : null}
+      ))}
     </div>
   );
 }
@@ -170,12 +167,21 @@ export function PlanUsageCard() {
 
   const isLoading = isAuthLoading || planAndUsage === undefined;
   const monthlyCredits = planAndUsage?.monthlyCredits ?? 0;
-  const purchasedCredits = planAndUsage?.purchasedCredits ?? 0;
-  const purchasedCreditsGranted = planAndUsage?.purchasedCreditsGranted ?? 0;
+  const additionalCredits = planAndUsage?.additionalCredits ?? 0;
+  const additionalCreditsGranted = planAndUsage?.additionalCreditsGranted ?? 0;
+  const referralCredits = planAndUsage?.referralCredits ?? 0;
+  const referralCreditsGranted = planAndUsage?.referralCreditsGranted ?? 0;
   const monthlyAllowance = planAndUsage?.monthlyAllowance ?? 0;
   const planPct = planProgressValue(monthlyCredits, monthlyAllowance);
-  const topUpPct = topUpProgressValue(purchasedCredits, purchasedCreditsGranted);
   const planName = planAndUsage?.planConfig.name ?? 'Free';
+  const rows = buildCreditBalanceRows({
+    monthlyRemaining: monthlyCredits,
+    monthlyGranted: monthlyAllowance,
+    additionalRemaining: additionalCredits,
+    additionalGranted: additionalCreditsGranted,
+    referralRemaining: referralCredits,
+    referralGranted: referralCreditsGranted,
+  });
 
   const goToPlan = () => {
     const base = agentId ? `/dashboard/${agentId}/settings` : '/workspace/settings';
@@ -203,16 +209,11 @@ export function PlanUsageCard() {
           <BalanceCardSkeleton />
         ) : (
           <PlanUsageBody
-            monthlyCredits={monthlyCredits}
-            monthlyAllowance={monthlyAllowance}
-            purchasedCredits={purchasedCredits}
-            purchasedCreditsGranted={purchasedCreditsGranted}
-            monthlyProgressValue={planPct}
+            rows={rows}
             monthlyProgressClassName={cn(
               planPct <= 10 && '[&>[data-slot=progress-indicator]]:bg-red-500',
               planPct > 10 && planPct <= 30 && '[&>[data-slot=progress-indicator]]:bg-amber-400',
             )}
-            topUpProgressPct={topUpPct}
           />
         )}
       </CompactBalanceCard>

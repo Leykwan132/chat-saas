@@ -11,11 +11,14 @@ export type CreditDeductionResult = {
   topUpAllocations: Array<{ topUpEntryId: Id<"topUpEntries">; amount: number }>;
 };
 
+export type TopUpEntrySource = "purchase" | "referral" | "manual";
+
 /** Create a top-up entry (granted/used quota, carried forward across cycles). */
 export async function createTopUpEntry(
   ctx: MutationCtx,
   userId: Id<"users">,
   args: {
+    source: TopUpEntrySource;
     grantedCredits: number;
     label?: string;
     stripePaymentIntentId?: string;
@@ -24,6 +27,7 @@ export async function createTopUpEntry(
   const now = Date.now();
   return await ctx.db.insert("topUpEntries", {
     userId,
+    source: args.source,
     grantedCredits: args.grantedCredits,
     usedCredits: 0,
     label: args.label,

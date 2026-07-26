@@ -445,6 +445,7 @@ export const handlePaymentIntentSucceededInternal = internalMutation({
 
     const before = await snapshotUserCredit(ctx, owner._id);
     const topUpEntryId = await createTopUpEntry(ctx, owner._id, {
+      source: "purchase",
       grantedCredits: args.creditsToGrant,
       label: buildTopUpLabel(args.creditsToGrant),
       stripePaymentIntentId: args.stripePaymentIntentId,

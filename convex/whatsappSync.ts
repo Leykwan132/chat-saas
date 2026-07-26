@@ -12,6 +12,7 @@ import { whatsappSyncPool } from "./channelSyncPools";
 import { resolveInboxLedgerContentType } from "./chat/inboxAudioIngest";
 import { leadLabelPool } from "./inboxPools";
 import { isSkippedWhatsAppContact } from "./whatsappSkipContacts";
+import { logWhatsAppHistoryErrorMessage } from "./whatsappHistoryDiagnostics";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const META_COEXISTENCE_BATCH_COUNT = 3;
@@ -334,6 +335,15 @@ async function upsertIngestMessage(
 ): Promise<void> {
   if (!args.message.id) return;
   const now = Date.now();
+  if (args.message.type === "error") {
+    logWhatsAppHistoryErrorMessage({
+      channelId: args.channelId,
+      batchId: args.batchId,
+      ingestThreadId: args.ingestThreadId,
+      whatsappThreadId: args.whatsappThreadId,
+      message: args.message,
+    });
+  }
   const existing = await ctx.db
     .query("whatsappHistoryIngestMessages")
     .withIndex("by_channelId_and_externalId", (q) =>
@@ -1209,4 +1219,7 @@ export type WhatsAppHistoryMessage = {
   document?: { caption?: string; id?: string; filename?: string };
   button?: { text?: string };
   history_context?: { status?: string };
+  error?: unknown;
+  errors?: unknown;
+  [key: string]: unknown;
 };

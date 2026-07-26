@@ -66,6 +66,7 @@ import {
   PlaygroundRedirect,
 } from '@/router/AppRouteComponents'
 import { QuickRepliesFeatureRoute } from '@/router/QuickRepliesFeatureRoute'
+import { ReferralFeatureRoute } from '@/router/ReferralFeatureRoute'
 import {
   AvatarCreateFeatureRoute,
   AvatarEmbedFeatureRoute,
@@ -120,6 +121,7 @@ const router = createBrowserRouter(
         <Route path="settings" element={<SettingsPage />} />
         <Route path="invitations" element={<InvitationsPage />} />
         <Route path="usage" element={<WorkspaceUsagePage />} />
+        <Route path="referrals" element={<ReferralFeatureRoute />} />
         <Route path="account" element={<Navigate to="../settings" replace />} />
       </Route>
       <Route path="/create-agent" element={<CreateAgentPage />} />

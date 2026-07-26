@@ -31,6 +31,22 @@ const ERROR_CODE_MAP: Record<string | number, MappedError> = {
     title: 'Permission Denied',
     message: 'Only team owners can invite someone as an Owner.',
   },
+  'INVALID_REFERRAL_CODE': {
+    title: 'Invalid referral code',
+    message: 'This referral code was not found.',
+  },
+  'SELF_REFERRAL': {
+    title: 'Invalid referral code',
+    message: 'You cannot use your own referral code.',
+  },
+  'REFERRAL_LIMIT_REACHED': {
+    title: 'Referral limit reached',
+    message: 'This referral code has reached its limit.',
+  },
+  'ALREADY_REDEEMED': {
+    title: 'Referral code already used',
+    message: 'A referral code has already been used for this account.',
+  },
 };
 
 // Map lowercase legacy string errors to user-friendly titles and description messages (as fallbacks)

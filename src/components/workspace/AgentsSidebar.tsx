@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router';
 import {
   BarChart3,
   Bot,
+  Gift,
   Mail,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,6 +25,10 @@ import {
 } from '@/components/ui/sidebar';
 import { usePendingTeamInvitations } from '@/hooks/usePendingTeamInvitations';
 import { usePermissions } from '@/hooks/usePermissions';
+import {
+  isProductFeatureEnabled,
+  useEnableReferralProgram,
+} from '@/lib/posthogFeatureFlags';
 import { cn } from '@/lib/utils';
 import { Permission } from '../../../shared/permissions';
 
@@ -32,9 +37,13 @@ export function AgentsSidebar() {
   const isAgentsRoute = pathname === '/workspace';
   const isInvitationsRoute = pathname === '/workspace/invitations';
   const isUsageRoute = pathname === '/workspace/usage';
+  const isReferralsRoute = pathname === '/workspace/referrals';
   const { state, toggleSidebar } = useSidebar();
   const { count: pendingInvitationCount } = usePendingTeamInvitations();
   const { can } = usePermissions();
+  const referralProgramState = useEnableReferralProgram();
+  const referralProgramEnabled =
+    isProductFeatureEnabled(referralProgramState);
 
   return (
     <Sidebar collapsible="icon">
@@ -119,6 +128,20 @@ export function AgentsSidebar() {
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {referralProgramEnabled ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isReferralsRoute}
+                    tooltip="Get Free Credits"
+                  >
+                    <Link to="/workspace/referrals">
+                      <Gift />
+                      <span>Get Free Credits</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
