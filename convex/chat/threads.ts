@@ -23,6 +23,7 @@ import {
   type InboxAttachment,
 } from "../../shared/inboxAttachments";
 import { INBOX_REACTION_EMOJIS } from "../../shared/messageReactions";
+import { truncateMessagePreview } from "../../shared/messagePreview";
 import {
   INBOX_ORDER_SPACER_TEXT,
   type InboxOutboundMeta,
@@ -1082,7 +1083,7 @@ export async function ingestChannelMessage(
   const files = args.files ?? [];
   const preview =
     trimmedContent.length > 0
-      ? trimmedContent.slice(0, 140)
+      ? truncateMessagePreview(trimmedContent, 140)
       : images.length > 0
         ? "Image"
         : files.length > 0
