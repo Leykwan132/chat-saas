@@ -3,8 +3,43 @@ import { convexTest } from "convex-test";
 import { expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import schema from "./schema";
+import {
+  isWhatsAppErrorMessage,
+  logWhatsAppLiveErrorMessage,
+} from "./whatsappHistoryDiagnostics";
 
 const modules = import.meta.glob("./**/*.ts");
+
+test("live ingest logs Meta error details for error-typed messages", () => {
+  const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  try {
+    const message = {
+      id: "wamid.error",
+      from: "16505551234",
+      timestamp: "1700000",
+      type: "error",
+      errors: [{ code: 131026, title: "Message undeliverable" }],
+    };
+    expect(isWhatsAppErrorMessage(message)).toBe(true);
+    logWhatsAppLiveErrorMessage({
+      source: "messages",
+      phoneNumberId: "phone-123",
+      message,
+    });
+    expect(errorLog).toHaveBeenCalledWith(
+      "[whatsapp] live ingest Meta error message",
+      expect.objectContaining({
+        source: "messages",
+        phoneNumberId: "phone-123",
+        externalId: "wamid.error",
+        type: "error",
+        errors: [{ code: 131026, title: "Message undeliverable" }],
+      }),
+    );
+  } finally {
+    errorLog.mockRestore();
+  }
+});
 
 test("history staging logs Meta error details before saving the placeholder", async () => {
   const t = convexTest(schema, modules);

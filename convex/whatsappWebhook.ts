@@ -29,6 +29,10 @@ import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomatio
 import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
+import {
+  isWhatsAppErrorMessage,
+  logWhatsAppLiveErrorMessage,
+} from "./whatsappHistoryDiagnostics";
 const messageStatusValidator = v.union(
   v.literal("queued"),
   v.literal("sent"),
@@ -365,6 +369,13 @@ export async function receive(
         if (!phoneNumberId) continue;
         for (const echo of value.message_echoes ?? []) {
           if (!echo.id || !echo.to) continue;
+          if (isWhatsAppErrorMessage(echo)) {
+            logWhatsAppLiveErrorMessage({
+              source: "message_echoes",
+              phoneNumberId,
+              message: echo,
+            });
+          }
           try {
             await ctx.runMutation(internal.whatsappWebhook.handleMessageEcho, {
               phoneNumberId,
@@ -396,6 +407,14 @@ export async function receive(
 
       for (const message of value.messages ?? []) {
         try {
+          if (isWhatsAppErrorMessage(message)) {
+            logWhatsAppLiveErrorMessage({
+              source: "messages",
+              phoneNumberId,
+              message,
+            });
+          }
+
           if (message.type === "reaction" && message.reaction?.message_id) {
             await ctx.runMutation(internal.whatsappWebhook.handleReaction, {
               phoneNumberId,
@@ -1279,6 +1298,10 @@ type WhatsAppIncomingMessage = {
     button_reply?: { id?: string; title?: string };
     list_reply?: { id?: string; title?: string };
   };
+  error?: unknown;
+  errors?: unknown;
+  history_context?: unknown;
+  [key: string]: unknown;
 };
 
 type WhatsAppHistoryError = {

@@ -22,14 +22,42 @@ export function logWhatsAppHistoryErrorMessage(args: {
     batchId: args.batchId,
     ingestThreadId: args.ingestThreadId,
     whatsappThreadId: args.whatsappThreadId,
-    externalId: args.message.id,
-    type: args.message.type,
-    timestamp: args.message.timestamp,
-    from: args.message.from,
-    to: args.message.to,
-    error: args.message.error,
-    errors: args.message.errors,
-    historyContext: args.message.history_context,
-    payloadKeys: Object.keys(args.message).sort(),
+    ...whatsAppErrorMessageFields(args.message),
   });
+}
+
+export function logWhatsAppLiveErrorMessage(args: {
+  source: "messages" | "message_echoes";
+  phoneNumberId: string;
+  message: WhatsAppHistoryDiagnosticMessage;
+}) {
+  console.error("[whatsapp] live ingest Meta error message", {
+    source: args.source,
+    phoneNumberId: args.phoneNumberId,
+    ...whatsAppErrorMessageFields(args.message),
+  });
+}
+
+export function isWhatsAppErrorMessage(
+  message: WhatsAppHistoryDiagnosticMessage,
+): boolean {
+  return (
+    message.type === "error" ||
+    message.error !== undefined ||
+    message.errors !== undefined
+  );
+}
+
+function whatsAppErrorMessageFields(message: WhatsAppHistoryDiagnosticMessage) {
+  return {
+    externalId: message.id,
+    type: message.type,
+    timestamp: message.timestamp,
+    from: message.from,
+    to: message.to,
+    error: message.error,
+    errors: message.errors,
+    historyContext: message.history_context,
+    payloadKeys: Object.keys(message).sort(),
+  };
 }
