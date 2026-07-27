@@ -57,3 +57,45 @@ test("successful incoming persistence returns HTTP 200", async () => {
   expect(response.status).toBe(200);
 });
 
+test("unsupported Meta messages are logged but not ingested", async () => {
+  vi.spyOn(console, "error").mockImplementation(() => undefined);
+  const runMutation = vi.fn();
+  const ctx = {
+    runMutation,
+  } as unknown as Parameters<typeof receive>[0];
+  const payload = JSON.stringify({
+    entry: [
+      {
+        changes: [
+          {
+            field: "messages",
+            value: {
+              metadata: { phone_number_id: "phone-123" },
+              messages: [
+                {
+                  id: "message-unsupported",
+                  from: "60123456789",
+                  timestamp: "1700000000",
+                  type: "unsupported",
+                  errors: [
+                    {
+                      code: 131051,
+                      title: "Message type unknown",
+                      message: "Message type unknown",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  });
+
+  const response = await receive(ctx, payload);
+
+  expect(response.status).toBe(200);
+  expect(runMutation).not.toHaveBeenCalled();
+});
+

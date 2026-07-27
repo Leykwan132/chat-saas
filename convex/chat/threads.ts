@@ -134,6 +134,7 @@ export async function saveUserMessage(
   const attachmentMetadata = inboxAttachmentsProviderMetadata({
     audio: hasAudio ? audioFiles : undefined,
     images: hasImages ? images : undefined,
+    displayText: messageContent,
   });
   if (attachmentMetadata) {
     metadata.providerMetadata = attachmentMetadata;

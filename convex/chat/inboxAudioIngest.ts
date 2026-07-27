@@ -1,5 +1,6 @@
-import { fetchWhatsAppMediaAsBase64 } from "./audioUtils";
 import type { Doc } from "../_generated/dataModel";
+import type { ActionCtx } from "../_generated/server";
+import { storeWhatsAppMediaInR2 } from "./whatsappMediaIngest";
 
 export type InboxAudioFile = {
   url: string;
@@ -64,11 +65,22 @@ export function resolveWebhookAudioFiles(
 
 /** WhatsApp Cloud API media id → playable URL for inbox metadata. */
 export async function resolveWhatsAppAudioFiles(
-  mediaId: string,
-  accessToken: string,
+  ctx: ActionCtx,
+  args: {
+    mediaId: string;
+    mediaUrl?: string;
+    mimeTypeHint?: string;
+    phoneNumberId: string;
+    accessToken: string;
+    orgId: string;
+  },
 ): Promise<InboxAudioFile[]> {
-  const file = await fetchWhatsAppMediaAsBase64(mediaId, accessToken);
-  return [file];
+  return [
+    await storeWhatsAppMediaInR2(ctx, {
+      kind: "audio",
+      ...args,
+    }),
+  ];
 }
 
 /** Ledger contentType when the messages table mirrors channel payloads. */

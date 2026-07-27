@@ -3,10 +3,14 @@ import type { MessageDoc } from "@convex-dev/agent";
 import type { UIMessage } from "@convex-dev/agent/react";
 import type { Id, Doc } from "../_generated/dataModel";
 import type { QueryCtx } from "../_generated/server";
-import type { InboxAttachment } from "../../shared/inboxAttachments";
+import type {
+  InboxAttachment,
+  InboxMediaUnderstanding,
+} from "../../shared/inboxAttachments";
 import {
   INBOX_IMAGE_PLACEHOLDER,
   readInboxAttachmentsFromProviderMetadata,
+  readInboxMetadataFromProviderMetadata,
 } from "../../shared/inboxAttachments";
 import type { InboxMessageReaction } from "../../shared/messageReactions";
 import { inferMediaMimeType } from "./mediaUrlExtractor";
@@ -56,7 +60,9 @@ export type InboxMessageMetadata = {
     ai?: AIProviderMetadata;
     channel?: ChannelProviderMetadata;
     inbox?: {
-      attachments: InboxAttachment[];
+      attachments?: InboxAttachment[];
+      displayText?: string;
+      mediaUnderstanding?: InboxMediaUnderstanding;
     };
   };
   llmModel?: string;
@@ -69,6 +75,7 @@ export type InboxMessageMetadata = {
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
   inboxAttachments?: InboxAttachment[];
+  inboxMediaUnderstanding?: InboxMediaUnderstanding;
   ledgerMessageId?: string;
   externalId?: string;
   channelStatus?: Doc<"messages">["status"];
@@ -167,7 +174,10 @@ function resolveSentAt(
 }
 
 function readInboxAttachments(doc: MessageDoc): InboxAttachment[] | undefined {
-  return readInboxAttachmentsFromProviderMetadata(doc.providerMetadata);
+  return (
+    readInboxAttachmentsFromProviderMetadata(doc.providerOptions) ??
+    readInboxAttachmentsFromProviderMetadata(doc.providerMetadata)
+  );
 }
 
 function ledgerMediaAttachment(row: Doc<"messages">): InboxAttachment | undefined {
@@ -277,11 +287,19 @@ export async function messageDocsToInboxUIMessages(
       const inboxAttachments =
         readInboxAttachments(doc) ??
         (docId ? ledgerAttachmentsByAgentMessageId.get(docId) : undefined);
+      const inboxMetadata =
+        readInboxMetadataFromProviderMetadata(doc.providerOptions) ??
+        readInboxMetadataFromProviderMetadata(doc.providerMetadata);
       const hideLedgerMediaText = shouldHideLedgerMediaText(ui.text, inboxAttachments);
+      const displayText = inboxMetadata?.displayText;
       return [
         {
           ...ui,
-          ...(hideLedgerMediaText ? { text: INBOX_IMAGE_PLACEHOLDER } : {}),
+          ...(displayText !== undefined
+            ? { text: displayText }
+            : hideLedgerMediaText
+              ? { text: INBOX_IMAGE_PLACEHOLDER }
+              : {}),
           _creationTime: sentAt,
           ...(ledger !== undefined
             ? {
@@ -297,6 +315,12 @@ export async function messageDocsToInboxUIMessages(
           ...(agentName !== undefined ? { agentName } : {}),
           ...(sentByAi !== undefined ? { sentByAi } : {}),
           ...(inboxAttachments !== undefined ? { inboxAttachments } : {}),
+          ...(inboxMetadata?.mediaUnderstanding !== undefined
+            ? {
+                inboxMediaUnderstanding:
+                  inboxMetadata.mediaUnderstanding,
+              }
+            : {}),
           ...(workflowAutomationSource ? { workflowAutomationSource } : {}),
           ...broadcastMetadata,
         },

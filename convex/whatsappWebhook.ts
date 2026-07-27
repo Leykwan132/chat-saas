@@ -16,6 +16,7 @@ import {
   resolveInboxLedgerContentType,
   resolveWhatsAppAudioFiles,
 } from "./chat/inboxAudioIngest";
+import { resolveWhatsAppImageFiles } from "./chat/inboxImageIngest";
 import { applyOutboundStatusByExternalId } from "./chat/readReceipts";
 import { whatsappSyncPool } from "./channelSyncPools";
 import {
@@ -30,8 +31,13 @@ import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
 import {
+  inboundMediaDescriptorValidator,
+  queueInboundMediaBatch,
+} from "./inboundMediaBatch";
+import {
   isWhatsAppErrorMessage,
   logWhatsAppLiveErrorMessage,
+  logWhatsAppMultiImageEvent,
 } from "./whatsappHistoryDiagnostics";
 const messageStatusValidator = v.union(
   v.literal("queued"),
@@ -405,7 +411,13 @@ export async function receive(
         }
       }
 
-      for (const message of value.messages ?? []) {
+      const incomingMessages = value.messages ?? [];
+      logWhatsAppMultiImageEvent({
+        phoneNumberId,
+        messages: incomingMessages,
+      });
+
+      for (const message of incomingMessages) {
         try {
           if (isWhatsAppErrorMessage(message)) {
             logWhatsAppLiveErrorMessage({
@@ -413,6 +425,7 @@ export async function receive(
               phoneNumberId,
               message,
             });
+            continue;
           }
 
           if (message.type === "reaction" && message.reaction?.message_id) {
@@ -426,20 +439,66 @@ export async function receive(
             continue;
           }
 
+          let images: Array<{ url: string; mimeType: string }> | undefined;
           let files: Array<{ url: string; mimeType: string }> | undefined;
-          if (message.type === "audio" && message.audio?.id) {
+          const mediaDescriptors =
+            message.type === "image" && message.image?.id
+              ? [
+                  {
+                    assetKey: `whatsapp:${message.id}:image:0`,
+                    kind: "image" as const,
+                    service: "whatsapp" as const,
+                    providerMediaId: message.image.id,
+                  },
+                ]
+              : message.type === "audio" && message.audio?.id
+                ? [
+                    {
+                      assetKey: `whatsapp:${message.id}:audio:0`,
+                      kind: "audio" as const,
+                      service: "whatsapp" as const,
+                      providerMediaId: message.audio.id,
+                    },
+                  ]
+                : undefined;
+          if (
+            (message.type === "image" && message.image?.id) ||
+            (message.type === "audio" && message.audio?.id)
+          ) {
             const channel = await ctx.runQuery(
               internal.channels.internalGetChannelByPhoneNumberId,
               { phoneNumberId, contactAddress: message.from },
             );
             if (channel?.accessToken) {
-              try {
-                files = await resolveWhatsAppAudioFiles(
-                  message.audio.id,
-                  channel.accessToken,
-                );
-              } catch (err) {
-                console.error("Failed to fetch WhatsApp audio media", err);
+              const mediaOwnerId =
+                channel.orgId || channel.connectedByUserId;
+              if (message.type === "image" && message.image?.id) {
+                try {
+                  images = await resolveWhatsAppImageFiles(ctx, {
+                    mediaId: message.image.id,
+                    mediaUrl: message.image.url,
+                    mimeTypeHint: message.image.mime_type,
+                    phoneNumberId,
+                    accessToken: channel.accessToken,
+                    orgId: mediaOwnerId,
+                  });
+                } catch (err) {
+                  console.error("Failed to store WhatsApp image media", err);
+                }
+              }
+              if (message.type === "audio" && message.audio?.id) {
+                try {
+                  files = await resolveWhatsAppAudioFiles(ctx, {
+                    mediaId: message.audio.id,
+                    mediaUrl: message.audio.url,
+                    mimeTypeHint: message.audio.mime_type,
+                    phoneNumberId,
+                    accessToken: channel.accessToken,
+                    orgId: mediaOwnerId,
+                  });
+                } catch (err) {
+                  console.error("Failed to fetch WhatsApp audio media", err);
+                }
               }
             }
           }
@@ -453,8 +512,11 @@ export async function receive(
               from: message.from,
               timestampMs: parseTimestamp(message.timestamp),
               content: extractContent(message),
+              caption: message.image?.caption,
               profileName: nameByWaId.get(message.from),
+              images,
               files,
+              mediaDescriptors,
             },
           );
         } catch (err) {
@@ -946,7 +1008,16 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
       from: v.string(),
       timestampMs: v.number(),
       content: v.string(),
+      caption: v.optional(v.string()),
       profileName: v.optional(v.string()),
+      images: v.optional(
+        v.array(
+          v.object({
+            url: v.string(),
+            mimeType: v.string(),
+          }),
+        ),
+      ),
       files: v.optional(
         v.array(
           v.object({
@@ -955,6 +1026,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
           }),
         ),
       ),
+      mediaDescriptors: v.optional(v.array(inboundMediaDescriptorValidator)),
     },
     handler: async (
       ctx,
@@ -965,7 +1037,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
 
       const contentType = resolveInboxLedgerContentType(
         args.content,
-        undefined,
+        args.images,
         args.files,
       );
 
@@ -981,6 +1053,7 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
           contentType,
           timestampMs: args.timestampMs,
           isHistorical: false,
+          images: args.images,
           files: args.files,
         },
       );
@@ -1007,20 +1080,48 @@ export const ingestIncomingMessageAndTriggerAnalyticsWorkflowAndAi =
             requireAiHandled: true,
           },
         );
-        await inboxAiReplyPool.enqueueAction(
-          ctx,
-          internal.chat.inbox.generateAiReplyWorker,
-          {
+        const mediaDescriptors = args.mediaDescriptors ?? [];
+        const queuedForUnderstanding =
+          result.agentMessageId !== undefined &&
+          (await queueInboundMediaBatch(ctx, {
             conversationId: result.conversationId,
-            promptContent: inboxPromptContent(
-              args.content,
-              undefined,
-              args.files,
-            ),
+            externalId: args.externalId,
             promptMessageId: result.agentMessageId,
-            inboundExternalId: args.externalId,
-          },
-        );
+            caption: args.caption ?? "",
+            timestampMs: args.timestampMs,
+            descriptors: mediaDescriptors,
+          }));
+        if (mediaDescriptors.length > 0 || (args.images?.length ?? 0) > 0) {
+          // ponytail: temporary multi-image/caption probe; remove with webhook helper
+          console.warn("[whatsapp] multi-image ingest", {
+            phoneNumberId: args.phoneNumberId,
+            externalId: args.externalId,
+            conversationId: result.conversationId,
+            hasCaption: Boolean(args.caption),
+            captionLength: args.caption?.length ?? 0,
+            caption: args.caption,
+            imageCount: args.images?.length ?? 0,
+            descriptorCount: mediaDescriptors.length,
+            descriptorKinds: mediaDescriptors.map((descriptor) => descriptor.kind),
+            queuedForUnderstanding,
+          });
+        }
+        if (!queuedForUnderstanding) {
+          await inboxAiReplyPool.enqueueAction(
+            ctx,
+            internal.chat.inbox.generateAiReplyWorker,
+            {
+              conversationId: result.conversationId,
+              promptContent: inboxPromptContent(
+                args.content,
+                args.images,
+                args.files,
+              ),
+              promptMessageId: result.agentMessageId,
+              inboundExternalId: args.externalId,
+            },
+          );
+        }
       }
 
       return result;
@@ -1161,6 +1262,7 @@ function extractContent(msg: WhatsAppIncomingMessage): string {
     return msg.interactive.button_reply.title;
   if (msg.interactive?.list_reply?.title)
     return msg.interactive.list_reply.title;
+  if (msg.type === "image") return "";
   if (msg.type === "audio") return "";
   return `<${msg.type ?? "unknown"}>`;
 }
@@ -1288,10 +1390,10 @@ type WhatsAppIncomingMessage = {
   timestamp?: string;
   type?: string;
   text?: { body?: string };
-  image?: { caption?: string; id?: string };
-  video?: { caption?: string; id?: string };
-  audio?: { id?: string };
-  document?: { caption?: string; id?: string; filename?: string };
+  image?: WhatsAppMediaPayload;
+  video?: WhatsAppMediaPayload;
+  audio?: WhatsAppMediaPayload & { voice?: boolean };
+  document?: WhatsAppMediaPayload & { filename?: string };
   reaction?: { message_id?: string; emoji?: string };
   button?: { text?: string };
   interactive?: {
@@ -1302,6 +1404,14 @@ type WhatsAppIncomingMessage = {
   errors?: unknown;
   history_context?: unknown;
   [key: string]: unknown;
+};
+
+type WhatsAppMediaPayload = {
+  caption?: string;
+  id?: string;
+  mime_type?: string;
+  sha256?: string;
+  url?: string;
 };
 
 type WhatsAppHistoryError = {

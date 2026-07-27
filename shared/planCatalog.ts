@@ -9,6 +9,7 @@ export type PlanFeatureFlags = {
   thread_summary: boolean;
   sync_lead_labeling: boolean;
   auto_reply: boolean;
+  ai_handle_audio_image: boolean;
   custom_agents: boolean;
   agent_usage: boolean;
   team_analytics: boolean;
@@ -143,6 +144,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       thread_summary: false,
       sync_lead_labeling: false,
       auto_reply: false,
+      ai_handle_audio_image: false,
       custom_agents: false,
       agent_usage: true,
       team_analytics: false,
@@ -180,6 +182,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: false,
+      ai_handle_audio_image: false,
       custom_agents: false,
       agent_usage: true,
       team_analytics: true,
@@ -201,6 +204,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "10 AI Agents",
       "5,000 credits / mo",
       "20MB per agent",
+      "Visual & Voice Intelligence",
       "Advanced Analytics",
       "10 team members",
     ],
@@ -216,6 +220,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: true,
+      ai_handle_audio_image: true,
       custom_agents: true,
       agent_usage: true,
       team_analytics: true,
@@ -250,6 +255,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       thread_summary: true,
       sync_lead_labeling: true,
       auto_reply: true,
+      ai_handle_audio_image: true,
       custom_agents: true,
       agent_usage: true,
       team_analytics: true,
@@ -386,6 +392,9 @@ export const AUTO_LEAD_TAGGING_LABEL = "Auto lead tagging";
 export const CHAT_SUMMARY_LABEL = "Chat summary";
 export const BASIC_ANALYTICS_LABEL = "Basic Analytics";
 export const AI_WORKFLOWS_LABEL = "AI Workflows";
+export const MEDIA_UNDERSTANDING_LABEL = "Visual & Voice Intelligence";
+export const MEDIA_UNDERSTANDING_HOVER_DESCRIPTION =
+  "AI is able to understand the audio and photos sent by users.";
 export const TEAM_ANALYTICS_LABEL = "Team analytics";
 export const TOPIC_ANALYTICS_LABEL = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_INCLUDES = [
@@ -496,7 +505,8 @@ export function isPlanFeatureDescriptionHoverLabel(label: string): boolean {
   return (
     isPlanCreditsLabel(label) ||
     isChatSummaryLabel(label) ||
-    isBasicAnalyticsLabel(label)
+    isBasicAnalyticsLabel(label) ||
+    label === MEDIA_UNDERSTANDING_LABEL
   );
 }
 
@@ -514,6 +524,12 @@ export function getPlanFeatureDescriptionHover(label: string): {
     return {
       title: BASIC_ANALYTICS_HOVER_TITLE,
       description: BASIC_ANALYTICS_HOVER_DESCRIPTION,
+    };
+  }
+  if (label === MEDIA_UNDERSTANDING_LABEL) {
+    return {
+      title: MEDIA_UNDERSTANDING_LABEL,
+      description: MEDIA_UNDERSTANDING_HOVER_DESCRIPTION,
     };
   }
   return null;
@@ -721,6 +737,20 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
       included: true,
     }),
     getComparisonValue: () => true,
+  },
+  {
+    group: "ai_features",
+    comparisonLabel: MEDIA_UNDERSTANDING_LABEL,
+    getSelfServeCardRow: (planId) => ({
+      text: MEDIA_UNDERSTANDING_LABEL,
+      included: PLAN_CATALOG[planId].features.ai_handle_audio_image,
+    }),
+    getEnterpriseCardRow: () => ({
+      text: MEDIA_UNDERSTANDING_LABEL,
+      included: true,
+    }),
+    getComparisonValue: (planId) =>
+      PLAN_CATALOG[planId].features.ai_handle_audio_image,
   },
   {
     group: "ai_features",

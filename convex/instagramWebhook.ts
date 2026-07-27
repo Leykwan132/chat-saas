@@ -12,6 +12,7 @@ import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomatio
 import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
+import { queueInboundMediaBatch } from "./inboundMediaBatch";
 
 // POST handler for the product-specific /webhook/instagram route.
 // The caller (convex/http.ts) has already read the raw body and checked the
@@ -106,7 +107,9 @@ export async function receive(
       console.log("[instagramWebhook.receive] message event received:", {
         recipientId,
         senderId,
-        message,
+        externalId: message.mid,
+        hasText: Boolean(message.text?.trim()),
+        attachmentCount: message.attachments?.length ?? 0,
       });
 
       const webhookAttachments = message.attachments ?? [];
@@ -262,20 +265,48 @@ export const handleIncoming = internalMutation({
           requireAiHandled: true,
         },
       );
-      await inboxAiReplyPool.enqueueAction(
-        ctx,
-        internal.chat.inbox.generateAiReplyWorker,
-        {
+      const descriptors = [
+        ...(args.images ?? []).map((image, index) => ({
+          assetKey: `instagram:${args.externalId}:image:${index}`,
+          kind: "image" as const,
+          service: "instagram" as const,
+          providerUrl: image.url,
+          mimeType: image.mimeType,
+        })),
+        ...(args.files ?? []).map((file, index) => ({
+          assetKey: `instagram:${args.externalId}:audio:${index}`,
+          kind: "audio" as const,
+          service: "instagram" as const,
+          providerUrl: file.url,
+          mimeType: file.mimeType,
+        })),
+      ];
+      const queuedForUnderstanding =
+        result.agentMessageId !== undefined &&
+        (await queueInboundMediaBatch(ctx, {
           conversationId: result.conversationId,
-          promptContent: inboxPromptContent(
-            content,
-            args.images,
-            args.files,
-          ),
+          externalId: args.externalId,
           promptMessageId: result.agentMessageId,
-          inboundExternalId: args.externalId,
-        },
-      );
+          caption: content,
+          timestampMs: args.timestampMs,
+          descriptors,
+        }));
+      if (!queuedForUnderstanding) {
+        await inboxAiReplyPool.enqueueAction(
+          ctx,
+          internal.chat.inbox.generateAiReplyWorker,
+          {
+            conversationId: result.conversationId,
+            promptContent: inboxPromptContent(
+              content,
+              args.images,
+              args.files,
+            ),
+            promptMessageId: result.agentMessageId,
+            inboundExternalId: args.externalId,
+          },
+        );
+      }
     }
 
     return result;

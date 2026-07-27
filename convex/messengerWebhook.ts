@@ -12,6 +12,7 @@ import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomatio
 import { inboxAiReplyPool, metaIndicatorPool } from "./inboxPools";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import type { IngestChannelMessageResult } from "./chat/threads";
+import { queueInboundMediaBatch } from "./inboundMediaBatch";
 
 const LOG_PREFIX = "[messenger-webhook]";
 
@@ -316,20 +317,48 @@ export const handleIncoming = internalMutation({
           requireAiHandled: true,
         },
       );
-      await inboxAiReplyPool.enqueueAction(
-        ctx,
-        internal.chat.inbox.generateAiReplyWorker,
-        {
+      const descriptors = [
+        ...(args.images ?? []).map((image, index) => ({
+          assetKey: `messenger:${args.externalId}:image:${index}`,
+          kind: "image" as const,
+          service: "messenger" as const,
+          providerUrl: image.url,
+          mimeType: image.mimeType,
+        })),
+        ...(args.files ?? []).map((file, index) => ({
+          assetKey: `messenger:${args.externalId}:audio:${index}`,
+          kind: "audio" as const,
+          service: "messenger" as const,
+          providerUrl: file.url,
+          mimeType: file.mimeType,
+        })),
+      ];
+      const queuedForUnderstanding =
+        result.agentMessageId !== undefined &&
+        (await queueInboundMediaBatch(ctx, {
           conversationId: result.conversationId,
-          promptContent: inboxPromptContent(
-            content,
-            args.images,
-            args.files,
-          ),
+          externalId: args.externalId,
           promptMessageId: result.agentMessageId,
-          inboundExternalId: args.externalId,
-        },
-      );
+          caption: content,
+          timestampMs: args.timestampMs,
+          descriptors,
+        }));
+      if (!queuedForUnderstanding) {
+        await inboxAiReplyPool.enqueueAction(
+          ctx,
+          internal.chat.inbox.generateAiReplyWorker,
+          {
+            conversationId: result.conversationId,
+            promptContent: inboxPromptContent(
+              content,
+              args.images,
+              args.files,
+            ),
+            promptMessageId: result.agentMessageId,
+            inboundExternalId: args.externalId,
+          },
+        );
+      }
     }
 
     return result;

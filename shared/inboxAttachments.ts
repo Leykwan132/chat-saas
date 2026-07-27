@@ -9,9 +9,28 @@ export type InboxAttachment = {
   type: InboxAttachmentKind;
 };
 
+export type InboxMediaUnderstandingAsset = {
+  assetKey: string;
+  kind: InboxAttachmentKind;
+  audioTranscript?: string;
+  audioLanguage?: string;
+  imageDescription?: string;
+  visibleImageText?: string;
+  uncertainty?: string;
+};
+
+export type InboxMediaUnderstanding = {
+  model: string;
+  processedAt: number;
+  captionResponse?: string;
+  assets: InboxMediaUnderstandingAsset[];
+};
+
 export type InboxAttachmentsProviderMetadata = {
   inbox: {
     attachments: InboxAttachment[];
+    displayText?: string;
+    mediaUnderstanding?: InboxMediaUnderstanding;
   };
 };
 
@@ -40,9 +59,19 @@ export function toInboxAttachments(options: {
 export function inboxAttachmentsProviderMetadata(options: {
   audio?: Array<{ url: string; mimeType: string }>;
   images?: Array<{ url: string; mimeType: string }>;
+  displayText?: string;
 }): InboxAttachmentsProviderMetadata | undefined {
   const attachments = toInboxAttachments(options);
-  return attachments.length > 0 ? { inbox: { attachments } } : undefined;
+  return attachments.length > 0
+    ? {
+        inbox: {
+          attachments,
+          ...(options.displayText !== undefined
+            ? { displayText: options.displayText }
+            : {}),
+        },
+      }
+    : undefined;
 }
 
 export function readInboxAttachmentsFromProviderMetadata(
@@ -58,12 +87,27 @@ export function readInboxAttachmentsFromProviderMetadata(
   return attachments;
 }
 
+export function readInboxMetadataFromProviderMetadata(
+  providerMetadata: unknown,
+): InboxAttachmentsProviderMetadata["inbox"] | undefined {
+  if (!providerMetadata || typeof providerMetadata !== "object") {
+    return undefined;
+  }
+  const inbox = (providerMetadata as { inbox?: unknown }).inbox;
+  if (!inbox || typeof inbox !== "object") return undefined;
+  return inbox as InboxAttachmentsProviderMetadata["inbox"];
+}
+
 export function isInboxAudioPlaceholder(text: string | undefined): boolean {
   return (text?.trim() ?? "") === INBOX_AUDIO_PLACEHOLDER;
 }
 
 export function isInboxImagePlaceholder(text: string | undefined): boolean {
-  return (text?.trim() ?? "") === INBOX_IMAGE_PLACEHOLDER;
+  const normalized = text?.trim() ?? "";
+  return (
+    normalized === INBOX_IMAGE_PLACEHOLDER ||
+    normalized.toLowerCase() === "<image>"
+  );
 }
 
 /** Prompt text for the AI when the inbound message has no caption. */

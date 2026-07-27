@@ -8,11 +8,13 @@ import {
   isInboxAudioPlaceholder,
   isInboxImagePlaceholder,
   type InboxAttachment,
+  type InboxMediaUnderstanding,
 } from '../../shared/inboxAttachments';
 
 export type InboxUIMessage = UIMessage & {
   sentByAi?: boolean;
   inboxAttachments?: InboxAttachment[];
+  inboxMediaUnderstanding?: InboxMediaUnderstanding;
   ledgerMessageId?: string;
   externalId?: string;
   channelStatus?: 'queued' | 'sent' | 'delivered' | 'read' | 'failed';

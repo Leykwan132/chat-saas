@@ -26,12 +26,8 @@ import {
 import { metaIndicatorPool } from "../inboxPools";
 import { toChannelMediaItems } from "./aiReplyMedia";
 import {
-  aiReplyStructuredOutput,
-  extractAiReplyOutputMedia,
-} from "./aiReplyOutput";
-import {
-  aiReplyPromptArgs,
   generateWorkflowActionPlan,
+  hasWorkflowActionMatches,
   resolveWorkflowActionPlanMedia,
   resolveWorkflowActionPlanText,
   workflowActionPlanReplyPromptArgs,
@@ -591,50 +587,30 @@ export const generateAiReplyWorker = internalAction({
         args,
         workflowRuntimeContext,
       );
-      const plannedMediaItems = workflowActionPlan
+      const hasMatches = hasWorkflowActionMatches(workflowActionPlan);
+      const plannedMediaItems = hasMatches
         ? resolveWorkflowActionPlanMedia(workflowActionPlan, workflowRuntimeContext)
         : [];
-      const plannedWorkflowText = workflowActionPlan
+      const plannedWorkflowText = hasMatches
         ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
         : null;
 
-      const promptArgs = aiReplyPromptArgs(args);
       let cleanText: string;
-      let replyMediaItems: ReturnType<typeof extractAiReplyOutputMedia>["mediaItems"];
 
-      if (workflowActionPlan) {
-        replyMediaItems = [];
-        if (plannedWorkflowText !== null) {
-          cleanText = plannedWorkflowText;
-        } else {
-          const result = await configuredAgent.generateText(
-            ctx,
-            { threadId: conv.threadId },
-            workflowActionPlanReplyPromptArgs(
-              args,
-              workflowActionPlan,
-              workflowRuntimeContext,
-            ),
-            { storageOptions: { saveMessages: "none" } },
-          );
-          cleanText = result.text.trim();
-        }
+      if (hasMatches && plannedWorkflowText !== null) {
+        cleanText = plannedWorkflowText;
       } else {
         const result = await configuredAgent.generateText(
           ctx,
           { threadId: conv.threadId },
-          {
-            ...promptArgs,
-            output: aiReplyStructuredOutput,
-          },
+          workflowActionPlanReplyPromptArgs(
+            args,
+            workflowActionPlan,
+            workflowRuntimeContext,
+          ),
           { storageOptions: { saveMessages: "none" } },
         );
-        const structuredReply = extractAiReplyOutputMedia(
-          result.output,
-          workflowRuntimeContext,
-        );
-        cleanText = structuredReply.text;
-        replyMediaItems = structuredReply.mediaItems;
+        cleanText = result.text.trim();
       }
 
       const convAfterGeneration = await ctx.runQuery(
@@ -648,7 +624,7 @@ export const generateAiReplyWorker = internalAction({
         return;
       }
 
-      const allMediaItems = workflowActionPlan ? plannedMediaItems : replyMediaItems;
+      const allMediaItems = plannedMediaItems;
       const channelMediaItems = toChannelMediaItems(allMediaItems);
 
       const allMediaUrls = allMediaItems.map((item) => item.url);

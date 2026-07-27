@@ -909,6 +909,47 @@ export default defineSchema({
       "assignedAgentId",
       "assignedUserId",
     ]),
+  inboundMediaBatches: defineTable({
+    conversationId: v.id("conversations"),
+    agentId: v.id("agents"),
+    state: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("completed"),
+    ),
+    revision: v.number(),
+    firstItemAt: v.number(),
+    latestItemAt: v.number(),
+    processAfter: v.number(),
+    latestPromptMessageId: v.string(),
+    latestExternalId: v.string(),
+    workId: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_conversationId_and_state", ["conversationId", "state"])
+    .index("by_updatedAt", ["updatedAt"]),
+  inboundMediaBatchItems: defineTable({
+    batchId: v.id("inboundMediaBatches"),
+    conversationId: v.id("conversations"),
+    assetKey: v.string(),
+    externalId: v.string(),
+    promptMessageId: v.string(),
+    ordinal: v.number(),
+    kind: v.union(v.literal("image"), v.literal("audio")),
+    service: v.union(
+      v.literal("whatsapp"),
+      v.literal("instagram"),
+      v.literal("messenger"),
+    ),
+    providerMediaId: v.optional(v.string()),
+    providerUrl: v.optional(v.string()),
+    mimeType: v.optional(v.string()),
+    caption: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_batchId_and_ordinal", ["batchId", "ordinal"])
+    .index("by_assetKey", ["assetKey"]),
   messages: defineTable({
     orgId: v.string(),
     conversationId: v.id("conversations"),

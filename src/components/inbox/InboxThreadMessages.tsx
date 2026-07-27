@@ -64,6 +64,7 @@ import {
 } from '../../../shared/messageReactions';
 import { cn } from '@/lib/utils';
 import { splitWhatsAppText } from '@/lib/whatsappText';
+import { InboxAudioTranscript } from './InboxAudioTranscript';
 import { InboxBroadcastMessage } from './InboxBroadcastMessage';
 import { InboxWorkflowAutomationMessage } from './InboxWorkflowAutomationMessage';
 
@@ -354,6 +355,9 @@ function InboxMessageBody({
     [files],
   );
   const text = message.text?.trim() ?? '';
+  const audioTranscripts = (message.inboxMediaUnderstanding?.assets ?? [])
+    .filter((asset) => asset.kind === 'audio' && asset.audioTranscript)
+    .map((asset) => asset.audioTranscript!);
   const isAudioPlaceholder = isInboxAudioPlaceholder(text);
   const isImagePlaceholder = isInboxImagePlaceholder(text);
   const showText =
@@ -371,26 +375,30 @@ function InboxMessageBody({
 
   const messageContent = (
     <>
-      {audioFiles.map((file) => (
-        <AudioPlayer
-          key={file.id}
-          className={cn(
-            'w-[320px] max-w-full my-1',
-            isCustomer ? 'self-start' : 'self-end',
-          )}
-        >
-          <AudioPlayerElement src={file.type === 'file' ? file.url! : ''} />
-          <AudioPlayerControlBar>
-            <AudioPlayerPlayButton />
-            <AudioPlayerSeekBackwardButton seekOffset={10} />
-            <AudioPlayerSeekForwardButton seekOffset={10} />
-            <AudioPlayerTimeDisplay />
-            <AudioPlayerTimeRange />
-            <AudioPlayerDurationDisplay />
-            <AudioPlayerMuteButton />
-            <AudioPlayerVolumeRange />
-          </AudioPlayerControlBar>
-        </AudioPlayer>
+      {audioFiles.map((file, index) => (
+        <div key={file.id} className="w-[320px] max-w-full">
+          <AudioPlayer
+            className={cn(
+              'block h-6 w-full',
+              isCustomer ? 'self-start' : 'self-end',
+            )}
+          >
+            <AudioPlayerElement src={file.type === 'file' ? file.url! : ''} />
+            <AudioPlayerControlBar>
+              <AudioPlayerPlayButton />
+              <AudioPlayerSeekBackwardButton seekOffset={10} />
+              <AudioPlayerSeekForwardButton seekOffset={10} />
+              <AudioPlayerTimeDisplay />
+              <AudioPlayerTimeRange />
+              <AudioPlayerDurationDisplay />
+              <AudioPlayerMuteButton />
+              <AudioPlayerVolumeRange />
+            </AudioPlayerControlBar>
+          </AudioPlayer>
+          {audioTranscripts[index] ? (
+            <InboxAudioTranscript transcript={audioTranscripts[index]} />
+          ) : null}
+        </div>
       ))}
       {imageFiles.length > 0 ? (
         <InboxMessageAttachments files={imageFiles} isCustomer={isCustomer} />

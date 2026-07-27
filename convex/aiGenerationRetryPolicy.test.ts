@@ -36,7 +36,7 @@ test("applies the shared policy to every Convex Agent generation call", () => {
   expect(agentFactory).toContain(
     "callSettings: { maxRetries: AI_GENERATION_MAX_RETRIES },",
   );
-  expect(inbox.match(/configuredAgent\.generateText\(/g)).toHaveLength(2);
+  expect(inbox.match(/configuredAgent\.generateText\(/g)).toHaveLength(1);
   expect(workflowPlanner.match(/configuredAgent\.generateObject\(/g)).toHaveLength(1);
 });
 

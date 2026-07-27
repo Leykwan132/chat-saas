@@ -5,6 +5,7 @@ import type { Id } from "../_generated/dataModel";
 import {
   buildWorkflowActionPlannerSystemPrompt,
   buildWorkflowActionPlanReplyGuidance,
+  hasWorkflowActionMatches,
   resolveWorkflowActionPlanMedia,
   resolveWorkflowActionPlanText,
   shouldRunWorkflowActionPlanner,
@@ -290,25 +291,63 @@ test("adds workflow action guidance as context without replacing the agent syste
   ]);
 });
 
-test("AI reply worker uses structured workflow planner before generating text", () => {
-  const inboxPath = fileURLToPath(new URL("./inbox.ts", import.meta.url));
-  const inboxSource = readFileSync(inboxPath, "utf8");
+test("builds a language-only planner prompt when no workflow actions exist", () => {
+  const prompt = buildWorkflowActionPlannerSystemPrompt(null);
 
-  expect(inboxSource).toContain("generateWorkflowActionPlan(");
-  expect(inboxSource).toContain("resolveWorkflowActionPlanMedia(");
-  expect(inboxSource).toContain("output: aiReplyStructuredOutput");
-  expect(inboxSource).toContain("extractAiReplyOutputMedia(");
+  expect(prompt).toContain("structured reply planner");
+  expect(prompt).toContain("workflowMatches: always []");
+  expect(prompt).toContain("responseLanguage");
+  expect(prompt).toContain(
+    "Detect the language of the latest user message and set responseLanguage",
+  );
+  expect(prompt).not.toContain("Workflow action nodes and definitive payloads");
 });
 
-test("AI reply worker uses plain text when workflow planner returns an empty media plan", () => {
+test("hasWorkflowActionMatches requires non-empty workflowMatches", () => {
+  expect(
+    hasWorkflowActionMatches({
+      workflowMatches: [],
+      mediaNodeIdsToSend: [],
+      responseLanguage: "English",
+      responseGuidance: "Answer normally.",
+    }),
+  ).toBe(false);
+  expect(
+    hasWorkflowActionMatches({
+      workflowMatches: [
+        {
+          matched: true,
+          nodeId: "video-node-id",
+          nodeKind: "sendImage",
+          nodeTitle: "Send Type B video",
+        },
+      ],
+      mediaNodeIdsToSend: ["video-node-id"],
+      responseLanguage: "English",
+      responseGuidance: "Send the video.",
+    }),
+  ).toBe(true);
+});
+
+test("AI reply worker always runs the planner and injects language into generated replies", () => {
   const inboxPath = fileURLToPath(new URL("./inbox.ts", import.meta.url));
   const inboxSource = readFileSync(inboxPath, "utf8");
+  const plannerPath = fileURLToPath(
+    new URL("./workflowActionPlanner.ts", import.meta.url),
+  );
+  const plannerSource = readFileSync(plannerPath, "utf8");
 
-  expect(inboxSource).toContain("if (workflowActionPlan) {");
+  expect(inboxSource).toContain("generateWorkflowActionPlan(");
+  expect(inboxSource).toContain("hasWorkflowActionMatches(");
+  expect(inboxSource).toContain("resolveWorkflowActionPlanMedia(");
+  expect(inboxSource).toContain("if (hasMatches && plannedWorkflowText !== null)");
   expect(inboxSource).toContain("workflowActionPlanReplyPromptArgs(");
-  expect(inboxSource).toContain("workflowRuntimeContext,");
+  expect(inboxSource).toContain("const allMediaItems = plannedMediaItems");
   expect(inboxSource).toContain("cleanText = result.text.trim();");
-  expect(inboxSource).toContain("replyMediaItems = [];");
+  expect(inboxSource).not.toContain("aiReplyStructuredOutput");
+  expect(inboxSource).not.toContain("extractAiReplyOutputMedia(");
+  expect(inboxSource).not.toContain("replyMediaItems");
+  expect(plannerSource).not.toContain("shouldRunWorkflowActionPlanner(workflowRuntimeContext)");
 });
 
 test("AI reply worker sends matched Send message text exactly", () => {

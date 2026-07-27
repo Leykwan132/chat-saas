@@ -7,7 +7,6 @@ import {
   getMatchedWorkflowActionNodes,
   getPlannableWorkflowActionNodes,
   reconcileWorkflowActionPlan,
-  shouldRunWorkflowActionPlanner,
 } from "./workflowActionExecution";
 
 export {
@@ -49,6 +48,10 @@ export function aiReplyPromptArgs(args: AiReplyPromptArgs) {
   if (args.promptMessageId) return { promptMessageId: args.promptMessageId };
   if (args.promptContent) return { prompt: args.promptContent };
   throw new Error("Either promptMessageId or promptContent must be provided");
+}
+
+export function hasWorkflowActionMatches(plan: WorkflowActionPlan) {
+  return plan.workflowMatches.length > 0;
 }
 
 export function workflowActionPlanReplyPromptArgs(
@@ -104,11 +107,27 @@ export function buildWorkflowActionPlanReplyGuidance(
   ].join("\n");
 }
 
+const PLANNER_LANGUAGE_RULES = `Rules:
+- Detect the language of the latest user message and set responseLanguage to that language. If the message mixes languages, use the dominant language. Never default to English unless the user wrote in English.
+- responseGuidance must never include uploaded filenames or instruct the later reply to display them.`;
+
 export function buildWorkflowActionPlannerSystemPrompt(
   context: WorkflowRuntimeContextForPrompt,
 ) {
   const actionNodes = getPlannableWorkflowActionNodes(context);
-  if (actionNodes.length === 0) return "";
+  if (actionNodes.length === 0) {
+    return `You are a structured reply planner.
+Analyze the current conversation and latest customer message.
+
+Return a strict object matching the schema:
+- workflowMatches: always [].
+- mediaNodeIdsToSend: always [].
+- responseLanguage: common English name of the language used in the latest user message (e.g. Chinese, English, Malay).
+- responseGuidance: one short instruction for the later customer-visible reply.
+
+${PLANNER_LANGUAGE_RULES}
+- There are no Workflow Runtime actions available this turn. Always return empty workflowMatches and mediaNodeIdsToSend.`;
+  }
 
   const nodeSections = actionNodes.map((node, index) => {
     const incoming = node.incomingConditions.length === 0
@@ -152,10 +171,8 @@ Return a strict object matching the schema:
 - responseLanguage: common English name of the language used in the latest user message (e.g. Chinese, English, Malay).
 - responseGuidance: one short instruction for the later customer-visible reply.
 
-Rules:
-- Detect the language of the latest user message and set responseLanguage to that language. If the message mixes languages, use the dominant language. Never default to English unless the user wrote in English.
+${PLANNER_LANGUAGE_RULES}
 - Do not return media URLs. The backend resolves URLs from node IDs.
-- responseGuidance must never include uploaded filenames or instruct the later reply to display them.
 - Use only exact Node IDs listed below.
 - Include an action in workflowMatches only when it should execute now.
 - Every matched sendImage/sendFile asset will be sent automatically, for sure. Never ask whether the customer wants it sent.
@@ -173,9 +190,7 @@ export async function generateWorkflowActionPlan(
   threadId: string,
   args: AiReplyPromptArgs,
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
-): Promise<WorkflowActionPlan | null> {
-  if (!shouldRunWorkflowActionPlanner(workflowRuntimeContext)) return null;
-
+): Promise<WorkflowActionPlan> {
   const result = await configuredAgent.generateObject(
     ctx,
     { threadId },

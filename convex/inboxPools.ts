@@ -5,6 +5,11 @@ export const inboxAiReplyPool = new Workpool(components.inboxAiReplyWorkpool, {
   maxParallelism: 4,
 });
 
+export const inboundMediaUnderstandingPool = new Workpool(
+  components.inboundMediaUnderstandingWorkpool,
+  { maxParallelism: 2 },
+);
+
 export const metaIndicatorPool = new Workpool(components.metaIndicatorWorkpool, {
   maxParallelism: 4,
 });
