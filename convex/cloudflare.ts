@@ -814,6 +814,14 @@ export const enqueueLinkDiscovery = action({
     const url = args.url.trim();
     if (!url) throw new Error("URL is required");
 
+    const alreadyAdded = await ctx.runQuery(internal.knowledgeBase.internalHasParentWebUrl, {
+      agentId: args.agentId,
+      url,
+    });
+    if (alreadyAdded) {
+      throw new Error("This URL has already been added");
+    }
+
     const entryId = await ctx.runMutation(internal.knowledgeBase.internalStoreWebEntry, {
       agentId: args.agentId,
       url,

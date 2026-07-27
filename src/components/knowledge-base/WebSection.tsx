@@ -39,6 +39,7 @@ import {
   KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
+import { hasParentWebUrl } from '../../../shared/webEntryUrl';
 
 interface WebSectionProps {
   entries: any[] | undefined;
@@ -63,6 +64,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
     const trimmed = webInput.trim();
     if (!trimmed || !agentId) return;
     if (!isValidUrl(trimmed)) { setWebInputError("Please enter a valid URL (e.g. https://example.com)"); return; }
+    if (hasParentWebUrl(entries ?? [], trimmed)) { setWebInputError("This URL has already been added"); return; }
     setWebInputError(null);
     setIsSearchingLinks(true);
     try {
@@ -71,8 +73,10 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
       posthog?.capture('knowledge_base_item_added', { type: 'web' });
       toast.success("URL queued for processing");
       setWebInput("");
-    } catch {
-      toast.error("Failed to discover links from this URL");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("already been added")) setWebInputError("This URL has already been added");
+      else toast.error("Failed to discover links from this URL");
       setSearchSourceUrl("");
     } finally { setIsSearchingLinks(false); }
   };

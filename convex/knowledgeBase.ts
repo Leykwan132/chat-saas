@@ -4,6 +4,7 @@ import { internal, api } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 import { getPlan, getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
+import { hasParentWebUrl } from "../shared/webEntryUrl";
 
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
 
@@ -214,6 +215,20 @@ export const listWebEntries = query({
       .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
       .order("desc")
       .collect();
+  },
+});
+
+export const internalHasParentWebUrl = internalQuery({
+  args: {
+    agentId: v.id("agents"),
+    url: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const entries = await ctx.db
+      .query("webEntries")
+      .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
+      .collect();
+    return hasParentWebUrl(entries, args.url);
   },
 });
 
