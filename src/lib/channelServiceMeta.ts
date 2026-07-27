@@ -6,6 +6,7 @@ export type SupportedChannelService = 'whatsapp' | 'instagram' | 'messenger';
 
 type ChannelServiceMeta = {
   label: string;
+  description: string;
   icon: ElementType;
   iconColor: string;
 };
@@ -13,16 +14,20 @@ type ChannelServiceMeta = {
 export const CHANNEL_SERVICE_META = {
   whatsapp: {
     label: 'WhatsApp',
+    description:
+      'Supports coexistence — keep WhatsApp Business on your phone with the same number.',
     icon: SiWhatsapp,
     iconColor: 'text-emerald-600 dark:text-emerald-400',
   },
   instagram: {
     label: 'Instagram',
+    description: 'Reply to Instagram DMs in one place.',
     icon: SiInstagram,
     iconColor: 'text-pink-600 dark:text-pink-400',
   },
   messenger: {
     label: 'Messenger',
+    description: 'Handle Facebook Messenger chats.',
     icon: SiMessenger,
     iconColor: 'text-blue-600 dark:text-blue-400',
   },
@@ -30,6 +35,7 @@ export const CHANNEL_SERVICE_META = {
 
 const UNSUPPORTED_CHANNEL_SERVICE_META: ChannelServiceMeta = {
   label: 'Unsupported channel',
+  description: 'This channel type is not supported.',
   icon: Plug,
   iconColor: 'text-muted-foreground',
 };

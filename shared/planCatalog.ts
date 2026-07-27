@@ -64,6 +64,8 @@ const MB = 1024 * KB;
 
 export const BASIC_LIMITED_MODELS_LABEL = "Basic models";
 export const ADVANCED_MODELS_LABEL = "Advanced models";
+export const LIMITED_CHANNELS_LABEL = "Limited channels";
+export const ALL_CHANNELS_LABEL = "All channels";
 
 export const ADVANCED_PLAN_MODELS = [
   "ilmu-mini-v3.3",
@@ -122,7 +124,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     displayFeatures: [
       "1 AI Agent",
       "50 credits / mo",
-      "1 channel",
+      LIMITED_CHANNELS_LABEL,
       "400KB per agent",
       BASIC_LIMITED_MODELS_LABEL,
       "Follow-ups",
@@ -155,13 +157,13 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 1000,
     maxMembers: 5,
     maxAgents: 3,
-    maxChannels: 2,
+    maxChannels: "unlimited",
     knowledgeBaseBytesPerAgent: 5 * MB,
     displayFeatures: [
       "Everything in Free, plus:",
       "3 AI Agents",
       "1,000 credits / mo",
-      "2 channels",
+      ALL_CHANNELS_LABEL,
       "5MB per agent",
       ADVANCED_MODELS_LABEL,
       "Team analytics",
@@ -192,13 +194,12 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 5000,
     maxMembers: 10,
     maxAgents: 10,
-    maxChannels: 5,
+    maxChannels: "unlimited",
     knowledgeBaseBytesPerAgent: 20 * MB,
     displayFeatures: [
       "Everything in Starter, plus:",
       "10 AI Agents",
       "5,000 credits / mo",
-      "5 channels",
       "20MB per agent",
       "Advanced Analytics",
       "10 team members",
@@ -229,13 +230,12 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
     monthlyCredits: 15000,
     maxMembers: 25,
     maxAgents: 25,
-    maxChannels: 15,
+    maxChannels: "unlimited",
     knowledgeBaseBytesPerAgent: 40 * MB,
     displayFeatures: [
       "Everything in Growth, plus:",
       "25 AI Agents",
       "15,000 credits / mo",
-      "15 channels",
       "40MB per agent",
       "25 team members",
     ],
@@ -294,7 +294,7 @@ export const PLAN_KEY_FEATURE_HEADERS: Record<ComparisonPlanKey, string> = {
 
 const ENTERPRISE_KEY_FEATURES = [
   "Custom agents & credits",
-  "Custom channels & knowledge base",
+  "Custom knowledge base",
   "Priority support",
 ];
 
@@ -315,7 +315,7 @@ export const ENTERPRISE_PLAN: EnterprisePlanEntry = {
   monthlyCreditsLabel: "Custom",
   maxMembersLabel: "Unlimited",
   maxAgentsLabel: "Custom",
-  maxChannelsLabel: "Custom / Unlimited",
+  maxChannelsLabel: "All",
   knowledgeBaseLabel: "Custom",
   actionLabel: "Contact sales",
   accentLabel: "Enterprise",
@@ -360,8 +360,7 @@ function formatAgentLimit(count: number | "unlimited"): string {
 }
 
 function formatChannelLimit(count: number | "unlimited"): string {
-  if (count === "unlimited") return "Unlimited channels";
-  return count === 1 ? "1 channel" : `${count.toLocaleString()} channels`;
+  return count === "unlimited" ? ALL_CHANNELS_LABEL : LIMITED_CHANNELS_LABEL;
 }
 
 function getAiModelAccessLabel(planKey: PlanKey): string {
@@ -434,8 +433,22 @@ export const BASIC_ANALYTICS_HOVER_DESCRIPTION =
   "It will record AI agent usage so you can track agent activity over time.";
 
 export const CHANNELS_HOVER_TITLE = "Supported channels";
+export const LIMITED_CHANNELS_HOVER_DESCRIPTION =
+  "You can connect one platform only for each AI agent.";
+export const ALL_CHANNELS_HOVER_DESCRIPTION =
+  "You can connect all three platforms — WhatsApp, Instagram, and Messenger — for every AI agent.";
 export const CHANNELS_HOVER_DESCRIPTION =
-  "Each connected channel counts toward your plan limit.";
+  "Free: one platform only per AI agent. Paid: all three platforms for every AI agent.";
+
+export function getChannelsHoverDescription(label: string): string {
+  if (label === LIMITED_CHANNELS_LABEL || label === "Limited") {
+    return LIMITED_CHANNELS_HOVER_DESCRIPTION;
+  }
+  if (label === ALL_CHANNELS_LABEL || label === "All") {
+    return ALL_CHANNELS_HOVER_DESCRIPTION;
+  }
+  return CHANNELS_HOVER_DESCRIPTION;
+}
 
 export const SUPPORTED_PLATFORM_HOVER_LABEL = "Supported Platform:";
 
@@ -472,7 +485,11 @@ export function isChannelsComparisonLabel(label: string): boolean {
 }
 
 export function isChannelLimitLabel(label: string): boolean {
-  return /\bchannels?$/.test(label) && !label.includes("credits");
+  return (
+    label === LIMITED_CHANNELS_LABEL ||
+    label === ALL_CHANNELS_LABEL ||
+    (/\bchannels?$/.test(label) && !label.includes("credits"))
+  );
 }
 
 export function isPlanFeatureDescriptionHoverLabel(label: string): boolean {
@@ -600,12 +617,12 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
       included: true,
     }),
     getEnterpriseCardRow: () => ({
-      text: `${ENTERPRISE_PLAN.maxChannelsLabel} channels`,
+      text: ALL_CHANNELS_LABEL,
       included: true,
     }),
     getComparisonValue: (planId) => {
       const { maxChannels } = PLAN_CATALOG[planId];
-      return maxChannels === "unlimited" ? "Unlimited" : maxChannels.toLocaleString();
+      return maxChannels === "unlimited" ? "All" : "Limited";
     },
   },
   {

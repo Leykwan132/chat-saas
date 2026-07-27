@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { usePostHog } from '@posthog/react';
@@ -11,23 +11,14 @@ import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { cn } from '@/lib/utils';
 import { UPGRADE_SCENARIOS } from '@/config/upgradeScenarios';
 import type { PlanKey } from '../../shared/planCatalog';
+import {
+  UpgradeModalContext,
+  useUpgradeModal,
+  type UpgradeScenario,
+} from '@/components/upgradeModalContext';
 
-export type UpgradeScenario = 'free_to_starter' | 'starter_to_growth' | 'growth_to_business';
-
-interface UpgradeModalContextType {
-  openUpgradeModal: (scenario?: UpgradeScenario) => void;
-  closeUpgradeModal: () => void;
-}
-
-const UpgradeModalContext = createContext<UpgradeModalContextType | undefined>(undefined);
-
-export function useUpgradeModal() {
-  const context = useContext(UpgradeModalContext);
-  if (!context) {
-    throw new Error('useUpgradeModal must be used within an UpgradeModalProvider');
-  }
-  return context;
-}
+export type { UpgradeScenario };
+export { useUpgradeModal };
 
 export function UpgradeModalProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -45,10 +36,9 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
 
   const openUpgradeModal = (scenario?: UpgradeScenario) => {
     let resolvedScenario: UpgradeScenario;
-    if (scenario) {
+    if (scenario && scenario in UPGRADE_SCENARIOS) {
       resolvedScenario = scenario;
     } else {
-      // Auto-resolve based on user plan
       const currentPlan = (planAndUsage?.plan ?? 'free') as PlanKey;
       if (currentPlan === 'free') {
         resolvedScenario = 'free_to_starter';
@@ -70,14 +60,13 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
   };
 
   const handleUpgrade = () => {
-    // Close the teaser modal and open the full plan picker (same as sidebar "Upgrade plan")
     setIsOpen(false);
     setAdjustPlanOpen(true);
   };
 
-  const config = UPGRADE_SCENARIOS[activeScenario];
+  const config =
+    UPGRADE_SCENARIOS[activeScenario] ?? UPGRADE_SCENARIOS.free_to_starter;
 
-  // Slice features for 4-column marquee
   const firstRow = config.features.slice(0, Math.ceil(config.features.length / 2));
   const secondRow = config.features.slice(Math.ceil(config.features.length / 2));
   const thirdRow = [...firstRow].reverse();
@@ -106,9 +95,8 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
             <span className="sr-only">Close</span>
           </button>
 
-          <div className="flex flex-col pt-12 pb-8">
-            {/* Header */}
-            <div className="text-center max-w-lg mx-auto px-6 sm:px-10">
+          <div className="flex flex-col pt-12 pb-8 px-6 sm:px-10">
+            <div className="text-center">
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white font-title">
                 {config.title}
               </h2>
@@ -117,13 +105,12 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
               </p>
             </div>
 
-            {/* 3D Marquee Area */}
-            <div className="relative flex h-80 items-center justify-center overflow-hidden [perspective:500px] my-6 mx-6 select-none pointer-events-none">
+            <div className="relative flex h-80 w-full items-center justify-center overflow-hidden [perspective:500px] my-6 select-none pointer-events-none">
               <div
                 className="absolute flex flex-row items-center gap-4 shrink-0"
                 style={{
                   transform:
-                  "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+                    "translateX(-50px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
                 }}
               >
                 <Marquee pauseOnHover={false} vertical className="[--duration:20s] gap-3">
@@ -147,24 +134,18 @@ export function UpgradeModalProvider({ children }: { children: React.ReactNode }
                   ))}
                 </Marquee>
               </div>
-
-              {/* Fades/Gradients to hide edges */}
-
             </div>
 
-            {/* Bottom Upgrade Button */}
-            <div className="flex flex-col items-center px-6 sm:px-10 w-full">
-              <Button
-                onClick={handleUpgrade}
-                className={cn(
-                  "w-full py-6 text-base font-semibold rounded-2xl transition-all duration-300",
-                  "bg-zinc-950 text-white hover:bg-zinc-800 active:scale-[0.98]",
-                  "dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
-                )}
-              >
-                {config.buttonLabel}
-              </Button>
-            </div>
+            <Button
+              onClick={handleUpgrade}
+              className={cn(
+                "w-full py-6 text-base font-semibold rounded-2xl transition-all duration-300",
+                "bg-zinc-950 text-white hover:bg-zinc-800 active:scale-[0.98]",
+                "dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
+              )}
+            >
+              {config.buttonLabel}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -205,7 +186,7 @@ export function UpgradeCard({
   description?: string;
 }) {
   const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
-  const config = UPGRADE_SCENARIOS[scenario];
+  const config = UPGRADE_SCENARIOS[scenario] ?? UPGRADE_SCENARIOS.free_to_starter;
 
   const firstRow = config.features.slice(0, Math.ceil(config.features.length / 2));
   const secondRow = config.features.slice(Math.ceil(config.features.length / 2));
@@ -214,9 +195,8 @@ export function UpgradeCard({
 
   return (
     <>
-      <div className="flex flex-col pt-10 pb-8 w-full">
-        {/* Header */}
-        <div className="text-center max-w-lg mx-auto px-6 sm:px-10">
+      <div className="flex flex-col pt-10 pb-8 w-full px-6 sm:px-10">
+        <div className="text-center">
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900 dark:text-white font-title">
             {title ?? config.title}
           </h2>
@@ -225,13 +205,12 @@ export function UpgradeCard({
           </p>
         </div>
 
-        {/* 3D Marquee Area */}
-        <div className="relative flex h-72 items-center justify-center overflow-hidden [perspective:500px] my-6 mx-6 select-none pointer-events-none">
+        <div className="relative flex h-72 w-full items-center justify-center overflow-hidden [perspective:500px] my-6 select-none pointer-events-none">
           <div
             className="absolute flex flex-row items-center gap-4 shrink-0"
             style={{
               transform:
-                "translateX(-100px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+                "translateX(-50px) translateY(0px) translateZ(-100px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
             }}
           >
             <Marquee pauseOnHover={false} vertical className="[--duration:20s] gap-3">
@@ -257,19 +236,16 @@ export function UpgradeCard({
           </div>
         </div>
 
-        {/* Upgrade Button */}
-        <div className="flex flex-col items-center px-6 sm:px-10 w-full">
-          <Button
-            onClick={() => setAdjustPlanOpen(true)}
-            className={cn(
-              "w-full max-w-sm py-6 text-base font-semibold rounded-2xl transition-all duration-300",
-              "bg-zinc-950 text-white hover:bg-zinc-800 active:scale-[0.98]",
-              "dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
-            )}
-          >
-            {config.buttonLabel}
-          </Button>
-        </div>
+        <Button
+          onClick={() => setAdjustPlanOpen(true)}
+          className={cn(
+            "w-full py-6 text-base font-semibold rounded-2xl transition-all duration-300",
+            "bg-zinc-950 text-white hover:bg-zinc-800 active:scale-[0.98]",
+            "dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100"
+          )}
+        >
+          {config.buttonLabel}
+        </Button>
       </div>
 
       <AdjustPlanDialog

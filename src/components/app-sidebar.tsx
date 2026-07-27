@@ -50,15 +50,6 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
     api.conversations.getTotalUnreadForAgent,
     canReadChats ? { agentId: agent._id } : 'skip',
   );
-  const canReadChannels = !isLoading && can(Permission.CHANNELS_READ);
-  const connectedChannels = useQuery(
-    api.channels.getConnectedForCurrentOrg,
-    canReadChannels ? {} : 'skip',
-  );
-  const connectedChannelCount = connectedChannels?.filter(
-    (channel) => channel.service !== 'avatar',
-  ).length;
-
   const filterItems = (items: NavItem[]) => {
     if (isLoading) return [];
     return items.filter((item) => can(item.requiredPermission));
@@ -142,35 +133,18 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
             <SidebarGroupLabel>AI Agent</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {configurationItems.map((item) => {
-                  const showChannelCount =
-                    item.label === 'Channels' &&
-                    connectedChannelCount !== undefined &&
-                    connectedChannelCount > 0;
-                  const tooltip = showChannelCount
-                    ? `${item.label} (${connectedChannelCount})`
-                    : item.label;
-
-                  return (
-                    <SidebarNavMenuItem
-                      key={item.to}
-                      to={item.to}
-                      end={item.end}
-                      tooltip={tooltip}
-                      icon={item.icon}
-                      label={item.label}
-                      badgeLabel={item.badgeLabel}
-                      badge={
-                        item.badge ??
-                        (showChannelCount ? (
-                          <span className="ml-auto flex size-[18px] shrink-0 items-center justify-center rounded-full bg-sidebar-accent-foreground/15 text-[10px] font-bold leading-none text-sidebar-foreground">
-                            {connectedChannelCount}
-                          </span>
-                        ) : undefined)
-                      }
-                    />
-                  );
-                })}
+                {configurationItems.map((item) => (
+                  <SidebarNavMenuItem
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    tooltip={item.label}
+                    icon={item.icon}
+                    label={item.label}
+                    badge={item.badge}
+                    badgeLabel={item.badgeLabel}
+                  />
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

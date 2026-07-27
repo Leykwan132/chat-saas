@@ -8,7 +8,6 @@ import {
   Loader2,
   RefreshCw,
   Trash2,
-  Plus,
   MoreHorizontal,
 } from 'lucide-react';
 import { SiWhatsapp } from 'react-icons/si';
@@ -36,9 +35,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
-import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
-import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
-import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
+import { AvailableChannelCard } from '@/components/channels/AvailableChannelCard';
 import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
 import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
@@ -49,10 +46,16 @@ import {
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
 import {
-  CHANNEL_SERVICE_META,
   getChannelServiceMeta,
   isSupportedChannelService,
+  type SupportedChannelService,
 } from '@/lib/channelServiceMeta';
+
+const CONNECTABLE_SERVICES: SupportedChannelService[] = [
+  'whatsapp',
+  'instagram',
+  'messenger',
+];
 
 type ChannelDoc = Doc<'channels'>;
 type ChannelWithConversationCount = ChannelDoc & { conversationCount?: number };
@@ -203,7 +206,6 @@ export default function ChannelsPage() {
   const { openUpgradeModal } = useUpgradeModal();
   useMetaChannelCallbackParams();
 
-  const [openAddDialog, setOpenAddDialog] = useState(false);
   const [webDetailsOpen, setWebDetailsOpen] = useState(false);
   const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
     Set<string>
@@ -227,10 +229,25 @@ export default function ChannelsPage() {
     ),
     [connectedChannelsList],
   );
+  const connectedByService = useMemo(() => {
+    const map = new Map<SupportedChannelService, ChannelDoc>();
+    for (const channel of externalConnectedChannelsList) {
+      if (!isSupportedChannelService(channel.service)) continue;
+      if (!map.has(channel.service)) {
+        map.set(channel.service, channel);
+      }
+    }
+    return map;
+  }, [externalConnectedChannelsList]);
   const activeCount = externalConnectedChannelsList.length;
-  const visibleActiveCount = activeCount + 1;
   const channelLimit = planAndUsage?.channelLimit ?? 1;
   const limitReached = activeCount >= channelLimit;
+  const showPendingWhatsApp =
+    openWhatsAppAttempt != null &&
+    ((isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) &&
+      openWhatsAppAttempt.status !== 'connected' &&
+      openWhatsAppAttempt.status !== 'syncing') ||
+      openWhatsAppAttempt.status === 'error');
   const openAttemptChannel = useMemo(() => {
     if (!channels || !openWhatsAppAttempt) return undefined;
     if (openWhatsAppAttempt.channelId) {
@@ -278,20 +295,6 @@ export default function ChannelsPage() {
         <div>
           <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Channels</h1>
         </div>
-        <Button
-          type="button"
-          onClick={() => {
-            if (limitReached) {
-              openUpgradeModal();
-            } else {
-              setOpenAddDialog(true);
-            }
-          }}
-          className="gap-2 shrink-0 rounded-full"
-        >
-          <Plus className="size-4" />
-          Add new channel
-        </Button>
       </header>
 
       {/* Guides section styled exactly like BroadcastPage */}
@@ -315,20 +318,18 @@ export default function ChannelsPage() {
       <section className="flex flex-col gap-4 animate-fade-in">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">Connected channels</h2>
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-xs font-medium text-muted-foreground">
-              {visibleActiveCount}
-            </span>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Available channels</h2>
           </div>
           <Separator className="mt-3" />
         </div>
 
         <div className="flex flex-wrap gap-2 mt-2">
-          {openWhatsAppAttempt &&
-          ((isOpenWhatsAppConnectionAttempt(openWhatsAppAttempt) &&
-            openWhatsAppAttempt.status !== 'connected' &&
-            openWhatsAppAttempt.status !== 'syncing') ||
-            openWhatsAppAttempt.status === 'error') ? (
+          <WebsiteChannelCard
+            agentId={agentId}
+            onShowDetails={() => setWebDetailsOpen(true)}
+          />
+
+          {showPendingWhatsApp && openWhatsAppAttempt ? (
             <PendingWhatsAppConnectionCard
               attempt={openWhatsAppAttempt}
               channel={openAttemptChannel}
@@ -347,102 +348,49 @@ export default function ChannelsPage() {
             />
           ) : null}
 
-          <WebsiteChannelCard
-            agentId={agentId}
-            onShowDetails={() => setWebDetailsOpen(true)}
-          />
+          {CONNECTABLE_SERVICES.map((service) => {
+            if (service === 'whatsapp' && showPendingWhatsApp) {
+              return null;
+            }
 
-          {externalConnectedChannelsList.map((channel: ChannelDoc) => (
-            <ConnectedChannelCard
-              key={channel._id}
-              agentId={agentId}
-              channel={channel}
-              onDisconnectBegin={() => {
-                setDisconnectingChannelIds((s) =>
-                  new Set(s).add(channel._id as string),
-                );
-              }}
-              onDisconnectUndone={() => {
-                setDisconnectingChannelIds((s) => {
-                  const next = new Set(s);
-                  next.delete(channel._id as string);
-                  return next;
-                });
-              }}
-              onShowWebDetails={() => setWebDetailsOpen(true)}
-            />
-          ))}
+            const channel = connectedByService.get(service);
+            if (channel) {
+              return (
+                <ConnectedChannelCard
+                  key={channel._id}
+                  agentId={agentId}
+                  channel={channel}
+                  onDisconnectBegin={() => {
+                    setDisconnectingChannelIds((s) =>
+                      new Set(s).add(channel._id as string),
+                    );
+                  }}
+                  onDisconnectUndone={() => {
+                    setDisconnectingChannelIds((s) => {
+                      const next = new Set(s);
+                      next.delete(channel._id as string);
+                      return next;
+                    });
+                  }}
+                  onShowWebDetails={() => setWebDetailsOpen(true)}
+                />
+              );
+            }
 
-          {/* Add channel placeholder card */}
-          <button
-            type="button"
-            onClick={() => {
-              if (limitReached) {
-                openUpgradeModal();
-              } else {
-                setOpenAddDialog(true);
-              }
-            }}
-            className={cn(
-              'flex size-56 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
-              'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
-            )}
-            aria-label="Connect another channel"
-          >
-            <Plus className="size-6" strokeWidth={1.75} />
-            <span className="text-xs font-medium">Connect another channel</span>
-          </button>
+            return (
+              <AvailableChannelCard
+                key={service}
+                service={service}
+                disabled={
+                  limitReached ||
+                  (service === 'whatsapp' && isWhatsAppSignupActive)
+                }
+                onLimitReached={openUpgradeModal}
+              />
+            );
+          })}
         </div>
       </section>
-
-      <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
-        <DialogContent className="sm:!max-w-[544px] md:!max-w-xl p-8 md:p-12">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">Connect a New Channel</DialogTitle>
-            <DialogDescription className="sr-only">
-              Select a platform to link with your workspace.
-            </DialogDescription>
-          </DialogHeader>
-
-          {limitReached ? (
-            <div className="flex items-start gap-3 rounded-xl border border-destructive/20 bg-destructive/10 p-4 text-destructive text-sm leading-relaxed mb-2">
-              <CircleAlert className="size-5 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold">Channel limit reached</p>
-                <p className="text-destructive/80 mt-0.5">
-                  Your workspace has connected {activeCount} of {channelLimit} allowed channels. Please upgrade your plan to connect more channels.
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          <div className="flex flex-wrap justify-center gap-6 mt-4">
-            <ConnectWhatsAppButton
-              forceAllowConnect
-              disabled={limitReached || isWhatsAppSignupActive}
-              onConnected={() => setOpenAddDialog(false)}
-            >
-              <PlatformOptionCard
-                service="whatsapp"
-                disabled={limitReached || isWhatsAppSignupActive}
-              />
-            </ConnectWhatsAppButton>
-            <ConnectInstagramButton
-              forceAllowConnect
-              disabled={limitReached}
-            >
-              <PlatformOptionCard service="instagram" disabled={limitReached} />
-            </ConnectInstagramButton>
-            <ConnectMessengerButton
-              forceAllowConnect
-              disabled={limitReached}
-              onConnected={() => setOpenAddDialog(false)}
-            >
-              <PlatformOptionCard service="messenger" disabled={limitReached} />
-            </ConnectMessengerButton>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <WebWidgetDetailsDialog
         open={webDetailsOpen}
@@ -460,23 +408,6 @@ export default function ChannelsPage() {
         open={isCoexistenceGuideOpen}
         onOpenChange={setIsCoexistenceGuideOpen}
       />
-    </div>
-  );
-}
-
-function PlatformOptionCard({
-  service,
-}: {
-  service: keyof typeof CHANNEL_SERVICE_META;
-  disabled?: boolean;
-}) {
-  const meta = CHANNEL_SERVICE_META[service];
-  const Icon = meta.icon;
-
-  return (
-    <div className="flex flex-col items-center gap-4 pointer-events-none w-full">
-      <Icon className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
-      <h3 className="text-sm font-semibold text-foreground leading-none">{meta.label}</h3>
     </div>
   );
 }
@@ -698,16 +629,16 @@ function ConnectedChannelCard({
           <div className="min-w-0 flex-1">
             {channel.status === 'connected' ? (
               channel.service === 'web' ? (
-                <div className="w-full">
+                <div className="flex w-full justify-end">
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-6 w-full text-[11px]"
+                    className="h-6 rounded-md px-2.5 text-[11px] font-medium shadow-none"
                     disabled={!agentId}
                     onClick={onShowWebDetails}
                   >
-                    Setup Info
+                    Setup
                   </Button>
                 </div>
               ) : whatsappSyncStatus ? (

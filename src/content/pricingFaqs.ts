@@ -22,7 +22,7 @@ export const pricingFaqs: PricingFaq[] = [
   {
     question: 'How many channels can I connect to one AI agent?',
     answer:
-      'You can connect one AI agent to multiple platforms, with the number of connected channels based on your plan.',
+      'On Free, each agent can connect one channel. On paid plans, each agent can connect all supported channels — WhatsApp, Instagram, and Messenger — with one account per platform.',
   },
   {
     question: 'How does the credit system work?',

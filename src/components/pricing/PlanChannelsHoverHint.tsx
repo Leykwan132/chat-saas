@@ -4,8 +4,8 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import {
-  CHANNELS_HOVER_DESCRIPTION,
   CHANNELS_HOVER_TITLE,
+  getChannelsHoverDescription,
   isChannelLimitLabel,
   isChannelsComparisonLabel,
   SUPPORTED_CHANNEL_DISPLAY_NAMES,
@@ -39,7 +39,7 @@ export function PlanChannelsHoverHint({
       <HoverCardContent align="start" className="w-64">
         <p className="font-medium text-foreground">{CHANNELS_HOVER_TITLE}</p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {CHANNELS_HOVER_DESCRIPTION}
+          {getChannelsHoverDescription(label)}
         </p>
         <PricingSupportedPlatformSection platforms={SUPPORTED_CHANNEL_DISPLAY_NAMES} />
       </HoverCardContent>

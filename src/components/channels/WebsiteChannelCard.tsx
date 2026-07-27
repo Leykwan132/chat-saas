@@ -31,16 +31,18 @@ export function WebsiteChannelCard({
           </p>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-6 w-full text-[11px]"
-          disabled={!agentId}
-          onClick={onShowDetails}
-        >
-          Setup Info
-        </Button>
+        <div className="mt-auto flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-6 rounded-md px-2.5 text-[11px] font-medium shadow-none"
+            disabled={!agentId}
+            onClick={onShowDetails}
+          >
+            Setup
+          </Button>
+        </div>
       </div>
     </div>
   );

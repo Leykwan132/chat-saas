@@ -417,10 +417,16 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   return (
     <>
       <div className="flex flex-col items-end gap-1">
-        <Button type="button" onClick={launchSignup} disabled={busy}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={launchSignup}
+          disabled={busy}
+        >
           {busy && dialogState.kind === 'closed' ? (
             <>
-              <Spinner className="size-4" />
+              <Spinner className="size-3" />
               Connect
             </>
           ) : (

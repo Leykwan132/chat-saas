@@ -75,8 +75,14 @@ export function ConnectInstagramButton({
   }
 
   return (
-    <Button type="button" onClick={launchSignup} disabled={busy}>
-      {busy ? <Spinner className="size-4" /> : 'Connect'}
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      onClick={launchSignup}
+      disabled={busy}
+    >
+      {busy ? <Spinner className="size-3" /> : 'Connect'}
     </Button>
   );
 }
