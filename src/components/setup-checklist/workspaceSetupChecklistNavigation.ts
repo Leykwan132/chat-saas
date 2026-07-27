@@ -20,6 +20,9 @@ export type WorkspaceSetupChecklistAction =
   | { kind: 'navigate'; to: string }
   | { kind: 'toast'; message: string };
 
+export const AGENT_SETUP_OPEN_TEST_PARAM = 'test';
+export const AGENT_SETUP_OPEN_TEST_VALUE = '1';
+
 const agentStepPaths = {
   uploadKnowledgeBase: 'knowledge-base/web',
   testAgent: 'agent-setup',
@@ -31,6 +34,10 @@ function resolveAgentId(args: ResolveWorkspaceSetupChecklistActionArgs) {
   if (args.selectedAgentId) return args.selectedAgentId;
   if (args.agents.length === 1) return args.agents[0]._id;
   return null;
+}
+
+export function buildAgentSetupTestPath(agentId: string): string {
+  return `/dashboard/${agentId}/agent-setup?${AGENT_SETUP_OPEN_TEST_PARAM}=${AGENT_SETUP_OPEN_TEST_VALUE}`;
 }
 
 export function resolveWorkspaceSetupChecklistAction(
@@ -47,6 +54,10 @@ export function resolveWorkspaceSetupChecklistAction(
   const agentId = resolveAgentId(args);
   if (agentId === null) {
     return { kind: 'toast', message: 'Please select agent to proceed' };
+  }
+
+  if (args.stepKey === 'testAgent') {
+    return { kind: 'navigate', to: buildAgentSetupTestPath(agentId) };
   }
 
   return {

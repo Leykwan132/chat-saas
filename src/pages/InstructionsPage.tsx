@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { Navigate, useBlocker, useNavigate, useParams } from 'react-router';
+import {
+  Navigate,
+  useBlocker,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router';
 import { Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -10,6 +16,10 @@ import { AgentSetupHeader } from '@/components/agent-setup/AgentSetupHeader';
 import { AgentSetupPanels } from '@/components/agent-setup/AgentSetupPanels';
 import { UnsavedChangesDialog } from '@/components/agent-setup/UnsavedChangesDialog';
 import type { EmojiUse, Formality, HumorLevel, ReplyMode, ResponseLength } from '@/components/agent-setup/agentSetupOptions';
+import {
+  AGENT_SETUP_OPEN_TEST_PARAM,
+  AGENT_SETUP_OPEN_TEST_VALUE,
+} from '@/components/setup-checklist/workspaceSetupChecklistNavigation';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -19,6 +29,7 @@ export default function InstructionsPage() {
   const { agentId } = useParams();
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canReadRouting = can(Permission.ROUTING_READ);
   const canManageRouting = can(Permission.ROUTING_MANAGE);
@@ -46,6 +57,17 @@ export default function InstructionsPage() {
 
   const updateAgent = useMutation(api.agents.update);
   const updateRoutingSettings = useMutation(api.leadRouting.settings.updateForAgent);
+
+  useEffect(() => {
+    if (searchParams.get(AGENT_SETUP_OPEN_TEST_PARAM) !== AGENT_SETUP_OPEN_TEST_VALUE) {
+      return;
+    }
+    setIsTestOpen(true);
+    const next = new URLSearchParams(searchParams);
+    next.delete(AGENT_SETUP_OPEN_TEST_PARAM);
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     if (!agent) return;
     setName(agent.name);

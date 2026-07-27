@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-27 [CODE] Launch Guide “Test your agent” navigates to Configuration with `?test=1`, which opens the test chat window immediately and then clears the query. Verified with focused navigation/source contracts; not deployed.
 - 2026-07-27 [CODE] Connected channels now always show WhatsApp, Instagram, and Messenger cards — connected state or dashed “Not connected” with a minimal bottom-right Connect — instead of a single “Connect another channel” placeholder; header Add dialog removed. Verified locally; not deployed.
 - 2026-07-27 [CODE] Extracted `useUpgradeModal` context into `upgradeModalContext.ts` so Vite HMR edits to UpgradeModal UI cannot split the React context and crash TeamSwitcher with a missing provider. Verified with a source contract; hard refresh still clears any already-broken HMR session.
 - 2026-07-27 [CODE] Pricing channel limits are Free = Limited channels (max 1) and paid = All channels (`maxChannels: "unlimited"`); key-feature bullets list All channels only on Starter (Growth/Business inherit it); hovers say one platform only per agent vs all three platforms for every AI agent. Verified locally; not deployed.

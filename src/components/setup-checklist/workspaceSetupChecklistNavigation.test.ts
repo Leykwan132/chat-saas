@@ -40,10 +40,13 @@ test('workspace agent-only step asks the user to select an agent when multiple e
   });
 });
 
-test('agent page step routes with the selected agent', () => {
+test('test agent step opens agent setup with the test window query', () => {
   expect(resolveWorkspaceSetupChecklistAction({
     stepKey: 'testAgent',
     agents,
     selectedAgentId: 'agent_b',
-  })).toEqual({ kind: 'navigate', to: '/dashboard/agent_b/agent-setup' });
+  })).toEqual({
+    kind: 'navigate',
+    to: '/dashboard/agent_b/agent-setup?test=1',
+  });
 });

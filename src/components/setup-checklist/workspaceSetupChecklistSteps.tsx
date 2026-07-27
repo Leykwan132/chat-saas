@@ -24,7 +24,7 @@ export const workspaceSetupChecklistSteps: WorkspaceSetupChecklistStepMeta[] = [
     key: 'testAgent',
     title: 'Test your agent',
     hoverTitle: 'Test agent',
-    hoverDescription: 'Open Agent Setup and use the test chat to check tone, knowledge, and response quality.',
+    hoverDescription: 'Open the test chat to check tone, knowledge, and response quality.',
   },
   {
     key: 'createWorkflow',
