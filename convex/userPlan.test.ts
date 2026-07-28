@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { api } from "./_generated/api";
+import { api, components } from "./_generated/api";
 import schema from "./schema";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
@@ -42,6 +42,47 @@ test("new user documents do not persist deprecated billing fields", async () => 
     .query(api.users.currentUser, {});
 
   expect(currentUser?.plan).toBe("free");
+});
+
+test("the latest Stripe subscription is the plan ground truth", async () => {
+  const t = initTest();
+  const workosUserId = "user_with_historical_subscriptions";
+  process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
+
+  await t.run(async (ctx) => {
+    await ctx.db.insert("users", {
+      workosUserId,
+      email: "historical-subscriptions@example.com",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  });
+
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId: "sub_older_active",
+    stripeCustomerId: "cus_historical_subscriptions",
+    status: "active",
+    currentPeriodEnd: 1_800_000_000,
+    cancelAtPeriodEnd: false,
+    priceId: "price_starter_monthly",
+    metadata: { orgId: workosUserId },
+  });
+  await t.mutation(components.stripe.private.handleSubscriptionCreated, {
+    stripeSubscriptionId: "sub_latest_canceled",
+    stripeCustomerId: "cus_historical_subscriptions",
+    status: "canceled",
+    currentPeriodEnd: 1_800_000_001,
+    cancelAtPeriodEnd: false,
+    priceId: "price_starter_monthly",
+    metadata: { orgId: workosUserId },
+  });
+
+  const currentUser = await t
+    .withIdentity({ subject: workosUserId })
+    .query(api.users.currentUser, {});
+
+  expect(currentUser?.plan).toBe("free");
+  expect(currentUser?.stripeSubscriptionStatus).toBe("canceled");
 });
 
 test("users schema rejects deprecated billing fields", async () => {
