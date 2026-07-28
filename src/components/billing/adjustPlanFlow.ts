@@ -5,6 +5,12 @@ export type PlanSelectionResult =
   | 'warn_team_free'
   | 'portal'
   | 'checkout';
+export type AdjustPlanView = 'closed' | 'picker' | 'team_free_warning';
+export type AdjustPlanViewAction =
+  | 'open'
+  | 'warn_team_free'
+  | 'go_back'
+  | 'close';
 
 export function resolvePlanSelection({
   currentPlan,
@@ -39,4 +45,31 @@ export function buildAdjustPlanReturnPath(
   search: string,
 ): string {
   return `${pathname}${search}`;
+}
+
+export function resolveAdjustPlanView(
+  view: AdjustPlanView,
+  action: AdjustPlanViewAction,
+): AdjustPlanView {
+  if (action === 'open' || action === 'go_back') {
+    return 'picker';
+  }
+  if (action === 'warn_team_free') {
+    return 'team_free_warning';
+  }
+  return view === 'closed' ? view : 'closed';
+}
+
+export function resolvePlanCardAction(
+  currentPlan: PlanKey,
+  plan: PlanKey,
+  loadingPlan: PlanKey | null,
+) {
+  const isCurrent = currentPlan === plan;
+  const loading = loadingPlan === plan;
+  return {
+    label: isCurrent ? 'Current plan' : 'Change plan',
+    disabled: isCurrent || loadingPlan !== null,
+    loading,
+  } as const;
 }

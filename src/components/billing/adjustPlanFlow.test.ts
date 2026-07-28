@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest';
 import {
   buildAdjustPlanReturnPath,
+  resolveAdjustPlanView,
+  resolvePlanCardAction,
   resolvePlanSelection,
 } from './adjustPlanFlow';
 
@@ -73,5 +75,34 @@ describe('adjust plan flow', () => {
         '?section=plan',
       ),
     ).toBe('/dashboard/agent_123/settings?section=plan');
+  });
+
+  test('team Free confirmation replaces the picker instead of nesting', () => {
+    expect(resolveAdjustPlanView('closed', 'open')).toBe('picker');
+    expect(resolveAdjustPlanView('picker', 'warn_team_free')).toBe(
+      'team_free_warning',
+    );
+    expect(resolveAdjustPlanView('team_free_warning', 'go_back')).toBe(
+      'picker',
+    );
+    expect(resolveAdjustPlanView('team_free_warning', 'close')).toBe('closed');
+  });
+
+  test('plan cards distinguish current, available, and loading actions', () => {
+    expect(resolvePlanCardAction('growth', 'growth', null)).toEqual({
+      label: 'Current plan',
+      disabled: true,
+      loading: false,
+    });
+    expect(resolvePlanCardAction('growth', 'business', null)).toEqual({
+      label: 'Change plan',
+      disabled: false,
+      loading: false,
+    });
+    expect(resolvePlanCardAction('growth', 'business', 'business')).toEqual({
+      label: 'Change plan',
+      disabled: true,
+      loading: true,
+    });
   });
 });
