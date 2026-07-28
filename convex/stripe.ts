@@ -34,6 +34,10 @@ import {
   applyPlanUpgradeToCurrentPeriod,
   snapshotUserCredit,
 } from "./creditPeriodPool";
+import {
+  requestTeamDeletion,
+  teamDeletionRequestResultValidator,
+} from "./teamDeletion/request";
 import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
@@ -328,43 +332,31 @@ export const handleSubscriptionDeletedInternal = internalMutation({
     stripeSubscriptionId: v.string(),
     orgId: v.string(),
   },
+  returns: teamDeletionRequestResultValidator,
   handler: async (ctx, args) => {
     const isPersonal = args.orgId.startsWith("user_");
 
-    let owner: Doc<"users">;
-    if (isPersonal) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.orgId))
-        .unique();
-      if (!user) {
-        throw new Error("User not found");
-      }
-      const personalTeam = await getPersonalTeamForUser(ctx, user._id);
-      if (personalTeam) {
-        await ctx.db.patch(personalTeam._id, {
-          stripeSubscriptionId: undefined,
-          updatedAt: Date.now(),
-        });
-      }
-      owner = user;
-    } else {
-      const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
-      if (!orgTeam) {
-        throw new Error("Team not found for organization " + args.orgId);
-      }
-      await ctx.db.patch(orgTeam._id, {
+    if (!isPersonal) {
+      return await requestTeamDeletion(ctx, {
+        workosOrgId: args.orgId,
+        stripeSubscriptionId: args.stripeSubscriptionId,
+        source: "stripe",
+      });
+    }
+
+    const owner = await ctx.db
+      .query("users")
+      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.orgId))
+      .unique();
+    if (!owner) {
+      throw new Error("User not found");
+    }
+    const personalTeam = await getPersonalTeamForUser(ctx, owner._id);
+    if (personalTeam) {
+      await ctx.db.patch(personalTeam._id, {
         stripeSubscriptionId: undefined,
         updatedAt: Date.now(),
       });
-      if (!orgTeam.ownerId) {
-        throw new Error("Team owner not found");
-      }
-      const ownerDoc = await ctx.db.get(orgTeam.ownerId);
-      if (!ownerDoc) {
-        throw new Error("Team owner not found");
-      }
-      owner = ownerDoc;
     }
 
     await ctx.db.patch(owner._id, {
@@ -379,7 +371,7 @@ export const handleSubscriptionDeletedInternal = internalMutation({
     // allocation; the next cycle (created by the worker) grants free credits.
     const before = await snapshotUserCredit(ctx, owner._id);
     await insertCreditLog(ctx, {
-      orgId: isPersonal ? "" : args.orgId,
+      orgId: "",
       userId: owner._id,
       eventType: "adjustment",
       label: "Plan canceled",
@@ -392,6 +384,7 @@ export const handleSubscriptionDeletedInternal = internalMutation({
       purchasedCreditsAfter: before.purchasedRemaining,
       reason: "Subscription canceled, reverts to Free plan next cycle",
     });
+    return { accepted: true, duplicate: false };
   },
 });
 

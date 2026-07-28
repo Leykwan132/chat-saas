@@ -22,6 +22,14 @@ import {
 
 export type { PlanKey, PlanCatalogEntry, PlanFeatureFlags };
 
+export function resolveDeletingTeamPlan(team: {
+  deletionStatus?: "deleting";
+}): { plan: "free"; status: "canceled" } | null {
+  if (team.deletionStatus === "deleting") {
+    return { plan: "free", status: "canceled" };
+  }
+  return null;
+}
 
 export type PlanConfig = PlanCatalogEntry & {
   price: string;
@@ -273,7 +281,16 @@ export async function getTeamStripePlanHelper(
       throw new Error(`Team not found for organization ${args.workosOrgId}`);
     }
 
+    const deletingPlan = resolveDeletingTeamPlan(team);
+    if (deletingPlan) {
+      return deletingPlan;
+    }
+
     if (!team.stripeSubscriptionId) {
+      const owner = team.ownerId ? await ctx.db.get(team.ownerId) : null;
+      if (owner?.stripeSubscriptionStatus === "canceled") {
+        return { plan: "free", status: "canceled" };
+      }
       throw new Error(`No Stripe subscription found for team ${team.name}`);
     }
 
@@ -281,6 +298,10 @@ export async function getTeamStripePlanHelper(
       components.stripe.public.getSubscription,
       { stripeSubscriptionId: team.stripeSubscriptionId }
     );
+
+    if (subscription?.status === "canceled") {
+      return { plan: "free", status: "canceled" };
+    }
 
     if (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) {
       throw new Error(`Stripe subscription ${team.stripeSubscriptionId} is not active or trialing for team ${team.name}`);
