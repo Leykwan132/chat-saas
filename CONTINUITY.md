@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-28 [USER] Free becomes a first-class Stripe plan with monthly `price_1Ty6SbK76D19hnMo7CvDgb4Y` and annual `price_1Ty6SyK76D19hnMob9D4sv3X` IDs. New Free subscriptions use no-card Checkout; existing Free downgrades update the current subscription through Stripe’s supported Subscription API and retain destructive team cleanup.
 - 2026-07-28 [CODE] Free Checkout now sends inline `Kilobot Free` MYR 0 monthly price data, removing the missing environment/catalog blocker. Scoped lint, whitespace, line limits, Convex codegen/typecheck, and configured-development upload passed without tests.
 - 2026-07-28 [USER] Free Checkout should define its recurring MYR 0 price inline instead of requiring `STRIPE_PRICE_FREE`; no Stripe catalog setup or Free price environment variable is needed.
 - 2026-07-28 [CODE] Settings → Plan now opens the same Free Checkout action directly and no longer opens the cancellation portal or team-downgrade warning for the Free card. Scoped lint and whitespace checks passed without tests; unreleased.
@@ -54,6 +55,9 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-28 [USER] D470 ACTIVE: Free uses `STRIPE_PRICE_FREE_MONTHLY` and `STRIPE_PRICE_FREE_ANNUAL` as Stripe plan ground truth. New subscriptions use Checkout with `payment_method_collection: "if_required"`; existing subscriptions downgrade by replacing the current subscription item because Checkout does not support `subscription_data[subscription_id]`. Team downgrades warn, update Stripe first, then run idempotent destructive cleanup; personal data is preserved.
+- 2026-07-28 [USER] D469 SUPERSEDED by D470: Inline Free `price_data` is replaced by configured monthly and annual Free price IDs.
+- 2026-07-28 [USER] D468 SUPERSEDED by D470: Settings Free no longer creates a parallel subscription or bypasses the team-downgrade warning.
 - 2026-07-28 [USER] D469 ACTIVE: Free Checkout uses inline Stripe `price_data` for `Kilobot Free` with `currency: "myr"`, `unit_amount: 0`, and monthly recurrence. This supersedes D467's reusable `STRIPE_PRICE_FREE` requirement while preserving the focused action, `if_required`, no promotions, and no new tests.
 - 2026-07-28 [USER] D468 ACTIVE: Settings → Plan opens `api.freeCheckout.create` directly for Free, without the cancellation portal or team-downgrade warning. The existing paid subscription may remain active and bill separately; this is an explicitly accepted Checkout-experience trade-off.
 - 2026-07-28 [USER] D467 PARTIALLY SUPERSEDED by D469: The focused Free Checkout action, `if_required`, no promotions, and minimal scope remain active; the environment-backed reusable price is replaced by inline MYR 0 price data.
