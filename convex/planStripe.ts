@@ -10,9 +10,13 @@ function requireEnvVar(name: string): string {
 }
 
 export const STRIPE_PRICE_IDS: Record<
-  Exclude<PlanKey, "free">,
+  PlanKey,
   Record<BillingInterval, string>
 > = {
+  free: {
+    monthly: requireEnvVar("STRIPE_PRICE_FREE_MONTHLY"),
+    annual: requireEnvVar("STRIPE_PRICE_FREE_ANNUAL"),
+  },
   starter: {
     monthly: requireEnvVar("STRIPE_PRICE_STARTER_MONTHLY"),
     annual: requireEnvVar("STRIPE_PRICE_STARTER_ANNUAL"),
@@ -34,7 +38,7 @@ const EXTRA_CREDITS_PRICE_ENV_NAMES: Record<ExtraCreditsPackId, string> = {
 };
 
 export function getStripePriceId(
-  plan: Exclude<PlanKey, "free">,
+  plan: PlanKey,
   interval: BillingInterval,
 ): string {
   return STRIPE_PRICE_IDS[plan][interval];
@@ -44,8 +48,8 @@ export function getExtraCreditsPriceId(packId: ExtraCreditsPackId): string {
   return requireEnvVar(EXTRA_CREDITS_PRICE_ENV_NAMES[packId]);
 }
 
-export function resolvePlanKeyFromStripePriceId(priceId: string): Exclude<PlanKey, "free"> {
-  for (const plan of ["starter", "growth", "business"] as const) {
+export function resolvePlanKeyFromStripePriceId(priceId: string): PlanKey {
+  for (const plan of ["free", "starter", "growth", "business"] as const) {
     if (
       STRIPE_PRICE_IDS[plan].monthly === priceId ||
       STRIPE_PRICE_IDS[plan].annual === priceId

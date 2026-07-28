@@ -4,6 +4,8 @@ export default defineConfig({
   test: {
     environment: "edge-runtime",
     env: {
+      STRIPE_PRICE_FREE_MONTHLY: "mock_free_mo",
+      STRIPE_PRICE_FREE_ANNUAL: "mock_free_yr",
       STRIPE_PRICE_STARTER_MONTHLY: "mock_std_mo",
       STRIPE_PRICE_STARTER_ANNUAL: "mock_std_yr",
       STRIPE_PRICE_GROWTH_MONTHLY: "mock_pro_mo",
