@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { components, internal } from "./_generated/api";
 import { action } from "./_generated/server";
 import { getBillingWorkosUserId } from "./billingScope";
+import { getStripePriceId } from "./planStripe";
 import { createCheckoutSessionWithPromotionCodes } from "./stripeCheckout";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
@@ -16,6 +17,7 @@ type BillingUser = {
 export const create = action({
   args: {
     cancelPath: v.string(),
+    interval: v.union(v.literal("monthly"), v.literal("annual")),
   },
   handler: async (ctx, args) => {
     const userId = await getBillingWorkosUserId(ctx);
@@ -38,12 +40,7 @@ export const create = action({
     ).replace(/\/+$/, "");
 
     return await createCheckoutSessionWithPromotionCodes({
-      priceData: {
-        currency: "myr",
-        unitAmount: 0,
-        recurringInterval: "month",
-        productName: "Kilobot Free",
-      },
+      priceId: getStripePriceId("free", args.interval),
       customerId: customer.customerId,
       mode: "subscription",
       successUrl: `${frontendUrl}/workspace?success=true`,

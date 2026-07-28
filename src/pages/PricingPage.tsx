@@ -52,6 +52,7 @@ export default function PricingPage() {
         toast.loading('Redirecting to checkout…');
         const session = await createFreeCheckout({
           cancelPath: '/pricing',
+          interval: billingInterval,
         });
         if (session?.url) {
           window.location.assign(session.url);

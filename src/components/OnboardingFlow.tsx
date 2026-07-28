@@ -122,6 +122,7 @@ export function OnboardingFlow() {
       toast.loading('Redirecting to checkout…');
       const session = await createFreeCheckout({
         cancelPath: '/onboarding',
+        interval: billingInterval,
       });
       if (!session?.url) {
         throw new Error('Failed to start checkout');

@@ -40,3 +40,20 @@ test("Stripe top-up checkout sessions keep payment intent metadata", () => {
     creditsAmount: "15000",
   });
 });
+
+test("Free checkout uses its configured price without collecting a card", () => {
+  const params = buildCheckoutSessionCreateParams({
+    ...baseCheckoutArgs,
+    priceId: "price_free_annual",
+    mode: "subscription",
+    subscriptionMetadata: { orgId: "user_test" },
+    paymentMethodCollection: "if_required",
+    allowPromotionCodes: false,
+  });
+
+  expect(params.line_items).toEqual([
+    { price: "price_free_annual", quantity: 1 },
+  ]);
+  expect(params.payment_method_collection).toBe("if_required");
+  expect(params.allow_promotion_codes).toBe(false);
+});
