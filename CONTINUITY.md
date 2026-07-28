@@ -277,7 +277,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
-- 2026-07-28 [TOOL] Credit meter progress height: Progress root dropped `flex items-center`/`size-full`; CreditMeter uses shared `METER_PROGRESS_CLASS = 'h-[0.3375rem]'`. Passed 1 file/2 tests under Node v22.22.0 (`src/lib/creditMeterProgress.test.ts`), scoped ESLint, and `git diff --check`. Unreleased; no changelog.
+- 2026-07-28 [TOOL] Credit meter bar alignment + Past referrals table (Email/Date/Earn, date-time, `+N credits`, centered) committed as `f7ab4673` (6 files) and pushed to `origin/main` (`1e8efcf9..f7ab4673`); local `main` is level with the remote.
+- 2026-07-28 [TOOL] Credit meter progress height: Progress root dropped `flex items-center`/`size-full`; CreditMeter uses shared `METER_PROGRESS_CLASS = 'h-[4px] shrink-0'`. Passed 1 file/2 tests under Node v22.22.0 (`src/lib/creditMeterProgress.test.ts`), scoped ESLint, and `git diff --check`. Unreleased; no changelog.
 - 2026-07-28 [TOOL] Referral PostHog funnel + empty-state spacing committed as `88982eb3` (5 files) and pushed to `origin/main` (`9380e3a1..88982eb3`); local `main` is level with the remote.
 - 2026-07-28 [TOOL] Referral PostHog funnel and Past referrals empty-state spacing (`flex-none` + `px-6 py-10`) passed 2 files/4 tests under Node v22.22.0 (`src/lib/referralAnalyticsEvents.test.ts`, `src/pages/ReferralsPageLayout.test.ts`) plus `git diff --check`. `npx eslint src/components/OnboardingFlow.tsx` reports the two pre-existing `react-hooks/set-state-in-effect` errors, confirmed identical at HEAD via stash. No deployment or public changelog update ran.
 - 2026-07-28 [TOOL] “Visual & Voice Intelligence” pricing copy and its hover description passed the focused 13-test inbound-media suite and scoped ESLint under Node v22.22.0; no deployment or public changelog update ran.
