@@ -24,7 +24,6 @@ dist-ssr
 *.sw?
 
 .cursor/plans/
-.worktrees/
 
 # wrangler files
 .wrangler
