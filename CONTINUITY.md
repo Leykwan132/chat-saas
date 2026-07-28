@@ -275,6 +275,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-28 [TOOL] Referral PostHog funnel + empty-state spacing committed as `88982eb3` (5 files) and pushed to `origin/main` (`9380e3a1..88982eb3`); local `main` is level with the remote.
 - 2026-07-28 [TOOL] Referral PostHog funnel and Past referrals empty-state spacing (`flex-none` + `px-6 py-10`) passed 2 files/4 tests under Node v22.22.0 (`src/lib/referralAnalyticsEvents.test.ts`, `src/pages/ReferralsPageLayout.test.ts`) plus `git diff --check`. `npx eslint src/components/OnboardingFlow.tsx` reports the two pre-existing `react-hooks/set-state-in-effect` errors, confirmed identical at HEAD via stash. No deployment or public changelog update ran.
 - 2026-07-28 [TOOL] “Visual & Voice Intelligence” pricing copy and its hover description passed the focused 13-test inbound-media suite and scoped ESLint under Node v22.22.0; no deployment or public changelog update ran.
 - 2026-07-27 [TOOL] Inbound-media diagnostic cleanup under Node v22.22.0 removed temporary webhook/media/MiMo console dumps and deleted `metaWebhookMediaDiagnostics.ts`; 13 focused tests, ESLint on touched files, whitespace, TypeScript via Convex upload, and a 191-line media module passed. Failure `console.error`s remain. No production deployment or public changelog update ran.
