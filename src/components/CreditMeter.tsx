@@ -1,5 +1,5 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { Plus, Rocket } from 'lucide-react';
+import { CircleArrowUp, Plus } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
@@ -89,8 +89,8 @@ export function CreditMeter() {
             onClick={openAdjustPlan}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-transparent px-2 py-0.5 text-[10px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <Rocket className="size-2.5" />
             {resolvePlanEntryLabel('credit_meter')}
+            <CircleArrowUp className="size-2.5" />
           </button>
         </div>
       ) : null}

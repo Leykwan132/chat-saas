@@ -19,7 +19,10 @@ import {
 } from './adjustPlanFlow';
 import { AdjustPlanPickerDialog } from './AdjustPlanPickerDialog';
 import { TeamFreePlanWarningDialog } from './TeamFreePlanWarningDialog';
-import { openBillingPortalNavigation } from './billingPortalNavigation';
+import {
+  openBillingPortalInNewWindow,
+  openBillingPortalNavigation,
+} from './billingPortalNavigation';
 
 type PaidPlanKey = Exclude<PlanKey, 'free'>;
 
@@ -50,15 +53,27 @@ export function AdjustPlanProvider({
   );
 
   const openPortal = useCallback(
-    async (selectedPlan: PlanKey) => {
+    async (
+      selectedPlan: PlanKey,
+      target: 'same_tab' | 'new_tab' = 'same_tab',
+    ) => {
       if (loadingPlan) return;
       setLoadingPlan(selectedPlan);
       try {
-        await openBillingPortalNavigation({
-          createPortal,
-          returnPath: returnPath(),
-          assign: (url) => window.location.assign(url),
-        });
+        const portalReturnPath = returnPath();
+        if (target === 'new_tab') {
+          await openBillingPortalInNewWindow({
+            createPortal,
+            returnPath: portalReturnPath,
+            openWindow: () => window.open('about:blank', '_blank'),
+          });
+        } else {
+          await openBillingPortalNavigation({
+            createPortal,
+            returnPath: portalReturnPath,
+            assign: (url) => window.location.assign(url),
+          });
+        }
       } catch (error: unknown) {
         console.error('Portal error:', error);
         toast.error(
@@ -124,7 +139,7 @@ export function AdjustPlanProvider({
       toast.error('Only the workspace owner can manage billing.');
       return;
     }
-    void openPortal(planAndUsage.plan);
+    void openPortal(planAndUsage.plan, 'new_tab');
   }, [openPortal, planAndUsage]);
 
   const selectPlan = useCallback(

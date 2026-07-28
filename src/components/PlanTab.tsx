@@ -18,7 +18,7 @@ import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function PlanTab() {
@@ -141,11 +141,16 @@ export function PlanTab() {
           <Button
             type="button"
             size="sm"
-            variant="outline"
+            variant="link"
+            className="px-0"
             onClick={openBillingPortal}
             disabled={isAdjustPlanLoading}
           >
-            {isAdjustPlanLoading ? <Spinner /> : null}
+            {isAdjustPlanLoading ? (
+              <Spinner />
+            ) : (
+              <ExternalLink className="size-3.5" />
+            )}
             Manage billing
           </Button>
         </div>
