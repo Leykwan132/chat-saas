@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, Navigate, useParams, useNavigate, useLocation } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
@@ -30,6 +31,9 @@ import {
 import { api } from '../../convex/_generated/api';
 import type { Id, Doc } from '../../convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
+import { WorkspaceUnavailable } from '@/components/WorkspaceUnavailable';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
+import { toast } from 'sonner';
 
 type DashboardHeaderProps = {
   agent: { _id: Id<'agents'>; name: string };
@@ -112,6 +116,10 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
 
 function DashboardContent() {
   const { agentId } = useParams();
+  const navigate = useNavigate();
+  const { isPersonal, switchTeam } = useActiveTeam();
+  const teams = useQuery(api.teams.listForCurrentUser);
+  const [switchingToPersonal, setSwitchingToPersonal] = useState(false);
   const location = useLocation();
   const isInboxPage = /\/inbox\/?$/.test(location.pathname);
   const isCalendarPage = /\/calendar\/?$/.test(location.pathname);
@@ -122,6 +130,28 @@ function DashboardContent() {
     api.agents.get,
     agentId ? { agentId: agentId as Id<'agents'> } : 'skip',
   );
+
+  const handleBackToPersonal = async () => {
+    const personalTeam = teams?.find((team) => team.type === 'personal');
+    if (!personalTeam) {
+      toast.error('Personal workspace is unavailable');
+      return;
+    }
+    setSwitchingToPersonal(true);
+    try {
+      if (!isPersonal) {
+        await switchTeam({ teamId: personalTeam._id });
+      }
+      navigate('/workspace', { replace: true });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Could not switch workspace',
+      );
+      setSwitchingToPersonal(false);
+    }
+  };
 
   if (!agentId) {
     return <Navigate to="/workspace" replace />;
@@ -136,7 +166,12 @@ function DashboardContent() {
   }
 
   if (agent === null) {
-    return <Navigate to="/workspace" replace />;
+    return (
+      <WorkspaceUnavailable
+        onBackToPersonal={handleBackToPersonal}
+        loading={teams === undefined || switchingToPersonal}
+      />
+    );
   }
 
   if (isCreateServicesPage) {
