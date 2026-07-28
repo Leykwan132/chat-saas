@@ -21,7 +21,6 @@ import {
 } from '@/components/SubscriptionPlanPicker';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { ConfirmTeamDowngradeDialog } from '@/components/billing/ConfirmTeamDowngradeDialog';
 
 type AdjustPlanDialogProps = {
   open: boolean;
@@ -42,12 +41,11 @@ export function AdjustPlanDialog({
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
-  const createPortal = useAction(api.stripe.createPortal);
+  const createFreeCheckout = useAction(api.freeCheckout.create);
 
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
-  const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
+  const [isFreeCheckoutLoading, setIsFreeCheckoutLoading] = useState(false);
 
   const plan = planAndUsage?.plan ?? 'free';
   const isLoading = isAuthLoading || planAndUsage === undefined;
@@ -76,32 +74,24 @@ export function AdjustPlanDialog({
     }
   };
 
-  const handlePortal = async () => {
-    setIsPortalLoading(true);
+  const handleFreeCheckout = async () => {
+    setIsFreeCheckoutLoading(true);
     try {
-      const session = await createPortal({
-        returnPath: planReturnPath,
+      const session = await createFreeCheckout({
+        cancelPath: planReturnPath,
       });
       if (session?.url) {
         window.location.assign(session.url);
       } else {
-        toast.error('Could not load billing portal.');
+        toast.error('Could not initiate checkout. Please try again.');
       }
     } catch (error: unknown) {
-      console.error('Portal error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to open customer portal.';
+      console.error('Checkout error:', error);
+      const message = error instanceof Error ? error.message : 'An error occurred initiating checkout.';
       toast.error(message);
     } finally {
-      setIsPortalLoading(false);
+      setIsFreeCheckoutLoading(false);
     }
-  };
-
-  const handleFreePlanAction = async () => {
-    if (planAndUsage && planAndUsage.isTeam) {
-      setConfirmDowngradeOpen(true);
-      return;
-    }
-    await handlePortal();
   };
 
   return (
@@ -138,7 +128,7 @@ export function AdjustPlanDialog({
                   billingInterval={billingInterval}
                   onBillingIntervalChange={setBillingInterval}
                   currentPlanId={plan as PlanKey}
-                  disabled={loadingPlanKey !== null || isPortalLoading}
+                  disabled={loadingPlanKey !== null || isFreeCheckoutLoading}
                   renderPlanAction={(planCard) => {
                     if (planCard.isEnterprise) {
                       return (
@@ -149,7 +139,7 @@ export function AdjustPlanDialog({
                     const isCurrent = plan === planCard.id;
                     const isFreeDowngrade = planCard.id === 'free';
                     const isPlanLoading = isFreeDowngrade
-                      ? isPortalLoading
+                      ? isFreeCheckoutLoading
                       : loadingPlanKey === planCard.id;
                     const label = isPlanLoading
                       ? 'Loading…'
@@ -177,11 +167,11 @@ export function AdjustPlanDialog({
                         planId={planCard.id}
                         emphasizeRecommended={planCard.id === 'growth'}
                         label={label}
-                        disabled={loadingPlanKey !== null || isPortalLoading}
+                        disabled={loadingPlanKey !== null || isFreeCheckoutLoading}
                         loading={isPlanLoading}
                         onClick={() =>
                           isFreeDowngrade
-                            ? void handleFreePlanAction()
+                            ? void handleFreeCheckout()
                             : void handleCheckout(planCard.id, 'subscription')
                         }
                       />
@@ -193,12 +183,6 @@ export function AdjustPlanDialog({
           </div>
         </DialogContent>
       </Dialog>
-      <ConfirmTeamDowngradeDialog
-        open={confirmDowngradeOpen}
-        onOpenChange={setConfirmDowngradeOpen}
-        onConfirm={handlePortal}
-        loading={isPortalLoading}
-      />
     </>
   );
 }

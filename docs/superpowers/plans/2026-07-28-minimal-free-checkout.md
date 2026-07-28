@@ -25,6 +25,7 @@
 - Modify: `convex/stripeCheckout.ts`
 - Modify: `src/components/OnboardingFlow.tsx`
 - Modify: `src/pages/PricingPage.tsx`
+- Modify: `src/components/AdjustPlanDialog.tsx`
 
 **Interfaces:**
 - Consumes: `STRIPE_PRICE_FREE` and `api.stripe.createCheckout`.
@@ -43,9 +44,9 @@ sessionParams.paymentMethodCollection = "if_required";
 sessionParams.allowPromotionCodes = false;
 ```
 
-- [ ] **Step 3: Route both Free buttons through Checkout**
+- [ ] **Step 3: Route all Free buttons through Checkout**
 
-Remove each `createStripeCustomer` Free bypass. Call `api.freeCheckout.create` for Free and preserve the existing paid Checkout path.
+Remove each `createStripeCustomer` Free bypass. Call `api.freeCheckout.create` for Free from onboarding, Pricing, and Settings → Plan while preserving the existing paid Checkout path.
 
 - [ ] **Step 4: Perform static verification**
 
@@ -54,6 +55,6 @@ Run `git diff --check`, inspect the scoped diff, and confirm no new files beyond
 - [ ] **Step 5: Commit**
 
 ```bash
-git add convex/freeCheckout.ts convex/stripeCheckout.ts src/components/OnboardingFlow.tsx src/pages/PricingPage.tsx
+git add convex/freeCheckout.ts convex/stripeCheckout.ts src/components/OnboardingFlow.tsx src/pages/PricingPage.tsx src/components/AdjustPlanDialog.tsx
 git commit -m "Open Free plan in Stripe Checkout"
 ```
