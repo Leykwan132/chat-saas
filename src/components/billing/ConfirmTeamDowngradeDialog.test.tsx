@@ -40,9 +40,11 @@ describe("team downgrade confirmation", () => {
   });
 
   test("only team downgrades to Free require confirmation", () => {
-    expect(adjustPlanSource).toContain("planAndUsage.isTeam");
+    expect(adjustPlanSource).toContain("api.freePlanDowngrade.execute");
+    expect(adjustPlanSource).toContain("planAndUsage?.isTeam");
     expect(adjustPlanSource).toContain("setConfirmDowngradeOpen(true)");
     expect(adjustPlanSource).toContain("<ConfirmTeamDowngradeDialog");
-    expect(adjustPlanSource).toContain("await handlePortal()");
+    expect(adjustPlanSource).toContain("await downgradeToFree");
+    expect(adjustPlanSource).not.toContain("createFreeCheckout");
   });
 });

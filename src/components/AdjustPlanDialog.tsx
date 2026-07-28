@@ -21,6 +21,7 @@ import {
 } from '@/components/SubscriptionPlanPicker';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { ConfirmTeamDowngradeDialog } from '@/components/billing/ConfirmTeamDowngradeDialog';
 
 type AdjustPlanDialogProps = {
   open: boolean;
@@ -41,11 +42,12 @@ export function AdjustPlanDialog({
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
-  const createFreeCheckout = useAction(api.freeCheckout.create);
+  const downgradeToFree = useAction(api.freePlanDowngrade.execute);
 
   const [billingInterval, setBillingInterval] = useState<BillingInterval>('monthly');
   const [loadingPlanKey, setLoadingPlanKey] = useState<string | null>(null);
-  const [isFreeCheckoutLoading, setIsFreeCheckoutLoading] = useState(false);
+  const [isFreeDowngradeLoading, setIsFreeDowngradeLoading] = useState(false);
+  const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
 
   const plan = planAndUsage?.plan ?? 'free';
   const isLoading = isAuthLoading || planAndUsage === undefined;
@@ -74,24 +76,36 @@ export function AdjustPlanDialog({
     }
   };
 
-  const handleFreeCheckout = async () => {
-    setIsFreeCheckoutLoading(true);
+  const executeFreeDowngrade = async () => {
+    setIsFreeDowngradeLoading(true);
     try {
-      const session = await createFreeCheckout({
-        cancelPath: planReturnPath,
+      const result = await downgradeToFree({
+        interval: billingInterval,
       });
-      if (session?.url) {
-        window.location.assign(session.url);
-      } else {
-        toast.error('Could not initiate checkout. Please try again.');
+      if (result.redirectToPersonal) {
+        window.location.assign('/workspace');
+        return;
       }
+      setConfirmDowngradeOpen(false);
+      onOpenChange(false);
+      toast.success('Your plan is now Free.');
     } catch (error: unknown) {
-      console.error('Checkout error:', error);
-      const message = error instanceof Error ? error.message : 'An error occurred initiating checkout.';
+      console.error('Downgrade error:', error);
+      const message = error instanceof Error
+        ? error.message
+        : 'Could not downgrade your plan.';
       toast.error(message);
     } finally {
-      setIsFreeCheckoutLoading(false);
+      setIsFreeDowngradeLoading(false);
     }
+  };
+
+  const handleFreeSelection = () => {
+    if (planAndUsage?.isTeam) {
+      setConfirmDowngradeOpen(true);
+      return;
+    }
+    void executeFreeDowngrade();
   };
 
   return (
@@ -128,7 +142,7 @@ export function AdjustPlanDialog({
                   billingInterval={billingInterval}
                   onBillingIntervalChange={setBillingInterval}
                   currentPlanId={plan as PlanKey}
-                  disabled={loadingPlanKey !== null || isFreeCheckoutLoading}
+                  disabled={loadingPlanKey !== null || isFreeDowngradeLoading}
                   renderPlanAction={(planCard) => {
                     if (planCard.isEnterprise) {
                       return (
@@ -139,7 +153,7 @@ export function AdjustPlanDialog({
                     const isCurrent = plan === planCard.id;
                     const isFreeDowngrade = planCard.id === 'free';
                     const isPlanLoading = isFreeDowngrade
-                      ? isFreeCheckoutLoading
+                      ? isFreeDowngradeLoading
                       : loadingPlanKey === planCard.id;
                     const label = isPlanLoading
                       ? 'Loading…'
@@ -167,11 +181,11 @@ export function AdjustPlanDialog({
                         planId={planCard.id}
                         emphasizeRecommended={planCard.id === 'growth'}
                         label={label}
-                        disabled={loadingPlanKey !== null || isFreeCheckoutLoading}
+                        disabled={loadingPlanKey !== null || isFreeDowngradeLoading}
                         loading={isPlanLoading}
                         onClick={() =>
                           isFreeDowngrade
-                            ? void handleFreeCheckout()
+                            ? handleFreeSelection()
                             : void handleCheckout(planCard.id, 'subscription')
                         }
                       />
@@ -183,6 +197,12 @@ export function AdjustPlanDialog({
           </div>
         </DialogContent>
       </Dialog>
+      <ConfirmTeamDowngradeDialog
+        open={confirmDowngradeOpen}
+        onOpenChange={setConfirmDowngradeOpen}
+        onConfirm={executeFreeDowngrade}
+        loading={isFreeDowngradeLoading}
+      />
     </>
   );
 }
