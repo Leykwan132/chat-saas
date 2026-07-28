@@ -24,7 +24,7 @@ export function showTeamCreationUpgradeToast(
   toast.message('Paid plan required', {
     description: 'Upgrade your account to create shared teams.',
     action: {
-      label: 'Upgrade',
+      label: 'Manage plan',
       onClick: () => navigate(planPath),
     },
   });
@@ -43,7 +43,7 @@ export function handleCreateTeamGate(
   onAllowed: () => void,
   navigate: NavigateFunction,
   planPath = DEFAULT_PLAN_PATH,
-  openUpgradeModal?: () => void,
+  openManagePlan?: () => void,
 ) {
   if (canCreateOrgTeam === undefined) return;
 
@@ -53,8 +53,8 @@ export function handleCreateTeamGate(
   }
 
   if (canCreateOrgTeam.requiresPlanUpgrade) {
-    if (openUpgradeModal) {
-      openUpgradeModal();
+    if (openManagePlan) {
+      openManagePlan();
     } else {
       showTeamCreationUpgradeToast(navigate, planPath);
     }

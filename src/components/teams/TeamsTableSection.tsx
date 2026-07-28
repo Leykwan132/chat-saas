@@ -12,7 +12,7 @@ import {
   getTeamTypeLabel,
 } from '@/lib/teamDisplay';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useManagePlan } from '@/components/billing/managePlanContext';
 
 type TeamsTableSectionProps = {
   settingsBasePath: string;
@@ -41,7 +41,7 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
   const navigate = useNavigate();
   const teams = useQuery(api.teams.listForCurrentUser);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
-  const { openUpgradeModal } = useUpgradeModal();
+  const { openManagePlan } = useManagePlan();
   const [search, setSearch] = useState('');
 
   const filteredTeams = useMemo(() => {
@@ -61,7 +61,7 @@ export function TeamsTableSection({ settingsBasePath, onOpenTeam }: TeamsTableSe
       },
       navigate,
       `${settingsBasePath}?section=plan`,
-      openUpgradeModal,
+      openManagePlan,
     );
   };
 

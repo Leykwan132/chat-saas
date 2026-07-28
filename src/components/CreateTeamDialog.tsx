@@ -6,7 +6,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { getClientTimeZone } from '@/lib/calendarTimeUtils';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useManagePlan } from '@/components/billing/managePlanContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,7 +35,7 @@ export function CreateTeamDialog({
   const { switchTeam } = useActiveTeam();
   const createTeam = useAction(api.organizationsAdmin.createTeamForCurrentUser);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
-  const { openUpgradeModal } = useUpgradeModal();
+  const { openManagePlan } = useManagePlan();
 
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
@@ -69,7 +69,8 @@ export function CreateTeamDialog({
 
     if (canCreateOrgTeam && !canCreateOrgTeam.allowed) {
       if (canCreateOrgTeam.requiresPlanUpgrade) {
-        openUpgradeModal();
+        setOpen(false);
+        openManagePlan();
         return;
       }
       setError(canCreateOrgTeam.reason ?? 'You cannot create a team right now.');

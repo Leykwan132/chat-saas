@@ -9,7 +9,6 @@ export interface UpgradeScenarioConfig {
   toPlanName: string;
   title: string;
   description: string;
-  buttonLabel: string;
   features: FeatureItem[];
 }
 
@@ -20,7 +19,6 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     toPlanName: 'Starter',
     title: 'Unlock Starter Features',
     description: 'Unlock multiple agents, lead insights, and premium AI models.',
-    buttonLabel: 'Upgrade to Starter',
     features: [
       {
         title: 'Advanced AI Models',
@@ -54,7 +52,6 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     toPlanName: 'Growth',
     title: 'Scale with Growth',
     description: 'Automate bookings, sync calendar schedules, and scale support.',
-    buttonLabel: 'Upgrade to Growth',
     features: [
       {
         title: 'Services & Scheduling',
@@ -88,7 +85,6 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     toPlanName: 'Business',
     title: 'Enterprise Power with Business',
     description: 'Get enterprise credit limits, maximum channels, and priority speed.',
-    buttonLabel: 'Upgrade to Business',
     features: [
       {
         title: '15,000 Monthly Credits',

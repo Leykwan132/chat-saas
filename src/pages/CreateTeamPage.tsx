@@ -27,7 +27,7 @@ import {
 } from '../../shared/teamFormOptions';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useManagePlan } from '@/components/billing/managePlanContext';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { BlurFade } from '@/components/ui/blur-fade';
 import {
@@ -72,7 +72,7 @@ function CreateTeamFlow() {
   const { switchTeam } = useActiveTeam();
   const createTeam = useAction(api.organizationsAdmin.createTeamForCurrentUser);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
-  const { openUpgradeModal } = useUpgradeModal();
+  const { openManagePlan } = useManagePlan();
 
   const returnTo = searchParams.get('returnTo') ?? DEFAULT_RETURN_TO;
 
@@ -80,13 +80,13 @@ function CreateTeamFlow() {
     if (canCreateOrgTeam === undefined || canCreateOrgTeam.allowed) return;
 
     if (canCreateOrgTeam.requiresPlanUpgrade) {
-      openUpgradeModal();
+      openManagePlan();
     } else {
       toast.message(canCreateOrgTeam.reason ?? 'You cannot create a team right now.');
     }
 
     navigate(returnTo, { replace: true });
-  }, [canCreateOrgTeam, navigate, returnTo]);
+  }, [canCreateOrgTeam, navigate, openManagePlan, returnTo]);
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');

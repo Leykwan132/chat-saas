@@ -13,11 +13,11 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import type { ExtraCreditsPackId } from '../../shared/planCatalog';
-import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
 import { PlanAddOnsSection } from '@/components/billing/PlanAddOnsSection';
+import { useManagePlan } from '@/components/billing/managePlanContext';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { AlertCircle, ExternalLink } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function PlanTab() {
@@ -30,11 +30,9 @@ export function PlanTab() {
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
-  const createPortal = useAction(api.stripe.createPortal);
+  const { openManagePlan, isManagePlanLoading } = useManagePlan();
 
-  const [plansDialogOpen, setPlansDialogOpen] = useState(false);
   const [loadingCreditsPackId, setLoadingCreditsPackId] = useState<ExtraCreditsPackId | null>(null);
-  const [isPortalLoading, setIsPortalLoading] = useState(false);
 
   useEffect(() => {
     if (window.location.hash !== '#plan-add-ons') {
@@ -99,26 +97,6 @@ export function PlanTab() {
     }
   };
 
-  const handlePortal = async () => {
-    setIsPortalLoading(true);
-    try {
-      const session = await createPortal({
-        returnPath: planReturnPath,
-      });
-      if (session?.url) {
-        window.location.assign(session.url);
-      } else {
-        toast.error('Could not load billing portal.');
-      }
-    } catch (error: unknown) {
-      console.error('Portal error:', error);
-      const message = error instanceof Error ? error.message : 'Failed to open customer portal.';
-      toast.error(message);
-    } finally {
-      setIsPortalLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-8 max-w-5xl">
       <div className="rounded-xl border border-border bg-card p-5 max-w-md">
@@ -149,39 +127,18 @@ export function PlanTab() {
           <Button
             type="button"
             size="sm"
-            onClick={() => setPlansDialogOpen(true)}
+            onClick={openManagePlan}
+            disabled={isManagePlanLoading}
           >
-            Adjust plan
+            {isManagePlanLoading ? <Spinner /> : null}
+            Manage plan
           </Button>
-          {plan !== 'free' ? (
-            <Button
-              type="button"
-              variant="link"
-              size="sm"
-              className="h-auto gap-1.5 px-0 text-muted-foreground"
-              onClick={() => void handlePortal()}
-              disabled={isPortalLoading}
-            >
-              {isPortalLoading ? (
-                <Spinner className="size-3.5" />
-              ) : (
-                <ExternalLink className="size-3.5" />
-              )}
-              Billing portal
-            </Button>
-          ) : null}
         </div>
       </div>
 
       <PlanAddOnsSection
         loadingCreditsPackId={loadingCreditsPackId}
         onCreditsCheckout={(extraCreditsPackId) => void handleCreditsCheckout(extraCreditsPackId)}
-      />
-
-      <AdjustPlanDialog
-        open={plansDialogOpen}
-        onOpenChange={setPlansDialogOpen}
-        planReturnPath={planReturnPath}
       />
     </div>
   );

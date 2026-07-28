@@ -6,7 +6,7 @@ export function showAgentLimitToast(navigate: NavigateFunction) {
     description: 'Upgrade to create more agents.',
     icon: null,
     action: {
-      label: 'Upgrade',
+      label: 'Manage plan',
       onClick: () => navigate('/workspace/settings?section=plan'),
     },
   });
