@@ -136,6 +136,7 @@ import type * as conversations from "../conversations.js";
 import type * as creditEntries from "../creditEntries.js";
 import type * as creditLogs from "../creditLogs.js";
 import type * as creditPeriodPool from "../creditPeriodPool.js";
+import type * as creditPlanReset from "../creditPlanReset.js";
 import type * as creditSourceBreakdown from "../creditSourceBreakdown.js";
 import type * as creditUsageAnalytics from "../creditUsageAnalytics.js";
 import type * as credits from "../credits.js";
@@ -440,6 +441,7 @@ declare const fullApi: ApiFromModules<{
   creditEntries: typeof creditEntries;
   creditLogs: typeof creditLogs;
   creditPeriodPool: typeof creditPeriodPool;
+  creditPlanReset: typeof creditPlanReset;
   creditSourceBreakdown: typeof creditSourceBreakdown;
   creditUsageAnalytics: typeof creditUsageAnalytics;
   credits: typeof credits;

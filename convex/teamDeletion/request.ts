@@ -3,6 +3,7 @@ import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../_generated/server";
 import { getTeamByWorkosOrgId } from "../teamHelpers";
+import { resetCurrentPeriodToFreePlan } from "../creditPlanReset";
 import { teamDeletionPool } from "./pool";
 import { moveActiveUsersPage } from "./isolation";
 
@@ -93,6 +94,7 @@ export async function requestTeamDeletion(
       stripeSubscriptionCurrentPeriodEnd: undefined,
       updatedAt: now,
     });
+    await resetCurrentPeriodToFreePlan(ctx, team.ownerId);
   }
 
   await moveActiveUsersPage(ctx, team._id);

@@ -115,8 +115,41 @@ describe("team subscription deletion", () => {
         role: "owner",
         createdAt: now,
       });
+      const creditPeriodId = await ctx.db.insert("userCreditPeriods", {
+        userId: ownerId,
+        periodStart: now - 1_000,
+        periodEnd: now + 30 * 24 * 60 * 60 * 1_000,
+        grantedCredits: 15_000,
+        usedCredits: 2_000,
+        planKey: "growth",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const purchasedTopUpId = await ctx.db.insert("topUpEntries", {
+        userId: ownerId,
+        source: "purchase",
+        grantedCredits: 2_000,
+        usedCredits: 250,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const referralTopUpId = await ctx.db.insert("topUpEntries", {
+        userId: ownerId,
+        source: "referral",
+        grantedCredits: 500,
+        usedCredits: 100,
+        createdAt: now + 1,
+        updatedAt: now + 1,
+      });
       await ctx.db.patch(ownerId, { activeTeamId: teamId });
-      return { ownerId, personalTeamId, teamId };
+      return {
+        ownerId,
+        personalTeamId,
+        teamId,
+        creditPeriodId,
+        purchasedTopUpId,
+        referralTopUpId,
+      };
     });
 
     const first = await t.mutation(
@@ -145,6 +178,15 @@ describe("team subscription deletion", () => {
       return {
         team: await ctx.db.get(fixture.teamId),
         owner: await ctx.db.get(fixture.ownerId),
+        creditPeriod: await ctx.db.get(fixture.creditPeriodId),
+        purchasedTopUp: await ctx.db.get(fixture.purchasedTopUpId),
+        referralTopUp: await ctx.db.get(fixture.referralTopUpId),
+        creditLogs: await ctx.db
+          .query("creditLogs")
+          .withIndex("by_userId_and_createdAt", (q) =>
+            q.eq("userId", fixture.ownerId),
+          )
+          .collect(),
         jobs,
         tombstone: await ctx.db
           .query("deletedTeamOrganizations")
@@ -159,6 +201,15 @@ describe("team subscription deletion", () => {
     expect(state.team?.stripeSubscriptionId).toBeUndefined();
     expect(state.owner?.activeTeamId).toBe(fixture.personalTeamId);
     expect(state.owner?.stripeSubscriptionStatus).toBe("canceled");
+    expect(state.creditPeriod?.grantedCredits).toBe(50);
+    expect(state.creditPeriod?.usedCredits).toBe(0);
+    expect(state.creditPeriod?.planKey).toBe("free");
+    expect(state.purchasedTopUp?.grantedCredits).toBe(2_000);
+    expect(state.purchasedTopUp?.usedCredits).toBe(250);
+    expect(state.referralTopUp?.grantedCredits).toBe(500);
+    expect(state.referralTopUp?.usedCredits).toBe(100);
+    expect(state.creditLogs).toHaveLength(1);
+    expect(state.creditLogs[0]?.label).toBe("Plan downgraded");
     expect(state.jobs).toHaveLength(1);
     expect(state.tombstone).not.toBeNull();
   });

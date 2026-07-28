@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-28 [CODE] The first accepted organizational subscription deletion now immediately resets the owner's active monthly Plan bucket to Free (`50 / 50`) while preserving purchased and referral top-ups; duplicate and stale Stripe deletion events do not reset it again. Verified and uploaded to the configured development Convex deployment; unreleased.
 - 2026-07-28 [CODE] `plans:getPlanAndUsage` now resolves team subscription statuses `canceled` and defensive `cancelled` as Free before the inactive-subscription error branch; verified and uploaded to the configured development Convex deployment. Unreleased.
 - 2026-07-28 [CODE] Organizational subscription deletion is implemented on `codex/team-subscription-deletion-cleanup`: Stripe cancellation immediately blocks the team, returns members to Personal, disconnects channels, and uses resumable Workpools to purge team-owned Convex, Agent, R2, Cloudflare, Meta, and WorkOS data. Provider creations are durably registered and cleanup retries survive compensation failure. Verified locally and uploaded to the configured development Convex deployment; unreleased and not merged.
 - 2026-07-28 [CODE] AI Agent Usage cards show `Resets MMM D`, exact compact credit balances with a 6px value/suffix gap, and a settings-icon `Manage plan` action that opens Settings → Plan without jumping to add-ons; Plan settings does not duplicate the reset date. Verified locally; unreleased.
@@ -45,6 +46,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-28 [USER] D464 ACTIVE: For the first accepted organizational subscription deletion, reset the owner's active monthly Plan credits immediately to the Free allocation of 50 with zero usage; preserve purchased and referral credits. This supersedes D241 only for this destructive downgrade path.
 - 2026-07-28 [USER] D463 ACTIVE: Canceling an organizational subscription is an immediate destructive downgrade to Free: warn with `Confirm downgrade`, make the team unavailable, offer only `Back to Personal`, disconnect channels, and permanently delete all team-owned conversations, contacts, Agent threads, media, integrations, and workspace data while preserving Personal and unrelated teams.
 - 2026-07-28 [USER] D462 ACTIVE: AI Agent Usage uses a settings-icon `Manage plan` action instead of `More credits`; it opens the Plan section in agent or workspace settings at the section top, without the add-ons anchor.
 - 2026-07-28 [USER] D461 ACTIVE: AI Agent Usage balance rows use a deliberate 6px inline layout gap between the large remaining value and the smaller `of total credits` suffix across Plan, Additional, and Referral.
@@ -247,13 +249,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-28 [CODE] Reset accepted organizational subscription deletions to `50 / 50` Plan credits without changing purchased or referral top-ups.
 - 2026-07-28 [CODE] Implemented the destructive organizational downgrade lifecycle, unavailable-workspace UX, complete bounded cleanup, late-webhook tombstone, and compensating provider deletion for in-flight external writes.
 - 2026-07-28 [CODE] Replaced AI Agent Usage `More credits` with a settings-icon `Manage plan` action targeting Settings → Plan.
 - 2026-07-28 [CODE] Added a consistent 6px visual gap between AI Agent Usage balance values and their `of … credits` suffixes.
 - 2026-07-28 [CODE] Removed the duplicate credit-reset date from Plan settings while retaining subscription renewal details.
 - 2026-07-28 [CODE] AI Agent Usage card concise `Resets MMM D` subtitle and smaller exact balance typography.
 - 2026-07-28 [CODE] Past referrals table headers are Email / Date / Earn; Date uses `toLocaleString()` (date + time) and Earn shows `+N credits`.
-- 2026-07-28 [CODE] Referral PostHog funnel: `referral_code_copied`, `referral_code_applied`, `referral_code_skipped`, `referral_claimed`, `referral_claim_failed`; plus the Past referrals empty state using `flex-none`/`px-6 py-10` so height tracks content.
 
 # Working set
 - 2026-07-28 [CODE] Team subscription deletion: `convex/teamDeletion/*`, `convex/{stripe,workosWebhook,workpool,cloudflare,whatsappTemplateMediaPool,whatsappTemplateMediaGraph,schema}.ts`, guarded feature entrypoints, `src/components/billing/ConfirmTeamDowngradeDialog*`, `src/components/workspace/WorkspaceUnavailable*`, and `src/layouts/DashboardLayout.tsx`; verified locally and uploaded to development, not released.
@@ -290,6 +292,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-28 [TOOL] Organizational downgrade credit-reset TDD completed on Node v22.22.0: the webhook regression first failed with 15,000 remaining, then passed at `50 / 50` while purchased/referral entries stayed unchanged and a duplicate emitted no second adjustment. Three related files/12 tests, `git diff --check`, Convex codegen/typecheck, and the configured-development upload passed. Production was untouched.
 - 2026-07-28 [TOOL] Canceled-team plan regression completed RED/GREEN on Node v22.22.0: the 6-case resolver test first failed on active `main`, then passed there; the feature branch passed 2 files/10 tests plus Convex codegen/typecheck/upload. Production was untouched.
 - 2026-07-28 [TOOL] Destructive team-downgrade verification on Node v22.22.0 passed 10 focused files/30 tests, production `tsc -b && vite build`, Convex codegen/typecheck and configured-development upload, durable failed-compensation/post-creation/registration-failure RED/GREEN contracts, `git diff --check`, and ≤285-line new task modules. Full Vitest remains at the unchanged baseline of 5 unrelated failures while 313 files/1006 tests pass. Production was untouched.
 - 2026-07-28 [TOOL] AI Agent Usage Manage plan action completed a focused RED/GREEN contract under Node v22.22.0: the test failed on the Coins/More credits/add-ons-anchor presentation, then passed with a Settings icon, `Manage plan`, and the agent/workspace `?section=plan` target. Final verification passed 2 files/5 tests, scoped ESLint, line limit, and `git diff --check`; no deployment or public changelog update ran.
