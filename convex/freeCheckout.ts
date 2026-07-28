@@ -1,0 +1,57 @@
+import { StripeSubscriptions } from "@convex-dev/stripe";
+import { v } from "convex/values";
+import { components, internal } from "./_generated/api";
+import { action } from "./_generated/server";
+import { getBillingWorkosUserId } from "./billingScope";
+import { createCheckoutSessionWithPromotionCodes } from "./stripeCheckout";
+
+const stripeClient = new StripeSubscriptions(components.stripe, {});
+
+type BillingUser = {
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+export const create = action({
+  args: {
+    cancelPath: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getBillingWorkosUserId(ctx);
+    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
+      userId,
+    })) as BillingUser | null;
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const priceId = process.env.STRIPE_PRICE_FREE;
+    if (!priceId) {
+      throw new Error("STRIPE_PRICE_FREE environment variable is not set");
+    }
+
+    const customer = await stripeClient.getOrCreateCustomer(ctx, {
+      userId,
+      email: user.email,
+      name: user.firstName
+        ? `${user.firstName} ${user.lastName ?? ""}`.trim()
+        : user.email,
+    });
+    const frontendUrl = (
+      process.env.APP_BASE_URL || "http://localhost:5173"
+    ).replace(/\/+$/, "");
+
+    return await createCheckoutSessionWithPromotionCodes({
+      priceId,
+      customerId: customer.customerId,
+      mode: "subscription",
+      successUrl: `${frontendUrl}/workspace?success=true`,
+      cancelUrl: `${frontendUrl}${args.cancelPath}`,
+      metadata: { orgId: userId, type: "subscription" },
+      subscriptionMetadata: { orgId: userId },
+      paymentMethodCollection: "if_required",
+      allowPromotionCodes: false,
+    });
+  },
+});

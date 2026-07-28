@@ -30,7 +30,7 @@ import { cn } from '@/lib/utils';
 export function OnboardingFlow() {
   const completeOnboarding = useMutation(api.users.completeOnboarding);
   const createCheckout = useAction(api.stripe.createCheckout);
-  const createStripeCustomer = useAction(api.stripe.createStripeCustomer);
+  const createFreeCheckout = useAction(api.freeCheckout.create);
   const currentUser = useQuery(api.users.currentUser);
   const posthog = usePostHog();
   const referralProgramState = useEnableReferralProgram();
@@ -119,9 +119,14 @@ export function OnboardingFlow() {
 
   const finishBilling = async (planKey: PlanKey) => {
     if (planKey === 'free') {
-      toast.loading('Setting up billing account…');
-      await createStripeCustomer({ orgId: 'personal' });
-      window.location.replace('/workspace');
+      toast.loading('Redirecting to checkout…');
+      const session = await createFreeCheckout({
+        cancelPath: '/onboarding',
+      });
+      if (!session?.url) {
+        throw new Error('Failed to start checkout');
+      }
+      window.location.href = session.url;
       return;
     }
     toast.loading('Redirecting to checkout…');

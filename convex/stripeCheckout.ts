@@ -11,6 +11,8 @@ export type CheckoutSessionParams = {
   metadata: CheckoutMetadata;
   subscriptionMetadata?: CheckoutMetadata;
   paymentIntentMetadata?: CheckoutMetadata;
+  paymentMethodCollection?: "always" | "if_required";
+  allowPromotionCodes?: boolean;
 };
 
 function getStripeSecretKey() {
@@ -36,8 +38,12 @@ export function buildCheckoutSessionCreateParams(
     cancel_url: args.cancelUrl,
     customer: args.customerId,
     metadata: args.metadata,
-    allow_promotion_codes: true,
+    allow_promotion_codes: args.allowPromotionCodes ?? true,
   };
+
+  if (args.paymentMethodCollection) {
+    sessionParams.payment_method_collection = args.paymentMethodCollection;
+  }
 
   if (args.mode === "subscription" && args.subscriptionMetadata) {
     sessionParams.subscription_data = {

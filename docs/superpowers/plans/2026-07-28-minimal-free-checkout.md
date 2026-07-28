@@ -4,7 +4,7 @@
 
 **Goal:** Open Stripe Checkout when an authenticated user selects the Free plan.
 
-**Architecture:** Extend the existing Checkout request with two optional Stripe parameters. Reuse `api.stripe.createCheckout` and the existing Free buttons without adding modules or tests.
+**Architecture:** Extend the existing Checkout request with two optional Stripe parameters. Add one focused `api.freeCheckout.create` action because the existing Stripe module is already above the project line limit.
 
 **Tech Stack:** TypeScript, Convex, Stripe, React
 
@@ -18,25 +18,25 @@
 
 ---
 
-### Task 1: Route Free through the existing Checkout action
+### Task 1: Route Free through a focused Checkout action
 
 **Files:**
+- Create: `convex/freeCheckout.ts`
 - Modify: `convex/stripeCheckout.ts`
-- Modify: `convex/stripe.ts`
 - Modify: `src/components/OnboardingFlow.tsx`
 - Modify: `src/pages/PricingPage.tsx`
 
 **Interfaces:**
 - Consumes: `STRIPE_PRICE_FREE` and `api.stripe.createCheckout`.
-- Produces: the existing `{ sessionId, url }` Checkout result.
+- Produces: `api.freeCheckout.create({ cancelPath: string })`.
 
 - [ ] **Step 1: Add optional Free Checkout parameters**
 
 Extend `CheckoutSessionParams` with `paymentMethodCollection` and `allowPromotionCodes`. Map them to Stripe while keeping promotion codes enabled by default.
 
-- [ ] **Step 2: Accept Free in `createCheckout`**
+- [ ] **Step 2: Create the Free Checkout action**
 
-When `args.plan === "free"`, require `STRIPE_PRICE_FREE`, omit the paid interval requirement, and set:
+Create one authenticated action that requires `STRIPE_PRICE_FREE`, gets or creates the Stripe customer, and sets:
 
 ```ts
 sessionParams.paymentMethodCollection = "if_required";
@@ -45,7 +45,7 @@ sessionParams.allowPromotionCodes = false;
 
 - [ ] **Step 3: Route both Free buttons through Checkout**
 
-Remove each `createStripeCustomer` Free bypass. Call the existing Checkout action for every plan, passing `interval: undefined` for Free and preserving each page's cancel path.
+Remove each `createStripeCustomer` Free bypass. Call `api.freeCheckout.create` for Free and preserve the existing paid Checkout path.
 
 - [ ] **Step 4: Perform static verification**
 
@@ -54,6 +54,6 @@ Run `git diff --check`, inspect the scoped diff, and confirm no new files beyond
 - [ ] **Step 5: Commit**
 
 ```bash
-git add convex/stripeCheckout.ts convex/stripe.ts src/components/OnboardingFlow.tsx src/pages/PricingPage.tsx
+git add convex/freeCheckout.ts convex/stripeCheckout.ts src/components/OnboardingFlow.tsx src/pages/PricingPage.tsx
 git commit -m "Open Free plan in Stripe Checkout"
 ```

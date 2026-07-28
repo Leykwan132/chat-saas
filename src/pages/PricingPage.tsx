@@ -30,7 +30,7 @@ export default function PricingPage() {
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null);
 
   const createCheckoutSession = useAction(api.stripe.createCheckout);
-  const createStripeCustomer = useAction(api.stripe.createStripeCustomer);
+  const createFreeCheckout = useAction(api.freeCheckout.create);
 
   const returnTo = { state: { returnTo: POST_LOGIN_REDIRECT } };
 
@@ -49,9 +49,15 @@ export default function PricingPage() {
 
     try {
       if (plan === 'free') {
-        toast.loading('Setting up billing account…');
-        await createStripeCustomer({ orgId: 'personal' });
-        window.location.assign('/workspace');
+        toast.loading('Redirecting to checkout…');
+        const session = await createFreeCheckout({
+          cancelPath: '/pricing',
+        });
+        if (session?.url) {
+          window.location.assign(session.url);
+        } else {
+          throw new Error('Failed to start checkout');
+        }
       } else {
         posthog?.capture('checkout_initiated', { plan, billing_interval: billingInterval });
         const session = await createCheckoutSession({

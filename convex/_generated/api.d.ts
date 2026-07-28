@@ -148,6 +148,7 @@ import type * as customers from "../customers.js";
 import type * as devReset from "../devReset.js";
 import type * as followUpPool from "../followUpPool.js";
 import type * as followUpQueries from "../followUpQueries.js";
+import type * as freeCheckout from "../freeCheckout.js";
 import type * as http from "../http.js";
 import type * as inboundMediaBatch from "../inboundMediaBatch.js";
 import type * as inboundMediaUnderstanding from "../inboundMediaUnderstanding.js";
@@ -455,6 +456,7 @@ declare const fullApi: ApiFromModules<{
   devReset: typeof devReset;
   followUpPool: typeof followUpPool;
   followUpQueries: typeof followUpQueries;
+  freeCheckout: typeof freeCheckout;
   http: typeof http;
   inboundMediaBatch: typeof inboundMediaBatch;
   inboundMediaUnderstanding: typeof inboundMediaUnderstanding;
