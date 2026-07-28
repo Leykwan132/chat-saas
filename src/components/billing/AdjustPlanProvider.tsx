@@ -19,6 +19,7 @@ import {
 } from './adjustPlanFlow';
 import { AdjustPlanPickerDialog } from './AdjustPlanPickerDialog';
 import { TeamFreePlanWarningDialog } from './TeamFreePlanWarningDialog';
+import { openBillingPortalNavigation } from './billingPortalNavigation';
 
 type PaidPlanKey = Exclude<PlanKey, 'free'>;
 
@@ -53,12 +54,11 @@ export function AdjustPlanProvider({
       if (loadingPlan) return;
       setLoadingPlan(selectedPlan);
       try {
-        const session = await createPortal({ returnPath: returnPath() });
-        if (!session?.url) {
-          toast.error('Could not load billing portal.');
-          return;
-        }
-        window.location.assign(session.url);
+        await openBillingPortalNavigation({
+          createPortal,
+          returnPath: returnPath(),
+          assign: (url) => window.location.assign(url),
+        });
       } catch (error: unknown) {
         console.error('Portal error:', error);
         toast.error(
@@ -115,6 +115,18 @@ export function AdjustPlanProvider({
     setView((current) => resolveAdjustPlanView(current, 'open'));
   }, [planAndUsage]);
 
+  const openBillingPortal = useCallback(() => {
+    if (!planAndUsage) {
+      toast.error('Your billing profile is not available yet.');
+      return;
+    }
+    if (!planAndUsage.canManageBilling) {
+      toast.error('Only the workspace owner can manage billing.');
+      return;
+    }
+    void openPortal(planAndUsage.plan);
+  }, [openPortal, planAndUsage]);
+
   const selectPlan = useCallback(
     (selectedPlan: PlanKey) => {
       if (!planAndUsage) return;
@@ -143,9 +155,10 @@ export function AdjustPlanProvider({
   const contextValue = useMemo<AdjustPlanContextValue>(
     () => ({
       openAdjustPlan,
+      openBillingPortal,
       isAdjustPlanLoading: loadingPlan !== null,
     }),
-    [loadingPlan, openAdjustPlan],
+    [loadingPlan, openAdjustPlan, openBillingPortal],
   );
 
   return (

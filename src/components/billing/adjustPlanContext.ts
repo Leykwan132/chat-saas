@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 export type AdjustPlanContextValue = {
   openAdjustPlan: () => void;
+  openBillingPortal: () => void;
   isAdjustPlanLoading: boolean;
 };
 
