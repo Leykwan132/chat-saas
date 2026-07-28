@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { useAction, useMutation, useQuery } from 'convex/react';
+import { usePostHog } from '@posthog/react';
 import { AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
@@ -31,6 +32,7 @@ export function OnboardingFlow() {
   const createCheckout = useAction(api.stripe.createCheckout);
   const createStripeCustomer = useAction(api.stripe.createStripeCustomer);
   const currentUser = useQuery(api.users.currentUser);
+  const posthog = usePostHog();
   const referralProgramState = useEnableReferralProgram();
   const referralProgramEnabled =
     isProductFeatureEnabled(referralProgramState);
@@ -138,23 +140,37 @@ export function OnboardingFlow() {
 
   const handleComplete = async (planKey: PlanKey) => {
     setSubmitting(true);
+    const submittedReferralCode =
+      referralProgramEnabled && referralCode ? referralCode : undefined;
     try {
       const result = await completeOnboarding({
         role,
         useCase: useCases,
         channels,
-        referralCode:
-          referralProgramEnabled && referralCode ? referralCode : undefined,
+        referralCode: submittedReferralCode,
       });
+      if (result.referralRewardCredits) {
+        posthog?.capture('referral_claimed', {
+          referral_code: submittedReferralCode,
+          reward_credits: result.referralRewardCredits,
+        });
+      }
       toast.success(
         result.referralRewardCredits
           ? `${result.referralRewardCredits.toLocaleString()} referral credits added`
           : 'Workspace created!',
       );
     } catch (error) {
+      const mappedError = mapBackendError(error, 'Referral code error');
+      if (submittedReferralCode) {
+        posthog?.capture('referral_claim_failed', {
+          referral_code: submittedReferralCode,
+          reason: mappedError.title,
+        });
+      }
       setStep(referralProgramEnabled ? 4 : 5);
       setSubmitting(false);
-      toast.error(mapBackendError(error, 'Referral code error').message);
+      toast.error(mappedError.message);
       return;
     }
 
@@ -236,8 +252,14 @@ export function OnboardingFlow() {
                       code={referralCode}
                       onChange={setReferralCode}
                       onBack={handleBack}
-                      onContinue={() => setStep(5)}
+                      onContinue={() => {
+                        posthog?.capture('referral_code_applied', {
+                          referral_code: referralCode,
+                        });
+                        setStep(5);
+                      }}
                       onSkip={() => {
+                        posthog?.capture('referral_code_skipped');
                         setReferralCode('');
                         setStep(5);
                       }}

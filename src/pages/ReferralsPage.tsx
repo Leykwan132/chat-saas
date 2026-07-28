@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { usePaginatedQuery, useQuery } from "convex/react";
 import { useAuth } from "@workos-inc/authkit-react";
+import { usePostHog } from "@posthog/react";
 import { Gift, Share2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "../../convex/_generated/api";
@@ -67,6 +68,7 @@ export default function ReferralsPage() {
     { initialNumItems: 10 },
   );
   const [copied, setCopied] = useState(false);
+  const posthog = usePostHog();
 
   if (isAuthLoading || overview === undefined) {
     return <ReferralPageSkeleton />;
@@ -76,6 +78,10 @@ export default function ReferralsPage() {
     try {
       await navigator.clipboard.writeText(overview.code);
       setCopied(true);
+      posthog?.capture("referral_code_copied", {
+        referral_code: overview.code,
+        successful_referral_count: overview.successfulReferralCount,
+      });
       toast.success("Referral code copied");
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -188,7 +194,7 @@ export default function ReferralsPage() {
             <Skeleton className="h-12 w-full" />
           </div>
         ) : history.length === 0 ? (
-          <Empty className="min-h-32 bg-muted/30 p-6">
+          <Empty className="flex-none bg-muted/30 px-6 py-10">
             <EmptyHeader>
               <EmptyMedia variant="icon">
                 <Gift />

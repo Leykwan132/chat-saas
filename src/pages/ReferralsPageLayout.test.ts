@@ -28,5 +28,5 @@ test("uses one soft referral panel with a code-only copy row", () => {
   expect(source).toContain('className="h-10 sm:w-24"');
   expect(source).toContain('{copied ? "Copied" : "Copy"}');
   expect(source).toMatch(/<section\s+aria-labelledby="past-referrals-title"/);
-  expect(source).toContain('<Empty className="min-h-32 bg-muted/30 p-6">');
+  expect(source).toContain('<Empty className="flex-none bg-muted/30 px-6 py-10">');
 });
