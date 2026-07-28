@@ -25,14 +25,17 @@ const consequences = [
   {
     Icon: MessageSquareOff,
     label: "Your conversations will be deleted",
+    description: "All conversations, messages, contacts, agent threads, and conversation history will be permanently removed.",
   },
   {
     Icon: Trash2,
     label: "Your workspace data will be cleared",
+    description: "Agents, workflows, knowledge, files, analytics, settings, and team memberships will be deleted.",
   },
   {
     Icon: Unplug,
     label: "Your channels will be disconnected",
+    description: "WhatsApp, Instagram, Messenger, web widgets, and associated credentials will be removed and will stop processing messages.",
   },
 ] as const;
 
@@ -53,19 +56,23 @@ export function ConfirmTeamDowngradeDialog({
         <DialogHeader>
           <DialogTitle>Confirm downgrade</DialogTitle>
           <DialogDescription>
-            Downgrading to Free permanently deletes this team workspace and
-            its data. This cannot be undone.
+            Once your downgrade is completed, your team workspace and its data will be permanently deleted. This cannot be undone.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-2">
-          {consequences.map(({ Icon, label }) => (
+          {consequences.map(({ Icon, label, description }) => (
             <div
               key={label}
-              className="flex items-center gap-3 rounded-xl bg-muted p-3"
+              className="flex items-start gap-3 rounded-xl bg-muted p-3"
             >
-              <Icon className="size-4 shrink-0 text-muted-foreground" />
-              <span>{label}</span>
+              <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div className="space-y-0.5">
+                <div className="font-medium">{label}</div>
+                <div className="text-sm text-muted-foreground">
+                  {description}
+                </div>
+              </div>
             </div>
           ))}
         </div>

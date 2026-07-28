@@ -17,10 +17,22 @@ describe("team downgrade confirmation", () => {
       "Your conversations will be deleted",
     );
     expect(dialogSource).toContain(
+      "All conversations, messages, contacts, agent threads, and conversation history will be permanently removed.",
+    );
+    expect(dialogSource).toContain(
       "Your workspace data will be cleared",
     );
     expect(dialogSource).toContain(
+      "Agents, workflows, knowledge, files, analytics, settings, and team memberships will be deleted.",
+    );
+    expect(dialogSource).toContain(
       "Your channels will be disconnected",
+    );
+    expect(dialogSource).toContain(
+      "WhatsApp, Instagram, Messenger, web widgets, and associated credentials will be removed and will stop processing messages.",
+    );
+    expect(dialogSource).toContain(
+      "Once your downgrade is completed, your team workspace and its data will be permanently deleted. This cannot be undone.",
     );
     expect(dialogSource).toContain("Go back");
     expect(dialogSource).toContain("onConfirm");

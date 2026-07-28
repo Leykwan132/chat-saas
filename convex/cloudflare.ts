@@ -2,10 +2,12 @@
 
 import { v } from "convex/values";
 import { action, internalAction } from "./_generated/server";
+import type { ActionCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext } from "./authUtils";
 import { cfUploadPool, cfDeletePool, webScraperPool, linkDiscovererPool } from "./workpool";
 import Cloudflare from "cloudflare";
+import { createWorkspaceExternalState } from "./teamDeletion/externalGuard";
 
 const cfAccountId = process.env.CF_ACCOUNT_ID!;
 const cfInstanceName = process.env.CF_AI_SEARCH_NAME!;
@@ -38,7 +40,7 @@ export async function uploadToCF(
   return response.id;
 }
 
-export async function deleteFromCF(cfItemId: string): Promise<void> {
+export async function deleteFromCFOrThrow(cfItemId: string): Promise<void> {
   try {
     await client.aiSearch.namespaces.instances.items.delete(
       cfNamespace,
@@ -46,9 +48,39 @@ export async function deleteFromCF(cfItemId: string): Promise<void> {
       cfItemId,
       { account_id: cfAccountId },
     );
+  } catch (error) {
+    if (isCloudflareNotFoundError(error)) return;
+    throw error;
+  }
+}
+
+export function isCloudflareNotFoundError(error: unknown): boolean {
+  if (error instanceof Cloudflare.NotFoundError) return true;
+  const status = (error as { status?: number; statusCode?: number })?.status ??
+    (error as { statusCode?: number })?.statusCode;
+  return status === 404;
+}
+
+export async function deleteFromCF(cfItemId: string): Promise<void> {
+  try {
+    await deleteFromCFOrThrow(cfItemId);
   } catch (err) {
     console.warn(`Cloudflare delete warning:`, err);
   }
+}
+
+async function uploadWorkspaceFileToCF(
+  ctx: ActionCtx,
+  content: File,
+  metadata: { agent_id: string; org_id: string; user_id: string },
+): Promise<string> {
+  return await createWorkspaceExternalState(
+    ctx,
+    metadata.org_id,
+    "cloudflare",
+    async () => await uploadToCF(content, metadata),
+    deleteFromCFOrThrow,
+  );
 }
 
 // ─── Browser rendering helpers ───────────────────────────
@@ -108,7 +140,7 @@ export const uploadTextEntry = action({
       throw new Error("Storage limit exceeded. Limit is 4 MB total per agent.");
     }
 
-    const cfItemId = await uploadToCF(fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const cfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalStoreTextEntry, {
       agentId: args.agentId,
@@ -154,7 +186,7 @@ export const uploadFileEntry = action({
       throw new Error("Storage limit exceeded. Limit is 4 MB total per agent.");
     }
 
-    const cfItemId = await uploadToCF(fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const cfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalStoreFileEntry, {
       agentId: args.agentId,
@@ -219,7 +251,7 @@ export const processWebUrl = action({
       throw new Error("Storage limit exceeded. Limit is 4 MB total per agent.");
     }
 
-    const cfItemId = await uploadToCF(markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(
       internal.knowledgeBase.internalStoreWebEntryWithContent,
@@ -284,7 +316,7 @@ export const uploadWebEntry = action({
             const uid = Math.random().toString(36).slice(2, 10);
             const safeName = linkUrl.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
             const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
-            const cfItemId = await uploadToCF(markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+            const cfItemId = await uploadWorkspaceFileToCF(ctx, markdownBlob, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
             // Store entry with markdown in Convex storage
             await ctx.runMutation(
@@ -344,7 +376,7 @@ export const uploadQAEntry = action({
       throw new Error("Storage limit exceeded. Limit is 4 MB total per agent.");
     }
 
-    const cfItemId = await uploadToCF(fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
+    const cfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: args.agentId, org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalStoreQAEntry, {
       agentId: args.agentId,
@@ -381,7 +413,7 @@ export const updateTextEntry = action({
 
     const fileContent = new File([`${title}\n\n${content}`], `${title}.txt`, { type: "text/plain" });
     const fileSize = fileContent.size;
-    const newCfItemId = await uploadToCF(fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
+    const newCfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalPatchTextEntry, {
       entryId: args.entryId,
@@ -431,7 +463,7 @@ export const updateWebEntry = action({
     const safeName = url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
     const fileContent = new File([url], `${safeName}.txt`, { type: "text/plain" });
     const fileSize = fileContent.size;
-    const newCfItemId = await uploadToCF(fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
+    const newCfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalPatchWebEntry, {
       entryId: args.entryId,
@@ -463,7 +495,7 @@ export const updateQAEntry = action({
     const safeName = question.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
     const fileContent = new File([`Q: ${question}\nA: ${answer}`], `${safeName}.txt`, { type: "text/plain" });
     const fileSize = fileContent.size;
-    const newCfItemId = await uploadToCF(fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
+    const newCfItemId = await uploadWorkspaceFileToCF(ctx, fileContent, { agent_id: "", org_id: auth.orgId, user_id: auth.userId });
 
     await ctx.runMutation(internal.knowledgeBase.internalPatchQAEntry, {
       entryId: args.entryId,

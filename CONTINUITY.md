@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-28 [CODE] Organizational subscription deletion is implemented on `codex/team-subscription-deletion-cleanup`: Stripe cancellation immediately blocks the team, returns members to Personal, disconnects channels, and uses resumable Workpools to purge team-owned Convex, Agent, R2, Cloudflare, Meta, and WorkOS data. Provider creations are durably registered and cleanup retries survive compensation failure. Verified locally and uploaded to the configured development Convex deployment; unreleased and not merged.
 - 2026-07-28 [CODE] AI Agent Usage cards show `Resets MMM D`, exact compact credit balances with a 6px value/suffix gap, and a settings-icon `Manage plan` action that opens Settings → Plan without jumping to add-ons; Plan settings does not duplicate the reset date. Verified locally; unreleased.
 - 2026-07-28 [CODE] Billing period analytics remains based on the latest Stripe cycle (`Jul 28–Aug 27` in the confirmed case) while its first displayed calendar day is inclusive in the workspace timezone; the July 28 10:51 MYT deduction is included despite Stripe’s hidden 16:19 MYT renewal time. Agent/workspace/account totals, charts, history, and Agent Overview share the resolver. Verified and uploaded to development; unreleased.
 - 2026-07-28 [CODE] Agent Overview 7/30/90-day ranges roll backward from today independently of billing-period boundaries; Billing period alone uses the latest Stripe dates with its first calendar day inclusive.
@@ -43,6 +44,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-28 [USER] D463 ACTIVE: Canceling an organizational subscription is an immediate destructive downgrade to Free: warn with `Confirm downgrade`, make the team unavailable, offer only `Back to Personal`, disconnect channels, and permanently delete all team-owned conversations, contacts, Agent threads, media, integrations, and workspace data while preserving Personal and unrelated teams.
 - 2026-07-28 [USER] D462 ACTIVE: AI Agent Usage uses a settings-icon `Manage plan` action instead of `More credits`; it opens the Plan section in agent or workspace settings at the section top, without the add-ons anchor.
 - 2026-07-28 [USER] D461 ACTIVE: AI Agent Usage balance rows use a deliberate 6px inline layout gap between the large remaining value and the smaller `of total credits` suffix across Plan, Additional, and Referral.
 - 2026-07-28 [USER] D460 ACTIVE: Plan settings does not show the credit-reset date; the concise reset date belongs only beneath the plan name in AI Agent Usage. Plan settings retains subscription price and renewal information.
@@ -244,15 +246,16 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-28 [CODE] Implemented the destructive organizational downgrade lifecycle, unavailable-workspace UX, complete bounded cleanup, late-webhook tombstone, and compensating provider deletion for in-flight external writes.
 - 2026-07-28 [CODE] Replaced AI Agent Usage `More credits` with a settings-icon `Manage plan` action targeting Settings → Plan.
 - 2026-07-28 [CODE] Added a consistent 6px visual gap between AI Agent Usage balance values and their `of … credits` suffixes.
 - 2026-07-28 [CODE] Removed the duplicate credit-reset date from Plan settings while retaining subscription renewal details.
 - 2026-07-28 [CODE] AI Agent Usage card concise `Resets MMM D` subtitle and smaller exact balance typography.
 - 2026-07-28 [CODE] Past referrals table headers are Email / Date / Earn; Date uses `toLocaleString()` (date + time) and Earn shows `+N credits`.
 - 2026-07-28 [CODE] Referral PostHog funnel: `referral_code_copied`, `referral_code_applied`, `referral_code_skipped`, `referral_claimed`, `referral_claim_failed`; plus the Past referrals empty state using `flex-none`/`px-6 py-10` so height tracks content.
-- 2026-07-27 [CODE] Always-on DeepSeek reply planner so language/guidance apply to every generated inbox reply; fixed matched sendText still bypasses regeneration. Inbox structured-output replies removed; media requires workflow matches; empty-match plans still feed language/guidance into plain text.
 
 # Working set
+- 2026-07-28 [CODE] Team subscription deletion: `convex/teamDeletion/*`, `convex/{stripe,workosWebhook,workpool,cloudflare,whatsappTemplateMediaPool,whatsappTemplateMediaGraph,schema}.ts`, guarded feature entrypoints, `src/components/billing/ConfirmTeamDowngradeDialog*`, `src/components/workspace/WorkspaceUnavailable*`, and `src/layouts/DashboardLayout.tsx`; verified locally and uploaded to development, not released.
 - 2026-07-28 [CODE] AI Agent Usage presentation: `src/components/analytics/PlanUsageCard{,.test}.ts*`, `docs/superpowers/{specs,plans}/2026-07-28-ai-agent-usage-card-reset-date*.md`; verified locally, not deployed.
 - 2026-07-27 [CODE] Always-on reply planner + plain-text generation: `convex/chat/{inbox,workflowActionPlanner{,.test}}.ts`, `convex/aiGenerationRetryPolicy.test.ts`; verified locally, not deployed.
 - 2026-07-27 [CODE] Inbound media understanding: `shared/{planCatalog,inboxAttachments}.ts`, `convex/{schema,convex.config,inboxPools,inboundMediaBatch,inboundMediaUnderstanding}*`, `convex/chat/{inboundMediaFetch,inboundMediaModel,whatsappMediaIngest,inboxImageIngest,inboxAudioIngest,inboxMessageMapping,threads}.ts`, Meta webhook handlers, `src/components/inbox/InboxThreadMessages.tsx`, and `src/lib/inboxOptimistic.ts`; uploaded to development, not released.
@@ -272,6 +275,7 @@
 - 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 
 # Open questions
+- 2026-07-28 [TOOL] OPEN: Cloudflare AI Search uploads and Meta media uploads return provider-generated IDs without a shared transaction with Convex. The implementation durably registers each returned ID and uses persist-or-remove retry handling, but a runtime termination in the instruction-level gap immediately after remote success and before the first registry mutation cannot be made mathematically atomic without provider idempotency or discovery support.
 - 2026-07-27 [TOOL] SUPERSEDED: The Ilmu `aiReplyStructuredOutput` final-reply failure is retired because inbox replies no longer request structured output; plain text is used instead.
 - 2026-07-27 [TOOL] OPEN: Real captioned image/audio requests on WhatsApp, Instagram, and Messenger still require live provider verification, including durable WhatsApp R2 preview rendering and a Starter workspace proving no media batch or MiMo request is created.
 - 2026-07-26 [CODE] OPEN: The new WhatsApp history error diagnostic must be deployed and the failing history batch retried before Meta’s actual `error`/`errors` payload for the reported `<error>` row can be observed.
@@ -285,6 +289,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-28 [TOOL] Destructive team-downgrade verification on Node v22.22.0 passed 10 focused files/30 tests, production `tsc -b && vite build`, Convex codegen/typecheck and configured-development upload, durable failed-compensation/post-creation/registration-failure RED/GREEN contracts, `git diff --check`, and ≤285-line new task modules. Full Vitest remains at the unchanged baseline of 5 unrelated failures while 313 files/1006 tests pass. Production was untouched.
 - 2026-07-28 [TOOL] AI Agent Usage Manage plan action completed a focused RED/GREEN contract under Node v22.22.0: the test failed on the Coins/More credits/add-ons-anchor presentation, then passed with a Settings icon, `Manage plan`, and the agent/workspace `?section=plan` target. Final verification passed 2 files/5 tests, scoped ESLint, line limit, and `git diff --check`; no deployment or public changelog update ran.
 - 2026-07-28 [TOOL] AI Agent Usage value/suffix spacing completed a screenshot-driven RED/GREEN contract under Node v22.22.0: the test failed while spacing depended on a literal text space, then passed with `inline-flex`, baseline alignment, and `gap-1.5`. Final verification passed 2 files/4 tests across usage and Plan settings, scoped ESLint, line limit, and `git diff --check`; no deployment or public changelog update ran.
 - 2026-07-28 [TOOL] Plan settings duplicate-reset removal completed a focused RED/GREEN source contract under Node v22.22.0: the test failed while `periodEndMs` and `Credits reset` remained, then passed after removing only that presentation block. Final verification passed 2 files/3 tests across Plan settings and AI Agent Usage, scoped ESLint, line limits, and `git diff --check`; no deployment or public changelog update ran.

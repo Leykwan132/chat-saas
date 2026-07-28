@@ -25,6 +25,17 @@ export function getPublicMediaUrl(r2Key: string): string {
   return `${base}/${r2Key}`;
 }
 
+export function getR2KeyFromPublicMediaUrl(
+  mediaUrl: string,
+): string | undefined {
+  const base = getMediaCdnBaseUrl();
+  if (!base) return undefined;
+  const prefix = `${base}/`;
+  return mediaUrl.startsWith(prefix)
+    ? mediaUrl.slice(prefix.length)
+    : undefined;
+}
+
 const MIME_TO_EXT: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/jpg": "jpg",

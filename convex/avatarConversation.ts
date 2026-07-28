@@ -6,6 +6,7 @@ import { inboxPromptContent } from '../shared/inboxAttachments';
 import { inboxAiReplyPool } from './inboxPools';
 import { markConversationAnalyticsDirty } from './analyticsDirtyRequest';
 import { cancelOrScheduleWorkflowFollowUpForMessages } from './workflowAutomationMessageActivity';
+import { canProcessWorkspaceActivity } from './teamDeletion/access';
 
 async function resolvePublicSession(
   ctx: QueryCtx | MutationCtx,
@@ -19,6 +20,12 @@ async function resolvePublicSession(
   const configuration = await ctx.db.get(session.configurationId);
   if (!configuration || configuration.publicKey !== args.publicKey) {
     throw new Error('Avatar session not found');
+  }
+  if (
+    !configuration.enabled ||
+    !(await canProcessWorkspaceActivity(ctx, configuration.orgId))
+  ) {
+    throw new Error('Workspace unavailable');
   }
   return { session, configuration };
 }

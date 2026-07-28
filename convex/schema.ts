@@ -30,6 +30,8 @@ import {
 } from "./workflowAutomationSchema";
 import { whatsappTemplateStatusValidator } from "./whatsappTemplateLifecycle";
 import {
+  deletedTeamOrganizationsTable,
+  teamExternalResourcesTable,
   teamDeletionJobsTable,
   teamDeletionStatusValidator,
 } from "./teamDeletion/schema";
@@ -226,7 +228,8 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_workosUserId", ["workosUserId"])
-    .index("by_email", ["email"]),
+    .index("by_email", ["email"])
+    .index("by_activeTeamId", ["activeTeamId"]),
   teams: defineTable({
     type: v.union(v.literal("personal"), v.literal("organizational")),
     name: v.string(),
@@ -1880,4 +1883,6 @@ export default defineSchema({
     .index("by_jobId", ["jobId"])
     .index("by_jobId_and_status", ["jobId", "status"]),
   teamDeletionJobs: teamDeletionJobsTable,
+  teamExternalResources: teamExternalResourcesTable,
+  deletedTeamOrganizations: deletedTeamOrganizationsTable,
 });

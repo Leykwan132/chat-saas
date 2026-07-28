@@ -9,6 +9,7 @@ import {
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { customerSearchText } from "./customerSearch";
+import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 
 // ─── Workpool instance ─────────────────────────────────────
 export const customerImportPool = new Workpool(
@@ -125,6 +126,9 @@ export const importBatchWorker = internalMutation({
     const job = await ctx.db.get(batch.jobId);
     if (job === null) {
       throw new Error(`Job ${batch.jobId} not found`);
+    }
+    if (!(await canProcessWorkspaceActivity(ctx, job.orgId))) {
+      return { processedCount: 0, failedCount: 0, skippedCount: 0 };
     }
 
     // Mark batch as processing

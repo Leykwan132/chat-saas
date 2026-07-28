@@ -47,6 +47,40 @@ function initTest() {
 }
 
 describe("team subscription deletion", () => {
+  test("ignores a delayed deletion event for a replaced subscription", async () => {
+    const t = initTest();
+    const teamId = await t.run(async (ctx) => {
+      const now = Date.now();
+      return await ctx.db.insert("teams", {
+        type: "organizational",
+        name: "Team",
+        workosOrgId: "org_team",
+        stripeSubscriptionId: "sub_current",
+        createdAt: now,
+        updatedAt: now,
+      });
+    });
+
+    const result = await t.mutation(
+      internal.stripe.handleSubscriptionDeletedInternal,
+      {
+        orgId: "org_team",
+        stripeSubscriptionId: "sub_replaced",
+      },
+    );
+
+    expect(result).toEqual({ accepted: true, duplicate: true });
+    await t.run(async (ctx) => {
+      expect((await ctx.db.get(teamId))?.deletionStatus).toBeUndefined();
+      expect(
+        await ctx.db
+          .query("teamDeletionJobs")
+          .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+          .first(),
+      ).toBeNull();
+    });
+  });
+
   test("marks the workspace once and returns its owner to Personal", async () => {
     const t = initTest();
     const fixture = await t.run(async (ctx) => {
@@ -112,6 +146,12 @@ describe("team subscription deletion", () => {
         team: await ctx.db.get(fixture.teamId),
         owner: await ctx.db.get(fixture.ownerId),
         jobs,
+        tombstone: await ctx.db
+          .query("deletedTeamOrganizations")
+          .withIndex("by_workosOrgId", (q) =>
+            q.eq("workosOrgId", "org_team"),
+          )
+          .unique(),
       };
     });
 
@@ -120,6 +160,63 @@ describe("team subscription deletion", () => {
     expect(state.owner?.activeTeamId).toBe(fixture.personalTeamId);
     expect(state.owner?.stripeSubscriptionStatus).toBe("canceled");
     expect(state.jobs).toHaveLength(1);
+    expect(state.tombstone).not.toBeNull();
+  });
+
+  test("moves every selected team member before memberships are deleted", async () => {
+    const t = initTest();
+    const fixture = await t.run(async (ctx) => {
+      const now = Date.now();
+      const teamId = await ctx.db.insert("teams", {
+        type: "organizational",
+        name: "Large Team",
+        workosOrgId: "org_large",
+        stripeSubscriptionId: "sub_large",
+        createdAt: now,
+        updatedAt: now,
+      });
+      const userIds = [];
+      for (let index = 0; index < 101; index += 1) {
+        const userId = await ctx.db.insert("users", {
+          workosUserId: `large_user_${index}`,
+          email: `large_user_${index}@example.com`,
+          activeTeamId: teamId,
+          createdAt: now,
+          updatedAt: now,
+        });
+        const personalTeamId = await ctx.db.insert("teams", {
+          type: "personal",
+          name: "Personal",
+          ownerId: userId,
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("teamMemberships", {
+          teamId,
+          userId,
+          role: "member",
+          createdAt: now,
+        });
+        userIds.push({ userId, personalTeamId });
+      }
+      return { teamId, userIds };
+    });
+
+    for (let page = 0; page < 5; page += 1) {
+      const result = await t.mutation(
+        internal.teamDeletion.isolation.moveActiveUsers,
+        { teamId: fixture.teamId },
+      );
+      if (result.done) break;
+    }
+
+    await t.run(async (ctx) => {
+      for (const member of fixture.userIds) {
+        expect((await ctx.db.get(member.userId))?.activeTeamId).toBe(
+          member.personalTeamId,
+        );
+      }
+    });
   });
 
   test("resolves a deleting team as canceled Free", () => {

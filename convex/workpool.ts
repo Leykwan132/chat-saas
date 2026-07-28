@@ -4,13 +4,23 @@ import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 import { components } from "./_generated/api";
 import { Workpool } from "@convex-dev/workpool";
-import { uploadToCF, deleteFromCF, scrapeMarkdown, scrapeLinks } from "./cloudflare";
+import {
+  uploadToCF,
+  deleteFromCF,
+  deleteFromCFOrThrow,
+  scrapeMarkdown,
+  scrapeLinks,
+} from "./cloudflare";
 import {
   r2,
   generateKnowledgeBaseImageKey,
   generateWorkflowMediaKey,
   getPublicMediaUrl,
 } from "./media/r2";
+import {
+  assertWorkspaceCanCreateExternalState,
+  createWorkspaceExternalState,
+} from "./teamDeletion/externalGuard";
 
 // ─── Workpool instances ───────────────────────────────────
 
@@ -50,7 +60,8 @@ export const cfUploadWorker = internalAction({
     orgId: v.optional(v.string()),
     userId: v.optional(v.string()),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    await assertWorkspaceCanCreateExternalState(ctx, args.orgId ?? "");
     let fileContent: File;
     let fileSize: number;
 
@@ -89,11 +100,18 @@ export const cfUploadWorker = internalAction({
         throw new Error(`Unknown entry type: ${args.entryType}`);
     }
 
-    const cfItemId = await uploadToCF(fileContent, {
-      agent_id: args.agentId ?? "",
-      org_id: args.orgId ?? "",
-      user_id: args.userId ?? "",
-    });
+    const cfItemId = await createWorkspaceExternalState(
+      ctx,
+      args.orgId ?? "",
+      "cloudflare",
+      async () =>
+        await uploadToCF(fileContent, {
+          agent_id: args.agentId ?? "",
+          org_id: args.orgId ?? "",
+          user_id: args.userId ?? "",
+        }),
+      deleteFromCFOrThrow,
+    );
 
     return { cfItemId, fileSize };
   },
@@ -114,6 +132,7 @@ export const kbImageUploadWorker = internalAction({
     fileBytes: v.bytes(),
   },
   handler: async (ctx, args) => {
+    await assertWorkspaceCanCreateExternalState(ctx, args.orgId);
     const key = generateKnowledgeBaseImageKey(
       args.orgId,
       args.agentId,
@@ -122,7 +141,16 @@ export const kbImageUploadWorker = internalAction({
     );
 
     const blob = new Blob([args.fileBytes], { type: args.mimeType });
-    await r2.store(ctx, blob, { key });
+    await createWorkspaceExternalState(
+      ctx,
+      args.orgId,
+      "r2",
+      async () => {
+        await r2.store(ctx, blob, { key });
+        return key;
+      },
+      async (createdKey) => await r2.deleteObject(ctx, createdKey),
+    );
 
     return {
       r2Key: key,
@@ -145,6 +173,7 @@ export const workflowMediaUploadWorker = internalAction({
     fileBytes: v.bytes(),
   },
   handler: async (ctx, args) => {
+    await assertWorkspaceCanCreateExternalState(ctx, args.orgId);
     const key = generateWorkflowMediaKey(
       args.orgId,
       args.agentId,
@@ -154,7 +183,16 @@ export const workflowMediaUploadWorker = internalAction({
     );
 
     const blob = new Blob([args.fileBytes], { type: args.mimeType });
-    await r2.store(ctx, blob, { key });
+    await createWorkspaceExternalState(
+      ctx,
+      args.orgId,
+      "r2",
+      async () => {
+        await r2.store(ctx, blob, { key });
+        return key;
+      },
+      async (createdKey) => await r2.deleteObject(ctx, createdKey),
+    );
 
     return {
       r2Key: key,
@@ -189,18 +227,26 @@ export const webScraperWorker = internalAction({
     orgId: v.string(),
     userId: v.string(),
   },
-  handler: async (_ctx, args) => {
+  handler: async (ctx, args) => {
+    await assertWorkspaceCanCreateExternalState(ctx, args.orgId);
     const markdown = await scrapeMarkdown(args.url);
     const uid = args.entryId.slice(-8);
     const safeName = args.url.replace(/[^a-zA-Z0-9]/g, "_").slice(0, 50);
     const markdownBlob = new File([markdown], `${safeName}_${uid}.md`, { type: "text/markdown" });
     const fileSize = markdownBlob.size;
 
-    const cfItemId = await uploadToCF(markdownBlob, {
-      agent_id: args.agentId,
-      org_id: args.orgId,
-      user_id: args.userId,
-    });
+    const cfItemId = await createWorkspaceExternalState(
+      ctx,
+      args.orgId,
+      "cloudflare",
+      async () =>
+        await uploadToCF(markdownBlob, {
+          agent_id: args.agentId,
+          org_id: args.orgId,
+          user_id: args.userId,
+        }),
+      deleteFromCFOrThrow,
+    );
 
     return { url: args.url, cfItemId, fileSize };
   },

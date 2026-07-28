@@ -2,11 +2,9 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { MutationCtx } from "../_generated/server";
 import { internalMutation } from "../_generated/server";
-import {
-  getPersonalTeamForUser,
-  getTeamByWorkosOrgId,
-} from "../teamHelpers";
+import { getTeamByWorkosOrgId } from "../teamHelpers";
 import { teamDeletionPool } from "./pool";
+import { moveActiveUsersPage } from "./isolation";
 
 export const teamDeletionRequestResultValidator = v.object({
   accepted: v.literal(true),
@@ -28,8 +26,26 @@ export async function requestTeamDeletion(
   if (team.type !== "organizational") {
     throw new Error("Only organizational workspaces can be deleted");
   }
+  if (
+    args.source === "stripe" &&
+    team.stripeSubscriptionId !== args.stripeSubscriptionId
+  ) {
+    return { accepted: true, duplicate: true };
+  }
 
   const now = Date.now();
+  const tombstone = await ctx.db
+    .query("deletedTeamOrganizations")
+    .withIndex("by_workosOrgId", (q) =>
+      q.eq("workosOrgId", args.workosOrgId),
+    )
+    .unique();
+  if (!tombstone) {
+    await ctx.db.insert("deletedTeamOrganizations", {
+      workosOrgId: args.workosOrgId,
+      deletedAt: now,
+    });
+  }
   await ctx.db.patch(team._id, {
     deletionStatus: "deleting",
     deletionStartedAt: now,
@@ -79,27 +95,7 @@ export async function requestTeamDeletion(
     });
   }
 
-  const memberships = await ctx.db
-    .query("teamMemberships")
-    .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
-    .take(100);
-
-  for (const membership of memberships) {
-    const member = await ctx.db.get(membership.userId);
-    if (member?.activeTeamId !== team._id) {
-      continue;
-    }
-    const personalTeam = await getPersonalTeamForUser(ctx, membership.userId);
-    if (!personalTeam) {
-      throw new Error(
-        `Personal workspace not found for member ${membership.userId}`,
-      );
-    }
-    await ctx.db.patch(membership.userId, {
-      activeTeamId: personalTeam._id,
-      updatedAt: now,
-    });
-  }
+  await moveActiveUsersPage(ctx, team._id);
 
   const jobId = await ctx.db.insert("teamDeletionJobs", {
     teamId: team._id,

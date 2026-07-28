@@ -43,6 +43,7 @@ import {
 } from "../workflowCore";
 import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
 import { markConversationAnalyticsDirty } from "../analyticsDirtyRequest";
+import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -127,6 +128,9 @@ export const internalPersistHumanReply = internalMutation({
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) {
       throw new Error("Conversation not found");
+    }
+    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) {
+      throw new Error("Workspace unavailable");
     }
     if (conv.assignedAgentId === undefined) {
       throw new Error("Conversation has no assigned agent");
@@ -256,6 +260,7 @@ export const internalPersistAiReply = internalMutation({
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) return null;
+    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) return null;
 
     const normalizedContent = normalizeCustomerFacingResponseFormatting(args.content);
     const trimmed = normalizedContent.trim();
@@ -344,6 +349,7 @@ export const internalPersistAiMediaReply = internalMutation({
   handler: async (ctx, args) => {
     const conv = await ctx.db.get(args.conversationId);
     if (conv === null) return null;
+    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) return null;
 
     const now = Date.now();
     const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
@@ -489,6 +495,13 @@ export const generateAiReplyWorker = internalAction({
     ) {
       return;
     }
+    if (
+      !(await ctx.runQuery(internal.teamDeletion.access.canProcess, {
+        orgId: conv.orgId,
+      }))
+    ) {
+      return;
+    }
 
     const agent = await ctx.runQuery(internal.agents.internalGet, {
       agentId: conv.assignedAgentId,
@@ -620,6 +633,13 @@ export const generateAiReplyWorker = internalAction({
       if (
         convAfterGeneration?.status === "requires_user_input" &&
         convAfterGeneration.escalation
+      ) {
+        return;
+      }
+      if (
+        !(await ctx.runQuery(internal.teamDeletion.access.canProcess, {
+          orgId: conv.orgId,
+        }))
       ) {
         return;
       }

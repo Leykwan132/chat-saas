@@ -5,9 +5,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { internal } from "../_generated/api";
 import { buildAgent } from "../chat/threads";
-import { deleteFromCF } from "../cloudflare";
-import { r2 } from "../media/r2";
+import { deleteFromCFOrThrow } from "../cloudflare";
+import { getR2KeyFromPublicMediaUrl, r2 } from "../media/r2";
 import { getWorkOSApiKey } from "../workosClient";
+import { deleteTrackedExternalResource } from "./externalResourceCleanup";
 
 const PAGE_SIZE = 20;
 const STAGES = [
@@ -15,6 +16,7 @@ const STAGES = [
   "mediaUploads",
   "quickReplies",
   "templateMedia",
+  "messageMedia",
   "textEntries",
   "fileEntries",
   "webEntries",
@@ -87,11 +89,26 @@ async function deleteThreadPage(
     if (!agent) {
       throw new Error(`Agent ${item.agentId} not found`);
     }
-    await buildAgent(agent, item.agentId).deleteThreadAsync(ctx, {
+    await buildAgent(agent, item.agentId).deleteThreadSync(ctx, {
       threadId: item.threadId,
     });
   }
   return page;
+}
+
+export async function deleteTrackedExternalResourcePage(
+  ctx: ActionCtx,
+  orgId: string,
+): Promise<{ done: boolean }> {
+  const resources: Doc<"teamExternalResources">[] =
+    await ctx.runQuery(
+      internal.teamDeletion.externalResourceState.getOrgPage,
+      { orgId, limit: PAGE_SIZE },
+    );
+  for (const resource of resources) {
+    await deleteTrackedExternalResource(ctx, resource);
+  }
+  return { done: resources.length < PAGE_SIZE };
 }
 
 async function deleteR2Keys(
@@ -152,6 +169,28 @@ async function deleteTemplateMediaPage(
   return page;
 }
 
+async function deleteMessageMediaPage(
+  ctx: ActionCtx,
+  jobId: Id<"teamDeletionJobs">,
+  pageCursor: string | null,
+): Promise<Page<unknown>> {
+  const page: Page<{ mediaUrl?: string }> | null = await ctx.runQuery(
+    internal.teamDeletion.externalState.getMessageMediaPage,
+    { jobId, paginationOpts: { numItems: PAGE_SIZE, cursor: pageCursor } },
+  );
+  if (!page) return { page: [], isDone: true, continueCursor: "" };
+  await deleteR2Keys(
+    ctx,
+    page.page.flatMap((row) => {
+      const key = row.mediaUrl
+        ? getR2KeyFromPublicMediaUrl(row.mediaUrl)
+        : undefined;
+      return key ? [key] : [];
+    }),
+  );
+  return page;
+}
+
 async function deleteKnowledgePage(
   ctx: ActionCtx,
   jobId: Id<"teamDeletionJobs">,
@@ -171,7 +210,7 @@ async function deleteKnowledgePage(
   );
   if (!page) return { page: [], isDone: true, continueCursor: "" };
   for (const row of page.page) {
-    if (row.cfItemId) await deleteFromCF(row.cfItemId);
+    if (row.cfItemId) await deleteFromCFOrThrow(row.cfItemId);
   }
   return page;
 }
@@ -214,6 +253,8 @@ export async function deleteExternalPage(
     page = await deleteQuickReplyPage(ctx, jobId, pageCursor);
   } else if (stage === "templateMedia") {
     page = await deleteTemplateMediaPage(ctx, jobId, pageCursor);
+  } else if (stage === "messageMedia") {
+    page = await deleteMessageMediaPage(ctx, jobId, pageCursor);
   } else if (stage === "widgetStorage") {
     page = await deleteWidgetStoragePage(ctx, jobId, pageCursor);
   } else {
@@ -221,6 +262,8 @@ export async function deleteExternalPage(
   }
   return advance(stage, page);
 }
+
+export { disconnectMetaChannel } from "./channelDisconnect";
 
 export async function deleteWorkosOrganization(
   workosOrgId: string,

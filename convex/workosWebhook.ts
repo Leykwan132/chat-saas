@@ -101,7 +101,12 @@ export const dispatch = internalMutation({
     }
 
     try {
-      switch (eventType) {
+      const ignoredDeletedOrganization = await isDeletedOrganizationEvent(
+        ctx,
+        eventType,
+        data,
+      );
+      switch (ignoredDeletedOrganization ? "" : eventType) {
         case "user.created":
         case "user.updated":
           await upsertUser(ctx, data);
@@ -150,6 +155,23 @@ export const dispatch = internalMutation({
 });
 
 // --- Internal helpers (run inside the dispatch transaction) ---
+
+async function isDeletedOrganizationEvent(
+  ctx: MutationCtx,
+  eventType: string,
+  data: any,
+): Promise<boolean> {
+  const workosOrgId: string | undefined = eventType.startsWith("organization.")
+    ? data?.id
+    : data?.organization_id ?? data?.organizationId;
+  if (!workosOrgId) return false;
+  return await ctx.db
+    .query("deletedTeamOrganizations")
+    .withIndex("by_workosOrgId", (q) =>
+      q.eq("workosOrgId", workosOrgId),
+    )
+    .unique() !== null;
+}
 
 async function upsertUser(ctx: MutationCtx, data: any) {
   const workosUserId: string | undefined = data?.id;

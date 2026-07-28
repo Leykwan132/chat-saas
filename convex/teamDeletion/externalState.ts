@@ -2,54 +2,39 @@ import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 
-export const prepareWorkspace = internalMutation({
+export const clearChannelCredential = internalMutation({
   args: {
-    jobId: v.id("teamDeletionJobs"),
+    channelId: v.id("channels"),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const job = await ctx.db.get(args.jobId);
-    if (!job) return null;
-    const now = Date.now();
-    const channels = await ctx.db
-      .query("channels")
-      .withIndex("by_orgId_and_service", (q) =>
-        q.eq("orgId", job.workosOrgId),
-      )
-      .take(50);
-    for (const channel of channels) {
-      await ctx.db.patch(channel._id, {
-        status: "disconnected",
-        updatedAt: now,
-      });
-    }
+    const channel = await ctx.db.get(args.channelId);
+    if (!channel) return null;
+    await ctx.db.patch(channel._id, {
+      status: "disconnected",
+      accessToken: undefined,
+      tokenExpiresAt: undefined,
+      updatedAt: Date.now(),
+    });
     return null;
   },
 });
 
-export const clearChannelCredentials = internalMutation({
+export const getChannelPage = internalQuery({
   args: {
     jobId: v.id("teamDeletionJobs"),
+    paginationOpts: paginationOptsValidator,
   },
-  returns: v.null(),
+  returns: v.any(),
   handler: async (ctx, args) => {
     const job = await ctx.db.get(args.jobId);
     if (!job) return null;
-    const channels = await ctx.db
+    return await ctx.db
       .query("channels")
       .withIndex("by_orgId_and_service", (q) =>
         q.eq("orgId", job.workosOrgId),
       )
-      .take(50);
-    for (const channel of channels) {
-      await ctx.db.patch(channel._id, {
-        status: "disconnected",
-        accessToken: undefined,
-        tokenExpiresAt: undefined,
-        updatedAt: Date.now(),
-      });
-    }
-    return null;
+      .paginate(args.paginationOpts);
   },
 });
 
@@ -133,6 +118,22 @@ export const getTemplateMediaPage = internalQuery({
     if (!job) return null;
     return await ctx.db
       .query("whatsappTemplateMediaAssets")
+      .withIndex("by_orgId", (q) => q.eq("orgId", job.workosOrgId))
+      .paginate(args.paginationOpts);
+  },
+});
+
+export const getMessageMediaPage = internalQuery({
+  args: {
+    jobId: v.id("teamDeletionJobs"),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.any(),
+  handler: async (ctx, args) => {
+    const job = await ctx.db.get(args.jobId);
+    if (!job) return null;
+    return await ctx.db
+      .query("messages")
       .withIndex("by_orgId", (q) => q.eq("orgId", job.workosOrgId))
       .paginate(args.paginationOpts);
   },

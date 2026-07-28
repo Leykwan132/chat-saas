@@ -3,6 +3,7 @@ import type { Doc } from "./_generated/dataModel";
 import { getTeamStripePlanHelper } from "./plans";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { DEFAULT_WEB_WIDGET_THEME } from "../shared/webWidgetThemes";
+import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 
 export const RECENT_WIDGET_MESSAGES = 80;
 
@@ -132,7 +133,11 @@ export async function getEnabledSettingsByPublicKey(
     .query("webWidgetSettings")
     .withIndex("by_publicKey", (q) => q.eq("publicKey", publicKey))
     .unique();
-  if (settings === null || !settings.enabled) {
+  if (
+    settings === null ||
+    !settings.enabled ||
+    !(await canProcessWorkspaceActivity(ctx, settings.orgId))
+  ) {
     throw new Error("Widget not found");
   }
   return settings;

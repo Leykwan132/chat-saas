@@ -105,6 +105,9 @@ async function buildAuthContextFromDb(
     const activeTeam = await getActiveTeamForUser(ctx, user);
     orgId = teamToOrgId(activeTeam);
     activeTeamId = activeTeam._id;
+    if (!(await canProcessWorkspaceActivity(ctx, orgId))) {
+      throw new Error("Workspace unavailable");
+    }
   }
 
   const claims = identity as unknown as WorkOSClaims;

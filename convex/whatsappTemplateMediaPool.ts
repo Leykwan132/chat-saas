@@ -12,13 +12,16 @@ import {
   assertWhatsAppTemplateMediaSpec,
   whatsappTemplateMediaFilename,
 } from "../shared/whatsappTemplateMedia";
+import { createWorkspaceExternalState } from "./teamDeletion/externalGuard";
+import {
+  deleteWhatsAppTemplateMedia,
+  uploadWhatsAppTemplateMedia,
+} from "./whatsappTemplateMediaGraph";
 
 export const whatsappTemplateMediaPool = new Workpool(
   components.whatsappTemplateMediaWorkpool,
   { maxParallelism: 2 },
 );
-
-const DEFAULT_GRAPH_VERSION = "v25.0";
 
 type HeaderMediaComponent = {
   type?: unknown;
@@ -27,33 +30,6 @@ type HeaderMediaComponent = {
   filename?: unknown;
   mimeType?: unknown;
 };
-
-function graphBase(): string {
-  const version = process.env.META_GRAPH_API_VERSION || DEFAULT_GRAPH_VERSION;
-  return `https://graph.facebook.com/${version}`;
-}
-
-function graphError(body: unknown) {
-  return typeof body === "string" ? body : JSON.stringify(body, null, 2);
-}
-
-async function readGraphObject(response: Response, errorPrefix: string) {
-  const text = await response.text();
-  let body: unknown;
-  try {
-    body = text.length ? JSON.parse(text) : text;
-  } catch {
-    body = text;
-  }
-
-  if (!response.ok) {
-    throw new Error(`${errorPrefix}: ${graphError(body)}`);
-  }
-  if (body === null || typeof body !== "object" || Array.isArray(body)) {
-    throw new Error(`${errorPrefix}: Meta returned an unexpected response.`);
-  }
-  return body as Record<string, unknown>;
-}
 
 function asComponentArray(value: unknown): HeaderMediaComponent[] {
   if (!Array.isArray(value)) return [];
@@ -216,19 +192,28 @@ export const prepareTemplateMediaAsset = internalAction({
   args: {
     mediaAssetId: v.id("whatsappTemplateMediaAssets"),
   },
-  handler: async (ctx, args) => {
-    await ctx.runMutation(internal.whatsappTemplateMediaPool.markMediaPreparing, {
-      mediaAssetId: args.mediaAssetId,
-    });
+  handler: async (ctx, args): Promise<{ ok: true; mediaId: string }> => {
+    const context: {
+      asset: Doc<"whatsappTemplateMediaAssets">;
+      channel: Doc<"channels">;
+    } | null = await ctx.runQuery(
+      internal.whatsappTemplateMediaPool.getPrepareMediaContext,
+      { mediaAssetId: args.mediaAssetId },
+    );
+    if (context === null) {
+      throw new Error("Template media asset not found.");
+    }
+    const canProcess = await ctx.runQuery(
+      internal.teamDeletion.access.canProcess,
+      { orgId: context.asset.orgId },
+    );
+    if (!canProcess) throw new Error("Workspace unavailable");
 
     try {
-      const context = await ctx.runQuery(
-        internal.whatsappTemplateMediaPool.getPrepareMediaContext,
+      await ctx.runMutation(
+        internal.whatsappTemplateMediaPool.markMediaPreparing,
         { mediaAssetId: args.mediaAssetId },
       );
-      if (context === null) {
-        throw new Error("Template media asset not found.");
-      }
 
       const { asset, channel } = context;
       const spec = assertWhatsAppTemplateMediaSpec(asset.mimeType);
@@ -259,21 +244,16 @@ export const prepareTemplateMediaAsset = internalAction({
       formData.append("messaging_product", "whatsapp");
       formData.append("file", blob, asset.filename);
 
-      const uploadResponse = await fetch(`${graphBase()}/${phoneNumberId}/media`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-      const uploadData = await readGraphObject(
-        uploadResponse,
-        "Meta template media upload failed",
+      const mediaId = await createWorkspaceExternalState(
+        ctx,
+        asset.orgId,
+        "metaMedia",
+        async () =>
+          await uploadWhatsAppTemplateMedia(phoneNumberId, token, formData),
+        async (uploadedMediaId) =>
+          await deleteWhatsAppTemplateMedia(uploadedMediaId, token),
+        token,
       );
-      const mediaId = uploadData.id;
-      if (typeof mediaId !== "string" || !mediaId.trim()) {
-        throw new Error("Meta media upload did not return a media ID.");
-      }
 
       await ctx.runMutation(internal.whatsappTemplateMediaPool.markMediaReady, {
         mediaAssetId: args.mediaAssetId,

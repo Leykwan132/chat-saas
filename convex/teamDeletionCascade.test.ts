@@ -2,6 +2,7 @@
 import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import schema from "./schema";
+import { deleteDescendantPage } from "./teamDeletion/localDescendants";
 import { deleteLocalPage } from "./teamDeletion/local";
 import { finalizeTeamDeletion } from "./teamDeletion/verify";
 
@@ -261,5 +262,56 @@ test("deletes team data and preserves account and unrelated workspace data", asy
     expect(await ctx.db.query("userCreditPeriods").take(1)).toHaveLength(1);
     expect(await ctx.db.get(fixture.controlTeamId)).not.toBeNull();
     expect(await ctx.db.get(fixture.controlAgentId)).not.toBeNull();
+  });
+});
+
+test("deletes descendants beyond the first parent page", async () => {
+  const t = convexTest(schema, modules);
+  const usageId = await t.run(async (ctx) => {
+    const now = Date.now();
+    let lastAgentId;
+    for (let index = 0; index < 51; index += 1) {
+      lastAgentId = await ctx.db.insert("agents", {
+        name: `Agent ${index}`,
+        provider: "openrouter",
+        userId: "user_owner",
+        orgId: "org_many",
+        model: "ilmu-mini-v3.3",
+        systemPrompt: "Test",
+        templateKey: "blank",
+        fileSize: 0,
+        createdAt: now + index,
+        updatedAt: now + index,
+      });
+    }
+    return await ctx.db.insert("rawAgentUsage", {
+      agentId: lastAgentId!,
+      userId: "user_owner",
+      model: "ilmu-mini-v3.3",
+      provider: "openrouter",
+      usage: {
+        promptTokens: 1,
+        completionTokens: 1,
+        totalTokens: 2,
+      },
+      createdAt: now,
+    });
+  });
+
+  for (let page = 0; page < 100; page += 1) {
+    const deleted = await t.run(async (ctx) =>
+      await deleteDescendantPage(ctx, "org_many"),
+    );
+    if (!deleted) break;
+  }
+
+  await t.run(async (ctx) => {
+    expect(await ctx.db.get(usageId)).toBeNull();
+    expect(
+      await ctx.db
+        .query("agents")
+        .withIndex("by_orgId", (q) => q.eq("orgId", "org_many"))
+        .first(),
+    ).toBeNull();
   });
 });

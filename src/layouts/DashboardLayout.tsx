@@ -140,7 +140,7 @@ function DashboardContent() {
     setSwitchingToPersonal(true);
     try {
       if (!isPersonal) {
-        await switchTeam({ teamId: personalTeam._id });
+        await switchTeam({ teamId: personalTeam._id as Id<'teams'> });
       }
       navigate('/workspace', { replace: true });
     } catch (error) {

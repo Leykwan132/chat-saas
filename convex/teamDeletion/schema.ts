@@ -28,3 +28,28 @@ export const teamDeletionJobsTable = defineTable({
   .index("by_teamId", ["teamId"])
   .index("by_workosOrgId", ["workosOrgId"])
   .index("by_stripeSubscriptionId", ["stripeSubscriptionId"]);
+
+export const deletedTeamOrganizationsTable = defineTable({
+  workosOrgId: v.string(),
+  deletedAt: v.number(),
+}).index("by_workosOrgId", ["workosOrgId"]);
+
+export const externalResourceProviderValidator = v.union(
+  v.literal("cloudflare"),
+  v.literal("r2"),
+  v.literal("metaMedia"),
+);
+
+export const teamExternalResourcesTable = defineTable({
+  orgId: v.string(),
+  provider: externalResourceProviderValidator,
+  resourceId: v.string(),
+  authorization: v.optional(v.string()),
+  createdAt: v.number(),
+})
+  .index("by_orgId", ["orgId"])
+  .index("by_orgId_provider_resourceId", [
+    "orgId",
+    "provider",
+    "resourceId",
+  ]);

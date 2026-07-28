@@ -7,7 +7,12 @@ import {
   internalMutation,
   internalQuery,
 } from "../_generated/server";
-import { deleteExternalPage, deleteWorkosOrganization } from "./external";
+import {
+  deleteExternalPage,
+  deleteTrackedExternalResourcePage,
+  deleteWorkosOrganization,
+} from "./external";
+import { disconnectChannelPage } from "./channelDisconnect";
 import { nextTeamDeletionPhase, type TeamDeletionPhase } from "./model";
 import { teamDeletionPool } from "./pool";
 import { teamDeletionPhaseValidator } from "./schema";
@@ -57,18 +62,19 @@ async function runPhase(
   job: Doc<"teamDeletionJobs">,
 ): Promise<PhaseResult> {
   if (job.phase === "stopWork") {
-    await ctx.runMutation(
-      internal.teamDeletion.externalState.prepareWorkspace,
-      { jobId: job._id },
+    return await ctx.runMutation(
+      internal.teamDeletion.isolation.preparePage,
+      {
+        jobId: job._id,
+        paginationOpts: {
+          numItems: 50,
+          cursor: job.cursor ?? null,
+        },
+      },
     );
-    return { done: true };
   }
   if (job.phase === "disconnectChannels") {
-    await ctx.runMutation(
-      internal.teamDeletion.externalState.clearChannelCredentials,
-      { jobId: job._id },
-    );
-    return { done: true };
+    return await disconnectChannelPage(ctx, job._id, job.cursor);
   }
   if (job.phase === "externalData") {
     return await deleteExternalPage(ctx, job._id, job.cursor);
@@ -81,6 +87,13 @@ async function runPhase(
     return result;
   }
   if (job.phase === "verify") {
+    const trackedResources = await deleteTrackedExternalResourcePage(
+      ctx,
+      job.workosOrgId,
+    );
+    if (!trackedResources.done) {
+      return { done: false };
+    }
     const residue: string[] = await ctx.runQuery(
       internal.teamDeletion.verify.findResidue,
       { jobId: job._id },
@@ -93,6 +106,10 @@ async function runPhase(
     return { done: true };
   }
   if (job.phase === "deleteOrganization") {
+    await ctx.runMutation(
+      internal.teamDeletion.verify.ensureTombstone,
+      { jobId: job._id },
+    );
     await deleteWorkosOrganization(job.workosOrgId);
     return { done: true };
   }
