@@ -20,6 +20,14 @@ function getStripeSecretKey(): string {
   return secretKey;
 }
 
+type DowngradeContext = {
+  userId: string;
+  stripeCustomerId?: string;
+  activeOrgId: string;
+  isTeam: boolean;
+  canManageBilling: boolean;
+};
+
 export const execute = action({
   args: {
     interval: v.union(v.literal("monthly"), v.literal("annual")),
@@ -27,8 +35,11 @@ export const execute = action({
   returns: v.object({
     redirectToPersonal: v.boolean(),
   }),
-  handler: async (ctx, args) => {
-    const downgradeContext = await ctx.runQuery(
+  handler: async (
+    ctx,
+    args,
+  ): Promise<{ redirectToPersonal: boolean }> => {
+    const downgradeContext: DowngradeContext = await ctx.runQuery(
       internal.freePlanDowngradeState.getContext,
       {},
     );

@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-28 [TOOL] The approved one-time development backfill reused existing Stripe customers and created active monthly Free subscriptions for both users missing subscription IDs; app/component records match, no candidates remain, the temporary runner is removed, and production was untouched.
 - 2026-07-28 [CODE] First-class Free Stripe plans are implemented and uploaded to development: onboarding/Pricing use monthly or annual no-card Checkout; Settings replaces the latest active subscription item in place; team downgrades warn, reset Plan credits to 50, preserve top-ups, queue destructive cleanup, and return to Personal. Unreleased and not pushed.
 - 2026-07-28 [TOOL] Development `outstanding-rabbit-215` now has `STRIPE_PRICE_FREE_MONTHLY=price_1Ty6SbK76D19hnMo7CvDgb4Y` and `STRIPE_PRICE_FREE_ANNUAL=price_1Ty6SyK76D19hnMob9D4sv3X`; production was untouched.
 - 2026-07-28 [CODE] Plan resolution now lists every Stripe subscription for the billing identity and treats the last returned row as ground truth regardless of status; a latest canceled row resolves Free even when an older row is active. Verified and uploaded to the configured development Convex deployment; unreleased and not pushed.
@@ -261,13 +262,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-28 [TOOL] Backfilled the two development users missing subscription IDs with active monthly Free subscriptions, verified both storage layers, and removed the one-time runner.
 - 2026-07-28 [CODE] Implemented first-class monthly/annual Free Stripe Checkout and safe in-place Free downgrade with immediate local subscription sync, owner-only team deletion, and retry-idempotent credit reset.
 - 2026-07-28 [CODE] Replaced oldest-subscription plan lookup with latest-row Stripe resolution and a registered-component regression.
 - 2026-07-28 [CODE] Reset accepted organizational subscription deletions to `50 / 50` Plan credits without changing purchased or referral top-ups.
 - 2026-07-28 [CODE] Implemented the destructive organizational downgrade lifecycle, unavailable-workspace UX, complete bounded cleanup, late-webhook tombstone, and compensating provider deletion for in-flight external writes.
 - 2026-07-28 [CODE] Replaced AI Agent Usage `More credits` with a settings-icon `Manage plan` action targeting Settings → Plan.
 - 2026-07-28 [CODE] Added a consistent 6px visual gap between AI Agent Usage balance values and their `of … credits` suffixes.
-- 2026-07-28 [CODE] Removed the duplicate credit-reset date from Plan settings while retaining subscription renewal details.
 
 # Working set
 - 2026-07-28 [CODE] First-class Free Stripe plans: `convex/{planStripe,freeCheckout,stripeCheckout,freePlanSubscriptionUpdate,freePlanDowngrade,freePlanDowngradeState,creditPlanReset}.ts`, `convex/teamDeletion/request.ts`, associated tests, `src/components/AdjustPlanDialog.tsx`, onboarding/Pricing entrypoints, generated API, and `docs/superpowers/{specs,plans}/2026-07-28-free-plan-price-ids*.md`; verified and uploaded to development, not released.
@@ -306,6 +307,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-28T18:08+08:00 [TOOL] Development `outstanding-rabbit-215` Free-subscription backfill dry-run found 2 `wouldCreate` and 0 review cases; execution created active monthly Free subscriptions `sub_1Ty7qiK76D19hnMolSKBlbO9` and `sub_1Ty7qkK76D19hnMoPnK8ruhQ`, reusing customers `cus_UxYXcARzuCzPfu` and `cus_UxwaEvrg8SSs3y`. App users and Stripe component rows match price `price_1Ty6SbK76D19hnMo7CvDgb4Y`; the post-run dry-run found 0 candidates. The temporary runner was deleted and is absent from the development function spec. Node v22 final verification passed 2 files/8 tests, full `tsc -b`, and `git diff --check`. Production was untouched.
 - 2026-07-28T17:40+08:00 [TOOL] First-class Free Stripe plan verification on Node v22 passed 8 focused files/25 tests, scoped ESLint, `git diff --check`, Convex codegen/typecheck and configured-development upload, full `tsc -b`, and ≤208-line touched production modules. Both development env values read back exactly. Full Vitest passed 318 files/1,028 tests and reproduced the known unrelated baseline: stale `doubleSave` workflow-plan mock, stale referral source regex, and three passing Node-native Docs files classified as empty suites. Production and public changelog were untouched. The checkout changed externally from `main` to `codex/docs-cleanup` at `aa56a954`; backend/UI commits `e48f6ff6` and `61998eed` are on that descendant branch, while the catalog/Checkout commits remain ancestors on `main`.
 - 2026-07-28 [TOOL] Inline RM0 Free Checkout passed scoped ESLint, `git diff --check`, 57/92-line module limits, Convex codegen/typecheck, and configured-development upload on Node v22.22.0. No tests, Stripe catalog writes, frontend deployment, or public changelog update ran.
 - 2026-07-28 [TOOL] Settings Free Checkout wiring passed scoped ESLint, `git diff --check`, and the 188-line module limit on Node v22.22.0. No tests, Stripe writes, Convex upload, frontend deployment, or public changelog update ran.
