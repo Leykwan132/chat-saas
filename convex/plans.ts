@@ -60,6 +60,14 @@ function safelyResolvePlanKeyFromStripePriceId(priceId: string): PlanKey {
   }
 }
 
+export function resolveCanceledSubscriptionPlan(
+  status: string | undefined,
+): { plan: "free"; status: "canceled" } | null {
+  return status === "canceled" || status === "cancelled"
+    ? { plan: "free", status: "canceled" }
+    : null;
+}
+
 export async function getPlanFromStripe(
   ctx: QueryCtx | MutationCtx,
   entityId: string,
@@ -288,8 +296,11 @@ export async function getTeamStripePlanHelper(
 
     if (!team.stripeSubscriptionId) {
       const owner = team.ownerId ? await ctx.db.get(team.ownerId) : null;
-      if (owner?.stripeSubscriptionStatus === "canceled") {
-        return { plan: "free", status: "canceled" };
+      const canceledPlan = resolveCanceledSubscriptionPlan(
+        owner?.stripeSubscriptionStatus,
+      );
+      if (canceledPlan) {
+        return canceledPlan;
       }
       throw new Error(`No Stripe subscription found for team ${team.name}`);
     }
@@ -299,8 +310,11 @@ export async function getTeamStripePlanHelper(
       { stripeSubscriptionId: team.stripeSubscriptionId }
     );
 
-    if (subscription?.status === "canceled") {
-      return { plan: "free", status: "canceled" };
+    const canceledPlan = resolveCanceledSubscriptionPlan(
+      subscription?.status,
+    );
+    if (canceledPlan) {
+      return canceledPlan;
     }
 
     if (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) {
