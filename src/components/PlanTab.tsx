@@ -31,7 +31,11 @@ export function PlanTab() {
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
-  const { openAdjustPlan, isAdjustPlanLoading } = useAdjustPlan();
+  const {
+    openAdjustPlan,
+    openBillingPortal,
+    isAdjustPlanLoading,
+  } = useAdjustPlan();
 
   const [loadingCreditsPackId, setLoadingCreditsPackId] = useState<ExtraCreditsPackId | null>(null);
 
@@ -133,6 +137,16 @@ export function PlanTab() {
           >
             {isAdjustPlanLoading ? <Spinner /> : null}
             {resolvePlanEntryLabel('plan_settings')}
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={openBillingPortal}
+            disabled={isAdjustPlanLoading}
+          >
+            {isAdjustPlanLoading ? <Spinner /> : null}
+            Manage billing
           </Button>
         </div>
       </div>
