@@ -29,6 +29,10 @@ import {
   workflowFollowUpTimersTable,
 } from "./workflowAutomationSchema";
 import { whatsappTemplateStatusValidator } from "./whatsappTemplateLifecycle";
+import {
+  teamDeletionJobsTable,
+  teamDeletionStatusValidator,
+} from "./teamDeletion/schema";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -229,6 +233,8 @@ export default defineSchema({
     ownerId: v.optional(v.id("users")),
     workosOrgId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
+    deletionStatus: v.optional(teamDeletionStatusValidator),
+    deletionStartedAt: v.optional(v.number()),
     industry: v.optional(v.string()),
     companySize: v.optional(v.string()),
     domain: v.optional(v.string()),
@@ -1853,4 +1859,5 @@ export default defineSchema({
   })
     .index("by_jobId", ["jobId"])
     .index("by_jobId_and_status", ["jobId", "status"]),
+  teamDeletionJobs: teamDeletionJobsTable,
 });

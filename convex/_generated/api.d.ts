@@ -200,6 +200,7 @@ import type * as signedRequest from "../signedRequest.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeCheckout from "../stripeCheckout.js";
 import type * as teamAccess from "../teamAccess.js";
+import type * as teamDeletion_model from "../teamDeletion/model.js";
 import type * as teamHelpers from "../teamHelpers.js";
 import type * as teamInvitationRecords from "../teamInvitationRecords.js";
 import type * as teamInvitations from "../teamInvitations.js";
@@ -487,6 +488,7 @@ declare const fullApi: ApiFromModules<{
   stripe: typeof stripe;
   stripeCheckout: typeof stripeCheckout;
   teamAccess: typeof teamAccess;
+  "teamDeletion/model": typeof teamDeletion_model;
   teamHelpers: typeof teamHelpers;
   teamInvitationRecords: typeof teamInvitationRecords;
   teamInvitations: typeof teamInvitations;
@@ -630,6 +632,7 @@ export declare const components: {
   creditPeriodWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"creditPeriodWorkpool">;
   customerImportWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"customerImportWorkpool">;
   advancedAnalyticsWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"advancedAnalyticsWorkpool">;
+  teamDeletionWorkpool: import("@convex-dev/workpool/_generated/component.js").ComponentApi<"teamDeletionWorkpool">;
   workOSAuthKit: import("@convex-dev/workos-authkit/_generated/component.js").ComponentApi<"workOSAuthKit">;
   crons: import("@convex-dev/crons/_generated/component.js").ComponentApi<"crons">;
   modelLifetimeUsage: import("@convex-dev/aggregate/_generated/component.js").ComponentApi<"modelLifetimeUsage">;
