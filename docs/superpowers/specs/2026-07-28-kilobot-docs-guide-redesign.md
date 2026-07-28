@@ -425,6 +425,13 @@ Expand symptom-based troubleshooting for:
 
 Each troubleshooting path identifies the expected state, the smallest useful checks, and when to contact support.
 
+Add stable-state image briefs for:
+
+- A disconnected channel card.
+- A WhatsApp template still In review.
+- A permission-restricted action.
+- An unsaved configuration draft.
+
 ### Contact support
 
 Retain the existing support channels and security warning. Improve the bug-report checklist so it captures:
@@ -462,6 +469,7 @@ Create small reusable components with no code file over 300 lines:
 - `DocSuccess` for observable completion checks.
 - `DocExample` for worked examples.
 - `DocMediaPlaceholder` for visible image and video briefs.
+- `DocVerified` for the date a UI-dependent guide was last checked against the product.
 
 Each component has its own focused styles where needed. Components must use self-explanatory names and avoid code comments.
 
@@ -476,6 +484,7 @@ Each component has its own focused styles where needed. Components must use self
 - Do not claim unreleased work has shipped.
 - Do not expose implementation names, feature-flag keys, internal models, deployment names, or internal cleanup mechanisms.
 - Do not link to hidden guide topics.
+- Show a `Last verified` date on every guide whose instructions depend on current product controls or external provider flows.
 
 ## Verification
 
