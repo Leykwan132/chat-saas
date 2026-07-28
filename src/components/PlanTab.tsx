@@ -75,7 +75,6 @@ export function PlanTab() {
     plan,
     planConfig,
     stripeSubscriptionCurrentPeriodEnd,
-    periodEndMs,
   } = planAndUsage;
 
   const handleCreditsCheckout = async (extraCreditsPackId: ExtraCreditsPackId) => {
@@ -141,16 +140,6 @@ export function PlanTab() {
               </span>
               <span>
                 Renews {new Date(stripeSubscriptionCurrentPeriodEnd).toLocaleDateString()}
-              </span>
-            </>
-          )}
-          {periodEndMs && (
-            <>
-              <span className="text-muted-foreground/40" aria-hidden>
-                ·
-              </span>
-              <span>
-                Credits reset {new Date(periodEndMs).toLocaleDateString()}
               </span>
             </>
           )}

@@ -50,6 +50,7 @@ import type * as analyticsProjectionVerification from "../analyticsProjectionVer
 import type * as analyticsProjectionWorker from "../analyticsProjectionWorker.js";
 import type * as analyticsRefreshRequest from "../analyticsRefreshRequest.js";
 import type * as analyticsRefreshWorker from "../analyticsRefreshWorker.js";
+import type * as analyticsTimeRange from "../analyticsTimeRange.js";
 import type * as analyticsTopicProjection from "../analyticsTopicProjection.js";
 import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
 import type * as appointmentBooking_access from "../appointmentBooking/access.js";
@@ -336,6 +337,7 @@ declare const fullApi: ApiFromModules<{
   analyticsProjectionWorker: typeof analyticsProjectionWorker;
   analyticsRefreshRequest: typeof analyticsRefreshRequest;
   analyticsRefreshWorker: typeof analyticsRefreshWorker;
+  analyticsTimeRange: typeof analyticsTimeRange;
   analyticsTopicProjection: typeof analyticsTopicProjection;
   analyticsTopicRecords: typeof analyticsTopicRecords;
   "appointmentBooking/access": typeof appointmentBooking_access;

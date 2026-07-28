@@ -76,7 +76,7 @@ test("credit-only data does not create operational overview metrics", async () =
   expect(summary.avgMessagesToClose).toBeNull();
 });
 
-test("time range limits overview activity", async () => {
+test("rolling time ranges ignore the billing period start", async () => {
   const t = createOverviewTest();
   const { authed, agentId, teamId, userId, now } = await createFixture(t);
   const dayMs = 24 * 60 * 60 * 1000; const oldAt = now - 15 * dayMs;
@@ -84,7 +84,7 @@ test("time range limits overview activity", async () => {
 
   await t.run(async (ctx) => {
     await ctx.db.patch(userId, {
-      stripeSubscriptionCurrentPeriodEnd: now + 10 * dayMs,
+      stripeSubscriptionCurrentPeriodEnd: now + 30 * dayMs,
       updatedAt: now,
     });
     await ctx.db.insert("messages", {

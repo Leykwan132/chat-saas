@@ -8,8 +8,11 @@ import aggregateSchema from "../node_modules/@convex-dev/aggregate/dist/componen
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("Backfill and Workspace/Account Usage Analytics Test", async () => {
+test("latest billing period includes the full first calendar day", async () => {
   const t = convexTest(schema, modules);
+  const billingPeriodDayStartAt = Date.UTC(2026, 6, 27, 16);
+  const creditUsageAt = Date.UTC(2026, 6, 28, 2, 51, 13);
+  const stripePeriodEnd = Date.UTC(2026, 7, 27, 8, 19, 1);
 
   // Register Stripe component
   t.registerComponent("stripe", stripeSchema, {
@@ -40,12 +43,13 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
   });
 
   // Setup database records
-  const { userDbId, teamId, agentId } = await t.run(async (ctx) => {
+  const { agentId } = await t.run(async (ctx) => {
     const userDbId = await ctx.db.insert("users", {
       workosUserId,
       email: "test@example.com",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      stripeSubscriptionCurrentPeriodEnd: stripePeriodEnd,
+      createdAt: Date.UTC(2026, 6, 26),
+      updatedAt: creditUsageAt,
     });
 
     // Create personal team
@@ -53,8 +57,9 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
       type: "personal",
       name: "Personal Workspace",
       ownerId: userDbId,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      timeZone: "Asia/Kuala_Lumpur",
+      createdAt: creditUsageAt,
+      updatedAt: creditUsageAt,
     });
 
     await ctx.db.insert("teamMemberships", {
@@ -70,8 +75,9 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
       name: "Shared Team",
       ownerId: userDbId,
       workosOrgId: "org-1",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      timeZone: "Asia/Kuala_Lumpur",
+      createdAt: creditUsageAt,
+      updatedAt: creditUsageAt,
     });
 
     await ctx.db.insert("teamMemberships", {
@@ -105,7 +111,7 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
       amount: -100,
       balanceBefore: 1000,
       balanceAfter: 900,
-      createdAt: Date.now(),
+      createdAt: creditUsageAt,
     });
 
     // Insert a creditUsageEvent without orgId to test backfill
@@ -115,10 +121,10 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
       modelId: "gemini-2.5",
       credits: 100,
       creditLogId,
-      createdAt: Date.now(),
-    } as any);
+      createdAt: creditUsageAt,
+    });
 
-    return { userDbId, teamId, agentId };
+    return { agentId };
   });
 
   // 1. Verify before backfill orgId is undefined
@@ -141,6 +147,9 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
   const usageResult = await testWithAuth.query(api.creditUsageAnalytics.getWorkspaceAndAccountUsage, {});
   expect(usageResult).toBeDefined();
   expect(usageResult?.workspaceName).toBe("Shared Team");
+  expect(usageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(usageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(usageResult?.accountCreditsUsed).toBe(100);
 
   // 5. Test getWorkspaceCreditUsage
   const workspaceUsageResult = await testWithAuth.query(api.creditUsageAnalytics.getWorkspaceCreditUsage, {
@@ -148,6 +157,8 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
     timeRange: "period",
   });
   expect(workspaceUsageResult).toBeDefined();
+  expect(workspaceUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(workspaceUsageResult?.periodEndMs).toBe(stripePeriodEnd);
   expect(workspaceUsageResult?.totalCreditsUsed).toBe(100);
   expect(workspaceUsageResult?.modelUsage.series.length).toBe(1);
   expect(workspaceUsageResult?.modelUsage.series[0].label).toBe("Test Agent");
@@ -157,9 +168,22 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
     timeRange: "period",
   });
   expect(accountUsageResult).toBeDefined();
+  expect(accountUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(accountUsageResult?.periodEndMs).toBe(stripePeriodEnd);
   expect(accountUsageResult?.totalCreditsUsed).toBe(100);
   expect(accountUsageResult?.modelUsage.series.length).toBe(1);
   expect(accountUsageResult?.modelUsage.series[0].label).toBe("Shared Team");
+
+  const agentUsageResult = await testWithAuth.query(
+    api.creditUsageAnalytics.getAgentCreditUsage,
+    {
+      agentId,
+      timeRange: "period",
+    },
+  );
+  expect(agentUsageResult?.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(agentUsageResult?.periodEndMs).toBe(stripePeriodEnd);
+  expect(agentUsageResult?.totalCreditsUsed).toBe(100);
 
   // 7. Test getWorkspaceCreditSpendHistory
   const workspaceHistory = await testWithAuth.query(api.creditUsageAnalytics.getWorkspaceCreditSpendHistory, {
@@ -168,6 +192,8 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
     paginationOpts: { numItems: 10, cursor: null },
   });
   expect(workspaceHistory).toBeDefined();
+  expect(workspaceHistory.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(workspaceHistory.periodEndMs).toBe(stripePeriodEnd);
   expect(workspaceHistory.page.length).toBe(1);
   expect(workspaceHistory.page[0].credits).toBe(100);
   expect(workspaceHistory.page[0].agentName).toBe("Test Agent");
@@ -178,7 +204,22 @@ test("Backfill and Workspace/Account Usage Analytics Test", async () => {
     paginationOpts: { numItems: 10, cursor: null },
   });
   expect(accountHistory).toBeDefined();
+  expect(accountHistory.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(accountHistory.periodEndMs).toBe(stripePeriodEnd);
   expect(accountHistory.page.length).toBe(1);
   expect(accountHistory.page[0].credits).toBe(100);
   expect(accountHistory.page[0].agentName).toBe("Test Agent");
+
+  const agentHistory = await testWithAuth.query(
+    api.creditUsageAnalytics.getAgentCreditSpendHistory,
+    {
+      agentId,
+      timeRange: "period",
+      paginationOpts: { numItems: 10, cursor: null },
+    },
+  );
+  expect(agentHistory.periodStartMs).toBe(billingPeriodDayStartAt);
+  expect(agentHistory.periodEndMs).toBe(stripePeriodEnd);
+  expect(agentHistory.page).toHaveLength(1);
+  expect(agentHistory.page[0].credits).toBe(100);
 });

@@ -10,9 +10,48 @@ function datePartsInTimeZone(ms: number, timeZone: string) {
   return Object.fromEntries(parts.map((part) => [part.type, part.value]));
 }
 
+function timeZoneOffsetMs(ms: number, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: normalizeTimeZone(timeZone),
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(ms));
+  const values = Object.fromEntries(
+    parts.map((part) => [part.type, Number(part.value)]),
+  );
+  const representedAsUtc = Date.UTC(
+    values.year,
+    values.month - 1,
+    values.day,
+    values.hour,
+    values.minute,
+    values.second,
+  );
+  return representedAsUtc - Math.floor(ms / 1000) * 1000;
+}
+
 export function toTimeZoneDateKey(ms: number, timeZone: string): string {
   const parts = datePartsInTimeZone(ms, timeZone);
   return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+export function startOfTimeZoneDay(ms: number, timeZone: string): number {
+  const parts = datePartsInTimeZone(ms, timeZone);
+  const utcMidnight = Date.UTC(
+    Number(parts.year),
+    Number(parts.month) - 1,
+    Number(parts.day),
+  );
+  let startMs = utcMidnight;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    startMs = utcMidnight - timeZoneOffsetMs(startMs, timeZone);
+  }
+  return startMs;
 }
 
 function addDaysToDateKey(dateKey: string, days: number) {

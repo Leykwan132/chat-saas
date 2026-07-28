@@ -4,16 +4,16 @@ import type { PaginationOptions } from "convex/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { QueryCtx } from "./_generated/server";
 import { internalMutation, query } from "./_generated/server";
+import {
+  resolveAnalyticsTimeRange,
+  resolveLatestBillingPeriod,
+} from "./analyticsTimeRange";
 import { assertAgentAccess } from "./agentUsage";
 import { getAuthContext } from "./authUtils";
 import { formatCreditLogEventType } from "./creditLogs";
 import { getBillingEntityForUser, getPlanFromStripe, getPlan } from "./plans";
 import { getActiveTeamForUser, normalizeTimeZone, teamToOrgId } from "./teamHelpers";
 import { getModelPricing } from "./llm/modelPricing";
-import {
-  DAY_MS,
-  getUsagePeriodStartMs,
-} from "./usageMonthKey";
 import {
   getDateKeysInTimeZoneRange,
   toTimeZoneDateKey,
@@ -23,16 +23,8 @@ import {
   modelUsageChartColor,
 } from "../shared/modelUsageChartColors";
 
-const MONTHLY_PERIOD_MS = 30 * DAY_MS;
 const MAX_CREDIT_SPEND_PAGE_SIZE = 100;
 const TOP_MODEL_SERIES_LIMIT = 8;
-const TIME_RANGE_DAYS: Record<"7d" | "30d" | "90d", number> = {
-  "7d": 7,
-  "30d": 30,
-  "90d": 90,
-};
-
-type CreditTimeRange = "7d" | "30d" | "90d" | "period";
 
 export const creditTimeRangeValidator = v.optional(
   v.union(
@@ -328,24 +320,6 @@ async function paginateAgentCreditSpendHistory(
     rangeEndMs: args.rangeEndMs,
     paginationOpts,
   });
-}
-
-function resolveCreditUsageRange(
-  timeRange: CreditTimeRange,
-  periodStartMs: number,
-  periodEndMs: number,
-) {
-  if (timeRange === "period") {
-    return { rangeStartMs: periodStartMs, rangeEndMs: periodEndMs };
-  }
-
-  const days = TIME_RANGE_DAYS[timeRange];
-  const rangeEndMs = Math.min(periodEndMs, Date.now());
-  const rangeStartMs = Math.max(
-    periodStartMs,
-    rangeEndMs - (days - 1) * DAY_MS,
-  );
-  return { rangeStartMs, rangeEndMs };
 }
 
 type DailyCreditRecord = {
@@ -738,11 +712,12 @@ export const getAgentCreditUsage = query({
     const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,
@@ -811,12 +786,15 @@ export const getAgentCreditSpendHistory = query({
       };
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,
@@ -912,12 +890,12 @@ export const getWorkspaceAndAccountUsage = query({
 
     const { billingUser, isTeam, teamName } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, billingUser.workosUserId);
-    const periodStartMs = getUsagePeriodStartMs(billingUser.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      billingUser.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
-
     const activeTeam = await getActiveTeamForUser(ctx, user);
     const timeZone = normalizeTimeZone(activeTeam.timeZone);
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      billingUser.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const activeWorkspaceId = teamToOrgId(activeTeam);
     const rangeEndMs = Math.min(periodEndMs, Date.now());
     const accountEvents = await listUserCreditUsageEventsInRange(ctx, {
@@ -1027,11 +1005,12 @@ export const getAccountCreditUsage = query({
     const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,
@@ -1186,12 +1165,15 @@ export const getAccountCreditSpendHistory = query({
       };
     }
 
+    const activeTeam = await getActiveTeamForUser(ctx, user);
+    const timeZone = normalizeTimeZone(activeTeam.timeZone);
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,
@@ -1249,11 +1231,12 @@ export const getWorkspaceCreditUsage = query({
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
     const stripeInfo = await getPlanFromStripe(ctx, userDoc.workosUserId);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,
@@ -1403,14 +1386,20 @@ export const getWorkspaceCreditSpendHistory = query({
       };
     }
 
-    await assertWorkspaceAccess(ctx, user._id, args.workspaceId);
+    const workspaceTeam = await assertWorkspaceAccess(
+      ctx,
+      user._id,
+      args.workspaceId,
+    );
+    const timeZone = normalizeTimeZone(workspaceTeam.timeZone);
 
     const { billingUser: userDoc } = await getBillingEntityForUser(ctx, user);
-    const periodStartMs = getUsagePeriodStartMs(userDoc.stripeSubscriptionCurrentPeriodEnd);
-    const periodEndMs =
-      userDoc.stripeSubscriptionCurrentPeriodEnd ?? periodStartMs + MONTHLY_PERIOD_MS;
+    const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
+      userDoc.stripeSubscriptionCurrentPeriodEnd,
+      timeZone,
+    );
     const timeRange = args.timeRange ?? "period";
-    const { rangeStartMs, rangeEndMs } = resolveCreditUsageRange(
+    const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
       timeRange,
       periodStartMs,
       periodEndMs,

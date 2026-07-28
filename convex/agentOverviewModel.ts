@@ -13,24 +13,22 @@ import {
   listAiMessagesForAgent,
   getOutgoingMessageCountsForConversations,
 } from "./agentOverviewMessages";
+import {
+  resolveAnalyticsTimeRange,
+  resolveLatestBillingPeriod,
+  type AnalyticsTimeRange,
+} from "./analyticsTimeRange";
 import { assertAgentAccess } from "./agentUsage";
 import { getAgentOverviewSentimentDistribution } from "./agentOverviewSentiment";
 import { getAgentOverviewTrendingTopics } from "./agentOverviewTopics";
 import { getAuthContext } from "./authUtils";
 import { getBillingEntityForUser } from "./plans";
 import { getActiveTeamForUser, normalizeTimeZone } from "./teamHelpers";
-import { DAY_MS, getUsagePeriodStartMs } from "./usageMonthKey";
 import { getDateKeysInTimeZoneRange } from "./timeZoneDateKeys";
 
-const MONTHLY_PERIOD_MS = 30 * DAY_MS;
 const MAX_OVERVIEW_ROWS = 5000;
-const TIME_RANGE_DAYS: Record<"7d" | "30d" | "90d", number> = {
-  "7d": 7,
-  "30d": 30,
-  "90d": 90,
-};
 
-export type OverviewTimeRange = "7d" | "30d" | "90d" | "period";
+export type OverviewTimeRange = AnalyticsTimeRange;
 
 async function getBillingPeriod(ctx: QueryCtx) {
   const { userDbId } = await getAuthContext(ctx);
@@ -41,36 +39,17 @@ async function getBillingPeriod(ctx: QueryCtx) {
 
   const activeTeam = await getActiveTeamForUser(ctx, user);
   const { billingUser } = await getBillingEntityForUser(ctx, user);
-  const periodStartMs = getUsagePeriodStartMs(
+  const timeZone = normalizeTimeZone(activeTeam.timeZone);
+  const { periodStartMs, periodEndMs } = resolveLatestBillingPeriod(
     billingUser.stripeSubscriptionCurrentPeriodEnd,
+    timeZone,
   );
-  const periodEndMs =
-    billingUser.stripeSubscriptionCurrentPeriodEnd ??
-    periodStartMs + MONTHLY_PERIOD_MS;
 
   return {
     periodStartMs,
     periodEndMs,
-    timeZone: normalizeTimeZone(activeTeam.timeZone),
+    timeZone,
   };
-}
-
-function resolveOverviewRange(
-  timeRange: OverviewTimeRange,
-  periodStartMs: number,
-  periodEndMs: number,
-) {
-  if (timeRange === "period") {
-    return { rangeStartMs: periodStartMs, rangeEndMs: periodEndMs };
-  }
-
-  const days = TIME_RANGE_DAYS[timeRange];
-  const rangeEndMs = Math.min(periodEndMs, Date.now());
-  const rangeStartMs = Math.max(
-    periodStartMs,
-    rangeEndMs - (days - 1) * DAY_MS,
-  );
-  return { rangeStartMs, rangeEndMs };
 }
 
 async function listPeriodConversations(
@@ -131,7 +110,7 @@ export async function getAgentOverviewSummary(
 ) {
   const agent = await assertAgentAccess(ctx, agentId);
   const { periodStartMs, periodEndMs, timeZone } = await getBillingPeriod(ctx);
-  const { rangeStartMs, rangeEndMs } = resolveOverviewRange(
+  const { rangeStartMs, rangeEndMs } = resolveAnalyticsTimeRange(
     timeRange,
     periodStartMs,
     periodEndMs,

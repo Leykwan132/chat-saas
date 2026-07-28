@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
-import { Coins, Info } from 'lucide-react';
+import { Info, Settings } from 'lucide-react';
 import { api } from '../../../convex/_generated/api';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -100,11 +100,11 @@ function CreditUsageRow({
     <div className="space-y-3">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm font-medium text-foreground">{title}</span>
-        <p className="shrink-0 truncate text-sm tabular-nums">
-          <span className="text-2xl font-semibold tracking-tight">
+        <p className="inline-flex shrink-0 items-baseline gap-1.5 truncate tabular-nums">
+          <span className="text-xl font-semibold tracking-tight">
             {remaining.toLocaleString()}
           </span>
-          <span className="text-muted-foreground"> of {total.toLocaleString()} credits</span>
+          <span className="text-xs text-muted-foreground">of {total.toLocaleString()} credits</span>
         </p>
       </div>
       <Progress value={progressValue} className={cn('h-2.5', progressClassName)} />
@@ -174,6 +174,15 @@ export function PlanUsageCard() {
   const monthlyAllowance = planAndUsage?.monthlyAllowance ?? 0;
   const planPct = planProgressValue(monthlyCredits, monthlyAllowance);
   const planName = planAndUsage?.planConfig.name ?? 'Free';
+  const periodEndMs = planAndUsage?.periodEndMs;
+  const description = isLoading
+    ? 'Loading plan…'
+    : periodEndMs == null
+      ? 'Credit reset date unavailable'
+      : `Resets ${new Date(periodEndMs).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+        })}`;
   const rows = buildCreditBalanceRows({
     monthlyRemaining: monthlyCredits,
     monthlyGranted: monthlyAllowance,
@@ -185,22 +194,20 @@ export function PlanUsageCard() {
 
   const goToPlan = () => {
     const base = agentId ? `/dashboard/${agentId}/settings` : '/workspace/settings';
-    navigate(`${base}?section=plan#plan-add-ons`);
+    navigate(`${base}?section=plan`);
   };
 
   return (
     <div className="w-full max-w-md">
       <CompactBalanceCard
         title={isLoading ? 'Plan' : `${planName} plan`}
-        description={
-          isLoading ? 'Loading plan…' : `You are on ${planName} plan`
-        }
+        description={description}
         infoTooltip="Usage will reset every month"
         action={
           !isLoading && planAndUsage?.canManageBilling ? (
             <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={goToPlan}>
-              <Coins className="size-3.5" />
-              More credits
+              <Settings className="size-3.5" />
+              Manage plan
             </Button>
           ) : undefined
         }

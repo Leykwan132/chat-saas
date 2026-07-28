@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Show the actual credit reset date in the AI Agent Usage card and slightly reduce the exact credit-balance typography.
+**Goal:** Show the actual credit reset date concisely in the AI Agent Usage card and slightly reduce the exact credit-balance typography.
 
 **Architecture:** Keep `PlanUsageCard` connected to the existing `getPlanAndUsage` query and render its existing `periodEndMs` value in the card description. Protect the presentation with a focused source contract so billing analytics and backend behavior remain untouched.
 
@@ -27,7 +27,7 @@
 
 **Interfaces:**
 - Consumes: `planAndUsage.periodEndMs: number | null`
-- Produces: Card description `Credits reset on ${new Date(periodEndMs).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` when the reset timestamp exists
+- Produces: Card description `Resets ${new Date(periodEndMs).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}` when the reset timestamp exists
 
 - [ ] **Step 1: Write the failing source contract**
 
@@ -64,7 +64,7 @@ Expected: FAIL because the card still renders the plan-status sentence and `text
 
 - [ ] **Step 3: Implement the reset description and compact typography**
 
-In `PlanUsageCard.tsx`, derive `periodEndMs`, format it with `month: 'short'` and `day: 'numeric'`, replace the loaded description with the reset copy, change the remaining balance class to `text-xl`, and give the inline suffix `text-xs text-muted-foreground`.
+In `PlanUsageCard.tsx`, derive `periodEndMs`, format it with `month: 'short'` and `day: 'numeric'`, replace the loaded description with the concise reset copy, change the remaining balance class to `text-xl`, and give the inline suffix `text-xs text-muted-foreground`.
 
 - [ ] **Step 4: Run focused verification**
 
