@@ -301,7 +301,8 @@ export default defineSchema({
     createdAt: v.number(),
     updatedAt: v.number(),
   })
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
   // Local cache of WorkOS invitations, kept in sync via webhooks and API actions.
   teamInvitationRecords: defineTable({
     workosInvitationId: v.string(),
@@ -464,7 +465,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
   fileEntries: defineTable({
     agentId: v.id("agents"),
     title: v.optional(v.string()),
@@ -484,7 +486,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
   webEntries: defineTable({
     agentId: v.id("agents"),
     url: v.string(),
@@ -505,7 +508,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
   qaEntries: defineTable({
     agentId: v.id("agents"),
     question: v.string(),
@@ -525,7 +529,8 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_agentId", ["agentId"])
-    .index("by_userId_and_orgId", ["userId", "orgId"]),
+    .index("by_userId_and_orgId", ["userId", "orgId"])
+    .index("by_orgId", ["orgId"]),
   // Per-org Meta connection. wabaId/phoneNumberId/accessToken are optional so a
   // row can exist before signup completes (status: "pending") and so future
   // Instagram/Messenger rows can live in the same table.
@@ -605,7 +610,8 @@ export default defineSchema({
   })
     .index("by_publicKey", ["publicKey"])
     .index("by_channelId", ["channelId"])
-    .index("by_agentId", ["agentId"]),
+    .index("by_agentId", ["agentId"])
+    .index("by_orgId", ["orgId"]),
   avatarConfigurations: defineTable({
     channelId: v.id("channels"),
     agentId: v.id("agents"),
@@ -676,7 +682,8 @@ export default defineSchema({
   })
     .index("by_requestId", ["requestId"])
     .index("by_channelId_and_syncType", ["channelId", "syncType"])
-    .index("by_phoneNumberId", ["phoneNumberId"]),
+    .index("by_phoneNumberId", ["phoneNumberId"])
+    .index("by_orgId", ["orgId"]),
   whatsappAccountUpdates: defineTable({
     wabaId: v.string(),
     event: v.string(),
@@ -727,7 +734,8 @@ export default defineSchema({
       "channelId",
       "phase",
       "chunkOrder",
-    ]),
+    ])
+    .index("by_orgId", ["orgId"]),
   whatsappHistoryIngestThreads: defineTable({
     batchId: v.id("whatsappHistorySyncBatches"),
     channelId: v.id("channels"),
@@ -750,7 +758,8 @@ export default defineSchema({
     .index("by_channelId_and_whatsappThreadId", [
       "channelId",
       "whatsappThreadId",
-    ]),
+    ])
+    .index("by_orgId", ["orgId"]),
   whatsappHistoryIngestMessages: defineTable({
     channelId: v.id("channels"),
     orgId: v.string(),
@@ -790,7 +799,8 @@ export default defineSchema({
       "channelId",
       "whatsappThreadId",
       "timestampMs",
-    ]),
+    ])
+    .index("by_orgId", ["orgId"]),
   // A customer is anyone who messaged the org via any channel, or who was
   // added manually. Natural key is (orgId, service, contactAddress).
   customers: defineTable({
@@ -934,6 +944,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_conversationId_and_state", ["conversationId", "state"])
+    .index("by_conversationId", ["conversationId"])
     .index("by_updatedAt", ["updatedAt"]),
   inboundMediaBatchItems: defineTable({
     batchId: v.id("inboundMediaBatches"),
@@ -955,6 +966,7 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_batchId_and_ordinal", ["batchId", "ordinal"])
+    .index("by_batchId", ["batchId"])
     .index("by_assetKey", ["assetKey"]),
   messages: defineTable({
     orgId: v.string(),
@@ -1057,7 +1069,8 @@ export default defineSchema({
       "conversationId",
       "timeZone",
       "date",
-    ]),
+    ])
+    .index("by_orgId", ["orgId"]),
   agentOverviewHumanEscalationFacts: defineTable({
     agentId: v.id("agents"),
     conversationId: v.id("conversations"),
@@ -1072,7 +1085,8 @@ export default defineSchema({
       "timeZone",
       "date",
     ])
-    .index("by_conversationLogId", ["conversationLogId"]),
+    .index("by_conversationLogId", ["conversationLogId"])
+    .index("by_orgId", ["orgId"]),
   conversationAnalyticsFacts: defineTable({
     orgId: v.string(),
     conversationId: v.id("conversations"),
@@ -1209,7 +1223,9 @@ export default defineSchema({
     // stash the user access token between the callback and the in-app
     // Page picker (authorization codes are single-use).
     pendingUserAccessToken: v.optional(v.string()),
-  }).index("by_csrf", ["csrf"]),
+  })
+    .index("by_csrf", ["csrf"])
+    .index("by_orgId", ["orgId"]),
   mediaUploads: defineTable({
     clientId: v.string(),
     orgId: v.string(),
@@ -1236,6 +1252,7 @@ export default defineSchema({
   })
     .index("by_orgId_userId_clientId", ["orgId", "userId", "clientId"])
     .index("by_orgId_userId", ["orgId", "userId"])
+    .index("by_orgId", ["orgId"])
     .index("by_agentId", ["agentId"])
     .index("by_workflowNodeId", ["workflowNodeId"]),
   // One row per billing user per monthly credit cycle. Source of truth for the
@@ -1675,7 +1692,9 @@ export default defineSchema({
     ),
     estCostMyr: v.number(),
     errorMessage: v.optional(v.string()),
-  }).index("by_ruleId_and_sentAt", ["ruleId", "sentAt"]),
+  })
+    .index("by_ruleId_and_sentAt", ["ruleId", "sentAt"])
+    .index("by_orgId", ["orgId"]),
   rawAgentUsage: defineTable({
     userId: v.optional(v.string()),
     threadId: v.optional(v.string()),
@@ -1778,7 +1797,8 @@ export default defineSchema({
       "channelId",
       "templateName",
       "templateLanguage",
-    ]),
+    ])
+    .index("by_orgId", ["orgId"]),
   // ─── Bulk CSV Customer Import ────────────────────────────
   // Parent table aggregating progress across one or more import jobs/chunks.
   customerImports: defineTable({

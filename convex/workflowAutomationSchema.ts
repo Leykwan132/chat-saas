@@ -60,7 +60,8 @@ export const workflowAutomationRunsTable = defineTable({
     'status',
   ])
   .index('by_appointmentId', ['appointmentId'])
-  .index('by_conversationId', ['conversationId']);
+  .index('by_conversationId', ['conversationId'])
+  .index('by_orgId', ['orgId']);
 
 export const workflowAutomationCostTotalsTable = defineTable({
   agentId: v.id('agents'),

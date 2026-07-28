@@ -384,7 +384,7 @@ export const handleSubscriptionDeletedInternal = internalMutation({
       purchasedCreditsAfter: before.purchasedRemaining,
       reason: "Subscription canceled, reverts to Free plan next cycle",
     });
-    return { accepted: true, duplicate: false };
+    return { accepted: true as const, duplicate: false };
   },
 });
 

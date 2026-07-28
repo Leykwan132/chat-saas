@@ -37,6 +37,38 @@ export async function requestTeamDeletion(
     updatedAt: now,
   });
 
+  const channels = await ctx.db
+    .query("channels")
+    .withIndex("by_orgId_and_service", (q) =>
+      q.eq("orgId", args.workosOrgId),
+    )
+    .take(50);
+  for (const channel of channels) {
+    await ctx.db.patch(channel._id, {
+      status: "disconnected",
+      updatedAt: now,
+    });
+  }
+
+  const widgetSettings = await ctx.db
+    .query("webWidgetSettings")
+    .withIndex("by_orgId", (q) => q.eq("orgId", args.workosOrgId))
+    .take(50);
+  for (const settings of widgetSettings) {
+    await ctx.db.patch(settings._id, { enabled: false, updatedAt: now });
+  }
+
+  const avatarConfigurations = await ctx.db
+    .query("avatarConfigurations")
+    .withIndex("by_orgId", (q) => q.eq("orgId", args.workosOrgId))
+    .take(50);
+  for (const configuration of avatarConfigurations) {
+    await ctx.db.patch(configuration._id, {
+      enabled: false,
+      updatedAt: now,
+    });
+  }
+
   if (team.ownerId) {
     await ctx.db.patch(team.ownerId, {
       stripeSubscriptionId: undefined,
