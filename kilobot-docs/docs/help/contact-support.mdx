@@ -1,59 +1,64 @@
 ---
 title: Contact support
-description: Report a bug or contact the KiloBot support team through WhatsApp or email.
+description: Report a bug or contact KiloBot support through WhatsApp or email.
 slug: /help/contact-support
 ---
 
-import DocCard from '@site/src/components/DocCard';
 import Link from '@docusaurus/Link';
+import DocExample from '@site/src/components/DocExample';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Contact support
 
-## Overview
+Use support after [Troubleshooting](/help/troubleshooting) does not unblock you. Prefer the bug form for a reproducible product issue, WhatsApp for account or setup help, and email for a detailed written trail.
 
-Use Contact support when troubleshooting does not unblock you. Prefer the bug report form for reproducible product issues, WhatsApp for account or setup help, and email when you need a detailed written trail. Include workspace and agent context without sending passwords, access tokens, or unnecessary customer data.
+## Choose a support route
 
-## Report a bug
+| Need | Route |
+| --- | --- |
+| Reproducible product issue | <Link to="https://forms.gle/Hoo56T7Qj3yEBEeZ9">Bug report form</Link> |
+| Account, setup, or operational help | <Link to="https://wa.me/60129499394">KiloBot support on WhatsApp</Link> |
+| Detailed request with several steps | [support@kilobot.app](mailto:support@kilobot.app) |
+| Sales or demo request | [KiloBot contact page](https://kilobot.app/contact) |
 
-The bug report form gives the team reproducible steps and environment details.
+## Include useful evidence
 
-<ol className="steps">
-  <li>Open the <Link to="https://forms.gle/Hoo56T7Qj3yEBEeZ9">KiloBot bug report form</Link>.</li>
-  <li>Include workspace and agent name, page or feature, approximate date and time with timezone, steps that reproduce the problem, expected and actual results, browser and device, and a screenshot or short recording with sensitive information hidden.</li>
-</ol>
+- Workspace and agent name
+- Page or feature
+- Approximate date and time with timezone
+- Steps that reproduce the problem
+- Expected and actual result
+- Browser and device
+- Screenshot or short recording with sensitive data hidden
+- Whether the problem affects one teammate, one channel, or the whole workspace
 
-## Reach support on WhatsApp
+<DocExample title="Clear support report">
 
-Use WhatsApp for account, setup, or operational help.
+**Agent:** Northstar Dental
 
-<ol className="steps">
-  <li>Start a conversation with <Link to="https://wa.me/60129499394">KiloBot support on WhatsApp</Link>.</li>
-  <li>Describe the outcome you are trying to achieve and where you are blocked.</li>
-</ol>
+**Page:** Workflows → Reminders
 
-## Send a detailed email
+**Time:** 28 July 2026, 3:15 PM MYT
 
-Email is suitable when you need to include several steps, screenshots, or team context. Send detailed requests to [support@kilobot.app](mailto:support@kilobot.app).
+**Expected:** A controlled test booking schedules a 24-hour reminder.
 
-## Prepare before you contact support
+**Actual:** No History row appears.
 
-Checking common causes first often resolves the issue without waiting on a reply.
+**Tried:** Confirmed the template is Approved, scope is Future only, and the booking was created after activation.
 
-<ol className="steps">
-  <li>Check <Link to="/help/troubleshooting">Troubleshooting</Link>.</li>
-  <li>Confirm the correct agent is selected.</li>
-  <li>Note whether the problem affects one teammate, one channel, or the entire workspace.</li>
-  <li>If a provider such as Meta is still reviewing a template or synchronizing a connection, include the visible provider status.</li>
-</ol>
+</DocExample>
+
+<DocSuccess>
+
+- Support can identify the affected workspace, agent, and time
+- The report contains reproducible steps and a clear expected result
+- Any attachment hides unrelated customer or account information
+
+</DocSuccess>
 
 :::warning
-Never send passwords, API keys, access tokens, complete payment details, or private customer exports through the bug form, WhatsApp, or email.
+Never send passwords, API keys, access tokens, complete payment details, or private customer exports through the form, WhatsApp, or email.
 :::
 
-For sales or demo requests, use the [KiloBot contact page](https://kilobot.app/contact).
-
-<DocCard
-  to="/help/troubleshooting"
-  title="Troubleshooting"
-  description="Common setup, channel, and permission issues to check first"
-/>
+<DocVerified date="2026-07-28" />

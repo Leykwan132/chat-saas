@@ -1,0 +1,51 @@
+.root {
+  margin: 1.75rem 0;
+  padding: 1.25rem;
+  border: 1px dashed var(--ifm-color-emphasis-500);
+  border-radius: 0.875rem;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 12px,
+      color-mix(in srgb, var(--ifm-color-emphasis-200) 28%, transparent) 12px,
+      color-mix(in srgb, var(--ifm-color-emphasis-200) 28%, transparent) 24px
+    );
+}
+
+.eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 0.5rem !important;
+  font-size: 1.1rem !important;
+}
+
+.brief {
+  margin-top: 0.875rem;
+}
+
+.briefTitle {
+  margin: 0 0 0.25rem;
+  font-weight: 650;
+}
+
+.brief ol {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+
+.detail,
+.asset {
+  margin: 0.875rem 0 0;
+}
+
+.asset code {
+  overflow-wrap: anywhere;
+}

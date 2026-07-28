@@ -4,69 +4,71 @@ description: Give teammates the access they need while protecting sensitive Kilo
 slug: /team/roles-and-permissions
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Roles and permissions
 
-## Overview
-
-Roles group permissions that control what a teammate can read or manage. Navigation and actions are permission-aware, so users may see different KiloBot screens inside the same workspace. Define responsibility first, then pick the smallest role that covers the work.
+Roles group permissions that control what a teammate can view or manage. Navigation and actions are permission-aware, so two teammates may see different screens in the same workspace.
 
 ## Start with responsibility
 
-Define what each teammate must do before choosing a role. Common responsibilities include:
+| Responsibility | Likely access | Usually unnecessary |
+| --- | --- | --- |
+| Answer customers | Conversations and Contacts | Agent configuration and team administration |
+| Manage appointments | Conversations, Services, Availability, Calendar | Channels and team administration |
+| Configure the customer experience | Agent Setup, Knowledge Base, Channels, Workflows | Team administration unless they also manage people |
+| Administer the workspace | Teams and required organization settings | Daily conversation ownership unless operationally needed |
 
-- Work in **Inbox** and **Contacts**
-- Manage **Calendar** and **Availability**
-- Create **Services** and Workflows
-- Configure **Agent Setup**, **Workflow**, **Knowledge Base**, and **Channels**
-- View **Analytics** and workspace **Usage**
-- Invite members or edit roles
+Use built-in roles where they fit. When custom roles are available, name them after responsibility, such as **Inbox operator** or **Booking manager**, rather than after a person.
 
-Separate read access from management access where the role editor allows it. A teammate who needs to view **Analytics** may not need permission to change routing or publish an agent configuration.
+<DocExample title="Northstar receptionist">
 
-## Use built-in and custom roles
+The receptionist needs Conversations, Contacts, Services, and Calendar. They do not need to reconnect channels, change the agent prompt, or manage team membership.
 
-Assign the broadest authority only where it is required, then narrow access for daily operators.
+</DocExample>
 
-<ol className="steps">
-  <li>Open <strong>Settings → Teams</strong> to review available roles.</li>
-  <li>Assign workspace owners the broadest authority.</li>
-  <li>Give administrators operational and configuration access as needed.</li>
-  <li>Give members the narrower access needed for daily work.</li>
-</ol>
-
-When custom roles are available, name them after responsibility, such as "Inbox operator" or "Booking manager," rather than after one person.
-
-## Test a role
-
-After changing a role, confirm the teammate sees the right pages and cannot reach sensitive controls.
+## Assign and test a role
 
 <ol className="steps">
-  <li>After changing a role, confirm the teammate can open every required page.</li>
-  <li>Verify they can perform the needed action.</li>
-  <li>Confirm that sensitive controls they should not manage are absent or disabled.</li>
+  <li>Open <strong>Settings → Teams</strong> and select the teammate.</li>
+  <li>Choose the role that covers the defined responsibility.</li>
+  <li>Save the change.</li>
+  <li>Ask the teammate to open every required page and perform one representative action.</li>
+  <li>Confirm sensitive controls are absent or disabled.</li>
 </ol>
 
-Permissions can affect **Agent Setup**, routing, channels, customers, broadcasts, bookings, analytics, and team administration. A redirect or missing action may be intentional when access is not granted.
+<DocMediaPlaceholder
+  kind="image"
+  title="Role and permission review"
+  description="Show a fictional operator role with its allowed product areas."
+  capture={[
+    'Selected teammate or role',
+    'Permission groups',
+    'Read and manage distinctions where available',
+    'Save action',
+  ]}
+  callouts={[
+    'Grant access by responsibility',
+    'Separate viewing from management where possible',
+    'Test the result with the teammate',
+  ]}
+  sensitive={['Real member names and emails', 'Workspace identifiers']}
+  assetPath="/img/guides/teams/role-permissions.png"
+/>
 
-## Maintain access
+<DocSuccess>
 
-Remove broad temporary access once setup or an incident is complete.
+- The teammate can complete every assigned task
+- Sensitive configuration is unavailable unless required
+- Temporary broad access has an owner and removal date
 
-<ol className="steps">
-  <li>Review membership and roles regularly.</li>
-  <li>Remove unused roles.</li>
-  <li>Revoke access when someone leaves.</li>
-  <li>Reduce broad temporary access after a setup or incident is complete.</li>
-</ol>
+</DocSuccess>
 
 :::warning
-Do not use shared user accounts to avoid permission setup. Individual membership provides clearer responsibility and safer access removal.
+Do not share user accounts to avoid permission setup. Individual membership makes responsibility and access removal clear.
 :::
 
-<DocCard
-  to="/team/workspace-and-team"
-  title="Workspace and team"
-  description="Invite teammates and manage membership at the workspace level"
-/>
+<DocVerified date="2026-07-28" />

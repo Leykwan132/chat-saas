@@ -1,62 +1,83 @@
 ---
 title: Lead Assignment
-description: Route conversations and bookings to teammates with manual or automatic strategies.
+description: Route conversations and bookings with manual, balanced, or round-robin ownership.
 slug: /team/lead-assignment
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Lead Assignment
 
-## Overview
+Lead Assignment determines who owns a customer conversation. Clear ownership prevents duplicate replies and makes Inbox filters useful.
 
-Lead Assignment determines who is responsible for customer conversations. A clear assignment model prevents duplicate replies and gives **Inbox** filters, **Services**, and **Analytics** meaningful ownership data. Choose manual or automatic distribution based on volume and how your team works.
+<DocPrerequisites>
 
-## Choose an operating model
+- Active workspace members who can work in Conversations
+- A decided ownership model
+- For booking assignment, valid teammate Availability
 
-KiloBot supports manual and automatic assignment patterns.
+</DocPrerequisites>
 
-Use manual assignment when a coordinator decides ownership or when volume is low. Use an automatic strategy when new leads should be distributed without waiting for a teammate.
+## Choose a strategy
 
-Available routing behavior can include balanced distribution and round robin. Balanced assignment considers current distribution, while round robin rotates through eligible teammates. Your active plan and permissions determine which controls are available.
+| Strategy | Use when | Watch for |
+| --- | --- | --- |
+| **Manual** | A coordinator decides ownership or volume is low | Unassigned conversations waiting too long |
+| **Balanced** | New work should consider current distribution | Ineligible or unavailable teammates |
+| **Round robin** | Eligible teammates should receive turns in sequence | Schedule differences and temporary absence |
+| **Specific teammate** | One person owns a Service or specialist journey | Coverage when that person is unavailable |
 
-## Configure eligible teammates
+Your plan and permissions determine which controls are available.
 
-Before turning on automatic routing, confirm who can receive work and that each person has the right access.
-
-<ol className="steps">
-  <li>Open <strong>Lead Assignment</strong> for the agent.</li>
-  <li>Review the teammates who can receive work.</li>
-  <li>Select the routing strategy.</li>
-  <li>Confirm each person has the right workspace membership, permissions, and operational responsibility.</li>
-</ol>
-
-For appointment booking, **Service** assignment adds another layer. A Service can prefer the conversation owner, use balanced or round-robin assignment, or choose a specific teammate. The assigned person must also have valid **Availability**.
-
-## Reassign a conversation
-
-When ownership changes, update the assignee in **Inbox** so filters, analytics, and follow-up routing stay accurate.
+## Configure assignment
 
 <ol className="steps">
-  <li>Open the conversation in <strong>Inbox</strong>.</li>
-  <li>Change the assignee from conversation details if permitted.</li>
+  <li>Open <strong>Teams → Lead Assignment</strong> for the agent.</li>
+  <li>Select the eligible teammates.</li>
+  <li>Choose the routing strategy and save it.</li>
+  <li>Send controlled test enquiries and verify ownership in Conversations.</li>
 </ol>
 
-The change is recorded in **Action History**. Reassign intentionally and communicate when the new owner needs context beyond the visible thread.
+For Bookings, each Service can prefer the conversation owner, use balanced or round-robin assignment, or select a specific teammate. The chosen teammate must also be available for the slot.
 
-## Review the outcome
+<DocExample title="Northstar front desk">
 
-Use **Inbox** and **Analytics** together to confirm routing is distributing work fairly.
+Northstar uses balanced assignment for general enquiries across two receptionists. The orthodontic consultation Service uses a specific specialist with dedicated Availability.
 
-<ol className="steps">
-  <li>Use <strong>Inbox</strong> filters to compare assigned and unassigned work.</li>
-  <li>Review response time and conversion information in <strong>Analytics</strong>.</li>
-</ol>
+</DocExample>
 
-If one person receives too much work, confirm eligibility, schedule, and routing settings before changing the strategy.
-
-<DocCard
-  to="/engage/inbox"
-  title="Inbox"
-  description="Filters, assignments, and conversation details for daily work"
+<DocMediaPlaceholder
+  kind="video"
+  title="Configure and verify Lead Assignment"
+  description="Show eligible teammates, strategy selection, and the resulting conversation ownership."
+  capture={[
+    'Open Lead Assignment for the correct agent',
+    'Select two eligible fictional teammates',
+    'Choose and save Balanced assignment',
+    'Send two controlled enquiries',
+    'Verify assignees in Conversations',
+  ]}
+  callouts={[
+    'Eligibility determines who can receive work',
+    'Service assignment can add another rule',
+    'Reassign in Conversations when ownership changes',
+  ]}
+  duration="60–90 seconds"
+  sensitive={['Real teammate identities', 'Customer messages', 'Phone numbers']}
+  assetPath="/video/guides/teams/lead-assignment.mp4"
 />
+
+<DocSuccess>
+
+- New conversations receive the expected owner
+- Unassigned work is visible and reviewed
+- Booking assignment also produces an available teammate
+- Ownership changes are kept accurate in Conversations
+
+</DocSuccess>
+
+<DocVerified date="2026-07-28" />

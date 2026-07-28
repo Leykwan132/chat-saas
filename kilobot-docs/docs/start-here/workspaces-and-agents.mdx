@@ -1,45 +1,64 @@
 ---
 title: Workspaces and agents
-description: Organize teams and customer experiences with KiloBot workspaces and AI agents.
+description: Decide when to create a workspace, an agent, or teammate access.
 slug: /start-here/workspaces-and-agents
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Workspaces and agents
 
-## Overview
+A workspace holds the organization, team, and plan. An agent is one customer-facing AI experience inside that workspace.
 
-A workspace holds your team and billing. Each agent is a separate customer experience inside that workspace. Use one workspace when the same organization shares billing and team access. Create separate agents when the customer experience, knowledge, channels, or workflow should differ.
+## Choose the right structure
 
-## Create a workspace
+| Need | Create | Why |
+| --- | --- | --- |
+| The same organization shares team access and plan | One workspace | Keeps ownership and administration together |
+| A brand, market, or journey needs different knowledge, channels, or behavior | Another agent | Keeps the customer experience separate |
+| A teammate needs access to existing work | A team invitation | Avoids duplicating agents or sharing accounts |
+| A legally or operationally separate organization needs isolation | Another workspace | Separates membership and organization controls |
 
-During onboarding, enter the team name, industry, and company size. Workspace-level pages manage members, invitations, roles, plan usage, and settings.
+<DocExample title="Northstar Dental">
 
-## Create an agent
+Northstar uses one workspace. It creates a **Northstar Dental** agent for patient enquiries. If a second clinic needs different services, operating hours, channels, and staff, Northstar creates another agent in the same workspace.
 
-Choose **Create agent** from the workspace, pick a template or blank starting point, name the agent, and complete the creation flow. Each agent has its own **Knowledge Base**, **Workflow**, **Channels**, **Inbox**, **Bookings**, and **Analytics**.
+</DocExample>
 
-## Switch between agents
+## Create and switch agents
 
-In the agent header, select the current agent name to switch. KiloBot keeps the same area open where possible. Open the **Agents** workspace page for the complete list and workspace controls.
+Choose **Create agent**, select a template or blank starting point, name the agent, and complete setup. Each agent has its own Agent Setup, Knowledge Base, Channels, Conversations, Bookings, and Workflows.
 
-## Plan before adding agents
+Use the agent switcher in the dashboard header to move between agents. Confirm the selected agent before changing settings or answering a customer.
 
-Give each agent one clear responsibility — for example one brand, market, or customer journey. Use roles and permissions for teammate access, not duplicate agents.
-
-:::note
-Plan limits determine how many agents, teammates, and channels the workspace can use. Review **Usage** before expanding a production setup.
-:::
-
-<DocCard
-  to="/build-your-agent/agent-setup"
-  title="Agent"
-  description="Configure the prompt, model, and publish settings for a new agent"
+<DocMediaPlaceholder
+  kind="image"
+  title="Workspace and agent switcher"
+  description="Show one workspace containing two clearly named agents."
+  capture={[
+    'Current workspace name',
+    'Agent switcher opened',
+    'Two fictional agents with distinct responsibilities',
+    'Create agent action',
+  ]}
+  callouts={[
+    'Workspace contains the team',
+    'Each agent owns a separate customer experience',
+    'Check the selected agent before editing',
+  ]}
+  sensitive={['Real workspace names', 'Member emails', 'Plan or billing details']}
+  assetPath="/img/guides/teams/workspace-agent-switcher.png"
 />
 
-<DocCard
-  to="/build-your-agent/knowledge-base"
-  title="Knowledge Base"
-  description="Add the facts a new agent should answer from first"
-/>
+<DocSuccess>
+
+- Each agent has one clear responsibility
+- Different customer experiences are not mixed into one agent
+- Teammates use individual accounts and appropriate roles
+
+</DocSuccess>
+
+<DocVerified date="2026-07-28" />

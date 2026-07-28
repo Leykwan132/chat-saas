@@ -1,72 +1,59 @@
 ---
-title: Workflows
-description: Design how your KiloBot agent routes customer intent and runs actions.
+title: Workflow overview
+description: Understand how KiloBot routes customer intent and automates actions.
 slug: /automate/workflow-overview
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
-# Workflows
+# Workflow overview
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Workflows give your AI agent an explicit operating path. On **Message handling**, a customer message enters, each connection's condition is evaluated, and the matching action runs — send a message or file, book an appointment, escalate to a teammate, or close the conversation. Separate views configure appointment **Reminders** and no-reply **Follow-ups**. Prefer a small number of precise branches over a large graph of vague conditions.
+Workflows give the agent an explicit operating path. Conditions describe when an action applies; actions define what KiloBot should do.
 
-## Choose a Workflow view
+<DocPrerequisites>
 
-Open **Workflow**, then use the view selector:
+- Agent-management permission
+- Published business rules and customer-safe content
+- Active Services and Availability before adding Book appointment
 
-- **Message handling** — respond to the current message
-- **Reminders** — send before a booked appointment
-- **Follow-ups** — re-engage when the customer has not replied
+</DocPrerequisites>
 
-## Build the graph
+## Choose the right view
 
-Write conditions from the customer's perspective. Each connection needs a short **Name** on the graph and a **Detail** that tells the AI exactly when the action applies. Keep exact customer-facing copy in the action, not in the condition detail. Avoid overlapping conditions that could both match the same message.
+| View | Trigger | Use it for |
+| --- | --- | --- |
+| Message handling | Current inbound message | Send content, book, escalate, or close |
+| Reminders | Booked appointment time | Send an approved WhatsApp message before an appointment |
+| Follow-ups | Customer silence | Re-engage an eligible customer after no reply |
 
-<ol className="steps">
-  <li>Start from <strong>Message enters</strong>.</li>
-  <li>Add an action from the connection control beside a node.</li>
-  <li>Select the new node to open the inspector.</li>
-  <li>Enable the condition, set a short <strong>Name</strong> (for example "Product brochure"), and write the <strong>Detail</strong> (for example when the customer asks for the brochure or a specification).</li>
-  <li>Choose the action type, configure it, and <strong>Save</strong>.</li>
-</ol>
+Configure Reminder and Follow-up details under [Outreach](/automate/reminders).
 
-## Choose an action type
+## Understand the graph
 
-- **Send message** — fixed text for hours, next steps, qualification, or disclosures
-- **Send Photo/Video** or **Send Files** — upload the asset on the action and describe when to send it
-- **Book appointment** — guides service choice, fields, availability, and confirmation; needs active [Services](/bookings/services) and [Availability](/bookings/availability)
-- **Human escalation** — pauses AI and surfaces the conversation in **Inbox** when a person should take over
-- **Close conversation** — terminal only; keep the condition narrow so active requests are not closed early
+**Message enters** is the start. Each connection can contain a condition with a short Name for the canvas and detailed matching guidance for the AI. The connected node performs the selected action.
 
-## Start from a template or from scratch
+Keep conditions precise and non-overlapping. Put exact customer-facing copy or uploaded media in the action rather than hiding it inside the condition.
 
-Applying a template changes the draft; it does not become live until you **Save**.
+## Work safely with drafts
 
-<ol className="steps">
-  <li>Choose a <strong>Workflow</strong> template for a practical starting graph, or add actions manually.</li>
-  <li>Use <strong>Arrange</strong> when the graph becomes hard to read.</li>
-  <li>Use <strong>Discard changes</strong> to return to the last saved workflow.</li>
-</ol>
+- Applying a template changes the draft only.
+- **Save** makes the current graph active.
+- **Discard changes** returns to the last saved graph.
+- **Arrange** improves layout without changing intent.
+- Test positive matches and near-misses before relying on a branch.
 
-## Save and test
+<DocSuccess>
 
-<ol className="steps">
-  <li><strong>Save</strong> after every coherent change.</li>
-  <li>Open <strong>Agent Setup</strong> and choose <strong>Test agent</strong>.</li>
-  <li>Send messages that should enter each branch, including near-misses.</li>
-  <li>Confirm escalation or close only happens when intended.</li>
-</ol>
+- Each branch has one clear customer intent.
+- Overlapping and vague conditions have been removed.
+- Every terminal or escalation action was tested with a near-miss.
+- The tested graph has been saved.
 
-<DocCard
-  to="/automate/reminders"
-  title="Reminders"
-  description="Time-based WhatsApp reminders for booked appointments"
-/>
+</DocSuccess>
 
-<DocCard
-  to="/automate/follow-ups"
-  title="Follow-ups"
-  description="No-reply follow-up timing, audience, and messages"
-/>
+<DocCard to="/automate/build-and-test" title="Build and test a Workflow" description="Create a complete branch and verify every action type" />

@@ -1,68 +1,72 @@
 ---
-title: Channels
-description: Connect Website, WhatsApp, Instagram, and Messenger conversations to KiloBot.
+title: Channels overview
+description: Choose, connect, and verify customer messaging channels in KiloBot.
 slug: /channels/connect-channels
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
-# Channels
+# Channels overview
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Channels connect customers to an agent on Website, WhatsApp, Instagram, or Messenger. A successful connection means new customer messages appear in **Inbox** for that agent. Available channel count depends on the workspace plan.
+Channels bring Website, WhatsApp, Instagram, and Messenger conversations into the selected agent’s [Inbox](/engage/inbox). Free supports one platform per agent. Paid plans support all supported platforms for every agent, subject to provider access.
 
-## Supported channels
+<DocPrerequisites>
 
-KiloBot supports:
+- The correct agent selected
+- Channel-management permission
+- Administrator access for any Meta account or Page being connected
 
-- **Website** through the KiloBot web widget
-- **WhatsApp** through Meta's connection flow
-- **Instagram** for connected professional messaging
-- **Messenger** for connected Facebook Page messaging
+</DocPrerequisites>
 
-The number of channels available depends on the workspace plan.
+## Understand the channel cards
 
-## Add a channel
+KiloBot always shows WhatsApp, Instagram, and Messenger cards. A disconnected card says **Not connected** and provides **Connect**. Connected cards show the account identity and status.
 
-The connected channel card shows its identity and connection state. A WhatsApp connection can move through signup, token, connection, and initial synchronization stages before it is ready. If mobile coexistence is used, follow the in-product coexistence guide and allow contact and history synchronization to finish.
+| State | Meaning | Next action |
+| --- | --- | --- |
+| Not connected | No active platform connection | Choose Connect |
+| Pending | Authorization or setup has started | Finish the provider flow |
+| Synchronizing | Initial supported data is being imported | Keep the connection active and wait |
+| Connected | New supported messages can enter Inbox | Run inbound and outbound tests |
+| Failed or disconnected | Authorization or provider access is incomplete | Review the platform guide before reconnecting |
 
-<ol className="steps">
-  <li>Open <strong>Channels</strong> for the agent.</li>
-  <li>Choose <strong>Connect another channel</strong>.</li>
-  <li>Select a platform and complete the provider or widget setup.</li>
-  <li>Do not close an external authorization flow until it reports completion.</li>
-</ol>
-
-## Set up the Website widget
-
-The snippet includes the public widget key.
-
-<ol className="steps">
-  <li>Create the <strong>Website</strong> channel.</li>
-  <li>Configure its appearance.</li>
-  <li>Copy the provided script snippet to the website.</li>
-  <li>Publish the site change.</li>
-  <li>Open the page in a private browser window to test a new visitor conversation.</li>
-</ol>
-
-## Verify a connection
-
-Test an outbound reply before announcing the channel.
-
-<ol className="steps">
-  <li>Send a message from the customer side.</li>
-  <li>Open <strong>Inbox</strong> and confirm the message appears.</li>
-  <li>Verify it is associated with the correct agent and contact.</li>
-  <li>Test an outbound reply before announcing the channel.</li>
-</ol>
-
-:::warning
-Connecting or reconnecting a Meta channel may require administrator access to the relevant business, WhatsApp account, Instagram account, or Facebook Page.
-:::
-
-<DocCard
-  to="/engage/inbox"
-  title="Inbox"
-  description="Work with conversations from every connected channel"
+<DocMediaPlaceholder
+  kind="image"
+  title="Compare channel card states"
+  description="Show one connected card and the persistent Not connected cards."
+  capture={['A connected platform identity', 'A Not connected card', 'The Connect action']}
+  callouts={['Connected', 'Not connected', 'Connect']}
+  sensitive={['Phone numbers', 'Page names not owned by the demo workspace', 'Provider IDs']}
+  assetPath="/media/channels/channel-cards.png"
 />
+
+## Verify every connection
+
+<ol className="steps">
+  <li>Send a new message from the customer side.</li>
+  <li>Open <strong>Inbox</strong> for the selected agent.</li>
+  <li>Confirm the message has the correct platform and Contact.</li>
+  <li>Send a teammate reply.</li>
+  <li>Confirm the reply reaches the customer-side account.</li>
+</ol>
+
+<DocSuccess>
+
+- The card shows Connected.
+- A new customer-side message appears in the correct Inbox.
+- A teammate reply reaches the customer.
+
+</DocSuccess>
+
+## Choose a platform
+
+<DocCard to="/channels/website-widget" title="Website widget" description="The fastest channel to install and test" />
+<DocCard to="/channels/whatsapp" title="WhatsApp" description="Connect through Meta and complete synchronization" />
+<DocCard to="/channels/instagram" title="Instagram" description="Connect professional account messaging" />
+<DocCard to="/channels/messenger" title="Messenger" description="Connect a Facebook Page" />

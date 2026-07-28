@@ -4,64 +4,103 @@ description: Configure no-reply follow-up timing, audience, attempts, and WhatsA
 slug: /automate/follow-ups
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Follow-ups
 
-## Overview
+Follow-ups re-engage eligible customers after they have not replied. A customer reply stops later attempts. Use Reminders when timing is tied to an appointment.
 
-Follow-ups re-engage eligible customers after they have not replied. Configure them from the **Follow-ups** view in **Workflow**. A customer reply prevents later no-reply attempts from continuing. Use Follow-ups for silence-based outreach; use **Reminders** for appointment-time messages.
+<DocPrerequisites>
+
+- A connected WhatsApp channel
+- One or more **Approved** Message Templates
+- A clearly defined audience
+- A safe test Contact or controlled lead group
+
+</DocPrerequisites>
 
 ## Choose the activation scope
 
-Use **Future only** when you want a clean launch boundary. Use **Current & future** only after reviewing the audience and message carefully. Reminder scope works the same way — see [Reminders](/automate/reminders).
+| Scope | Includes | Best for |
+| --- | --- | --- |
+| **Future only** | Eligible messages that occur after activation | A clean first launch |
+| **Current & future** | Eligible existing conversations and new messages | A reviewed backlog that should enter follow-up |
+
+## Configure the sequence
 
 <ol className="steps">
-  <li>Open <strong>Workflow</strong> and switch to <strong>Follow-ups</strong>.</li>
-  <li>Choose <strong>Current & future</strong> to schedule follow-ups still due for eligible existing conversations and after new messages, or <strong>Future only</strong> to schedule follow-ups after new eligible messages while the automation is on.</li>
+  <li>Open <strong>Workflows → Follow-ups</strong> and choose a scope.</li>
+  <li>Select the eligible audience, such as the intended lead statuses.</li>
+  <li>Set <strong>Start after</strong> to define the initial no-reply wait.</li>
+  <li>Choose the maximum attempts.</li>
+  <li>For multiple attempts, set the reattempt interval and choose whether attempts use the same or different templates.</li>
+  <li>Select approved templates and choose <strong>Confirm</strong>.</li>
+  <li>Review the Summary, then turn Follow-ups on.</li>
 </ol>
 
-## Define the audience
+<DocExample title="Northstar warm-lead follow-up">
 
-Review audience filters that control which leads may enter the follow-up sequence. Check lead temperature and other available filters before activation.
+For Warm leads, wait 1 day after no reply, send one helpful brochure follow-up, then make one final attempt 3 days later. Stop immediately when the customer replies.
 
-## Configure timing and attempts
+</DocExample>
 
-When there is more than one attempt, choose how often to reattempt. A one-attempt sequence does not need an interval.
+<DocMediaPlaceholder
+  kind="image"
+  title="Completed Follow-up sequence"
+  description="Show the Northstar Warm-lead sequence before activation."
+  capture={[
+    'Future only activation scope',
+    'Warm audience selection',
+    'Start-after duration and maximum attempts',
+    'Reattempt interval and confirmed templates',
+    'Summary and Active switch',
+  ]}
+  callouts={[
+    'Audience controls who may enter the sequence',
+    'A one-attempt sequence does not need an interval',
+    'Customer replies stop remaining attempts',
+  ]}
+  sensitive={['Customer identities', 'Phone numbers', 'Private audience data']}
+  assetPath="/img/guides/workflows/follow-up-configuration.png"
+/>
 
-<ol className="steps">
-  <li>Choose <strong>Start after</strong> to define how long KiloBot waits without a customer reply.</li>
-  <li>Select a preset or a custom positive whole duration in minutes, hours, days, or weeks.</li>
-  <li>Set the maximum number of attempts.</li>
-  <li>When there is more than one attempt, choose how often to reattempt.</li>
-</ol>
+## Monitor History
 
-## Select messages
+Open **History** from the Follow-up Summary to inspect scheduled, sent, failed, skipped, and cancelled activity. The table includes customer, template, scheduled time, sent time, status, and estimated Meta cost where pricing is known.
 
-Pending selections are saved only after you **Confirm** the dialog.
+Meta template charges are separate from KiloBot credits. Estimates use known template rates; unknown categories are excluded instead of guessed.
 
-<ol className="steps">
-  <li>For one attempt, select one approved WhatsApp template.</li>
-  <li>For multiple attempts, choose whether every attempt uses the same template or different templates.</li>
-  <li><strong>Confirm</strong> the dialog to save pending selections.</li>
-</ol>
+<DocSuccess>
 
-## Activate and monitor
+- The Summary matches the intended audience, delay, attempts, and templates
+- Follow-ups are active
+- A controlled no-reply test schedules the expected attempts
+- A test reply prevents the next attempt
 
-Keep copy useful and spaced appropriately. Test a high-attempt sequence with a controlled group before broad activation.
+</DocSuccess>
 
-<ol className="steps">
-  <li>Review the <strong>Summary</strong>.</li>
-  <li>Turn <strong>Follow-ups</strong> on.</li>
-  <li>Open <strong>History</strong> to review scheduling and send results with estimated Meta cost when the template category can be priced.</li>
-</ol>
+<DocMediaPlaceholder
+  kind="video"
+  title="Test a no-reply Follow-up safely"
+  description="Demonstrate both branches: an attempt sent after silence and a later attempt cancelled by a reply."
+  capture={[
+    'Activate a Future only test sequence',
+    'Trigger the sequence with a controlled Contact',
+    'Verify the first scheduled or sent History row',
+    'Reply as the customer',
+    'Verify the remaining attempt does not send',
+  ]}
+  duration="75–105 seconds"
+  sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}
+  assetPath="/video/guides/workflows/follow-up-reply-stop.mp4"
+/>
 
 :::warning
-Follow-ups require approved WhatsApp **Message Templates**. Provider charges are separate from KiloBot credits — see [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
+Use **Current & future** only after reviewing the existing audience. Activation can schedule work for eligible conversations already in progress.
 :::
 
-<DocCard
-  to="/automate/reminders"
-  title="Reminders"
-  description="Schedule approved WhatsApp messages before booked appointments"
-/>
+<DocVerified date="2026-07-28" />

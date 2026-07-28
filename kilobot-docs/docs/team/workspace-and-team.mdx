@@ -1,69 +1,75 @@
 ---
 title: Workspace and team
-description: Invite teammates, manage membership, switch agents, and organize shared KiloBot work.
+description: Invite teammates, manage membership, and organize shared KiloBot work.
 slug: /team/workspace-and-team
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Workspace and team
 
-## Overview
+Use **Teams** for workspace membership, invitations, and roles. Configure the customer experience inside each agent.
 
-The workspace is where owners and permitted administrators manage people, agents, invitations, settings, and usage. Use it for organization-level access and billing context; configure each agent's customer experience inside the agent. Related guides: [Roles and permissions](/team/roles-and-permissions) and [Lead Assignment](/team/lead-assignment).
+<DocPrerequisites>
+
+- Owner or team-administration permission
+- The teammate's correct email address
+- A decided responsibility and matching role
+
+</DocPrerequisites>
 
 ## Invite a teammate
 
-Send an invitation with the smallest role that covers the work the person will do.
-
 <ol className="steps">
-  <li>Open <strong>Invitations</strong> from the workspace sidebar, or <strong>Settings → Teams</strong> to manage members and roles.</li>
-  <li>Enter the teammate's email.</li>
-  <li>Choose the appropriate role.</li>
+  <li>Open <strong>Teams</strong> or <strong>Settings → Teams</strong>.</li>
+  <li>Choose <strong>Invite teammate</strong>.</li>
+  <li>Enter the teammate's email and select the smallest suitable role.</li>
   <li>Send the invitation.</li>
+  <li>Confirm the invitation becomes an active membership after acceptance.</li>
 </ol>
 
-The recipient must accept before they become an active member. If an invitation is pending, verify the email before sending another.
+If an invitation remains pending, verify the email and ask the recipient to check the same account before sending another.
 
-## Manage members
-
-Review membership regularly so access matches current responsibility.
-
-<ol className="steps">
-  <li>Review active members and their roles.</li>
-  <li>Confirm each person has access to the work they should own.</li>
-  <li>Use the smallest role that allows the teammate to do their job.</li>
-  <li>Update or remove access when responsibility changes.</li>
-</ol>
-
-A member may need **Inbox** access without permission to change **Agent Setup**, **Workflow**, billing, or team administration.
-
-## Work across agents
-
-Each agent is a separate customer experience inside the same workspace.
-
-<ol className="steps">
-  <li>Open the workspace agent list to see agents available to the user.</li>
-  <li>Inside an agent dashboard, use the agent switcher in the header to move to another agent.</li>
-</ol>
-
-## Settings and usage
-
-Organization-level controls and consumption live outside individual agent dashboards.
-
-<ol className="steps">
-  <li>Open <strong>Settings</strong> for organization-level controls.</li>
-  <li>Open <strong>Usage</strong> to review plan, credits, limits, and related activity.</li>
-</ol>
-
-Check **Usage** before inviting many teammates, creating agents, or connecting channels.
-
-:::note
-If a teammate cannot see an agent or feature, confirm membership and role permissions first — see [Troubleshooting](/help/troubleshooting).
-:::
-
-<DocCard
-  to="/team/roles-and-permissions"
-  title="Roles and permissions"
-  description="Design access before you invite or expand the team"
+<DocMediaPlaceholder
+  kind="image"
+  title="Invite a teammate"
+  description="Show the invitation dialog with a fictional email and a selected role."
+  capture={[
+    'Teams navigation',
+    'Invite teammate action',
+    'Email field',
+    'Role selector and send action',
+  ]}
+  callouts={[
+    'Use the teammate’s individual email',
+    'Choose the smallest suitable role',
+    'Pending invitations are not active members',
+  ]}
+  sensitive={['Real member emails', 'Workspace identifiers']}
+  assetPath="/img/guides/teams/invite-teammate.png"
 />
+
+## Maintain membership
+
+Review members regularly. Update a role when responsibility changes, remove access when someone leaves, and reduce temporary administrative access after setup or incident work is complete.
+
+| Situation | Action |
+| --- | --- |
+| Teammate cannot open a required page | Verify membership, selected workspace, and role |
+| Teammate can change sensitive configuration unnecessarily | Assign a narrower role |
+| Invitation went to the wrong email | Revoke it and invite the correct account |
+| Teammate has left the organization | Remove membership promptly |
+
+<DocSuccess>
+
+- Every teammate uses an individual account
+- Active members have the minimum access needed
+- Pending invitations are intentional and sent to the correct email
+- Departed teammates no longer have workspace access
+
+</DocSuccess>
+
+<DocVerified date="2026-07-28" />

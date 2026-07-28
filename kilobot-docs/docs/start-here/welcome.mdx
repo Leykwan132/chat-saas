@@ -1,88 +1,45 @@
 ---
 title: Welcome
-description: Learn what Kilobot does and choose the right path through the help center.
+description: Start quickly or browse the complete KiloBot customer guide.
 slug: /
 pagination_prev: null
 hide_table_of_contents: true
 ---
 
 import Head from '@docusaurus/Head';
-import {
-  BookOpen,
-  Bot,
-  CalendarDays,
-  CreditCard,
-  Inbox,
-  Library,
-  Rocket,
-  Workflow,
-} from 'lucide-react';
+import {BookOpen, Rocket} from 'lucide-react';
 import DocQuickstartBanner from '@site/src/components/DocQuickstartBanner';
 import DocPathGrid from '@site/src/components/DocPathGrid';
 import DocPathTile from '@site/src/components/DocPathTile';
 
 <Head>
-  <title>Kilobot Docs</title>
+  <title>KiloBot Docs</title>
 </Head>
 
-# Kilobot Docs
+# KiloBot Docs
 
 <DocQuickstartBanner
-  title="Quickstart"
-  description="Set up knowledge, workflow, and a channel in minutes."
-  primary={{label: 'Get started', to: '/start-here/launch-guide'}}
-  secondary={{label: 'Try Kilobot', to: 'https://kilobot.app/workspace'}}
+  title="Quick Start"
+  description="Build a working Website agent with one trusted answer and a real Inbox message."
+  primary={{label: 'Start now', to: '/start-here/quick-start'}}
+  secondary={{label: 'Try KiloBot', to: 'https://kilobot.app/workspace'}}
 />
 
-## Start here
+The Website channel is the fastest way to launch because it does not require external provider authorization or account synchronization.
+
+## Choose your path
 
 <DocPathGrid>
   <DocPathTile
-    to="/start-here/launch-guide"
-    title="Launch Guide"
-    description="Set up your first agent in the recommended order"
+    to="/start-here/quick-start"
+    title="Quick Start"
+    description="Create, test, publish, and verify your first agent"
     icon={Rocket}
   />
   <DocPathTile
     to="/build-your-agent/agent-setup"
-    title="Core Concepts"
-    description="Agent, knowledge, workflows, services, and channels"
+    title="Browse the guide"
+    description="Explore Agent, Channels, Bookings, Workflows, Outreach, and Teams"
     icon={BookOpen}
-  />
-  <DocPathTile
-    to="/build-your-agent/agent-setup"
-    title="Agent"
-    description="Prompt, model, style, and publish controls"
-    icon={Bot}
-  />
-  <DocPathTile
-    to="/build-your-agent/knowledge-base"
-    title="Knowledge Base"
-    description="Facts and sources your agent can rely on"
-    icon={Library}
-  />
-  <DocPathTile
-    to="/automate/workflow-overview"
-    title="Workflows"
-    description="Route customer intent and automate actions"
-    icon={Workflow}
-  />
-  <DocPathTile
-    to="/engage/inbox"
-    title="Inbox"
-    description="Day-to-day customer conversations across channels"
-    icon={Inbox}
-  />
-  <DocPathTile
-    to="/bookings/services"
-    title="Services and bookings"
-    description="What customers can book and when teammates are available"
-    icon={CalendarDays}
-  />
-  <DocPathTile
-    to="/insights/usage-and-billing"
-    title="Usage and billing"
-    description="Credits, plans, and what affects your usage"
-    icon={CreditCard}
   />
 </DocPathGrid>

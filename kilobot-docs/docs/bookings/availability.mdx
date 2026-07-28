@@ -1,69 +1,83 @@
 ---
 title: Availability
-description: Configure teammate working hours, timezones, and all-day availability for bookings.
+description: Configure teammate schedules and troubleshoot missing booking slots.
 slug: /bookings/availability
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Availability
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Availability tells KiloBot when each teammate can receive an appointment. It is evaluated together with Service duration, buffer, timezone, existing Calendar events, and assignment strategy. Configure Availability after Services so booking has both what can be booked and when.
+Availability tells KiloBot when a teammate may receive a booking. A slot must fit weekly hours, timezone, Service duration and buffer, Calendar conflicts, and assignment eligibility.
 
-## Open a teammate schedule
+<DocPrerequisites>
 
-<ol className="steps">
-  <li>Choose <strong>Availability</strong> from the agent sidebar.</li>
-  <li>Select a teammate to view their schedule.</li>
-  <li>Choose the edit action if you have permission.</li>
-</ol>
+- An active Service
+- An eligible teammate
+- Availability management permission, or access to edit your own schedule
 
-A teammate can edit their own available hours; broader schedule management depends on workspace permissions.
+</DocPrerequisites>
 
 ## Set weekly hours
 
 <ol className="steps">
-  <li>For each day, enable or disable availability.</li>
-  <li>Choose a start and end time for each enabled day.</li>
-  <li>Set the schedule timezone that matches the teammate's working hours.</li>
-  <li><strong>Save</strong> after reviewing every day.</li>
+  <li>Open <strong>Availability</strong> and select the teammate.</li>
+  <li>Enable the days the teammate works.</li>
+  <li>Set a start and end time for each enabled day.</li>
+  <li>Choose the timezone that matches those hours.</li>
+  <li>Save and review every day.</li>
 </ol>
 
-The **Available 24/7** control sets all seven days to `00:00–24:00`. Turning it off resets all seven days to `09:00–17:00`; it does not restore a previous custom schedule.
+**Available 24/7** sets all seven days to `00:00–24:00`. Turning it off resets all days to `09:00–17:00`; it does not restore the earlier custom schedule.
 
-## How availability affects booking
-
-When a customer books, KiloBot checks the selected Service and assigned teammate against:
-
-- Weekly available hours
-- The schedule timezone
-- Service duration and buffer
-- Existing **Calendar** conflicts
-- Any required assignment rule
-
-The customer must explicitly confirm a valid slot before the appointment is created.
-
-## Troubleshoot missing slots
-
-If a time is not offered, work through the most common causes in order.
-
-<ol className="steps">
-  <li>Confirm the <strong>Service</strong> is active.</li>
-  <li>Confirm the teammate is eligible.</li>
-  <li>Check timezone and weekly hours.</li>
-  <li>Review <strong>Calendar</strong> for conflicts.</li>
-</ol>
-
-See [Troubleshooting](/help/troubleshooting#restore-booking-availability) for more detail.
-
-<DocCard
-  to="/bookings/services"
-  title="Services"
-  description="Active Services, booking fields, and assignment rules"
+<DocMediaPlaceholder
+  kind="image"
+  title="Set weekly Availability"
+  description="Show enabled days, working hours, timezone, and Available 24/7."
+  capture={['Full weekly schedule', 'Timezone', 'Available 24/7 control']}
+  callouts={['Days', 'Hours', 'Timezone', '24/7']}
+  sensitive={['Real teammate names']}
+  assetPath="/media/bookings/weekly-availability.png"
 />
 
-:::tip
-Test one booking near the start of the day and another near the end to catch timezone, duration, and buffer mistakes.
-:::
+## Understand slot evaluation
+
+For a 30-minute Northstar Consultation with a 15-minute buffer, KiloBot needs a continuous valid interval that includes both. The assigned teammate must be eligible and free in Calendar in the same schedule timezone.
+
+## Troubleshoot a missing slot
+
+Check in this order:
+
+1. **Service:** Is Northstar Consultation active and selected by the Workflow?
+2. **Eligibility:** Can the intended teammate receive this Service?
+3. **Timezone:** Are the displayed hours interpreted in the intended zone?
+4. **Weekly hours:** Does the appointment fit entirely inside an enabled period?
+5. **Duration and buffer:** Is there enough continuous time?
+6. **Calendar:** Does another event overlap?
+7. **Assignment:** Can another eligible teammate offer the slot?
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Diagnose a missing booking slot"
+  description="Show Availability beside the conflicting Calendar event and Service timing."
+  capture={['Relevant working hours', 'Service duration and buffer', 'Conflicting event']}
+  callouts={['Available window', 'Required interval', 'Conflict']}
+  sensitive={['Customer and teammate identities']}
+  assetPath="/media/bookings/missing-slot-checks.png"
+/>
+
+<DocSuccess>
+
+- The intended timezone and weekly hours are saved.
+- A Northstar Consultation fits with its full buffer.
+- A valid test time is offered and a conflicting time is not.
+
+</DocSuccess>
+
+<DocCard to="/bookings/calendar" title="Calendar" description="Create and manage the appointments that occupy those slots" />

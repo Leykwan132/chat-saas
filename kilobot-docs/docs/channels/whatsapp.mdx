@@ -1,0 +1,72 @@
+---
+title: WhatsApp
+description: Connect WhatsApp through Meta and verify messaging in KiloBot.
+slug: /channels/whatsapp
+---
+
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
+
+# WhatsApp
+
+<DocVerified date="2026-07-28" />
+
+WhatsApp connects through Meta’s authorization flow. Setup may remain pending while account access, number registration, or initial synchronization completes.
+
+<DocPrerequisites>
+
+- KiloBot channel-management permission
+- Administrator access to the intended Meta business and WhatsApp account
+- Authority to connect the selected phone number
+- Access to the phone when Meta requires verification
+
+</DocPrerequisites>
+
+## Connect
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on WhatsApp.</li>
+  <li>Complete Meta sign-in without closing the authorization window early.</li>
+  <li>Select the intended business, WhatsApp account, and phone number.</li>
+  <li>Grant the requested messaging access.</li>
+  <li>If using mobile coexistence, follow the in-product coexistence steps.</li>
+  <li>Return to KiloBot and allow supported contact and history synchronization to finish.</li>
+</ol>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Recognize WhatsApp connection states"
+  description="Show pending authorization, synchronization, connected, and failed states without provider identifiers."
+  capture={['Pending card', 'Synchronizing card', 'Connected card', 'Failed state if available']}
+  callouts={['Pending', 'Synchronizing', 'Connected', 'Needs attention']}
+  sensitive={['Phone number', 'Business ID', 'WhatsApp account ID']}
+  assetPath="/media/channels/whatsapp-states.png"
+/>
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Connect WhatsApp"
+  description="Record Meta authorization through the first verified Inbox conversation."
+  capture={['Show the connected result first', 'Complete Meta account selection', 'Return to synchronization', 'Send inbound and outbound tests']}
+  duration="60–90 seconds"
+  sensitive={['Login details', 'Phone number', 'Business and account IDs', 'Customer history']}
+  assetPath="/media/channels/connect-whatsapp.mp4"
+/>
+
+## Verify
+
+Send a fresh message from a separate WhatsApp account, confirm it appears in Inbox, then send a teammate reply. Historical synchronization does not replace this live test.
+
+<DocSuccess>
+
+- The card shows Connected.
+- Initial synchronization is no longer pending.
+- A new inbound message and teammate reply work in both directions.
+
+</DocSuccess>
+
+## Before reconnecting
+
+Confirm that administrator access still exists and that the intended business, account, and number have not changed. Reconnecting can repeat authorization and synchronization; avoid starting multiple connection attempts.

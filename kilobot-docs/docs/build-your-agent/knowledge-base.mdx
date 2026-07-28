@@ -1,62 +1,125 @@
 ---
 title: Knowledge Base
-description: Add and maintain the trusted information your KiloBot agent uses to answer customers.
+description: Add, maintain, and test the trusted information used by a KiloBot agent.
 slug: /build-your-agent/knowledge-base
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Knowledge Base
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-The Knowledge Base is the agent's trusted source for business facts. It is separate for each agent, so only add information relevant to the customer experience that agent owns. Use it for websites, files, notes, and Q&A that should ground answers without stuffing the system prompt.
+Knowledge Base is the selected agent’s trusted source for business facts. Sources are agent-specific: confirm the correct agent before adding, replacing, or deleting information.
+
+<DocPrerequisites>
+
+- An agent with Knowledge Base access
+- Current, customer-safe source material
+- No passwords, API keys, private credentials, or information customers must never receive
+
+</DocPrerequisites>
+
+## Choose a source
+
+| Source | Best for | Avoid when |
+| --- | --- | --- |
+| Web | Current public pages with related content | The site contains conflicting or private material |
+| Files | Approved documents supported by the upload control | The document changes frequently |
+| Text | A focused fact or policy that has no source page | The note would duplicate another source |
+| Q&A | A direct question with a concise approved answer | Many questions need the same long document |
+
+The upload control and **Storage limit** panel are authoritative for currently supported file formats, per-source limits, and plan allowance.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Choose a Knowledge Base source"
+  description="Show Web, Files, Text, and Q&A in the source picker."
+  capture={['The complete source picker', 'Each source type label']}
+  callouts={['Web', 'Files', 'Text', 'Q&A']}
+  sensitive={['Private source names']}
+  assetPath="/media/agent/knowledge-source-picker.png"
+/>
 
 ## Add a source
 
-Each source type fits a different kind of material. Use **Web** or **Files** for longer source material. Use **Text** for information that does not live elsewhere. Use **Q&A** when an exact customer question needs a concise, controlled answer.
-
-Choose a source type from **Sources**: **Web** for public website content, **Files** for supported documents, **Text** for a focused note or policy, or **Q&A** for a direct question and approved answer.
-
 <ol className="steps">
-  <li>Open <strong>Knowledge Base</strong>.</li>
-  <li>Choose a source type from <strong>Sources</strong>.</li>
-  <li>Add the source and wait for processing to complete.</li>
+  <li>Open <strong>Knowledge Base</strong> for the correct agent.</li>
+  <li>Select the source type.</li>
+  <li>Add only the focused material the agent should use.</li>
+  <li>Wait for processing to complete before testing.</li>
 </ol>
 
-## Build a reliable source set
+<DocExample title="Northstar Dental Q&A">
 
-Prioritize pricing, policies, hours, and escalation boundaries. Remove outdated or duplicated information — if two sources disagree, the agent may not know which is current.
+**Question:** What are your opening hours?
 
-## Watch storage usage
+**Answer:** Northstar Dental is open Monday to Friday, 9:00 am to 6:00 pm, and Saturday, 9:00 am to 1:00 pm. It is closed on Sunday.
 
-The **Storage limit** panel shows how much space your sources consume and what your plan allows.
+</DocExample>
 
-<ol className="steps">
-  <li>Open the <strong>Storage limit</strong> panel in <strong>Knowledge Base</strong>.</li>
-  <li>Review the number and size of sources by type, total storage used, and the allowance for the agent's plan.</li>
-  <li>Remove unused large files to free space for current material.</li>
-</ol>
-
-## Test the result
-
-Confirm answers stay accurate and grounded before you rely on the agent in production.
-
-<ol className="steps">
-  <li>Open <strong>Agent Setup</strong>.</li>
-  <li>Choose <strong>Test agent</strong>.</li>
-  <li>Ask the same question several ways.</li>
-  <li>Ask one question that is intentionally absent so the agent does not invent an answer.</li>
-</ol>
-
-:::warning
-Do not upload secrets, private credentials, or information that customers should never receive. Treat every source as available to the customer-facing agent.
-:::
-
-Use [Workflows](/automate/workflow-overview) when a request needs a defined action instead of a knowledge answer.
-
-<DocCard
-  to="/build-your-agent/agent-setup"
-  title="Agent"
-  description="Prompt, model, tone, and publish controls"
+<DocMediaPlaceholder
+  kind="image"
+  title="Recognize source processing states"
+  description="Show a source that is processing and one that is ready for testing."
+  capture={['A processing source', 'A completed source', 'Any visible failed state']}
+  callouts={['Processing', 'Ready', 'Needs attention']}
+  sensitive={['Private file and website names']}
+  assetPath="/media/agent/knowledge-processing.png"
 />
+
+## Keep sources reliable
+
+- Prefer one authoritative source for pricing, policies, hours, and service details.
+- Remove obsolete and duplicate sources.
+- When replacing information, wait for the new source to finish processing before deleting the old source.
+- If two sources disagree, correct the source set instead of asking the prompt to choose.
+- Deleting a source removes it from future grounding; test important answers again afterward.
+
+## Monitor storage
+
+Open **Storage limit** to review usage by source type and the selected agent’s allowance. Remove obsolete large files and duplicate material before adding another copy.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Review Knowledge Base storage"
+  description="Show used storage, plan allowance, and usage by source type."
+  capture={['Total used storage', 'Current allowance', 'Breakdown by source type']}
+  callouts={['Used', 'Allowance', 'Source breakdown']}
+  sensitive={['Private source names']}
+  assetPath="/media/agent/knowledge-storage.png"
+/>
+
+## Test every important answer
+
+| Test | Example | What to check |
+| --- | --- | --- |
+| Exact | “What are your opening hours?” | Approved answer |
+| Paraphrased | “Can I visit on Saturday?” | Same grounded facts |
+| Missing | “Do you offer emergency root canals?” | No invented service |
+| Conflicting | Ask about a fact recently corrected | Only current source wins |
+
+Open **Agent Setup → Test agent** after any material source change.
+
+<DocSuccess>
+
+- Every important source has completed processing.
+- Exact and paraphrased questions use the approved facts.
+- Missing information is handled without invention.
+- No active sources contradict each other.
+
+</DocSuccess>
+
+## Common problems
+
+- **Processing does not finish:** retry the supported source or contact support with the source type and approximate time.
+- **The answer is incomplete:** make the source focused and explicit.
+- **The answer contradicts policy:** locate and remove the stale source.
+- **An action should happen:** use a [Workflow](/automate/workflow-overview) instead of adding more general knowledge.
+
+<DocCard to="/automate/workflow-overview" title="Workflows" description="Use explicit conditions when a customer request must perform an action" />

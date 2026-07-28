@@ -1,0 +1,16 @@
+.root {
+  margin: 1.5rem 0;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  border-radius: 0.75rem;
+  background: var(--ifm-background-surface-color);
+}
+
+.title {
+  margin: 0 0 0.5rem !important;
+  font-size: 1rem !important;
+}
+
+.content > :last-child {
+  margin-bottom: 0;
+}

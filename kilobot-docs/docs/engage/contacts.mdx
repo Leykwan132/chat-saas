@@ -1,59 +1,83 @@
 ---
 title: Contacts
-description: Manage customer identity, channel details, lead status, and conversation context.
+description: Maintain customer identity, segmentation, lead temperature, and connected activity.
 slug: /engage/contacts
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Contacts
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Contacts are the customer records behind **Inbox** conversations, bookings, and broadcasts. Use Contacts to maintain identity, channel details, tags, and lead temperature that drive follow-up audiences, assignment, and analytics. Confirm you have the right person before editing key fields.
+Contacts are the customer records behind Inbox conversations, bookings, assignment, Outreach audiences, and reporting.
 
-## Browse and search
+<DocPrerequisites>
 
-Channel identity matters. A phone number, Instagram identity, Messenger identity, website visitor, or imported record may represent how KiloBot first learned about the customer. Confirm you are editing the correct person before changing key details.
+- The correct agent selected
+- Contact read permission
+- Manage permission before changing customer fields
 
-<ol className="steps">
-  <li>Open <strong>Contacts</strong> for the selected agent.</li>
-  <li>Use search and filters to find the person you need.</li>
-  <li>Open the Contact detail page for the full record.</li>
-</ol>
+</DocPrerequisites>
+
+## Confirm the identity
+
+A Contact may originate from a phone number, Instagram identity, Messenger identity, Website visitor, or imported record. Search by the known channel identity before editing or importing another record.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Read a Contact record"
+  description="Show identity, channel source, tags, lead temperature, conversations, and bookings."
+  capture={['Primary identity', 'Channel source', 'Tags and lead temperature', 'Conversation and booking links']}
+  callouts={['Identity', 'Source', 'Sales context', 'History']}
+  sensitive={['Real names', 'Phone numbers', 'Private notes']}
+  assetPath="/media/conversations/contact-details.png"
+/>
+
+## Use lead temperature consistently
+
+| Temperature | Meaning | Northstar example |
+| --- | --- | --- |
+| Hot | Strong immediate intent | Requests the next available consultation |
+| Warm | Meaningful interest that still needs progress | Asks about services and prices but has not booked |
+| Cold | Not currently progressing | Declines next steps or has no current need |
+
+Lead Temperature can affect Follow-up audiences, prioritization, assignment practice, and reporting. Update it when customer intent changes.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Choose Lead Temperature"
+  description="Show the selector with Hot, Warm, and Cold and a safe demo customer."
+  capture={['Current value', 'All three options']}
+  callouts={['Current signal', 'Available values']}
+  sensitive={['Customer identity']}
+  assetPath="/media/conversations/lead-temperature.png"
+/>
 
 ## Maintain useful context
 
-Apply lead temperature consistently because follow-up audiences, assignment, and analytics can depend on this context. Set **Lead Temperature** to **Hot** for strong immediate intent, **Warm** for meaningful interest that still needs progress, or **Cold** when the lead is not currently progressing.
-
 <ol className="steps">
-  <li>Keep the Contact's name and reachable contact information accurate.</li>
-  <li>Add tags for durable segments or operational labels.</li>
-  <li>Set <strong>Lead Temperature</strong> for the current sales signal.</li>
-</ol>
-
-## Open conversations and bookings
-
-Bookings created by the AI or a teammate remain connected to the customer so the team can see the latest status and prior appointment activity.
-
-<ol className="steps">
-  <li>From the Contact record, open the relevant <strong>Inbox</strong> thread.</li>
-  <li>Review customer history and connected bookings.</li>
+  <li>Keep the customer name and reachable contact information accurate.</li>
+  <li>Use tags for durable segments or operating labels.</li>
+  <li>Set Lead Temperature from current evidence.</li>
+  <li>Open the linked Inbox conversation or booking when context is needed.</li>
 </ol>
 
 ## Avoid duplicates
 
-<ol className="steps">
-  <li>Search for existing channel identities and contact details before creating or importing a record.</li>
-  <li>If the same person contacts you through another platform, verify the relationship before treating the records as interchangeable.</li>
-</ol>
+Search before importing or creating. Separate identities across platforms are not automatically proof that two records belong to one person. Do not treat records as interchangeable without confirmation. If no merge control is available, preserve both records and use careful tags or team process rather than overwriting identity.
 
-<DocCard
-  to="/engage/inbox"
-  title="Inbox"
-  description="Reply, assign, tag, and review booking history in conversations"
-/>
+<DocSuccess>
 
-:::note
-Missing Contact controls may be a role restriction — see [Roles and permissions](/team/roles-and-permissions).
-:::
+- The channel identity belongs to the intended customer.
+- Contact information, tags, and lead temperature are current.
+- Teammates can reach the correct conversation and booking history.
+- No duplicate was created for an identity that already existed.
+
+</DocSuccess>
+
+<DocCard to="/engage/inbox" title="Inbox" description="Reply, assign, and manage AI behavior in customer conversations" />

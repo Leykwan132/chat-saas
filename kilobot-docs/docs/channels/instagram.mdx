@@ -1,0 +1,64 @@
+---
+title: Instagram
+description: Connect Instagram professional messaging to KiloBot.
+slug: /channels/instagram
+---
+
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Instagram
+
+<DocVerified date="2026-07-28" />
+
+Connect a professional Instagram account so supported direct messages enter the selected agent’s Inbox.
+
+<DocPrerequisites>
+
+- A professional Instagram account connected to the appropriate Meta business
+- Administrator access to the related business assets
+- KiloBot channel-management permission
+
+</DocPrerequisites>
+
+## Connect and verify
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on Instagram.</li>
+  <li>Sign in to Meta and select the intended professional account.</li>
+  <li>Grant the requested messaging access and return to KiloBot.</li>
+  <li>Send a new direct message from a separate Instagram account.</li>
+  <li>Confirm the message in Inbox and send a teammate reply.</li>
+</ol>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Verify the connected Instagram identity"
+  description="Show the connected card and the matching platform identity in Inbox."
+  capture={['Connected Instagram card', 'Instagram platform marker in Inbox']}
+  callouts={['Connected account', 'Matching conversation']}
+  sensitive={['Personal usernames', 'Provider IDs']}
+  assetPath="/media/channels/instagram-connected.png"
+/>
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Connect Instagram"
+  description="Show professional-account selection and a complete message test."
+  capture={['Select the professional account', 'Grant access', 'Verify inbound and outbound messages']}
+  duration="60–90 seconds"
+  sensitive={['Meta login', 'Personal accounts', 'Customer messages']}
+  assetPath="/media/channels/connect-instagram.mp4"
+/>
+
+<DocSuccess>
+
+- The correct professional account shows Connected.
+- A new direct message appears as Instagram in Inbox.
+- The teammate reply reaches the customer account.
+
+</DocSuccess>
+
+If no eligible account appears, confirm professional-account status, business linkage, and your Meta administrator access before retrying.
