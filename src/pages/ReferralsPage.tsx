@@ -210,20 +210,22 @@ export default function ReferralsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Person</TableHead>
-                  <TableHead>Completed</TableHead>
-                  <TableHead className="text-right">Earned</TableHead>
+                  <TableHead className="text-center">Email</TableHead>
+                  <TableHead className="text-center">Date</TableHead>
+                  <TableHead className="text-center">Earned</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {history.map((referral) => (
                   <TableRow key={referral.redemptionId}>
-                    <TableCell>{referral.maskedEmail}</TableCell>
-                    <TableCell>
-                      {new Date(referral.completedAt).toLocaleDateString()}
+                    <TableCell className="text-center">
+                      {referral.maskedEmail}
                     </TableCell>
-                    <TableCell className="text-right font-medium tabular-nums">
-                      +{referral.rewardCredits.toLocaleString()}
+                    <TableCell className="text-center">
+                      {new Date(referral.completedAt).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-center font-medium tabular-nums">
+                      +{referral.rewardCredits.toLocaleString()} credits
                     </TableCell>
                   </TableRow>
                 ))}

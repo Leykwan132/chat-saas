@@ -20,6 +20,7 @@ function topUpProgressValue(remaining: number, granted: number) {
 }
 
 const TOP_UP_PROGRESS_CLASS = '[&>[data-slot=progress-indicator]]:bg-green-600';
+const METER_PROGRESS_CLASS = 'h-[4px] shrink-0';
 
 function useSettingsPath(section: 'plan', hash?: string) {
   const { agentId } = useParams();
@@ -125,7 +126,7 @@ export function CreditMeter() {
                   {row.key === 'plan' && !isLoading && planAndUsage?.plan ? (
                     <Badge
                       variant="secondary"
-                      className="h-[0.9rem] rounded border-none bg-primary/10 px-[0.225rem] text-[8.1px] font-semibold uppercase tracking-wider text-primary select-none"
+                      className="h-[0.675rem] rounded border-none bg-primary/10 px-[0.225rem] text-[8.1px] font-semibold uppercase leading-none tracking-wider text-primary select-none"
                     >
                       {planAndUsage.plan}
                     </Badge>
@@ -155,7 +156,7 @@ export function CreditMeter() {
               <Progress
                 value={isLoading ? 0 : progressValue}
                 className={cn(
-                  'h-[0.3375rem]',
+                  METER_PROGRESS_CLASS,
                   row.key === 'plan' &&
                     !isLoading &&
                     monthlyPct <= 10 &&

@@ -29,4 +29,18 @@ test("uses one soft referral panel with a code-only copy row", () => {
   expect(source).toContain('{copied ? "Copied" : "Copy"}');
   expect(source).toMatch(/<section\s+aria-labelledby="past-referrals-title"/);
   expect(source).toContain('<Empty className="flex-none bg-muted/30 px-6 py-10">');
+  expect(source).toContain('<TableHead className="text-center">Email</TableHead>');
+  expect(source).toContain('<TableHead className="text-center">Date</TableHead>');
+  expect(source).toContain('<TableHead className="text-center">Earned</TableHead>');
+  expect(source).toContain('className="text-center"');
+  expect(source).toContain(
+    'className="text-center font-medium tabular-nums"',
+  );
+  expect(source).toContain("toLocaleString()");
+  expect(source).toContain(
+    "+{referral.rewardCredits.toLocaleString()} credits",
+  );
+  expect(source).not.toContain("<TableHead>Person</TableHead>");
+  expect(source).not.toContain("<TableHead>Completed</TableHead>");
+  expect(source).not.toContain('text-right');
 });

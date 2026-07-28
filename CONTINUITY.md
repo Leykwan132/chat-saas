@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-28 [CODE] Credit meter Plan/Referral bars share one `METER_PROGRESS_CLASS` (`h-[4px] shrink-0`); Progress root no longer uses `flex items-center`/`size-full`. Plan badge height matches the label text so the Plan block does not look denser. Verified locally; unreleased.
 - 2026-07-28 [CODE] Referral analytics are client-side PostHog captures only: `referral_code_copied` (referrals page), `referral_code_applied`/`referral_code_skipped` (onboarding step 4), and `referral_claimed`/`referral_claim_failed` (onboarding completion). All carry `referral_code`, so referrer attribution is done by joining on that property; no server-side capture exists. Verified locally; unreleased.
 - 2026-07-27 [CODE] Temporary WhatsApp multi-image/caption probe logs: `[whatsapp] multi-image event` on webhook message arrays that include images, and `[whatsapp] multi-image ingest` after Inbox persistence/AI batch queue. No tokens or media URLs; remove after album shape is confirmed. Unreleased.
 - 2026-07-27 [CODE] Live WhatsApp messages carrying Meta error payloads, including `type: "unsupported"` / code `131051`, are logged and immediately skipped instead of being persisted to Inbox or triggering AI. Uploaded to the configured development Convex deployment; unreleased.
@@ -235,6 +236,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-28 [CODE] Past referrals table headers are Email / Date / Earn; Date uses `toLocaleString()` (date + time) and Earn shows `+N credits`.
 - 2026-07-28 [CODE] Referral PostHog funnel: `referral_code_copied`, `referral_code_applied`, `referral_code_skipped`, `referral_claimed`, `referral_claim_failed`; plus the Past referrals empty state using `flex-none`/`px-6 py-10` so height tracks content.
 - 2026-07-27 [CODE] Always-on DeepSeek reply planner so language/guidance apply to every generated inbox reply; fixed matched sendText still bypasses regeneration. Inbox structured-output replies removed; media requires workflow matches; empty-match plans still feed language/guidance into plain text.
 - 2026-07-27 [CODE] Implemented Growth+ inbound image/audio understanding across WhatsApp, Instagram, and Messenger with durable revisioned batches, secure media acquisition, MiMo preprocessing, same-message enrichment, usage accounting, fallback replies, durable WhatsApp image previews above captions, transcript-only Inbox presentation, detailed privacy-safe webhook diagnostics, and an explicit `LOG_META_WEBHOOK_MESSAGE_ARRAYS=true` diagnostic that logs raw WhatsApp messages plus webhook/resolved image/audio URLs only when deliberately enabled.
@@ -275,6 +277,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-28 [TOOL] Credit meter progress height: Progress root dropped `flex items-center`/`size-full`; CreditMeter uses shared `METER_PROGRESS_CLASS = 'h-[0.3375rem]'`. Passed 1 file/2 tests under Node v22.22.0 (`src/lib/creditMeterProgress.test.ts`), scoped ESLint, and `git diff --check`. Unreleased; no changelog.
 - 2026-07-28 [TOOL] Referral PostHog funnel + empty-state spacing committed as `88982eb3` (5 files) and pushed to `origin/main` (`9380e3a1..88982eb3`); local `main` is level with the remote.
 - 2026-07-28 [TOOL] Referral PostHog funnel and Past referrals empty-state spacing (`flex-none` + `px-6 py-10`) passed 2 files/4 tests under Node v22.22.0 (`src/lib/referralAnalyticsEvents.test.ts`, `src/pages/ReferralsPageLayout.test.ts`) plus `git diff --check`. `npx eslint src/components/OnboardingFlow.tsx` reports the two pre-existing `react-hooks/set-state-in-effect` errors, confirmed identical at HEAD via stash. No deployment or public changelog update ran.
 - 2026-07-28 [TOOL] “Visual & Voice Intelligence” pricing copy and its hover description passed the focused 13-test inbound-media suite and scoped ESLint under Node v22.22.0; no deployment or public changelog update ran.
