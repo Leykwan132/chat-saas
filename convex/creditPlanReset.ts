@@ -16,6 +16,14 @@ export async function resetCurrentPeriodToFreePlan(
   const purchasedRemaining = await getTopUpRemaining(ctx, userId);
   const grantedCredits = PLAN_CATALOG.free.monthlyCredits;
 
+  if (
+    current.planKey === "free" &&
+    current.grantedCredits === grantedCredits &&
+    current.usedCredits === 0
+  ) {
+    return;
+  }
+
   await ctx.db.patch(current._id, {
     grantedCredits,
     usedCredits: 0,
@@ -36,6 +44,6 @@ export async function resetCurrentPeriodToFreePlan(
     monthlyCreditsAfter: grantedCredits,
     purchasedCreditsBefore: purchasedRemaining,
     purchasedCreditsAfter: purchasedRemaining,
-    reason: "Team subscription canceled and reset to Free plan",
+    reason: "Subscription downgraded and reset to Free plan",
   });
 }

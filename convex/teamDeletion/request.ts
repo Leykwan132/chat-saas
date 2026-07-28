@@ -18,6 +18,7 @@ export async function requestTeamDeletion(
     workosOrgId: string;
     stripeSubscriptionId?: string;
     source: "stripe" | "workos";
+    preserveOwnerSubscription?: boolean;
   },
 ): Promise<{ accepted: true; duplicate: boolean }> {
   const team = await getTeamByWorkosOrgId(ctx, args.workosOrgId);
@@ -87,13 +88,15 @@ export async function requestTeamDeletion(
   }
 
   if (team.ownerId) {
-    await ctx.db.patch(team.ownerId, {
-      stripeSubscriptionId: undefined,
-      stripePriceId: undefined,
-      stripeSubscriptionStatus: "canceled",
-      stripeSubscriptionCurrentPeriodEnd: undefined,
-      updatedAt: now,
-    });
+    if (!args.preserveOwnerSubscription) {
+      await ctx.db.patch(team.ownerId, {
+        stripeSubscriptionId: undefined,
+        stripePriceId: undefined,
+        stripeSubscriptionStatus: "canceled",
+        stripeSubscriptionCurrentPeriodEnd: undefined,
+        updatedAt: now,
+      });
+    }
     await resetCurrentPeriodToFreePlan(ctx, team.ownerId);
   }
 
