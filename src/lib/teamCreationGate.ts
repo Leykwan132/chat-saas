@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import type { NavigateFunction } from 'react-router';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
 export const DEFAULT_PLAN_PATH = '/workspace/settings?section=plan';
 
@@ -24,7 +25,7 @@ export function showTeamCreationUpgradeToast(
   toast.message('Paid plan required', {
     description: 'Upgrade your account to create shared teams.',
     action: {
-      label: 'Manage plan',
+      label: resolvePlanEntryLabel('plan_limit'),
       onClick: () => navigate(planPath),
     },
   });
@@ -43,7 +44,7 @@ export function handleCreateTeamGate(
   onAllowed: () => void,
   navigate: NavigateFunction,
   planPath = DEFAULT_PLAN_PATH,
-  openManagePlan?: () => void,
+  openAdjustPlan?: () => void,
 ) {
   if (canCreateOrgTeam === undefined) return;
 
@@ -53,8 +54,8 @@ export function handleCreateTeamGate(
   }
 
   if (canCreateOrgTeam.requiresPlanUpgrade) {
-    if (openManagePlan) {
-      openManagePlan();
+    if (openAdjustPlan) {
+      openAdjustPlan();
     } else {
       showTeamCreationUpgradeToast(navigate, planPath);
     }

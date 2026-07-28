@@ -32,10 +32,10 @@ test('separates the remaining value and total with an explicit gap', () => {
   );
 });
 
-test('opens plan settings from the manage plan action', () => {
+test('opens Adjust Plan from the usage card action', () => {
   expect(source).toContain('<Settings className="size-3.5" />');
-  expect(source).toContain('Manage plan');
-  expect(source).toContain('navigate(`${base}?section=plan`)');
+  expect(source).toContain("resolvePlanEntryLabel('usage_card')");
+  expect(source).toContain('onClick={openAdjustPlan}');
   expect(source).not.toContain('More credits');
   expect(source).not.toContain('#plan-add-ons');
 });

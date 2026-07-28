@@ -11,6 +11,12 @@ export type AdjustPlanViewAction =
   | 'warn_team_free'
   | 'go_back'
   | 'close';
+export type PlanEntrySurface =
+  | 'credit_meter'
+  | 'plan_settings'
+  | 'usage_card'
+  | 'locked_feature'
+  | 'plan_limit';
 
 export function resolvePlanSelection({
   currentPlan,
@@ -72,4 +78,14 @@ export function resolvePlanCardAction(
     disabled: isCurrent || loadingPlan !== null,
     loading,
   } as const;
+}
+
+export function resolvePlanEntryLabel(surface: PlanEntrySurface): string {
+  if (surface === 'credit_meter') {
+    return 'Upgrade';
+  }
+  if (surface === 'plan_settings' || surface === 'usage_card') {
+    return 'Adjust plan';
+  }
+  return 'Change plan';
 }

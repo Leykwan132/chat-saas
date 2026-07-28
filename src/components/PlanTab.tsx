@@ -14,7 +14,8 @@ import {
 } from '@/components/ui/empty';
 import type { ExtraCreditsPackId } from '../../shared/planCatalog';
 import { PlanAddOnsSection } from '@/components/billing/PlanAddOnsSection';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { AlertCircle } from 'lucide-react';
@@ -30,7 +31,7 @@ export function PlanTab() {
   );
 
   const createCheckout = useAction(api.stripe.createCheckout);
-  const { openManagePlan, isManagePlanLoading } = useManagePlan();
+  const { openAdjustPlan, isAdjustPlanLoading } = useAdjustPlan();
 
   const [loadingCreditsPackId, setLoadingCreditsPackId] = useState<ExtraCreditsPackId | null>(null);
 
@@ -127,11 +128,11 @@ export function PlanTab() {
           <Button
             type="button"
             size="sm"
-            onClick={openManagePlan}
-            disabled={isManagePlanLoading}
+            onClick={openAdjustPlan}
+            disabled={isAdjustPlanLoading}
           >
-            {isManagePlanLoading ? <Spinner /> : null}
-            Manage plan
+            {isAdjustPlanLoading ? <Spinner /> : null}
+            {resolvePlanEntryLabel('plan_settings')}
           </Button>
         </div>
       </div>

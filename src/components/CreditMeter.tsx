@@ -7,7 +7,8 @@ import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 import { cn } from '@/lib/utils';
 import { buildCreditBalanceRows } from '@/lib/creditBalanceRows';
 
@@ -38,7 +39,7 @@ function useAnalyticsUsagePath() {
 
 export function CreditMeter() {
   const navigate = useNavigate();
-  const { openManagePlan } = useManagePlan();
+  const { openAdjustPlan } = useAdjustPlan();
   const analyticsUsagePath = useAnalyticsUsagePath();
   const planTopUpPath = useSettingsPath('plan', '#plan-add-ons');
   const { isLoading: isAuthLoading } = useAuth();
@@ -85,11 +86,11 @@ export function CreditMeter() {
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={openManagePlan}
+            onClick={openAdjustPlan}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-transparent px-2 py-0.5 text-[10px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Settings className="size-2.5" />
-            Manage plan
+            {resolvePlanEntryLabel('credit_meter')}
           </button>
         </div>
       ) : null}

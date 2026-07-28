@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { Info, Settings } from 'lucide-react';
@@ -18,6 +17,8 @@ import {
   buildCreditBalanceRows,
   type CreditBalanceRow,
 } from '@/lib/creditBalanceRows';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
 function planProgressValue(remaining: number, allowance: number) {
   if (allowance <= 0) {
@@ -157,8 +158,7 @@ function BalanceCardSkeleton() {
 }
 
 export function PlanUsageCard() {
-  const navigate = useNavigate();
-  const { agentId } = useParams();
+  const { openAdjustPlan } = useAdjustPlan();
   const { isLoading: isAuthLoading } = useAuth();
   const planAndUsage = useQuery(
     api.plans.getPlanAndUsage,
@@ -192,11 +192,6 @@ export function PlanUsageCard() {
     referralGranted: referralCreditsGranted,
   });
 
-  const goToPlan = () => {
-    const base = agentId ? `/dashboard/${agentId}/settings` : '/workspace/settings';
-    navigate(`${base}?section=plan`);
-  };
-
   return (
     <div className="w-full max-w-md">
       <CompactBalanceCard
@@ -205,9 +200,9 @@ export function PlanUsageCard() {
         infoTooltip="Usage will reset every month"
         action={
           !isLoading && planAndUsage?.canManageBilling ? (
-            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={goToPlan}>
+            <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={openAdjustPlan}>
               <Settings className="size-3.5" />
-              Manage plan
+              {resolvePlanEntryLabel('usage_card')}
             </Button>
           ) : undefined
         }

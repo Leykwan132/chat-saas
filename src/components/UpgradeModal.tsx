@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { UPGRADE_SCENARIOS } from '@/config/upgradeScenarios';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
 export type UpgradeScenario = keyof typeof UPGRADE_SCENARIOS;
 
@@ -16,7 +17,7 @@ export function UpgradeCard({
   title?: string;
   description?: string;
 }) {
-  const { openManagePlan, isManagePlanLoading } = useManagePlan();
+  const { openAdjustPlan, isAdjustPlanLoading } = useAdjustPlan();
   const config =
     UPGRADE_SCENARIOS[scenario] ?? UPGRADE_SCENARIOS.free_to_starter;
   const firstRow = config.features.slice(
@@ -90,16 +91,16 @@ export function UpgradeCard({
       </div>
 
       <Button
-        onClick={openManagePlan}
-        disabled={isManagePlanLoading}
+        onClick={openAdjustPlan}
+        disabled={isAdjustPlanLoading}
         className={cn(
           'w-full rounded-2xl py-6 text-base font-semibold transition-all duration-300',
           'bg-zinc-950 text-white hover:bg-zinc-800 active:scale-[0.98]',
           'dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100',
         )}
       >
-        {isManagePlanLoading ? <Spinner /> : null}
-        Manage plan
+        {isAdjustPlanLoading ? <Spinner /> : null}
+        {resolvePlanEntryLabel('locked_feature')}
       </Button>
     </div>
   );

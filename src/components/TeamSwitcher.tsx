@@ -15,7 +15,7 @@ type TeamType = {
   isActive: boolean;
 };
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { Spinner } from '@/components/ui/spinner';
 import {
   BreadcrumbItem,
@@ -45,7 +45,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
   const teams = useQuery(api.teams.listForCurrentUser);
   const canInviteMembers = useQuery(api.teams.canInviteMembers);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
-  const { openManagePlan } = useManagePlan();
+  const { openAdjustPlan } = useAdjustPlan();
 
   const [switchingTeamId, setSwitchingTeamId] = useState<string | null>(null);
 
@@ -99,7 +99,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
       },
       navigate,
       settingsPath ? `${settingsPath}?section=plan` : undefined,
-      openManagePlan,
+      openAdjustPlan,
     );
   };
 
@@ -126,7 +126,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
     }
 
     if (canInviteMembers?.requiresPlanUpgrade) {
-      openManagePlan();
+      openAdjustPlan();
       return;
     }
 

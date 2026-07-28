@@ -8,7 +8,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -109,7 +109,7 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
   const teams = useQuery(api.teams.listForCurrentUser);
   const canInviteMembers = useQuery(api.teams.canInviteMembers);
   const canCreateOrgTeam = useQuery(api.teams.canCreateOrgTeam);
-  const { openManagePlan } = useManagePlan();
+  const { openAdjustPlan } = useAdjustPlan();
 
   const [switchingTeamId, setSwitchingTeamId] = useState<string | null>(null);
 
@@ -151,7 +151,7 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
       },
       navigate,
       `${settingsPath}?section=plan`,
-      openManagePlan,
+      openAdjustPlan,
     );
   };
 
@@ -167,7 +167,7 @@ export function TeamsAccountSubmenu({ settingsPath }: TeamsAccountSubmenuProps) 
     }
 
     if (canInviteMembers?.requiresPlanUpgrade) {
-      openManagePlan();
+      openAdjustPlan();
       return;
     }
 

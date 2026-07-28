@@ -6,7 +6,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
 import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
 import { DEFAULT_WEB_WIDGET_THEME } from '../../../shared/webWidgetThemes';
-import { useManagePlan } from '@/components/billing/managePlanContext';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { WebWidgetAppearanceSection } from '@/components/channels/WebWidgetAppearanceSection';
 import { WebWidgetBrandingSection } from '@/components/channels/WebWidgetBrandingSection';
 import { WebWidgetLayoutPicker } from '@/components/channels/WebWidgetLayoutPicker';
@@ -49,7 +49,7 @@ export function WebWidgetSettingsPanel({
   generateIconUploadUrl,
   saveIcon,
 }: WebWidgetSettingsPanelProps) {
-  const { openManagePlan } = useManagePlan();
+  const { openAdjustPlan } = useAdjustPlan();
   const [agentDisplayName, setAgentDisplayName] = useState(settings.agentDisplayName);
   const [placeholderText, setPlaceholderText] = useState(settings.placeholder);
   const [placementLayout, setPlacementLayout] = useState(settings.layout);
@@ -98,7 +98,7 @@ export function WebWidgetSettingsPanel({
     (nextHidePoweredBy: boolean) => {
       if (!agentId) return;
       if (nextHidePoweredBy && !settings.canHideBranding) {
-        openManagePlan();
+        openAdjustPlan();
         return;
       }
       setHidePoweredBy(nextHidePoweredBy);
@@ -123,7 +123,7 @@ export function WebWidgetSettingsPanel({
     },
     [
       agentId,
-      openManagePlan,
+      openAdjustPlan,
       settings.canHideBranding,
       settings.hidePoweredBy,
       updateSettings,
@@ -227,7 +227,7 @@ export function WebWidgetSettingsPanel({
               canHideBranding={settings.canHideBranding}
               saving={savingBranding}
               onChange={saveBranding}
-              onRequestUpgrade={openManagePlan}
+              onRequestUpgrade={openAdjustPlan}
             />
 
             <Field>

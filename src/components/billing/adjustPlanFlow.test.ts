@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest';
 import {
   buildAdjustPlanReturnPath,
   resolveAdjustPlanView,
+  resolvePlanEntryLabel,
   resolvePlanCardAction,
   resolvePlanSelection,
 } from './adjustPlanFlow';
@@ -104,5 +105,13 @@ describe('adjust plan flow', () => {
       disabled: true,
       loading: true,
     });
+  });
+
+  test('entrypoints use labels that match their context', () => {
+    expect(resolvePlanEntryLabel('credit_meter')).toBe('Upgrade');
+    expect(resolvePlanEntryLabel('plan_settings')).toBe('Adjust plan');
+    expect(resolvePlanEntryLabel('usage_card')).toBe('Adjust plan');
+    expect(resolvePlanEntryLabel('locked_feature')).toBe('Change plan');
+    expect(resolvePlanEntryLabel('plan_limit')).toBe('Change plan');
   });
 });
