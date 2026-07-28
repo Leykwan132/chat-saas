@@ -3,7 +3,13 @@ import Stripe from "stripe";
 export type CheckoutMetadata = Record<string, string>;
 
 export type CheckoutSessionParams = {
-  priceId: string;
+  priceId?: string;
+  priceData?: {
+    currency: string;
+    unitAmount: number;
+    recurringInterval: "month" | "year";
+    productName: string;
+  };
   customerId: string;
   mode: "subscription" | "payment";
   successUrl: string;
@@ -26,14 +32,25 @@ function getStripeSecretKey() {
 export function buildCheckoutSessionCreateParams(
   args: CheckoutSessionParams,
 ): Stripe.Checkout.SessionCreateParams {
+  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = args.priceId
+    ? { price: args.priceId, quantity: 1 }
+    : args.priceData
+      ? {
+          price_data: {
+            currency: args.priceData.currency,
+            unit_amount: args.priceData.unitAmount,
+            recurring: { interval: args.priceData.recurringInterval },
+            product_data: { name: args.priceData.productName },
+          },
+          quantity: 1,
+        }
+      : (() => {
+          throw new Error("Checkout price is required");
+        })();
+
   const sessionParams: Stripe.Checkout.SessionCreateParams = {
     mode: args.mode,
-    line_items: [
-      {
-        price: args.priceId,
-        quantity: 1,
-      },
-    ],
+    line_items: [lineItem],
     success_url: args.successUrl,
     cancel_url: args.cancelUrl,
     customer: args.customerId,

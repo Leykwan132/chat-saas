@@ -26,11 +26,6 @@ export const create = action({
       throw new Error("User not found");
     }
 
-    const priceId = process.env.STRIPE_PRICE_FREE;
-    if (!priceId) {
-      throw new Error("STRIPE_PRICE_FREE environment variable is not set");
-    }
-
     const customer = await stripeClient.getOrCreateCustomer(ctx, {
       userId,
       email: user.email,
@@ -43,7 +38,12 @@ export const create = action({
     ).replace(/\/+$/, "");
 
     return await createCheckoutSessionWithPromotionCodes({
-      priceId,
+      priceData: {
+        currency: "myr",
+        unitAmount: 0,
+        recurringInterval: "month",
+        productName: "Kilobot Free",
+      },
       customerId: customer.customerId,
       mode: "subscription",
       successUrl: `${frontendUrl}/workspace?success=true`,

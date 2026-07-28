@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Node.js 22 is required for script commands.
-- Use the reusable `STRIPE_PRICE_FREE`.
+- Use inline Stripe `price_data` with MYR 0 and monthly recurrence.
 - Free uses `payment_method_collection: "if_required"` and no promotion codes.
 - Paid Checkout and credit top-ups remain unchanged.
 - Do not add tests or refactor unrelated billing code.
@@ -28,7 +28,7 @@
 - Modify: `src/components/AdjustPlanDialog.tsx`
 
 **Interfaces:**
-- Consumes: `STRIPE_PRICE_FREE` and `api.stripe.createCheckout`.
+- Consumes: inline Free price data and `api.stripe.createCheckout`.
 - Produces: `api.freeCheckout.create({ cancelPath: string })`.
 
 - [ ] **Step 1: Add optional Free Checkout parameters**
@@ -37,7 +37,7 @@ Extend `CheckoutSessionParams` with `paymentMethodCollection` and `allowPromotio
 
 - [ ] **Step 2: Create the Free Checkout action**
 
-Create one authenticated action that requires `STRIPE_PRICE_FREE`, gets or creates the Stripe customer, and sets:
+Create one authenticated action that gets or creates the Stripe customer, uses inline MYR 0 monthly price data, and sets:
 
 ```ts
 sessionParams.paymentMethodCollection = "if_required";
