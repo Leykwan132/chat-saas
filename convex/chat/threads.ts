@@ -47,6 +47,7 @@ import {
   messageKindValidator,
 } from "../broadcastMessageValidators";
 import { broadcastAgentMetadata } from "./broadcastMessageMetadata";
+import { isTeamDeletionActive } from "../teamDeletion/access";
 
 const UNKNOWN_AGENT_NAME = "Unknown agent";
 
@@ -1049,6 +1050,9 @@ export async function ingestChannelMessage(
   const channel = await ctx.db.get(args.channelId);
   if (channel === null) {
     throw new Error("Channel not found");
+  }
+  if (await isTeamDeletionActive(ctx, channel.orgId)) {
+    throw new Error("Workspace unavailable");
   }
 
   const service = channel.service;

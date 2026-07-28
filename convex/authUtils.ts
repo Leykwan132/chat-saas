@@ -16,6 +16,7 @@ import {
   teamToOrgId,
 } from "./teamHelpers";
 import type { EnsureUserAccountArgs } from "./teamHelpers";
+import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 
 export const PERSONAL_ORG_FALLBACK = PERSONAL_ORG_ID;
 
@@ -94,6 +95,9 @@ async function buildAuthContextFromDb(
   let activeTeamId: Id<"teams">;
 
   if (overrideOrgId !== undefined) {
+    if (!(await canProcessWorkspaceActivity(ctx, overrideOrgId))) {
+      throw new Error("Workspace unavailable");
+    }
     const activeTeam = await getActiveTeamForUser(ctx, user);
     orgId = overrideOrgId;
     activeTeamId = activeTeam._id;

@@ -9,6 +9,7 @@ import {
   planWorkflowFollowUpOutbound,
 } from './workflowFollowUpTimer';
 import { workflowFollowUpWorkpool } from './workflowFollowUpPool';
+import { isTeamDeletionActive } from './teamDeletion/access';
 
 type WorkflowFollowUpWakeRun = Pick<
   Doc<'workflowAutomationRuns'>,
@@ -72,7 +73,13 @@ export async function handleWorkflowFollowUpOutbound(
   messageId: Id<'messages'>,
 ) {
   const message = await ctx.db.get(messageId);
-  if (!message || !isEligibleWorkflowFollowUpOutbound({
+  if (
+    !message ||
+    (await isTeamDeletionActive(ctx, message.orgId))
+  ) {
+    return;
+  }
+  if (!isEligibleWorkflowFollowUpOutbound({
     service: message.service,
     direction: message.direction,
     status: message.status,

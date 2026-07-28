@@ -96,6 +96,17 @@ export const processBatch = internalAction({
       args,
     );
     if (!claimed) return;
+    const deleting = await ctx.runQuery(
+      internal.teamDeletion.access.isDeleting,
+      { orgId: claimed.conversation.orgId },
+    );
+    if (deleting) {
+      await ctx.runMutation(
+        internal.inboundMediaBatch.completeBatchWithoutReply,
+        args,
+      );
+      return;
+    }
 
     const creditCheck = await ctx.runQuery(
       internal.credits.internalCheckCredits,

@@ -92,6 +92,13 @@ export const broadcastWorker = internalAction({
       throw new Error(`Broadcast worker context not found for recipient: ${args.recipientId}`);
     }
     const { recipient, schedule, customer, channel } = context;
+    const deleting = await ctx.runQuery(
+      internal.teamDeletion.access.isDeleting,
+      { orgId: schedule.orgId },
+    );
+    if (deleting) {
+      return { skipped: true, msg: "Workspace unavailable" };
+    }
 
     if (recipient.status === "completed") {
       return { skipped: true, msg: "Already sent" };

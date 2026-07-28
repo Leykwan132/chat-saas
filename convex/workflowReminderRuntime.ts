@@ -5,6 +5,7 @@ import { resolveWorkflowAutomationConfigs } from './workflowAutomationConfig';
 import { getWorkflowForAgent } from './workflowCore';
 import { getReminderScheduleCandidates } from './workflowReminderSchedule';
 import { workflowReminderWorkpool } from './workflowReminderPool';
+import { isTeamDeletionActive } from './teamDeletion/access';
 
 export async function scheduleWorkflowRemindersForAppointment(
   ctx: MutationCtx,
@@ -53,6 +54,9 @@ export async function scheduleWorkflowRemindersForAppointment(
       reason: 'conversation_not_whatsapp_eligible',
       service: conversation?.service,
     });
+    return 0;
+  }
+  if (await isTeamDeletionActive(ctx, conversation.orgId)) {
     return 0;
   }
   const channel = await ctx.db.get(conversation.channelId);

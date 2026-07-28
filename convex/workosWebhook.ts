@@ -24,6 +24,7 @@ import {
   fetchWorkosUserByEmail,
   fetchWorkosUserById,
 } from "./workosClient";
+import { requestTeamDeletion } from "./teamDeletion/request";
 
 // POST /webhook/workos
 // Verifies the WorkOS-Signature header against WORKOS_WEBHOOK_SECRET, dedupes
@@ -207,17 +208,10 @@ async function upsertOrganization(ctx: MutationCtx, data: any) {
 
 async function deleteOrganizationByWorkosId(ctx: MutationCtx, workosOrgId?: string) {
   if (!workosOrgId) return;
-  const team = await getTeamByWorkosOrgId(ctx, workosOrgId);
-  if (team !== null) {
-    const memberships = await ctx.db
-      .query("teamMemberships")
-      .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
-      .collect();
-    for (const membership of memberships) {
-      await ctx.db.delete(membership._id);
-    }
-    await ctx.db.delete(team._id);
-  }
+  await requestTeamDeletion(ctx, {
+    workosOrgId,
+    source: "workos",
+  });
 }
 
 // Membership payloads carry user_id / organization_id and a role with a slug.

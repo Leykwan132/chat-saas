@@ -64,6 +64,13 @@ export const sendReminder = internalAction({
       args,
     );
     if ('skipped' in context) return { skipped: true as const, reason: context.skipped };
+    const deleting = await ctx.runQuery(
+      internal.teamDeletion.access.isDeleting,
+      { orgId: context.run.orgId },
+    );
+    if (deleting) {
+      return { skipped: true as const, reason: "Workspace unavailable" };
+    }
     console.log('workflow_reminder_sending', {
       appointmentId: context.run.appointmentId,
       runId: context.run._id,

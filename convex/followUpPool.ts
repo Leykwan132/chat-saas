@@ -48,6 +48,13 @@ export const followUpWorker = internalAction({
       return { skipped: true, reason: "Context not found" };
     }
     const { customer, rule, conversation, channel } = context;
+    const deleting = await ctx.runQuery(
+      internal.teamDeletion.access.isDeleting,
+      { orgId: conversation.orgId },
+    );
+    if (deleting) {
+      return { skipped: true, reason: "Workspace unavailable" };
+    }
 
     if (!customer.followUpPending) {
       return { skipped: true, reason: "Customer is no longer pending follow-up" };

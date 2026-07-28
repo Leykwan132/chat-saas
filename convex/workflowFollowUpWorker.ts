@@ -84,6 +84,13 @@ export const wakeFollowUp = internalAction({
       args,
     );
     if ('skipped' in context) return { skipped: true as const, reason: context.skipped };
+    const deleting = await ctx.runQuery(
+      internal.teamDeletion.access.isDeleting,
+      { orgId: context.run.orgId },
+    );
+    if (deleting) {
+      return { skipped: true as const, reason: "Workspace unavailable" };
+    }
     const decision = getWorkflowFollowUpWakeDecision({ now: Date.now(), dueAt: context.timer.dueAt });
     if (decision.kind === 'reschedule') return { reschedule: true as const, dueAt: decision.dueAt };
     console.log('workflow_followup_sending', {

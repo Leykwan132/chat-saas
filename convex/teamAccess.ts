@@ -50,7 +50,7 @@ async function getTeamMembershipForCurrentUser(
   }
 
   const team = await ctx.db.get(teamId);
-  if (team === null) {
+  if (team === null || team.deletionStatus === "deleting") {
     return null;
   }
 
