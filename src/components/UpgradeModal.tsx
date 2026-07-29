@@ -12,12 +12,15 @@ export function UpgradeCard({
   scenario = 'free_to_starter',
   title,
   description,
+  onUpgrade,
 }: {
   scenario?: UpgradeScenario;
   title?: string;
   description?: string;
+  onUpgrade?: () => void;
 }) {
   const { openAdjustPlan, isAdjustPlanLoading } = useAdjustPlan();
+  const handleUpgrade = onUpgrade ?? openAdjustPlan;
   const config =
     UPGRADE_SCENARIOS[scenario] ?? UPGRADE_SCENARIOS.free_to_starter;
   const firstRow = config.features.slice(
@@ -91,7 +94,7 @@ export function UpgradeCard({
       </div>
 
       <Button
-        onClick={openAdjustPlan}
+        onClick={handleUpgrade}
         disabled={isAdjustPlanLoading}
         className={cn(
           'w-full rounded-2xl py-6 text-base font-semibold transition-all duration-300',
