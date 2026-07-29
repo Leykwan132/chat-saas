@@ -4,11 +4,25 @@ import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
 export const DEFAULT_PLAN_PATH = '/workspace/settings?section=plan';
 
-type CanCreateOrgTeamResult = {
+export type CanCreateOrgTeamResult = {
   allowed: boolean;
   reason: string | null;
   requiresPlanUpgrade: boolean;
 } | undefined;
+
+export type TeamCreationGateDecision =
+  | 'loading'
+  | 'allowed'
+  | 'upgrade'
+  | 'blocked';
+
+export function resolveTeamCreationGate(
+  result: CanCreateOrgTeamResult,
+): TeamCreationGateDecision {
+  if (result === undefined) return 'loading';
+  if (result.allowed) return 'allowed';
+  return result.requiresPlanUpgrade ? 'upgrade' : 'blocked';
+}
 
 export function getPlanPathFromReturnTo(returnTo: string) {
   if (returnTo.includes('section=')) {
@@ -32,11 +46,7 @@ export function showTeamCreationUpgradeToast(
 }
 
 export function isTeamCreationUpgradeRequired(canCreateOrgTeam: CanCreateOrgTeamResult) {
-  return (
-    canCreateOrgTeam !== undefined &&
-    !canCreateOrgTeam.allowed &&
-    canCreateOrgTeam.requiresPlanUpgrade
-  );
+  return resolveTeamCreationGate(canCreateOrgTeam) === 'upgrade';
 }
 
 export function handleCreateTeamGate(
@@ -44,18 +54,20 @@ export function handleCreateTeamGate(
   onAllowed: () => void,
   navigate: NavigateFunction,
   planPath = DEFAULT_PLAN_PATH,
-  openAdjustPlan?: () => void,
+  openUpgradeModal?: () => void,
 ) {
-  if (canCreateOrgTeam === undefined) return;
+  const decision = resolveTeamCreationGate(canCreateOrgTeam);
 
-  if (canCreateOrgTeam.allowed) {
+  if (decision === 'loading') return;
+
+  if (decision === 'allowed') {
     onAllowed();
     return;
   }
 
-  if (canCreateOrgTeam.requiresPlanUpgrade) {
-    if (openAdjustPlan) {
-      openAdjustPlan();
+  if (decision === 'upgrade') {
+    if (openUpgradeModal) {
+      openUpgradeModal();
     } else {
       showTeamCreationUpgradeToast(navigate, planPath);
     }
