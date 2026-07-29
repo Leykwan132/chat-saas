@@ -15,7 +15,6 @@ describe('adjust plan flow', () => {
         resolvePlanSelection({
           currentPlan: 'free',
           selectedPlan: 'growth',
-          isTeam: false,
           subscriptionStatus: status,
         }),
       ).toBe('portal');
@@ -29,7 +28,6 @@ describe('adjust plan flow', () => {
         resolvePlanSelection({
           currentPlan: 'free',
           selectedPlan: 'growth',
-          isTeam: false,
           subscriptionStatus,
         }),
       ).toBe('checkout');
@@ -41,21 +39,19 @@ describe('adjust plan flow', () => {
       resolvePlanSelection({
         currentPlan: 'growth',
         selectedPlan: 'free',
-        isTeam: true,
         subscriptionStatus: 'active',
       }),
-    ).toBe('warn_team_free');
+    ).toBe('warn_free_downgrade');
   });
 
-  test('a personal workspace selecting Free changes through Portal', () => {
+  test('a paid personal workspace selecting Free receives a warning', () => {
     expect(
       resolvePlanSelection({
         currentPlan: 'growth',
         selectedPlan: 'free',
-        isTeam: false,
         subscriptionStatus: 'active',
       }),
-    ).toBe('portal');
+    ).toBe('warn_free_downgrade');
   });
 
   test('selecting the current plan does nothing', () => {
@@ -63,7 +59,6 @@ describe('adjust plan flow', () => {
       resolvePlanSelection({
         currentPlan: 'growth',
         selectedPlan: 'growth',
-        isTeam: false,
         subscriptionStatus: 'active',
       }),
     ).toBe('ignore');
@@ -78,15 +73,15 @@ describe('adjust plan flow', () => {
     ).toBe('/dashboard/agent_123/settings?section=plan');
   });
 
-  test('team Free confirmation replaces the picker instead of nesting', () => {
+  test('Free confirmation replaces the picker instead of nesting', () => {
     expect(resolveAdjustPlanView('closed', 'open')).toBe('picker');
-    expect(resolveAdjustPlanView('picker', 'warn_team_free')).toBe(
-      'team_free_warning',
+    expect(resolveAdjustPlanView('picker', 'warn_free_downgrade')).toBe(
+      'free_downgrade_warning',
     );
-    expect(resolveAdjustPlanView('team_free_warning', 'go_back')).toBe(
+    expect(resolveAdjustPlanView('free_downgrade_warning', 'go_back')).toBe(
       'picker',
     );
-    expect(resolveAdjustPlanView('team_free_warning', 'close')).toBe('closed');
+    expect(resolveAdjustPlanView('free_downgrade_warning', 'close')).toBe('closed');
   });
 
   test('plan cards distinguish current, available, and loading actions', () => {

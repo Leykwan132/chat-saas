@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { ShineBorder } from '@/components/ui/shine-border';
+import { Spinner } from '@/components/ui/spinner';
 import { WordRotate } from '@/components/ui/word-rotate';
 import { cn } from '@/lib/utils';
 import {
@@ -462,7 +463,7 @@ export function SubscriptionPlanActionButton({
           'border-0 bg-zinc-950 text-white hover:bg-zinc-900 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800',
       )}
     >
-      {label}
+      {loading ? <Spinner /> : label}
     </Button>
   );
 }

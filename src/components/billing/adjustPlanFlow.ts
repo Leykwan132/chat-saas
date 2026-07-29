@@ -2,13 +2,13 @@ import type { PlanKey } from '../../../shared/planCatalog';
 
 export type PlanSelectionResult =
   | 'ignore'
-  | 'warn_team_free'
+  | 'warn_free_downgrade'
   | 'portal'
   | 'checkout';
-export type AdjustPlanView = 'closed' | 'picker' | 'team_free_warning';
+export type AdjustPlanView = 'closed' | 'picker' | 'free_downgrade_warning';
 export type AdjustPlanViewAction =
   | 'open'
-  | 'warn_team_free'
+  | 'warn_free_downgrade'
   | 'go_back'
   | 'close';
 export type PlanEntrySurface =
@@ -21,25 +21,22 @@ export type PlanEntrySurface =
 export function resolvePlanSelection({
   currentPlan,
   selectedPlan,
-  isTeam,
   subscriptionStatus,
 }: {
   currentPlan: PlanKey;
   selectedPlan: PlanKey;
-  isTeam: boolean;
   subscriptionStatus: string | null | undefined;
 }): PlanSelectionResult {
   if (selectedPlan === currentPlan) {
     return 'ignore';
   }
-  if (isTeam && selectedPlan === 'free') {
-    return 'warn_team_free';
+  if (selectedPlan === 'free') {
+    return 'warn_free_downgrade';
   }
   if (
-    selectedPlan !== 'free' &&
-    (!subscriptionStatus ||
-      subscriptionStatus === 'canceled' ||
-      subscriptionStatus === 'cancelled')
+    !subscriptionStatus ||
+    subscriptionStatus === 'canceled' ||
+    subscriptionStatus === 'cancelled'
   ) {
     return 'checkout';
   }
@@ -60,8 +57,8 @@ export function resolveAdjustPlanView(
   if (action === 'open' || action === 'go_back') {
     return 'picker';
   }
-  if (action === 'warn_team_free') {
-    return 'team_free_warning';
+  if (action === 'warn_free_downgrade') {
+    return 'free_downgrade_warning';
   }
   return view === 'closed' ? view : 'closed';
 }

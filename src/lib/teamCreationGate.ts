@@ -74,5 +74,5 @@ export function handleCreateTeamGate(
     return;
   }
 
-  toast.message(canCreateOrgTeam.reason ?? 'You cannot create a team right now.');
+  toast.message(canCreateOrgTeam?.reason ?? 'You cannot create a team right now.');
 }

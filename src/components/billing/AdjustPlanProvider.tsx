@@ -18,7 +18,7 @@ import {
   type AdjustPlanView,
 } from './adjustPlanFlow';
 import { AdjustPlanPickerDialog } from './AdjustPlanPickerDialog';
-import { TeamFreePlanWarningDialog } from './TeamFreePlanWarningDialog';
+import { FreePlanDowngradeWarningDialog } from './FreePlanDowngradeWarningDialog';
 import {
   openBillingPortalInNewWindow,
   openBillingPortalNavigation,
@@ -148,13 +148,12 @@ export function AdjustPlanProvider({
       const result = resolvePlanSelection({
         currentPlan: planAndUsage.plan,
         selectedPlan,
-        isTeam: planAndUsage.isTeam,
         subscriptionStatus: planAndUsage.stripeSubscriptionStatus,
       });
       if (result === 'ignore') return;
-      if (result === 'warn_team_free') {
+      if (result === 'warn_free_downgrade') {
         setView((current) =>
-          resolveAdjustPlanView(current, 'warn_team_free'),
+          resolveAdjustPlanView(current, 'warn_free_downgrade'),
         );
         return;
       }
@@ -191,9 +190,10 @@ export function AdjustPlanProvider({
         onBillingIntervalChange={setBillingInterval}
         loadingPlan={loadingPlan}
         onSelectPlan={selectPlan}
+        onManagePlan={openBillingPortal}
       />
-      <TeamFreePlanWarningDialog
-        open={view === 'team_free_warning'}
+      <FreePlanDowngradeWarningDialog
+        open={view === 'free_downgrade_warning'}
         loading={loadingPlan !== null}
         onOpenChange={(open) => {
           if (!open && !loadingPlan) {
