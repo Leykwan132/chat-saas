@@ -10,6 +10,9 @@ Make the paid-to-Free confirmation easier to scan without weakening the permanen
 - Place “What you’ll lose” in the left column.
 - Place “What will be removed” in the right column.
 - Stack the sections vertically on narrow screens so titles and descriptions remain readable.
+- Use a 40px gap between columns.
+- Use 16px between each impact row and between each section title and its rows.
+- Use 24px between the dialog header, impact grid, and footer.
 - Keep the existing viewport-height limit and scrolling behavior.
 
 ## Copy
