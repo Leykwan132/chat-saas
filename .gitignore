@@ -31,4 +31,6 @@ dist-ssr
 !.dev.vars.example
 .env*
 !.env.example
+!.env.dev.example
+!.env.production.example
 .env.local

@@ -6,9 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:dev": "tsc -b && vite build --mode dev",
+    "build:prod": "tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "bun run build && wrangler dev",
-    "deploy": "bun run build && wrangler deploy"
+    "deploy": "bun run deploy:prod",
+    "deploy:dev": "node scripts/deploy-worker.mjs dev",
+    "deploy:prod": "node scripts/deploy-worker.mjs production"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.65",
