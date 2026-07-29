@@ -16,7 +16,7 @@ import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
 import { Button } from '@/components/ui/button';
-import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import {
   Dialog,
   DialogContent,
@@ -203,7 +203,7 @@ export default function ChannelsPage() {
   );
   const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
   const ensureDefaultAgentId = useMutation(api.channels.ensureDefaultAgentId);
-  const { openAdjustPlan } = useAdjustPlan();
+  const { openUpgradeModal } = useUpgradeModal();
   useMetaChannelCallbackParams();
 
   const [webDetailsOpen, setWebDetailsOpen] = useState(false);
@@ -385,7 +385,7 @@ export default function ChannelsPage() {
                   limitReached ||
                   (service === 'whatsapp' && isWhatsAppSignupActive)
                 }
-                onLimitReached={openAdjustPlan}
+                onLimitReached={openUpgradeModal}
               />
             );
           })}

@@ -16,7 +16,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
 import { SupportHoverCard } from '@/components/SupportHoverCard';
-import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { Button } from '@/components/ui/button';
 import {
@@ -66,7 +66,7 @@ export function AgentsIndex() {
   const removeAgent = useMutation(api.agents.remove);
   const { can } = usePermissions();
   const { activeTeam } = useActiveTeam();
-  const { openAdjustPlan } = useAdjustPlan();
+  const { openUpgradeModal } = useUpgradeModal();
 
   const [deletingId, setDeletingId] = useState<Id<'agents'> | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +75,7 @@ export function AgentsIndex() {
     if (canCreateAgent === undefined) return;
 
     if (!canCreateAgent.allowed) {
-      openAdjustPlan();
+      openUpgradeModal();
       return;
     }
 
