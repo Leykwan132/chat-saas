@@ -7,7 +7,6 @@ Use one predictable upgrade journey throughout the signed-in product:
 - Explicit Upgrade and Adjust Plan actions open Adjust Plan immediately.
 - A user who encounters a gated feature or plan limit sees UpgradeModal first.
 - UpgradeModal's action opens Adjust Plan.
-- Manage plan remains available from Adjust Plan.
 
 ## Routing Rules
 
@@ -31,9 +30,9 @@ These actions do not show UpgradeModal because the user's intent is already to r
 
 UpgradeModal explains the gated capability. Its upgrade action closes UpgradeModal and opens Adjust Plan. Closing UpgradeModal without continuing leaves the user on the current screen.
 
-### Adjust Plan to Manage Plan
+### Simple Adjust Plan
 
-Adjust Plan remains the only plan-selection modal in this journey. Its Manage plan action continues to open Stripe billing management. UpgradeModal does not open Stripe directly.
+Adjust Plan remains the only plan-selection modal in this journey. Its header contains only “Choose your plan”; it does not show a secondary Manage plan action. UpgradeModal does not open Stripe directly.
 
 ## Scope
 

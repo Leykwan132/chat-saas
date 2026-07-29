@@ -13,7 +13,8 @@
 - Explicit Upgrade and Adjust Plan actions always open Adjust Plan directly.
 - Every other interactive plan gate opens UpgradeModal first.
 - UpgradeModal's action closes UpgradeModal and opens Adjust Plan.
-- Manage plan remains available from Adjust Plan and UpgradeModal never opens Stripe directly.
+- Adjust Plan keeps a simple “Choose your plan” header without a secondary Manage plan action.
+- UpgradeModal never opens Stripe directly.
 - Preserve non-billing restriction messages and backend entitlement checks.
 - Keep locked models visible and clickable without making them selectable.
 - Reuse existing shadcn Dialog and UpgradeCard components; install no new UI component.
@@ -447,7 +448,7 @@ git commit -m "Prompt upgrade for locked models"
 - Modify: `CONTINUITY.md`
 
 **Interfaces:**
-- Verifies: gated feature → UpgradeModal → Adjust Plan → Manage plan.
+- Verifies: gated feature → UpgradeModal → Adjust Plan.
 - Verifies: explicit Upgrade or Adjust Plan → Adjust Plan.
 
 - [ ] **Step 1: Run all focused tests**

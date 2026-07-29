@@ -1,11 +1,9 @@
-import { ExternalLink } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import {
   EnterprisePlanAction,
   SubscriptionPlanActionButton,
@@ -26,29 +24,7 @@ type AdjustPlanPickerDialogProps = {
   onBillingIntervalChange: (interval: BillingInterval) => void;
   loadingPlan: PlanKey | null;
   onSelectPlan: (plan: PlanKey) => void;
-  onManagePlan: () => void;
 };
-
-export function AdjustPlanManageAction({
-  disabled,
-  onManagePlan,
-}: {
-  disabled: boolean;
-  onManagePlan: () => void;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      disabled={disabled}
-      onClick={onManagePlan}
-    >
-      <ExternalLink data-icon="inline-start" />
-      Manage plan
-    </Button>
-  );
-}
 
 export function AdjustPlanPickerDialog({
   open,
@@ -58,7 +34,6 @@ export function AdjustPlanPickerDialog({
   onBillingIntervalChange,
   loadingPlan,
   onSelectPlan,
-  onManagePlan,
 }: AdjustPlanPickerDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,10 +52,6 @@ export function AdjustPlanPickerDialog({
               <DialogTitle className="font-title text-3xl font-semibold tracking-tight sm:text-4xl">
                 Choose your plan
               </DialogTitle>
-              <AdjustPlanManageAction
-                disabled={loadingPlan !== null}
-                onManagePlan={onManagePlan}
-              />
             </DialogHeader>
 
             <SubscriptionPlanPicker

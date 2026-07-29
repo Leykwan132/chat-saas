@@ -190,7 +190,6 @@ export function AdjustPlanProvider({
         onBillingIntervalChange={setBillingInterval}
         loadingPlan={loadingPlan}
         onSelectPlan={selectPlan}
-        onManagePlan={openBillingPortal}
       />
       <FreePlanDowngradeWarningDialog
         open={view === 'free_downgrade_warning'}

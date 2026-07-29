@@ -1,17 +1,18 @@
-import { renderToStaticMarkup } from 'react-dom/server';
+import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'vitest';
-import { AdjustPlanManageAction } from './AdjustPlanPickerDialog';
 
-describe('AdjustPlanManageAction', () => {
-  test('offers plan management from the Adjust Plan modal', () => {
-    const markup = renderToStaticMarkup(
-      <AdjustPlanManageAction
-        disabled={false}
-        onManagePlan={() => undefined}
-      />,
+const source = readFileSync(
+  new URL('./AdjustPlanPickerDialog.tsx', import.meta.url),
+  'utf8',
+);
+
+describe('AdjustPlanPickerDialog', () => {
+  test('keeps the Choose your plan header simple', () => {
+    expect(source).toContain('Choose your plan');
+    expect(source).not.toContain('Manage plan');
+    expect(source).not.toContain('AdjustPlanManageAction');
+    expect(source).not.toContain(
+      'onManagePlan',
     );
-
-    expect(markup).toContain('Manage plan');
-    expect(markup).toContain('data-variant="ghost"');
   });
 });
