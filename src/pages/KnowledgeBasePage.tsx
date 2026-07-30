@@ -153,6 +153,7 @@ export default function KnowledgeBasePage() {
           <KnowledgeBaseNavigation
             activeType={type}
             onSelect={selectKnowledgeType}
+            workflowHref={`/dashboard/${agentId}/workflow`}
           />
 
           <div className="flex flex-col gap-4 min-w-0">
