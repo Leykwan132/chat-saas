@@ -228,6 +228,18 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));
 });
 
+test("other channel setup paths stay direct", () => {
+  for (const relativePath of [
+    "channels/instagram.mdx",
+    "channels/messenger.mdx",
+    "channels/website-widget.mdx",
+  ]) {
+    const source = readGuide(relativePath);
+    assert.ok(source.includes("Setup is straightforward:"));
+    assert.ok((source.match(/<li>/g) ?? []).length <= 3);
+  }
+});
+
 test("Quick Start uses the approved five-minute introduction", () => {
   assert.match(
     readGuide("start-here/quick-start.mdx"),

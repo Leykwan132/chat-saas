@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start uses a compact icon-led Example Q&A card without a redundant eyebrow and its training image says timing depends on source size and queue. Channels starts with WhatsApp, then Instagram, Messenger, and Website widget; Quick Start's Deploy link opens WhatsApp. The WhatsApp guide defines coexistence in one sentence, then requires selecting WhatsApp Business app and entering a phone number before phone QR confirmation, conditional Meta payment setup, and history sync. Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, image, example-card, and WhatsApp-guide contracts pass; unreleased and unpushed.
+- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start uses a compact icon-led Example Q&A card without a redundant eyebrow and its training image says timing depends on source size and queue. Channels starts with WhatsApp, then Instagram, Messenger, and Website widget; Quick Start's Deploy link opens WhatsApp. WhatsApp documents its longer coexistence flow; Instagram, Messenger, and Website widget now state and use concise direct setup paths. Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, image, example-card, and WhatsApp-guide contracts pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every Docs content image and its alt-derived caption aligns to the article's left edge; Quick Start's Source training and Test your agent screenshots remain uncropped at 40% desktop width and 100% mobile width, and its Next steps section now links ordered Channels, Workflows, and Bookings outcomes. Recursive caption coverage, thirty-nine Docs tests, six component tests, TypeScript, the 225-document production build, exact built-HTML checks, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every MDX content image now uses one global borderless renderer with a small alt-derived caption and an accessible full-screen native-dialog lightbox; X, Escape, and backdrop dismissal are supported while navbar/theme assets remain excluded. Thirty-seven Docs tests, six component tests, TypeScript, the 225-document production build, built-HTML contracts, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] The mobile docs table-of-contents dropdown is hidden, removing the empty rounded control above page titles; the desktop right-side outline remains unchanged. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
@@ -83,6 +83,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D529 ACTIVE: Instagram, Messenger, and Website widget use concise straightforward setup instructions; WhatsApp retains its distinct coexistence flow.
 - 2026-07-31 [USER] D528 ACTIVE: In the WhatsApp setup flow, select WhatsApp Business app before entering the phone number.
 - 2026-07-31 [USER] D527 ACTIVE: The WhatsApp coexistence flow includes phone-app QR confirmation, conditional Meta payment setup, then a return to KiloBot for the initial history sync.
 - 2026-07-31 [USER] D525 ACTIVE: Rename the WhatsApp connection section to `Connect with Coexistence`.
@@ -352,6 +353,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Reduced Instagram, Messenger, and Website widget setup paths to their direct connection actions.
 - 2026-07-31 [CODE] Made WhatsApp Business app selection and phone-number entry an explicit ordered connection step.
 - 2026-07-31 [CODE] Added phone QR confirmation, payment setup, and history-sync continuation to WhatsApp connection steps and video brief.
 - 2026-07-31 [CODE] Reduced the WhatsApp coexistence introduction to one direct definition.
@@ -417,6 +419,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31T01:20+08:00 [TOOL] Non-WhatsApp channel guides now state straightforward setup and use no more than three ordered connection actions. Node v22.22.0 passed 5/5 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T01:15+08:00 [TOOL] WhatsApp setup now requires WhatsApp Business app selection before phone-number entry. Node v22.22.0 passed 4/4 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T01:10+08:00 [TOOL] WhatsApp connection flow now includes phone QR confirmation, conditional payment setup, and the return to history sync. Node v22.22.0 passed 4/4 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T01:05+08:00 [TOOL] WhatsApp coexistence copy reduced to one definition sentence. Node v22.22.0 passed 4/4 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
