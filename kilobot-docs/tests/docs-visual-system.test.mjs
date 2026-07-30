@@ -30,3 +30,25 @@ test('styles every admonition as a borderless semantic surface', () => {
   assert.ok(admonitionsCss.includes('.theme-admonition-caution'));
   assert.ok(admonitionsCss.includes('.theme-admonition-danger'));
 });
+
+test('balances the desktop article between equal spacers and a right rail', () => {
+  const layoutCss = read('src/theme/DocRoot/Layout/Main/styles.module.css');
+  const tocCss = read('src/css/toc.css');
+  const balancedTracks = [
+    'minmax(2.5rem, 1fr)',
+    'minmax(0, 56rem)',
+    'minmax(2.5rem, 1fr)',
+    'clamp(14rem, 18vw, 19rem)',
+  ];
+
+  assert.ok(layoutCss.includes('@media (min-width: 997px)'));
+  for (const track of balancedTracks) {
+    assert.ok(layoutCss.includes(track));
+  }
+  assert.ok(layoutCss.includes(':has(> :global(.col--3))'));
+  assert.ok(layoutCss.includes('grid-column: 2;'));
+  assert.ok(layoutCss.includes('grid-column: 4;'));
+  assert.ok(layoutCss.includes('@layer docusaurus.theme-classic'));
+  assert.ok(layoutCss.includes('--doc-content-pad-x: 0;'));
+  assert.equal(tocCss.includes('padding-left: 2rem;'), false);
+});

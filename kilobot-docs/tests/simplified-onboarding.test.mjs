@@ -43,13 +43,13 @@ test('uses concise Workflow child labels', () => {
   assert.equal(workflows.includes('Build and test a Workflow'), false);
 });
 
-test('adds desktop-only separation before the page outline', () => {
+test('keeps the desktop outline sticky without a duplicated local spacer', () => {
   const tocCss = read('src/css/toc.css');
   const desktopRule = tocCss.match(
     /\.theme-doc-toc-desktop \{[\s\S]*?\n\}/,
   )?.[0];
 
   assert.ok(desktopRule);
-  assert.match(desktopRule, /padding-left: 2rem;/);
+  assert.equal(desktopRule.includes('padding-left: 2rem;'), false);
   assert.equal(tocCss.includes('@media (max-width: 996px)'), false);
 });

@@ -33,7 +33,34 @@
 @media (min-width: 997px) {
   .docContent {
     --doc-content-pad: 2.75rem;
-    --doc-content-pad-x: 11rem;
+    --doc-content-pad-x: 0;
+  }
+
+  .docContent > :global(.row) {
+    display: grid;
+    grid-template-columns:
+      minmax(2.5rem, 1fr)
+      minmax(0, 56rem)
+      minmax(2.5rem, 1fr);
+  }
+
+  .docContent > :global(.row):has(> :global(.col--3)) {
+    grid-template-columns:
+      minmax(2.5rem, 1fr)
+      minmax(0, 56rem)
+      minmax(2.5rem, 1fr)
+      clamp(14rem, 18vw, 19rem);
+  }
+
+  .docContent > :global(.row) > :global(.col):first-child {
+    grid-column: 2;
+    width: auto;
+  }
+
+  .docContent > :global(.row) > :global(.col--3) {
+    grid-column: 4;
+    width: auto;
+    max-width: none;
   }
 
   .docMainContainer {
@@ -49,5 +76,13 @@
     max-width: calc(
       var(--ifm-container-width) + var(--doc-sidebar-width)
     ) !important;
+  }
+}
+
+@layer docusaurus.theme-classic {
+  @media (min-width: 997px) {
+    .docContent > :global(.row) > :global(.col):first-child {
+      max-width: none !important;
+    }
   }
 }

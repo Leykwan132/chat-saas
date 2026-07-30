@@ -222,7 +222,7 @@ test('uses heading hierarchy with an unlabeled page outline', () => {
     ),
   );
   assert.ok(docMainStyles.includes('--doc-content-pad: 2.75rem'));
-  assert.ok(docMainStyles.includes('--doc-content-pad-x: 11rem'));
+  assert.ok(docMainStyles.includes('--doc-content-pad-x: 0'));
   assert.ok(docMainStyles.includes('@media (min-width: 768px)'));
   assert.ok(docMainStyles.includes('@media (min-width: 997px)'));
   assert.ok(docMainStyles.includes('max-width: none'));
