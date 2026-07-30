@@ -15,7 +15,7 @@ describe('Knowledge Base Workflow promotion', () => {
     expect(navigationSource).toContain(
       'Need your AI agent to send images, videos, reminders, or follow-ups?',
     );
-    expect(navigationSource).toContain('Set it up with Workflow.');
+    expect(navigationSource).not.toContain('Set it up with Workflow.');
     expect(navigationSource).toContain('Try Workflow');
   });
 

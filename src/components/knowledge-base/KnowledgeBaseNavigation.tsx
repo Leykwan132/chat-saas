@@ -88,9 +88,6 @@ export function KnowledgeBaseNavigation({
           <p className="text-sm font-semibold leading-snug text-foreground">
             Need your AI agent to send images, videos, reminders, or follow-ups?
           </p>
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-            Set it up with Workflow.
-          </p>
           <Button asChild variant="outline" size="sm" className="mt-4 w-full">
             <Link to={workflowHref}>
               Try Workflow

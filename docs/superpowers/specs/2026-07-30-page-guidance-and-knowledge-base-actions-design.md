@@ -46,7 +46,6 @@ Place `https://storage.kilobot.app/grad-2.jpg` as a full-width 16:9 banner above
 The card copy is:
 
 - Headline: `Need your AI agent to send images, videos, reminders, or follow-ups?`
-- Description: `Set it up with Workflow.`
 - Action: `Try Workflow →`
 
 The action navigates to the current agent's Workflow page. The card remains visible for every Knowledge Base source type and does not open a modal.

@@ -230,7 +230,7 @@ describe('Knowledge Base Workflow promotion', () => {
     expect(navigationSource).toContain(
       'Need your AI agent to send images, videos, reminders, or follow-ups?',
     );
-    expect(navigationSource).toContain('Set it up with Workflow.');
+    expect(navigationSource).not.toContain('Set it up with Workflow.');
     expect(navigationSource).toContain('Try Workflow');
   });
 
@@ -276,9 +276,6 @@ Render this after `KnowledgeBaseNavGroup`:
 <aside className="rounded-xl border border-border bg-muted/40 p-4">
   <p className="text-sm font-semibold leading-snug text-foreground">
     Need your AI agent to send images, videos, reminders, or follow-ups?
-  </p>
-  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-    Set it up with Workflow.
   </p>
   <Button asChild variant="outline" size="sm" className="mt-4 w-full">
     <Link to={workflowHref}>
@@ -565,9 +562,6 @@ Replace the promotion card with:
   <div className="p-4">
     <p className="text-sm font-semibold leading-snug text-foreground">
       Need your AI agent to send images, videos, reminders, or follow-ups?
-    </p>
-    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-      Set it up with Workflow.
     </p>
     <Button asChild variant="outline" size="sm" className="mt-4 w-full">
       <Link to={workflowHref}>
