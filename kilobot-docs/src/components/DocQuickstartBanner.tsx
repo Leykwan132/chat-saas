@@ -52,7 +52,7 @@ export default function DocQuickstartBanner({
             width={18}
             height={18}
           />
-          <span className={styles.mediaWordmark}>Kilobot</span>
+          <span className={styles.mediaWordmark}>KiloBot</span>
         </div>
       </div>
     </div>

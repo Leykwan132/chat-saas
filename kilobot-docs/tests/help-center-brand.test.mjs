@@ -12,7 +12,7 @@ function read(relativePath) {
 
 test('configures the public KiloBot domain, local search, and product navigation', () => {
   const config = read('docusaurus.config.ts');
-  assert.ok(config.includes("title: 'Kilobot Docs'"));
+  assert.ok(config.includes("title: 'KiloBot Docs'"));
   assert.ok(config.includes("url: 'https://docs.kilobot.app'"));
   assert.ok(config.includes("'@cmfcmf/docusaurus-search-local'"));
   assert.ok(config.includes("markdown: {hooks: {onBrokenMarkdownLinks: 'throw'}}"));
@@ -34,7 +34,7 @@ test('uses a Docs brand pill instead of Guides and Core concepts navbar links', 
     config.includes("{to: '/start-here/core-concepts', label: 'Core concepts', position: 'left'}"),
     false,
   );
-  assert.ok(config.includes("label: 'Try Kilobot'"));
+  assert.ok(config.includes("label: 'Try KiloBot'"));
   assert.equal(config.includes("label: 'Dashboard'"), false);
   assert.equal(config.includes("label: 'Go to dashboard'"), false);
   assert.equal(existsSync(path.join(root, navbarLogoPath)), true);
@@ -77,7 +77,7 @@ test('styles the top bar like the product header chrome', () => {
   assert.ok(navbarCss.includes('height: 2.25rem'));
 });
 
-test('uses Geist for docs content and Gilda for Kilobot marketing titles', () => {
+test('uses Geist for docs content and Gilda for KiloBot marketing titles', () => {
   const config = read('docusaurus.config.ts');
   const css = read('src/css/custom.css');
   const navbarCss = read('src/css/navbar.css');
@@ -139,9 +139,14 @@ test('opens the documentation shell at the root without a custom home page', () 
   assert.equal(welcome.includes('pagination_next: null'), false);
   assert.ok(welcome.includes('pagination_prev: null'));
   assert.ok(welcome.includes('hide_table_of_contents: true'));
-  assert.ok(welcome.includes("to: '/start-here/launch-guide'"));
+  assert.ok(welcome.includes("to: '/start-here/quick-start'"));
+  assert.equal(
+    [...welcome.matchAll(/<DocPathTile/g)].length,
+    2,
+  );
+  assert.ok(welcome.includes('title="Quick Start"'));
+  assert.ok(welcome.includes('title="Browse the guide"'));
   assert.ok(welcome.includes('to="/build-your-agent/agent-setup"'));
-  assert.ok(welcome.includes('title="Core Concepts"'));
   assert.ok(welcome.includes('from \'lucide-react\''));
   assert.equal(existsSync(path.join(root, 'src/pages/index.tsx')), false);
   assert.equal(existsSync(path.join(root, 'src/pages/index.module.css')), false);
@@ -152,7 +157,7 @@ test('opens the documentation shell at the root without a custom home page', () 
 test('scopes circular step badges and ships path/card components', () => {
   const css = read('src/css/custom.css');
   const paginationCss = read('src/css/pagination.css');
-  const launchGuide = read('docs/start-here/launch-guide.mdx');
+  const agentSetup = read('docs/build-your-agent/agent-setup.mdx');
   const packageJson = read('package.json');
 
   assert.ok(css.includes('.theme-doc-markdown ol.steps'));
@@ -176,7 +181,7 @@ test('scopes circular step badges and ships path/card components', () => {
     paginationCss,
     /\.pagination-nav__link,\s*\.pagination-nav__link:hover \{[\s\S]*border: none;/,
   );
-  assert.ok(launchGuide.includes('className="steps"'));
+  assert.ok(agentSetup.includes('className="steps"'));
   assert.ok(packageJson.includes('"lucide-react"'));
   assert.equal(existsSync(path.join(root, 'src/components/DocPathGrid.tsx')), true);
   assert.equal(existsSync(path.join(root, 'src/components/DocPathTile.tsx')), true);
@@ -217,7 +222,7 @@ test('uses heading hierarchy with an unlabeled page outline', () => {
     ),
   );
   assert.ok(docMainStyles.includes('--doc-content-pad: 2.75rem'));
-  assert.ok(docMainStyles.includes('--doc-content-pad-x: 11rem'));
+  assert.ok(docMainStyles.includes('--doc-content-pad-x: 0'));
   assert.ok(docMainStyles.includes('@media (min-width: 768px)'));
   assert.ok(docMainStyles.includes('@media (min-width: 997px)'));
   assert.ok(docMainStyles.includes('max-width: none'));

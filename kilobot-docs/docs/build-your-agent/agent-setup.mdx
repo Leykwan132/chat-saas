@@ -1,64 +1,149 @@
 ---
-title: Agent
-description: Configure your AI agent's prompt, model, style, reply mode, and test behavior.
+title: Agent Setup
+description: Define, test, and publish the behavior of your KiloBot agent.
 slug: /build-your-agent/agent-setup
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
-# Agent
+# Agent Setup
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-The agent is the customer-facing AI you configure — role, model, tone, and reply mode. Use **Workflows** for specific customer intents and actions, and keep durable business facts in the **Knowledge Base** instead of the system prompt. Open **Agent Setup** in the product to edit these controls.
+Agent Setup defines who the agent is, how it communicates, and when it should involve a person. Keep business facts in [Knowledge Base](/build-your-agent/knowledge-base) and use [Workflows](/automate/workflow-overview) for requests that must perform an action.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Decide where instructions, facts, and actions belong
+- Write clear behavior, tone, boundaries, and escalation rules
+- Test changes before publishing the agent
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- An agent you can manage
+- Approved business boundaries and escalation rules
+- Permission to publish agent configuration
+
+</DocPrerequisites>
+
+## Decide where information belongs
+
+| Put it in | Use it for | Example |
+| --- | --- | --- |
+| Agent Setup | Role, goals, tone, boundaries, escalation | “Never diagnose a medical condition.” |
+| Knowledge Base | Durable facts the agent may answer from | Opening hours, pricing, policies |
+| Workflow | A defined condition that performs an action | Send a brochure or book an appointment |
 
 ## Write the system prompt
 
-The system prompt defines who the agent is, who it serves, and how it should behave. Keep business facts in the **Knowledge Base** instead of repeating them in the prompt.
+A useful prompt identifies the agent, audience, goals, conversation behavior, knowledge limits, and handoff boundary.
+
+<DocExample title="Weak prompt">
+
+`You are a helpful dental assistant. Answer questions and get bookings.`
+
+This leaves the audience, knowledge boundary, escalation behavior, and acceptable booking behavior unclear.
+
+</DocExample>
+
+<DocExample title="Northstar Booking Assistant system prompt">
+
+```text
+You are Northstar Booking Assistant for Northstar Dental.
+
+Help prospective and existing patients understand approved clinic information
+and take the next appropriate step.
+
+Use the Knowledge Base for business facts. If the answer is missing or
+conflicting, say that you do not have confirmed information and offer a human
+handoff. Never invent services, prices, availability, medical advice, diagnoses,
+or treatment suitability.
+
+Ask one clear question at a time. Keep answers concise, warm, and professional.
+Use a Workflow when a matching request requires a brochure, booking, escalation,
+or conversation closure.
+
+Escalate urgent symptoms, complaints, payment disputes, privacy requests, and
+requests for clinical judgment to a teammate.
+```
+
+</DocExample>
 
 <ol className="steps">
   <li>Open <strong>Agent Setup</strong>.</li>
-  <li>Apply a starter template or write your own system prompt.</li>
-  <li>Include the agent's role, audience, goals, conversation flow, tone, safety boundaries, and when to involve a human.</li>
+  <li>Apply a starter template or replace the prompt with an approved version.</li>
+  <li>Keep facts out of the prompt when they belong in Knowledge Base.</li>
+  <li>Review the escalation and safety boundaries.</li>
 </ol>
 
-## Tune the model and style
+## Choose model and style
 
-These settings tune the default presentation. A **Workflow** action can still require an exact message or behavior for a specific condition.
+Open **Model & Style**, choose a model available to the workspace plan, and set response length, emoji use, formality, and humor. Style settings shape normal replies; exact Workflow messages remain exact.
 
-<ol className="steps">
-  <li>Open <strong>Model & Style</strong>.</li>
-  <li>Set the <strong>Name</strong> shown in the workspace.</li>
-  <li>Choose a <strong>Model</strong> from those enabled for your plan.</li>
-  <li>Adjust <strong>Response length</strong>, <strong>Emoji use</strong>, <strong>Formality</strong>, and <strong>Humor level</strong>.</li>
-</ol>
+## Control AI replies
 
-## Control when the AI replies
+Open **Triggers** and choose the available **Reply mode**. Human escalation or a conversation-level pause can prevent automatic replies even when the agent is published. Missing controls can indicate a plan, permission, or routing restriction.
 
-**Reply mode** determines whether the AI automatically answers inbound messages or waits for a teammate to enable it. Availability of this control depends on routing permissions and plan features.
-
-<ol className="steps">
-  <li>Open <strong>Triggers</strong>.</li>
-  <li>Set <strong>Reply mode</strong> to the behavior you want.</li>
-</ol>
-
-## Test and publish
-
-Validate behavior before customers see it. If you navigate away with unpublished changes, KiloBot warns that the draft has not been published.
-
-<ol className="steps">
-  <li>Open <strong>Test agent</strong>.</li>
-  <li>Send a normal question, a missing-knowledge question, an escalation request, and any important workflow intent.</li>
-  <li>Update the prompt or <strong>Knowledge Base</strong> based on what you observe.</li>
-  <li>Choose <strong>Publish</strong> to save the configuration.</li>
-</ol>
-
-:::tip
-Test with customer wording, abbreviations, and incomplete questions rather than only the exact phrases used in your documentation.
-:::
-
-<DocCard
-  to="/build-your-agent/knowledge-base"
-  title="Knowledge Base"
-  description="Add the trusted facts your agent should answer from"
+<DocMediaPlaceholder
+  kind="image"
+  title="Agent Setup controls"
+  description="Show the prompt, Model & Style, Triggers, Test agent, and Publish controls in one readable composition."
+  capture={['Prompt editor', 'Model & Style section', 'Triggers and Reply mode', 'Test agent and Publish actions']}
+  callouts={['Prompt', 'Style', 'Reply mode', 'Test', 'Publish']}
+  sensitive={['Private prompt rules', 'Unrelated agent names']}
+  assetPath="/media/agent/agent-setup-controls.png"
 />
+
+## Test the behavior
+
+Test customer wording, abbreviations, and incomplete questions—not only phrases copied from your source material.
+
+| Test | Northstar message | Expected behavior |
+| --- | --- | --- |
+| Known fact | “Are you open Saturday?” | Uses the approved hours |
+| Paraphrase | “Can I come this weekend?” | Reaches the same grounded answer |
+| Missing fact | “Do you offer emergency root canals?” | Does not invent a service |
+| Escalation | “I want to dispute a payment.” | Offers or triggers human help |
+| Workflow intent | “Send me your brochure.” | Matches the intended Workflow only |
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Test grounded and unknown questions"
+  description="Show one supported answer and one safe response to missing knowledge."
+  capture={['A grounded opening-hours answer', 'An unknown service question', 'The non-invented response']}
+  callouts={['Grounded', 'Unknown', 'Safe boundary']}
+  sensitive={['Other test conversations']}
+  assetPath="/media/agent/test-agent.png"
+/>
+
+## Publish
+
+**Publish** makes the current draft active. Saving or editing a field does not guarantee that customers receive the new configuration. If you navigate away with an unpublished draft, return and publish after testing.
+
+<DocSuccess>
+
+- Known and paraphrased questions use the same approved facts.
+- Missing information is not invented.
+- Escalation and Workflow tests activate only when intended.
+- The latest tested draft has been published.
+
+</DocSuccess>
+
+## Common problems
+
+- **The answer is wrong:** correct conflicting Knowledge Base sources before expanding the prompt.
+- **An action does not run:** check the Workflow condition and near-miss tests.
+- **AI does not reply:** check conversation AI state, Reply mode, credits, permissions, and channel connection.
+- **A change is absent:** confirm the draft was published.
+
+<DocCard to="/build-your-agent/knowledge-base" title="Knowledge Base" description="Add and maintain the trusted facts used in replies" />

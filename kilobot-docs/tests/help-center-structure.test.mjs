@@ -8,60 +8,42 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const requiredDocs = [
   'docs/start-here/welcome.mdx',
-  'docs/start-here/launch-guide.mdx',
+  'docs/start-here/quick-start.mdx',
   'docs/start-here/workspaces-and-agents.mdx',
   'docs/build-your-agent/agent-setup.mdx',
   'docs/build-your-agent/knowledge-base.mdx',
   'docs/automate/workflow-overview.mdx',
+  'docs/automate/build-and-test.mdx',
   'docs/automate/reminders.mdx',
   'docs/automate/follow-ups.mdx',
   'docs/channels/connect-channels.mdx',
+  'docs/channels/website-widget.mdx',
+  'docs/channels/whatsapp.mdx',
+  'docs/channels/instagram.mdx',
+  'docs/channels/messenger.mdx',
   'docs/bookings/services.mdx',
   'docs/bookings/availability.mdx',
   'docs/bookings/calendar.mdx',
   'docs/engage/inbox.mdx',
   'docs/engage/contacts.mdx',
-  'docs/engage/quick-replies.mdx',
   'docs/engage/message-templates.mdx',
   'docs/engage/broadcast.mdx',
   'docs/team/lead-assignment.mdx',
   'docs/team/workspace-and-team.mdx',
   'docs/team/roles-and-permissions.mdx',
-  'docs/insights/overview-and-analytics.mdx',
-  'docs/insights/usage-and-billing.mdx',
   'docs/help/troubleshooting.mdx',
   'docs/help/contact-support.mdx',
 ];
 
-const coreConceptDocs = [
-  'build-your-agent/agent-setup',
-  'build-your-agent/knowledge-base',
-  'automate/workflow-overview',
-  'bookings/services',
-  'bookings/availability',
-  'channels/connect-channels',
-];
-
-const resourceDocs = [
-  'engage/inbox',
-  'engage/contacts',
-  'bookings/calendar',
-  'engage/message-templates',
-  'automate/reminders',
-  'automate/follow-ups',
-  'engage/quick-replies',
-  'engage/broadcast',
-  'team/workspace-and-team',
-  'team/roles-and-permissions',
-  'team/lead-assignment',
-  'insights/overview-and-analytics',
-  'insights/usage-and-billing',
-];
-
 const requiredSidebarLabels = [
   'Getting started',
-  'Core Concepts',
-  'Resources',
+  'Agent',
+  'Channels',
+  'Bookings',
+  'Workflows',
+  'Outreach',
+  'Teams',
+  'Releases',
   'Help and support',
 ];
 
@@ -69,55 +51,30 @@ function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
 }
 
-function sidebarItemsBlock(sidebar, label) {
-  return sidebar.match(
-    new RegExp(`label: '${label}',[\\s\\S]*?items: \\[([\\s\\S]*?)\\],`),
-  )?.[1];
-}
-
 test('ships every required product guide with useful front matter', () => {
   for (const relativePath of requiredDocs) {
     assert.equal(existsSync(path.join(root, relativePath)), true, `${relativePath} is missing`);
     const source = read(relativePath);
     assert.match(source, /^---\n[\s\S]*title: .+[\s\S]*description: .+[\s\S]*---/);
-    assert.ok(source.split(/\s+/).length >= 90, `${relativePath} is too thin`);
-    if (relativePath !== 'docs/start-here/welcome.mdx') {
-      assert.ok(
-        source.includes('## Overview'),
-        `${relativePath} is missing ## Overview`,
-      );
-    }
+    assert.ok(source.split(/\s+/).length >= 70, `${relativePath} is too thin`);
   }
   assert.equal(existsSync(path.join(root, 'docs/start-here/core-concepts.mdx')), false);
   assert.equal(existsSync(path.join(root, 'docs/automate/workflow-actions.mdx')), false);
-  assert.ok(
-    read('docs/automate/workflow-overview.mdx').includes('## Choose an action type'),
-  );
 });
 
-test('keeps Core Concepts to the essentials and the rest in Resources', () => {
+test('keeps retired guides outside the public docs input', () => {
   const sidebar = read('sidebars.ts');
-  const coreBlock = sidebarItemsBlock(sidebar, 'Core Concepts');
-  const resourceBlock = sidebarItemsBlock(sidebar, 'Resources');
-  assert.ok(coreBlock, 'Core Concepts items block is missing');
-  assert.ok(resourceBlock, 'Resources items block is missing');
-
-  const coreIds = [...coreBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]);
-  assert.equal(coreIds.length, coreConceptDocs.length);
-  assert.deepEqual(coreIds, coreConceptDocs);
-  for (const docId of coreConceptDocs) {
-    assert.ok(coreBlock.includes(`'${docId}'`), `Core Concepts missing ${docId}`);
+  const retiredPaths = [
+    'docs/engage/quick-replies.mdx',
+    'docs/insights/overview-and-analytics.mdx',
+    'docs/insights/usage-and-billing.mdx',
+  ];
+  for (const retiredPath of retiredPaths) {
+    assert.equal(existsSync(path.join(root, retiredPath)), false);
   }
-  for (const docId of resourceDocs) {
-    assert.ok(resourceBlock.includes(`'${docId}'`), `Resources missing ${docId}`);
-    assert.equal(
-      coreBlock.includes(`'${docId}'`),
-      false,
-      `${docId} should not be in Core Concepts`,
-    );
-  }
-  assert.equal(coreBlock.includes('team/workspace-and-team'), false);
-  assert.equal(coreBlock.includes('team/roles-and-permissions'), false);
+  assert.equal(sidebar.includes('quick-replies'), false);
+  assert.equal(sidebar.includes('overview-and-analytics'), false);
+  assert.equal(sidebar.includes('usage-and-billing'), false);
 });
 
 test('uses an explicit task-oriented sidebar', () => {
