@@ -35,10 +35,11 @@
 
 .caption {
   display: block;
-  margin-top: 0.5rem;
-  color: var(--ifm-font-color-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  margin-top: 0.625rem;
+  color: var(--ifm-font-color-base);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.45;
   text-align: left;
 }
 

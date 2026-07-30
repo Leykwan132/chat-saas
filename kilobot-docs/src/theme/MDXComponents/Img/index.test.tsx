@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createRef} from 'react';
 import {describe, test} from 'node:test';
 import {renderToStaticMarkup} from 'react-dom/server';
+import {fileURLToPath} from 'node:url';
 import MDXImg, {
   ExpandedImageDialog,
   isBackdropSelection,
@@ -47,5 +49,18 @@ describe('MDX image lightbox', () => {
 
     assert.equal(isBackdropSelection(backdrop, backdrop), true);
     assert.equal(isBackdropSelection(image, backdrop), false);
+  });
+
+  test('keeps captions readable directly below images', () => {
+    const styles = readFileSync(
+      fileURLToPath(new URL('./styles.module.css', import.meta.url)),
+      'utf8',
+    );
+    const captionRule = styles.match(/\.caption \{[\s\S]*?\n\}/)?.[0] ?? '';
+
+    assert.match(captionRule, /margin-top:\s*0\.625rem/);
+    assert.match(captionRule, /font-size:\s*0\.875rem/);
+    assert.match(captionRule, /font-weight:\s*500/);
+    assert.match(captionRule, /color:\s*var\(--ifm-font-color-base\)/);
   });
 });
