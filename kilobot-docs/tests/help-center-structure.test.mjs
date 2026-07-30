@@ -42,7 +42,7 @@ const requiredSidebarLabels = [
   'Channels',
   'Bookings',
   'Workflows',
-  'Broadcast',
+  'Outreach',
   'Teams',
   'Releases',
   'Help and support',

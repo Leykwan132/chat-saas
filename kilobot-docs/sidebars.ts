@@ -76,14 +76,14 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Broadcast',
+      label: 'Outreach',
       collapsed: false,
       collapsible: false,
       items: [
         {
           type: 'doc',
           id: 'engage/broadcast',
-          label: 'Create a broadcast',
+          label: 'Broadcast',
         },
         {
           type: 'doc',

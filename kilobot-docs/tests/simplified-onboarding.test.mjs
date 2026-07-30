@@ -90,7 +90,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
 test('uses task-based Workflow child labels', () => {
   const sidebar = read('sidebars.ts');
   const workflows = sidebar.match(
-    /label: 'Workflows'[\s\S]*?label: 'Broadcast'/,
+    /label: 'Workflows'[\s\S]*?label: 'Outreach'/,
   )?.[0];
   const labels = [
     'Send messages and assets',

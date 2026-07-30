@@ -21,7 +21,7 @@ test('uses the approved public guide order', () => {
     'Channels',
     'Workflows',
     'Bookings',
-    'Broadcast',
+    'Outreach',
     'Teams',
     'Releases',
     'Help and support',
@@ -61,7 +61,7 @@ test('starts Channels with the Website widget and hides Conversations', () => {
 test('hides Calendar from Bookings navigation', () => {
   const sidebar = read('sidebars.ts');
   const bookings = sidebar.match(
-    /label: 'Bookings'[\s\S]*?label: 'Broadcast'/,
+    /label: 'Bookings'[\s\S]*?label: 'Outreach'/,
   )?.[0];
 
   assert.ok(bookings);
@@ -86,7 +86,7 @@ test('limits Teams to roles and lead assignment', () => {
 test('organizes Workflows around user tasks', () => {
   const sidebar = read('sidebars.ts');
   const workflows = sidebar.match(
-    /label: 'Workflows'[\s\S]*?label: 'Broadcast'/,
+    /label: 'Workflows'[\s\S]*?label: 'Outreach'/,
   )?.[0];
   const orderedItems = [
     'automate/send-messages-and-assets',
@@ -107,17 +107,18 @@ test('organizes Workflows around user tasks', () => {
   assert.equal(workflows.includes('build-and-test'), false);
 });
 
-test('places broadcasts before message templates', () => {
+test('places Broadcast before Message templates under Outreach', () => {
   const sidebar = read('sidebars.ts');
-  const broadcast = sidebar.match(
-    /label: 'Broadcast'[\s\S]*?label: 'Teams'/,
+  const outreach = sidebar.match(
+    /label: 'Outreach'[\s\S]*?label: 'Teams'/,
   )?.[0];
 
-  assert.ok(broadcast);
-  assert.ok(broadcast.indexOf('engage/broadcast') > -1);
+  assert.ok(outreach);
+  assert.ok(outreach.indexOf("label: 'Broadcast'") > -1);
+  assert.ok(outreach.indexOf("label: 'Message templates'") > -1);
   assert.ok(
-    broadcast.indexOf('engage/broadcast')
-      < broadcast.indexOf('engage/message-templates'),
+    outreach.indexOf('engage/broadcast')
+      < outreach.indexOf('engage/message-templates'),
   );
 });
 
