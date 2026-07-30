@@ -21,13 +21,14 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     'https://storage.kilobot.app/docs/docs-training.jpeg',
     'https://storage.kilobot.app/docs/docs-testing.png',
   ];
-  const testingImageStart = quickStart.indexOf(
-    '<div className="docs-image-compact">',
-  );
-  const testingImage = quickStart.indexOf(
+  const compactImageUrls = [
+    'https://storage.kilobot.app/docs/docs-training.jpeg',
     'https://storage.kilobot.app/docs/docs-testing.png',
-  );
-  const testingImageEnd = quickStart.indexOf('</div>', testingImageStart);
+  ];
+  const compactWrapper = '<div className="docs-image-compact">';
+  const compactWrappers = [...quickStart.matchAll(
+    /<div className="docs-image-compact">[\s\S]*?<\/div>/g,
+  )].map((match) => match[0]);
 
   assert.deepEqual(
     requiredHeadings.map((match) => match[2].replace(/ ·.+$/, '')),
@@ -54,9 +55,15 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     assert.equal(quickStart.includes(screenshotUrl), true, screenshotUrl);
   }
 
-  assert.ok(testingImageStart >= 0);
-  assert.ok(testingImageStart < testingImage);
-  assert.ok(testingImage < testingImageEnd);
+  assert.equal(compactWrappers.length, 2);
+  for (const compactImageUrl of compactImageUrls) {
+    assert.equal(
+      compactWrappers.some((wrapper) => wrapper.includes(compactImageUrl)),
+      true,
+      compactImageUrl,
+    );
+  }
+  assert.equal(quickStart.match(new RegExp(compactWrapper, 'g'))?.length, 2);
   assert.ok(
     quickStart.indexOf('https://storage.kilobot.app/docs/docs-testing.png')
       < quickStart.indexOf('Your agent is ready!'),

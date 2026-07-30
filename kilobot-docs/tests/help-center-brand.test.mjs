@@ -77,12 +77,12 @@ test('uses Geist for body text and dashboard-aligned color tokens', () => {
   );
 });
 
-test('keeps the testing screenshot compact on desktop and full-width on mobile', () => {
+test('keeps both tall screenshots compact on desktop and full-width on mobile', () => {
   const css = read('src/css/custom.css');
 
   assert.match(
     css,
-    /\.docs-image-compact\s*\{[^}]*width:\s*70%;[^}]*margin-inline:\s*auto;/s,
+    /\.docs-image-compact\s*\{[^}]*width:\s*40%;[^}]*margin-inline:\s*auto;/s,
   );
   assert.match(
     css,
