@@ -219,6 +219,9 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
     source.indexOf("Coexistence lets you use the same WhatsApp Business number") <
       source.indexOf('<ol className="steps">'),
   );
+  assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
+  assert.ok(source.includes("Add a payment method if Meta asks for one"));
+  assert.ok(source.includes("continue the initial history sync"));
   assert.ok(source.includes("## Disconnect"));
   assert.ok(source.includes("clears its authorization"));
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));
