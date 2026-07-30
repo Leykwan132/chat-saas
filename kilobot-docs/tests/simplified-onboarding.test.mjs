@@ -33,6 +33,13 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     false,
   );
   assert.equal(quickStart.includes('unsupported'), false);
+  assert.ok(quickStart.includes('title="See how Sources trains your agent"'));
+  assert.ok(quickStart.includes('assetPath="/media/quick-start/sources-training.png"'));
+  assert.ok(quickStart.includes("'The source training state'"));
+  assert.equal(
+    quickStart.includes('assetPath="/media/quick-start/add-knowledge.png"'),
+    false,
+  );
 });
 
 test('uses concise Workflow child labels', () => {
