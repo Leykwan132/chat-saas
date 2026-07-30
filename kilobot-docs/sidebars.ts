@@ -57,13 +57,28 @@ const sidebars: SidebarsConfig = {
       items: [
         {
           type: 'doc',
-          id: 'automate/workflow-overview',
-          label: 'Overview',
+          id: 'automate/send-messages-and-assets',
+          label: 'Send messages and assets',
         },
         {
           type: 'doc',
-          id: 'automate/build-and-test',
-          label: 'Build and test',
+          id: 'automate/human-in-the-loop',
+          label: 'Human in the loop',
+        },
+        {
+          type: 'doc',
+          id: 'automate/automate-bookings',
+          label: 'Automate bookings',
+        },
+        {
+          type: 'doc',
+          id: 'automate/reminders',
+          label: 'Reminders',
+        },
+        {
+          type: 'doc',
+          id: 'automate/follow-ups',
+          label: 'Follow-ups',
         },
       ],
     },

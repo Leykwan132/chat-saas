@@ -1,0 +1,104 @@
+---
+title: Human in the loop
+description: Pause AI replies and involve a teammate when a conversation needs human judgment.
+slug: /automate/human-in-the-loop
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Human in the loop
+
+<DocVerified date="2026-07-30" />
+
+Human escalation pauses AI replies and gives a teammate space to take over when judgment, safety, or personal support matters more than automation.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Recognize when a teammate should take over
+- Pause AI replies with a clear escalation condition
+- Close a conversation only when it is complete
+
+</DocOutcomes>
+
+## Decide when a person is needed
+
+Escalate when:
+
+- The customer directly asks to speak with a person.
+- The agent cannot answer confidently from trusted knowledge.
+- The request involves a complaint, exception, safety concern, or sensitive decision.
+- Your team has promised that a person will review this type of request.
+
+Do not use escalation as a substitute for missing business knowledge. Add stable facts to the Knowledge Base and reserve human involvement for requests that require judgment or ownership.
+
+## Add a clear escalation
+
+<DocExample title="Northstar Dental human support">
+
+**Name:** Needs a teammate
+
+**Detail:** Match when the customer asks for a human, reports an urgent or sensitive concern, makes a complaint, or needs help that the agent cannot provide confidently. Do not match ordinary questions that the Knowledge Base can answer.
+
+</DocExample>
+
+<ol className="steps">
+  <li>Open <strong>Workflows → Direct Message</strong>.</li>
+  <li>Add <strong>Human escalation</strong> from the relevant connection.</li>
+  <li>Enter a narrow Name and Detail.</li>
+  <li>Save the Workflow.</li>
+  <li>Test the request and confirm AI replies pause.</li>
+  <li>Open Inbox and confirm a teammate can take ownership.</li>
+</ol>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Configure a Human escalation action"
+  description="Show the escalation node and its precise condition in the inspector."
+  capture={['Message enters', 'Needs a teammate condition', 'Human escalation node', 'Condition Detail']}
+  callouts={['Trigger', 'Boundary', 'Handoff']}
+  sensitive={['Customer conversations', 'Teammate identities', 'Unrelated Workflow branches']}
+  assetPath="/media/workflows/human-escalation-condition.png"
+/>
+
+## Verify the handoff
+
+Test one request that should escalate and one that should remain with the agent:
+
+- **Escalate:** `I need to speak with someone about a complaint.`
+- **Do not escalate:** `What time do you close on Saturday?`
+
+After escalation, the agent should not continue sending automated replies. Confirm the conversation appears in Inbox with the correct AI state before relying on the branch.
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Escalate and verify teammate ownership"
+  description="Trigger a human handoff, confirm AI replies pause, and show the conversation ready for a teammate in Inbox."
+  capture={[
+    'Test the complaint request',
+    'Show the Human escalation result',
+    'Open the same conversation in Inbox',
+    'Confirm the paused AI state and teammate ownership',
+  ]}
+  duration="45–75 seconds"
+  sensitive={['Real customer data', 'Phone numbers', 'Private teammate details']}
+  assetPath="/media/workflows/verify-human-handoff.mp4"
+/>
+
+## Close a completed conversation
+
+Use **Close conversation** only when a narrow condition proves that no more action is required. Closing is terminal, so do not connect it to broad signals such as a short reply or a general thank-you that may still need follow-up.
+
+<DocSuccess>
+
+- Human requests and sensitive cases reach a teammate.
+- Ordinary questions remain with the agent.
+- AI replies pause after escalation.
+- Only clearly completed conversations close automatically.
+
+</DocSuccess>

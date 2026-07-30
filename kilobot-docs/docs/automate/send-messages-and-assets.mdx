@@ -1,0 +1,106 @@
+---
+title: Send messages and assets
+description: Send approved text, photos, videos, and files when a customer request matches.
+slug: /automate/send-messages-and-assets
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Send messages and assets
+
+<DocVerified date="2026-07-30" />
+
+Use a Workflow when a customer request should send approved content instead of relying on the agent to compose a new response.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Send an exact message when a customer request matches
+- Deliver approved photos, videos, and files
+- Test matches and near-misses before saving
+
+</DocOutcomes>
+
+## Choose what to send
+
+| Action | Use it for | Example |
+| --- | --- | --- |
+| **Send message** | Exact customer-facing text | Preparation instructions |
+| **Send Photo/Video** | Approved visual media | A clinic tour |
+| **Send Files** | Documents customers can open or download | A treatment brochure |
+
+Keep the customer-facing content in the action. Use the condition only to explain when that action should run.
+
+## Describe when it should happen
+
+Write a short Name that is easy to scan on the canvas, followed by a precise Detail that separates the request from similar intents.
+
+<DocExample title="Northstar Dental brochure">
+
+**Name:** Treatment brochure
+
+**Detail:** Match when the customer asks for the clinic brochure, a general treatment overview, or a document describing available services. Do not match questions about pricing, booking, or whether a treatment is suitable for a specific person.
+
+</DocExample>
+
+## Build the branch
+
+<ol className="steps">
+  <li>Open <strong>Workflows → Direct Message</strong>.</li>
+  <li>Use the connection control beside <strong>Message enters</strong>.</li>
+  <li>Choose <strong>Send Files</strong>.</li>
+  <li>Enter the condition Name and Detail.</li>
+  <li>Upload the approved brochure.</li>
+  <li>Choose <strong>Save</strong> when the branch is ready.</li>
+</ol>
+
+Use **Discard changes** if you need to return to the last saved Workflow. Arrange and Cleanup change the canvas layout without changing the intended customer action.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Choose a message or asset action"
+  description="Show the Direct Message action picker with the supported customer-facing content actions."
+  capture={['Send message', 'Send Photo/Video', 'Send Files']}
+  callouts={['Exact text', 'Visual media', 'Documents']}
+  sensitive={['Private files', 'Unreleased internal actions', 'Customer information']}
+  assetPath="/media/workflows/message-and-asset-actions.png"
+/>
+
+## Test the condition
+
+Test the requests that should match and nearby requests that should follow a different path:
+
+- **Match:** `Can you send me your treatment brochure?`
+- **Paraphrase:** `I need a document explaining your services.`
+- **Near-miss:** `How much does a consultation cost?`
+- **Other action:** `I want to book a consultation.`
+
+The first two requests should receive the brochure. Pricing and booking requests should not.
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Send and verify a brochure"
+  description="Build the brochure branch, save it, and verify two matches and two near-misses."
+  capture={[
+    'Show the successful brochure result first',
+    'Create the condition and Send Files action',
+    'Upload the approved brochure and save',
+    'Test the match, paraphrase, pricing question, and booking request',
+  ]}
+  duration="60–90 seconds"
+  sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}
+  assetPath="/media/workflows/send-and-test-brochure.mp4"
+/>
+
+<DocSuccess>
+
+- The direct request and paraphrase receive the approved brochure.
+- Pricing and booking requests do not send the brochure.
+- The latest tested Workflow is saved.
+
+</DocSuccess>

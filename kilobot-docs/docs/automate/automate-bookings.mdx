@@ -1,0 +1,103 @@
+---
+title: Automate bookings
+description: Start appointment booking when a customer's message shows clear booking intent.
+slug: /automate/automate-bookings
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Automate bookings
+
+<DocVerified date="2026-07-30" />
+
+The Book appointment action lets the agent move from a clear booking request into your configured service and availability flow.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Connect a booking request to an active service
+- Keep service and availability setup in Bookings
+- Test booking intent without matching unrelated questions
+
+</DocOutcomes>
+
+## Prepare the booking flow
+
+Workflow decides **when** booking should begin. The Bookings section controls **what** customers can book and **when** appointments are available:
+
+- [Services](/bookings/services) defines the customer-facing appointment, duration, fields, and eligible teammates.
+- [Availability](/bookings/availability) defines working hours, buffers, and open slots.
+- [Calendar](/bookings/calendar) shows the confirmed appointment and its status.
+
+Create and activate the service before selecting it in a Workflow.
+
+## Match clear booking intent
+
+<DocExample title="Northstar Consultation booking">
+
+**Name:** Book a consultation
+
+**Detail:** Match when the customer clearly asks to schedule, book, or choose an appointment time for a Northstar Consultation. Do not match general questions about the service, price, preparation, or suitability.
+
+</DocExample>
+
+<ol className="steps">
+  <li>Open <strong>Workflows → Direct Message</strong>.</li>
+  <li>Add <strong>Book appointment</strong> from the relevant connection.</li>
+  <li>Select the active <strong>Northstar Consultation</strong> service.</li>
+  <li>Enter the booking condition Name and Detail.</li>
+  <li>Save the Workflow.</li>
+</ol>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Configure the Book appointment action"
+  description="Show a booking node with the Northstar Consultation service and a precise booking condition."
+  capture={['Book appointment node', 'Selected service', 'Condition Name', 'Condition Detail']}
+  callouts={['Intent', 'Active service', 'Booking action']}
+  sensitive={['Private service data', 'Customer information', 'Unrelated Workflow branches']}
+  assetPath="/media/workflows/book-appointment-action.png"
+/>
+
+## Test the complete outcome
+
+Use requests that separate booking intent from nearby questions:
+
+- **Book:** `I want to book a consultation for next week.`
+- **Paraphrase:** `Can I schedule a time with the dentist?`
+- **Near-miss:** `How much does the consultation cost?`
+- **Near-miss:** `What should I bring to my appointment?`
+
+The first two requests should enter booking. The pricing and preparation questions should receive information without starting appointment selection.
+
+Complete one controlled booking, explicitly confirm the chosen slot, and verify the new appointment under [Calendar](/bookings/calendar).
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Trigger and verify an automated booking"
+  description="Test booking intent, confirm a slot, and verify the resulting appointment in Calendar."
+  capture={[
+    'Show the configured booking condition and service',
+    'Test a direct booking request',
+    'Choose and confirm an available slot',
+    'Open Calendar and verify the appointment',
+    'Test a pricing-only near-miss',
+  ]}
+  duration="60–90 seconds"
+  sensitive={['Real customer records', 'Phone numbers', 'Private provider schedules']}
+  assetPath="/media/workflows/verify-automated-booking.mp4"
+/>
+
+<DocSuccess>
+
+- Clear booking requests enter the selected service flow.
+- Informational questions do not start booking.
+- The customer explicitly confirms the slot.
+- The completed test appears in Calendar.
+
+</DocSuccess>
