@@ -49,6 +49,14 @@ test('styles every shared informational panel as a borderless rounded surface', 
   }
 });
 
+test('uses compact, consistent spacing in example cards', () => {
+  const css = read('src/components/DocExample.module.css');
+
+  assert.match(css, /\.title\s*\{[^}]*margin:\s*0 0 0\.625rem !important;/s);
+  assert.match(css, /\.content\s*\{[^}]*display:\s*flex;[^}]*gap:\s*0\.625rem;/s);
+  assert.match(css, /\.content > \*\s*\{[^}]*margin:\s*0;/s);
+});
+
 test('makes guide outcomes the focused borderless surface', () => {
   const customCss = read('src/css/custom.css');
   const outcomesCss = read('src/components/DocOutcomes.module.css');
