@@ -13,8 +13,11 @@ function read(relativePath) {
 test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
-  const nextSteps =
-    'Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).';
+  const nextStepItems = [
+    '[Deploy to channels](/channels/connect-channels) to let customers chat with your agent on WhatsApp, Instagram, and Messenger.',
+    '[Set up workflows](/automate/workflow-overview) to automate what happens during and after conversations.',
+    '[Automate bookings](/bookings/services) to let customers book your services through your agent.',
+  ];
   const screenshotUrls = [
     'https://storage.kilobot.app/docs/docs-signup.png',
     'https://storage.kilobot.app/docs/docs-kb.png',
@@ -35,7 +38,16 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     ['Create your agent', 'Give your agent knowledge', 'Test your agent'],
   );
   assert.ok(quickStart.includes('## Next steps'));
-  assert.ok(quickStart.includes(nextSteps));
+  assert.ok(
+    quickStart.includes('Your agent is ready. Choose what you want to set up next:'),
+  );
+
+  let previousNextStepIndex = quickStart.indexOf('## Next steps');
+  for (const nextStepItem of nextStepItems) {
+    const nextStepIndex = quickStart.indexOf(`- ${nextStepItem}`);
+    assert.ok(nextStepIndex > previousNextStepIndex, nextStepItem);
+    previousNextStepIndex = nextStepIndex;
+  }
   assert.equal(quickStart.includes('import DocCard from'), false);
   assert.equal(quickStart.includes('<DocCard'), false);
   assert.equal(quickStart.includes('Connect the Website widget'), false);

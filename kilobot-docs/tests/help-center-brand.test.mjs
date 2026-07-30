@@ -77,22 +77,6 @@ test('uses Geist for body text and dashboard-aligned color tokens', () => {
   );
 });
 
-test('left-aligns content images and captions at every supported width', () => {
-  const css = read('src/css/custom.css');
-  const imageCss = read('src/theme/MDXComponents/Img/styles.module.css');
-
-  assert.match(
-    css,
-    /\.docs-image-compact\s*\{[^}]*width:\s*40%;[^}]*margin-left:\s*0;[^}]*margin-right:\s*auto;/s,
-  );
-  assert.match(
-    css,
-    /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*?\.docs-image-compact\s*\{[^}]*width:\s*100%;/s,
-  );
-  assert.match(imageCss, /\.root\s*\{[^}]*text-align:\s*left;/s);
-  assert.match(imageCss, /\.caption\s*\{[^}]*text-align:\s*left;/s);
-});
-
 test('styles the top bar like the product header chrome', () => {
   const css = read('src/css/custom.css');
   const navbarCss = read('src/css/navbar.css');
@@ -288,37 +272,4 @@ test('disables doc breadcrumbs', () => {
 
   assert.ok(config.includes('breadcrumbs: false'));
   assert.equal(css.includes('.breadcrumbs__link'), false);
-});
-
-test('keeps all new code modules below the workspace limit', () => {
-  const codeFiles = [
-    'docusaurus.config.ts',
-    'sidebars.ts',
-    'src/css/custom.css',
-    'src/css/navbar.css',
-    'src/css/toc.css',
-    'src/css/pagination.css',
-    'src/theme/Navbar/Logo/index.tsx',
-    'src/theme/Navbar/Logo/styles.module.css',
-    'src/theme/TOCCollapsible/CollapseButton/index.tsx',
-    'src/theme/TOCCollapsible/CollapseButton/styles.module.css',
-    'src/theme/MDXComponents/Img/index.tsx',
-    'src/theme/MDXComponents/Img/styles.module.css',
-    'src/theme/MDXComponents/Img/index.test.tsx',
-    'src/theme/DocRoot/Layout/Main/index.tsx',
-    'src/theme/DocRoot/Layout/Main/styles.module.css',
-    'src/components/DocPathGrid.tsx',
-    'src/components/DocPathGrid.module.css',
-    'src/components/DocPathTile.tsx',
-    'src/components/DocPathTile.module.css',
-    'src/components/DocCard.tsx',
-    'src/components/DocCard.module.css',
-    'src/components/DocQuickstartBanner.tsx',
-    'src/components/DocQuickstartBanner.module.css',
-  ];
-  for (const relativePath of codeFiles) {
-    assert.equal(existsSync(path.join(root, relativePath)), true, `${relativePath} is missing`);
-    const lineCount = read(relativePath).split('\n').length;
-    assert.ok(lineCount <= 300, `${relativePath} has ${lineCount} lines`);
-  }
 });

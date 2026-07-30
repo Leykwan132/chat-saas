@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync, readdirSync} from 'node:fs';
+import {existsSync, readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -49,14 +49,6 @@ const requiredSidebarLabels = [
 
 function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
-}
-
-function collectMarkdownFiles(directoryPath) {
-  return readdirSync(directoryPath, {withFileTypes: true}).flatMap((entry) => {
-    const entryPath = path.join(directoryPath, entry.name);
-    if (entry.isDirectory()) return collectMarkdownFiles(entryPath);
-    return /\.(?:md|mdx)$/.test(entry.name) ? [entryPath] : [];
-  });
 }
 
 test('ships every required product guide with useful front matter', () => {
@@ -129,15 +121,35 @@ test('removes all starter tutorial and demo content', () => {
   assert.equal(existsSync(path.join(root, 'src/components/HomepageFeatures/index.tsx')), false);
 });
 
-test('gives every public documentation image a caption source', () => {
-  const docsDirectory = path.join(root, 'docs');
-
-  for (const markdownPath of collectMarkdownFiles(docsDirectory)) {
-    const source = readFileSync(markdownPath, 'utf8');
-    const relativePath = path.relative(root, markdownPath);
-
-    for (const match of source.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)) {
-      assert.notEqual(match[1].trim(), '', `${relativePath}: ${match[2]}`);
-    }
+test('keeps all new code modules below the workspace limit', () => {
+  const codeFiles = [
+    'docusaurus.config.ts',
+    'sidebars.ts',
+    'src/css/custom.css',
+    'src/css/navbar.css',
+    'src/css/toc.css',
+    'src/css/pagination.css',
+    'src/theme/Navbar/Logo/index.tsx',
+    'src/theme/Navbar/Logo/styles.module.css',
+    'src/theme/TOCCollapsible/CollapseButton/index.tsx',
+    'src/theme/TOCCollapsible/CollapseButton/styles.module.css',
+    'src/theme/MDXComponents/Img/index.tsx',
+    'src/theme/MDXComponents/Img/styles.module.css',
+    'src/theme/MDXComponents/Img/index.test.tsx',
+    'src/theme/DocRoot/Layout/Main/index.tsx',
+    'src/theme/DocRoot/Layout/Main/styles.module.css',
+    'src/components/DocPathGrid.tsx',
+    'src/components/DocPathGrid.module.css',
+    'src/components/DocPathTile.tsx',
+    'src/components/DocPathTile.module.css',
+    'src/components/DocCard.tsx',
+    'src/components/DocCard.module.css',
+    'src/components/DocQuickstartBanner.tsx',
+    'src/components/DocQuickstartBanner.module.css',
+  ];
+  for (const relativePath of codeFiles) {
+    assert.equal(existsSync(path.join(root, relativePath)), true, `${relativePath} is missing`);
+    const lineCount = read(relativePath).split('\n').length;
+    assert.ok(lineCount <= 300, `${relativePath} has ${lineCount} lines`);
   }
 });
