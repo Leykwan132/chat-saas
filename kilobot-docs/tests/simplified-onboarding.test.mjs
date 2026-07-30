@@ -10,26 +10,20 @@ function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
 }
 
-test('keeps Quick Start to three required steps and three optional next steps', () => {
+test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
-  const nextStepCards = [...quickStart.matchAll(/<DocCard\b/g)];
+  const nextSteps =
+    'Your agent is ready! Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).';
 
   assert.deepEqual(
     requiredHeadings.map((match) => match[2].replace(/ ·.+$/, '')),
     ['Create your agent', 'Add knowledge', 'Test your agent'],
   );
-  assert.equal(nextStepCards.length, 3);
-  assert.ok(
-    quickStart.includes(
-      'title="Deploy to channels (WhatsApp, IG, Messenger)"',
-    ),
-  );
-  assert.ok(quickStart.includes('to="/channels/connect-channels"'));
-  assert.ok(quickStart.includes('title="Set up workflows"'));
-  assert.ok(quickStart.includes('to="/automate/workflow-overview"'));
-  assert.ok(quickStart.includes('title="Set up bookings"'));
-  assert.ok(quickStart.includes('to="/bookings/services"'));
+  assert.ok(quickStart.includes('## Next steps'));
+  assert.ok(quickStart.includes(nextSteps));
+  assert.equal(quickStart.includes('import DocCard from'), false);
+  assert.equal(quickStart.includes('<DocCard'), false);
   assert.equal(quickStart.includes('Connect the Website widget'), false);
   assert.equal(quickStart.includes('Confirm the conversation in Inbox'), false);
 });
