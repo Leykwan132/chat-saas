@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-31 [CODE] KiloBot Docs Channels starts with Website widget; Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden from navigation for now. Workflows and Broadcast retain their task-based structure; Quick Start lists Channels before Workflows. Focused navigation and onboarding contracts pass; unreleased and unpushed.
+- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment. Channels starts with Website widget; Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation and onboarding contracts pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every Docs content image and its alt-derived caption aligns to the article's left edge; Quick Start's Source training and Test your agent screenshots remain uncropped at 40% desktop width and 100% mobile width, and its Next steps section now links ordered Channels, Workflows, and Bookings outcomes. Recursive caption coverage, thirty-nine Docs tests, six component tests, TypeScript, the 225-document production build, exact built-HTML checks, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every MDX content image now uses one global borderless renderer with a small alt-derived caption and an accessible full-screen native-dialog lightbox; X, Escape, and backdrop dismissal are supported while navbar/theme assets remain excluded. Thirty-seven Docs tests, six component tests, TypeScript, the 225-document production build, built-HTML contracts, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] The mobile docs table-of-contents dropdown is hidden, removing the empty rounded control above page titles; the desktop right-side outline remains unchanged. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
@@ -83,6 +83,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D516 ACTIVE: Place Workflows above Bookings in the sidebar. Teams contains only Roles and permissions and Lead assignment; hide Workspace and team and Workspaces and agents without deleting those guide files.
 - 2026-07-31 [USER] D515 ACTIVE: Hide Calendar from the Bookings sidebar for now while retaining Services and Availability and without deleting the Calendar guide file.
 - 2026-07-31 [USER] D514 ACTIVE: The Channels sidebar starts with Website widget and then lists WhatsApp, Instagram, and Messenger. Hide Connect channels and Conversations (Inbox and Contacts) from the public sidebar for now without deleting those guide files.
 - 2026-07-31 [USER] D513 ACTIVE: Quick Start Next steps lists Deploy to channels first, followed by Set up workflows. The Channels link names WhatsApp, Instagram, and Messenger; the Workflow link names assets, human involvement, bookings, and follow-ups. This supersedes D512 only for the one-item Quick Start handoff.
@@ -339,6 +340,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Moved Workflows above Bookings and limited Teams navigation to roles and lead assignment.
 - 2026-07-31 [CODE] Hid Calendar from Bookings navigation while retaining its guide file.
 - 2026-07-31 [CODE] Simplified Channels navigation to start with Website widget and hide the overview and Conversations.
 - 2026-07-31 [CODE] Put Deploy to channels first and Set up workflows second in Quick Start Next steps.
@@ -391,6 +393,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31T00:15+08:00 [TOOL] Sidebar hierarchy update moved Workflows before Bookings and removed two Teams entries. Node v22.22.0 passed 9/9 focused information-architecture tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:10+08:00 [TOOL] Bookings navigation update removed only the Calendar sidebar entry. Node v22.22.0 passed 8/8 focused information-architecture tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:05+08:00 [TOOL] Channels navigation update removed only the Connect channels and Conversations sidebar entries. Node v22.22.0 passed 7/7 focused information-architecture tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:00+08:00 [TOOL] Quick Start Channels-first update changed only `docs/start-here/quick-start.mdx` and its exact onboarding contract. Node v22.22.0 passed 3/3 focused tests and `git diff --check`; no deployment, changelog, or push ran.

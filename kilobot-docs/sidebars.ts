@@ -33,16 +33,6 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Bookings',
-      collapsed: false,
-      collapsible: false,
-      items: [
-        'bookings/services',
-        'bookings/availability',
-      ],
-    },
-    {
-      type: 'category',
       label: 'Workflows',
       collapsed: false,
       collapsible: false,
@@ -76,6 +66,16 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
+      label: 'Bookings',
+      collapsed: false,
+      collapsible: false,
+      items: [
+        'bookings/services',
+        'bookings/availability',
+      ],
+    },
+    {
+      type: 'category',
       label: 'Broadcast',
       collapsed: false,
       collapsible: false,
@@ -98,8 +98,6 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'start-here/workspaces-and-agents',
-        'team/workspace-and-team',
         'team/roles-and-permissions',
         'team/lead-assignment',
       ],

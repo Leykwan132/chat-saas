@@ -19,8 +19,8 @@ test('uses the approved public guide order', () => {
     'Getting started',
     'Agent',
     'Channels',
-    'Bookings',
     'Workflows',
+    'Bookings',
     'Broadcast',
     'Teams',
     'Releases',
@@ -61,13 +61,26 @@ test('starts Channels with the Website widget and hides Conversations', () => {
 test('hides Calendar from Bookings navigation', () => {
   const sidebar = read('sidebars.ts');
   const bookings = sidebar.match(
-    /label: 'Bookings'[\s\S]*?label: 'Workflows'/,
+    /label: 'Bookings'[\s\S]*?label: 'Broadcast'/,
   )?.[0];
 
   assert.ok(bookings);
   assert.ok(bookings.includes("'bookings/services'"));
   assert.ok(bookings.includes("'bookings/availability'"));
   assert.equal(bookings.includes("'bookings/calendar'"), false);
+});
+
+test('limits Teams to roles and lead assignment', () => {
+  const sidebar = read('sidebars.ts');
+  const teams = sidebar.match(
+    /label: 'Teams'[\s\S]*?label: 'Releases'/,
+  )?.[0];
+
+  assert.ok(teams);
+  assert.ok(teams.includes("'team/roles-and-permissions'"));
+  assert.ok(teams.includes("'team/lead-assignment'"));
+  assert.equal(teams.includes("'start-here/workspaces-and-agents'"), false);
+  assert.equal(teams.includes("'team/workspace-and-team'"), false);
 });
 
 test('organizes Workflows around user tasks', () => {
