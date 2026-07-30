@@ -1,0 +1,103 @@
+.root {
+  display: block;
+  margin: 1.5rem 0;
+}
+
+.trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  cursor: zoom-in;
+}
+
+.trigger:focus-visible {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 3px;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0.75rem;
+  transition: opacity 150ms ease;
+}
+
+.trigger:hover .image {
+  opacity: 0.92;
+}
+
+.caption {
+  display: block;
+  margin-top: 0.5rem;
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.dialog {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 1.5rem;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.dialog[open] {
+  display: grid;
+  place-items: center;
+}
+
+.dialog::backdrop {
+  background: rgb(0 0 0 / 86%);
+}
+
+.expanded {
+  display: block;
+  max-width: calc(100vw - 3rem);
+  max-height: calc(100dvh - 3rem);
+  margin: auto;
+  object-fit: contain;
+}
+
+.close {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  place-items: center;
+  background: rgb(24 24 27 / 82%);
+  color: white;
+  cursor: pointer;
+}
+
+.close:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+.close svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transition: none;
+  }
+}
