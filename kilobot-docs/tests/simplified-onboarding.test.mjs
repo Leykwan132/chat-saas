@@ -14,7 +14,13 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
   const nextSteps =
-    'Your agent is ready! Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).';
+    'Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).';
+  const screenshotUrls = [
+    'https://storage.kilobot.app/docs/docs-signup.png',
+    'https://storage.kilobot.app/docs/docs-kb.png',
+    'https://storage.kilobot.app/docs/docs-training.jpeg',
+    'https://storage.kilobot.app/docs/docs-testing.png',
+  ];
 
   assert.deepEqual(
     requiredHeadings.map((match) => match[2].replace(/ ·.+$/, '')),
@@ -33,12 +39,21 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     false,
   );
   assert.equal(quickStart.includes('unsupported'), false);
-  assert.ok(quickStart.includes('title="See how Sources trains your agent"'));
-  assert.ok(quickStart.includes('assetPath="/media/quick-start/sources-training.png"'));
-  assert.ok(quickStart.includes("'The source training state'"));
-  assert.equal(
-    quickStart.includes('assetPath="/media/quick-start/add-knowledge.png"'),
-    false,
+  assert.equal(quickStart.includes('DocMediaPlaceholder'), false);
+  assert.equal(quickStart.includes('/media/quick-start/'), false);
+  assert.equal(quickStart.includes('Your agent is ready!'), true);
+
+  for (const screenshotUrl of screenshotUrls) {
+    assert.equal(quickStart.includes(screenshotUrl), true, screenshotUrl);
+  }
+
+  assert.ok(
+    quickStart.indexOf('https://storage.kilobot.app/docs/docs-testing.png')
+      < quickStart.indexOf('Your agent is ready!'),
+  );
+  assert.ok(
+    quickStart.indexOf('Your agent is ready!')
+      < quickStart.indexOf('## Next steps'),
   );
 });
 

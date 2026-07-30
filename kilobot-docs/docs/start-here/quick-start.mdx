@@ -5,7 +5,6 @@ slug: /start-here/quick-start
 ---
 
 import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -29,15 +28,7 @@ In about 5 minutes, you will create and test a working agent using Northstar Den
 
 Creating an agent takes only a few steps. Start with one of our templates and choose the default option.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Create the Northstar Booking Assistant"
-  description="Show the Create agent flow immediately before submission."
-  capture={['The template or blank choice', 'The agent-name field with Northstar Booking Assistant', 'The Create action']}
-  callouts={['Starting option', 'Agent name', 'Create action']}
-  sensitive={['Workspace member names', 'Unrelated agent names']}
-  assetPath="/media/quick-start/create-agent.png"
-/>
+![Create your agent from the signup screen](https://storage.kilobot.app/docs/docs-signup.png)
 
 You should now have an agent ready to be trained.
 
@@ -53,17 +44,11 @@ The fastest way to give your agent knowledge is with text. Open **Knowledge Base
 
 </DocExample>
 
+![Add the opening-hours Q&A to the Knowledge Base](https://storage.kilobot.app/docs/docs-kb.png)
+
 Wait until the source finishes processing before testing.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="See how Sources trains your agent"
-  description="Show the Sources list after adding the Q&A, with its training status visible."
-  capture={['The opening-hours Q&A source', 'The source training state', 'The Sources list']}
-  callouts={['Q&A source', 'Training status']}
-  sensitive={['Other private Knowledge Base sources']}
-  assetPath="/media/quick-start/sources-training.png"
-/>
+![Source training in the Knowledge Base](https://storage.kilobot.app/docs/docs-training.jpeg)
 
 Your agent is now ready to be tested with the knowledge.
 
@@ -73,16 +58,10 @@ Choose **Test agent** and ask one question the Knowledge Base can answer:
 
 `Are you open on Saturday?`
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Test the opening-hours question"
-  description="Show the Test agent panel with the grounded Saturday-hours answer."
-  capture={['The Saturday-hours question', 'The grounded answer']}
-  callouts={['Known question', 'Grounded answer']}
-  sensitive={['Other test conversations']}
-  assetPath="/media/quick-start/test-agent.png"
-/>
+![Test the agent with the opening-hours question](https://storage.kilobot.app/docs/docs-testing.png)
+
+Your agent is ready!
 
 ## Next steps
 
-Your agent is ready! Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).
+Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).

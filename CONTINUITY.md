@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-30 [CODE] Quick Start now renders the four supplied hosted screenshots for agent signup, Knowledge Base Q&A, Sources training, and agent testing; all placeholder briefs are removed from that page, and `Your agent is ready!` sits directly below the testing image before Next steps. All assets return HTTP 200 with correct image content types; thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass.
 - 2026-07-30 [CODE] Quick Start's knowledge step now reserves one real-product screenshot at `/media/quick-start/sources-training.png`, showing the opening-hours Q&A in the Sources list with its training status visible. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; the asset remains a placeholder for user capture.
 - 2026-07-30 [CODE] All 20 public-guide `Before you begin` prerequisite panels and imports are removed; the unused shared component/styles are retired and a recursive docs contract prevents reintroduction. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Quick Start's testing section now asks only the known Saturday-hours question; the unsupported root-canal prompt, its explanatory copy, and its image-capture requirements are removed. Docs tests, component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
@@ -78,7 +79,8 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
-- 2026-07-30 [USER] D505 ACTIVE: Quick Start uses one image asset to show how Sources training looks: the opening-hours Q&A appears in the Sources list with its training status visible.
+- 2026-07-30 [USER] D506 ACTIVE: Quick Start uses the supplied hosted screenshots `docs-signup.png`, `docs-kb.png`, `docs-training.jpeg`, and `docs-testing.png` in their matching steps; the readiness confirmation appears immediately below the testing image and before Next steps.
+- 2026-07-30 [USER] D505 SUPERSEDED by D506: The Sources-training placeholder brief is replaced by the supplied hosted training screenshot.
 - 2026-07-30 [USER] D504 ACTIVE: Public guides must not include `Before you begin` prerequisite panels; remove the shared component from every page and prevent it from returning.
 - 2026-07-30 [USER] D503 ACTIVE: Quick Start tests only the known Saturday opening-hours question; remove the unsupported emergency-root-canal scenario and keep the media brief focused on the grounded opening-hours answer.
 - 2026-07-30 [USER] D502 ACTIVE: The Docs navbar and Welcome-page `Try KiloBot` actions route to the KiloBot homepage at `https://kilobot.app`; the navbar's external-link icon is vertically centered, 14px square, and separated from the label by a consistent inline gap.
@@ -324,13 +326,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-30 [CODE] Replaced all Quick Start placeholders with the four supplied screenshots and moved readiness copy below testing.
 - 2026-07-30 [CODE] Focused Quick Start's knowledge visual on one Sources-training screenshot with an explicit capture brief.
 - 2026-07-30 [CODE] Removed all 20 public-guide `Before you begin` panels and retired their unused shared component.
 - 2026-07-30 [CODE] Simplified Quick Start testing to one known opening-hours question and aligned its image brief.
 - 2026-07-30 [CODE] Routed both Docs `Try KiloBot` actions to the KiloBot homepage and aligned the navbar external-link icon.
 - 2026-07-30 [CODE] Added functional setup-page descriptions, reordered Configuration navigation, and gave Knowledge Base direct agent testing plus a persistent Workflow promotion.
 - 2026-07-30 [CODE] Wrapped all 25 guide outcome previews in shared borderless containers and simplified Quick Start into concise creation, knowledge, testing, and next-step guidance.
-- 2026-07-30 [CODE] Made the public footer Contact link reset the page to the top, including same-route clicks from the bottom of `/contact`.
 
 # Working set
 - 2026-07-30 [CODE] Page guidance and Knowledge Base actions: `src/components/{PageTitleBlock,app-sidebar-nav,AppSidebarFeatureFlag.test}.ts*`, `src/components/agent-setup/AgentSetupHeader.tsx`, `src/components/knowledge-base/{KnowledgeBaseHeader,KnowledgeBaseNavigation}*`, `src/pages/{KnowledgeBase,Channels,Schedule,Services,pageHeaderChrome.test}*`, and `docs/superpowers/{specs,plans}/2026-07-30-page-guidance-and-knowledge-base-actions*.md`; verified locally, not released.
@@ -373,6 +375,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-30T22:41+08:00 [TOOL] All four supplied storage URLs returned HTTP 200 with their expected PNG/JPEG content types. The Quick Start asset/placement contract first failed against placeholder briefs, then passed after rendering the four hosted screenshots and moving `Your agent is ready!` between the testing image and Next steps. Node v22.22.0 verification passed 37/37 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 225 indexed documents, and `git diff --check`. No deployment, public changelog, or push ran.
 - 2026-07-30T21:52+08:00 [TOOL] The Sources-training asset contract first failed against the generic `add-knowledge.png` brief, then passed after the single Quick Start image slot was renamed to `/media/quick-start/sources-training.png` and focused on the Q&A row plus visible training status. Node v22.22.0 verification passed 37/37 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 228 indexed documents, and `git diff --check`. The real screenshot is still pending user capture; no deployment, public changelog, or push ran.
 - 2026-07-30T21:41+08:00 [TOOL] The recursive public-guide contract failed against the 20 remaining `DocPrerequisites` uses, then passed after removing every panel/import and retiring the shared component/styles. Node v22.22.0 verification passed 37/37 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 228 indexed documents, and `git diff --check`. No deployment, public changelog, or push ran.
 - 2026-07-30T21:26+08:00 [TOOL] The Quick Start simplification contract first failed against the unsupported-service scenario, then passed after removing its prose and focusing the media brief on the known Saturday-hours answer. Node v22.22.0 verification passed the focused 3-test suite, 36/36 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 248 indexed documents, and `git diff --check`. No deployment, public changelog, or push ran.
