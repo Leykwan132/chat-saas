@@ -26,6 +26,13 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   assert.equal(quickStart.includes('<DocCard'), false);
   assert.equal(quickStart.includes('Connect the Website widget'), false);
   assert.equal(quickStart.includes('Confirm the conversation in Inbox'), false);
+  assert.equal(quickStart.includes('The reply should use the opening hours from the Q&A.'), false);
+  assert.equal(quickStart.includes('Do you offer emergency root canals?'), false);
+  assert.equal(
+    quickStart.includes('The agent should not claim that Northstar Dental provides an unsupported service.'),
+    false,
+  );
+  assert.equal(quickStart.includes('unsupported'), false);
 });
 
 test('uses concise Workflow child labels', () => {

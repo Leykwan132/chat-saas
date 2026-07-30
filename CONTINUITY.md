@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-30 [CODE] Quick Start's testing section now asks only the known Saturday-hours question; the unsupported root-canal prompt, its explanatory copy, and its image-capture requirements are removed. Docs tests, component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Both Docs `Try KiloBot` actions now route to `https://kilobot.app`; the navbar pill centers its external-link icon at 14px with a consistent inline gap. Docs tests, component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [TOOL] Latest `origin/dev` at `39aefae2` is merged into `codex/page-guidance-test`; page-guidance work, the public footer/Meta SDK changes, and the KiloBot Docs redesign coexist. The only conflict was this ledger, resolved by preserving both histories and renumbering the Knowledge Base decisions to D496–D500. Focused application tests, application build, Docs tests/typecheck/build, and whitespace checks pass; merge is local and unpushed.
 - 2026-07-30 [CODE] Configuration navigation now places Knowledge Base directly below Agent Setup; Configuration, Knowledge Base, Channels, Availability, and Services have concise functional descriptions; Knowledge Base toggles the shared test chat as an in-page right-side container and links users from a persistent Sources card with a hosted Workflow preview image and Workflow action. The card now shows the semibold `Do More Automatically` title above its normal-weight capability sentence. Thirty focused tests and the production build pass; unreleased.
@@ -75,6 +76,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-30 [USER] D503 ACTIVE: Quick Start tests only the known Saturday opening-hours question; remove the unsupported emergency-root-canal scenario and keep the media brief focused on the grounded opening-hours answer.
 - 2026-07-30 [USER] D502 ACTIVE: The Docs navbar and Welcome-page `Try KiloBot` actions route to the KiloBot homepage at `https://kilobot.app`; the navbar's external-link icon is vertically centered, 14px square, and separated from the label by a consistent inline gap.
 - 2026-07-30 [USER] D501 ACTIVE: The persistent Knowledge Base Workflow card uses `https://storage.kilobot.app/workflow-prev.png` as its full-width 16:9 preview image; its simple `object-cover` presentation and card content remain unchanged.
 - 2026-07-30 [USER] D500 ACTIVE (renumbered during merge from D490): The Knowledge Base Workflow card adds the one-line title `Do More Automatically` above the existing capability sentence; both use `text-sm`, with semibold title weight and normal supporting-line weight.
@@ -318,13 +320,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-30 [CODE] Simplified Quick Start testing to one known opening-hours question and aligned its image brief.
 - 2026-07-30 [CODE] Routed both Docs `Try KiloBot` actions to the KiloBot homepage and aligned the navbar external-link icon.
 - 2026-07-30 [CODE] Added functional setup-page descriptions, reordered Configuration navigation, and gave Knowledge Base direct agent testing plus a persistent Workflow promotion.
 - 2026-07-30 [CODE] Wrapped all 25 guide outcome previews in shared borderless containers and simplified Quick Start into concise creation, knowledge, testing, and next-step guidance.
 - 2026-07-30 [CODE] Replaced the Facebook SDK's hard-coded App ID with deployment-specific `VITE_META_APP_ID` substitution.
 - 2026-07-30 [CODE] Made the public footer Contact link reset the page to the top, including same-route clicks from the bottom of `/contact`.
 - 2026-07-29 [CODE] Finalized billing actions with trailing CircleArrowUp for Upgrade and a leading-ExternalLink text action that opens Manage billing safely in a new tab.
-- 2026-07-29 [CODE] Restored one signed-in Adjust Plan picker with status-aware Portal/Checkout routing, a non-nested destructive team-Free warning, and contextual action labels.
 
 # Working set
 - 2026-07-30 [CODE] Page guidance and Knowledge Base actions: `src/components/{PageTitleBlock,app-sidebar-nav,AppSidebarFeatureFlag.test}.ts*`, `src/components/agent-setup/AgentSetupHeader.tsx`, `src/components/knowledge-base/{KnowledgeBaseHeader,KnowledgeBaseNavigation}*`, `src/pages/{KnowledgeBase,Channels,Schedule,Services,pageHeaderChrome.test}*`, and `docs/superpowers/{specs,plans}/2026-07-30-page-guidance-and-knowledge-base-actions*.md`; verified locally, not released.
@@ -367,6 +369,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-30T21:26+08:00 [TOOL] The Quick Start simplification contract first failed against the unsupported-service scenario, then passed after removing its prose and focusing the media brief on the known Saturday-hours answer. Node v22.22.0 verification passed the focused 3-test suite, 36/36 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 248 indexed documents, and `git diff --check`. No deployment, public changelog, or push ran.
 - 2026-07-30T21:12+08:00 [TOOL] The `Try KiloBot` homepage and icon-alignment contracts failed against the old `/workspace` targets and unnormalized navbar link, then passed after both destinations changed to `https://kilobot.app` and the pill adopted centered inline-flex layout with a 14px external-link icon. Node v22.22.0 verification passed 36/36 Node-native Docs tests, 3/3 component tests, TypeScript, the Docusaurus production build with 248 indexed documents, and `git diff --check`. No deployment, public changelog, or push ran.
 - 2026-07-30T20:31+08:00 [TOOL] The supplied `workflow-prev.png` URL returned HTTP 200 as `image/png`. Its rendered-card contract first failed on the old `grad-2.jpg` source, then passed after the one-line replacement. Node v22.22.0 final verification passed the 4-file/30-test page-guidance suite, `git diff --check`, the stale production-source scan, and the 104-line component limit. Unreleased and unpushed.
 - 2026-07-30T18:07+08:00 [TOOL] The Desktop `codex/page-guidance-test` and Codex worktree `codex/page-guidance` branches were reconciled through `136eb367`: the Desktop-only `Try Workflow` text styling was committed after the 4-file/30-test page-guidance suite passed, then the Codex worktree fast-forwarded to the identical tip. Both worktrees were clean before this receipt; no push or deployment ran.

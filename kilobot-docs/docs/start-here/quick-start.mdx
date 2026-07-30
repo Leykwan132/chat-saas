@@ -73,18 +73,12 @@ Choose **Test agent** and ask one question the Knowledge Base can answer:
 
 `Are you open on Saturday?`
 
-The reply should use the opening hours from the Q&A. Then ask one question that the Knowledge Base cannot answer:
-
-`Do you offer emergency root canals?`
-
-The agent should not claim that Northstar Dental provides an unsupported service.
-
 <DocMediaPlaceholder
   kind="image"
-  title="Test a known and an unsupported question"
-  description="Show the Test agent panel with one grounded answer and one safe response when knowledge is missing."
-  capture={['The Saturday-hours answer', 'The emergency root-canal question', 'The non-invented response']}
-  callouts={['Grounded answer', 'Unknown question', 'Safe response']}
+  title="Test the opening-hours question"
+  description="Show the Test agent panel with the grounded Saturday-hours answer."
+  capture={['The Saturday-hours question', 'The grounded answer']}
+  callouts={['Known question', 'Grounded answer']}
   sensitive={['Other test conversations']}
   assetPath="/media/quick-start/test-agent.png"
 />
