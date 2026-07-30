@@ -14,6 +14,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
   const nextStepItems = [
+    '[Deploy to channels](/channels/connect-channels) to chat with customers on WhatsApp, Instagram, and Messenger.',
     '[Set up workflows](/automate/send-messages-and-assets) to send assets, involve your team, automate bookings, and follow up with customers.',
   ];
   const screenshotUrls = [
@@ -37,7 +38,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   );
   assert.ok(quickStart.includes('## Next steps'));
   assert.ok(
-    quickStart.includes('Continue with the most useful automation:'),
+    quickStart.includes('Choose what to set up next:'),
   );
 
   let previousNextStepIndex = quickStart.indexOf('## Next steps');
@@ -50,7 +51,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   assert.equal(quickStart.includes('<DocCard'), false);
   assert.equal(quickStart.includes('Connect the Website widget'), false);
   assert.equal(quickStart.includes('Confirm the conversation in Inbox'), false);
-  assert.equal(quickStart.includes('[Deploy to channels]'), false);
+  assert.equal(quickStart.includes('[Deploy to channels]'), true);
   assert.equal(quickStart.includes('[Automate bookings]'), false);
   assert.equal(quickStart.includes('The reply should use the opening hours from the Q&A.'), false);
   assert.equal(quickStart.includes('Do you offer emergency root canals?'), false);
