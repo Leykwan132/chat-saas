@@ -48,6 +48,8 @@ The card copy is:
 - Headline: `Need your AI agent to send images, videos, reminders, or follow-ups?`
 - Action: `Try Workflow →`
 
+Use the same small text size for the headline and action, with normal weight on the headline so the action remains the stronger element.
+
 The action navigates to the current agent's Workflow page. The card remains visible for every Knowledge Base source type and does not open a modal.
 
 ## Responsive behavior

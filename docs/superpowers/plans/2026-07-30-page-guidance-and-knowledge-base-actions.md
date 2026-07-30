@@ -274,7 +274,7 @@ Render this after `KnowledgeBaseNavGroup`:
 
 ```tsx
 <aside className="rounded-xl border border-border bg-muted/40 p-4">
-  <p className="text-sm font-semibold leading-snug text-foreground">
+  <p className="text-sm font-normal leading-snug text-foreground">
     Need your AI agent to send images, videos, reminders, or follow-ups?
   </p>
   <Button asChild variant="outline" size="sm" className="mt-4 w-full">
@@ -560,7 +560,7 @@ Replace the promotion card with:
     className="aspect-video w-full object-cover"
   />
   <div className="p-4">
-    <p className="text-sm font-semibold leading-snug text-foreground">
+    <p className="text-sm font-normal leading-snug text-foreground">
       Need your AI agent to send images, videos, reminders, or follow-ups?
     </p>
     <Button asChild variant="outline" size="sm" className="mt-4 w-full">

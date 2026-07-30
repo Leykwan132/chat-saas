@@ -19,6 +19,13 @@ describe('Knowledge Base Workflow promotion', () => {
     expect(navigationSource).toContain('Try Workflow');
   });
 
+  it('matches the Workflow action size with a softer headline weight', () => {
+    expect(navigationSource).toContain(
+      'className="text-sm font-normal leading-snug text-foreground"',
+    );
+    expect(navigationSource).not.toContain('text-sm font-semibold leading-snug');
+  });
+
   it('shows the approved minimal banner above the promotion copy', () => {
     expect(navigationSource).toContain(
       'src="https://storage.kilobot.app/grad-2.jpg"',
