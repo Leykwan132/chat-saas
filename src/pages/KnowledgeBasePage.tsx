@@ -17,10 +17,14 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
 import { WebSection } from '@/components/knowledge-base/WebSection';
 import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
+import {
+  KnowledgeBaseHeader,
+} from '@/components/knowledge-base/KnowledgeBaseHeader';
 import {
   KnowledgeBaseNavigation,
   type KnowledgeType,
@@ -69,6 +73,7 @@ export default function KnowledgeBasePage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTestOpen, setIsTestOpen] = useState(false);
 
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
@@ -143,11 +148,7 @@ export default function KnowledgeBasePage() {
   return (
     <>
       <div className="flex w-full flex-col gap-6">
-        <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
-          <div>
-            <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Knowledge Base</h1>
-          </div>
-        </header>
+        <KnowledgeBaseHeader onTest={() => setIsTestOpen(true)} />
 
         <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
           <KnowledgeBaseNavigation
@@ -237,6 +238,15 @@ export default function KnowledgeBasePage() {
           />
         </div>
       </div>
+
+      {selectedAgentId ? (
+        <AgentPlaygroundPanel
+          agentId={selectedAgentId}
+          mode="drawer"
+          open={isTestOpen}
+          onOpenChange={setIsTestOpen}
+        />
+      ) : null}
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md" showCloseButton={false}>

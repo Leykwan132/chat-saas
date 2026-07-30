@@ -14,7 +14,6 @@ const compactHeaderPages = [
   'ChatsPage.tsx',
   'CustomersPage.tsx',
   'FollowUpPage.tsx',
-  'KnowledgeBasePage.tsx',
   'LeadAssignmentPage.tsx',
   'QuickRepliesPage.tsx',
 ];
@@ -101,6 +100,12 @@ describe('page header chrome', () => {
     expect(source).toContain(
       'description="Define how your agent behaves and responds to customers."',
     );
+  });
+
+  test('Knowledge Base uses its descriptive action header', () => {
+    const source = readPage('KnowledgeBasePage.tsx');
+
+    expect(source).toContain('KnowledgeBaseHeader');
   });
 
   test('shared page title block keeps descriptions visually subordinate', () => {
