@@ -31,6 +31,25 @@ test('styles every admonition as a borderless semantic surface', () => {
   assert.ok(admonitionsCss.includes('.theme-admonition-danger'));
 });
 
+test('styles every shared informational panel as a borderless rounded surface', () => {
+  const panelStyles = [
+    ['src/components/DocPrerequisites.module.css', 'var(--kilobot-muted)'],
+    ['src/components/DocExample.module.css', 'var(--kilobot-muted)'],
+    ['src/components/DocSuccess.module.css', '#16a34a'],
+    ['src/components/DocMediaPlaceholder.module.css', 'repeating-linear-gradient'],
+  ];
+
+  for (const [relativePath, expectedSurface] of panelStyles) {
+    const css = read(relativePath);
+    const rootRule = css.match(/\.root \{[\s\S]*?\n\}/)?.[0];
+
+    assert.ok(rootRule, `${relativePath} must define a root rule`);
+    assert.doesNotMatch(rootRule, /^\s*border(?:-left)?:/m);
+    assert.match(rootRule, /border-radius:/);
+    assert.ok(rootRule.includes(expectedSurface));
+  }
+});
+
 test('balances the desktop article between equal spacers and a right rail', () => {
   const layoutCss = read('src/theme/DocRoot/Layout/Main/styles.module.css');
   const tocCss = read('src/css/toc.css');

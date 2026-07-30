@@ -1,8 +1,7 @@
 .root {
   margin: 1.5rem 0;
   padding: 1.125rem;
-  border-left: 3px solid var(--ifm-color-primary);
-  border-radius: 0 0.75rem 0.75rem 0;
+  border-radius: 0.75rem;
   background: var(--kilobot-muted);
 }
 

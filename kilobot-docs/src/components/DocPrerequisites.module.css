@@ -1,9 +1,8 @@
 .root {
   margin: 1.5rem 0;
   padding: 1rem 1.125rem;
-  border: 1px solid var(--ifm-color-emphasis-300);
   border-radius: 0.75rem;
-  background: var(--ifm-background-surface-color);
+  background: var(--kilobot-muted);
 }
 
 .title {

@@ -1,7 +1,6 @@
 .root {
   margin: 1.75rem 0;
   padding: 1.25rem;
-  border: 1px dashed var(--ifm-color-emphasis-500);
   border-radius: 0.875rem;
   background:
     repeating-linear-gradient(

@@ -1,7 +1,6 @@
 .root {
   margin: 1.5rem 0;
   padding: 1rem 1.125rem;
-  border: 1px solid color-mix(in srgb, #16a34a 38%, transparent);
   border-radius: 0.75rem;
   background: color-mix(in srgb, #16a34a 9%, var(--ifm-background-color));
 }
