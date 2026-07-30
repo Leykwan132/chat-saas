@@ -50,6 +50,25 @@ test('styles every shared informational panel as a borderless rounded surface', 
   }
 });
 
+test('makes guide outcomes the focused borderless surface', () => {
+  const customCss = read('src/css/custom.css');
+  const outcomesCss = read('src/components/DocOutcomes.module.css');
+  const rootRule = outcomesCss.match(/\.root \{[\s\S]*?\n\}/)?.[0];
+
+  assert.ok(rootRule);
+  assert.doesNotMatch(rootRule, /^\s*border(?:-left)?:/m);
+  assert.doesNotMatch(rootRule, /^\s*box-shadow:/m);
+  assert.ok(rootRule.includes('margin: 1.5rem 0 2rem;'));
+  assert.ok(rootRule.includes('padding: 1.75rem;'));
+  assert.ok(rootRule.includes('border-radius: 1rem;'));
+  assert.ok(rootRule.includes('background: var(--kilobot-outcomes);'));
+  assert.ok(outcomesCss.includes('margin: 0 0 0.75rem !important;'));
+  assert.ok(outcomesCss.includes('@media (max-width: 640px)'));
+  assert.ok(outcomesCss.includes('padding: 1.25rem;'));
+  assert.ok(customCss.includes('--kilobot-outcomes: #eeeeef;'));
+  assert.ok(customCss.includes('--kilobot-outcomes: #333333;'));
+});
+
 test('balances the desktop article between equal spacers and a right rail', () => {
   const layoutCss = read('src/theme/DocRoot/Layout/Main/styles.module.css');
   const tocCss = read('src/css/toc.css');

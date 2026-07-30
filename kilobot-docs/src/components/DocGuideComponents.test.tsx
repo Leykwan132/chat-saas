@@ -3,6 +3,7 @@ import { describe, test } from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import DocExample from './DocExample';
 import DocMediaPlaceholder from './DocMediaPlaceholder';
+import DocOutcomes from './DocOutcomes';
 import DocPrerequisites from './DocPrerequisites';
 import DocSuccess from './DocSuccess';
 import DocVerified from './DocVerified';
@@ -47,5 +48,22 @@ describe('guide components', () => {
     assert.ok(html.includes('Before you begin'));
     assert.ok(html.includes('Northstar Dental'));
     assert.ok(html.includes('You’re done when'));
+  });
+
+  test('renders guide outcomes as one semantic section', () => {
+    const html = renderToStaticMarkup(
+      <DocOutcomes>
+        <h3>By the end, you will</h3>
+        <ul>
+          <li>Create a working agent</li>
+          <li>Add one trusted answer</li>
+          <li>Test the approved answer</li>
+        </ul>
+      </DocOutcomes>,
+    );
+
+    assert.match(html, /^<section>/);
+    assert.ok(html.includes('<h3>By the end, you will</h3>'));
+    assert.ok(html.includes('<li>Create a working agent</li>'));
   });
 });

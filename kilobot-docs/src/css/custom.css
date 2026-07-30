@@ -26,6 +26,7 @@
   --kilobot-border: #e4e4e7;
   --kilobot-link: #4f6bed;
   --kilobot-muted: #f4f4f5;
+  --kilobot-outcomes: #eeeeef;
   --docusaurus-highlighted-code-line-bg: rgba(24, 24, 27, 0.06);
 }
 
@@ -46,6 +47,7 @@
   --kilobot-border: rgba(255, 255, 255, 0.08);
   --kilobot-link: #8babf5;
   --kilobot-muted: #3d3d3d;
+  --kilobot-outcomes: #333333;
   --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
 }
 
