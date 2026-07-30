@@ -1,3 +1,5 @@
+@import './admonitions.css';
+
 :root {
   --ifm-color-primary: #27272a;
   --ifm-color-primary-dark: #18181b;
@@ -269,10 +271,4 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   line-height: 1;
-}
-
-.alert {
-  border-width: 1px;
-  border-radius: 0.65rem;
-  box-shadow: none;
 }
