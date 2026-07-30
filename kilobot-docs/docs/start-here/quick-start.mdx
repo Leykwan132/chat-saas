@@ -1,0 +1,94 @@
+---
+title: Quick Start
+description: Create an agent, add trusted knowledge, and test its answers.
+slug: /start-here/quick-start
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Quick Start
+
+<DocVerified date="2026-07-30" />
+
+In about 5 minutes, you will create and test a working agent using Northstar Dental as the example.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Create a working agent
+- Add one trusted answer
+- Test that the agent uses the approved answer
+
+</DocOutcomes>
+
+## 1. Create your agent
+
+Creating an agent takes only a few steps. Start with one of our templates and choose the default option.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Create the Northstar Booking Assistant"
+  description="Show the Create agent flow immediately before submission."
+  capture={['The template or blank choice', 'The agent-name field with Northstar Booking Assistant', 'The Create action']}
+  callouts={['Starting option', 'Agent name', 'Create action']}
+  sensitive={['Workspace member names', 'Unrelated agent names']}
+  assetPath="/media/quick-start/create-agent.png"
+/>
+
+You should now have an agent ready to be trained.
+
+## 2. Give your agent knowledge
+
+The fastest way to give your agent knowledge is with text. Open **Knowledge Base**, choose **Q&A**, and add this example.
+
+<DocExample title="Northstar Dental opening hours">
+
+**Question:** What are your opening hours?
+
+**Answer:** Northstar Dental is open Monday to Friday, 9:00 am to 6:00 pm, and Saturday, 9:00 am to 1:00 pm. It is closed on Sunday.
+
+</DocExample>
+
+Wait until the source finishes processing before testing.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Add the opening-hours Q&A"
+  description="Show the completed Q&A form and the processed source state."
+  capture={['Q&A selected in Sources', 'The example question and answer', 'The completed processing state']}
+  callouts={['Source type', 'Approved answer', 'Ready state']}
+  sensitive={['Other private Knowledge Base sources']}
+  assetPath="/media/quick-start/add-knowledge.png"
+/>
+
+Your agent is now ready to be tested with the knowledge.
+
+## 3. Test your agent
+
+Choose **Test agent** and ask one question the Knowledge Base can answer:
+
+`Are you open on Saturday?`
+
+The reply should use the opening hours from the Q&A. Then ask one question that the Knowledge Base cannot answer:
+
+`Do you offer emergency root canals?`
+
+The agent should not claim that Northstar Dental provides an unsupported service.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Test a known and an unsupported question"
+  description="Show the Test agent panel with one grounded answer and one safe response when knowledge is missing."
+  capture={['The Saturday-hours answer', 'The emergency root-canal question', 'The non-invented response']}
+  callouts={['Grounded answer', 'Unknown question', 'Safe response']}
+  sensitive={['Other test conversations']}
+  assetPath="/media/quick-start/test-agent.png"
+/>
+
+## Next steps
+
+Your agent is ready! Continue by [deploying it to channels](/channels/connect-channels), [setting up workflows](/automate/workflow-overview), or [setting up bookings](/bookings/services).

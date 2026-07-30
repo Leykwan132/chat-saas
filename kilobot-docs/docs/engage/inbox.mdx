@@ -1,65 +1,115 @@
 ---
 title: Inbox
-description: Work with customer conversations, AI replies, assignments, tags, and booking history.
+description: Manage customer conversations, AI handoff, ownership, and booking context.
 slug: /engage/inbox
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Inbox
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Inbox brings customer conversations from every connected channel into one team workspace. Use it for day-to-day replies, AI pause/resume, lead context, assignments, and booking details tied to a thread. Contact records and channel setup feed what you see here.
+Inbox brings supported channel conversations into one operational view. Use it to find new work, manage AI and human ownership, reply, maintain customer context, and review actions that happened outside the visible message thread.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Find conversations and understand the Inbox layout
+- Manage AI and teammate ownership
+- Reply, update customer context, and review completed actions
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- A connected channel and the correct agent selected
+- Inbox read permission
+- Manage permission for assignment, tags, lead temperature, or AI controls you need to change
+
+</DocPrerequisites>
+
+## Learn the layout
+
+Inbox has three working areas: conversation list and filters, the selected message thread and composer, and customer/conversation details.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Orient a new operator in Inbox"
+  description="Show the complete Inbox with one safe demo conversation selected."
+  capture={['Conversation list and filters', 'Message thread and composer', 'Customer details and Action History']}
+  callouts={['Find work', 'Reply', 'Manage context']}
+  sensitive={['Real customer identities', 'Phone numbers', 'Message content']}
+  assetPath="/media/conversations/inbox-layout.png"
+/>
 
 ## Find the right conversation
 
-Unread counts help the team identify new activity. Use filters to narrow the list before opening a thread — by assignment, platform, status, lead temperature, or tags.
+| Filter | Use it for |
+| --- | --- |
+| Unread | New customer activity needing review |
+| Assignee | Personal queue, teammate queue, or unassigned work |
+| Platform | Channel-specific incidents or operating queues |
+| Status | Active or resolved conversation states |
+| Lead Temperature | Prioritizing Hot and Warm opportunities |
+| Tags | Durable operational or campaign segments |
+
+## Hand off between AI and a teammate
+
+Human escalation pauses AI handling so a teammate does not compete with automated replies.
 
 <ol className="steps">
-  <li>Open <strong>Inbox</strong> for the selected agent.</li>
-  <li>Apply the filters you need.</li>
-  <li>Select a conversation to open its message thread and customer details.</li>
+  <li>Open the conversation and read the latest customer request.</li>
+  <li>Pause or disable AI replies using the available conversation control.</li>
+  <li>Assign the conversation to the responsible teammate.</li>
+  <li>Send the human reply and add any useful tag or lead update.</li>
+  <li>Resume AI only when the human-led work is complete and automation is appropriate again.</li>
 </ol>
 
-## Reply and manage AI behavior
+<DocMediaPlaceholder
+  kind="video"
+  title="Complete an AI-to-human handoff"
+  description="Show a new message, AI pause, assignment, teammate reply, Action History, and safe AI resume."
+  capture={['Show the completed handoff first', 'Pause AI', 'Assign and reply', 'Review history', 'Resume AI']}
+  duration="45–60 seconds"
+  sensitive={['Customer identity', 'Phone number', 'Private message content']}
+  assetPath="/media/conversations/human-handoff.mp4"
+/>
 
-Human escalation pauses AI handling so a teammate can work safely without competing automated messages. The thread distinguishes customer, teammate, AI, Workflow Reminder, and Follow-up activity. Attachments, reactions, read state, and delivery information appear when supported by the channel.
+## Maintain conversation context
 
-<ol className="steps">
-  <li>Write a message in the reply composer to respond as a teammate.</li>
-  <li>Enable or disable AI replies for the conversation, depending on permissions and routing configuration.</li>
-</ol>
-
-## Keep the customer record current
-
-Lead Temperature values are defined in [Contacts](/engage/contacts).
-
-<ol className="steps">
-  <li>Open conversation details.</li>
-  <li>Change the assignee, add or remove tags, or update <strong>Lead Temperature</strong> if permitted.</li>
-  <li>Review <strong>Contact</strong> information.</li>
-</ol>
+Use details to change the assignee, add or remove tags, set Lead Temperature, and review the linked [Contact](/engage/contacts). Attachments, reactions, read state, and delivery information appear when the connected platform supports them. Growth and Business can understand supported customer-sent audio and photos; audio transcripts may appear beneath audio while image understanding remains part of AI processing.
 
 ## Work with bookings
 
-Appointment statuses match those in [Calendar](/bookings/calendar).
-
-<ol className="steps">
-  <li>Choose <strong>Create booking</strong> from the conversation when the customer and Service are known.</li>
-  <li>Review the most recently updated booking and booking history in the details panel.</li>
-</ol>
+Choose **Create booking** when the Contact and Service are known. The most recently updated booking and prior booking activity appear in details. Appointment status remains consistent with [Calendar](/bookings/calendar).
 
 ## Review Action History
 
-Action History records assignment changes, AI reply changes, tags, lead status, broadcasts, follow-ups, and appointment activity. Use it to understand what happened outside the visible message text.
+Action History provides operational context for assignment changes, AI-state changes, tags, lead status, Broadcasts, Reminders, Follow-ups, and appointment activity. Use it when the message text does not explain why a state changed.
 
-<ol className="steps">
-  <li>Open <strong>Action History</strong> in the conversation.</li>
-</ol>
+## Daily operator checklist
 
-<DocCard
-  to="/engage/contacts"
-  title="Contacts"
-  description="Customer identity, lead temperature, and conversation context"
-/>
+1. Review unread and unassigned conversations.
+2. Confirm urgent or escalated conversations have an owner.
+3. Reply or record the next action.
+4. Update lead temperature and durable tags.
+5. Check failed outbound activity or booking changes.
+6. Resolve or hand over work before ending the shift.
+
+<DocSuccess>
+
+- The conversation has the right owner and AI state.
+- The customer received the intended reply.
+- Lead, tag, and booking context reflects the real situation.
+- Action History explains relevant automated or teammate actions.
+
+</DocSuccess>
+
+<DocCard to="/engage/contacts" title="Contacts" description="Maintain the customer record behind each conversation" />

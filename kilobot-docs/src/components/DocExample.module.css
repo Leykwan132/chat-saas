@@ -1,0 +1,24 @@
+.root {
+  margin: 1.5rem 0;
+  padding: 1.125rem;
+  border-radius: 0.75rem;
+  background: var(--kilobot-muted);
+}
+
+.eyebrow {
+  margin: 0 0 0.25rem;
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0 0 0.75rem !important;
+  font-size: 1.05rem !important;
+}
+
+.content > :last-child {
+  margin-bottom: 0;
+}

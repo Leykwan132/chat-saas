@@ -3,8 +3,8 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Kilobot Docs',
-  tagline: 'Build, launch, and grow with Kilobot',
+  title: 'KiloBot Docs',
+  tagline: 'Build, launch, and grow with KiloBot',
   favicon: 'img/icon.svg',
   future: {v4: true},
   url: 'https://docs.kilobot.app',
@@ -84,9 +84,9 @@ const config: Config = {
       respectPrefersColorScheme: true,
     },
     navbar: {
-      title: 'Kilobot',
+      title: 'KiloBot',
       logo: {
-        alt: 'Kilobot',
+        alt: 'KiloBot',
         src: 'img/icon.svg',
         srcDark: 'img/icon-dark.svg',
       },
@@ -94,7 +94,7 @@ const config: Config = {
         {type: 'search', position: 'right'},
         {
           href: 'https://kilobot.app/workspace',
-          label: 'Try Kilobot',
+          label: 'Try KiloBot',
           position: 'right',
           className: 'navbar-dashboard-link',
         },

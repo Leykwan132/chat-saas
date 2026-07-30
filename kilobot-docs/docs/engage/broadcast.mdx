@@ -1,63 +1,116 @@
 ---
 title: Broadcast
-description: Send an approved WhatsApp template to a selected audience and monitor delivery.
+description: Send an approved WhatsApp template to a selected audience and review delivery.
 slug: /engage/broadcast
 ---
 
-import DocCard from '@site/src/components/DocCard';
-import Link from '@docusaurus/Link';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Broadcast
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Broadcast sends one approved WhatsApp Message Template to a selected group of Contacts. Use it for a planned campaign or announcement, not for one-to-one support. You need a connected WhatsApp channel, approved templates, and Contacts before you send.
+Broadcast sends one approved WhatsApp Message Template to a selected group of Contacts. Use it for a planned campaign or announcement, not one-to-one support.
 
-## Before you begin
+<DocOutcomes>
 
-Confirm that the agent has:
+### By the end, you will
+
+- Choose an approved template and audience
+- Review message variables, recipients, and estimated charges
+- Send safely and inspect delivery history
+
+</DocOutcomes>
+
+<DocPrerequisites>
 
 - A connected WhatsApp channel
-- An **Approved** **Message Template**
-- Enough eligible **Contacts**
-- An audience with a legitimate reason to receive the message
+- An **Approved** Message Template
+- Contacts with a legitimate reason to receive the message
+- A reviewed audience and send time
 
-Review Meta policy and expected template cost.
+</DocPrerequisites>
 
 ## Create a Broadcast
 
-Avoid sending a test campaign to a production audience.
-
 <ol className="steps">
-  <li>Open <strong>Broadcast</strong> and choose the new Broadcast action.</li>
-  <li>Select the WhatsApp channel and <strong>Approved</strong> template.</li>
-  <li>Define the audience using available Contact criteria.</li>
-  <li>Review the recipient count.</li>
-  <li>Preview the template with its parameters.</li>
-  <li>Use the <strong>Cost Calculator</strong> for the expected provider charge — see <Link to="/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges">Usage and billing</Link>.</li>
-  <li>Choose the available send or schedule option.</li>
-  <li>Confirm only after checking audience, template, and timing.</li>
+  <li>Open <strong>Outreach → Broadcast</strong> and choose <strong>New Broadcast</strong>.</li>
+  <li>Select the WhatsApp channel and an approved template.</li>
+  <li>Define the audience using Contact criteria.</li>
+  <li>Review the recipient count and preview resolved parameters.</li>
+  <li>Review the estimated Meta charge.</li>
+  <li>Send now or choose the available schedule option.</li>
+  <li>Confirm only after checking the audience, template, and timing.</li>
 </ol>
+
+<DocExample title="Safe first campaign">
+
+Create a small internal test audience, send the complete campaign to that group, and confirm the rendered variables and reply path before selecting production Contacts.
+
+</DocExample>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Broadcast review before send"
+  description="Show the final review screen with audience, template preview, recipient count, and estimated charge."
+  capture={[
+    'Selected WhatsApp channel and approved template',
+    'Audience criteria and recipient count',
+    'Resolved message preview',
+    'Estimated Meta charge and final confirmation action',
+  ]}
+  callouts={[
+    'Verify the audience before sending',
+    'Check every resolved template variable',
+    'Provider charges are separate from KiloBot credits',
+  ]}
+  sensitive={['Real phone numbers', 'Customer names', 'Private audience criteria']}
+  assetPath="/img/guides/outreach/broadcast-review.png"
+/>
 
 ## Review history
 
-History is paginated. Successfully sent Broadcast messages also appear in the customer's **Inbox** thread and **Action History**, which helps teammates understand later replies.
+Open **Broadcast History**, select a Broadcast, and review its overview, recipients, and delivery status. Successfully sent messages also appear in the customer's **Inbox** thread and **Action History**, giving teammates context when the customer replies.
 
-<ol className="steps">
-  <li>Open <strong>Broadcast</strong> history.</li>
-  <li>Select a Broadcast to review its overview, recipients, and status.</li>
-</ol>
-
-## Protect channel quality
-
-Use specific audiences, useful content, and reasonable frequency. Monitor failures and customer replies. Repeated irrelevant sends can harm trust and may affect the connected WhatsApp account.
-
-<DocCard
-  to="/engage/message-templates"
-  title="Message Templates"
-  description="Create and manage approved WhatsApp templates"
+<DocMediaPlaceholder
+  kind="video"
+  title="Create, test, and review a Broadcast"
+  description="Demonstrate the complete safe path from a small test audience through delivery history."
+  capture={[
+    'Choose an approved template',
+    'Build and verify a test audience',
+    'Review the estimated charge and send',
+    'Open History and inspect recipient outcomes',
+    'Open one recipient conversation in Inbox',
+  ]}
+  callouts={[
+    'Never use the production audience for the first test',
+    'Confirm variables before sending',
+    'Use History to investigate failures',
+  ]}
+  duration="60–90 seconds"
+  sensitive={['Real customer data', 'Phone numbers', 'Business identifiers']}
+  assetPath="/video/guides/outreach/broadcast-complete.mp4"
 />
 
+## Understand charges
+
+Meta charges for delivered WhatsApp templates separately from KiloBot credits. The displayed MYR amount is an estimate based on known template pricing; final charges come from Meta. Unknown categories are excluded instead of guessed.
+
+<DocSuccess>
+
+- The correct audience received the intended approved template
+- Template variables rendered correctly
+- Recipient outcomes are visible in Broadcast History
+- Replies can be continued from Inbox
+
+</DocSuccess>
+
 :::warning
-Meta template approval does not replace consent, audience quality, or local messaging requirements. Your organization remains responsible for appropriate outreach.
+Meta approval does not establish consent. Your organization remains responsible for appropriate audiences, useful content, frequency, and applicable messaging rules.
 :::

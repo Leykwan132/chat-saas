@@ -1,0 +1,75 @@
+---
+title: Messenger
+description: Connect Facebook Page messaging to KiloBot.
+slug: /channels/messenger
+---
+
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Messenger
+
+<DocVerified date="2026-07-28" />
+
+Connect a Facebook Page so supported Messenger conversations enter the selected agent’s Inbox.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Connect the correct Facebook Page
+- Verify a Page message reaches Inbox
+- Send a teammate reply from KiloBot
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- Administrator access to the intended Facebook Page and business
+- Permission to grant Page messaging access
+- KiloBot channel-management permission
+
+</DocPrerequisites>
+
+## Connect and verify
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on Messenger.</li>
+  <li>Sign in to Meta and select the intended Facebook Page.</li>
+  <li>Grant the requested messaging access and return to KiloBot.</li>
+  <li>Send a new Page message from a separate Facebook account.</li>
+  <li>Confirm the conversation in Inbox and send a teammate reply.</li>
+</ol>
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Verify the connected Facebook Page"
+  description="Show the connected Page card and the matching Messenger conversation."
+  capture={['Connected Messenger card', 'Messenger platform marker in Inbox']}
+  callouts={['Connected Page', 'Matching conversation']}
+  sensitive={['Personal profiles', 'Provider IDs', 'Customer messages']}
+  assetPath="/media/channels/messenger-connected.png"
+/>
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Connect Messenger"
+  description="Show Page selection, authorization, and a complete message test."
+  capture={['Select the Page', 'Grant access', 'Verify inbound and outbound messages']}
+  duration="60–90 seconds"
+  sensitive={['Meta login', 'Unrelated Pages', 'Customer messages']}
+  assetPath="/media/channels/connect-messenger.mp4"
+/>
+
+<DocSuccess>
+
+- The intended Page shows Connected.
+- A new Page message appears as Messenger in Inbox.
+- The teammate reply reaches the customer account.
+
+</DocSuccess>
+
+If the Page is missing, confirm Page administrator access and business ownership before starting another connection attempt.

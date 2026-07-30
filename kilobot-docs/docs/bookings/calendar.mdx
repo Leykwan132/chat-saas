@@ -1,63 +1,101 @@
 ---
 title: Calendar
-description: View, create, update, and track customer appointments in the shared KiloBot calendar.
+description: Create, validate, and manage customer appointments.
 slug: /bookings/calendar
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Calendar
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Calendar is the shared operational view of appointments created by the AI agent or by a teammate. Use it to navigate, create, update, and cancel bookings after **Services** and **Availability** are in place. Booking details also appear on the customer's conversation in **Inbox**.
+Calendar is the shared operational view for AI-created and teammate-created bookings. Past events are visually muted after their end time; current and future events remain prominent.
 
-## Navigate the Calendar
+<DocOutcomes>
 
-Past events are visually muted after their end time. Select an appointment to review its date, customer detail, Service fields, and team assignment. Booking information is also available from the customer's conversation in **Inbox**.
+### By the end, you will
 
-<ol className="steps">
-  <li>Open <strong>Calendar</strong> from the agent sidebar.</li>
-  <li>Use the sidebar to choose the view and teammate context.</li>
-  <li>Review events in the main calendar or the <strong>Today</strong> list for current and upcoming work.</li>
-</ol>
+- Create a customer booking manually
+- Check availability and prevent scheduling conflicts
+- Update appointment status and review booking history
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- Calendar read permission
+- An active Service and valid teammate Availability for new bookings
+- An existing Contact for manual customer bookings
+
+</DocPrerequisites>
 
 ## Create a booking manually
 
-Staff-created bookings use the same Service and schedule checks as AI bookings. The Service duration provides the initial end time, but you can use a valid custom interval. KiloBot checks the Service and schedule before allowing creation and revalidates when you submit. If the slot conflicts or required context is incomplete, creation is blocked.
+The Service duration provides the initial end time, but a valid custom interval can be selected. KiloBot checks availability before enabling creation and revalidates on submission.
 
 <ol className="steps">
-  <li>Choose the create action.</li>
-  <li>Find the <strong>Contact</strong>.</li>
-  <li>Select a <strong>Service</strong>, date, start time, and end time.</li>
-  <li>Complete the required booking fields.</li>
-  <li>Submit the booking.</li>
+  <li>Open <strong>Calendar</strong> and choose the create action.</li>
+  <li>Find and select the Contact.</li>
+  <li>Select <strong>Northstar Consultation</strong>.</li>
+  <li>Choose the date, start time, and end time.</li>
+  <li>Complete required fields and optional remarks.</li>
+  <li>Create the booking after the availability check succeeds.</li>
 </ol>
 
-## Update appointment status
-
-Status affects the customer record, history, and reporting. Open the event details and set the status that reflects the real outcome:
-
-- **Scheduled** for an upcoming confirmed appointment
-- **Completed** after the appointment takes place
-- **Cancelled** when it will not proceed
-- **No-show** when the customer did not attend
-
-## Edit or cancel
-
-<ol className="steps">
-  <li>Open the event details.</li>
-  <li>Edit permitted fields or cancel the appointment.</li>
-</ol>
-
-Changes made by a teammate and by the AI are recorded in the conversation's **Action History** where applicable.
-
-<DocCard
-  to="/engage/inbox"
-  title="Inbox"
-  description="Create bookings from conversations and review booking history"
+<DocMediaPlaceholder
+  kind="image"
+  title="Create a manual Northstar Consultation"
+  description="Show the selected Contact, Service, time interval, availability result, and Create booking action."
+  capture={['Selected customer', 'Northstar Consultation', 'Start and end time', 'Available result', 'Create booking']}
+  callouts={['Customer', 'Service', 'Interval', 'Validation', 'Create']}
+  sensitive={['Real customer and teammate identities']}
+  assetPath="/media/bookings/manual-booking.png"
 />
 
-:::note
-Appointment **Reminders** are configured in **Workflow** and may react to booking lifecycle changes. Review reminder settings before making large schedule changes.
-:::
+## Use accurate statuses
+
+| Status | Use it when |
+| --- | --- |
+| Scheduled | The upcoming appointment is confirmed |
+| Completed | The appointment took place |
+| Cancelled | The appointment will not proceed |
+| No-show | The customer did not attend |
+
+Status affects customer history, reporting, and automation decisions. Review [Reminders](/automate/reminders) before changing many appointments.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Update appointment status"
+  description="Show the event details and all operational status choices."
+  capture={['Event detail', 'Status control', 'Scheduled, Completed, Cancelled, and No-show']}
+  callouts={['Appointment', 'Outcome']}
+  sensitive={['Customer details', 'Booking ID']}
+  assetPath="/media/bookings/calendar-statuses.png"
+/>
+
+<DocMediaPlaceholder
+  kind="video"
+  title="Complete the booking journey"
+  description="Create Northstar Consultation, set Availability, connect it to a Workflow, complete a booking, and verify Calendar."
+  capture={['Show the Calendar result first', 'Create the Service', 'Set hours', 'Connect the Workflow', 'Complete and verify the booking']}
+  duration="60–90 seconds"
+  sensitive={['Customer phone number', 'Teammate identity', 'Booking ID']}
+  assetPath="/media/bookings/complete-booking-journey.mp4"
+/>
+
+<DocSuccess>
+
+- The booking passes validation.
+- Calendar shows the correct customer, Service, teammate, and interval.
+- The status matches the real appointment outcome.
+- The customer’s Inbox details show the connected booking where applicable.
+
+</DocSuccess>
+
+<DocCard to="/engage/inbox" title="Inbox" description="Create bookings from conversations and review customer booking history" />
