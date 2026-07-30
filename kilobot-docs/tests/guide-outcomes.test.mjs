@@ -214,6 +214,7 @@ test("non-instructional pages do not show the outcome preview", () => {
 test("WhatsApp explains coexistence before connection and safe disconnection", () => {
   const source = readGuide("channels/whatsapp.mdx");
 
+  assert.ok(source.includes("## Connect with Coexistence"));
   assert.ok(source.indexOf("**coexistence** lets you connect") < source.indexOf('<ol className="steps">'));
   assert.ok(source.includes("## Disconnect"));
   assert.ok(source.includes("clears its authorization"));

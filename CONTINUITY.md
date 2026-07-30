@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start uses a compact icon-led Example Q&A card without a redundant eyebrow and its training image says timing depends on source size and queue. Channels starts with WhatsApp, then Instagram, Messenger, and Website widget; Quick Start's Deploy link opens WhatsApp. The WhatsApp guide explains coexistence before connection and has a Disconnect section. Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, image, example-card, and WhatsApp-guide contracts pass; unreleased and unpushed.
+- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start uses a compact icon-led Example Q&A card without a redundant eyebrow and its training image says timing depends on source size and queue. Channels starts with WhatsApp, then Instagram, Messenger, and Website widget; Quick Start's Deploy link opens WhatsApp. The WhatsApp guide uses Connect with Coexistence and has a Disconnect section. Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, image, example-card, and WhatsApp-guide contracts pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every Docs content image and its alt-derived caption aligns to the article's left edge; Quick Start's Source training and Test your agent screenshots remain uncropped at 40% desktop width and 100% mobile width, and its Next steps section now links ordered Channels, Workflows, and Bookings outcomes. Recursive caption coverage, thirty-nine Docs tests, six component tests, TypeScript, the 225-document production build, exact built-HTML checks, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every MDX content image now uses one global borderless renderer with a small alt-derived caption and an accessible full-screen native-dialog lightbox; X, Escape, and backdrop dismissal are supported while navbar/theme assets remain excluded. Thirty-seven Docs tests, six component tests, TypeScript, the 225-document production build, built-HTML contracts, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] The mobile docs table-of-contents dropdown is hidden, removing the empty rounded control above page titles; the desktop right-side outline remains unchanged. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
@@ -83,6 +83,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D525 ACTIVE: Rename the WhatsApp connection section to `Connect with Coexistence`.
 - 2026-07-31 [USER] D524 ACTIVE: WhatsApp Connect explains coexistence before its steps, makes coexistence selection explicit in the Meta flow, and includes Disconnect instructions that distinguish stopping KiloBot messaging and clearing authorization from deleting the WhatsApp Business account.
 - 2026-07-31 [USER] D523 ACTIVE: Order Channels as WhatsApp, Instagram, Messenger, and Website widget; Quick Start's Deploy to channels link routes to WhatsApp.
 - 2026-07-31 [USER] D522 ACTIVE: Documentation example cards use one controlled 10px vertical gap between content items and a 10px title-to-content gap, replacing default Markdown paragraph margins.
@@ -348,6 +349,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Renamed the WhatsApp connection section to Connect with Coexistence.
 - 2026-07-31 [CODE] Added WhatsApp coexistence guidance before connection steps and a safe Disconnect section.
 - 2026-07-31 [CODE] Put WhatsApp first in Channels, moved Website widget below Messenger, and routed Quick Start deployment to WhatsApp.
 - 2026-07-31 [CODE] Normalized shared example-card spacing with a compact controlled content stack.
@@ -409,6 +411,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31T01:00+08:00 [TOOL] WhatsApp section rename changed only the heading and its guide contract. Node v22.22.0 passed 4/4 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:55+08:00 [TOOL] WhatsApp guide expansion added pre-step coexistence context, explicit coexistence selection, and Disconnect behavior/steps. Node v22.22.0 passed 4/4 focused guide-outcome tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:50+08:00 [TOOL] Channels order and Quick Start destination updated together so the destination remains in the sidebar. Node v22.22.0 passed 12/12 focused navigation/onboarding tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:45+08:00 [TOOL] Example-card spacing update replaced stacked Markdown margins with one 0.625rem content gap and matching title gap. Node v22.22.0 passed 8/8 focused visual/component tests and `git diff --check`; no deployment, changelog, or push ran.
