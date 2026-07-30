@@ -829,30 +829,41 @@ Do not modify `kilobot-docs/docs/releases/changelog.mdx` because production avai
 - Consumes: the existing persistent Workflow promotion card and its `workflowHref`.
 - Produces: a semibold `text-sm` title above the existing normal-weight `text-sm` capability sentence.
 
-- [ ] **Step 1: Write the failing title-hierarchy test**
+- [x] **Step 1: Write the failing title-hierarchy test**
 
-Replace the existing headline-weight test in `KnowledgeBaseNavigation.test.ts` with:
+Import `createElement` from React, `renderToStaticMarkup` from `react-dom/server`, `MemoryRouter` from `react-router`, and `KnowledgeBaseNavigation`. Replace the existing headline-weight test with:
 
 ```ts
 it('places the approved title above the supporting line', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      {},
+      createElement(KnowledgeBaseNavigation, {
+        activeType: 'web',
+        onSelect: () => undefined,
+        workflowHref: '/dashboard/agent-id/workflow',
+      }),
+    ),
+  );
   const title = 'Do More Automatically';
   const supportingLine =
     'Need your AI agent to send images, videos, reminders, or follow-ups?';
 
-  expect(navigationSource.indexOf(title)).toBeGreaterThan(-1);
-  expect(navigationSource.indexOf(title)).toBeLessThan(
-    navigationSource.indexOf(supportingLine),
+  expect(markup.indexOf(title)).toBeGreaterThan(-1);
+  expect(markup.indexOf(title)).toBeLessThan(
+    markup.indexOf(supportingLine),
   );
-  expect(navigationSource).toContain(
-    'className="text-sm font-semibold leading-snug text-foreground"',
+  expect(markup).toContain(
+    'class="text-sm font-semibold leading-snug text-foreground"',
   );
-  expect(navigationSource).toContain(
-    'className="mt-1.5 text-sm font-normal leading-snug text-foreground"',
+  expect(markup).toContain(
+    'class="mt-1.5 text-sm font-normal leading-snug text-foreground"',
   );
 });
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run:
 
@@ -862,7 +873,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: FAIL because `Do More Automatically` and the title styling are absent.
 
-- [ ] **Step 3: Add the title above the supporting line**
+- [x] **Step 3: Add the title above the supporting line**
 
 Replace the existing capability paragraph in `KnowledgeBaseNavigation.tsx` with:
 
@@ -877,7 +888,7 @@ Replace the existing capability paragraph in `KnowledgeBaseNavigation.tsx` with:
 
 Keep the banner, `Try Workflow` action, route, card container, and button spacing unchanged.
 
-- [ ] **Step 4: Run the focused test to verify it passes**
+- [x] **Step 4: Run the focused test to verify it passes**
 
 Run:
 
@@ -887,7 +898,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: all four tests PASS.
 
-- [ ] **Step 5: Run the page-guidance verification**
+- [x] **Step 5: Run the page-guidance verification**
 
 Run:
 
@@ -899,7 +910,7 @@ wc -l src/components/knowledge-base/KnowledgeBaseNavigation.tsx
 
 Expected: all focused tests PASS, no whitespace errors, and the production component remains at or below 300 lines.
 
-- [ ] **Step 6: Update continuity and commit**
+- [x] **Step 6: Update continuity and commit**
 
 Record the implemented title and focused verification in `CONTINUITY.md`. Do not update `kilobot-docs/docs/releases/changelog.mdx` because production availability remains unconfirmed.
 
