@@ -18,7 +18,7 @@ The opening paragraph follows the 17px body scale. H1 page titles, H4 labels, im
 
 Only the screenshot below `Test your agent` in Quick Start receives the compact treatment:
 
-- Center it at 70% of the article width on desktop.
+- Center it at 40% of the article width on desktop.
 - Return it to 100% width on mobile.
 - Keep its caption aligned to the same width.
 - Preserve the existing click-to-expand behavior and full-size lightbox.
