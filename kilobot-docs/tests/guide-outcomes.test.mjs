@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 
 const docsDirectory = fileURLToPath(new URL("../docs/", import.meta.url));
 const outcomeHeading = "### By the end, you will";
+const outcomeImport =
+  "import DocOutcomes from '@site/src/components/DocOutcomes';";
+const outcomeContainerPattern =
+  /<DocOutcomes>\n\n### By the end, you will\n\n(?:- .+(?:\n|$)){3,5}\n<\/DocOutcomes>/;
 
 const guides = new Map([
   ["start-here/quick-start.mdx", [
@@ -158,6 +162,11 @@ function countWords(value) {
 function assertGuideOutcomes(relativePath, expectedOutcomes) {
   const source = readGuide(relativePath);
   const headingMatches = source.match(/### By the end, you will/g) ?? [];
+  const importMatches = source.match(
+    /import DocOutcomes from '@site\/src\/components\/DocOutcomes';/g,
+  ) ?? [];
+  const openingMatches = source.match(/<DocOutcomes>/g) ?? [];
+  const closingMatches = source.match(/<\/DocOutcomes>/g) ?? [];
   const outcomes = parseOutcomes(source);
   const headingIndex = source.indexOf(outcomeHeading);
   const verifiedIndex = source.indexOf("<DocVerified date=");
@@ -167,6 +176,10 @@ function assertGuideOutcomes(relativePath, expectedOutcomes) {
     prerequisitesIndex >= 0 ? prerequisitesIndex : firstSectionIndex;
 
   assert.equal(headingMatches.length, 1, relativePath);
+  assert.equal(importMatches.length, 1, `${relativePath}: import`);
+  assert.equal(openingMatches.length, 1, `${relativePath}: opening`);
+  assert.equal(closingMatches.length, 1, `${relativePath}: closing`);
+  assert.match(source, outcomeContainerPattern, `${relativePath}: wrapper`);
   assert.deepEqual(outcomes, expectedOutcomes, relativePath);
   assert.ok(headingIndex > source.indexOf("\n# "), relativePath);
   if (verifiedIndex >= 0) {
@@ -189,7 +202,10 @@ test("instructional guides preview their outcomes", () => {
 
 test("non-instructional pages do not show the outcome preview", () => {
   for (const relativePath of excludedGuides) {
-    assert.doesNotMatch(readGuide(relativePath), /### By the end, you will/);
+    const source = readGuide(relativePath);
+    assert.doesNotMatch(source, /### By the end, you will/);
+    assert.ok(!source.includes(outcomeImport));
+    assert.doesNotMatch(source, /<\/?DocOutcomes>/);
   }
 });
 
