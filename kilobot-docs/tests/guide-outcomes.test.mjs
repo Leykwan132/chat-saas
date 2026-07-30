@@ -107,6 +107,31 @@ const guides = new Map([
     "Configure timing, attempts, and approved messages",
     "Verify replies stop later attempts",
   ]],
+  ["team/workspace-and-team.mdx", [
+    "Invite a teammate to the correct workspace",
+    "Assign the smallest suitable role",
+    "Review, change, or remove team access",
+  ]],
+  ["team/roles-and-permissions.mdx", [
+    "Match permissions to a teammate’s responsibilities",
+    "Assign the smallest suitable access",
+    "Test what the teammate can view and manage",
+  ]],
+  ["team/lead-assignment.mdx", [
+    "Choose a conversation assignment strategy",
+    "Configure teammate eligibility and booking ownership",
+    "Verify new work reaches the intended teammate",
+  ]],
+  ["help/troubleshooting.mdx", [
+    "Diagnose common agent, channel, booking, and Outreach problems",
+    "Check workspace, agent, permissions, and connection state",
+    "Gather useful evidence when support is needed",
+  ]],
+  ["help/contact-support.mdx", [
+    "Choose the right support route",
+    "Include the details needed to investigate",
+    "Remove sensitive customer data before sharing evidence",
+  ]],
 ]);
 
 const excludedGuides = [
@@ -135,6 +160,7 @@ function assertGuideOutcomes(relativePath, expectedOutcomes) {
   const headingMatches = source.match(/### By the end, you will/g) ?? [];
   const outcomes = parseOutcomes(source);
   const headingIndex = source.indexOf(outcomeHeading);
+  const verifiedIndex = source.indexOf("<DocVerified date=");
   const prerequisitesIndex = source.indexOf("<DocPrerequisites");
   const firstSectionIndex = source.indexOf("\n## ");
   const nextContentIndex =
@@ -143,6 +169,9 @@ function assertGuideOutcomes(relativePath, expectedOutcomes) {
   assert.equal(headingMatches.length, 1, relativePath);
   assert.deepEqual(outcomes, expectedOutcomes, relativePath);
   assert.ok(headingIndex > source.indexOf("\n# "), relativePath);
+  if (verifiedIndex >= 0) {
+    assert.ok(verifiedIndex < headingIndex, `${relativePath}: verification date`);
+  }
   assert.ok(nextContentIndex > headingIndex, relativePath);
   assert.ok(outcomes.length >= 3 && outcomes.length <= 5, relativePath);
 
