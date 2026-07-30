@@ -25,17 +25,10 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'channels/connect-channels',
         'channels/website-widget',
         'channels/whatsapp',
         'channels/instagram',
         'channels/messenger',
-        {
-          type: 'category',
-          label: 'Conversations',
-          collapsed: false,
-          items: ['engage/inbox', 'engage/contacts'],
-        },
       ],
     },
     {

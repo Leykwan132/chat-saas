@@ -40,15 +40,22 @@ test('limits Getting started to Welcome and Quick Start', () => {
   ]);
 });
 
-test('nests Conversations under Channels', () => {
+test('starts Channels with the Website widget and hides Conversations', () => {
   const sidebar = read('sidebars.ts');
   const channels = sidebar.match(
     /label: 'Channels'[\s\S]*?label: 'Bookings'/,
   )?.[0];
+
   assert.ok(channels);
-  assert.ok(channels.includes("label: 'Conversations'"));
-  assert.ok(channels.includes("'engage/inbox'"));
-  assert.ok(channels.includes("'engage/contacts'"));
+  assert.ok(channels.indexOf("'channels/website-widget'") > -1);
+  assert.ok(
+    channels.indexOf("'channels/website-widget'")
+      < channels.indexOf("'channels/whatsapp'"),
+  );
+  assert.equal(channels.includes("'channels/connect-channels'"), false);
+  assert.equal(channels.includes("label: 'Conversations'"), false);
+  assert.equal(channels.includes("'engage/inbox'"), false);
+  assert.equal(channels.includes("'engage/contacts'"), false);
 });
 
 test('organizes Workflows around user tasks', () => {
