@@ -19,6 +19,21 @@ describe('Knowledge Base Workflow promotion', () => {
     expect(navigationSource).toContain('Try Workflow');
   });
 
+  it('shows the approved minimal banner above the promotion copy', () => {
+    expect(navigationSource).toContain(
+      'src="https://storage.kilobot.app/grad-2.jpg"',
+    );
+    expect(navigationSource).toContain('alt=""');
+    expect(navigationSource).toContain(
+      'className="aspect-video w-full object-cover"',
+    );
+    expect(navigationSource.indexOf('<img')).toBeLessThan(
+      navigationSource.indexOf(
+        'Need your AI agent to send images, videos, reminders, or follow-ups?',
+      ),
+    );
+  });
+
   it('links to the current agent Workflow', () => {
     expect(navigationSource).toContain('workflowHref');
     expect(pageSource).toContain(

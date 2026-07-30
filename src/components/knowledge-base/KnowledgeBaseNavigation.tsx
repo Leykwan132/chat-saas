@@ -78,19 +78,26 @@ export function KnowledgeBaseNavigation({
         activeType={activeType}
         onSelect={onSelect}
       />
-      <aside className="rounded-xl border border-border bg-muted/40 p-4">
-        <p className="text-sm font-semibold leading-snug text-foreground">
-          Need your AI agent to send images, videos, reminders, or follow-ups?
-        </p>
-        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-          Set it up with Workflow.
-        </p>
-        <Button asChild variant="outline" size="sm" className="mt-4 w-full">
-          <Link to={workflowHref}>
-            Try Workflow
-            <ArrowRight className="size-4" />
-          </Link>
-        </Button>
+      <aside className="overflow-hidden rounded-xl border border-border bg-muted/40">
+        <img
+          src="https://storage.kilobot.app/grad-2.jpg"
+          alt=""
+          className="aspect-video w-full object-cover"
+        />
+        <div className="p-4">
+          <p className="text-sm font-semibold leading-snug text-foreground">
+            Need your AI agent to send images, videos, reminders, or follow-ups?
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            Set it up with Workflow.
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+            <Link to={workflowHref}>
+              Try Workflow
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </aside>
     </div>
   );
