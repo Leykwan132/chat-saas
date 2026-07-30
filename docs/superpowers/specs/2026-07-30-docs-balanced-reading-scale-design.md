@@ -2,7 +2,7 @@
 
 ## Goal
 
-Make KiloBot guide content easier to read without making the navigation or interface chrome feel oversized, and reduce the visual dominance of the Quick Start testing screenshot.
+Make KiloBot guide content easier to read without making the navigation or interface chrome feel oversized, and reduce the visual dominance of the two tall Quick Start screenshots.
 
 ## Typography
 
@@ -14,21 +14,21 @@ Apply the balanced scale to the main Markdown article:
 
 The opening paragraph follows the 17px body scale. H1 page titles, H4 labels, image captions, navigation, the page outline, pagination, cards, and other interface chrome retain their existing sizes.
 
-## Testing Screenshot
+## Compact Screenshots
 
-Only the screenshot below `Test your agent` in Quick Start receives the compact treatment:
+The screenshots below `Source training in the Knowledge Base` and `Test your agent` in Quick Start receive the same compact treatment:
 
-- Center it at 40% of the article width on desktop.
-- Return it to 100% width on mobile.
-- Preserve its complete aspect ratio without cropping.
-- Keep its caption aligned to the same width.
+- Center each at 40% of the article width on desktop.
+- Return each to 100% width on mobile.
+- Preserve each complete aspect ratio without cropping.
+- Keep each caption aligned to the same width.
 - Preserve the existing click-to-expand behavior and full-size lightbox.
 
-The other Quick Start screenshots and all other guide images retain their current article width.
+The agent signup and Knowledge Base Q&A screenshots, plus all other guide images, retain their current article width.
 
 ## Implementation Boundary
 
-Use the existing global MDX image renderer with an explicit content-level sizing hook for this one image. Keep the global renderer generic so future images do not inherit the testing screenshot's compact size accidentally.
+Use the existing global MDX image renderer with one explicit content-level sizing hook around each of the two compact screenshots. Keep the global renderer generic so future images do not inherit the compact size accidentally.
 
 ## Verification
 
