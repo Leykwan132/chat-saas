@@ -520,7 +520,7 @@ Tasks 5–7 are the approved revision and supersede the drawer-specific behavior
 - Consumes: the existing `KnowledgeBaseNavigation` promotion card and hosted image URL `https://storage.kilobot.app/grad-2.jpg`.
 - Produces: a decorative full-width 16:9 banner above the existing promotion copy.
 
-- [ ] **Step 1: Write the failing banner contract**
+- [x] **Step 1: Write the failing banner contract**
 
 Add this assertion to the existing Workflow promotion test:
 
@@ -541,7 +541,7 @@ it('shows the approved minimal banner above the promotion copy', () => {
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -551,7 +551,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: FAIL because the promotion card has no image.
 
-- [ ] **Step 3: Add the minimal banner**
+- [x] **Step 3: Add the minimal banner**
 
 Replace the promotion card with:
 
@@ -581,7 +581,7 @@ Replace the promotion card with:
 
 Do not add an overlay, image label, gradient effect, or alternate card copy.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run:
 
@@ -591,7 +591,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the banner**
+- [x] **Step 5: Commit the banner**
 
 ```bash
 git add src/components/knowledge-base/KnowledgeBaseNavigation.tsx src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
@@ -611,7 +611,7 @@ git commit -m "Add minimal Knowledge Base workflow banner"
 - Produces: `KnowledgeBaseTestLayout({ children, showTestPanel, testPanel }: { children: ReactNode; showTestPanel: boolean; testPanel: ReactNode }): JSX.Element`
 - Consumes: `AgentPlaygroundPanel` with `mode="inline"`, `open={isTestOpen}`, and `onOpenChange={setIsTestOpen}`.
 
-- [ ] **Step 1: Replace the drawer test with a failing inline-layout contract**
+- [x] **Step 1: Replace the drawer test with a failing inline-layout contract**
 
 Read the new layout source alongside the existing page source:
 
@@ -649,7 +649,7 @@ it('keeps Knowledge Base content intact beside the responsive test panel', () =>
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [x] **Step 2: Run the test to verify it fails**
 
 Run:
 
@@ -659,7 +659,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: FAIL because Knowledge Base still uses drawer mode and the layout component does not exist.
 
-- [ ] **Step 3: Add the responsive test layout**
+- [x] **Step 3: Add the responsive test layout**
 
 Create `src/components/knowledge-base/KnowledgeBaseTestLayout.tsx`:
 
@@ -692,7 +692,7 @@ export function KnowledgeBaseTestLayout({
 }
 ```
 
-- [ ] **Step 4: Move the playground into the Knowledge Base page flow**
+- [x] **Step 4: Move the playground into the Knowledge Base page flow**
 
 Import `KnowledgeBaseTestLayout`. Keep `KnowledgeBaseHeader` above it, then wrap the existing Sources/content/storage grid:
 
@@ -721,7 +721,7 @@ Keep every existing child of that grid unchanged. Immediately after its existing
 
 Remove the drawer instance after the page content. Do not change the inner Sources/content/storage grid, selected source state, delete dialog, or shared playground behavior.
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run:
 
@@ -731,7 +731,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/
 
 Expected: PASS.
 
-- [ ] **Step 6: Check the code-file limits**
+- [x] **Step 6: Check the code-file limits**
 
 Run:
 
@@ -741,7 +741,7 @@ wc -l src/pages/KnowledgeBasePage.tsx src/components/knowledge-base/KnowledgeBas
 
 Expected: both files remain at or below 300 lines.
 
-- [ ] **Step 7: Commit the in-page tester**
+- [x] **Step 7: Commit the in-page tester**
 
 ```bash
 git add src/components/knowledge-base/KnowledgeBaseTestLayout.tsx src/components/knowledge-base/KnowledgeBaseHeader.test.ts src/pages/KnowledgeBasePage.tsx
@@ -759,7 +759,7 @@ git commit -m "Embed agent testing in Knowledge Base"
 - Consumes: Tasks 5–6 and their focused tests.
 - Produces: a verified unreleased revision receipt.
 
-- [ ] **Step 1: Run all page-guidance tests**
+- [x] **Step 1: Run all page-guidance tests**
 
 Run:
 
@@ -769,7 +769,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/pages/pageH
 
 Expected: all focused tests PASS.
 
-- [ ] **Step 2: Run the production build**
+- [x] **Step 2: Run the production build**
 
 Run:
 
@@ -779,7 +779,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bun run build
 
 Expected: TypeScript and Vite production build PASS.
 
-- [ ] **Step 3: Review the final revision**
+- [x] **Step 3: Review the final revision**
 
 Run:
 
@@ -791,11 +791,11 @@ git diff --stat HEAD~2
 
 Expected: no whitespace errors; the revision is limited to the approved banner, responsive test layout, focused tests, plan, and continuity.
 
-- [ ] **Step 4: Update continuity**
+- [x] **Step 4: Update continuity**
 
 Update the `2026-07-30` Snapshot and Receipts to state that the hosted banner and in-page test container are implemented, the focused tests and build pass, and the result remains unreleased.
 
-- [ ] **Step 5: Commit the verification receipt**
+- [x] **Step 5: Commit the verification receipt**
 
 ```bash
 git add CONTINUITY.md docs/superpowers/plans/2026-07-30-page-guidance-and-knowledge-base-actions.md
