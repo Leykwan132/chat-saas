@@ -18,7 +18,8 @@ test('configures the public KiloBot domain, local search, and product navigation
   assert.ok(config.includes("markdown: {hooks: {onBrokenMarkdownLinks: 'throw'}}"));
   assert.equal(config.includes('searchResultLimits'), false);
   assert.ok(config.includes("blog: false"));
-  assert.ok(config.includes("href: 'https://kilobot.app/workspace'"));
+  assert.ok(config.includes("href: 'https://kilobot.app'"));
+  assert.equal(config.includes("href: 'https://kilobot.app/workspace'"), false);
   assert.ok(config.includes('footer: undefined'));
   assert.equal(config.includes('facebook/docusaurus'), false);
   assert.equal(config.includes('your-docusaurus-site.example.com'), false);
@@ -71,7 +72,14 @@ test('styles the top bar like the product header chrome', () => {
   assert.match(navbarRule, /border-bottom:/);
   assert.match(navbarRule, /box-shadow: none/);
   assert.doesNotMatch(navbarRule, /backdrop-filter:/);
-  assert.match(navbarCss, /\.navbar-dashboard-link \{[\s\S]*border-radius: 999px;[\s\S]*\}/);
+  assert.match(
+    navbarCss,
+    /\.navbar-dashboard-link \{[\s\S]*display: inline-flex;[\s\S]*align-items: center;[\s\S]*gap: 0\.35rem;[\s\S]*border-radius: 999px;[\s\S]*\}/,
+  );
+  assert.match(
+    navbarCss,
+    /\.navbar-dashboard-link svg \{[\s\S]*width: 0\.875rem;[\s\S]*height: 0\.875rem;[\s\S]*margin: 0;[\s\S]*\}/,
+  );
   assert.ok(navbarCss.includes('.aa-DetachedSearchButton'));
   assert.ok(navbarCss.includes('width: 14.5rem'));
   assert.ok(navbarCss.includes('height: 2.25rem'));
@@ -152,6 +160,8 @@ test('opens the documentation shell at the root without a custom home page', () 
   assert.equal(existsSync(path.join(root, 'src/pages/index.module.css')), false);
   assert.equal(existsSync(path.join(root, 'src/components/HomeCategoryGrid.tsx')), false);
   assert.equal(existsSync(path.join(root, 'src/components/HomeCategoryGrid.module.css')), false);
+  assert.ok(welcome.includes("secondary={{label: 'Try KiloBot', to: 'https://kilobot.app'}}"));
+  assert.equal(welcome.includes('https://kilobot.app/workspace'), false);
 });
 
 test('scopes circular step badges and ships path/card components', () => {
