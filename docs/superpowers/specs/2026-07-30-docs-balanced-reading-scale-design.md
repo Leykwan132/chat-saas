@@ -20,6 +20,7 @@ Only the screenshot below `Test your agent` in Quick Start receives the compact 
 
 - Center it at 40% of the article width on desktop.
 - Return it to 100% width on mobile.
+- Preserve its complete aspect ratio without cropping.
 - Keep its caption aligned to the same width.
 - Preserve the existing click-to-expand behavior and full-size lightbox.
 
