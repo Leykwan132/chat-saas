@@ -815,3 +815,95 @@ git commit -m "Record Knowledge Base layout verification"
 ```
 
 Do not modify `kilobot-docs/docs/releases/changelog.mdx` because production availability is not confirmed.
+
+---
+
+### Task 8: Add the Workflow card title
+
+**Files:**
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.test.ts`
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: the existing persistent Workflow promotion card and its `workflowHref`.
+- Produces: a semibold `text-sm` title above the existing normal-weight `text-sm` capability sentence.
+
+- [ ] **Step 1: Write the failing title-hierarchy test**
+
+Replace the existing headline-weight test in `KnowledgeBaseNavigation.test.ts` with:
+
+```ts
+it('places the approved title above the supporting line', () => {
+  const title = 'Do More Automatically';
+  const supportingLine =
+    'Need your AI agent to send images, videos, reminders, or follow-ups?';
+
+  expect(navigationSource.indexOf(title)).toBeGreaterThan(-1);
+  expect(navigationSource.indexOf(title)).toBeLessThan(
+    navigationSource.indexOf(supportingLine),
+  );
+  expect(navigationSource).toContain(
+    'className="text-sm font-semibold leading-snug text-foreground"',
+  );
+  expect(navigationSource).toContain(
+    'className="mt-1.5 text-sm font-normal leading-snug text-foreground"',
+  );
+});
+```
+
+- [ ] **Step 2: Run the focused test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: FAIL because `Do More Automatically` and the title styling are absent.
+
+- [ ] **Step 3: Add the title above the supporting line**
+
+Replace the existing capability paragraph in `KnowledgeBaseNavigation.tsx` with:
+
+```tsx
+<p className="text-sm font-semibold leading-snug text-foreground">
+  Do More Automatically
+</p>
+<p className="mt-1.5 text-sm font-normal leading-snug text-foreground">
+  Need your AI agent to send images, videos, reminders, or follow-ups?
+</p>
+```
+
+Keep the banner, `Try Workflow` action, route, card container, and button spacing unchanged.
+
+- [ ] **Step 4: Run the focused test to verify it passes**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: all four tests PASS.
+
+- [ ] **Step 5: Run the page-guidance verification**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/pages/pageHeaderChrome.test.ts src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/components/knowledge-base/KnowledgeBaseHeader.test.ts
+git diff --check
+wc -l src/components/knowledge-base/KnowledgeBaseNavigation.tsx
+```
+
+Expected: all focused tests PASS, no whitespace errors, and the production component remains at or below 300 lines.
+
+- [ ] **Step 6: Update continuity and commit**
+
+Record the implemented title and focused verification in `CONTINUITY.md`. Do not update `kilobot-docs/docs/releases/changelog.mdx` because production availability remains unconfirmed.
+
+```bash
+git add src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.tsx docs/superpowers/plans/2026-07-30-page-guidance-and-knowledge-base-actions.md CONTINUITY.md
+git commit -m "Add Knowledge Base Workflow card title"
+```
