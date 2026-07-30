@@ -1,57 +1,101 @@
 ---
 title: Message Templates
-description: Create and manage approved WhatsApp templates for broadcasts, reminders, and follow-ups.
+description: Create and approve WhatsApp templates for broadcasts, reminders, and follow-ups.
 slug: /engage/message-templates
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Message Templates
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-WhatsApp Message Templates are provider-approved messages used for outbound communication such as **Broadcasts**, appointment **Reminders**, and **Follow-ups**. KiloBot stores the local template record and updates its lifecycle from Meta events. Create and approve templates before those features can send.
+Message Templates are Meta-approved WhatsApp messages. Create them before you configure a **Broadcast**, **Reminder**, or **Follow-up**.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Create a complete WhatsApp Message Template
+- Add examples and media where required
+- Submit the template and confirm approval before use
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- A connected WhatsApp channel
+- Final copy and a clear reason for contacting the customer
+- Example values for every variable
+- Header media ready when the template uses an image or document
+
+</DocPrerequisites>
 
 ## Create a template
 
-Headers can contain supported text or media. The body may use positional or named variables with examples. Buttons and Footer must follow the options accepted by Meta.
-
 <ol className="steps">
-  <li>Open <strong>Message Templates</strong>.</li>
-  <li>Choose <strong>New template</strong>.</li>
-  <li>Enter the template name, language, category, and message body.</li>
-  <li>Optionally enable <strong>Header</strong>, <strong>Buttons</strong>, or <strong>Footer</strong> sections — each shows <strong>Active</strong> when enabled and <strong>Inactive</strong> when disabled.</li>
-  <li>Submit the template.</li>
+  <li>Open <strong>Outreach → Templates</strong> and choose <strong>New template</strong>.</li>
+  <li>Enter a lowercase template name, language, and the category that best matches the message.</li>
+  <li>Write the body and add an example for every variable.</li>
+  <li>Turn on <strong>Header</strong>, <strong>Buttons</strong>, or <strong>Footer</strong> only when needed.</li>
+  <li>Preview the complete message, then submit it to Meta.</li>
 </ol>
 
-## Understand status
+<DocExample title="Northstar appointment reminder">
 
-A template moves through the following practical states:
+**Body:** Hi `{{1}}`, this is a reminder for your `{{2}}` appointment on `{{3}}` at `{{4}}`. Reply here if you need help.
 
-- **Submitting** while KiloBot sends the request
-- **In review** while Meta evaluates it
-- **Approved** when it can be selected for sending
-- **Failed** when submission or a terminal provider event is unsuccessful
+**Examples:** `Aisyah`, `Consultation`, `12 August`, `10:00 AM`
 
-A category update from Meta can change the saved category without changing an approved status. Only **Approved** templates are available in sending and Workflow selectors.
+</DocExample>
 
-## Preview and maintain
-
-<ol className="steps">
-  <li>Open a template to review the current local content, examples, category, language, and status.</li>
-  <li>Use the available update flow when copy needs to change, and expect provider review where required.</li>
-</ol>
-
-## Costs and policy
-
-Meta bills WhatsApp template charges by category and destination. KiloBot may show estimated MYR rates — see [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
-
-<DocCard
-  to="/engage/broadcast"
-  title="Broadcast"
-  description="Send an approved template to a selected audience"
+<DocMediaPlaceholder
+  kind="image"
+  title="Create a WhatsApp Message Template"
+  description="Show the completed Northstar reminder form immediately before submission."
+  capture={[
+    'Template name, language, and category',
+    'Body with four variables and their example values',
+    'Preview panel with the resolved example message',
+    'Submit action',
+  ]}
+  callouts={[
+    'Choose the category that matches the message purpose',
+    'Every variable needs an example',
+    'Check the preview before submission',
+  ]}
+  sensitive={['Phone numbers', 'Customer names other than the fictional example', 'WhatsApp business identifiers']}
+  assetPath="/img/guides/outreach/template-create.png"
 />
 
+## Understand the status
+
+| Status | Meaning | What to do |
+| --- | --- | --- |
+| **Submitting** | KiloBot is sending the request | Wait; do not submit a duplicate |
+| **In review** | Meta is reviewing the template | Wait for the provider decision |
+| **Approved** | The template can be selected | Use it in Outreach or Workflows |
+| **Failed** | Submission or review failed | Open it, correct the issue, and resubmit |
+
+Only **Approved** templates appear in sending selectors. Meta may later update a template category without removing its approved status.
+
+## Understand charges
+
+Meta charges for WhatsApp template delivery separately from KiloBot credits. The amount depends on Meta's current category, destination, and pricing. KiloBot may show an estimated MYR amount; treat it as an estimate and review the final provider charge in your Meta account.
+
+<DocSuccess>
+
+- The template status is **Approved**
+- The preview contains the intended copy and resolved examples
+- The template appears in the relevant Broadcast, Reminder, or Follow-up selector
+
+</DocSuccess>
+
 :::warning
-Do not plan a time-sensitive **Broadcast**, **Reminder**, or **Follow-up** around a template that is still **In review**. Approve required templates before activation.
+Approval does not replace customer consent or local messaging requirements. Do not schedule a time-sensitive campaign around a template that is still **In review**.
 :::

@@ -1,0 +1,25 @@
+.root {
+  margin: 1.5rem 0 2rem;
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background: var(--kilobot-outcomes);
+}
+
+.root :global(h3) {
+  margin: 0 0 0.75rem !important;
+}
+
+.root :global(ul) {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.root :global(li + li) {
+  margin-top: 0.375rem;
+}
+
+@media (max-width: 640px) {
+  .root {
+    padding: 1.25rem;
+  }
+}

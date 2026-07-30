@@ -1,65 +1,112 @@
 ---
 title: Reminders
-description: Schedule approved WhatsApp reminder messages for booked appointments.
+description: Schedule approved WhatsApp messages before booked appointments.
 slug: /automate/reminders
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Reminders
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Reminders send an approved WhatsApp Message Template before a booked appointment. Configure them from the **Reminders** view in **Workflow**. Use Reminders for time-based appointment messaging; use **Follow-ups** when you need to re-engage after no reply.
+Reminders send an approved WhatsApp Message Template before a booked appointment. Use them for appointment-time messaging; use **Follow-ups** when the trigger is a customer who has not replied.
 
-## Before you begin
+<DocOutcomes>
 
-Confirm you have active **Services**, booked appointments, a connected WhatsApp channel, and an approved **Message Template**. Provider charges are covered in [Usage and billing](/insights/usage-and-billing#separate-kilobot-credits-from-whatsapp-charges).
+### By the end, you will
+
+- Choose which appointments should receive reminders
+- Configure approved messages and send timing
+- Verify scheduled and completed sends in History
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- An active Service with bookable appointments
+- A connected WhatsApp channel
+- An **Approved** reminder Message Template
+- Correct appointment customer phone numbers and timezones
+
+</DocPrerequisites>
 
 ## Choose the activation scope
 
-The scope controls which appointments enter scheduling; it does not change the appointment itself. Follow-ups use the same scope pattern — see [Follow-ups](/automate/follow-ups).
+| Scope | Includes | Best for |
+| --- | --- | --- |
+| **Future only** | Eligible appointments created after activation | A clean, low-risk launch |
+| **Current & future** | Remaining eligible sends for current upcoming appointments and new appointments | Applying the automation to an already-reviewed calendar |
+
+The scope controls which appointments enter scheduling. It does not modify the appointments.
+
+## Configure and activate
 
 <ol className="steps">
-  <li>Open <strong>Workflow</strong> and switch to <strong>Reminders</strong>.</li>
-  <li>Choose <strong>Current & future</strong> to schedule remaining eligible reminders for confirmed upcoming and new appointments, or <strong>Future only</strong> to schedule reminders only for appointments created while the automation is on.</li>
+  <li>Open <strong>Workflows → Reminders</strong>.</li>
+  <li>Choose the activation scope.</li>
+  <li>Choose how many reminders to send and when each should be sent.</li>
+  <li>Select an approved WhatsApp template and choose <strong>Confirm</strong>.</li>
+  <li>Review the Summary, then turn Reminders on.</li>
 </ol>
 
-## Set the schedule
+<DocExample title="Northstar Consultation">
 
-Keep reminder times far enough apart that customers are not overwhelmed.
+Send one reminder 24 hours before the appointment and a second reminder 2 hours before it. Start with **Future only** while verifying the workflow.
 
-<ol className="steps">
-  <li>Choose the number of reminders.</li>
-  <li>Set when each reminder should go out.</li>
-  <li>Use predefined timing options or a custom positive duration in minutes, hours, days, or weeks.</li>
-</ol>
+</DocExample>
 
-## Select the message
+<DocMediaPlaceholder
+  kind="image"
+  title="Completed Reminder configuration"
+  description="Show a two-reminder Northstar setup immediately before activation."
+  capture={[
+    'Activation scope',
+    'Both reminder timings',
+    'Selected approved template',
+    'Summary and Active switch',
+  ]}
+  callouts={[
+    'Future only is the safest first activation',
+    'Confirm the template selection',
+    'Review the Summary before turning it on',
+  ]}
+  sensitive={['Customer information', 'Phone numbers', 'Private template variables']}
+  assetPath="/img/guides/workflows/reminder-configuration.png"
+/>
 
-The template must remain **Approved** to be sent. Review the **Summary** before turning the automation on.
+## Monitor History
 
-<ol className="steps">
-  <li>Choose an approved WhatsApp <strong>Message Template</strong>.</li>
-  <li><strong>Confirm</strong> the selection.</li>
-  <li>Review the <strong>Summary</strong> before turning the automation on.</li>
-</ol>
+Open **History** from the Reminder Summary. Review the customer, template, scheduled time, sent time, status, and estimated Meta charge. Statuses include scheduled, sent, failed, skipped, and cancelled.
 
-## Monitor reminder history
+Meta charges for WhatsApp templates separately from KiloBot credits. KiloBot shows estimates only where the template category has a known rate; unknown categories are excluded instead of guessed.
 
-Sent, failed, cancelled, scheduled, and skipped outcomes use separate status indicators. The footer summarizes all-time sent activity and estimated spend where pricing is known.
+<DocSuccess>
 
-<ol className="steps">
-  <li>Open <strong>History</strong> from the reminder <strong>Summary</strong>.</li>
-  <li>Review the customer, template, scheduled time, sent time, status, and estimated cost.</li>
-</ol>
+- The Summary shows the intended scope, timing, and approved template
+- Reminders are active
+- A controlled test booking produces the expected scheduled History rows
+- Sent reminders appear in the customer's Inbox conversation
 
-:::warning
-Turning reminders on without a selected approved message is blocked. Complete the message step first.
-:::
+</DocSuccess>
 
-<DocCard
-  to="/automate/follow-ups"
-  title="Follow-ups"
-  description="Re-engage customers who have not replied"
+<DocMediaPlaceholder
+  kind="video"
+  title="Activate and verify appointment Reminders"
+  description="Show configuration, a controlled booking, and the resulting Reminder History."
+  capture={[
+    'Configure Future only scope and two timings',
+    'Select and confirm an approved template',
+    'Activate the automation',
+    'Create a controlled test booking',
+    'Open History and verify scheduled outcomes',
+  ]}
+  duration="60–90 seconds"
+  sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}
+  assetPath="/video/guides/workflows/reminders-verify.mp4"
 />

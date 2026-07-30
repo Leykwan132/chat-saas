@@ -1,65 +1,112 @@
 ---
 title: Services
-description: Define what customers can book, what information to collect, and who receives appointments.
+description: Define what customers can book, what to collect, and who receives appointments.
 slug: /bookings/services
 ---
 
 import DocCard from '@site/src/components/DocCard';
+import DocExample from '@site/src/components/DocExample';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocPrerequisites from '@site/src/components/DocPrerequisites';
+import DocSuccess from '@site/src/components/DocSuccess';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Services
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Services define the appointments KiloBot can offer. A Service combines the customer-facing description, timing rules, booking fields, sales style, and teammate assignment strategy used by the **Book appointment** Workflow action. Pair Services with **Availability** and review outcomes in **Calendar**.
+A Service combines customer-facing details, timing, booking fields, sales style, and teammate assignment. Availability and Calendar determine whether the assigned teammate can actually accept a requested time.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Create a customer-facing Service
+- Configure timing, booking fields, and assignment
+- Test that customers can book an eligible teammate
+
+</DocOutcomes>
+
+<DocPrerequisites>
+
+- Booking-automation management permission
+- At least one eligible workspace teammate
+- Approved booking questions and timing rules
+
+</DocPrerequisites>
 
 ## Create a Service
 
+<DocExample title="Northstar Consultation">
+
+- **Duration:** 30 minutes
+- **Buffer:** 15 minutes
+- **Required fields:** Customer name, phone number, reason for visit
+- **Assignment:** Conversation owner first
+
+</DocExample>
+
 <ol className="steps">
   <li>Open <strong>Services</strong> and choose <strong>Add a service</strong>.</li>
-  <li>Complete <strong>Details</strong> — enter the Service name, description, and active state.</li>
-  <li>Complete <strong>Timing</strong> — set appointment duration, buffer, timezone, and optional preferred times.</li>
-  <li>Complete <strong>Data collection</strong> — choose the fields KiloBot collects during booking.</li>
-  <li>Complete <strong>Assignment</strong> — choose the sales style and teammate assignment strategy.</li>
-  <li><strong>Save</strong> the Service.</li>
+  <li>Enter the name, customer-facing description, and active state.</li>
+  <li>Set duration, buffer, timezone, and any preferred times.</li>
+  <li>Choose only the booking fields the team needs.</li>
+  <li>Choose the sales style and assignment strategy.</li>
+  <li>Save the Service.</li>
 </ol>
 
-Default booking fields include Booking Date, Booking Time, Customer Name, and Phone Number. You can add text, number, select, yes/no, date, time, and phone fields. Keep the form short enough for a customer to finish in conversation.
+Keep conversational data collection short. Default booking context includes date, time, customer name, and phone number; add text, number, select, yes/no, date, time, or phone fields only when the team will use them.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Configure Northstar Consultation"
+  description="Show Details, Timing, Data collection, and Assignment with the example values."
+  capture={['Service details and active state', '30-minute duration and 15-minute buffer', 'Required fields', 'Assignment strategy']}
+  callouts={['Details', 'Timing', 'Questions', 'Assignment']}
+  sensitive={['Teammate names outside the demo workspace']}
+  assetPath="/media/bookings/service-form.png"
+/>
 
 ## Choose an assignment strategy
 
-Assignment decides which teammate receives a booked appointment. Availability is still required — an assignment strategy does not make an unavailable teammate bookable.
+| Strategy | Choose it when |
+| --- | --- |
+| Conversation owner first | The existing relationship should take priority |
+| Balanced | Work should favor teammates with less assigned load |
+| Round robin | Eligible teammates should rotate predictably |
+| Specific teammate | One person exclusively owns the Service |
 
-- **Conversation owner first** prefers the teammate already responsible for the conversation.
-- **Balanced** distributes bookings based on available workload.
-- **Round robin** rotates assignment through eligible teammates.
-- **Specific teammate** sends the Service to one selected person.
+Availability remains required for every strategy.
 
-## Activate and connect the Service
+<DocMediaPlaceholder
+  kind="image"
+  title="Compare Service assignment strategies"
+  description="Show all assignment options and the eligible-teammate control."
+  capture={['Strategy selector', 'Every strategy label', 'Eligible teammate selection']}
+  callouts={['Strategy', 'Eligibility']}
+  sensitive={['Real teammate names']}
+  assetPath="/media/bookings/assignment-strategies.png"
+/>
 
-Before customers can book, the Service must be active, connected to a **Book appointment** action, and backed by usable teammate availability.
+## Activate and connect it
 
 <ol className="steps">
   <li>Confirm the Service is active.</li>
-  <li>Open <strong>Workflow</strong>, select a <strong>Book appointment</strong> node, and choose which Services that action may use.</li>
-  <li>Open <strong>Agent Setup</strong> and test a complete booking.</li>
+  <li>Set [Availability](/bookings/availability) for every eligible teammate.</li>
+  <li>Open a <strong>Book appointment</strong> Workflow action and select the Service.</li>
+  <li>Run a complete booking in Test agent.</li>
 </ol>
 
-<DocCard
-  to="/bookings/availability"
-  title="Availability"
-  description="Set weekly hours and timezones so booked slots are real"
-/>
+Editing a Service changes future booking evaluation. Deactivation prevents it from producing new bookable options; existing appointments remain operational records and should be reviewed in Calendar.
 
-## Review bookings
+<DocSuccess>
 
-The **Services** page lists your Services and booked appointments, including customer, assignee, appointment time, status, booking ID, and creation time. You can also manage the appointment from **Calendar**.
+- Northstar Consultation is active and saved.
+- Eligible teammates have usable Availability.
+- A Book appointment action can select the Service.
+- A complete test booking appears in Calendar.
 
-<DocCard
-  to="/bookings/calendar"
-  title="Calendar"
-  description="View, create, and update appointments in the shared calendar"
-/>
+</DocSuccess>
 
-:::note
-An active Service without **Availability** cannot produce a usable slot — see [Availability](/bookings/availability).
-:::
+<DocCard to="/bookings/availability" title="Availability" description="Set the real hours behind bookable slots" />

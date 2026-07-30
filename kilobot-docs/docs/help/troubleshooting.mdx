@@ -1,93 +1,182 @@
 ---
 title: Troubleshooting
-description: Diagnose common setup, channel, AI reply, booking, template, and permission problems.
+description: Diagnose common setup, channel, reply, booking, outreach, and permission problems.
 slug: /help/troubleshooting
 ---
 
-import DocCard from '@site/src/components/DocCard';
+import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
 
 # Troubleshooting
 
-## Overview
+<DocVerified date="2026-07-28" />
 
-Use this page when something in KiloBot is not working as expected. Match your symptom below — most issues come from missing configuration, provider status, permissions, or an unsaved draft. If you still need help after checking the steps, see [Contact support](/help/contact-support).
+Match what you see to a symptom below. Check the selected workspace and agent first; many apparent problems are changes made in a different agent.
 
-## Fix incomplete or incorrect answers
+<DocOutcomes>
 
-When the agent misses a fact or contradicts your documentation, start with knowledge and prompt alignment before expanding **Workflow**.
+### By the end, you will
 
-<ol className="steps">
-  <li>Open <strong>Knowledge Base</strong> and confirm the relevant fact exists for the selected agent.</li>
-  <li>Remove or fix any source that contradicts it.</li>
-  <li>Review the system prompt in <strong>Agent Setup</strong>.</li>
-  <li>Choose <strong>Test agent</strong> with the same question.</li>
-  <li>If the request should trigger an action, review the <strong>Workflow</strong> condition instead of adding more general knowledge.</li>
-</ol>
+- Diagnose common agent, channel, booking, and Outreach problems
+- Check workspace, agent, permissions, and connection state
+- Gather useful evidence when support is needed
 
-## Restore missing customer messages
+</DocOutcomes>
 
-A connected channel, finished synchronization, and the correct agent context are required before messages appear in **Inbox**.
+## 1. The agent gives an incomplete or incorrect answer
 
-<ol className="steps">
-  <li>Open <strong>Channels</strong> and confirm the correct channel is connected.</li>
-  <li>For a new WhatsApp connection, wait for initial synchronization to finish.</li>
-  <li>Send a fresh customer-side message.</li>
-  <li>Verify you are viewing the correct agent and <strong>Inbox</strong> filters.</li>
-</ol>
+1. Confirm the fact exists in the selected agent's **Knowledge Base**.
+2. Remove or correct contradictory sources.
+3. Check whether the **Agent Setup** prompt conflicts with the fact.
+4. Ask the same question in **Test agent**.
+5. If the request should trigger an action, inspect the Workflow condition instead of adding general knowledge.
 
-## Restore AI replies
+## 2. A channel is not connected or customer messages are missing
 
-Human escalation intentionally pauses AI replies. When the AI should be answering, check reply mode, credits, routing, and workflow branches.
+1. Open **Channels** and check the card for the affected platform.
+2. Complete any visible reconnect or provider action.
+3. For a new WhatsApp connection, allow initial synchronization to finish.
+4. Send a new customer-side message.
+5. Clear Conversation filters and confirm the correct agent is selected.
 
-<ol className="steps">
-  <li>Check the conversation's AI reply state.</li>
-  <li>Review <strong>Agent Setup</strong> <strong>Reply mode</strong>.</li>
-  <li>Confirm routing permissions, available credits, and the connected channel.</li>
-  <li>Review <strong>Workflow</strong> for a branch that should handle the message.</li>
-</ol>
-
-## Restore booking availability
-
-Booking times depend on the active **Service**, assignment strategy, teammate **Availability**, and **Calendar** conflicts.
-
-<ol className="steps">
-  <li>Confirm the <strong>Service</strong> is active and selected in the <strong>Book appointment</strong> action.</li>
-  <li>Check Service duration, buffer, and assignment strategy.</li>
-  <li>Review teammate <strong>Availability</strong>, timezone, and <strong>Calendar</strong> conflicts.</li>
-</ol>
-
-## Select an approved WhatsApp template
-
-Only **Approved** templates are selectable for **Broadcast**, **Reminders**, and **Follow-ups**.
-
-<ol className="steps">
-  <li>Open <strong>Message Templates</strong>.</li>
-  <li>Check whether the template is <strong>Submitting</strong>, <strong>In review</strong>, <strong>Failed</strong>, or <strong>Approved</strong>.</li>
-  <li>Confirm the template belongs to the intended channel and use case.</li>
-</ol>
-
-## Restore page or action access
-
-KiloBot hides or disables controls when the user lacks permission.
-
-<ol className="steps">
-  <li>Review workspace membership and role permissions.</li>
-  <li>Confirm the teammate has read or manage permission for that area.</li>
-</ol>
-
-## Recover unsaved changes
-
-Many product areas require an explicit **Save**, **Publish**, or **Confirm** before changes become live.
-
-<ol className="steps">
-  <li>Look for a required <strong>Save</strong>, <strong>Publish</strong>, or <strong>Confirm</strong> action.</li>
-  <li>Check <strong>Workflow</strong>, <strong>Agent Setup</strong>, reminder or follow-up message dialogs, <strong>Services</strong>, and <strong>Availability</strong> for unsaved drafts.</li>
-</ol>
-
-If the issue remains, collect the agent name, affected screen, approximate time, expected result, actual result, and a screenshot without sensitive customer data, then [contact support](/help/contact-support).
-
-<DocCard
-  to="/help/contact-support"
-  title="Contact support"
-  description="Report a bug or reach the team when troubleshooting is not enough"
+<DocMediaPlaceholder
+  kind="image"
+  title="Channel status card"
+  description="A stable screenshot showing one connected channel and one channel requiring attention."
+  capture={[
+    'Channels page heading',
+    'Connected status on one fictional channel',
+    'Not connected or attention state on another card',
+    'Connect or reconnect action',
+  ]}
+  callouts={[
+    'Read the card status first',
+    'Use the action on the affected card',
+  ]}
+  sensitive={['Phone numbers', 'Page IDs', 'Business account identifiers']}
+  assetPath="/img/guides/help/channel-status.png"
 />
+
+## 3. The AI is not replying
+
+1. Check whether a teammate has taken over the conversation.
+2. Review **Agent Setup → Reply mode**.
+3. Confirm the connected channel is healthy and the workspace has available credits.
+4. Inspect Workflow branches that may route or stop the reply.
+5. Test a new conversation after saving changes.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Conversation reply controls"
+  description="A stable screenshot of the Conversation detail area showing assignee and AI reply state."
+  capture={[
+    'Selected conversation',
+    'Assignee control',
+    'AI reply or takeover state',
+    'Action History entry',
+  ]}
+  callouts={[
+    'Human takeover can intentionally pause AI',
+    'Action History helps explain state changes',
+  ]}
+  sensitive={['Customer identity', 'Messages', 'Contact information']}
+  assetPath="/img/guides/help/conversation-reply-controls.png"
+/>
+
+## 4. An image, audio message, or attachment is unavailable
+
+1. Refresh the conversation and retry the attachment.
+2. Confirm the original channel message is still available.
+3. Check that the file is within the platform's supported type and size.
+4. Record the message time, platform, and attachment type before contacting support.
+
+Do not forward private media to support unless it is necessary and authorized.
+
+## 5. No booking times are available
+
+1. Confirm the **Service** is active.
+2. Check duration, buffer, assignment strategy, and assigned teammate.
+3. Review **Availability**, timezone, and date-specific hours.
+4. Inspect Calendar conflicts across the full service duration.
+5. Try a controlled date that should be open.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Booking availability inputs"
+  description="A stable screenshot showing the settings that determine whether a slot can be offered."
+  capture={[
+    'Active Service with duration and buffer',
+    'Assignment strategy',
+    'Teammate Available Hours',
+    'Calendar event conflicting with one example slot',
+  ]}
+  callouts={[
+    'All four inputs affect the result',
+    'Timezone applies before slots are calculated',
+  ]}
+  sensitive={['Customer bookings', 'Private calendar event titles', 'Teammate email addresses']}
+  assetPath="/img/guides/help/booking-availability-inputs.png"
+/>
+
+## 6. A WhatsApp template is not selectable
+
+1. Open **Outreach → Templates**.
+2. Check whether the template is **Submitting**, **In review**, **Failed**, or **Approved**.
+3. Confirm it belongs to the connected WhatsApp channel and intended use case.
+4. Correct and resubmit a failed template.
+
+Only **Approved** templates appear in Broadcast, Reminder, Follow-up, and Workflow selectors.
+
+<DocMediaPlaceholder
+  kind="image"
+  title="Message Template statuses"
+  description="A stable screenshot showing the complete set of practical template states."
+  capture={[
+    'Templates list',
+    'Submitting, In review, Approved, and Failed examples',
+    'Status filters if available',
+  ]}
+  callouts={[
+    'Only Approved templates are selectable',
+    'Open Failed templates to correct the issue',
+  ]}
+  sensitive={['Real template content', 'Business account identifiers']}
+  assetPath="/img/guides/help/template-statuses.png"
+/>
+
+## 7. A Broadcast, Reminder, or Follow-up did not send
+
+1. Confirm the selected template is still **Approved**.
+2. Review the automation or Broadcast **History** status and reason.
+3. For Reminders, verify the appointment and activation scope are eligible.
+4. For Follow-ups, check the audience, no-reply timing, and whether the customer already replied.
+5. Confirm the WhatsApp channel is connected.
+
+## 8. A page or action is missing
+
+1. Confirm the correct workspace and agent are selected.
+2. Ask a team administrator to verify membership and role permissions.
+3. Confirm the feature is available for the active plan.
+4. Refresh after a role or plan change.
+
+A missing navigation item or disabled action may be intentional when access is not granted.
+
+## 9. A teammate cannot accept an invitation
+
+1. Confirm the invitation was sent to the exact email they use to sign in.
+2. Check whether the invitation is still pending.
+3. Revoke duplicate or incorrect invitations.
+4. Send one new invitation to the correct account.
+5. After acceptance, verify the teammate appears as an active member.
+
+## 10. Changes disappeared or never became active
+
+1. Return to the edited page and look for **Save**, **Publish**, or **Confirm**.
+2. Check Agent Setup, Workflows, Services, Availability, and template selection dialogs for drafts.
+3. Save the change, reload the page, and verify the persisted value.
+4. Re-run the related test before using the change with customers.
+
+## If the issue remains
+
+Collect the workspace and agent name, affected screen, approximate time with timezone, expected result, actual result, and reproduction steps. Add a screenshot or short recording with sensitive information hidden, then [contact support](/help/contact-support).
