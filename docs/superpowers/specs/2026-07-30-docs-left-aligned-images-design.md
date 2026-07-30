@@ -29,6 +29,20 @@ Every documentation Markdown image must have non-empty descriptive text. The sha
 
 An automated content test scans every public Markdown and MDX document and fails when an image has an empty caption source. This prevents future captionless content images.
 
+## Quick Start Next Steps
+
+Replace the existing one-line Next steps sentence with a short introduction and three linked bullets. Each bullet names the task first and explains the outcome in plain language.
+
+```md
+Your agent is ready. Choose what you want to set up next:
+
+- [Deploy to channels](/channels/connect-channels) to let customers chat with your agent on WhatsApp, Instagram, and Messenger.
+- [Set up workflows](/automate/workflow-overview) to automate what happens during and after conversations.
+- [Automate bookings](/bookings/services) to let customers book your services through your agent.
+```
+
+The list uses standard documentation prose and links rather than cards or another emphasized container.
+
 ## Approaches Considered
 
 ### Shared global treatment
@@ -48,6 +62,7 @@ Replace the current inline-safe renderer with `figure` and `figcaption`. This wa
 - A renderer style contract proves the caption is left-aligned.
 - A Docs style contract proves compact wrappers use left anchoring at 40% desktop width and 100% mobile width.
 - A recursive document test proves every Markdown image has non-empty descriptive text.
+- The Quick Start content contract proves the three linked Next steps appear in the approved order with their outcome-focused descriptions.
 - Existing component tests continue to prove caption rendering and image expansion.
 - The complete Docs test suite, TypeScript check, production build, built-output inspection, and whitespace check must pass.
 
