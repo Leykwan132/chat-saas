@@ -26,8 +26,10 @@
   <div id="root"></div>
   <script>
     window.fbAsyncInit = function () {
+      const metaAppId = '%VITE_META_APP_ID%';
+      console.log('[meta] Facebook SDK app ID:', metaAppId);
       FB.init({
-        appId: '999704942713974',
+        appId: metaAppId,
         autoLogAppEvents: true,
         xfbml: true,
         version: 'v25.0',
