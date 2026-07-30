@@ -21,6 +21,13 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     'https://storage.kilobot.app/docs/docs-training.jpeg',
     'https://storage.kilobot.app/docs/docs-testing.png',
   ];
+  const testingImageStart = quickStart.indexOf(
+    '<div className="docs-image-compact">',
+  );
+  const testingImage = quickStart.indexOf(
+    'https://storage.kilobot.app/docs/docs-testing.png',
+  );
+  const testingImageEnd = quickStart.indexOf('</div>', testingImageStart);
 
   assert.deepEqual(
     requiredHeadings.map((match) => match[2].replace(/ ·.+$/, '')),
@@ -47,6 +54,9 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     assert.equal(quickStart.includes(screenshotUrl), true, screenshotUrl);
   }
 
+  assert.ok(testingImageStart >= 0);
+  assert.ok(testingImageStart < testingImage);
+  assert.ok(testingImage < testingImageEnd);
   assert.ok(
     quickStart.indexOf('https://storage.kilobot.app/docs/docs-testing.png')
       < quickStart.indexOf('Your agent is ready!'),

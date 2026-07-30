@@ -59,6 +59,35 @@ test('uses Geist for body text and dashboard-aligned color tokens', () => {
   assert.ok(css.includes('--ifm-background-color: #212121'));
   assert.ok(css.includes('--kilobot-link:'));
   assert.match(css, /\.theme-doc-markdown h1 \{[\s\S]*font-size: 1\.875rem;[\s\S]*\}/);
+  assert.match(
+    css,
+    /\.theme-doc-markdown\s*\{[^}]*font-size:\s*1\.0625rem;[^}]*line-height:\s*1\.7;/s,
+  );
+  assert.match(
+    css,
+    /\.theme-doc-markdown h2\s*\{[^}]*font-size:\s*1\.375rem;/s,
+  );
+  assert.match(
+    css,
+    /\.theme-doc-markdown h3\s*\{[^}]*font-size:\s*1\.125rem;/s,
+  );
+  assert.match(
+    css,
+    /\.theme-doc-markdown > p:first-of-type\s*\{[^}]*font-size:\s*1\.0625rem;/s,
+  );
+});
+
+test('keeps the testing screenshot compact on desktop and full-width on mobile', () => {
+  const css = read('src/css/custom.css');
+
+  assert.match(
+    css,
+    /\.docs-image-compact\s*\{[^}]*width:\s*70%;[^}]*margin-inline:\s*auto;/s,
+  );
+  assert.match(
+    css,
+    /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*?\.docs-image-compact\s*\{[^}]*width:\s*100%;/s,
+  );
 });
 
 test('styles the top bar like the product header chrome', () => {
