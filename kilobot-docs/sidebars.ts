@@ -39,7 +39,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'bookings/services',
         'bookings/availability',
-        'bookings/calendar',
       ],
     },
     {

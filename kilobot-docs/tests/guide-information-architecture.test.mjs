@@ -58,6 +58,18 @@ test('starts Channels with the Website widget and hides Conversations', () => {
   assert.equal(channels.includes("'engage/contacts'"), false);
 });
 
+test('hides Calendar from Bookings navigation', () => {
+  const sidebar = read('sidebars.ts');
+  const bookings = sidebar.match(
+    /label: 'Bookings'[\s\S]*?label: 'Workflows'/,
+  )?.[0];
+
+  assert.ok(bookings);
+  assert.ok(bookings.includes("'bookings/services'"));
+  assert.ok(bookings.includes("'bookings/availability'"));
+  assert.equal(bookings.includes("'bookings/calendar'"), false);
+});
+
 test('organizes Workflows around user tasks', () => {
   const sidebar = read('sidebars.ts');
   const workflows = sidebar.match(
