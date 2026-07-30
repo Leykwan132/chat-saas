@@ -1,4 +1,8 @@
 # Snapshot
+- 2026-07-30 [TOOL] The development Worker still serves `FB.init({ appId: '999704942713974' })` because `dev` and `origin/dev` remain at `954e8219`; the env-backed initializer and diagnostic log are only uncommitted local changes. The next native Cloudflare build also requires `VITE_META_APP_ID` in its build environment.
+- 2026-07-30 [CODE] Facebook SDK initialization now uses Vite's `VITE_META_APP_ID` HTML substitution instead of a hard-coded Meta App ID and logs the resolved public App ID as `[meta] Facebook SDK app ID:`, keeping WhatsApp Embedded Signup and backend code exchange on the deployment-selected Meta app. Focused RED/GREEN coverage and a sentinel production build pass; unreleased and unpushed.
+- 2026-07-30 [USER] Design requested: when the selected workspace has no AI agents, replace the small grid create card with the installed shadcn Empty component and make it fill the workspace content below the retained header/sidebar. Creators receive the first-agent action; members without create permission see guidance to ask a workspace owner and no action.
+- 2026-07-29 [USER] Cloudflare now owns environment separation through two Workers: production `kilobot` follows `main`, while `kilobot-dev` uses `dev` as its production branch. The temporary repository-level CLI deployment environments, branch guards, templates, tests, and docs were reverted; local ignored `.env.dev` and `.env.production` files remain untouched.
 - 2026-07-29 [CODE] `main` now contains the universal upgrade and plan-management flow after a clean fast-forward to `5f8fb140`: explicit Upgrade/Adjust Plan actions open Adjust Plan directly; team, member, agent, channel, branding, and locked-model gates show UpgradeModal first; its action opens the simple Choose your plan view without a secondary Manage plan action. The merged tree passes 37 focused routing/billing tests and the production build. Unreleased and unpushed.
 - 2026-07-29 [CODE] The paid-to-Free warning now overrides the shared Dialog's 24px padding with a scoped 28px container padding; all other modal spacing and global dialogs remain unchanged. Nineteen focused tests and the production build pass; the full-suite result remains the documented unrelated baseline of 2 stale application-test failures plus 3 Node-native Docs suites misclassified by Vitest. Unreleased and unpushed.
 - 2026-07-29 [CODE] The paid-to-Free warning now has 24px between its major sections, 40px between desktop columns, and 16px between each section title and impact row, while preserving the responsive stacked layout and viewport scrolling. Nineteen focused tests and the production build pass; the full-suite result remains the documented unrelated baseline of 2 stale application-test failures plus 3 Node-native Docs suites misclassified by Vitest. Unreleased and unpushed.
@@ -61,6 +65,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-29 [USER] D487 ACTIVE: Use two Cloudflare Workers with native Git builds: `kilobot` follows `main` for production and `kilobot-dev` follows `dev` as its production branch. The repository no longer owns separate Wrangler environments or manual branch-locked deployment commands.
 - 2026-07-29 [USER] D483 SUPERSEDED by D484: Create Team still preflights organizational-team entitlement, but a paid gate must not open Adjust Plan immediately.
 - 2026-07-29 [USER] D484 PARTIALLY SUPERSEDED by D485: Explicit Upgrade/Adjust Plan routing and gated-feature teaser behavior remain active; Adjust Plan no longer contains a Manage plan action.
 - 2026-07-29 [USER] D485 ACTIVE: Keep the Adjust Plan header simple: show “Choose your plan” without a secondary Manage plan action underneath.
@@ -286,14 +291,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-30 [CODE] Replaced the Facebook SDK's hard-coded App ID with deployment-specific `VITE_META_APP_ID` substitution.
 - 2026-07-29 [CODE] Finalized billing actions with trailing CircleArrowUp for Upgrade and a leading-ExternalLink text action that opens Manage billing safely in a new tab.
 - 2026-07-29 [CODE] Restored one signed-in Adjust Plan picker with status-aware Portal/Checkout routing, a non-nested destructive team-Free warning, and contextual action labels.
 - 2026-07-28 [TOOL] Backfilled the two development users missing subscription IDs with active monthly Free subscriptions, verified both storage layers, and removed the one-time runner.
 - 2026-07-28 [CODE] Implemented first-class monthly/annual Free Stripe Checkout and safe in-place Free downgrade with immediate local subscription sync, owner-only team deletion, and retry-idempotent credit reset.
 - 2026-07-28 [CODE] Replaced oldest-subscription plan lookup with latest-row Stripe resolution and a registered-component regression.
 - 2026-07-28 [CODE] Reset accepted organizational subscription deletions to `50 / 50` Plan credits without changing purchased or referral top-ups.
-- 2026-07-28 [CODE] Implemented the destructive organizational downgrade lifecycle, unavailable-workspace UX, complete bounded cleanup, late-webhook tombstone, and compensating provider deletion for in-flight external writes.
-- 2026-07-28 [CODE] Replaced AI Agent Usage `More credits` with a settings-icon `Manage plan` action targeting Settings → Plan.
 
 # Working set
 - 2026-07-29 [CODE] Adjust Plan branch: `src/components/billing/{AdjustPlanProvider,AdjustPlanPickerDialog,TeamFreePlanWarningDialog,adjustPlanContext,adjustPlanFlow}*`, signed-in plan/limit callers, and `docs/superpowers/{specs,plans}/2026-07-29-restored-adjust-plan-checkout-routing*.md`; frontend-only revision, verified locally, not released or pushed.
