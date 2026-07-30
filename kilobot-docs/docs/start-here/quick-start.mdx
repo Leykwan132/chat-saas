@@ -1,6 +1,6 @@
 ---
 title: Quick Start
-description: Create, test, publish, and verify a working KiloBot Website agent.
+description: Create an agent, add trusted knowledge, and test its answers.
 slug: /start-here/quick-start
 ---
 
@@ -15,18 +15,16 @@ import DocVerified from '@site/src/components/DocVerified';
 
 <DocVerified date="2026-07-28" />
 
-Build a working customer-facing agent, add one trusted answer, publish it, and confirm a real Website conversation in Inbox. The example uses **Northstar Dental** throughout and normally takes 10–15 minutes.
+Create a working agent, give it one trusted answer, and check that it responds safely. The example uses **Northstar Dental** throughout and normally takes about 5 minutes.
 
 <DocPrerequisites>
 
 - A KiloBot account and workspace
-- Permission to create and publish an agent
-- Access to edit and publish your business website
-- A private browser window for the final visitor test
+- Permission to create an agent
 
 </DocPrerequisites>
 
-## 1. Create your agent · About 2 minutes
+## 1. Create your agent
 
 <ol className="steps">
   <li>Open the workspace and choose <strong>Create agent</strong>.</li>
@@ -45,7 +43,7 @@ Build a working customer-facing agent, add one trusted answer, publish it, and c
   assetPath="/media/quick-start/create-agent.png"
 />
 
-## 2. Add one trusted answer · About 2 minutes
+## 2. Add knowledge
 
 Open **Knowledge Base**, select **Q&A**, and add this approved answer.
 
@@ -69,24 +67,22 @@ Wait until the source finishes processing before testing.
   assetPath="/media/quick-start/add-knowledge.png"
 />
 
-## 3. Review the agent · About 2 minutes
+## 3. Test your agent
 
-Open **Agent Setup**. Confirm the prompt identifies the business, instructs the agent to use trusted knowledge, avoids inventing missing facts, and escalates requests that need a person. Review the model and style settings without adding business facts to the prompt.
+Choose **Test agent** and ask one question the Knowledge Base can answer:
 
-## 4. Test before publishing · About 3 minutes
+`Are you open on Saturday?`
 
-Choose **Test agent** and send:
+The reply should use the opening hours from the Q&A. Then ask one question that the Knowledge Base cannot answer:
 
-1. `Are you open on Saturday?`
-2. `Can I visit this weekend?`
-3. `Do you offer emergency root canals?`
+`Do you offer emergency root canals?`
 
-The first two should use the Q&A. The third should not invent an unsupported service.
+The agent should not claim that Northstar Dental provides an unsupported service.
 
 <DocMediaPlaceholder
   kind="image"
-  title="Test known, paraphrased, and unknown questions"
-  description="Show the Test agent panel with one grounded answer and the safe unknown-answer behavior."
+  title="Test a known and an unsupported question"
+  description="Show the Test agent panel with one grounded answer and one safe response when knowledge is missing."
   capture={['The Saturday-hours answer', 'The emergency root-canal question', 'The non-invented response']}
   callouts={['Grounded answer', 'Unknown question', 'Safe response']}
   sensitive={['Other test conversations']}
@@ -95,81 +91,26 @@ The first two should use the Q&A. The third should not invent an unsupported ser
 
 <DocSuccess>
 
-- Both opening-hours questions receive consistent answers.
-- The missing service question is not answered as if it were known.
-- Any required escalation behavior matches the system prompt.
+- Your agent is ready with trusted business knowledge.
+- The known question receives a grounded answer.
+- The unsupported question is not answered as if it were known.
 
 </DocSuccess>
 
-## 5. Publish the agent · Less than 1 minute
+## Choose what to do next
 
-Choose **Publish** in Agent Setup. Publish makes the current draft active for connected customer channels. If KiloBot warns about an unpublished draft, return to Agent Setup and publish before continuing.
-
-## 6. Connect the Website widget · About 3 minutes
-
-<ol className="steps">
-  <li>Open <strong>Channels</strong>.</li>
-  <li>On the Website card, choose <strong>Connect</strong>.</li>
-  <li>Configure the customer-facing name and appearance.</li>
-  <li>Copy the script snippet and add it to the website.</li>
-  <li>Publish the website change.</li>
-</ol>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Configure and copy the Website widget"
-  description="Show the Website settings and the complete snippet-copy surface."
-  capture={['Customer-facing widget settings', 'The widget preview', 'The copy-snippet action']}
-  callouts={['Appearance', 'Preview', 'Copy']}
-  sensitive={['Public widget keys if the capture should not expose them']}
-  assetPath="/media/quick-start/website-widget.png"
+<DocCard
+  to="/channels/connect-channels"
+  title="Deploy to channels (WhatsApp, IG, Messenger)"
+  description="Connect the platforms where customers will talk to your agent"
 />
-
-## 7. Verify the visitor experience · About 2 minutes
-
-<ol className="steps">
-  <li>Open the published website in a private browser window.</li>
-  <li>Open the widget and ask <strong>Are you open on Saturday?</strong></li>
-  <li>Confirm the reply uses the approved opening hours.</li>
-</ol>
-
-## 8. Confirm the conversation in Inbox · About 1 minute
-
-Open **Inbox** for Northstar Booking Assistant, select the new Website conversation, and send a teammate reply. Confirm the reply reaches the private-window visitor.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Confirm the Website conversation in Inbox"
-  description="Show the visitor message, correct agent context, and teammate reply."
-  capture={['Northstar Booking Assistant selected', 'The Website conversation', 'The delivered teammate reply']}
-  callouts={['Correct agent', 'Website source', 'Reply delivery']}
-  sensitive={['Real customer identities', 'Phone numbers', 'Unrelated conversations']}
-  assetPath="/media/quick-start/inbox-confirmation.png"
+<DocCard
+  to="/automate/workflow-overview"
+  title="Set up workflows"
+  description="Route customer requests into reliable actions"
 />
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Complete Website Quick Start"
-  description="Record the entire Northstar journey from agent creation through Inbox verification."
-  capture={['Show the completed Website conversation first', 'Create the agent and Q&A', 'Test and publish', 'Install the widget', 'Verify the Inbox reply']}
-  duration="2–3 minutes"
-  sensitive={['Workspace members', 'Private sources', 'Widget keys', 'Customer information']}
-  assetPath="/media/quick-start/website-launch.mp4"
+<DocCard
+  to="/bookings/services"
+  title="Set up bookings"
+  description="Define what customers can book and when"
 />
-
-<DocSuccess>
-
-- The agent is published.
-- The Website widget loads on the live website.
-- The approved opening-hours answer works for a real visitor.
-- The visitor message and teammate reply both appear in the correct Inbox conversation.
-
-</DocSuccess>
-
-## Continue when you are ready
-
-<DocCard to="/bookings/services" title="Accept bookings" description="Define what customers can book and when your team is available" />
-<DocCard to="/automate/workflow-overview" title="Build a Workflow" description="Route customer intent into precise actions" />
-<DocCard to="/channels/whatsapp" title="Connect WhatsApp" description="Complete Meta authorization and synchronization" />
-<DocCard to="/engage/message-templates" title="Set up Outreach" description="Prepare approved messages for campaigns and automation" />
-<DocCard to="/team/workspace-and-team" title="Invite your team" description="Add teammates with the right access" />
