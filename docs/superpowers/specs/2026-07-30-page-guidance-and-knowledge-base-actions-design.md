@@ -31,13 +31,17 @@ Permissions and destination routes remain unchanged.
 
 Add an outlined `Test your agent` button to the top-right of the Knowledge Base header, matching the Agent Setup header action.
 
-Selecting it opens the existing agent playground directly from Knowledge Base in a right-side drawer. The user stays on the Knowledge Base page, and the shared playground continues to own permission handling, loading, indexing status, and test-chat behavior.
+Selecting it opens the existing agent playground as its own container within the Knowledge Base page. At extra-large widths, the existing Knowledge Base content remains intact on the left while an approximately 380px test panel enters from the right. At smaller widths, the panel stacks beneath the Knowledge Base content.
 
-Closing the drawer returns focus to Knowledge Base without changing routes or source selection.
+Reuse the playground's inline presentation and right-entry animation so the panel has its own title, close action, and bordered chat surface without behaving like a drawer or overlay. The shared playground continues to own permission handling, loading, indexing status, and test-chat behavior.
+
+Closing the panel removes its container without changing routes or source selection.
 
 ## Workflow promotion card
 
 Add a persistent compact card beneath the Knowledge Base `Sources` navigation group.
+
+Place `https://storage.kilobot.app/grad-2.jpg` as a full-width 16:9 banner above the copy. Use simple `object-cover` presentation with rounded card clipping and no overlay, decorative label, or extra effect.
 
 The card copy is:
 
@@ -51,15 +55,17 @@ The action navigates to the current agent's Workflow page. The card remains visi
 
 Page descriptions wrap naturally on narrow screens. Existing header actions retain their current responsive stacking.
 
-The test chat uses the shared drawer behavior at all viewport sizes, avoiding another Knowledge Base grid column. The promotion card follows the Sources column width and moves with that column under the existing responsive layout.
+The Knowledge Base content wrapper adds the test panel as a right-hand column only at extra-large widths. The existing Sources, main content, and storage layout remains unchanged inside the left side. At smaller widths, the test panel stacks beneath that complete content area rather than overlaying it or becoming a fourth column inside it.
+
+The promotion card follows the Sources column width and moves with that column under the existing responsive layout.
 
 ## Testing
 
 Add focused source or component tests covering:
 
 - Exact page-description copy on all five pages.
-- Knowledge Base test button presence and shared playground drawer wiring.
-- Workflow card copy and current-agent destination.
+- Knowledge Base test button presence and shared inline playground wiring.
+- Workflow card image, copy, and current-agent destination.
 - Configuration navigation order.
 
 Run the focused tests and the production build under Node.js 22.
