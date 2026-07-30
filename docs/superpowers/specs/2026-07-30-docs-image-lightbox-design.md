@@ -12,13 +12,14 @@ It does not apply to navbar branding, interface icons, decorative theme assets, 
 
 ## Presentation
 
-Each image renders inside a borderless figure.
+Each image renders inside a borderless image group.
 
 - The image preserves its natural aspect ratio and existing responsive width.
 - The image uses a pointer cursor and a subtle hover treatment that communicates interactivity without adding a border.
 - A small muted caption appears eight pixels below the image.
 - The caption uses the image's existing alt text, so page authors maintain one descriptive string.
 - The visible duplicate caption is hidden from assistive technology because the image alt text already communicates the same description.
+- The group uses phrasing-content markup because Docusaurus nests Markdown images inside paragraphs; this avoids invalid paragraph and hydration structure.
 
 ## Expansion behavior
 
@@ -38,7 +39,7 @@ Swizzle Docusaurus's global `MDXComponents/Img` renderer.
 The custom renderer:
 
 1. Preserves Docusaurus image defaults such as lazy loading and asynchronous decoding.
-2. Wraps the inline image in a semantic figure and accessible button.
+2. Wraps the inline image in an accessible grouped control that remains valid inside MDX paragraphs.
 3. Opens one native dialog owned by that image instance.
 4. Reuses the original image source and alt text for the expanded view.
 
