@@ -31,7 +31,7 @@ Permissions and destination routes remain unchanged.
 
 Add an outlined `Test your agent` button to the top-right of the Knowledge Base header, matching the Agent Setup header action.
 
-Selecting it opens the existing agent playground as its own container within the Knowledge Base page. At extra-large widths, the existing Knowledge Base content remains intact on the left while an approximately 380px test panel enters from the right. At smaller widths, the panel stacks beneath the Knowledge Base content.
+Selecting it toggles the existing agent playground as its own container within the Knowledge Base page. A first selection opens it and the next closes it, with the button exposing its state through `aria-pressed`. At extra-large widths, the existing Knowledge Base content remains intact on the left while an approximately 380px test panel enters from the right. At smaller widths, the panel stacks beneath the Knowledge Base content.
 
 Reuse the playground's inline presentation and right-entry animation so the panel has its own title, close action, and bordered chat surface without behaving like a drawer or overlay. The shared playground continues to own permission handling, loading, indexing status, and test-chat behavior.
 

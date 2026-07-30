@@ -316,7 +316,7 @@ git commit -m "Guide Knowledge Base users into Workflow"
 - Modify: `src/pages/pageHeaderChrome.test.ts`
 
 **Interfaces:**
-- Produces: `KnowledgeBaseHeader({ onTest }: { onTest: () => void }): JSX.Element`
+- Produces: `KnowledgeBaseHeader({ isTestOpen, onTest }: { isTestOpen: boolean; onTest: () => void }): JSX.Element`
 - Consumes: `PageTitleBlock`, the existing outlined `Button`, and `AgentPlaygroundPanel` with `mode="drawer"`.
 
 - [x] **Step 1: Write the failing Knowledge Base header tests**
@@ -351,7 +351,7 @@ describe('Knowledge Base header', () => {
     expect(pageSource).toContain('mode="drawer"');
     expect(pageSource).toContain('open={isTestOpen}');
     expect(pageSource).toContain('onOpenChange={setIsTestOpen}');
-    expect(pageSource).toContain('onTest={() => setIsTestOpen(true)}');
+    expect(pageSource).toContain('onTest={() => setIsTestOpen(toggleTestOpen)}');
   });
 });
 ```
@@ -377,17 +377,30 @@ import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Button } from '@/components/ui/button';
 
 type KnowledgeBaseHeaderProps = {
+  isTestOpen: boolean;
   onTest: () => void;
 };
 
-export function KnowledgeBaseHeader({ onTest }: KnowledgeBaseHeaderProps) {
+export function toggleTestOpen(current: boolean) {
+  return !current;
+}
+
+export function KnowledgeBaseHeader({
+  isTestOpen,
+  onTest,
+}: KnowledgeBaseHeaderProps) {
   return (
     <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
       <PageTitleBlock
         title="Knowledge Base"
         description="Add the information your agent uses to answer customers."
       />
-      <Button type="button" variant="outline" onClick={onTest}>
+      <Button
+        type="button"
+        variant="outline"
+        aria-pressed={isTestOpen}
+        onClick={onTest}
+      >
         Test your agent
       </Button>
     </header>
@@ -406,7 +419,10 @@ const [isTestOpen, setIsTestOpen] = useState(false);
 Replace the inline header with:
 
 ```tsx
-<KnowledgeBaseHeader onTest={() => setIsTestOpen(true)} />
+<KnowledgeBaseHeader
+  isTestOpen={isTestOpen}
+  onTest={() => setIsTestOpen(toggleTestOpen)}
+/>
 ```
 
 Render beside the existing delete dialog:
@@ -631,7 +647,9 @@ it('opens the shared test chat as its own in-page container', () => {
   expect(pageSource).not.toContain('mode="drawer"');
   expect(pageSource).toContain('open={isTestOpen}');
   expect(pageSource).toContain('onOpenChange={setIsTestOpen}');
-  expect(pageSource).toContain('onTest={() => setIsTestOpen(true)}');
+  expect(pageSource).toContain('isTestOpen={isTestOpen}');
+  expect(pageSource).toContain('onTest={() => setIsTestOpen(toggleTestOpen)}');
+  expect(headerSource).toContain('aria-pressed={isTestOpen}');
 });
 
 it('keeps Knowledge Base content intact beside the responsive test panel', () => {

@@ -24,6 +24,7 @@ import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
 import {
   KnowledgeBaseHeader,
+  toggleTestOpen,
 } from '@/components/knowledge-base/KnowledgeBaseHeader';
 import {
   KnowledgeBaseNavigation,
@@ -149,7 +150,10 @@ export default function KnowledgeBasePage() {
   return (
     <>
       <div className="flex w-full flex-col gap-6">
-        <KnowledgeBaseHeader onTest={() => setIsTestOpen(true)} />
+        <KnowledgeBaseHeader
+          isTestOpen={isTestOpen}
+          onTest={() => setIsTestOpen(toggleTestOpen)}
+        />
 
         <KnowledgeBaseTestLayout
           showTestPanel={isTestOpen && Boolean(selectedAgentId)}
