@@ -84,14 +84,20 @@ const sidebars: SidebarsConfig = {
     },
     {
       type: 'category',
-      label: 'Outreach',
+      label: 'Broadcast',
       collapsed: false,
       collapsible: false,
       items: [
-        'engage/message-templates',
-        'engage/broadcast',
-        'automate/reminders',
-        'automate/follow-ups',
+        {
+          type: 'doc',
+          id: 'engage/broadcast',
+          label: 'Create a broadcast',
+        },
+        {
+          type: 'doc',
+          id: 'engage/message-templates',
+          label: 'Message templates',
+        },
       ],
     },
     {
