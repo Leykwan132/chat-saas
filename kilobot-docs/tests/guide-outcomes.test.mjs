@@ -170,10 +170,7 @@ function assertGuideOutcomes(relativePath, expectedOutcomes) {
   const outcomes = parseOutcomes(source);
   const headingIndex = source.indexOf(outcomeHeading);
   const verifiedIndex = source.indexOf("<DocVerified date=");
-  const prerequisitesIndex = source.indexOf("<DocPrerequisites");
   const firstSectionIndex = source.indexOf("\n## ");
-  const nextContentIndex =
-    prerequisitesIndex >= 0 ? prerequisitesIndex : firstSectionIndex;
 
   assert.equal(headingMatches.length, 1, relativePath);
   assert.equal(importMatches.length, 1, `${relativePath}: import`);
@@ -185,7 +182,7 @@ function assertGuideOutcomes(relativePath, expectedOutcomes) {
   if (verifiedIndex >= 0) {
     assert.ok(verifiedIndex < headingIndex, `${relativePath}: verification date`);
   }
-  assert.ok(nextContentIndex > headingIndex, relativePath);
+  assert.ok(firstSectionIndex > headingIndex, relativePath);
   assert.ok(outcomes.length >= 3 && outcomes.length <= 5, relativePath);
 
   for (const outcome of outcomes) {

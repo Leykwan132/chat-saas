@@ -33,7 +33,6 @@ test('styles every admonition as a borderless semantic surface', () => {
 
 test('styles every shared informational panel as a borderless rounded surface', () => {
   const panelStyles = [
-    ['src/components/DocPrerequisites.module.css', 'var(--kilobot-muted)'],
     ['src/components/DocExample.module.css', 'var(--kilobot-muted)'],
     ['src/components/DocSuccess.module.css', '#16a34a'],
     ['src/components/DocMediaPlaceholder.module.css', 'repeating-linear-gradient'],

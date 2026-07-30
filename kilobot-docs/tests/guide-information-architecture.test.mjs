@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,5 +58,18 @@ test('keeps hidden topics outside the public docs input', () => {
     'docs/insights/usage-and-billing.mdx',
   ]) {
     assert.equal(existsSync(path.join(root, file)), false);
+  }
+});
+
+test('removes Before you begin sections from every public guide', () => {
+  const docsDirectory = path.join(root, 'docs');
+  const guides = readdirSync(docsDirectory, { recursive: true })
+    .filter((file) => file.endsWith('.mdx'));
+
+  for (const guide of guides) {
+    const source = read(path.join('docs', guide));
+
+    assert.equal(source.includes('Before you begin'), false, guide);
+    assert.equal(source.includes('DocPrerequisites'), false, guide);
   }
 });
