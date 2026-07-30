@@ -54,7 +54,18 @@ const sidebars: SidebarsConfig = {
       label: 'Workflows',
       collapsed: false,
       collapsible: false,
-      items: ['automate/workflow-overview', 'automate/build-and-test'],
+      items: [
+        {
+          type: 'doc',
+          id: 'automate/workflow-overview',
+          label: 'Overview',
+        },
+        {
+          type: 'doc',
+          id: 'automate/build-and-test',
+          label: 'Build and test',
+        },
+      ],
     },
     {
       type: 'category',

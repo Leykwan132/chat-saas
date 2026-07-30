@@ -33,3 +33,18 @@ test('keeps Quick Start to three required steps and three optional next steps', 
   assert.equal(quickStart.includes('Connect the Website widget'), false);
   assert.equal(quickStart.includes('Confirm the conversation in Inbox'), false);
 });
+
+test('uses concise Workflow child labels', () => {
+  const sidebar = read('sidebars.ts');
+  const workflows = sidebar.match(
+    /label: 'Workflows'[\s\S]*?label: 'Outreach'/,
+  )?.[0];
+
+  assert.ok(workflows);
+  assert.ok(workflows.includes("id: 'automate/workflow-overview'"));
+  assert.ok(workflows.includes("label: 'Overview'"));
+  assert.ok(workflows.includes("id: 'automate/build-and-test'"));
+  assert.ok(workflows.includes("label: 'Build and test'"));
+  assert.equal(workflows.includes('Workflow overview'), false);
+  assert.equal(workflows.includes('Build and test a Workflow'), false);
+});
