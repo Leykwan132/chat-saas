@@ -18,7 +18,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
 
   assert.deepEqual(
     requiredHeadings.map((match) => match[2].replace(/ ·.+$/, '')),
-    ['Create your agent', 'Add knowledge', 'Test your agent'],
+    ['Create your agent', 'Give your agent knowledge', 'Test your agent'],
   );
   assert.ok(quickStart.includes('## Next steps'));
   assert.ok(quickStart.includes(nextSteps));
