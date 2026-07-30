@@ -11,7 +11,6 @@ type DocExampleProps = {
 export default function DocExample({ title, children, icon: Icon }: DocExampleProps) {
   return (
     <section className={styles.root}>
-      <p className={styles.eyebrow}>Example</p>
       <h3 className={styles.title}>
         {Icon ? <Icon aria-hidden="true" data-icon="example" /> : null}
         {title}
