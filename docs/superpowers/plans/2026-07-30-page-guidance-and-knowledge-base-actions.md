@@ -1,0 +1,507 @@
+# Page Guidance and Knowledge Base Actions Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
+
+**Goal:** Add concise page descriptions, improve Configuration navigation order, and give Knowledge Base direct access to agent testing and Workflow.
+
+**Architecture:** Introduce one small reusable page-title component for consistent title and description styling. Keep Knowledge Base behavior modular by placing its header and Workflow promotion in focused components while reusing the existing `AgentPlaygroundPanel` drawer for testing.
+
+**Tech Stack:** React 19, TypeScript 6, React Router 7, Tailwind CSS 4, shadcn Button, Vitest 1.6, Bun, Node.js 22.
+
+## Global Constraints
+
+- Use Node.js 22 for every script and test command.
+- Keep every newly created code file below 300 lines.
+- Do not add default fallbacks or empty `try`/`catch` blocks.
+- Do not add code comments unless a non-obvious workaround cannot be expressed through naming and structure.
+- Preserve existing routes, permissions, and full-height Workflow canvas behavior.
+- Do not update the production changelog because release availability is unconfirmed.
+
+---
+
+### Task 1: Reusable descriptive page titles
+
+**Files:**
+- Create: `src/components/PageTitleBlock.tsx`
+- Modify: `src/components/agent-setup/AgentSetupHeader.tsx`
+- Modify: `src/pages/ChannelsPage.tsx`
+- Modify: `src/pages/SchedulePage.tsx`
+- Modify: `src/pages/ServicesPage.tsx`
+- Modify: `src/pages/pageHeaderChrome.test.ts`
+
+**Interfaces:**
+- Produces: `PageTitleBlock({ title, description }: { title: string; description: string }): JSX.Element`
+- Consumes: existing title typography classes and muted foreground tokens.
+
+- [x] **Step 1: Write the failing page-header tests**
+
+Update `src/pages/pageHeaderChrome.test.ts` so the four affected sources must use `PageTitleBlock` with exact approved copy:
+
+```ts
+const descriptivePageHeaders = [
+  {
+    fileName: 'ChannelsPage.tsx',
+    title: 'Channels',
+    description: 'Connect the platforms where customers can reach your agent.',
+  },
+  {
+    fileName: 'SchedulePage.tsx',
+    title: 'Availability',
+    description: 'Set when your team is available for bookings and lead assignment.',
+  },
+  {
+    fileName: 'ServicesPage.tsx',
+    title: 'Services',
+    description: 'Create the services customers can book with your team.',
+  },
+];
+
+test.each(descriptivePageHeaders)(
+  '$fileName shows its page description',
+  ({ fileName, title, description }) => {
+    const source = readPage(fileName);
+
+    expect(source).toContain('PageTitleBlock');
+    expect(source).toContain(`title="${title}"`);
+    expect(source).toContain(`description="${description}"`);
+  },
+);
+
+test('agent setup explains Configuration', () => {
+  const source = readComponent('agent-setup/AgentSetupHeader.tsx');
+
+  expect(source).toContain('PageTitleBlock');
+  expect(source).toContain('title="Configuration"');
+  expect(source).toContain(
+    'description="Define how your agent behaves and responds to customers."',
+  );
+});
+```
+
+Remove these pages from assertions that descriptions are absent. Add a source assertion for the shared component:
+
+```ts
+test('shared page title block keeps descriptions visually subordinate', () => {
+  const source = readComponent('PageTitleBlock.tsx');
+
+  expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+  expect(source).toContain('text-sm text-muted-foreground');
+});
+```
+
+- [x] **Step 2: Run the header test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/pageHeaderChrome.test.ts
+```
+
+Expected: FAIL because `PageTitleBlock` and the approved descriptions are absent.
+
+- [x] **Step 3: Add the shared title component**
+
+Create `src/components/PageTitleBlock.tsx`:
+
+```tsx
+type PageTitleBlockProps = {
+  title: string;
+  description: string;
+};
+
+export function PageTitleBlock({
+  title,
+  description,
+}: PageTitleBlockProps) {
+  return (
+    <div className="flex min-w-0 flex-col gap-1">
+      <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        {title}
+      </h1>
+      <p className="m-0 text-sm text-muted-foreground">{description}</p>
+    </div>
+  );
+}
+```
+
+- [x] **Step 4: Replace the four existing title blocks**
+
+Use these exact calls:
+
+```tsx
+<PageTitleBlock
+  title="Configuration"
+  description="Define how your agent behaves and responds to customers."
+/>
+```
+
+```tsx
+<PageTitleBlock
+  title="Channels"
+  description="Connect the platforms where customers can reach your agent."
+/>
+```
+
+```tsx
+<PageTitleBlock
+  title="Availability"
+  description="Set when your team is available for bookings and lead assignment."
+/>
+```
+
+```tsx
+<PageTitleBlock
+  title="Services"
+  description="Create the services customers can book with your team."
+/>
+```
+
+Keep each page's existing header container and actions unchanged.
+
+- [x] **Step 5: Run the header test to verify it passes**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/pageHeaderChrome.test.ts
+```
+
+Expected: PASS.
+
+- [x] **Step 6: Commit the descriptive headers**
+
+```bash
+git add src/components/PageTitleBlock.tsx src/components/agent-setup/AgentSetupHeader.tsx src/pages/ChannelsPage.tsx src/pages/SchedulePage.tsx src/pages/ServicesPage.tsx src/pages/pageHeaderChrome.test.ts
+git commit -m "Add concise setup page descriptions"
+```
+
+---
+
+### Task 2: Knowledge Base placement and Workflow promotion
+
+**Files:**
+- Modify: `src/components/app-sidebar-nav.ts`
+- Modify: `src/components/AppSidebarFeatureFlag.test.ts`
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`
+- Create: `src/components/knowledge-base/KnowledgeBaseNavigation.test.ts`
+- Modify: `src/pages/KnowledgeBasePage.tsx`
+
+**Interfaces:**
+- Produces: `KnowledgeBaseNavigation({ activeType, onSelect, workflowHref }: { activeType: KnowledgeType; onSelect: (type: KnowledgeType) => void; workflowHref: string }): JSX.Element`
+- Consumes: the current agent ID from `KnowledgeBasePage` to form `/dashboard/${agentId}/workflow`.
+
+- [x] **Step 1: Write failing navigation-order and promotion-card tests**
+
+Add this ordering assertion to `src/components/AppSidebarFeatureFlag.test.ts`:
+
+```ts
+test('places Knowledge Base directly below Agent Setup', () => {
+  const labels = getNavItems('agent-id', {
+    showSavedReplies: false,
+    enableAvatarFeature: false,
+  }).configuration.map((item) => item.label);
+
+  expect(labels).toEqual([
+    'Agent Setup',
+    'Knowledge Base',
+    'Workflow',
+    'Channels',
+  ]);
+});
+```
+
+Create `src/components/knowledge-base/KnowledgeBaseNavigation.test.ts`:
+
+```ts
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+
+const navigationSource = readFileSync(
+  new URL('./KnowledgeBaseNavigation.tsx', import.meta.url),
+  'utf8',
+);
+const pageSource = readFileSync(
+  new URL('../../pages/KnowledgeBasePage.tsx', import.meta.url),
+  'utf8',
+);
+
+describe('Knowledge Base Workflow promotion', () => {
+  it('shows direct Workflow capability copy beneath Sources', () => {
+    expect(navigationSource).toContain(
+      'Need your AI agent to send images, videos, reminders, or follow-ups?',
+    );
+    expect(navigationSource).toContain('Set it up with Workflow.');
+    expect(navigationSource).toContain('Try Workflow');
+  });
+
+  it('links to the current agent Workflow', () => {
+    expect(navigationSource).toContain('workflowHref');
+    expect(pageSource).toContain(
+      'workflowHref={`/dashboard/${agentId}/workflow`}',
+    );
+  });
+});
+```
+
+- [x] **Step 2: Run the focused tests to verify they fail**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: FAIL on the existing Configuration order and missing promotion card.
+
+- [x] **Step 3: Reorder Configuration navigation**
+
+In `src/components/app-sidebar-nav.ts`, use:
+
+```ts
+configuration: [
+  { to: `/dashboard/${agentId}/agent-setup`, icon: Bot, label: 'Agent Setup', requiredPermission: Permission.AGENTS_MANAGE },
+  { to: `/dashboard/${agentId}/knowledge-base`, icon: BookOpen, label: 'Knowledge Base', requiredPermission: Permission.KB_READ },
+  { to: `/dashboard/${agentId}/workflow`, icon: Workflow, label: 'Workflow', requiredPermission: Permission.AGENTS_MANAGE },
+  { to: `/dashboard/${agentId}/channels`, icon: Plug, label: 'Channels', requiredPermission: Permission.CHANNELS_READ },
+],
+```
+
+- [x] **Step 4: Add the persistent Workflow card**
+
+Extend `KnowledgeBaseNavigationProps` with `workflowHref: string`. Import `Link` from `react-router`, `ArrowRight` from `lucide-react`, and the existing `Button`.
+
+Render this after `KnowledgeBaseNavGroup`:
+
+```tsx
+<aside className="rounded-xl border border-border bg-muted/40 p-4">
+  <p className="text-sm font-semibold leading-snug text-foreground">
+    Need your AI agent to send images, videos, reminders, or follow-ups?
+  </p>
+  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+    Set it up with Workflow.
+  </p>
+  <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+    <Link to={workflowHref}>
+      Try Workflow
+      <ArrowRight className="size-4" />
+    </Link>
+  </Button>
+</aside>
+```
+
+Pass the exact current-agent route from `KnowledgeBasePage`.
+
+- [x] **Step 5: Run the focused tests to verify they pass**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: PASS.
+
+- [x] **Step 6: Commit navigation and promotion**
+
+```bash
+git add src/components/app-sidebar-nav.ts src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.tsx src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/pages/KnowledgeBasePage.tsx
+git commit -m "Guide Knowledge Base users into Workflow"
+```
+
+---
+
+### Task 3: Knowledge Base description and direct test drawer
+
+**Files:**
+- Create: `src/components/knowledge-base/KnowledgeBaseHeader.tsx`
+- Create: `src/components/knowledge-base/KnowledgeBaseHeader.test.ts`
+- Modify: `src/pages/KnowledgeBasePage.tsx`
+- Modify: `src/pages/pageHeaderChrome.test.ts`
+
+**Interfaces:**
+- Produces: `KnowledgeBaseHeader({ onTest }: { onTest: () => void }): JSX.Element`
+- Consumes: `PageTitleBlock`, the existing outlined `Button`, and `AgentPlaygroundPanel` with `mode="drawer"`.
+
+- [x] **Step 1: Write the failing Knowledge Base header tests**
+
+Create `src/components/knowledge-base/KnowledgeBaseHeader.test.ts`:
+
+```ts
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+
+const headerSource = readFileSync(
+  new URL('./KnowledgeBaseHeader.tsx', import.meta.url),
+  'utf8',
+);
+const pageSource = readFileSync(
+  new URL('../../pages/KnowledgeBasePage.tsx', import.meta.url),
+  'utf8',
+);
+
+describe('Knowledge Base header', () => {
+  it('explains the page and offers agent testing', () => {
+    expect(headerSource).toContain('title="Knowledge Base"');
+    expect(headerSource).toContain(
+      'description="Add the information your agent uses to answer customers."',
+    );
+    expect(headerSource).toContain('Test your agent');
+    expect(headerSource).toContain('variant="outline"');
+  });
+
+  it('opens the shared test drawer without changing routes', () => {
+    expect(pageSource).toContain("useState(false)");
+    expect(pageSource).toContain('mode="drawer"');
+    expect(pageSource).toContain('open={isTestOpen}');
+    expect(pageSource).toContain('onOpenChange={setIsTestOpen}');
+    expect(pageSource).toContain('onTest={() => setIsTestOpen(true)}');
+  });
+});
+```
+
+Add Knowledge Base and its exact copy to the descriptive-page assertions in `src/pages/pageHeaderChrome.test.ts`.
+
+- [x] **Step 2: Run the focused tests to verify they fail**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/knowledge-base/KnowledgeBaseHeader.test.ts src/pages/pageHeaderChrome.test.ts
+```
+
+Expected: FAIL because the header component, description, button, and drawer state are absent.
+
+- [x] **Step 3: Create the Knowledge Base header**
+
+Create `src/components/knowledge-base/KnowledgeBaseHeader.tsx`:
+
+```tsx
+import { PageTitleBlock } from '@/components/PageTitleBlock';
+import { Button } from '@/components/ui/button';
+
+type KnowledgeBaseHeaderProps = {
+  onTest: () => void;
+};
+
+export function KnowledgeBaseHeader({ onTest }: KnowledgeBaseHeaderProps) {
+  return (
+    <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+      <PageTitleBlock
+        title="Knowledge Base"
+        description="Add the information your agent uses to answer customers."
+      />
+      <Button type="button" variant="outline" onClick={onTest}>
+        Test your agent
+      </Button>
+    </header>
+  );
+}
+```
+
+- [x] **Step 4: Wire the shared playground drawer**
+
+In `KnowledgeBasePage`:
+
+```tsx
+const [isTestOpen, setIsTestOpen] = useState(false);
+```
+
+Replace the inline header with:
+
+```tsx
+<KnowledgeBaseHeader onTest={() => setIsTestOpen(true)} />
+```
+
+Render beside the existing delete dialog:
+
+```tsx
+{selectedAgentId ? (
+  <AgentPlaygroundPanel
+    agentId={selectedAgentId}
+    mode="drawer"
+    open={isTestOpen}
+    onOpenChange={setIsTestOpen}
+  />
+) : null}
+```
+
+Import `KnowledgeBaseHeader` and `AgentPlaygroundPanel`. Do not add a new agent query or duplicate playground permission logic.
+
+- [x] **Step 5: Run the focused tests to verify they pass**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/knowledge-base/KnowledgeBaseHeader.test.ts src/pages/pageHeaderChrome.test.ts
+```
+
+Expected: PASS.
+
+- [x] **Step 6: Commit direct Knowledge Base testing**
+
+```bash
+git add src/components/knowledge-base/KnowledgeBaseHeader.tsx src/components/knowledge-base/KnowledgeBaseHeader.test.ts src/pages/KnowledgeBasePage.tsx src/pages/pageHeaderChrome.test.ts
+git commit -m "Add direct agent testing to Knowledge Base"
+```
+
+---
+
+### Task 4: Integrated verification and continuity
+
+**Files:**
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: all UI and test outputs from Tasks 1–3.
+- Produces: a concise continuity receipt with verification outcome and unreleased status.
+
+- [x] **Step 1: Run all focused tests together**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/pageHeaderChrome.test.ts src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/components/knowledge-base/KnowledgeBaseHeader.test.ts
+```
+
+Expected: all focused tests PASS.
+
+- [x] **Step 2: Run the production build**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bun run build
+```
+
+Expected: TypeScript and Vite production build PASS.
+
+- [x] **Step 3: Review the final diff**
+
+Run:
+
+```bash
+git diff --check
+git status --short
+git diff --stat
+```
+
+Expected: no whitespace errors; only the approved UI, tests, plan, and continuity files are changed.
+
+- [x] **Step 4: Update continuity**
+
+Replace the pending Snapshot entry with one dated `2026-07-30` and tagged `[CODE]` that records:
+
+```md
+- 2026-07-30 [CODE] Configuration navigation now places Knowledge Base directly below Agent Setup; Configuration, Knowledge Base, Channels, Availability, and Services have concise functional descriptions; Knowledge Base opens the shared test chat directly and links users from a persistent Sources card to Workflow for images, videos, reminders, and follow-ups. Focused tests and the production build pass; unreleased.
+```
+
+Add the focused-test and build commands to Receipts while respecting the ledger caps.
+
+- [x] **Step 5: Commit the continuity receipt**
+
+```bash
+git add CONTINUITY.md
+git commit -m "Record page guidance verification"
+```
+
+Do not modify `kilobot-docs/docs/releases/changelog.mdx` because production availability is not confirmed.
