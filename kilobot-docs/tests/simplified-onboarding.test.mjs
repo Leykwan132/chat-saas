@@ -69,6 +69,9 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   }
 
   assert.equal(compactWrappers.length, 2);
+  assert.ok(
+    quickStart.includes('Training typically takes a few minutes, depending on source size and the queue.'),
+  );
   for (const compactImageUrl of compactImageUrls) {
     assert.equal(
       compactWrappers.some((wrapper) => wrapper.includes(compactImageUrl)),
