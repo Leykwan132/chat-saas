@@ -36,11 +36,11 @@
 .caption {
   display: block;
   margin-top: 0.625rem;
-  color: var(--ifm-font-color-base);
+  color: var(--ifm-font-color-secondary);
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.45;
-  text-align: left;
+  text-align: center;
 }
 
 .dialog {

@@ -18,7 +18,7 @@ function collectMarkdownFiles(directoryPath) {
   });
 }
 
-test('left-aligns content images and captions at every supported width', () => {
+test('left-aligns content images with centered captions at every supported width', () => {
   const css = read('src/css/custom.css');
   const imageCss = read('src/theme/MDXComponents/Img/styles.module.css');
 
@@ -31,7 +31,11 @@ test('left-aligns content images and captions at every supported width', () => {
     /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*?\.docs-image-compact\s*\{[^}]*width:\s*100%;/s,
   );
   assert.match(imageCss, /\.root\s*\{[^}]*text-align:\s*left;/s);
-  assert.match(imageCss, /\.caption\s*\{[^}]*text-align:\s*left;/s);
+  assert.match(imageCss, /\.caption\s*\{[^}]*text-align:\s*center;/s);
+  assert.match(
+    imageCss,
+    /\.caption\s*\{[^}]*color:\s*var\(--ifm-font-color-secondary\);/s,
+  );
 });
 
 test('gives every public documentation image a caption source', () => {

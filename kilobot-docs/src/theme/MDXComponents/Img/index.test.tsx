@@ -51,7 +51,7 @@ describe('MDX image lightbox', () => {
     assert.equal(isBackdropSelection(image, backdrop), false);
   });
 
-  test('keeps captions readable directly below images', () => {
+  test('centers light-grey captions directly below images', () => {
     const styles = readFileSync(
       fileURLToPath(new URL('./styles.module.css', import.meta.url)),
       'utf8',
@@ -61,6 +61,7 @@ describe('MDX image lightbox', () => {
     assert.match(captionRule, /margin-top:\s*0\.625rem/);
     assert.match(captionRule, /font-size:\s*0\.875rem/);
     assert.match(captionRule, /font-weight:\s*500/);
-    assert.match(captionRule, /color:\s*var\(--ifm-font-color-base\)/);
+    assert.match(captionRule, /color:\s*var\(--ifm-font-color-secondary\)/);
+    assert.match(captionRule, /text-align:\s*center/);
   });
 });
