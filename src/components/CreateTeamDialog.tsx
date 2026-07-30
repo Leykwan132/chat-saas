@@ -6,7 +6,8 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { getClientTimeZone } from '@/lib/calendarTimeUtils';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { resolveTeamCreationGate } from '@/lib/teamCreationGate';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -55,6 +56,20 @@ export function CreateTeamDialog({
 
   const handleOpenChange = (next: boolean) => {
     if (submitting) return;
+    if (next) {
+      const decision = resolveTeamCreationGate(canCreateOrgTeam);
+      if (decision === 'loading') return;
+      if (decision === 'upgrade') {
+        openUpgradeModal();
+        return;
+      }
+      if (decision === 'blocked') {
+        toast.message(
+          canCreateOrgTeam?.reason ?? 'You cannot create a team right now.',
+        );
+        return;
+      }
+    }
     setOpen(next);
     if (!next) reset();
   };
@@ -69,6 +84,7 @@ export function CreateTeamDialog({
 
     if (canCreateOrgTeam && !canCreateOrgTeam.allowed) {
       if (canCreateOrgTeam.requiresPlanUpgrade) {
+        setOpen(false);
         openUpgradeModal();
         return;
       }

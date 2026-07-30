@@ -12,7 +12,7 @@ import {
   getTeamTypeLabel,
 } from '@/lib/teamDisplay';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 
 type TeamsTableSectionProps = {
   settingsBasePath: string;

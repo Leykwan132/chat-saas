@@ -1,14 +1,14 @@
 import type { KeyboardEvent, MouseEvent } from 'react';
-import { useState } from 'react';
 import { CircleArrowUp, Plus } from 'lucide-react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { api } from '../../convex/_generated/api';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
+import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 import { cn } from '@/lib/utils';
 import { buildCreditBalanceRows } from '@/lib/creditBalanceRows';
 
@@ -39,9 +39,7 @@ function useAnalyticsUsagePath() {
 
 export function CreditMeter() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
-  const planReturnPath = `${location.pathname}${location.search}`;
+  const { openAdjustPlan } = useAdjustPlan();
   const analyticsUsagePath = useAnalyticsUsagePath();
   const planTopUpPath = useSettingsPath('plan', '#plan-add-ons');
   const { isLoading: isAuthLoading } = useAuth();
@@ -69,14 +67,9 @@ export function CreditMeter() {
     referralRemaining: referralCredits,
     referralGranted: referralCreditsGranted,
   });
-  const showUpgradePlan =
+  const showManagePlan =
     !isLoading &&
-    planAndUsage?.canManageBilling &&
-    planAndUsage.plan !== 'business';
-
-  const goToUpgradePlan = () => {
-    setAdjustPlanOpen(true);
-  };
+    planAndUsage?.canManageBilling;
 
   const goToTopUp = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
@@ -89,15 +82,15 @@ export function CreditMeter() {
 
   return (
     <div className="group-data-[collapsible=icon]:hidden px-[0.675rem] py-[0.45rem] space-y-[0.5625rem]">
-      {showUpgradePlan ? (
+      {showManagePlan ? (
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={goToUpgradePlan}
+            onClick={openAdjustPlan}
             className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-transparent px-2 py-0.5 text-[10px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent/40 hover:text-sidebar-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
+            {resolvePlanEntryLabel('credit_meter')}
             <CircleArrowUp className="size-2.5" />
-            Upgrade plan
           </button>
         </div>
       ) : null}
@@ -181,12 +174,6 @@ export function CreditMeter() {
           </Button>
         ) : null}
       </div>
-
-      <AdjustPlanDialog
-        open={adjustPlanOpen}
-        onOpenChange={setAdjustPlanOpen}
-        planReturnPath={planReturnPath}
-      />
     </div>
   );
 }

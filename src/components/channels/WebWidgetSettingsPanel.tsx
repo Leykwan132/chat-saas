@@ -6,7 +6,7 @@ import type { Id } from '../../../convex/_generated/dataModel';
 import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
 import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
 import { DEFAULT_WEB_WIDGET_THEME } from '../../../shared/webWidgetThemes';
-import { AdjustPlanDialog } from '@/components/AdjustPlanDialog';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { WebWidgetAppearanceSection } from '@/components/channels/WebWidgetAppearanceSection';
 import { WebWidgetBrandingSection } from '@/components/channels/WebWidgetBrandingSection';
 import { WebWidgetLayoutPicker } from '@/components/channels/WebWidgetLayoutPicker';
@@ -49,6 +49,7 @@ export function WebWidgetSettingsPanel({
   generateIconUploadUrl,
   saveIcon,
 }: WebWidgetSettingsPanelProps) {
+  const { openUpgradeModal } = useUpgradeModal();
   const [agentDisplayName, setAgentDisplayName] = useState(settings.agentDisplayName);
   const [placeholderText, setPlaceholderText] = useState(settings.placeholder);
   const [placementLayout, setPlacementLayout] = useState(settings.layout);
@@ -57,12 +58,10 @@ export function WebWidgetSettingsPanel({
   const [savingPlacement, setSavingPlacement] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
-  const [adjustPlanOpen, setAdjustPlanOpen] = useState(false);
   const snippet = buildWebWidgetSnippet(settings.publicKey);
   const normalizedAgentName = agentDisplayName.trim();
   const normalizedPlaceholder = placeholderText.trim();
   const previewPoweredBy = !(settings.canHideBranding && hidePoweredBy);
-  const planReturnPath = `${window.location.pathname}${window.location.search}`;
 
   const saveAppearance = useCallback(() => {
     if (!agentId) return;
@@ -99,7 +98,7 @@ export function WebWidgetSettingsPanel({
     (nextHidePoweredBy: boolean) => {
       if (!agentId) return;
       if (nextHidePoweredBy && !settings.canHideBranding) {
-        setAdjustPlanOpen(true);
+        openUpgradeModal();
         return;
       }
       setHidePoweredBy(nextHidePoweredBy);
@@ -124,6 +123,7 @@ export function WebWidgetSettingsPanel({
     },
     [
       agentId,
+      openUpgradeModal,
       settings.canHideBranding,
       settings.hidePoweredBy,
       updateSettings,
@@ -227,7 +227,7 @@ export function WebWidgetSettingsPanel({
               canHideBranding={settings.canHideBranding}
               saving={savingBranding}
               onChange={saveBranding}
-              onRequestUpgrade={() => setAdjustPlanOpen(true)}
+              onRequestUpgrade={openUpgradeModal}
             />
 
             <Field>
@@ -254,12 +254,6 @@ export function WebWidgetSettingsPanel({
           />
         </div>
       </div>
-
-      <AdjustPlanDialog
-        open={adjustPlanOpen}
-        onOpenChange={setAdjustPlanOpen}
-        planReturnPath={planReturnPath}
-      />
     </>
   );
 }

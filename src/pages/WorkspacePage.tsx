@@ -16,7 +16,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
 import { SupportHoverCard } from '@/components/SupportHoverCard';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { Button } from '@/components/ui/button';
 import {

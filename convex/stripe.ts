@@ -4,19 +4,6 @@ import { StripeSubscriptions } from "@convex-dev/stripe";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getBillingWorkosUserId } from "./billingScope";
-import { getPlan } from "./plans";
-import {
-  getExtraCreditsPack,
-  getExtraCreditsPriceId,
-  getStripePriceId,
-  resolvePlanKeyFromStripePriceId,
-  type ExtraCreditsPackId,
-  type PlanKey,
-} from "./planCatalog";
-import {
-  STRIPE_CREDITS_AMOUNT_METADATA_KEY,
-  STRIPE_EXTRA_CREDITS_METADATA_TYPE,
-} from "../shared/planCatalog";
 import {
   buildTopUpLabel,
   insertCreditLog,
@@ -24,21 +11,17 @@ import {
 import {
   createTopUpEntry,
 } from "./creditEntries";
+import { snapshotUserCredit } from "./creditPeriodPool";
+import { teamDeletionRequestResultValidator } from "./teamDeletion/request";
+import { getTeamByWorkosOrgId } from "./teamHelpers";
 import {
-  createCheckoutSessionWithPromotionCodes,
-  type CheckoutMetadata,
-  type CheckoutSessionParams,
-} from "./stripeCheckout";
+  createCheckoutForBillingUser,
+  createPortalForBillingUser,
+} from "./stripeBillingSessions";
 import {
-  ensureFirstCreditPeriod,
-  applyPlanUpgradeToCurrentPeriod,
-  snapshotUserCredit,
-} from "./creditPeriodPool";
-import {
-  requestTeamDeletion,
-  teamDeletionRequestResultValidator,
-} from "./teamDeletion/request";
-import { getPersonalTeamForUser, getTeamByWorkosOrgId } from "./teamHelpers";
+  handleSubscriptionDeleted,
+  handleSubscriptionUpdated,
+} from "./stripeSubscriptionEvents";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
 
@@ -50,10 +33,6 @@ type BillingUserRecord = {
   stripePriceId?: string | null;
   stripeSubscriptionId?: string | null;
 };
-
-function isPaidPlanKey(plan: string): plan is Exclude<PlanKey, "free"> {
-  return plan === "starter" || plan === "growth" || plan === "business";
-}
 
 export const createCheckout = action({
   args: {
@@ -70,78 +49,8 @@ export const createCheckout = action({
     orgId: v.optional(v.union(v.string(), v.null())),
     cancelPath: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    const userId = await getBillingWorkosUserId(ctx);
-
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
-      userId,
-    })) as BillingUserRecord | null;
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    const email = user.email;
-    const name = user.firstName
-      ? `${user.firstName} ${user.lastName ?? ""}`.trim()
-      : user.email;
-
-    const customer = await stripeClient.getOrCreateCustomer(ctx, {
-      userId,
-      email,
-      name,
-    });
-    
-    let priceId: string;
-    let extraCreditsPack: ReturnType<typeof getExtraCreditsPack> | null = null;
-    if (args.mode === "payment") {
-      if (!args.extraCreditsPackId) {
-        throw new Error("Extra credits pack is required for payment checkout");
-      }
-      const extraCreditsPackId = args.extraCreditsPackId as ExtraCreditsPackId;
-      extraCreditsPack = getExtraCreditsPack(extraCreditsPackId);
-      priceId = getExtraCreditsPriceId(extraCreditsPackId);
-    } else {
-      if (!args.plan || !args.interval || !isPaidPlanKey(args.plan)) {
-        throw new Error("Plan and interval are required for subscription checkout");
-      }
-      priceId = getStripePriceId(args.plan, args.interval);
-    }
-
-    const frontendUrl = (process.env.APP_BASE_URL || "http://localhost:5173").replace(
-      /\/+$/,
-      "",
-    );
-    const successUrl = `${frontendUrl}/workspace?success=true`;
-    const cancelUrl = args.cancelPath
-      ? `${frontendUrl}${args.cancelPath.startsWith("/") ? args.cancelPath : `/${args.cancelPath}`}`
-      : `${frontendUrl}/onboarding`;
-
-    const creditMetadata: CheckoutMetadata | null = extraCreditsPack
-      ? {
-          orgId: userId,
-          type: STRIPE_EXTRA_CREDITS_METADATA_TYPE,
-          extraCreditsPackId: extraCreditsPack.id,
-          [STRIPE_CREDITS_AMOUNT_METADATA_KEY]: String(extraCreditsPack.credits),
-        }
-      : null;
-
-    const sessionParams: CheckoutSessionParams = {
-      priceId,
-      customerId: customer.customerId,
-      mode: args.mode,
-      successUrl,
-      cancelUrl,
-      metadata: creditMetadata ?? { orgId: userId, type: "subscription" },
-    };
-
-    if (args.mode === "subscription") {
-      sessionParams.subscriptionMetadata = { orgId: userId };
-    } else if (creditMetadata) {
-      sessionParams.paymentIntentMetadata = creditMetadata;
-    }
-
-    return await createCheckoutSessionWithPromotionCodes(sessionParams);
-  },
+  handler: async (ctx, args) =>
+    await createCheckoutForBillingUser(ctx, args),
 });
 
 export const createPortal = action({
@@ -149,33 +58,8 @@ export const createPortal = action({
     orgId: v.optional(v.union(v.string(), v.null())),
     returnPath: v.optional(v.string()),
   },
-  handler: async (ctx, args) => {
-    const userId = await getBillingWorkosUserId(ctx);
-
-    const user = (await ctx.runQuery(internal.stripe.internalGetUser, {
-      userId,
-    })) as BillingUserRecord | null;
-    if (!user) throw new Error("User not found");
-    const stripeCustomerId = user.stripeCustomerId;
-
-    if (!stripeCustomerId) {
-      throw new Error("No Stripe billing customer found.");
-    }
-
-    const frontendUrl = (
-      process.env.APP_BASE_URL ||
-      process.env.FRONTEND_URL ||
-      "http://localhost:5173"
-    ).replace(/\/+$/, "");
-    const returnPath = args.returnPath ?? "/workspace/settings?section=plan";
-    const returnUrl = `${frontendUrl}${returnPath.startsWith("/") ? returnPath : `/${returnPath}`}`;
-
-    const portalSession = await stripeClient.createCustomerPortalSession(ctx, {
-      customerId: stripeCustomerId,
-      returnUrl,
-    });
-    return portalSession as { url: string };
-  },
+  handler: async (ctx, args) =>
+    await createPortalForBillingUser(ctx, args),
 });
 
 export const syncBillingWithStripe = action({
@@ -233,98 +117,12 @@ export const handleSubscriptionUpdatedInternal = internalMutation({
     stripeCustomerId: v.string(),
     status: v.string(),
     priceId: v.string(),
-    currentPeriodEnd: v.number(), // in seconds
+    currentPeriodEnd: v.number(),
     orgId: v.string(),
   },
-  handler: async (ctx, args) => {
-    const isPersonal = args.orgId.startsWith("user_");
-
-    const isActive = args.status === "active" || args.status === "trialing";
-    const plan = isActive
-      ? resolvePlanKeyFromStripePriceId(args.priceId)
-      : "free";
-
-    const planConfig = getPlan(plan);
-    const newPeriodEndMs = args.currentPeriodEnd * 1000;
-
-    // Resolve the billing user (owner) for this subscription.
-    let owner: Doc<"users">;
-    if (isPersonal) {
-      const user = await ctx.db
-        .query("users")
-        .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.orgId))
-        .unique();
-      if (!user) {
-        throw new Error("User not found");
-      }
-      const personalTeam = await getPersonalTeamForUser(ctx, user._id);
-      if (personalTeam) {
-        await ctx.db.patch(personalTeam._id, {
-          stripeSubscriptionId: args.stripeSubscriptionId,
-          updatedAt: Date.now(),
-        });
-      }
-      owner = user;
-    } else {
-      const orgTeam = await getTeamByWorkosOrgId(ctx, args.orgId);
-      if (!orgTeam) {
-        throw new Error("Team not found for organization " + args.orgId);
-      }
-      await ctx.db.patch(orgTeam._id, {
-        stripeSubscriptionId: args.stripeSubscriptionId,
-        updatedAt: Date.now(),
-      });
-      if (!orgTeam.ownerId) {
-        throw new Error("Team owner not found");
-      }
-      const ownerDoc = await ctx.db.get(orgTeam.ownerId);
-      if (!ownerDoc) {
-        throw new Error("Team owner not found");
-      }
-      owner = ownerDoc;
-    }
-
-    const isPlanChanged = owner.stripePriceId !== args.priceId;
-
-    // Keep Stripe subscription metadata on the owner user in sync (used for
-    // plan lookups). The credit cycle itself is independent of the Stripe
-    // billing interval, so no credit reset happens on Stripe period change.
-    await ctx.db.patch(owner._id, {
-      stripeCustomerId: args.stripeCustomerId,
-      stripeSubscriptionId: args.stripeSubscriptionId,
-      stripePriceId: args.priceId,
-      stripeSubscriptionStatus: args.status,
-      stripeSubscriptionCurrentPeriodEnd: newPeriodEndMs,
-      updatedAt: Date.now(),
-    });
-
-    // Ensure a credit period exists for the billing user (first subscription,
-    // or re-activation after cancellation).
-    await ensureFirstCreditPeriod(ctx, owner._id);
-
-    // On a plan upgrade, grow the current period's allocation immediately so
-    // the user benefits right away. Downgrades take effect at the next cycle
-    // (the worker re-reads the plan when it creates the next period).
-    if (isPlanChanged && isActive) {
-      const before = await snapshotUserCredit(ctx, owner._id);
-      await applyPlanUpgradeToCurrentPeriod(ctx, owner._id);
-      const after = await snapshotUserCredit(ctx, owner._id);
-      await insertCreditLog(ctx, {
-        orgId: isPersonal ? "" : args.orgId,
-        userId: owner._id,
-        eventType: "grant",
-        label: `Plan change (${planConfig.name})`,
-        amount: after.totalRemaining - before.totalRemaining,
-        balanceBefore: before.totalRemaining,
-        balanceAfter: after.totalRemaining,
-        monthlyCreditsBefore: before.monthlyRemaining,
-        monthlyCreditsAfter: after.monthlyRemaining,
-        purchasedCreditsBefore: before.purchasedRemaining,
-        purchasedCreditsAfter: after.purchasedRemaining,
-        reason: `Subscription changed to ${planConfig.name} plan`,
-      });
-    }
-  },
+  returns: v.null(),
+  handler: async (ctx, args) =>
+    await handleSubscriptionUpdated(ctx, args),
 });
 
 export const handleSubscriptionDeletedInternal = internalMutation({
@@ -333,59 +131,8 @@ export const handleSubscriptionDeletedInternal = internalMutation({
     orgId: v.string(),
   },
   returns: teamDeletionRequestResultValidator,
-  handler: async (ctx, args) => {
-    const isPersonal = args.orgId.startsWith("user_");
-
-    if (!isPersonal) {
-      return await requestTeamDeletion(ctx, {
-        workosOrgId: args.orgId,
-        stripeSubscriptionId: args.stripeSubscriptionId,
-        source: "stripe",
-      });
-    }
-
-    const owner = await ctx.db
-      .query("users")
-      .withIndex("by_workosUserId", (q) => q.eq("workosUserId", args.orgId))
-      .unique();
-    if (!owner) {
-      throw new Error("User not found");
-    }
-    const personalTeam = await getPersonalTeamForUser(ctx, owner._id);
-    if (personalTeam) {
-      await ctx.db.patch(personalTeam._id, {
-        stripeSubscriptionId: undefined,
-        updatedAt: Date.now(),
-      });
-    }
-
-    await ctx.db.patch(owner._id, {
-      stripeSubscriptionId: undefined,
-      stripePriceId: undefined,
-      stripeSubscriptionStatus: "canceled",
-      stripeSubscriptionCurrentPeriodEnd: undefined,
-      updatedAt: Date.now(),
-    });
-
-    // Cancellation reverts the plan to free. The current cycle keeps its
-    // allocation; the next cycle (created by the worker) grants free credits.
-    const before = await snapshotUserCredit(ctx, owner._id);
-    await insertCreditLog(ctx, {
-      orgId: "",
-      userId: owner._id,
-      eventType: "adjustment",
-      label: "Plan canceled",
-      amount: 0,
-      balanceBefore: before.totalRemaining,
-      balanceAfter: before.totalRemaining,
-      monthlyCreditsBefore: before.monthlyRemaining,
-      monthlyCreditsAfter: before.monthlyRemaining,
-      purchasedCreditsBefore: before.purchasedRemaining,
-      purchasedCreditsAfter: before.purchasedRemaining,
-      reason: "Subscription canceled, reverts to Free plan next cycle",
-    });
-    return { accepted: true as const, duplicate: false };
-  },
+  handler: async (ctx, args) =>
+    await handleSubscriptionDeleted(ctx, args),
 });
 
 export const handlePaymentIntentSucceededInternal = internalMutation({

@@ -10,7 +10,8 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Spinner } from '@/components/ui/spinner';
 import { Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { UpgradeModalProvider } from '@/components/UpgradeModal';
+import { AdjustPlanProvider } from '@/components/billing/AdjustPlanProvider';
+import { UpgradeModalProvider } from '@/components/UpgradeModalProvider';
 import { usePermissions } from '@/hooks/usePermissions';
 import {
   getDefaultAnalyticsSection,
@@ -139,12 +140,14 @@ export function AppRootLayout({
       >
         <ConvexProviderWithAuthKit client={convex} useAuth={useAuth}>
           <TooltipProvider>
-            <UpgradeModalProvider>
-              <PostHogIdentifier />
-              <ScrollToTop />
-              <Outlet />
-              <Toaster />
-            </UpgradeModalProvider>
+            <AdjustPlanProvider>
+              <UpgradeModalProvider>
+                <PostHogIdentifier />
+                <ScrollToTop />
+                <Outlet />
+                <Toaster />
+              </UpgradeModalProvider>
+            </AdjustPlanProvider>
           </TooltipProvider>
         </ConvexProviderWithAuthKit>
       </AuthKitProvider>

@@ -8,7 +8,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { Spinner } from '@/components/ui/spinner';
 import { Badge } from '@/components/ui/badge';
 import {

@@ -1,13 +1,28 @@
 import { toast } from 'sonner';
 import type { NavigateFunction } from 'react-router';
+import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
 export const DEFAULT_PLAN_PATH = '/workspace/settings?section=plan';
 
-type CanCreateOrgTeamResult = {
+export type CanCreateOrgTeamResult = {
   allowed: boolean;
   reason: string | null;
   requiresPlanUpgrade: boolean;
 } | undefined;
+
+export type TeamCreationGateDecision =
+  | 'loading'
+  | 'allowed'
+  | 'upgrade'
+  | 'blocked';
+
+export function resolveTeamCreationGate(
+  result: CanCreateOrgTeamResult,
+): TeamCreationGateDecision {
+  if (result === undefined) return 'loading';
+  if (result.allowed) return 'allowed';
+  return result.requiresPlanUpgrade ? 'upgrade' : 'blocked';
+}
 
 export function getPlanPathFromReturnTo(returnTo: string) {
   if (returnTo.includes('section=')) {
@@ -24,18 +39,14 @@ export function showTeamCreationUpgradeToast(
   toast.message('Paid plan required', {
     description: 'Upgrade your account to create shared teams.',
     action: {
-      label: 'Upgrade',
+      label: resolvePlanEntryLabel('plan_limit'),
       onClick: () => navigate(planPath),
     },
   });
 }
 
 export function isTeamCreationUpgradeRequired(canCreateOrgTeam: CanCreateOrgTeamResult) {
-  return (
-    canCreateOrgTeam !== undefined &&
-    !canCreateOrgTeam.allowed &&
-    canCreateOrgTeam.requiresPlanUpgrade
-  );
+  return resolveTeamCreationGate(canCreateOrgTeam) === 'upgrade';
 }
 
 export function handleCreateTeamGate(
@@ -45,14 +56,16 @@ export function handleCreateTeamGate(
   planPath = DEFAULT_PLAN_PATH,
   openUpgradeModal?: () => void,
 ) {
-  if (canCreateOrgTeam === undefined) return;
+  const decision = resolveTeamCreationGate(canCreateOrgTeam);
 
-  if (canCreateOrgTeam.allowed) {
+  if (decision === 'loading') return;
+
+  if (decision === 'allowed') {
     onAllowed();
     return;
   }
 
-  if (canCreateOrgTeam.requiresPlanUpgrade) {
+  if (decision === 'upgrade') {
     if (openUpgradeModal) {
       openUpgradeModal();
     } else {
@@ -61,5 +74,5 @@ export function handleCreateTeamGate(
     return;
   }
 
-  toast.message(canCreateOrgTeam.reason ?? 'You cannot create a team right now.');
+  toast.message(canCreateOrgTeam?.reason ?? 'You cannot create a team right now.');
 }

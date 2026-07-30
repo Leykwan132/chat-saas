@@ -16,7 +16,7 @@ import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
 import { Button } from '@/components/ui/button';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import {
   Dialog,
   DialogContent,

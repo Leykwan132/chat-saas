@@ -27,7 +27,7 @@ import {
 } from '../../shared/teamFormOptions';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { BlurFade } from '@/components/ui/blur-fade';
 import {
@@ -86,7 +86,7 @@ function CreateTeamFlow() {
     }
 
     navigate(returnTo, { replace: true });
-  }, [canCreateOrgTeam, navigate, returnTo]);
+  }, [canCreateOrgTeam, navigate, openUpgradeModal, returnTo]);
 
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');

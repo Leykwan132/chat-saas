@@ -15,7 +15,7 @@ type TeamType = {
   isActive: boolean;
 };
 import { handleCreateTeamGate } from '@/lib/teamCreationGate';
-import { useUpgradeModal } from '@/components/UpgradeModal';
+import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { Spinner } from '@/components/ui/spinner';
 import {
   BreadcrumbItem,
