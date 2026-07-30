@@ -17,6 +17,41 @@ const guides = new Map([
     "Create and switch between agents",
     "Keep each agent’s settings and customer experience separate",
   ]],
+  ["build-your-agent/agent-setup.mdx", [
+    "Decide where instructions, facts, and actions belong",
+    "Write clear behavior, tone, boundaries, and escalation rules",
+    "Test changes before publishing the agent",
+  ]],
+  ["build-your-agent/knowledge-base.mdx", [
+    "Choose the right source type",
+    "Add, replace, and remove trusted information",
+    "Test that the agent answers from approved facts",
+  ]],
+  ["channels/connect-channels.mdx", [
+    "Choose the right channel for your customers",
+    "Understand each connection status",
+    "Connect a channel and verify a real conversation",
+  ]],
+  ["channels/website-widget.mdx", [
+    "Configure the Website widget",
+    "Install it on your website",
+    "Verify that visitor messages reach Inbox",
+  ]],
+  ["channels/whatsapp.mdx", [
+    "Complete the Meta connection flow",
+    "Confirm synchronization finishes successfully",
+    "Verify incoming messages and teammate replies",
+  ]],
+  ["channels/instagram.mdx", [
+    "Connect the correct professional Instagram account",
+    "Verify a direct message reaches Inbox",
+    "Send a teammate reply from KiloBot",
+  ]],
+  ["channels/messenger.mdx", [
+    "Connect the correct Facebook Page",
+    "Verify a Page message reaches Inbox",
+    "Send a teammate reply from KiloBot",
+  ]],
 ]);
 
 const excludedGuides = [
