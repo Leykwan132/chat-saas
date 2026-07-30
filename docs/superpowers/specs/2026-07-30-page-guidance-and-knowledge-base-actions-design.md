@@ -41,7 +41,7 @@ Closing the panel removes its container without changing routes or source select
 
 Add a persistent compact card beneath the Knowledge Base `Sources` navigation group.
 
-Place `https://storage.kilobot.app/grad-2.jpg` as a full-width 16:9 banner above the copy. Use simple `object-cover` presentation with rounded card clipping and no overlay, decorative label, or extra effect.
+Place `https://storage.kilobot.app/workflow-prev.png` as a full-width 16:9 banner above the copy. Use simple `object-cover` presentation with rounded card clipping and no overlay, decorative label, or extra effect.
 
 The card copy is:
 

@@ -80,7 +80,7 @@ export function KnowledgeBaseNavigation({
       />
       <aside className="overflow-hidden rounded-xl border border-border bg-muted/40">
         <img
-          src="https://storage.kilobot.app/grad-2.jpg"
+          src="https://storage.kilobot.app/workflow-prev.png"
           alt=""
           className="aspect-video w-full object-cover"
         />
