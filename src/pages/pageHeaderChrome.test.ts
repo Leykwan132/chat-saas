@@ -11,20 +11,34 @@ function readComponent(path: string) {
 
 const compactHeaderPages = [
   'BroadcastPage.tsx',
-  'ChannelsPage.tsx',
   'ChatsPage.tsx',
   'CustomersPage.tsx',
   'FollowUpPage.tsx',
-  'KnowledgeBasePage.tsx',
   'LeadAssignmentPage.tsx',
   'QuickRepliesPage.tsx',
-  'SchedulePage.tsx',
-  'ServicesPage.tsx',
 ];
 
 const compactDetailPages = [
   'BroadcastDetailPage.tsx',
   'FollowUpDetailPage.tsx',
+];
+
+const descriptivePageHeaders = [
+  {
+    fileName: 'ChannelsPage.tsx',
+    title: 'Channels',
+    description: 'Connect the platforms where customers can reach your agent.',
+  },
+  {
+    fileName: 'SchedulePage.tsx',
+    title: 'Availability',
+    description: 'Set when your team is available for bookings and lead assignment.',
+  },
+  {
+    fileName: 'ServicesPage.tsx',
+    title: 'Services',
+    description: 'Create the services customers can book with your team.',
+  },
 ];
 
 describe('page header chrome', () => {
@@ -60,11 +74,45 @@ describe('page header chrome', () => {
     expect(source).not.toContain('text-4xl font-semibold tracking-tight');
   });
 
-  test('agent setup header uses a compact title', () => {
+  test('agent setup header uses the shared compact title', () => {
     const source = readComponent('agent-setup/AgentSetupHeader.tsx');
 
-    expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(source).toContain('PageTitleBlock');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
+  });
+
+  test.each(descriptivePageHeaders)(
+    '$fileName shows its page description',
+    ({ fileName, title, description }) => {
+      const source = readPage(fileName);
+
+      expect(source).toContain('PageTitleBlock');
+      expect(source).toContain(`title="${title}"`);
+      expect(source).toContain(`description="${description}"`);
+    },
+  );
+
+  test('agent setup explains Configuration', () => {
+    const source = readComponent('agent-setup/AgentSetupHeader.tsx');
+
+    expect(source).toContain('PageTitleBlock');
+    expect(source).toContain('title="Configuration"');
+    expect(source).toContain(
+      'description="Define how your agent behaves and responds to customers."',
+    );
+  });
+
+  test('Knowledge Base uses its descriptive action header', () => {
+    const source = readPage('KnowledgeBasePage.tsx');
+
+    expect(source).toContain('KnowledgeBaseHeader');
+  });
+
+  test('shared page title block keeps descriptions visually subordinate', () => {
+    const source = readComponent('PageTitleBlock.tsx');
+
+    expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(source).toContain('text-sm text-muted-foreground');
   });
 
   test('analytics section headers use compact titles without descriptions', () => {

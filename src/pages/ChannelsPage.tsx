@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { formatPrefixedRelativeAge } from '@/lib/formatRelativeAge';
+import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Button } from '@/components/ui/button';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
 import {
@@ -292,9 +293,10 @@ export default function ChannelsPage() {
   return (
     <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
-        <div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Channels</h1>
-        </div>
+        <PageTitleBlock
+          title="Channels"
+          description="Connect the platforms where customers can reach your agent."
+        />
       </header>
 
       {/* Guides section styled exactly like BroadcastPage */}
