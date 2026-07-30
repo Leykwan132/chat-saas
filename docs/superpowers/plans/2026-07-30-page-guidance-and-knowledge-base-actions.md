@@ -918,3 +918,47 @@ Record the implemented title and focused verification in `CONTINUITY.md`. Do not
 git add src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.tsx docs/superpowers/plans/2026-07-30-page-guidance-and-knowledge-base-actions.md CONTINUITY.md
 git commit -m "Add Knowledge Base Workflow card title"
 ```
+
+---
+
+### Task 9: Replace the Workflow preview asset
+
+**Files:**
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.test.ts`
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`
+- Modify: `docs/superpowers/specs/2026-07-30-page-guidance-and-knowledge-base-actions-design.md`
+- Modify: `CONTINUITY.md`
+
+- [x] **Step 1: Render the real card and expect `workflow-prev.png`**
+
+The banner contract renders `KnowledgeBaseNavigation` inside `MemoryRouter` and expects:
+
+```ts
+expect(markup).toContain(
+  'src="https://storage.kilobot.app/workflow-prev.png"',
+);
+```
+
+- [x] **Step 2: Run the focused test and confirm RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: FAIL because the rendered image still uses `grad-2.jpg`.
+
+- [x] **Step 3: Replace only the hosted image URL**
+
+Use:
+
+```tsx
+src="https://storage.kilobot.app/workflow-prev.png"
+```
+
+Keep the decorative alt text, 16:9 presentation, copy, and Workflow action unchanged.
+
+- [x] **Step 4: Verify GREEN and the complete page-guidance surface**
+
+Run the focused banner test, the four-file page-guidance suite, `git diff --check`, and the component line-limit check.
