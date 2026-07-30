@@ -45,10 +45,11 @@ Place `https://storage.kilobot.app/grad-2.jpg` as a full-width 16:9 banner above
 
 The card copy is:
 
-- Headline: `Need your AI agent to send images, videos, reminders, or follow-ups?`
+- Title: `Do More Automatically`
+- Supporting line: `Need your AI agent to send images, videos, reminders, or follow-ups?`
 - Action: `Try Workflow →`
 
-Use the same small text size for the headline and action, with normal weight on the headline so the action remains the stronger element.
+Place the single-line title directly above the supporting line. Use the same small text size for both, semibold weight for the title, and normal weight for the supporting line. Keep the action visually distinct as the card's next step.
 
 The action navigates to the current agent's Workflow page. The card remains visible for every Knowledge Base source type and does not open a modal.
 
