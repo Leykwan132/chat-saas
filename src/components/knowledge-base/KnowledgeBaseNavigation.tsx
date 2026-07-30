@@ -1,5 +1,7 @@
 import type { ElementType } from 'react';
-import { AlignLeft, FileText, Globe, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router';
+import { AlignLeft, ArrowRight, FileText, Globe, HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export type KnowledgeType = 'web' | 'file' | 'text' | 'qa';
@@ -20,6 +22,7 @@ const KNOWLEDGE_TABS: KnowledgeTab[] = [
 type KnowledgeBaseNavigationProps = {
   activeType: KnowledgeType;
   onSelect: (type: KnowledgeType) => void;
+  workflowHref: string;
 };
 
 function KnowledgeBaseNavGroup({
@@ -65,6 +68,7 @@ function KnowledgeBaseNavGroup({
 export function KnowledgeBaseNavigation({
   activeType,
   onSelect,
+  workflowHref,
 }: KnowledgeBaseNavigationProps) {
   return (
     <div className="flex flex-col gap-8">
@@ -74,6 +78,27 @@ export function KnowledgeBaseNavigation({
         activeType={activeType}
         onSelect={onSelect}
       />
+      <aside className="overflow-hidden rounded-xl border border-border bg-muted/40">
+        <img
+          src="https://storage.kilobot.app/grad-2.jpg"
+          alt=""
+          className="aspect-video w-full object-cover"
+        />
+        <div className="p-4">
+          <p className="text-sm font-semibold leading-snug text-foreground">
+            Do More Automatically
+          </p>
+          <p className="mt-1.5 text-sm font-normal leading-snug text-foreground">
+            Need your AI agent to send images, videos, reminders, or follow-ups?
+          </p>
+          <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+            <Link to={workflowHref} className="text-sm font-normal leading-snug text-foreground">
+              Try Workflow
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
+import { PageTitleBlock } from '@/components/PageTitleBlock';
 import {
   ServicesOverviewDialog,
   SERVICES_OVERVIEW_META,
@@ -161,11 +162,10 @@ export default function ServicesPage() {
   return (
     <div className="flex w-full flex-col gap-8">
       <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
-        <div>
-          <h1 className="m-0 flex items-center gap-2.5 text-3xl font-semibold tracking-tight text-foreground">
-            Services
-          </h1>
-        </div>
+        <PageTitleBlock
+          title="Services"
+          description="Create the services customers can book with your team."
+        />
         {canManage ? (
           <Button asChild className="gap-1.5 font-semibold">
             <Link to={createServiceHref}>

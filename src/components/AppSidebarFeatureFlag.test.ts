@@ -29,4 +29,18 @@ describe('sidebar feature flags', () => {
     expect(enabled.tools.map((item) => item.label)).toContain('Avatar');
     expect(disabled.tools.map((item) => item.label)).not.toContain('Avatar');
   });
+
+  test('places Knowledge Base directly below Agent Setup', () => {
+    const labels = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: false,
+    }).configuration.map((item) => item.label);
+
+    expect(labels).toEqual([
+      'Agent Setup',
+      'Knowledge Base',
+      'Workflow',
+      'Channels',
+    ]);
+  });
 });
