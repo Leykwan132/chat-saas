@@ -52,6 +52,31 @@ const guides = new Map([
     "Verify a Page message reaches Inbox",
     "Send a teammate reply from KiloBot",
   ]],
+  ["engage/inbox.mdx", [
+    "Find conversations and understand the Inbox layout",
+    "Manage AI and teammate ownership",
+    "Reply, update customer context, and review completed actions",
+  ]],
+  ["engage/contacts.mdx", [
+    "Confirm a customer’s identity and channel source",
+    "Update tags, lead temperature, and customer details",
+    "Review linked conversations and bookings",
+  ]],
+  ["bookings/services.mdx", [
+    "Create a customer-facing Service",
+    "Configure timing, booking fields, and assignment",
+    "Test that customers can book an eligible teammate",
+  ]],
+  ["bookings/availability.mdx", [
+    "Set weekly hours and the correct timezone",
+    "Account for Service duration, buffers, and Calendar conflicts",
+    "Diagnose why a booking slot is unavailable",
+  ]],
+  ["bookings/calendar.mdx", [
+    "Create a customer booking manually",
+    "Check availability and prevent scheduling conflicts",
+    "Update appointment status and review booking history",
+  ]],
 ]);
 
 const excludedGuides = [
