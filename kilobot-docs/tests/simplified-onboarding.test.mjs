@@ -14,7 +14,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
   const nextStepItems = [
-    '[Deploy to channels](/channels/connect-channels) to chat with customers on WhatsApp, Instagram, and Messenger.',
+    '[Deploy to channels](/channels/whatsapp) to chat with customers on WhatsApp, Instagram, and Messenger.',
     '[Set up workflows](/automate/send-messages-and-assets) to send assets, involve your team, automate bookings, and follow up with customers.',
   ];
   const screenshotUrls = [

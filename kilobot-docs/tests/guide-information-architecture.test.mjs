@@ -40,17 +40,25 @@ test('limits Getting started to Welcome and Quick Start', () => {
   ]);
 });
 
-test('starts Channels with the Website widget and hides Conversations', () => {
+test('starts Channels with WhatsApp and places Website widget after Messenger', () => {
   const sidebar = read('sidebars.ts');
   const channels = sidebar.match(
     /label: 'Channels'[\s\S]*?label: 'Bookings'/,
   )?.[0];
 
   assert.ok(channels);
-  assert.ok(channels.indexOf("'channels/website-widget'") > -1);
+  assert.ok(channels.indexOf("'channels/whatsapp'") > -1);
   assert.ok(
-    channels.indexOf("'channels/website-widget'")
-      < channels.indexOf("'channels/whatsapp'"),
+    channels.indexOf("'channels/whatsapp'")
+      < channels.indexOf("'channels/instagram'"),
+  );
+  assert.ok(
+    channels.indexOf("'channels/instagram'")
+      < channels.indexOf("'channels/messenger'"),
+  );
+  assert.ok(
+    channels.indexOf("'channels/messenger'")
+      < channels.indexOf("'channels/website-widget'"),
   );
   assert.equal(channels.includes("'channels/connect-channels'"), false);
   assert.equal(channels.includes("label: 'Conversations'"), false);

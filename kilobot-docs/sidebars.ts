@@ -25,10 +25,10 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'channels/website-widget',
         'channels/whatsapp',
         'channels/instagram',
         'channels/messenger',
+        'channels/website-widget',
       ],
     },
     {
