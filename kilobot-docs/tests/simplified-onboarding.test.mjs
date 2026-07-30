@@ -77,8 +77,13 @@ test('keeps the desktop outline sticky without a duplicated local spacer', () =>
   const desktopRule = tocCss.match(
     /\.theme-doc-toc-desktop \{[\s\S]*?\n\}/,
   )?.[0];
+  const mobileRule = tocCss.match(
+    /\.theme-doc-toc-mobile \{[\s\S]*?\n\}/,
+  )?.[0];
 
   assert.ok(desktopRule);
+  assert.ok(mobileRule);
+  assert.ok(mobileRule.includes('display: none;'));
   assert.equal(desktopRule.includes('padding-left: 2rem;'), false);
   assert.equal(tocCss.includes('@media (max-width: 996px)'), false);
 });

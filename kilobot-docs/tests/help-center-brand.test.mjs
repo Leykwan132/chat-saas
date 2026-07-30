@@ -207,7 +207,7 @@ test('scopes circular step badges and ships path/card components', () => {
   assert.equal(existsSync(path.join(root, 'src/components/DocQuickstartBanner.tsx')), true);
 });
 
-test('uses heading hierarchy with an unlabeled page outline', () => {
+test('uses heading hierarchy with a desktop-only unlabeled page outline', () => {
   const css = read('src/css/custom.css');
   const tocCss = read('src/css/toc.css');
   const config = read('docusaurus.config.ts');
@@ -221,7 +221,10 @@ test('uses heading hierarchy with an unlabeled page outline', () => {
   assert.ok(config.includes('./src/css/pagination.css'));
   assert.equal(tocButton.includes('On this page'), false);
   assert.ok(tocButton.includes('aria-label="Page sections"'));
-  assert.equal(tocCss.includes('display: none'), false);
+  assert.match(
+    tocCss,
+    /\.theme-doc-toc-mobile \{[\s\S]*display: none;[\s\S]*\}/,
+  );
   assert.ok(tocCss.includes('.table-of-contents__link--active'));
   const docMainStyles = read('src/theme/DocRoot/Layout/Main/styles.module.css');
   assert.ok(docMainStyles.includes('--doc-content-pad: 1.5rem'));
