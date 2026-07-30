@@ -77,6 +77,36 @@ const guides = new Map([
     "Check availability and prevent scheduling conflicts",
     "Update appointment status and review booking history",
   ]],
+  ["automate/workflow-overview.mdx", [
+    "Choose the correct Workflow view",
+    "Understand how conditions trigger actions",
+    "Decide when to use Reminders or Follow-ups",
+  ]],
+  ["automate/build-and-test.mdx", [
+    "Write a precise customer-intent condition",
+    "Choose safe actions for the matched request",
+    "Test matches and near misses before publishing",
+  ]],
+  ["engage/message-templates.mdx", [
+    "Create a complete WhatsApp Message Template",
+    "Add examples and media where required",
+    "Submit the template and confirm approval before use",
+  ]],
+  ["engage/broadcast.mdx", [
+    "Choose an approved template and audience",
+    "Review message variables, recipients, and estimated charges",
+    "Send safely and inspect delivery history",
+  ]],
+  ["automate/reminders.mdx", [
+    "Choose which appointments should receive reminders",
+    "Configure approved messages and send timing",
+    "Verify scheduled and completed sends in History",
+  ]],
+  ["automate/follow-ups.mdx", [
+    "Choose the follow-up audience and activation scope",
+    "Configure timing, attempts, and approved messages",
+    "Verify replies stop later attempts",
+  ]],
 ]);
 
 const excludedGuides = [
