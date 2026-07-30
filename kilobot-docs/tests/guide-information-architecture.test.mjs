@@ -21,7 +21,7 @@ test('uses the approved public guide order', () => {
     'Channels',
     'Bookings',
     'Workflows',
-    'Outreach',
+    'Broadcast',
     'Teams',
     'Releases',
     'Help and support',
@@ -49,6 +49,44 @@ test('nests Conversations under Channels', () => {
   assert.ok(channels.includes("label: 'Conversations'"));
   assert.ok(channels.includes("'engage/inbox'"));
   assert.ok(channels.includes("'engage/contacts'"));
+});
+
+test('organizes Workflows around user tasks', () => {
+  const sidebar = read('sidebars.ts');
+  const workflows = sidebar.match(
+    /label: 'Workflows'[\s\S]*?label: 'Broadcast'/,
+  )?.[0];
+  const orderedItems = [
+    'automate/send-messages-and-assets',
+    'automate/human-in-the-loop',
+    'automate/automate-bookings',
+    'automate/reminders',
+    'automate/follow-ups',
+  ];
+
+  assert.ok(workflows);
+  let previousIndex = -1;
+  for (const item of orderedItems) {
+    const itemIndex = workflows.indexOf(item);
+    assert.ok(itemIndex > previousIndex, item);
+    previousIndex = itemIndex;
+  }
+  assert.equal(workflows.includes('workflow-overview'), false);
+  assert.equal(workflows.includes('build-and-test'), false);
+});
+
+test('places broadcasts before message templates', () => {
+  const sidebar = read('sidebars.ts');
+  const broadcast = sidebar.match(
+    /label: 'Broadcast'[\s\S]*?label: 'Teams'/,
+  )?.[0];
+
+  assert.ok(broadcast);
+  assert.ok(broadcast.indexOf('engage/broadcast') > -1);
+  assert.ok(
+    broadcast.indexOf('engage/broadcast')
+      < broadcast.indexOf('engage/message-templates'),
+  );
 });
 
 test('keeps hidden topics outside the public docs input', () => {

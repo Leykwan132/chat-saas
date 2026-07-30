@@ -81,15 +81,20 @@ const guides = new Map([
     "Check availability and prevent scheduling conflicts",
     "Update appointment status and review booking history",
   ]],
-  ["automate/workflow-overview.mdx", [
-    "Choose the correct Workflow view",
-    "Understand how conditions trigger actions",
-    "Decide when to use Reminders or Follow-ups",
+  ["automate/send-messages-and-assets.mdx", [
+    "Send an exact message when a customer request matches",
+    "Deliver approved photos, videos, and files",
+    "Test matches and near-misses before saving",
   ]],
-  ["automate/build-and-test.mdx", [
-    "Write a precise customer-intent condition",
-    "Choose safe actions for the matched request",
-    "Test matches and near misses before publishing",
+  ["automate/human-in-the-loop.mdx", [
+    "Recognize when a teammate should take over",
+    "Pause AI replies with a clear escalation condition",
+    "Close a conversation only when it is complete",
+  ]],
+  ["automate/automate-bookings.mdx", [
+    "Connect a booking request to an active service",
+    "Keep service and availability setup in Bookings",
+    "Test booking intent without matching unrelated questions",
   ]],
   ["engage/message-templates.mdx", [
     "Create a complete WhatsApp Message Template",
@@ -127,7 +132,7 @@ const guides = new Map([
     "Verify new work reaches the intended teammate",
   ]],
   ["help/troubleshooting.mdx", [
-    "Diagnose common agent, channel, booking, and Outreach problems",
+    "Diagnose common agent, channel, booking, and Broadcast problems",
     "Check workspace, agent, permissions, and connection state",
     "Gather useful evidence when support is needed",
   ]],

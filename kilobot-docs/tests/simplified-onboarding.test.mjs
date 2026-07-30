@@ -14,9 +14,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   const quickStart = read('docs/start-here/quick-start.mdx');
   const requiredHeadings = [...quickStart.matchAll(/^## ([1-9])\. (.+)$/gm)];
   const nextStepItems = [
-    '[Deploy to channels](/channels/connect-channels) to let customers chat with your agent on WhatsApp, Instagram, and Messenger.',
-    '[Set up workflows](/automate/workflow-overview) to automate what happens during and after conversations.',
-    '[Automate bookings](/bookings/services) to let customers book your services through your agent.',
+    '[Set up workflows](/automate/send-messages-and-assets) to send assets, involve your team, automate bookings, and follow up with customers.',
   ];
   const screenshotUrls = [
     'https://storage.kilobot.app/docs/docs-signup.png',
@@ -39,7 +37,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   );
   assert.ok(quickStart.includes('## Next steps'));
   assert.ok(
-    quickStart.includes('Your agent is ready. Choose what you want to set up next:'),
+    quickStart.includes('Continue with the most useful automation:'),
   );
 
   let previousNextStepIndex = quickStart.indexOf('## Next steps');
@@ -52,6 +50,8 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   assert.equal(quickStart.includes('<DocCard'), false);
   assert.equal(quickStart.includes('Connect the Website widget'), false);
   assert.equal(quickStart.includes('Confirm the conversation in Inbox'), false);
+  assert.equal(quickStart.includes('[Deploy to channels]'), false);
+  assert.equal(quickStart.includes('[Automate bookings]'), false);
   assert.equal(quickStart.includes('The reply should use the opening hours from the Q&A.'), false);
   assert.equal(quickStart.includes('Do you offer emergency root canals?'), false);
   assert.equal(
@@ -86,19 +86,25 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   );
 });
 
-test('uses concise Workflow child labels', () => {
+test('uses task-based Workflow child labels', () => {
   const sidebar = read('sidebars.ts');
   const workflows = sidebar.match(
-    /label: 'Workflows'[\s\S]*?label: 'Outreach'/,
+    /label: 'Workflows'[\s\S]*?label: 'Broadcast'/,
   )?.[0];
+  const labels = [
+    'Send messages and assets',
+    'Human in the loop',
+    'Automate bookings',
+    'Reminders',
+    'Follow-ups',
+  ];
 
   assert.ok(workflows);
-  assert.ok(workflows.includes("id: 'automate/workflow-overview'"));
-  assert.ok(workflows.includes("label: 'Overview'"));
-  assert.ok(workflows.includes("id: 'automate/build-and-test'"));
-  assert.ok(workflows.includes("label: 'Build and test'"));
-  assert.equal(workflows.includes('Workflow overview'), false);
-  assert.equal(workflows.includes('Build and test a Workflow'), false);
+  for (const label of labels) {
+    assert.ok(workflows.includes(`label: '${label}'`), label);
+  }
+  assert.equal(workflows.includes("label: 'Overview'"), false);
+  assert.equal(workflows.includes("label: 'Actions and testing'"), false);
 });
 
 test('keeps the desktop outline sticky without a duplicated local spacer', () => {

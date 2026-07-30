@@ -12,8 +12,9 @@ const requiredDocs = [
   'docs/start-here/workspaces-and-agents.mdx',
   'docs/build-your-agent/agent-setup.mdx',
   'docs/build-your-agent/knowledge-base.mdx',
-  'docs/automate/workflow-overview.mdx',
-  'docs/automate/build-and-test.mdx',
+  'docs/automate/send-messages-and-assets.mdx',
+  'docs/automate/human-in-the-loop.mdx',
+  'docs/automate/automate-bookings.mdx',
   'docs/automate/reminders.mdx',
   'docs/automate/follow-ups.mdx',
   'docs/channels/connect-channels.mdx',
@@ -41,7 +42,7 @@ const requiredSidebarLabels = [
   'Channels',
   'Bookings',
   'Workflows',
-  'Outreach',
+  'Broadcast',
   'Teams',
   'Releases',
   'Help and support',
@@ -60,6 +61,8 @@ test('ships every required product guide with useful front matter', () => {
   }
   assert.equal(existsSync(path.join(root, 'docs/start-here/core-concepts.mdx')), false);
   assert.equal(existsSync(path.join(root, 'docs/automate/workflow-actions.mdx')), false);
+  assert.equal(existsSync(path.join(root, 'docs/automate/workflow-overview.mdx')), false);
+  assert.equal(existsSync(path.join(root, 'docs/automate/build-and-test.mdx')), false);
 });
 
 test('keeps retired guides outside the public docs input', () => {
