@@ -4,7 +4,7 @@
 
 **Goal:** Add concise page descriptions, improve Configuration navigation order, and give Knowledge Base direct access to agent testing and Workflow.
 
-**Architecture:** Introduce one small reusable page-title component for consistent title and description styling. Keep Knowledge Base behavior modular by placing its header and Workflow promotion in focused components while reusing the existing `AgentPlaygroundPanel` drawer for testing.
+**Architecture:** Introduce one small reusable page-title component for consistent title and description styling. Keep Knowledge Base behavior modular by placing its header, Workflow promotion, and responsive test layout in focused components while reusing the existing `AgentPlaygroundPanel` inline mode for testing.
 
 **Tech Stack:** React 19, TypeScript 6, React Router 7, Tailwind CSS 4, shadcn Button, Vitest 1.6, Bun, Node.js 22.
 
@@ -502,6 +502,304 @@ Add the focused-test and build commands to Receipts while respecting the ledger 
 ```bash
 git add CONTINUITY.md
 git commit -m "Record page guidance verification"
+```
+
+Do not modify `kilobot-docs/docs/releases/changelog.mdx` because production availability is not confirmed.
+
+---
+
+Tasks 5–7 are the approved revision and supersede the drawer-specific behavior completed in Task 3.
+
+### Task 5: Minimal Workflow promotion banner
+
+**Files:**
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.tsx`
+- Modify: `src/components/knowledge-base/KnowledgeBaseNavigation.test.ts`
+
+**Interfaces:**
+- Consumes: the existing `KnowledgeBaseNavigation` promotion card and hosted image URL `https://storage.kilobot.app/grad-2.jpg`.
+- Produces: a decorative full-width 16:9 banner above the existing promotion copy.
+
+- [ ] **Step 1: Write the failing banner contract**
+
+Add this assertion to the existing Workflow promotion test:
+
+```ts
+it('shows the approved minimal banner above the promotion copy', () => {
+  expect(navigationSource).toContain(
+    'src="https://storage.kilobot.app/grad-2.jpg"',
+  );
+  expect(navigationSource).toContain('alt=""');
+  expect(navigationSource).toContain(
+    'className="aspect-video w-full object-cover"',
+  );
+  expect(navigationSource.indexOf('<img')).toBeLessThan(
+    navigationSource.indexOf(
+      'Need your AI agent to send images, videos, reminders, or follow-ups?',
+    ),
+  );
+});
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: FAIL because the promotion card has no image.
+
+- [ ] **Step 3: Add the minimal banner**
+
+Replace the promotion card with:
+
+```tsx
+<aside className="overflow-hidden rounded-xl border border-border bg-muted/40">
+  <img
+    src="https://storage.kilobot.app/grad-2.jpg"
+    alt=""
+    className="aspect-video w-full object-cover"
+  />
+  <div className="p-4">
+    <p className="text-sm font-semibold leading-snug text-foreground">
+      Need your AI agent to send images, videos, reminders, or follow-ups?
+    </p>
+    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+      Set it up with Workflow.
+    </p>
+    <Button asChild variant="outline" size="sm" className="mt-4 w-full">
+      <Link to={workflowHref}>
+        Try Workflow
+        <ArrowRight className="size-4" />
+      </Link>
+    </Button>
+  </div>
+</aside>
+```
+
+Do not add an overlay, image label, gradient effect, or alternate card copy.
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit the banner**
+
+```bash
+git add src/components/knowledge-base/KnowledgeBaseNavigation.tsx src/components/knowledge-base/KnowledgeBaseNavigation.test.ts
+git commit -m "Add minimal Knowledge Base workflow banner"
+```
+
+---
+
+### Task 6: In-page Knowledge Base test container
+
+**Files:**
+- Create: `src/components/knowledge-base/KnowledgeBaseTestLayout.tsx`
+- Modify: `src/components/knowledge-base/KnowledgeBaseHeader.test.ts`
+- Modify: `src/pages/KnowledgeBasePage.tsx`
+
+**Interfaces:**
+- Produces: `KnowledgeBaseTestLayout({ children, showTestPanel, testPanel }: { children: ReactNode; showTestPanel: boolean; testPanel: ReactNode }): JSX.Element`
+- Consumes: `AgentPlaygroundPanel` with `mode="inline"`, `open={isTestOpen}`, and `onOpenChange={setIsTestOpen}`.
+
+- [ ] **Step 1: Replace the drawer test with a failing inline-layout contract**
+
+Read the new layout source alongside the existing page source:
+
+```ts
+const testLayoutUrl = new URL('./KnowledgeBaseTestLayout.tsx', import.meta.url);
+const testLayoutSource = existsSync(testLayoutUrl)
+  ? readFileSync(testLayoutUrl, 'utf8')
+  : '';
+```
+
+Replace the drawer assertion with:
+
+```ts
+it('opens the shared test chat as its own in-page container', () => {
+  expect(pageSource).toContain(
+    'const [isTestOpen, setIsTestOpen] = useState(false)',
+  );
+  expect(pageSource).toContain('KnowledgeBaseTestLayout');
+  expect(pageSource).toContain(
+    'showTestPanel={isTestOpen && Boolean(selectedAgentId)}',
+  );
+  expect(pageSource).toContain('mode="inline"');
+  expect(pageSource).not.toContain('mode="drawer"');
+  expect(pageSource).toContain('open={isTestOpen}');
+  expect(pageSource).toContain('onOpenChange={setIsTestOpen}');
+  expect(pageSource).toContain('onTest={() => setIsTestOpen(true)}');
+});
+
+it('keeps Knowledge Base content intact beside the responsive test panel', () => {
+  expect(testLayoutSource).toContain(
+    "showTestPanel && 'xl:grid-cols-[minmax(0,1fr)_380px]'",
+  );
+  expect(testLayoutSource).toContain('<div className="min-w-0">{children}</div>');
+  expect(testLayoutSource).toContain('{testPanel}');
+});
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseHeader.test.ts
+```
+
+Expected: FAIL because Knowledge Base still uses drawer mode and the layout component does not exist.
+
+- [ ] **Step 3: Add the responsive test layout**
+
+Create `src/components/knowledge-base/KnowledgeBaseTestLayout.tsx`:
+
+```tsx
+import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
+
+type KnowledgeBaseTestLayoutProps = {
+  children: ReactNode;
+  showTestPanel: boolean;
+  testPanel: ReactNode;
+};
+
+export function KnowledgeBaseTestLayout({
+  children,
+  showTestPanel,
+  testPanel,
+}: KnowledgeBaseTestLayoutProps) {
+  return (
+    <div
+      className={cn(
+        'grid min-w-0 gap-6',
+        showTestPanel && 'xl:grid-cols-[minmax(0,1fr)_380px]',
+      )}
+    >
+      <div className="min-w-0">{children}</div>
+      {testPanel}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: Move the playground into the Knowledge Base page flow**
+
+Import `KnowledgeBaseTestLayout`. Keep `KnowledgeBaseHeader` above it, then wrap the existing Sources/content/storage grid:
+
+```tsx
+<KnowledgeBaseTestLayout
+  showTestPanel={isTestOpen && Boolean(selectedAgentId)}
+  testPanel={
+    selectedAgentId ? (
+      <AgentPlaygroundPanel
+        agentId={selectedAgentId}
+        mode="inline"
+        open={isTestOpen}
+        onOpenChange={setIsTestOpen}
+      />
+    ) : null
+  }
+>
+  <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
+```
+
+Keep every existing child of that grid unchanged. Immediately after its existing closing `</div>`, close the wrapper:
+
+```tsx
+</KnowledgeBaseTestLayout>
+```
+
+Remove the drawer instance after the page content. Do not change the inner Sources/content/storage grid, selected source state, delete dialog, or shared playground behavior.
+
+- [ ] **Step 5: Run the test to verify it passes**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/components/knowledge-base/KnowledgeBaseHeader.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Check the code-file limits**
+
+Run:
+
+```bash
+wc -l src/pages/KnowledgeBasePage.tsx src/components/knowledge-base/KnowledgeBaseTestLayout.tsx
+```
+
+Expected: both files remain at or below 300 lines.
+
+- [ ] **Step 7: Commit the in-page tester**
+
+```bash
+git add src/components/knowledge-base/KnowledgeBaseTestLayout.tsx src/components/knowledge-base/KnowledgeBaseHeader.test.ts src/pages/KnowledgeBasePage.tsx
+git commit -m "Embed agent testing in Knowledge Base"
+```
+
+---
+
+### Task 7: Revision verification and continuity
+
+**Files:**
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: Tasks 5–6 and their focused tests.
+- Produces: a verified unreleased revision receipt.
+
+- [ ] **Step 1: Run all page-guidance tests**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run --no-cache src/pages/pageHeaderChrome.test.ts src/components/AppSidebarFeatureFlag.test.ts src/components/knowledge-base/KnowledgeBaseNavigation.test.ts src/components/knowledge-base/KnowledgeBaseHeader.test.ts
+```
+
+Expected: all focused tests PASS.
+
+- [ ] **Step 2: Run the production build**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bun run build
+```
+
+Expected: TypeScript and Vite production build PASS.
+
+- [ ] **Step 3: Review the final revision**
+
+Run:
+
+```bash
+git diff --check
+git status --short
+git diff --stat HEAD~2
+```
+
+Expected: no whitespace errors; the revision is limited to the approved banner, responsive test layout, focused tests, plan, and continuity.
+
+- [ ] **Step 4: Update continuity**
+
+Update the `2026-07-30` Snapshot and Receipts to state that the hosted banner and in-page test container are implemented, the focused tests and build pass, and the result remains unreleased.
+
+- [ ] **Step 5: Commit the verification receipt**
+
+```bash
+git add CONTINUITY.md docs/superpowers/plans/2026-07-30-page-guidance-and-knowledge-base-actions.md
+git commit -m "Record Knowledge Base layout verification"
 ```
 
 Do not modify `kilobot-docs/docs/releases/changelog.mdx` because production availability is not confirmed.
