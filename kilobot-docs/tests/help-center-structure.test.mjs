@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {existsSync, readFileSync} from 'node:fs';
+import {existsSync, readFileSync, readdirSync} from 'node:fs';
 import {test} from 'node:test';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
@@ -49,6 +49,14 @@ const requiredSidebarLabels = [
 
 function read(relativePath) {
   return readFileSync(path.join(root, relativePath), 'utf8');
+}
+
+function collectMarkdownFiles(directoryPath) {
+  return readdirSync(directoryPath, {withFileTypes: true}).flatMap((entry) => {
+    const entryPath = path.join(directoryPath, entry.name);
+    if (entry.isDirectory()) return collectMarkdownFiles(entryPath);
+    return /\.(?:md|mdx)$/.test(entry.name) ? [entryPath] : [];
+  });
 }
 
 test('ships every required product guide with useful front matter', () => {
@@ -119,4 +127,17 @@ test('removes all starter tutorial and demo content', () => {
   assert.equal(existsSync(path.join(root, 'blog/2019-05-28-first-blog-post.mdx')), false);
   assert.equal(existsSync(path.join(root, 'src/pages/markdown-page.mdx')), false);
   assert.equal(existsSync(path.join(root, 'src/components/HomepageFeatures/index.tsx')), false);
+});
+
+test('gives every public documentation image a caption source', () => {
+  const docsDirectory = path.join(root, 'docs');
+
+  for (const markdownPath of collectMarkdownFiles(docsDirectory)) {
+    const source = readFileSync(markdownPath, 'utf8');
+    const relativePath = path.relative(root, markdownPath);
+
+    for (const match of source.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)) {
+      assert.notEqual(match[1].trim(), '', `${relativePath}: ${match[2]}`);
+    }
+  }
 });

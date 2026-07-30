@@ -77,17 +77,20 @@ test('uses Geist for body text and dashboard-aligned color tokens', () => {
   );
 });
 
-test('keeps both tall screenshots compact on desktop and full-width on mobile', () => {
+test('left-aligns content images and captions at every supported width', () => {
   const css = read('src/css/custom.css');
+  const imageCss = read('src/theme/MDXComponents/Img/styles.module.css');
 
   assert.match(
     css,
-    /\.docs-image-compact\s*\{[^}]*width:\s*40%;[^}]*margin-inline:\s*auto;/s,
+    /\.docs-image-compact\s*\{[^}]*width:\s*40%;[^}]*margin-left:\s*0;[^}]*margin-right:\s*auto;/s,
   );
   assert.match(
     css,
     /@media\s*\(max-width:\s*767px\)\s*\{[\s\S]*?\.docs-image-compact\s*\{[^}]*width:\s*100%;/s,
   );
+  assert.match(imageCss, /\.root\s*\{[^}]*text-align:\s*left;/s);
+  assert.match(imageCss, /\.caption\s*\{[^}]*text-align:\s*left;/s);
 });
 
 test('styles the top bar like the product header chrome', () => {

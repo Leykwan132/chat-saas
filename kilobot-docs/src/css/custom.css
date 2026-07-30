@@ -209,7 +209,8 @@ body {
 
 .docs-image-compact {
   width: 40%;
-  margin-inline: auto;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 @media (max-width: 767px) {

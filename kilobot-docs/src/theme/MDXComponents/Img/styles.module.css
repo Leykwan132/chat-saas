@@ -1,6 +1,7 @@
 .root {
   display: block;
   margin: 1.5rem 0;
+  text-align: left;
 }
 
 .trigger {
@@ -38,7 +39,7 @@
   color: var(--ifm-font-color-secondary);
   font-size: 0.8125rem;
   line-height: 1.4;
-  text-align: center;
+  text-align: left;
 }
 
 .dialog {
