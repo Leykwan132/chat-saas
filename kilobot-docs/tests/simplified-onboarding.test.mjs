@@ -63,6 +63,8 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
   assert.equal(quickStart.includes('DocMediaPlaceholder'), false);
   assert.equal(quickStart.includes('/media/quick-start/'), false);
   assert.equal(quickStart.includes('Your agent is ready!'), true);
+  assert.ok(quickStart.includes('title="Example Q&A" icon={MessageCircleQuestion}'));
+  assert.equal(quickStart.includes('Northstar Dental opening hours'), false);
 
   for (const screenshotUrl of screenshotUrls) {
     assert.equal(quickStart.includes(screenshotUrl), true, screenshotUrl);

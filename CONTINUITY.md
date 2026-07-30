@@ -1,5 +1,5 @@
 # Snapshot
-- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start's training image says timing depends on source size and queue. Channels starts with Website widget; Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, and image contracts pass; unreleased and unpushed.
+- 2026-07-31 [CODE] KiloBot Docs navigation places Workflows above Bookings; Teams shows only Roles and permissions plus Lead assignment; Outreach contains Broadcast and Message templates. Shared image captions are centered beneath left-aligned images in light grey; Quick Start uses an icon-led Example Q&A card and training image says timing depends on source size and queue. Channels starts with Website widget; Connect channels, Conversations (Inbox, Contacts), and Bookings Calendar are hidden for now. Focused navigation, onboarding, and image contracts pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every Docs content image and its alt-derived caption aligns to the article's left edge; Quick Start's Source training and Test your agent screenshots remain uncropped at 40% desktop width and 100% mobile width, and its Next steps section now links ordered Channels, Workflows, and Bookings outcomes. Recursive caption coverage, thirty-nine Docs tests, six component tests, TypeScript, the 225-document production build, exact built-HTML checks, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] Every MDX content image now uses one global borderless renderer with a small alt-derived caption and an accessible full-screen native-dialog lightbox; X, Escape, and backdrop dismissal are supported while navbar/theme assets remain excluded. Thirty-seven Docs tests, six component tests, TypeScript, the 225-document production build, built-HTML contracts, and whitespace checks pass; unreleased and unpushed.
 - 2026-07-30 [CODE] The mobile docs table-of-contents dropdown is hidden, removing the empty rounded control above page titles; the desktop right-side outline remains unchanged. Thirty-seven Docs tests, three component tests, TypeScript, production build, and whitespace checks pass; unreleased and unpushed.
@@ -83,6 +83,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D520 ACTIVE: Quick Start's knowledge example uses the title `Example Q&A` with a small Q&A icon; remove the business-specific `Northstar Dental opening hours` heading while retaining the example question and answer.
 - 2026-07-31 [USER] D519 ACTIVE: Quick Start's Sources-training screenshot caption says, “Training typically takes a few minutes, depending on source size and the queue.”
 - 2026-07-31 [USER] D518 ACTIVE: Keep documentation images left-aligned, but center every caption directly beneath its image and use the light-grey secondary text color. This supersedes D512 only for caption alignment and color.
 - 2026-07-31 [USER] D517 ACTIVE: Use Outreach as the parent sidebar topic, with Broadcast first and Message templates second.
@@ -343,6 +344,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Replaced the Quick Start example title with icon-led Example Q&A.
 - 2026-07-31 [CODE] Replaced the Quick Start training screenshot caption with source-size and queue timing guidance.
 - 2026-07-31 [CODE] Centered image captions and changed them to light grey while keeping images left-aligned.
 - 2026-07-31 [CODE] Renamed the Broadcast parent topic to Outreach and simplified its first item to Broadcast.
@@ -399,6 +401,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31T00:35+08:00 [TOOL] Quick Start's Example Q&A revision added an optional shared example icon, styled it, and used it only on the Q&A card. Node v22.22.0 passed 6/6 focused guide-component and onboarding tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:30+08:00 [TOOL] Quick Start training-caption update changed the alt-derived caption and its exact onboarding contract. Node v22.22.0 passed 3/3 focused onboarding tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:25+08:00 [TOOL] Shared caption styling now centers captions below images with the secondary light-grey color. Node v22.22.0 passed 6/6 focused image tests and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T00:20+08:00 [TOOL] Outreach navigation update renamed the parent and first child only. Node v22.22.0 passed 19/19 focused documentation navigation tests and `git diff --check`; no deployment, changelog, or push ran.

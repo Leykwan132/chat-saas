@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {MessageCircleQuestion} from 'lucide-react';
 import { describe, test } from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import DocExample from './DocExample';
@@ -34,14 +35,17 @@ describe('guide components', () => {
     const html = renderToStaticMarkup(
       <>
         <DocVerified date="2026-07-28" />
-        <DocExample title="Northstar Dental">Example content</DocExample>
+        <DocExample title="Example Q&A" icon={MessageCircleQuestion}>
+          Example content
+        </DocExample>
         <DocSuccess><p>The message appears in Inbox.</p></DocSuccess>
       </>,
     );
 
     assert.ok(html.includes('Last verified:'));
     assert.ok(html.includes('July 28, 2026'));
-    assert.ok(html.includes('Northstar Dental'));
+    assert.ok(html.includes('Example Q&amp;A'));
+    assert.ok(html.includes('data-icon="example"'));
     assert.ok(html.includes('You’re done when'));
   });
 
