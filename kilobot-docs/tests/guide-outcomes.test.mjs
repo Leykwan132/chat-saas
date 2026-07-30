@@ -44,7 +44,7 @@ const guides = new Map([
   ["channels/whatsapp.mdx", [
     "Complete the Meta connection flow",
     "Confirm synchronization finishes successfully",
-    "Verify incoming messages and teammate replies",
+    "Verify incoming messages, teammate replies, and safe disconnection",
   ]],
   ["channels/instagram.mdx", [
     "Connect the correct professional Instagram account",
@@ -209,6 +209,15 @@ test("non-instructional pages do not show the outcome preview", () => {
     assert.ok(!source.includes(outcomeImport));
     assert.doesNotMatch(source, /<\/?DocOutcomes>/);
   }
+});
+
+test("WhatsApp explains coexistence before connection and safe disconnection", () => {
+  const source = readGuide("channels/whatsapp.mdx");
+
+  assert.ok(source.indexOf("**coexistence** lets you connect") < source.indexOf('<ol className="steps">'));
+  assert.ok(source.includes("## Disconnect"));
+  assert.ok(source.includes("clears its authorization"));
+  assert.ok(source.includes("It does not delete the WhatsApp Business account"));
 });
 
 test("Quick Start uses the approved five-minute introduction", () => {

@@ -21,18 +21,20 @@ WhatsApp connects through Meta’s authorization flow. Setup may remain pending 
 
 - Complete the Meta connection flow
 - Confirm synchronization finishes successfully
-- Verify incoming messages and teammate replies
+- Verify incoming messages, teammate replies, and safe disconnection
 
 </DocOutcomes>
 
 ## Connect
+
+If you already use the WhatsApp Business app on this phone number, **coexistence** lets you connect that same number to KiloBot while continuing to use the app. Choose coexistence when Meta offers it during setup; Meta determines whether the number is eligible and guides the required confirmation steps.
 
 <ol className="steps">
   <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on WhatsApp.</li>
   <li>Complete Meta sign-in without closing the authorization window early.</li>
   <li>Select the intended business, WhatsApp account, and phone number.</li>
   <li>Grant the requested messaging access.</li>
-  <li>If using mobile coexistence, follow the in-product coexistence steps.</li>
+  <li>When Meta offers <strong>coexistence</strong>, select it to keep using the WhatsApp Business app on this number, then complete the in-product prompts.</li>
   <li>Return to KiloBot and allow supported contact and history synchronization to finish.</li>
 </ol>
 
@@ -67,6 +69,19 @@ Send a fresh message from a separate WhatsApp account, confirm it appears in Inb
 - A new inbound message and teammate reply work in both directions.
 
 </DocSuccess>
+
+## Disconnect
+
+Disconnecting stops KiloBot from sending and receiving WhatsApp messages for this channel and clears its authorization. It does not delete the WhatsApp Business account or the app from your phone.
+
+<ol className="steps">
+  <li>Open <strong>Channels</strong> and select WhatsApp.</li>
+  <li>Choose <strong>Disconnect</strong>.</li>
+  <li>Review the change, then confirm.</li>
+  <li>Check that the channel card shows <strong>Disconnected</strong> before connecting another number or provider.</li>
+</ol>
+
+If the number uses coexistence, complete any Meta prompts shown during the disconnect or later reconnect flow.
 
 ## Before reconnecting
 
