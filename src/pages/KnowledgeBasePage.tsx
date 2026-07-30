@@ -33,6 +33,7 @@ import {
   KnowledgeBaseStoragePanel,
   type KnowledgeBaseStorageStat,
 } from '@/components/knowledge-base/KnowledgeBaseStoragePanel';
+import { KnowledgeBaseTestLayout } from '@/components/knowledge-base/KnowledgeBaseTestLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import {
@@ -150,103 +151,108 @@ export default function KnowledgeBasePage() {
       <div className="flex w-full flex-col gap-6">
         <KnowledgeBaseHeader onTest={() => setIsTestOpen(true)} />
 
-        <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
-          <KnowledgeBaseNavigation
-            activeType={type}
-            onSelect={selectKnowledgeType}
-            workflowHref={`/dashboard/${agentId}/workflow`}
-          />
+        <KnowledgeBaseTestLayout
+          showTestPanel={isTestOpen && Boolean(selectedAgentId)}
+          testPanel={
+            selectedAgentId ? (
+              <AgentPlaygroundPanel
+                agentId={selectedAgentId}
+                mode="inline"
+                open={isTestOpen}
+                onOpenChange={setIsTestOpen}
+              />
+            ) : null
+          }
+        >
+          <div className="grid gap-6 lg:grid-cols-[252px_minmax(0,1fr)] xl:grid-cols-[252px_minmax(0,1fr)_280px]">
+            <KnowledgeBaseNavigation
+              activeType={type}
+              onSelect={selectKnowledgeType}
+              workflowHref={`/dashboard/${agentId}/workflow`}
+            />
 
-          <div className="flex flex-col gap-4 min-w-0">
-            <div>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
-                    {type === 'web' && 'Web Sources'}
-                    {type === 'file' && (
-                      <span className="flex items-center gap-1.5">
-                        Files
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors" aria-label="Reference files information">
-                                <Info className="size-4 shrink-0" />
-                              </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-xs text-left font-normal normal-case">
-                              These files are only used to build the knowledge base of the AI agent and won't be sent to the customer directly.
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </span>
-                    )}
-                    {type === 'text' && 'Text'}
-                    {type === 'qa' && 'Q&A'}
-                  </h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {type === 'web' && 'Crawl websites and import pages as knowledge.'}
-                    {type === 'file' && 'Upload documents for your agent to reference.'}
-                    {type === 'text' && 'Write or paste raw text content directly.'}
-                    {type === 'qa' && 'Add question and answer pairs your agent can learn from.'}
-                  </p>
+            <div className="flex flex-col gap-4 min-w-0">
+              <div>
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground">
+                      {type === 'web' && 'Web Sources'}
+                      {type === 'file' && (
+                        <span className="flex items-center gap-1.5">
+                          Files
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <button type="button" className="rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors" aria-label="Reference files information">
+                                  <Info className="size-4 shrink-0" />
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs text-left font-normal normal-case">
+                                These files are only used to build the knowledge base of the AI agent and won't be sent to the customer directly.
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </span>
+                      )}
+                      {type === 'text' && 'Text'}
+                      {type === 'qa' && 'Q&A'}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {type === 'web' && 'Crawl websites and import pages as knowledge.'}
+                      {type === 'file' && 'Upload documents for your agent to reference.'}
+                      {type === 'text' && 'Write or paste raw text content directly.'}
+                      {type === 'qa' && 'Add question and answer pairs your agent can learn from.'}
+                    </p>
+                  </div>
                 </div>
+
+                <Separator className="mt-4" />
               </div>
-
-              <Separator className="mt-4" />
+              {type === 'web' && (
+                <WebSection
+                  entries={webEntries}
+                  agentId={selectedAgentId}
+                  openDeleteDialog={openDeleteDialog}
+                  canManage={canManageKnowledgeBase}
+                />
+              )}
+              {type === 'file' && (
+                <FileSection
+                  entries={fileEntries}
+                  agentId={selectedAgentId}
+                  openDeleteDialog={openDeleteDialog}
+                  maxFileSize={maxFileSize}
+                  canManage={canManageKnowledgeBase}
+                />
+              )}
+              {type === 'text' && (
+                <TextSection
+                  entries={textEntries}
+                  agentId={selectedAgentId}
+                  openDeleteDialog={openDeleteDialog}
+                  canManage={canManageKnowledgeBase}
+                />
+              )}
+              {type === 'qa' && (
+                <QASection
+                  entries={qaEntries}
+                  agentId={selectedAgentId}
+                  openDeleteDialog={openDeleteDialog}
+                  canManage={canManageKnowledgeBase}
+                />
+              )}
             </div>
-            {type === 'web' && (
-              <WebSection
-                entries={webEntries}
-                agentId={selectedAgentId}
-                openDeleteDialog={openDeleteDialog}
-                canManage={canManageKnowledgeBase}
-              />
-            )}
-            {type === 'file' && (
-              <FileSection
-                entries={fileEntries}
-                agentId={selectedAgentId}
-                openDeleteDialog={openDeleteDialog}
-                maxFileSize={maxFileSize}
-                canManage={canManageKnowledgeBase}
-              />
-            )}
-            {type === 'text' && (
-              <TextSection
-                entries={textEntries}
-                agentId={selectedAgentId}
-                openDeleteDialog={openDeleteDialog}
-                canManage={canManageKnowledgeBase}
-              />
-            )}
-            {type === 'qa' && (
-              <QASection
-                entries={qaEntries}
-                agentId={selectedAgentId}
-                openDeleteDialog={openDeleteDialog}
-                canManage={canManageKnowledgeBase}
-              />
-            )}
+
+            <KnowledgeBaseStoragePanel
+              rows={statRows}
+              totalFileSize={totalFileSize}
+              maxTotalSize={maxTotalSize}
+              onSelect={selectKnowledgeType}
+              className="lg:col-start-2 xl:col-start-auto"
+            />
           </div>
-
-          <KnowledgeBaseStoragePanel
-            rows={statRows}
-            totalFileSize={totalFileSize}
-            maxTotalSize={maxTotalSize}
-            onSelect={selectKnowledgeType}
-            className="lg:col-start-2 xl:col-start-auto"
-          />
-        </div>
+        </KnowledgeBaseTestLayout>
       </div>
-
-      {selectedAgentId ? (
-        <AgentPlaygroundPanel
-          agentId={selectedAgentId}
-          mode="drawer"
-          open={isTestOpen}
-          onOpenChange={setIsTestOpen}
-        />
-      ) : null}
 
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="sm:max-w-md" showCloseButton={false}>
