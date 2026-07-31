@@ -271,20 +271,16 @@ test("Meta channel guides explain the conversation window", () => {
   }
 });
 
-test("reminders and follow-ups explain smart window pricing", () => {
+test("reminders and follow-ups keep pricing guidance concise", () => {
   for (const relativePath of [
     "automate/reminders.mdx",
     "automate/follow-ups.mdx",
   ]) {
     const source = readGuide(relativePath);
 
-    assert.ok(source.includes("## Smart follow-up and reminder"), relativePath);
-    assert.ok(source.includes("The window starts when the customer sends a message"), relativePath);
-    assert.ok(source.includes("Send a normal message"), relativePath);
-    assert.ok(source.includes("Avoids an unnecessary template charge"), relativePath);
-    assert.ok(source.includes("approved WhatsApp Message Template"), relativePath);
-    assert.ok(source.includes("Meta's current template pricing applies"), relativePath);
-    assert.ok(source.includes("official WhatsApp pricing"), relativePath);
+    assert.equal(source.includes("## Smart follow-up and reminder"), false, relativePath);
+    assert.equal(source.includes("Conversation window | Message path | Pricing impact"), false, relativePath);
+    assert.equal(source.includes("Avoids an unnecessary template charge"), false, relativePath);
   }
 
   assert.ok(readGuide("automate/reminders.mdx").includes("/automate/follow-ups"));
