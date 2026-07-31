@@ -388,10 +388,13 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.ok(source.includes("## Three core concepts"));
   assert.ok(source.includes("| Concept | Use case | Example |"));
   assert.ok(source.includes("## Supported models"));
-  assert.ok(source.includes("| Model | Advantage | Disadvantage |"));
+  assert.ok(source.includes("| Model | Recommended language | Advantage | Disadvantage |"));
   assert.ok(source.includes("Ilmu Mini V3.3"));
+  assert.ok(source.includes("| Malay / Bahasa Melayu |"));
   assert.ok(source.includes("DeepSeek V4 Flash"));
+  assert.ok(source.includes("| Chinese / Mandarin |"));
   assert.ok(source.includes("Google Gemini 3.1 Flash Lite"));
+  assert.ok(source.includes("| English |"));
   assert.ok(source.includes("OpenAI GPT-OSS 120B"));
   assert.ok(source.includes("Xiaomi MiMo V2.5"));
   assert.ok(source.includes("Amazon Nova Micro"));
