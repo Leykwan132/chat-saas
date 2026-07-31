@@ -28,9 +28,9 @@ Agent Setup defines who the agent is, how it communicates, and when it should in
 
 Keep Agent Setup focused on behavior: define the role, tone, boundaries, and escalation rules. Put durable business facts in the Knowledge Base and actions in Workflows so each change is easier to review and maintain.
 
-## Decide where information belongs
+## Three core concepts
 
-| Put it in | Use it for | Example |
+| Concept | Use case | Example |
 | --- | --- | --- |
 | Agent Setup | Role, goals, tone, boundaries, escalation | “Never diagnose a medical condition.” |
 | Knowledge Base | Durable facts the agent may answer from | Opening hours, pricing, policies |
@@ -73,7 +73,10 @@ requests for clinical judgment to a teammate.`}
 | --- | --- | --- |
 | Ilmu Mini V3.3 | <ul><li>Strong for Malay/Bahasa Melayu.</li><li>Concise for everyday support conversations.</li></ul> | <ul><li>Less suited to long, highly technical reasoning.</li><li>Less suited to complex multi-step reasoning.</li></ul> |
 | DeepSeek V4 Flash | <ul><li>Strong structured reasoning and technical explanations.</li><li>Handles multilingual conversations, including Chinese.</li></ul> | <ul><li>Can be more verbose.</li><li>May need tighter style instructions.</li></ul> |
+| Google Gemini 3.1 Flash Lite | <ul><li>Fast, concise responses for everyday support.</li><li>Useful for multilingual conversations.</li></ul> | <ul><li>Less suited to long, complex instructions.</li><li>May need clear boundaries for exact business answers.</li></ul> |
 | OpenAI GPT-OSS 120B | <ul><li>Strong general-purpose writing and nuanced instructions.</li><li>Flexible conversation style.</li></ul> | <ul><li>May use more credits.</li><li>Ground business answers in the Knowledge Base.</li></ul> |
+| Xiaomi MiMo V2.5 | <ul><li>Useful for structured, step-by-step responses.</li><li>Handles varied support requests.</li></ul> | <ul><li>May need concise style instructions.</li><li>Ground business answers in the Knowledge Base.</li></ul> |
+| Amazon Nova Micro | <ul><li>Fast and efficient for short support replies.</li><li>Useful for straightforward customer questions.</li></ul> | <ul><li>Less suited to complex multi-step reasoning.</li><li>May need more context for nuanced requests.</li></ul> |
 
 ## Triggers
 

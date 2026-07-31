@@ -296,11 +296,16 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
 test("Agent Setup keeps model and trigger guidance focused", () => {
   const source = readGuide("build-your-agent/agent-setup.mdx");
 
+  assert.ok(source.includes("## Three core concepts"));
+  assert.ok(source.includes("| Concept | Use case | Example |"));
   assert.ok(source.includes("## Supported models"));
   assert.ok(source.includes("| Model | Advantage | Disadvantage |"));
   assert.ok(source.includes("Ilmu Mini V3.3"));
   assert.ok(source.includes("DeepSeek V4 Flash"));
+  assert.ok(source.includes("Google Gemini 3.1 Flash Lite"));
   assert.ok(source.includes("OpenAI GPT-OSS 120B"));
+  assert.ok(source.includes("Xiaomi MiMo V2.5"));
+  assert.ok(source.includes("Amazon Nova Micro"));
   assert.ok(source.includes("## Triggers"));
   assert.ok(source.includes("| Automatically |"));
   assert.ok(source.includes("| Manual |"));
