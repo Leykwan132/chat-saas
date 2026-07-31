@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] WhatsApp Disconnect now embeds the supplied hosted `sample-vid-demo.mp4` with native controls and a centered caption.
 - 2026-07-31 [CODE] The WhatsApp Business App connect screenshot now uses the supplied full-size `docs-connect-new.jpeg` asset instead of the smaller compact coexistence image.
 - 2026-07-31 [CODE] WhatsApp coexistence now shows the compact `docs-scan-qr.png` screenshot immediately before the QR-scan step.
 - 2026-07-31 [CODE] Broadcast and Follow-ups now show the compact `docs-payment.png` screenshot under Pricing as the final Meta payment setup step; Reminders remains text-only.
@@ -95,6 +96,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D604 ACTIVE: Use the supplied hosted `sample-vid-demo.mp4` as the WhatsApp Disconnect demo video.
 - 2026-07-31 [USER] D603 ACTIVE: Replace the too-small WhatsApp connect image with `docs-connect-new.jpeg` and display it at the normal full image size.
 - 2026-07-31 [USER] D602 ACTIVE: Use the supplied hosted `docs-scan-qr.png` screenshot before the WhatsApp QR-scan step.
 - 2026-07-31 [USER] D601 ACTIVE: Use the supplied hosted `docs-payment.png` screenshot as the final Meta payment step for Broadcast and Follow-ups.
@@ -439,6 +441,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Added the hosted WhatsApp Disconnect demo video with scoped video and caption styling.
 - 2026-07-31 [CODE] Replaced the compact WhatsApp Business App screenshot with the full-size hosted connect image.
 - 2026-07-31 [CODE] Added the hosted QR screenshot immediately before the WhatsApp QR-scan step.
 - 2026-07-31 [CODE] Added the hosted Meta payment screenshot to Broadcast and Follow-ups under their Pricing sections.
@@ -579,6 +582,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Embedded `https://storage.kilobot.app/docs/sample-vid-demo.mp4` in WhatsApp Disconnect; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; CSS remains within the 300-line limit; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Replaced the compact coexistence image with `https://storage.kilobot.app/docs/docs-connect-new.jpeg` at normal display size; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added `https://storage.kilobot.app/docs/docs-scan-qr.png` before the WhatsApp QR-scan step; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added `https://storage.kilobot.app/docs/docs-payment.png` to Broadcast and Follow-ups and updated billing coverage; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.

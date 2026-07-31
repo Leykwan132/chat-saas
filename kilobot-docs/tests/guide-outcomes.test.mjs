@@ -262,6 +262,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("## Disconnect"));
   assert.ok(source.includes("clears its authorization"));
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));
+  assert.ok(source.includes('src="https://storage.kilobot.app/docs/sample-vid-demo.mp4"'));
 });
 
 test("Meta channel guides explain the conversation window", () => {

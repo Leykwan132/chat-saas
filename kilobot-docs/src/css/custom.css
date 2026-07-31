@@ -1,5 +1,6 @@
 @import './admonitions.css';
 @import './required-tag.css';
+@import './inline-video.css';
 
 :root {
   --ifm-color-primary: #27272a;
