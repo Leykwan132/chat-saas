@@ -253,6 +253,21 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));
 });
 
+test("Meta channel guides explain the conversation window", () => {
+  for (const relativePath of [
+    "channels/whatsapp.mdx",
+    "channels/instagram.mdx",
+    "channels/messenger.mdx",
+  ]) {
+    const source = readGuide(relativePath);
+    const windowIndex = source.indexOf("## Conversation window");
+
+    assert.ok(windowIndex >= 0, relativePath);
+    assert.ok(windowIndex > source.indexOf("</DocOutcomes>"), relativePath);
+    assert.match(source.slice(windowIndex), /conversation window/i);
+  }
+});
+
 test("other channel setup paths stay direct", () => {
   for (const relativePath of [
     "channels/instagram.mdx",
