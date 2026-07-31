@@ -5,7 +5,6 @@ slug: /channels/website-widget
 ---
 
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -56,19 +55,3 @@ Open the published page in a private window, start a conversation, and confirm t
   sensitive={['Widget keys', 'Website administration URLs', 'Customer data']}
   assetPath="/media/channels/website-installation.mp4"
 />
-
-<DocSuccess>
-
-- The widget loads on the published site.
-- A private-window message appears under the correct agent.
-- A teammate reply returns to the same visitor.
-
-</DocSuccess>
-
-## Common problems
-
-- **Widget is absent:** confirm the complete snippet is present in the published build.
-- **Widget appears twice:** remove duplicate installations from page and global layouts.
-- **Old settings remain:** publish the latest site version and test without cached visitor state.
-- **Message reaches the wrong agent:** replace the snippet with the one copied from the intended agent.
-- **Security policy blocks the script:** allow the KiloBot script and network origins in the website policy.
