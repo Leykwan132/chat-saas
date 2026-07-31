@@ -6,66 +6,81 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("recordSignupFinished persists the browser FINISH payload before OAuth completes", async () => {
+async function createAuthenticatedFixture(subject: string) {
   const t = convexTest(schema, modules);
-  const authed = t.withIdentity({ subject: "user-finish" });
+  const authed = t.withIdentity({ subject });
   await authed.mutation(api.authUtils.upsertUser, {});
-
-  const attemptId = await t.run(async (ctx) => {
-    return await ctx.db.insert("whatsappConnectionAttempts", {
+  const agentId = await t.run(async (ctx) => {
+    return await ctx.db.insert("agents", {
+      name: "WhatsApp agent",
+      provider: "openrouter",
+      model: "test-model",
+      systemPrompt: "Help customers",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: subject,
       orgId: "personal",
-      connectedByUserId: "user-finish",
-      status: "started",
       createdAt: 1_700_000_000_000,
       updatedAt: 1_700_000_000_000,
     });
   });
+  return { t, authed, agentId };
+}
 
-  await authed.mutation(
-    api.whatsappEmbeddedSignup.recordSignupFinished,
-    {
-      attemptId,
-      wabaId: "waba-finish",
-      phoneNumberId: "phone-finish",
-    },
+test("beginConnectionAttempt stores the agent context before OAuth", async () => {
+  const { t, authed, agentId } = await createAuthenticatedFixture("user-owner");
+
+  const attemptId = await authed.mutation(
+    api.whatsappEmbeddedSignup.beginConnectionAttempt,
+    { agentId },
   );
 
   const attempt = await t.run(async (ctx) => await ctx.db.get(attemptId));
-  expect(attempt?.status).toBe("signup_finished");
-  expect(attempt?.wabaId).toBe("waba-finish");
-  expect(attempt?.phoneNumberId).toBe("phone-finish");
-  expect(attempt?.signupFinishedAt).toBeTypeOf("number");
+  expect(attempt).toMatchObject({
+    connectedByUserId: "user-owner",
+    orgId: "",
+    agentId,
+    status: "started",
+  });
+  expect(attempt?.wabaId).toBeUndefined();
+  expect(attempt?.phoneNumberId).toBeUndefined();
 });
 
-test("recordSignupFinished is idempotent and rejects another user", async () => {
-  const t = convexTest(schema, modules);
-  const owner = t.withIdentity({ subject: "user-owner" });
-  const stranger = t.withIdentity({ subject: "user-stranger" });
-  await owner.mutation(api.authUtils.upsertUser, {});
-  await stranger.mutation(api.authUtils.upsertUser, {});
+test("beginConnectionAttempt rejects a second open attempt", async () => {
+  const { authed, agentId } = await createAuthenticatedFixture("user-owner");
+  await authed.mutation(api.whatsappEmbeddedSignup.beginConnectionAttempt, {
+    agentId,
+  });
 
-  const attemptId = await t.run(async (ctx) => {
-    return await ctx.db.insert("whatsappConnectionAttempts", {
-      orgId: "personal",
-      connectedByUserId: "user-owner",
-      status: "started",
+  await expect(
+    authed.mutation(api.whatsappEmbeddedSignup.beginConnectionAttempt, {
+      agentId,
+    }),
+  ).rejects.toThrow(
+    "You already have a WhatsApp connection in progress. Cancel it before starting a new one.",
+  );
+});
+
+test("beginConnectionAttempt rejects agent context outside the workspace", async () => {
+  const { t, authed } = await createAuthenticatedFixture("user-owner");
+  const otherAgentId = await t.run(async (ctx) => {
+    return await ctx.db.insert("agents", {
+      name: "Other agent",
+      provider: "openrouter",
+      model: "test-model",
+      systemPrompt: "Help other customers",
+      templateKey: "blank",
+      fileSize: 0,
+      userId: "user-other",
+      orgId: "org-other",
       createdAt: 1_700_000_000_000,
       updatedAt: 1_700_000_000_000,
     });
   });
-  const payload = {
-    attemptId,
-    wabaId: "waba-owner",
-    phoneNumberId: "phone-owner",
-  };
 
-  await owner.mutation(api.whatsappEmbeddedSignup.recordSignupFinished, payload);
-  const first = await t.run(async (ctx) => await ctx.db.get(attemptId));
-  await owner.mutation(api.whatsappEmbeddedSignup.recordSignupFinished, payload);
-  const second = await t.run(async (ctx) => await ctx.db.get(attemptId));
-
-  expect(second?.signupFinishedAt).toBe(first?.signupFinishedAt);
   await expect(
-    stranger.mutation(api.whatsappEmbeddedSignup.recordSignupFinished, payload),
-  ).rejects.toThrow("Not allowed to update this connection attempt.");
+    authed.mutation(api.whatsappEmbeddedSignup.beginConnectionAttempt, {
+      agentId: otherAgentId,
+    }),
+  ).rejects.toThrow("Agent not found.");
 });

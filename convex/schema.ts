@@ -594,6 +594,7 @@ export default defineSchema({
     .index("by_igUserId", ["igUserId"])
     .index("by_pageId", ["pageId"])
     .index("by_fbUserId", ["fbUserId"])
+    .index("by_defaultAgentId_and_service", ["defaultAgentId", "service"])
     .index("by_connectedByUserId", ["connectedByUserId"]),
   webWidgetSettings: defineTable({
     channelId: v.id("channels"),
@@ -702,6 +703,7 @@ export default defineSchema({
   whatsappConnectionAttempts: defineTable({
     orgId: v.string(),
     connectedByUserId: v.string(),
+    agentId: v.optional(v.id("agents")),
     status: whatsappConnectionAttemptStatusValidator,
     wabaId: v.optional(v.string()),
     phoneNumberId: v.optional(v.string()),
