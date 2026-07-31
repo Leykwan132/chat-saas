@@ -279,6 +279,15 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
   assert.ok(knowledgeBase.includes("not 100% accurate"));
 });
 
+test("Workflow branch guidance stays under Build the branch", () => {
+  const source = readGuide("automate/send-messages-and-assets.mdx");
+
+  assert.equal(source.includes("## Describe when it should happen"), false);
+  assert.ok(source.includes("## Build the branch"));
+  assert.ok(source.includes("Write a short Name that is easy to scan on the canvas"));
+  assert.ok(source.indexOf("Write a short Name") > source.indexOf("## Build the branch"));
+});
+
 test("other channel setup paths stay direct", () => {
   for (const relativePath of [
     "channels/instagram.mdx",
