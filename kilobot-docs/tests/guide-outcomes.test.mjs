@@ -254,13 +254,19 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("## Add payment"));
   assert.ok(source.indexOf("## Add payment") < source.indexOf("## Disconnect"));
   assert.ok(source.includes('<ol className="steps" start={3}>'));
-  assert.ok(source.includes('<ol className="steps" start={5}>'));
-  assert.equal(source.includes('<ol className="steps" start={7}>'), false);
+  assert.ok(source.includes('<ol className="steps" start={4}>'));
+  assert.equal(source.includes('<ol className="steps" start={5}>'), false);
+  assert.equal(source.includes("Grant the requested messaging access"), false);
+  assert.equal(source.includes("When Meta offers <strong>coexistence</strong>"), false);
   assert.equal(source.includes("connect-msg.png"), false);
   assert.equal((source.match(/className="docs-image-compact"/g) ?? []).length, 4);
   assert.equal(source.includes("Complete Meta sign-in without closing the authorization window early"), false);
   assert.equal(source.includes("Select the intended business and WhatsApp account"), false);
   assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
+  assert.ok(
+    source.indexOf("Scan the QR code from the WhatsApp Business app on your phone") <
+      source.indexOf("![Scan the QR code to connect WhatsApp]"),
+  );
   assert.ok(source.includes("share your own WhatsApp chats with KiloBot"));
   assert.equal(source.includes("connect-whatsapp.mp4"), false);
   assert.equal(source.includes('kind="video"'), false);

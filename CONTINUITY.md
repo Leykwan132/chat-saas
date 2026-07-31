@@ -1,5 +1,6 @@
 # Snapshot
-- 2026-07-31 [CODE] WhatsApp Coexistence now numbers its connection flow 1–6 correctly; payment is a separate “Add payment” segment immediately before Disconnect, followed by one concise history-sync sentence.
+- 2026-07-31 [CODE] WhatsApp Coexistence now shows only the essential connection steps: scan the QR code as step 3 with its image immediately below, then approve chat sharing as step 4; the redundant access and coexistence-selection steps are removed.
+- 2026-07-31 [CODE] WhatsApp Coexistence keeps payment in a separate “Add payment” segment immediately before Disconnect, while its essential connection flow now ends at step 4.
 - 2026-07-31 [CODE] All WhatsApp page media now uses the payment image’s compact 40% desktop width with full-width mobile behavior; the Disconnect video and caption share that width.
 - 2026-07-31 [CODE] WhatsApp Disconnect now focuses on the smaller 480px demo video; the four-step disconnect checklist and coexistence prompt note are removed.
 - 2026-07-31 [CODE] WhatsApp coexistence media now follows the confirmed sequence: `docs-coexistence.png` for WhatsApp Business App selection, `docs-connect-new.jpeg` for the received connection request, `docs-scan-qr.png` for QR scanning, and `docs-payment.png` before payment; the obsolete `connect-msg.png` and unused short-image CSS are removed.
@@ -100,7 +101,8 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
-- 2026-07-31 [USER] D608 ACTIVE: Keep WhatsApp Coexistence numbered steps 1–6 and move payment into a separate “Add payment” segment above Disconnect.
+- 2026-07-31 [USER] D609 ACTIVE: Remove the redundant messaging-access and coexistence-selection steps from WhatsApp, and place the QR image directly below the QR-scan command.
+- 2026-07-31 [USER] D608 PARTIALLY SUPERSEDED by D609: Payment remains in a separate “Add payment” segment above Disconnect, while the Coexistence flow is now shortened to its essential numbered steps.
 - 2026-07-31 [USER] D607 ACTIVE: Match every WhatsApp page image and video to the payment image sizing.
 - 2026-07-31 [USER] D606 ACTIVE: Remove all WhatsApp Disconnect steps and make the Disconnect demo video smaller.
 - 2026-07-31 [USER] D605 ACTIVE: Map WhatsApp coexistence assets to selection (`docs-coexistence.png`), received connection request (`docs-connect-new.jpeg`), QR scan (`docs-scan-qr.png`), and payment (`docs-payment.png`).
@@ -449,6 +451,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Simplified WhatsApp Coexistence to the QR scan and chat-sharing steps, with the QR image directly below the scan instruction.
 - 2026-07-31 [CODE] Corrected WhatsApp Coexistence numbering through step 6 and separated payment into its own Add payment segment before Disconnect.
 - 2026-07-31 [CODE] Applied the payment image’s compact sizing to all WhatsApp screenshots and the Disconnect video, including mobile full-width behavior.
 - 2026-07-31 [CODE] Removed the WhatsApp Disconnect checklist and reduced the demo video to a 480px maximum width.
@@ -594,6 +597,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Removed the redundant WhatsApp access/coexistence-selection steps and moved the QR screenshot below its scan command; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Corrected WhatsApp Coexistence numbering and moved payment into Add payment; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Matched all WhatsApp media to the payment image’s 40% desktop/100% mobile sizing and aligned the video caption; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed WhatsApp Disconnect steps and added scoped 480px video sizing; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
