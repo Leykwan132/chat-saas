@@ -285,12 +285,14 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
   assert.ok(knowledgeBase.includes("The answer is not fixed"));
   assert.ok(knowledgeBase.includes("subject to summarization by the model"));
   assert.ok(knowledgeBase.includes("## Limits"));
-  assert.ok(knowledgeBase.includes("| Free | 400 KB per agent |"));
-  assert.ok(knowledgeBase.includes("| Starter | 5 MB per agent |"));
-  assert.ok(knowledgeBase.includes("| Growth | 20 MB per agent |"));
-  assert.ok(knowledgeBase.includes("| Business | 40 MB per agent |"));
-  assert.ok(knowledgeBase.includes("| Enterprise | Custom per agent |"));
-  assert.ok(knowledgeBase.indexOf("## Limits") < knowledgeBase.indexOf("## Best practice"));
+  assert.ok(knowledgeBase.includes("| Plan | Knowledge Base limit | Supported sources |"));
+  assert.ok(knowledgeBase.includes("| Free | 400 KB per agent | Web, Files, Text, Q&A |"));
+  assert.ok(knowledgeBase.includes("| Starter | 5 MB per agent | Web, Files, Text, Q&A |"));
+  assert.ok(knowledgeBase.includes("| Growth | 20 MB per agent | Web, Files, Text, Q&A |"));
+  assert.ok(knowledgeBase.includes("| Business | 40 MB per agent | Web, Files, Text, Q&A |"));
+  assert.ok(knowledgeBase.includes("| Enterprise | Custom per agent | Custom |"));
+  assert.ok(knowledgeBase.indexOf("## Best practice") < knowledgeBase.indexOf("## Limits"));
+  assert.ok(knowledgeBase.indexOf("## Limits") < knowledgeBase.indexOf("## Common problems"));
 });
 
 test("Agent Setup keeps model and trigger guidance focused", () => {
