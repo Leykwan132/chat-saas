@@ -25,6 +25,11 @@ export const beginConnectionAttempt = mutation({
   handler: async (ctx, args): Promise<Id<"whatsappConnectionAttempts">> => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
+    console.log("[whatsapp-connect]:beginConnectionAttempt", "received", {
+      orgId: channelOrgId,
+      userId,
+      agentId: args.agentId,
+    });
     const now = Date.now();
     if (args.agentId !== undefined) {
       const agent = await ctx.db.get(args.agentId);
@@ -44,13 +49,17 @@ export const beginConnectionAttempt = mutation({
         )
         .first();
       if (existing !== null) {
+        console.error("[whatsapp-connect]:beginConnectionAttempt", "blocked", {
+          existingAttemptId: existing._id,
+          existingStatus: existing.status,
+        });
         throw new Error(
           "You already have a WhatsApp connection in progress. Cancel it before starting a new one.",
         );
       }
     }
 
-    return await ctx.db.insert("whatsappConnectionAttempts", {
+    const attemptId = await ctx.db.insert("whatsappConnectionAttempts", {
       orgId: channelOrgId,
       connectedByUserId: userId,
       ...(args.agentId !== undefined ? { agentId: args.agentId } : {}),
@@ -58,6 +67,12 @@ export const beginConnectionAttempt = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    console.log("[whatsapp-connect]:beginConnectionAttempt", "created", {
+      attemptId,
+      orgId: channelOrgId,
+      agentId: args.agentId,
+    });
+    return attemptId;
   },
 });
 
@@ -131,7 +146,12 @@ export const internalUpdateConnectionAttempt = internalMutation({
   },
   handler: async (ctx, args) => {
     const attempt = await ctx.db.get(args.attemptId);
-    if (attempt === null) return;
+    if (attempt === null) {
+      console.warn("[whatsapp-connect]:updateAttempt", "not_found", {
+        attemptId: args.attemptId,
+      });
+      return;
+    }
     await ctx.db.patch(args.attemptId, {
       ...(args.wabaId !== undefined ? { wabaId: args.wabaId } : {}),
       ...(args.phoneNumberId !== undefined
@@ -147,6 +167,15 @@ export const internalUpdateConnectionAttempt = internalMutation({
         ? { syncStartedAt: args.syncStartedAt }
         : {}),
       updatedAt: Date.now(),
+    });
+    console.log("[whatsapp-connect]:updateAttempt", "patched", {
+      attemptId: args.attemptId,
+      previousStatus: attempt.status,
+      nextStatus: args.status,
+      wabaId: args.wabaId,
+      phoneNumberId: args.phoneNumberId,
+      channelId: args.channelId,
+      hasError: args.lastError !== undefined,
     });
   },
 });
@@ -167,6 +196,10 @@ export const internalStartCoexistenceSyncForChannel = internalMutation({
   },
   handler: async (ctx, args) => {
     const now = Date.now();
+    console.log("[whatsapp-connect]:startSync", "received", {
+      channelId: args.channelId,
+      attemptId: args.attemptId,
+    });
     if (args.attemptId !== undefined) {
       const attempt = await ctx.db.get(args.attemptId);
       if (attempt !== null && isOpenWhatsAppConnectionAttempt(attempt)) {
@@ -175,6 +208,10 @@ export const internalStartCoexistenceSyncForChannel = internalMutation({
           status: "syncing",
           syncStartedAt: attempt.syncStartedAt ?? now,
           updatedAt: now,
+        });
+        console.log("[whatsapp-connect]:startSync", "attempt_syncing", {
+          channelId: args.channelId,
+          attemptId: args.attemptId,
         });
       }
     }

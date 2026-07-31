@@ -20,9 +20,23 @@ export async function completeWhatsAppSignupFromCode({
     | undefined;
   completeSignup: CompleteSignup;
 }): Promise<{ status: 'syncing' }> {
+  console.info('[whatsapp-connect] waiting for connection attempt', {
+    hasAttemptPromise: attemptPromise !== undefined,
+  });
   const attemptId = await attemptPromise;
   if (attemptId === undefined) {
+    console.error('[whatsapp-connect] connection attempt unavailable');
     throw new Error('Connection attempt was not created.');
   }
-  return await completeSignup({ code, attemptId });
+  console.info('[whatsapp-connect] invoking completeSignup', {
+    attemptId,
+    hasCode: code.length > 0,
+    codeLength: code.length,
+  });
+  const result = await completeSignup({ code, attemptId });
+  console.info('[whatsapp-connect] completeSignup response received', {
+    attemptId,
+    status: result.status,
+  });
+  return result;
 }

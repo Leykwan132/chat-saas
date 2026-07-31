@@ -6,8 +6,6 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import {
-  refreshFacebookLoginStatus,
-  useFacebookSession,
   waitForFacebookSdk,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
@@ -56,8 +54,6 @@ export function useWhatsAppConnectionFlow({
   });
   const appId = signupIds?.appId;
   const configId = signupIds?.configId;
-
-  useFacebookSession();
 
   const whatsappChannel = useMemo(() => {
     if (!channels) return undefined;
@@ -133,7 +129,15 @@ export function useWhatsAppConnectionFlow({
 
   const finishWithCode = useCallback(
     async (code: string) => {
-      if (completingRef.current) return;
+      if (completingRef.current) {
+        console.info('[whatsapp-connect] completeSignup already running');
+        return;
+      }
+      console.info('[whatsapp-connect] authorization code ready', {
+        hasCode: code.length > 0,
+        codeLength: code.length,
+        hasAttemptPromise: connectionAttemptPromiseRef.current !== undefined,
+      });
       completingRef.current = true;
       setDialogState({ kind: 'connecting' });
       try {
@@ -162,15 +166,21 @@ export function useWhatsAppConnectionFlow({
     let facebook: NonNullable<typeof window.FB>;
     try {
       facebook = await waitForFacebookSdk();
+      console.info('[whatsapp-connect] Facebook SDK ready');
     } catch (error) {
       console.error('[whatsapp-connect] Facebook SDK unavailable', error);
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       setBusy(false);
       return;
     }
+    console.info('[whatsapp-connect] invoking FB.login', {
+      appId,
+      configId,
+      responseType: 'code',
+      featureType: 'whatsapp_business_app_onboarding',
+    });
     facebook.login(
       (response: FBLoginResponse) => {
-        refreshFacebookLoginStatus();
         const code = response.authResponse?.code;
         console.info('[whatsapp-connect] FB.login response', {
           status: response.status,
@@ -202,6 +212,13 @@ export function useWhatsAppConnectionFlow({
   }, [appId, configId, finishWithCode]);
 
   const launchSignup = useCallback(async () => {
+    console.info('[whatsapp-connect] signup launch requested', {
+      agentId,
+      hasAppId: Boolean(appId),
+      hasConfigId: Boolean(configId),
+      openAttemptId: openConnectionAttempt?._id,
+      openAttemptStatus: openConnectionAttempt?.status,
+    });
     if (!appId || !configId) {
       toast.error(
         'WhatsApp is not configured. Set VITE_META_APP_ID and VITE_META_EMBEDDED_SIGNUP_CONFIG_ID.',
@@ -223,10 +240,16 @@ export function useWhatsAppConnectionFlow({
     setBusy(true);
     completingRef.current = false;
     setUserDismissed(false);
+    console.info('[whatsapp-connect] creating connection attempt', {
+      agentId,
+    });
     connectionAttemptPromiseRef.current = beginConnectionAttempt(
       agentId ? { agentId: agentId as Id<'agents'> } : {},
     )
       .then((attemptId) => {
+        console.info('[whatsapp-connect] connection attempt created', {
+          attemptId,
+        });
         setDialogState({ kind: 'connecting' });
         return attemptId;
       })

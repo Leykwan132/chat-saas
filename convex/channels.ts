@@ -333,6 +333,11 @@ async function upsertWhatsAppChannel(
   },
 ): Promise<Id<"channels">> {
   const now = Date.now();
+  logWhatsAppChannel("internalUpsertWhatsApp", "started", {
+    orgId: args.orgId,
+    wabaId: args.wabaId,
+    phoneNumberId: args.phoneNumberId,
+  });
   const channels = await ctx.db
     .query("channels")
     .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
@@ -365,6 +370,10 @@ async function upsertWhatsAppChannel(
       defaultAgentId,
       createdAt: now,
     });
+    logWhatsAppChannel("internalUpsertWhatsApp", "inserted connected row", {
+      channelId: newId,
+      phoneNumberId: args.phoneNumberId,
+    });
     return newId;
   }
   const backfillAgentId =
@@ -379,6 +388,11 @@ async function upsertWhatsAppChannel(
     ...patch,
     connectedByUserId: args.connectedByUserId,
     ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
+  });
+  logWhatsAppChannel("internalUpsertWhatsApp", "patched connected row", {
+    channelId: existing._id,
+    previousStatus: existing.status,
+    phoneNumberId: args.phoneNumberId,
   });
   return existing._id;
 }
@@ -396,6 +410,12 @@ export const internalStartPending = internalMutation({
     agentId: v.optional(v.id("agents")),
   },
   handler: async (ctx, args): Promise<Id<"channels">> => {
+    logWhatsAppChannel("internalStartPending", "started", {
+      orgId: args.orgId,
+      wabaId: args.wabaId,
+      phoneNumberId: args.phoneNumberId,
+      requestedAgentId: args.agentId,
+    });
     const stripeInfo = await getPlanFromStripe(ctx, args.connectedByUserId);
     if (!checkPlatformSupport(stripeInfo.plan, "whatsapp")) {
       logWhatsAppChannel("internalStartPending", "blocked by plan", {
@@ -465,6 +485,11 @@ export const internalStartPending = internalMutation({
         createdAt: now,
         updatedAt: now,
       });
+      logWhatsAppChannel("internalStartPending", "inserted pending row", {
+        channelId: newId,
+        phoneNumberId: args.phoneNumberId,
+        defaultAgentId,
+      });
       return newId;
     }
     const backfillAgentId =
@@ -479,6 +504,12 @@ export const internalStartPending = internalMutation({
       connectedByUserId: args.connectedByUserId,
       ...(backfillAgentId !== undefined ? { defaultAgentId: backfillAgentId } : {}),
       updatedAt: now,
+    });
+    logWhatsAppChannel("internalStartPending", "patched pending row", {
+      channelId: existing._id,
+      previousStatus: existing.status,
+      phoneNumberId: args.phoneNumberId,
+      defaultAgentId: existing.defaultAgentId ?? defaultAgentId,
     });
     return existing._id;
   },
@@ -529,12 +560,25 @@ export const internalSetProgress = internalMutation({
         .unique();
     }
     if (existing === null) {
+      if (args.service === "whatsapp") {
+        logWhatsAppChannel("internalSetProgress", "channel row not found", {
+          orgId: args.orgId,
+          phoneNumberId: args.phoneNumberId,
+          progressStep: args.progressStep,
+        });
+      }
       return;
     }
     await ctx.db.patch(existing._id, {
       progressStep: args.progressStep,
       updatedAt: Date.now(),
     });
+    if (args.service === "whatsapp") {
+      logWhatsAppChannel("internalSetProgress", "progress updated", {
+        channelId: existing._id,
+        progressStep: args.progressStep,
+      });
+    }
   },
 });
 
