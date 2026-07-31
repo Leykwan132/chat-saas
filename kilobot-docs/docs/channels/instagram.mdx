@@ -4,7 +4,6 @@ description: Connect Instagram professional messaging to KiloBot.
 slug: /channels/instagram
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -24,6 +23,10 @@ Connect a professional Instagram account so supported direct messages enter the 
 
 </DocOutcomes>
 
+:::important
+Before connecting, make sure the professional Instagram account is connected to Meta Business Suite and that you have administrator access.
+:::
+
 ## Conversation window
 
 - **When it opens:** A customer messages your professional Instagram account.
@@ -37,26 +40,6 @@ Connect a professional Instagram account so supported direct messages enter the 
   <li>Sign in to Meta, select the intended professional account, and grant messaging access.</li>
   <li>Return to KiloBot, then send a new direct message and reply from Inbox.</li>
 </ol>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Show the connected Instagram identity"
-  description="Show the connected card and the matching platform identity in Inbox."
-  capture={['Connected Instagram card', 'Instagram platform marker in Inbox']}
-  callouts={['Connected account', 'Matching conversation']}
-  sensitive={['Personal usernames', 'Provider IDs']}
-  assetPath="/media/channels/instagram-connected.png"
-/>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Connect Instagram"
-  description="Show professional-account selection and the connected conversation."
-  capture={['Select the professional account', 'Grant access', 'Show the connected conversation']}
-  duration="60–90 seconds"
-  sensitive={['Meta login', 'Personal accounts', 'Customer messages']}
-  assetPath="/media/channels/connect-instagram.mp4"
-/>
 
 If no eligible account appears, confirm professional-account status, business linkage, and your Meta administrator access before retrying.
 
