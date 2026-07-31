@@ -265,6 +265,9 @@ test("Meta channel guides explain the conversation window", () => {
     assert.ok(windowIndex >= 0, relativePath);
     assert.ok(windowIndex > source.indexOf("</DocOutcomes>"), relativePath);
     assert.match(source.slice(windowIndex), /conversation window/i);
+    assert.ok(source.includes("- **When it opens:**"), relativePath);
+    assert.ok(source.includes("- **While it is open:**"), relativePath);
+    assert.ok(source.includes("- **After it closes:**"), relativePath);
   }
 });
 
