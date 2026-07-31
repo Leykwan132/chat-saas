@@ -112,7 +112,7 @@ const guides = new Map([
     "Activate reminders for eligible appointments",
   ]],
   ["automate/follow-ups.mdx", [
-    "Choose the follow-up audience and activation scope",
+    "Choose which follow-up conversations to include",
     "Configure timing, attempts, and approved messages",
     "Stop later attempts when customers reply",
   ]],
