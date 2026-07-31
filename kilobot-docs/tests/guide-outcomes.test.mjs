@@ -241,7 +241,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
 
   assert.ok(source.includes("## Connect with Coexistence"));
   assert.ok(source.includes('<div className="docs-image-compact">'));
-  assert.ok(source.includes("![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)"));
+  assert.ok(source.includes("![Connect WhatsApp Business App](https://storage.kilobot.app/docs/docs-coexistence.png)"));
   assert.ok(source.includes("![Facebook connection message through WhatsApp](https://storage.kilobot.app/docs/connect-msg.png)"));
   assert.ok(source.includes('<div className="docs-image-compact docs-image-short">'));
   assert.ok(

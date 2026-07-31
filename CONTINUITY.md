@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] The compact WhatsApp coexistence screenshot caption now reads “Connect WhatsApp Business App.”
 - 2026-07-31 [CODE] The WhatsApp Facebook connection-message screenshot uses a scoped short-image class with a 260px maximum height, preserving full-image expansion and leaving other docs images unchanged.
 - 2026-07-31 [CODE] After the WhatsApp Business app/phone-number step, WhatsApp now explains that Facebook sends a connection message through WhatsApp and shows the compact `connect-msg.png` screenshot before the remaining coexistence steps.
 - 2026-07-31 [CODE] The WhatsApp coexistence flow now says to choose WhatsApp Business app for the business portfolio before entering the phone number.
@@ -91,6 +92,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D600 ACTIVE: Rename the coexistence screenshot caption to “Connect WhatsApp Business App.”
 - 2026-07-31 [USER] D599 ACTIVE: Reduce the height of the WhatsApp connection-message image without cropping it or changing other images.
 - 2026-07-31 [USER] D598 ACTIVE: Explain that Facebook sends a WhatsApp connection message after the business-app/phone-number step and place `connect-msg.png` immediately there.
 - 2026-07-31 [USER] D597 ACTIVE: Clarify the WhatsApp coexistence step as “Choose WhatsApp Business app for your business portfolio.”
@@ -431,6 +433,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Renamed the WhatsApp coexistence screenshot caption to “Connect WhatsApp Business App.”
 - 2026-07-31 [CODE] Added a scoped 260px max-height style for the WhatsApp connection-message screenshot.
 - 2026-07-31 [CODE] Moved the compact Facebook connection-message screenshot directly after phone-number entry and added the explanatory sentence.
 - 2026-07-31 [CODE] Clarified the WhatsApp Business app selection step to reference the business portfolio.
@@ -567,6 +570,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Renamed the WhatsApp coexistence image caption; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Reduced the WhatsApp connection-message image height with a scoped `docs-image-short` class; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`. CSS remains 295 lines; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Positioned `https://storage.kilobot.app/docs/connect-msg.png` after WhatsApp Business app/phone-number entry and added the Facebook-through-WhatsApp explanation. Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Updated the WhatsApp Business app selection wording to include the business portfolio; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
