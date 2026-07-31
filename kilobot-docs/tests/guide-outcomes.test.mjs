@@ -299,6 +299,14 @@ test("Broadcast explains the smart window alternative and pricing", () => {
   assert.ok(source.includes("official WhatsApp pricing"));
 });
 
+test("Availability omits the slot evaluation explanation", () => {
+  const source = readGuide("bookings/availability.mdx");
+
+  assert.equal(source.includes("## Understand slot evaluation"), false);
+  assert.equal(source.includes("continuous valid interval that includes both"), false);
+  assert.ok(source.includes("## Troubleshoot a missing slot"));
+});
+
 test("Agent Setup and Knowledge Base explain source best practices", () => {
   const agentSetup = readGuide("build-your-agent/agent-setup.mdx");
   const knowledgeBase = readGuide("build-your-agent/knowledge-base.mdx");
