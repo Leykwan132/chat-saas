@@ -32,6 +32,11 @@ export function useWhatsAppEmbeddedSignupEvents({
         return;
       }
       if (payload?.type !== 'WA_EMBEDDED_SIGNUP') return;
+      console.info('[whatsapp-connect] embedded signup event received', {
+        origin: event.origin,
+        event: payload.event,
+        hasErrorMessage: Boolean(payload.data?.error_message),
+      });
       if (payload.event === 'CANCEL') {
         onCancel();
       } else if (payload.event === 'ERROR') {

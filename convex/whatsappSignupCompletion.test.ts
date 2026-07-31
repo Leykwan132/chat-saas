@@ -8,10 +8,14 @@ import {
 function createCompletionFixture() {
   const state: {
     events: string[];
+    diagnostics: Array<{
+      stage: string;
+      data?: Record<string, unknown>;
+    }>;
     attempt?: Record<string, unknown>;
     channel?: Record<string, unknown>;
     error?: string;
-  } = { events: [] };
+  } = { events: [], diagnostics: [] };
   const dependencies: ServerOwnedWhatsAppSignupDependencies = {
     exchangeAuthorizationCode: async (code) => {
       state.events.push(`exchange:${code}`);
@@ -36,6 +40,7 @@ function createCompletionFixture() {
     },
     startPendingChannel: async (assets) => {
       state.events.push(`pending:${assets.phoneNumberId}`);
+      return "pending-channel-123" as Id<"channels">;
     },
     setChannelProgress: async (progressStep) => {
       state.events.push(`progress:${progressStep}`);
@@ -54,6 +59,9 @@ function createCompletionFixture() {
     recordFailure: async (error) => {
       state.events.push("failure");
       state.error = error;
+    },
+    reportStage: (stage, data) => {
+      state.diagnostics.push({ stage, data });
     },
     now: () => 1_700_000_000_000,
   };
@@ -94,6 +102,32 @@ test("discovers Meta assets before persisting the backend token and returns stat
     "attempt:token_ready",
     "sync:channel-123",
   ]);
+  expect(state.diagnostics.map(({ stage }) => stage)).toEqual([
+    "code_exchange_started",
+    "code_exchange_completed",
+    "asset_discovery_started",
+    "asset_discovery_completed",
+    "attempt_signup_finished",
+    "pending_channel_started",
+    "channel_progress_subscribing",
+    "waba_subscription_started",
+    "waba_subscription_completed",
+    "channel_persist_started",
+    "channel_persist_completed",
+    "attempt_token_ready",
+    "sync_started",
+    "signup_completed",
+  ]);
+  expect(state.diagnostics[1]?.data).toEqual({
+    tokenType: undefined,
+    expiresIn: 3600,
+  });
+  expect(state.diagnostics[5]?.data).toEqual({
+    channelId: "pending-channel-123",
+  });
+  expect(state.diagnostics[10]?.data).toEqual({
+    channelId: "channel-123",
+  });
 });
 
 test("does not create a channel when Meta asset discovery fails", async () => {
@@ -122,4 +156,11 @@ test("does not create a channel when Meta asset discovery fails", async () => {
     "discover:failed",
     "failure",
   ]);
+  expect(state.diagnostics.at(-1)).toEqual({
+    stage: "signup_failed",
+    data: {
+      failedStage: "asset_discovery",
+      error: "No WhatsApp Business Account was authorized.",
+    },
+  });
 });
