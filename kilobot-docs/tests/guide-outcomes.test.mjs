@@ -313,6 +313,8 @@ test("Broadcast, Reminders, and Follow-ups explain Meta billing setup", () => {
     assert.ok(source.includes(`before activating ${featureName}`), relativePath);
     assert.ok(source.includes("Meta bills these message charges directly"), relativePath);
     assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"), relativePath);
+    assert.ok(source.includes("## Pricing"), relativePath);
+    assert.ok(source.includes("official WhatsApp pricing"), relativePath);
   }
 });
 
