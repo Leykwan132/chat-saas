@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Check, Copy } from 'lucide-react';
 import styles from './DocPromptComparison.module.css';
 
 type DocPromptComparisonProps = {
@@ -23,8 +24,14 @@ function PromptCard({ label, prompt }: PromptCardProps) {
     <article className={styles.card}>
       <div className={styles.cardHeader}>
         <h3>{label}</h3>
-        <button type="button" className={styles.copyButton} onClick={copyPrompt}>
-          {copied ? 'Copied' : 'Copy'}
+        <button
+          type="button"
+          className={styles.copyButton}
+          onClick={copyPrompt}
+          aria-label={copied ? `${label} copied` : `Copy ${label}`}
+          title={copied ? `${label} copied` : `Copy ${label}`}
+        >
+          {copied ? <Check aria-hidden size={15} /> : <Copy aria-hidden size={15} />}
         </button>
       </div>
       <pre className={styles.prompt}><code>{prompt}</code></pre>

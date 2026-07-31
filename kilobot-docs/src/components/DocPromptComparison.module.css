@@ -26,10 +26,15 @@
 }
 
 .copyButton {
+  display: inline-flex;
   flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
   border: 0;
   border-radius: 999px;
-  padding: 0.35rem 0.7rem;
+  padding: 0;
   color: var(--ifm-font-color-base);
   background: var(--ifm-background-color);
   font: inherit;

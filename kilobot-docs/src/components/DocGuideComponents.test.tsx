@@ -72,7 +72,8 @@ describe('guide components', () => {
     assert.ok(html.includes('System prompt examples'));
     assert.ok(html.includes('Bad system prompt'));
     assert.ok(html.includes('Good system prompt'));
-    assert.equal((html.match(/>Copy<\/button>/g) ?? []).length, 2);
+    assert.equal((html.match(/aria-label="Copy (?:Good|Bad) system prompt"/g) ?? []).length, 2);
+    assert.equal((html.match(/>Copy<\/button>/g) ?? []).length, 0);
     assert.ok(html.includes('Be helpful.'));
     assert.ok(html.includes('Use approved facts.'));
   });
