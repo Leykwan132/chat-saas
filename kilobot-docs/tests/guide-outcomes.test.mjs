@@ -253,6 +253,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("![Add payment for the next connection step](https://storage.kilobot.app/docs/docs-payment.png)"));
   assert.ok(source.includes("## Add payment"));
   assert.ok(source.indexOf("## Add payment") < source.indexOf("## Disconnect"));
+  assert.ok(source.includes("This payment method is required for Broadcast, Follow-ups, and Reminders"));
   assert.ok(source.includes('<ol className="steps steps-start-3" start={3}>'));
   assert.ok(source.includes('<ol className="steps steps-start-4" start={4}>'));
   assert.equal(source.includes('<ol className="steps" start={5}>'), false);
@@ -344,6 +345,8 @@ test("Broadcast, Reminders, and Follow-ups explain Meta billing setup", () => {
     assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"), relativePath);
     assert.ok(source.includes("## Pricing"), relativePath);
     assert.ok(source.includes("official WhatsApp pricing"), relativePath);
+    assert.ok(source.includes('<span className="docs-required-tag">Payment method required</span>'), relativePath);
+    assert.ok(source.includes("[Add payment](/channels/whatsapp#add-payment)"), relativePath);
     if (relativePath !== "automate/reminders.mdx") {
       assert.ok(source.includes("![Add a payment method in Meta](https://storage.kilobot.app/docs/docs-payment.png)"), relativePath);
     }
