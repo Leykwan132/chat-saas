@@ -42,7 +42,7 @@ function PromptCard({ label, prompt }: PromptCardProps) {
 export default function DocPromptComparison({ goodPrompt, badPrompt }: DocPromptComparisonProps) {
   return (
     <section className={styles.root} aria-label="System prompt examples">
-      <PromptCard label="Good system prompt" prompt={goodPrompt} />
+      <PromptCard label="Good prompt" prompt={goodPrompt} />
       <PromptCard label="Bad system prompt" prompt={badPrompt} />
     </section>
   );

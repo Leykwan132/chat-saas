@@ -1,6 +1,6 @@
 .root {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin: 1.5rem 0;
 }
@@ -55,10 +55,4 @@
   background: transparent;
   font-size: 0.84rem;
   line-height: 1.55;
-}
-
-@media (max-width: 760px) {
-  .root {
-    grid-template-columns: 1fr;
-  }
 }
