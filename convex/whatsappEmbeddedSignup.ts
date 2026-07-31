@@ -19,27 +19,15 @@ export function whatsappOAuthRedirectUri(): string {
 }
 
 export const beginConnectionAttempt = mutation({
-  args: {
-    agentId: v.optional(v.id("agents")),
-  },
-  handler: async (ctx, args): Promise<Id<"whatsappConnectionAttempts">> => {
+  args: {},
+  handler: async (ctx): Promise<Id<"whatsappConnectionAttempts">> => {
     const { orgId, userId } = await getAuthContext(ctx);
     const channelOrgId = resolveChannelOrgId(orgId, userId);
     console.log("[whatsapp-connect]:beginConnectionAttempt", "received", {
       orgId: channelOrgId,
       userId,
-      agentId: args.agentId,
     });
     const now = Date.now();
-    if (args.agentId !== undefined) {
-      const agent = await ctx.db.get(args.agentId);
-      if (
-        agent === null ||
-        (agent.userId !== userId && agent.orgId !== channelOrgId)
-      ) {
-        throw new Error("Agent not found.");
-      }
-    }
 
     for (const status of WHATSAPP_OPEN_CONNECTION_ATTEMPT_STATUSES) {
       const existing = await ctx.db
@@ -62,7 +50,6 @@ export const beginConnectionAttempt = mutation({
     const attemptId = await ctx.db.insert("whatsappConnectionAttempts", {
       orgId: channelOrgId,
       connectedByUserId: userId,
-      ...(args.agentId !== undefined ? { agentId: args.agentId } : {}),
       status: "started",
       createdAt: now,
       updatedAt: now,
@@ -70,7 +57,6 @@ export const beginConnectionAttempt = mutation({
     console.log("[whatsapp-connect]:beginConnectionAttempt", "created", {
       attemptId,
       orgId: channelOrgId,
-      agentId: args.agentId,
     });
     return attemptId;
   },
