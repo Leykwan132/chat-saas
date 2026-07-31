@@ -326,8 +326,10 @@ test("Roles and permissions stays focused on three roles and owner control", () 
   assert.ok(source.includes("| **Member** |"));
   assert.ok(source.includes("Only the **Owner** can set what each role can see and manage"));
   assert.ok(source.includes("## Give access"));
+  assert.ok(source.includes('kind="image"'));
+  assert.ok(source.includes("role-permissions.png"));
   assert.equal(source.includes("## Start with responsibility"), false);
-  assert.equal(source.includes("DocMediaPlaceholder"), false);
+  assert.equal(source.includes('kind="video"'), false);
   assert.equal(source.includes("Northstar receptionist"), false);
 });
 
