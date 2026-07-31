@@ -13,11 +13,13 @@ test('active WhatsApp connection shows a transparent red icon-only stop action',
   );
 
   expect(markup).toContain('Connecting…');
-  expect(markup).toContain('aria-label="Stop"');
+  expect(markup).toContain('aria-label="Stop WhatsApp connection"');
   expect(markup).toContain('data-variant="destructiveGhost"');
   expect(markup).toContain('data-size="icon-xs"');
+  expect(markup).toContain('lucide-square');
   expect(markup).toContain('text-destructive');
   expect(markup).not.toContain('bg-destructive');
+  expect(markup).not.toContain('>Stop</button>');
 });
 
 test('stopping WhatsApp connection disables the stop action', () => {
@@ -26,8 +28,9 @@ test('stopping WhatsApp connection disables the stop action', () => {
   );
 
   expect(markup).toContain('Stopping…');
+  expect(markup).toContain('aria-label="Stopping WhatsApp connection"');
   expect(markup).toContain('disabled=""');
-  expect(markup).not.toContain('>Stop</button>');
+  expect(markup).not.toContain('lucide-square');
 });
 
 test('WhatsApp connection failure offers only contact support', () => {

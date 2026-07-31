@@ -444,7 +444,7 @@ export function PendingWhatsAppConnectionCard({
   return (
     <div
       className={cn(
-        'flex size-56 flex-col rounded-lg border border-dashed border-amber-500/40 bg-amber-500/5 p-3.5',
+        'flex size-56 flex-col rounded-lg border border-border bg-card p-3.5',
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col justify-between">
@@ -455,6 +455,9 @@ export function PendingWhatsAppConnectionCard({
               {label}
             </h3>
           </div>
+          <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+            {getChannelServiceMeta('whatsapp').description}
+          </p>
         </div>
 
         <WhatsAppConnectingAction
