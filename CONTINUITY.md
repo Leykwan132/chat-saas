@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] WhatsApp coexistence now shows the compact `docs-scan-qr.png` screenshot immediately before the QR-scan step.
 - 2026-07-31 [CODE] Broadcast and Follow-ups now show the compact `docs-payment.png` screenshot under Pricing as the final Meta payment setup step; Reminders remains text-only.
 - 2026-07-31 [CODE] The compact WhatsApp coexistence screenshot caption now reads “Connect WhatsApp Business App.”
 - 2026-07-31 [CODE] The WhatsApp Facebook connection-message screenshot uses a scoped short-image class with a 260px maximum height, preserving full-image expansion and leaving other docs images unchanged.
@@ -93,6 +94,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D602 ACTIVE: Use the supplied hosted `docs-scan-qr.png` screenshot before the WhatsApp QR-scan step.
 - 2026-07-31 [USER] D601 ACTIVE: Use the supplied hosted `docs-payment.png` screenshot as the final Meta payment step for Broadcast and Follow-ups.
 - 2026-07-31 [USER] D600 ACTIVE: Rename the coexistence screenshot caption to “Connect WhatsApp Business App.”
 - 2026-07-31 [USER] D599 ACTIVE: Reduce the height of the WhatsApp connection-message image without cropping it or changing other images.
@@ -435,6 +437,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Added the hosted QR screenshot immediately before the WhatsApp QR-scan step.
 - 2026-07-31 [CODE] Added the hosted Meta payment screenshot to Broadcast and Follow-ups under their Pricing sections.
 - 2026-07-31 [CODE] Renamed the WhatsApp coexistence screenshot caption to “Connect WhatsApp Business App.”
 - 2026-07-31 [CODE] Added a scoped 260px max-height style for the WhatsApp connection-message screenshot.
@@ -573,6 +576,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Added `https://storage.kilobot.app/docs/docs-scan-qr.png` before the WhatsApp QR-scan step; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added `https://storage.kilobot.app/docs/docs-payment.png` to Broadcast and Follow-ups and updated billing coverage; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Renamed the WhatsApp coexistence image caption; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Reduced the WhatsApp connection-message image height with a scoped `docs-image-short` class; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`. CSS remains 295 lines; no deployment, changelog, or push ran.

@@ -250,6 +250,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   );
   assert.ok(source.includes("Choose <strong>WhatsApp Business app</strong> for your business portfolio, then enter your phone number"));
   assert.ok(source.includes("Facebook sends a WhatsApp message to that number asking you to connect"));
+  assert.ok(source.includes("![Scan the QR code to connect WhatsApp](https://storage.kilobot.app/docs/docs-scan-qr.png)"));
   assert.equal(source.includes("Complete Meta sign-in without closing the authorization window early"), false);
   assert.equal(source.includes("Select the intended business and WhatsApp account"), false);
   assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
