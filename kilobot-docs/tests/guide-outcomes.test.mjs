@@ -527,6 +527,8 @@ test("other channel setup paths stay direct", () => {
     if (relativePath === "channels/website-widget.mdx") {
       assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
       assert.equal(source.includes("assetPath"), false, relativePath);
+      assert.ok(source.includes("Copy the code snippet."), relativePath);
+      assert.ok(source.includes("Paste the code snippet into your website HTML <code>&lt;script&gt;</code>"), relativePath);
     } else {
       assert.ok(source.includes(":::important"), relativePath);
       assert.ok(source.includes("Meta Business Suite"), relativePath);

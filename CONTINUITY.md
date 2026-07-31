@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] Website widget setup now makes step 2 “Copy the code snippet” and step 3 paste it into the website HTML `<script>` before publishing.
 - 2026-07-31 [CODE] Website widget now has no image or video requirements; its guide stays text-only with the direct install steps and next-step links.
 - 2026-07-31 [CODE] WhatsApp’s Add payment guidance now uses two concise bullets: when to add the Meta payment method and why Broadcast, Follow-ups, and Reminders require it.
 - 2026-07-31 [CODE] Removed the WhatsApp “Before reconnecting” section so the guide stays focused on connection, payment, disconnection, and next steps.
@@ -107,6 +108,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D616 ACTIVE: Make Website widget step 2 copy the code snippet and step 3 paste it into the website HTML script.
 - 2026-07-31 [USER] D615 ACTIVE: Remove the Website widget guide’s image and video media requirements.
 - 2026-07-31 [USER] D614 ACTIVE: Format the WhatsApp Add payment explanation as bullet points.
 - 2026-07-31 [USER] D613 ACTIVE: Remove the WhatsApp “Before reconnecting” guidance section.
@@ -463,6 +465,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Split Website widget copy and paste into explicit steps 2 and 3, with HTML script wording.
 - 2026-07-31 [CODE] Removed the Website widget image and video placeholders and their unused import.
 - 2026-07-31 [CODE] Converted the WhatsApp Add payment explanation into two scan-friendly bullets.
 - 2026-07-31 [CODE] Removed the WhatsApp Before reconnecting section and its repeated authorization/synchronization checklist.
@@ -615,6 +618,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Updated Website widget steps for copying and pasting the code snippet into HTML; Node v22.22.0 passed 62/62 Docs tests, the 204-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed Website widget media requirements and added no-placeholder coverage; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Formatted WhatsApp Add payment guidance as bullets; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed the WhatsApp Before reconnecting section; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
