@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { Square } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DialogDescription,
@@ -25,13 +26,14 @@ export function WhatsAppConnectingAction({
       </span>
       <Button
         type="button"
-        variant="destructive"
-        size="xs"
-        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        variant="destructiveGhost"
+        size="icon-xs"
+        aria-label="Stop"
         disabled={stopping}
         onClick={onStop}
       >
-        {stopping ? 'Stopping…' : 'Stop'}
+        <Square className="size-3 fill-current" aria-hidden />
+        <span className="sr-only">{stopping ? 'Stopping…' : 'Stop'}</span>
       </Button>
     </div>
   );

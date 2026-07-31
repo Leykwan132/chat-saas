@@ -23,6 +23,7 @@ test('pending WhatsApp card shows only the compact connection action', () => {
   );
 
   expect(markup).toContain('Connecting…');
-  expect(markup).toContain('>Stop</button>');
+  expect(markup).toContain('aria-label="Stop"');
+  expect(markup).toContain('data-variant="destructiveGhost"');
   expect(markup).not.toContain('Waiting for WhatsApp setup');
 });
