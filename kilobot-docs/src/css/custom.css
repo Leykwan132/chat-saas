@@ -215,12 +215,6 @@ body {
   margin-right: auto;
 }
 
-.docs-image-short img {
-  max-height: 260px;
-  object-fit: contain;
-  object-position: left center;
-}
-
 @media (max-width: 767px) {
   .docs-image-compact {
     width: 100%;
