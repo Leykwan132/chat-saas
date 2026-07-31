@@ -74,7 +74,7 @@ const guides = new Map([
   ["bookings/availability.mdx", [
     "Set weekly hours and the correct timezone",
     "Account for Service duration, buffers, and Calendar conflicts",
-    "Diagnose why a booking slot is unavailable",
+    "Keep bookable slots within teammate hours",
   ]],
   ["bookings/calendar.mdx", [
     "Create a customer booking manually",
@@ -334,12 +334,13 @@ test("Roles and permissions stays focused on three roles and owner control", () 
   assert.equal(source.includes("Northstar receptionist"), false);
 });
 
-test("Availability omits the slot evaluation explanation", () => {
+test("Availability omits slot troubleshooting", () => {
   const source = readGuide("bookings/availability.mdx");
 
   assert.equal(source.includes("## Understand slot evaluation"), false);
   assert.equal(source.includes("continuous valid interval that includes both"), false);
-  assert.ok(source.includes("## Troubleshoot a missing slot"));
+  assert.equal(source.includes("## Troubleshoot a missing slot"), false);
+  assert.equal(source.includes("Diagnose a missing booking slot"), false);
 });
 
 test("Services and Availability explain auto-booking prerequisites", () => {

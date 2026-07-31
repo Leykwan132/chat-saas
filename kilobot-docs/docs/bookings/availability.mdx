@@ -1,6 +1,6 @@
 ---
 title: Availability
-description: Configure teammate schedules and troubleshoot missing booking slots.
+description: Configure teammate schedules for booking availability.
 slug: /bookings/availability
 ---
 
@@ -20,7 +20,7 @@ Availability tells KiloBot when a teammate may receive a booking. A slot must fi
 
 - Set weekly hours and the correct timezone
 - Account for Service duration, buffers, and Calendar conflicts
-- Diagnose why a booking slot is unavailable
+  - Keep bookable slots within teammate hours
 
 </DocOutcomes>
 
@@ -48,28 +48,6 @@ Auto booking also needs Availability. After KiloBot knows which Service to book,
   callouts={['Days', 'Hours', 'Timezone', '24/7']}
   sensitive={['Real teammate names']}
   assetPath="/media/bookings/weekly-availability.png"
-/>
-
-## Troubleshoot a missing slot
-
-Check in this order:
-
-1. **Service:** Is Northstar Consultation active and selected by the Workflow?
-2. **Eligibility:** Can the intended teammate receive this Service?
-3. **Timezone:** Are the displayed hours interpreted in the intended zone?
-4. **Weekly hours:** Does the appointment fit entirely inside an enabled period?
-5. **Duration and buffer:** Is there enough continuous time?
-6. **Calendar:** Does another event overlap?
-7. **Assignment:** Can another eligible teammate offer the slot?
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Diagnose a missing booking slot"
-  description="Show Availability beside the conflicting Calendar event and Service timing."
-  capture={['Relevant working hours', 'Service duration and buffer', 'Conflicting event']}
-  callouts={['Available window', 'Required interval', 'Conflict']}
-  sensitive={['Customer and teammate identities']}
-  assetPath="/media/bookings/missing-slot-checks.png"
 />
 
 ## Next steps
