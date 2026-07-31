@@ -211,6 +211,16 @@ test("non-instructional pages do not show the outcome preview", () => {
   }
 });
 
+test("instructional guides offer page-specific next steps", () => {
+  for (const relativePath of guides.keys()) {
+    const source = readGuide(relativePath);
+    const nextSteps = source.split("## Next steps")[1];
+
+    assert.ok(nextSteps, `${relativePath}: next steps`);
+    assert.ok((nextSteps.match(/^- \[/gm) ?? []).length >= 2, relativePath);
+  }
+});
+
 test("WhatsApp explains coexistence before connection and safe disconnection", () => {
   const source = readGuide("channels/whatsapp.mdx");
 
