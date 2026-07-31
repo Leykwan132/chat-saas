@@ -19,9 +19,9 @@ A Service combines customer-facing details, timing, booking fields, sales style,
 
 ### By the end, you will
 
-- Create a customer-facing Service
-- Configure timing, booking fields, and assignment
-- Test that customers can book an eligible teammate
+- Understand what each Service setting controls
+- Choose timing, booking fields, sales style, and assignment
+- Prepare a Service for agent booking
 
 </DocOutcomes>
 
@@ -29,7 +29,18 @@ A Service combines customer-facing details, timing, booking fields, sales style,
 Auto booking needs a Service and an eligible teammate. KiloBot must know which Service to book before it can find a valid appointment time.
 :::
 
-## Create a Service
+## Service settings
+
+| Setting | What it means |
+| --- | --- |
+| **Name and description** | The customer-facing name and explanation for the appointment. |
+| **Active state** | Whether the Service can be used for new bookings. |
+| **Duration** | How long the appointment itself lasts. |
+| **Buffer** | Extra time held before the next appointment. |
+| **Timezone and preferred times** | How KiloBot interprets the schedule and which times it should prefer. |
+| **Booking fields** | The questions KiloBot asks to collect the information the team needs. |
+| **Sales style** | How the agent presents the Service: Proactive, Neutral, or Gentle. |
+| **Assignment** | How KiloBot chooses an eligible teammate, such as the conversation owner, balanced load, round robin, or a specific teammate. |
 
 <DocExample title="Northstar Consultation">
 
@@ -39,15 +50,6 @@ Auto booking needs a Service and an eligible teammate. KiloBot must know which S
 - **Assignment:** Conversation owner first
 
 </DocExample>
-
-<ol className="steps">
-  <li>Open <strong>Services</strong> and choose <strong>Add a service</strong>.</li>
-  <li>Enter the name, customer-facing description, and active state.</li>
-  <li>Set duration, buffer, timezone, and any preferred times.</li>
-  <li>Choose only the booking fields the team needs.</li>
-  <li>Choose the sales style and assignment strategy.</li>
-  <li>Save the Service.</li>
-</ol>
 
 Keep conversational data collection short. Default booking context includes date, time, customer name, and phone number; add text, number, select, yes/no, date, time, or phone fields only when the team will use them.
 
