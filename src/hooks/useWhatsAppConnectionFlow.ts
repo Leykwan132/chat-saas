@@ -6,8 +6,6 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import {
-  refreshFacebookLoginStatus,
-  useFacebookSession,
   waitForFacebookSdk,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
@@ -56,8 +54,6 @@ export function useWhatsAppConnectionFlow({
   });
   const appId = signupIds?.appId;
   const configId = signupIds?.configId;
-
-  useFacebookSession();
 
   const whatsappChannel = useMemo(() => {
     if (!channels) return undefined;
@@ -170,7 +166,6 @@ export function useWhatsAppConnectionFlow({
     }
     facebook.login(
       (response: FBLoginResponse) => {
-        refreshFacebookLoginStatus();
         const code = response.authResponse?.code;
         console.info('[whatsapp-connect] FB.login response', {
           status: response.status,

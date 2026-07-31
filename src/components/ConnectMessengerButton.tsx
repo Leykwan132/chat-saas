@@ -16,8 +16,6 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { MessengerPagePickerDialog } from '@/components/MessengerPagePickerDialog';
 import {
-  refreshFacebookLoginStatus,
-  useFacebookSession,
   waitForFacebookSdk,
   type FBLoginResponse,
 } from '@/lib/fbSdk';
@@ -49,8 +47,6 @@ export function ConnectMessengerButton({
     (import.meta.env.VITE_MESSENGER_CODE_EXCHANGE_REDIRECT_URI as
       | string
       | undefined)?.trim() || undefined;
-
-  useFacebookSession();
 
   const [activeChannelId, setActiveChannelId] = useState<
     Id<'channels'> | undefined
@@ -101,7 +97,6 @@ export function ConnectMessengerButton({
 
       fb.login(
         (response: FBLoginResponse) => {
-          refreshFacebookLoginStatus();
           void (async () => {
             try {
               const code = response.authResponse?.code;
