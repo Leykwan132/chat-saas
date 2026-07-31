@@ -37,9 +37,7 @@ test('keeps Quick Start to three required steps and compact next steps', () => {
     ['Create your agent', 'Give your agent knowledge', 'Test your agent'],
   );
   assert.ok(quickStart.includes('## Next steps'));
-  assert.ok(
-    quickStart.includes('Choose what to set up next:'),
-  );
+  assert.equal(quickStart.includes('Choose what to set up next:'), false);
 
   let previousNextStepIndex = quickStart.indexOf('## Next steps');
   for (const nextStepItem of nextStepItems) {
