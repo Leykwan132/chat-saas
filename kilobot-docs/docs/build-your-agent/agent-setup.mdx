@@ -1,10 +1,9 @@
 ---
 title: Agent Setup
-description: Define, test, and publish the behavior of your KiloBot agent.
+description: Define and refine the behavior of your KiloBot agent.
 slug: /build-your-agent/agent-setup
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 import DocPromptComparison from '@site/src/components/DocPromptComparison';
@@ -21,13 +20,13 @@ Agent Setup defines who the agent is, how it communicates, and when it should in
 
 - Decide where instructions, facts, and actions belong
 - Write clear behavior, tone, boundaries, and escalation rules
-- Review changes before publishing the agent
+- Review the agent behavior before using it
 
 </DocOutcomes>
 
 ## Best practice
 
-Keep Agent Setup focused on behavior: define the role, tone, boundaries, and escalation rules. Put durable business facts in the Knowledge Base and actions in Workflows so each change is easier to review and test.
+Keep Agent Setup focused on behavior: define the role, tone, boundaries, and escalation rules. Put durable business facts in the Knowledge Base and actions in Workflows so each change is easier to review and maintain.
 
 ## Decide where information belongs
 
@@ -68,34 +67,35 @@ requests for clinical judgment to a teammate.`}
   <li>Review the escalation and safety boundaries.</li>
 </ol>
 
-## Choose model and style
+## Models
 
-Open **Model & Style**, choose a model available to the workspace plan, and set response length, emoji use, formality, and humor. Style settings shape normal replies; exact Workflow messages remain exact.
+Choose a model available to your workspace plan. Compare the available options before you decide:
 
-## Control AI replies
+| Model | Advantage | Disadvantage |
+| --- | --- | --- |
+| Ilmu Mini V3.3 | Strong for Malay/Bahasa Melayu and concise everyday support conversations. | Less suited to long, highly technical, or complex multi-step reasoning. |
+| DeepSeek V4 Flash | Strong structured reasoning, technical explanations, and multilingual conversations, including Chinese. | Can be more verbose and may need tighter style instructions. |
+| OpenAI GPT-OSS 120B | Strong general-purpose writing, nuanced instructions, and flexible conversation style. | May use more credits; always ground business answers in the Knowledge Base. |
 
-Open **Triggers** and choose the available **Reply mode**. Human escalation or a conversation-level pause can prevent automatic replies even when the agent is published. Missing controls can indicate a plan, permission, or routing restriction.
+## Triggers
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Agent Setup controls"
-  description="Show the prompt, Model & Style, Triggers, Test agent, and Publish controls in one readable composition."
-  capture={['Prompt editor', 'Model & Style section', 'Triggers and Reply mode', 'Test agent and Publish actions']}
-  callouts={['Prompt', 'Style', 'Reply mode', 'Test', 'Publish']}
-  sensitive={['Private prompt rules', 'Unrelated agent names']}
-  assetPath="/media/agent/agent-setup-controls.png"
-/>
+Choose whether the agent should reply to every incoming message automatically or only after a teammate assigns the conversation.
 
-## Publish
+| Reply mode | Use it when |
+| --- | --- |
+| Automatically | The agent should reply to every incoming message. |
+| After assignment | A teammate should assign the conversation before the agent replies. |
 
-**Publish** makes the current draft active. Saving or editing a field does not guarantee that customers receive the new configuration. If you navigate away with an unpublished draft, return and publish the latest changes.
+:::tip
+If you want to send an item reliably, use a [Workflow](/automate/send-messages-and-assets). Workflows send approved messages and assets when a specific request matches.
+:::
 
 ## Common problems
 
 - **The answer is wrong:** correct conflicting Knowledge Base sources before expanding the prompt.
 - **An action does not run:** check the Workflow condition and near-miss tests.
 - **AI does not reply:** check conversation AI state, Reply mode, credits, permissions, and channel connection.
-- **A change is absent:** confirm the draft was published.
+- **A change is absent:** confirm the latest changes were saved.
 
 ## Next steps
 

@@ -24,7 +24,7 @@ const guides = new Map([
   ["build-your-agent/agent-setup.mdx", [
     "Decide where instructions, facts, and actions belong",
     "Write clear behavior, tone, boundaries, and escalation rules",
-    "Review changes before publishing the agent",
+    "Review the agent behavior before using it",
   ]],
   ["build-your-agent/knowledge-base.mdx", [
     "Choose the right source type",
@@ -277,6 +277,25 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
   assert.ok(knowledgeBase.includes("## Best practice: convert PDFs to text"));
   assert.ok(knowledgeBase.includes("add that text as a source"));
   assert.ok(knowledgeBase.includes("not 100% accurate"));
+});
+
+test("Agent Setup keeps model and trigger guidance focused", () => {
+  const source = readGuide("build-your-agent/agent-setup.mdx");
+
+  assert.ok(source.includes("## Models"));
+  assert.ok(source.includes("| Model | Advantage | Disadvantage |"));
+  assert.ok(source.includes("Ilmu Mini V3.3"));
+  assert.ok(source.includes("DeepSeek V4 Flash"));
+  assert.ok(source.includes("OpenAI GPT-OSS 120B"));
+  assert.ok(source.includes("## Triggers"));
+  assert.ok(source.includes("| Automatically |"));
+  assert.ok(source.includes("| After assignment |"));
+  assert.ok(source.includes(":::tip"));
+  assert.ok(source.includes("If you want to send an item reliably"));
+  assert.equal(source.includes("## Choose model and style"), false);
+  assert.equal(source.includes("## Control AI replies"), false);
+  assert.equal(source.includes("## Publish"), false);
+  assert.equal(source.includes("DocMediaPlaceholder"), false);
 });
 
 test("Workflow branch guidance stays under Build the branch", () => {
