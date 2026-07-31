@@ -83,6 +83,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D580 ACTIVE: Replace the Automate bookings image placeholder with the supplied `docs-booking.png` asset under Add the booking action.
 - 2026-07-31 [USER] D579 ACTIVE: Replace the Human in the loop image placeholder with the supplied `docs-human.png` asset under Add human escalation.
 - 2026-07-31 [USER] D578 ACTIVE: Replace the Send messages first section title with “Create the action” and use the supplied `docs-workflow.png` asset beneath it.
 - 2026-07-31 [USER] D577 ACTIVE: Instagram and Messenger should require Meta Business Suite before connection, keep their direct steps, and remove image/video assets for this setup.
@@ -403,6 +404,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Replaced the Automate bookings image placeholder with the supplied hosted docs-booking.png screenshot.
 - 2026-07-31 [CODE] Replaced the Human in the loop escalation image placeholder with the supplied hosted docs-human.png screenshot.
 - 2026-07-31 [CODE] Renamed Send messages’ first section to Create the action and replaced its placeholder with the supplied hosted workflow screenshot.
 - 2026-07-31 [CODE] Added Meta Business Suite Important prerequisites to Instagram and Messenger, removed their image/video briefs, and kept their straightforward connection steps.
@@ -519,6 +521,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31T17:30+08:00 [TOOL] Replaced the Automate bookings image placeholder with `https://storage.kilobot.app/docs/docs-booking.png` and added hosted-asset coverage. Node v22.22.0 passed 61/61 Docs tests, the 216-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T17:00+08:00 [TOOL] Replaced the Human in the loop image placeholder with `https://storage.kilobot.app/docs/docs-human.png` and added hosted-asset coverage. Node v22.22.0 passed 61/61 Docs tests, the 217-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T16:30+08:00 [TOOL] Renamed the Send messages first section to Create the action and replaced its placeholder with `https://storage.kilobot.app/docs/docs-workflow.png`. Node v22.22.0 passed 61/61 Docs tests, the 218-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31T16:00+08:00 [TOOL] Added Meta Business Suite prerequisites to Instagram and Messenger, removed both setup image and video placeholders from each, and added focused no-asset coverage. Node v22.22.0 passed 61/61 Docs tests, the 219-document production build, and `git diff --check`; no deployment, changelog, or push ran.

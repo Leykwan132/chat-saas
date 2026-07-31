@@ -444,7 +444,8 @@ test("Automate bookings uses two essential workflow steps", () => {
   assert.ok(source.includes("## 2. Describe the booking condition"));
   assert.ok(source.includes("From the Workflows page"));
   assert.ok(source.includes("Book appointment"));
-  assert.ok(source.indexOf('assetPath="/media/workflows/book-appointment-action.png"') < source.indexOf("## 2. Describe the booking condition"));
+  assert.ok(source.includes("![Configure the booking action](https://storage.kilobot.app/docs/docs-booking.png)"));
+  assert.equal(source.includes("book-appointment-action.png"), false);
   assert.equal(source.slice(source.indexOf("## 2. Describe the booking condition")).includes("DocMediaPlaceholder"), false);
   assert.equal(source.includes("className=\"steps\""), false);
   assert.equal(source.includes("Workflows → Direct Message"), false);
