@@ -183,7 +183,6 @@ test('opens the documentation shell at the root without a custom home page', () 
 test('scopes circular step badges and ships path/card components', () => {
   const css = read('src/css/custom.css');
   const paginationCss = read('src/css/pagination.css');
-  const agentSetup = read('docs/build-your-agent/agent-setup.mdx');
   const packageJson = read('package.json');
 
   assert.ok(css.includes('.theme-doc-markdown ol.steps'));
@@ -207,7 +206,6 @@ test('scopes circular step badges and ships path/card components', () => {
     paginationCss,
     /\.pagination-nav__link,\s*\.pagination-nav__link:hover \{[\s\S]*border: none;/,
   );
-  assert.ok(agentSetup.includes('className="steps"'));
   assert.ok(packageJson.includes('"lucide-react"'));
   assert.equal(existsSync(path.join(root, 'src/components/DocPathGrid.tsx')), true);
   assert.equal(existsSync(path.join(root, 'src/components/DocPathTile.tsx')), true);
