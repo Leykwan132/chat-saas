@@ -326,6 +326,8 @@ test("Broadcast explains the smart window alternative and pricing", () => {
   assert.ok(source.includes("Send the approved WhatsApp Message Template through Broadcast"));
   assert.ok(source.includes("Meta's current template pricing applies"));
   assert.ok(source.includes("official WhatsApp pricing"));
+  assert.equal(source.includes("## Review history"), false);
+  assert.equal(source.includes("broadcast-complete.mp4"), false);
   assert.ok(source.includes("Meta bills these message charges directly"));
   assert.ok(source.includes("valid payment method in your Meta Business account"));
   assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"));
