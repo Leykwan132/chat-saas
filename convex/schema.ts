@@ -706,6 +706,7 @@ export default defineSchema({
     wabaId: v.optional(v.string()),
     phoneNumberId: v.optional(v.string()),
     channelId: v.optional(v.id("channels")),
+    signupFinishedAt: v.optional(v.number()),
     mmLiteTermsSignedAt: v.optional(v.number()),
     partnerAppInstalledAt: v.optional(v.number()),
     syncStartedAt: v.optional(v.number()),
