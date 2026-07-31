@@ -122,9 +122,9 @@ const guides = new Map([
     "Review, change, or remove team access",
   ]],
   ["team/roles-and-permissions.mdx", [
-    "Match permissions to a teammate’s responsibilities",
-    "Assign the smallest suitable access",
-    "Give teammates only the access they need",
+    "Understand Owner, Admin, and Member",
+    "Know that only the Owner controls role access",
+    "Give each teammate the access they need",
   ]],
   ["team/lead-assignment.mdx", [
     "Choose a conversation assignment strategy",
@@ -315,6 +315,20 @@ test("Broadcast, Reminders, and Follow-ups explain Meta billing setup", () => {
     assert.ok(source.includes("Meta bills these message charges directly"), relativePath);
     assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"), relativePath);
   }
+});
+
+test("Roles and permissions stays focused on three roles and owner control", () => {
+  const source = readGuide("team/roles-and-permissions.mdx");
+
+  assert.ok(source.includes("## Three roles"));
+  assert.ok(source.includes("| **Owner** |"));
+  assert.ok(source.includes("| **Admin** |"));
+  assert.ok(source.includes("| **Member** |"));
+  assert.ok(source.includes("Only the **Owner** can set what each role can see and manage"));
+  assert.ok(source.includes("## Give access"));
+  assert.equal(source.includes("## Start with responsibility"), false);
+  assert.equal(source.includes("DocMediaPlaceholder"), false);
+  assert.equal(source.includes("Northstar receptionist"), false);
 });
 
 test("Availability omits the slot evaluation explanation", () => {

@@ -4,8 +4,6 @@ description: Give teammates the access they need while protecting sensitive Kilo
 slug: /team/roles-and-permissions
 ---
 
-import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -13,66 +11,35 @@ import DocVerified from '@site/src/components/DocVerified';
 
 <DocVerified date="2026-07-28" />
 
-Roles group permissions that control what a teammate can view or manage. Navigation and actions are permission-aware, so two teammates may see different screens in the same workspace.
+Roles control what each teammate can see and manage in the workspace. KiloBot starts with three roles.
 
 <DocOutcomes>
 
 ### By the end, you will
 
-- Match permissions to a teammate’s responsibilities
-- Assign the smallest suitable access
-- Give teammates only the access they need
+- Understand Owner, Admin, and Member
+- Know that only the Owner controls role access
+- Give each teammate the access they need
 
 </DocOutcomes>
 
-## Start with responsibility
+## Three roles
 
-| Responsibility | Likely access | Usually unnecessary |
-| --- | --- | --- |
-| Answer customers | Conversations and Contacts | Agent configuration and team administration |
-| Manage appointments | Conversations, Services, Availability, Calendar | Channels and team administration |
-| Configure the customer experience | Agent Setup, Knowledge Base, Channels, Workflows | Team administration unless they also manage people |
-| Administer the workspace | Teams and required organization settings | Daily conversation ownership unless operationally needed |
+| Role | What it means |
+| --- | --- |
+| **Owner** | Owns the workspace and controls what each role can see and manage. |
+| **Admin** | Helps run the workspace with the access set by the Owner. |
+| **Member** | Works with the access set by the Owner. |
 
-Use built-in roles where they fit. When custom roles are available, name them after responsibility, such as **Inbox operator** or **Booking manager**, rather than after a person.
-
-<DocExample title="Northstar receptionist">
-
-The receptionist needs Conversations, Contacts, Services, and Calendar. They do not need to reconnect channels, change the agent prompt, or manage team membership.
-
-</DocExample>
-
-## Assign a role
-
-<ol className="steps">
-  <li>Open <strong>Settings → Teams</strong> and select the teammate.</li>
-  <li>Choose the role that covers the defined responsibility.</li>
-  <li>Save the change.</li>
-  <li>Confirm the teammate has only the controls required for the role.</li>
-</ol>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Role and permission review"
-  description="Show a fictional operator role with its allowed product areas."
-  capture={[
-    'Selected teammate or role',
-    'Permission groups',
-    'Read and manage distinctions where available',
-    'Save action',
-  ]}
-  callouts={[
-    'Grant access by responsibility',
-    'Separate viewing from management where possible',
-    'Review the assigned access',
-  ]}
-  sensitive={['Real member names and emails', 'Workspace identifiers']}
-  assetPath="/img/guides/teams/role-permissions.png"
-/>
-
-:::warning
-Do not share user accounts to avoid permission setup. Individual membership makes responsibility and access removal clear.
+:::important
+Only the **Owner** can set what each role can see and manage. Admins and Members use the access the Owner gives them.
 :::
+
+## Give access
+
+1. Open **Settings → Teams**.
+2. Select a teammate and choose **Admin** or **Member**.
+3. As the Owner, choose what that role can see and manage, then save.
 
 ## Next steps
 
