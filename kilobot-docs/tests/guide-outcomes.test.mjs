@@ -221,6 +221,12 @@ test("instructional guides offer page-specific next steps", () => {
   }
 });
 
+test("public guides do not show success panels", () => {
+  for (const relativePath of [...guides.keys(), ...excludedGuides]) {
+    assert.equal(readGuide(relativePath).includes("DocSuccess"), false, relativePath);
+  }
+});
+
 test("WhatsApp explains coexistence before connection and safe disconnection", () => {
   const source = readGuide("channels/whatsapp.mdx");
 

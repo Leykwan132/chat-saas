@@ -5,7 +5,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import DocExample from './DocExample';
 import DocMediaPlaceholder from './DocMediaPlaceholder';
 import DocOutcomes from './DocOutcomes';
-import DocSuccess from './DocSuccess';
 import DocVerified from './DocVerified';
 
 describe('guide components', () => {
@@ -31,14 +30,13 @@ describe('guide components', () => {
     assert.ok(html.includes('aria-label="Video needed: Connect the Website widget"'));
   });
 
-  test('renders examples, success, and verification metadata', () => {
+  test('renders examples and verification metadata', () => {
     const html = renderToStaticMarkup(
       <>
         <DocVerified date="2026-07-28" />
         <DocExample title="Example Q&A" icon={MessageCircleQuestion}>
           Example content
         </DocExample>
-        <DocSuccess><p>The message appears in Inbox.</p></DocSuccess>
       </>,
     );
 
@@ -46,7 +44,6 @@ describe('guide components', () => {
     assert.ok(html.includes('July 28, 2026'));
     assert.ok(html.includes('Example Q&amp;A'));
     assert.ok(html.includes('data-icon="example"'));
-    assert.ok(html.includes('You’re done when'));
   });
 
   test('renders guide outcomes as one semantic section', () => {
