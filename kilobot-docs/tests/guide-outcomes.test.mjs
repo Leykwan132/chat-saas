@@ -236,6 +236,14 @@ test("public guides do not show success panels", () => {
   }
 });
 
+test("public guides do not retain media placeholders", () => {
+  for (const relativePath of guides.keys()) {
+    const source = readGuide(relativePath);
+    assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
+    assert.equal(source.includes("assetPath"), false, relativePath);
+  }
+});
+
 test("WhatsApp explains coexistence before connection and safe disconnection", () => {
   const source = readGuide("channels/whatsapp.mdx");
 
@@ -364,8 +372,8 @@ test("Roles and permissions stays focused on three roles and owner control", () 
   assert.ok(source.includes("| **Member** |"));
   assert.ok(source.includes("Only the **Owner** can set what each role can see and manage"));
   assert.ok(source.includes("## Give access"));
-  assert.ok(source.includes('kind="image"'));
-  assert.ok(source.includes("role-permissions.png"));
+  assert.equal(source.includes('kind="image"'), false);
+  assert.equal(source.includes("role-permissions.png"), false);
   assert.equal(source.includes("## Start with responsibility"), false);
   assert.equal(source.includes('kind="video"'), false);
   assert.equal(source.includes("Northstar receptionist"), false);

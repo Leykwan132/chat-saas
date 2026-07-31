@@ -5,7 +5,6 @@ slug: /channels/connect-channels
 ---
 
 import DocCard from '@site/src/components/DocCard';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -36,16 +35,6 @@ KiloBot always shows WhatsApp, Instagram, and Messenger cards. A disconnected ca
 | Synchronizing | Initial supported data is being imported | Keep the connection active and wait |
 | Connected | New supported messages can enter Inbox | Reply to new messages |
 | Failed or disconnected | Authorization or provider access is incomplete | Review the platform guide before reconnecting |
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Compare channel card states"
-  description="Show one connected card and the persistent Not connected cards."
-  capture={['A connected platform identity', 'A Not connected card', 'The Connect action']}
-  callouts={['Connected', 'Not connected', 'Connect']}
-  sensitive={['Phone numbers', 'Page names not owned by the demo workspace', 'Provider IDs']}
-  assetPath="/media/channels/channel-cards.png"
-/>
 
 ## Choose a platform
 
