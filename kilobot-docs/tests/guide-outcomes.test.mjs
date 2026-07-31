@@ -240,6 +240,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   const source = readGuide("channels/whatsapp.mdx");
 
   assert.ok(source.includes("## Connect with Coexistence"));
+  assert.ok(source.includes("![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)"));
   assert.ok(
     source.indexOf("Coexistence lets you use the same WhatsApp Business number") <
       source.indexOf('<ol className="steps">'),
