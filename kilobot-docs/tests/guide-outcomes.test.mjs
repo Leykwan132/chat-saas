@@ -416,6 +416,8 @@ test("Send messages guide uses two setup steps", () => {
   assert.ok(source.includes("## 2. Describe the condition"));
   assert.ok(source.includes("Write a short Name that is easy to scan on the canvas"));
   assert.ok(source.indexOf("## 1. Create the send message") < source.indexOf("## 2. Describe the condition"));
+  assert.ok(source.indexOf('assetPath="/media/workflows/send-message-steps.png"') < source.indexOf("## 2. Describe the condition"));
+  assert.equal(source.slice(source.indexOf("## 2. Describe the condition")).includes("DocMediaPlaceholder"), false);
   assert.equal(source.includes("className=\"steps\""), false);
 });
 
@@ -430,6 +432,7 @@ test("Human in the loop shows the escalated Inbox state", () => {
   assert.ok(source.includes("What a teammate sees after escalation"));
   assert.ok(source.includes("the Inbox conversation after Human escalation pauses AI replies"));
   assert.ok(source.includes("human-escalation-inbox.png"));
+  assert.ok(source.indexOf("human-escalation-inbox.png") < source.indexOf("## 2. Describe the condition"));
   assert.equal(source.includes("verify-human-handoff.mp4"), false);
 });
 
@@ -440,6 +443,8 @@ test("Automate bookings uses two essential workflow steps", () => {
   assert.ok(source.includes("## 2. Describe the booking condition"));
   assert.ok(source.includes("From the Workflows page"));
   assert.ok(source.includes("Book appointment"));
+  assert.ok(source.indexOf('assetPath="/media/workflows/book-appointment-action.png"') < source.indexOf("## 2. Describe the booking condition"));
+  assert.equal(source.slice(source.indexOf("## 2. Describe the booking condition")).includes("DocMediaPlaceholder"), false);
   assert.equal(source.includes("className=\"steps\""), false);
   assert.equal(source.includes("Workflows → Direct Message"), false);
   assert.equal(source.includes("Save the Workflow"), false);

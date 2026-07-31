@@ -35,6 +35,16 @@ Use a Workflow when a customer request should send approved content instead of r
 
 Keep the customer-facing content in the action. Use the condition only to explain when that action should run.
 
+<DocMediaPlaceholder
+  kind="image"
+  title="Create a send-message Workflow"
+  description="Show the approved message or asset action ready to configure."
+  capture={['Create the Send message, Send Photo/Video, or Send Files action', 'Approved customer-facing content']}
+  callouts={['Send message', 'Approved content']}
+  sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}
+  assetPath="/media/workflows/send-message-steps.png"
+/>
+
 ## 2. Describe the condition
 
 Write a short Name that is easy to scan on the canvas, followed by a precise Detail that separates the request from similar intents.
@@ -46,16 +56,6 @@ Write a short Name that is easy to scan on the canvas, followed by a precise Det
 **Detail:** Match when the customer asks for the clinic brochure, a general treatment overview, or a document describing available services. Do not match questions about pricing, booking, or whether a treatment is suitable for a specific person.
 
 </DocExample>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Create a send-message Workflow"
-  description="Show the two-step setup: create the approved message or asset, then describe the condition that should send it."
-  capture={['Create the Send message, Send Photo/Video, or Send Files action', 'Describe the condition Name and Detail']}
-  callouts={['Send message', 'Condition']}
-  sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}
-  assetPath="/media/workflows/send-message-steps.png"
-/>
 
 ## Next steps
 

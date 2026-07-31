@@ -29,6 +29,16 @@ Human escalation pauses AI replies and gives a teammate space to take over when 
 
 Add **Human escalation** from the relevant Workflow connection. When the condition matches, the AI raises the escalation and pauses its replies for a teammate.
 
+<DocMediaPlaceholder
+  kind="image"
+  title="What a teammate sees after escalation"
+  description="Show the Inbox conversation after Human escalation pauses AI replies and makes the conversation ready for teammate ownership."
+  capture={['The escalated conversation in Inbox', 'A visible paused-AI or human-escalation state', 'The conversation ready for a teammate to reply']}
+  callouts={['Escalated conversation', 'AI paused', 'Teammate reply']}
+  sensitive={['Real customer data', 'Phone numbers', 'Private teammate details']}
+  assetPath="/media/workflows/human-escalation-inbox.png"
+/>
+
 ## 2. Describe the condition
 
 Use a narrow Name and Detail so the AI can identify when a teammate should take over.
@@ -40,16 +50,6 @@ Use a narrow Name and Detail so the AI can identify when a teammate should take 
 **Detail:** Match when the customer asks for a human, reports an urgent or sensitive concern, makes a complaint, or needs help that the agent cannot provide confidently. Do not match ordinary questions that the Knowledge Base can answer.
 
 </DocExample>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="What a teammate sees after escalation"
-  description="Show the Inbox conversation after Human escalation pauses AI replies and makes the conversation ready for teammate ownership."
-  capture={['The escalated conversation in Inbox', 'A visible paused-AI or human-escalation state', 'The conversation ready for a teammate to reply']}
-  callouts={['Escalated conversation', 'AI paused', 'Teammate reply']}
-  sensitive={['Real customer data', 'Phone numbers', 'Private teammate details']}
-  assetPath="/media/workflows/human-escalation-inbox.png"
-/>
 
 ## Next steps
 
