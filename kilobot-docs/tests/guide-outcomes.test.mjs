@@ -281,6 +281,9 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
   );
   assert.ok(knowledgeBase.includes("add that text as a source"));
   assert.ok(knowledgeBase.includes("not 100% accurate"));
+  assert.ok(knowledgeBase.includes("The model answer has not updated"));
+  assert.ok(knowledgeBase.includes("The answer is not fixed"));
+  assert.ok(knowledgeBase.includes("subject to summarization by the model"));
 });
 
 test("Agent Setup keeps model and trigger guidance focused", () => {
