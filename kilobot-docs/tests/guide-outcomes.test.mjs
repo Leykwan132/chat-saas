@@ -268,6 +268,17 @@ test("Meta channel guides explain the conversation window", () => {
   }
 });
 
+test("Agent Setup and Knowledge Base explain source best practices", () => {
+  const agentSetup = readGuide("build-your-agent/agent-setup.mdx");
+  const knowledgeBase = readGuide("build-your-agent/knowledge-base.mdx");
+
+  assert.ok(agentSetup.includes("## Best practice"));
+  assert.ok(agentSetup.includes("Put durable business facts in the Knowledge Base"));
+  assert.ok(knowledgeBase.includes("## Best practice: convert PDFs to text"));
+  assert.ok(knowledgeBase.includes("add that text as a source"));
+  assert.ok(knowledgeBase.includes("not 100% accurate"));
+});
+
 test("other channel setup paths stay direct", () => {
   for (const relativePath of [
     "channels/instagram.mdx",
