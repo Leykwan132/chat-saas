@@ -109,7 +109,7 @@ const guides = new Map([
   ["automate/reminders.mdx", [
     "Choose which appointments should receive reminders",
     "Configure approved messages and send timing",
-    "See scheduled and completed sends in History",
+    "Activate reminders for eligible appointments",
   ]],
   ["automate/follow-ups.mdx", [
     "Choose the follow-up audience and activation scope",
@@ -451,6 +451,16 @@ test("Automate bookings uses two essential workflow steps", () => {
   assert.equal(source.includes("Workflows → Direct Message"), false);
   assert.equal(source.includes("Save the Workflow"), false);
   assert.equal(source.includes("verify-automated-booking.mp4"), false);
+});
+
+test("Reminders omits History monitoring and its video brief", () => {
+  const source = readGuide("automate/reminders.mdx");
+
+  assert.equal(source.includes("## Monitor History"), false);
+  assert.equal(source.includes("Reminder History"), false);
+  assert.equal(source.includes("Show appointment Reminders"), false);
+  assert.equal(source.includes("reminders-verify.mp4"), false);
+  assert.ok(source.includes("Activate reminders for eligible appointments"));
 });
 
 test("guides show outcomes without standalone testing sections", () => {
