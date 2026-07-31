@@ -9,6 +9,7 @@ import {
   maybeCompleteWhatsAppConnectionAttempt,
   WHATSAPP_OPEN_CONNECTION_ATTEMPT_STATUSES,
 } from "./whatsappConnectionAttemptUtils";
+import { recordWhatsAppSignupFinished } from "./whatsappConnectionAttemptFinish";
 
 const DEFAULT_GRAPH_VERSION = "v22.0";
 const LOG_PREFIX = "[whatsapp-connect]";
@@ -80,6 +81,15 @@ export const beginConnectionAttempt = mutation({
       updatedAt: now,
     });
   },
+});
+
+export const recordSignupFinished = mutation({
+  args: {
+    attemptId: v.id("whatsappConnectionAttempts"),
+    wabaId: v.string(),
+    phoneNumberId: v.string(),
+  },
+  handler: recordWhatsAppSignupFinished,
 });
 
 export const cancelConnectionAttempt = mutation({
@@ -292,43 +302,6 @@ async function exchangeAuthorizationCodeForToken(args: {
     "Code exchange",
   );
 }
-
-// Stage signup after FB.login + embedded signup FINISH. completeSignup also
-// stages the row, so this remains safe for clients that still call it.
-export const prepareWhatsAppSignup = action({
-  args: {
-    wabaId: v.string(),
-    phoneNumberId: v.string(),
-    attemptId: v.optional(v.id("whatsappConnectionAttempts")),
-    agentId: v.optional(v.id("agents")),
-  },
-  handler: async (ctx, args) => {
-    const { orgId, userId } = await getAuthContext(ctx);
-    const channelOrgId = resolveChannelOrgId(orgId, userId);
-
-    if (args.attemptId !== undefined) {
-      await ctx.runMutation(
-        internal.whatsappEmbeddedSignup.internalUpdateConnectionAttempt,
-        {
-          attemptId: args.attemptId,
-          wabaId: args.wabaId,
-          phoneNumberId: args.phoneNumberId,
-          status: "signup_finished",
-        },
-      );
-    }
-
-    await ctx.runMutation(internal.channels.internalStartPending, {
-      orgId: channelOrgId,
-      wabaId: args.wabaId,
-      phoneNumberId: args.phoneNumberId,
-      connectedByUserId: userId,
-      agentId: args.agentId,
-    });
-
-    return { prepared: true as const };
-  },
-});
 
 // Public action invoked from the frontend after FB.login returns the short-lived
 // authorization code and WA_EMBEDDED_SIGNUP returns the WABA + phone IDs.

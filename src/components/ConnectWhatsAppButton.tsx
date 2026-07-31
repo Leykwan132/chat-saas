@@ -27,6 +27,7 @@ import {
 import {
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
+import { usePersistWhatsAppSignupFinish } from '@/hooks/usePersistWhatsAppSignupFinish';
 
 type SessionInfoMessage = {
   type: 'WA_EMBEDDED_SIGNUP';
@@ -66,6 +67,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   const beginConnectionAttempt = useMutation(
     api.whatsappEmbeddedSignup.beginConnectionAttempt,
   );
+  const persistSignupFinish = usePersistWhatsAppSignupFinish();
   const openConnectionAttempt = useQuery(
     api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
     {},
@@ -260,7 +262,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
   // Meta posts WA_EMBEDDED_SIGNUP when the embedded signup flow finishes.
   useEffect(() => {
-    function handleMessage(event: MessageEvent) {
+    async function handleMessage(event: MessageEvent) {
       let payload: SessionInfoMessage | null = null;
       try {
         if (typeof event.data === 'string') {
@@ -273,12 +275,32 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       }
       if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
 
-      if (isSignupFinishEvent(payload.event) && payload.data) {
+      if (
+        isSignupFinishEvent(payload.event) &&
+        payload.data?.waba_id &&
+        payload.data.phone_number_id
+      ) {
+        const wabaId = payload.data.waba_id;
+        const phoneNumberId = payload.data.phone_number_id;
+        try {
+          await persistSignupFinish(
+            connectionAttemptPromiseRef.current,
+            wabaId,
+            phoneNumberId,
+          );
+        } catch (err) {
+          setDialogState({
+            kind: 'error',
+            message: err instanceof Error ? err.message : String(err),
+          });
+          setBusy(false);
+          return;
+        }
         sessionInfoRef.current = {
-          wabaId: payload.data.waba_id,
-          phoneNumberId: payload.data.phone_number_id,
+          wabaId,
+          phoneNumberId,
         };
-        setActivePhoneNumberId(payload.data.phone_number_id);
+        setActivePhoneNumberId(phoneNumberId);
         void tryCompleteSignup();
       } else if (payload.event === 'CANCEL') {
         setBusy(false);
@@ -289,9 +311,12 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       }
     }
 
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [tryCompleteSignup]);
+    const receiveMessage = (event: MessageEvent) => {
+      void handleMessage(event);
+    };
+    window.addEventListener('message', receiveMessage);
+    return () => window.removeEventListener('message', receiveMessage);
+  }, [persistSignupFinish, tryCompleteSignup]);
 
   const launchSignup = useCallback(async () => {
     if (!appId || !configId) {
