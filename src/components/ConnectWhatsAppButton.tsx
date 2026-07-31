@@ -189,18 +189,33 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
   }, [openConnectionAttempt, whatsappChannel?.status, dialogState.kind, onConnected, userDismissed, agentId, navigate]);
 
   const tryCompleteSignup = useCallback(async () => {
-    if (completingRef.current) return;
+    if (completingRef.current) {
+      console.info('[whatsapp-connect] completeSignup already running');
+      return;
+    }
 
     const code = authCodeRef.current;
     const { wabaId, phoneNumberId } = sessionInfoRef.current;
-    if (!code || !wabaId || !phoneNumberId) return;
+    if (!code || !wabaId || !phoneNumberId) {
+      console.warn('[whatsapp-connect] completeSignup waiting for inputs', {
+        hasCode: Boolean(code),
+        hasWabaId: Boolean(wabaId),
+        hasPhoneNumberId: Boolean(phoneNumberId),
+      });
+      return;
+    }
 
     completingRef.current = true;
     setDialogState({ kind: 'connecting' });
 
     try {
       const attemptId = await connectionAttemptPromiseRef.current;
-      await completeSignup({
+      console.info('[whatsapp-connect] invoking completeSignup', {
+        attemptId,
+        wabaId,
+        phoneNumberId,
+      });
+      const result = await completeSignup({
         code,
         applicationId: appId,
         wabaId,
@@ -208,7 +223,9 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         attemptId,
         flowType: 'existing_phone_number',
       });
+      console.info('[whatsapp-connect] completeSignup completed', result);
     } catch (err) {
+      console.error('[whatsapp-connect] completeSignup failed', err);
       const msg = err instanceof Error ? err.message : String(err);
       setDialogState({ kind: 'error', message: msg });
     } finally {
@@ -223,18 +240,53 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
     let fb: NonNullable<typeof window.FB>;
     try {
       fb = await waitForFacebookSdk();
-    } catch {
+    } catch (err) {
+      console.error('[whatsapp-connect] Facebook SDK unavailable', err);
       toast.error('Facebook SDK not loaded yet. Please try again in a moment.');
       setBusy(false);
       return;
     }
 
+    console.info('[whatsapp-connect] launching FB.login', {
+      appId,
+      configId,
+      responseType: 'code',
+      overrideDefaultResponseType: true,
+      featureType: 'whatsapp_business_app_onboarding',
+      sessionInfoVersion: '3',
+    });
     fb.login(
       (response: FBLoginResponse) => {
         refreshFacebookLoginStatus();
 
         const code = response.authResponse?.code;
+        console.info('[whatsapp-connect] FB.login response', {
+          status: response.status,
+          authResponse: response.authResponse
+            ? {
+                userID: response.authResponse.userID,
+                expiresIn: response.authResponse.expiresIn,
+                hasCode: Boolean(code),
+                codeLength: code?.length,
+                hasAccessToken: Boolean(response.authResponse.accessToken),
+                hasSignedRequest: Boolean(response.authResponse.signedRequest),
+              }
+            : null,
+        });
         if (!code) {
+          console.error('[whatsapp-connect] OAuth code missing', {
+            status: response.status,
+            authResponse: response.authResponse
+              ? {
+                  keys: Object.keys(response.authResponse),
+                  code: response.authResponse.code ?? null,
+                  userID: response.authResponse.userID,
+                  expiresIn: response.authResponse.expiresIn,
+                  hasAccessToken: Boolean(response.authResponse.accessToken),
+                  hasSignedRequest: Boolean(response.authResponse.signedRequest),
+                }
+              : null,
+          });
           const message =
             response.status === 'unknown'
               ? 'Signup cancelled before completion.'
@@ -245,6 +297,7 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         }
 
         authCodeRef.current = code;
+        console.info('[whatsapp-connect] OAuth code received');
         void tryCompleteSignup();
       },
       {
@@ -270,10 +323,20 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         } else if (typeof event.data === 'object' && event.data !== null) {
           payload = event.data as SessionInfoMessage;
         }
-      } catch {
+      } catch (err) {
+        console.error('[whatsapp-connect] Meta message parse failed', {
+          error: err,
+          origin: event.origin,
+        });
         return;
       }
       if (!payload || payload.type !== 'WA_EMBEDDED_SIGNUP') return;
+      console.info('[whatsapp-connect] embedded signup message', {
+        origin: event.origin,
+        type: payload.type,
+        event: payload.event,
+        data: payload.data,
+      });
 
       if (
         isSignupFinishEvent(payload.event) &&
@@ -282,13 +345,20 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
       ) {
         const wabaId = payload.data.waba_id;
         const phoneNumberId = payload.data.phone_number_id;
+        console.info('[whatsapp-connect] embedded signup FINISH received', {
+          event: payload.event,
+          wabaId,
+          phoneNumberId,
+        });
         try {
           await persistSignupFinish(
             connectionAttemptPromiseRef.current,
             wabaId,
             phoneNumberId,
           );
+          console.info('[whatsapp-connect] signup FINISH persisted');
         } catch (err) {
+          console.error('[whatsapp-connect] signup FINISH persistence failed', err);
           setDialogState({
             kind: 'error',
             message: err instanceof Error ? err.message : String(err),
@@ -302,10 +372,18 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
         };
         setActivePhoneNumberId(phoneNumberId);
         void tryCompleteSignup();
+      } else if (isSignupFinishEvent(payload.event)) {
+        console.error('[whatsapp-connect] embedded signup FINISH missing IDs', {
+          event: payload.event,
+          hasWabaId: Boolean(payload.data?.waba_id),
+          hasPhoneNumberId: Boolean(payload.data?.phone_number_id),
+        });
       } else if (payload.event === 'CANCEL') {
+        console.warn('[whatsapp-connect] embedded signup cancelled', payload.data);
         setBusy(false);
         toast.message('WhatsApp connection cancelled');
       } else if (payload.event === 'ERROR' && payload.data?.error_message) {
+        console.error('[whatsapp-connect] embedded signup error', payload.data);
         setBusy(false);
         toast.error(`Embedded Signup error: ${payload.data.error_message}`);
       }
@@ -356,10 +434,12 @@ export function ConnectWhatsAppButton({ onConnected, forceAllowConnect, disabled
 
     connectionAttemptPromiseRef.current = beginConnectionAttempt({})
       .then((attemptId) => {
+        console.info('[whatsapp-connect] connection attempt created', { attemptId });
         setDialogState({ kind: 'connecting' });
         return attemptId;
       })
       .catch((err) => {
+        console.error('[whatsapp-connect] connection attempt creation failed', err);
         toast.error(err instanceof Error ? err.message : String(err));
         setBusy(false);
         return undefined;
