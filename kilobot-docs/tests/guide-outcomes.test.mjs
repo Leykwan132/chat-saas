@@ -421,7 +421,7 @@ test("Send messages guide uses two setup steps", () => {
   assert.ok(source.includes("## 2. Describe the condition"));
   assert.ok(source.includes("Write a short Name that is easy to scan on the canvas"));
   assert.ok(source.indexOf("## 1. Create the action") < source.indexOf("## 2. Describe the condition"));
-  assert.ok(source.includes("![Create the action](https://storage.kilobot.app/docs/docs-workflow.png)"));
+  assert.ok(source.includes("![Create the send message action](https://storage.kilobot.app/docs/docs-send-msg.png)"));
   assert.equal(source.slice(source.indexOf("## 2. Describe the condition")).includes("DocMediaPlaceholder"), false);
   assert.equal(source.includes("send-message-steps.png"), false);
   assert.equal(source.includes("className=\"steps\""), false);
