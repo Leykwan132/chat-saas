@@ -524,7 +524,10 @@ test("other channel setup paths stay direct", () => {
     const source = readGuide(relativePath);
     assert.ok(source.includes("Setup is straightforward:"));
     assert.ok((source.match(/<li>/g) ?? []).length <= 3);
-    if (relativePath !== "channels/website-widget.mdx") {
+    if (relativePath === "channels/website-widget.mdx") {
+      assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
+      assert.equal(source.includes("assetPath"), false, relativePath);
+    } else {
       assert.ok(source.includes(":::important"), relativePath);
       assert.ok(source.includes("Meta Business Suite"), relativePath);
       assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
