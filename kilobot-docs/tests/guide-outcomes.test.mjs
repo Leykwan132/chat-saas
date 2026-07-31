@@ -287,6 +287,18 @@ test("reminders and follow-ups explain smart window pricing", () => {
   assert.ok(readGuide("automate/reminders.mdx").includes("/automate/follow-ups"));
 });
 
+test("Broadcast explains the smart window alternative and pricing", () => {
+  const source = readGuide("engage/broadcast.mdx");
+
+  assert.ok(source.includes("## Smart sending and pricing"));
+  assert.ok(source.includes("Broadcasts are for audience-level, business-initiated messages"));
+  assert.ok(source.includes("Send a normal one-to-one message or workflow instead of a Broadcast"));
+  assert.ok(source.includes("Avoids an unnecessary template charge"));
+  assert.ok(source.includes("Send the approved WhatsApp Message Template through Broadcast"));
+  assert.ok(source.includes("Meta's current template pricing applies"));
+  assert.ok(source.includes("official WhatsApp pricing"));
+});
+
 test("Agent Setup and Knowledge Base explain source best practices", () => {
   const agentSetup = readGuide("build-your-agent/agent-setup.mdx");
   const knowledgeBase = readGuide("build-your-agent/knowledge-base.mdx");
