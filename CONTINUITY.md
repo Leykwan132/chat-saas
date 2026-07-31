@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] After the WhatsApp Business app/phone-number step, WhatsApp now explains that Facebook sends a connection message through WhatsApp and shows the compact `connect-msg.png` screenshot before the remaining coexistence steps.
 - 2026-07-31 [CODE] The WhatsApp coexistence flow now says to choose WhatsApp Business app for the business portfolio before entering the phone number.
 - 2026-07-31 [CODE] WhatsApp coexistence now starts directly with Connect and WhatsApp Business app/phone-number selection; Meta sign-in and business/account-selection instructions were removed.
 - 2026-07-31 [CODE] WhatsApp no longer has a connection video brief; the coexistence screenshot is compact and placed immediately after the “WhatsApp Business app” phone-number step, while the connection-message screenshot remains below the remaining steps.
@@ -89,6 +90,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D598 ACTIVE: Explain that Facebook sends a WhatsApp connection message after the business-app/phone-number step and place `connect-msg.png` immediately there.
 - 2026-07-31 [USER] D597 ACTIVE: Clarify the WhatsApp coexistence step as “Choose WhatsApp Business app for your business portfolio.”
 - 2026-07-31 [USER] D596 ACTIVE: Remove the Meta sign-in and intended business/account selection steps from the WhatsApp coexistence flow.
 - 2026-07-31 [USER] D595 ACTIVE: Remove the WhatsApp connection video brief and place a smaller `docs-coexistence.png` image directly after the first WhatsApp Business app/phone-number step.
@@ -427,6 +429,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Moved the compact Facebook connection-message screenshot directly after phone-number entry and added the explanatory sentence.
 - 2026-07-31 [CODE] Clarified the WhatsApp Business app selection step to reference the business portfolio.
 - 2026-07-31 [CODE] Removed the Meta sign-in and business/account-selection steps from WhatsApp coexistence and renumbered the remaining flow.
 - 2026-07-31 [CODE] Removed the WhatsApp connection video placeholder and moved the compact coexistence screenshot into the first WhatsApp Business app step.
@@ -561,6 +564,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Positioned `https://storage.kilobot.app/docs/connect-msg.png` after WhatsApp Business app/phone-number entry and added the Facebook-through-WhatsApp explanation. Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Updated the WhatsApp Business app selection wording to include the business portfolio; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed the two Meta sign-in/account-selection steps from WhatsApp coexistence; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed WhatsApp’s connection video brief and made `docs-coexistence.png` a compact image after the WhatsApp Business app/phone-number step. Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.

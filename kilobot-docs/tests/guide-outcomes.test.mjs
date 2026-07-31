@@ -242,12 +242,13 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("## Connect with Coexistence"));
   assert.ok(source.includes('<div className="docs-image-compact">'));
   assert.ok(source.includes("![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)"));
-  assert.ok(source.includes("![WhatsApp connection message and QR permission](https://storage.kilobot.app/docs/connect-msg.png)"));
+  assert.ok(source.includes("![Facebook connection message through WhatsApp](https://storage.kilobot.app/docs/connect-msg.png)"));
   assert.ok(
     source.indexOf("Coexistence lets you use the same WhatsApp Business number") <
       source.indexOf('<ol className="steps">'),
   );
   assert.ok(source.includes("Choose <strong>WhatsApp Business app</strong> for your business portfolio, then enter your phone number"));
+  assert.ok(source.includes("Facebook sends a WhatsApp message to that number asking you to connect"));
   assert.equal(source.includes("Complete Meta sign-in without closing the authorization window early"), false);
   assert.equal(source.includes("Select the intended business and WhatsApp account"), false);
   assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
