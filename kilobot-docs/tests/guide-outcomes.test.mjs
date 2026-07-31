@@ -248,6 +248,8 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
       source.indexOf('<ol className="steps">'),
   );
   assert.ok(source.includes("Choose <strong>WhatsApp Business app</strong>, then enter your phone number"));
+  assert.equal(source.includes("Complete Meta sign-in without closing the authorization window early"), false);
+  assert.equal(source.includes("Select the intended business and WhatsApp account"), false);
   assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
   assert.ok(source.includes("share your own WhatsApp chats with KiloBot"));
   assert.equal(source.includes("connect-whatsapp.mp4"), false);
