@@ -274,6 +274,7 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
 
   assert.ok(agentSetup.includes("## Best practice"));
   assert.ok(agentSetup.includes("Put durable business facts in the Knowledge Base"));
+  assert.ok(agentSetup.indexOf("## Best practice") < agentSetup.indexOf("## Common problems"));
   assert.ok(knowledgeBase.includes("## Best practice"));
   assert.ok(knowledgeBase.includes("### Convert PDFs to text"));
   assert.ok(
