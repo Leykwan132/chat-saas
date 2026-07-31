@@ -297,6 +297,24 @@ test("Broadcast explains the smart window alternative and pricing", () => {
   assert.ok(source.includes("Send the approved WhatsApp Message Template through Broadcast"));
   assert.ok(source.includes("Meta's current template pricing applies"));
   assert.ok(source.includes("official WhatsApp pricing"));
+  assert.ok(source.includes("Meta bills these message charges directly"));
+  assert.ok(source.includes("valid payment method in your Meta Business account"));
+  assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"));
+});
+
+test("Broadcast, Reminders, and Follow-ups explain Meta billing setup", () => {
+  for (const [relativePath, featureName] of [
+    ["engage/broadcast.mdx", "Broadcast"],
+    ["automate/reminders.mdx", "Reminders"],
+    ["automate/follow-ups.mdx", "Follow-ups"],
+  ]) {
+    const source = readGuide(relativePath);
+
+    assert.ok(source.includes(":::important"), relativePath);
+    assert.ok(source.includes(`before activating ${featureName}`), relativePath);
+    assert.ok(source.includes("Meta bills these message charges directly"), relativePath);
+    assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"), relativePath);
+  }
 });
 
 test("Availability omits the slot evaluation explanation", () => {
