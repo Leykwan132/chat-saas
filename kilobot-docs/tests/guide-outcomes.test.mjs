@@ -307,6 +307,16 @@ test("Availability omits the slot evaluation explanation", () => {
   assert.ok(source.includes("## Troubleshoot a missing slot"));
 });
 
+test("Services and Availability explain auto-booking prerequisites", () => {
+  const services = readGuide("bookings/services.mdx");
+  const availability = readGuide("bookings/availability.mdx");
+
+  assert.ok(services.includes(":::important"));
+  assert.ok(services.includes("which Service to book"));
+  assert.ok(availability.includes(":::important"));
+  assert.ok(availability.includes("eligible teammate with working hours and an open Calendar slot"));
+});
+
 test("Agent Setup and Knowledge Base explain source best practices", () => {
   const agentSetup = readGuide("build-your-agent/agent-setup.mdx");
   const knowledgeBase = readGuide("build-your-agent/knowledge-base.mdx");
