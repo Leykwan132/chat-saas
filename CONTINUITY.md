@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] Removed the WhatsApp “Before reconnecting” section so the guide stays focused on connection, payment, disconnection, and next steps.
 - 2026-07-31 [CODE] WhatsApp’s Add payment section now explains that the Meta payment method is needed for Broadcast, Follow-ups, and Reminders; each of those guides shows a red Payment method required tag and links back to this section.
 - 2026-07-31 [CODE] WhatsApp’s split Coexistence lists now preserve visual continuation numbers: the QR instruction renders as step 3 and approval as step 4 while keeping the QR image below step 3.
 - 2026-07-31 [CODE] WhatsApp Coexistence now ends with approving the prompt in the Meta login window; KiloBot then starts syncing conversations, while the separate Add payment segment remains above Disconnect.
@@ -104,6 +105,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D613 ACTIVE: Remove the WhatsApp “Before reconnecting” guidance section.
 - 2026-07-31 [USER] D612 ACTIVE: Explain Meta payment requirements for Broadcast, Follow-ups, and Reminders in WhatsApp’s Add payment section, tag those guides as payment-required, and link them back to the payment section.
 - 2026-07-31 [USER] D611 ACTIVE: Preserve WhatsApp Coexistence step numbering across split lists so the QR instruction remains step 3 and approval remains step 4.
 - 2026-07-31 [USER] D610 ACTIVE: Make the final WhatsApp Coexistence step approve the Meta login-window prompt, then explain that KiloBot starts syncing conversations.
@@ -457,6 +459,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Removed the WhatsApp Before reconnecting section and its repeated authorization/synchronization checklist.
 - 2026-07-31 [CODE] Added the WhatsApp payment explanation, payment-required tags to Broadcast/Follow-ups/Reminders, and links back to the WhatsApp Add payment section.
 - 2026-07-31 [CODE] Fixed the custom step badges so WhatsApp’s QR and approval lists visually continue at steps 3 and 4 instead of restarting at 1.
 - 2026-07-31 [CODE] Updated the final WhatsApp Coexistence step to approve the Meta login prompt and begin conversation syncing; removed the duplicate follow-up sync sentence.
@@ -606,6 +609,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Removed the WhatsApp Before reconnecting section; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added Meta payment requirement copy, red payment-required tags, and Add payment links across Broadcast, Follow-ups, and Reminders; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, `git diff --check`, and the 300-line CSS limit; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Fixed WhatsApp split-list visual numbering with continuation classes; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, `git diff --check`, and the 300-line CSS limit; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Updated the final WhatsApp step to approve the Meta login-window prompt and start conversation syncing; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
