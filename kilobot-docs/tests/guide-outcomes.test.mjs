@@ -236,6 +236,14 @@ test("public guides do not show success panels", () => {
   }
 });
 
+test("public guides do not retain media placeholders", () => {
+  for (const relativePath of guides.keys()) {
+    const source = readGuide(relativePath);
+    assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
+    assert.equal(source.includes("assetPath"), false, relativePath);
+  }
+});
+
 test("WhatsApp explains coexistence before connection and safe disconnection", () => {
   const source = readGuide("channels/whatsapp.mdx");
 
@@ -326,6 +334,8 @@ test("Broadcast explains the smart window alternative and pricing", () => {
   assert.ok(source.includes("Send the approved WhatsApp Message Template through Broadcast"));
   assert.ok(source.includes("Meta's current template pricing applies"));
   assert.ok(source.includes("official WhatsApp pricing"));
+  assert.equal(source.includes("## Review history"), false);
+  assert.equal(source.includes("broadcast-complete.mp4"), false);
   assert.ok(source.includes("Meta bills these message charges directly"));
   assert.ok(source.includes("valid payment method in your Meta Business account"));
   assert.ok(source.includes("KiloBot is not where you add that card or top up Meta message credit"));
@@ -362,8 +372,8 @@ test("Roles and permissions stays focused on three roles and owner control", () 
   assert.ok(source.includes("| **Member** |"));
   assert.ok(source.includes("Only the **Owner** can set what each role can see and manage"));
   assert.ok(source.includes("## Give access"));
-  assert.ok(source.includes('kind="image"'));
-  assert.ok(source.includes("role-permissions.png"));
+  assert.equal(source.includes('kind="image"'), false);
+  assert.equal(source.includes("role-permissions.png"), false);
   assert.equal(source.includes("## Start with responsibility"), false);
   assert.equal(source.includes('kind="video"'), false);
   assert.equal(source.includes("Northstar receptionist"), false);
@@ -388,6 +398,8 @@ test("Services and Availability explain auto-booking prerequisites", () => {
   assert.ok(services.includes("## Service settings"));
   assert.ok(services.includes("| **Booking fields** |"));
   assert.equal(services.includes("Open **Services** and choose **Add a service**"), false);
+  assert.equal(services.includes("DocMediaPlaceholder"), false);
+  assert.equal(services.includes("assetPath"), false);
   assert.ok(services.includes(":::important"));
   assert.ok(services.includes("which Service to book"));
   assert.ok(availability.includes(":::important"));
@@ -524,7 +536,12 @@ test("other channel setup paths stay direct", () => {
     const source = readGuide(relativePath);
     assert.ok(source.includes("Setup is straightforward:"));
     assert.ok((source.match(/<li>/g) ?? []).length <= 3);
-    if (relativePath !== "channels/website-widget.mdx") {
+    if (relativePath === "channels/website-widget.mdx") {
+      assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);
+      assert.equal(source.includes("assetPath"), false, relativePath);
+      assert.ok(source.includes("Copy the code snippet."), relativePath);
+      assert.ok(source.includes("Paste the code snippet into your website HTML <code>&lt;script&gt;</code>"), relativePath);
+    } else {
       assert.ok(source.includes(":::important"), relativePath);
       assert.ok(source.includes("Meta Business Suite"), relativePath);
       assert.equal(source.includes("DocMediaPlaceholder"), false, relativePath);

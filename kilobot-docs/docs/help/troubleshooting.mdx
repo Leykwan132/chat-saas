@@ -4,7 +4,6 @@ description: Diagnose common setup, channel, reply, booking, outreach, and permi
 slug: /help/troubleshooting
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -40,24 +39,6 @@ Match what you see to a symptom below. Check the selected workspace and agent fi
 4. Send a new customer-side message.
 5. Clear Conversation filters and confirm the correct agent is selected.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Channel status card"
-  description="A stable screenshot showing one connected channel and one channel requiring attention."
-  capture={[
-    'Channels page heading',
-    'Connected status on one fictional channel',
-    'Not connected or attention state on another card',
-    'Connect or reconnect action',
-  ]}
-  callouts={[
-    'Read the card status first',
-    'Use the action on the affected card',
-  ]}
-  sensitive={['Phone numbers', 'Page IDs', 'Business account identifiers']}
-  assetPath="/img/guides/help/channel-status.png"
-/>
-
 ## 3. The AI is not replying
 
 1. Check whether a teammate has taken over the conversation.
@@ -65,24 +46,6 @@ Match what you see to a symptom below. Check the selected workspace and agent fi
 3. Confirm the connected channel is healthy and the workspace has available credits.
 4. Inspect Workflow branches that may route or stop the reply.
 5. Test a new conversation after saving changes.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Conversation reply controls"
-  description="A stable screenshot of the Conversation detail area showing assignee and AI reply state."
-  capture={[
-    'Selected conversation',
-    'Assignee control',
-    'AI reply or takeover state',
-    'Action History entry',
-  ]}
-  callouts={[
-    'Human takeover can intentionally pause AI',
-    'Action History helps explain state changes',
-  ]}
-  sensitive={['Customer identity', 'Messages', 'Contact information']}
-  assetPath="/img/guides/help/conversation-reply-controls.png"
-/>
 
 ## 4. An image, audio message, or attachment is unavailable
 
@@ -101,24 +64,6 @@ Do not forward private media to support unless it is necessary and authorized.
 4. Inspect Calendar conflicts across the full service duration.
 5. Try a controlled date that should be open.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Booking availability inputs"
-  description="A stable screenshot showing the settings that determine whether a slot can be offered."
-  capture={[
-    'Active Service with duration and buffer',
-    'Assignment strategy',
-    'Teammate Available Hours',
-    'Calendar event conflicting with one example slot',
-  ]}
-  callouts={[
-    'All four inputs affect the result',
-    'Timezone applies before slots are calculated',
-  ]}
-  sensitive={['Customer bookings', 'Private calendar event titles', 'Teammate email addresses']}
-  assetPath="/img/guides/help/booking-availability-inputs.png"
-/>
-
 ## 6. A WhatsApp template is not selectable
 
 1. Open **Broadcast → Message templates**.
@@ -127,23 +72,6 @@ Do not forward private media to support unless it is necessary and authorized.
 4. Correct and resubmit a failed template.
 
 Only **Approved** templates appear in Broadcast, Reminder, Follow-up, and Workflow selectors.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Message Template statuses"
-  description="A stable screenshot showing the complete set of practical template states."
-  capture={[
-    'Templates list',
-    'Submitting, In review, Approved, and Failed examples',
-    'Status filters if available',
-  ]}
-  callouts={[
-    'Only Approved templates are selectable',
-    'Open Failed templates to correct the issue',
-  ]}
-  sensitive={['Real template content', 'Business account identifiers']}
-  assetPath="/img/guides/help/template-statuses.png"
-/>
 
 ## 7. A Broadcast, Reminder, or Follow-up did not send
 

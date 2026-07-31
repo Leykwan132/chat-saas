@@ -4,7 +4,6 @@ description: Create, validate, and manage customer appointments.
 slug: /bookings/calendar
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -37,16 +36,6 @@ The Service duration provides the initial end time, but a valid custom interval 
   <li>Create the booking after the availability check succeeds.</li>
 </ol>
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Create a manual Northstar Consultation"
-  description="Show the selected Contact, Service, time interval, availability result, and Create booking action."
-  capture={['Selected customer', 'Northstar Consultation', 'Start and end time', 'Available result', 'Create booking']}
-  callouts={['Customer', 'Service', 'Interval', 'Validation', 'Create']}
-  sensitive={['Real customer and teammate identities']}
-  assetPath="/media/bookings/manual-booking.png"
-/>
-
 ## Use accurate statuses
 
 | Status | Use it when |
@@ -57,26 +46,6 @@ The Service duration provides the initial end time, but a valid custom interval 
 | No-show | The customer did not attend |
 
 Status affects customer history, reporting, and automation decisions. Review [Reminders](/automate/reminders) before changing many appointments.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Update appointment status"
-  description="Show the event details and all operational status choices."
-  capture={['Event detail', 'Status control', 'Scheduled, Completed, Cancelled, and No-show']}
-  callouts={['Appointment', 'Outcome']}
-  sensitive={['Customer details', 'Booking ID']}
-  assetPath="/media/bookings/calendar-statuses.png"
-/>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Complete the booking journey"
-  description="Create Northstar Consultation, set Availability, connect it to a Workflow, complete a booking, and verify Calendar."
-  capture={['Show the Calendar result first', 'Create the Service', 'Set hours', 'Connect the Workflow', 'Complete and verify the booking']}
-  duration="60–90 seconds"
-  sensitive={['Customer phone number', 'Teammate identity', 'Booking ID']}
-  assetPath="/media/bookings/complete-booking-journey.mp4"
-/>
 
 ## Next steps
 

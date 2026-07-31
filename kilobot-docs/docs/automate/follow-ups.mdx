@@ -5,7 +5,6 @@ slug: /automate/follow-ups
 ---
 
 import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -52,45 +51,11 @@ For Warm leads, wait 1 day after no reply, send one helpful brochure follow-up, 
 
 </DocExample>
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Completed Follow-up sequence"
-  description="Show the Northstar Warm-lead sequence before activation."
-  capture={[
-    'Which conversations to include',
-    'Warm audience selection',
-    'Start-after duration and maximum attempts',
-    'Reattempt interval and confirmed templates',
-    'Summary and Active switch',
-  ]}
-  callouts={[
-    'Audience controls who may enter the sequence',
-    'A one-attempt sequence does not need an interval',
-    'Customer replies stop remaining attempts',
-  ]}
-  sensitive={['Customer identities', 'Phone numbers', 'Private audience data']}
-  assetPath="/img/guides/workflows/follow-up-configuration.png"
-/>
-
 ## Monitor History
 
 Open **History** from the Follow-up Summary to inspect scheduled, sent, failed, skipped, and cancelled activity. The table includes customer, template, scheduled time, sent time, status, and estimated Meta cost where pricing is known.
 
 Estimates use known template rates; unknown categories are excluded instead of guessed.
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Show Follow-up history"
-  description="Show scheduled, sent, and cancelled Follow-up outcomes in History."
-  capture={[
-    'Show the active Follow-up Summary',
-    'Show a scheduled or sent History row',
-    'Show a cancelled remaining attempt after a reply',
-  ]}
-  duration="75–105 seconds"
-  sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}
-  assetPath="/video/guides/workflows/follow-up-reply-stop.mp4"
-/>
 
 :::warning
 Use **Current & future** only after reviewing the existing audience. Activation can schedule work for eligible conversations already in progress.

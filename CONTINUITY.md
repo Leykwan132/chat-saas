@@ -1,4 +1,10 @@
 # Snapshot
+- 2026-07-31 [TOOL] Latest `origin/main` at `017d8b56` is reconciled into `codex/page-guidance-test`; sixteen conflicts were resolved by retaining the branch’s newer placeholder-free guides/tests and complete ledger, because upstream carried their earlier superseded versions. The merge is verified locally and remains unpushed.
+- 2026-07-31 [CODE] All public guides now have no DocMediaPlaceholder image/video holders or assetPath requirements; supplied real assets remain only where explicitly added as Markdown media.
+- 2026-07-31 [CODE] Broadcast no longer includes the Review history section or its related history-demo video; the guide now moves from the send workflow to Pricing.
+- 2026-07-31 [CODE] Services is now text-only; its two image placeholders and unused media import are removed while the settings and assignment tables remain.
+- 2026-07-31 [CODE] Website widget setup now makes step 2 “Copy the code snippet” and step 3 paste it into the website HTML `<script>` before publishing.
+- 2026-07-31 [CODE] Website widget now has no image or video requirements; its guide stays text-only with the direct install steps and next-step links.
 - 2026-07-31 [CODE] WhatsApp’s Add payment guidance now uses two concise bullets: when to add the Meta payment method and why Broadcast, Follow-ups, and Reminders require it.
 - 2026-07-31 [CODE] Removed the WhatsApp “Before reconnecting” section so the guide stays focused on connection, payment, disconnection, and next steps.
 - 2026-07-31 [CODE] WhatsApp’s Add payment section now explains that the Meta payment method is needed for Broadcast, Follow-ups, and Reminders; each of those guides shows a red Payment method required tag and links back to this section.
@@ -106,6 +112,12 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D620 ACTIVE: Merge the latest `origin/main` into the current docs branch and resolve conflicts while preserving the current guide cleanup.
+- 2026-07-31 [USER] D619 ACTIVE: Remove the remaining documentation asset holders for now.
+- 2026-07-31 [USER] D618 ACTIVE: Remove Broadcast’s Review history section and its related history media.
+- 2026-07-31 [USER] D617 ACTIVE: Hide all Services guide images; no image media is needed for Services.
+- 2026-07-31 [USER] D616 ACTIVE: Make Website widget step 2 copy the code snippet and step 3 paste it into the website HTML script.
+- 2026-07-31 [USER] D615 ACTIVE: Remove the Website widget guide’s image and video media requirements.
 - 2026-07-31 [USER] D614 ACTIVE: Format the WhatsApp Add payment explanation as bullet points.
 - 2026-07-31 [USER] D613 ACTIVE: Remove the WhatsApp “Before reconnecting” guidance section.
 - 2026-07-31 [USER] D612 ACTIVE: Explain Meta payment requirements for Broadcast, Follow-ups, and Reminders in WhatsApp’s Add payment section, tag those guides as payment-required, and link them back to the payment section.
@@ -461,6 +473,12 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [TOOL] Fetched `origin/main` at `017d8b56`, resolved all sixteen merge conflicts without restoring superseded media holders or older guide wording, and prepared the verified merge commit.
+- 2026-07-31 [CODE] Removed every remaining DocMediaPlaceholder block/import from the public guides and added a recursive no-holder contract.
+- 2026-07-31 [CODE] Removed Broadcast Review history guidance and its review video placeholder.
+- 2026-07-31 [CODE] Removed both Services image placeholders and the unused media import.
+- 2026-07-31 [CODE] Split Website widget copy and paste into explicit steps 2 and 3, with HTML script wording.
+- 2026-07-31 [CODE] Removed the Website widget image and video placeholders and their unused import.
 - 2026-07-31 [CODE] Converted the WhatsApp Add payment explanation into two scan-friendly bullets.
 - 2026-07-31 [CODE] Removed the WhatsApp Before reconnecting section and its repeated authorization/synchronization checklist.
 - 2026-07-31 [CODE] Added the WhatsApp payment explanation, payment-required tags to Broadcast/Follow-ups/Reminders, and links back to the WhatsApp Add payment section.
@@ -612,6 +630,12 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Reconciled `origin/main` at `017d8b56` into `codex/page-guidance-test`; Node v22.22.0 passed 63/63 Docs tests, the 179-document production build, and staged/worktree `git diff --check`; no deployment or push ran.
+- 2026-07-31 [TOOL] Removed all remaining public-guide media placeholders and asset paths; Node v22.22.0 passed 63/63 Docs tests, the 179-document production build, and `git diff --check`; no deployment, changelog, or push ran.
+- 2026-07-31 [TOOL] Removed Broadcast Review history and its video requirement; Node v22.22.0 passed 62/62 Docs tests, the 202-document production build, and `git diff --check`; no deployment, changelog, or push ran.
+- 2026-07-31 [TOOL] Removed Services image requirements and added no-placeholder coverage; Node v22.22.0 passed 62/62 Docs tests, the 204-document production build, and `git diff --check`; no deployment, changelog, or push ran.
+- 2026-07-31 [TOOL] Updated Website widget steps for copying and pasting the code snippet into HTML; Node v22.22.0 passed 62/62 Docs tests, the 204-document production build, and `git diff --check`; no deployment, changelog, or push ran.
+- 2026-07-31 [TOOL] Removed Website widget media requirements and added no-placeholder coverage; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Formatted WhatsApp Add payment guidance as bullets; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed the WhatsApp Before reconnecting section; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added Meta payment requirement copy, red payment-required tags, and Add payment links across Broadcast, Follow-ups, and Reminders; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, `git diff --check`, and the 300-line CSS limit; no deployment, changelog, or push ran.

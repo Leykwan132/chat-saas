@@ -5,7 +5,6 @@ slug: /bookings/services
 ---
 
 import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -53,16 +52,6 @@ Auto booking needs a Service and an eligible teammate. KiloBot must know which S
 
 Keep conversational data collection short. Default booking context includes date, time, customer name, and phone number; add text, number, select, yes/no, date, time, or phone fields only when the team will use them.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Configure Northstar Consultation"
-  description="Show Details, Timing, Data collection, and Assignment with the example values."
-  capture={['Service details and active state', '30-minute duration and 15-minute buffer', 'Required fields', 'Assignment strategy']}
-  callouts={['Details', 'Timing', 'Questions', 'Assignment']}
-  sensitive={['Teammate names outside the demo workspace']}
-  assetPath="/media/bookings/service-form.png"
-/>
-
 ## Choose an assignment strategy
 
 | Strategy | Choose it when |
@@ -73,16 +62,6 @@ Keep conversational data collection short. Default booking context includes date
 | Specific teammate | One person exclusively owns the Service |
 
 Availability remains required for every strategy.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Compare Service assignment strategies"
-  description="Show all assignment options and the eligible-teammate control."
-  capture={['Strategy selector', 'Every strategy label', 'Eligible teammate selection']}
-  callouts={['Strategy', 'Eligibility']}
-  sensitive={['Real teammate names']}
-  assetPath="/media/bookings/assignment-strategies.png"
-/>
 
 ## Next steps
 
