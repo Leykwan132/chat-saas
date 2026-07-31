@@ -267,12 +267,11 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
     source.indexOf("Scan the QR code from the WhatsApp Business app on your phone") <
       source.indexOf("![Scan the QR code to connect WhatsApp]"),
   );
-  assert.ok(source.includes("share your own WhatsApp chats with KiloBot"));
+  assert.ok(source.includes("Approve the prompt in the Meta login window. KiloBot then starts syncing your conversations."));
   assert.equal(source.includes("connect-whatsapp.mp4"), false);
   assert.equal(source.includes('kind="video"'), false);
   assert.ok(source.includes("Add a payment method if Meta asks for one before continuing the connection"));
-  assert.ok(source.includes("Complete the remaining prompts, then return to KiloBot to continue the initial history sync."));
-  assert.ok(source.includes("continue the initial history sync"));
+  assert.equal(source.includes("Complete the remaining prompts, then return to KiloBot to continue the initial history sync."), false);
   assert.ok(source.includes("## Disconnect"));
   assert.ok(source.includes("clears its authorization"));
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));

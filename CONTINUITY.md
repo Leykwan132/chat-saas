@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] WhatsApp Coexistence now ends with approving the prompt in the Meta login window; KiloBot then starts syncing conversations, while the separate Add payment segment remains above Disconnect.
 - 2026-07-31 [CODE] WhatsApp Coexistence now shows only the essential connection steps: scan the QR code as step 3 with its image immediately below, then approve chat sharing as step 4; the redundant access and coexistence-selection steps are removed.
 - 2026-07-31 [CODE] WhatsApp Coexistence keeps payment in a separate “Add payment” segment immediately before Disconnect, while its essential connection flow now ends at step 4.
 - 2026-07-31 [CODE] All WhatsApp page media now uses the payment image’s compact 40% desktop width with full-width mobile behavior; the Disconnect video and caption share that width.
@@ -101,6 +102,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D610 ACTIVE: Make the final WhatsApp Coexistence step approve the Meta login-window prompt, then explain that KiloBot starts syncing conversations.
 - 2026-07-31 [USER] D609 ACTIVE: Remove the redundant messaging-access and coexistence-selection steps from WhatsApp, and place the QR image directly below the QR-scan command.
 - 2026-07-31 [USER] D608 PARTIALLY SUPERSEDED by D609: Payment remains in a separate “Add payment” segment above Disconnect, while the Coexistence flow is now shortened to its essential numbered steps.
 - 2026-07-31 [USER] D607 ACTIVE: Match every WhatsApp page image and video to the payment image sizing.
@@ -451,6 +453,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Updated the final WhatsApp Coexistence step to approve the Meta login prompt and begin conversation syncing; removed the duplicate follow-up sync sentence.
 - 2026-07-31 [CODE] Simplified WhatsApp Coexistence to the QR scan and chat-sharing steps, with the QR image directly below the scan instruction.
 - 2026-07-31 [CODE] Corrected WhatsApp Coexistence numbering through step 6 and separated payment into its own Add payment segment before Disconnect.
 - 2026-07-31 [CODE] Applied the payment image’s compact sizing to all WhatsApp screenshots and the Disconnect video, including mobile full-width behavior.
@@ -597,6 +600,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Updated the final WhatsApp step to approve the Meta login-window prompt and start conversation syncing; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed the redundant WhatsApp access/coexistence-selection steps and moved the QR screenshot below its scan command; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Corrected WhatsApp Coexistence numbering and moved payment into Add payment; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Matched all WhatsApp media to the payment image’s 40% desktop/100% mobile sizing and aligned the video caption; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
