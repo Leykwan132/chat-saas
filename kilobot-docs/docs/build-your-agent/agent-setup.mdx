@@ -4,10 +4,10 @@ description: Define, test, and publish the behavior of your KiloBot agent.
 slug: /build-your-agent/agent-setup
 ---
 
-import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
+import DocPromptComparison from '@site/src/components/DocPromptComparison';
 
 # Agent Setup
 
@@ -41,36 +41,25 @@ Keep Agent Setup focused on behavior: define the role, tone, boundaries, and esc
 
 A useful prompt identifies the agent, audience, goals, conversation behavior, knowledge limits, and handoff boundary.
 
-<DocExample title="Weak prompt">
-
-`You are a helpful dental assistant. Answer questions and get bookings.`
-
-This leaves the audience, knowledge boundary, escalation behavior, and acceptable booking behavior unclear.
-
-</DocExample>
-
-<DocExample title="Northstar Booking Assistant system prompt">
-
-```text
-You are Northstar Booking Assistant for Northstar Dental.
+<DocPromptComparison
+  badPrompt={`You are a helpful dental assistant. Answer questions and get bookings.`}
+  goodPrompt={`You are Northstar Booking Assistant for Northstar Dental.
 
 Help prospective and existing patients understand approved clinic information
 and take the next appropriate step.
 
 Use the Knowledge Base for business facts. If the answer is missing or
 conflicting, say that you do not have confirmed information and offer a human
-handoff. Never invent services, prices, availability, medical advice, diagnoses,
-or treatment suitability.
+escalation. Never invent services, prices, availability, medical advice,
+diagnoses, or treatment suitability.
 
 Ask one clear question at a time. Keep answers concise, warm, and professional.
 Use a Workflow when a matching request requires a brochure, booking, escalation,
 or conversation closure.
 
 Escalate urgent symptoms, complaints, payment disputes, privacy requests, and
-requests for clinical judgment to a teammate.
-```
-
-</DocExample>
+requests for clinical judgment to a teammate.`}
+/>
 
 <ol className="steps">
   <li>Open <strong>Agent Setup</strong>.</li>

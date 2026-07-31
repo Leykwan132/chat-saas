@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import DocExample from './DocExample';
 import DocMediaPlaceholder from './DocMediaPlaceholder';
 import DocOutcomes from './DocOutcomes';
+import DocPromptComparison from './DocPromptComparison';
 import DocVerified from './DocVerified';
 
 describe('guide components', () => {
@@ -61,5 +62,18 @@ describe('guide components', () => {
     assert.match(html, /^<section>/);
     assert.ok(html.includes('<h3>By the end, you will</h3>'));
     assert.ok(html.includes('<li>Create a working agent</li>'));
+  });
+
+  test('renders side-by-side prompt examples with copy actions', () => {
+    const html = renderToStaticMarkup(
+      <DocPromptComparison badPrompt="Be helpful." goodPrompt="Use approved facts." />,
+    );
+
+    assert.ok(html.includes('System prompt examples'));
+    assert.ok(html.includes('Bad system prompt'));
+    assert.ok(html.includes('Good system prompt'));
+    assert.equal((html.match(/>Copy<\/button>/g) ?? []).length, 2);
+    assert.ok(html.includes('Be helpful.'));
+    assert.ok(html.includes('Use approved facts.'));
   });
 });
