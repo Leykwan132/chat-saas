@@ -1,13 +1,11 @@
-import { CheckCircle2, CircleAlert } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogTitle,
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
+import { WhatsAppConnectionErrorContent } from '@/components/channels/WhatsAppConnectionFeedback';
 import { useWhatsAppConnectionFlow } from '@/hooks/useWhatsAppConnectionFlow';
 
 type ConnectWhatsAppButtonProps = {
@@ -65,10 +63,6 @@ export function ConnectWhatsAppButton({
         <ConnectionErrorDialog
           dialogState={dialogState}
           onOpenChange={handleDialogOpenChange}
-          onRetry={() => {
-            handleDialogOpenChange(false);
-            void launchSignup();
-          }}
         />
       </>
     );
@@ -97,10 +91,6 @@ export function ConnectWhatsAppButton({
       <ConnectionErrorDialog
         dialogState={dialogState}
         onOpenChange={handleDialogOpenChange}
-        onRetry={() => {
-          handleDialogOpenChange(false);
-          void launchSignup();
-        }}
       />
     </>
   );
@@ -109,49 +99,17 @@ export function ConnectWhatsAppButton({
 function ConnectionErrorDialog({
   dialogState,
   onOpenChange,
-  onRetry,
 }: {
   dialogState: ReturnType<typeof useWhatsAppConnectionFlow>['dialogState'];
   onOpenChange: (open: boolean) => void;
-  onRetry: () => void;
 }) {
   return (
     <Dialog open={dialogState.kind === 'error'} onOpenChange={onOpenChange}>
       <DialogContent>
         {dialogState.kind === 'error' ? (
-          <ErrorState message={dialogState.message} onRetry={onRetry} />
+          <WhatsAppConnectionErrorContent message={dialogState.message} />
         ) : null}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function ErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="flex flex-col gap-5 py-2">
-      <div className="flex flex-col items-center gap-3 text-center">
-        <div className="flex size-12 items-center justify-center rounded-full bg-red-500/10 text-red-600 dark:text-red-400">
-          <CircleAlert className="size-6" />
-        </div>
-        <div className="flex flex-col gap-1">
-          <DialogTitle className="text-base">Connection failed</DialogTitle>
-          <DialogDescription>{message}</DialogDescription>
-        </div>
-      </div>
-      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-        <DialogClose asChild>
-          <Button variant="outline">Close</Button>
-        </DialogClose>
-        <Button type="button" onClick={onRetry}>
-          Try again
-        </Button>
-      </div>
-    </div>
   );
 }

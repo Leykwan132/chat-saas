@@ -37,13 +37,13 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { AvailableChannelCard } from '@/components/channels/AvailableChannelCard';
+import { WhatsAppConnectingAction } from '@/components/channels/WhatsAppConnectionFeedback';
 import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
 import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
 import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
-  getWhatsAppConnectionAttemptStatus,
   isOpenWhatsAppConnectionAttempt,
 } from '@/lib/whatsappConnectionAttemptStatus';
 import {
@@ -425,7 +425,7 @@ function WhatsAppReadyStatus({ label }: { label: string }) {
   );
 }
 
-function PendingWhatsAppConnectionCard({
+export function PendingWhatsAppConnectionCard({
   attempt,
   channel,
   onCancel,
@@ -434,7 +434,6 @@ function PendingWhatsAppConnectionCard({
   channel: ChannelDoc | undefined;
   onCancel: () => void | Promise<void>;
 }) {
-  const status = getWhatsAppConnectionAttemptStatus(attempt, channel);
   const [cancelling, setCancelling] = useState(false);
   const label =
     channel?.displayPhoneNumber ??
@@ -456,57 +455,15 @@ function PendingWhatsAppConnectionCard({
               {label}
             </h3>
           </div>
-          <div className="mt-2 flex items-start gap-2">
-            {status.showCheck ? (
-              <WhatsAppReadyStatus label={status.label} />
-            ) : status.spinning ? (
-              <>
-                <Loader2
-                  className="mt-0.5 size-3.5 shrink-0 animate-spin text-amber-600 dark:text-amber-400"
-                  aria-hidden
-                />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium leading-snug text-foreground">
-                    {status.label}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                <CircleAlert
-                  className="mt-0.5 size-3.5 shrink-0 text-destructive"
-                  aria-hidden
-                />
-                <div className="min-w-0">
-                  <p className="text-[11px] font-medium leading-snug text-foreground">
-                    {status.label}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
         </div>
 
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="mt-3 h-7 w-full text-xs"
-          disabled={cancelling}
-          onClick={() => {
+        <WhatsAppConnectingAction
+          stopping={cancelling}
+          onStop={() => {
             setCancelling(true);
             void Promise.resolve(onCancel()).finally(() => setCancelling(false));
           }}
-        >
-          {cancelling ? (
-            <>
-              <Loader2 className="size-3 animate-spin" />
-              Cancelling…
-            </>
-          ) : (
-            'Cancel connection'
-          )}
-        </Button>
+        />
       </div>
     </div>
   );
