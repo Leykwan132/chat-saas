@@ -1,4 +1,5 @@
 @import './admonitions.css';
+@import './required-tag.css';
 
 :root {
   --ifm-color-primary: #27272a;

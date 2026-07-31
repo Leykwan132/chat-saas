@@ -348,6 +348,8 @@ test("Services and Availability explain auto-booking prerequisites", () => {
   const services = readGuide("bookings/services.mdx");
   const availability = readGuide("bookings/availability.mdx");
 
+  assert.ok(services.includes('<span className="docs-required-tag">Required for auto booking</span>'));
+  assert.ok(availability.includes('<span className="docs-required-tag">Required for auto booking</span>'));
   assert.ok(services.includes(":::important"));
   assert.ok(services.includes("which Service to book"));
   assert.ok(availability.includes(":::important"));

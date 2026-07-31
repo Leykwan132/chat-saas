@@ -1,0 +1,20 @@
+.docs-required-tag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.22rem 0.48rem;
+  border-radius: 999px;
+  color: #b42318;
+  background: #fef3f2;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .docs-required-tag {
+  color: #fda29b;
+  background: rgba(180, 35, 24, 0.2);
+}
