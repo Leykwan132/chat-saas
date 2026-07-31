@@ -303,7 +303,7 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.ok(source.includes("OpenAI GPT-OSS 120B"));
   assert.ok(source.includes("## Triggers"));
   assert.ok(source.includes("| Automatically |"));
-  assert.ok(source.includes("| After assignment |"));
+  assert.ok(source.includes("| Manual |"));
   assert.ok(source.includes(":::tip"));
   assert.ok(source.includes("If you want to send an item reliably"));
   assert.equal(source.includes("## Choose model and style"), false);
