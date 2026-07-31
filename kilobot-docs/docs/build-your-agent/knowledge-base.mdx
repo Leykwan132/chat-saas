@@ -1,14 +1,9 @@
 ---
 title: Knowledge Base
-description: Add, maintain, and test the trusted information used by a KiloBot agent.
+description: Add, maintain, and use the trusted information for a KiloBot agent.
 slug: /build-your-agent/knowledge-base
 ---
 
-import DocCard from '@site/src/components/DocCard';
-import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -24,19 +19,11 @@ Knowledge Base is the selected agent’s trusted source for business facts. Sour
 
 - Choose the right source type
 - Add, replace, and remove trusted information
-- Test that the agent answers from approved facts
+- Ground answers in approved facts
 
 </DocOutcomes>
 
-<DocPrerequisites>
-
-- An agent with Knowledge Base access
-- Current, customer-safe source material
-- No passwords, API keys, private credentials, or information customers must never receive
-
-</DocPrerequisites>
-
-## Choose a source
+## Supported sources
 
 | Source | Best for | Avoid when |
 | --- | --- | --- |
@@ -45,92 +32,36 @@ Knowledge Base is the selected agent’s trusted source for business facts. Sour
 | Text | A focused fact or policy that has no source page | The note would duplicate another source |
 | Q&A | A direct question with a concise approved answer | Many questions need the same long document |
 
-The upload control and **Storage limit** panel are authoritative for currently supported file formats, per-source limits, and plan allowance.
+## Best practice
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Choose a Knowledge Base source"
-  description="Show Web, Files, Text, and Q&A in the source picker."
-  capture={['The complete source picker', 'Each source type label']}
-  callouts={['Web', 'Files', 'Text', 'Q&A']}
-  sensitive={['Private source names']}
-  assetPath="/media/agent/knowledge-source-picker.png"
-/>
+### Convert PDFs to text
 
-## Add a source
+When a PDF contains important business facts, convert it to clean text first and add that text as a source. Text is easier to review and often gives the agent more reliable grounding than extracting directly from a PDF.
 
-<ol className="steps">
-  <li>Open <strong>Knowledge Base</strong> for the correct agent.</li>
-  <li>Select the source type.</li>
-  <li>Add only the focused material the agent should use.</li>
-  <li>Wait for processing to complete before testing.</li>
-</ol>
+:::warning
+Extracting information from an image or PDF is not 100% accurate. Scans, tables, columns, and formatting can be missed or misread, so review converted text and confirm important answers before relying on it.
+:::
 
-<DocExample title="Northstar Dental Q&A">
+## Limits
 
-**Question:** What are your opening hours?
+Knowledge Base storage is measured per AI agent across its supported sources. Free and paid plans support Web, Files, Text, and Q&A; storage capacity varies by plan.
 
-**Answer:** Northstar Dental is open Monday to Friday, 9:00 am to 6:00 pm, and Saturday, 9:00 am to 1:00 pm. It is closed on Sunday.
-
-</DocExample>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Recognize source processing states"
-  description="Show a source that is processing and one that is ready for testing."
-  capture={['A processing source', 'A completed source', 'Any visible failed state']}
-  callouts={['Processing', 'Ready', 'Needs attention']}
-  sensitive={['Private file and website names']}
-  assetPath="/media/agent/knowledge-processing.png"
-/>
-
-## Keep sources reliable
-
-- Prefer one authoritative source for pricing, policies, hours, and service details.
-- Remove obsolete and duplicate sources.
-- When replacing information, wait for the new source to finish processing before deleting the old source.
-- If two sources disagree, correct the source set instead of asking the prompt to choose.
-- Deleting a source removes it from future grounding; test important answers again afterward.
-
-## Monitor storage
-
-Open **Storage limit** to review usage by source type and the selected agent’s allowance. Remove obsolete large files and duplicate material before adding another copy.
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Review Knowledge Base storage"
-  description="Show used storage, plan allowance, and usage by source type."
-  capture={['Total used storage', 'Current allowance', 'Breakdown by source type']}
-  callouts={['Used', 'Allowance', 'Source breakdown']}
-  sensitive={['Private source names']}
-  assetPath="/media/agent/knowledge-storage.png"
-/>
-
-## Test every important answer
-
-| Test | Example | What to check |
+| Plan | Knowledge Base limit | Supported sources |
 | --- | --- | --- |
-| Exact | “What are your opening hours?” | Approved answer |
-| Paraphrased | “Can I visit on Saturday?” | Same grounded facts |
-| Missing | “Do you offer emergency root canals?” | No invented service |
-| Conflicting | Ask about a fact recently corrected | Only current source wins |
-
-Open **Agent Setup → Test agent** after any material source change.
-
-<DocSuccess>
-
-- Every important source has completed processing.
-- Exact and paraphrased questions use the approved facts.
-- Missing information is handled without invention.
-- No active sources contradict each other.
-
-</DocSuccess>
+| Free | 400 KB per agent | Web, Files, Text, Q&A |
+| Starter | 5 MB per agent | Web, Files, Text, Q&A |
+| Growth | 20 MB per agent | Web, Files, Text, Q&A |
+| Business | 40 MB per agent | Web, Files, Text, Q&A |
+| Enterprise | Custom per agent | Custom |
 
 ## Common problems
 
-- **Processing does not finish:** retry the supported source or contact support with the source type and approximate time.
-- **The answer is incomplete:** make the source focused and explicit.
-- **The answer contradicts policy:** locate and remove the stale source.
-- **An action should happen:** use a [Workflow](/automate/workflow-overview) instead of adding more general knowledge.
+- **The model answer has not updated:** It normally takes a couple of minutes for the model to extract the data and update its knowledge, so allow time for processing to finish.
+- **The answer is not fixed:** For a fixed response, use a [Workflow](/automate/send-messages-and-assets) because you control the exact message it sends.
+- **The answer is summarized:** Anything added to the Knowledge Base is subject to summarization by the model. Use a Workflow when the wording, assets, or timing must stay exact.
 
-<DocCard to="/automate/workflow-overview" title="Workflows" description="Use explicit conditions when a customer request must perform an action" />
+## Next steps
+
+- [Refine Agent Setup](/build-your-agent/agent-setup) with clear behavior and boundaries.
+- [Send messages and assets](/automate/send-messages-and-assets) when a request needs an action.
+- [Deploy to a channel](/channels/website-widget) to use the agent with real visitors.

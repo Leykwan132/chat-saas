@@ -4,9 +4,6 @@ description: Connect Instagram professional messaging to KiloBot.
 slug: /channels/instagram
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -14,62 +11,39 @@ import DocVerified from '@site/src/components/DocVerified';
 
 <DocVerified date="2026-07-28" />
 
-Connect a professional Instagram account so supported direct messages enter the selected agent’s Inbox.
+Connect a professional Instagram account so supported direct messages enter the selected agent’s Inbox. Setup is straightforward: sign in, choose the account, and grant access.
 
 <DocOutcomes>
 
 ### By the end, you will
 
 - Connect the correct professional Instagram account
-- Verify a direct message reaches Inbox
+- See a direct message reach Inbox
 - Send a teammate reply from KiloBot
 
 </DocOutcomes>
 
-<DocPrerequisites>
+:::important
+Before connecting, make sure the professional Instagram account is connected to Meta Business Suite and that you have administrator access.
+:::
 
-- A professional Instagram account connected to the appropriate Meta business
-- Administrator access to the related business assets
-- KiloBot channel-management permission
+## Conversation window
 
-</DocPrerequisites>
+- **When it opens:** A customer messages your professional Instagram account.
+- **While it is open:** KiloBot can reply.
+- **After it closes:** Instagram rules may limit business-initiated messages or require the customer to message again.
 
-## Connect and verify
+## Connect
 
 <ol className="steps">
   <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on Instagram.</li>
-  <li>Sign in to Meta and select the intended professional account.</li>
-  <li>Grant the requested messaging access and return to KiloBot.</li>
-  <li>Send a new direct message from a separate Instagram account.</li>
-  <li>Confirm the message in Inbox and send a teammate reply.</li>
+  <li>Sign in to Meta, select the intended professional account, and grant messaging access.</li>
+  <li>Return to KiloBot, then send a new direct message and reply from Inbox.</li>
 </ol>
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Verify the connected Instagram identity"
-  description="Show the connected card and the matching platform identity in Inbox."
-  capture={['Connected Instagram card', 'Instagram platform marker in Inbox']}
-  callouts={['Connected account', 'Matching conversation']}
-  sensitive={['Personal usernames', 'Provider IDs']}
-  assetPath="/media/channels/instagram-connected.png"
-/>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Connect Instagram"
-  description="Show professional-account selection and a complete message test."
-  capture={['Select the professional account', 'Grant access', 'Verify inbound and outbound messages']}
-  duration="60–90 seconds"
-  sensitive={['Meta login', 'Personal accounts', 'Customer messages']}
-  assetPath="/media/channels/connect-instagram.mp4"
-/>
-
-<DocSuccess>
-
-- The correct professional account shows Connected.
-- A new direct message appears as Instagram in Inbox.
-- The teammate reply reaches the customer account.
-
-</DocSuccess>
-
 If no eligible account appears, confirm professional-account status, business linkage, and your Meta administrator access before retrying.
+
+## Next steps
+
+- [Connect the Website widget](/channels/website-widget) for a second customer entry point.
+- [Set up workflows](/automate/send-messages-and-assets) for automated replies and handoffs.

@@ -1,0 +1,34 @@
+.docs-inline-video {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin: 1.5rem 0 0.625rem;
+  border-radius: 0.75rem;
+  background: var(--kilobot-muted);
+}
+
+.docs-video-caption {
+  max-width: 720px;
+  margin: 0 0 1.5rem;
+  color: var(--ifm-font-color-secondary);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.docs-inline-video-compact {
+  width: 40%;
+  max-width: none;
+}
+
+.docs-video-caption-compact {
+  width: 40%;
+  max-width: none;
+}
+
+@media (max-width: 767px) {
+  .docs-inline-video-compact,
+  .docs-video-caption-compact {
+    width: 100%;
+  }
+}

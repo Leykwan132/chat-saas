@@ -1,0 +1,59 @@
+---
+title: Automate bookings
+description: Start appointment booking when a customer's message shows clear booking intent.
+slug: /automate/automate-bookings
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Automate bookings
+
+<DocVerified date="2026-07-30" />
+
+The Book appointment action lets the agent move from a clear booking request into your configured service and availability flow.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Connect a booking request to an active service
+- Keep service and availability setup in Bookings
+- Route clear booking intent without matching unrelated questions
+
+</DocOutcomes>
+
+## Prepare the booking flow
+
+Workflow decides **when** booking should begin. The Bookings section controls **what** customers can book and **when** appointments are available:
+
+- [Services](/bookings/services) defines the customer-facing appointment, duration, fields, and eligible teammates.
+- [Availability](/bookings/availability) defines working hours, buffers, and open slots.
+- [Calendar](/bookings/calendar) shows the confirmed appointment and its status.
+
+Create and activate the service before selecting it in a Workflow.
+
+## 1. Add the booking action
+
+From the Workflows page, add **Book appointment** from the relevant connection and select the active service.
+
+![Configure the booking action](https://storage.kilobot.app/docs/docs-booking.png)
+
+## 2. Describe the booking condition
+
+Use a narrow Name and Detail so the AI can identify clear booking intent without matching general service questions.
+
+<DocExample title="Northstar Consultation booking">
+
+**Name:** Book a consultation
+
+**Detail:** Match when the customer clearly asks to schedule, book, or choose an appointment time for a Northstar Consultation. Do not match general questions about the service, price, preparation, or suitability.
+
+</DocExample>
+
+## Next steps
+
+- [Configure Services](/bookings/services) so customers can choose what to book.
+- [Set Availability](/bookings/availability) so only workable times are offered.
+- [Set up Reminders](/automate/reminders) before confirmed appointments.

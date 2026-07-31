@@ -6,16 +6,14 @@ slug: /automate/reminders
 
 import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
-# Reminders
+# Reminders <span className="docs-required-tag">Payment method required</span>
 
 <DocVerified date="2026-07-28" />
 
-Reminders send an approved WhatsApp Message Template before a booked appointment. Use them for appointment-time messaging; use **Follow-ups** when the trigger is a customer who has not replied.
+Reminders help you send appointment-time WhatsApp messages. Use them for appointment timing; use **Follow-ups** when the trigger is a customer who has not replied. Create and approve the template for closed-window sends under [Message templates](/engage/message-templates).
 
 <DocOutcomes>
 
@@ -23,33 +21,26 @@ Reminders send an approved WhatsApp Message Template before a booked appointment
 
 - Choose which appointments should receive reminders
 - Configure approved messages and send timing
-- Verify scheduled and completed sends in History
+- Activate reminders for eligible appointments
 
 </DocOutcomes>
 
-<DocPrerequisites>
+:::important
+Meta bills these message charges directly. Set up a valid payment method in your Meta Business account before activating Reminders. KiloBot is not where you add that card or top up Meta message credit.
+:::
 
-- An active Service with bookable appointments
-- A connected WhatsApp channel
-- An **Approved** reminder Message Template
-- Correct appointment customer phone numbers and timezones
-
-</DocPrerequisites>
-
-## Choose the activation scope
+## Choose which appointments to include
 
 | Scope | Includes | Best for |
 | --- | --- | --- |
 | **Future only** | Eligible appointments created after activation | A clean, low-risk launch |
 | **Current & future** | Remaining eligible sends for current upcoming appointments and new appointments | Applying the automation to an already-reviewed calendar |
 
-The scope controls which appointments enter scheduling. It does not modify the appointments.
-
-## Configure and activate
+This choice controls which appointments enter scheduling. It does not modify the appointments.
 
 <ol className="steps">
   <li>Open <strong>Workflows → Reminders</strong>.</li>
-  <li>Choose the activation scope.</li>
+  <li>Choose which appointments to include.</li>
   <li>Choose how many reminders to send and when each should be sent.</li>
   <li>Select an approved WhatsApp template and choose <strong>Confirm</strong>.</li>
   <li>Review the Summary, then turn Reminders on.</li>
@@ -66,7 +57,7 @@ Send one reminder 24 hours before the appointment and a second reminder 2 hours 
   title="Completed Reminder configuration"
   description="Show a two-reminder Northstar setup immediately before activation."
   capture={[
-    'Activation scope',
+    'Which appointments to include',
     'Both reminder timings',
     'Selected approved template',
     'Summary and Active switch',
@@ -80,33 +71,12 @@ Send one reminder 24 hours before the appointment and a second reminder 2 hours 
   assetPath="/img/guides/workflows/reminder-configuration.png"
 />
 
-## Monitor History
+## Pricing
 
-Open **History** from the Reminder Summary. Review the customer, template, scheduled time, sent time, status, and estimated Meta charge. Statuses include scheduled, sent, failed, skipped, and cancelled.
+Meta bills WhatsApp message charges directly to your Meta Business account. Set up a payment method there before activating Reminders. See [Add payment](/channels/whatsapp#add-payment) for the required setup. KiloBot credits are separate, and KiloBot is not where you add a card or top up Meta message credit. See the [official WhatsApp pricing](https://whatsappbusiness.com/products/platform-pricing/) for current rates.
 
-Meta charges for WhatsApp templates separately from KiloBot credits. KiloBot shows estimates only where the template category has a known rate; unknown categories are excluded instead of guessed.
+## Next steps
 
-<DocSuccess>
-
-- The Summary shows the intended scope, timing, and approved template
-- Reminders are active
-- A controlled test booking produces the expected scheduled History rows
-- Sent reminders appear in the customer's Inbox conversation
-
-</DocSuccess>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Activate and verify appointment Reminders"
-  description="Show configuration, a controlled booking, and the resulting Reminder History."
-  capture={[
-    'Configure Future only scope and two timings',
-    'Select and confirm an approved template',
-    'Activate the automation',
-    'Create a controlled test booking',
-    'Open History and verify scheduled outcomes',
-  ]}
-  duration="60–90 seconds"
-  sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}
-  assetPath="/video/guides/workflows/reminders-verify.mp4"
-/>
+- [Create message templates](/engage/message-templates) for approved appointment reminders.
+- [Set up Follow-ups](/automate/follow-ups) for no-reply customer follow-up.
+- [Automate bookings](/automate/automate-bookings) so customers can choose an available slot.

@@ -6,47 +6,38 @@ slug: /automate/follow-ups
 
 import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
-# Follow-ups
+# Follow-ups <span className="docs-required-tag">Payment method required</span>
 
 <DocVerified date="2026-07-28" />
 
-Follow-ups re-engage eligible customers after they have not replied. A customer reply stops later attempts. Use Reminders when timing is tied to an appointment.
+Follow-ups re-engage eligible customers after they have not replied. A customer reply stops later attempts. Use Reminders when timing is tied to an appointment. Create and approve the templates for closed-window sends under [Message templates](/engage/message-templates).
 
 <DocOutcomes>
 
 ### By the end, you will
 
-- Choose the follow-up audience and activation scope
+- Choose which follow-up conversations to include
 - Configure timing, attempts, and approved messages
-- Verify replies stop later attempts
+- Stop later attempts when customers reply
 
 </DocOutcomes>
 
-<DocPrerequisites>
+:::important
+Meta bills these message charges directly. Set up a valid payment method in your Meta Business account before activating Follow-ups. KiloBot is not where you add that card or top up Meta message credit.
+:::
 
-- A connected WhatsApp channel
-- One or more **Approved** Message Templates
-- A clearly defined audience
-- A safe test Contact or controlled lead group
-
-</DocPrerequisites>
-
-## Choose the activation scope
+## Choose which conversations to include
 
 | Scope | Includes | Best for |
 | --- | --- | --- |
 | **Future only** | Eligible messages that occur after activation | A clean first launch |
 | **Current & future** | Eligible existing conversations and new messages | A reviewed backlog that should enter follow-up |
 
-## Configure the sequence
-
 <ol className="steps">
-  <li>Open <strong>Workflows → Follow-ups</strong> and choose a scope.</li>
+  <li>Open <strong>Workflows → Follow-ups</strong> and choose which conversations to include.</li>
   <li>Select the eligible audience, such as the intended lead statuses.</li>
   <li>Set <strong>Start after</strong> to define the initial no-reply wait.</li>
   <li>Choose the maximum attempts.</li>
@@ -66,7 +57,7 @@ For Warm leads, wait 1 day after no reply, send one helpful brochure follow-up, 
   title="Completed Follow-up sequence"
   description="Show the Northstar Warm-lead sequence before activation."
   capture={[
-    'Future only activation scope',
+    'Which conversations to include',
     'Warm audience selection',
     'Start-after duration and maximum attempts',
     'Reattempt interval and confirmed templates',
@@ -85,27 +76,16 @@ For Warm leads, wait 1 day after no reply, send one helpful brochure follow-up, 
 
 Open **History** from the Follow-up Summary to inspect scheduled, sent, failed, skipped, and cancelled activity. The table includes customer, template, scheduled time, sent time, status, and estimated Meta cost where pricing is known.
 
-Meta template charges are separate from KiloBot credits. Estimates use known template rates; unknown categories are excluded instead of guessed.
-
-<DocSuccess>
-
-- The Summary matches the intended audience, delay, attempts, and templates
-- Follow-ups are active
-- A controlled no-reply test schedules the expected attempts
-- A test reply prevents the next attempt
-
-</DocSuccess>
+Estimates use known template rates; unknown categories are excluded instead of guessed.
 
 <DocMediaPlaceholder
   kind="video"
-  title="Test a no-reply Follow-up safely"
-  description="Demonstrate both branches: an attempt sent after silence and a later attempt cancelled by a reply."
+  title="Show Follow-up history"
+  description="Show scheduled, sent, and cancelled Follow-up outcomes in History."
   capture={[
-    'Activate a Future only test sequence',
-    'Trigger the sequence with a controlled Contact',
-    'Verify the first scheduled or sent History row',
-    'Reply as the customer',
-    'Verify the remaining attempt does not send',
+    'Show the active Follow-up Summary',
+    'Show a scheduled or sent History row',
+    'Show a cancelled remaining attempt after a reply',
   ]}
   duration="75–105 seconds"
   sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}
@@ -115,3 +95,18 @@ Meta template charges are separate from KiloBot credits. Estimates use known tem
 :::warning
 Use **Current & future** only after reviewing the existing audience. Activation can schedule work for eligible conversations already in progress.
 :::
+
+## Pricing
+
+Meta bills WhatsApp message charges directly to your Meta Business account. Set up a payment method there before activating Follow-ups. See [Add payment](/channels/whatsapp#add-payment) for the required setup. KiloBot credits are separate, and KiloBot is not where you add a card or top up Meta message credit. See the [official WhatsApp pricing](https://whatsappbusiness.com/products/platform-pricing/) for current rates.
+
+<div className="docs-image-compact">
+
+![Add a payment method in Meta](https://storage.kilobot.app/docs/docs-payment.png)
+
+</div>
+
+## Next steps
+
+- [Create message templates](/engage/message-templates) for approved WhatsApp follow-up messages.
+- [Human escalation](/automate/human-in-the-loop) for conversations that need teammate attention.

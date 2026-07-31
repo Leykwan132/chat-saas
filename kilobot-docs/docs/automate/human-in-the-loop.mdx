@@ -1,0 +1,48 @@
+---
+title: Human in the loop
+description: Pause AI replies and involve a teammate when a conversation needs human judgment.
+slug: /automate/human-in-the-loop
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Human in the loop
+
+<DocVerified date="2026-07-30" />
+
+Human escalation pauses AI replies and gives a teammate space to take over when judgment, safety, or personal support matters more than automation.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Add a Human escalation action
+- Describe the condition that should trigger it
+- See the escalated conversation ready for a teammate
+
+</DocOutcomes>
+
+## 1. Add human escalation
+
+Add **Human escalation** from the relevant Workflow connection. When the condition matches, the AI raises the escalation and pauses its replies for a teammate.
+
+![What a teammate sees after escalation](https://storage.kilobot.app/docs/docs-human.png)
+
+## 2. Describe the condition
+
+Use a narrow Name and Detail so the AI can identify when a teammate should take over.
+
+<DocExample title="Northstar Dental human support">
+
+**Name:** Needs a teammate
+
+**Detail:** Match when the customer asks for a human, reports an urgent or sensitive concern, makes a complaint, or needs help that the agent cannot provide confidently. Do not match ordinary questions that the Knowledge Base can answer.
+
+</DocExample>
+
+## Next steps
+
+- [Send messages and assets](/automate/send-messages-and-assets) for approved automated replies.
+- [Set up follow-ups](/automate/follow-ups) after a conversation needs another touch.

@@ -1,3 +1,7 @@
+.theme-doc-toc-mobile {
+  display: none;
+}
+
 .theme-doc-toc-desktop {
   top: calc(
     var(--ifm-navbar-height) + var(--doc-content-pad-top, calc(2.75rem * 1.15))

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -19,8 +19,8 @@ test('uses the approved public guide order', () => {
     'Getting started',
     'Agent',
     'Channels',
-    'Bookings',
     'Workflows',
+    'Bookings',
     'Outreach',
     'Teams',
     'Releases',
@@ -40,15 +40,94 @@ test('limits Getting started to Welcome and Quick Start', () => {
   ]);
 });
 
-test('nests Conversations under Channels', () => {
+test('starts Channels with WhatsApp and places Website widget after Messenger', () => {
   const sidebar = read('sidebars.ts');
   const channels = sidebar.match(
     /label: 'Channels'[\s\S]*?label: 'Bookings'/,
   )?.[0];
+
   assert.ok(channels);
-  assert.ok(channels.includes("label: 'Conversations'"));
-  assert.ok(channels.includes("'engage/inbox'"));
-  assert.ok(channels.includes("'engage/contacts'"));
+  assert.ok(channels.indexOf("'channels/whatsapp'") > -1);
+  assert.ok(
+    channels.indexOf("'channels/whatsapp'")
+      < channels.indexOf("'channels/instagram'"),
+  );
+  assert.ok(
+    channels.indexOf("'channels/instagram'")
+      < channels.indexOf("'channels/messenger'"),
+  );
+  assert.ok(
+    channels.indexOf("'channels/messenger'")
+      < channels.indexOf("'channels/website-widget'"),
+  );
+  assert.equal(channels.includes("'channels/connect-channels'"), false);
+  assert.equal(channels.includes("label: 'Conversations'"), false);
+  assert.equal(channels.includes("'engage/inbox'"), false);
+  assert.equal(channels.includes("'engage/contacts'"), false);
+});
+
+test('hides Calendar from Bookings navigation', () => {
+  const sidebar = read('sidebars.ts');
+  const bookings = sidebar.match(
+    /label: 'Bookings'[\s\S]*?label: 'Outreach'/,
+  )?.[0];
+
+  assert.ok(bookings);
+  assert.ok(bookings.includes("'bookings/services'"));
+  assert.ok(bookings.includes("'bookings/availability'"));
+  assert.equal(bookings.includes("'bookings/calendar'"), false);
+});
+
+test('limits Teams to roles and lead assignment', () => {
+  const sidebar = read('sidebars.ts');
+  const teams = sidebar.match(
+    /label: 'Teams'[\s\S]*?label: 'Releases'/,
+  )?.[0];
+
+  assert.ok(teams);
+  assert.ok(teams.includes("'team/roles-and-permissions'"));
+  assert.ok(teams.includes("'team/lead-assignment'"));
+  assert.equal(teams.includes("'start-here/workspaces-and-agents'"), false);
+  assert.equal(teams.includes("'team/workspace-and-team'"), false);
+});
+
+test('organizes Workflows around user tasks', () => {
+  const sidebar = read('sidebars.ts');
+  const workflows = sidebar.match(
+    /label: 'Workflows'[\s\S]*?label: 'Outreach'/,
+  )?.[0];
+  const orderedItems = [
+    'automate/send-messages-and-assets',
+    'automate/human-in-the-loop',
+    'automate/automate-bookings',
+    'automate/reminders',
+    'automate/follow-ups',
+  ];
+
+  assert.ok(workflows);
+  let previousIndex = -1;
+  for (const item of orderedItems) {
+    const itemIndex = workflows.indexOf(item);
+    assert.ok(itemIndex > previousIndex, item);
+    previousIndex = itemIndex;
+  }
+  assert.equal(workflows.includes('workflow-overview'), false);
+  assert.equal(workflows.includes('build-and-test'), false);
+});
+
+test('places Broadcast before Message templates under Outreach', () => {
+  const sidebar = read('sidebars.ts');
+  const outreach = sidebar.match(
+    /label: 'Outreach'[\s\S]*?label: 'Teams'/,
+  )?.[0];
+
+  assert.ok(outreach);
+  assert.ok(outreach.indexOf("label: 'Broadcast'") > -1);
+  assert.ok(outreach.indexOf("label: 'Message templates'") > -1);
+  assert.ok(
+    outreach.indexOf('engage/broadcast')
+      < outreach.indexOf('engage/message-templates'),
+  );
 });
 
 test('keeps hidden topics outside the public docs input', () => {
@@ -58,5 +137,18 @@ test('keeps hidden topics outside the public docs input', () => {
     'docs/insights/usage-and-billing.mdx',
   ]) {
     assert.equal(existsSync(path.join(root, file)), false);
+  }
+});
+
+test('removes Before you begin sections from every public guide', () => {
+  const docsDirectory = path.join(root, 'docs');
+  const guides = readdirSync(docsDirectory, { recursive: true })
+    .filter((file) => file.endsWith('.mdx'));
+
+  for (const guide of guides) {
+    const source = read(path.join('docs', guide));
+
+    assert.equal(source.includes('Before you begin'), false, guide);
+    assert.equal(source.includes('DocPrerequisites'), false, guide);
   }
 });

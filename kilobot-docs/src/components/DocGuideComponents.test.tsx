@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
+import {MessageCircleQuestion} from 'lucide-react';
 import { describe, test } from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import DocExample from './DocExample';
 import DocMediaPlaceholder from './DocMediaPlaceholder';
 import DocOutcomes from './DocOutcomes';
-import DocPrerequisites from './DocPrerequisites';
-import DocSuccess from './DocSuccess';
+import DocPromptComparison from './DocPromptComparison';
 import DocVerified from './DocVerified';
 
 describe('guide components', () => {
@@ -31,23 +31,20 @@ describe('guide components', () => {
     assert.ok(html.includes('aria-label="Video needed: Connect the Website widget"'));
   });
 
-  test('renders prerequisites, examples, success, and verification metadata', () => {
+  test('renders examples and verification metadata', () => {
     const html = renderToStaticMarkup(
       <>
         <DocVerified date="2026-07-28" />
-        <DocPrerequisites>
-          <ul><li>An agent</li></ul>
-        </DocPrerequisites>
-        <DocExample title="Northstar Dental">Example content</DocExample>
-        <DocSuccess><p>The message appears in Inbox.</p></DocSuccess>
+        <DocExample title="Example Q&A" icon={MessageCircleQuestion}>
+          Example content
+        </DocExample>
       </>,
     );
 
     assert.ok(html.includes('Last verified:'));
     assert.ok(html.includes('July 28, 2026'));
-    assert.ok(html.includes('Before you begin'));
-    assert.ok(html.includes('Northstar Dental'));
-    assert.ok(html.includes('You’re done when'));
+    assert.ok(html.includes('Example Q&amp;A'));
+    assert.ok(html.includes('data-icon="example"'));
   });
 
   test('renders guide outcomes as one semantic section', () => {
@@ -65,5 +62,19 @@ describe('guide components', () => {
     assert.match(html, /^<section>/);
     assert.ok(html.includes('<h3>By the end, you will</h3>'));
     assert.ok(html.includes('<li>Create a working agent</li>'));
+  });
+
+  test('renders side-by-side prompt examples with copy actions', () => {
+    const html = renderToStaticMarkup(
+      <DocPromptComparison badPrompt="Be helpful." goodPrompt="Use approved facts." />,
+    );
+
+    assert.ok(html.includes('System prompt examples'));
+    assert.ok(html.includes('Bad system prompt'));
+    assert.ok(html.includes('Good prompt'));
+    assert.equal((html.match(/aria-label="Copy (?:Good prompt|Bad system prompt)"/g) ?? []).length, 2);
+    assert.equal((html.match(/>Copy<\/button>/g) ?? []).length, 0);
+    assert.ok(html.includes('Be helpful.'));
+    assert.ok(html.includes('Use approved facts.'));
   });
 });

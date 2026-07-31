@@ -4,10 +4,7 @@ description: Create, validate, and manage customer appointments.
 slug: /bookings/calendar
 ---
 
-import DocCard from '@site/src/components/DocCard';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -26,14 +23,6 @@ Calendar is the shared operational view for AI-created and teammate-created book
 - Update appointment status and review booking history
 
 </DocOutcomes>
-
-<DocPrerequisites>
-
-- Calendar read permission
-- An active Service and valid teammate Availability for new bookings
-- An existing Contact for manual customer bookings
-
-</DocPrerequisites>
 
 ## Create a booking manually
 
@@ -89,13 +78,7 @@ Status affects customer history, reporting, and automation decisions. Review [Re
   assetPath="/media/bookings/complete-booking-journey.mp4"
 />
 
-<DocSuccess>
+## Next steps
 
-- The booking passes validation.
-- Calendar shows the correct customer, Service, teammate, and interval.
-- The status matches the real appointment outcome.
-- The customer’s Inbox details show the connected booking where applicable.
-
-</DocSuccess>
-
-<DocCard to="/engage/inbox" title="Inbox" description="Create bookings from conversations and review customer booking history" />
+- [Review Inbox](/engage/inbox) to manage conversations and booking context.
+- [Automate bookings](/automate/automate-bookings) for customer-led appointment requests.

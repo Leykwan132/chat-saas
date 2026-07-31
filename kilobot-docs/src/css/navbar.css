@@ -37,12 +37,22 @@
 }
 
 .navbar-dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   border-radius: 999px;
   padding: 0.45rem 0.95rem;
   background: #18181b;
   color: #ffffff !important;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+.navbar-dashboard-link svg {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin: 0;
 }
 
 [data-theme='dark'] .navbar-dashboard-link {

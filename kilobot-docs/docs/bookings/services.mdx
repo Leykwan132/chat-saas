@@ -4,15 +4,12 @@ description: Define what customers can book, what to collect, and who receives a
 slug: /bookings/services
 ---
 
-import DocCard from '@site/src/components/DocCard';
 import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
-# Services
+# Services <span className="docs-required-tag">Required for auto booking</span>
 
 <DocVerified date="2026-07-28" />
 
@@ -22,21 +19,28 @@ A Service combines customer-facing details, timing, booking fields, sales style,
 
 ### By the end, you will
 
-- Create a customer-facing Service
-- Configure timing, booking fields, and assignment
-- Test that customers can book an eligible teammate
+- Understand what each Service setting controls
+- Choose timing, booking fields, sales style, and assignment
+- Prepare a Service for agent booking
 
 </DocOutcomes>
 
-<DocPrerequisites>
+:::important
+Auto booking needs a Service and an eligible teammate. KiloBot must know which Service to book before it can find a valid appointment time.
+:::
 
-- Booking-automation management permission
-- At least one eligible workspace teammate
-- Approved booking questions and timing rules
+## Service settings
 
-</DocPrerequisites>
-
-## Create a Service
+| Setting | What it means |
+| --- | --- |
+| **Name and description** | The customer-facing name and explanation for the appointment. |
+| **Active state** | Whether the Service can be used for new bookings. |
+| **Duration** | How long the appointment itself lasts. |
+| **Buffer** | Extra time held before the next appointment. |
+| **Timezone and preferred times** | How KiloBot interprets the schedule and which times it should prefer. |
+| **Booking fields** | The questions KiloBot asks to collect the information the team needs. |
+| **Sales style** | How the agent presents the Service: Proactive, Neutral, or Gentle. |
+| **Assignment** | How KiloBot chooses an eligible teammate, such as the conversation owner, balanced load, round robin, or a specific teammate. |
 
 <DocExample title="Northstar Consultation">
 
@@ -46,15 +50,6 @@ A Service combines customer-facing details, timing, booking fields, sales style,
 - **Assignment:** Conversation owner first
 
 </DocExample>
-
-<ol className="steps">
-  <li>Open <strong>Services</strong> and choose <strong>Add a service</strong>.</li>
-  <li>Enter the name, customer-facing description, and active state.</li>
-  <li>Set duration, buffer, timezone, and any preferred times.</li>
-  <li>Choose only the booking fields the team needs.</li>
-  <li>Choose the sales style and assignment strategy.</li>
-  <li>Save the Service.</li>
-</ol>
 
 Keep conversational data collection short. Default booking context includes date, time, customer name, and phone number; add text, number, select, yes/no, date, time, or phone fields only when the team will use them.
 
@@ -89,24 +84,7 @@ Availability remains required for every strategy.
   assetPath="/media/bookings/assignment-strategies.png"
 />
 
-## Activate and connect it
+## Next steps
 
-<ol className="steps">
-  <li>Confirm the Service is active.</li>
-  <li>Set [Availability](/bookings/availability) for every eligible teammate.</li>
-  <li>Open a <strong>Book appointment</strong> Workflow action and select the Service.</li>
-  <li>Run a complete booking in Test agent.</li>
-</ol>
-
-Editing a Service changes future booking evaluation. Deactivation prevents it from producing new bookable options; existing appointments remain operational records and should be reviewed in Calendar.
-
-<DocSuccess>
-
-- Northstar Consultation is active and saved.
-- Eligible teammates have usable Availability.
-- A Book appointment action can select the Service.
-- A complete test booking appears in Calendar.
-
-</DocSuccess>
-
-<DocCard to="/bookings/availability" title="Availability" description="Set the real hours behind bookable slots" />
+- [Set Availability](/bookings/availability) for the teammates who receive this Service.
+- [Automate bookings](/automate/automate-bookings) so clear booking requests start the Service flow.

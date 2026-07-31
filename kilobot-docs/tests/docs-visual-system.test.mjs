@@ -33,9 +33,7 @@ test('styles every admonition as a borderless semantic surface', () => {
 
 test('styles every shared informational panel as a borderless rounded surface', () => {
   const panelStyles = [
-    ['src/components/DocPrerequisites.module.css', 'var(--kilobot-muted)'],
     ['src/components/DocExample.module.css', 'var(--kilobot-muted)'],
-    ['src/components/DocSuccess.module.css', '#16a34a'],
     ['src/components/DocMediaPlaceholder.module.css', 'repeating-linear-gradient'],
   ];
 
@@ -48,6 +46,14 @@ test('styles every shared informational panel as a borderless rounded surface', 
     assert.match(rootRule, /border-radius:/);
     assert.ok(rootRule.includes(expectedSurface));
   }
+});
+
+test('uses compact, consistent spacing in example cards', () => {
+  const css = read('src/components/DocExample.module.css');
+
+  assert.match(css, /\.title\s*\{[^}]*margin:\s*0 0 0\.625rem !important;/s);
+  assert.match(css, /\.content\s*\{[^}]*display:\s*flex;[^}]*gap:\s*0\.625rem;/s);
+  assert.match(css, /\.content > \*\s*\{[^}]*margin:\s*0;/s);
 });
 
 test('makes guide outcomes the focused borderless surface', () => {

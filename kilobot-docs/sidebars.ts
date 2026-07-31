@@ -25,16 +25,42 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'channels/connect-channels',
-        'channels/website-widget',
         'channels/whatsapp',
         'channels/instagram',
         'channels/messenger',
+        'channels/website-widget',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Workflows',
+      collapsed: false,
+      collapsible: false,
+      items: [
         {
-          type: 'category',
-          label: 'Conversations',
-          collapsed: false,
-          items: ['engage/inbox', 'engage/contacts'],
+          type: 'doc',
+          id: 'automate/send-messages-and-assets',
+          label: 'Send messages and assets',
+        },
+        {
+          type: 'doc',
+          id: 'automate/human-in-the-loop',
+          label: 'Human in the loop',
+        },
+        {
+          type: 'doc',
+          id: 'automate/automate-bookings',
+          label: 'Automate bookings',
+        },
+        {
+          type: 'doc',
+          id: 'automate/reminders',
+          label: 'Reminders',
+        },
+        {
+          type: 'doc',
+          id: 'automate/follow-ups',
+          label: 'Follow-ups',
         },
       ],
     },
@@ -46,25 +72,6 @@ const sidebars: SidebarsConfig = {
       items: [
         'bookings/services',
         'bookings/availability',
-        'bookings/calendar',
-      ],
-    },
-    {
-      type: 'category',
-      label: 'Workflows',
-      collapsed: false,
-      collapsible: false,
-      items: [
-        {
-          type: 'doc',
-          id: 'automate/workflow-overview',
-          label: 'Overview',
-        },
-        {
-          type: 'doc',
-          id: 'automate/build-and-test',
-          label: 'Build and test',
-        },
       ],
     },
     {
@@ -73,10 +80,16 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'engage/message-templates',
-        'engage/broadcast',
-        'automate/reminders',
-        'automate/follow-ups',
+        {
+          type: 'doc',
+          id: 'engage/broadcast',
+          label: 'Broadcast',
+        },
+        {
+          type: 'doc',
+          id: 'engage/message-templates',
+          label: 'Message templates',
+        },
       ],
     },
     {
@@ -85,8 +98,6 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       collapsible: false,
       items: [
-        'start-here/workspaces-and-agents',
-        'team/workspace-and-team',
         'team/roles-and-permissions',
         'team/lead-assignment',
       ],

@@ -93,7 +93,7 @@ const config: Config = {
       items: [
         {type: 'search', position: 'right'},
         {
-          href: 'https://kilobot.app/workspace',
+          href: 'https://kilobot.app',
           label: 'Try KiloBot',
           position: 'right',
           className: 'navbar-dashboard-link',

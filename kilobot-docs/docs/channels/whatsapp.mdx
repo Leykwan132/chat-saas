@@ -1,12 +1,9 @@
 ---
 title: WhatsApp
-description: Connect WhatsApp through Meta and verify messaging in KiloBot.
+description: Connect WhatsApp through Meta and use messaging in KiloBot.
 slug: /channels/whatsapp
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -22,62 +19,75 @@ WhatsApp connects through Meta’s authorization flow. Setup may remain pending 
 
 - Complete the Meta connection flow
 - Confirm synchronization finishes successfully
-- Verify incoming messages and teammate replies
+- See incoming messages, teammate replies, and safe disconnection
 
 </DocOutcomes>
 
-<DocPrerequisites>
+## Conversation window
 
-- KiloBot channel-management permission
-- Administrator access to the intended Meta business and WhatsApp account
-- Authority to connect the selected phone number
-- Access to the phone when Meta requires verification
+- **When it opens:** A customer messages your WhatsApp Business number.
+- **While it is open:** KiloBot can send service replies.
+- **After it closes:** WhatsApp generally requires an approved template to start a new business-initiated conversation.
 
-</DocPrerequisites>
+## Connect with Coexistence
 
-## Connect
+Coexistence lets you use the same WhatsApp Business number in both KiloBot and the WhatsApp Business app.
 
 <ol className="steps">
   <li>Open <strong>Channels</strong> and choose <strong>Connect</strong> on WhatsApp.</li>
-  <li>Complete Meta sign-in without closing the authorization window early.</li>
-  <li>Select the intended business, WhatsApp account, and phone number.</li>
-  <li>Grant the requested messaging access.</li>
-  <li>If using mobile coexistence, follow the in-product coexistence steps.</li>
-  <li>Return to KiloBot and allow supported contact and history synchronization to finish.</li>
+  <li>Choose <strong>WhatsApp Business app</strong> for your business portfolio, then enter your phone number.</li>
 </ol>
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Recognize WhatsApp connection states"
-  description="Show pending authorization, synchronization, connected, and failed states without provider identifiers."
-  capture={['Pending card', 'Synchronizing card', 'Connected card', 'Failed state if available']}
-  callouts={['Pending', 'Synchronizing', 'Connected', 'Needs attention']}
-  sensitive={['Phone number', 'Business ID', 'WhatsApp account ID']}
-  assetPath="/media/channels/whatsapp-states.png"
-/>
+<div className="docs-image-compact">
 
-<DocMediaPlaceholder
-  kind="video"
-  title="Connect WhatsApp"
-  description="Record Meta authorization through the first verified Inbox conversation."
-  capture={['Show the connected result first', 'Complete Meta account selection', 'Return to synchronization', 'Send inbound and outbound tests']}
-  duration="60–90 seconds"
-  sensitive={['Login details', 'Phone number', 'Business and account IDs', 'Customer history']}
-  assetPath="/media/channels/connect-whatsapp.mp4"
-/>
+![Select WhatsApp Business App](https://storage.kilobot.app/docs/docs-coexistence.png)
 
-## Verify
+</div>
 
-Send a fresh message from a separate WhatsApp account, confirm it appears in Inbox, then send a teammate reply. Historical synchronization does not replace this live test.
+After you enter the phone number, WhatsApp sends a message asking you to connect.
 
-<DocSuccess>
+<div className="docs-image-compact">
 
-- The card shows Connected.
-- Initial synchronization is no longer pending.
-- A new inbound message and teammate reply work in both directions.
+![WhatsApp connection request](https://storage.kilobot.app/docs/docs-connect-new.jpeg)
 
-</DocSuccess>
+</div>
 
-## Before reconnecting
+<ol className="steps steps-start-3" start={3}>
+  <li>Scan the QR code from the WhatsApp Business app on your phone to confirm the connection.</li>
+</ol>
 
-Confirm that administrator access still exists and that the intended business, account, and number have not changed. Reconnecting can repeat authorization and synchronization; avoid starting multiple connection attempts.
+<div className="docs-image-compact">
+
+![Scan the QR code to connect WhatsApp](https://storage.kilobot.app/docs/docs-scan-qr.png)
+
+</div>
+
+<ol className="steps steps-start-4" start={4}>
+  <li>Approve the prompt in the Meta login window. KiloBot then starts syncing your conversations.</li>
+</ol>
+
+## Add payment
+
+- Add a payment method if Meta asks for one before continuing the connection.
+- This payment method is required for Broadcast, Follow-ups, and Reminders because Meta bills those WhatsApp messages directly.
+
+<div className="docs-image-compact">
+
+![Add payment for the next connection step](https://storage.kilobot.app/docs/docs-payment.png)
+
+</div>
+
+## Disconnect
+
+Disconnecting stops KiloBot from sending and receiving WhatsApp messages for this channel and clears its authorization. It does not delete the WhatsApp Business account or the app from your phone.
+
+<video className="docs-inline-video docs-inline-video-compact" controls preload="metadata" aria-label="WhatsApp disconnect demo">
+  <source src="https://storage.kilobot.app/docs/sample-vid-demo.mp4" type="video/mp4" />
+</video>
+
+<p className="docs-video-caption docs-video-caption-compact">Disconnect WhatsApp from the channel settings.</p>
+
+## Next steps
+
+- [Set up workflows](/automate/send-messages-and-assets) for automated replies and handoffs.
+- [Automate bookings](/automate/automate-bookings) when customers ask for appointments.

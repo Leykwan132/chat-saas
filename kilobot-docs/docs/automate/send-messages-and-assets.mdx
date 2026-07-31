@@ -1,0 +1,55 @@
+---
+title: Send messages and assets
+description: Send approved text, photos, videos, and files when a customer request matches.
+slug: /automate/send-messages-and-assets
+---
+
+import DocExample from '@site/src/components/DocExample';
+import DocOutcomes from '@site/src/components/DocOutcomes';
+import DocVerified from '@site/src/components/DocVerified';
+
+# Send messages and assets
+
+<DocVerified date="2026-07-30" />
+
+Use a Workflow when a customer request should send approved content instead of relying on the agent to compose a new response.
+
+<DocOutcomes>
+
+### By the end, you will
+
+- Send an exact message when a customer request matches
+- Deliver approved photos, videos, and files
+- Keep near-miss requests on their intended paths
+
+</DocOutcomes>
+
+## 1. Create the action
+
+| Action | Use it for | Example |
+| --- | --- | --- |
+| **Send message** | Exact customer-facing text | Preparation instructions |
+| **Send Photo/Video** | Approved visual media | A clinic tour |
+| **Send Files** | Documents customers can open or download | A treatment brochure |
+
+Keep the customer-facing content in the action. Use the condition only to explain when that action should run.
+
+![Create the send message action](https://storage.kilobot.app/docs/docs-send-msg.png)
+
+## 2. Describe the condition
+
+Write a short Name that is easy to scan on the canvas, followed by a precise Detail that separates the request from similar intents.
+
+<DocExample title="Northstar Dental brochure">
+
+**Name:** Treatment brochure
+
+**Detail:** Match when the customer asks for the clinic brochure, a general treatment overview, or a document describing available services. Do not match questions about pricing, booking, or whether a treatment is suitable for a specific person.
+
+</DocExample>
+
+## Next steps
+
+- [Human escalation](/automate/human-in-the-loop) when a request needs teammate judgment.
+- [Set up follow-ups](/automate/follow-ups) for customers who do not reply.
+- [Automate bookings](/automate/automate-bookings) when a message shows clear booking intent.

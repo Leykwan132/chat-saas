@@ -6,8 +6,6 @@ slug: /team/lead-assignment
 
 import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -23,17 +21,9 @@ Lead Assignment determines who owns a customer conversation. Clear ownership pre
 
 - Choose a conversation assignment strategy
 - Configure teammate eligibility and booking ownership
-- Verify new work reaches the intended teammate
+- See new work reach the intended teammate
 
 </DocOutcomes>
-
-<DocPrerequisites>
-
-- Active workspace members who can work in Conversations
-- A decided ownership model
-- For booking assignment, valid teammate Availability
-
-</DocPrerequisites>
 
 ## Choose a strategy
 
@@ -52,7 +42,7 @@ Your plan and permissions determine which controls are available.
   <li>Open <strong>Teams → Lead Assignment</strong> for the agent.</li>
   <li>Select the eligible teammates.</li>
   <li>Choose the routing strategy and save it.</li>
-  <li>Send controlled test enquiries and verify ownership in Conversations.</li>
+  <li>Review an assigned conversation in Conversations.</li>
 </ol>
 
 For Bookings, each Service can prefer the conversation owner, use balanced or round-robin assignment, or select a specific teammate. The chosen teammate must also be available for the slot.
@@ -65,14 +55,13 @@ Northstar uses balanced assignment for general enquiries across two receptionist
 
 <DocMediaPlaceholder
   kind="video"
-  title="Configure and verify Lead Assignment"
+  title="Configure Lead Assignment"
   description="Show eligible teammates, strategy selection, and the resulting conversation ownership."
   capture={[
     'Open Lead Assignment for the correct agent',
     'Select two eligible fictional teammates',
     'Choose and save Balanced assignment',
-    'Send two controlled enquiries',
-    'Verify assignees in Conversations',
+    'Show the assigned conversations in Conversations',
   ]}
   callouts={[
     'Eligibility determines who can receive work',
@@ -84,11 +73,7 @@ Northstar uses balanced assignment for general enquiries across two receptionist
   assetPath="/video/guides/teams/lead-assignment.mp4"
 />
 
-<DocSuccess>
+## Next steps
 
-- New conversations receive the expected owner
-- Unassigned work is visible and reviewed
-- Booking assignment also produces an available teammate
-- Ownership changes are kept accurate in Conversations
-
-</DocSuccess>
+- [Automate bookings](/automate/automate-bookings) so appointment ownership uses the same teammate setup.
+- [Review Roles and permissions](/team/roles-and-permissions) to confirm teammate access.

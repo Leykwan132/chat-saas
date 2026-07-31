@@ -6,12 +6,10 @@ slug: /engage/broadcast
 
 import DocExample from '@site/src/components/DocExample';
 import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
-import DocPrerequisites from '@site/src/components/DocPrerequisites';
-import DocSuccess from '@site/src/components/DocSuccess';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
-# Broadcast
+# Broadcast <span className="docs-required-tag">Payment method required</span>
 
 <DocVerified date="2026-07-28" />
 
@@ -27,19 +25,21 @@ Broadcast sends one approved WhatsApp Message Template to a selected group of Co
 
 </DocOutcomes>
 
-<DocPrerequisites>
+## Smart sending and pricing
 
-- A connected WhatsApp channel
-- An **Approved** Message Template
-- Contacts with a legitimate reason to receive the message
-- A reviewed audience and send time
+Broadcasts are for audience-level, business-initiated messages. Before sending, check the Meta conversation window for each recipient. The window starts when the customer sends a message and stays open for 24 hours.
 
-</DocPrerequisites>
+| Conversation window | Best message path | Pricing impact |
+| --- | --- | --- |
+| **Open** | Send a normal one-to-one message or workflow instead of a Broadcast | Avoids an unnecessary template charge |
+| **Closed** | Send the approved WhatsApp Message Template through Broadcast | Meta's current template pricing applies |
+
+Use the open-window path when a personal reply is enough; keep Broadcast for a true audience send. Meta charges are separate from KiloBot credits. See the [official WhatsApp pricing](https://whatsappbusiness.com/products/platform-pricing/) for current rates and treat any in-app estimate as an estimate.
 
 ## Create a Broadcast
 
 <ol className="steps">
-  <li>Open <strong>Outreach → Broadcast</strong> and choose <strong>New Broadcast</strong>.</li>
+  <li>Open <strong>Broadcast → Create a broadcast</strong> and choose <strong>New Broadcast</strong>.</li>
   <li>Select the WhatsApp channel and an approved template.</li>
   <li>Define the audience using Contact criteria.</li>
   <li>Review the recipient count and preview resolved parameters.</li>
@@ -98,19 +98,25 @@ Open **Broadcast History**, select a Broadcast, and review its overview, recipie
   assetPath="/video/guides/outreach/broadcast-complete.mp4"
 />
 
-## Understand charges
+## Pricing
 
-Meta charges for delivered WhatsApp templates separately from KiloBot credits. The displayed MYR amount is an estimate based on known template pricing; final charges come from Meta. Unknown categories are excluded instead of guessed.
+The displayed MYR amount is an estimate based on known template pricing; final charges come from Meta. Meta bills WhatsApp message charges directly to your Meta Business account. Set up a payment method there before activating Broadcast. See [Add payment](/channels/whatsapp#add-payment) for the required setup. KiloBot credits are separate, and KiloBot is not where you add a card or top up Meta message credit. See the [official WhatsApp pricing](https://whatsappbusiness.com/products/platform-pricing/) for current rates. Unknown categories are excluded instead of guessed.
 
-<DocSuccess>
+<div className="docs-image-compact">
 
-- The correct audience received the intended approved template
-- Template variables rendered correctly
-- Recipient outcomes are visible in Broadcast History
-- Replies can be continued from Inbox
+![Add a payment method in Meta](https://storage.kilobot.app/docs/docs-payment.png)
 
-</DocSuccess>
+</div>
+
+:::important
+Meta bills these message charges directly. Set up a valid payment method in your Meta Business account before activating Broadcast. KiloBot is not where you add that card or top up Meta message credit.
+:::
 
 :::warning
 Meta approval does not establish consent. Your organization remains responsible for appropriate audiences, useful content, frequency, and applicable messaging rules.
 :::
+
+## Next steps
+
+- [Create Message Templates](/engage/message-templates) before sending another approved message.
+- [Set up workflows](/automate/send-messages-and-assets) for messages that should run automatically.
