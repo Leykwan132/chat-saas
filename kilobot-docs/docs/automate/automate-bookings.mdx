@@ -35,7 +35,13 @@ Workflow decides **when** booking should begin. The Bookings section controls **
 
 Create and activate the service before selecting it in a Workflow.
 
-## Match clear booking intent
+## 1. Add the booking action
+
+From the Workflows page, add **Book appointment** from the relevant connection and select the active service.
+
+## 2. Describe the booking condition
+
+Use a narrow Name and Detail so the AI can identify clear booking intent without matching general service questions.
 
 <DocExample title="Northstar Consultation booking">
 
@@ -45,14 +51,6 @@ Create and activate the service before selecting it in a Workflow.
 
 </DocExample>
 
-<ol className="steps">
-  <li>Open <strong>Workflows → Direct Message</strong>.</li>
-  <li>Add <strong>Book appointment</strong> from the relevant connection.</li>
-  <li>Select the active <strong>Northstar Consultation</strong> service.</li>
-  <li>Enter the booking condition Name and Detail.</li>
-  <li>Save the Workflow.</li>
-</ol>
-
 <DocMediaPlaceholder
   kind="image"
   title="Configure the Book appointment action"
@@ -61,21 +59,6 @@ Create and activate the service before selecting it in a Workflow.
   callouts={['Intent', 'Active service', 'Booking action']}
   sensitive={['Private service data', 'Customer information', 'Unrelated Workflow branches']}
   assetPath="/media/workflows/book-appointment-action.png"
-/>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Show an automated booking"
-  description="Show the configured booking action and the resulting appointment in Calendar."
-  capture={[
-    'Show the configured booking condition and service',
-    'Show the completed booking in Calendar',
-    'Choose and confirm an available slot',
-    'Open Calendar and show the appointment',
-  ]}
-  duration="60–90 seconds"
-  sensitive={['Real customer records', 'Phone numbers', 'Private provider schedules']}
-  assetPath="/media/workflows/verify-automated-booking.mp4"
 />
 
 ## Next steps

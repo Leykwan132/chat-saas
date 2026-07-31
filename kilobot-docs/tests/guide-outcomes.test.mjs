@@ -344,6 +344,19 @@ test("Human in the loop shows the escalated Inbox state", () => {
   assert.equal(source.includes("verify-human-handoff.mp4"), false);
 });
 
+test("Automate bookings uses two essential workflow steps", () => {
+  const source = readGuide("automate/automate-bookings.mdx");
+
+  assert.ok(source.includes("## 1. Add the booking action"));
+  assert.ok(source.includes("## 2. Describe the booking condition"));
+  assert.ok(source.includes("From the Workflows page"));
+  assert.ok(source.includes("Book appointment"));
+  assert.equal(source.includes("className=\"steps\""), false);
+  assert.equal(source.includes("Workflows → Direct Message"), false);
+  assert.equal(source.includes("Save the Workflow"), false);
+  assert.equal(source.includes("verify-automated-booking.mp4"), false);
+});
+
 test("guides show outcomes without standalone testing sections", () => {
   for (const relativePath of guides.keys()) {
     if (relativePath === "start-here/quick-start.mdx") continue;
