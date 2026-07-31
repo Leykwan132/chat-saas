@@ -263,6 +263,10 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("## Disconnect"));
   assert.ok(source.includes("clears its authorization"));
   assert.ok(source.includes("It does not delete the WhatsApp Business account"));
+  assert.ok(source.includes('className="docs-inline-video docs-inline-video-compact"'));
+  assert.equal(source.includes("Open <strong>Channels</strong> and select WhatsApp"), false);
+  assert.equal(source.includes("Choose <strong>Disconnect</strong>"), false);
+  assert.equal(source.includes("If the number uses coexistence"), false);
   assert.ok(source.includes('src="https://storage.kilobot.app/docs/sample-vid-demo.mp4"'));
 });
 

@@ -15,3 +15,7 @@
   line-height: 1.45;
   text-align: center;
 }
+
+.docs-inline-video-compact {
+  max-width: 480px;
+}
