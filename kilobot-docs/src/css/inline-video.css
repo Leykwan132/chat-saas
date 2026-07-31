@@ -17,5 +17,18 @@
 }
 
 .docs-inline-video-compact {
-  max-width: 480px;
+  width: 40%;
+  max-width: none;
+}
+
+.docs-video-caption-compact {
+  width: 40%;
+  max-width: none;
+}
+
+@media (max-width: 767px) {
+  .docs-inline-video-compact,
+  .docs-video-caption-compact {
+    width: 100%;
+  }
 }

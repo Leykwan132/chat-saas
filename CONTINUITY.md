@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] All WhatsApp page media now uses the payment image’s compact 40% desktop width with full-width mobile behavior; the Disconnect video and caption share that width.
 - 2026-07-31 [CODE] WhatsApp Disconnect now focuses on the smaller 480px demo video; the four-step disconnect checklist and coexistence prompt note are removed.
 - 2026-07-31 [CODE] WhatsApp coexistence media now follows the confirmed sequence: `docs-coexistence.png` for WhatsApp Business App selection, `docs-connect-new.jpeg` for the received connection request, `docs-scan-qr.png` for QR scanning, and `docs-payment.png` before payment; the obsolete `connect-msg.png` and unused short-image CSS are removed.
 - 2026-07-31 [CODE] WhatsApp Disconnect now embeds the supplied hosted `sample-vid-demo.mp4` with native controls and a centered caption.
@@ -98,6 +99,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D607 ACTIVE: Match every WhatsApp page image and video to the payment image sizing.
 - 2026-07-31 [USER] D606 ACTIVE: Remove all WhatsApp Disconnect steps and make the Disconnect demo video smaller.
 - 2026-07-31 [USER] D605 ACTIVE: Map WhatsApp coexistence assets to selection (`docs-coexistence.png`), received connection request (`docs-connect-new.jpeg`), QR scan (`docs-scan-qr.png`), and payment (`docs-payment.png`).
 - 2026-07-31 [USER] D604 ACTIVE: Use the supplied hosted `sample-vid-demo.mp4` as the WhatsApp Disconnect demo video.
@@ -445,6 +447,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Applied the payment image’s compact sizing to all WhatsApp screenshots and the Disconnect video, including mobile full-width behavior.
 - 2026-07-31 [CODE] Removed the WhatsApp Disconnect checklist and reduced the demo video to a 480px maximum width.
 - 2026-07-31 [CODE] Corrected the WhatsApp coexistence asset order and captions, added its payment screenshot, removed the obsolete connection-message asset, and deleted unused short-image styling.
 - 2026-07-31 [CODE] Added the hosted WhatsApp Disconnect demo video with scoped video and caption styling.
@@ -588,6 +591,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Matched all WhatsApp media to the payment image’s 40% desktop/100% mobile sizing and aligned the video caption; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed WhatsApp Disconnect steps and added scoped 480px video sizing; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Corrected WhatsApp asset mapping and added `docs-payment.png` to the payment step; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; custom CSS is 290 lines; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Embedded `https://storage.kilobot.app/docs/sample-vid-demo.mp4` in WhatsApp Disconnect; Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; CSS remains within the 300-line limit; no deployment, changelog, or push ran.
