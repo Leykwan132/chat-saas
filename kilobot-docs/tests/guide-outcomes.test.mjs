@@ -330,6 +330,15 @@ test("Send messages guide uses two setup steps", () => {
   assert.equal(source.includes("className=\"steps\""), false);
 });
 
+test("Human in the loop shows the escalated Inbox state", () => {
+  const source = readGuide("automate/human-in-the-loop.mdx");
+
+  assert.ok(source.includes("What a teammate sees after escalation"));
+  assert.ok(source.includes("the Inbox conversation after Human escalation pauses AI replies"));
+  assert.ok(source.includes("human-escalation-inbox.png"));
+  assert.equal(source.includes("verify-human-handoff.mp4"), false);
+});
+
 test("guides show outcomes without standalone testing sections", () => {
   for (const relativePath of guides.keys()) {
     if (relativePath === "start-here/quick-start.mdx") continue;
