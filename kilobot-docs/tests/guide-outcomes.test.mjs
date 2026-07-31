@@ -431,9 +431,9 @@ test("Human in the loop shows the escalated Inbox state", () => {
   assert.equal(source.includes("className=\"steps\""), false);
   assert.equal(source.includes("## Close a completed conversation"), false);
   assert.ok(source.includes("What a teammate sees after escalation"));
-  assert.ok(source.includes("the Inbox conversation after Human escalation pauses AI replies"));
-  assert.ok(source.includes("human-escalation-inbox.png"));
-  assert.ok(source.indexOf("human-escalation-inbox.png") < source.indexOf("## 2. Describe the condition"));
+  assert.ok(source.includes("![What a teammate sees after escalation](https://storage.kilobot.app/docs/docs-human.png)"));
+  assert.equal(source.includes("human-escalation-inbox.png"), false);
+  assert.equal(source.includes("DocMediaPlaceholder"), false);
   assert.equal(source.includes("verify-human-handoff.mp4"), false);
 });
 
