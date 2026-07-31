@@ -320,13 +320,14 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.equal(source.includes("DocMediaPlaceholder"), false);
 });
 
-test("Workflow branch guidance stays under Build the branch", () => {
+test("Send messages guide uses two setup steps", () => {
   const source = readGuide("automate/send-messages-and-assets.mdx");
 
-  assert.equal(source.includes("## Describe when it should happen"), false);
-  assert.ok(source.includes("## Build the branch"));
+  assert.ok(source.includes("## 1. Create the send message"));
+  assert.ok(source.includes("## 2. Describe the condition"));
   assert.ok(source.includes("Write a short Name that is easy to scan on the canvas"));
-  assert.ok(source.indexOf("Write a short Name") > source.indexOf("## Build the branch"));
+  assert.ok(source.indexOf("## 1. Create the send message") < source.indexOf("## 2. Describe the condition"));
+  assert.equal(source.includes("className=\"steps\""), false);
 });
 
 test("guides show outcomes without standalone testing sections", () => {

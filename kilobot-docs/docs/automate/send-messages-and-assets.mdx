@@ -25,7 +25,7 @@ Use a Workflow when a customer request should send approved content instead of r
 
 </DocOutcomes>
 
-## Choose what to send
+## 1. Create the send message
 
 | Action | Use it for | Example |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ Use a Workflow when a customer request should send approved content instead of r
 
 Keep the customer-facing content in the action. Use the condition only to explain when that action should run.
 
-## Build the branch
+## 2. Describe the condition
 
 Write a short Name that is easy to scan on the canvas, followed by a precise Detail that separates the request from similar intents.
 
@@ -47,40 +47,14 @@ Write a short Name that is easy to scan on the canvas, followed by a precise Det
 
 </DocExample>
 
-<ol className="steps">
-  <li>Open <strong>Workflows → Direct Message</strong>.</li>
-  <li>Use the connection control beside <strong>Message enters</strong>.</li>
-  <li>Choose <strong>Send Files</strong>.</li>
-  <li>Enter the condition Name and Detail.</li>
-  <li>Upload the approved brochure.</li>
-  <li>Choose <strong>Save</strong> when the branch is ready.</li>
-</ol>
-
-Use **Discard changes** if you need to return to the last saved Workflow. Arrange and Cleanup change the canvas layout without changing the intended customer action.
-
 <DocMediaPlaceholder
   kind="image"
-  title="Choose a message or asset action"
-  description="Show the Direct Message action picker with the supported customer-facing content actions."
-  capture={['Send message', 'Send Photo/Video', 'Send Files']}
-  callouts={['Exact text', 'Visual media', 'Documents']}
-  sensitive={['Private files', 'Unreleased internal actions', 'Customer information']}
-  assetPath="/media/workflows/message-and-asset-actions.png"
-/>
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Send a brochure"
-  description="Build the brochure branch, save it, and show the approved brochure action."
-  capture={[
-    'Show the successful brochure result first',
-    'Create the condition and Send Files action',
-    'Upload the approved brochure and save',
-    'Show the approved brochure action',
-  ]}
-  duration="60–90 seconds"
+  title="Create a send-message Workflow"
+  description="Show the two-step setup: create the approved message or asset, then describe the condition that should send it."
+  capture={['Create the Send message, Send Photo/Video, or Send Files action', 'Describe the condition Name and Detail']}
+  callouts={['Send message', 'Condition']}
   sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}
-  assetPath="/media/workflows/send-and-test-brochure.mp4"
+  assetPath="/media/workflows/send-message-steps.png"
 />
 
 ## Next steps
