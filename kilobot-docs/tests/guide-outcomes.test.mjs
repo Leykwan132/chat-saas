@@ -253,8 +253,8 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("![Add payment for the next connection step](https://storage.kilobot.app/docs/docs-payment.png)"));
   assert.ok(source.includes("## Add payment"));
   assert.ok(source.indexOf("## Add payment") < source.indexOf("## Disconnect"));
-  assert.ok(source.includes('<ol className="steps" start={3}>'));
-  assert.ok(source.includes('<ol className="steps" start={4}>'));
+  assert.ok(source.includes('<ol className="steps steps-start-3" start={3}>'));
+  assert.ok(source.includes('<ol className="steps steps-start-4" start={4}>'));
   assert.equal(source.includes('<ol className="steps" start={5}>'), false);
   assert.equal(source.includes("Grant the requested messaging access"), false);
   assert.equal(source.includes("When Meta offers <strong>coexistence</strong>"), false);

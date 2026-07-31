@@ -234,6 +234,14 @@ body {
   counter-reset: kilobot-step;
 }
 
+.theme-doc-markdown ol.steps.steps-start-3 {
+  counter-reset: kilobot-step 2;
+}
+
+.theme-doc-markdown ol.steps.steps-start-4 {
+  counter-reset: kilobot-step 3;
+}
+
 .theme-doc-markdown ol.steps > li {
   position: relative;
   margin: 0 0 0.85rem;

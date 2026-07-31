@@ -186,6 +186,8 @@ test('scopes circular step badges and ships path/card components', () => {
   const packageJson = read('package.json');
 
   assert.ok(css.includes('.theme-doc-markdown ol.steps'));
+  assert.ok(css.includes('.theme-doc-markdown ol.steps.steps-start-3'));
+  assert.ok(css.includes('.theme-doc-markdown ol.steps.steps-start-4'));
   assert.equal(css.includes('.theme-doc-markdown ol > li::before'), false);
   assert.ok(
     paginationCss.includes(
