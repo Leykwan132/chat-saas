@@ -240,6 +240,7 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   const source = readGuide("channels/whatsapp.mdx");
 
   assert.ok(source.includes("## Connect with Coexistence"));
+  assert.ok(source.includes('<div className="docs-image-compact">'));
   assert.ok(source.includes("![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)"));
   assert.ok(source.includes("![WhatsApp connection message and QR permission](https://storage.kilobot.app/docs/connect-msg.png)"));
   assert.ok(
@@ -249,6 +250,8 @@ test("WhatsApp explains coexistence before connection and safe disconnection", (
   assert.ok(source.includes("Choose <strong>WhatsApp Business app</strong>, then enter your phone number"));
   assert.ok(source.includes("Scan the QR code from the WhatsApp Business app on your phone"));
   assert.ok(source.includes("share your own WhatsApp chats with KiloBot"));
+  assert.equal(source.includes("connect-whatsapp.mp4"), false);
+  assert.equal(source.includes('kind="video"'), false);
   assert.ok(source.includes("Add a payment method if Meta asks for one"));
   assert.ok(source.includes("continue the initial history sync"));
   assert.ok(source.includes("## Disconnect"));

@@ -4,7 +4,6 @@ description: Connect WhatsApp through Meta and use messaging in KiloBot.
 slug: /channels/whatsapp
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -39,6 +38,15 @@ Coexistence lets you use the same WhatsApp Business number in both KiloBot and t
   <li>Complete Meta sign-in without closing the authorization window early.</li>
   <li>Select the intended business and WhatsApp account.</li>
   <li>Choose <strong>WhatsApp Business app</strong>, then enter your phone number.</li>
+</ol>
+
+<div className="docs-image-compact">
+
+![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)
+
+</div>
+
+<ol className="steps" start={5}>
   <li>Grant the requested messaging access.</li>
   <li>When Meta offers <strong>coexistence</strong>, select it to keep using the WhatsApp Business app on this number, then complete the in-product prompts.</li>
   <li>Scan the QR code from the WhatsApp Business app on your phone to confirm the connection.</li>
@@ -47,19 +55,7 @@ Coexistence lets you use the same WhatsApp Business number in both KiloBot and t
   <li>Return to KiloBot to continue the initial history sync.</li>
 </ol>
 
-![Connect WhatsApp with coexistence](https://storage.kilobot.app/docs/docs-coexistence.png)
-
 ![WhatsApp connection message and QR permission](https://storage.kilobot.app/docs/connect-msg.png)
-
-<DocMediaPlaceholder
-  kind="video"
-  title="Connect WhatsApp"
-  description="Record Meta authorization, phone confirmation, and the connected Inbox conversation."
-  capture={['Show the connected result first', 'Complete Meta account selection', 'Choose WhatsApp Business app and enter the phone number', 'Scan the phone QR code and approve chat-sharing permission', 'Complete payment setup without payment details', 'Return to history sync', 'Show the connected Inbox conversation']}
-  duration="60–90 seconds"
-  sensitive={['Login details', 'Phone number', 'Business and account IDs', 'Customer history']}
-  assetPath="/media/channels/connect-whatsapp.mp4"
-/>
 
 ## Disconnect
 

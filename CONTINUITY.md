@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-07-31 [CODE] WhatsApp no longer has a connection video brief; the coexistence screenshot is compact and placed immediately after the “WhatsApp Business app” phone-number step, while the connection-message screenshot remains below the remaining steps.
 - 2026-07-31 [CODE] WhatsApp coexistence now shows the supplied connection-message screenshot and explains that users scan the QR code and approve permission to share their own WhatsApp chats with KiloBot.
 - 2026-07-31 [CODE] WhatsApp’s coexistence section now uses the supplied hosted `docs-coexistence.png` screenshot; the prior connection-state image placeholder is removed while the connection video brief remains.
 - 2026-07-31 [CODE] “Open Inbox” next-step links and wording are removed across the public guides; affected pages retain relevant workflow, escalation, booking, permissions, or channel setup links.
@@ -86,6 +87,7 @@
 - 2026-07-16 [CODE] `kilobot-docs` Welcome, guide copy, Algolia search, navbar, sidebar, sticky outline, spacing, and Bun/Wrangler static deployment setup are implemented and verified but not deployed.
 - 2026-07-16 [CODE] Broadcast History and detail Recipients use shared shadcn tables with numbered 10-record pagination; History loads cursor batches reactively and detail uses bounded client-side pages.
 # Decisions
+- 2026-07-31 [USER] D595 ACTIVE: Remove the WhatsApp connection video brief and place a smaller `docs-coexistence.png` image directly after the first WhatsApp Business app/phone-number step.
 - 2026-07-31 [USER] D594 ACTIVE: Add the supplied hosted `connect-msg.png` screenshot and explain the QR scan plus permission to share the user’s own WhatsApp chats with KiloBot.
 - 2026-07-31 [USER] D593 ACTIVE: Use the supplied hosted `docs-coexistence.png` screenshot for the WhatsApp coexistence section.
 - 2026-07-31 [USER] D592 ACTIVE: Remove “Open Inbox” links and wording from the documentation.
@@ -421,6 +423,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-07-31 [CODE] Removed the WhatsApp connection video placeholder and moved the compact coexistence screenshot into the first WhatsApp Business app step.
 - 2026-07-31 [CODE] Added the hosted WhatsApp connection-message screenshot and a coexistence step for approving chat-sharing permission after scanning the QR code.
 - 2026-07-31 [CODE] Replaced the WhatsApp connection-state image placeholder with the supplied hosted coexistence screenshot.
 - 2026-07-31 [CODE] Removed “Open Inbox” from channel, Broadcast, lead-assignment, and connect-channel guidance while preserving useful alternative next steps.
@@ -552,6 +555,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-07-31 [TOOL] Removed WhatsApp’s connection video brief and made `docs-coexistence.png` a compact image after the WhatsApp Business app/phone-number step. Node v22.22.0 passed 62/62 Docs tests, the 206-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Added `https://storage.kilobot.app/docs/connect-msg.png` and QR/chat-sharing permission guidance to WhatsApp coexistence. Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Replaced the WhatsApp connection-state image placeholder with `https://storage.kilobot.app/docs/docs-coexistence.png`; Node v22.22.0 passed 62/62 Docs tests, the 207-document production build, and `git diff --check`; no deployment, changelog, or push ran.
 - 2026-07-31 [TOOL] Removed all “Open Inbox” wording from public guides and restored two-link next-step coverage where needed. Node v22.22.0 passed 62/62 Docs tests, the 208-document production build, and `git diff --check`; no deployment, changelog, or push ran.
