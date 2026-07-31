@@ -87,9 +87,9 @@ const guides = new Map([
     "Keep near-miss requests on their intended paths",
   ]],
   ["automate/human-in-the-loop.mdx", [
-    "Recognize when a teammate should take over",
-    "Pause AI replies with a clear escalation condition",
-    "Close a conversation only when it is complete",
+    "Add a Human escalation action",
+    "Describe the condition that should trigger it",
+    "See the escalated conversation ready for a teammate",
   ]],
   ["automate/automate-bookings.mdx", [
     "Connect a booking request to an active service",
@@ -333,6 +333,11 @@ test("Send messages guide uses two setup steps", () => {
 test("Human in the loop shows the escalated Inbox state", () => {
   const source = readGuide("automate/human-in-the-loop.mdx");
 
+  assert.ok(source.includes("## 1. Add human escalation"));
+  assert.ok(source.includes("## 2. Describe the condition"));
+  assert.ok(source.indexOf("## 1. Add human escalation") < source.indexOf("## 2. Describe the condition"));
+  assert.equal(source.includes("className=\"steps\""), false);
+  assert.equal(source.includes("## Close a completed conversation"), false);
   assert.ok(source.includes("What a teammate sees after escalation"));
   assert.ok(source.includes("the Inbox conversation after Human escalation pauses AI replies"));
   assert.ok(source.includes("human-escalation-inbox.png"));

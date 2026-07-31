@@ -19,24 +19,19 @@ Human escalation pauses AI replies and gives a teammate space to take over when 
 
 ### By the end, you will
 
-- Recognize when a teammate should take over
-- Pause AI replies with a clear escalation condition
-- Close a conversation only when it is complete
+- Add a Human escalation action
+- Describe the condition that should trigger it
+- See the escalated conversation ready for a teammate
 
 </DocOutcomes>
 
-## Decide when a person is needed
+## 1. Add human escalation
 
-Escalate when:
+Add **Human escalation** from the relevant Workflow connection. When the condition matches, the AI raises the escalation and pauses its replies for a teammate.
 
-- The customer directly asks to speak with a person.
-- The agent cannot answer confidently from trusted knowledge.
-- The request involves a complaint, exception, safety concern, or sensitive decision.
-- Your team has promised that a person will review this type of request.
+## 2. Describe the condition
 
-Do not use escalation as a substitute for missing business knowledge. Add stable facts to the Knowledge Base and reserve human involvement for requests that require judgment or ownership.
-
-## Add a clear escalation
+Use a narrow Name and Detail so the AI can identify when a teammate should take over.
 
 <DocExample title="Northstar Dental human support">
 
@@ -45,23 +40,6 @@ Do not use escalation as a substitute for missing business knowledge. Add stable
 **Detail:** Match when the customer asks for a human, reports an urgent or sensitive concern, makes a complaint, or needs help that the agent cannot provide confidently. Do not match ordinary questions that the Knowledge Base can answer.
 
 </DocExample>
-
-<ol className="steps">
-  <li>Open <strong>Workflows → Direct Message</strong>.</li>
-  <li>Add <strong>Human escalation</strong> from the relevant connection.</li>
-  <li>Enter a narrow Name and Detail.</li>
-  <li>Save the Workflow.</li>
-</ol>
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Configure a Human escalation action"
-  description="Show the escalation node and its precise condition in the inspector."
-  capture={['Message enters', 'Needs a teammate condition', 'Human escalation node', 'Condition Detail']}
-  callouts={['Trigger', 'Boundary', 'Handoff']}
-  sensitive={['Customer conversations', 'Teammate identities', 'Unrelated Workflow branches']}
-  assetPath="/media/workflows/human-escalation-condition.png"
-/>
 
 <DocMediaPlaceholder
   kind="image"
@@ -72,10 +50,6 @@ Do not use escalation as a substitute for missing business knowledge. Add stable
   sensitive={['Real customer data', 'Phone numbers', 'Private teammate details']}
   assetPath="/media/workflows/human-escalation-inbox.png"
 />
-
-## Close a completed conversation
-
-Use **Close conversation** only when a narrow condition proves that no more action is required. Closing is terminal, so do not connect it to broad signals such as a short reply or a general thank-you that may still need follow-up.
 
 ## Next steps
 
