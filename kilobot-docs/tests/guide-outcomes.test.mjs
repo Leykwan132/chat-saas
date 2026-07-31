@@ -219,6 +219,15 @@ test("instructional guides offer page-specific next steps", () => {
     assert.ok(nextSteps, `${relativePath}: next steps`);
     assert.ok((nextSteps.match(/^- \[/gm) ?? []).length >= 2, relativePath);
   }
+  for (const relativePath of [
+    "automate/send-messages-and-assets.mdx",
+    "automate/follow-ups.mdx",
+    "engage/inbox.mdx",
+  ]) {
+    const source = readGuide(relativePath);
+    assert.equal(source.includes("Add human handoff"), false, relativePath);
+    assert.ok(source.includes("Human escalation"), relativePath);
+  }
 });
 
 test("public guides do not show success panels", () => {
