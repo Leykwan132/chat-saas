@@ -5,7 +5,6 @@ slug: /automate/send-messages-and-assets
 ---
 
 import DocExample from '@site/src/components/DocExample';
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -25,7 +24,7 @@ Use a Workflow when a customer request should send approved content instead of r
 
 </DocOutcomes>
 
-## 1. Create the send message
+## 1. Create the action
 
 | Action | Use it for | Example |
 | --- | --- | --- |
@@ -35,15 +34,7 @@ Use a Workflow when a customer request should send approved content instead of r
 
 Keep the customer-facing content in the action. Use the condition only to explain when that action should run.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Create a send-message Workflow"
-  description="Show the approved message or asset action ready to configure."
-  capture={['Create the Send message, Send Photo/Video, or Send Files action', 'Approved customer-facing content']}
-  callouts={['Send message', 'Approved content']}
-  sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}
-  assetPath="/media/workflows/send-message-steps.png"
-/>
+![Create the action](https://storage.kilobot.app/docs/docs-workflow.png)
 
 ## 2. Describe the condition
 
