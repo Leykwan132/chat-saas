@@ -337,6 +337,7 @@ test("Roles and permissions stays focused on three roles and owner control", () 
 test("Availability omits slot troubleshooting", () => {
   const source = readGuide("bookings/availability.mdx");
 
+  assert.ok(source.includes("![Configure teammate Availability](https://storage.kilobot.app/docs/docs-availability.png)"));
   assert.equal(source.includes("## Understand slot evaluation"), false);
   assert.equal(source.includes("continuous valid interval that includes both"), false);
   assert.equal(source.includes("## Troubleshoot a missing slot"), false);

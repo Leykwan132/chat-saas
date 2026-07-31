@@ -4,7 +4,6 @@ description: Configure teammate schedules for booking availability.
 slug: /bookings/availability
 ---
 
-import DocMediaPlaceholder from '@site/src/components/DocMediaPlaceholder';
 import DocOutcomes from '@site/src/components/DocOutcomes';
 import DocVerified from '@site/src/components/DocVerified';
 
@@ -20,7 +19,7 @@ Availability tells KiloBot when a teammate may receive a booking. A slot must fi
 
 - Set weekly hours and the correct timezone
 - Account for Service duration, buffers, and Calendar conflicts
-  - Keep bookable slots within teammate hours
+- Keep bookable slots within teammate hours
 
 </DocOutcomes>
 
@@ -40,15 +39,7 @@ Auto booking also needs Availability. After KiloBot knows which Service to book,
 
 **Available 24/7** sets all seven days to `00:00–24:00`. Turning it off resets all days to `09:00–17:00`; it does not restore the earlier custom schedule.
 
-<DocMediaPlaceholder
-  kind="image"
-  title="Set weekly Availability"
-  description="Show enabled days, working hours, timezone, and Available 24/7."
-  capture={['Full weekly schedule', 'Timezone', 'Available 24/7 control']}
-  callouts={['Days', 'Hours', 'Timezone', '24/7']}
-  sensitive={['Real teammate names']}
-  assetPath="/media/bookings/weekly-availability.png"
-/>
+![Configure teammate Availability](https://storage.kilobot.app/docs/docs-availability.png)
 
 ## Next steps
 
