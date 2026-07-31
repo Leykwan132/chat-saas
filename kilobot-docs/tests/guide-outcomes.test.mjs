@@ -296,7 +296,7 @@ test("Agent Setup and Knowledge Base explain source best practices", () => {
 test("Agent Setup keeps model and trigger guidance focused", () => {
   const source = readGuide("build-your-agent/agent-setup.mdx");
 
-  assert.ok(source.includes("## Models"));
+  assert.ok(source.includes("## Supported models"));
   assert.ok(source.includes("| Model | Advantage | Disadvantage |"));
   assert.ok(source.includes("Ilmu Mini V3.3"));
   assert.ok(source.includes("DeepSeek V4 Flash"));
