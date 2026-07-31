@@ -51,8 +51,6 @@ Do not use escalation as a substitute for missing business knowledge. Add stable
   <li>Add <strong>Human escalation</strong> from the relevant connection.</li>
   <li>Enter a narrow Name and Detail.</li>
   <li>Save the Workflow.</li>
-  <li>Test the request and confirm AI replies pause.</li>
-  <li>Open Inbox and confirm a teammate can take ownership.</li>
 </ol>
 
 <DocMediaPlaceholder
@@ -65,21 +63,11 @@ Do not use escalation as a substitute for missing business knowledge. Add stable
   assetPath="/media/workflows/human-escalation-condition.png"
 />
 
-## Verify the handoff
-
-Test one request that should escalate and one that should remain with the agent:
-
-- **Escalate:** `I need to speak with someone about a complaint.`
-- **Do not escalate:** `What time do you close on Saturday?`
-
-After escalation, the agent should not continue sending automated replies. Confirm the conversation appears in Inbox with the correct AI state before relying on the branch.
-
 <DocMediaPlaceholder
   kind="video"
-  title="Escalate and verify teammate ownership"
-  description="Trigger a human handoff, confirm AI replies pause, and show the conversation ready for a teammate in Inbox."
+  title="Show teammate escalation"
+  description="Show the Human escalation action and the conversation ready for a teammate in Inbox."
   capture={[
-    'Test the complaint request',
     'Show the Human escalation result',
     'Open the same conversation in Inbox',
     'Confirm the paused AI state and teammate ownership',

@@ -21,7 +21,7 @@ The Book appointment action lets the agent move from a clear booking request int
 
 - Connect a booking request to an active service
 - Keep service and availability setup in Bookings
-- Test booking intent without matching unrelated questions
+- Route clear booking intent without matching unrelated questions
 
 </DocOutcomes>
 
@@ -63,29 +63,15 @@ Create and activate the service before selecting it in a Workflow.
   assetPath="/media/workflows/book-appointment-action.png"
 />
 
-## Test the complete outcome
-
-Use requests that separate booking intent from nearby questions:
-
-- **Book:** `I want to book a consultation for next week.`
-- **Paraphrase:** `Can I schedule a time with the dentist?`
-- **Near-miss:** `How much does the consultation cost?`
-- **Near-miss:** `What should I bring to my appointment?`
-
-The first two requests should enter booking. The pricing and preparation questions should receive information without starting appointment selection.
-
-Complete one controlled booking, explicitly confirm the chosen slot, and verify the new appointment under [Calendar](/bookings/calendar).
-
 <DocMediaPlaceholder
   kind="video"
-  title="Trigger and verify an automated booking"
-  description="Test booking intent, confirm a slot, and verify the resulting appointment in Calendar."
+  title="Show an automated booking"
+  description="Show the configured booking action and the resulting appointment in Calendar."
   capture={[
     'Show the configured booking condition and service',
-    'Test a direct booking request',
+    'Show the completed booking in Calendar',
     'Choose and confirm an available slot',
-    'Open Calendar and verify the appointment',
-    'Test a pricing-only near-miss',
+    'Open Calendar and show the appointment',
   ]}
   duration="60–90 seconds"
   sensitive={['Real customer records', 'Phone numbers', 'Private provider schedules']}

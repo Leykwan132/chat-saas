@@ -1,6 +1,6 @@
 ---
 title: Knowledge Base
-description: Add, maintain, and test the trusted information used by a KiloBot agent.
+description: Add, maintain, and use the trusted information for a KiloBot agent.
 slug: /build-your-agent/knowledge-base
 ---
 
@@ -21,7 +21,7 @@ Knowledge Base is the selected agent’s trusted source for business facts. Sour
 
 - Choose the right source type
 - Add, replace, and remove trusted information
-- Test that the agent answers from approved facts
+- Ground answers in approved facts
 
 </DocOutcomes>
 
@@ -30,7 +30,7 @@ Knowledge Base is the selected agent’s trusted source for business facts. Sour
 When a PDF contains important business facts, convert it to clean text first and add that text as a source. Text is easier to review and often gives the agent more reliable grounding than extracting directly from a PDF.
 
 :::warning
-Extracting information from an image or PDF is not 100% accurate. Scans, tables, columns, and formatting can be missed or misread, so review converted text and test important answers before relying on it.
+Extracting information from an image or PDF is not 100% accurate. Scans, tables, columns, and formatting can be missed or misread, so review converted text and confirm important answers before relying on it.
 :::
 
 ## Choose a source
@@ -60,7 +60,7 @@ The upload control and **Storage limit** panel are authoritative for currently s
   <li>Open <strong>Knowledge Base</strong> for the correct agent.</li>
   <li>Select the source type.</li>
   <li>Add only the focused material the agent should use.</li>
-  <li>Wait for processing to complete before testing.</li>
+  <li>Wait for processing to complete before relying on the source.</li>
 </ol>
 
 <DocExample title="Northstar Dental Q&A">
@@ -74,7 +74,7 @@ The upload control and **Storage limit** panel are authoritative for currently s
 <DocMediaPlaceholder
   kind="image"
   title="Recognize source processing states"
-  description="Show a source that is processing and one that is ready for testing."
+  description="Show a source that is processing and one that is ready to use."
   capture={['A processing source', 'A completed source', 'Any visible failed state']}
   callouts={['Processing', 'Ready', 'Needs attention']}
   sensitive={['Private file and website names']}
@@ -103,17 +103,6 @@ Open **Storage limit** to review usage by source type and the selected agent’s
   assetPath="/media/agent/knowledge-storage.png"
 />
 
-## Test every important answer
-
-| Test | Example | What to check |
-| --- | --- | --- |
-| Exact | “What are your opening hours?” | Approved answer |
-| Paraphrased | “Can I visit on Saturday?” | Same grounded facts |
-| Missing | “Do you offer emergency root canals?” | No invented service |
-| Conflicting | Ask about a fact recently corrected | Only current source wins |
-
-Open **Agent Setup → Test agent** after any material source change.
-
 ## Common problems
 
 - **Processing does not finish:** retry the supported source or contact support with the source type and approximate time.
@@ -125,4 +114,4 @@ Open **Agent Setup → Test agent** after any material source change.
 
 - [Refine Agent Setup](/build-your-agent/agent-setup) with clear behavior and boundaries.
 - [Send messages and assets](/automate/send-messages-and-assets) when a request needs an action.
-- [Deploy to a channel](/channels/website-widget) to test the agent with real visitors.
+- [Deploy to a channel](/channels/website-widget) to use the agent with real visitors.

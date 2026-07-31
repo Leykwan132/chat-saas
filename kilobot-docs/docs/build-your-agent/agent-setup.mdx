@@ -21,7 +21,7 @@ Agent Setup defines who the agent is, how it communicates, and when it should in
 
 - Decide where instructions, facts, and actions belong
 - Write clear behavior, tone, boundaries, and escalation rules
-- Test changes before publishing the agent
+- Review changes before publishing the agent
 
 </DocOutcomes>
 
@@ -97,31 +97,9 @@ Open **Triggers** and choose the available **Reply mode**. Human escalation or a
   assetPath="/media/agent/agent-setup-controls.png"
 />
 
-## Test the behavior
-
-Test customer wording, abbreviations, and incomplete questions—not only phrases copied from your source material.
-
-| Test | Northstar message | Expected behavior |
-| --- | --- | --- |
-| Known fact | “Are you open Saturday?” | Uses the approved hours |
-| Paraphrase | “Can I come this weekend?” | Reaches the same grounded answer |
-| Missing fact | “Do you offer emergency root canals?” | Does not invent a service |
-| Escalation | “I want to dispute a payment.” | Offers or triggers human help |
-| Workflow intent | “Send me your brochure.” | Matches the intended Workflow only |
-
-<DocMediaPlaceholder
-  kind="image"
-  title="Test grounded and unknown questions"
-  description="Show one supported answer and one safe response to missing knowledge."
-  capture={['A grounded opening-hours answer', 'An unknown service question', 'The non-invented response']}
-  callouts={['Grounded', 'Unknown', 'Safe boundary']}
-  sensitive={['Other test conversations']}
-  assetPath="/media/agent/test-agent.png"
-/>
-
 ## Publish
 
-**Publish** makes the current draft active. Saving or editing a field does not guarantee that customers receive the new configuration. If you navigate away with an unpublished draft, return and publish after testing.
+**Publish** makes the current draft active. Saving or editing a field does not guarantee that customers receive the new configuration. If you navigate away with an unpublished draft, return and publish the latest changes.
 
 ## Common problems
 
@@ -134,4 +112,4 @@ Test customer wording, abbreviations, and incomplete questions—not only phrase
 
 - [Give your agent knowledge](/build-your-agent/knowledge-base) from trusted business sources.
 - [Send messages and assets](/automate/send-messages-and-assets) when requests should trigger an action.
-- [Deploy to a channel](/channels/website-widget) after testing the agent.
+- [Deploy to a channel](/channels/website-widget) after reviewing the agent.

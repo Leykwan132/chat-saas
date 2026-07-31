@@ -1,6 +1,6 @@
 ---
 title: WhatsApp
-description: Connect WhatsApp through Meta and verify messaging in KiloBot.
+description: Connect WhatsApp through Meta and use messaging in KiloBot.
 slug: /channels/whatsapp
 ---
 
@@ -20,7 +20,7 @@ WhatsApp connects through Meta’s authorization flow. Setup may remain pending 
 
 - Complete the Meta connection flow
 - Confirm synchronization finishes successfully
-- Verify incoming messages, teammate replies, and safe disconnection
+- See incoming messages, teammate replies, and safe disconnection
 
 </DocOutcomes>
 
@@ -57,16 +57,12 @@ Coexistence lets you use the same WhatsApp Business number in both KiloBot and t
 <DocMediaPlaceholder
   kind="video"
   title="Connect WhatsApp"
-  description="Record Meta authorization, phone confirmation, and the first verified Inbox conversation."
-  capture={['Show the connected result first', 'Complete Meta account selection', 'Choose WhatsApp Business app and enter the phone number', 'Scan the phone QR code', 'Complete payment setup without payment details', 'Return to history sync', 'Send inbound and outbound tests']}
+  description="Record Meta authorization, phone confirmation, and the connected Inbox conversation."
+  capture={['Show the connected result first', 'Complete Meta account selection', 'Choose WhatsApp Business app and enter the phone number', 'Scan the phone QR code', 'Complete payment setup without payment details', 'Return to history sync', 'Show the connected Inbox conversation']}
   duration="60–90 seconds"
   sensitive={['Login details', 'Phone number', 'Business and account IDs', 'Customer history']}
   assetPath="/media/channels/connect-whatsapp.mp4"
 />
-
-## Verify
-
-Send a fresh message from a separate WhatsApp account, confirm it appears in Inbox, then send a teammate reply. Historical synchronization does not replace this live test.
 
 ## Disconnect
 

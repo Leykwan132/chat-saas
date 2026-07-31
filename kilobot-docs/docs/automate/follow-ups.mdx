@@ -21,7 +21,7 @@ Follow-ups re-engage eligible customers after they have not replied. A customer 
 
 - Choose the follow-up audience and activation scope
 - Configure timing, attempts, and approved messages
-- Verify replies stop later attempts
+- Stop later attempts when customers reply
 
 </DocOutcomes>
 
@@ -78,14 +78,12 @@ Meta template charges are separate from KiloBot credits. Estimates use known tem
 
 <DocMediaPlaceholder
   kind="video"
-  title="Test a no-reply Follow-up safely"
-  description="Demonstrate both branches: an attempt sent after silence and a later attempt cancelled by a reply."
+  title="Show Follow-up history"
+  description="Show scheduled, sent, and cancelled Follow-up outcomes in History."
   capture={[
-    'Activate a Future only test sequence',
-    'Trigger the sequence with a controlled Contact',
-    'Verify the first scheduled or sent History row',
-    'Reply as the customer',
-    'Verify the remaining attempt does not send',
+    'Show the active Follow-up Summary',
+    'Show a scheduled or sent History row',
+    'Show a cancelled remaining attempt after a reply',
   ]}
   duration="75–105 seconds"
   sensitive={['Real customer records', 'Phone numbers', 'Provider identifiers']}

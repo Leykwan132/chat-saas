@@ -21,7 +21,7 @@ Use a Workflow when a customer request should send approved content instead of r
 
 - Send an exact message when a customer request matches
 - Deliver approved photos, videos, and files
-- Test matches and near-misses before saving
+- Keep near-miss requests on their intended paths
 
 </DocOutcomes>
 
@@ -68,26 +68,15 @@ Use **Discard changes** if you need to return to the last saved Workflow. Arrang
   assetPath="/media/workflows/message-and-asset-actions.png"
 />
 
-## Test the condition
-
-Test the requests that should match and nearby requests that should follow a different path:
-
-- **Match:** `Can you send me your treatment brochure?`
-- **Paraphrase:** `I need a document explaining your services.`
-- **Near-miss:** `How much does a consultation cost?`
-- **Other action:** `I want to book a consultation.`
-
-The first two requests should receive the brochure. Pricing and booking requests should not.
-
 <DocMediaPlaceholder
   kind="video"
-  title="Send and verify a brochure"
-  description="Build the brochure branch, save it, and verify two matches and two near-misses."
+  title="Send a brochure"
+  description="Build the brochure branch, save it, and show the approved brochure action."
   capture={[
     'Show the successful brochure result first',
     'Create the condition and Send Files action',
     'Upload the approved brochure and save',
-    'Test the match, paraphrase, pricing question, and booking request',
+    'Show the approved brochure action',
   ]}
   duration="60–90 seconds"
   sensitive={['Private files', 'Customer data', 'Unrelated Workflow branches']}

@@ -24,36 +24,36 @@ const guides = new Map([
   ["build-your-agent/agent-setup.mdx", [
     "Decide where instructions, facts, and actions belong",
     "Write clear behavior, tone, boundaries, and escalation rules",
-    "Test changes before publishing the agent",
+    "Review changes before publishing the agent",
   ]],
   ["build-your-agent/knowledge-base.mdx", [
     "Choose the right source type",
     "Add, replace, and remove trusted information",
-    "Test that the agent answers from approved facts",
+    "Ground answers in approved facts",
   ]],
   ["channels/connect-channels.mdx", [
     "Choose the right channel for your customers",
     "Understand each connection status",
-    "Connect a channel and verify a real conversation",
+    "See a connected channel in Inbox",
   ]],
   ["channels/website-widget.mdx", [
     "Configure the Website widget",
     "Install it on your website",
-    "Verify that visitor messages reach Inbox",
+    "See visitor messages in Inbox",
   ]],
   ["channels/whatsapp.mdx", [
     "Complete the Meta connection flow",
     "Confirm synchronization finishes successfully",
-    "Verify incoming messages, teammate replies, and safe disconnection",
+    "See incoming messages, teammate replies, and safe disconnection",
   ]],
   ["channels/instagram.mdx", [
     "Connect the correct professional Instagram account",
-    "Verify a direct message reaches Inbox",
+    "See a direct message reach Inbox",
     "Send a teammate reply from KiloBot",
   ]],
   ["channels/messenger.mdx", [
     "Connect the correct Facebook Page",
-    "Verify a Page message reaches Inbox",
+    "See a Page message reach Inbox",
     "Send a teammate reply from KiloBot",
   ]],
   ["engage/inbox.mdx", [
@@ -84,7 +84,7 @@ const guides = new Map([
   ["automate/send-messages-and-assets.mdx", [
     "Send an exact message when a customer request matches",
     "Deliver approved photos, videos, and files",
-    "Test matches and near-misses before saving",
+    "Keep near-miss requests on their intended paths",
   ]],
   ["automate/human-in-the-loop.mdx", [
     "Recognize when a teammate should take over",
@@ -94,7 +94,7 @@ const guides = new Map([
   ["automate/automate-bookings.mdx", [
     "Connect a booking request to an active service",
     "Keep service and availability setup in Bookings",
-    "Test booking intent without matching unrelated questions",
+    "Route clear booking intent without matching unrelated questions",
   ]],
   ["engage/message-templates.mdx", [
     "Create a complete WhatsApp Message Template",
@@ -109,12 +109,12 @@ const guides = new Map([
   ["automate/reminders.mdx", [
     "Choose which appointments should receive reminders",
     "Configure approved messages and send timing",
-    "Verify scheduled and completed sends in History",
+    "See scheduled and completed sends in History",
   ]],
   ["automate/follow-ups.mdx", [
     "Choose the follow-up audience and activation scope",
     "Configure timing, attempts, and approved messages",
-    "Verify replies stop later attempts",
+    "Stop later attempts when customers reply",
   ]],
   ["team/workspace-and-team.mdx", [
     "Invite a teammate to the correct workspace",
@@ -124,12 +124,12 @@ const guides = new Map([
   ["team/roles-and-permissions.mdx", [
     "Match permissions to a teammate’s responsibilities",
     "Assign the smallest suitable access",
-    "Test what the teammate can view and manage",
+    "Give teammates only the access they need",
   ]],
   ["team/lead-assignment.mdx", [
     "Choose a conversation assignment strategy",
     "Configure teammate eligibility and booking ownership",
-    "Verify new work reaches the intended teammate",
+    "See new work reach the intended teammate",
   ]],
   ["help/troubleshooting.mdx", [
     "Diagnose common agent, channel, booking, and Broadcast problems",
@@ -286,6 +286,18 @@ test("Workflow branch guidance stays under Build the branch", () => {
   assert.ok(source.includes("## Build the branch"));
   assert.ok(source.includes("Write a short Name that is easy to scan on the canvas"));
   assert.ok(source.indexOf("Write a short Name") > source.indexOf("## Build the branch"));
+});
+
+test("guides show outcomes without standalone testing sections", () => {
+  for (const relativePath of guides.keys()) {
+    if (relativePath === "start-here/quick-start.mdx") continue;
+
+    assert.doesNotMatch(
+      readGuide(relativePath),
+      /^## (?:Test|Verify)|^## Assign and test/m,
+      relativePath,
+    );
+  }
 });
 
 test("other channel setup paths stay direct", () => {
