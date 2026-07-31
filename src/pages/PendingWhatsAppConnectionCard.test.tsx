@@ -24,6 +24,7 @@ test('pending WhatsApp card keeps the standard card appearance', () => {
 
   expect(markup).toContain('Connecting…');
   expect(markup).toContain('aria-label="Stop WhatsApp connection"');
+  expect(markup).toContain('data-variant="destructiveGhost"');
   expect(markup).toContain('lucide-square');
   expect(markup).not.toContain('>Stop</button>');
   expect(markup).toContain('border-border bg-card');

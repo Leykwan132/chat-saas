@@ -26,9 +26,8 @@ export function WhatsAppConnectingAction({
       </span>
       <Button
         type="button"
-        variant="destructive"
+        variant="destructiveGhost"
         size="icon-xs"
-        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
         aria-label={
           stopping
             ? 'Stopping WhatsApp connection'

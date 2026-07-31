@@ -7,18 +7,19 @@ import {
   WhatsAppConnectionErrorContent,
 } from './WhatsAppConnectionFeedback';
 
-test('active WhatsApp connection shows a compact square stop action', () => {
+test('active WhatsApp connection shows a transparent red icon-only stop action', () => {
   const markup = renderToStaticMarkup(
     <WhatsAppConnectingAction stopping={false} onStop={() => undefined} />,
   );
 
   expect(markup).toContain('Connecting…');
   expect(markup).toContain('aria-label="Stop WhatsApp connection"');
+  expect(markup).toContain('data-variant="destructiveGhost"');
   expect(markup).toContain('data-size="icon-xs"');
   expect(markup).toContain('lucide-square');
+  expect(markup).toContain('text-destructive');
+  expect(markup).not.toContain('bg-destructive');
   expect(markup).not.toContain('>Stop</button>');
-  expect(markup).toContain('data-variant="destructive"');
-  expect(markup).toContain('bg-destructive text-destructive-foreground');
 });
 
 test('stopping WhatsApp connection disables the stop action', () => {
