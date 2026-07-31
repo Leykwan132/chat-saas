@@ -13,6 +13,7 @@ import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
+import { assertAgentCanConnectWhatsApp } from "./whatsappChannelGuard";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -404,6 +405,21 @@ export const internalStartPending = internalMutation({
       throw new Error(`WhatsApp is not supported on the ${stripeInfo.plan} plan.`);
     }
     const now = Date.now();
+    const defaultAgentId =
+      args.agentId ??
+      (await resolveDefaultAgentIdForChannel(ctx, {
+        channelOrgId: args.orgId,
+        connectedByUserId: args.connectedByUserId,
+      }));
+    if (defaultAgentId !== undefined) {
+      const agentWhatsAppChannels = await ctx.db
+        .query("channels")
+        .withIndex("by_defaultAgentId_and_service", (q) =>
+          q.eq("defaultAgentId", defaultAgentId).eq("service", "whatsapp"),
+        )
+        .take(50);
+      assertAgentCanConnectWhatsApp(agentWhatsAppChannels, args.wabaId);
+    }
     const channels = await ctx.db
       .query("channels")
       .withIndex("by_phoneNumberId", (q) => q.eq("phoneNumberId", args.phoneNumberId))
@@ -437,12 +453,6 @@ export const internalStartPending = internalMutation({
     }
 
     if (existing === null) {
-      const defaultAgentId =
-        args.agentId ??
-        (await resolveDefaultAgentIdForChannel(ctx, {
-          channelOrgId: args.orgId,
-          connectedByUserId: args.connectedByUserId,
-        }));
       const newId = await ctx.db.insert("channels", {
         orgId: args.orgId,
         service: "whatsapp",
@@ -458,13 +468,7 @@ export const internalStartPending = internalMutation({
       return newId;
     }
     const backfillAgentId =
-      existing.defaultAgentId === undefined
-        ? (args.agentId ??
-          (await resolveDefaultAgentIdForChannel(ctx, {
-            channelOrgId: args.orgId,
-            connectedByUserId: args.connectedByUserId,
-          })))
-        : undefined;
+      existing.defaultAgentId === undefined ? defaultAgentId : undefined;
     await ctx.db.patch(existing._id, {
       orgId: args.orgId,
       wabaId: args.wabaId,
