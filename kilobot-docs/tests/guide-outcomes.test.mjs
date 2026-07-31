@@ -388,6 +388,8 @@ test("Services and Availability explain auto-booking prerequisites", () => {
   assert.ok(services.includes("## Service settings"));
   assert.ok(services.includes("| **Booking fields** |"));
   assert.equal(services.includes("Open **Services** and choose **Add a service**"), false);
+  assert.equal(services.includes("DocMediaPlaceholder"), false);
+  assert.equal(services.includes("assetPath"), false);
   assert.ok(services.includes(":::important"));
   assert.ok(services.includes("which Service to book"));
   assert.ok(availability.includes(":::important"));
