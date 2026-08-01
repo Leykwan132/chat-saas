@@ -15,8 +15,9 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { WorkflowBookingAvailabilitySection } from './WorkflowBookingAvailabilitySection';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
-import { getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
+import { bookingAvailabilityBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -78,6 +79,7 @@ export function WorkflowInspectorForm({
   const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
     Id<'appointmentServices'>[] | undefined
   >(node.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined);
+  const [hasAcceptingLeadMember, setHasAcceptingLeadMember] = useState<boolean>();
   const selectedTitle = name.trim() || workflowNodeTitle(node.kind);
   const conditionEnabled = conditionEdge !== undefined;
   const {
@@ -133,7 +135,7 @@ export function WorkflowInspectorForm({
       !sameOptionalIdSet(allowedAppointmentServiceIds, node.allowedAppointmentServiceIds)
     )
   );
-  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || !hasNodeChanges;
+  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || !hasNodeChanges || bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
 
   return (
     <>
@@ -238,6 +240,14 @@ export function WorkflowInspectorForm({
                     agentId={agentId}
                     allowedServiceIds={allowedAppointmentServiceIds}
                     onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
+                  />
+                  <div className="flex flex-col gap-1">
+                    <h4 className="text-sm font-semibold text-foreground">Availability</h4>
+                    <p className="text-xs leading-relaxed text-muted-foreground">Choose who can accept appointment leads.</p>
+                  </div>
+                  <WorkflowBookingAvailabilitySection
+                    agentId={agentId}
+                    onEligibilityChange={setHasAcceptingLeadMember}
                   />
                 </div>
               ) : null}

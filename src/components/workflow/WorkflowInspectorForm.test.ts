@@ -18,3 +18,12 @@ test('workflow inspector allows immediate media and keeps Apply icon-free', () =
   expect(source).toContain('hasMediaSection && agentId');
   expect(source).toContain('<Loader2');
 });
+
+test('book appointment places availability below services and gates Apply', () => {
+  expect(source).toContain('<WorkflowBookingAvailabilitySection');
+  expect(source.indexOf('<WorkflowBookingServicesSection')).toBeLessThan(
+    source.indexOf('<WorkflowBookingAvailabilitySection'),
+  );
+  expect(source).toContain('bookingAvailabilityBlocksApply(');
+  expect(source).toContain('onEligibilityChange={setHasAcceptingLeadMember}');
+});
