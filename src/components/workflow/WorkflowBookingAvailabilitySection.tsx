@@ -136,7 +136,7 @@ export function WorkflowBookingAvailabilityList({
       ) : null}
       {!hasAcceptingLeadMember(roster, teammateUserIds) ? (
         <p className="text-xs text-destructive">
-          Turn on availability for at least one teammate to use appointment booking.
+          At least one teammate to use appointment booking.
         </p>
       ) : null}
     </div>

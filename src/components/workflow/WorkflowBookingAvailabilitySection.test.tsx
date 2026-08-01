@@ -165,6 +165,6 @@ test('keeps switch interaction separate from row navigation', () => {
 
   expect(source).toContain('event.stopPropagation()');
   expect(source).toContain('relative z-10 flex shrink-0 items-start gap-2');
-  expect(source).toContain('Turn on availability for at least one teammate to use appointment booking.');
+  expect(source).toContain('At least one teammate to use appointment booking.');
   expect(source).toContain('Availability is temporarily unavailable.');
 });
