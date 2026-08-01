@@ -51,7 +51,7 @@ test("beginConnectionAttempt rejects client-supplied agent context", async () =>
 
   await expect(
     authed.mutation(api.whatsappEmbeddedSignup.beginConnectionAttempt, {
-      agentId,
+      agentId: agentId as never,
     }),
   ).rejects.toThrow(/agentId/);
 });
