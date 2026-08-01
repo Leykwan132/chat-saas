@@ -43,8 +43,8 @@ export default function WorkspaceUsagePage() {
   return (
     <div className="space-y-6 max-w-4xl animate-fade-in mt-4">
       {/* Title */}
-      <div className="mb-4">
-        <h1 className="text-3xl font-semibold tracking-tight">{workspaceName} Usage</h1>
+      <div>
+        <h1 className="font-title text-3xl font-normal tracking-tight">{workspaceName} Usage</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Monitor credit spend and resource consumption for this workspace.
         </p>

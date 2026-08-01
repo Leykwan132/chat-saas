@@ -69,7 +69,7 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="flex w-full flex-col gap-8">
+    <div className="flex w-full flex-col gap-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <PageTitleBlock
           title="Services"

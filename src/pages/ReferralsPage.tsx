@@ -90,9 +90,9 @@ export default function ReferralsPage() {
   };
 
   return (
-    <div className="flex max-w-2xl animate-fade-in flex-col gap-8 pt-4">
+    <div className="flex max-w-2xl animate-fade-in flex-col gap-6 pt-4">
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">
+        <h1 className="font-title text-3xl font-normal tracking-tight">
           Get Free Credits
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">

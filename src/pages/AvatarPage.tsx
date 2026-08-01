@@ -34,7 +34,7 @@ export default function AvatarPage() {
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <div className="flex items-center gap-2"><h1 className="text-2xl font-semibold">Avatar</h1><Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge></div>
+          <div className="flex items-center gap-2"><h1 className="font-title text-2xl font-normal">Avatar</h1><Badge variant="secondary" className="bg-muted text-muted-foreground">Beta</Badge></div>
           <p className="mt-1 text-sm text-muted-foreground">Give visitors a face and voice for live conversations with KiloBot.</p>
         </div>
         {configuration.configured && canManage ? (
