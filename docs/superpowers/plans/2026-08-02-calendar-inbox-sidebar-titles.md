@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the fixed boxed Calendar and Inbox sidebar headers with plain normal-weight KiloBot page titles while preserving all sidebar behavior.
+**Goal:** Use plain normal-weight KiloBot sidebar titles with compact following space and update the main Inbox and Services navigation icons while preserving all behavior.
 
-**Architecture:** Define one small shared `SidebarPageTitleRow` component that owns the unboxed row and title typography. Calendar and the expanded Inbox filter sidebar consume it, the loading skeleton mirrors its geometry, and the collapsed Inbox rail keeps its existing expand button in a compact unboxed row.
+**Architecture:** Keep title typography and compact following space in the shared `SidebarPageTitleRow`. Calendar and expanded Inbox consume it, the loading skeleton mirrors its geometry, and the main navigation data selects Lucide's `MessagesSquare` and `ShoppingCart` icons for Inbox and Services.
 
 **Tech Stack:** React 19, TypeScript, Tailwind CSS, shadcn/ui Button, Vitest
 
@@ -15,6 +15,7 @@
 - Do not change Calendar, Inbox filtering, collapse, permissions, scrolling, or responsive behavior.
 - Do not modify or stage unrelated `convex/_generated/api.d.ts` changes.
 - Do not add comments or exceed 300 lines in any new code file.
+- Limit icon replacements to the main Inbox and Services navigation entries.
 
 ---
 
@@ -113,4 +114,99 @@ Update `CONTINUITY.md` with the new unboxed sidebar-title behavior, focused veri
 ```bash
 git add CONTINUITY.md docs/superpowers/plans/2026-08-02-calendar-inbox-sidebar-titles.md src/components/SidebarPageTitleRow.tsx src/components/SidebarPageTitleRow.test.tsx src/lib/sidebarNavStyles.ts src/pages/CalendarPage.tsx src/components/inbox/InboxFilterSidebar.tsx src/components/inbox/InboxPageSkeleton.tsx
 git commit -m "Style Calendar and Inbox sidebar titles"
+```
+
+---
+
+### Task 2: Compact Title Spacing and Navigation Icons
+
+**Files:**
+- Modify: `src/components/SidebarPageTitleRow.tsx`
+- Modify: `src/components/SidebarPageTitleRow.test.tsx`
+- Modify: `src/pages/CalendarPage.tsx`
+- Modify: `src/pages/CalendarSidebarPadding.test.ts`
+- Modify: `src/components/inbox/InboxPageSkeleton.tsx`
+- Modify: `src/components/app-sidebar-nav.ts`
+- Modify: `src/components/AppSidebarFeatureFlag.test.ts`
+
+**Interfaces:**
+- Consumes: `SidebarPageTitleRow({ title, action })` and `getNavItems(agentId, featureOptions)`.
+- Produces: a title row with `pb-0`, a Calendar New Booking button without `mt-2`, and navigation items whose `icon` references are `MessagesSquare` for Inbox and `ShoppingCart` for Services.
+
+- [ ] **Step 1: Write failing spacing and icon regressions**
+
+Extend `SidebarPageTitleRow.test.tsx`:
+
+```ts
+expect(markup).toContain('pb-0');
+expect(markup).not.toContain('pb-2');
+```
+
+Extend `CalendarSidebarPadding.test.ts`:
+
+```ts
+expect(source).toContain('className="h-11 w-full gap-2 px-5 py-3"');
+expect(source).not.toContain('className="mt-2 h-11 w-full gap-2 px-5 py-3"');
+```
+
+Extend `AppSidebarFeatureFlag.test.ts` with real icon references:
+
+```ts
+import { MessagesSquare, ShoppingCart } from 'lucide-react';
+
+test('uses the approved Inbox and Services navigation icons', () => {
+  const navigation = getNavItems('agent-id', {
+    showSavedReplies: false,
+    enableAvatarFeature: false,
+  });
+
+  expect(navigation.engagement.find((item) => item.label === 'Inbox')?.icon).toBe(
+    MessagesSquare,
+  );
+  expect(navigation.bookings.find((item) => item.label === 'Services')?.icon).toBe(
+    ShoppingCart,
+  );
+});
+```
+
+- [ ] **Step 2: Run the regressions and confirm RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/SidebarPageTitleRow.test.tsx src/pages/CalendarSidebarPadding.test.ts src/components/AppSidebarFeatureFlag.test.ts
+```
+
+Expected: FAIL because the title row still uses `pb-2`, Calendar still uses `mt-2`, and the navigation still returns `MessageSquare` and `CalendarCheck`.
+
+- [ ] **Step 3: Implement the compact gap and icon replacements**
+
+Change the shared title row and matching skeleton from `pb-2` to `pb-0`. Remove only `mt-2` from Calendar's New Booking button. In `app-sidebar-nav.ts`, replace the `MessageSquare` and `CalendarCheck` imports and mappings:
+
+```ts
+import { MessagesSquare, ShoppingCart } from 'lucide-react';
+
+{ to: `/dashboard/${agentId}/inbox`, icon: MessagesSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ }
+{ to: `/dashboard/${agentId}/services`, icon: ShoppingCart, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ }
+```
+
+- [ ] **Step 4: Run focused verification**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/SidebarPageTitleRow.test.tsx src/pages/CalendarSidebarPadding.test.ts src/components/AppSidebarFeatureFlag.test.ts src/pages/ChatsPageHeaderActions.test.ts
+source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/SidebarPageTitleRow.tsx src/components/SidebarPageTitleRow.test.tsx src/pages/CalendarSidebarPadding.test.ts src/components/inbox/InboxPageSkeleton.tsx src/components/app-sidebar-nav.ts src/components/AppSidebarFeatureFlag.test.ts
+git diff --check
+```
+
+Expected: all focused tests, scoped lint, and whitespace checks pass.
+
+- [ ] **Step 5: Record and commit**
+
+Update `CONTINUITY.md` with the compact spacing, approved icons, focused verification, and unreleased status. Do not update the changelog without a confirmed production date.
+
+```bash
+git add CONTINUITY.md docs/superpowers/plans/2026-08-02-calendar-inbox-sidebar-titles.md src/components/SidebarPageTitleRow.tsx src/components/SidebarPageTitleRow.test.tsx src/pages/CalendarPage.tsx src/pages/CalendarSidebarPadding.test.ts src/components/inbox/InboxPageSkeleton.tsx src/components/app-sidebar-nav.ts src/components/AppSidebarFeatureFlag.test.ts
+git commit -m "Refine sidebar title spacing and icons"
 ```
