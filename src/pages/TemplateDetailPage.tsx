@@ -160,7 +160,7 @@ export default function TemplateDetailPage() {
       {template && (
         <>
           <header>
-            <h1 className="m-0 text-3xl font-semibold leading-none tracking-tight text-foreground">
+            <h1 className="m-0 font-title text-3xl font-normal leading-none tracking-tight text-foreground">
               {template.name}
             </h1>
           </header>

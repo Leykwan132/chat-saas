@@ -200,7 +200,7 @@ export default function ServicePage() {
 
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-2">
-            <h1 className="m-0 truncate text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className="m-0 truncate font-title text-3xl font-normal tracking-tight text-foreground">
               {form.name.trim() || 'Edit service'}
             </h1>
           </div>
