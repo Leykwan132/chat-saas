@@ -730,7 +730,7 @@ function CalendarSidebarFilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className="px-3 py-[0.45rem]">
+    <div className="px-4 py-[0.45rem]">
       <div className={inboxSidebarGroupLabelClassName}>{title}</div>
       <div className="flex flex-col gap-[0.1125rem]">{children}</div>
     </div>
@@ -1132,7 +1132,7 @@ export default function CalendarPage() {
         </div>
         <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem]')}>
           {canManageCalendar && (
-            <div className="px-3 pb-3">
+            <div className="px-4 pb-3">
               <Button
                 type="button"
                 size="lg"
