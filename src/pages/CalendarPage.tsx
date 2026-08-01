@@ -93,7 +93,6 @@ import {
   inboxSidebarItemActiveClassName,
   inboxSidebarItemClassName,
   inboxSidebarItemInactiveClassName,
-  inboxSidebarSectionClassName,
 } from '@/lib/sidebarNavStyles';
 import { cn } from '@/lib/utils';
 
@@ -731,7 +730,7 @@ function CalendarSidebarFilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <div className={inboxSidebarSectionClassName}>
+    <div className="px-3 py-[0.45rem]">
       <div className={inboxSidebarGroupLabelClassName}>{title}</div>
       <div className="flex flex-col gap-[0.1125rem]">{children}</div>
     </div>
