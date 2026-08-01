@@ -85,10 +85,10 @@ import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
+import { SidebarPageTitleRow } from '@/components/SidebarPageTitleRow';
 import {
   inboxSidebarCountClassName,
   inboxSidebarGroupLabelClassName,
-  inboxSidebarHeaderTitleClassName,
   inboxSidebarIconSlotClassName,
   inboxSidebarItemActiveClassName,
   inboxSidebarItemClassName,
@@ -1127,9 +1127,7 @@ export default function CalendarPage() {
   return (
     <div className="grid h-full min-h-0 grid-cols-[18rem_minmax(0,1fr)_20rem] overflow-hidden bg-background">
       <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
-        <div className={cn(inboxColumnHeaderClassName, 'px-[0.675rem]')}>
-          <h1 className={inboxSidebarHeaderTitleClassName}>Calendar</h1>
-        </div>
+        <SidebarPageTitleRow title="Calendar" />
         <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem]')}>
           {canManageCalendar && (
             <div className="px-4 pb-3">

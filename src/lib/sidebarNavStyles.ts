@@ -25,9 +25,6 @@ export const inboxSidebarCountClassName =
 
 export const inboxSidebarSectionClassName = 'px-[0.45rem] py-[0.45rem]';
 
-export const inboxSidebarHeaderTitleClassName =
-  'm-0 text-[0.7875rem] font-semibold text-foreground';
-
 export const inboxSidebarToggleButtonClassName =
   'size-[1.8rem] shrink-0 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground';
 

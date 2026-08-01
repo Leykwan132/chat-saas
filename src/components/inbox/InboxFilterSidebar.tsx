@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { SiInstagram, SiMessenger, SiWhatsapp } from 'react-icons/si';
 import { Button } from '@/components/ui/button';
+import { SidebarPageTitleRow } from '@/components/SidebarPageTitleRow';
 import {
   Empty,
   EmptyContent,
@@ -33,7 +34,6 @@ import {
   INBOX_SIDEBAR_WIDTH,
   inboxSidebarCountClassName,
   inboxSidebarGroupLabelClassName,
-  inboxSidebarHeaderTitleClassName,
   inboxSidebarIconSlotClassName,
   inboxSidebarItemActiveClassName,
   inboxSidebarItemClassName,
@@ -46,7 +46,6 @@ import type { ConversationPlatform } from '@/components/ChatRow';
 import { getPlatformIconClassName } from '@/lib/platformIconStyles';
 import {
   inboxColumnClassName,
-  inboxColumnHeaderClassName,
   inboxColumnScrollClassName,
 } from '@/components/inbox/inboxLayout';
 import { LeadTemperatureInfo } from '@/components/inbox/LeadTemperatureInfo';
@@ -241,15 +240,10 @@ export function InboxFilterSidebar({
         width: open ? INBOX_SIDEBAR_WIDTH : INBOX_SIDEBAR_ICON_RAIL_WIDTH,
       }}
     >
-      <div
-        className={cn(
-          inboxColumnHeaderClassName,
-          open ? 'justify-between px-[0.675rem]' : 'justify-center px-[0.45rem]',
-        )}
-      >
-        {open ? (
-          <>
-            <h2 className={inboxSidebarHeaderTitleClassName}>Inbox</h2>
+      {open ? (
+        <SidebarPageTitleRow
+          title="Inbox"
+          action={(
             <Button
               type="button"
               variant="ghost"
@@ -260,8 +254,10 @@ export function InboxFilterSidebar({
             >
               <PanelLeftClose className={inboxSidebarToggleIconClassName} />
             </Button>
-          </>
-        ) : (
+          )}
+        />
+      ) : (
+        <div className="flex justify-center px-[0.45rem] py-2">
           <Button
             type="button"
             variant="ghost"
@@ -272,8 +268,8 @@ export function InboxFilterSidebar({
           >
             <PanelLeftOpen className={inboxSidebarToggleIconClassName} />
           </Button>
-        )}
-      </div>
+        </div>
+      )}
 
       {!open ? (
         <div className="flex flex-1 flex-col items-center gap-[0.225rem] py-[0.225rem]">
