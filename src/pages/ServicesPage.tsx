@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Link, Navigate, useNavigate, useParams } from 'react-router';
+import { useMemo } from 'react';
+import { Link, Navigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import {
@@ -10,15 +10,11 @@ import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { PageTitleBlock } from '@/components/PageTitleBlock';
-import {
-  ServicesOverviewDialog,
-  SERVICES_OVERVIEW_META,
-} from '@/components/ServicesOverviewDialog';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/usePermissions';
 import { type ServiceRow } from '@/lib/serviceForm';
 import { cn } from '@/lib/utils';
@@ -29,97 +25,12 @@ function formatBookingCount(count: number) {
   return `${count} bookings`;
 }
 
-interface BookCardProps {
-  tag: string;
-  title: React.ReactNode;
-  onClick?: () => void;
-  to?: string;
-  disabled?: boolean;
-  isDark?: boolean;
-}
-
-function BookCard({ tag, title, onClick, to, disabled, isDark }: BookCardProps) {
-  const cardContent = (
-    <>
-      <div className="absolute inset-0 z-0 rounded-l-sm rounded-r-[14px] border border-neutral-200/80 bg-white shadow-inner transition-transform duration-500 ease-out group-hover:translate-x-1.5 dark:border-neutral-800/80 dark:bg-[#1a1a1a]" />
-      <div
-        style={{ transformOrigin: 'left center', transformStyle: 'preserve-3d' }}
-        className={`absolute inset-0 z-20 flex origin-left flex-col justify-between rounded-l-sm rounded-r-[14px] border py-3.5 pl-[25px] pr-3.5 shadow-md transition-transform duration-500 ease-out group-hover:shadow-lg group-hover:[transform:rotateY(-24deg)] ${
-          isDark
-            ? 'border-neutral-900 bg-neutral-950 text-white dark:bg-black'
-            : 'border-neutral-200/80 bg-[#fafafa] text-neutral-800 dark:border-neutral-800/80 dark:bg-[#202020] dark:text-neutral-100'
-        }`}
-      >
-        <div className="flex flex-col gap-2">
-          <img
-            src="/icon.svg"
-            className={`size-5 shrink-0 ${isDark ? 'invert' : 'dark:invert'}`}
-            alt="App Logo"
-          />
-          <span
-            className={`inline-flex w-fit items-center rounded-full border px-2 py-0.5 text-[9px] font-semibold ${
-              isDark
-                ? 'border-neutral-800/50 bg-neutral-900 text-neutral-400'
-                : 'border-neutral-200/30 bg-neutral-100 text-neutral-500 dark:border-neutral-700/30 dark:bg-neutral-800 dark:text-neutral-400'
-            }`}
-          >
-            {tag}
-          </span>
-        </div>
-        <h3
-          className={`text-sm font-semibold leading-tight tracking-tight ${isDark ? 'text-white' : 'text-neutral-800 dark:text-neutral-100'}`}
-        >
-          {title}
-        </h3>
-        <div
-          className={`pointer-events-none absolute bottom-0 left-0 top-0 w-[17px] rounded-l-sm bg-gradient-to-r ${
-            isDark
-              ? 'from-white/[0.04] via-transparent to-black/[0.3]'
-              : 'from-black/[0.08] via-transparent to-black/[0.12] dark:from-white/[0.03] dark:to-black/[0.2]'
-          }`}
-        />
-        <div
-          className={`pointer-events-none absolute bottom-0 left-[17px] top-0 w-px ${
-            isDark ? 'bg-neutral-800/80' : 'bg-neutral-300/60 dark:bg-neutral-800/60'
-          }`}
-        />
-        <div
-          className={`pointer-events-none absolute bottom-0 left-[18px] top-0 w-px ${
-            isDark ? 'bg-white/[0.02]' : 'bg-white/50 dark:bg-white/[0.02]'
-          }`}
-        />
-      </div>
-    </>
-  );
-
-  if (to) {
-    return (
-      <Link
-        to={to}
-        className={`group relative block h-[182px] w-[140px] [perspective:1000px] select-none ${disabled ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}
-      >
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return (
-    <div
-      onClick={disabled ? undefined : onClick}
-      className={`group relative h-[182px] w-[140px] [perspective:1000px] select-none ${disabled ? 'pointer-events-none opacity-50' : 'cursor-pointer'}`}
-    >
-      {cardContent}
-    </div>
-  );
-}
-
 function formatDateTime(value: number) {
   return format(new Date(value), 'MMM d, yyyy h:mm a');
 }
 
 export default function ServicesPage() {
   const { agentId } = useParams();
-  const navigate = useNavigate();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canRead = can(Permission.AUTOMATION_READ) || can(Permission.CALENDAR_READ);
@@ -130,8 +41,6 @@ export default function ServicesPage() {
     typedAgentId && canRead ? { agentId: typedAgentId } : 'skip',
   );
   const updateService = useMutation(api.appointmentBooking.services.updateService);
-  const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
-  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const overviewServices = overview?.services;
   const services = useMemo(() => (overviewServices ?? []) as ServiceRow[], [overviewServices]);
   const createServiceHref = `/dashboard/${typedAgentId}/services/new`;
@@ -176,61 +85,41 @@ export default function ServicesPage() {
         ) : null}
       </header>
 
-      <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
-        <div className="flex max-w-[700px] flex-wrap items-end gap-6">
-          <BookCard
-            tag={SERVICES_OVERVIEW_META.tag}
-            title={SERVICES_OVERVIEW_META.bookTitle}
-            onClick={() => {
-              setWalkthroughStep(0);
-              setIsWalkthroughOpen(true);
-            }}
-          />
-        </div>
-      </section>
+      <Tabs defaultValue="services" className="gap-6">
+        <TabsList variant="line">
+          <TabsTrigger value="services">Your Services</TabsTrigger>
+          <TabsTrigger value="appointments">Booked Appointments</TabsTrigger>
+        </TabsList>
 
-      <section className="mt-4 flex flex-col gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">Your Services</h2>
-          </div>
-          <Separator className="mt-3" />
-        </div>
+        <TabsContent value="services">
+          {services.length === 0 && !canManage ? (
+            <div className="rounded-xl border border-dashed border-border bg-card px-5 py-8 text-center">
+              <CalendarCheck className="mx-auto size-8 text-muted-foreground" />
+              <h3 className="mt-3 text-sm font-semibold text-foreground">No services yet</h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Add a service to let AI start booking appointments.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {services.map((service) => (
+                <ServiceCard
+                  key={service._id}
+                  service={service}
+                  canManage={canManage}
+                  detailHref={`/dashboard/${typedAgentId}/services/${service._id}`}
+                  onToggleActive={(isActive) => void handleToggleActive(service._id, isActive)}
+                />
+              ))}
+              {canManage ? <AddServiceCard href={createServiceHref} /> : null}
+            </div>
+          )}
+        </TabsContent>
 
-        {services.length === 0 && !canManage ? (
-          <div className="rounded-xl border border-dashed border-border bg-card px-5 py-8 text-center">
-            <CalendarCheck className="mx-auto size-8 text-muted-foreground" />
-            <h3 className="mt-3 text-sm font-semibold text-foreground">No services yet</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Add a service to let AI start booking appointments.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {services.map((service) => (
-              <ServiceCard
-                key={service._id}
-                service={service}
-                canManage={canManage}
-                detailHref={`/dashboard/${typedAgentId}/services/${service._id}`}
-                onToggleActive={(isActive) => void handleToggleActive(service._id, isActive)}
-              />
-            ))}
-            {canManage ? <AddServiceCard href={createServiceHref} /> : null}
-          </div>
-        )}
-      </section>
-
-      <section className="mt-4 flex flex-col gap-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">Booked Appointments</h2>
-          <Separator className="mt-3" />
-        </div>
-
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] border-collapse text-sm">
+        <TabsContent value="appointments">
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] border-collapse text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-5 py-3.5 text-left align-middle font-semibold text-muted-foreground">
@@ -287,19 +176,11 @@ export default function ServicesPage() {
                   ))
                 )}
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <ServicesOverviewDialog
-        open={isWalkthroughOpen}
-        onOpenChange={setIsWalkthroughOpen}
-        step={walkthroughStep}
-        onStepChange={setWalkthroughStep}
-        onAddService={canManage ? () => navigate(createServiceHref) : undefined}
-      />
-
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
@@ -357,13 +238,16 @@ function ServiceCard({
         </p>
 
         <div
-          className="relative z-10 shrink-0"
+          className="relative z-10 flex shrink-0 items-center gap-1.5"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
           }}
           onKeyDown={(event) => event.stopPropagation()}
         >
+          <span className="text-xs text-muted-foreground">
+            {service.isActive ? 'Active' : 'Inactive'}
+          </span>
           <Switch
             checked={service.isActive}
             onCheckedChange={onToggleActive}
