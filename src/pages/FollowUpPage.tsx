@@ -233,7 +233,7 @@ export default function FollowUpPage() {
               WhatsApp only
             </span>
           </div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Follow-ups</h1>
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">Follow-ups</h1>
         </div>
         {canManage && (
           <div className="flex shrink-0">

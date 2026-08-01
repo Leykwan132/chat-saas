@@ -50,7 +50,7 @@ export default function InvitationsPage() {
 
   return (
     <div className="mt-4">
-      <h1 className="m-0 text-3xl font-semibold tracking-tight">Invitations</h1>
+      <h1 className="m-0 font-title text-3xl font-normal tracking-tight">Invitations</h1>
 
       <div className="mt-8">
         {loading ? (

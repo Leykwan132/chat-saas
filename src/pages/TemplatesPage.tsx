@@ -175,7 +175,7 @@ export default function TemplatesPage() {
     <div data-templates-page className="mx-auto flex w-full max-w-7xl flex-col gap-6 animate-fade-in pb-12">
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground leading-tight">
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground leading-tight">
             Message templates
           </h1>
         </div>

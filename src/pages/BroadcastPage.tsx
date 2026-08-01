@@ -72,7 +72,7 @@ export default function BroadcastPage() {
               WhatsApp only
             </span>
           </div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Broadcast</h1>
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">Broadcast</h1>
         </div>
         {canManage && (
           <div className="flex shrink-0">

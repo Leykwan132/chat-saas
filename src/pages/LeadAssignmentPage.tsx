@@ -106,7 +106,7 @@ export default function LeadAssignmentPage() {
   return (
     <div className="flex w-full max-w-5xl flex-col gap-6">
       <header>
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
           Lead Assignment
         </h1>
       </header>
