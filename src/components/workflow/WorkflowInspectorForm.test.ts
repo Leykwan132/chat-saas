@@ -27,3 +27,8 @@ test('book appointment places availability below services and gates Apply', () =
   expect(source).toContain('bookingAvailabilityBlocksApply(');
   expect(source).toContain('onEligibilityChange={setHasAcceptingLeadMember}');
 });
+
+test('keeps workflow labels close to their booking controls', () => {
+  expect(source).toContain('<Field className="items-start gap-2 text-left">');
+  expect(source).toContain('<div className="flex flex-col gap-3">');
+});

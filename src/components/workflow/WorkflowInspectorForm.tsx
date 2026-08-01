@@ -158,7 +158,7 @@ export function WorkflowInspectorForm({
                     Decide when this node should run in the conversation.
                   </FieldDescription>
                 </div>
-                <Field>
+                <Field className="gap-2">
                   <FieldLabel htmlFor="workflow-node-condition-name">Name</FieldLabel>
                   <Input
                     id="workflow-node-condition-name"
@@ -167,7 +167,7 @@ export function WorkflowInspectorForm({
                     placeholder={conditionNamePlaceholder}
                   />
                 </Field>
-                <Field>
+                <Field className="gap-2">
                   <FieldLabel htmlFor="workflow-node-condition-detail">Detail</FieldLabel>
                   <Textarea
                     id="workflow-node-condition-detail"
@@ -206,7 +206,7 @@ export function WorkflowInspectorForm({
                   Define what the AI should do after the condition matches.
                 </FieldDescription>
               </div>
-              <Field className="items-start text-left">
+              <Field className="items-start gap-2 text-left">
                 <FieldLabel className="text-left" htmlFor="workflow-node-title">{nameLabel}</FieldLabel>
                 <Input
                   id="workflow-node-title"
@@ -216,7 +216,7 @@ export function WorkflowInspectorForm({
                 />
               </Field>
               {hasGoalField ? (
-                <Field className="items-start text-left">
+                <Field className="items-start gap-2 text-left">
                   <FieldLabel className="text-left" htmlFor="workflow-node-description">{goalLabel}</FieldLabel>
                   <Textarea
                     id="workflow-node-description"
@@ -229,7 +229,7 @@ export function WorkflowInspectorForm({
                 </Field>
               ) : null}
               {isBookAppointmentAction && agentId ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1">
                     <h4 className="text-sm font-semibold text-foreground">Services</h4>
                     <p className="text-xs leading-relaxed text-muted-foreground">
