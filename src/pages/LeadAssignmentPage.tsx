@@ -105,7 +105,7 @@ export default function LeadAssignmentPage() {
 
   return (
     <div className="flex w-full max-w-5xl flex-col gap-6">
-      <header className="border-b border-border pb-6">
+      <header>
         <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
           Lead Assignment
         </h1>
@@ -183,7 +183,7 @@ export default function LeadAssignmentPage() {
 function LeadAssignmentPageSkeleton() {
   return (
     <div className="flex w-full max-w-5xl flex-col gap-6">
-      <div className="border-b border-border pb-6">
+      <div>
         <Skeleton className="h-9 w-52" />
       </div>
 

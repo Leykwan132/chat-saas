@@ -159,7 +159,7 @@ export default function TemplateDetailPage() {
 
       {template && (
         <>
-          <header className="border-b border-border pb-6">
+          <header>
             <h1 className="m-0 text-3xl font-semibold leading-none tracking-tight text-foreground">
               {template.name}
             </h1>

@@ -186,8 +186,12 @@ export default function ServicePage() {
         className="mx-auto flex w-full max-w-3xl flex-col gap-8"
         style={showSaveFooter ? { paddingBottom: '4.5rem' } : undefined}
       >
-      <header className="flex flex-col gap-4 border-b border-border pb-6">
-        <Button asChild variant="ghost" className="w-fit gap-2 px-0 text-muted-foreground hover:text-foreground">
+      <header className="flex flex-col gap-4">
+        <Button
+          asChild
+          variant="ghost"
+          className="w-fit gap-2 px-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        >
           <Link to={backHref}>
             <ArrowLeft className="size-4" />
             Back to Services
@@ -332,7 +336,7 @@ function CreateServiceSkeleton() {
 function EditServiceSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-      <div className="border-b border-border pb-6">
+      <div>
         <Skeleton className="h-9 w-40" />
         <Skeleton className="mt-4 h-9 w-56" />
         <Skeleton className="mt-3 h-4 w-96" />

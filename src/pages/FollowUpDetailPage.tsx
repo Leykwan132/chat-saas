@@ -658,7 +658,7 @@ export default function FollowUpDetailPage() {
         </Link>
       </Button>
 
-      <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {canManage && isEditingTitle ? (

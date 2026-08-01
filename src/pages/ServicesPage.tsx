@@ -70,7 +70,7 @@ export default function ServicesPage() {
 
   return (
     <div className="flex w-full flex-col gap-8">
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <PageTitleBlock
           title="Services"
           description="Create the services customers can book with your team."
@@ -264,7 +264,7 @@ function ServiceCard({
 function ServicesSkeleton() {
   return (
     <div className="flex w-full flex-col gap-8">
-      <div className="border-b border-border pb-6">
+      <div>
         <Skeleton className="h-10 w-64" />
         <Skeleton className="mt-3 h-4 w-96" />
       </div>

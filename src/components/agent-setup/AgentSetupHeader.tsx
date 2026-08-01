@@ -18,7 +18,7 @@ export function AgentSetupHeader({
   onTest,
 }: AgentSetupHeaderProps) {
   return (
-    <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+    <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
       <PageTitleBlock
         title="Configuration"
         description="Define how your agent behaves and responds to customers."

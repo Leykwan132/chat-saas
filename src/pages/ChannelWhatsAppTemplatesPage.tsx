@@ -125,7 +125,7 @@ export default function ChannelWhatsAppTemplatesPage() {
         </Button>
       </div>
 
-      <header className="flex flex-col gap-2 border-b border-border pb-6">
+      <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <FileText className="size-5" />
           <span className="text-xs font-medium uppercase tracking-wide">

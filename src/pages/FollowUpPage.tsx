@@ -225,7 +225,7 @@ export default function FollowUpPage() {
       <WhatsAppFeatureGate feature="Follow-ups">
         <div className="flex w-full flex-col gap-8">
       {/* Page Header */}
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold text-muted-foreground">

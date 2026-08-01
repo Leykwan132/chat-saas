@@ -206,7 +206,7 @@ export default function CreateTemplatePage() {
         </Button>
       </div>
 
-      <header className="mb-6 border-b border-border pb-6">
+      <header className="mb-6">
         <h1 className="m-0 text-2xl font-bold tracking-tight text-foreground">
           Create template
         </h1>

@@ -172,7 +172,7 @@ export default function BroadcastDetailPage() {
         </Link>
       </Button>
 
-      <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
             {schedule.templateName}

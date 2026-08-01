@@ -13,14 +13,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  BroadcastOverviewDialog,
-  OVERVIEW_VARIANT_META,
-} from '@/components/WhatsAppFeatureOverviewDialog';
-import {
-  BAN_GUIDE_META,
-  WhatsAppBanGuideDialog,
-} from '@/components/WhatsAppBanGuideDialog';
 import { useMutation, usePaginatedQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -28,8 +20,6 @@ import { toast } from 'sonner';
 import { WhatsAppFeatureGate } from '@/components/WhatsAppFeatureGate';
 import { BroadcastHistoryTable } from '@/components/broadcast/BroadcastHistoryTable';
 import { BROADCAST_HISTORY_PAGE_SIZE } from '@/components/broadcast/broadcastHistoryPagination';
-import { BroadcastGuideCard } from '@/components/broadcast/BroadcastGuideCard';
-import { BroadcastCostCalculatorDialog } from '@/components/broadcast/BroadcastCostCalculatorDialog';
 
 export default function BroadcastPage() {
   const { agentId } = useParams();
@@ -62,11 +52,6 @@ export default function BroadcastPage() {
     }
   };
 
-  const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
-  const [walkthroughStep, setWalkthroughStep] = useState(0);
-  const [isBanGuideOpen, setIsBanGuideOpen] = useState(false);
-  const [banGuideStep, setBanGuideStep] = useState(0);
-  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [targetSchedule, setTargetSchedule] = useState<{
     id: Id<'whatsappBroadcastSchedules'>;
@@ -74,9 +59,12 @@ export default function BroadcastPage() {
   } | null>(null);
 
   return (
-    <WhatsAppFeatureGate feature="Broadcast">
+    <WhatsAppFeatureGate
+      feature="Broadcast"
+      connectionRequiredVariant="minimal"
+    >
       <div data-broadcast-page className="flex w-full flex-col gap-8">
-        <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+        <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <div className="mb-2 flex items-center gap-1.5">
             <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
@@ -98,36 +86,6 @@ export default function BroadcastPage() {
         )}
         </header>
 
-        <section className="flex flex-col gap-4">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
-        <div className="flex flex-wrap items-end gap-6 max-w-[920px]">
-          <BroadcastGuideCard
-            tag={OVERVIEW_VARIANT_META.broadcast.tag}
-            title={OVERVIEW_VARIANT_META.broadcast.bookTitle}
-            onClick={() => {
-              setWalkthroughStep(0);
-              setIsWalkthroughOpen(true);
-            }}
-          />
-
-          <BroadcastGuideCard
-            tag={BAN_GUIDE_META.tag}
-            title={BAN_GUIDE_META.bookTitle}
-            onClick={() => {
-              setBanGuideStep(0);
-              setIsBanGuideOpen(true);
-            }}
-          />
-
-          <BroadcastGuideCard
-            tag="Calculator"
-            title="Cost Calculator"
-            onClick={() => setIsCalculatorOpen(true)}
-          />
-
-        </div>
-        </section>
-
       <BroadcastHistoryTable
         agentId={agentId as Id<'agents'>}
         schedules={schedules}
@@ -139,28 +97,6 @@ export default function BroadcastPage() {
           setTargetSchedule(schedule);
           setConfirmDialogOpen(true);
         }}
-      />
-
-      <BroadcastOverviewDialog
-        open={isWalkthroughOpen}
-        onOpenChange={setIsWalkthroughOpen}
-        step={walkthroughStep}
-        onStepChange={setWalkthroughStep}
-        ctaHref={canManage ? `/dashboard/${agentId}/broadcast/new` : undefined}
-      />
-
-      <WhatsAppBanGuideDialog
-        open={isBanGuideOpen}
-        onOpenChange={setIsBanGuideOpen}
-        step={banGuideStep}
-        onStepChange={setBanGuideStep}
-      />
-
-      <BroadcastCostCalculatorDialog
-        open={isCalculatorOpen}
-        onOpenChange={setIsCalculatorOpen}
-        agentId={agentId as Id<'agents'>}
-        canManage={canManage}
       />
 
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
