@@ -100,7 +100,16 @@ export function formatWorkflowWeeklyAvailability(
 }
 
 export function hasAcceptingLeadMember(
-  entries: Array<{ schedule: { enabled: boolean } }>,
+  entries: Array<{
+    schedule: { enabled: boolean; workosUserId?: string };
+  }>,
+  teammateUserIds?: Set<string>,
 ) {
-  return entries.some(({ schedule }) => schedule.enabled);
+  return entries.some(
+    ({ schedule }) =>
+      schedule.enabled &&
+      (teammateUserIds === undefined ||
+        (schedule.workosUserId !== undefined &&
+          teammateUserIds.has(schedule.workosUserId))),
+  );
 }

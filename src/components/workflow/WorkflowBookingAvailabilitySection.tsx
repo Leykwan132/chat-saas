@@ -41,6 +41,10 @@ export function WorkflowBookingAvailabilityList({
   pendingUserIds,
   onToggle,
 }: WorkflowBookingAvailabilityListProps) {
+  const teammateUserIds = useMemo(
+    () => new Set(teammates.map((teammate) => teammate.workosUserId)),
+    [teammates],
+  );
   const rosterByUserId = useMemo(
     () =>
       new Map(roster.map((entry) => [entry.schedule.workosUserId, entry])),
@@ -121,7 +125,7 @@ export function WorkflowBookingAvailabilityList({
           })}
         </div>
       </ScrollArea>
-      {!hasAcceptingLeadMember(roster) ? (
+      {!hasAcceptingLeadMember(roster, teammateUserIds) ? (
         <p className="text-xs text-destructive">
           Turn on availability for at least one teammate to use appointment booking.
         </p>
@@ -164,9 +168,12 @@ function WorkflowBookingAvailabilityData({
   const addUser = useMutation(api.leadRouting.schedules.addUser);
   const updateUser = useMutation(api.leadRouting.schedules.updateUser);
   const [pendingUserIds, setPendingUserIds] = useState<Set<string>>(new Set());
-  const eligibility = roster === undefined
+  const eligibility = teammates === undefined || roster === undefined
     ? undefined
-    : hasAcceptingLeadMember(roster);
+    : hasAcceptingLeadMember(
+        roster,
+        new Set(teammates.map((teammate) => teammate.workosUserId)),
+      );
 
   useEffect(() => {
     onEligibilityChange(eligibility);

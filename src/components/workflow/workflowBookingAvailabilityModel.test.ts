@@ -48,3 +48,13 @@ test('eligibility depends only on accepting leads', () => {
   expect(hasAcceptingLeadMember([{ schedule: { enabled: false } }])).toBe(false);
   expect(hasAcceptingLeadMember([{ schedule: { enabled: true } }])).toBe(true);
 });
+
+test('team eligibility ignores schedules for former teammates', () => {
+  const roster = [
+    { schedule: { enabled: true, workosUserId: 'former-user' } },
+    { schedule: { enabled: false, workosUserId: 'current-user' } },
+  ];
+
+  expect(hasAcceptingLeadMember(roster, new Set(['current-user']))).toBe(false);
+  expect(hasAcceptingLeadMember(roster, new Set(['former-user']))).toBe(true);
+});
