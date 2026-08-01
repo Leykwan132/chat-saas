@@ -78,4 +78,5 @@ test('services and appointments use line tabs instead of section headings', () =
   expect(source).toContain('<TabsList variant="line">');
   expect(source).toContain('<TabsContent value="services"');
   expect(source).toContain('<TabsContent value="appointments"');
+  expect(source).toContain('relative z-10 flex shrink-0 items-start gap-1.5');
 });

@@ -238,7 +238,7 @@ function ServiceCard({
         </p>
 
         <div
-          className="relative z-10 flex shrink-0 items-center gap-1.5"
+          className="relative z-10 flex shrink-0 items-start gap-1.5"
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
