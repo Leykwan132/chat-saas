@@ -16,5 +16,7 @@ test('renders an unboxed normal-weight KiloBot sidebar title with an action', ()
   expect(markup).toContain('font-normal');
   expect(markup).toContain('Inbox');
   expect(markup).toContain('Collapse');
+  expect(markup).toContain('pb-0');
+  expect(markup).not.toContain('pb-2');
   expect(markup).not.toContain('border-b');
 });

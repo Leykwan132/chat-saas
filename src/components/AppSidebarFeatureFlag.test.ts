@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { MessagesSquare, ShoppingCart } from 'lucide-react';
 import { getNavItems } from './app-sidebar-nav';
 
 describe('sidebar feature flags', () => {
@@ -42,5 +43,19 @@ describe('sidebar feature flags', () => {
       'Workflow',
       'Channels',
     ]);
+  });
+
+  test('uses the approved Inbox and Services navigation icons', () => {
+    const navigation = getNavItems('agent-id', {
+      showSavedReplies: false,
+      enableAvatarFeature: false,
+    });
+
+    expect(
+      navigation.engagement.find((item) => item.label === 'Inbox')?.icon,
+    ).toBe(MessagesSquare);
+    expect(
+      navigation.bookings.find((item) => item.label === 'Services')?.icon,
+    ).toBe(ShoppingCart);
   });
 });

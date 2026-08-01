@@ -1134,7 +1134,7 @@ export default function CalendarPage() {
               <Button
                 type="button"
                 size="lg"
-                className="mt-2 h-11 w-full gap-2 px-5 py-3"
+                className="h-11 w-full gap-2 px-5 py-3"
                 onClick={() => setCreateBookingOpen(true)}
               >
                 <Plus data-icon="inline-start" />

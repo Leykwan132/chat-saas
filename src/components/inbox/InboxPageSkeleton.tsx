@@ -42,7 +42,7 @@ export function InboxFilterSidebarSkeleton() {
       style={{ width: INBOX_SIDEBAR_WIDTH }}
       aria-hidden
     >
-      <div className="flex items-start justify-between px-4 pb-2 pt-4">
+      <div className="flex items-start justify-between px-4 pb-0 pt-4">
         <Skeleton className="h-9 w-20 rounded-md" />
         <Skeleton className="size-[1.8rem] rounded-md" />
       </div>

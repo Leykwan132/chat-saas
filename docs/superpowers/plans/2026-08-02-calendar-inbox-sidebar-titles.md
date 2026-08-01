@@ -133,7 +133,7 @@ git commit -m "Style Calendar and Inbox sidebar titles"
 - Consumes: `SidebarPageTitleRow({ title, action })` and `getNavItems(agentId, featureOptions)`.
 - Produces: a title row with `pb-0`, a Calendar New Booking button without `mt-2`, and navigation items whose `icon` references are `MessagesSquare` for Inbox and `ShoppingCart` for Services.
 
-- [ ] **Step 1: Write failing spacing and icon regressions**
+- [x] **Step 1: Write failing spacing and icon regressions**
 
 Extend `SidebarPageTitleRow.test.tsx`:
 
@@ -169,7 +169,7 @@ test('uses the approved Inbox and Services navigation icons', () => {
 });
 ```
 
-- [ ] **Step 2: Run the regressions and confirm RED**
+- [x] **Step 2: Run the regressions and confirm RED**
 
 Run:
 
@@ -179,7 +179,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/SidebarPage
 
 Expected: FAIL because the title row still uses `pb-2`, Calendar still uses `mt-2`, and the navigation still returns `MessageSquare` and `CalendarCheck`.
 
-- [ ] **Step 3: Implement the compact gap and icon replacements**
+- [x] **Step 3: Implement the compact gap and icon replacements**
 
 Change the shared title row and matching skeleton from `pb-2` to `pb-0`. Remove only `mt-2` from Calendar's New Booking button. In `app-sidebar-nav.ts`, replace the `MessageSquare` and `CalendarCheck` imports and mappings:
 
@@ -190,7 +190,7 @@ import { MessagesSquare, ShoppingCart } from 'lucide-react';
 { to: `/dashboard/${agentId}/services`, icon: ShoppingCart, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ }
 ```
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -202,7 +202,7 @@ git diff --check
 
 Expected: all focused tests, scoped lint, and whitespace checks pass.
 
-- [ ] **Step 5: Record and commit**
+- [x] **Step 5: Record and commit**
 
 Update `CONTINUITY.md` with the compact spacing, approved icons, focused verification, and unreleased status. Do not update the changelog without a confirmed production date.
 
