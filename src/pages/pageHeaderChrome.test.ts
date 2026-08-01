@@ -46,7 +46,7 @@ describe('page header chrome', () => {
     const source = readPage(fileName);
 
     expect(source).not.toContain('PageDescription');
-    expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(source).toContain('font-title text-3xl font-normal tracking-tight text-foreground');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
   });
 
@@ -56,21 +56,21 @@ describe('page header chrome', () => {
       const source = readPage(fileName);
 
       expect(source).not.toContain('PageDescription');
-      expect(source).toContain('text-3xl font-semibold');
+      expect(source).toContain('font-title text-3xl font-normal');
     },
   );
 
   test.each(['SettingsPage.tsx'])('%s uses a compact page title', (fileName) => {
     const source = readPage(fileName);
 
-    expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(source).toContain('font-title text-3xl font-normal tracking-tight text-foreground');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
   });
 
   test.each(compactDetailPages)('%s uses compact detail titles', (fileName) => {
     const source = readPage(fileName);
 
-    expect(source).toContain('text-3xl font-semibold tracking-tight');
+    expect(source).toContain('font-title text-3xl font-normal tracking-tight');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight');
   });
 
@@ -111,7 +111,7 @@ describe('page header chrome', () => {
   test('shared page title block keeps descriptions visually subordinate', () => {
     const source = readComponent('PageTitleBlock.tsx');
 
-    expect(source).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(source).toContain('font-title text-3xl font-normal tracking-tight text-foreground');
     expect(source).toContain('text-sm text-muted-foreground');
   });
 
@@ -122,7 +122,7 @@ describe('page header chrome', () => {
     expect(pageSource).not.toContain('description:');
     expect(pageSource).not.toContain('See how much token spend this agent has used across models over time.');
     expect(headerSource).toMatch(/type AnalyticsSectionHeaderProps = \{\s+title: string;\s+action\?: ReactNode;\s+\};/);
-    expect(headerSource).toContain('text-3xl font-semibold tracking-tight text-foreground');
+    expect(headerSource).toContain('font-title text-3xl font-normal tracking-tight text-foreground');
     expect(headerSource).not.toContain('sm:text-4xl');
     expect(headerSource).not.toMatch(/export function AnalyticsSectionHeader\([\s\S]*\{description\}[\s\S]*type AnalyticsBlockProps/);
   });
