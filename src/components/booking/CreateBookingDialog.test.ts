@@ -6,6 +6,7 @@ const customerSource = readFileSync(new URL('./BookingCustomerCombobox.tsx', imp
 const customerSummarySource = readFileSync(new URL('./BookingCustomerSummary.tsx', import.meta.url), 'utf8');
 const inboxSource = readFileSync(new URL('../inbox/CreateCustomerBookingDialog.tsx', import.meta.url), 'utf8');
 const calendarDialogSource = readFileSync(new URL('../calendar/CalendarCreateBookingDialog.tsx', import.meta.url), 'utf8');
+const calendarSidebarSource = readFileSync(new URL('../calendar/CalendarSidebar.tsx', import.meta.url), 'utf8');
 const calendarPageSource = readFileSync(new URL('../../pages/CalendarPage.tsx', import.meta.url), 'utf8');
 const calendarEventsSource = readFileSync(new URL('../../../convex/calendarEvents.ts', import.meta.url), 'utf8');
 
@@ -53,7 +54,7 @@ test('uses a searchable scrollable customer Combobox', () => {
 });
 
 test('keeps generic event creation separate from the primary booking action', () => {
-  expect(calendarPageSource).toContain('New Booking');
+  expect(calendarSidebarSource).toContain('New Booking');
   expect(calendarPageSource).toContain('<CalendarCreateBookingDialog');
   expect(calendarPageSource).toContain('openCreateEventSheet(nextDay)');
   expect(calendarPageSource).toContain("editingEvent ? 'Event Details' : 'New Event'");

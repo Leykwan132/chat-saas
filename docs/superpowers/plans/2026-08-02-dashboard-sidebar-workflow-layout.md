@@ -34,7 +34,7 @@
 - Consumes: the existing `Calendar`, `Button`, `SidebarPageTitleRow`, shared sidebar navigation classes, selected date/month state, filter counts, and callbacks from `CalendarPage`.
 - Produces: `CalendarSidebar(props: CalendarSidebarProps): React.ReactElement`, where the props contain `selectedDate`, `visibleMonth`, `canManageCalendar`, `assignedToMeOnly`, `hasCurrentUser`, optional `{ all?: number; assigned?: number }` counts, and callbacks for month change, booking creation, and both filters.
 
-- [ ] **Step 1: Write the failing rendered-order tests**
+- [x] **Step 1: Write the failing rendered-order tests**
 
 Create `CalendarSidebar.test.tsx` with a shared render helper and these assertions:
 
@@ -77,7 +77,7 @@ describe('CalendarSidebar', () => {
 
 The production change caught is moving the action above the month or accidentally dropping its permission gate.
 
-- [ ] **Step 2: Run the Calendar test to verify RED**
+- [x] **Step 2: Run the Calendar test to verify RED**
 
 Run:
 
@@ -87,7 +87,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: FAIL because `CalendarSidebar` does not exist.
 
-- [ ] **Step 3: Extract and reorder the Calendar sidebar**
+- [x] **Step 3: Extract and reorder the Calendar sidebar**
 
 Move `CalendarSidebarFilterRow` and `CalendarSidebarFilterSection` from `CalendarPage.tsx` into the new component. Render the title first, then the month wrapper, then the permission-gated booking action, then the View section:
 
@@ -152,7 +152,7 @@ Replace the original Calendar sidebar markup with:
 
 Point the existing padding source contract at `CalendarSidebar.tsx` so it continues to protect `px-4`, `pb-3`, and the button dimensions.
 
-- [ ] **Step 4: Run Calendar tests to verify GREEN**
+- [x] **Step 4: Run Calendar tests to verify GREEN**
 
 Run:
 
@@ -162,7 +162,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: PASS with the rendered hierarchy and existing booking-dialog contract intact.
 
-- [ ] **Step 5: Commit the Calendar task**
+- [x] **Step 5: Commit the Calendar task**
 
 ```bash
 git add src/components/calendar/CalendarSidebar.tsx src/components/calendar/CalendarSidebar.test.tsx src/pages/CalendarPage.tsx src/pages/CalendarSidebarPadding.test.ts
