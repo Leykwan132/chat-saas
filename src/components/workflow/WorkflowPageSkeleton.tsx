@@ -57,25 +57,30 @@ export function WorkflowPageSkeleton() {
       </div>
       <div className="relative flex min-w-0 flex-1 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,var(--border)_1px,transparent_0)] bg-[length:28px_28px] opacity-40" />
-        <div
-          className="absolute left-4 top-4 z-10 flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 backdrop-blur"
-          data-workflow-skeleton-navigation="canvas-tools"
-        >
-          <Skeleton className="size-8 rounded-md" />
-          <Skeleton className="size-8 rounded-md" />
-          <Skeleton className="size-8 rounded-md" />
-          <Skeleton className="mx-1 h-8 w-px rounded-none" />
-          <Skeleton className="h-8 w-24 rounded-md" />
-          <Skeleton className="h-8 w-20 rounded-md" />
-        </div>
-        <div
-          className="absolute left-4 top-[72px] z-10 flex w-48 flex-col gap-2 rounded-lg border border-border bg-background/95 p-2 backdrop-blur"
-          data-workflow-skeleton-navigation="workflow-tabs"
-        >
-          <Skeleton className="h-4 w-20 rounded-md" />
-          <Skeleton className="h-9 w-full rounded-md" />
-          <Skeleton className="h-9 w-11/12 rounded-md" />
-          <Skeleton className="h-9 w-10/12 rounded-md" />
+        <div className="absolute left-4 top-4 z-10 flex flex-col items-start gap-3">
+          <Skeleton
+            className="h-9 w-32 rounded-md"
+            data-workflow-skeleton-navigation="page-title"
+          />
+          <div
+            className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 backdrop-blur"
+            data-workflow-skeleton-navigation="canvas-tools"
+          >
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="size-8 rounded-md" />
+            <Skeleton className="mx-1 h-8 w-px rounded-none" />
+            <Skeleton className="h-8 w-24 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
+          </div>
+          <div
+            className="flex w-48 flex-col gap-2 rounded-lg border border-border bg-background/95 p-2 backdrop-blur"
+            data-workflow-skeleton-navigation="workflow-tabs"
+          >
+            <Skeleton className="h-9 w-full rounded-md" />
+            <Skeleton className="h-9 w-11/12 rounded-md" />
+            <Skeleton className="h-9 w-10/12 rounded-md" />
+          </div>
         </div>
         <div className="absolute right-4 top-4 z-10 flex items-center gap-2">
           <Skeleton className="h-10 w-32 rounded-xl" />

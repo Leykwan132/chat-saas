@@ -183,7 +183,7 @@ git commit -m "Move booking action below calendar"
 - Consumes: the existing `WorkflowToolbarProps`, React Flow `Panel` and zoom/fit methods, workflow view options, and existing tool callbacks.
 - Produces: the same `WorkflowToolbar(props)` interface and behavior, with one top-left `Panel` containing an ordered title, tool surface, and navigation surface.
 
-- [ ] **Step 1: Write the failing rendered toolbar and skeleton tests**
+- [x] **Step 1: Write the failing rendered toolbar and skeleton tests**
 
 In `WorkflowToolbarHierarchy.test.tsx`, render the real toolbar inside `ReactFlowProvider` and assert one heading appears before the Zoom in control, while no navigation-card heading remains:
 
@@ -211,7 +211,7 @@ Update `WorkflowPageSkeleton.test.tsx` to render `WorkflowPageSkeleton` with `re
 
 The production changes caught are putting the title inside or below the tools, retaining the duplicate card title, or leaving the loading hierarchy stale.
 
-- [ ] **Step 2: Run Workflow tests to verify RED**
+- [x] **Step 2: Run Workflow tests to verify RED**
 
 Run:
 
@@ -221,7 +221,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: FAIL because the live title is still in the navigation card and the skeleton has no page-title marker.
 
-- [ ] **Step 3: Consolidate the Workflow controls into one ordered stack**
+- [x] **Step 3: Consolidate the Workflow controls into one ordered stack**
 
 Replace the two top-left panels with one panel:
 
@@ -297,7 +297,7 @@ Remove the navigation card's `h2` and the translated second `Panel`. Do not chan
 
 In `WorkflowPageSkeleton.tsx`, replace the separate tool and tab absolute blocks with one `absolute left-4 top-4` vertical stack. Add a title skeleton carrying `data-workflow-skeleton-navigation="page-title"`, followed by the unchanged tool and tab skeleton surfaces. Remove the obsolete `top-[72px]` transform.
 
-- [ ] **Step 4: Run Workflow tests to verify GREEN**
+- [x] **Step 4: Run Workflow tests to verify GREEN**
 
 Run:
 
@@ -307,7 +307,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: PASS with one title and all existing toolbar contracts unchanged.
 
-- [ ] **Step 5: Commit the Workflow task**
+- [x] **Step 5: Commit the Workflow task**
 
 ```bash
 git add src/components/workflow/WorkflowToolbar.tsx src/components/workflow/WorkflowToolbarHierarchy.test.tsx src/components/workflow/WorkflowPageSkeleton.tsx src/components/workflow/WorkflowPageSkeleton.test.tsx

@@ -56,11 +56,11 @@ export function WorkflowToolbar({
     : layoutOrientation === 'horizontal' ? 'Horizontal' : 'Vertical';
 
   return (
-    <>
-      <Panel
-        position="top-left"
-        className="nodrag nopan m-4"
-      >
+    <Panel position="top-left" className="nodrag nopan m-4">
+      <div className="flex flex-col items-start gap-3">
+        <h1 className="font-title text-3xl font-normal tracking-tight text-foreground">
+          Workflow
+        </h1>
         <div className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 backdrop-blur">
           <Button type="button" variant="ghost" size="icon-sm" onClick={() => zoomIn()}>
             <ZoomIn data-icon="inline-start" />
@@ -112,16 +112,7 @@ export function WorkflowToolbar({
             {arrangeLabel}
           </Button>
         </div>
-      </Panel>
-      <Panel
-        position="top-left"
-        className="m-4"
-        style={{ transform: 'translate3d(0, 52px, 0)' }}
-      >
         <div className="flex w-48 flex-col gap-2 rounded-lg border border-border bg-background/95 p-2 backdrop-blur">
-          <h2 className="px-1 text-sm font-normal tracking-tight text-muted-foreground">
-            Workflow
-          </h2>
           <nav
             role="tablist"
             aria-label="Workflow sections"
@@ -150,7 +141,7 @@ export function WorkflowToolbar({
             })}
           </nav>
         </div>
-      </Panel>
-    </>
+      </div>
+    </Panel>
   );
 }
