@@ -30,9 +30,9 @@ const contentHeaderPaths = [
 
 for (const path of contentHeaderPaths) {
   test(`${path} has no dashboard title divider`, () => {
-    expect(readSource(path)).not.toMatch(
-      /(?:header|div) className="[^"]*border-b border-border pb-6/,
-    );
+    const source = readSource(path);
+    expect(source).not.toMatch(/<header className="[^"]*\bborder-b\b/);
+    expect(source).not.toContain('<div className="border-b border-border pb-6">');
   });
 }
 

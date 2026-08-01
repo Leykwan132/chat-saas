@@ -71,6 +71,8 @@ test('services and appointments use line tabs instead of section headings', () =
   expect(markup).toContain('role="tablist"');
   expect(markup).toContain('Your Services');
   expect(markup).toContain('Booked Appointments');
+  expect(markup).toMatch(/data-state="active"[^>]*>Your Services<\/button>/);
+  expect(markup).toMatch(/data-state="inactive"[^>]*>Booked Appointments<\/button>/);
   expect(markup).not.toContain('<h2');
   expect(source).toContain('<Tabs defaultValue="services"');
   expect(source).toContain('<TabsList variant="line">');

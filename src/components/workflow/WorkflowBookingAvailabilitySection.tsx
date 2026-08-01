@@ -15,19 +15,22 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { memberLabel } from '@/lib/scheduleUtils';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Permission } from '../../../shared/permissions';
 import {
   formatWorkflowWeeklyAvailability,
   hasAcceptingLeadMember,
   type WorkflowAvailabilityRosterEntry,
   type WorkflowAvailabilityTeammate,
 } from './workflowBookingAvailabilityModel';
-import { setWorkflowAcceptingLeads } from './workflowBookingAvailabilityMutation';
+import { runWorkflowAvailabilityToggle } from './workflowBookingAvailabilityMutation';
 
 type WorkflowBookingAvailabilityListProps = {
   agentId: Id<'agents'>;
   teammates: WorkflowAvailabilityTeammate[];
   roster: WorkflowAvailabilityRosterEntry[];
   pendingUserIds: Set<string>;
+  canManageAvailability: boolean;
   onToggle: (
     teammate: WorkflowAvailabilityTeammate,
     enabled: boolean,
@@ -39,6 +42,7 @@ export function WorkflowBookingAvailabilityList({
   teammates,
   roster,
   pendingUserIds,
+  canManageAvailability,
   onToggle,
 }: WorkflowBookingAvailabilityListProps) {
   const teammateUserIds = useMemo(
@@ -113,7 +117,7 @@ export function WorkflowBookingAvailabilityList({
                   <span className="text-xs text-muted-foreground">Accepting leads</span>
                   <Switch
                     checked={enabled}
-                    disabled={pending}
+                    disabled={pending || !canManageAvailability}
                     onClick={(event) => event.stopPropagation()}
                     onCheckedChange={(checked) => onToggle(teammate, checked)}
                     aria-label={`${enabled ? 'Stop' : 'Start'} accepting leads for ${memberLabel(teammate)}`}
@@ -125,6 +129,11 @@ export function WorkflowBookingAvailabilityList({
           })}
         </div>
       </ScrollArea>
+      {!canManageAvailability ? (
+        <p className="text-xs text-muted-foreground">
+          You need Lead Assignment management permission to change availability.
+        </p>
+      ) : null}
       {!hasAcceptingLeadMember(roster, teammateUserIds) ? (
         <p className="text-xs text-destructive">
           Turn on availability for at least one teammate to use appointment booking.
@@ -159,12 +168,16 @@ function WorkflowBookingAvailabilityData({
   agentId,
   onEligibilityChange,
 }: AvailabilityDataProps) {
+  const { can, isLoading: permissionsLoading } = usePermissions();
+  const canReadAvailability = can(Permission.AVAILABILITY_READ);
+  const canManageAvailability = can(Permission.ROUTING_MANAGE);
   const teammates = useQuery(api.users.getUsers, {}) as
     | WorkflowAvailabilityTeammate[]
     | undefined;
-  const roster = useQuery(api.leadRouting.schedules.listForAgent, {
-    agentId,
-  }) as WorkflowAvailabilityRosterEntry[] | undefined;
+  const roster = useQuery(
+    api.leadRouting.schedules.listForAgent,
+    !permissionsLoading && canReadAvailability ? { agentId } : 'skip',
+  ) as WorkflowAvailabilityRosterEntry[] | undefined;
   const addUser = useMutation(api.leadRouting.schedules.addUser);
   const updateUser = useMutation(api.leadRouting.schedules.updateUser);
   const [pendingUserIds, setPendingUserIds] = useState<Set<string>>(new Set());
@@ -185,41 +198,39 @@ function WorkflowBookingAvailabilityData({
     [roster],
   );
 
-  if (teammates === undefined || roster === undefined) {
+  if (permissionsLoading || teammates === undefined) {
     return <WorkflowBookingAvailabilitySkeleton />;
   }
+  if (!canReadAvailability) {
+    return (
+      <AvailabilityPermissionMessage onEligibilityChange={onEligibilityChange} />
+    );
+  }
+  if (roster === undefined) return <WorkflowBookingAvailabilitySkeleton />;
 
   const handleToggle = async (
     teammate: WorkflowAvailabilityTeammate,
     enabled: boolean,
   ) => {
-    setPendingUserIds((current) => new Set(current).add(teammate.workosUserId));
-    const toastId = toast.loading(
-      enabled ? 'Turning on availability…' : 'Turning off availability…',
-    );
-    try {
-      await setWorkflowAcceptingLeads({
-        agentId,
-        teammate,
-        rosterByUserId,
-        enabled,
-        addUser,
-        updateUser,
-      });
-      toast.success(enabled ? 'Availability turned on' : 'Availability turned off', {
-        id: toastId,
-      });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Update failed', {
-        id: toastId,
-      });
-    } finally {
-      setPendingUserIds((current) => {
+    await runWorkflowAvailabilityToggle({
+      agentId,
+      teammate,
+      rosterByUserId,
+      enabled,
+      addUser,
+      updateUser,
+      setPending: (pending) => setPendingUserIds((current) => {
         const next = new Set(current);
-        next.delete(teammate.workosUserId);
+        if (pending) next.add(teammate.workosUserId);
+        else next.delete(teammate.workosUserId);
         return next;
-      });
-    }
+      }),
+      notify: {
+        loading: (message) => toast.loading(message),
+        success: (message, toastId) => toast.success(message, { id: toastId }),
+        error: (message, toastId) => toast.error(message, { id: toastId }),
+      },
+    });
   };
 
   return (
@@ -228,8 +239,22 @@ function WorkflowBookingAvailabilityData({
       teammates={teammates}
       roster={roster}
       pendingUserIds={pendingUserIds}
+      canManageAvailability={canManageAvailability}
       onToggle={(teammate, enabled) => void handleToggle(teammate, enabled)}
     />
+  );
+}
+
+function AvailabilityPermissionMessage({
+  onEligibilityChange,
+}: Pick<AvailabilityDataProps, 'onEligibilityChange'>) {
+  useEffect(() => {
+    onEligibilityChange(false);
+  }, [onEligibilityChange]);
+  return (
+    <p className="rounded-lg border border-border p-3 text-sm text-muted-foreground">
+      You need Availability read permission to configure appointment booking.
+    </p>
   );
 }
 
