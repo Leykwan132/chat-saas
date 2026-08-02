@@ -171,7 +171,10 @@ export default function TemplatesPage() {
   }
 
   return (
-    <WhatsAppFeatureGate feature="Message Templates">
+    <WhatsAppFeatureGate
+      feature="Message Templates"
+      connectionRequiredVariant="minimal"
+    >
     <div data-templates-page className="mx-auto flex w-full max-w-7xl flex-col gap-6 animate-fade-in pb-12">
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>

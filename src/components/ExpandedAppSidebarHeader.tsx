@@ -12,8 +12,8 @@ export function ExpandedAppSidebarHeader({
   return (
     <SidebarHeader className="flex flex-row items-center justify-between px-[0.9rem] py-[0.7875rem]">
       <a href="/workspace" className="flex items-center gap-[0.45rem]">
-        <img src="/icon.svg" className="size-[1.35rem] dark:invert" alt="" />
-        <span className="font-title text-[16px] font-semibold tracking-normal">
+        <img src="/icon.svg" className="size-5 dark:invert" alt="" />
+        <span className="font-title text-[18px] font-semibold tracking-normal">
           Kilobot
         </span>
       </a>
