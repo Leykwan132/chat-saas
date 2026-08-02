@@ -38,7 +38,7 @@ export function LandingAppPreviewSidebar({
   return (
     <aside className="flex w-[224px] shrink-0 flex-col border-r border-zinc-200 bg-zinc-50/80 text-zinc-950">
       <div className="flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-[0.45rem]">
           <img src="/icon.svg" alt="" className="size-5" />
           <span className="font-title text-sm font-semibold">Kilobot</span>
         </div>

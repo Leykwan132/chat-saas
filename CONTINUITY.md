@@ -1,4 +1,8 @@
 # Snapshot
+- 2026-08-02 [TOOL] Fetched `origin/main` at `9e43b8ac` and merged it into `codex/fix-available-channels-ui` as `7597f8c5`. The uncommitted sidebar work was safely stashed and restored without conflicts; Node v22.22.0 passed three focused lockup tests, scoped ESLint, conflict-marker, and whitespace checks. Nothing was pushed.
+- 2026-08-02 [CODE] The workspace/Agents sidebar now reuses the agent Workflow sidebar's shared expanded header, eliminating its prior padding and collapse-control sizing differences as well as matching the KiloBot lockup. Node v22.22.0 passed three focused lockup regressions, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
+- 2026-08-02 [CODE] The visible workspace/Agents sidebar now shares the 7.2px KiloBot icon-to-wordmark spacing, 20px icon, and 18px wordmark of the agent Workflow sidebar. Node v22.22.0 passed three focused lockup regressions, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
+- 2026-08-02 [CODE] The public Workflow preview sidebar now matches the authenticated agent sidebar's 7.2px KiloBot icon-to-wordmark spacing, preserving its compact preview typography and navigation layout. Node v22.22.0 passed focused rendered regressions, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
 - 2026-08-02 [TOOL] Fetched `origin/main` at `fdcc47a3` and reconciled it into `codex/fix-available-channels-ui`, preserving PR #24 plus the branch's 24px Workflow corner inset. Conflicts were limited to `CONTINUITY.md` and four Workflow live/skeleton files; Node v22.22.0 passed 2 focused tests, scoped ESLint, and whitespace checks. Nothing was pushed.
 - 2026-08-02 [USER] D628 ACTIVE: Give the Workflow title/tool/navigation stack more breathing room from the canvas's top-left corner by using a 24px inset.
 - 2026-08-02 [CODE] The live Workflow stack and its loading skeleton now use a 24px top-left inset instead of 16px; internal spacing and right/bottom canvas controls are unchanged. Node v22.22.0 passed 2 focused tests, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
@@ -539,6 +543,9 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-08-02 [CODE] Unified workspace/Agents and agent Workflow expanded headers through the shared header component, including padding and collapse-control sizing.
+- 2026-08-02 [CODE] Matched the workspace/Agents sidebar KiloBot lockup to the agent Workflow sidebar’s 7.2px gap, 20px icon, and 18px wordmark.
+- 2026-08-02 [CODE] Matched the public Workflow preview KiloBot lockup to the authenticated sidebar's 7.2px icon-to-wordmark spacing.
 - 2026-08-02 [CODE] Increased the Workflow top-left title/tool/navigation inset from 16px to 24px in both live and loading states.
 - 2026-08-02 [CODE] Increased the Avatar page title from 24px to the standard 30px dashboard scale.
 - 2026-08-02 [CODE] Matched Message templates' no-WhatsApp state and action button to Broadcast's compact connection prompt.
@@ -665,6 +672,9 @@
 - 2026-07-30 [CODE] Removed all 20 public-guide `Before you begin` panels and retired their unused shared component.
 
 # Working set
+- 2026-08-02 [CODE] Shared workspace and agent Workflow header: `src/components/{ExpandedAppSidebarHeader,workspace/AgentsSidebar{,Brand.test}}.ts*`; verified locally, unreleased.
+- 2026-08-02 [CODE] Workspace sidebar brand spacing: `src/components/workspace/AgentsSidebar{,Brand.test}.ts*`; verified locally, unreleased.
+- 2026-08-02 [CODE] Workflow preview brand spacing: `src/components/landing/LandingAppPreviewSidebar{,.test}.tsx`; verified locally, unreleased.
 - 2026-08-02 [CODE] Workflow corner inset: `src/components/workflow/{WorkflowToolbar,WorkflowToolbarHierarchy.test,WorkflowPageSkeleton,WorkflowPageSkeleton.test}.tsx`; verified locally, unreleased.
 - 2026-08-02 [CODE] Avatar title scale: `src/pages/AvatarPage{,.test}.ts*`; verified locally, unreleased.
 - 2026-08-02 [CODE] Message templates connection prompt: `src/pages/TemplatesPage{,ConnectionGate.test}.tsx`; verified locally, unreleased.
@@ -713,6 +723,10 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-08-02 [TOOL] Origin-main `9e43b8ac` merged cleanly as `7597f8c5` after a temporary all-files safeguard stash. The stash restored the three modified and two untracked sidebar files without conflicts, then was safely dropped. Node v22.22.0 passed 3 focused tests, scoped ESLint, conflict-marker, and `git diff --check` scans.
+- 2026-08-02 [TOOL] Header-composition regression failed while the workspace sidebar carried its own expanded-header measurements, then passed after it adopted `ExpandedAppSidebarHeader`. Node v22.22.0 passed 3 focused lockup tests, scoped ESLint, and `git diff --check`.
+- 2026-08-02 [TOOL] The workspace/Agents sidebar regression failed on its prior 12px gap/24px icon/16px wordmark, then passed after matching the Workflow lockup. Node v22.22.0 passed 3 focused lockup tests, scoped ESLint, and `git diff --check`.
+- 2026-08-02 [TOOL] The rendered Workflow-preview regression failed on the prior 10px icon-to-wordmark gap, then passed with the shared 7.2px gap. Node v22.22.0 passed 2 focused rendered tests, scoped ESLint, and `git diff --check`.
 - 2026-08-02 [TOOL] Origin-main `fdcc47a3` reconciliation retained upstream's automatically merged PR #24 tree while resolving the Workflow conflict hunks to the branch's `m-6`/`left-6 top-6` implementation and regressions. Conflict-marker and whitespace scans passed before the merge commit.
 - 2026-08-02 [TOOL] Workflow inset regressions initially found the 16px `m-4`/`left-4 top-4` positions, then passed after both live and skeleton stacks moved to 24px. Node v22.22.0 passed 2 focused tests, scoped ESLint, and `git diff --check`.
 - 2026-08-02 [TOOL] Origin-main merge receipt: fetched `27220dc5`, `git merge origin/main` returned `Already up to date`, ancestry verification passed, and the eight pre-merge local files matched their safeguard blobs after restoration. Temporary merge stashes were removed only after exact-content verification; unrelated pre-existing stashes remain untouched.
