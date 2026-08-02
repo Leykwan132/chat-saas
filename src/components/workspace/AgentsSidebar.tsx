@@ -4,10 +4,10 @@ import {
   Bot,
   Gift,
   Mail,
-  PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
 import { CreditMeter } from '@/components/CreditMeter';
+import { ExpandedAppSidebarHeader } from '@/components/ExpandedAppSidebarHeader';
 import { WorkspaceSetupChecklist } from '@/components/setup-checklist/WorkspaceSetupChecklist';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,23 +74,7 @@ export function AgentsSidebar() {
           </Button>
         </SidebarHeader>
       ) : (
-        <SidebarHeader className="flex flex-row items-center justify-between px-4 py-3.5">
-          <Link to="/workspace" className="flex items-center gap-3">
-            <img src="/icon.svg" className="size-6 dark:invert" alt="" />
-            <div className="flex min-w-0 flex-col leading-none">
-              <span className="font-semibold text-[16px] tracking-normal font-title">Kilobot</span>
-            </div>
-          </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-8 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <PanelLeftClose className="size-5" />
-            <span className="sr-only">Collapse Sidebar</span>
-          </Button>
-        </SidebarHeader>
+        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} />
       )}
 
       <SidebarContent>
