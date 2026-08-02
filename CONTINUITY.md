@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-08-02 [TOOL] Fetched `origin/main` at `fdcc47a3` and reconciled it into `codex/fix-available-channels-ui`, preserving PR #24 plus the branch's 24px Workflow corner inset. Conflicts were limited to `CONTINUITY.md` and four Workflow live/skeleton files; Node v22.22.0 passed 2 focused tests, scoped ESLint, and whitespace checks. Nothing was pushed.
 - 2026-08-02 [USER] D628 ACTIVE: Give the Workflow title/tool/navigation stack more breathing room from the canvas's top-left corner by using a 24px inset.
 - 2026-08-02 [CODE] The live Workflow stack and its loading skeleton now use a 24px top-left inset instead of 16px; internal spacing and right/bottom canvas controls are unchanged. Node v22.22.0 passed 2 focused tests, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
 - 2026-08-02 [TOOL] Fetched `origin/main` at `27220dc5` and merged it into `codex/fix-available-channels-ui`; Git reported `Already up to date` because that upstream commit is already an ancestor of `HEAD` `c150a0ad`. All eight local tracked/untracked changes were safeguarded and restored with exact blob hashes. Node v22.22.0 passed 5 focused files/7 tests and whitespace checks; nothing was pushed.
@@ -712,6 +713,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-08-02 [TOOL] Origin-main `fdcc47a3` reconciliation retained upstream's automatically merged PR #24 tree while resolving the Workflow conflict hunks to the branch's `m-6`/`left-6 top-6` implementation and regressions. Conflict-marker and whitespace scans passed before the merge commit.
 - 2026-08-02 [TOOL] Workflow inset regressions initially found the 16px `m-4`/`left-4 top-4` positions, then passed after both live and skeleton stacks moved to 24px. Node v22.22.0 passed 2 focused tests, scoped ESLint, and `git diff --check`.
 - 2026-08-02 [TOOL] Origin-main merge receipt: fetched `27220dc5`, `git merge origin/main` returned `Already up to date`, ancestry verification passed, and the eight pre-merge local files matched their safeguard blobs after restoration. Temporary merge stashes were removed only after exact-content verification; unrelated pre-existing stashes remain untouched.
 - 2026-08-02 [TOOL] The Avatar page regression initially found its 24px title, then passed after the 30px `text-3xl` update. Node v22.22.0 passed 3 focused page/header tests, scoped ESLint, and `git diff --check`.
