@@ -16,6 +16,8 @@ test('workflow page skeleton previews the full navigation and branching canvas',
   expect(titleIndex).toBeGreaterThan(-1);
   expect(titleIndex).toBeLessThan(toolsIndex);
   expect(toolsIndex).toBeLessThan(tabsIndex);
+  expect(markup).toContain('absolute left-6 top-6');
+  expect(markup).not.toContain('absolute left-4 top-4 z-10 flex flex-col');
   expect(source).toContain('data-workflow-skeleton-navigation="workspace"');
   expect(source).toContain('data-workflow-skeleton-navigation="workflow-tabs"');
   expect(source).toContain('data-workflow-skeleton-navigation="canvas-tools"');
