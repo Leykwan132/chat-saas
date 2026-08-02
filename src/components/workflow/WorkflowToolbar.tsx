@@ -56,7 +56,7 @@ export function WorkflowToolbar({
     : layoutOrientation === 'horizontal' ? 'Horizontal' : 'Vertical';
 
   return (
-    <Panel position="top-left" className="nodrag nopan m-4">
+    <Panel position="top-left" className="nodrag nopan m-6">
       <div className="flex flex-col items-start gap-3">
         <h1 className="font-title text-3xl font-normal tracking-tight text-foreground">
           Workflow

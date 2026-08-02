@@ -1,4 +1,6 @@
 # Snapshot
+- 2026-08-02 [USER] D628 ACTIVE: Give the Workflow title/tool/navigation stack more breathing room from the canvas's top-left corner by using a 24px inset.
+- 2026-08-02 [CODE] The live Workflow stack and its loading skeleton now use a 24px top-left inset instead of 16px; internal spacing and right/bottom canvas controls are unchanged. Node v22.22.0 passed 2 focused tests, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
 - 2026-08-02 [TOOL] Fetched `origin/main` at `27220dc5` and merged it into `codex/fix-available-channels-ui`; Git reported `Already up to date` because that upstream commit is already an ancestor of `HEAD` `c150a0ad`. All eight local tracked/untracked changes were safeguarded and restored with exact blob hashes. Node v22.22.0 passed 5 focused files/7 tests and whitespace checks; nothing was pushed.
 - 2026-08-02 [USER] D627 ACTIVE: Increase the Avatar page title to the standard authenticated-dashboard title size.
 - 2026-08-02 [CODE] Avatar now uses the normal-weight KiloBot `text-3xl` title (30px), replacing its 24px outlier while preserving the adjacent Beta badge. Node v22.22.0 passed focused page and described-header tests, scoped ESLint, and whitespace checks. Customer-facing but unreleased; no changelog entry was added.
@@ -536,6 +538,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-08-02 [CODE] Increased the Workflow top-left title/tool/navigation inset from 16px to 24px in both live and loading states.
 - 2026-08-02 [CODE] Increased the Avatar page title from 24px to the standard 30px dashboard scale.
 - 2026-08-02 [CODE] Matched Message templates' no-WhatsApp state and action button to Broadcast's compact connection prompt.
 - 2026-08-02 [CODE] Enlarged the expanded sidebar Kilobot wordmark to 18px and reduced the adjacent icon to 20px, with a focused rendered-header regression.
@@ -661,6 +664,7 @@
 - 2026-07-30 [CODE] Removed all 20 public-guide `Before you begin` panels and retired their unused shared component.
 
 # Working set
+- 2026-08-02 [CODE] Workflow corner inset: `src/components/workflow/{WorkflowToolbar,WorkflowToolbarHierarchy.test,WorkflowPageSkeleton,WorkflowPageSkeleton.test}.tsx`; verified locally, unreleased.
 - 2026-08-02 [CODE] Avatar title scale: `src/pages/AvatarPage{,.test}.ts*`; verified locally, unreleased.
 - 2026-08-02 [CODE] Message templates connection prompt: `src/pages/TemplatesPage{,ConnectionGate.test}.tsx`; verified locally, unreleased.
 - 2026-08-02 [CODE] Expanded sidebar brand refinement: `src/components/ExpandedAppSidebarHeader{,.test}.tsx`; verified locally, unreleased.
@@ -708,6 +712,7 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-08-02 [TOOL] Workflow inset regressions initially found the 16px `m-4`/`left-4 top-4` positions, then passed after both live and skeleton stacks moved to 24px. Node v22.22.0 passed 2 focused tests, scoped ESLint, and `git diff --check`.
 - 2026-08-02 [TOOL] Origin-main merge receipt: fetched `27220dc5`, `git merge origin/main` returned `Already up to date`, ancestry verification passed, and the eight pre-merge local files matched their safeguard blobs after restoration. Temporary merge stashes were removed only after exact-content verification; unrelated pre-existing stashes remain untouched.
 - 2026-08-02 [TOOL] The Avatar page regression initially found its 24px title, then passed after the 30px `text-3xl` update. Node v22.22.0 passed 3 focused page/header tests, scoped ESLint, and `git diff --check`.
 - 2026-08-02 [TOOL] The Message templates route regression initially rendered the larger card and `Open Channels`, then passed with the compact `Connect Channel` prompt after selecting the minimal gate variant. Node v22.22.0 passed 3 focused gate tests and the new test file passes scoped ESLint; page lint retains its pre-existing two errors/two warnings outside this change.

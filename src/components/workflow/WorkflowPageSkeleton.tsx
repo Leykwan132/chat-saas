@@ -57,7 +57,7 @@ export function WorkflowPageSkeleton() {
       </div>
       <div className="relative flex min-w-0 flex-1 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,var(--border)_1px,transparent_0)] bg-[length:28px_28px] opacity-40" />
-        <div className="absolute left-4 top-4 z-10 flex flex-col items-start gap-3">
+        <div className="absolute left-6 top-6 z-10 flex flex-col items-start gap-3">
           <Skeleton
             className="h-9 w-32 rounded-md"
             data-workflow-skeleton-navigation="page-title"
