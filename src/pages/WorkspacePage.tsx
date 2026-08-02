@@ -101,7 +101,7 @@ export function AgentsIndex() {
         {!activeTeam ? (
           <div className="h-9 w-48 rounded bg-muted/40 animate-pulse" />
         ) : (
-          <h1 className="m-0 text-3xl font-semibold tracking-tight">
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight">
             {activeTeam.type === 'personal' ? 'Personal' : activeTeam.name}
           </h1>
         )}

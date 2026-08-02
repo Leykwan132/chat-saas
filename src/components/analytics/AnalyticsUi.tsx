@@ -671,7 +671,7 @@ export function AnalyticsSectionHeader({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
       <div className="min-w-0 flex-1">
-        <h2 className="text-3xl font-semibold tracking-tight text-foreground">
+        <h2 className="font-title text-3xl font-normal tracking-tight text-foreground">
           {title}
         </h2>
       </div>

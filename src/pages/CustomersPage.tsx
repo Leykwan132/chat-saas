@@ -252,7 +252,7 @@ export default function CustomersPage() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
             Customers
           </h1>
         </div>

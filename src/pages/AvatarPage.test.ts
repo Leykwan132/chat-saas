@@ -9,6 +9,7 @@ const stageSource = readFileSync(
 
 describe('Avatar configured overview', () => {
   it('presents the custom preview and website embed handoff', () => {
+    expect(pageSource).toContain('font-title text-3xl font-normal');
     expect(pageSource).toContain('sm:flex-row sm:items-start sm:justify-between');
     expect(pageSource).toContain('Edit avatar');
     expect(pageSource).toContain('configuration.configured && canManage ?');

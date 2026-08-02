@@ -4,15 +4,15 @@ import {
   BookOpen,
   Bot,
   Calendar,
-  CalendarCheck,
   Clock3,
   LayoutDashboard,
   FileText,
   Megaphone,
-  MessageSquare,
+  MessagesSquare,
   Plug,
   ReplyAll,
   ScanFace,
+  ShoppingCart,
   UserRoundCheck,
   Users,
   Workflow,
@@ -51,13 +51,13 @@ export function getNavItems(
       { to: `/dashboard/${agentId}/overview`, icon: LayoutDashboard, label: 'Overview', requiredPermission: Permission.ANALYTICS_READ },
     ],
     engagement: [
-      { to: `/dashboard/${agentId}/inbox`, icon: MessageSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
+      { to: `/dashboard/${agentId}/inbox`, icon: MessagesSquare, label: 'Inbox', end: true, requiredPermission: Permission.CHATS_READ },
       { to: `/dashboard/${agentId}/customers`, icon: Users, label: 'Contacts', requiredPermission: Permission.CUSTOMERS_READ },
     ],
     bookings: [
       { to: `/dashboard/${agentId}/calendar`, icon: Calendar, label: 'Calendar', requiredPermission: Permission.CALENDAR_READ },
       { to: `/dashboard/${agentId}/availability`, icon: Clock3, label: 'Availability', requiredPermission: Permission.AVAILABILITY_READ },
-      { to: `/dashboard/${agentId}/services`, icon: CalendarCheck, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
+      { to: `/dashboard/${agentId}/services`, icon: ShoppingCart, label: 'Services', end: true, requiredPermission: Permission.AUTOMATION_READ },
     ],
     tools: [
       ...(enableAvatarFeature

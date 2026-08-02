@@ -658,7 +658,7 @@ export default function FollowUpDetailPage() {
         </Link>
       </Button>
 
-      <header className="flex flex-col gap-4 border-b border-border pb-6 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {canManage && isEditingTitle ? (
@@ -673,12 +673,12 @@ export default function FollowUpDetailPage() {
                   setIsEditingTitle(false);
                 }}
                 autoFocus
-                className="max-w-2xl text-3xl font-semibold tracking-tight h-auto py-1 px-2"
+                className="max-w-2xl font-title text-3xl font-normal tracking-tight h-auto py-1 px-2"
                 aria-label="Follow-up name"
               />
             ) : (
               <>
-                <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+                <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
                   {name}
                 </h1>
                 {canManage && (

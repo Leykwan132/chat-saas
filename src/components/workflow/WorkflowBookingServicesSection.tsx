@@ -95,7 +95,7 @@ export function WorkflowBookingServicesSection({
           <div
             key={service._id}
             className={cn(
-              'flex items-center gap-3 p-3',
+              'flex items-start gap-3 p-3',
               index > 0 && 'border-t border-border',
             )}
           >
@@ -115,12 +115,17 @@ export function WorkflowBookingServicesSection({
                 </p>
               ) : null}
             </div>
-            <Switch
-              checked={checked}
-              onCheckedChange={(nextChecked) => handleToggleService(service._id, nextChecked)}
-              aria-label={`${checked ? 'Disallow' : 'Allow'} ${service.name}`}
-              className="data-[state=checked]:bg-emerald-600"
-            />
+            <div className="flex shrink-0 items-start gap-1.5">
+              <span className="text-xs text-muted-foreground">
+                {checked ? 'Active' : 'Inactive'}
+              </span>
+              <Switch
+                checked={checked}
+                onCheckedChange={(nextChecked) => handleToggleService(service._id, nextChecked)}
+                aria-label={`${checked ? 'Disallow' : 'Allow'} ${service.name}`}
+                className="data-[state=checked]:bg-emerald-600"
+              />
+            </div>
           </div>
         );
       })}

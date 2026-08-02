@@ -176,7 +176,7 @@ export default function ScheduleUserAvailabilityPage() {
       </Link>
 
       <div className="flex flex-col gap-4">
-        <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+        <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
           Available hours
         </h1>
 

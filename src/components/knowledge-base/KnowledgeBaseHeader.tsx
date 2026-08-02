@@ -15,7 +15,7 @@ export function KnowledgeBaseHeader({
   onTest,
 }: KnowledgeBaseHeaderProps) {
   return (
-    <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+    <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
       <PageTitleBlock
         title="Knowledge Base"
         description="Add the information your agent uses to answer customers."

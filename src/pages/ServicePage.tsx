@@ -186,8 +186,12 @@ export default function ServicePage() {
         className="mx-auto flex w-full max-w-3xl flex-col gap-8"
         style={showSaveFooter ? { paddingBottom: '4.5rem' } : undefined}
       >
-      <header className="flex flex-col gap-4 border-b border-border pb-6">
-        <Button asChild variant="ghost" className="w-fit gap-2 px-0 text-muted-foreground hover:text-foreground">
+      <header className="flex flex-col gap-4">
+        <Button
+          asChild
+          variant="ghost"
+          className="w-fit gap-2 px-0 text-muted-foreground hover:bg-transparent hover:text-foreground dark:hover:bg-transparent"
+        >
           <Link to={backHref}>
             <ArrowLeft className="size-4" />
             Back to Services
@@ -196,7 +200,7 @@ export default function ServicePage() {
 
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-2">
-            <h1 className="m-0 truncate text-3xl font-semibold tracking-tight text-foreground">
+            <h1 className="m-0 truncate font-title text-3xl font-normal tracking-tight text-foreground">
               {form.name.trim() || 'Edit service'}
             </h1>
           </div>
@@ -332,7 +336,7 @@ function CreateServiceSkeleton() {
 function EditServiceSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
-      <div className="border-b border-border pb-6">
+      <div>
         <Skeleton className="h-9 w-40" />
         <Skeleton className="mt-4 h-9 w-56" />
         <Skeleton className="mt-3 h-4 w-96" />

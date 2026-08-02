@@ -91,7 +91,7 @@ export function TemplateDetailPageSkeleton() {
     >
       <Skeleton className="h-9 w-36 rounded-md" />
 
-      <header className="border-b border-border pb-6">
+      <header>
         <Skeleton className="h-8 w-72 rounded-md" />
       </header>
 

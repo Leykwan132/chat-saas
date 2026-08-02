@@ -115,7 +115,7 @@ export default function ChannelWhatsAppTemplatesPage() {
   );
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div>
         <Button variant="ghost" size="sm" className="-ml-2 gap-1 text-muted-foreground" asChild>
           <Link to={`/dashboard/${agentId}/channels`}>
@@ -125,14 +125,14 @@ export default function ChannelWhatsAppTemplatesPage() {
         </Button>
       </div>
 
-      <header className="flex flex-col gap-2 border-b border-border pb-6">
+      <header className="flex flex-col gap-2">
         <div className="flex items-center gap-2 text-muted-foreground">
           <FileText className="size-5" />
           <span className="text-xs font-medium uppercase tracking-wide">
             WhatsApp · Message templates
           </span>
         </div>
-        <h1 className="m-0 text-3xl font-semibold tracking-tight">{label}</h1>
+        <h1 className="m-0 font-title text-3xl font-normal tracking-tight">{label}</h1>
         <p className="m-0 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           Create and list templates for this WhatsApp Business Account. Graph API
           calls run on Convex using this channel&apos;s credentials—nothing is

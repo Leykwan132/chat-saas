@@ -26,3 +26,10 @@ export function getWorkflowInspectorBehavior(
     mediaActionTitle: isSendFileAction ? 'Files to send' : 'Your Photos/Videos',
   };
 }
+
+export function bookingAvailabilityBlocksApply(
+  kind: WorkflowNodeKind,
+  hasAcceptingLeadMember: boolean | undefined,
+) {
+  return kind === 'bookAppointment' && hasAcceptingLeadMember !== true;
+}

@@ -243,9 +243,9 @@ export default function QuickRepliesPage() {
   return (
     <div className="flex w-full flex-col gap-6 max-w-none">
       {/* Header */}
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">Quick Replies</h1>
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">Quick Replies</h1>
         </div>
         <div className="flex shrink-0">
           {canManage && (

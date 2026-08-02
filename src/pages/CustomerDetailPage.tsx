@@ -268,7 +268,7 @@ export default function CustomerDetailPage() {
   }
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       {/* Back link & header */}
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-4">
@@ -326,7 +326,7 @@ export default function CustomerDetailPage() {
                 </div>
               ) : (
                 <>
-                  <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+                  <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
                     {customer.name?.trim() || 'Unnamed Customer'}
                   </h1>
                   {customer.email && !customer.email.toLowerCase().endsWith('@facebook.com') && (

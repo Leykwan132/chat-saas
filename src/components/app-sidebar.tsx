@@ -1,5 +1,5 @@
 import { useQuery } from 'convex/react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftOpen } from 'lucide-react';
 import type { Doc } from '../../convex/_generated/dataModel';
 import { api } from '../../convex/_generated/api';
 import { CreditMeter } from '@/components/CreditMeter';
@@ -27,6 +27,7 @@ import {
   useEnableAvatarFeature,
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
+import { ExpandedAppSidebarHeader } from './ExpandedAppSidebarHeader';
 
 function formatUnreadBadgeCount(count: number): string {
   return count > 99 ? '99+' : String(count);
@@ -91,23 +92,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
           </Button>
         </SidebarHeader>
       ) : (
-        <SidebarHeader className="flex flex-row items-center justify-between px-[0.9rem] py-[0.7875rem]">
-          <a href="/workspace" className="flex items-center gap-[0.675rem]">
-            <img src="/icon.svg" className="size-[1.35rem] dark:invert" alt="" />
-            <div className="flex min-w-0 flex-col leading-none">
-              <span className="text-[14.5px] font-semibold tracking-normal font-title">Kilobot</span>
-            </div>
-          </a>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className="size-[1.8rem] text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          >
-            <PanelLeftClose className="size-[1.125rem]" />
-            <span className="sr-only">Collapse Sidebar</span>
-          </Button>
-        </SidebarHeader>
+        <ExpandedAppSidebarHeader onCollapse={toggleSidebar} />
       )}
 
       <SidebarContent className="gap-0">

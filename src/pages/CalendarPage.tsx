@@ -21,13 +21,11 @@ import {
   Plus,
   Search,
   Trash2,
-  User,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
   ContextMenu,
   ContextMenuContent,
@@ -85,16 +83,7 @@ import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
-import {
-  inboxSidebarCountClassName,
-  inboxSidebarGroupLabelClassName,
-  inboxSidebarHeaderTitleClassName,
-  inboxSidebarIconSlotClassName,
-  inboxSidebarItemActiveClassName,
-  inboxSidebarItemClassName,
-  inboxSidebarItemInactiveClassName,
-  inboxSidebarSectionClassName,
-} from '@/lib/sidebarNavStyles';
+import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { cn } from '@/lib/utils';
 
 const calendarApi = api.calendarEvents;
@@ -688,56 +677,6 @@ function formStatesEqual(a: EventFormState, b: EventFormState) {
   );
 }
 
-function CalendarSidebarFilterRow({
-  label,
-  icon,
-  isActive,
-  count,
-  onClick,
-  disabled,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  isActive: boolean;
-  count?: number;
-  onClick: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        inboxSidebarItemClassName,
-        isActive ? inboxSidebarItemActiveClassName : inboxSidebarItemInactiveClassName,
-        disabled && 'pointer-events-none opacity-50',
-      )}
-    >
-      <span className={inboxSidebarIconSlotClassName}>{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-      {count !== undefined ? (
-        <span className={inboxSidebarCountClassName}>{count}</span>
-      ) : null}
-    </button>
-  );
-}
-
-function CalendarSidebarFilterSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={inboxSidebarSectionClassName}>
-      <div className={inboxSidebarGroupLabelClassName}>{title}</div>
-      <div className="flex flex-col gap-[0.1125rem]">{children}</div>
-    </div>
-  );
-}
-
 export default function CalendarPage() {
   const { agentId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1127,56 +1066,18 @@ export default function CalendarPage() {
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[18rem_minmax(0,1fr)_20rem] overflow-hidden bg-background">
-      <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
-        <div className={cn(inboxColumnHeaderClassName, 'px-[0.675rem]')}>
-          <h1 className={inboxSidebarHeaderTitleClassName}>Calendar</h1>
-        </div>
-        <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem]')}>
-          {canManageCalendar && (
-            <div className="px-3 pb-3">
-              <Button
-                type="button"
-                size="lg"
-                className="mt-2 h-11 w-full gap-2 px-5 py-3"
-                onClick={() => setCreateBookingOpen(true)}
-              >
-                <Plus data-icon="inline-start" />
-                New Booking
-              </Button>
-            </div>
-          )}
-
-          <div className="flex justify-center pb-[0.675rem]">
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              month={visibleMonth}
-              onMonthChange={handleChangeMonth}
-              // onSelect={handleSelectDate}
-              className="rounded-xl border border-border bg-card p-2"
-            />
-          </div>
-
-          <CalendarSidebarFilterSection title="View">
-            <CalendarSidebarFilterRow
-              label="All events"
-              icon={<CalendarIcon className="text-muted-foreground" />}
-              isActive={!assignedToMeOnly}
-              count={eventFilterCounts?.all}
-              onClick={() => setAssignedToMeOnly(false)}
-            />
-            <CalendarSidebarFilterRow
-              label="Assigned to me"
-              icon={<User className="text-muted-foreground" />}
-              isActive={assignedToMeOnly}
-              count={eventFilterCounts?.assigned}
-              onClick={() => setAssignedToMeOnly(true)}
-              disabled={!currentUser}
-            />
-          </CalendarSidebarFilterSection>
-
-        </div>
-      </aside>
+      <CalendarSidebar
+        assignedToMeOnly={assignedToMeOnly}
+        canManageCalendar={canManageCalendar}
+        eventFilterCounts={eventFilterCounts}
+        hasCurrentUser={currentUser !== null && currentUser !== undefined}
+        selectedDate={selectedDate}
+        visibleMonth={visibleMonth}
+        onAssignedToMe={() => setAssignedToMeOnly(true)}
+        onChangeMonth={handleChangeMonth}
+        onCreateBooking={() => setCreateBookingOpen(true)}
+        onShowAllEvents={() => setAssignedToMeOnly(false)}
+      />
 
       <section className={cn(inboxColumnClassName, 'border-r border-border')}>
         <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>

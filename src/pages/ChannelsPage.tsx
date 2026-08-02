@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Link, useParams, useSearchParams } from 'react-router';
+import { useParams, useSearchParams } from 'react-router';
 import { usePostHog } from '@posthog/react';
 import {
-  Check,
-  CircleAlert,
   Loader2,
   RefreshCw,
   Trash2,
@@ -33,14 +31,16 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
-import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { AvailableChannelCard } from '@/components/channels/AvailableChannelCard';
+import {
+  ChannelReadyStatus,
+  SavedConversationStatus,
+} from '@/components/channels/ChannelReadyStatus';
 import { WhatsAppConnectingAction } from '@/components/channels/WhatsAppConnectionFeedback';
 import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
 import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
-import { AnimatedGridPattern } from '@/components/ui/animated-grid-pattern';
 import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
@@ -211,8 +211,6 @@ export default function ChannelsPage() {
   const [disconnectingChannelIds, setDisconnectingChannelIds] = useState<
     Set<string>
   >(new Set());
-  const [isLifecycleGuideOpen, setIsLifecycleGuideOpen] = useState(false);
-  const [isCoexistenceGuideOpen, setIsCoexistenceGuideOpen] = useState(false);
 
   const connectedChannelsList = useMemo(
     () =>
@@ -291,41 +289,16 @@ export default function ChannelsPage() {
   }, [agentId, channels, ensureDefaultAgentId]);
 
   return (
-    <div className="flex w-full flex-col gap-8">
-      <header className="flex flex-col justify-between gap-4 border-b border-border pb-6 md:flex-row md:items-end">
+    <div className="flex w-full flex-col gap-6">
+      <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <PageTitleBlock
           title="Channels"
           description="Connect the platforms where customers can reach your agent."
         />
       </header>
 
-      {/* Guides section styled exactly like BroadcastPage */}
       <section className="flex flex-col gap-4 animate-fade-in">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">Guides</h2>
-        <div className="flex flex-wrap items-end gap-6 max-w-[920px]">
-          <BookCard
-            tag="Channels"
-            title="How channels work"
-            onClick={() => setIsLifecycleGuideOpen(true)}
-          />
-
-          <BookCard
-            tag="WhatsApp"
-            title="Mobile coexistence"
-            onClick={() => setIsCoexistenceGuideOpen(true)}
-          />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-4 animate-fade-in">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-semibold tracking-tight text-foreground">Available channels</h2>
-          </div>
-          <Separator className="mt-3" />
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="flex flex-wrap gap-2">
           <WebsiteChannelCard
             agentId={agentId}
             onShowDetails={() => setWebDetailsOpen(true)}
@@ -400,31 +373,9 @@ export default function ChannelsPage() {
         agentId={agentId}
       />
 
-      {/* Guide Dialogs */}
-      <ChannelLifecycleGuideDialog
-        open={isLifecycleGuideOpen}
-        onOpenChange={setIsLifecycleGuideOpen}
-      />
-
-      <WhatsAppCoexistenceGuideDialog
-        open={isCoexistenceGuideOpen}
-        onOpenChange={setIsCoexistenceGuideOpen}
-      />
     </div>
   );
 }
-
-function WhatsAppReadyStatus({ label }: { label: string }) {
-  return (
-    <span className="inline-flex max-w-full items-center gap-1.5">
-      <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800">
-        <Check className="size-2.5 text-emerald-100" strokeWidth={2.5} aria-hidden />
-      </span>
-      <span className="truncate text-[11px] font-medium text-foreground">{label}</span>
-    </span>
-  );
-}
-
 export function PendingWhatsAppConnectionCard({
   attempt,
   channel,
@@ -606,7 +557,7 @@ function ConnectedChannelCard({
               ) : whatsappSyncStatus ? (
                 <div className="text-[11px] leading-snug space-y-1.5 w-full">
                   {whatsappSyncStatus.showCheck ? (
-                    <WhatsAppReadyStatus label={whatsappSyncStatus.label} />
+                    <ChannelReadyStatus label={whatsappSyncStatus.label} />
                   ) : (
                     <p className="font-medium text-foreground truncate">
                       {whatsappSyncStatus.label}
@@ -630,9 +581,11 @@ function ConnectedChannelCard({
                   ) : null}
                 </div>
               ) : (
-                <p className="text-[11px] leading-snug text-muted-foreground font-medium truncate">
-                  {(channel as ChannelWithConversationCount).conversationCount ?? 0} conversations saved
-                </p>
+                <SavedConversationStatus
+                  conversationCount={
+                    (channel as ChannelWithConversationCount).conversationCount ?? 0
+                  }
+                />
               )
             ) : channel.status === 'error' && channel.lastError ? (
               <p className="text-[11px] leading-snug text-destructive line-clamp-2" title={channel.lastError}>
@@ -734,278 +687,5 @@ function ConnectedChannelCard({
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Guides Helper Components (BookCard & Guide Dialogs)
-// ──────────────────────────────────────────────────────────────────────────
-
-interface BookCardProps {
-  tag: string;
-  title: React.ReactNode;
-  onClick?: () => void;
-  to?: string;
-  disabled?: boolean;
-  isDark?: boolean;
-}
-
-function BookCard({ tag, title, onClick, to, disabled, isDark }: BookCardProps) {
-  const cardContent = (
-    <>
-      {/* Book Body (Inside Pages/Back) */}
-      <div className="absolute inset-0 rounded-r-[14px] rounded-l-sm bg-white dark:bg-[#1a1a1a] border border-neutral-200/80 dark:border-neutral-800/80 shadow-inner z-0 transition-transform duration-500 ease-out group-hover:translate-x-1.5" />
-
-      {/* Front Cover */}
-      <div 
-        style={{ transformOrigin: 'left center', transformStyle: 'preserve-3d' }}
-        className={`absolute inset-0 rounded-r-[14px] rounded-l-sm border pl-[25px] pr-3.5 py-3.5 flex flex-col justify-between transition-transform duration-500 ease-out group-hover:[transform:rotateY(-24deg)] z-20 shadow-md group-hover:shadow-lg origin-left ${
-          isDark 
-            ? 'bg-neutral-950 dark:bg-black border-neutral-900 text-white' 
-            : 'bg-[#fafafa] dark:bg-[#202020] border-neutral-200/80 dark:border-neutral-800/80 text-neutral-800 dark:text-neutral-100'
-        }`}
-      >
-        <div className="flex flex-col gap-2">
-          {/* App Logo */}
-          <img 
-            src="/icon.svg" 
-            className={`size-5 shrink-0 ${isDark ? 'invert' : 'dark:invert'}`} 
-            alt="App Logo" 
-          />
-          <span className={`inline-flex w-fit items-center rounded-full px-2 py-0.5 text-[9px] font-semibold border ${
-            isDark 
-              ? 'bg-neutral-900 text-neutral-400 border-neutral-800/50' 
-              : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 border-neutral-200/30 dark:border-neutral-700/30'
-          }`}>
-            {tag}
-          </span>
-        </div>
-        <h3 className={`text-xs font-semibold tracking-tight leading-tight ${isDark ? 'text-white' : 'text-neutral-850 dark:text-neutral-100'}`}>
-          {title}
-        </h3>
-
-        {/* Binder / spine crease */}
-        <div className={`absolute left-0 top-0 bottom-0 w-[17px] rounded-l-sm bg-gradient-to-r pointer-events-none ${
-          isDark 
-            ? 'from-white/[0.04] via-transparent to-black/[0.3]' 
-            : 'from-black/[0.08] via-transparent to-black/[0.12] dark:from-white/[0.03] dark:to-black/[0.2]'
-        }`} />
-        <div className={`absolute left-[17px] top-0 bottom-0 w-[1px] pointer-events-none ${
-          isDark ? 'bg-neutral-800/80' : 'bg-neutral-300/60 dark:bg-neutral-800/60'
-        }`} />
-        <div className={`absolute left-[18px] top-0 bottom-0 w-[1px] pointer-events-none ${
-          isDark ? 'bg-white/[0.02]' : 'bg-white/50 dark:bg-white/[0.02]'
-        }`} />
-      </div>
-    </>
-  );
-
-  if (to) {
-    return (
-      <Link 
-        to={to} 
-        className={`group relative select-none w-[125px] h-[162px] [perspective:1000px] block ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-      >
-        {cardContent}
-      </Link>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`group relative select-none w-[125px] h-[162px] [perspective:1000px] text-left block ${disabled ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}`}
-    >
-      {cardContent}
-    </button>
-  );
-}
-
-interface ChannelLifecycleGuideDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-function ChannelLifecycleGuideDialog({ open, onOpenChange }: ChannelLifecycleGuideDialogProps) {
-  const points = [
-    'Secure Token Exchange: Long-lived platform credentials are encrypted and stored safely.',
-    'Webhook Handlers: Real-time subscriptions deliver customer messages instantly to our servers.',
-    'AI Auto-Response: Inbound messages trigger agent prompt processing to reply instantly.',
-  ];
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,640px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[880px]">
-        <DialogTitle className="sr-only">How channels work</DialogTitle>
-        <div className="w-full flex flex-col h-[min(440px,calc(90vh-5.5rem))] min-h-[400px]">
-          <div className="flex h-full w-full flex-col overflow-hidden md:flex-row md:items-stretch">
-            <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-y-auto px-6 py-6 sm:px-10 md:overflow-visible md:py-10">
-              <div className="flex flex-col gap-2.5">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  How channels work
-                </h2>
-                <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Our system establishes a direct, real-time integration with Meta platforms (WhatsApp, Instagram, and Messenger) to power your workspace inbox.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Under the hood
-                </h3>
-                <ul className="flex flex-col gap-2.5">
-                  {points.map((point, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2.5 text-sm leading-snug text-foreground/90"
-                    >
-                      <Check
-                        className="mt-0.5 size-4 shrink-0 text-emerald-500"
-                        strokeWidth={2.5}
-                      />
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="relative h-[min(240px,38vh)] shrink-0 overflow-hidden border-t border-border/40 bg-muted/15 md:h-full md:border-t-0 md:border-l md:w-[48%] flex items-center justify-center">
-              <div className="pointer-events-none absolute inset-0 size-full">
-                <AnimatedGridPattern
-                  width={40}
-                  height={40}
-                  maxOpacity={0.18}
-                  numSquares={72}
-                  className="size-full opacity-40 dark:opacity-20"
-                />
-              </div>
-              <div className="relative z-10 flex size-full items-center justify-center p-6 md:p-8">
-                <svg className="w-full h-auto max-w-[220px]" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="15" y="20" width="35" height="35" rx="8" fill="#e8f5e9" className="dark:fill-emerald-950/20" />
-                  <path d="M32.5 30 V45 M25 37.5 H40" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" />
-                  
-                  <rect x="150" y="20" width="35" height="35" rx="8" fill="#e3f2fd" className="dark:fill-blue-950/20" />
-                  <path d="M167.5 30 V45 M160 37.5 H175" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" />
-                  
-                  <rect x="82.5" y="125" width="35" height="35" rx="8" fill="#fdf2f8" className="dark:fill-pink-950/20" />
-                  <circle cx="100" cy="142.5" r="8" stroke="#ec4899" strokeWidth="2.5" />
-                  
-                  <path d="M58 37.5 H142" stroke="currentColor" className="text-border" strokeWidth="2" strokeDasharray="4 4" />
-                  <path d="M142 37.5 L135 33.5 M142 37.5 L135 41.5" stroke="currentColor" className="text-border" strokeWidth="2" />
-                  
-                  <path d="M167.5 63 V142.5 H125" stroke="currentColor" className="text-border" strokeWidth="2" strokeDasharray="4 4" />
-                  <path d="M125 142.5 L132 138.5 M125 142.5 L132 146.5" stroke="currentColor" className="text-border" strokeWidth="2" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-4 border-t border-border/40 px-6 py-4 sm:px-8">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="min-w-[4.5rem] font-semibold"
-            onClick={() => onOpenChange(false)}
-          >
-            Got it
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface WhatsAppCoexistenceGuideDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
-function WhatsAppCoexistenceGuideDialog({ open, onOpenChange }: WhatsAppCoexistenceGuideDialogProps) {
-  const points = [
-    'Cloud-Hosted Number: Once registered, Meta virtualizes your number in their cloud infrastructure.',
-    'Mobile App Disconnection: The standard WhatsApp & WhatsApp Business mobile applications are disabled for this number.',
-    'Reverting back: You can easily restore mobile use by deleting the number from Meta WhatsApp Manager first.',
-  ];
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[min(90vh,640px)] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-[880px]">
-        <DialogTitle className="sr-only">Mobile app coexistence</DialogTitle>
-        <div className="w-full flex flex-col h-[min(440px,calc(90vh-5.5rem))] min-h-[400px]">
-          <div className="flex h-full w-full flex-col overflow-hidden md:flex-row md:items-stretch">
-            <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-y-auto px-6 py-6 sm:px-10 md:overflow-visible md:py-10">
-              <div className="flex flex-col gap-2.5">
-                <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                  Mobile app coexistence
-                </h2>
-                <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Because Meta virtualizes your phone number for Cloud API operations, standard mobile messaging apps cannot run in parallel.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Key rules
-                </h3>
-                <ul className="flex flex-col gap-2.5">
-                  {points.map((point, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-start gap-2.5 text-sm leading-snug text-foreground/90"
-                    >
-                      <CircleAlert
-                        className="mt-0.5 size-4 shrink-0 text-amber-500"
-                        strokeWidth={2.5}
-                      />
-                      <span>{point}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-
-            <div className="relative h-[min(240px,38vh)] shrink-0 overflow-hidden border-t border-border/40 bg-muted/15 md:h-full md:border-t-0 md:border-l md:w-[48%]">
-              <div className="pointer-events-none absolute inset-0 size-full">
-                <AnimatedGridPattern
-                  width={40}
-                  height={40}
-                  maxOpacity={0.18}
-                  numSquares={72}
-                  className="size-full opacity-40 dark:opacity-20"
-                />
-              </div>
-              <div className="relative z-10 flex size-full items-center justify-center p-6 md:p-8">
-                <div className="w-full">
-                  <div className="flex size-full max-h-full w-full items-center justify-center">
-                    <img
-                      src="/restricted.png"
-                      alt="WhatsApp Cloud API hosting active status screenshot"
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end gap-4 border-t border-border/40 px-6 py-4 sm:px-8">
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="min-w-[4.5rem] font-semibold"
-            onClick={() => onOpenChange(false)}
-          >
-            Got it
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
   );
 }

@@ -225,7 +225,7 @@ export default function ScheduleUserDetailPage() {
   const availabilityPath = `/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}/edit`;
 
   return (
-    <div className="flex w-full max-w-3xl flex-col gap-8">
+    <div className="flex w-full max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-4">
         <Link
           to={schedulePath}
@@ -256,7 +256,7 @@ export default function ScheduleUserDetailPage() {
               </Badge>
             </div>
             <div className="flex flex-col gap-1">
-              <h1 className="m-0 text-3xl font-semibold tracking-tight text-foreground">
+              <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
                 {displayName}
               </h1>
               <p className="text-sm text-muted-foreground">{detail.user.email}</p>
