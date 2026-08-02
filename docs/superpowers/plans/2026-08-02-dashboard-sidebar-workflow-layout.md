@@ -327,7 +327,7 @@ git commit -m "Place Workflow title above canvas tools"
 - Consumes: `toggleSidebar: () => void`, the existing `/icon.svg`, shadcn `SidebarHeader` and `Button`, and `PanelLeftClose`.
 - Produces: `ExpandedAppSidebarHeader({ onCollapse }: { onCollapse: () => void }): React.ReactElement` for the expanded-only app-sidebar header.
 
-- [ ] **Step 1: Write the failing rendered brand test**
+- [x] **Step 1: Write the failing rendered brand test**
 
 Create `ExpandedAppSidebarHeader.test.tsx`:
 
@@ -350,7 +350,7 @@ test('renders the larger Kilobot wordmark closer to the unchanged logo', () => {
 
 The production changes caught are widening the brand gap, shrinking the wordmark, changing the logo size, or losing the collapse action's accessible name.
 
-- [ ] **Step 2: Run the brand test to verify RED**
+- [x] **Step 2: Run the brand test to verify RED**
 
 Run:
 
@@ -360,7 +360,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ExpandedApp
 
 Expected: FAIL because `ExpandedAppSidebarHeader` does not exist.
 
-- [ ] **Step 3: Extract and apply the expanded brand proportions**
+- [x] **Step 3: Extract and apply the expanded brand proportions**
 
 Create the component using the existing expanded `SidebarHeader`, brand link, logo, and collapse button. Apply these exact classes:
 
@@ -373,7 +373,7 @@ Create the component using the existing expanded `SidebarHeader`, brand link, lo
 
 Replace only the expanded branch in `AppSidebar` with `<ExpandedAppSidebarHeader onCollapse={toggleSidebar} />`. Leave the collapsed branch byte-for-byte unchanged.
 
-- [ ] **Step 4: Run sidebar tests to verify GREEN**
+- [x] **Step 4: Run sidebar tests to verify GREEN**
 
 Run:
 
@@ -383,7 +383,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ExpandedApp
 
 Expected: PASS with the new brand dimensions and existing sidebar navigation behavior intact.
 
-- [ ] **Step 5: Commit the sidebar task**
+- [x] **Step 5: Commit the sidebar task**
 
 ```bash
 git add src/components/ExpandedAppSidebarHeader.tsx src/components/ExpandedAppSidebarHeader.test.tsx src/components/app-sidebar.tsx
