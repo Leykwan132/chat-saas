@@ -3,6 +3,7 @@ import { internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getWorkflowForAgent, listWorkflowEdges, listWorkflowNodes } from "./workflowCore";
 import { workflowNodeDescription, workflowNodeDisplayTitle } from "../shared/workflows";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 
 const MAX_RUNTIME_SERVICES = 100;
@@ -59,7 +60,7 @@ function mediaForNode(
   return mediaRows
     .filter((row) =>
       row.workflowNodeId === node._id &&
-      row.purpose === "workflowSendMedia" &&
+      row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
       row.status === "ready",
     )
     .map((row) => ({

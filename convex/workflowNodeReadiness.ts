@@ -1,6 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { workflowNodeDescription } from '../shared/workflows';
+import { MediaUploadPurpose } from '../shared/mediaUploadPurpose';
 import { MAX_WORKFLOW_EDGES } from './workflowCore';
 
 const MAX_RUNTIME_MEDIA = 500;
@@ -90,7 +91,7 @@ export async function getWorkflowNodeReadinessFactsForAgent(
 
   return {
     readyMediaNodeIds: new Set(mediaRows.flatMap((row) => (
-      row.purpose === 'workflowSendMedia' &&
+      row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
       row.status === 'ready' &&
       row.workflowNodeId !== undefined
         ? [row.workflowNodeId]

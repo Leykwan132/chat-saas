@@ -8,6 +8,7 @@ import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/
 import r2Schema from "../node_modules/@convex-dev/r2/dist/component/schema.js";
 import { PERSONAL_ORG_ID } from "./teamHelpers";
 import { withComponents } from "./testUtils";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 const modules = import.meta.glob("./**/*.ts");
 process.env.MEDIA_CDN_BASE_URL = "https://cdn.example.com";
@@ -138,7 +139,7 @@ test("legacy knowledge base files import into a Send Files node", async () => {
       mediaType: "application/pdf",
       filename: "legacy.pdf",
       fileSize: 20,
-      purpose: "knowledgeBase",
+      purpose: MediaUploadPurpose.KnowledgeBase,
       agentId,
       createdAt: Date.now(),
     });
@@ -261,7 +262,7 @@ test("removing a Send Media node cleans up node media", async () => {
       mediaType: "image/jpeg",
       filename: "delete-ready.jpg",
       fileSize: 10,
-      purpose: "workflowSendMedia",
+      purpose: MediaUploadPurpose.WorkflowSendMedia,
       agentId,
       workflowNodeId: mediaNode._id,
       createdAt: now,
@@ -274,7 +275,7 @@ test("removing a Send Media node cleans up node media", async () => {
       mediaType: "image/jpeg",
       filename: "delete-pending.jpg",
       fileSize: 10,
-      purpose: "workflowSendMedia",
+      purpose: MediaUploadPurpose.WorkflowSendMedia,
       agentId,
       workflowNodeId: mediaNode._id,
       createdAt: now,
@@ -289,7 +290,7 @@ test("removing a Send Media node cleans up node media", async () => {
       mediaType: "image/jpeg",
       filename: "keep-ready.jpg",
       fileSize: 10,
-      purpose: "workflowSendMedia",
+      purpose: MediaUploadPurpose.WorkflowSendMedia,
       agentId,
       workflowNodeId: otherNode._id,
       createdAt: now,

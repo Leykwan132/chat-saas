@@ -16,6 +16,7 @@ import {
   queueWorkflowMediaR2Delete,
 } from "./workflowMediaDeletion";
 import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 async function findWorkflowMediaRow(
   ctx: Parameters<typeof listWorkflowNodeMediaRows>[0],
@@ -27,7 +28,7 @@ async function findWorkflowMediaRow(
   const rows = await listWorkflowNodeMediaRows(ctx, nodeId);
   return rows.find((candidate) =>
     candidate.clientId === clientId &&
-    candidate.purpose === "workflowSendMedia" &&
+    candidate.purpose === MediaUploadPurpose.WorkflowSendMedia &&
     mediaBelongsToAgent(candidate, agent),
   );
 }
@@ -68,7 +69,7 @@ export const internalCreateUpload = internalMutation({
       userId: auth.userId,
       agentId: agent._id,
       workflowNodeId: args.nodeId,
-      purpose: "workflowSendMedia",
+      purpose: MediaUploadPurpose.WorkflowSendMedia,
       filename: args.fileName,
       mediaType: args.mimeType,
       fileSize: args.fileSize,
@@ -222,7 +223,7 @@ export const internalListReadyByNode = internalQuery({
     return rows
       .filter((row) =>
         row.agentId === args.agentId &&
-        row.purpose === "workflowSendMedia" &&
+        row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
         row.status === "ready",
       )
       .map((row) => ({

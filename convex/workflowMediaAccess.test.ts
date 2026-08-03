@@ -5,6 +5,7 @@ import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import { PERSONAL_ORG_ID } from "./teamHelpers";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -130,7 +131,7 @@ test("ready workflow media is scoped to the matching Send Media node", async () 
         mediaType: "image/jpeg",
         filename: `${clientId}.jpg`,
         fileSize: 10,
-        purpose: "workflowSendMedia",
+        purpose: MediaUploadPurpose.WorkflowSendMedia,
         agentId,
         workflowNodeId: nodeId,
         createdAt: now,

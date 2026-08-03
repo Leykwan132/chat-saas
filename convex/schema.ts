@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import {
   workflowLayoutOrientationValidator,
   workflowNodeKindValidator,
@@ -1251,7 +1252,10 @@ export default defineSchema({
     mediaType: v.string(),
     filename: v.optional(v.string()),
     fileSize: v.optional(v.number()),
-    purpose: v.optional(v.union(v.literal("knowledgeBase"), v.literal("workflowSendMedia"))),
+    purpose: v.optional(v.union(
+      v.literal(MediaUploadPurpose.KnowledgeBase),
+      v.literal(MediaUploadPurpose.WorkflowSendMedia),
+    )),
     agentId: v.optional(v.id("agents")),
     workflowNodeId: v.optional(v.id("workflowNodes")),
     collectionName: v.optional(v.string()),
