@@ -38,6 +38,9 @@ test('privacy policy states the approved provider, retention, and security pract
 test('terms state the approved contractual protections', () => {
   const terms = renderLegalSections(termsOfServiceSections);
 
+  expect(terms).toContain('MorphSwift Studio');
+  expect(terms).not.toContain('Morph Swift Studio');
+
   for (const text of [
     'What Kilobot means',
     'Changes to these Terms',

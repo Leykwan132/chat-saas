@@ -1,4 +1,4 @@
-export const LEGAL_ENTITY = 'Morph Swift Studio Enterprise';
+export const LEGAL_ENTITY = 'MorphSwift Studio Enterprise';
 export const PRODUCT_NAME = 'Kilobot';
 export const PRODUCT_URL = 'https://kilobot.app';
 export const LEGAL_EMAIL = 'admin@morphswiftstudio.com';
