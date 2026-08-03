@@ -14,6 +14,7 @@ import {
 import { addableWorkflowNodeKindValidator } from "./workflowValidators";
 import {
   isWorkflowTerminalNodeKind,
+  isWorkflowInitiallyReadyNodeKind,
   workflowNodeDefaultCondition,
   workflowNodeDescription,
   workflowNodeTitle,
@@ -25,10 +26,6 @@ function requireFinitePosition(value: number, field: string) {
   if (!Number.isFinite(value)) {
     throw new Error(`${field} must be finite`);
   }
-}
-
-function initialWorkflowNodeReadiness(kind: Doc<"workflowNodes">["kind"]) {
-  return kind === "closeConversation" || kind === "humanEscalation";
 }
 
 function getNextChildPosition(
@@ -108,7 +105,7 @@ export const addNodeAfter = mutation({
       kind: args.kind,
       title: workflowNodeTitle(args.kind),
       description: workflowNodeDescription(args.kind),
-      isReady: initialWorkflowNodeReadiness(args.kind),
+      isReady: isWorkflowInitiallyReadyNodeKind(args.kind),
       positionX,
       positionY,
       createdAt: now,

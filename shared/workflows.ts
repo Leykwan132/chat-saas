@@ -49,6 +49,11 @@ export const WORKFLOW_ACTION_NODE_KINDS = [
   'humanEscalation',
 ] as const satisfies readonly WorkflowNodeKind[];
 
+export const WORKFLOW_INITIALLY_READY_NODE_KINDS = [
+  'closeConversation',
+  'humanEscalation',
+] as const satisfies readonly WorkflowNodeKind[];
+
 export const WORKFLOW_NODE_META: Record<
   WorkflowNodeKind,
   { label: string; description?: string }
@@ -145,6 +150,12 @@ export function isWorkflowTerminalNodeKind(kind: WorkflowNodeKind) {
 export function isWorkflowActionNodeKind(kind: WorkflowNodeKind) {
   return WORKFLOW_ACTION_NODE_KINDS.includes(
     kind as (typeof WORKFLOW_ACTION_NODE_KINDS)[number],
+  );
+}
+
+export function isWorkflowInitiallyReadyNodeKind(kind: WorkflowNodeKind) {
+  return WORKFLOW_INITIALLY_READY_NODE_KINDS.includes(
+    kind as (typeof WORKFLOW_INITIALLY_READY_NODE_KINDS)[number],
   );
 }
 
