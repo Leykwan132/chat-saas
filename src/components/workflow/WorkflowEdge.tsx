@@ -5,7 +5,7 @@ import {
   getBezierPath,
   type EdgeProps,
 } from '@xyflow/react';
-import { ClipboardList } from 'lucide-react';
+import { Split } from 'lucide-react';
 import type { WorkflowFlowEdge } from './workflowTypes';
 
 export function WorkflowEdge({
@@ -68,7 +68,7 @@ export function WorkflowEdge({
               className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
             >
               <span className="sr-only">Condition:</span>
-              <ClipboardList className="size-3 shrink-0" aria-hidden="true" />
+              <Split className="size-3 shrink-0" aria-hidden="true" />
               <span className="min-w-0 truncate">{label}</span>
             </button>
           </div>
