@@ -93,7 +93,7 @@ export function WorkflowBookingAvailabilityList({
             return (
               <div
                 key={teammate.workosUserId}
-                className="relative flex items-center gap-3 px-3 py-2.5"
+                className="relative flex items-start gap-3 px-3 py-2.5"
               >
                 <Link
                   to={`/dashboard/${agentId}/availability/${encodeURIComponent(teammate.workosUserId)}`}
@@ -113,7 +113,7 @@ export function WorkflowBookingAvailabilityList({
                     {summary.timezoneLabel}
                   </p>
                 </div>
-                <div className="relative z-10 flex shrink-0 items-center gap-2">
+                <div className="relative z-10 flex shrink-0 items-start gap-2">
                   <span className="text-xs text-muted-foreground">Accepting leads</span>
                   <Switch
                     checked={enabled}
