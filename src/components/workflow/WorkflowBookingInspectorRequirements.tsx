@@ -86,7 +86,7 @@ export function WorkflowBookingInspectorRequirements({
           title="Availability"
           description="Choose who can accept appointment leads."
           action={availabilityTimezone ? (
-            <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
               <Globe2 className="size-3.5" aria-hidden="true" />
               {availabilityTimezone}
             </span>
