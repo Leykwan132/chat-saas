@@ -15,9 +15,7 @@ export const termsCommercialSections: LegalSection[] = [
         </p>
         <p>
           We may offer accepted Early Adopter Program participants a Growth plan at no charge for
-          three months in exchange for feedback. The Early Adopter Program is not a free trial and
-          does not automatically convert to a paid subscription unless we expressly tell the
-          participant otherwise.
+          three months in exchange for feedback.
         </p>
         <p>
           Payments are processed by Stripe. Paid monthly and annual subscriptions renew

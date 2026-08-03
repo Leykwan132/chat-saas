@@ -50,6 +50,9 @@ test('terms state the approved contractual protections', () => {
     'Cancellation takes effect immediately and is reflected directly in your billing status.',
   );
   expect(terms).not.toContain('Cancellation takes effect at the end of the then-current paid period.');
+  expect(terms).not.toContain(
+    'The Early Adopter Program is not a free trial and does not automatically convert to a paid subscription unless we expressly tell the participant otherwise.',
+  );
 
   for (const text of [
     'What Kilobot means',
