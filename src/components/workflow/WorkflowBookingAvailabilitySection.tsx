@@ -106,7 +106,7 @@ export function WorkflowBookingAvailabilityList({
                     </p>
                   ))}
                 </div>
-                <div className="relative z-10 flex shrink-0 items-start gap-2">
+                <div className="relative z-10 flex shrink-0 self-center items-center gap-2">
                   <span className="text-xs text-muted-foreground">Accepting leads</span>
                   <Switch
                     checked={enabled}
