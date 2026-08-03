@@ -60,7 +60,7 @@ export function WorkflowBookingInspectorRequirements({
           action={(
             <Link
               to={`/dashboard/${agentId}/services/new`}
-              className="shrink-0 text-xs font-medium text-primary hover:underline"
+              className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline dark:text-blue-400 dark:hover:text-blue-300"
             >
               + Create Service
             </Link>
