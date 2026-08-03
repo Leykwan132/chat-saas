@@ -5,6 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { Globe2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
@@ -31,10 +32,7 @@ type WorkflowBookingAvailabilityListProps = {
   roster: WorkflowAvailabilityRosterEntry[];
   pendingUserIds: Set<string>;
   canManageAvailability: boolean;
-  onToggle: (
-    teammate: WorkflowAvailabilityTeammate,
-    enabled: boolean,
-  ) => void;
+  onToggle: (teammate: WorkflowAvailabilityTeammate, enabled: boolean) => void;
 };
 
 export function WorkflowBookingAvailabilityList({
@@ -66,6 +64,7 @@ export function WorkflowBookingAvailabilityList({
       }),
     [rosterByUserId, teammates],
   );
+  const timezoneLabel = formatWorkflowWeeklyAvailability([], roster[0]?.schedule.timezone).timezoneLabel;
 
   if (sortedTeammates.length === 0) {
     return (
@@ -79,6 +78,10 @@ export function WorkflowBookingAvailabilityList({
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Globe2 className="size-3.5" aria-hidden="true" />
+        <span>{timezoneLabel}</span>
+      </div>
       <ScrollArea className="max-h-64 rounded-lg border border-border">
         <div className="divide-y divide-border">
           {sortedTeammates.map((teammate) => {
@@ -109,9 +112,6 @@ export function WorkflowBookingAvailabilityList({
                       {line}
                     </p>
                   ))}
-                  <p className="truncate text-xs text-muted-foreground">
-                    {summary.timezoneLabel}
-                  </p>
                 </div>
                 <div className="relative z-10 flex shrink-0 items-start gap-2">
                   <span className="text-xs text-muted-foreground">Accepting leads</span>
