@@ -29,7 +29,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: '10x more credits for messages and campaigns.',
       },
       {
-        title: 'Up to 3 AI Agents',
+        title: 'Up to 2 AI Agents',
         description: 'Deploy specialized sales and support agents.',
       },
       {
@@ -58,7 +58,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: 'Book meetings and sync calendars automatically.',
       },
       {
-        title: 'Up to 10 AI Agents',
+        title: 'Up to 5 AI Agents',
         description: 'Deploy specialized agents for every department.',
       },
       {
@@ -91,7 +91,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: 'Enterprise credit limits for high chat volumes.',
       },
       {
-        title: 'Up to 25 AI Agents',
+        title: 'Up to 10 AI Agents',
         description: 'Build advanced multi-agent business flows.',
       },
       {
