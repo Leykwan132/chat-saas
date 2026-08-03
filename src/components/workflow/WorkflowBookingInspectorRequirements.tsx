@@ -1,6 +1,6 @@
-import { Clock3, ShoppingCart } from 'lucide-react';
+import { Clock3, Globe2, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { WorkflowBookingAvailabilitySection } from './WorkflowBookingAvailabilitySection';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
@@ -50,6 +50,8 @@ export function WorkflowBookingInspectorRequirements({
   showServiceWarning,
   showAvailabilityWarning,
 }: WorkflowBookingInspectorRequirementsProps) {
+  const [availabilityTimezone, setAvailabilityTimezone] = useState<string>();
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
@@ -83,10 +85,17 @@ export function WorkflowBookingInspectorRequirements({
           icon={Clock3}
           title="Availability"
           description="Choose who can accept appointment leads."
+          action={availabilityTimezone ? (
+            <span className="flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground">
+              <Globe2 className="size-3.5" aria-hidden="true" />
+              {availabilityTimezone}
+            </span>
+          ) : undefined}
         />
         <WorkflowBookingAvailabilitySection
           agentId={agentId}
           onEligibilityChange={onAvailabilityEligibilityChange}
+          onTimezoneChange={setAvailabilityTimezone}
         />
         {showAvailabilityWarning ? (
           <p className="text-xs text-destructive" role="alert">

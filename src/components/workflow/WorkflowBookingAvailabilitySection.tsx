@@ -5,7 +5,6 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { Globe2 } from 'lucide-react';
 import { Link } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
@@ -64,8 +63,6 @@ export function WorkflowBookingAvailabilityList({
       }),
     [rosterByUserId, teammates],
   );
-  const timezoneLabel = formatWorkflowWeeklyAvailability([], roster[0]?.schedule.timezone).timezoneLabel;
-
   if (sortedTeammates.length === 0) {
     return (
       <Empty className="border border-border p-5">
@@ -78,10 +75,6 @@ export function WorkflowBookingAvailabilityList({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Globe2 className="size-3.5" aria-hidden="true" />
-        <span>{timezoneLabel}</span>
-      </div>
       <ScrollArea className="max-h-64 rounded-lg border border-border">
         <div className="divide-y divide-border">
           {sortedTeammates.map((teammate) => {
@@ -162,11 +155,13 @@ function WorkflowBookingAvailabilitySkeleton() {
 type AvailabilityDataProps = {
   agentId: Id<'agents'>;
   onEligibilityChange: (eligible: boolean | undefined) => void;
+  onTimezoneChange?: (timezone: string | undefined) => void;
 };
 
 function WorkflowBookingAvailabilityData({
   agentId,
   onEligibilityChange,
+  onTimezoneChange,
 }: AvailabilityDataProps) {
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canReadAvailability = can(Permission.AVAILABILITY_READ);
@@ -187,10 +182,16 @@ function WorkflowBookingAvailabilityData({
         roster,
         new Set(teammates.map((teammate) => teammate.workosUserId)),
       );
+  const timezoneLabel = roster === undefined
+    ? undefined
+    : formatWorkflowWeeklyAvailability([], roster[0]?.schedule.timezone).timezoneLabel;
 
   useEffect(() => {
     onEligibilityChange(eligibility);
   }, [eligibility, onEligibilityChange]);
+  useEffect(() => {
+    onTimezoneChange?.(timezoneLabel);
+  }, [onTimezoneChange, timezoneLabel]);
 
   const rosterByUserId = useMemo(
     () =>
