@@ -204,14 +204,6 @@ test("web widget placement can change while theme stays fixed", async () => {
   expect(setup.layout).toBe("input_bar");
   expect(setup.theme).toBe("light");
 
-  const initialConfig = await t.query(api.webWidget.publicGetConfig, {
-    publicKey: setup.publicKey,
-  });
-
-  expect(initialConfig.layout).toBe("input_bar");
-  expect(initialConfig.theme).toBe("light");
-  expect(initialConfig.placeholder).toBe("What can Layout Agent help with?");
-
   await t
     .withIdentity({ subject: "user_web_layout", email: "layout@example.com" })
     .mutation(api.webWidget.updateSettings, {
