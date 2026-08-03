@@ -124,6 +124,13 @@ export const privacyPolicyServiceSections: LegalSection[] = [
           to their own policies and our agreements with them.
         </p>
         <p>
+          For more information about OpenRouter&apos;s handling of personal data, see{' '}
+          <a href="https://openrouter.ai/privacy" target="_blank" rel="noopener noreferrer">
+            OpenRouter&apos;s Privacy Policy
+          </a>
+          .
+        </p>
+        <p>
           You are responsible for ensuring that content you submit for AI processing complies with
           applicable law and any third-party platform rules, including Meta messaging policies.
         </p>

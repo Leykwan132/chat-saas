@@ -35,6 +35,12 @@ test('privacy policy states the approved provider, retention, and security pract
   }
 });
 
+test('privacy policy links AI processing disclosure to OpenRouter privacy information', () => {
+  const policy = renderLegalSections(privacyPolicySections);
+
+  expect(policy).toContain('href="https://openrouter.ai/privacy"');
+});
+
 test('terms state the approved contractual protections', () => {
   const terms = renderLegalSections(termsOfServiceSections);
 
