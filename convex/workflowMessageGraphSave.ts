@@ -14,6 +14,7 @@ import {
   workflowGraphNodeSaveValidator,
 } from "./workflowGraphSaveValidators";
 import { deleteOrQueueWorkflowNodeMedia } from "./workflowMediaDeletion";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 import { recordWorkflowTemplateUsage } from "./workflowTemplateUsage";
 import {
   workflowTemplateIdValidator,
@@ -123,6 +124,7 @@ export const replace = mutation({
     if (args.templateId) {
       await recordWorkflowTemplateUsage(ctx, agent._id, args.templateId, now);
     }
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
 
     const savedWorkflow = await ctx.db.get(workflow._id);
     if (savedWorkflow === null) {

@@ -183,6 +183,31 @@ test("rejects an unrelated condition edge without partially updating the node", 
   expect(persistedNode?.title).toBe(messageNode.title);
 });
 
+test("applying a configured Send message marks its node ready", async () => {
+  const t = initTest();
+  const workosUserId = "workflow-node-config-readiness";
+  const agentId = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const graph = await authed.mutation(api.workflows.ensureForAgent, { agentId });
+  const startNode = graph.nodes.find((node) => node.kind === "start")!;
+  const withSendText = await authed.mutation(api.workflows.addNodeAfter, {
+    agentId,
+    sourceNodeId: startNode._id,
+    kind: "sendText",
+  });
+  const sendTextNode = withSendText.nodes.find((node) => node.kind === "sendText")!;
+
+  expect(sendTextNode.isReady).toBe(false);
+  const updated = await authed.mutation(api.workflowNodeConfig.apply, {
+    agentId,
+    nodeId: sendTextNode._id,
+    title: "Send welcome message",
+    description: "Thanks for reaching out. How can I help?",
+  });
+
+  expect(updated.nodes.find((node) => node._id === sendTextNode._id)?.isReady).toBe(true);
+});
+
 test("rejects archived and cross-agent services before updating the node", async () => {
   const t = initTest();
   const workosUserId = "workflow-node-config-services";

@@ -15,6 +15,7 @@ import {
   deleteOrQueueWorkflowMediaRow,
   queueWorkflowMediaR2Delete,
 } from "./workflowMediaDeletion";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 async function findWorkflowMediaRow(
   ctx: Parameters<typeof listWorkflowNodeMediaRows>[0],
@@ -130,6 +131,9 @@ export const workflowMediaUploadComplete = internalMutation({
     ) {
       await ctx.db.delete(row._id);
     }
+    if (row?.agentId) {
+      await refreshWorkflowNodeReadinessForAgent(ctx, row.agentId);
+    }
   },
 });
 
@@ -162,6 +166,7 @@ export const internalFinalizeDirectUpload = internalMutation({
       return null;
     }
     await ctx.db.patch(row._id, { status: "ready", ...metadata });
+    await refreshWorkflowNodeReadinessForAgent(ctx, args.agentId);
     return null;
   },
 });
@@ -179,6 +184,7 @@ export const internalMarkDeleting = internalMutation({
       return null;
     }
     await deleteOrQueueWorkflowMediaRow(ctx, row);
+    await refreshWorkflowNodeReadinessForAgent(ctx, args.agentId);
     return null;
   },
 });

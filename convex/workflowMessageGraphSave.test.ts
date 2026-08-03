@@ -52,6 +52,7 @@ test("replaces the message graph without changing automations", async () => {
     "sendFile",
     "start",
   ]);
+  expect(replaced.nodes.find((node) => node.kind === "start")?.isReady).toBe(true);
   expect(replaced.nodes.some((node) => node._id === startNode._id)).toBe(false);
   await testClient.run(async (ctx) => {
     const usage = await ctx.db.query("workflowTemplateUsage").take(10);

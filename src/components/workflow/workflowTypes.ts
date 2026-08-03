@@ -21,6 +21,7 @@ export type WorkflowNodeData = Record<string, unknown> & {
   kind: WorkflowNodeKind;
   title: string;
   description?: string;
+  isReady: boolean;
   density?: WorkflowNodeDensity;
   layoutOrientation: WorkflowLayoutOrientation;
   disabled: boolean;

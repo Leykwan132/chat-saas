@@ -26,6 +26,10 @@ function requireFinitePosition(value: number, field: string) {
   }
 }
 
+function initialWorkflowNodeReadiness(kind: Doc<"workflowNodes">["kind"]) {
+  return kind === "closeConversation" || kind === "humanEscalation";
+}
+
 function getNextChildPosition(
   sourceNode: Doc<"workflowNodes">,
   nodes: Doc<"workflowNodes">[],
@@ -103,6 +107,7 @@ export const addNodeAfter = mutation({
       kind: args.kind,
       title: workflowNodeTitle(args.kind),
       description: workflowNodeDescription(args.kind),
+      isReady: initialWorkflowNodeReadiness(args.kind),
       positionX,
       positionY,
       createdAt: now,

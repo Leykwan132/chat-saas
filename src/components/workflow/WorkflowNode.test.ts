@@ -26,6 +26,12 @@ test('workflow node card does not render landing demo service labels', () => {
   expect(source).not.toContain('serviceLabels');
 });
 
+test('workflow node shows an accessible action-required alert when incomplete', () => {
+  expect(source).toContain('Action Required');
+  expect(source).toContain('aria-label="Action required"');
+  expect(source).toContain('!data.isReady && !isCompact');
+});
+
 test('workflow node compact density reduces the card and direct controls', () => {
   expect(source).toContain("const isCompact = data.density === 'compact'");
   expect(source).toContain("'min-w-[150px] max-w-[255px]'");

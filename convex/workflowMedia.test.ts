@@ -10,6 +10,7 @@ import { PERSONAL_ORG_ID } from "./teamHelpers";
 import { withComponents } from "./testUtils";
 
 const modules = import.meta.glob("./**/*.ts");
+process.env.MEDIA_CDN_BASE_URL = "https://cdn.example.com";
 const r2Modules = {
   lib: async () => {
     const { mutation } = await import("../node_modules/@convex-dev/r2/dist/component/_generated/server.js");
@@ -146,6 +147,9 @@ test("legacy knowledge base files import into a Send Files node", async () => {
     nodeId: mediaNode._id,
   });
   expect(nodeMedia.map((entry) => entry.clientId)).toEqual(["legacy"]);
+  await t.run(async (ctx) => {
+    expect(await ctx.db.get(mediaNode._id)).toMatchObject({ isReady: true });
+  });
 });
 
 test("workflow media upload types are scoped by media node kind", async () => {
@@ -199,6 +203,33 @@ test("workflow media upload types are scoped by media node kind", async () => {
       fileSize: 10,
     }),
   ).rejects.toThrow("photo.jpg is not a supported file type");
+});
+
+test("finishing a media upload marks its node ready", async () => {
+  const t = initTest();
+  const workosUserId = "workflow-media-readiness";
+  const { agentId } = await createPersonalAgent(t, workosUserId);
+  const authed = t.withIdentity({ subject: workosUserId });
+  const mediaNode = await addNode(authed, agentId, "sendImage");
+
+  await authed.mutation(internal.workflowMediaInternal.internalCreateUpload, {
+    agentId,
+    nodeId: mediaNode._id,
+    clientId: "workflow-image",
+    fileName: "photo.jpg",
+    mimeType: "image/jpeg",
+    fileSize: 10,
+  });
+  await authed.mutation(internal.workflowMediaInternal.internalFinalizeDirectUpload, {
+    agentId,
+    nodeId: mediaNode._id,
+    clientId: "workflow-image",
+    key: "workflow-media/photo.jpg",
+  });
+
+  await t.run(async (ctx) => {
+    expect(await ctx.db.get(mediaNode._id)).toMatchObject({ isReady: true });
+  });
 });
 
 test("removing a Send Media node cleans up node media", async () => {

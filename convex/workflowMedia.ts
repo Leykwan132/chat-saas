@@ -20,6 +20,7 @@ import {
   publicWorkflowMediaRow,
   type UploadReservation,
 } from "./workflowMediaShared";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 function mediaUploadError(error: unknown) {
   return error instanceof Error ? error.message : "Upload failed";
@@ -94,6 +95,7 @@ export const importLegacyMedia = mutation({
       });
       imported += 1;
     }
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
     return { imported };
   },
 });

@@ -181,6 +181,7 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          isReady: node.isReady === true,
           density: nodeDensity,
           layoutOrientation,
           disabled,
