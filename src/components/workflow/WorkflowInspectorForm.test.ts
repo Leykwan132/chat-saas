@@ -32,3 +32,11 @@ test('keeps workflow labels close to their booking controls', () => {
   expect(source).toContain('<Field className="items-start gap-2 text-left">');
   expect(source).toContain('<div className="flex flex-col gap-3">');
 });
+
+test('uses the shared required label for condition, booking, and file requirements', () => {
+  expect(source).toContain('<WorkflowRequiredLabel>Detail</WorkflowRequiredLabel>');
+  expect(source).toMatch(/id="workflow-node-condition-detail"[\s\S]*?required/);
+  expect(source).toContain('<WorkflowRequiredLabel as="h4">Services</WorkflowRequiredLabel>');
+  expect(source).toContain('<WorkflowRequiredLabel as="h4">Availability</WorkflowRequiredLabel>');
+  expect(source).toContain('conditionDetailBlocksApply(');
+});

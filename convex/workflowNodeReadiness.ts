@@ -1,6 +1,7 @@
 import type { Doc, Id } from './_generated/dataModel';
 import type { MutationCtx, QueryCtx } from './_generated/server';
 import { workflowNodeDescription } from '../shared/workflows';
+import { MAX_WORKFLOW_EDGES } from './workflowCore';
 
 const MAX_RUNTIME_MEDIA = 500;
 const MAX_RUNTIME_SERVICES = 100;
@@ -13,6 +14,7 @@ export type WorkflowNodeReadinessFacts = {
   readyMediaNodeIds: Set<Id<'workflowNodes'>>;
   activeAppointmentServiceIds: Set<Id<'appointmentServices'>>;
   hasAcceptingLeadMember: boolean;
+  configuredConditionNodeIds: Set<Id<'workflowNodes'>>;
 };
 
 function hasConfiguredMessage(node: Doc<'workflowNodes'>) {
@@ -36,6 +38,8 @@ export function getWorkflowNodeReadiness(
   node: Doc<'workflowNodes'>,
   facts: WorkflowNodeReadinessFacts,
 ) {
+  if (node.kind === 'start') return true;
+  if (!facts.configuredConditionNodeIds.has(node._id)) return false;
   if (node.kind === 'sendText') return hasConfiguredMessage(node);
   if (node.kind === 'sendImage' || node.kind === 'sendFile') {
     return facts.readyMediaNodeIds.has(node._id);
@@ -53,7 +57,10 @@ export async function getWorkflowNodeReadinessFactsForAgent(
   ctx: DbCtx,
   agentId: Id<'agents'>,
 ): Promise<WorkflowNodeReadinessFacts> {
-  const [mediaRows, services, schedules] = await Promise.all([
+  const workflow = await ctx.db.query('workflows')
+    .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
+    .unique();
+  const [mediaRows, services, schedules, edges] = await Promise.all([
     ctx.db.query('mediaUploads')
       .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
       .take(MAX_RUNTIME_MEDIA),
@@ -63,7 +70,15 @@ export async function getWorkflowNodeReadinessFactsForAgent(
     ctx.db.query('userSchedules')
       .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
       .take(MAX_ROUTING_SCHEDULES),
+    workflow === null
+      ? Promise.resolve([])
+      : ctx.db.query('workflowEdges')
+        .withIndex('by_workflowId', (q) => q.eq('workflowId', workflow._id))
+        .take(MAX_WORKFLOW_EDGES + 1),
   ]);
+  if (edges.length > MAX_WORKFLOW_EDGES) {
+    throw new Error('Workflow edge limit exceeded');
+  }
 
   return {
     readyMediaNodeIds: new Set(mediaRows.flatMap((row) => (
@@ -79,6 +94,11 @@ export async function getWorkflowNodeReadinessFactsForAgent(
         .map((service) => service._id),
     ),
     hasAcceptingLeadMember: schedules.some((schedule) => schedule.enabled),
+    configuredConditionNodeIds: new Set(
+      edges
+        .filter((edge) => Boolean(edge.detail?.trim()))
+        .map((edge) => edge.targetNodeId),
+    ),
   };
 }
 

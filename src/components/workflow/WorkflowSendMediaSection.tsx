@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { WorkflowMediaGrid } from './WorkflowMediaGrid';
 import { WorkflowMediaUploader } from './WorkflowMediaUploader';
 import { getWorkflowSendMediaCopy } from './workflowSendMediaCopy';
+import { WorkflowSendMediaTitle } from './WorkflowSendMediaTitle';
 import {
   shouldDisplayWorkflowMediaEntry,
   type WorkflowMediaEntry,
@@ -84,9 +85,7 @@ export function WorkflowSendMediaSection({
             <Icon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h4 className="truncate text-sm font-semibold text-foreground">
-              {mediaCopy.title}
-            </h4>
+            <WorkflowSendMediaTitle nodeKind={nodeKind} title={mediaCopy.title} />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

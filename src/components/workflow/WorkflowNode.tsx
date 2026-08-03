@@ -43,12 +43,6 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
         )}
         isConnectable={!isEntry && !data.disabled}
       />
-      {!data.isReady && !isCompact ? (
-        <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-          <TriangleAlert aria-label="Action required" role="img" className="size-3.5" />
-          <span>Action Required</span>
-        </div>
-      ) : null}
       <div
         className={cn(
           'relative z-10 flex w-fit flex-col items-start justify-center border border-border bg-card text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted',
@@ -82,6 +76,12 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           </p>
         ) : null}
       </div>
+      {!data.isReady && data.kind !== 'start' && !isCompact ? (
+        <div className="absolute left-0 top-full mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+          <TriangleAlert aria-label="Action required" role="img" className="size-3.5" />
+          <span>Action Required</span>
+        </div>
+      ) : null}
       {!isTerminal ? (
         <Handle
           type="source"

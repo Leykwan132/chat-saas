@@ -48,6 +48,7 @@ test("keeps the legacy combined workflow save endpoint available", async () => {
       {
         sourceClientId: "legacy:start",
         targetClientId: "legacy:text",
+        detail: "When the customer enters the workflow",
       },
     ],
     automations,

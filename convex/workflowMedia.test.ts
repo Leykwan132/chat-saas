@@ -107,9 +107,18 @@ async function addNode(
     sourceNodeId: startNode!._id,
     kind,
   });
-  return [...nextGraph.nodes]
+  const node = [...nextGraph.nodes]
     .filter((node) => node.kind === kind)
     .sort((a, b) => b._creationTime - a._creationTime)[0]!;
+  const edge = nextGraph.edges.find((edge) => edge.targetNodeId === node._id)!;
+  const configuredGraph = await authed.mutation(api.workflowNodeConfig.apply, {
+    agentId,
+    nodeId: node._id,
+    conditionEdgeId: edge._id,
+    title: node.title,
+    conditionDetail: "When the customer requests this media",
+  });
+  return configuredGraph.nodes.find((configuredNode) => configuredNode._id === node._id)!;
 }
 
 test("legacy knowledge base files import into a Send Files node", async () => {

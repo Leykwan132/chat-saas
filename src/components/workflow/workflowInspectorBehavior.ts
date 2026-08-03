@@ -33,3 +33,10 @@ export function bookingAvailabilityBlocksApply(
 ) {
   return kind === 'bookAppointment' && hasAcceptingLeadMember !== true;
 }
+
+export function conditionDetailBlocksApply(
+  conditionEnabled: boolean,
+  conditionDetail: string,
+) {
+  return conditionEnabled && !conditionDetail.trim();
+}

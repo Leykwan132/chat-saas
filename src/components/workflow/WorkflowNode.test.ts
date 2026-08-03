@@ -26,10 +26,16 @@ test('workflow node card does not render landing demo service labels', () => {
   expect(source).not.toContain('serviceLabels');
 });
 
-test('workflow node shows an accessible action-required alert when incomplete', () => {
+test('workflow node shows an accessible bottom-left action-required alert only for incomplete actions', () => {
   expect(source).toContain('Action Required');
   expect(source).toContain('aria-label="Action required"');
-  expect(source).toContain('!data.isReady && !isCompact');
+  expect(source).toContain("data.kind !== 'start'");
+  expect(source).toContain('absolute left-0 top-full mt-1.5');
+
+  const cardIndex = source.indexOf("'relative z-10 flex w-fit flex-col");
+  const requirementIndex = source.indexOf("data.kind !== 'start'");
+  expect(cardIndex).toBeGreaterThan(-1);
+  expect(requirementIndex).toBeGreaterThan(cardIndex);
 });
 
 test('workflow node compact density reduces the card and direct controls', () => {

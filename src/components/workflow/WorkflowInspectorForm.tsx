@@ -17,7 +17,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { WorkflowBookingAvailabilitySection } from './WorkflowBookingAvailabilitySection';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
-import { bookingAvailabilityBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
+import { bookingAvailabilityBlocksApply, conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
+import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -135,7 +136,7 @@ export function WorkflowInspectorForm({
       !sameOptionalIdSet(allowedAppointmentServiceIds, node.allowedAppointmentServiceIds)
     )
   );
-  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || !hasNodeChanges || bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
+  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || conditionDetailBlocksApply(conditionEnabled, conditionDetail) || !hasNodeChanges || bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
 
   return (
     <>
@@ -168,9 +169,10 @@ export function WorkflowInspectorForm({
                   />
                 </Field>
                 <Field className="gap-2">
-                  <FieldLabel htmlFor="workflow-node-condition-detail">Detail</FieldLabel>
+                  <FieldLabel htmlFor="workflow-node-condition-detail"><WorkflowRequiredLabel>Detail</WorkflowRequiredLabel></FieldLabel>
                   <Textarea
                     id="workflow-node-condition-detail"
+                    required
                     value={conditionDetail}
                     onChange={(event) => setConditionDetail(event.target.value)}
                     placeholder={conditionDetailPlaceholder}
@@ -231,7 +233,7 @@ export function WorkflowInspectorForm({
               {isBookAppointmentAction && agentId ? (
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-col gap-1">
-                    <h4 className="text-sm font-semibold text-foreground">Services</h4>
+                    <WorkflowRequiredLabel as="h4">Services</WorkflowRequiredLabel>
                     <p className="text-xs leading-relaxed text-muted-foreground">
                       AI will only book services that are available.
                     </p>
@@ -242,7 +244,7 @@ export function WorkflowInspectorForm({
                     onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
                   />
                   <div className="flex flex-col gap-1">
-                    <h4 className="text-sm font-semibold text-foreground">Availability</h4>
+                    <WorkflowRequiredLabel as="h4">Availability</WorkflowRequiredLabel>
                     <p className="text-xs leading-relaxed text-muted-foreground">Choose who can accept appointment leads.</p>
                   </div>
                   <WorkflowBookingAvailabilitySection

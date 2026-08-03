@@ -16,6 +16,8 @@
 - Treat absent legacy `isReady` as unready until the migration completes.
 - The authenticated editor loads all nodes; only AI runtime context filters to ready nodes.
 - Do not deploy or run the data migration without user authorization.
+- Every non-entry workflow node requires a non-empty incoming condition detail; Condition Name remains optional.
+- Render `Action Required` below incomplete standard nodes, left-aligned, and never render it for `Message enters`.
 
 ---
 
@@ -25,7 +27,6 @@
 - Create: `convex/workflowNodeReadiness.ts`
 - Create: `convex/workflowNodeReadiness.test.ts`
 - Create: `convex/workflowNodeReadinessMigration.ts`
-- Create: `convex/workflowNodeReadinessMigration.test.ts`
 - Modify: `convex/schema.ts:428-440`
 - Modify: `convex/workflowCore.ts:25-96`
 - Modify: `convex/workflows.ts:77-122`
@@ -88,14 +89,14 @@ Add `isReady: v.optional(v.boolean())` to `workflowNodes`. Build readiness facts
 
 - [ ] **Step 4: Run policy and migration tests to verify they pass**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeReadiness.test.ts convex/workflowNodeReadinessMigration.test.ts`
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeReadiness.test.ts`
 
 Expected: PASS; the policy catches missing message/media/booking prerequisites and migration patches legacy nodes.
 
 - [ ] **Step 5: Commit the readiness contract**
 
 ```bash
-git add convex/schema.ts convex/workflowCore.ts convex/workflows.ts convex/workflowNodeReadiness.ts convex/workflowNodeReadiness.test.ts convex/workflowNodeReadinessMigration.ts convex/workflowNodeReadinessMigration.test.ts
+git add convex/schema.ts convex/workflowCore.ts convex/workflows.ts convex/workflowNodeReadiness.ts convex/workflowNodeReadiness.test.ts convex/workflowNodeReadinessMigration.ts
 git commit -m "Add workflow node readiness state"
 ```
 
@@ -242,7 +243,7 @@ test('carries persisted readiness into the standard workflow flow node', () => {
   expect(nodes[0]?.data.isReady).toBe(false);
 });
 
-test('renders an Action Required alert above an unready node', () => {
+test('renders an Action Required alert below an unready action node', () => {
   render(<WorkflowNode {...propsFor({ isReady: false })} />);
   expect(screen.getByText('Action Required')).toBeVisible();
   expect(screen.getByRole('img', { name: 'Action required' })).toBeVisible();
@@ -255,11 +256,11 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workf
 
 Expected: FAIL because readiness is absent from flow data and no alert renders.
 
-- [ ] **Step 3: Add the compact accessible alert above the card**
+- [ ] **Step 3: Add the compact accessible alert below the card**
 
 ```tsx
-{data.isReady ? null : (
-  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+{data.isReady || data.kind === 'start' ? null : (
+  <div className="absolute left-0 top-full mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
     <TriangleAlert aria-label="Action required" role="img" className="size-3.5" />
     <span>Action Required</span>
   </div>
@@ -292,7 +293,7 @@ git commit -m "Show workflow node action requirements"
 
 - [ ] **Step 1: Run the combined focused suite**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeReadiness.test.ts convex/workflowNodeReadinessMigration.test.ts convex/workflowNodeConfig.test.ts convex/workflowAppointmentServices.test.ts convex/workflowMedia.test.ts convex/workflowRuntimeContext.test.ts convex/chat/workflowActionPlanner.test.ts src/components/workflow/workflowFlowModel.test.ts src/components/workflow/WorkflowNode.test.ts`
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeReadiness.test.ts convex/workflowNodeConfig.test.ts convex/workflowAppointmentServices.test.ts convex/workflowMedia.test.ts convex/workflowRuntimeContext.test.ts convex/chat/workflowActionPlanner.test.ts src/components/workflow/workflowFlowModel.test.ts src/components/workflow/WorkflowNode.test.ts`
 
 Expected: PASS with no readiness regression failures.
 
@@ -317,4 +318,62 @@ Do not run these commands unless the user explicitly authorizes data migration f
 ```bash
 git add CONTINUITY.md convex src docs/superpowers/plans/2026-08-03-workflow-node-readiness.md
 git commit -m "Add workflow node readiness"
+```
+
+### Task 6: Refine required-field guidance and condition readiness
+
+**Files:**
+- Create: `src/components/workflow/WorkflowRequiredLabel.tsx`
+- Create: `src/components/workflow/WorkflowRequiredLabel.test.tsx`
+- Create: `src/components/workflow/WorkflowSendMediaTitle.tsx`
+- Create: `src/components/workflow/WorkflowSendMediaTitle.test.tsx`
+- Modify: `src/components/workflow/WorkflowNode.tsx`
+- Modify: `src/components/workflow/WorkflowNode.test.ts`
+- Modify: `src/components/workflow/WorkflowInspectorForm.tsx`
+- Modify: `src/components/workflow/workflowInspectorBehavior.ts`
+- Modify: `src/components/workflow/workflowInspectorMediaActions.test.ts`
+- Modify: `src/components/workflow/WorkflowSendMediaSection.tsx`
+- Modify: `convex/workflowNodeReadiness.ts`
+- Modify: `convex/workflowNodeReadiness.test.ts`
+- Modify: `convex/workflowNodeConfig.ts`
+- Modify: `convex/workflowNodeConfig.test.ts`
+- Modify: `convex/workflowDraftValidation.ts`
+- Modify: `convex/workflowDraftValidation.test.ts`
+- Modify: `convex/workflows.ts`
+
+**Interfaces:**
+- Produces `WorkflowRequiredLabel`, which renders visible label text, a decorative red asterisk, and screen-reader `required` text.
+- Produces `conditionDetailBlocksApply(conditionEnabled: boolean, conditionDetail: string): boolean` for inspector Apply gating.
+- Extends `WorkflowNodeReadinessFacts` with `configuredConditionNodeIds: Set<Id<'workflowNodes'>>` derived from non-empty incoming edge details.
+- Preserves `getWorkflowNodeReadiness(node, facts): boolean` while requiring every non-`start` node to appear in `configuredConditionNodeIds`.
+
+- [ ] **Step 1: Write failing behavior tests**
+
+Add tests proving that the shared required label renders `Services`, a red decorative `*`, and screen-reader `required`; condition-detail gating blocks only a displayed blank detail; a non-entry node without configured condition detail is unready; `workflowNodeConfig.apply` rejects clearing an existing edge detail; and draft validation rejects a blank edge detail.
+
+- [ ] **Step 2: Run the tests to verify the missing behavior fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/WorkflowRequiredLabel.test.tsx src/components/workflow/WorkflowSendMediaTitle.test.tsx src/components/workflow/workflowInspectorMediaActions.test.ts convex/workflowNodeReadiness.test.ts convex/workflowNodeConfig.test.ts convex/workflowDraftValidation.test.ts`
+
+Expected: FAIL because the required-label component, Apply gate, condition readiness fact, and backend validation do not exist.
+
+- [ ] **Step 3: Implement the minimal required-field and readiness behavior**
+
+Render the shared label for Book appointment Services/Availability, Send file Files to send, and Condition Detail. Add condition gating to `saveDisabled`; reject blank detail before any mutation patch; reject blank draft edge details; load bounded workflow edges into readiness facts; require a configured condition for non-entry nodes; and refresh readiness after `addNodeAfter` inserts its edge.
+
+Move the alert after the card with `absolute left-0 top-full mt-1.5`, retain the amber styling, and gate it with `data.kind !== 'start'` so legacy or stale readiness can never show an alert above or below `Message enters`. Absolute placement keeps card handles and direct controls anchored to the card rather than the status line.
+
+- [ ] **Step 4: Run focused tests and build**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeReadiness.test.ts convex/workflowNodeConfig.test.ts convex/workflowDraftValidation.test.ts convex/workflowAppointmentServices.test.ts convex/workflowMedia.test.ts convex/workflowRuntimeContext.test.ts convex/chat/workflowActionPlanner.test.ts src/components/workflow/WorkflowRequiredLabel.test.tsx src/components/workflow/WorkflowSendMediaTitle.test.tsx src/components/workflow/workflowInspectorMediaActions.test.ts src/components/workflow/WorkflowInspectorForm.test.ts src/components/workflow/workflowFlowModel.test.ts src/components/workflow/WorkflowNode.test.ts`
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/workflow/WorkflowRequiredLabel.tsx src/components/workflow/WorkflowRequiredLabel.test.tsx src/components/workflow/WorkflowSendMediaTitle.tsx src/components/workflow/WorkflowSendMediaTitle.test.tsx src/components/workflow/WorkflowNode.tsx src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/workflowInspectorBehavior.ts src/components/workflow/WorkflowSendMediaSection.tsx convex/workflowNodeReadiness.ts convex/workflowNodeConfig.ts convex/workflowDraftValidation.ts convex/workflows.ts && bun run build && git diff --check`
+
+Expected: focused tests, scoped lint, production build, and whitespace check pass.
+
+- [ ] **Step 5: Commit the refinement**
+
+```bash
+git add docs/superpowers/specs/2026-08-03-workflow-node-readiness-design.md docs/superpowers/plans/2026-08-03-workflow-node-readiness.md src/components/workflow/WorkflowRequiredLabel.tsx src/components/workflow/WorkflowRequiredLabel.test.tsx src/components/workflow/WorkflowSendMediaTitle.tsx src/components/workflow/WorkflowSendMediaTitle.test.tsx src/components/workflow/WorkflowNode.tsx src/components/workflow/WorkflowNode.test.ts src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/workflowInspectorBehavior.ts src/components/workflow/workflowInspectorMediaActions.test.ts src/components/workflow/WorkflowSendMediaSection.tsx convex/workflowNodeReadiness.ts convex/workflowNodeReadiness.test.ts convex/workflowNodeConfig.ts convex/workflowNodeConfig.test.ts convex/workflowDraftValidation.ts convex/workflowDraftValidation.test.ts convex/workflowDraftSave.test.ts convex/workflowMessageGraphSave.test.ts convex/workflowMedia.test.ts convex/workflows.ts CONTINUITY.md
+git commit -m "Refine workflow action requirements"
 ```

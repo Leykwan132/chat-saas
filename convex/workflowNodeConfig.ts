@@ -46,6 +46,9 @@ export const apply = mutation({
     ) {
       throw new Error("Workflow edge not found");
     }
+    if (edge && !args.conditionDetail?.trim()) {
+      throw new Error("Condition detail is required");
+    }
 
     const serviceIds =
       args.allowedAppointmentServiceIds === undefined

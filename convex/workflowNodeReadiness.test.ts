@@ -32,6 +32,10 @@ function readinessFacts(
     readyMediaNodeIds: new Set(),
     activeAppointmentServiceIds: new Set(),
     hasAcceptingLeadMember: false,
+    configuredConditionNodeIds: new Set([
+      'workflow-node' as Id<'workflowNodes'>,
+      mediaNodeId,
+    ]),
     ...values,
   };
 }
@@ -76,5 +80,24 @@ test('marks configuration-free workflow nodes ready', () => {
   expect(getWorkflowNodeReadiness(
     workflowNode('humanEscalation'),
     readinessFacts(),
+  )).toBe(true);
+});
+
+test('requires an incoming condition detail for every non-entry node', () => {
+  const node = workflowNode('humanEscalation');
+
+  expect(getWorkflowNodeReadiness(
+    node,
+    Object.assign(readinessFacts(), { configuredConditionNodeIds: new Set() }),
+  )).toBe(false);
+  expect(getWorkflowNodeReadiness(
+    node,
+    Object.assign(readinessFacts(), {
+      configuredConditionNodeIds: new Set([node._id]),
+    }),
+  )).toBe(true);
+  expect(getWorkflowNodeReadiness(
+    workflowNode('start'),
+    Object.assign(readinessFacts(), { configuredConditionNodeIds: new Set() }),
   )).toBe(true);
 });

@@ -43,6 +43,7 @@ test("replaces the message graph without changing automations", async () => {
         sourceClientId: "replacement:start",
         targetClientId: "replacement:file",
         label: "Brochure requested",
+        detail: "When the customer requests the brochure",
       },
     ],
   });
