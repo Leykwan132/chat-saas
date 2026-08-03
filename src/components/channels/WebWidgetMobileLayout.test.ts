@@ -61,8 +61,8 @@ test('public widget bottom right launcher renders a single icon button', () => {
 
 test('public widget reset starts a fresh local visitor thread', () => {
   expect(widgetScript).toContain("aria-label='Reset chat'");
-  expect(widgetScript).toContain("M8.5 5.2A5.7 5.7 0 1 1 5 10.4");
-  expect(widgetScript).toContain("M4.2 4.3v3.2h3.2");
+  expect(widgetScript).toContain("M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8");
+  expect(widgetScript).toContain("M3 3v5h5");
   expect(widgetScript).not.toContain("M3.8 10a6.2 6.2 0 1 0 2-4.55");
   expect(widgetScript).not.toContain("M6.5 6.5A5 5 0 1 1 5 10.1M5 5v4h4");
   expect(widgetScript).toContain('function resetChat()');
