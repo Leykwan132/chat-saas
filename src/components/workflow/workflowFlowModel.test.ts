@@ -99,6 +99,7 @@ test('workflowGraphToFlow keeps real condition labels', () => {
   );
 
   expect(flow.edges[0].label).toBe('Customer asks about billing');
+  expect(flow.edges[0].data?.conditionDetail).toBe('Long internal condition detail');
 });
 
 test('workflowGraphToFlow keeps nodes above edges', () => {

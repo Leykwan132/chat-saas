@@ -214,6 +214,7 @@ export function workflowGraphToFlow(
           className: 'workflow-edge',
           data: {
             routePoints: edgeRoutes.get(edge._id),
+            conditionDetail: edge.detail?.trim() || undefined,
           },
         };
       }),

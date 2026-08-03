@@ -75,6 +75,7 @@ export type WorkflowTriggerBackdropNodeData = Record<string, unknown> & {
 
 export type WorkflowEdgeData = Record<string, unknown> & {
   routePoints?: WorkflowEdgeRoutePoint[];
+  conditionDetail?: string;
   onSelectTargetNode?: () => void;
   automation?: boolean;
 };
