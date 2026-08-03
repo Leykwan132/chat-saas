@@ -127,10 +127,9 @@ export function SiteFooter({ className }: SiteFooterProps) {
               </div>
             </div>
 
-            {/* Column 2: About */}
             <div className="flex flex-col gap-4">
               <span className="font-title text-lg font-semibold text-zinc-950 dark:text-zinc-50">
-                About
+                Security &amp; Legal
               </span>
               <nav className="flex flex-col gap-3">
                 <Link
@@ -143,7 +142,7 @@ export function SiteFooter({ className }: SiteFooterProps) {
                   to="/terms"
                   className="text-base text-zinc-500 transition-colors hover:text-zinc-950 dark:text-zinc-400 dark:hover:text-white"
                 >
-                  Terms
+                  Terms of Service
                 </Link>
               </nav>
             </div>
