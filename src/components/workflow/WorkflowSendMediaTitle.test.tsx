@@ -4,10 +4,10 @@ import { WorkflowSendMediaTitle } from './WorkflowSendMediaTitle';
 
 test('marks files and photos/videos as required', () => {
   const fileMarkup = renderToStaticMarkup(
-    <WorkflowSendMediaTitle nodeKind="sendFile" title="Files to send" />,
+    <WorkflowSendMediaTitle title="Files to send" />,
   );
   const imageMarkup = renderToStaticMarkup(
-    <WorkflowSendMediaTitle nodeKind="sendImage" title="Your Photos/Videos" />,
+    <WorkflowSendMediaTitle title="Your Photos/Videos" />,
   );
 
   expect(fileMarkup).toContain('Files to send');

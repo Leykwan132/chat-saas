@@ -137,14 +137,19 @@ test('workflowGraphToFlow defaults persisted nodes to standard density', () => {
   expect(persistedNodes.every((node) => node.data.density === 'standard')).toBe(true);
 });
 
-test('workflowGraphToFlow carries persisted readiness into a standard node', () => {
+test('workflowGraphToFlow carries persisted readiness and missing-item count into a standard node', () => {
   const graph = workflowGraph();
-  graph.nodes[1] = { ...graph.nodes[1]!, isReady: false } as Doc<'workflowNodes'>;
+  graph.nodes[1] = {
+    ...graph.nodes[1]!,
+    isReady: false,
+    readinessIssueCount: 2,
+  } as Doc<'workflowNodes'>;
 
   const flow = workflowGraphToFlow(graph, () => {}, () => {});
   const sendTextNode = flow.nodes.find((node) => node.id === textNodeId);
 
   expect(sendTextNode?.data.isReady).toBe(false);
+  expect(sendTextNode?.data.readinessIssueCount).toBe(2);
 });
 
 test('workflowGraphToFlow propagates compact density to persisted nodes only', () => {

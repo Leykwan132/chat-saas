@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest';
 import type { Doc, Id } from './_generated/dataModel';
 import {
+  getWorkflowNodeReadinessIssueCount,
   getWorkflowNodeReadiness,
   type WorkflowNodeReadinessFacts,
 } from './workflowNodeReadiness';
@@ -76,11 +77,24 @@ test('requires active services and an accepting teammate before a booking node i
   }))).toBe(true);
 });
 
+test('counts every missing booking requirement', () => {
+  expect(getWorkflowNodeReadinessIssueCount(
+    workflowNode('bookAppointment', {
+      allowedAppointmentServiceIds: [serviceId],
+    }),
+    readinessFacts(),
+  )).toBe(2);
+});
+
 test('marks configuration-free workflow nodes ready', () => {
   expect(getWorkflowNodeReadiness(
     workflowNode('humanEscalation'),
     readinessFacts(),
   )).toBe(true);
+  expect(getWorkflowNodeReadinessIssueCount(
+    workflowNode('humanEscalation'),
+    readinessFacts({ configuredConditionNodeIds: new Set() }),
+  )).toBe(0);
 });
 
 test('keeps Human escalation ready without an incoming condition detail', () => {

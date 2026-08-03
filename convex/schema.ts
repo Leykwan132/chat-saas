@@ -433,6 +433,7 @@ export default defineSchema({
     notes: v.optional(v.string()),
     allowedAppointmentServiceIds: v.optional(v.array(v.id("appointmentServices"))),
     isReady: v.optional(v.boolean()),
+    readinessIssueCount: v.optional(v.number()),
     positionX: v.number(),
     positionY: v.number(),
     createdAt: v.number(),

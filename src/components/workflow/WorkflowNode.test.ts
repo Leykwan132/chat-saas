@@ -26,9 +26,10 @@ test('workflow node card does not render landing demo service labels', () => {
   expect(source).not.toContain('serviceLabels');
 });
 
-test('workflow node shows an accessible bottom-left action-required alert only for incomplete actions', () => {
-  expect(source).toContain('Action Required');
-  expect(source).toContain('aria-label="Action required"');
+test('workflow node shows an accessible bottom-left remaining-setup count only for incomplete actions', () => {
+  expect(source).toContain('setup item remaining');
+  expect(source).toContain('readinessIssueCount');
+  expect(source).toContain('aria-label="Setup incomplete"');
   expect(source).toContain("data.kind !== 'start'");
   expect(source).toContain('absolute left-0 top-full mt-1.5');
 

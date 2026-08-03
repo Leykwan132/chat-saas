@@ -22,6 +22,7 @@ export type WorkflowNodeData = Record<string, unknown> & {
   title: string;
   description?: string;
   isReady: boolean;
+  readinessIssueCount: number;
   density?: WorkflowNodeDensity;
   layoutOrientation: WorkflowLayoutOrientation;
   disabled: boolean;

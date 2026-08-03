@@ -38,19 +38,27 @@ export function getWorkflowNodeReadiness(
   node: Doc<'workflowNodes'>,
   facts: WorkflowNodeReadinessFacts,
 ) {
-  if (node.kind === 'start' || node.kind === 'humanEscalation') return true;
-  if (!facts.configuredConditionNodeIds.has(node._id)) return false;
-  if (node.kind === 'sendText') return hasConfiguredMessage(node);
+  return getWorkflowNodeReadinessIssueCount(node, facts) === 0;
+}
+
+export function getWorkflowNodeReadinessIssueCount(
+  node: Doc<'workflowNodes'>,
+  facts: WorkflowNodeReadinessFacts,
+) {
+  if (node.kind === 'start' || node.kind === 'humanEscalation') return 0;
+
+  let count = facts.configuredConditionNodeIds.has(node._id) ? 0 : 1;
+  if (node.kind === 'sendText') {
+    return count + (hasConfiguredMessage(node) ? 0 : 1);
+  }
   if (node.kind === 'sendImage' || node.kind === 'sendFile') {
-    return facts.readyMediaNodeIds.has(node._id);
+    return count + (facts.readyMediaNodeIds.has(node._id) ? 0 : 1);
   }
   if (node.kind === 'bookAppointment') {
-    return (
-      facts.hasAcceptingLeadMember &&
-      hasActiveAllowedService(node, facts.activeAppointmentServiceIds)
-    );
+    if (!facts.hasAcceptingLeadMember) count += 1;
+    if (!hasActiveAllowedService(node, facts.activeAppointmentServiceIds)) count += 1;
   }
-  return true;
+  return count;
 }
 
 export async function getWorkflowNodeReadinessFactsForAgent(
@@ -118,9 +126,13 @@ export async function refreshWorkflowNodeReadinessForAgent(
     getWorkflowNodeReadinessFactsForAgent(ctx, agentId),
   ]);
   for (const node of nodes) {
-    const isReady = getWorkflowNodeReadiness(node, facts);
-    if (node.isReady !== isReady) {
-      await ctx.db.patch(node._id, { isReady });
+    const readinessIssueCount = getWorkflowNodeReadinessIssueCount(node, facts);
+    const isReady = readinessIssueCount === 0;
+    if (
+      node.isReady !== isReady ||
+      node.readinessIssueCount !== readinessIssueCount
+    ) {
+      await ctx.db.patch(node._id, { isReady, readinessIssueCount });
     }
   }
 }

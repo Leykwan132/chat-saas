@@ -94,7 +94,7 @@ export function WorkflowSendMediaSection({
             <Icon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <WorkflowSendMediaTitle nodeKind={nodeKind} title={mediaCopy.title} />
+            <WorkflowSendMediaTitle title={mediaCopy.title} />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">

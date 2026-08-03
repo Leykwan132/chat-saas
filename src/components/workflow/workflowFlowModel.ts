@@ -182,6 +182,7 @@ export function workflowGraphToFlow(
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
           isReady: node.isReady === true,
+          readinessIssueCount: node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
           density: nodeDensity,
           layoutOrientation,
           disabled,
