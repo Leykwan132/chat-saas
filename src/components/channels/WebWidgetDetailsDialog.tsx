@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { WebWidgetSettingsPanel } from '@/components/channels/WebWidgetSettingsPanel';
+import { WebWidgetTraditionalPanel } from '@/components/channels/WebWidgetTraditionalPanel';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type WebWidgetDetailsDialogProps = {
   open: boolean;
@@ -69,14 +71,32 @@ export function WebWidgetDetailsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : settings ? (
-          <WebWidgetSettingsPanel
-            key={settings.publicKey}
-            agentId={typedAgentId}
-            settings={settings}
-            updateSettings={updateSettings}
-            generateIconUploadUrl={generateIconUploadUrl}
-            saveIcon={saveIcon}
-          />
+          <Tabs key={`${settings.publicKey}:${settings.activeMode}`} defaultValue={settings.activeMode} className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-8 py-3 lg:px-10">
+              <TabsList aria-label="Widget mode">
+                <TabsTrigger value="ai_powered">AI-powered</TabsTrigger>
+                <TabsTrigger value="traditional">Traditional</TabsTrigger>
+              </TabsList>
+              <span className="text-xs font-medium text-muted-foreground">Active: {settings.activeMode === 'traditional' ? 'Traditional' : 'AI-powered'}</span>
+            </div>
+            <TabsContent value="ai_powered" className="m-0 min-h-0 overflow-hidden">
+              <WebWidgetSettingsPanel
+                agentId={typedAgentId}
+                settings={settings}
+                updateSettings={updateSettings}
+                generateIconUploadUrl={generateIconUploadUrl}
+                saveIcon={saveIcon}
+              />
+            </TabsContent>
+            <TabsContent value="traditional" className="m-0 min-h-0 overflow-hidden">
+              <WebWidgetTraditionalPanel
+                agentId={typedAgentId}
+                publicKey={settings.publicKey}
+                settings={settings.traditional}
+                active={settings.activeMode === 'traditional'}
+              />
+            </TabsContent>
+          </Tabs>
         ) : null}
       </DialogContent>
     </Dialog>

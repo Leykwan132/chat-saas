@@ -24,10 +24,7 @@ describe('Avatar embed website-widget isolation', () => {
       'window.location.pathname.startsWith(excludedPathPrefix)',
     );
     expect(guardIndex).toBeGreaterThan(-1);
-    expect(guardIndex).toBeLessThan(widgetScript.indexOf('var storageKey ='));
-    expect(guardIndex).toBeLessThan(
-      widgetScript.indexOf('host.setAttribute("data-kilobot-root"'),
-    );
+    expect(guardIndex).toBeLessThan(widgetScript.indexOf('fetch(configUrl())'));
   });
 
   it('keeps generated customer widget snippets route-agnostic', () => {

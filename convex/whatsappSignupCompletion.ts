@@ -146,6 +146,9 @@ export async function completeWhatsAppSignup(
           ...(channel.displayPhoneNumber !== undefined
             ? { displayPhoneNumber: channel.displayPhoneNumber }
             : {}),
+          ...(channel.displayUsername !== undefined
+            ? { displayUsername: channel.displayUsername }
+            : {}),
           ...(channel.tokenExpiresAt !== undefined
             ? { tokenExpiresAt: channel.tokenExpiresAt }
             : {}),

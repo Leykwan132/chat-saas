@@ -31,6 +31,7 @@ function createCompletionFixture() {
         phoneNumber: {
           id: "phone-123",
           display_phone_number: "+1 555 078 3881",
+          verified_name: "Wati",
         },
       };
     },
@@ -87,6 +88,7 @@ test("discovers Meta assets before persisting the backend token and returns stat
     wabaId: "waba-123",
     phoneNumberId: "phone-123",
     displayPhoneNumber: "+1 555 078 3881",
+    displayUsername: "Wati",
     accessToken: "business-token",
     tokenExpiresAt: 1_700_003_600_000,
     connectedByUserId: "user-123",

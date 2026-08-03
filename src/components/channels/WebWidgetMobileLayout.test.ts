@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import widgetScript from '../../../public/widget/v1.js?raw';
+import widgetScript from '../../../public/widget/ai.js?raw';
 
 test('public widget mobile layout keeps the expanded panel separated from the input bar', () => {
   expect(widgetScript).toContain('.wrap,.wrap *{box-sizing:border-box}');

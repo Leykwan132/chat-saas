@@ -92,12 +92,14 @@ describe("WhatsApp Meta asset selection", () => {
           {
             id: "phone-123",
             display_phone_number: "+1 555 078 3881",
+            verified_name: "Wati",
           },
         ],
       }),
     ).toEqual({
       id: "phone-123",
       display_phone_number: "+1 555 078 3881",
+      verified_name: "Wati",
     });
   });
 
@@ -134,6 +136,7 @@ test("Meta signup client exchanges the code and discovers one backend-owned asse
         {
           id: "phone-123",
           display_phone_number: "+1 555 078 3881",
+          verified_name: "Wati",
         },
       ],
     },
@@ -167,6 +170,7 @@ test("Meta signup client exchanges the code and discovers one backend-owned asse
     phoneNumber: {
       id: "phone-123",
       display_phone_number: "+1 555 078 3881",
+      verified_name: "Wati",
     },
   });
   expect(requests).toHaveLength(4);
@@ -175,7 +179,7 @@ test("Meta signup client exchanges the code and discovers one backend-owned asse
     Authorization: "Bearer app-123|app-secret",
   });
   expect(requests[2].url).toContain(
-    "/v22.0/waba-123/phone_numbers?fields=id%2Cdisplay_phone_number",
+    "/v22.0/waba-123/phone_numbers?fields=id%2Cdisplay_phone_number%2Cverified_name",
   );
   expect(requests[2].init?.headers).toEqual({
     Authorization: "Bearer business-token",

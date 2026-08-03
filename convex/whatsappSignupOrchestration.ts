@@ -28,6 +28,7 @@ type PendingChannelInput = {
 type PersistChannelInput = PendingChannelInput & {
   orgId: string;
   displayPhoneNumber?: string;
+  displayUsername?: string;
   accessToken: string;
   tokenExpiresAt?: number;
   connectedByUserId: string;
@@ -69,6 +70,7 @@ export async function runServerOwnedWhatsAppSignup(
       phoneNumberId,
       hasDisplayPhoneNumber:
         assets.phoneNumber.display_phone_number !== undefined,
+      hasDisplayUsername: assets.phoneNumber.verified_name !== undefined,
     });
     failedStage = "attempt_signup_finished";
     await dependencies.updateAttempt({
@@ -101,6 +103,9 @@ export async function runServerOwnedWhatsAppSignup(
       phoneNumberId,
       ...(assets.phoneNumber.display_phone_number !== undefined
         ? { displayPhoneNumber: assets.phoneNumber.display_phone_number }
+        : {}),
+      ...(assets.phoneNumber.verified_name !== undefined
+        ? { displayUsername: assets.phoneNumber.verified_name }
         : {}),
       accessToken: token.access_token,
       ...(token.expires_in !== undefined

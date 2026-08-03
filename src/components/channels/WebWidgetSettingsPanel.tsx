@@ -18,6 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import type { TraditionalWidgetSettings } from './WebWidgetTraditionalPanel';
 
 export type WebWidgetSettings = {
   channelId: Id<'channels'>;
@@ -32,6 +33,8 @@ export type WebWidgetSettings = {
   hidePoweredBy: boolean;
   canHideBranding: boolean;
   canUseCustomIcon: boolean;
+  activeMode: 'ai_powered' | 'traditional';
+  traditional: TraditionalWidgetSettings;
 };
 
 type WebWidgetSettingsPanelProps = {
