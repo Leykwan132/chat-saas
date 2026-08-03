@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { ArchiveRestore, FileText, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,12 +19,16 @@ type WorkflowSendMediaSectionProps = {
   agentId: Id<'agents'>;
   nodeId: Id<'workflowNodes'>;
   nodeKind: 'sendImage' | 'sendFile';
+  onReadinessChange: (ready: boolean | undefined) => void;
+  showRequirementWarning: boolean;
 };
 
 export function WorkflowSendMediaSection({
   agentId,
   nodeId,
   nodeKind,
+  onReadinessChange,
+  showRequirementWarning,
 }: WorkflowSendMediaSectionProps) {
   const entries = useQuery(api.workflowMedia.listForNode, { agentId, nodeId });
   const legacyEntries = useQuery(api.workflowMedia.listLegacyUnassigned, { agentId, nodeId });
@@ -47,6 +51,11 @@ export function WorkflowSendMediaSection({
   const itemLabel = isFileNode ? 'file' : 'photo/video';
   const itemLabelPlural = isFileNode ? 'files' : 'photos/videos';
   const mediaCopy = getWorkflowSendMediaCopy(nodeKind, mediaEntries.length, isLoading);
+  const readiness = isLoading ? undefined : mediaEntries.length > 0;
+
+  useEffect(() => {
+    onReadinessChange(readiness);
+  }, [onReadinessChange, readiness]);
 
   const handleDelete = async (clientId: string) => {
     setDeletingClientId(clientId);
@@ -134,6 +143,13 @@ export function WorkflowSendMediaSection({
         </WorkflowMediaGrid>
       </div>
       <p className="text-xs text-muted-foreground">{mediaCopy.status}</p>
+      {showRequirementWarning ? (
+        <p className="text-xs text-destructive" role="alert">
+          {nodeKind === 'sendFile'
+            ? 'Please add at least one file before applying.'
+            : 'Please add at least one photo or video before applying.'}
+        </p>
+      ) : null}
     </div>
   );
 }

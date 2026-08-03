@@ -83,13 +83,13 @@ test('marks configuration-free workflow nodes ready', () => {
   )).toBe(true);
 });
 
-test('requires an incoming condition detail for every non-entry node', () => {
+test('keeps Human escalation ready without an incoming condition detail', () => {
   const node = workflowNode('humanEscalation');
 
   expect(getWorkflowNodeReadiness(
     node,
     Object.assign(readinessFacts(), { configuredConditionNodeIds: new Set() }),
-  )).toBe(false);
+  )).toBe(true);
   expect(getWorkflowNodeReadiness(
     node,
     Object.assign(readinessFacts(), {

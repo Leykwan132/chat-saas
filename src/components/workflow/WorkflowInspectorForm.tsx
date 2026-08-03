@@ -15,9 +15,8 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { WorkflowBookingAvailabilitySection } from './WorkflowBookingAvailabilitySection';
-import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
 import { bookingAvailabilityBlocksApply, conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
+import { WorkflowBookingInspectorRequirements } from './WorkflowBookingInspectorRequirements';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
@@ -44,25 +43,6 @@ type WorkflowInspectorFormProps = {
   onRemove: () => void;
 };
 
-function normalizedPersistedText(value: string | undefined) {
-  return value?.trim() ?? '';
-}
-
-function normalizedConditionName(value: string | undefined) {
-  return workflowConditionDisplayLabel(value) ?? '';
-}
-
-function sameOptionalIdSet<T extends string>(first: T[] | undefined, second: T[] | undefined) {
-  if (first === undefined || second === undefined) {
-    return first === second;
-  }
-  if (first.length !== second.length) {
-    return false;
-  }
-  const secondSet = new Set(second);
-  return first.every((id) => secondSet.has(id));
-}
-
 export function WorkflowInspectorForm({
   agentId,
   node,
@@ -80,7 +60,10 @@ export function WorkflowInspectorForm({
   const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
     Id<'appointmentServices'>[] | undefined
   >(node.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined);
+  const [hasBookableService, setHasBookableService] = useState<boolean>();
   const [hasAcceptingLeadMember, setHasAcceptingLeadMember] = useState<boolean>();
+  const [hasReadyMedia, setHasReadyMedia] = useState<boolean>();
+  const [attemptedApply, setAttemptedApply] = useState(false);
   const selectedTitle = name.trim() || workflowNodeTitle(node.kind);
   const conditionEnabled = conditionEdge !== undefined;
   const {
@@ -118,25 +101,29 @@ export function WorkflowInspectorForm({
   const contentGridClassName = conditionEnabled
     ? 'grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]'
     : 'grid gap-8';
-  const hasNodeChanges = (
-    normalizedPersistedText(name) !== normalizedPersistedText(node.title) ||
-    (
-      hasGoalField &&
-      normalizedPersistedText(goal) !== normalizedPersistedText(node.description)
-    ) ||
-    (
-      conditionEnabled &&
-      (
-        normalizedConditionName(conditionName) !== normalizedConditionName(conditionEdge.label) ||
-        normalizedPersistedText(conditionDetail) !== normalizedPersistedText(conditionEdge.detail)
-      )
-    ) ||
-    (
-      isBookAppointmentAction &&
-      !sameOptionalIdSet(allowedAppointmentServiceIds, node.allowedAppointmentServiceIds)
-    )
-  );
-  const saveDisabled = isSaving || !name.trim() || (saveRequiresDescription && !goal.trim()) || conditionDetailBlocksApply(conditionEnabled, conditionDetail) || !hasNodeChanges || bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
+  const hasConditionDetail = !conditionDetailBlocksApply(conditionEnabled, conditionDetail);
+  const hasActionDescription = !saveRequiresDescription || Boolean(goal.trim());
+  const hasAppointmentService = !isBookAppointmentAction || !agentId || hasBookableService === true;
+  const hasAppointmentAvailability = !isBookAppointmentAction || !agentId || !bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
+  const hasMedia = !hasMediaSection || !agentId || hasReadyMedia === true;
+  const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasAppointmentService && hasAppointmentAvailability && hasMedia;
+  const saveDisabled = isSaving || !name.trim();
+
+  const handleApply = () => {
+    if (!hasRequiredConfiguration) {
+      setAttemptedApply(true);
+      return;
+    }
+    onSave({
+      name,
+      description: hasGoalField ? goal : '',
+      conditionName: conditionEnabled ? conditionName : undefined,
+      conditionDetail: conditionEnabled ? conditionDetail : undefined,
+      allowedAppointmentServiceIds: isBookAppointmentAction
+        ? allowedAppointmentServiceIds
+        : undefined,
+    });
+  };
 
   return (
     <>
@@ -179,6 +166,9 @@ export function WorkflowInspectorForm({
                     rows={6}
                     style={{ minHeight: '11rem' }}
                   />
+                  {attemptedApply && !hasConditionDetail ? (
+                    <p className="text-xs text-destructive" role="alert">Detail is required before applying.</p>
+                  ) : null}
                   {isCustomAction ? (
                     <div className="flex flex-wrap gap-2">
                       {CUSTOM_ACTION_CONDITION_SUGGESTIONS.map((suggestion) => (
@@ -219,7 +209,9 @@ export function WorkflowInspectorForm({
               </Field>
               {hasGoalField ? (
                 <Field className="items-start gap-2 text-left">
-                  <FieldLabel className="text-left" htmlFor="workflow-node-description">{goalLabel}</FieldLabel>
+                  <FieldLabel className="text-left" htmlFor="workflow-node-description">
+                    {saveRequiresDescription ? <WorkflowRequiredLabel>{goalLabel}</WorkflowRequiredLabel> : goalLabel}
+                  </FieldLabel>
                   <Textarea
                     id="workflow-node-description"
                     value={goal}
@@ -228,36 +220,29 @@ export function WorkflowInspectorForm({
                     rows={isAction ? 10 : 4}
                     style={isAction ? { minHeight: '16rem' } : undefined}
                   />
+                  {attemptedApply && !hasActionDescription ? (
+                    <p className="text-xs text-destructive" role="alert">{goalLabel} is required before applying.</p>
+                  ) : null}
                 </Field>
               ) : null}
               {isBookAppointmentAction && agentId ? (
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col gap-1">
-                    <WorkflowRequiredLabel as="h4">Services</WorkflowRequiredLabel>
-                    <p className="text-xs leading-relaxed text-muted-foreground">
-                      AI will only book services that are available.
-                    </p>
-                  </div>
-                  <WorkflowBookingServicesSection
-                    agentId={agentId}
-                    allowedServiceIds={allowedAppointmentServiceIds}
-                    onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <WorkflowRequiredLabel as="h4">Availability</WorkflowRequiredLabel>
-                    <p className="text-xs leading-relaxed text-muted-foreground">Choose who can accept appointment leads.</p>
-                  </div>
-                  <WorkflowBookingAvailabilitySection
-                    agentId={agentId}
-                    onEligibilityChange={setHasAcceptingLeadMember}
-                  />
-                </div>
+                <WorkflowBookingInspectorRequirements
+                  agentId={agentId}
+                  allowedServiceIds={allowedAppointmentServiceIds}
+                  onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
+                  onServiceEligibilityChange={setHasBookableService}
+                  onAvailabilityEligibilityChange={setHasAcceptingLeadMember}
+                  showServiceWarning={attemptedApply && !hasAppointmentService}
+                  showAvailabilityWarning={attemptedApply && !hasAppointmentAvailability}
+                />
               ) : null}
               {hasMediaSection && agentId ? (
                 <WorkflowSendMediaSection
                   agentId={agentId}
                   nodeId={node._id}
                   nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
+                  onReadinessChange={setHasReadyMedia}
+                  showRequirementWarning={attemptedApply && !hasMedia}
                 />
               ) : null}
             </section>
@@ -279,15 +264,7 @@ export function WorkflowInspectorForm({
         <Button
           type="button"
           disabled={saveDisabled}
-          onClick={() => onSave({
-            name,
-            description: hasGoalField ? goal : '',
-            conditionName: conditionEnabled ? conditionName : undefined,
-            conditionDetail: conditionEnabled ? conditionDetail : undefined,
-            allowedAppointmentServiceIds: isBookAppointmentAction
-              ? allowedAppointmentServiceIds
-              : undefined,
-          })}
+          onClick={handleApply}
         >
           {isSaving ? (
             <Loader2 className="animate-spin" data-icon="inline-start" />

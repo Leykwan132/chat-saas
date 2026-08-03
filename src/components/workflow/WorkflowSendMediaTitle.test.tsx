@@ -2,7 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test } from 'vitest';
 import { WorkflowSendMediaTitle } from './WorkflowSendMediaTitle';
 
-test('marks files to send as required without marking photo and video media', () => {
+test('marks files and photos/videos as required', () => {
   const fileMarkup = renderToStaticMarkup(
     <WorkflowSendMediaTitle nodeKind="sendFile" title="Files to send" />,
   );
@@ -13,5 +13,5 @@ test('marks files to send as required without marking photo and video media', ()
   expect(fileMarkup).toContain('Files to send');
   expect(fileMarkup).toContain(' required</span>');
   expect(imageMarkup).toContain('Your Photos/Videos');
-  expect(imageMarkup).not.toContain(' required</span>');
+  expect(imageMarkup).toContain(' required</span>');
 });

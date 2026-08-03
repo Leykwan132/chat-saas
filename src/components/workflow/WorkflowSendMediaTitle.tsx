@@ -11,9 +11,7 @@ export function WorkflowSendMediaTitle({
 }: WorkflowSendMediaTitleProps) {
   return (
     <h4 className="truncate text-sm font-semibold text-foreground">
-      {nodeKind === 'sendFile' ? (
-        <WorkflowRequiredLabel>{title}</WorkflowRequiredLabel>
-      ) : title}
+      <WorkflowRequiredLabel>{title}</WorkflowRequiredLabel>
     </h4>
   );
 }

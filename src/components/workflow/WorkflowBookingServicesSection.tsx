@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { useQuery } from 'convex/react';
 import { CalendarCheck, ExternalLink, Plus } from 'lucide-react';
@@ -20,18 +20,21 @@ type BookingServiceRow = {
   _id: Id<'appointmentServices'>;
   name: string;
   description?: string;
+  isActive: boolean;
 };
 
 type WorkflowBookingServicesSectionProps = {
   agentId: Id<'agents'>;
   allowedServiceIds?: Id<'appointmentServices'>[];
   onAllowedServiceIdsChange: (serviceIds: Id<'appointmentServices'>[]) => void;
+  onEligibilityChange: (eligible: boolean | undefined) => void;
 };
 
 export function WorkflowBookingServicesSection({
   agentId,
   allowedServiceIds,
   onAllowedServiceIdsChange,
+  onEligibilityChange,
 }: WorkflowBookingServicesSectionProps) {
   const services = useQuery(api.workflowAppointmentServices.listForAgent, { agentId }) as
     | BookingServiceRow[]
@@ -41,6 +44,15 @@ export function WorkflowBookingServicesSection({
     const ids = allowedServiceIds ?? services?.map((service) => service._id) ?? [];
     return new Set(ids);
   }, [allowedServiceIds, services]);
+  const eligibility = services === undefined
+    ? undefined
+    : services.some((service) => (
+      service.isActive && effectiveAllowedServiceIds.has(service._id)
+    ));
+
+  useEffect(() => {
+    onEligibilityChange(eligibility);
+  }, [eligibility, onEligibilityChange]);
 
   const handleToggleService = (
     serviceId: Id<'appointmentServices'>,

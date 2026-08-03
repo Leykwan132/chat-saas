@@ -38,7 +38,7 @@ export function getWorkflowNodeReadiness(
   node: Doc<'workflowNodes'>,
   facts: WorkflowNodeReadinessFacts,
 ) {
-  if (node.kind === 'start') return true;
+  if (node.kind === 'start' || node.kind === 'humanEscalation') return true;
   if (!facts.configuredConditionNodeIds.has(node._id)) return false;
   if (node.kind === 'sendText') return hasConfiguredMessage(node);
   if (node.kind === 'sendImage' || node.kind === 'sendFile') {
