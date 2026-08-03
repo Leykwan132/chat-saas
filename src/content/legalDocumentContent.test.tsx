@@ -46,6 +46,10 @@ test('terms state the approved contractual protections', () => {
 
   expect(terms).toContain('MorphSwift Studio');
   expect(terms).not.toContain('Morph Swift Studio');
+  expect(terms).toContain(
+    'Cancellation takes effect immediately and is reflected directly in your billing status.',
+  );
+  expect(terms).not.toContain('Cancellation takes effect at the end of the then-current paid period.');
 
   for (const text of [
     'What Kilobot means',

@@ -23,7 +23,8 @@ export const termsCommercialSections: LegalSection[] = [
           Payments are processed by Stripe. Paid monthly and annual subscriptions renew
           automatically for the same billing interval, and Stripe charges the payment method on
           file, until you cancel through the Stripe billing portal or by contacting us before the
-          next renewal date. Cancellation takes effect at the end of the then-current paid period.
+          next renewal date. Cancellation takes effect immediately and is reflected directly in your
+          billing status.
         </p>
         <p>
           If a payment cannot be collected, we may restrict or suspend access until payment is

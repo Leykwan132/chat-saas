@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-08-03 [CODE] Subscription cancellation in the public Terms now takes effect immediately and is reflected directly in billing status, replacing the end-of-period wording. Node v22.22.0 focused Terms regression and scoped ESLint pass. Customer-facing but unreleased, so no changelog entry was added.
 - 2026-08-03 [CODE] The Privacy Policy AI-processing disclosure now links to OpenRouter's Privacy Policy. Node v22.22.0 focused privacy-policy regression and scoped ESLint pass. Customer-facing but unreleased, so no changelog entry was added.
 - 2026-08-03 [CODE] Workflow condition labels now use the Lucide Split icon, and public legal documents identify the company as MorphSwift Studio Enterprise. Node v22.22.0 rendered Workflow/legal regressions and scoped ESLint pass. Customer-facing but unreleased, so no changelog entry was added.
 - 2026-08-03 [CODE] The public footer now groups Privacy and Terms of Service under `Security & Legal`, replacing the former About label. Node v22.22.0 rendered-footer regression and scoped ESLint pass. Customer-facing but unreleased, so no changelog entry was added.
