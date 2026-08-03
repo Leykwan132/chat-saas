@@ -127,7 +127,7 @@ export function WorkflowBookingServicesSection({
                 </p>
               ) : null}
             </div>
-            <div className="flex shrink-0 items-start gap-1.5">
+            <div className="flex shrink-0 self-center items-center gap-1.5">
               <span className="text-xs text-muted-foreground">
                 {checked ? 'Active' : 'Inactive'}
               </span>
