@@ -1,5 +1,13 @@
 import { readFileSync } from 'node:fs';
-import { expect, test } from 'vitest';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
+import { expect, test, vi } from 'vitest';
+import { SiteFooter } from './SiteFooter';
+
+vi.mock('@workos-inc/authkit-react', () => ({
+  useAuth: () => ({ signIn: vi.fn(), user: null }),
+}));
 
 const siteFooterSource = readFileSync(new URL('./SiteFooter.tsx', import.meta.url), 'utf8');
 
@@ -20,4 +28,15 @@ test('footer keeps direct contact details on the contact page', () => {
 test('footer labels the terms link accurately', () => {
   expect(siteFooterSource).toContain('to="/terms"');
   expect(siteFooterSource).toContain('Terms of Service');
+});
+
+test('footer groups public legal links under Security & Legal', () => {
+  const footer = renderToStaticMarkup(
+    createElement(MemoryRouter, null, createElement(SiteFooter)),
+  );
+
+  expect(footer).toContain('Security &amp; Legal');
+  expect(footer).toContain('href="/privacy"');
+  expect(footer).toContain('href="/terms"');
+  expect(footer).not.toContain('>About<');
 });
