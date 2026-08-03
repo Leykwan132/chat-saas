@@ -52,6 +52,7 @@ export function validateWorkflowDraft(
     if (source.clientId === target.clientId) throw new Error('Cannot connect a node to itself');
     if (isWorkflowTerminalNodeKind(source.kind)) throw new Error('Cannot connect from a terminal node');
     if (target.kind === 'start') throw new Error('Cannot connect to the entry node');
+    if (!edge.detail?.trim()) throw new Error('Condition detail is required');
     const edgeKey = `${source.clientId}\u0000${target.clientId}`;
     if (edgeKeys.has(edgeKey)) throw new Error('Workflow edges must be unique');
     edgeKeys.add(edgeKey);

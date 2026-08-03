@@ -13,6 +13,7 @@ import { buildKnowledgeBaseImageFileName } from "./media/r2";
 import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 import { getBillingPlanFromStripe } from "./billingScope";
 import { getPlan } from "./plans";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
@@ -47,7 +48,7 @@ export const listKbImagesByAgent = query({
 
     return rows.filter(
       (row) =>
-        row.purpose === "knowledgeBase" &&
+        row.purpose === MediaUploadPurpose.KnowledgeBase &&
         row.orgId === auth.orgId &&
         row.userId === auth.userId &&
         row.status !== "deleting" &&
@@ -96,7 +97,7 @@ export const internalCreateKbImageUpload = internalMutation({
       orgId: args.orgId,
       userId: args.userId,
       agentId: args.agentId,
-      purpose: "knowledgeBase",
+      purpose: MediaUploadPurpose.KnowledgeBase,
       collectionName: args.collectionName,
       filename: args.fileName,
       mediaType: args.mimeType,

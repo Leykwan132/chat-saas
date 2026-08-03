@@ -5,6 +5,7 @@ import { getAuthContext } from "./authUtils";
 import { getPlan, getPlanFromStripe } from "./plans";
 import type { Id } from "./_generated/dataModel";
 import { hasParentWebUrl } from "../shared/webEntryUrl";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 type KnowledgeEntryTable = "textEntries" | "fileEntries" | "webEntries" | "qaEntries";
 
@@ -58,7 +59,8 @@ async function getKnowledgeBaseBytesForAgent(
     sumRows("qaEntries", qaEntries) +
     mediaUploads.reduce((sum, row) => {
       const countsTowardAgentStorage =
-        row.purpose === "knowledgeBase" || row.purpose === "workflowSendMedia";
+        row.purpose === MediaUploadPurpose.KnowledgeBase ||
+        row.purpose === MediaUploadPurpose.WorkflowSendMedia;
       if (!countsTowardAgentStorage || row.status === "deleting" || row.status === "cancelled") {
         return sum;
       }

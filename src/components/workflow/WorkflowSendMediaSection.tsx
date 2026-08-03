@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAction, useMutation, useQuery } from 'convex/react';
 import { ArchiveRestore, FileText, ImagePlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { WorkflowMediaGrid } from './WorkflowMediaGrid';
 import { WorkflowMediaUploader } from './WorkflowMediaUploader';
 import { getWorkflowSendMediaCopy } from './workflowSendMediaCopy';
+import { WorkflowSendMediaTitle } from './WorkflowSendMediaTitle';
 import {
   shouldDisplayWorkflowMediaEntry,
   type WorkflowMediaEntry,
@@ -18,12 +20,16 @@ type WorkflowSendMediaSectionProps = {
   agentId: Id<'agents'>;
   nodeId: Id<'workflowNodes'>;
   nodeKind: 'sendImage' | 'sendFile';
+  onReadinessChange: (ready: boolean | undefined) => void;
+  showRequirementWarning: boolean;
 };
 
 export function WorkflowSendMediaSection({
   agentId,
   nodeId,
   nodeKind,
+  onReadinessChange,
+  showRequirementWarning,
 }: WorkflowSendMediaSectionProps) {
   const entries = useQuery(api.workflowMedia.listForNode, { agentId, nodeId });
   const legacyEntries = useQuery(api.workflowMedia.listLegacyUnassigned, { agentId, nodeId });
@@ -46,6 +52,11 @@ export function WorkflowSendMediaSection({
   const itemLabel = isFileNode ? 'file' : 'photo/video';
   const itemLabelPlural = isFileNode ? 'files' : 'photos/videos';
   const mediaCopy = getWorkflowSendMediaCopy(nodeKind, mediaEntries.length, isLoading);
+  const readiness = isLoading ? undefined : mediaEntries.length > 0;
+
+  useEffect(() => {
+    onReadinessChange(readiness);
+  }, [onReadinessChange, readiness]);
 
   const handleDelete = async (clientId: string) => {
     setDeletingClientId(clientId);
@@ -84,9 +95,7 @@ export function WorkflowSendMediaSection({
             <Icon className="size-4" />
           </span>
           <div className="flex min-w-0 flex-col gap-0.5">
-            <h4 className="truncate text-sm font-semibold text-foreground">
-              {mediaCopy.title}
-            </h4>
+            <WorkflowSendMediaTitle title={mediaCopy.title} />
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -106,12 +115,6 @@ export function WorkflowSendMediaSection({
               Import
             </Button>
           ) : null}
-          {isLoading ? (
-            <Button type="button" variant="ghost" size="icon-sm" disabled>
-              <Spinner className="size-4" />
-              <span className="sr-only">Loading media</span>
-            </Button>
-          ) : null}
         </div>
       </div>
 
@@ -123,18 +126,29 @@ export function WorkflowSendMediaSection({
           density="compact"
           className="flex flex-nowrap gap-3"
         >
-          <WorkflowMediaUploader
-            agentId={agentId}
-            nodeId={nodeId}
-            maxFileSize={maxFileSize}
-            nodeKind={nodeKind}
-            layout="tile"
-            density="compact"
-            onError={toast.error}
-          />
+          {isLoading ? (
+            <Skeleton className="size-16 shrink-0 rounded-lg" />
+          ) : (
+            <WorkflowMediaUploader
+              agentId={agentId}
+              nodeId={nodeId}
+              maxFileSize={maxFileSize}
+              nodeKind={nodeKind}
+              layout="tile"
+              density="compact"
+              onError={toast.error}
+            />
+          )}
         </WorkflowMediaGrid>
       </div>
       <p className="text-xs text-muted-foreground">{mediaCopy.status}</p>
+      {showRequirementWarning ? (
+        <p className="text-xs text-destructive" role="alert">
+          {nodeKind === 'sendFile'
+            ? 'Please add at least one file before applying.'
+            : 'Please add at least one photo or video before applying.'}
+        </p>
+      ) : null}
     </div>
   );
 }

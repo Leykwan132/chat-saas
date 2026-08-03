@@ -15,6 +15,8 @@ import {
   deleteOrQueueWorkflowMediaRow,
   queueWorkflowMediaR2Delete,
 } from "./workflowMediaDeletion";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 async function findWorkflowMediaRow(
   ctx: Parameters<typeof listWorkflowNodeMediaRows>[0],
@@ -26,7 +28,7 @@ async function findWorkflowMediaRow(
   const rows = await listWorkflowNodeMediaRows(ctx, nodeId);
   return rows.find((candidate) =>
     candidate.clientId === clientId &&
-    candidate.purpose === "workflowSendMedia" &&
+    candidate.purpose === MediaUploadPurpose.WorkflowSendMedia &&
     mediaBelongsToAgent(candidate, agent),
   );
 }
@@ -67,7 +69,7 @@ export const internalCreateUpload = internalMutation({
       userId: auth.userId,
       agentId: agent._id,
       workflowNodeId: args.nodeId,
-      purpose: "workflowSendMedia",
+      purpose: MediaUploadPurpose.WorkflowSendMedia,
       filename: args.fileName,
       mediaType: args.mimeType,
       fileSize: args.fileSize,
@@ -130,6 +132,9 @@ export const workflowMediaUploadComplete = internalMutation({
     ) {
       await ctx.db.delete(row._id);
     }
+    if (row?.agentId) {
+      await refreshWorkflowNodeReadinessForAgent(ctx, row.agentId);
+    }
   },
 });
 
@@ -162,6 +167,7 @@ export const internalFinalizeDirectUpload = internalMutation({
       return null;
     }
     await ctx.db.patch(row._id, { status: "ready", ...metadata });
+    await refreshWorkflowNodeReadinessForAgent(ctx, args.agentId);
     return null;
   },
 });
@@ -179,6 +185,7 @@ export const internalMarkDeleting = internalMutation({
       return null;
     }
     await deleteOrQueueWorkflowMediaRow(ctx, row);
+    await refreshWorkflowNodeReadinessForAgent(ctx, args.agentId);
     return null;
   },
 });
@@ -216,7 +223,7 @@ export const internalListReadyByNode = internalQuery({
     return rows
       .filter((row) =>
         row.agentId === args.agentId &&
-        row.purpose === "workflowSendMedia" &&
+        row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
         row.status === "ready",
       )
       .map((row) => ({

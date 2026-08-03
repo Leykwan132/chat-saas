@@ -31,10 +31,7 @@ type WorkflowBookingAvailabilityListProps = {
   roster: WorkflowAvailabilityRosterEntry[];
   pendingUserIds: Set<string>;
   canManageAvailability: boolean;
-  onToggle: (
-    teammate: WorkflowAvailabilityTeammate,
-    enabled: boolean,
-  ) => void;
+  onToggle: (teammate: WorkflowAvailabilityTeammate, enabled: boolean) => void;
 };
 
 export function WorkflowBookingAvailabilityList({
@@ -66,7 +63,6 @@ export function WorkflowBookingAvailabilityList({
       }),
     [rosterByUserId, teammates],
   );
-
   if (sortedTeammates.length === 0) {
     return (
       <Empty className="border border-border p-5">
@@ -93,7 +89,7 @@ export function WorkflowBookingAvailabilityList({
             return (
               <div
                 key={teammate.workosUserId}
-                className="relative flex items-center gap-3 px-3 py-2.5"
+                className="relative flex items-start gap-3 px-3 py-2.5"
               >
                 <Link
                   to={`/dashboard/${agentId}/availability/${encodeURIComponent(teammate.workosUserId)}`}
@@ -109,11 +105,8 @@ export function WorkflowBookingAvailabilityList({
                       {line}
                     </p>
                   ))}
-                  <p className="truncate text-xs text-muted-foreground">
-                    {summary.timezoneLabel}
-                  </p>
                 </div>
-                <div className="relative z-10 flex shrink-0 items-start gap-2">
+                <div className="relative z-10 flex shrink-0 self-center items-center gap-2">
                   <span className="text-xs text-muted-foreground">Accepting leads</span>
                   <Switch
                     checked={enabled}
@@ -162,11 +155,13 @@ function WorkflowBookingAvailabilitySkeleton() {
 type AvailabilityDataProps = {
   agentId: Id<'agents'>;
   onEligibilityChange: (eligible: boolean | undefined) => void;
+  onTimezoneChange?: (timezone: string | undefined) => void;
 };
 
 function WorkflowBookingAvailabilityData({
   agentId,
   onEligibilityChange,
+  onTimezoneChange,
 }: AvailabilityDataProps) {
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canReadAvailability = can(Permission.AVAILABILITY_READ);
@@ -187,10 +182,16 @@ function WorkflowBookingAvailabilityData({
         roster,
         new Set(teammates.map((teammate) => teammate.workosUserId)),
       );
+  const timezoneLabel = roster === undefined
+    ? undefined
+    : formatWorkflowWeeklyAvailability([], roster[0]?.schedule.timezone).timezoneLabel;
 
   useEffect(() => {
     onEligibilityChange(eligibility);
   }, [eligibility, onEligibilityChange]);
+  useEffect(() => {
+    onTimezoneChange?.(timezoneLabel);
+  }, [onTimezoneChange, timezoneLabel]);
 
   const rosterByUserId = useMemo(
     () =>

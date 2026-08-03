@@ -1,5 +1,5 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, TriangleAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { isWorkflowTerminalNodeKind } from '../../../shared/workflows';
@@ -14,6 +14,12 @@ const sourceHandleClassName = '!z-20 !rounded-full !border !border-border !bg-ba
 const horizontalSourceHandleClassName = '!right-0 !left-auto';
 const verticalSourceHandleClassName = '!bottom-0 !top-auto !left-1/2 !-translate-x-1/2';
 
+function workflowNodeSetupItemLabel(readinessIssueCount: number) {
+  return readinessIssueCount === 1
+    ? '1 setup item remaining'
+    : `${readinessIssueCount} setup items remaining`;
+}
+
 export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlowNode>) {
   const Icon = workflowKindIcons[data.kind];
   const isTerminal = isWorkflowTerminalNodeKind(data.kind);
@@ -21,6 +27,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
   const isProtected = data.kind === 'start' || data.kind === 'end';
   const isVertical = data.layoutOrientation === 'vertical';
   const isCompact = data.density === 'compact';
+  const setupItemLabel = workflowNodeSetupItemLabel(data.readinessIssueCount);
   const targetPosition = isVertical ? Position.Top : Position.Left;
   const sourcePosition = isVertical ? Position.Bottom : Position.Right;
   const nodeFrameClassName = isCompact
@@ -76,6 +83,12 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           </p>
         ) : null}
       </div>
+      {!data.isReady && data.kind !== 'start' && !isCompact ? (
+        <div className="absolute left-0 top-full mt-1.5 flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+          <TriangleAlert aria-label="Setup incomplete" role="img" className="size-3.5" />
+          <span>{setupItemLabel}</span>
+        </div>
+      ) : null}
       {!isTerminal ? (
         <Handle
           type="source"

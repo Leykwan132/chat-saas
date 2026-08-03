@@ -3,6 +3,7 @@ import { getOwnedAgentForAuth } from "./agentAccess";
 import { getAuthContext, type AuthContext } from "./authUtils";
 import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 const TOTAL_STEP_COUNT = 5;
 
@@ -87,7 +88,7 @@ async function hasKnowledgeBaseContent(ctx: DbCtx, agentId: Id<"agents">) {
     .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
     .take(20);
   return mediaUploads.some(
-    (row) => row.purpose === "knowledgeBase" && row.status === "ready",
+    (row) => row.purpose === MediaUploadPurpose.KnowledgeBase && row.status === "ready",
   );
 }
 

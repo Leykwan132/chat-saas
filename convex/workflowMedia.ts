@@ -20,6 +20,8 @@ import {
   publicWorkflowMediaRow,
   type UploadReservation,
 } from "./workflowMediaShared";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 function mediaUploadError(error: unknown) {
   return error instanceof Error ? error.message : "Upload failed";
@@ -32,7 +34,7 @@ export const listForNode = query({
     const rows = await listWorkflowNodeMediaRows(ctx, args.nodeId);
     return rows
       .filter((row) =>
-        row.purpose === "workflowSendMedia" &&
+        row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
         mediaBelongsToAgent(row, agent) &&
         isActiveWorkflowMedia(row),
       )
@@ -51,7 +53,7 @@ export const listLegacyUnassigned = query({
       .take(MAX_AGENT_MEDIA);
     return rows
       .filter((row) =>
-        row.purpose === "knowledgeBase" &&
+        row.purpose === MediaUploadPurpose.KnowledgeBase &&
         row.workflowNodeId === undefined &&
         mediaBelongsToAgent(row, agent) &&
         isActiveWorkflowMedia(row) &&
@@ -80,7 +82,7 @@ export const importLegacyMedia = mutation({
     for (const row of rows) {
       if (
         !requestedClientIds.has(row.clientId) ||
-        row.purpose !== "knowledgeBase" ||
+        row.purpose !== MediaUploadPurpose.KnowledgeBase ||
         row.workflowNodeId !== undefined ||
         !mediaBelongsToAgent(row, agent) ||
         !isActiveWorkflowMedia(row) ||
@@ -89,11 +91,12 @@ export const importLegacyMedia = mutation({
         continue;
       }
       await ctx.db.patch(row._id, {
-        purpose: "workflowSendMedia",
+        purpose: MediaUploadPurpose.WorkflowSendMedia,
         workflowNodeId: args.nodeId,
       });
       imported += 1;
     }
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
     return { imported };
   },
 });

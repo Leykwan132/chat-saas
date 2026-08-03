@@ -7,6 +7,7 @@ import {
   listWorkflowNodeMediaRows,
   mediaBelongsToAgent,
 } from "./workflowMediaShared";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 export async function queueWorkflowMediaR2Delete(
   ctx: MutationCtx,
@@ -87,7 +88,7 @@ export async function deleteOrQueueWorkflowNodeMedia(
   const rows = await listWorkflowNodeMediaRows(ctx, nodeId);
   for (const row of rows) {
     if (
-      row.purpose !== "workflowSendMedia" ||
+      row.purpose !== MediaUploadPurpose.WorkflowSendMedia ||
       !mediaBelongsToAgent(row, agent)
     ) {
       continue;

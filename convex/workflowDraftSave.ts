@@ -20,6 +20,7 @@ import {
   workflowGraphNodeSaveValidator,
 } from "./workflowGraphSaveValidators";
 import { deleteOrQueueWorkflowNodeMedia } from "./workflowMediaDeletion";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 import { recordWorkflowTemplateUsage } from "./workflowTemplateUsage";
 import { workflowTemplateIdValidator } from "./workflowTemplateUsageSchema";
 import { workflowLayoutOrientationValidator } from "./workflowValidators";
@@ -150,6 +151,7 @@ export const save = mutation({
         now,
       );
     }
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
 
     const savedWorkflow = await ctx.db.get(workflow._id);
     if (savedWorkflow === null) {

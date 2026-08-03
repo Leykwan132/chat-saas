@@ -22,6 +22,7 @@ import {
   timeSlotPolicyValidator,
 } from "./validators";
 import { filterServicesByWorkflowBookingSelection } from "../workflowAppointmentServices";
+import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
 
 export const getOverview = query({
   args: { agentId: v.id("agents") },
@@ -95,7 +96,7 @@ export const createService = mutation({
     await assertAppointmentBookingManage(ctx, args.agentId);
     const services = await listServices(ctx, args.agentId);
     const now = Date.now();
-    return await ctx.db.insert("appointmentServices", {
+    const serviceId = await ctx.db.insert("appointmentServices", {
       agentId: args.agentId,
       name: args.name.trim() || "New service",
       isActive: true,
@@ -109,6 +110,8 @@ export const createService = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await refreshWorkflowNodeReadinessForAgent(ctx, args.agentId);
+    return serviceId;
   },
 });
 
@@ -149,6 +152,7 @@ export const updateService = mutation({
     if (args.assignmentStrategy !== undefined) patch.assignmentStrategy = args.assignmentStrategy;
     if (args.specificWorkosUserId !== undefined) patch.specificWorkosUserId = args.specificWorkosUserId.trim() || undefined;
     await ctx.db.patch(service._id, patch);
+    await refreshWorkflowNodeReadinessForAgent(ctx, service.agentId);
   },
 });
 
@@ -162,6 +166,7 @@ export const archiveService = mutation({
       archivedAt: Date.now(),
       updatedAt: Date.now(),
     });
+    await refreshWorkflowNodeReadinessForAgent(ctx, service.agentId);
   },
 });
 

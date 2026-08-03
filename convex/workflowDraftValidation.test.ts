@@ -7,7 +7,19 @@ const nodes = [
 ];
 
 test('validates a complete workflow draft', () => {
-  expect(() => validateWorkflowDraft(nodes, [{ sourceClientId: 'start', targetClientId: 'message' }])).not.toThrow();
+  expect(() => validateWorkflowDraft(nodes, [{
+    sourceClientId: 'start',
+    targetClientId: 'message',
+    detail: 'When the customer asks for help',
+  }])).not.toThrow();
+});
+
+test('rejects an edge without condition detail', () => {
+  expect(() => validateWorkflowDraft(nodes, [{
+    sourceClientId: 'start',
+    targetClientId: 'message',
+    detail: '   ',
+  }])).toThrow('Condition detail is required');
 });
 
 test('rejects missing starts and invalid terminal connections', () => {

@@ -99,6 +99,7 @@ test('workflowGraphToFlow keeps real condition labels', () => {
   );
 
   expect(flow.edges[0].label).toBe('Customer asks about billing');
+  expect(flow.edges[0].data?.conditionDetail).toBe('Long internal condition detail');
 });
 
 test('workflowGraphToFlow keeps nodes above edges', () => {
@@ -135,6 +136,21 @@ test('workflowGraphToFlow defaults persisted nodes to standard density', () => {
   const persistedNodes = flow.nodes.filter((node) => node.type === 'workflow');
 
   expect(persistedNodes.every((node) => node.data.density === 'standard')).toBe(true);
+});
+
+test('workflowGraphToFlow carries persisted readiness and missing-item count into a standard node', () => {
+  const graph = workflowGraph();
+  graph.nodes[1] = {
+    ...graph.nodes[1]!,
+    isReady: false,
+    readinessIssueCount: 2,
+  } as Doc<'workflowNodes'>;
+
+  const flow = workflowGraphToFlow(graph, () => {}, () => {});
+  const sendTextNode = flow.nodes.find((node) => node.id === textNodeId);
+
+  expect(sendTextNode?.data.isReady).toBe(false);
+  expect(sendTextNode?.data.readinessIssueCount).toBe(2);
 });
 
 test('workflowGraphToFlow propagates compact density to persisted nodes only', () => {

@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
 import { assertAvailabilityRead, assertRoutingManage } from "./helpers";
+import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
 
 const DEFAULT_TIMEZONE = "Asia/Kuala_Lumpur";
 const DEFAULT_SHIFT_START_MINUTES = 9 * 60;
@@ -268,6 +269,9 @@ export const updateUser = mutation({
       patch.note = args.note.trim();
     }
     await ctx.db.patch(args.userScheduleId, patch);
+    if (args.enabled !== undefined) {
+      await refreshWorkflowNodeReadinessForAgent(ctx, schedule.agentId);
+    }
   },
 });
 
@@ -298,6 +302,7 @@ export const removeUser = mutation({
       await ctx.db.delete(row._id);
     }
     await ctx.db.delete(args.userScheduleId);
+    await refreshWorkflowNodeReadinessForAgent(ctx, schedule.agentId);
   },
 });
 

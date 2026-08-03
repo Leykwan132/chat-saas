@@ -14,11 +14,13 @@ import {
 import { addableWorkflowNodeKindValidator } from "./workflowValidators";
 import {
   isWorkflowTerminalNodeKind,
+  isWorkflowInitiallyReadyNodeKind,
   workflowNodeDefaultCondition,
   workflowNodeDescription,
   workflowNodeTitle,
 } from "../shared/workflows";
 import { removeWorkflowNode } from "./workflowNodeRemoval";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 function requireFinitePosition(value: number, field: string) {
   if (!Number.isFinite(value)) {
@@ -103,6 +105,7 @@ export const addNodeAfter = mutation({
       kind: args.kind,
       title: workflowNodeTitle(args.kind),
       description: workflowNodeDescription(args.kind),
+      isReady: isWorkflowInitiallyReadyNodeKind(args.kind),
       positionX,
       positionY,
       createdAt: now,
@@ -119,6 +122,7 @@ export const addNodeAfter = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(workflow._id, { updatedAt: now });
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
     return await getWorkflowGraph(ctx, workflow);
   },
 });

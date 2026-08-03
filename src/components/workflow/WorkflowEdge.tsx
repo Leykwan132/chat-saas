@@ -6,6 +6,7 @@ import {
   type EdgeProps,
 } from '@xyflow/react';
 import { Split } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import type { WorkflowFlowEdge } from './workflowTypes';
 
 export function WorkflowEdge({
@@ -37,6 +38,17 @@ export function WorkflowEdge({
       targetPosition,
     });
 
+  const conditionButton = (
+    <button
+      type="button"
+      className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
+    >
+      <span className="sr-only">Condition:</span>
+      <Split className="size-3 shrink-0" aria-hidden="true" />
+      <span className="min-w-0 truncate">{label}</span>
+    </button>
+  );
+
   return (
     <>
       <BaseEdge
@@ -63,14 +75,14 @@ export function WorkflowEdge({
               isolation: 'isolate',
             }}
           >
-            <button
-              type="button"
-              className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
-            >
-              <span className="sr-only">Condition:</span>
-              <Split className="size-3 shrink-0" aria-hidden="true" />
-              <span className="min-w-0 truncate">{label}</span>
-            </button>
+            {data?.conditionDetail ? (
+              <Tooltip>
+                <TooltipTrigger asChild>{conditionButton}</TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs whitespace-pre-wrap text-left">
+                  {data.conditionDetail}
+                </TooltipContent>
+              </Tooltip>
+            ) : conditionButton}
           </div>
         </EdgeLabelRenderer>
       ) : null}

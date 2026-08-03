@@ -181,6 +181,8 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          isReady: node.isReady === true,
+          readinessIssueCount: node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
           density: nodeDensity,
           layoutOrientation,
           disabled,
@@ -212,6 +214,7 @@ export function workflowGraphToFlow(
           className: 'workflow-edge',
           data: {
             routePoints: edgeRoutes.get(edge._id),
+            conditionDetail: edge.detail?.trim() || undefined,
           },
         };
       }),

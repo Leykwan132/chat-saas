@@ -3,6 +3,7 @@ import { mutation } from "./_generated/server";
 import { assertManageableAgent } from "./agentAccess";
 import { normalizeAllowedAppointmentServiceIds } from "./workflowAppointmentServices";
 import { getWorkflowForAgent, getWorkflowGraph } from "./workflowCore";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 export const apply = mutation({
   args: {
@@ -45,6 +46,9 @@ export const apply = mutation({
     ) {
       throw new Error("Workflow edge not found");
     }
+    if (edge && !args.conditionDetail?.trim()) {
+      throw new Error("Condition detail is required");
+    }
 
     const serviceIds =
       args.allowedAppointmentServiceIds === undefined
@@ -75,6 +79,7 @@ export const apply = mutation({
       });
     }
     await ctx.db.patch(workflow._id, { updatedAt: now });
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
 
     const savedWorkflow = await ctx.db.get(workflow._id);
     if (savedWorkflow === null) {

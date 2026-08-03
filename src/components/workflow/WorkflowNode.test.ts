@@ -26,6 +26,19 @@ test('workflow node card does not render landing demo service labels', () => {
   expect(source).not.toContain('serviceLabels');
 });
 
+test('workflow node shows an accessible bottom-left remaining-setup count only for incomplete actions', () => {
+  expect(source).toContain('setup item remaining');
+  expect(source).toContain('readinessIssueCount');
+  expect(source).toContain('aria-label="Setup incomplete"');
+  expect(source).toContain("data.kind !== 'start'");
+  expect(source).toContain('absolute left-0 top-full mt-1.5');
+
+  const cardIndex = source.indexOf("'relative z-10 flex w-fit flex-col");
+  const requirementIndex = source.indexOf("data.kind !== 'start'");
+  expect(cardIndex).toBeGreaterThan(-1);
+  expect(requirementIndex).toBeGreaterThan(cardIndex);
+});
+
 test('workflow node compact density reduces the card and direct controls', () => {
   expect(source).toContain("const isCompact = data.density === 'compact'");
   expect(source).toContain("'min-w-[150px] max-w-[255px]'");

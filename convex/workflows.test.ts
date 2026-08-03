@@ -147,6 +147,7 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   );
   expect(sendMessageNode).toBeDefined();
   expect(sendMessageNode!.title).toBe("Send message");
+  expect(sendMessageNode!.isReady).toBe(false);
 
   const withBookAppointment = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,
@@ -171,6 +172,7 @@ test("addNodeAfter adds child nodes without rewiring existing children", async (
   expect(humanEscalationNode).toBeDefined();
   expect(humanEscalationNode!.title).toBe("Human escalation");
   expect(humanEscalationNode!.description).toContain("Pause AI replies");
+  expect(humanEscalationNode!.isReady).toBe(true);
 
   const withCloseConversation = await authed.mutation(api.workflows.addNodeAfter, {
     agentId,

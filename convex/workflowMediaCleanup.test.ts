@@ -9,6 +9,7 @@ import r2Schema from "../node_modules/@convex-dev/r2/dist/component/schema.js";
 import { generateWorkflowMediaKey } from "./media/r2";
 import { PERSONAL_ORG_ID } from "./teamHelpers";
 import { withComponents } from "./testUtils";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
 const modules = import.meta.glob("./**/*.ts");
 const r2Modules = {
@@ -116,7 +117,7 @@ test("deleting one Send Media asset queues storage cleanup", async () => {
     mediaType: "image/jpeg",
     filename: "delete-one.jpg",
     fileSize: 10,
-    purpose: "workflowSendMedia",
+    purpose: MediaUploadPurpose.WorkflowSendMedia,
     agentId,
     workflowNodeId: mediaNode._id,
     createdAt: Date.now(),
@@ -154,7 +155,7 @@ test("late direct upload sync after node deletion deletes the asset", async () =
     mediaType: "image/jpeg",
     filename: "late-sync.jpg",
     fileSize: 10,
-    purpose: "workflowSendMedia",
+    purpose: MediaUploadPurpose.WorkflowSendMedia,
     agentId,
     workflowNodeId: mediaNode._id,
     createdAt: Date.now(),

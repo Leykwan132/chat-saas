@@ -3,6 +3,7 @@ import { internalQuery } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { getWorkflowForAgent, listWorkflowEdges, listWorkflowNodes } from "./workflowCore";
 import { workflowNodeDescription, workflowNodeDisplayTitle } from "../shared/workflows";
+import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import { requireReadyMediaPublicUrl } from "./media/publicUrls";
 
 const MAX_RUNTIME_SERVICES = 100;
@@ -59,7 +60,7 @@ function mediaForNode(
   return mediaRows
     .filter((row) =>
       row.workflowNodeId === node._id &&
-      row.purpose === "workflowSendMedia" &&
+      row.purpose === MediaUploadPurpose.WorkflowSendMedia &&
       row.status === "ready",
     )
     .map((row) => ({
@@ -87,6 +88,20 @@ function textToSendForNode(node: Doc<"workflowNodes">) {
   return node.description?.trim() || undefined;
 }
 
+export function getReadyWorkflowGraph(
+  nodes: Doc<"workflowNodes">[],
+  edges: Doc<"workflowEdges">[],
+) {
+  const readyNodes = nodes.filter((node) => node.isReady === true);
+  const readyNodeIds = new Set(readyNodes.map((node) => node._id));
+  return {
+    nodes: readyNodes,
+    edges: edges.filter((edge) =>
+      readyNodeIds.has(edge.sourceNodeId) && readyNodeIds.has(edge.targetNodeId),
+    ),
+  };
+}
+
 export const loadForAgent = internalQuery({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
@@ -97,6 +112,7 @@ export const loadForAgent = internalQuery({
 
     const nodes = await listWorkflowNodes(ctx, workflow._id);
     const edges = await listWorkflowEdges(ctx, workflow._id);
+    const readyGraph = getReadyWorkflowGraph(nodes, edges);
     const activeServices = await listActiveServices(ctx, args.agentId);
     const serviceById = new Map(activeServices.map((service) => [service._id, service]));
     const mediaRows = await ctx.db
@@ -106,14 +122,14 @@ export const loadForAgent = internalQuery({
 
     return {
       workflowId: workflow._id,
-      nodes: nodes.map((node) => ({
+      nodes: readyGraph.nodes.map((node) => ({
         nodeId: node._id,
         kind: node.kind,
         title: workflowNodeDisplayTitle(node.kind, node.title),
         goal: goalForNode(node),
         textToSend: textToSendForNode(node),
         notes: node.notes,
-        incomingConditions: edges
+        incomingConditions: readyGraph.edges
           .filter((edge) => edge.targetNodeId === node._id)
           .map((edge) => ({
             sourceNodeId: edge.sourceNodeId,
@@ -123,7 +139,7 @@ export const loadForAgent = internalQuery({
         allowedServices: servicesForNode(node, activeServices, serviceById),
         mediaAssets: mediaForNode(node, mediaRows),
       })),
-      edges: edges.map((edge) => ({
+      edges: readyGraph.edges.map((edge) => ({
         sourceNodeId: edge.sourceNodeId,
         targetNodeId: edge.targetNodeId,
         name: edge.label,

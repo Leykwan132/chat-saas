@@ -3,6 +3,7 @@ import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/s
 import type { Doc, Id } from "./_generated/dataModel";
 import { assertManageableAgent } from "./agentAccess";
 import { getWorkflowForAgent, listWorkflowNodes } from "./workflowCore";
+import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 const MAX_BOOKING_SERVICES = 100;
 
@@ -142,5 +143,6 @@ export const updateAllowedServices = mutation({
       updatedAt: now,
     });
     await ctx.db.patch(workflow._id, { updatedAt: now });
+    await refreshWorkflowNodeReadinessForAgent(ctx, agent._id);
   },
 });
