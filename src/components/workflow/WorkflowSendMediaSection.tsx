@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { WorkflowMediaGrid } from './WorkflowMediaGrid';
 import { WorkflowMediaUploader } from './WorkflowMediaUploader';
@@ -114,12 +115,6 @@ export function WorkflowSendMediaSection({
               Import
             </Button>
           ) : null}
-          {isLoading ? (
-            <Button type="button" variant="ghost" size="icon-sm" disabled>
-              <Spinner className="size-4" />
-              <span className="sr-only">Loading media</span>
-            </Button>
-          ) : null}
         </div>
       </div>
 
@@ -131,15 +126,19 @@ export function WorkflowSendMediaSection({
           density="compact"
           className="flex flex-nowrap gap-3"
         >
-          <WorkflowMediaUploader
-            agentId={agentId}
-            nodeId={nodeId}
-            maxFileSize={maxFileSize}
-            nodeKind={nodeKind}
-            layout="tile"
-            density="compact"
-            onError={toast.error}
-          />
+          {isLoading ? (
+            <Skeleton className="size-16 shrink-0 rounded-lg" />
+          ) : (
+            <WorkflowMediaUploader
+              agentId={agentId}
+              nodeId={nodeId}
+              maxFileSize={maxFileSize}
+              nodeKind={nodeKind}
+              layout="tile"
+              density="compact"
+              onError={toast.error}
+            />
+          )}
         </WorkflowMediaGrid>
       </div>
       <p className="text-xs text-muted-foreground">{mediaCopy.status}</p>
