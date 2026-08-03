@@ -21,7 +21,7 @@ test('privacy policy states the approved provider, retention, and security pract
     'Authentication service',
     'WorkOS AuthKit',
     'Google sign-in',
-    'KiloBot never receives your Google password',
+    'Kilobot never receives your Google password',
     'Security and performance',
     'Cloudflare Workers',
     'Cloudflare R2',
@@ -29,7 +29,7 @@ test('privacy policy states the approved provider, retention, and security pract
     'Stripe',
     'Data security',
     'TLS encryption',
-    'when it is no longer needed for its original purpose',
+    'as soon as it is no longer needed for its original purpose',
   ]) {
     expect(policy).toContain(text);
   }
@@ -39,18 +39,18 @@ test('terms state the approved contractual protections', () => {
   const terms = renderLegalSections(termsOfServiceSections);
 
   for (const text of [
-    'What KiloBot means',
+    'What Kilobot means',
     'Changes to these Terms',
     'Subscription terms',
-    'KiloBot does not offer free trials',
+    'Kilobot does not offer free trials',
     'Early Adopter Program',
-    'Content provided by KiloBot',
+    'Content provided by Kilobot',
     'Software license',
     'Service reselling',
     'Content backups',
     'Service interruption and availability',
     'Account termination',
-    'Suspension and termination by KiloBot',
+    'Suspension and termination by Kilobot',
     'Disclaimer of warranties',
     'Indemnification',
   ]) {
