@@ -110,7 +110,7 @@ export function WebWidgetTraditionalPanel({
 
   return (
     <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
-      <div className="flex flex-col gap-6 border-b border-border p-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-10">
+      <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
         {!settings.canActivate ? <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">Connect a WhatsApp channel with an account name and phone number before activating Traditional.</div> : null}
         <FieldGroup>
           <Field><FieldLabel>WhatsApp account</FieldLabel><Input value={settings.displayUsername ?? ''} readOnly placeholder="No connected account" /></Field>
@@ -124,7 +124,7 @@ export function WebWidgetTraditionalPanel({
           <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => void navigator.clipboard.writeText(snippet).then(() => toast.success('Installation copied'))} onDownload={() => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }} /></Field>
         </FieldGroup>
       </div>
-      <div className="flex min-h-0 flex-col items-center justify-center gap-3 p-8 lg:overflow-y-auto lg:p-10"><div className="w-full max-w-sm rounded-[2rem] border bg-muted/30 p-8"><a className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold shadow-lg" style={{ backgroundColor: mainColor, color: previewForeground }} href={`https://wa.me/${(settings.displayPhoneNumber ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(prefillMessage)}`} target="_blank" rel="noreferrer">{settings.iconUrl ? <img className="size-7" src={settings.iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}<span className="truncate">{label || 'Chat with us'}</span></a>{!hidePoweredBy ? <p className="mt-2 text-center text-xs text-muted-foreground">Powered by Kilobot</p> : null}</div><p className="text-sm text-muted-foreground">Preview</p></div>
+      <div className="flex min-h-0 flex-col items-center justify-center gap-3 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><div className="w-full max-w-sm rounded-[2rem] border bg-muted/30 p-8"><a className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold shadow-lg" style={{ backgroundColor: mainColor, color: previewForeground }} href={`https://wa.me/${(settings.displayPhoneNumber ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(prefillMessage)}`} target="_blank" rel="noreferrer">{settings.iconUrl ? <img className="size-7" src={settings.iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}<span className="truncate">{label || 'Chat with us'}</span></a>{!hidePoweredBy ? <p className="mt-2 text-center text-xs text-muted-foreground">Powered by Kilobot</p> : null}</div><p className="text-sm text-muted-foreground">Preview</p></div>
     </div>
   );
 }
