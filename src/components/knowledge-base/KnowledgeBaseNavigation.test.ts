@@ -59,7 +59,7 @@ describe('Knowledge Base Workflow promotion', () => {
     const markup = renderNavigation();
 
     expect(markup).toContain(
-      'src="https://storage.kilobot.app/workflow-prev.png"',
+      'src="https://storage.kilobot.app/workflow-prev-latest.png"',
     );
     expect(markup).toContain('alt=""');
     expect(markup).toContain(
