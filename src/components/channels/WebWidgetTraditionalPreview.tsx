@@ -36,11 +36,11 @@ export function WebWidgetTraditionalPreview({
       <WebWidgetPreviewFrame device={previewDevice} onPointerDownCapture={() => undefined}>
         <div className={cn('relative flex h-full w-full items-end', mobilePreview ? 'mx-auto max-w-[390px]' : 'max-w-[460px] ml-auto')}>
           <div className={cn('absolute bottom-0 right-0 flex flex-col items-center gap-2', mobilePreview && 'gap-1.5')}>
-            <a className={cn('flex max-w-[min(100%,320px)] items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-normal text-black', mobilePreview && 'gap-1.5 px-3.5 py-2 text-[13px]')} style={{ fontFamily: 'Google Sans Flex, sans-serif' }} href={destinationUrl} target="_blank" rel="noreferrer">
-              <TraditionalWhatsAppIcon className={cn('size-7', mobilePreview && 'size-6')} />
+            <a className={cn('flex max-w-[min(100%,320px)] items-center gap-2 rounded-full bg-[#25D366] px-3.5 py-2 text-sm font-normal text-black', mobilePreview && 'gap-1.5 px-3 py-1.5 text-[13px]')} style={{ fontFamily: 'Google Sans Flex, sans-serif' }} href={destinationUrl} target="_blank" rel="noreferrer">
+              <TraditionalWhatsAppIcon className={cn('size-[26px]', mobilePreview && 'size-6')} />
               <span className="truncate">{label || 'Chat with us'}</span>
             </a>
-            {poweredBy ? <span className={cn('text-xs text-muted-foreground', mobilePreview && 'text-[10px]')}>Powered by <a className="hover:text-foreground hover:underline" href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
+            {poweredBy ? <span className={cn('text-[11px] text-muted-foreground', mobilePreview && 'text-[10px]')}>Powered by <a className="hover:text-foreground hover:underline" href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
           </div>
         </div>
       </WebWidgetPreviewFrame>
