@@ -1026,8 +1026,10 @@ const customerSentimentChartConfig = {
 
 export function AnalyticsCustomerSentimentPieChart({
   distribution,
+  showLegend = true,
 }: {
   distribution: CustomerSentimentCounts;
+  showLegend?: boolean;
 }) {
   const chartData = useMemo(
     () =>
@@ -1083,13 +1085,15 @@ export function AnalyticsCustomerSentimentPieChart({
           dataKey="value"
           nameKey="sentiment"
           cx="50%"
-          cy="44%"
-          outerRadius="72%"
+          cy={showLegend ? '44%' : '50%'}
+          outerRadius="86%"
         />
-        <ChartLegend
-          content={<ChartLegendContent nameKey="sentiment" />}
-          className="mt-1 flex-wrap justify-center gap-x-4 gap-y-1"
-        />
+        {showLegend ? (
+          <ChartLegend
+            content={<ChartLegendContent nameKey="sentiment" />}
+            className="mt-1 flex-wrap justify-center gap-x-4 gap-y-1"
+          />
+        ) : null}
       </PieChart>
     </ChartContainer>
   );

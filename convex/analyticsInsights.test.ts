@@ -9,10 +9,10 @@ import {
   isAdvancedAnalyticsPlan,
 } from "../shared/planCatalog";
 
-const validInsights = {
+  const validInsights = {
   topics: [
     {
-      topic: "Product pricing request",
+      topic: "Pricing",
       description: "Customers ask about prices and plan differences.",
       summary: "The customer asked for the current price.",
       existingTopicId: null,
@@ -43,6 +43,8 @@ test("combined analytics prompt covers all three analyses", () => {
   ]);
 
   expect(system).toContain("1 to 5 specific topics");
+  expect(system).toContain("1-2 words");
+  expect(system).not.toContain("3-8 word topic labels");
   expect(system).toContain("positive, neutral, or negative");
   expect(system).toContain("hot, warm, or cold");
   expect(system).toContain("topic-1: Pricing");

@@ -25,3 +25,19 @@ test('uses the compact Connect Channel prompt when WhatsApp is not connected', (
   expect(markup).not.toContain('Open Channels');
   expect(markup).not.toContain('border-[#25D366]/30');
 });
+
+test('previews the WhatsApp-only Message templates header in development', () => {
+  const markup = renderToStaticMarkup(
+    <MemoryRouter initialEntries={['/dashboard/agent-1/templates?previewWithoutWhatsApp=1']}>
+      <Routes>
+        <Route path="/dashboard/:agentId/templates" element={<TemplatesPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('WhatsApp only');
+  expect(markup).toContain('Message templates');
+  expect(markup).toContain(
+    'Create and manage approved WhatsApp templates for your customer messages.',
+  );
+});

@@ -42,7 +42,7 @@ export function buildAnalyticsInsightsSystemPrompt(existingTopics: ExistingTopic
   return `Analyze a customer conversation for Advanced Analytics.
 
 Return 1 to 5 specific topics, ordered from most important to least important.
-- Use specific 3-8 word topic labels about the customer's issue, request, or intent.
+ - Use concise labels of 1-2 words about the customer's issue, request, or intent.
 - Reuse an existing topic id only when it clearly matches; otherwise return null.
 - Never include personal identifiers.
 - Provide a concise description, conversation summary, and confidence from 0 to 1.
