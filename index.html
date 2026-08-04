@@ -44,17 +44,13 @@
     src="https://connect.facebook.net/en_US/sdk.js"
   ></script>
   <script type="module" src="/src/main.tsx"></script>
-  <script>
-    (() => {
-      const script = document.createElement('script');
-      script.async = true;
-      script.src = 'http://localhost:5173/widget/traditional.js';
-      script.onload = () => {
-        window.KilobotTraditionalWidget.mount({"publicKey":"local-traditional-preview","label":"Chat with us","mainColor":"#25D366","foregroundColor":"#000000","poweredBy":true,"destinationUrl":"https://wa.me/60129499394?text=Hi!%20This%20is%20a%20local%20Kilobot%20widget%20test."}, 'local-traditional-preview');
-      };
-      document.head.appendChild(script);
-    })();
-  </script>
+  <script
+    async
+    src="https://kilobot.app/widget/v1.js"
+    data-kilobot-widget="pub_9eb757fbbd9c4af8b568acb8c5fed9ad"
+    data-kilobot-api="https://outstanding-rabbit-215.convex.site"
+    data-kilobot-exclude-path-prefix="/avatar/embed/"
+  ></script>
 </body>
 
 </html>

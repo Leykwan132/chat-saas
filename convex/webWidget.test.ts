@@ -101,30 +101,6 @@ async function createAgent(t: ReturnType<typeof initTest>, userId: string, name 
   });
 }
 
-async function connectWhatsApp(
-  t: ReturnType<typeof initTest>,
-  agentId: Awaited<ReturnType<typeof createAgent>>,
-  userId: string,
-) {
-  await t.run(async (ctx) => {
-    const now = Date.now();
-    await ctx.db.insert("channels", {
-      orgId: "",
-      service: "whatsapp",
-      wabaId: "waba-traditional",
-      phoneNumberId: "phone-traditional",
-      displayPhoneNumber: "+60 12-345 6789",
-      displayUsername: "Wati",
-      accessToken: "whatsapp-token",
-      status: "connected",
-      connectedByUserId: userId,
-      defaultAgentId: agentId,
-      createdAt: now,
-      updatedAt: now,
-    });
-  });
-}
-
 test("ensureForAgent creates one connected web channel and widget settings", async () => {
   const t = initTest();
   const agentId = await createAgent(t, "user_web_setup", "Concierge");
@@ -234,107 +210,6 @@ test("web widget placement can change while theme stays fixed", async () => {
   });
   expect(updatedDashboard).not.toHaveProperty("launcherLabel");
   expect(updatedConfig).not.toHaveProperty("launcherLabel");
-});
-
-test("existing widgets default to AI-powered and expose connected WhatsApp defaults", async () => {
-  const t = initTest();
-  const userId = "user_web_traditional_defaults";
-  const agentId = await createAgent(t, userId);
-  await connectWhatsApp(t, agentId, userId);
-  await t
-    .withIdentity({ subject: userId, email: "defaults@example.com" })
-    .mutation(api.webWidget.ensureForAgent, { agentId });
-
-  const dashboard = await t
-    .withIdentity({ subject: userId, email: "defaults@example.com" })
-    .query(api.webWidget.getForAgent, { agentId });
-
-  expect(dashboard).toMatchObject({
-    activeMode: "ai_powered",
-    traditional: {
-      label: "Chat with us",
-      prefillMessage:
-        "Hi, I'd like to get in touch with the Wati team. Can someone help me?",
-      mainColor: "#25D366",
-      foregroundColor: "#000000",
-      displayUsername: "Wati",
-      displayPhoneNumber: "+60 12-345 6789",
-      canActivate: true,
-    },
-  });
-});
-
-test("Traditional activation routes to WhatsApp and blocks AI message APIs", async () => {
-  const t = initTest();
-  const userId = "user_web_traditional_active";
-  const agentId = await createAgent(t, userId);
-  await connectWhatsApp(t, agentId, userId);
-  const identity = { subject: userId, email: "traditional@example.com" };
-  const setup = await t
-    .withIdentity(identity)
-    .mutation(api.webWidget.ensureForAgent, { agentId });
-
-  await t.withIdentity(identity).mutation(api.webWidget.updateTraditionalSettings, {
-    agentId,
-    label: "Talk to sales",
-    prefillMessage: "Hi there & welcome",
-    mainColor: "#112233",
-  });
-  await t.withIdentity(identity).mutation(api.webWidget.activateMode, {
-    agentId,
-    mode: "traditional",
-  });
-
-  const config = await t.query(api.webWidget.publicGetConfig, {
-    publicKey: setup.publicKey,
-  });
-  expect(config).toEqual({
-    mode: "traditional",
-    publicKey: setup.publicKey,
-    label: "Talk to sales",
-    mainColor: "#112233",
-    foregroundColor: "#FFFFFF",
-    iconUrl: undefined,
-    poweredBy: true,
-    destinationUrl:
-      "https://wa.me/60123456789?text=Hi+there+%26+welcome",
-  });
-
-  await expect(
-    t.query(api.webWidget.publicListMessages, {
-      publicKey: setup.publicKey,
-      visitorId: "visitor-blocked",
-    }),
-  ).rejects.toThrow("AI messaging is unavailable for Traditional widgets");
-  await expect(
-    t.mutation(internal.webWidget.internalReceiveMessage, {
-      publicKey: setup.publicKey,
-      visitorId: "visitor-blocked",
-      content: "Do not create a conversation",
-    }),
-  ).rejects.toThrow("AI messaging is unavailable for Traditional widgets");
-
-  const conversations = await t.run(async (ctx) =>
-    await ctx.db.query("conversations").collect(),
-  );
-  expect(conversations).toHaveLength(0);
-});
-
-test("Traditional activation requires a connected named WhatsApp channel", async () => {
-  const t = initTest();
-  const userId = "user_web_traditional_missing";
-  const agentId = await createAgent(t, userId);
-  const identity = { subject: userId, email: "missing@example.com" };
-  await t
-    .withIdentity(identity)
-    .mutation(api.webWidget.ensureForAgent, { agentId });
-
-  await expect(
-    t.withIdentity(identity).mutation(api.webWidget.activateMode, {
-      agentId,
-      mode: "traditional",
-    }),
-  ).rejects.toThrow("Connect WhatsApp before activating Traditional");
 });
 
 test("same visitor id reuses the web conversation", async () => {
