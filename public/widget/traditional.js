@@ -13,7 +13,7 @@
       ".pill{display:flex;max-width:min(calc(100vw - 36px),320px);align-items:center;gap:10px;border:0;border-radius:999px;background:var(--main-color);color:var(--foreground-color);box-shadow:0 8px 24px rgba(0,0,0,.18);padding:8px 18px 8px 9px;text-decoration:none;transition:transform .2s ease,box-shadow .2s ease}",
       ".pill:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.22)}.pill:focus-visible{outline:3px solid #111827;outline-offset:3px}",
       ".icon{display:flex;width:34px;height:34px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:999px;overflow:hidden}.icon svg,.icon img{display:block;width:100%;height:100%;object-fit:contain}",
-      ".label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:700;line-height:1.2}.brand{color:#6b7280;font-size:11px;line-height:1.2;text-decoration:none}.brand:hover{text-decoration:underline}",
+      ".label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px;font-weight:400;line-height:1.2}.brand{align-self:center;color:#6b7280;font-size:11px;line-height:1.2;text-decoration:none}.brand:hover{text-decoration:underline}",
       "@media(prefers-reduced-motion:reduce){.pill{transition:none}.pill:hover{transform:none}}",
       "</style>",
       "<div class='wrap'><a class='pill' rel='noopener noreferrer'><span class='icon'></span><span class='label'></span></a><a class='brand' href='https://kilobot.app/' target='_blank' rel='noopener noreferrer'>Powered by Kilobot</a></div>",
