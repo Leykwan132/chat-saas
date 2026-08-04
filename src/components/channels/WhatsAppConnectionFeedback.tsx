@@ -28,6 +28,7 @@ export function WhatsAppConnectingAction({
         type="button"
         variant="destructiveGhost"
         size="icon-xs"
+        className="bg-muted"
         aria-label={
           stopping
             ? 'Stopping WhatsApp connection'

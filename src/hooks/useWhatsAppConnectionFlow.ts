@@ -31,6 +31,7 @@ export function useWhatsAppConnectionFlow({
   const beginConnectionAttempt = useMutation(
     api.whatsappEmbeddedSignup.beginConnectionAttempt,
   );
+  const cancelConnectionAttempt = useMutation(api.whatsappEmbeddedSignup.cancelConnectionAttempt);
   const openConnectionAttempt = useQuery(
     api.whatsappEmbeddedSignup.getOpenConnectionAttempt,
     {},
@@ -173,12 +174,6 @@ export function useWhatsAppConnectionFlow({
       setBusy(false);
       return;
     }
-    console.info('[whatsapp-connect] invoking FB.login', {
-      appId,
-      configId,
-      responseType: 'code',
-      featureType: 'whatsapp_business_app_onboarding',
-    });
     facebook.login(
       (response: FBLoginResponse) => {
         const code = response.authResponse?.code;
@@ -188,6 +183,15 @@ export function useWhatsAppConnectionFlow({
           codeLength: code?.length,
         });
         if (!code) {
+          if (response.status === 'unknown') {
+            void connectionAttemptPromiseRef.current
+              ?.then((attemptId) =>
+                attemptId ? cancelConnectionAttempt({ attemptId }) : undefined,
+              )
+              .catch((error) =>
+                console.error('[whatsapp-connect] cancellation failed', error),
+              );
+          }
           toast.error(
             response.status === 'unknown'
               ? 'Signup cancelled before completion.'
@@ -209,7 +213,7 @@ export function useWhatsAppConnectionFlow({
         },
       },
     );
-  }, [appId, configId, finishWithCode]);
+  }, [appId, cancelConnectionAttempt, configId, finishWithCode]);
 
   const launchSignup = useCallback(async () => {
     console.info('[whatsapp-connect] signup launch requested', {
