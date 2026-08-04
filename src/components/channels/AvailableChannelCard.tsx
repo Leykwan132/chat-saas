@@ -1,4 +1,4 @@
-import { BookOpen } from 'lucide-react';
+import { Lightbulb } from 'lucide-react';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
@@ -65,7 +65,7 @@ export function AvailableChannelCard({
                 target="_blank"
                 rel="noreferrer"
               >
-                <BookOpen data-icon="inline-start" />
+                <Lightbulb data-icon="inline-start" />
                 Guide
               </a>
             </Button>
