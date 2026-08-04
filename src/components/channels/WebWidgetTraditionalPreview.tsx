@@ -40,7 +40,7 @@ export function WebWidgetTraditionalPreview({
               <TraditionalWhatsAppIcon className={cn('size-6', mobilePreview && 'size-[22px]')} />
               <span className="truncate">{label || 'Chat with us'}</span>
             </a>
-            {poweredBy ? <span className={cn('text-[11px] text-muted-foreground', mobilePreview && 'text-[10px]')}>Powered by <a className="hover:text-foreground hover:underline" href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
+            {poweredBy ? <span className={cn('text-[11px] text-muted-foreground', mobilePreview && 'text-[10px]')}>Powered by <a href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
           </div>
         </div>
       </WebWidgetPreviewFrame>
