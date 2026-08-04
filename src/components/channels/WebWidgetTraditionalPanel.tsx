@@ -1,21 +1,14 @@
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
-import { Link } from 'react-router';
-import { SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { WebWidgetBrandingSection } from './WebWidgetBrandingSection';
 import { WebWidgetScriptArtifact } from './WebWidgetScriptArtifact';
-import {
-  buildLocalTraditionalWidgetSnippet,
-  buildWebWidgetSnippet,
-} from './webWidgetSnippet';
+import { buildWebWidgetSnippet } from './webWidgetSnippet';
 import { WebWidgetTraditionalPreview } from './WebWidgetTraditionalPreview';
 
 export type TraditionalWidgetSettings = {
@@ -47,19 +40,13 @@ export function WebWidgetTraditionalPanel({
   const [prefillMessage, setPrefillMessage] = useState(settings.prefillMessage);
   const [hidePoweredBy, setHidePoweredBy] = useState(settings.hidePoweredBy);
   const [saving, setSaving] = useState(false);
-  const localTesting = import.meta.env.DEV && !settings.canActivate;
-  const canInstallTraditional = settings.canActivate || localTesting;
-  const valid = localTesting || (label.trim().length >= 1 && label.trim().length <= 40 && prefillMessage.trim().length >= 1 && prefillMessage.trim().length <= 500);
-  const snippet = localTesting
-    ? buildLocalTraditionalWidgetSnippet({ label, prefillMessage, poweredBy: !hidePoweredBy })
-    : buildWebWidgetSnippet(publicKey);
+  const snippet = buildWebWidgetSnippet(publicKey);
+  const valid = label.trim().length >= 1 && label.trim().length <= 40 && prefillMessage.trim().length >= 1 && prefillMessage.trim().length <= 500;
 
   const publishTraditional = async () => {
-    if (!canInstallTraditional || !valid) {
+    if (!agentId || !settings.canActivate || !valid) {
       throw new Error('Complete the Traditional widget settings before installing it.');
     }
-    if (localTesting) return;
-    if (!agentId) throw new Error('Widget agent is unavailable.');
     await updateTraditionalSettings({
       agentId,
       label: label.trim(),
@@ -81,13 +68,13 @@ export function WebWidgetTraditionalPanel({
   return (
     <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
       <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
-        {!settings.canActivate ? <Alert className="border-[#25D366]/30 bg-[#25D366]/5"><SiWhatsapp className="size-5 text-[#25D366]" /><AlertTitle>Connect WhatsApp to activate Traditional</AlertTitle><AlertDescription>{localTesting ? 'Connect an account with a name and phone number to activate Traditional. You can use the local test installation below first.' : 'Traditional opens WhatsApp directly. Connect an account with a name and phone number to activate it.'}</AlertDescription><AlertAction className="static col-start-2 row-start-3 mt-3 w-fit"><Button asChild size="sm"><Link to={`/dashboard/${agentId}/channels`}><SiWhatsapp data-icon="inline-start" />Connect Channel</Link></Button></AlertAction></Alert> : null}
+        {!settings.canActivate ? <p className="text-sm text-muted-foreground">You need to connect WhatsApp before using Traditional.</p> : null}
         <FieldGroup>
           {settings.canActivate ? <><Field><FieldLabel>WhatsApp account</FieldLabel><Input value={settings.displayUsername} readOnly /></Field><Field><FieldLabel>WhatsApp number</FieldLabel><Input value={settings.displayPhoneNumber} readOnly /></Field></> : null}
           <Field><FieldLabel>Pill label</FieldLabel><Input value={label} maxLength={40} onChange={(event) => setLabel(event.target.value)} /><p className="text-xs text-muted-foreground">1–40 characters</p></Field>
           <Field><FieldLabel>Prefilled WhatsApp message</FieldLabel><textarea value={prefillMessage} maxLength={500} className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" onChange={(event) => setPrefillMessage(event.target.value)} /><p className="text-xs text-muted-foreground">1–500 characters</p></Field>
           <WebWidgetBrandingSection hidePoweredBy={hidePoweredBy} canHideBranding={settings.canHideBranding} saving={saving} onChange={setHidePoweredBy} onRequestUpgrade={openUpgradeModal} />
-          {canInstallTraditional ? <Field><FieldLabel>{localTesting ? 'Local test installation' : 'Installation'}</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => install(() => navigator.clipboard.writeText(snippet), localTesting ? 'Local Traditional test installation copied' : 'Traditional installation copied')} onDownload={() => install(async () => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }, localTesting ? 'Local Traditional test installation downloaded' : 'Traditional installation downloaded')} /></Field> : null}
+          {settings.canActivate ? <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => install(() => navigator.clipboard.writeText(snippet), 'Traditional installation copied')} onDownload={() => install(async () => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }, 'Traditional installation downloaded')} /></Field> : null}
         </FieldGroup>
       </div>
       <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><WebWidgetTraditionalPreview className="min-h-[620px] lg:min-h-0" label={label} phoneNumber={settings.displayPhoneNumber} prefillMessage={prefillMessage} poweredBy={!hidePoweredBy} /></div>
