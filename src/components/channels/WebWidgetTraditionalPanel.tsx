@@ -4,7 +4,6 @@ import { ImagePlus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { traditionalWidgetForeground } from '../../../shared/traditionalWebWidget';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -13,6 +12,7 @@ import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { WebWidgetScriptArtifact } from './WebWidgetScriptArtifact';
 import { buildWebWidgetSnippet } from './webWidgetSnippet';
 import { TraditionalWhatsAppIcon } from './TraditionalWhatsAppIcon';
+import { WebWidgetTraditionalPreview } from './WebWidgetTraditionalPreview';
 
 export type TraditionalWidgetSettings = {
   label: string;
@@ -56,9 +56,6 @@ export function WebWidgetTraditionalPanel({
   const [uploading, setUploading] = useState(false);
   const snippet = buildWebWidgetSnippet(publicKey);
   const valid = label.trim().length >= 1 && label.trim().length <= 40 && prefillMessage.trim().length >= 1 && prefillMessage.trim().length <= 500 && /^#[0-9A-Fa-f]{6}$/.test(mainColor);
-  const previewForeground = /^#[0-9A-Fa-f]{6}$/.test(mainColor)
-    ? traditionalWidgetForeground(mainColor)
-    : settings.foregroundColor;
 
   const save = () => {
     if (!agentId || !valid || saving) return;
@@ -123,7 +120,7 @@ export function WebWidgetTraditionalPanel({
           <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => void navigator.clipboard.writeText(snippet).then(() => toast.success('Installation copied'))} onDownload={() => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }} /></Field>
         </FieldGroup>
       </div>
-      <div className="flex min-h-0 flex-col items-center justify-center gap-3 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><div className="w-full max-w-sm rounded-[2rem] border bg-muted/30 p-8"><a className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold shadow-lg" style={{ backgroundColor: mainColor, color: previewForeground }} href={`https://wa.me/${(settings.displayPhoneNumber ?? '').replace(/\D/g, '')}?text=${encodeURIComponent(prefillMessage)}`} target="_blank" rel="noreferrer">{settings.iconUrl ? <img className="size-7" src={settings.iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}<span className="truncate">{label || 'Chat with us'}</span></a>{!hidePoweredBy ? <p className="mt-2 text-center text-xs text-muted-foreground">Powered by Kilobot</p> : null}</div><p className="text-sm text-muted-foreground">Preview</p></div>
+      <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><WebWidgetTraditionalPreview className="min-h-[620px] lg:min-h-0" iconUrl={settings.iconUrl} label={label} mainColor={mainColor} phoneNumber={settings.displayPhoneNumber} prefillMessage={prefillMessage} poweredBy={!hidePoweredBy} /></div>
     </div>
   );
 }
