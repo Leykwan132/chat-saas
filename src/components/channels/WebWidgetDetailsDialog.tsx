@@ -73,7 +73,7 @@ export function WebWidgetDetailsDialog({
         ) : settings ? (
           <Tabs key={`${settings.publicKey}:${settings.activeMode}`} defaultValue={settings.activeMode} className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden">
             <div className="flex items-center justify-between border-b border-border px-8 py-3 lg:px-10">
-              <TabsList aria-label="Widget mode">
+              <TabsList variant="line" aria-label="Widget mode">
                 <TabsTrigger value="ai_powered">AI-powered</TabsTrigger>
                 <TabsTrigger value="traditional">Traditional</TabsTrigger>
               </TabsList>
