@@ -3,7 +3,9 @@ import { WebWidgetTextSettingField } from '@/components/channels/WebWidgetTextSe
 
 type WebWidgetAppearanceSectionProps = {
   agentDisplayName: string;
+  savedAgentDisplayName: string;
   placeholderText: string;
+  savedPlaceholder: string;
   canUseCustomIcon: boolean;
   iconUrl?: string;
   uploadingIcon: boolean;
@@ -15,7 +17,9 @@ type WebWidgetAppearanceSectionProps = {
 
 export function WebWidgetAppearanceSection({
   agentDisplayName,
+  savedAgentDisplayName,
   placeholderText,
+  savedPlaceholder,
   canUseCustomIcon,
   iconUrl,
   uploadingIcon,

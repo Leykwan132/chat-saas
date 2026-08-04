@@ -206,7 +206,9 @@ export function WebWidgetSettingsPanel({
           <FieldGroup>
             <WebWidgetAppearanceSection
               agentDisplayName={agentDisplayName}
+              savedAgentDisplayName={settings.agentDisplayName}
               placeholderText={placeholderText}
+              savedPlaceholder={settings.placeholder}
               canUseCustomIcon={settings.canUseCustomIcon}
               iconUrl={settings.iconUrl}
               uploadingIcon={uploadingIcon}
