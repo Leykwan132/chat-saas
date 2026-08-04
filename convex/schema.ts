@@ -9,6 +9,7 @@ import {
 } from "./workflowValidators";
 import {
   webWidgetLayoutValidator,
+  webWidgetModeValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
 import {
@@ -612,6 +613,12 @@ export default defineSchema({
     theme: v.optional(webWidgetThemeValidator),
     iconStorageId: v.optional(v.id("_storage")),
     hidePoweredBy: v.optional(v.boolean()),
+    mode: v.optional(webWidgetModeValidator),
+    traditionalLabel: v.optional(v.string()),
+    traditionalPrefillMessage: v.optional(v.string()),
+    traditionalMainColor: v.optional(v.string()),
+    traditionalIconStorageId: v.optional(v.id("_storage")),
+    traditionalHidePoweredBy: v.optional(v.boolean()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

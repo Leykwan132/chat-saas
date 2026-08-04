@@ -18,6 +18,7 @@ import {
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
+import type { TraditionalWidgetSettings } from './WebWidgetTraditionalPanel';
 
 export type WebWidgetSettings = {
   channelId: Id<'channels'>;
@@ -32,6 +33,8 @@ export type WebWidgetSettings = {
   hidePoweredBy: boolean;
   canHideBranding: boolean;
   canUseCustomIcon: boolean;
+  activeMode: 'ai_powered' | 'traditional';
+  traditional: TraditionalWidgetSettings;
 };
 
 type WebWidgetSettingsPanelProps = {
@@ -199,7 +202,7 @@ export function WebWidgetSettingsPanel({
   return (
     <>
       <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
-        <div className="flex flex-col gap-6 border-b border-border p-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:p-10">
+        <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
           <FieldGroup>
             <WebWidgetAppearanceSection
               agentDisplayName={agentDisplayName}
@@ -208,7 +211,6 @@ export function WebWidgetSettingsPanel({
               savedPlaceholder={settings.placeholder}
               canUseCustomIcon={settings.canUseCustomIcon}
               iconUrl={settings.iconUrl}
-              savingAppearance={savingAppearance}
               uploadingIcon={uploadingIcon}
               onAgentDisplayNameChange={setAgentDisplayName}
               onPlaceholderChange={setPlaceholderText}
@@ -241,7 +243,7 @@ export function WebWidgetSettingsPanel({
           </FieldGroup>
         </div>
 
-        <div className="flex min-h-0 flex-col gap-6 p-8 lg:overflow-y-auto lg:p-10">
+        <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10">
           <WebWidgetPreview
             className="min-h-[620px] lg:min-h-0"
             agentName={agentDisplayName || settings.agentDisplayName}
