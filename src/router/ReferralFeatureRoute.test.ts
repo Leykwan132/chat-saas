@@ -50,9 +50,10 @@ describe('referral feature flag surfaces', () => {
     expect(onboardingSource).toContain(
       'setStep(referralProgramEnabled ? 4 : 5)',
     );
-    expect(onboardingSource).toMatch(
-      /referralCode:\s+referralProgramEnabled && referralCode \? referralCode : undefined/,
+    expect(onboardingSource).toContain(
+      'referralProgramEnabled && referralCode ? referralCode : undefined',
     );
+    expect(onboardingSource).toContain('referralCode: submittedReferralCode');
     expect(onboardingSource).toContain(
       'current === 5 && !referralProgramEnabled',
     );

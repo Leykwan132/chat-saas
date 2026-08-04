@@ -11,6 +11,10 @@ import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 import { cn } from '@/lib/utils';
 import { buildCreditBalanceRows } from '@/lib/creditBalanceRows';
+import {
+  additionalCreditProgressClass,
+  referralCreditProgressClass,
+} from '@/lib/creditProgressStyles';
 
 function topUpProgressValue(remaining: number, granted: number) {
   if (granted <= 0) {
@@ -19,7 +23,6 @@ function topUpProgressValue(remaining: number, granted: number) {
   return Math.min(100, Math.round((remaining / granted) * 100));
 }
 
-const TOP_UP_PROGRESS_CLASS = '[&>[data-slot=progress-indicator]]:bg-green-600';
 const METER_PROGRESS_CLASS = 'h-[4px] shrink-0';
 
 function useSettingsPath(section: 'plan', hash?: string) {
@@ -154,7 +157,8 @@ export function CreditMeter() {
                     !isLoading &&
                     monthlyPct <= 10 &&
                     '[&>[data-slot=progress-indicator]]:bg-destructive',
-                  row.key === 'additional' && TOP_UP_PROGRESS_CLASS,
+                  row.key === 'additional' && additionalCreditProgressClass,
+                  row.key === 'referral' && referralCreditProgressClass,
                 )}
               />
             </div>

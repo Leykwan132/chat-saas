@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import widgetScript from '../../../public/widget/v1.js?raw';
+import widgetScript from '../../../public/widget/ai.js?raw';
 
 test('public widget synchronizes mobile geometry with VisualViewport events', () => {
   expect(widgetScript).toContain('window.visualViewport.addEventListener("resize", scheduleVisualViewportSync, { passive: true })');

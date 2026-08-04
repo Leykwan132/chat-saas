@@ -10,6 +10,7 @@ export type DebugTokenResponse = {
 export type WhatsAppPhoneNumber = {
   id: string;
   display_phone_number?: string;
+  verified_name?: string;
 };
 
 export type WhatsAppPhoneNumbersResponse = {
@@ -167,7 +168,10 @@ export function createWhatsAppMetaSignupClient({
       );
       const wabaId = selectSingleWhatsAppBusinessAccountId(debugToken);
       const phoneUrl = new URL(`${graphBase}/${wabaId}/phone_numbers`);
-      phoneUrl.searchParams.set("fields", "id,display_phone_number");
+      phoneUrl.searchParams.set(
+        "fields",
+        "id,display_phone_number,verified_name",
+      );
       const phoneNumbers = await requestMeta<WhatsAppPhoneNumbersResponse>(
         fetcher,
         phoneUrl,

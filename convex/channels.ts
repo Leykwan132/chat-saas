@@ -309,6 +309,7 @@ export const internalUpsertWhatsApp = internalMutation({
     wabaId: v.string(),
     phoneNumberId: v.string(),
     displayPhoneNumber: v.optional(v.string()),
+    displayUsername: v.optional(v.string()),
     accessToken: v.string(),
     tokenExpiresAt: v.optional(v.number()),
     connectedByUserId: v.string(),
@@ -326,6 +327,7 @@ async function upsertWhatsAppChannel(
     wabaId: string;
     phoneNumberId: string;
     displayPhoneNumber?: string;
+    displayUsername?: string;
     accessToken: string;
     tokenExpiresAt?: number;
     connectedByUserId: string;
@@ -347,6 +349,7 @@ async function upsertWhatsAppChannel(
     wabaId: args.wabaId,
     phoneNumberId: args.phoneNumberId,
     displayPhoneNumber: args.displayPhoneNumber,
+    displayUsername: args.displayUsername,
     accessToken: args.accessToken,
     tokenExpiresAt: args.tokenExpiresAt,
     status: "connected" as const,

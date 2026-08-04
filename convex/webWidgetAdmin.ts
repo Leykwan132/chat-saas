@@ -1,6 +1,5 @@
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext, resolveChannelOrgId } from "./authUtils";
 import {
   DEFAULT_WEB_WIDGET_LAYOUT,
   normalizeWebWidgetLayout,
@@ -14,36 +13,17 @@ import {
   defaultWebWidgetPlaceholder,
   generateUniquePublicKey,
   getWebWidgetPlanState,
-  isAgentInAuthScope,
   normalizeAgentDisplayName,
   normalizeWidgetPlaceholder,
   resolveWebWidgetBranding,
   resolveWidgetIconUrl,
 } from "./webWidgetCore";
-
-type AuthorizedAgent = {
-  orgId: string;
-  userId: string;
-  channelOrgId: string;
-  agent: Doc<"agents">;
-};
-
-async function getAuthorizedAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">): Promise<AuthorizedAgent> {
-  const { orgId, userId } = await getAuthContext(ctx);
-  const channelOrgId = resolveChannelOrgId(orgId, userId);
-  const agent = await ctx.db.get(agentId);
-  if (agent === null || !isAgentInAuthScope(agent, { channelOrgId, userId })) {
-    throw new Error("Agent not found");
-  }
-  return { orgId, userId, channelOrgId, agent };
-}
-
-async function getSettingsForAgent(ctx: QueryCtx | MutationCtx, agentId: Id<"agents">) {
-  return await ctx.db
-    .query("webWidgetSettings")
-    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
-    .first();
-}
+import {
+  getAuthorizedWebWidgetAgent,
+  getWebWidgetSettingsForAgent,
+} from "./webWidgetAccess";
+import { traditionalDashboardConfig } from "./webWidgetTraditional";
+import { DEFAULT_WEB_WIDGET_MODE } from "../shared/traditionalWebWidget";
 
 async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<"webWidgetSettings">) {
   const planState = await getWebWidgetPlanState(ctx, {
@@ -63,6 +43,12 @@ async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<
     iconUrl: await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon),
     ...branding,
     canUseCustomIcon: planState.canUseCustomIcon,
+    activeMode: settings.mode ?? DEFAULT_WEB_WIDGET_MODE,
+    traditional: await traditionalDashboardConfig(
+      ctx,
+      settings,
+      planState.canUseCustomIcon,
+    ),
   };
 }
 
@@ -124,8 +110,8 @@ async function ensureConnectedWebChannel(
 }
 
 export async function getWidgetForAgent(ctx: QueryCtx, agentId: Id<"agents">) {
-  await getAuthorizedAgent(ctx, agentId);
-  const settings = await getSettingsForAgent(ctx, agentId);
+  await getAuthorizedWebWidgetAgent(ctx, agentId);
+  const settings = await getWebWidgetSettingsForAgent(ctx, agentId);
   if (settings === null) {
     return null;
   }
@@ -133,9 +119,9 @@ export async function getWidgetForAgent(ctx: QueryCtx, agentId: Id<"agents">) {
 }
 
 export async function ensureWidgetForAgent(ctx: MutationCtx, agentId: Id<"agents">) {
-  const { userId, channelOrgId, agent } = await getAuthorizedAgent(ctx, agentId);
+  const { userId, channelOrgId, agent } = await getAuthorizedWebWidgetAgent(ctx, agentId);
   const now = Date.now();
-  const existingSettings = await getSettingsForAgent(ctx, agentId);
+  const existingSettings = await getWebWidgetSettingsForAgent(ctx, agentId);
   const channel = await ensureConnectedWebChannel(ctx, {
     channelOrgId,
     userId,
@@ -201,8 +187,8 @@ export async function updateWidgetSettings(
     hidePoweredBy?: boolean;
   },
 ) {
-  await getAuthorizedAgent(ctx, args.agentId);
-  const settings = await getSettingsForAgent(ctx, args.agentId);
+  await getAuthorizedWebWidgetAgent(ctx, args.agentId);
+  const settings = await getWebWidgetSettingsForAgent(ctx, args.agentId);
   if (settings === null) {
     throw new Error("Widget settings not found");
   }
@@ -242,7 +228,7 @@ export async function updateWidgetSettings(
 }
 
 export async function generateWidgetIconUploadUrl(ctx: MutationCtx, agentId: Id<"agents">) {
-  const { channelOrgId, userId } = await getAuthorizedAgent(ctx, agentId);
+  const { channelOrgId, userId } = await getAuthorizedWebWidgetAgent(ctx, agentId);
   const planState = await getWebWidgetPlanState(ctx, {
     orgId: channelOrgId,
     userId,
@@ -257,7 +243,7 @@ export async function saveWidgetIcon(
   ctx: MutationCtx,
   args: { agentId: Id<"agents">; storageId: Id<"_storage"> },
 ) {
-  const { channelOrgId, userId } = await getAuthorizedAgent(ctx, args.agentId);
+  const { channelOrgId, userId } = await getAuthorizedWebWidgetAgent(ctx, args.agentId);
   const planState = await getWebWidgetPlanState(ctx, {
     orgId: channelOrgId,
     userId,
@@ -265,7 +251,7 @@ export async function saveWidgetIcon(
   if (!planState.canUseCustomIcon) {
     throw new Error("Custom widget icons are available on paid plans.");
   }
-  const settings = await getSettingsForAgent(ctx, args.agentId);
+  const settings = await getWebWidgetSettingsForAgent(ctx, args.agentId);
   if (settings === null) {
     throw new Error("Widget settings not found");
   }
@@ -276,8 +262,8 @@ export async function saveWidgetIcon(
 }
 
 export async function removeWidgetIcon(ctx: MutationCtx, agentId: Id<"agents">) {
-  await getAuthorizedAgent(ctx, agentId);
-  const settings = await getSettingsForAgent(ctx, agentId);
+  await getAuthorizedWebWidgetAgent(ctx, agentId);
+  const settings = await getWebWidgetSettingsForAgent(ctx, agentId);
   if (settings === null) {
     throw new Error("Widget settings not found");
   }

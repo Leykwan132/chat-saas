@@ -68,7 +68,12 @@ export function LandingAppPreview({
               {showsSectionHeader ? (
                 <div className="flex shrink-0 items-start justify-between gap-4">
                   <div>
-                    <h2 className="text-[28px] font-semibold tracking-tight text-zinc-950">
+                    <h2
+                      className={cn(
+                        'text-[28px] font-semibold tracking-tight text-zinc-950',
+                        (section.id === 'overview' || section.id === 'agentSetup') && 'font-title font-normal tracking-normal',
+                      )}
+                    >
                       {section.title}
                     </h2>
                     {section.subtitle ? (
