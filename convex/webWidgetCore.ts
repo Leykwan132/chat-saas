@@ -4,6 +4,8 @@ import { getTeamStripePlanHelper } from "./plans";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { DEFAULT_WEB_WIDGET_THEME } from "../shared/webWidgetThemes";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
+import { DEFAULT_WEB_WIDGET_MODE } from "../shared/traditionalWebWidget";
+import { publicTraditionalConfig } from "./webWidgetTraditional";
 
 export const RECENT_WIDGET_MESSAGES = 80;
 
@@ -107,6 +109,9 @@ export async function publicConfigForSettings(
   if (!settings.enabled) {
     throw new Error("Widget not found");
   }
+  if ((settings.mode ?? DEFAULT_WEB_WIDGET_MODE) === "traditional") {
+    return await publicTraditionalConfig(ctx, settings);
+  }
   const planState = await getWebWidgetPlanState(ctx, {
     orgId: settings.orgId,
     userId: settings.connectedByUserId,
@@ -114,6 +119,7 @@ export async function publicConfigForSettings(
   const branding = resolveWebWidgetBranding(settings, planState.canUseCustomIcon);
   const iconUrl = await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon);
   return {
+    mode: "ai_powered" as const,
     publicKey: settings.publicKey,
     agentDisplayName: settings.agentDisplayName,
     layout: normalizeWebWidgetLayout(settings.layout),
@@ -123,6 +129,12 @@ export async function publicConfigForSettings(
     iconUrl,
     poweredBy: branding.poweredBy,
   };
+}
+
+export function assertAiWebWidget(settings: Doc<"webWidgetSettings">) {
+  if ((settings.mode ?? DEFAULT_WEB_WIDGET_MODE) === "traditional") {
+    throw new Error("AI messaging is unavailable for Traditional widgets");
+  }
 }
 
 export async function getEnabledSettingsByPublicKey(
@@ -148,6 +160,7 @@ export async function listMessagesForVisitor(
   args: { publicKey: string; visitorId: string },
 ) {
   const settings = await getEnabledSettingsByPublicKey(ctx, args.publicKey);
+  assertAiWebWidget(settings);
   const conversation = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>

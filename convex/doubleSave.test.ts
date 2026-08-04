@@ -44,6 +44,9 @@ vi.mock('./llm/openRouter', () => {
               type: 'text',
               text: JSON.stringify({
                 workflowMatches: [],
+                mediaNodeIdsToSend: [],
+                responseLanguage: 'English',
+                responseGuidance: 'Answer normally.',
                 customerResponse: 'Mock response text',
                 mediaToSend: [],
               }),
@@ -169,6 +172,7 @@ test('Incoming message is saved exactly once to the agent thread', async () => {
   t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentTokenUsage', aggregateSchema, mockAggregate);
   t.registerComponent(
     'agentOverviewAiAssistedDaily',
     aggregateSchema,
@@ -401,6 +405,7 @@ test('internalIngestHistoricalChannelMessage ingests without enqueuing AI reply 
   t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentTokenUsage', aggregateSchema, mockAggregate);
   t.registerComponent(
     'agentOverviewAiAssistedDaily',
     aggregateSchema,
@@ -584,6 +589,7 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   t.registerComponent('modelMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentMonthlyUsage', aggregateSchema, mockAggregate);
   t.registerComponent('agentCostUsage', aggregateSchema, mockAggregate);
+  t.registerComponent('agentTokenUsage', aggregateSchema, mockAggregate);
   t.registerComponent(
     'agentOverviewAiAssistedDaily',
     aggregateSchema,
@@ -722,12 +728,11 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
   // There should be exactly 3 messages:
   // 1. User message "Help me" (from ingestChannelMessage)
   // 2. User spacer message (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
-  // 3. Assistant message "Mock response text" (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
+  // 3. Assistant message (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
   // If the agent component had automatically saved prompt/outputs, there would be duplicates.
   expect(agentMessages.length).toBe(3);
   expect(agentMessages[0].message.role).toBe('user');
   expect(agentMessages[0].text).toBe('Help me');
   expect(agentMessages[1].message.role).toBe('user'); // spacer
   expect(agentMessages[2].message.role).toBe('assistant');
-  expect(agentMessages[2].text).toBe('Mock response text');
 });

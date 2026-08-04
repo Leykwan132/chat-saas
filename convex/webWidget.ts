@@ -16,15 +16,23 @@ import {
   updateWidgetSettings,
 } from "./webWidgetAdmin";
 import {
+  assertAiWebWidget,
   getEnabledSettingsByPublicKey,
   listMessagesForVisitor,
   publicConfigForSettings,
 } from "./webWidgetCore";
+import {
+  activateWebWidgetMode,
+  removeTraditionalWidgetIcon,
+  saveTraditionalWidgetIcon,
+  updateTraditionalWidgetSettings,
+} from "./webWidgetTraditional";
 import { ingestChannelMessage } from "./chat/threads";
 import { inboxPromptContent } from "../shared/inboxAttachments";
 import { inboxAiReplyPool } from "./inboxPools";
 import {
   webWidgetLayoutValidator,
+  webWidgetModeValidator,
   webWidgetThemeValidator,
 } from "./webWidgetValidators";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
@@ -66,6 +74,55 @@ export const updateSettings = mutation({
   },
   handler: async (ctx, args) => {
     await updateWidgetSettings(ctx, args);
+  },
+});
+
+export const updateTraditionalSettings = mutation({
+  args: {
+    agentId: v.id("agents"),
+    label: v.optional(v.string()),
+    prefillMessage: v.optional(v.string()),
+    hidePoweredBy: v.optional(v.boolean()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await updateTraditionalWidgetSettings(ctx, args);
+    return null;
+  },
+});
+
+export const activateMode = mutation({
+  args: {
+    agentId: v.id("agents"),
+    mode: webWidgetModeValidator,
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await activateWebWidgetMode(ctx, args);
+    return null;
+  },
+});
+
+export const saveTraditionalIcon = mutation({
+  args: {
+    agentId: v.id("agents"),
+    storageId: v.id("_storage"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await saveTraditionalWidgetIcon(ctx, args);
+    return null;
+  },
+});
+
+export const removeTraditionalIcon = mutation({
+  args: {
+    agentId: v.id("agents"),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    await removeTraditionalWidgetIcon(ctx, args.agentId);
+    return null;
   },
 });
 
@@ -170,6 +227,7 @@ async function receiveWidgetMessage(
   args: ReceiveWidgetMessageArgs,
 ) {
   const settings = await getEnabledSettingsByPublicKey(ctx, args.publicKey);
+  assertAiWebWidget(settings);
   const trimmed = args.content.trim();
   if (!trimmed) {
     throw new Error("Message is required");

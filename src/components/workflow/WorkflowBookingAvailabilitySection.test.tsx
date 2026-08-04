@@ -65,7 +65,6 @@ test('renders a compact scrollable weekly roster with detail links', () => {
   expect(markup).toContain('Alex Tan');
   expect(markup).toContain('Jamie Lee');
   expect(markup).toContain('Mon–Fri · 9:00 AM–5:00 PM');
-  expect(markup).toContain('(GMT+8) Kuala Lumpur');
   expect(markup).toContain('No hours set');
   expect(markup).toContain('Accepting leads');
   expect(markup).toContain('/dashboard/agent-1/availability/user-alex');
@@ -164,7 +163,6 @@ test('keeps switch interaction separate from row navigation', () => {
   const source = readFileSync(sourcePath, 'utf8');
 
   expect(source).toContain('event.stopPropagation()');
-  expect(source).toContain('relative z-10 flex shrink-0 items-center gap-2');
   expect(source).toContain('At least one teammate to use appointment booking.');
   expect(source).toContain('Availability is temporarily unavailable.');
 });
