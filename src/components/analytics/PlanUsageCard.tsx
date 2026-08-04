@@ -17,6 +17,10 @@ import {
   buildCreditBalanceRows,
   type CreditBalanceRow,
 } from '@/lib/creditBalanceRows';
+import {
+  additionalCreditProgressClass,
+  referralCreditProgressClass,
+} from '@/lib/creditProgressStyles';
 import { useAdjustPlan } from '@/components/billing/adjustPlanContext';
 import { resolvePlanEntryLabel } from '@/components/billing/adjustPlanFlow';
 
@@ -33,8 +37,6 @@ function topUpProgressValue(remaining: number, granted: number) {
   }
   return Math.min(100, Math.round((remaining / granted) * 100));
 }
-
-const TOP_UP_PROGRESS_CLASS = '[&>[data-slot=progress-indicator]]:bg-green-600';
 
 const balanceCardClassName =
   'overflow-hidden rounded-xl py-0 shadow-none ring-1 ring-border/70';
@@ -136,8 +138,10 @@ function PlanUsageBody({
             row.key === 'plan'
               ? monthlyProgressClassName
               : row.key === 'additional'
-                ? TOP_UP_PROGRESS_CLASS
-                : undefined
+                ? additionalCreditProgressClass
+                : row.key === 'referral'
+                  ? referralCreditProgressClass
+                  : undefined
           }
         />
       ))}
