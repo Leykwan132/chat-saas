@@ -7,7 +7,7 @@ const TRENDING_TOPIC_LIMIT = 8;
 type AgentTopicRow = {
   topicId: Id<"conversationTopics">;
   topic: string;
-  count: number;
+  customerKeys: Set<string>;
   lastSeenAt: number;
   description: string | null;
 };
@@ -42,20 +42,33 @@ export async function getAgentOverviewTrendingTopics(
       }
 
       const current = topicsById.get(topic._id);
+      const customerKey = topicCustomerKey(conversation);
+      const customerKeys = current?.customerKeys ?? new Set<string>();
+      customerKeys.add(customerKey);
       topicsById.set(topic._id, {
         topicId: topic._id,
         topic: topic.name,
-        count: (current?.count ?? 0) + 1,
+        customerKeys,
         lastSeenAt: Math.max(current?.lastSeenAt ?? 0, assignment.detectedAt),
         description: topic.description ?? null,
       });
     }
   }
 
-  return [...topicsById.values()]
+  const rows = [...topicsById.values()]
     .sort(
       (left, right) =>
-        right.count - left.count || right.lastSeenAt - left.lastSeenAt,
+        right.customerKeys.size - left.customerKeys.size ||
+        right.lastSeenAt - left.lastSeenAt,
     )
     .slice(0, TRENDING_TOPIC_LIMIT);
+
+  return rows.map(({ customerKeys, ...row }) => ({
+    ...row,
+    count: customerKeys.size,
+  }));
+}
+
+function topicCustomerKey(conversation: Doc<"conversations">) {
+  return conversation.customerId?.toString() ?? conversation.contactAddress;
 }

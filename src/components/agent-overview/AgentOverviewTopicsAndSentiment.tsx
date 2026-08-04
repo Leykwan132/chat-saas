@@ -1,19 +1,38 @@
-import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Fragment, useMemo } from 'react';
+import { Pie, PieChart } from 'recharts';
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from '@/components/ui/chart';
+import { Separator } from '@/components/ui/separator';
 import {
   AnalyticsChartShell,
   AnalyticsChartShellSkeleton,
   AnalyticsCustomerSentimentPieChart,
-  AnalyticsHorizontalBarChart,
-  TOPIC_BAR_OPACITY_GRADIENT,
   analyticsAdvancedOverviewGridClass,
-  getTopicMapShellHeight,
-  type AnalyticsHorizontalBarDatum,
 } from '@/components/analytics/AnalyticsUi';
-import type { CustomerSentimentCounts } from '../../../shared/customerSentiment';
-import { formatWholeNumber } from './agentOverviewFormat';
+import {
+  CUSTOMER_SENTIMENT_CHART_COLORS,
+  CUSTOMER_SENTIMENT_LABELS,
+  CUSTOMER_SENTIMENTS,
+  type CustomerSentimentCounts,
+} from '../../../shared/customerSentiment';
 
-const COLLAPSED_TOPIC_COUNT = 5;
+const COMMON_TOPICS_SHELL_HEIGHT = 340;
+const TOPIC_CHART_COLORS = [
+  '#7cb4f4',
+  '#67d184',
+  '#ffd43d',
+  '#ffab8c',
+  '#c7a4f5',
+  '#f8b5bd',
+] as const;
+
+const topicChartConfig = {
+  customers: { label: 'Customers' },
+} satisfies ChartConfig;
 
 export type AgentOverviewCommonTopic = {
   topicId: string;
@@ -22,21 +41,94 @@ export type AgentOverviewCommonTopic = {
   description: string | null;
 };
 
-function buildTopicRows(
-  topics: AgentOverviewCommonTopic[],
-  expanded: boolean,
-): AnalyticsHorizontalBarDatum[] {
-  const limit = expanded
-    ? topics.length
-    : Math.min(COLLAPSED_TOPIC_COUNT, topics.length);
+export type AgentOverviewTopicChartDatum = {
+  key: string;
+  label: string;
+  customerCount: number;
+  percentage: number;
+  fill: string;
+  detail?: string;
+};
 
-  return topics.slice(0, limit).map((topic) => ({
+type AgentOverviewDistributionItem = {
+  key: string;
+  label: string;
+  percentage: number;
+  fill: string;
+};
+
+export function buildTopicChartData(
+  topics: AgentOverviewCommonTopic[],
+): AgentOverviewTopicChartDatum[] {
+  const totalCustomers = topics.reduce((sum, topic) => sum + topic.count, 0);
+
+  return topics.map((topic, index) => ({
     key: topic.topicId,
     label: topic.topic,
-    value: topic.count,
-    displayValue: formatWholeNumber(topic.count),
+    customerCount: topic.count,
+    percentage:
+      totalCustomers > 0
+        ? Number(((topic.count / totalCustomers) * 100).toFixed(2))
+        : 0,
+    fill: TOPIC_CHART_COLORS[index % TOPIC_CHART_COLORS.length],
     detail: topic.description ?? undefined,
   }));
+}
+
+function formatPercentage(percentage: number) {
+  return `${percentage % 1 === 0 ? percentage.toFixed(0) : percentage.toFixed(2)}%`;
+}
+
+function formatCustomerCount(count: number) {
+  return `${count.toLocaleString()} customer${count === 1 ? '' : 's'}`;
+}
+
+function buildSentimentChartData(
+  distribution: CustomerSentimentCounts,
+): AgentOverviewDistributionItem[] {
+  const total = CUSTOMER_SENTIMENTS.reduce(
+    (sum, sentiment) => sum + distribution[sentiment],
+    0,
+  );
+
+  return CUSTOMER_SENTIMENTS.map((sentiment) => ({
+    key: sentiment,
+    label: CUSTOMER_SENTIMENT_LABELS[sentiment],
+    percentage:
+      total > 0
+        ? Number(((distribution[sentiment] / total) * 100).toFixed(2))
+        : 0,
+    fill: CUSTOMER_SENTIMENT_CHART_COLORS[sentiment],
+  })).sort((left, right) => right.percentage - left.percentage);
+}
+
+function DistributionList({
+  items,
+}: {
+  items: AgentOverviewDistributionItem[];
+}) {
+  return (
+    <div className="flex min-h-0 w-full flex-col justify-start">
+      {items.map((item, index) => (
+        <Fragment key={item.key}>
+          <div className="flex w-full min-w-0 items-center justify-between gap-3 py-2 text-base leading-tight">
+            <div className="flex min-w-0 items-center gap-2">
+              <span
+                aria-hidden="true"
+                className="size-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: item.fill }}
+              />
+              <span className="min-w-0 truncate text-foreground">{item.label}</span>
+            </div>
+            <span className="shrink-0 tabular-nums text-muted-foreground">
+              {formatPercentage(item.percentage)}
+            </span>
+          </div>
+          {index < items.length - 1 ? <Separator /> : null}
+        </Fragment>
+      ))}
+    </div>
+  );
 }
 
 export function AgentOverviewTopicsAndSentiment({
@@ -46,73 +138,72 @@ export function AgentOverviewTopicsAndSentiment({
   topics: AgentOverviewCommonTopic[];
   sentimentDistribution: CustomerSentimentCounts;
 }) {
-  const [expanded, setExpanded] = useState(false);
-  const topicRows = useMemo(
-    () => buildTopicRows(topics, expanded),
-    [topics, expanded],
-  );
-  const canExpand = topics.length > COLLAPSED_TOPIC_COUNT;
-  const shellHeight = Math.max(
-    getTopicMapShellHeight(topicRows.length, { includeExpandAction: canExpand }),
-    420,
+  const topicChartData = useMemo(() => buildTopicChartData(topics), [topics]);
+  const sentimentChartData = useMemo(
+    () => buildSentimentChartData(sentimentDistribution),
+    [sentimentDistribution],
   );
 
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
       <AnalyticsChartShell
         title="Common Topics"
-        isEmpty={topicRows.length === 0}
+        className="bg-background"
+        isEmpty={topicChartData.length === 0}
         emptyMessage="Nothing available yet."
-        shellStyle={{ height: shellHeight }}
+        shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
-        <div className="flex min-h-0 flex-1 flex-col pt-4">
-          <AnalyticsHorizontalBarChart
-            data={topicRows}
-            opacityGradient={TOPIC_BAR_OPACITY_GRADIENT}
-            labelWidth={168}
-            align="start"
-            gapClass="gap-5"
-            barHeightClass="h-9"
-            barRadiusClass="rounded-sm"
-            textClassName="text-[15px]"
-            rowTooltip={(row) => (
-              <>
-                <span className="max-w-72 text-xs font-normal text-background/60">
-                  {formatWholeNumber(row.value)} conversation
-                  {row.value === 1 ? '' : 's'}
-                </span>
-                <span className="max-w-72 font-medium leading-snug">
-                  {row.label}
-                </span>
-                {row.detail ? (
-                  <span className="max-w-72 text-xs leading-relaxed text-background/60">
-                    {row.detail}
-                  </span>
-                ) : null}
-              </>
-            )}
-          />
-          {canExpand ? (
-            <div className="mt-auto flex justify-center px-4 pt-5">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setExpanded((current) => !current)}
-              >
-                {expanded ? 'Show less' : 'Show more'}
-              </Button>
-            </div>
-          ) : null}
+        <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+          <DistributionList items={topicChartData} />
+
+          <ChartContainer
+            config={topicChartConfig}
+            className="mx-auto aspect-square size-full max-h-[230px] max-w-[230px]"
+          >
+            <PieChart>
+              <ChartTooltip
+                cursor={false}
+                content={(
+                  <ChartTooltipContent
+                    hideLabel
+                    formatter={(value, _name, item) => {
+                      const topic = item.payload as AgentOverviewTopicChartDatum;
+                      return (
+                        <span className="font-medium text-foreground">
+                          {topic.label}: {formatCustomerCount(Number(value))}
+                        </span>
+                      );
+                    }}
+                  />
+                )}
+              />
+              <Pie
+                data={topicChartData}
+                dataKey="customerCount"
+                nameKey="label"
+                innerRadius="48%"
+                outerRadius="86%"
+                strokeWidth={3}
+                stroke="var(--background)"
+              />
+            </PieChart>
+          </ChartContainer>
         </div>
       </AnalyticsChartShell>
 
       <AnalyticsChartShell
         title="Customer Sentiment"
-        shellStyle={{ height: shellHeight }}
+        className="bg-background"
+        shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
-        <div className="flex min-h-0 flex-1 items-center justify-center px-2 [&_[data-slot=chart]]:!size-[min(360px,100%)]">
-          <AnalyticsCustomerSentimentPieChart distribution={sentimentDistribution} />
+        <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
+          <DistributionList items={sentimentChartData} />
+          <div className="flex min-h-0 flex-1 items-start justify-center [&_[data-slot=chart]]:!size-[min(230px,100%)]">
+            <AnalyticsCustomerSentimentPieChart
+              distribution={sentimentDistribution}
+              showLegend={false}
+            />
+          </div>
         </div>
       </AnalyticsChartShell>
     </div>
@@ -120,14 +211,14 @@ export function AgentOverviewTopicsAndSentiment({
 }
 
 export function AgentOverviewTopicsAndSentimentSkeleton() {
-  const shellHeight = getTopicMapShellHeight(COLLAPSED_TOPIC_COUNT, {
-    includeExpandAction: true,
-  });
-
   return (
     <div className={analyticsAdvancedOverviewGridClass}>
-      <AnalyticsChartShellSkeleton shellStyle={{ height: shellHeight }} />
-      <AnalyticsChartShellSkeleton shellStyle={{ height: shellHeight }} />
+      <AnalyticsChartShellSkeleton
+        shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
+      />
+      <AnalyticsChartShellSkeleton
+        shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
+      />
     </div>
   );
 }

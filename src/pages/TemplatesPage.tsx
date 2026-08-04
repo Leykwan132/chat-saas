@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useQuery } from 'convex/react';
+import { SiWhatsapp } from 'react-icons/si';
 import {
   Loader2,
   Plus,
@@ -103,8 +104,12 @@ function TemplatesTableSkeleton() {
 
 export default function TemplatesPage() {
   const { agentId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const channels = useQuery(api.channels.listForCurrentOrg, {});
+  const previewWithoutWhatsApp =
+    import.meta.env.DEV &&
+    new URLSearchParams(location.search).has('previewWithoutWhatsApp');
 
   const [channelId, setChannelId] = useState<Id<'channels'> | ''>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -174,13 +179,23 @@ export default function TemplatesPage() {
     <WhatsAppFeatureGate
       feature="Message Templates"
       connectionRequiredVariant="minimal"
+      bypassConnectionRequirement={previewWithoutWhatsApp}
     >
     <div data-templates-page className="mx-auto flex w-full max-w-7xl flex-col gap-6 animate-fade-in pb-12">
       <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
+          <div className="mb-2 flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1 rounded-md border border-border bg-muted/40 px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+              <SiWhatsapp className="size-3 text-[#25D366]" />
+              WhatsApp only
+            </span>
+          </div>
           <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground leading-tight">
             Message templates
           </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create and manage approved WhatsApp templates for your customer messages.
+          </p>
         </div>
         <div className="flex items-center gap-2 mt-4 md:mt-0">
           <Button
