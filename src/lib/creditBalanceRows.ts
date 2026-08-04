@@ -1,6 +1,6 @@
 export type CreditBalanceRow = {
   key: 'plan' | 'additional' | 'referral';
-  label: 'Plan' | 'Additional' | 'Referral';
+  label: 'Plan' | 'Top-ups' | 'Referral';
   remaining: number;
   granted: number;
 };
@@ -28,7 +28,7 @@ export function buildCreditBalanceRows(
   if (input.additionalRemaining > 0) {
     rows.push({
       key: 'additional',
-      label: 'Additional',
+      label: 'Top-ups',
       remaining: input.additionalRemaining,
       granted: input.additionalGranted,
     });

@@ -15,7 +15,7 @@ test('keeps plan, additional, and referral balances separate', () => {
     { key: 'plan', label: 'Plan', remaining: 420, granted: 500 },
     {
       key: 'additional',
-      label: 'Additional',
+      label: 'Top-ups',
       remaining: 2000,
       granted: 2000,
     },
