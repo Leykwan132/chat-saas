@@ -48,7 +48,7 @@ export function WebWidgetTraditionalPreview({
               {iconUrl ? <img className="size-7 object-contain" src={iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}
               <span className="truncate">{label || 'Chat with us'}</span>
             </a>
-            {poweredBy ? <span className="text-xs text-muted-foreground">Powered by Kilobot</span> : null}
+            {poweredBy ? <span className="text-xs text-muted-foreground">Powered by <a className="hover:text-foreground hover:underline" href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
           </div>
         </div>
       </WebWidgetPreviewFrame>
