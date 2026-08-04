@@ -15,6 +15,7 @@
       ".pill:hover{transform:translateY(-2px)}.pill:focus-visible{outline:3px solid #111827;outline-offset:3px}",
       ".icon{display:flex;width:34px;height:34px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:999px;overflow:hidden}.icon svg,.icon img{display:block;width:100%;height:100%;object-fit:contain}",
       ".label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Google Sans Flex',sans-serif;font-size:15px;font-weight:400;line-height:1.2}.brand{align-self:center;color:#6b7280;font-size:11px;line-height:1.2}.brand a{color:inherit;text-decoration:none}.brand a:hover{text-decoration:underline}",
+      "@media(max-width:480px){.wrap{right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));gap:6px}.pill{gap:8px;padding:7px 14px 7px 8px}.icon{width:30px;height:30px}.label{font-size:14px}.brand{font-size:10px}}",
       "@media(prefers-reduced-motion:reduce){.pill{transition:none}.pill:hover{transform:none}}",
       "</style>",
       "<div class='wrap'><a class='pill' rel='noopener noreferrer'><span class='icon'></span><span class='label'></span></a><span class='brand'>Powered by <a href='https://kilobot.app/' target='_blank' rel='noopener noreferrer'>Kilobot</a></span></div>",
@@ -28,14 +29,7 @@
     pill.style.setProperty("--foreground-color", config.foregroundColor);
     pill.setAttribute("aria-label", config.label + " on WhatsApp");
     label.textContent = config.label;
-    if (config.iconUrl) {
-      var image = document.createElement("img");
-      image.src = config.iconUrl;
-      image.alt = "";
-      icon.appendChild(image);
-    } else {
-      icon.innerHTML = whatsappIcon;
-    }
+    icon.innerHTML = whatsappIcon;
     brand.hidden = !config.poweredBy;
   }
 
