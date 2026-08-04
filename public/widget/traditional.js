@@ -8,13 +8,13 @@
     var root = host.attachShadow({ mode: "open" });
     root.innerHTML = [
       "<style>",
-      "@import url('https://fonts.googleapis.com/css2?family=Gilda+Display&display=swap');",
+      "@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex&display=swap');",
       ":host{all:initial;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}",
       ".wrap{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:2147483647;display:flex;flex-direction:column;align-items:flex-end;gap:8px}",
       ".pill{display:flex;max-width:min(calc(100vw - 36px),320px);align-items:center;gap:10px;border:0;border-radius:999px;background:var(--main-color);color:var(--foreground-color);padding:8px 18px 8px 9px;text-decoration:none;transition:transform .2s ease}",
       ".pill:hover{transform:translateY(-2px)}.pill:focus-visible{outline:3px solid #111827;outline-offset:3px}",
       ".icon{display:flex;width:34px;height:34px;flex:0 0 auto;align-items:center;justify-content:center;border-radius:999px;overflow:hidden}.icon svg,.icon img{display:block;width:100%;height:100%;object-fit:contain}",
-      ".label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Gilda Display',serif;font-size:15px;font-weight:400;line-height:1.2}.brand{align-self:center;color:#6b7280;font-size:11px;line-height:1.2}.brand a{color:inherit;text-decoration:none}.brand a:hover{text-decoration:underline}",
+      ".label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'Google Sans Flex',sans-serif;font-size:15px;font-weight:400;line-height:1.2}.brand{align-self:center;color:#6b7280;font-size:11px;line-height:1.2}.brand a{color:inherit;text-decoration:none}.brand a:hover{text-decoration:underline}",
       "@media(prefers-reduced-motion:reduce){.pill{transition:none}.pill:hover{transform:none}}",
       "</style>",
       "<div class='wrap'><a class='pill' rel='noopener noreferrer'><span class='icon'></span><span class='label'></span></a><span class='brand'>Powered by <a href='https://kilobot.app/' target='_blank' rel='noopener noreferrer'>Kilobot</a></span></div>",

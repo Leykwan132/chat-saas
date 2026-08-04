@@ -44,9 +44,9 @@ export function WebWidgetTraditionalPreview({
       <WebWidgetPreviewFrame device={previewDevice} onPointerDownCapture={() => undefined}>
         <div className={cn('relative flex h-full w-full items-end', mobilePreview ? 'mx-auto max-w-[390px]' : 'max-w-[460px] ml-auto')}>
           <div className="absolute bottom-0 right-0 flex flex-col items-center gap-2">
-            <a className="flex max-w-[min(100%,320px)] items-center gap-2 rounded-full px-4 py-2.5 text-sm font-normal" style={{ backgroundColor: mainColor, color: foregroundColor }} href={destinationUrl} target="_blank" rel="noreferrer">
+            <a className="flex max-w-[min(100%,320px)] items-center gap-2 rounded-full px-4 py-2.5 text-sm font-normal" style={{ backgroundColor: mainColor, color: foregroundColor, fontFamily: 'Google Sans Flex, sans-serif' }} href={destinationUrl} target="_blank" rel="noreferrer">
               {iconUrl ? <img className="size-7 object-contain" src={iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}
-              <span className="truncate font-title">{label || 'Chat with us'}</span>
+              <span className="truncate">{label || 'Chat with us'}</span>
             </a>
             {poweredBy ? <span className="text-xs text-muted-foreground">Powered by <a className="hover:text-foreground hover:underline" href="https://kilobot.app/" target="_blank" rel="noreferrer">Kilobot</a></span> : null}
           </div>
