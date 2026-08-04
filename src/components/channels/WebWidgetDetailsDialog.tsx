@@ -92,7 +92,6 @@ export function WebWidgetDetailsDialog({
                 agentId={typedAgentId}
                 publicKey={settings.publicKey}
                 settings={settings.traditional}
-                active={settings.activeMode === 'traditional'}
               />
             </TabsContent>
           </Tabs>

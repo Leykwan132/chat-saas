@@ -33,14 +33,12 @@ type WebWidgetTraditionalPanelProps = {
   agentId: Id<'agents'> | undefined;
   publicKey: string;
   settings: TraditionalWidgetSettings;
-  active: boolean;
 };
 
 export function WebWidgetTraditionalPanel({
   agentId,
   publicKey,
   settings,
-  active,
 }: WebWidgetTraditionalPanelProps) {
   const { openUpgradeModal } = useUpgradeModal();
   const updateTraditionalSettings = useMutation(api.webWidget.updateTraditionalSettings);
@@ -57,27 +55,25 @@ export function WebWidgetTraditionalPanel({
   const snippet = buildWebWidgetSnippet(publicKey);
   const valid = label.trim().length >= 1 && label.trim().length <= 40 && prefillMessage.trim().length >= 1 && prefillMessage.trim().length <= 500 && /^#[0-9A-Fa-f]{6}$/.test(mainColor);
 
-  const save = () => {
-    if (!agentId || !valid || saving) return;
-    setSaving(true);
-    void updateTraditionalSettings({
+  const publishTraditional = async () => {
+    if (!agentId || !settings.canActivate || !valid) {
+      throw new Error('Complete the Traditional widget settings before installing it.');
+    }
+    await updateTraditionalSettings({
       agentId,
       label: label.trim(),
       prefillMessage: prefillMessage.trim(),
       mainColor,
       hidePoweredBy,
-    })
-      .then(() => toast.success('Traditional widget saved'))
-      .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
-      .finally(() => setSaving(false));
+    });
+    await activateMode({ agentId, mode: 'traditional' });
   };
 
-  const activate = () => {
-    if (!agentId || !settings.canActivate || saving) return;
+  const install = (action: () => Promise<void>, successMessage: string) => {
+    if (saving) return;
     setSaving(true);
-    void updateTraditionalSettings({ agentId, label: label.trim(), prefillMessage: prefillMessage.trim(), mainColor, hidePoweredBy })
-      .then(() => activateMode({ agentId, mode: 'traditional' }))
-      .then(() => toast.success('Traditional widget is now active'))
+    void Promise.all([publishTraditional(), action()])
+      .then(() => toast.success(successMessage))
       .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
       .finally(() => setSaving(false));
   };
@@ -115,8 +111,7 @@ export function WebWidgetTraditionalPanel({
           <Field><FieldLabel>Prefilled WhatsApp message</FieldLabel><textarea value={prefillMessage} maxLength={500} className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" onChange={(event) => setPrefillMessage(event.target.value)} /><p className="text-xs text-muted-foreground">1–500 characters</p></Field>
           <div className="grid gap-6 sm:grid-cols-2"><Field><FieldLabel>Main color</FieldLabel><div className="flex gap-2"><Input value={mainColor} pattern="#[0-9A-Fa-f]{6}" onChange={(event) => setMainColor(event.target.value)} /><input aria-label="Traditional main color picker" type="color" value={/^#[0-9A-Fa-f]{6}$/.test(mainColor) ? mainColor : '#25D366'} className="size-10 shrink-0 rounded border border-input p-1" onChange={(event) => setMainColor(event.target.value.toUpperCase())} /></div></Field><Field><FieldLabel>Icon</FieldLabel><div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-full bg-muted">{settings.iconUrl ? <img className="size-8 object-contain" src={settings.iconUrl} alt="" /> : <TraditionalWhatsAppIcon />}</div><Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => document.getElementById('traditional-widget-icon')?.click()}><ImagePlus className="size-4" />{uploading ? 'Uploading' : 'Upload'}</Button>{settings.iconUrl ? <Button type="button" variant="ghost" size="icon-sm" aria-label="Remove Traditional icon" onClick={() => agentId && void removeTraditionalIcon({ agentId })}><Trash2 className="size-4" /></Button> : null}<input id="traditional-widget-icon" className="hidden" type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => uploadIcon(event.target.files?.[0])} /></div></Field></div>
           <Field orientation="horizontal"><div className="flex-1"><FieldLabel>Hide Powered by Kilobot</FieldLabel><p className="text-xs text-muted-foreground">Available on paid plans.</p></div><Switch checked={hidePoweredBy} onCheckedChange={(next) => { if (next && !settings.canHideBranding) { openUpgradeModal(); return; } setHidePoweredBy(next); }} /></Field>
-          <div className="flex flex-wrap gap-2"><Button type="button" onClick={save} disabled={!valid || saving}>Save</Button><Button type="button" variant="secondary" onClick={activate} disabled={!valid || !settings.canActivate || saving}>{active ? 'Active' : 'Activate Traditional'}</Button></div>
-          {settings.canActivate ? <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => void navigator.clipboard.writeText(snippet).then(() => toast.success('Installation copied'))} onDownload={() => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }} /></Field> : null}
+          {settings.canActivate ? <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => install(() => navigator.clipboard.writeText(snippet), 'Traditional installation copied')} onDownload={() => install(async () => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }, 'Traditional installation downloaded')} /></Field> : null}
         </FieldGroup>
       </div>
       <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><WebWidgetTraditionalPreview className="min-h-[620px] lg:min-h-0" iconUrl={settings.iconUrl} label={label} mainColor={mainColor} phoneNumber={settings.displayPhoneNumber} prefillMessage={prefillMessage} poweredBy={!hidePoweredBy} /></div>
