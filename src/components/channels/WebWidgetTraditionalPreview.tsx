@@ -44,7 +44,7 @@ export function WebWidgetTraditionalPreview({
       <WebWidgetPreviewFrame device={previewDevice} onPointerDownCapture={() => undefined}>
         <div className={cn('relative flex h-full w-full items-end', mobilePreview ? 'mx-auto max-w-[390px]' : 'max-w-[460px] ml-auto')}>
           <div className="absolute bottom-0 right-0 flex flex-col items-center gap-2">
-            <a className="flex max-w-[min(100%,320px)] items-center gap-2 rounded-full px-4 py-2.5 text-sm font-normal shadow-lg" style={{ backgroundColor: mainColor, color: foregroundColor }} href={destinationUrl} target="_blank" rel="noreferrer">
+            <a className="flex max-w-[min(100%,320px)] items-center gap-2 rounded-full px-4 py-2.5 text-sm font-normal" style={{ backgroundColor: mainColor, color: foregroundColor }} href={destinationUrl} target="_blank" rel="noreferrer">
               {iconUrl ? <img className="size-7 object-contain" src={iconUrl} alt="" /> : <TraditionalWhatsAppIcon className="size-7" />}
               <span className="truncate">{label || 'Chat with us'}</span>
             </a>
