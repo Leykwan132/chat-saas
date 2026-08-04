@@ -11,11 +11,11 @@
       "@import url('https://fonts.googleapis.com/css2?family=Google+Sans+Flex&display=swap');",
       ":host{all:initial;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}",
       ".wrap{position:fixed;right:max(18px,env(safe-area-inset-right,0px));bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:2147483647;display:flex;flex-direction:column;align-items:flex-end;gap:8px}",
-      ".pill{display:flex;max-width:min(calc(100vw - 36px),320px);align-items:center;gap:8px;border:4px solid var(--main-color);border-radius:999px;background:#fff;color:var(--main-color);padding:7px 14px 7px 8px;text-decoration:none}",
+      ".pill{display:flex;max-width:min(calc(100vw - 36px),320px);align-items:center;gap:4px;border:4px solid var(--main-color);border-radius:999px;background:#fff;color:var(--main-color);padding:7px 14px 7px 8px;text-decoration:none}",
       ".pill:focus-visible{outline:3px solid #111827;outline-offset:3px}",
       ".icon{display:flex;width:28px;height:28px;flex:0 0 auto;align-items:center;justify-content:center}.icon svg,.icon img{display:block;width:100%;height:100%;object-fit:contain}",
       ".label{overflow:hidden;color:#000;text-overflow:ellipsis;white-space:nowrap;font-family:'Google Sans Flex',sans-serif;font-size:14px;font-weight:400;line-height:1.2}.brand{align-self:center;color:#6b7280;font-size:10px;line-height:1.2}.brand a{color:inherit;text-decoration:none}",
-      "@media(max-width:480px){.wrap{right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));gap:6px}.pill{gap:8px;padding:7px 14px 7px 8px}.icon{width:28px;height:28px}.label{font-size:14px}.brand{font-size:10px}}",
+      "@media(max-width:480px){.wrap{right:max(14px,env(safe-area-inset-right,0px));bottom:max(14px,env(safe-area-inset-bottom,0px));gap:6px}.pill{gap:4px;padding:7px 14px 7px 8px}.icon{width:28px;height:28px}.label{font-size:14px}.brand{font-size:10px}}",
       "</style>",
       "<div class='wrap'><a class='pill' rel='noopener noreferrer'><span class='icon'></span><span class='label'></span></a><span class='brand'>Powered by <a href='https://kilobot.app/' target='_blank' rel='noopener noreferrer'>Kilobot</a></span></div>",
     ].join("");
