@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import { useMutation } from 'convex/react';
+import { Link } from 'react-router';
+import { SiWhatsapp } from 'react-icons/si';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
+import { Alert, AlertAction, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
@@ -68,7 +72,7 @@ export function WebWidgetTraditionalPanel({
   return (
     <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
       <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
-        {!settings.canActivate ? <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4 text-sm text-muted-foreground">Connect a WhatsApp channel with an account name and phone number before activating Traditional.</div> : null}
+        {!settings.canActivate ? <Alert className="border-[#25D366]/30 bg-[#25D366]/5"><SiWhatsapp className="size-5 text-[#25D366]" /><AlertTitle>Connect WhatsApp to activate Traditional</AlertTitle><AlertDescription>Traditional opens WhatsApp directly. Connect an account with a name and phone number to activate it.</AlertDescription><AlertAction className="static col-start-2 row-start-3 mt-3 w-fit"><Button asChild size="sm"><Link to={`/dashboard/${agentId}/channels`}><SiWhatsapp data-icon="inline-start" />Connect Channel</Link></Button></AlertAction></Alert> : null}
         <FieldGroup>
           {settings.canActivate ? <><Field><FieldLabel>WhatsApp account</FieldLabel><Input value={settings.displayUsername} readOnly /></Field><Field><FieldLabel>WhatsApp number</FieldLabel><Input value={settings.displayPhoneNumber} readOnly /></Field></> : null}
           <Field><FieldLabel>Pill label</FieldLabel><Input value={label} maxLength={40} onChange={(event) => setLabel(event.target.value)} /><p className="text-xs text-muted-foreground">1–40 characters</p></Field>
