@@ -127,7 +127,7 @@ export function WebWidgetPreview({
       <div className="flex flex-wrap items-center justify-between gap-3 px-1">
         <div className="flex items-center gap-2">
           <Globe className="size-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Preview</span>
+          <span className="font-title text-base font-normal">Preview</span>
         </div>
         <WebWidgetPreviewDeviceToggle
           value={previewDevice}
