@@ -1,3 +1,4 @@
+import { Lightbulb } from 'lucide-react';
 import { ConnectWhatsAppButton } from '@/components/ConnectWhatsAppButton';
 import { ConnectInstagramButton } from '@/components/ConnectInstagramButton';
 import { ConnectMessengerButton } from '@/components/ConnectMessengerButton';
@@ -47,11 +48,28 @@ export function AvailableChannelCard({
 
         <div
           className={cn(
-            'mt-auto flex justify-end',
+            'mt-auto flex justify-end gap-2',
             '[&_button]:h-6 [&_button]:rounded-md [&_button]:px-2.5 [&_button]:text-[11px] [&_button]:font-medium [&_button]:shadow-none',
             '[&>div]:contents',
           )}
         >
+          {service === 'whatsapp' ? (
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className={connectTriggerClass}
+            >
+              <a
+                href="https://docs.kilobot.app/channels/whatsapp#connect-with-coexistence"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Lightbulb data-icon="inline-start" />
+                Guide
+              </a>
+            </Button>
+          ) : null}
           {disabled ? (
             <Button
               type="button"

@@ -5,7 +5,7 @@ import { BlurFade } from '@/components/ui/blur-fade';
 import { LandingAnnouncementPill } from './LandingAnnouncementPill';
 import { LandingAppPreview } from './LandingAppPreview';
 
-const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/Kilobot%20Landing%20-%20Mobile%20-%202.svg';
+const LANDING_MOBILE_IMAGE = 'https://storage.kilobot.app/mob-cover-image.png';
 
 function PrimaryCta({
   hasSession,
