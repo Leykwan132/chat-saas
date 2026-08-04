@@ -82,7 +82,6 @@ export const updateTraditionalSettings = mutation({
     agentId: v.id("agents"),
     label: v.optional(v.string()),
     prefillMessage: v.optional(v.string()),
-    mainColor: v.optional(v.string()),
     hidePoweredBy: v.optional(v.boolean()),
   },
   returns: v.null(),

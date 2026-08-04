@@ -6,7 +6,6 @@ import {
   DEFAULT_TRADITIONAL_WIDGET_LABEL,
   DEFAULT_WEB_WIDGET_MODE,
   defaultTraditionalWidgetMessage,
-  normalizeTraditionalWidgetColor,
   normalizeTraditionalWidgetLabel,
   normalizeTraditionalWidgetMessage,
   traditionalWidgetForeground,
@@ -30,21 +29,8 @@ function resolveTraditionalValues(
     (channel?.displayUsername
       ? defaultTraditionalWidgetMessage(channel.displayUsername)
       : "");
-  const mainColor = normalizeTraditionalWidgetColor(
-    settings.traditionalMainColor ?? DEFAULT_TRADITIONAL_WIDGET_COLOR,
-  );
+  const mainColor = DEFAULT_TRADITIONAL_WIDGET_COLOR;
   return { label, prefillMessage, mainColor };
-}
-
-async function resolveTraditionalIconUrl(
-  ctx: QueryCtx | MutationCtx,
-  settings: Doc<"webWidgetSettings">,
-  allowed: boolean,
-) {
-  if (!allowed || settings.traditionalIconStorageId === undefined) {
-    return undefined;
-  }
-  return (await ctx.storage.getUrl(settings.traditionalIconStorageId)) ?? undefined;
 }
 
 export async function traditionalDashboardConfig(
@@ -61,8 +47,6 @@ export async function traditionalDashboardConfig(
     displayUsername: channel?.displayUsername,
     displayPhoneNumber: channel?.displayPhoneNumber,
     canActivate: Boolean(channel?.displayUsername && channel.displayPhoneNumber),
-    iconUrl: await resolveTraditionalIconUrl(ctx, settings, canUseCustomIcon),
-    canUseCustomIcon,
     canHideBranding: canUseCustomIcon,
     hidePoweredBy,
     poweredBy: !hidePoweredBy,
@@ -89,7 +73,6 @@ export async function publicTraditionalConfig(
     label: dashboard.label,
     mainColor: dashboard.mainColor,
     foregroundColor: dashboard.foregroundColor,
-    iconUrl: dashboard.iconUrl,
     poweredBy: dashboard.poweredBy,
     destinationUrl: traditionalWhatsAppUrl(channel.displayPhoneNumber, prefillMessage),
   };
@@ -101,7 +84,6 @@ export async function updateTraditionalWidgetSettings(
     agentId: Id<"agents">;
     label?: string;
     prefillMessage?: string;
-    mainColor?: string;
     hidePoweredBy?: boolean;
   },
 ) {
@@ -120,7 +102,6 @@ export async function updateTraditionalWidgetSettings(
   const patch: Partial<Doc<"webWidgetSettings">> = { updatedAt: Date.now() };
   if (args.label !== undefined) patch.traditionalLabel = normalizeTraditionalWidgetLabel(args.label);
   if (args.prefillMessage !== undefined) patch.traditionalPrefillMessage = normalizeTraditionalWidgetMessage(args.prefillMessage);
-  if (args.mainColor !== undefined) patch.traditionalMainColor = normalizeTraditionalWidgetColor(args.mainColor);
   if (args.hidePoweredBy !== undefined) patch.traditionalHidePoweredBy = args.hidePoweredBy;
   if (Object.keys(patch).length === 1) throw new Error("No Traditional settings changes provided");
   await ctx.db.patch(settings._id, patch);
@@ -146,7 +127,6 @@ export async function activateWebWidgetMode(
     mode: args.mode,
     traditionalLabel: values.label,
     traditionalPrefillMessage: normalizeTraditionalWidgetMessage(values.prefillMessage),
-    traditionalMainColor: values.mainColor,
     updatedAt: Date.now(),
   });
 }
