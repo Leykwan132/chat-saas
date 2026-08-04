@@ -200,7 +200,7 @@ export function EarlyAdopterApplicationForm() {
                 </Field>
                 <Field>
                   <FieldLabel className="text-zinc-700 dark:text-zinc-200">
-                    What is your usecase? <span className="text-red-500">*</span>
+                    What is your use case? <span className="text-red-500">*</span>
                   </FieldLabel>
                   <Textarea
                     value={useCase}
