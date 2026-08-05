@@ -1,12 +1,25 @@
 import { afterEach, expect, test, vi } from "vitest";
 import {
   handleTelegramWebhookRequest,
+  requireNotificationBotToken,
   sendTelegramContactRequest,
   sendTelegramNotificationReady,
 } from "./telegramWebhook";
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+test("uses the dedicated notification bot token", () => {
+  expect(
+    requireNotificationBotToken({
+      BOT_TOKEN: "legacy-bot-token",
+      NOTIFICATION_BOT_TOKEN: "notification-bot-token",
+    }),
+  ).toBe("notification-bot-token");
+  expect(() => requireNotificationBotToken({ BOT_TOKEN: "legacy-bot-token" })).toThrow(
+    "NOTIFICATION_BOT_TOKEN is not configured",
+  );
 });
 
 test("logs request details and message text for an authenticated update", async () => {

@@ -18,6 +18,16 @@ type TelegramContactMetadata = {
   hasVcard: boolean;
 };
 
+export function requireNotificationBotToken(
+  environment: Record<string, string | undefined>,
+): string {
+  const token = environment.NOTIFICATION_BOT_TOKEN?.trim();
+  if (!token) {
+    throw new Error("NOTIFICATION_BOT_TOKEN is not configured");
+  }
+  return token;
+}
+
 const TELEGRAM_UPDATE_EVENT_TYPES = [
   "message",
   "edited_message",
@@ -234,17 +244,11 @@ export const telegramWebhook = httpAction(async (_ctx, request) => {
     request,
     process.env.TELEGRAM_WEBHOOK_SECRET,
     async (chatId) => {
-      const botToken = process.env.BOT_TOKEN;
-      if (!botToken) {
-        throw new Error("BOT_TOKEN is not configured");
-      }
+      const botToken = requireNotificationBotToken(process.env);
       await sendTelegramContactRequest(botToken, chatId);
     },
     async (chatId) => {
-      const botToken = process.env.BOT_TOKEN;
-      if (!botToken) {
-        throw new Error("BOT_TOKEN is not configured");
-      }
+      const botToken = requireNotificationBotToken(process.env);
       await sendTelegramNotificationReady(botToken, chatId);
     },
   );
