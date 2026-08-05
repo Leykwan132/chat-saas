@@ -4,6 +4,7 @@ type TelegramWebhookMetadata = {
   updateId: number | null;
   eventType: string;
   chatId: number | null;
+  chatType: string | null;
   senderId: number | null;
   messageText: string | null;
 };
@@ -43,6 +44,7 @@ function metadataForEvent(
 
   return {
     chatId: idFrom(chat),
+    chatType: typeof chat?.type === "string" ? chat.type : null,
     senderId: idFrom(sender),
     messageText:
       typeof event.text === "string"
@@ -62,6 +64,7 @@ export function extractTelegramWebhookMetadata(
       updateId: null,
       eventType: "unknown",
       chatId: null,
+      chatType: null,
       senderId: null,
       messageText: null,
     };
@@ -82,6 +85,7 @@ export function extractTelegramWebhookMetadata(
     updateId: asNumber(record.update_id),
     eventType: "unknown",
     chatId: null,
+    chatType: null,
     senderId: null,
     messageText: null,
   };
@@ -90,6 +94,7 @@ export function extractTelegramWebhookMetadata(
 export async function handleTelegramWebhookRequest(
   request: Request,
   expectedSecret: string | undefined,
+  onHiMessage?: (chatId: number) => Promise<void>,
 ): Promise<Response> {
   if (!expectedSecret) {
     console.error("[telegram-webhook] TELEGRAM_WEBHOOK_SECRET is not configured");
@@ -118,13 +123,61 @@ export async function handleTelegramWebhookRequest(
       request.headers.get("x-telegram-bot-api-secret-token"),
     ),
   });
-  console.log("[telegram-webhook] received", extractTelegramWebhookMetadata(update));
+  const metadata = extractTelegramWebhookMetadata(update);
+  console.log("[telegram-webhook] received", metadata);
+  if (
+    onHiMessage &&
+    metadata.eventType === "message" &&
+    metadata.chatType === "private" &&
+    metadata.chatId !== null &&
+    metadata.messageText?.trim().toLowerCase() === "hi"
+  ) {
+    await onHiMessage(metadata.chatId);
+  }
   return new Response(null, { status: 200 });
+}
+
+export async function sendTelegramContactRequest(
+  botToken: string,
+  chatId: number,
+): Promise<void> {
+  const response = await fetch(
+    `https://api.telegram.org/bot${botToken}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: "Please share your phone number so I can continue.",
+        reply_markup: {
+          keyboard: [[{ text: "Share phone number", request_contact: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }),
+    },
+  );
+  const result = (await response.json()) as {
+    ok?: boolean;
+    description?: string;
+  };
+  if (!response.ok || result.ok !== true) {
+    throw new Error(
+      `Telegram contact request failed: ${result.description ?? response.status}`,
+    );
+  }
 }
 
 export const telegramWebhook = httpAction(async (_ctx, request) => {
   return await handleTelegramWebhookRequest(
     request,
     process.env.TELEGRAM_WEBHOOK_SECRET,
+    async (chatId) => {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        throw new Error("TELEGRAM_BOT_TOKEN is not configured");
+      }
+      await sendTelegramContactRequest(botToken, chatId);
+    },
   );
 });
