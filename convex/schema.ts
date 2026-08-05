@@ -1,6 +1,10 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { appointmentBookingSessionStatusValidator } from "./appointmentBookingSessionStatus";
+import {
+  telegramRecipientStatusValidator,
+  telegramSubscriptionStatusValidator,
+} from "./telegramNotifications/validators";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import {
@@ -1515,6 +1519,36 @@ export default defineSchema({
     .index("by_conversationId", ["conversationId"])
     .index("by_calendarEventId", ["calendarEventId"])
     .index("by_agentId_and_updatedAt", ["agentId", "updatedAt"]),
+  telegramNotificationRecipients: defineTable({
+    phoneDigits: v.string(),
+    status: telegramRecipientStatusValidator,
+    verificationTokenHash: v.optional(v.string()),
+    verificationChatId: v.optional(v.string()),
+    telegramChatId: v.optional(v.string()),
+    telegramUserId: v.optional(v.string()),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    verifiedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_phoneDigits", ["phoneDigits"])
+    .index("by_verificationTokenHash", ["verificationTokenHash"])
+    .index("by_verificationChatId_and_updatedAt", ["verificationChatId", "updatedAt"])
+    .index("by_telegramChatId", ["telegramChatId"])
+    .index("by_telegramUserId", ["telegramUserId"]),
+  agentTelegramNotificationSubscriptions: defineTable({
+    agentId: v.id("agents"),
+    recipientId: v.id("telegramNotificationRecipients"),
+    status: telegramSubscriptionStatusValidator,
+    lastTestSentAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_agentId", ["agentId"])
+    .index("by_agentId_and_status", ["agentId", "status"])
+    .index("by_agentId_and_recipientId", ["agentId", "recipientId"])
+    .index("by_recipientId", ["recipientId"]),
   quickReplies: defineTable({
     teamId: v.id("teams"),
     title: v.string(),
