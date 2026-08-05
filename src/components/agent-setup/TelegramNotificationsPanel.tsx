@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Copy, Link2, Send, Trash2 } from 'lucide-react';
+import { Copy, Link2, MessageSquare, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -99,14 +99,14 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
-      <div className="grid gap-6 lg:grid-cols-2">
+    <section className="flex flex-col gap-6">
+      <div className="grid gap-8 lg:grid-cols-2">
         <div className="flex flex-col gap-3">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">Recipients List</h3>
+            <h3 className="text-base font-semibold tracking-tight">Recipients List</h3>
             <p className="text-xs text-muted-foreground">Add up to five numbers. Each person verifies their own Telegram account before receiving updates.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex w-full max-w-md gap-2">
             <PhoneInput
               defaultCountry="MY"
               international
@@ -177,29 +177,44 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
         </div>
         <div className="flex flex-col gap-3 lg:border-l lg:border-border lg:pl-6">
           <div className="space-y-1">
-            <h3 className="text-sm font-medium">Notification Updates</h3>
+            <h3 className="text-base font-semibold tracking-tight">Notification Types</h3>
             <p className="text-xs text-muted-foreground">Choose the fixed updates sent to every connected phone number.</p>
           </div>
           <div className="divide-y divide-border">
             {telegramNotificationOptions.map((option) => {
               const isEnabled = selectedKinds.includes(option.kind);
               return (
-                <div key={option.kind} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium">{option.label}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
+                <div key={option.kind} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
+                        <p className="text-sm font-medium">{option.label}</p>
+                      </div>
+                      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
+                      <Switch
+                        checked={isEnabled}
+                        onCheckedChange={(enabled) => void setNotificationKind(option.kind, enabled)}
+                        aria-label={`Send ${option.label.toLowerCase()} notifications`}
+                      />
+                    </div>
+                  </div>
+                  <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-muted-foreground">{option.preview}</pre>
+                  <div className="flex justify-end">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          className="mt-1 h-auto px-0 text-xs text-primary hover:bg-transparent hover:text-primary/80"
                           disabled={testingKind === option.kind || sendableSubscriptions.length === 0}
                         >
                           Send a test message
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent>
+                      <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Send to</DropdownMenuLabel>
                         <DropdownMenuGroup>
                           {sendableSubscriptions.map((subscription) => (
@@ -213,14 +228,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                         </DropdownMenuGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 self-center">
-                    <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
-                    <Switch
-                      checked={isEnabled}
-                      onCheckedChange={(enabled) => void setNotificationKind(option.kind, enabled)}
-                      aria-label={`Send ${option.label.toLowerCase()} notifications`}
-                    />
                   </div>
                 </div>
               );
