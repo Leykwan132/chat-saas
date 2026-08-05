@@ -8,6 +8,7 @@ import {
 } from "./whatsappWebhook";
 import { receive as instagramReceive } from "./instagramWebhook";
 import { receive as messengerReceive } from "./messengerWebhook";
+import { telegramWebhook } from "./telegramWebhook";
 import { authKit } from "./auth";
 import { decodeOAuthState, redirectResponse } from "./oauthShared";
 import {
@@ -222,6 +223,12 @@ http.route({
   path: "/webhook/workos",
   method: "POST",
   handler: workosWebhook,
+});
+
+http.route({
+  path: "/webhook/telegram",
+  method: "POST",
+  handler: telegramWebhook,
 });
 
 const whatsappDispatch = httpAction(async (ctx, req) => {
