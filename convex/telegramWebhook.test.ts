@@ -176,7 +176,7 @@ test("sends a contact-sharing keyboard through Telegram", async () => {
   expect(options?.method).toBe("POST");
   expect(JSON.parse(String(options?.body))).toEqual({
     chat_id: 301,
-    text: "To subscribe to notifications, please share your phone number using the button below.",
+    text: "Please share your phone number for verification so we can subscribe you to notifications.",
     reply_markup: {
       keyboard: [[{ text: "Share phone number", request_contact: true }]],
       resize_keyboard: true,
