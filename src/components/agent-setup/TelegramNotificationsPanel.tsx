@@ -105,7 +105,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   }
 
   return (
-    <section className="flex flex-col gap-8">
+    <section className="grid gap-8 lg:grid-cols-2">
       <div className="flex flex-col gap-3">
         <div className="space-y-1">
           <h3 className="text-base font-semibold tracking-tight">Recipients List</h3>
@@ -180,7 +180,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
           ))}
         </div>
       </div>
-      <div className="flex flex-col gap-3 border-t border-border pt-8">
+      <div className="flex flex-col gap-3 border-t border-border pt-8 lg:border-t-0 lg:border-l lg:border-border lg:pl-8 lg:pt-0">
         <div className="space-y-1">
           <h3 className="text-base font-semibold tracking-tight">Notification Types</h3>
           <p className="text-xs text-muted-foreground">Choose the fixed updates sent to every connected phone number.</p>
