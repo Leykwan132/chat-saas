@@ -100,6 +100,15 @@ export async function handleTelegramWebhookRequest(
     return new Response("invalid json", { status: 400 });
   }
 
+  console.log("[telegram-webhook] received request", {
+    method: request.method,
+    url: request.url,
+    contentType: request.headers.get("content-type"),
+    userAgent: request.headers.get("user-agent"),
+    hasSecretToken: Boolean(
+      request.headers.get("x-telegram-bot-api-secret-token"),
+    ),
+  });
   console.log("[telegram-webhook] received", extractTelegramWebhookMetadata(update));
   return new Response(null, { status: 200 });
 }

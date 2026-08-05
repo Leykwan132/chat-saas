@@ -29,8 +29,19 @@ test("logs safe metadata for an authenticated message update", async () => {
   );
 
   expect(response.status).toBe(200);
-  expect(log).toHaveBeenCalledOnce();
-  expect(log).toHaveBeenCalledWith("[telegram-webhook] received", {
+  expect(log).toHaveBeenCalledTimes(2);
+  expect(log).toHaveBeenNthCalledWith(
+    1,
+    "[telegram-webhook] received request",
+    {
+      method: "POST",
+      url: "https://example.com/webhook/telegram",
+      contentType: "application/json",
+      userAgent: null,
+      hasSecretToken: true,
+    },
+  );
+  expect(log).toHaveBeenNthCalledWith(2, "[telegram-webhook] received", {
     updateId: 101,
     eventType: "message",
     chatId: 300,
