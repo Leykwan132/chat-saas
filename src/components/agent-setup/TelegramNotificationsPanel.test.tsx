@@ -30,11 +30,10 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('Booking updated');
   expect(markup).toContain('Booking cancelled');
   expect(markup).toContain('Sending');
-  expect(markup).toContain('Send a test message');
   expect(markup.indexOf('Notification Types')).toBeGreaterThan(markup.indexOf('Recipients List'));
 
   const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
-  expect(source).toContain('lg:border-l lg:border-border lg:pl-6');
+  expect(source).toContain('border-t border-border pt-8');
   expect(source).not.toContain('rounded-md border border-border p-3');
   expect(source).toContain('justify-between');
   expect(source).not.toContain('whitespace-pre-wrap rounded-md bg-muted p-2');
@@ -47,4 +46,11 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('MessageSquare');
   expect(source).toContain('option.preview');
   expect(source).toContain('justify-end');
+  expect(source).not.toContain('lg:grid-cols-2');
+  expect(source).toContain('Accordion');
+  expect(source).toContain('AccordionItem');
+  expect(source).toContain('AccordionContent');
+  expect(source).toContain('type="multiple"');
+  expect(source).toContain('variant="secondary"');
+  expect(source).toContain('Send a test message');
 });
