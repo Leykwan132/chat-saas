@@ -46,12 +46,60 @@ test("logs request details and message text for an authenticated update", async 
   );
   expect(log).toHaveBeenNthCalledWith(2, "[telegram-webhook] received", {
     updateId: 101,
-      eventType: "message",
-      chatId: 300,
-      chatType: "private",
-      senderId: 400,
-      messageText: "private message",
-    });
+    eventType: "message",
+    chatId: 300,
+    chatType: "private",
+    senderId: 400,
+    messageText: "private message",
+    contact: null,
+  });
+});
+
+test("logs contact data when a user shares their phone number", async () => {
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+  const response = await handleTelegramWebhookRequest(
+    new Request("https://example.com/webhook/telegram", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-telegram-bot-api-secret-token": "test-secret",
+      },
+      body: JSON.stringify({
+        update_id: 103,
+        message: {
+          message_id: 4,
+          chat: { id: 302, type: "private" },
+          from: { id: 402 },
+          contact: {
+            phone_number: "+60123456789",
+            first_name: "Alex",
+            last_name: "Tan",
+            user_id: 502,
+            vcard: "BEGIN:VCARD",
+          },
+        },
+      }),
+    }),
+    "test-secret",
+  );
+
+  expect(response.status).toBe(200);
+  expect(log).toHaveBeenNthCalledWith(2, "[telegram-webhook] received", {
+    updateId: 103,
+    eventType: "message",
+    chatId: 302,
+    chatType: "private",
+    senderId: 402,
+    messageText: null,
+    contact: {
+      phoneNumber: "+60123456789",
+      firstName: "Alex",
+      lastName: "Tan",
+      userId: 502,
+      hasVcard: true,
+    },
+  });
 });
 
 test("requests contact details when a private user says Hi", async () => {
@@ -97,7 +145,7 @@ test("sends a contact-sharing keyboard through Telegram", async () => {
   expect(options?.method).toBe("POST");
   expect(JSON.parse(String(options?.body))).toEqual({
     chat_id: 301,
-    text: "Please share your phone number so I can continue.",
+    text: "Thanks for reaching out! Could you share your phone number so we can help you better?",
     reply_markup: {
       keyboard: [[{ text: "Share phone number", request_contact: true }]],
       resize_keyboard: true,

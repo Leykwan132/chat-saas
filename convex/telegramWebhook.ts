@@ -7,6 +7,15 @@ type TelegramWebhookMetadata = {
   chatType: string | null;
   senderId: number | null;
   messageText: string | null;
+  contact: TelegramContactMetadata | null;
+};
+
+type TelegramContactMetadata = {
+  phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  userId: number | null;
+  hasVcard: boolean;
 };
 
 const TELEGRAM_UPDATE_EVENT_TYPES = [
@@ -31,6 +40,10 @@ function asNumber(value: unknown): number | null {
   return typeof value === "number" ? value : null;
 }
 
+function asString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
 function idFrom(value: Record<string, unknown> | null): number | null {
   return asNumber(value?.id);
 }
@@ -41,6 +54,7 @@ function metadataForEvent(
   const message = asRecord(event.message);
   const chat = asRecord(event.chat) ?? asRecord(message?.chat);
   const sender = asRecord(event.from) ?? asRecord(message?.from);
+  const contact = asRecord(event.contact) ?? asRecord(message?.contact);
 
   return {
     chatId: idFrom(chat),
@@ -52,6 +66,15 @@ function metadataForEvent(
         : typeof message?.text === "string"
           ? message.text
           : null,
+    contact: contact
+      ? {
+          phoneNumber: asString(contact.phone_number),
+          firstName: asString(contact.first_name),
+          lastName: asString(contact.last_name),
+          userId: asNumber(contact.user_id),
+          hasVcard: typeof contact.vcard === "string" && contact.vcard.length > 0,
+        }
+      : null,
   };
 }
 
@@ -67,6 +90,7 @@ export function extractTelegramWebhookMetadata(
       chatType: null,
       senderId: null,
       messageText: null,
+      contact: null,
     };
   }
 
@@ -88,6 +112,7 @@ export function extractTelegramWebhookMetadata(
     chatType: null,
     senderId: null,
     messageText: null,
+    contact: null,
   };
 }
 
@@ -148,7 +173,7 @@ export async function sendTelegramContactRequest(
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: "Please share your phone number so I can continue.",
+        text: "Thanks for reaching out! Could you share your phone number so we can help you better?",
         reply_markup: {
           keyboard: [[{ text: "Share phone number", request_contact: true }]],
           resize_keyboard: true,
