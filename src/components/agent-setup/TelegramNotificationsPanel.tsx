@@ -220,7 +220,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
             return (
               <AccordionItem key={option.kind} value={option.kind}>
                 <div
-                  className="flex w-full cursor-pointer items-start transition-colors hover:bg-muted/60"
+                  className="flex w-full cursor-pointer items-start rounded-md px-3 transition-colors hover:bg-muted/60"
                   onClick={(event) => {
                     const target = event.target;
                     if (target instanceof Element && target.closest('[data-slot="accordion-trigger"], [data-slot="switch"]')) return;
@@ -236,7 +236,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                       <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
                     </span>
                   </AccordionTrigger>
-                  <div className="ml-auto flex shrink-0 items-center gap-2 py-4 pr-4">
+                  <div className="ml-auto flex shrink-0 items-center gap-2 py-4">
                     <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
                     <Switch
                       checked={isEnabled}
@@ -245,7 +245,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                     />
                   </div>
                 </div>
-                <AccordionContent>
+                <AccordionContent className="px-3">
                   <div className="flex flex-col gap-3 pt-1">
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Sample message</p>
