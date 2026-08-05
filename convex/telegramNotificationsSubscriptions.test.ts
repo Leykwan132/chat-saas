@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
+
+beforeEach(() => vi.stubEnv("NOTIFICATION_BOT_USERNAME", "notifications_kilobot"));
+afterEach(() => vi.unstubAllEnvs());
 
 async function createAgent(t: ReturnType<typeof convexTest>, userId: string, name: string) {
   return await t.run(async (ctx) => {
