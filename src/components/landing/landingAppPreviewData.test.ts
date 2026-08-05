@@ -298,3 +298,14 @@ test('landing preview agent setup model controls use compact labels with roomier
   expect(agentSetupSource).not.toContain('text-sm font-semibold text-zinc-800');
   expect(agentSetupSource).not.toContain('Triggers');
 });
+
+test('agent setup asks when AI should reply without a duplicate field label', () => {
+  const routingPanelSource = readFileSync(
+    new URL('../agent-setup/AgentSetupRoutingPanel.tsx', import.meta.url),
+    'utf8',
+  );
+
+  expect(routingPanelSource).toContain('When should AI reply');
+  expect(routingPanelSource).not.toContain('Reply mode');
+  expect(routingPanelSource).not.toContain('\n        Triggers\n');
+});
