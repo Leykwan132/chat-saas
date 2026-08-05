@@ -57,9 +57,10 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('Add Telegram recipient');
   expect(source).toContain('Mail');
   expect(source).toContain('flex items-center gap-2');
-  expect(source).toContain('pl-6');
+  expect(source).toContain('mt-1 block text-xs');
+  expect(source).not.toContain('pl-6 text-xs');
   expect(source).toContain('px-0 py-4');
-  expect(source).toContain('<AccordionContent className="pl-6">');
+  expect(source).toContain('<AccordionContent>');
   expect(source).toContain('option.description');
   expect(source).toContain('ml-auto');
   expect(source).toContain('hover:bg-muted/60');

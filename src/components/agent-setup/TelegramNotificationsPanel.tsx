@@ -233,7 +233,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                         <Mail className="size-4 shrink-0 text-muted-foreground" />
                         <span className="truncate">{option.label}</span>
                       </span>
-                      <span className="mt-1 block pl-6 text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
+                      <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
                     </span>
                   </AccordionTrigger>
                   <div className="ml-auto flex shrink-0 items-center gap-2 py-4 pr-4">
@@ -245,7 +245,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                     />
                   </div>
                 </div>
-                <AccordionContent className="pl-6">
+                <AccordionContent>
                   <div className="flex flex-col gap-3 pt-1">
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Sample message</p>
