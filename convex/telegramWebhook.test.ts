@@ -5,7 +5,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-test("logs safe metadata for an authenticated message update", async () => {
+test("logs request details and message text for an authenticated update", async () => {
   const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
   const response = await handleTelegramWebhookRequest(
@@ -43,10 +43,11 @@ test("logs safe metadata for an authenticated message update", async () => {
   );
   expect(log).toHaveBeenNthCalledWith(2, "[telegram-webhook] received", {
     updateId: 101,
-    eventType: "message",
-    chatId: 300,
-    senderId: 400,
-  });
+      eventType: "message",
+      chatId: 300,
+      senderId: 400,
+      messageText: "private message",
+    });
 });
 
 test("rejects a request whose secret header does not match", async () => {

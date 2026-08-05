@@ -5,6 +5,7 @@ type TelegramWebhookMetadata = {
   eventType: string;
   chatId: number | null;
   senderId: number | null;
+  messageText: string | null;
 };
 
 const TELEGRAM_UPDATE_EVENT_TYPES = [
@@ -43,6 +44,12 @@ function metadataForEvent(
   return {
     chatId: idFrom(chat),
     senderId: idFrom(sender),
+    messageText:
+      typeof event.text === "string"
+        ? event.text
+        : typeof message?.text === "string"
+          ? message.text
+          : null,
   };
 }
 
@@ -56,6 +63,7 @@ export function extractTelegramWebhookMetadata(
       eventType: "unknown",
       chatId: null,
       senderId: null,
+      messageText: null,
     };
   }
 
@@ -75,6 +83,7 @@ export function extractTelegramWebhookMetadata(
     eventType: "unknown",
     chatId: null,
     senderId: null,
+    messageText: null,
   };
 }
 
