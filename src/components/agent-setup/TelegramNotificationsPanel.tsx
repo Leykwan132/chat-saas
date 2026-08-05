@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Copy, Link2, MessageSquare, Send, Trash2 } from 'lucide-react';
+import { Copy, Link2, Mail, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -190,14 +190,17 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
             const isEnabled = selectedKinds.includes(option.kind);
             return (
               <AccordionItem key={option.kind} value={option.kind}>
-                <div className="flex items-start gap-2">
-                  <AccordionTrigger className="p-4 hover:no-underline">
-                    <span className="flex min-w-0 items-center gap-2">
-                      <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
-                      <span className="truncate">{option.label}</span>
+                <div className="flex w-full items-start">
+                  <AccordionTrigger className="min-w-0 flex-1 p-4 hover:no-underline">
+                    <span className="flex min-w-0 items-start gap-2">
+                      <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <span className="min-w-0">
+                        <span className="block truncate">{option.label}</span>
+                        <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
+                      </span>
                     </span>
                   </AccordionTrigger>
-                  <div className="flex shrink-0 items-center gap-2 py-4 pr-4">
+                  <div className="ml-auto flex shrink-0 items-center gap-2 py-4 pr-4">
                     <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
                     <Switch
                       checked={isEnabled}

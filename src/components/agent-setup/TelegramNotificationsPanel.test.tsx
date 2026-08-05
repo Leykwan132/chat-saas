@@ -29,6 +29,10 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('New booking');
   expect(markup).toContain('Booking updated');
   expect(markup).toContain('Booking cancelled');
+  expect(markup).toContain('When the agent asks for human help.');
+  expect(markup).toContain('When a customer books an appointment.');
+  expect(markup).toContain('When an appointment is changed.');
+  expect(markup).toContain('When an appointment is cancelled.');
   expect(markup).toContain('Sending');
   expect(markup.indexOf('Notification Types')).toBeGreaterThan(markup.indexOf('Recipients List'));
 
@@ -43,7 +47,9 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).not.toContain('rounded-lg border border-border bg-card p-4');
   expect(source).toContain('text-base font-semibold tracking-tight');
   expect(source).toContain('max-w-md');
-  expect(source).toContain('MessageSquare');
+  expect(source).toContain('Mail');
+  expect(source).toContain('option.description');
+  expect(source).toContain('ml-auto');
   expect(source).toContain('option.preview');
   expect(source).toContain('justify-end');
   expect(source).not.toContain('lg:grid-cols-2');
