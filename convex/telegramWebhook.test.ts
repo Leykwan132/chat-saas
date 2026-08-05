@@ -2,6 +2,7 @@ import { afterEach, expect, test, vi } from "vitest";
 import {
   handleTelegramWebhookRequest,
   sendTelegramContactRequest,
+  sendTelegramNotificationReady,
 } from "./telegramWebhook";
 
 afterEach(() => {
@@ -102,6 +103,36 @@ test("logs contact data when a user shares their phone number", async () => {
   });
 });
 
+test("confirms subscription after a private user shares their phone number", async () => {
+  vi.spyOn(console, "log").mockImplementation(() => undefined);
+  const confirmSubscription = vi.fn().mockResolvedValue(undefined);
+
+  const response = await handleTelegramWebhookRequest(
+    new Request("https://example.com/webhook/telegram", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-telegram-bot-api-secret-token": "test-secret",
+      },
+      body: JSON.stringify({
+        update_id: 104,
+        message: {
+          message_id: 5,
+          chat: { id: 303, type: "private" },
+          from: { id: 403 },
+          contact: { phone_number: "60123456789" },
+        },
+      }),
+    }),
+    "test-secret",
+    undefined,
+    confirmSubscription,
+  );
+
+  expect(response.status).toBe(200);
+  expect(confirmSubscription).toHaveBeenCalledWith(303);
+});
+
 test("requests contact details when a private user says Hi", async () => {
   vi.spyOn(console, "log").mockImplementation(() => undefined);
   const requestContact = vi.fn().mockResolvedValue(undefined);
@@ -151,6 +182,24 @@ test("sends a contact-sharing keyboard through Telegram", async () => {
       resize_keyboard: true,
       one_time_keyboard: true,
     },
+  });
+});
+
+test("sends a notification-ready confirmation through Telegram", async () => {
+  const fetchMock = vi
+    .spyOn(globalThis, "fetch")
+    .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+
+  await sendTelegramNotificationReady("test-bot-token", 303);
+
+  const [url, options] = fetchMock.mock.calls[0];
+  expect(url).toBe(
+    "https://api.telegram.org/bottest-bot-token/sendMessage",
+  );
+  expect(options?.method).toBe("POST");
+  expect(JSON.parse(String(options?.body))).toEqual({
+    chat_id: 303,
+    text: "Your notifications are ready!",
   });
 });
 

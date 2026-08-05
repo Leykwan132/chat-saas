@@ -120,6 +120,7 @@ export async function handleTelegramWebhookRequest(
   request: Request,
   expectedSecret: string | undefined,
   onHiMessage?: (chatId: number) => Promise<void>,
+  onContactShared?: (chatId: number) => Promise<void>,
 ): Promise<Response> {
   if (!expectedSecret) {
     console.error("[telegram-webhook] TELEGRAM_WEBHOOK_SECRET is not configured");
@@ -159,6 +160,15 @@ export async function handleTelegramWebhookRequest(
   ) {
     await onHiMessage(metadata.chatId);
   }
+  if (
+    onContactShared &&
+    metadata.eventType === "message" &&
+    metadata.chatType === "private" &&
+    metadata.chatId !== null &&
+    metadata.contact !== null
+  ) {
+    await onContactShared(metadata.chatId);
+  }
   return new Response(null, { status: 200 });
 }
 
@@ -193,6 +203,32 @@ export async function sendTelegramContactRequest(
   }
 }
 
+export async function sendTelegramNotificationReady(
+  botToken: string,
+  chatId: number,
+): Promise<void> {
+  const response = await fetch(
+    `https://api.telegram.org/bot${botToken}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: "Your notifications are ready!",
+      }),
+    },
+  );
+  const result = (await response.json()) as {
+    ok?: boolean;
+    description?: string;
+  };
+  if (!response.ok || result.ok !== true) {
+    throw new Error(
+      `Telegram notification confirmation failed: ${result.description ?? response.status}`,
+    );
+  }
+}
+
 export const telegramWebhook = httpAction(async (_ctx, request) => {
   return await handleTelegramWebhookRequest(
     request,
@@ -203,6 +239,13 @@ export const telegramWebhook = httpAction(async (_ctx, request) => {
         throw new Error("BOT_TOKEN is not configured");
       }
       await sendTelegramContactRequest(botToken, chatId);
+    },
+    async (chatId) => {
+      const botToken = process.env.BOT_TOKEN;
+      if (!botToken) {
+        throw new Error("BOT_TOKEN is not configured");
+      }
+      await sendTelegramNotificationReady(botToken, chatId);
     },
   );
 });
