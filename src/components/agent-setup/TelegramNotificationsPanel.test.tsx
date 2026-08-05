@@ -23,15 +23,15 @@ test('shows all four notification choices below the phone-number controls', () =
     <TelegramNotificationsPanel agentId={'agent-id' as never} />,
   );
 
-  expect(markup).toContain('Phone numbers');
-  expect(markup).toContain('What should be sent?');
+  expect(markup).toContain('Recipients List');
+  expect(markup).toContain('Notification Updates');
   expect(markup).toContain('Human escalation');
   expect(markup).toContain('New booking');
   expect(markup).toContain('Booking updated');
   expect(markup).toContain('Booking cancelled');
   expect(markup).toContain('Sending');
   expect(markup).toContain('Send a test message');
-  expect(markup.indexOf('What should be sent?')).toBeGreaterThan(markup.indexOf('Phone numbers'));
+  expect(markup.indexOf('Notification Updates')).toBeGreaterThan(markup.indexOf('Recipients List'));
 
   const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
   expect(source).toContain('lg:border-l lg:border-border lg:pl-6');
