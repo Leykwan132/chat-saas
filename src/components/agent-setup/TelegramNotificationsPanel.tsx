@@ -152,7 +152,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
             ))}
           </div>
         </div>
-        <div className="flex flex-col gap-3 rounded-md border border-border p-3">
+        <div className="flex flex-col gap-3 lg:border-l lg:border-border lg:pl-6">
           <div className="space-y-1">
             <h3 className="text-sm font-medium">What should be sent?</h3>
             <p className="text-xs text-muted-foreground">Choose the fixed updates sent to every connected phone number.</p>
