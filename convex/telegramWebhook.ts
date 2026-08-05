@@ -173,9 +173,9 @@ export const telegramWebhook = httpAction(async (_ctx, request) => {
     request,
     process.env.TELEGRAM_WEBHOOK_SECRET,
     async (chatId) => {
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const botToken = process.env.BOT_TOKEN;
       if (!botToken) {
-        throw new Error("TELEGRAM_BOT_TOKEN is not configured");
+        throw new Error("BOT_TOKEN is not configured");
       }
       await sendTelegramContactRequest(botToken, chatId);
     },
