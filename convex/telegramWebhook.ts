@@ -173,7 +173,7 @@ export async function sendTelegramContactRequest(
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: "Thanks for reaching out! Could you share your phone number so we can help you better?",
+        text: "To subscribe to notifications, please share your phone number using the button below.",
         reply_markup: {
           keyboard: [[{ text: "Share phone number", request_contact: true }]],
           resize_keyboard: true,
