@@ -5,7 +5,6 @@ import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
 import { AgentSetupConfigurationPanel } from '@/components/agent-setup/AgentSetupConfigurationPanel';
 import { AgentSetupRoutingPanel } from '@/components/agent-setup/AgentSetupRoutingPanel';
 import { AgentSetupSystemPromptPanel } from '@/components/agent-setup/AgentSetupSystemPromptPanel';
-import { TelegramNotificationsPanel } from '@/components/agent-setup/TelegramNotificationsPanel';
 import type {
   EmojiUse,
   Formality,
@@ -109,7 +108,6 @@ export function AgentSetupPanels({
           replyMode={replyMode}
           onReplyModeChange={onReplyModeChange}
         />
-        <TelegramNotificationsPanel agentId={agentId} />
       </aside>
       <AgentPlaygroundPanel
         agentId={agentId}

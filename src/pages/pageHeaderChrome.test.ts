@@ -39,6 +39,11 @@ const descriptivePageHeaders = [
     title: 'Services',
     description: 'Create the services customers can book with your team.',
   },
+  {
+    fileName: 'NotificationsPage.tsx',
+    title: 'Notifications',
+    description: 'Telegram is currently the only supported notification channel.',
+  },
 ];
 
 describe('page header chrome', () => {

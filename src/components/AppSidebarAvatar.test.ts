@@ -35,4 +35,20 @@ describe('Avatar navigation', () => {
     expect(source).toContain('bg-muted');
     expect(source).toContain('text-muted-foreground');
   });
+
+  it('places Notifications directly above Broadcast under Tools', () => {
+    const tools = getNavItems('agent-id', {
+      showSavedReplies: true,
+      enableAvatarFeature: true,
+    }).tools;
+
+    const notificationIndex = tools.findIndex((item) => item.label === 'Notifications');
+    const broadcastIndex = tools.findIndex((item) => item.label === 'Broadcast');
+
+    expect(tools[notificationIndex]).toMatchObject({
+      to: '/dashboard/agent-id/notifications',
+      requiredPermission: 'agents:manage',
+    });
+    expect(notificationIndex).toBe(broadcastIndex - 1);
+  });
 });
