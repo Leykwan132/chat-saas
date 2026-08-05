@@ -38,41 +38,6 @@ export const markRecipientBlocked = internalMutation({
   },
 });
 
-export const reserveEventPreview = internalMutation({
-  args: { agentId: v.id("agents") },
-  returns: v.array(v.object({
-    recipientId: v.id("telegramNotificationRecipients"),
-    chatId: v.string(),
-    agentName: v.string(),
-  })),
-  handler: async (ctx, args) => {
-    const { agent } = await assertManageableAgent(ctx, args.agentId);
-    const subscriptions = await ctx.db
-      .query("agentTelegramNotificationSubscriptions")
-      .withIndex("by_agentId_and_status", (q) => q.eq("agentId", args.agentId).eq("status", "enabled"))
-      .take(5);
-    const recipients: Array<{
-      recipientId: typeof subscriptions[number]["recipientId"];
-      chatId: string;
-      agentName: string;
-    }> = [];
-    for (const subscription of subscriptions) {
-      const recipient = await ctx.db.get(subscription.recipientId);
-      if (recipient?.status === "verified" && recipient.telegramChatId) {
-        recipients.push({
-          recipientId: recipient._id,
-          chatId: recipient.telegramChatId,
-          agentName: agent.name,
-        });
-      }
-    }
-    if (recipients.length === 0) {
-      throw new Error("Add and verify a Telegram recipient before sending a test");
-    }
-    return recipients;
-  },
-});
-
 export const send = action({
   args: { subscriptionId: subscriptionIdValidator },
   returns: v.object({ sent: v.literal(true) }),
@@ -96,32 +61,25 @@ export const send = action({
 });
 
 export const sendEventPreview = action({
-  args: { agentId: v.id("agents"), kind: telegramNotificationKindValidator },
-  returns: v.object({ sent: v.number() }),
+  args: { subscriptionId: subscriptionIdValidator, kind: telegramNotificationKindValidator },
+  returns: v.object({ sent: v.literal(true) }),
   handler: async (ctx, args) => {
-    const recipients = await ctx.runMutation(
-      internal.telegramNotifications.testMessage.reserveEventPreview,
-      { agentId: args.agentId },
-    );
-    const text = formatEventTestPreview(args.kind, recipients[0].agentName);
-    let sent = 0;
-    for (const recipient of recipients) {
-      try {
-        await sendTelegramMessage(requireNotificationBotToken(process.env), {
-          chatId: recipient.chatId,
-          text,
+    const reservation = await ctx.runMutation(internal.telegramNotifications.testMessage.reserve, {
+      subscriptionId: args.subscriptionId,
+    });
+    try {
+      await sendTelegramMessage(requireNotificationBotToken(process.env), {
+        chatId: reservation.chatId,
+        text: formatEventTestPreview(args.kind, reservation.agentName),
+      });
+    } catch (error) {
+      if (error instanceof TelegramDeliveryError && (error.kind === "blocked" || error.kind === "unavailable")) {
+        await ctx.runMutation(internal.telegramNotifications.testMessage.markRecipientBlocked, {
+          recipientId: reservation.recipientId,
         });
-        sent += 1;
-      } catch (error) {
-        if (error instanceof TelegramDeliveryError && (error.kind === "blocked" || error.kind === "unavailable")) {
-          await ctx.runMutation(internal.telegramNotifications.testMessage.markRecipientBlocked, {
-            recipientId: recipient.recipientId,
-          });
-          continue;
-        }
-        throw error;
       }
+      throw error;
     }
-    return { sent };
+    return { sent: true as const };
   },
 });

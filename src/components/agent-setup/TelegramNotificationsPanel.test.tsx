@@ -38,4 +38,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).not.toContain('rounded-md border border-border p-3');
   expect(source).toContain('justify-between');
   expect(source).not.toContain('whitespace-pre-wrap rounded-md bg-muted p-2');
+  expect(source).toContain('DropdownMenu');
+  expect(source).toContain('DropdownMenuItem');
+  expect(source).toContain('subscription.phoneNumber');
 });

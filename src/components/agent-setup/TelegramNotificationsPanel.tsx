@@ -7,6 +7,14 @@ import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 import {
   TELEGRAM_NOTIFICATION_KINDS,
@@ -33,6 +41,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const [isAdding, setIsAdding] = useState(false);
   const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
   const selectedKinds = preferences?.kinds ?? TELEGRAM_NOTIFICATION_KINDS;
+  const sendableSubscriptions = subscriptions?.filter((subscription) => subscription.canSendTest) ?? [];
 
   async function copyVerificationUrl(url: string) {
     await navigator.clipboard.writeText(url);
@@ -73,12 +82,15 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
     }
   }
 
-  async function sendNotificationTest(kind: TelegramNotificationKind) {
+  async function sendNotificationTest(
+    kind: TelegramNotificationKind,
+    subscriptionId: Id<'agentTelegramNotificationSubscriptions'>,
+  ) {
     setTestingKind(kind);
     const toastId = toast.loading('Sending test message…');
     try {
-      const result = await sendEventPreview({ agentId, kind });
-      toast.success(`Test message sent to ${result.sent} recipient${result.sent === 1 ? '' : 's'}`, { id: toastId });
+      await sendEventPreview({ subscriptionId, kind });
+      toast.success('Test message sent', { id: toastId });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Could not send a test message', { id: toastId });
     } finally {
@@ -176,15 +188,31 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium">{option.label}</p>
                     <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-1 h-auto px-0 text-xs text-primary hover:bg-transparent hover:text-primary/80"
-                      disabled={testingKind === option.kind}
-                      onClick={() => void sendNotificationTest(option.kind)}
-                    >
-                      Send a test message
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="mt-1 h-auto px-0 text-xs text-primary hover:bg-transparent hover:text-primary/80"
+                          disabled={testingKind === option.kind || sendableSubscriptions.length === 0}
+                        >
+                          Send a test message
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuLabel>Send to</DropdownMenuLabel>
+                        <DropdownMenuGroup>
+                          {sendableSubscriptions.map((subscription) => (
+                            <DropdownMenuItem
+                              key={subscription.subscriptionId}
+                              onSelect={() => void sendNotificationTest(option.kind, subscription.subscriptionId)}
+                            >
+                              {subscription.phoneNumber}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <div className="flex shrink-0 items-center gap-2 self-center">
                     <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
