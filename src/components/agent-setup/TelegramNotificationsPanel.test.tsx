@@ -29,9 +29,13 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('New booking');
   expect(markup).toContain('Booking updated');
   expect(markup).toContain('Booking cancelled');
+  expect(markup).toContain('Sending');
+  expect(markup).toContain('Send a test message');
   expect(markup.indexOf('What should be sent?')).toBeGreaterThan(markup.indexOf('Phone numbers'));
 
   const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
   expect(source).toContain('lg:border-l lg:border-border lg:pl-6');
   expect(source).not.toContain('rounded-md border border-border p-3');
+  expect(source).toContain('justify-between');
+  expect(source).not.toContain('whitespace-pre-wrap rounded-md bg-muted p-2');
 });

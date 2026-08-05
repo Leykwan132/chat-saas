@@ -27,9 +27,11 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const setPreferences = useMutation(api.telegramNotifications.preferences.setForAgent);
   const regenerate = useMutation(api.telegramNotifications.subscriptions.regenerateVerificationLink);
   const sendTest = useAction(api.telegramNotifications.testMessage.send);
+  const sendEventPreview = useAction(api.telegramNotifications.testMessage.sendEventPreview);
   const [phone, setPhone] = useState<string>();
   const [verificationUrl, setVerificationUrl] = useState<string>();
   const [isAdding, setIsAdding] = useState(false);
+  const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
   const selectedKinds = preferences?.kinds ?? TELEGRAM_NOTIFICATION_KINDS;
 
   async function copyVerificationUrl(url: string) {
@@ -68,6 +70,19 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
       toast.error(error instanceof Error ? error.message : 'Could not save notification preferences', {
         id: toastId,
       });
+    }
+  }
+
+  async function sendNotificationTest(kind: TelegramNotificationKind) {
+    setTestingKind(kind);
+    const toastId = toast.loading('Sending test message…');
+    try {
+      const result = await sendEventPreview({ agentId, kind });
+      toast.success(`Test message sent to ${result.sent} recipient${result.sent === 1 ? '' : 's'}`, { id: toastId });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not send a test message', { id: toastId });
+    } finally {
+      setTestingKind(undefined);
     }
   }
 
@@ -157,21 +172,36 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
             <h3 className="text-sm font-medium">What should be sent?</h3>
             <p className="text-xs text-muted-foreground">Choose the fixed updates sent to every connected phone number.</p>
           </div>
-          {telegramNotificationOptions.map((option) => (
-            <div key={option.kind} className="flex items-start gap-3">
-              <Switch
-                checked={selectedKinds.includes(option.kind)}
-                onCheckedChange={(enabled) => void setNotificationKind(option.kind, enabled)}
-                aria-label={`Send ${option.label.toLowerCase()} notifications`}
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">{option.label}</p>
-                <pre className="mt-1 whitespace-pre-wrap rounded-md bg-muted p-2 font-sans text-xs leading-relaxed text-muted-foreground">
-                  {option.preview}
-                </pre>
-              </div>
-            </div>
-          ))}
+          <div className="divide-y divide-border">
+            {telegramNotificationOptions.map((option) => {
+              const isEnabled = selectedKinds.includes(option.kind);
+              return (
+                <div key={option.kind} className="flex items-start justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{option.label}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{option.description}</p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-1 h-auto px-0 text-xs text-primary hover:bg-transparent hover:text-primary/80"
+                      disabled={testingKind === option.kind}
+                      onClick={() => void sendNotificationTest(option.kind)}
+                    >
+                      Send a test message
+                    </Button>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2 self-center">
+                    <span className="text-xs text-muted-foreground">{isEnabled ? 'Sending' : 'Not Sending'}</span>
+                    <Switch
+                      checked={isEnabled}
+                      onCheckedChange={(enabled) => void setNotificationKind(option.kind, enabled)}
+                      aria-label={`Send ${option.label.toLowerCase()} notifications`}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
