@@ -16,6 +16,7 @@ import {
 } from "./calendarFormatUtils";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
 import { customerSearchText } from "./customerSearch";
+import { notifyAppointmentEvent } from "./telegramNotifications/events";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -659,17 +660,38 @@ export const update = mutation({
     }
 
     const conversationId = await getConversationIdForEvent(ctx, event);
+    const isCancellation = args.status === "cancelled" && event.status !== "cancelled";
+    const isMaterialUpdate =
+      args.title !== undefined && args.title.trim() !== event.title ||
+      args.startAt !== undefined && args.startAt !== event.startAt ||
+      args.endAt !== undefined && args.endAt !== event.endAt ||
+      args.status !== undefined && args.status !== event.status ||
+      args.customerId !== undefined ||
+      args.assignedUserId !== undefined ||
+      args.attendeeUserIds !== undefined ||
+      args.customFieldResponses !== undefined;
     if (conversationId) {
-      const isCancelled = args.status === "cancelled";
       await logConversationEvent(ctx, {
         conversationId,
-        action: isCancelled ? "event_cancelled" : "event_updated",
+        action: isCancellation ? "event_cancelled" : "event_updated",
         metadata: {
           eventId: args.eventId,
           eventTitle: args.title ?? event.title,
           startAt: args.startAt ?? event.startAt,
         },
       });
+    }
+    if (event.agentId && event.bookingSource !== undefined && isMaterialUpdate) {
+      const agent = await ctx.db.get(event.agentId);
+      if (agent) {
+        await notifyAppointmentEvent(
+          ctx,
+          agent._id,
+          event._id,
+          agent.name,
+          isCancellation ? "cancelled" : "updated",
+        );
+      }
     }
   },
 });
