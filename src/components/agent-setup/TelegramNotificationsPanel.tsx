@@ -245,7 +245,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                     />
                   </div>
                 </div>
-                <AccordionContent className="px-3">
+                <AccordionContent className="-mx-4 px-3">
                   <div className="flex flex-col gap-3 pt-1">
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Sample message</p>

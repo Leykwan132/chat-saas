@@ -63,7 +63,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('option.description');
   expect(source).toContain('ml-auto');
   expect(source).toContain('rounded-md px-3 transition-colors hover:bg-muted/60');
-  expect(source).toContain('<AccordionContent className="px-3">');
+  expect(source).toContain('<AccordionContent className="-mx-4 px-3">');
   expect(source).toContain('showIndicator={false}');
   expect(source).toContain('toggleNotificationDetails');
   expect(source).toContain('option.preview');
