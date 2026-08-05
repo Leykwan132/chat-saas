@@ -2,11 +2,16 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Copy, Link2, Mail, Send, Trash2 } from 'lucide-react';
+import { Copy, Link2, Mail, Plus, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+} from '@/components/ui/input-group';
 import {
   Accordion,
   AccordionContent,
@@ -120,20 +125,30 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
           <h3 className="text-base font-semibold tracking-tight">Recipients List</h3>
           <p className="text-xs text-muted-foreground">Add up to five numbers. Each person verifies their own Telegram account before receiving updates.</p>
         </div>
-        <div className="flex w-full max-w-md gap-2">
-          <PhoneInput
-            defaultCountry="MY"
-            international
-            countryCallingCodeEditable={false}
-            value={phone}
-            onChange={setPhone}
-            disabled={isAdding || subscriptions?.length === 5}
-            className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
-            numberInputProps={{ className: 'min-w-0 bg-transparent outline-none' }}
-          />
-          <Button size="sm" onClick={addRecipient} disabled={!phone || isAdding || subscriptions?.length === 5}>
-            Add
-          </Button>
+        <div className="w-full max-w-xs">
+          <InputGroup className="h-10 rounded-md border-border bg-background">
+            <PhoneInput
+              defaultCountry="MY"
+              international
+              countryCallingCodeEditable={false}
+              value={phone}
+              onChange={setPhone}
+              disabled={isAdding || subscriptions?.length === 5}
+              className="min-w-0 flex-1 px-3 text-sm"
+              numberInputProps={{ className: 'min-w-0 bg-transparent outline-none' }}
+            />
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton
+                variant="secondary"
+                size="icon-xs"
+                aria-label="Add Telegram recipient"
+                onClick={addRecipient}
+                disabled={!phone || isAdding || subscriptions?.length === 5}
+              >
+                <Plus />
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
         {verificationUrl ? (
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-xs">

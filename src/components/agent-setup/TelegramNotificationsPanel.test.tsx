@@ -49,7 +49,12 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('subscription.phoneNumber');
   expect(source).not.toContain('rounded-lg border border-border bg-card p-4');
   expect(source).toContain('text-base font-semibold tracking-tight');
-  expect(source).toContain('max-w-md');
+  expect(source).toContain('max-w-xs');
+  expect(source).toContain('InputGroup');
+  expect(source).toContain('InputGroupAddon');
+  expect(source).toContain('InputGroupButton');
+  expect(source).toContain('Plus');
+  expect(source).toContain('Add Telegram recipient');
   expect(source).toContain('Mail');
   expect(source).toContain('items-start gap-3');
   expect(source).toContain('mt-0.5 size-4');
