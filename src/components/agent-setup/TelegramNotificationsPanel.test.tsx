@@ -51,7 +51,10 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('text-base font-semibold tracking-tight');
   expect(source).toContain('max-w-md');
   expect(source).toContain('Mail');
-  expect(source).toContain('self-center');
+  expect(source).toContain('items-start gap-3');
+  expect(source).toContain('mt-0.5 size-4');
+  expect(source).toContain('px-0 py-4');
+  expect(source).toContain('<AccordionContent className="pl-7">');
   expect(source).toContain('option.description');
   expect(source).toContain('ml-auto');
   expect(source).toContain('hover:bg-muted/60');
