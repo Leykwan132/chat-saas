@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2 } from 'lucide-react';
+import { ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -230,7 +230,11 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   <AccordionTrigger showIndicator={false} className="min-w-0 flex-1 px-0 py-4 hover:no-underline">
                     <span className="min-w-0">
                       <span className="flex items-center gap-2">
-                        <Mail className="size-4 shrink-0 text-muted-foreground" />
+                        {option.kind === 'humanEscalation' ? (
+                          <TriangleAlert className="size-4 shrink-0 text-amber-600" />
+                        ) : (
+                          <Mail className="size-4 shrink-0 text-muted-foreground" />
+                        )}
                         <span className="truncate">{option.label}</span>
                       </span>
                       <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>

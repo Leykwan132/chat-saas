@@ -34,6 +34,8 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('When an appointment is changed.');
   expect(markup).toContain('When an appointment is cancelled.');
   expect(markup).toContain('Sending');
+  expect(markup).toContain('lucide-triangle-alert');
+  expect(markup.match(/lucide-mail/g)).toHaveLength(3);
   expect(markup).not.toContain('lucide-chevron-down');
   expect(markup).not.toContain('lucide-chevron-up');
   expect(markup.indexOf('Notification Types')).toBeGreaterThan(markup.indexOf('Recipients List'));
