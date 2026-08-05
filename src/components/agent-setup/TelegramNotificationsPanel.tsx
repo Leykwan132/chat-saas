@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Copy, Link2, Mail, Plus, Send, Trash2 } from 'lucide-react';
+import { ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -251,7 +251,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                       <p className="text-sm font-medium">Sample message</p>
                       <pre className="whitespace-pre-wrap rounded-md bg-muted px-3 py-3 font-sans text-sm leading-relaxed text-muted-foreground">{option.preview}</pre>
                     </div>
-                    <div className="flex justify-end pt-1">
+                    <div className="flex justify-start pt-1">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -260,9 +260,10 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                             disabled={testingKind === option.kind || sendableSubscriptions.length === 0}
                           >
                             Send a test message
+                            <ChevronDown className="size-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                        <DropdownMenuContent align="start">
                           <DropdownMenuLabel>Send to</DropdownMenuLabel>
                           <DropdownMenuGroup>
                             {sendableSubscriptions.map((subscription) => (
