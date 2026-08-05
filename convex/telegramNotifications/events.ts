@@ -1,6 +1,8 @@
 import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import type { TelegramNotificationKind } from "../../shared/telegramNotificationKinds";
 import { enqueueTelegramAgentNotification } from "./dispatch";
+import { isNotificationKindEnabled } from "./kinds";
 
 function dashboardUrl(path: string): string {
   const baseUrl = process.env.APP_BASE_URL?.replace(/\/$/, "");
@@ -15,8 +17,18 @@ async function hasEnabledRecipient(ctx: MutationCtx, agentId: Id<"agents">): Pro
     .take(1)).length > 0;
 }
 
+async function canSendNotification(
+  ctx: MutationCtx,
+  agentId: Id<"agents">,
+  kind: TelegramNotificationKind,
+): Promise<boolean> {
+  const agent = await ctx.db.get(agentId);
+  return Boolean(agent && isNotificationKindEnabled(agent.telegramNotificationKinds, kind))
+    && await hasEnabledRecipient(ctx, agentId);
+}
+
 export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agents">, conversationId: Id<"conversations">, agentName: string) {
-  if (!(await hasEnabledRecipient(ctx, agentId))) return 0;
+  if (!(await canSendNotification(ctx, agentId, "humanEscalation"))) return 0;
   return await enqueueTelegramAgentNotification(
     ctx,
     agentId,
@@ -25,7 +37,8 @@ export async function notifyHumanEscalation(ctx: MutationCtx, agentId: Id<"agent
 }
 
 export async function notifyAppointmentEvent(ctx: MutationCtx, agentId: Id<"agents">, appointmentId: Id<"calendarEvents">, agentName: string, event: "booked" | "updated" | "cancelled") {
-  if (!(await hasEnabledRecipient(ctx, agentId))) return 0;
+  const kind = event === "booked" ? "bookingCreated" : event === "updated" ? "bookingUpdated" : "bookingCancelled";
+  if (!(await canSendNotification(ctx, agentId, kind))) return 0;
   const label = event === "booked" ? "New booking" : event === "updated" ? "Booking updated" : "Booking cancelled";
   return await enqueueTelegramAgentNotification(
     ctx,

@@ -5,6 +5,7 @@ import {
   telegramRecipientStatusValidator,
   telegramSubscriptionStatusValidator,
 } from "./telegramNotifications/validators";
+import { telegramNotificationKindsValidator } from "./telegramNotifications/kinds";
 import { CUSTOMER_SENTIMENTS } from "../shared/customerSentiment";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 import {
@@ -405,6 +406,7 @@ export default defineSchema({
     emojiUse: v.optional(v.union(v.literal("never"), v.literal("occasional"), v.literal("frequent"))),
     formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
     humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
+    telegramNotificationKinds: v.optional(telegramNotificationKindsValidator),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

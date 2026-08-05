@@ -3,6 +3,10 @@ import { convexTest } from "convex-test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
+import {
+  notifyAppointmentEvent,
+  notifyHumanEscalation,
+} from "./telegramNotifications/events";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -127,4 +131,54 @@ test("limits each agent to five saved Telegram recipients", async () => {
       phone: "60111111116",
     }),
   ).rejects.toThrow("five Telegram recipients");
+});
+
+test("stores agent notification kinds and defaults existing agents to every event", async () => {
+  const t = convexTest(schema, modules);
+  const ownerId = "telegram-notification-kinds-owner";
+  const agentId = await createAgent(t, ownerId, "Notification Kinds Agent");
+  const owner = t.withIdentity({ subject: ownerId });
+
+  await owner.mutation(api.authUtils.upsertUser, {});
+
+  await expect(
+    owner.query(api.telegramNotifications.preferences.getForAgent, { agentId }),
+  ).resolves.toEqual({
+    kinds: ["humanEscalation", "bookingCreated", "bookingUpdated", "bookingCancelled"],
+  });
+
+  await owner.mutation(api.telegramNotifications.preferences.setForAgent, {
+    agentId,
+    kinds: ["humanEscalation", "bookingCancelled"],
+  });
+
+  await expect(
+    owner.query(api.telegramNotifications.preferences.getForAgent, { agentId }),
+  ).resolves.toEqual({ kinds: ["humanEscalation", "bookingCancelled"] });
+});
+
+test("does not queue events omitted from an agent's notification kinds", async () => {
+  const t = convexTest(schema, modules);
+  const agentId = await createAgent(t, "telegram-notification-filter-owner", "Filtered Agent");
+
+  const result = await t.run(async (ctx) => {
+    await ctx.db.patch(agentId, { telegramNotificationKinds: ["bookingCreated"] });
+    return {
+      escalation: await notifyHumanEscalation(
+        ctx,
+        agentId,
+        "conversation-id" as never,
+        "Filtered Agent",
+      ),
+      updatedBooking: await notifyAppointmentEvent(
+        ctx,
+        agentId,
+        "calendar-event-id" as never,
+        "Filtered Agent",
+        "updated",
+      ),
+    };
+  });
+
+  expect(result).toEqual({ escalation: 0, updatedBooking: 0 });
 });

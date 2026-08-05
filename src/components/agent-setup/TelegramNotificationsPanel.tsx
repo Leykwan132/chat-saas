@@ -8,6 +8,11 @@ import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import {
+  TELEGRAM_NOTIFICATION_KINDS,
+  type TelegramNotificationKind,
+} from '../../../shared/telegramNotificationKinds';
+import { telegramNotificationOptions } from './telegramNotificationOptions';
 
 type TelegramNotificationsPanelProps = {
   agentId: Id<'agents'>;
@@ -15,14 +20,17 @@ type TelegramNotificationsPanelProps = {
 
 export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPanelProps) {
   const subscriptions = useQuery(api.telegramNotifications.subscriptions.listForAgent, { agentId });
+  const preferences = useQuery(api.telegramNotifications.preferences.getForAgent, { agentId });
   const add = useMutation(api.telegramNotifications.subscriptions.add);
   const remove = useMutation(api.telegramNotifications.subscriptions.remove);
   const setEnabled = useMutation(api.telegramNotifications.subscriptions.setEnabled);
+  const setPreferences = useMutation(api.telegramNotifications.preferences.setForAgent);
   const regenerate = useMutation(api.telegramNotifications.subscriptions.regenerateVerificationLink);
   const sendTest = useAction(api.telegramNotifications.testMessage.send);
   const [phone, setPhone] = useState<string>();
   const [verificationUrl, setVerificationUrl] = useState<string>();
   const [isAdding, setIsAdding] = useState(false);
+  const selectedKinds = preferences?.kinds ?? TELEGRAM_NOTIFICATION_KINDS;
 
   async function copyVerificationUrl(url: string) {
     await navigator.clipboard.writeText(url);
@@ -48,6 +56,21 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
     }
   }
 
+  async function setNotificationKind(kind: TelegramNotificationKind, enabled: boolean) {
+    const kinds = enabled
+      ? [...selectedKinds, kind]
+      : selectedKinds.filter((selectedKind) => selectedKind !== kind);
+    const toastId = toast.loading('Saving notification preferences…');
+    try {
+      await setPreferences({ agentId, kinds });
+      toast.success('Notification preferences saved', { id: toastId });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not save notification preferences', {
+        id: toastId,
+      });
+    }
+  }
+
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <div className="space-y-1">
@@ -70,6 +93,29 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
         <Button size="sm" onClick={addRecipient} disabled={!phone || isAdding || subscriptions?.length === 5}>
           Add
         </Button>
+      </div>
+      <div className="rounded-md border border-border p-3">
+        <div className="mb-3 space-y-1">
+          <h3 className="text-sm font-medium">When should we notify you?</h3>
+          <p className="text-xs text-muted-foreground">Choose the updates sent to every connected phone number.</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {telegramNotificationOptions.map((option) => (
+            <div key={option.kind} className="flex items-start gap-3">
+              <Switch
+                checked={selectedKinds.includes(option.kind)}
+                onCheckedChange={(enabled) => void setNotificationKind(option.kind, enabled)}
+                aria-label={`Send ${option.label.toLowerCase()} notifications`}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{option.label}</p>
+                <pre className="mt-1 whitespace-pre-wrap rounded-md bg-muted p-2 font-sans text-xs leading-relaxed text-muted-foreground">
+                  {option.preview}
+                </pre>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       {verificationUrl ? (
         <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-xs">
