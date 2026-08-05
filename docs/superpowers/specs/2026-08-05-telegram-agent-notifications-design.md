@@ -49,9 +49,7 @@ Application mutations enforce one recipient record per `phoneDigits` value.
 - `recipientId`
 - `status`: `pending`, `active`, or `disabled`
 - `verificationTokenHash`: optional SHA-256 hash of the current one-time token
-- `verificationExpiresAt`: optional token expiry timestamp
-- `pendingTelegramChatId`: optional chat ID for the current verification session
-- `pendingTelegramUserId`: optional Telegram user ID for the current verification session
+- `verificationChatId`: optional chat ID bridging the start command to the contact share
 - `verifiedAt`: optional agent-specific consent timestamp
 - `createdAt`
 - `updatedAt`
@@ -63,7 +61,7 @@ Indexes:
 - `by_agentId_and_recipientId`
 - `by_recipientId`
 - `by_verificationTokenHash`
-- `by_pendingTelegramChatId_and_updatedAt`
+- `by_verificationChatId_and_updatedAt`
 
 Application mutations enforce one subscription per agent and recipient. Every saved row, including pending and disabled rows, occupies one of the agent's five slots. Removing a row frees the slot.
 
@@ -90,7 +88,7 @@ The section supports:
 
 - Adding an international phone number
 - Generating and immediately copying a Telegram verification link
-- Generating a replacement for an expired or unused link
+- Generating a replacement for an unused link
 - Disabling or enabling an active subscription
 - Removing a subscription
 
@@ -100,7 +98,7 @@ Removing the final subscription for a recipient does not delete the recipient re
 
 ## Verification links
 
-Convex generates 32 random bytes with Web Crypto, encodes them as base64url, and returns the raw token only in the generated link. The subscription stores only the SHA-256 hash. The token expires after 24 hours, is single-use, and regeneration invalidates the prior token.
+Convex generates 32 random bytes with Web Crypto, encodes them as base64url, and returns the raw token only in the generated link. The subscription stores only the SHA-256 hash. The token does not expire, is single-use, and remains valid only while the subscription is pending. Successful verification, regeneration, disabling, or removal invalidates it.
 
 Because the raw token is not stored, the UI can display and copy a link only from the mutation response that created it. After a reload, the user generates a replacement link instead of retrieving the previous one.
 
@@ -116,18 +114,18 @@ The raw token remains within Telegram's 64-character start-parameter limit.
 
 After the recipient opens the link and presses Start, Telegram sends `/start <raw_token>` to the notification bot. Because the bot is registered to `POST /webhook/telegram`, the update reaches the existing Convex HTTP action.
 
-The handler authenticates the webhook secret, parses the start token, hashes it, and finds the pending subscription. It rejects missing, unknown, used, expired, or non-pending tokens with a generic Telegram response that does not reveal subscription data.
+The handler authenticates the webhook secret, parses the start token, hashes it, and finds the pending subscription. It rejects missing, unknown, used, or non-pending tokens with a generic Telegram response that does not reveal subscription data.
 
-For a valid token, the handler clears any other incomplete verification session associated with the same Telegram chat, stores the chat and Telegram user IDs on the selected subscription, and sends the contact-sharing keyboard using `NOTIFICATION_BOT_TOKEN`.
+For a valid token, the handler clears any other incomplete verification session associated with the same Telegram chat, stores that chat ID as `verificationChatId` on the selected subscription, and sends the contact-sharing keyboard using `NOTIFICATION_BOT_TOKEN`.
 
 The subsequent contact update does not repeat the start token. The handler finds the most recently updated pending subscription for that chat and requires:
 
 - A private `message` update
 - `message.contact.user_id` equal to `message.from.id`
 - The normalized contact phone equal to the linked recipient's `phoneDigits`
-- An unexpired verification session
+- A pending subscription still bound to the same verification chat
 
-On success, one mutation updates the recipient to `verified`, saves the permanent Telegram chat and user IDs plus names, activates only the selected agent subscription, clears token and pending-session fields, records both verification timestamps, and returns the `Your notifications are ready!` confirmation.
+On success, one mutation updates the recipient to `verified`, saves the permanent Telegram chat and user IDs plus names, activates only the selected agent subscription, clears the token and verification chat, records both verification timestamps, and returns the `Your notifications are ready!` confirmation.
 
 One recipient may repeat this flow for another agent. The recipient record is reused, but each agent subscription requires its own explicit link and successful contact share.
 
@@ -183,7 +181,7 @@ Focused tests cover:
 - Canonical phone normalization and rejection of local-only or malformed values
 - Transactional five-subscription enforcement and duplicate prevention
 - Recipient reuse across agents
-- Token hashing, expiry, regeneration, single use, and invalid-token responses
+- Token hashing, regeneration, single use, and invalid-token responses
 - `/start <token>` parsing and contact-keyboard sending
 - Self-contact ownership and phone matching
 - Activation of only the selected agent subscription
