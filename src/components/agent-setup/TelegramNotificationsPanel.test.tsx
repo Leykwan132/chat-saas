@@ -34,6 +34,8 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('When an appointment is changed.');
   expect(markup).toContain('When an appointment is cancelled.');
   expect(markup).toContain('Sending');
+  expect(markup).not.toContain('lucide-chevron-down');
+  expect(markup).not.toContain('lucide-chevron-up');
   expect(markup.indexOf('Notification Types')).toBeGreaterThan(markup.indexOf('Recipients List'));
 
   const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
@@ -49,8 +51,11 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('text-base font-semibold tracking-tight');
   expect(source).toContain('max-w-md');
   expect(source).toContain('Mail');
+  expect(source).toContain('self-center');
   expect(source).toContain('option.description');
   expect(source).toContain('ml-auto');
+  expect(source).toContain('showIndicator={false}');
+  expect(source).toContain('toggleNotificationDetails');
   expect(source).toContain('option.preview');
   expect(source).toContain('justify-end');
   expect(source).toContain('Accordion');

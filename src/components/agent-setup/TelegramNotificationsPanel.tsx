@@ -46,6 +46,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const [verificationUrl, setVerificationUrl] = useState<string>();
   const [isAdding, setIsAdding] = useState(false);
   const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
+  const [openNotificationKinds, setOpenNotificationKinds] = useState<TelegramNotificationKind[]>([]);
   const selectedKinds = preferences?.kinds ?? TELEGRAM_NOTIFICATION_KINDS;
   const sendableSubscriptions = subscriptions?.filter((subscription) => subscription.canSendTest) ?? [];
 
@@ -102,6 +103,14 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
     } finally {
       setTestingKind(undefined);
     }
+  }
+
+  function toggleNotificationDetails(kind: TelegramNotificationKind) {
+    setOpenNotificationKinds((current) => (
+      current.includes(kind)
+        ? current.filter((openKind) => openKind !== kind)
+        : [...current, kind]
+    ));
   }
 
   return (
@@ -185,15 +194,27 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
           <h3 className="text-base font-semibold tracking-tight">Notification Types</h3>
           <p className="text-xs text-muted-foreground">Choose the fixed updates sent to every connected phone number.</p>
         </div>
-        <Accordion type="multiple" className="rounded-none border-0">
+        <Accordion
+          type="multiple"
+          value={openNotificationKinds}
+          onValueChange={(value) => setOpenNotificationKinds(value as TelegramNotificationKind[])}
+          className="rounded-none border-0"
+        >
           {telegramNotificationOptions.map((option) => {
             const isEnabled = selectedKinds.includes(option.kind);
             return (
               <AccordionItem key={option.kind} value={option.kind}>
-                <div className="flex w-full items-start">
-                  <AccordionTrigger className="min-w-0 flex-1 p-4 hover:no-underline">
+                <div
+                  className="flex w-full cursor-pointer items-start"
+                  onClick={(event) => {
+                    const target = event.target;
+                    if (target instanceof Element && target.closest('[data-slot="accordion-trigger"], [data-slot="switch"]')) return;
+                    toggleNotificationDetails(option.kind);
+                  }}
+                >
+                  <AccordionTrigger showIndicator={false} className="min-w-0 flex-1 p-4 hover:no-underline">
                     <span className="flex min-w-0 items-start gap-2">
-                      <Mail className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                      <Mail className="size-4 shrink-0 self-center text-muted-foreground" />
                       <span className="min-w-0">
                         <span className="block truncate">{option.label}</span>
                         <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
