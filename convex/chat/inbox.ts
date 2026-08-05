@@ -44,6 +44,7 @@ import {
 import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
 import { markConversationAnalyticsDirty } from "../analyticsDirtyRequest";
 import { canProcessWorkspaceActivity } from "../teamDeletion/access";
+import { notifyHumanEscalation } from "../telegramNotifications/events";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -470,6 +471,7 @@ export const internalEscalateConversation = internalMutation({
     await markConversationAnalyticsDirty(ctx, {
       conversationId: args.conversationId,
     });
+    await notifyHumanEscalation(ctx, agent._id, args.conversationId, agent.name);
   },
 });
 

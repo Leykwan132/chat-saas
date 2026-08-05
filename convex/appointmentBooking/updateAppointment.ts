@@ -16,6 +16,7 @@ import {
   cancelWorkflowRemindersForAppointment,
   scheduleWorkflowRemindersForAppointment,
 } from "../workflowReminderRuntime";
+import { notifyAppointmentEvent } from "../telegramNotifications/events";
 
 export const updateBookingAppointment = internalMutation({
   args: {
@@ -136,6 +137,7 @@ export const updateBookingAppointment = internalMutation({
     }
     await cancelWorkflowRemindersForAppointment(ctx, event._id, "Appointment rescheduled");
     await scheduleWorkflowRemindersForAppointment(ctx, event._id);
+    await notifyAppointmentEvent(ctx, agent._id, event._id, agent.name, "updated");
     return {
       success: true,
       bookingId: event._id,

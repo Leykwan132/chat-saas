@@ -598,7 +598,7 @@ export const update = mutation({
         const sessions = await ctx.db
           .query("appointmentBookingSessions")
           .withIndex("by_conversationId", (q) => q.eq("conversationId", event.conversationId!))
-          .collect();
+          .take(100);
         const session = sessions.find(
           (row) =>
             row.calendarEventId === args.eventId &&
