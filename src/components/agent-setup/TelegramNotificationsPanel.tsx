@@ -228,12 +228,12 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   }}
                 >
                   <AccordionTrigger showIndicator={false} className="min-w-0 flex-1 px-0 py-4 hover:no-underline">
-                    <span className="flex min-w-0 items-start gap-3">
-                      <Mail className="size-4 shrink-0 self-center text-muted-foreground" />
-                      <span className="min-w-0">
-                        <span className="block truncate">{option.label}</span>
-                        <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2">
+                        <Mail className="size-4 shrink-0 text-muted-foreground" />
+                        <span className="truncate">{option.label}</span>
                       </span>
+                      <span className="mt-1 block pl-6 text-xs font-normal leading-relaxed text-muted-foreground">{option.description}</span>
                     </span>
                   </AccordionTrigger>
                   <div className="ml-auto flex shrink-0 items-center gap-2 py-4 pr-4">
@@ -245,7 +245,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                     />
                   </div>
                 </div>
-                <AccordionContent className="pl-7">
+                <AccordionContent className="pl-6">
                   <div className="flex flex-col gap-3 pt-1">
                     <div className="space-y-2">
                       <p className="text-sm font-medium">Sample message</p>
