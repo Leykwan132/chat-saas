@@ -15,6 +15,7 @@ const compactHeaderPages = [
   'CustomersPage.tsx',
   'FollowUpPage.tsx',
   'LeadAssignmentPage.tsx',
+  'NotificationsPage.tsx',
   'QuickRepliesPage.tsx',
 ];
 
@@ -38,11 +39,6 @@ const descriptivePageHeaders = [
     fileName: 'ServicesPage.tsx',
     title: 'Services',
     description: 'Create the services customers can book with your team.',
-  },
-  {
-    fileName: 'NotificationsPage.tsx',
-    title: 'Notifications',
-    description: 'Telegram is currently the only supported notification channel.',
   },
 ];
 
@@ -84,6 +80,13 @@ describe('page header chrome', () => {
 
     expect(source).toContain('PageTitleBlock');
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
+  });
+
+  test('Notifications identifies its Telegram-only channel with BellRing', () => {
+    const source = readPage('NotificationsPage.tsx');
+
+    expect(source).toContain('BellRing');
+    expect(source).toContain('Telegram only');
   });
 
   test.each(descriptivePageHeaders)(
