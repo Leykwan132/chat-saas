@@ -205,7 +205,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
             return (
               <AccordionItem key={option.kind} value={option.kind}>
                 <div
-                  className="flex w-full cursor-pointer items-start"
+                  className="flex w-full cursor-pointer items-start transition-colors hover:bg-muted/60"
                   onClick={(event) => {
                     const target = event.target;
                     if (target instanceof Element && target.closest('[data-slot="accordion-trigger"], [data-slot="switch"]')) return;
