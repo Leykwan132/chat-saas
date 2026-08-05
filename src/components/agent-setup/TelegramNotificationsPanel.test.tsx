@@ -58,6 +58,8 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('showIndicator={false}');
   expect(source).toContain('toggleNotificationDetails');
   expect(source).toContain('option.preview');
+  expect(source).toContain('Sample message');
+  expect(source).toContain('px-3 py-3 font-sans text-sm');
   expect(source).toContain('justify-end');
   expect(source).toContain('Accordion');
   expect(source).toContain('AccordionItem');
