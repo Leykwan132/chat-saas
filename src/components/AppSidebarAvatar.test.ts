@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { BellRing } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 import { getNavItems } from './app-sidebar-nav';
 
@@ -47,6 +48,7 @@ describe('Avatar navigation', () => {
 
     expect(tools[notificationIndex]).toMatchObject({
       to: '/dashboard/agent-id/notifications',
+      icon: BellRing,
       requiredPermission: 'agents:manage',
     });
     expect(notificationIndex).toBe(broadcastIndex - 1);

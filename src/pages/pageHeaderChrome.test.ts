@@ -82,11 +82,13 @@ describe('page header chrome', () => {
     expect(source).not.toContain('text-4xl font-semibold tracking-tight text-foreground');
   });
 
-  test('Notifications identifies its Telegram-only channel with BellRing', () => {
+  test('Notifications identifies its Telegram-only channel with the Telegram icon', () => {
     const source = readPage('NotificationsPage.tsx');
 
-    expect(source).toContain('BellRing');
+    expect(source).toContain('FaTelegramPlane');
     expect(source).toContain('Telegram only');
+    expect(source).toContain('Telegram is currently the only supported notification channel.');
+    expect(source).toContain('text-sm text-muted-foreground');
   });
 
   test.each(descriptivePageHeaders)(
