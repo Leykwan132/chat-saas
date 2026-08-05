@@ -22,10 +22,11 @@ test('shows all four notification choices below the phone-number controls', () =
     <TelegramNotificationsPanel agentId={'agent-id' as never} />,
   );
 
-  expect(markup).toContain('When should we notify you?');
+  expect(markup).toContain('Phone numbers');
+  expect(markup).toContain('What should be sent?');
   expect(markup).toContain('Human escalation');
   expect(markup).toContain('New booking');
   expect(markup).toContain('Booking updated');
   expect(markup).toContain('Booking cancelled');
-  expect(markup.indexOf('When should we notify you?')).toBeGreaterThan(markup.indexOf('Add'));
+  expect(markup.indexOf('What should be sent?')).toBeGreaterThan(markup.indexOf('Phone numbers'));
 });
