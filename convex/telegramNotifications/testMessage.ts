@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { action, internalMutation } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { assertManageableAgent } from "../agentAccess";
 import { requireNotificationBotToken } from "./config";
 import { TelegramDeliveryError, sendTelegramMessage } from "./telegramApi";
@@ -53,6 +54,6 @@ export const send = action({
       }
       throw error;
     }
-    return { sent: true };
+    return { sent: true as const };
   },
 });

@@ -6,8 +6,12 @@ import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
 
-beforeEach(() => vi.stubEnv("NOTIFICATION_BOT_USERNAME", "notifications_kilobot"));
-afterEach(() => vi.unstubAllEnvs());
+beforeEach(() => {
+  vi.stubEnv("NOTIFICATION_BOT_USERNAME", "notifications_kilobot");
+});
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 async function createAgent(t: ReturnType<typeof convexTest>, userId: string, name: string) {
   return await t.run(async (ctx) => {
@@ -43,6 +47,9 @@ test("manages reusable, authorized Telegram recipients without storing a raw sta
   });
 
   expect(first.state).toBe("pending");
+  if (first.state !== "pending") {
+    throw new Error("Expected a pending Telegram subscription");
+  }
   expect(first.verificationUrl).toMatch(
     /^https:\/\/t\.me\/notifications_kilobot\?start=[A-Za-z0-9_-]{43}$/,
   );

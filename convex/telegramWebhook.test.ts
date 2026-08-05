@@ -2,7 +2,9 @@ import { afterEach, expect, test, vi } from "vitest";
 import { handleTelegramWebhookRequest } from "./telegramWebhook";
 import { parseTelegramUpdate } from "./telegramNotifications/updateParser";
 
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 test("parses private Telegram messages with string identifiers", () => {
   expect(parseTelegramUpdate({

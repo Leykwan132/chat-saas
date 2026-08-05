@@ -124,7 +124,11 @@ export const add = mutation({
         createdAt: now,
         updatedAt: now,
       });
-      return { subscriptionId, state: "pending", verificationUrl: verification.verificationUrl };
+      return {
+        subscriptionId,
+        state: "pending" as const,
+        verificationUrl: verification.verificationUrl,
+      };
     }
 
     const subscriptionId = await ctx.db.insert("agentTelegramNotificationSubscriptions", {
@@ -135,7 +139,7 @@ export const add = mutation({
       updatedAt: now,
     });
     if (recipient.status === "verified") {
-      return { subscriptionId, state: "connected" };
+      return { subscriptionId, state: "connected" as const };
     }
 
     const verification = await createVerificationLink();
@@ -150,7 +154,11 @@ export const add = mutation({
       verifiedAt: undefined,
       updatedAt: now,
     });
-    return { subscriptionId, state: "pending", verificationUrl: verification.verificationUrl };
+    return {
+      subscriptionId,
+      state: "pending" as const,
+      verificationUrl: verification.verificationUrl,
+    };
   },
 });
 
