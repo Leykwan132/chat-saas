@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useParams } from 'react-router';
+import { Link, useLocation, useParams } from 'react-router';
 import { SiWhatsapp } from 'react-icons/si';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -23,8 +23,12 @@ import { BROADCAST_HISTORY_PAGE_SIZE } from '@/components/broadcast/broadcastHis
 
 export default function BroadcastPage() {
   const { agentId } = useParams();
+  const location = useLocation();
   const { can } = usePermissions();
   const canManage = can(Permission.BROADCAST_MANAGE);
+  const previewWithoutWhatsApp =
+    import.meta.env.DEV &&
+    new URLSearchParams(location.search).has('previewWithoutWhatsApp');
 
   const { results: schedules, status, loadMore } = usePaginatedQuery(
     api.whatsappBroadcast.listSchedulesForAgent,
@@ -62,6 +66,7 @@ export default function BroadcastPage() {
     <WhatsAppFeatureGate
       feature="Broadcast"
       connectionRequiredVariant="minimal"
+      bypassConnectionRequirement={previewWithoutWhatsApp}
     >
       <div data-broadcast-page className="flex w-full flex-col gap-8">
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -73,6 +78,9 @@ export default function BroadcastPage() {
             </span>
           </div>
           <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">Broadcast</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Send approved WhatsApp templates to a selected group of contacts.
+          </p>
         </div>
         {canManage && (
           <div className="flex shrink-0">

@@ -23,4 +23,8 @@ test('uses a Convex-paginated shadcn Broadcast History table', () => {
   expect(table).toContain('<PaginationEllipsis');
   expect(table).toContain('<PaginationNext');
   expect(table).toContain('void loadMore(BROADCAST_HISTORY_PAGE_SIZE)');
+  expect(table).toContain('<section className="flex flex-col gap-4">');
+  expect(table).not.toContain(
+    '<section className="mt-4 flex flex-col gap-4">',
+  );
 });

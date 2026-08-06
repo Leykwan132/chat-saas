@@ -192,6 +192,10 @@ test("counts AI escalation events for the agent", async () => {
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
   const conversationId = await insertConversation(t, { agentId, now });
+  const secondConversationId = await insertConversation(t, {
+    agentId,
+    now: now + 1,
+  });
 
   await t.run(async (ctx) => {
     await ctx.db.insert("conversationLogs", {
@@ -243,6 +247,10 @@ test("returns trending topics for agent conversations in the period", async () =
   const t = createOverviewTest();
   const { authed, agentId, now } = await createFixture(t);
   const conversationId = await insertConversation(t, { agentId, now });
+  const secondConversationId = await insertConversation(t, {
+    agentId,
+    now: now + 1,
+  });
 
   await t.run(async (ctx) => {
     const topicId = await ctx.db.insert("conversationTopics", {
@@ -263,6 +271,15 @@ test("returns trending topics for agent conversations in the period", async () =
       detectedAt: now,
       createdAt: now,
       updatedAt: now,
+    });
+    await ctx.db.insert("conversationTopicAssignments", {
+      orgId: "",
+      conversationId: secondConversationId,
+      topicId,
+      confidence: 0.9,
+      detectedAt: now + 1,
+      createdAt: now + 1,
+      updatedAt: now + 1,
     });
   });
 

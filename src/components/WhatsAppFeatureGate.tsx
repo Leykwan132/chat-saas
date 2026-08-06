@@ -12,6 +12,7 @@ type WhatsAppFeatureGateProps = {
   feature: string;
   children: React.ReactNode;
   connectionRequiredVariant?: 'default' | 'minimal';
+  bypassConnectionRequirement?: boolean;
 };
 
 type WhatsAppConnectionRequiredStateProps = {
@@ -73,6 +74,7 @@ export function WhatsAppFeatureGate({
   feature,
   children,
   connectionRequiredVariant = 'default',
+  bypassConnectionRequirement = false,
 }: WhatsAppFeatureGateProps) {
   const { agentId } = useParams();
   const { role, isLoading: permLoading } = usePermissions();
@@ -116,7 +118,7 @@ export function WhatsAppFeatureGate({
   }
 
   // Owner but no WhatsApp channel: guide them to connect
-  if (!hasWhatsApp) {
+  if (!hasWhatsApp && !bypassConnectionRequirement) {
     return (
       <WhatsAppConnectionRequiredState
         agentId={agentId}
