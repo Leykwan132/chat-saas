@@ -163,7 +163,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="truncate text-sm font-medium">{subscription.phoneNumber}</p>
-                    {subscription.state === 'connected' ? <span role="img" aria-label={`Telegram recipient ${subscription.phoneNumber} connected`} className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"><Check className="size-3" /></span> : null}
+                    {subscription.state === 'connected' ? <span role="img" aria-label={`Telegram recipient ${subscription.phoneNumber} connected`} className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800"><Check className="size-2.5 text-white" strokeWidth={2.5} /></span> : null}
                   </div>
                   <p className="text-xs capitalize text-muted-foreground">{subscription.state}</p>
               </div>

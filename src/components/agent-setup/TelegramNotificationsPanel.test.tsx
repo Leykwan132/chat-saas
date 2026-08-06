@@ -42,7 +42,8 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('Sending');
   expect(markup).toContain('aria-label="Telegram recipient +60 12-949 9394 connected"');
   expect(markup).toContain('lucide-check');
-  expect(markup).toContain('bg-emerald-100');
+  expect(markup).toContain('size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800');
+  expect(markup).toContain('size-2.5 text-white');
   expect(markup).toContain('>Active</span>');
   expect(markup).not.toContain('aria-label="Send test to +60 12-949 9394"');
   expect(markup).toContain('lucide-triangle-alert');
