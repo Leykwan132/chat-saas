@@ -31,6 +31,7 @@ import {
   TELEGRAM_NOTIFICATION_KINDS,
   type TelegramNotificationKind,
 } from '../../../shared/telegramNotificationKinds';
+import { recipientAddErrorMessage } from './telegramRecipientError';
 import { telegramNotificationOptions } from './telegramNotificationOptions';
 
 type TelegramNotificationsPanelProps = {
@@ -47,6 +48,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const regenerate = useMutation(api.telegramNotifications.subscriptions.regenerateVerificationLink);
   const sendEventPreview = useAction(api.telegramNotifications.testMessage.sendEventPreview);
   const [phone, setPhone] = useState<string>();
+  const [recipientError, setRecipientError] = useState<string>();
   const [verificationUrl, setVerificationUrl] = useState<string>();
   const [isAdding, setIsAdding] = useState(false);
   const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
@@ -61,6 +63,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
 
   async function addRecipient() {
     if (!phone) return;
+    setRecipientError(undefined);
     setIsAdding(true);
     try {
       const result = await add({ agentId, phone });
@@ -72,7 +75,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
       }
       setPhone(undefined);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Could not add Telegram recipient');
+      setRecipientError(recipientAddErrorMessage(error));
     } finally {
       setIsAdding(false);
     }
@@ -131,7 +134,10 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
               international
               countryCallingCodeEditable={false}
               value={phone}
-              onChange={setPhone}
+              onChange={(value) => {
+                setPhone(value);
+                setRecipientError(undefined);
+              }}
               disabled={isAdding || subscriptions?.length === 5}
               className="min-w-0 flex-1 px-3 text-sm"
               numberInputProps={{ className: 'min-w-0 bg-transparent outline-none' }}
@@ -148,6 +154,7 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
               </InputGroupButton>
             </InputGroupAddon>
           </InputGroup>
+          {recipientError ? <p role="alert" className="mt-2 text-xs text-destructive">{recipientError}</p> : null}
         </div>
         {verificationUrl ? (
           <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-xs">

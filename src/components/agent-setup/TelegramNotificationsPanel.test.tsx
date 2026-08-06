@@ -70,6 +70,9 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('InputGroupButton');
   expect(source).toContain('Plus');
   expect(source).toContain('Add Telegram recipient');
+  expect(source).toContain('recipientAddErrorMessage');
+  expect(source).toContain('role="alert"');
+  expect(source).toContain('text-destructive');
   expect(source).toContain('Mail');
   expect(source).toContain('flex items-center gap-2');
   expect(source).toContain('mt-1 block text-xs');
