@@ -3,5 +3,5 @@ import { components } from "../_generated/api";
 
 export const telegramNotificationWorkpool = new Workpool(
   components.telegramNotificationWorkpool,
-  { maxParallelism: 3, retryActionsByDefault: true },
+  { maxParallelism: 1, retryActionsByDefault: true },
 );
