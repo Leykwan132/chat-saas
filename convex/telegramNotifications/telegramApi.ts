@@ -5,11 +5,14 @@ export type TelegramSendRequest = {
 };
 
 export class TelegramDeliveryError extends Error {
+  readonly kind: "blocked" | "unavailable" | "transient" | "permanent";
+
   constructor(
-    public readonly kind: "blocked" | "unavailable" | "transient" | "permanent",
+    kind: "blocked" | "unavailable" | "transient" | "permanent",
     message: string,
   ) {
     super(message);
+    this.kind = kind;
   }
 }
 

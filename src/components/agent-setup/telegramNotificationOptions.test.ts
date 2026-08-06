@@ -12,11 +12,11 @@ test('shows booking and escalation details in notification samples', () => {
   expect(escalation?.preview).toContain('Needs help: Please review the customer request.');
 
   for (const booking of [newBooking, updatedBooking, cancelledBooking]) {
-    expect(booking.preview).toContain('Booking: Consultation - Sample Customer');
-    expect(booking.preview).toContain('Date: August 6 (Thursday)');
-    expect(booking.preview).toContain('Time: 10:00 AM - 10:30 AM (Asia/Kuala_Lumpur)');
-    expect(booking.preview).toContain('Customer: Sample Customer <sample@example.com>');
-    expect(booking.preview).toContain('Service: Consultation');
+    expect(booking?.preview).toContain('Booking: Consultation - Sample Customer');
+    expect(booking?.preview).toContain('Date: August 6 (Thursday)');
+    expect(booking?.preview).toContain('Time: 10:00 AM - 10:30 AM (Asia/Kuala_Lumpur)');
+    expect(booking?.preview).toContain('Customer: Sample Customer <sample@example.com>');
+    expect(booking?.preview).toContain('Service: Consultation');
   }
   expect(newBooking?.preview).toContain('Status: Confirmed');
   expect(updatedBooking?.preview).toContain('Status: Updated');
