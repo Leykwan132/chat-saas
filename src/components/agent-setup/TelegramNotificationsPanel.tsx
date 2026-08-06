@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Check, ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2, TriangleAlert } from 'lucide-react';
+import { Check, ChevronDown, Copy, Link2, Mail, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -45,7 +45,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const setEnabled = useMutation(api.telegramNotifications.subscriptions.setEnabled);
   const setPreferences = useMutation(api.telegramNotifications.preferences.setForAgent);
   const regenerate = useMutation(api.telegramNotifications.subscriptions.regenerateVerificationLink);
-  const sendTest = useAction(api.telegramNotifications.testMessage.send);
   const sendEventPreview = useAction(api.telegramNotifications.testMessage.sendEventPreview);
   const [phone, setPhone] = useState<string>();
   const [verificationUrl, setVerificationUrl] = useState<string>();
@@ -186,15 +185,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   <Link2 className="size-4" />
                 </Button>
               ) : null}
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={!subscription.canSendTest}
-                aria-label={`Send test to ${subscription.phoneNumber}`}
-                onClick={() => void sendTest({ subscriptionId: subscription.subscriptionId }).then(() => toast.success('Test notification sent')).catch((error) => toast.error(error instanceof Error ? error.message : 'Could not send test'))}
-              >
-                <Send className="size-4" />
-              </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
