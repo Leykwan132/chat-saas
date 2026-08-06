@@ -11,7 +11,13 @@ vi.mock('convex/react', () => ({
   useQuery: () => {
     queryCount += 1;
     return queryCount === 1
-      ? []
+      ? [{
+        subscriptionId: 'telegram-subscription-id',
+        phoneNumber: '+60 12-949 9394',
+        state: 'connected',
+        enabled: true,
+        canSendTest: true,
+      }]
       : { kinds: ['humanEscalation', 'bookingCreated', 'bookingUpdated', 'bookingCancelled'] };
   },
 }));
@@ -34,6 +40,9 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('When an appointment is changed.');
   expect(markup).toContain('When an appointment is cancelled.');
   expect(markup).toContain('Sending');
+  expect(markup).toContain('aria-label="Telegram recipient +60 12-949 9394 connected"');
+  expect(markup).toContain('lucide-check');
+  expect(markup).toContain('bg-emerald-100');
   expect(markup).toContain('lucide-triangle-alert');
   expect(markup.match(/lucide-mail/g)).toHaveLength(3);
   expect(markup).not.toContain('lucide-chevron-down');

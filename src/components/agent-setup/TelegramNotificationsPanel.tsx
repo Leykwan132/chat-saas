@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2, TriangleAlert } from 'lucide-react';
+import { Check, ChevronDown, Copy, Link2, Mail, Plus, Send, Trash2, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -160,10 +160,13 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
         ) : null}
         <div className="flex flex-col gap-2">
           {subscriptions?.map((subscription) => (
-            <div key={subscription.subscriptionId} className="flex items-center gap-2 rounded-md border border-border p-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{subscription.phoneNumber}</p>
-                <p className="text-xs capitalize text-muted-foreground">{subscription.state}</p>
+              <div key={subscription.subscriptionId} className="flex items-center gap-2 rounded-md border border-border p-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="truncate text-sm font-medium">{subscription.phoneNumber}</p>
+                    {subscription.state === 'connected' ? <span role="img" aria-label={`Telegram recipient ${subscription.phoneNumber} connected`} className="flex size-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"><Check className="size-3" /></span> : null}
+                  </div>
+                  <p className="text-xs capitalize text-muted-foreground">{subscription.state}</p>
               </div>
               <Switch
                 checked={subscription.enabled}
