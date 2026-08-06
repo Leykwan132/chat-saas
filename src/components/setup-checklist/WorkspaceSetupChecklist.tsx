@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { Rocket } from 'lucide-react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -9,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { WorkspaceSetupChecklistIntroDialog } from './WorkspaceSetupChecklistIntroDialog';
 import { WorkspaceSetupChecklistPanel } from './WorkspaceSetupChecklistPanel';
+import { WorkspaceSetupChecklistProgressRing } from './WorkspaceSetupChecklistProgressRing';
 import {
   resolveWorkspaceSetupChecklistAction,
   type WorkspaceSetupChecklistStepKey,
 } from './workspaceSetupChecklistNavigation';
 import {
+  workspaceSetupChecklistAccentBorderStyle,
   workspaceSetupChecklistPanelClassName,
   workspaceSetupChecklistRootClassName,
   workspaceSetupChecklistTriggerClassName,
@@ -30,6 +31,8 @@ export function WorkspaceSetupChecklist({
   className,
 }: WorkspaceSetupChecklistProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const forceStarterGuide = searchParams.get('starterGuide') === '1';
   const checklist = useQuery(
     api.workspaceSetupChecklist.getWorkspaceSetupChecklist,
     agentId ? { agentId } : {},
@@ -40,18 +43,22 @@ export function WorkspaceSetupChecklist({
   const completeChecklist = useMutation(
     api.workspaceSetupChecklist.completeWorkspaceSetupChecklist,
   );
-  const [guideOpen, setGuideOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(forceStarterGuide);
   const [introOpen, setIntroOpen] = useState(false);
   const [completing, setCompleting] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const introRecordedRef = useRef(false);
 
   useEffect(() => {
+    if (forceStarterGuide) {
+      setGuideOpen(true);
+      return;
+    }
     if (!checklist?.shouldShowIntro || introRecordedRef.current) return;
     introRecordedRef.current = true;
     setIntroOpen(true);
     void recordIntroShown({});
-  }, [checklist?.shouldShowIntro, recordIntroShown]);
+  }, [checklist?.shouldShowIntro, forceStarterGuide, recordIntroShown]);
 
   useEffect(() => {
     if (!guideOpen) return;
@@ -69,7 +76,7 @@ export function WorkspaceSetupChecklist({
     };
   }, [guideOpen]);
 
-  if (checklist === undefined || !checklist.visible) {
+  if (checklist === undefined || (!checklist.visible && !forceStarterGuide)) {
     return null;
   }
 
@@ -135,16 +142,23 @@ export function WorkspaceSetupChecklist({
       <Button
         type="button"
         variant="ghost"
-        aria-label="Open Launch Guide"
+        aria-label={`Open Getting Started, ${checklist.completedCount} of ${checklist.totalCount} steps complete`}
         onClick={() => setGuideOpen(true)}
-        style={{
-          background:
-            'linear-gradient(var(--color-background), var(--color-background)) padding-box, linear-gradient(135deg, #34d399, #38bdf8, #a78bfa, #f472b6) border-box',
-        }}
+        style={workspaceSetupChecklistAccentBorderStyle}
         className={workspaceSetupChecklistTriggerClassName}
       >
-        <Rocket className="size-3.5" strokeWidth={1.8} />
-        <span className="truncate">Launch Guide</span>
+        <span className="flex min-w-0 items-center truncate text-left leading-none">
+          Getting Started
+        </span>
+        <span className="flex h-full shrink-0 items-center gap-1 overflow-visible tabular-nums text-[0.675rem] font-medium leading-none text-muted-foreground">
+          <span className="leading-none">
+            {checklist.completedCount}/{checklist.totalCount}
+          </span>
+          <WorkspaceSetupChecklistProgressRing
+            completed={checklist.completedCount}
+            total={checklist.totalCount}
+          />
+        </span>
       </Button>
       <WorkspaceSetupChecklistIntroDialog
         open={introOpen}
