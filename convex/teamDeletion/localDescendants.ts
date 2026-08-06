@@ -1,5 +1,6 @@
 import type { Id, TableNames } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
+import { deleteSubscriptionsForAgent } from "../telegramNotifications/subscriptionAccess";
 
 const PAGE_SIZE = 50;
 
@@ -182,6 +183,7 @@ async function deleteAgentPage(
     )
     .take(PAGE_SIZE);
   if (await deleteRows(ctx, templateUsage)) return true;
+  await deleteSubscriptionsForAgent(ctx, agent._id);
   await ctx.db.delete(agent._id);
   return true;
 }

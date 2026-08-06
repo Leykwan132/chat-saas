@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   BarChart3,
+  BellRing,
   BookOpen,
   Bot,
   Calendar,
@@ -77,6 +78,7 @@ export function getNavItems(
             requiredPermission: Permission.CHATS_READ,
           }]
         : []),
+      { to: `/dashboard/${agentId}/notifications`, icon: BellRing, label: 'Notifications', requiredPermission: Permission.AGENTS_MANAGE },
       { to: `/dashboard/${agentId}/broadcast`, icon: Megaphone, label: 'Broadcast', requiredPermission: Permission.BROADCAST_READ },
       { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],

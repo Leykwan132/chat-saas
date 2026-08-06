@@ -4,6 +4,7 @@ import { AppointmentBookingSessionStatus, isActiveAppointmentBookingSessionStatu
 import { logConversationEvent } from "../conversationLogs";
 import { getExistingBookingSession } from "./sessionStore";
 import { cancelWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
+import { notifyAppointmentEvent } from "../telegramNotifications/events";
 
 export const cancelBookingSession = internalMutation({
   args: { conversationId: v.id("conversations") },
@@ -54,6 +55,7 @@ export const cancelBookingSession = internalMutation({
           updatedAt: now,
         });
       }
+      if (agent) await notifyAppointmentEvent(ctx, agent._id, event._id, agent.name, "cancelled");
       return { success: true, message: "Booking cancelled." };
     }
 
@@ -100,6 +102,9 @@ export const cancelBookingSession = internalMutation({
           eventId: active.calendarEventId,
         },
       });
+      if (agent) {
+        await notifyAppointmentEvent(ctx, agent._id, active.calendarEventId, agent.name, "cancelled");
+      }
     }
 
     await ctx.db.patch(active._id, {

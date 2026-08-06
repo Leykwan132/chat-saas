@@ -8,6 +8,7 @@ import {
 import { cn } from '@/lib/utils';
 import { WorkspaceSetupChecklistHoverIllustration } from './WorkspaceSetupChecklistHoverIllustration';
 import type { WorkspaceSetupChecklistStepKey } from './workspaceSetupChecklistNavigation';
+import { workspaceSetupChecklistAccentBorderStyle } from './workspaceSetupChecklistLayout';
 import { workspaceSetupChecklistSteps } from './workspaceSetupChecklistSteps';
 
 type WorkspaceSetupChecklistStep = {
@@ -42,15 +43,12 @@ export function WorkspaceSetupChecklistPanel({
 
   return (
     <div
-      style={{
-        background:
-          'linear-gradient(var(--color-background), var(--color-background)) padding-box, linear-gradient(135deg, #34d399, #38bdf8, #a78bfa, #f472b6) border-box',
-      }}
+      style={workspaceSetupChecklistAccentBorderStyle}
       className="w-full rounded-lg border border-transparent p-3 text-left text-foreground shadow-lg shadow-black/5 backdrop-blur"
     >
       <div className="mb-2 flex items-start justify-between gap-3 px-1">
         <div className="min-w-0">
-          <p className="m-0 text-sm font-medium">Launch Guide</p>
+          <p className="m-0 text-sm font-medium">Starter Guide</p>
           <p className="m-0 truncate text-xs text-muted-foreground">Get your first agent ready.</p>
         </div>
         <Button
@@ -59,7 +57,7 @@ export function WorkspaceSetupChecklistPanel({
           size="icon"
           className="size-6 shrink-0"
           onClick={onClose}
-          aria-label="Close Launch Guide"
+          aria-label="Close Starter Guide"
         >
           <X className="size-3.5" />
         </Button>

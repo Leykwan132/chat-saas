@@ -31,6 +31,7 @@ app.use(workpool, { name: "leadLabelWorkpool" });
 app.use(workpool, { name: "broadcastWorkpool" });
 app.use(workpool, { name: "followUpWorkpool" });
 app.use(workpool, { name: "workflowReminderWorkpool" });
+app.use(workpool, { name: "telegramNotificationWorkpool" });
 app.use(workpool, { name: "workflowFollowUpWorkpool" });
 app.use(workpool, { name: "whatsappTemplateMediaWorkpool" });
 app.use(workpool, { name: "conversationLogWorkpool" });

@@ -33,6 +33,7 @@ import AutomationsBroadcastPage from './pages/AutomationsBroadcastPage.tsx'
 import AutomationsFollowUpPage from './pages/AutomationsFollowUpPage.tsx'
 import BroadcastPage from './pages/BroadcastPage.tsx'
 import BroadcastDetailPage from './pages/BroadcastDetailPage.tsx'
+import NotificationsPage from './pages/NotificationsPage.tsx'
 import FollowUpPage from './pages/FollowUpPage.tsx'
 import FollowUpDetailPage from './pages/FollowUpDetailPage.tsx'
 import LeadAssignmentPage from './pages/LeadAssignmentPage.tsx'
@@ -146,6 +147,7 @@ const router = createBrowserRouter(
         <Route path="follow-ups" element={<FollowUpPage />} />
         <Route path="follow-ups/new" element={<AutomationsFollowUpPage />} />
         <Route path="follow-ups/:ruleId" element={<FollowUpDetailPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
         <Route path="broadcast" element={<BroadcastPage />} />
         <Route path="broadcast/new" element={<AutomationsBroadcastPage />} />
         <Route path="broadcast/:scheduleId" element={<BroadcastDetailPage />} />

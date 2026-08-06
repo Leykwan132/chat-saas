@@ -12,6 +12,7 @@ import {
   assertCanManageAgent,
   getOwnedAgent,
 } from "./agentAccess";
+import { deleteSubscriptionsForAgent } from "./telegramNotifications/subscriptionAccess";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 
 const templateKeyValidator = v.union(
@@ -290,6 +291,7 @@ export const remove = mutation({
       throw new Error("Agent not found");
     }
 
+    await deleteSubscriptionsForAgent(ctx, args.agentId);
     await ctx.db.delete(args.agentId);
     return args.agentId;
   },

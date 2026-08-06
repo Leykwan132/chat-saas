@@ -33,6 +33,7 @@ test('uses KiloBot typography for authenticated index page titles', () => {
   expectBrandTitle(pageSource('./QuickRepliesPage.tsx'), '>Quick Replies</h1>');
   expectBrandTitle(pageSource('./CustomersPage.tsx'), '>\n            Customers\n');
   expectBrandTitle(pageSource('./FollowUpPage.tsx'), '>Follow-ups</h1>');
+  expectBrandTitle(pageSource('./NotificationsPage.tsx'), '>Notifications</h1>');
   expectBrandTitle(pageSource('./BroadcastPage.tsx'), '>Broadcast</h1>');
   expectBrandTitle(pageSource('./TemplatesPage.tsx'), 'Message templates');
   expectBrandTitle(pageSource('./LeadAssignmentPage.tsx'), 'Lead Assignment');
