@@ -43,6 +43,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('When an appointment is cancelled.');
   expect(markup).toContain('Sending');
   expect(markup).toContain('aria-label="Telegram recipient +60 12-949 9394 connected"');
+  expect(markup).toContain('Ready to Accept Notification');
   expect(markup).toContain('lucide-check');
   expect(markup).toContain('size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800');
   expect(markup).toContain('size-2.5 text-white');
@@ -55,6 +56,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup.indexOf('Notification Types')).toBeGreaterThan(markup.indexOf('Recipients List'));
 
   const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
+  const rowSource = readFileSync(new URL('./TelegramRecipientRow.tsx', import.meta.url), 'utf8');
   expect(source).toContain('grid gap-8 lg:grid-cols-2');
   expect(source).toContain('lg:border-l lg:border-border lg:pl-8');
   expect(source).not.toContain('rounded-md border border-border p-3');
@@ -62,7 +64,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('DropdownMenu');
   expect(source).toContain('DropdownMenuItem');
   expect(source).toContain('subscription.phoneNumber');
-  expect(source).toContain("subscription.enabled ? 'Active' : 'Inactive'");
+  expect(rowSource).toContain("enabled ? 'Active' : 'Inactive'");
   expect(source).not.toContain('rounded-lg border border-border bg-card p-4');
   expect(source).toContain('text-base font-semibold tracking-tight');
   expect(source).toContain('max-w-xs');
@@ -107,9 +109,22 @@ test('keeps pending-recipient verification controls in the recipient row', () =>
   );
 
   expect(markup).toContain('lucide-clock-3');
-  expect(markup).toContain('Copy verification link');
+  expect(markup).toContain('bg-yellow-500');
+  expect(markup).toContain('Pending verification');
+  expect(markup).toContain('>Active</span>');
 
-  const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
-  expect(source).not.toContain('Share the copied verification link with the recipient.');
-  expect(source).not.toContain('Copy verification link for ${subscription.phoneNumber}');
+  const panelSource = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
+  const rowSource = readFileSync(new URL('./TelegramRecipientRow.tsx', import.meta.url), 'utf8');
+  const hookSource = readFileSync(new URL('./useTelegramVerificationUrls.ts', import.meta.url), 'utf8');
+  expect(panelSource).not.toContain('Share the copied verification link with the recipient.');
+  expect(rowSource).not.toContain('variant="link"');
+  expect(rowSource).not.toContain('https://t.me/…?start=…');
+  expect(rowSource).not.toContain('Use this activation link to get started in Telegram.');
+  expect(rowSource).toContain('Activation link');
+  expect(rowSource).toContain('break-all');
+  expect(rowSource).toContain('bg-yellow-500');
+  expect(rowSource).toContain('Ready to Accept Notification');
+  expect(rowSource).toContain('text-xs text-muted-foreground');
+  expect(rowSource).toContain('<Copy className="size-3" />');
+  expect(hookSource).toContain('ensureVerificationUrl');
 });
