@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@workos-inc/authkit-react';
 import { useMutation, useQuery } from 'convex/react';
 import { Plus } from 'lucide-react';
-import { Outlet, useNavigate, useSearchParams } from 'react-router';
+import { Navigate, Outlet, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -152,7 +152,7 @@ export function AgentsIndex() {
 }
 
 export default function WorkspacePage() {
-  const { isLoading: workosLoading } = useAuth();
+  const { isLoading: workosLoading, user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
@@ -168,6 +168,10 @@ export default function WorkspacePage() {
         <Spinner className="size-8 text-muted-foreground" />
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/" replace />;
   }
 
   return (
