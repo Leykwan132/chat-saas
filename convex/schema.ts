@@ -1531,6 +1531,8 @@ export default defineSchema({
     firstName: v.optional(v.string()),
     lastName: v.optional(v.string()),
     verifiedAt: v.optional(v.number()),
+    nextTelegramMessageAt: v.optional(v.number()),
+    nextTelegramMessageAvailableAt: v.optional(v.number()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

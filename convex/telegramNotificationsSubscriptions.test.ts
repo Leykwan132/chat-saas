@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import schema from "./schema";
 import {
   notifyAppointmentEvent,
@@ -181,4 +181,42 @@ test("does not queue events omitted from an agent's notification kinds", async (
   });
 
   expect(result).toEqual({ escalation: 0, updatedBooking: 0 });
+});
+
+test("spaces queued sends to the same Telegram chat one second apart", async () => {
+  const t = convexTest(schema, modules);
+  const ownerId = "telegram-notification-queue-owner";
+  const agentId = await createAgent(t, ownerId, "Queued Agent");
+  const owner = t.withIdentity({ subject: ownerId });
+  await owner.mutation(api.authUtils.upsertUser, {});
+
+  const subscriptionId = await t.run(async (ctx) => {
+    const now = Date.now();
+    const recipientId = await ctx.db.insert("telegramNotificationRecipients", {
+      phoneDigits: "60129499394",
+      status: "verified",
+      telegramChatId: "7499620613",
+      telegramUserId: "7499620613",
+      createdAt: now,
+      updatedAt: now,
+    });
+    return await ctx.db.insert("agentTelegramNotificationSubscriptions", {
+      agentId,
+      recipientId,
+      status: "enabled",
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
+
+  const first = await owner.mutation(internal.telegramNotifications.testMessage.reserve, { subscriptionId });
+  const second = await owner.mutation(internal.telegramNotifications.testMessage.reserve, { subscriptionId });
+
+  expect((second as { scheduledFor: number }).scheduledFor - (first as { scheduledFor: number }).scheduledFor).toBe(1_000);
+
+  const firstDelivery = await t.mutation(internal.telegramNotifications.worker.getDelivery, { subscriptionId });
+  const delayedDelivery = await t.mutation(internal.telegramNotifications.worker.getDelivery, { subscriptionId });
+
+  expect(firstDelivery).toMatchObject({ chatId: "7499620613" });
+  expect(delayedDelivery).toMatchObject({ retryAt: expect.any(Number) });
 });
