@@ -2,7 +2,7 @@ import { useState } from 'react';
 import PhoneInput from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import { useAction, useMutation, useQuery } from 'convex/react';
-import { Check, ChevronDown, Copy, Link2, Mail, Plus, Trash2, TriangleAlert } from 'lucide-react';
+import { Check, ChevronDown, Clock3, Link2, Mail, Plus, Trash2, TriangleAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -49,7 +49,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
   const sendEventPreview = useAction(api.telegramNotifications.testMessage.sendEventPreview);
   const [phone, setPhone] = useState<string>();
   const [recipientError, setRecipientError] = useState<string>();
-  const [verificationUrl, setVerificationUrl] = useState<string>();
   const [isAdding, setIsAdding] = useState(false);
   const [testingKind, setTestingKind] = useState<TelegramNotificationKind>();
   const [openNotificationKinds, setOpenNotificationKinds] = useState<TelegramNotificationKind[]>([]);
@@ -68,7 +67,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
     try {
       const result = await add({ agentId, phone });
       if (result.state === 'pending') {
-        setVerificationUrl(result.verificationUrl);
         await copyVerificationUrl(result.verificationUrl);
       } else {
         toast.success('Telegram recipient connected');
@@ -78,6 +76,15 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
       setRecipientError(recipientAddErrorMessage(error));
     } finally {
       setIsAdding(false);
+    }
+  }
+
+  async function copyVerificationLink(subscriptionId: Id<'agentTelegramNotificationSubscriptions'>) {
+    try {
+      const result = await regenerate({ subscriptionId });
+      await copyVerificationUrl(result.verificationUrl);
+    } catch {
+      toast.error('Could not create a verification link');
     }
   }
 
@@ -156,14 +163,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
           </InputGroup>
           {recipientError ? <p role="alert" className="mt-2 text-xs text-destructive">{recipientError}</p> : null}
         </div>
-        {verificationUrl ? (
-          <div className="flex items-center justify-between gap-2 rounded-md bg-muted p-2 text-xs">
-            <span className="truncate">Share the copied verification link with the recipient.</span>
-            <Button variant="ghost" size="icon-sm" onClick={() => copyVerificationUrl(verificationUrl)} aria-label="Copy verification link">
-              <Copy className="size-4" />
-            </Button>
-          </div>
-        ) : null}
         <div className="flex flex-col gap-2">
           {subscriptions?.map((subscription) => (
               <div key={subscription.subscriptionId} className="flex items-center gap-2 rounded-md border border-border p-2">
@@ -171,8 +170,10 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   <div className="flex min-w-0 items-center gap-2">
                     <p className="truncate text-sm font-medium">{subscription.phoneNumber}</p>
                     {subscription.state === 'connected' ? <span role="img" aria-label={`Telegram recipient ${subscription.phoneNumber} connected`} className="flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-800"><Check className="size-2.5 text-white" strokeWidth={2.5} /></span> : null}
+                    {subscription.state === 'pending' ? <span role="img" aria-label={`Telegram recipient ${subscription.phoneNumber} pending`} className="flex size-4 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"><Clock3 className="size-2.5" /></span> : null}
                   </div>
                   <p className="text-xs capitalize text-muted-foreground">{subscription.state}</p>
+                  {subscription.state === 'pending' || subscription.state === 'blocked' ? <Button variant="link" size="sm" className="h-auto px-0 text-xs" onClick={() => void copyVerificationLink(subscription.subscriptionId)}><Link2 className="size-3" />Copy verification link</Button> : null}
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 <span className="text-xs text-muted-foreground">{subscription.enabled ? 'Active' : 'Inactive'}</span>
@@ -182,19 +183,6 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   aria-label={`Enable ${subscription.phoneNumber}`}
                 />
               </div>
-              {subscription.state === 'pending' || subscription.state === 'blocked' ? (
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  aria-label={`Copy verification link for ${subscription.phoneNumber}`}
-                  onClick={() => void regenerate({ subscriptionId: subscription.subscriptionId }).then((result) => {
-                    setVerificationUrl(result.verificationUrl);
-                    return copyVerificationUrl(result.verificationUrl);
-                  }).catch(() => toast.error('Could not create a verification link'))}
-                >
-                  <Link2 className="size-4" />
-                </Button>
-              ) : null}
               <Button
                 variant="ghost"
                 size="icon-sm"

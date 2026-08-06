@@ -4,6 +4,7 @@ import { expect, test, vi } from 'vitest';
 import { TelegramNotificationsPanel } from './TelegramNotificationsPanel';
 
 let queryCount = 0;
+let recipientState: 'connected' | 'pending' = 'connected';
 
 vi.mock('convex/react', () => ({
   useAction: () => vi.fn(),
@@ -14,7 +15,7 @@ vi.mock('convex/react', () => ({
       ? [{
         subscriptionId: 'telegram-subscription-id',
         phoneNumber: '+60 12-949 9394',
-        state: 'connected',
+        state: recipientState,
         enabled: true,
         canSendTest: true,
       }]
@@ -24,6 +25,7 @@ vi.mock('convex/react', () => ({
 
 test('shows all four notification choices below the phone-number controls', () => {
   queryCount = 0;
+  recipientState = 'connected';
 
   const markup = renderToStaticMarkup(
     <TelegramNotificationsPanel agentId={'agent-id' as never} />,
@@ -56,7 +58,6 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('grid gap-8 lg:grid-cols-2');
   expect(source).toContain('lg:border-l lg:border-border lg:pl-8');
   expect(source).not.toContain('rounded-md border border-border p-3');
-  expect(source).toContain('justify-between');
   expect(source).not.toContain('whitespace-pre-wrap rounded-md bg-muted p-2');
   expect(source).toContain('DropdownMenu');
   expect(source).toContain('DropdownMenuItem');
@@ -95,4 +96,20 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('type="multiple"');
   expect(source).toContain('variant="secondary"');
   expect(source).toContain('Send a test message');
+});
+
+test('keeps pending-recipient verification controls in the recipient row', () => {
+  queryCount = 0;
+  recipientState = 'pending';
+
+  const markup = renderToStaticMarkup(
+    <TelegramNotificationsPanel agentId={'agent-id' as never} />,
+  );
+
+  expect(markup).toContain('lucide-clock-3');
+  expect(markup).toContain('Copy verification link');
+
+  const source = readFileSync(new URL('./TelegramNotificationsPanel.tsx', import.meta.url), 'utf8');
+  expect(source).not.toContain('Share the copied verification link with the recipient.');
+  expect(source).not.toContain('Copy verification link for ${subscription.phoneNumber}');
 });
