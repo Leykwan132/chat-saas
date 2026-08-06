@@ -43,6 +43,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(markup).toContain('aria-label="Telegram recipient +60 12-949 9394 connected"');
   expect(markup).toContain('lucide-check');
   expect(markup).toContain('bg-emerald-100');
+  expect(markup).toContain('>Active</span>');
   expect(markup).not.toContain('aria-label="Send test to +60 12-949 9394"');
   expect(markup).toContain('lucide-triangle-alert');
   expect(markup.match(/lucide-mail/g)).toHaveLength(3);
@@ -59,6 +60,7 @@ test('shows all four notification choices below the phone-number controls', () =
   expect(source).toContain('DropdownMenu');
   expect(source).toContain('DropdownMenuItem');
   expect(source).toContain('subscription.phoneNumber');
+  expect(source).toContain("subscription.enabled ? 'Active' : 'Inactive'");
   expect(source).not.toContain('rounded-lg border border-border bg-card p-4');
   expect(source).toContain('text-base font-semibold tracking-tight');
   expect(source).toContain('max-w-xs');

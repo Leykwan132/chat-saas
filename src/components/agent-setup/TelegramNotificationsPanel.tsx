@@ -167,11 +167,14 @@ export function TelegramNotificationsPanel({ agentId }: TelegramNotificationsPan
                   </div>
                   <p className="text-xs capitalize text-muted-foreground">{subscription.state}</p>
               </div>
-              <Switch
-                checked={subscription.enabled}
-                onCheckedChange={(enabled) => void setEnabled({ subscriptionId: subscription.subscriptionId, enabled })}
-                aria-label={`Enable ${subscription.phoneNumber}`}
-              />
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-xs text-muted-foreground">{subscription.enabled ? 'Active' : 'Inactive'}</span>
+                <Switch
+                  checked={subscription.enabled}
+                  onCheckedChange={(enabled) => void setEnabled({ subscriptionId: subscription.subscriptionId, enabled })}
+                  aria-label={`Enable ${subscription.phoneNumber}`}
+                />
+              </div>
               {subscription.state === 'pending' || subscription.state === 'blocked' ? (
                 <Button
                   variant="ghost"
