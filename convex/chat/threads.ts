@@ -36,6 +36,7 @@ import {
   buildWorkflowRuntimeBlock,
   type WorkflowRuntimeContextForPrompt,
 } from "./workflowPrompt";
+import { aiReplyMessageBreakBlock } from "./aiReplyMessages";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import type {
@@ -744,14 +745,14 @@ export function buildAgent(
   }
 
   const citationBlock = enableCitations
-    ? `\n\nWhen responding, include:
-- A comprehensive paragraph with inline citations marked as [1], [2], etc.
-- 2-3 citations with realistic source information
-- Each citation MUST have a {title: "", url: "", description: ""} JSON object. If ANY of them doesn't exist, leave it as empty string "" for that key. 
+    ? `\n\nWhen responding, include a Citations section after the customer-facing chat messages:
+- Write the chat reply normally with no [1], [2], or other citation markers in the customer-facing text.
+- Add 2-3 citations with realistic source information under a final section titled Citations.
+- Each citation MUST have a {title: "", url: "", description: ""} JSON object. If ANY of them doesn't exist, leave it as empty string "" for that key.
 - If it's a file, the URL value must start with https://storage.kilobot.app/{{fileName}}
-- The description key MUST contain a short summary of the content from the source. 
-- Make the content informative and the sources credible
-Format citations as numbered references within the text. Use only sources found via \`fetchContext\` — do not fabricate sources.
+- The description key MUST contain a short summary of the content from the source.
+- Make the content informative and the sources credible.
+- Use only sources found via \`fetchContext\` — do not fabricate sources.
 - This is citations section, not references. Must use the keyword Citations.`
     : "";
 
@@ -841,7 +842,7 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     return styleBlock;
   })()}
 
-${toolUsageBlock}${chatResponseFormattingBlock}${toneBlock}${groundingBlock}
+${toolUsageBlock}${chatResponseFormattingBlock}${aiReplyMessageBreakBlock}${toneBlock}${groundingBlock}
   ${citationBlock}${escalationBlock}${workflowBlock}${bookingBlock}`;
 
   const resolvedModel = resolveLanguageModel(agent.model);

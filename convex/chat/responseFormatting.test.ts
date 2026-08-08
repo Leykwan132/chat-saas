@@ -98,6 +98,49 @@ test("normalizes markdown tables to WhatsApp-friendly bullets", () => {
   );
 });
 
+test("strips markdown headings, horizontal rules, and leftover table lines", () => {
+  const input = [
+    "### Business plan",
+    "---",
+    "It includes 10 AI agents.",
+    "***",
+    "|---|---|",
+    "| Growth | RM299 |",
+    "## Next step",
+    "Want help signing up?",
+  ].join("\n");
+
+  expect(normalizeCustomerFacingResponseFormatting(input)).toBe(
+    [
+      "Business plan",
+      "It includes 10 AI agents.",
+      "- Growth: RM299",
+      "Next step",
+      "Want help signing up?",
+    ].join("\n"),
+  );
+});
+
+test("strips leftover inline citation markers from customer replies", () => {
+  expect(
+    normalizeCustomerFacingResponseFormatting(
+      "Business is *RM 899/month* [1]. Yearly plans are about *20% off* [2].",
+    ),
+  ).toBe("Business is *RM 899/month*. Yearly plans are about *20% off*.");
+});
+
+test("prompt forbids headings, tables, and separators in customer replies", () => {
+  expect(chatResponseFormattingBlock).toContain(
+    "Do not use Markdown headings like #, ##, or ###.",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "Do not use horizontal separators like ---, ***, ___, or ====",
+  );
+  expect(chatResponseFormattingBlock).toContain(
+    "Do not use Markdown tables, table borders, or pipe rows",
+  );
+});
+
 test("removes internal context lookup narration", () => {
   const input = [
     "Let me check the knowledge base for the Sena Residence location details.",

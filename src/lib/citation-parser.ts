@@ -13,6 +13,14 @@ interface ParsedCitationText {
 
 const SOURCES_HEADER_REGEX = /(?:^|\n)\s*(?:#{1,3}\s+)?(?:\*\*)?(?:Sources?|References?|Citations?)[:*]?\s*(?:\*\*)?\s*(?:\n|$)/i;
 
+export function stripInlineCitationMarkers(text: string): string {
+  return text
+    .replace(/[ \t]*\[\d+\]/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
   let title: string | undefined;
   let url: string | undefined;
@@ -21,22 +29,27 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
   const lines = blockText.split("\n");
   const firstLine = lines[0]?.trim() ?? "";
 
-  // JSON-like format: {"Title": "...", "URL": "...", "Description": "..."}
-  const jsonLike = blockText.match(/\{[^}]+\}/);
+  // JSON-like format: {title: "...", url: "...", description: "..."}
+  const jsonLike = blockText.match(/\{[^{}]+\}/);
   if (jsonLike) {
     const jsonStr = jsonLike[0];
-    const titleMatch = jsonStr.match(/"Title"\s*:\s*"([^"]*)"/i);
-    const urlMatch = jsonStr.match(/"URL"\s*:\s*"([^"]*)"/i);
-    const descMatch = jsonStr.match(/"Description"\s*:\s*"([^"]*)"/i);
+    const titleMatch = jsonStr.match(/["']?title["']?\s*:\s*"([^"]*)"/i);
+    const urlMatch = jsonStr.match(/["']?url["']?\s*:\s*"([^"]*)"/i);
+    const descMatch = jsonStr.match(/["']?description["']?\s*:\s*"([^"]*)"/i);
 
-    if (titleMatch && titleMatch[1]) title = titleMatch[1];
-    if (urlMatch && urlMatch[1]) url = urlMatch[1];
-    if (descMatch && descMatch[1]) description = descMatch[1];
+    if (titleMatch?.[1]) title = titleMatch[1];
+    if (urlMatch?.[1]) url = urlMatch[1];
+    if (descMatch?.[1]) description = descMatch[1];
   }
 
   const boldOnFirst = firstLine.match(/\*\*(.+?)\*\*/);
   if (boldOnFirst) {
     title = boldOnFirst[1].trim();
+  }
+
+  const markdownUrl = blockText.match(/\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/);
+  if (markdownUrl) {
+    url = markdownUrl[1];
   }
 
   const backtickUrl = blockText.match(/`(https?:\/\/[^`]+)`/);
@@ -48,6 +61,15 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
     const bareUrl = blockText.match(/(https?:\/\/[^\s)\]]+)/);
     if (bareUrl) {
       url = bareUrl[1];
+    }
+  }
+
+  if (!description) {
+    const descriptionLabel = blockText.match(
+      /(?:^|[.\s])Description\s*:\s*(.+)$/im,
+    );
+    if (descriptionLabel?.[1]) {
+      description = descriptionLabel[1].trim();
     }
   }
 
@@ -85,6 +107,18 @@ function extractFieldsFromBlock(blockText: string): Omit<Citation, "number"> {
 
   if (!title && firstLine && !firstLine.match(/(URL|Description|Quote)\s*:/i)) {
     title = firstLine.replace(/^[*-]\s*/, "").trim();
+  }
+
+  if (!title) {
+    const cleaned = firstLine
+      .replace(/\[[^\]]*\]\(https?:\/\/[^)]+\)/g, "")
+      .replace(/\bDescription\s*:.*$/i, "")
+      .replace(/^[*-]\s*/, "")
+      .trim();
+    const named =
+      cleaned.match(/^(.+?)\.?\s*\(n\.d\.\)/i)?.[1] ??
+      cleaned.match(/^([^.|]+)/)?.[1];
+    if (named?.trim()) title = named.trim().replace(/\.$/, "");
   }
 
   if (!description) {
@@ -177,10 +211,23 @@ export function parseCitations(text: string): ParsedCitationText {
     }
   }
 
+  if (blocks.length === 0) {
+    const objectMatches = sourcesSection.match(/\{[^{}]+\}/g) ?? [];
+    for (const [index, objectText] of objectMatches.entries()) {
+      blocks.push({
+        number: String(index + 1),
+        text: objectText.trim(),
+      });
+    }
+  }
+
   const citations: Citation[] = blocks.map((block) => ({
     number: block.number,
     ...extractFieldsFromBlock(block.text),
   }));
 
-  return { content: mainContent, citations };
+  return {
+    content: stripInlineCitationMarkers(mainContent),
+    citations,
+  };
 }
