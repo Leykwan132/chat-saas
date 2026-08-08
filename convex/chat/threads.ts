@@ -39,6 +39,7 @@ import {
 import { aiReplyMessageBreakBlock } from "./aiReplyMessages";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
+import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -803,7 +804,9 @@ NEVER respond with phrases like "I don't have that information", "I'm not sure",
     noContextFallback,
   });
 
-  const instructions = `${agent.systemPrompt}${(() => {
+  const instructions = `${buildIdentityPriorityBlock()}
+
+${agent.systemPrompt}${(() => {
     let styleBlock = "";
     if (agent.responseLength || agent.emojiUse || agent.formality || agent.humorLevel) {
       styleBlock = "\n\n## Response Style Guidelines";

@@ -103,6 +103,7 @@ import type * as chat_aiReplyMessages from "../chat/aiReplyMessages.js";
 import type * as chat_aiReplyOutput from "../chat/aiReplyOutput.js";
 import type * as chat_broadcastMessageMetadata from "../chat/broadcastMessageMetadata.js";
 import type * as chat_channelSend from "../chat/channelSend.js";
+import type * as chat_identityPriorityPrompt from "../chat/identityPriorityPrompt.js";
 import type * as chat_inboundMediaFetch from "../chat/inboundMediaFetch.js";
 import type * as chat_inboundMediaModel from "../chat/inboundMediaModel.js";
 import type * as chat_inbox from "../chat/inbox.js";
@@ -445,6 +446,7 @@ declare const fullApi: ApiFromModules<{
   "chat/aiReplyOutput": typeof chat_aiReplyOutput;
   "chat/broadcastMessageMetadata": typeof chat_broadcastMessageMetadata;
   "chat/channelSend": typeof chat_channelSend;
+  "chat/identityPriorityPrompt": typeof chat_identityPriorityPrompt;
   "chat/inboundMediaFetch": typeof chat_inboundMediaFetch;
   "chat/inboundMediaModel": typeof chat_inboundMediaModel;
   "chat/inbox": typeof chat_inbox;
