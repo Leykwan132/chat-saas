@@ -123,14 +123,14 @@ test("validates planner output with a fixed schema", () => {
   ).toThrow();
 });
 
-test("pins structured workflow planning to a dedicated Xiaomi MiMo model", () => {
+test("pins structured workflow planning to a dedicated DeepSeek model", () => {
   const plannerPath = fileURLToPath(
     new URL("./workflowActionPlanner.ts", import.meta.url),
   );
   const plannerSource = readFileSync(plannerPath, "utf8");
 
   expect(plannerSource).toContain(
-    'export const WORKFLOW_ACTION_PLANNER_MODEL = "xiaomi/mimo-v2.5";',
+    'export const WORKFLOW_ACTION_PLANNER_MODEL = "deepseek/deepseek-v4-flash";',
   );
   expect(plannerSource).toContain(
     "model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL)",
