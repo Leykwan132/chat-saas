@@ -33,6 +33,7 @@ import {
   isAllowedInboxReactionEmoji,
 } from "../../shared/messageReactions";
 import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import { normalizeAiReplyMessages } from "./aiReplyMessages";
 
 type MetaIndicatorActionResult =
   | { ok: true; skipped?: string }
@@ -564,6 +565,63 @@ export const internalRemoveAndPersistReaction = internalAction({
   },
 });
 
+type AiReplySendResult = {
+  ok: boolean;
+  error?: string;
+  policy?: ChannelSendPolicy;
+  textExternalId?: string;
+  mediaExternalIds?: string[];
+};
+
+async function sendAiReplyContent(
+  conversation: Doc<"conversations">,
+  channel: Doc<"channels">,
+  args: {
+    content: string;
+    mediaUrls: string[];
+    mediaItems?: ChannelMediaItem[];
+    allowHumanAgentTag?: boolean;
+  },
+): Promise<AiReplySendResult> {
+  const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
+  const content = normalizeCustomerFacingResponseFormatting(args.content);
+  const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
+
+  if (content.trim() && mediaItems.length > 0) {
+    const result = await sendMediaToChannel(conversation, channel, {
+      text: content,
+      mediaItems,
+      ...options,
+    });
+    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    return {
+      ok: true,
+      textExternalId: result.textConsumed ? undefined : result.externalId,
+      mediaExternalIds: result.externalIds ?? [],
+    };
+  }
+
+  if (content.trim()) {
+    const result = await sendTextToChannel(conversation, channel, content, options);
+    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    return { ok: true, textExternalId: result.externalId };
+  }
+
+  if (mediaItems.length > 0) {
+    const result = await sendMediaToChannel(conversation, channel, {
+      mediaItems,
+      ...options,
+    });
+    if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+    return {
+      ok: true,
+      mediaExternalIds: result.externalIds ?? (result.externalId ? [result.externalId] : []),
+    };
+  }
+
+  return { ok: false, error: "Nothing to send", policy: "generic" };
+}
+
 export const internalSendAiReply = internalAction({
   args: {
     conversationId: v.id("conversations"),
@@ -572,13 +630,7 @@ export const internalSendAiReply = internalAction({
     mediaItems: v.optional(v.array(channelMediaItemValidator)),
     allowHumanAgentTag: v.optional(v.boolean()),
   },
-  handler: async (ctx, args): Promise<{
-    ok: boolean;
-    error?: string;
-    policy?: ChannelSendPolicy;
-    textExternalId?: string;
-    mediaExternalIds?: string[];
-  }> => {
+  handler: async (ctx, args): Promise<AiReplySendResult> => {
     const ctxData = await ctx.runQuery(
       internal.chat.inbox.internalGetSendContext,
       { conversationId: args.conversationId },
@@ -586,45 +638,102 @@ export const internalSendAiReply = internalAction({
     if (ctxData === null) {
       return { ok: false, error: "Conversation not found", policy: "generic" };
     }
-    const { conversation, channel } = ctxData;
-    const options = { allowHumanAgentTag: args.allowHumanAgentTag ?? false };
-    const content = normalizeCustomerFacingResponseFormatting(args.content);
-    const mediaItems: ChannelMediaItem[] =
-      args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
+    return await sendAiReplyContent(ctxData.conversation, ctxData.channel, args);
+  },
+});
 
-    if (content.trim() && mediaItems.length > 0) {
-      const result = await sendMediaToChannel(conversation, channel, {
-        text: content,
-        mediaItems,
-        ...options,
-      });
-      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
+export const internalSendAiReplyMessages = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+    contents: v.array(v.string()),
+    mediaUrls: v.array(v.string()),
+    mediaItems: v.optional(v.array(channelMediaItemValidator)),
+    allowHumanAgentTag: v.optional(v.boolean()),
+  },
+  handler: async (ctx, args): Promise<{
+    ok: boolean;
+    error?: string;
+    policy?: ChannelSendPolicy;
+    mediaSent: boolean;
+    sentTextCount: number;
+    textExternalIds: Array<string | null>;
+    mediaExternalIds: string[];
+  }> => {
+    const ctxData = await ctx.runQuery(
+      internal.chat.inbox.internalGetSendContext,
+      { conversationId: args.conversationId },
+    );
+    if (ctxData === null) {
       return {
-        ok: true,
-        textExternalId: result.textConsumed ? undefined : result.externalId,
-        mediaExternalIds: result.externalIds ?? [],
+        ok: false,
+        error: "Conversation not found",
+        policy: "generic",
+        mediaSent: false,
+        sentTextCount: 0,
+        textExternalIds: [],
+        mediaExternalIds: [],
       };
     }
 
-    if (content.trim()) {
-      const result = await sendTextToChannel(conversation, channel, content, options);
-      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
-      return { ok: true, textExternalId: result.externalId };
-    }
+    const contents = normalizeAiReplyMessages(args.contents);
+    const mediaItems = args.mediaItems ?? args.mediaUrls.map((url) => ({ url }));
+    const textExternalIds: Array<string | null> = [];
+    let mediaExternalIds: string[] = [];
+    let mediaSent = false;
 
     if (mediaItems.length > 0) {
-      const result = await sendMediaToChannel(conversation, channel, {
-        mediaItems,
-        ...options,
-      });
-      if (!result.ok) return { ok: false, error: result.error, policy: result.policy };
-      return {
-        ok: true,
-        mediaExternalIds: result.externalIds ?? (result.externalId ? [result.externalId] : []),
-      };
+      const mediaResult = await sendAiReplyContent(
+        ctxData.conversation,
+        ctxData.channel,
+        {
+          content: "",
+          mediaUrls: args.mediaUrls,
+          mediaItems,
+          allowHumanAgentTag: args.allowHumanAgentTag,
+        },
+      );
+      if (!mediaResult.ok) {
+        return {
+          ...mediaResult,
+          mediaSent: false,
+          sentTextCount: 0,
+          textExternalIds,
+          mediaExternalIds: mediaResult.mediaExternalIds ?? [],
+        };
+      }
+      mediaSent = true;
+      mediaExternalIds = mediaResult.mediaExternalIds ?? [];
     }
 
-    return { ok: false, error: "Nothing to send", policy: "generic" };
+    for (const content of contents) {
+      const result = await sendAiReplyContent(
+        ctxData.conversation,
+        ctxData.channel,
+        {
+          content,
+          mediaUrls: [],
+          allowHumanAgentTag: args.allowHumanAgentTag,
+        },
+      );
+      if (!result.ok) {
+        return {
+          ...result,
+          mediaSent,
+          sentTextCount: textExternalIds.length,
+          textExternalIds,
+          mediaExternalIds,
+        };
+      }
+      textExternalIds.push(result.textExternalId ?? null);
+    }
+
+    return {
+      ok: true,
+      mediaSent,
+      sentTextCount: contents.length,
+      textExternalIds,
+      mediaExternalIds,
+    };
   },
 });
 

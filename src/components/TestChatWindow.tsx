@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, isValidElement, cloneElement } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -14,10 +14,13 @@ import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { parseCitations, type Citation } from "@/lib/citation-parser";
+import {
+  parseCitations,
+  stripInlineCitationMarkers,
+  type Citation,
+} from "@/lib/citation-parser";
 import {
   InlineCitation,
-  InlineCitationText,
   InlineCitationCard,
   InlineCitationCardTrigger,
   InlineCitationCardBody,
@@ -52,6 +55,7 @@ import {
 import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
+import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
 import {
   Attachment,
   AttachmentOpen,
@@ -59,92 +63,6 @@ import {
   Attachments,
   getMediaCategory,
 } from "@/components/ai-elements/attachments";
-
-function renderCitationBadge(
-  citationNumber: string,
-  citation: Citation | undefined,
-  key: string,
-) {
-  if (citation && (citation.url || citation.title || citation.description)) {
-    return (
-      <InlineCitation key={key}>
-        <InlineCitationCard>
-          <InlineCitationCardTrigger
-            sources={citation.url ? [citation.url] : []}
-          />
-          <InlineCitationCardBody>
-            <InlineCitationCarousel>
-              <InlineCitationCarouselHeader>
-                <InlineCitationCarouselPrev />
-                <InlineCitationCarouselNext />
-                <InlineCitationCarouselIndex />
-              </InlineCitationCarouselHeader>
-              <InlineCitationCarouselContent>
-                <InlineCitationCarouselItem>
-                  <InlineCitationSource
-                    title={citation.title}
-                    url={citation.url}
-                    description={citation.description}
-                  />
-                  {citation.quote && (
-                    <InlineCitationQuote>
-                      {citation.quote}
-                    </InlineCitationQuote>
-                  )}
-                </InlineCitationCarouselItem>
-              </InlineCitationCarouselContent>
-            </InlineCitationCarousel>
-          </InlineCitationCardBody>
-        </InlineCitationCard>
-      </InlineCitation>
-    );
-  }
-
-  return (
-    <InlineCitationText
-      key={key}
-      className="inline-flex items-center justify-center rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-semibold leading-none text-secondary-foreground align-middle cursor-default"
-    >
-      {citationNumber}
-    </InlineCitationText>
-  );
-}
-
-let citationInjectKey = 0;
-
-function injectCitations(
-  node: React.ReactNode,
-  citations: Citation[],
-): React.ReactNode {
-  if (typeof node === "string") {
-    const parts = node.split(/(\[\d+\])/);
-    return parts.map((part) => {
-      const match = part.match(/\[(\d+)\]/);
-      if (match) {
-        citationInjectKey += 1;
-        const citation = citations.find((c) => c.number === match[1]);
-        return renderCitationBadge(match[1], citation, `cit-${citationInjectKey}`);
-      }
-      return part;
-    });
-  }
-
-  if (Array.isArray(node)) {
-    return node.map((child) => injectCitations(child, citations));
-  }
-
-  if (isValidElement(node)) {
-    const childProps = node.props as { children?: React.ReactNode };
-    if (childProps.children) {
-      return cloneElement(node as React.ReactElement<Record<string, unknown>>, {
-        ...childProps,
-        children: injectCitations(childProps.children, citations),
-      });
-    }
-  }
-
-  return node;
-}
 
 function PlaygroundMessageAttachments({
   messageKey,
@@ -202,31 +120,51 @@ function StreamingMarkdown({ text, status }: { text: string; status: string }) {
   const isComplete = status !== "streaming" && status !== "pending";
   const { content: parsedContent, citations } = isComplete
     ? parseCitations(processed)
-    : { content: processed, citations: [] as Citation[] };
+    : {
+        content: stripInlineCitationMarkers(processed),
+        citations: [] as Citation[],
+      };
   const hasCitations = citations.length > 0 && isComplete;
-
-  if (!hasCitations) {
-    return (
-      <div className="[&_p]:leading-snug [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_p:not(:last-child)]:mb-2">
-        <Markdown components={whatsAppMarkdownComponents}>{processed}</Markdown>
-      </div>
-    );
-  }
-
-  const markdownComponents: Components = {
-    ...whatsAppMarkdownComponents,
-    p: ({ children, ...props }) => {
-      citationInjectKey = 0;
-      const injected = injectCitations(children, citations);
-      return <p {...props}>{injected}</p>;
-    },
-  };
 
   return (
     <div className="[&_p]:leading-snug [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 [&_p:not(:last-child)]:mb-2">
-      <Markdown components={markdownComponents}>
-        {parsedContent}
-      </Markdown>
+      <Markdown components={whatsAppMarkdownComponents}>{parsedContent}</Markdown>
+      {hasCitations ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {citations.map((citation) => (
+            <InlineCitation key={`source-${citation.number}-${citation.url ?? citation.title}`}>
+              <InlineCitationCard>
+                <InlineCitationCardTrigger
+                  sources={citation.url ? [citation.url] : []}
+                />
+                <InlineCitationCardBody>
+                  <InlineCitationCarousel>
+                    <InlineCitationCarouselHeader>
+                      <InlineCitationCarouselPrev />
+                      <InlineCitationCarouselNext />
+                      <InlineCitationCarouselIndex />
+                    </InlineCitationCarouselHeader>
+                    <InlineCitationCarouselContent>
+                      <InlineCitationCarouselItem>
+                        <InlineCitationSource
+                          title={citation.title}
+                          url={citation.url}
+                          description={citation.description}
+                        />
+                        {citation.quote && (
+                          <InlineCitationQuote>
+                            {citation.quote}
+                          </InlineCitationQuote>
+                        )}
+                      </InlineCitationCarouselItem>
+                    </InlineCitationCarouselContent>
+                  </InlineCitationCarousel>
+                </InlineCitationCardBody>
+              </InlineCitationCard>
+            </InlineCitation>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -576,6 +514,12 @@ export function TestChatWindow({
               const rawText = message.text ?? "";
               const displayText =
                 message.role === "user" ? rawText : stripMediaMarkers(rawText);
+              const assistantTexts =
+                message.role === "user"
+                  ? []
+                  : playgroundAssistantTextParts(message)
+                      .map(stripMediaMarkers)
+                      .filter(Boolean);
               const mediaItems =
                 message.role === "user"
                   ? []
@@ -599,11 +543,14 @@ export function TestChatWindow({
                           message.status === "pending"
                         }
                       />
-                      <div className={PLAYGROUND_ASSISTANT_BUBBLE_CLASS}>
-                        <StreamingMarkdown
-                          text={displayText}
-                          status={message.status}
-                        />
+                      <div className={cn(PLAYGROUND_ASSISTANT_BUBBLE_CLASS, "space-y-3")}>
+                        {assistantTexts.map((text, index) => (
+                          <StreamingMarkdown
+                            key={`${message.key}-part-${index}`}
+                            text={text}
+                            status={message.status}
+                          />
+                        ))}
                         <PlaygroundMessageAttachments
                           messageKey={message.key}
                           items={mediaItems}

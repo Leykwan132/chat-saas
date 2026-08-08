@@ -98,6 +98,7 @@ import type * as calendarFormatUtils from "../calendarFormatUtils.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
 import type * as chat_aiReplyMedia from "../chat/aiReplyMedia.js";
+import type * as chat_aiReplyMessages from "../chat/aiReplyMessages.js";
 import type * as chat_aiReplyOutput from "../chat/aiReplyOutput.js";
 import type * as chat_broadcastMessageMetadata from "../chat/broadcastMessageMetadata.js";
 import type * as chat_channelSend from "../chat/channelSend.js";
@@ -438,6 +439,7 @@ declare const fullApi: ApiFromModules<{
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
   "chat/aiReplyMedia": typeof chat_aiReplyMedia;
+  "chat/aiReplyMessages": typeof chat_aiReplyMessages;
   "chat/aiReplyOutput": typeof chat_aiReplyOutput;
   "chat/broadcastMessageMetadata": typeof chat_broadcastMessageMetadata;
   "chat/channelSend": typeof chat_channelSend;

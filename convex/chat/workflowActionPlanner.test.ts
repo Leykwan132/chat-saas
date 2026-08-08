@@ -343,7 +343,9 @@ test("AI reply worker always runs the planner and injects language into generate
   expect(inboxSource).toContain("if (hasMatches && plannedWorkflowText !== null)");
   expect(inboxSource).toContain("workflowActionPlanReplyPromptArgs(");
   expect(inboxSource).toContain("const allMediaItems = plannedMediaItems");
-  expect(inboxSource).toContain("cleanText = result.text.trim();");
+  expect(inboxSource).toContain(
+    "replyMessages = splitAiReplyMessages(result.text);",
+  );
   expect(inboxSource).not.toContain("aiReplyStructuredOutput");
   expect(inboxSource).not.toContain("extractAiReplyOutputMedia(");
   expect(inboxSource).not.toContain("replyMediaItems");
@@ -355,5 +357,5 @@ test("AI reply worker sends matched Send message text exactly", () => {
   const inboxSource = readFileSync(inboxPath, "utf8");
 
   expect(inboxSource).toContain("resolveWorkflowActionPlanText(");
-  expect(inboxSource).toContain("cleanText = plannedWorkflowText;");
+  expect(inboxSource).toContain("replyMessages = [plannedWorkflowText];");
 });

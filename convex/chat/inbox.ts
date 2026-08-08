@@ -45,6 +45,7 @@ import { handleWorkflowFollowUpOutbound } from "../workflowFollowUpRuntime";
 import { markConversationAnalyticsDirty } from "../analyticsDirtyRequest";
 import { canProcessWorkspaceActivity } from "../teamDeletion/access";
 import { notifyHumanEscalation } from "../telegramNotifications/events";
+import { splitAiReplyMessages } from "./aiReplyMessages";
 
 const channelMediaItemValidator = v.object({
   url: v.string(),
@@ -339,6 +340,108 @@ export const internalPersistAiReply = internalMutation({
   },
 });
 
+export const internalPersistAiReplyMessages = internalMutation({
+  args: {
+    conversationId: v.id("conversations"),
+    threadId: v.string(),
+    messages: v.array(
+      v.object({
+        content: v.string(),
+        externalId: v.optional(v.string()),
+      }),
+    ),
+    llmModel: v.optional(v.string()),
+    creditsCharged: v.optional(v.number()),
+    sourceEventId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const conv = await ctx.db.get(args.conversationId);
+    if (conv === null) return null;
+    if (!(await canProcessWorkspaceActivity(ctx, conv.orgId))) return null;
+
+    const messages = args.messages
+      .map((message) => ({
+        ...message,
+        content: normalizeCustomerFacingResponseFormatting(message.content).trim(),
+      }))
+      .filter((message) => message.content.length > 0);
+    if (messages.length === 0) return null;
+
+    const channel = conv.channelId ? await ctx.db.get(conv.channelId) : null;
+    const orgAddress =
+      channel?.phoneNumberId ?? channel?.igUserId ?? channel?.pageId ?? conv.orgAddress;
+    const startedAt = Date.now();
+    let lastAgentMessageId = "";
+    let lastMessageId: Id<"messages"> | null = null;
+
+    for (const [index, message] of messages.entries()) {
+      const sentAt = startedAt + index;
+      const creditsCharged = index === 0 ? args.creditsCharged : 0;
+      const messageMetadata =
+        args.llmModel !== undefined
+          ? { llmModel: args.llmModel, creditsCharged: creditsCharged ?? 0 }
+          : undefined;
+      lastAgentMessageId = await saveAiReply(
+        ctx,
+        args.threadId,
+        message.content,
+        conv.assignedAgentId,
+        sentAt,
+        { messageMetadata },
+      );
+      lastMessageId = await ctx.db.insert("messages", {
+        orgId: conv.orgId,
+        conversationId: conv._id,
+        channelId: conv.channelId,
+        service: conv.service,
+        externalId: message.externalId,
+        orgAddress,
+        contactAddress: conv.contactAddress,
+        direction: "outgoing",
+        agentId: conv.assignedAgentId,
+        contentType: "text",
+        content: message.content,
+        agentMessageId: lastAgentMessageId,
+        sourceEventId: args.sourceEventId,
+        llmModel: args.llmModel,
+        creditsCharged,
+        status: "sent",
+        createdAt: sentAt,
+      });
+    }
+
+    if (conv.assignedAgentId !== undefined) {
+      await recordAiAssistedConversationAggregate(ctx, {
+        conversation: conv,
+        agentId: conv.assignedAgentId,
+        timestamp: startedAt,
+      });
+    }
+
+    const markedRead = conv.unreadCount > 0;
+    const lastContent = messages.at(-1)?.content ?? "";
+    await ctx.db.patch(conv._id, {
+      lastMessageAt: startedAt + messages.length - 1,
+      lastMessagePreview: lastContent.slice(0, 140),
+      unreadCount: 0,
+      updatedAt: startedAt + messages.length - 1,
+    });
+    await markConversationAnalyticsDirty(ctx, {
+      conversationId: conv._id,
+      earliestDirtyMessageAt: startedAt,
+    });
+    if (lastMessageId !== null) {
+      await handleWorkflowFollowUpOutbound(ctx, lastMessageId);
+    }
+
+    return replyPersistResult(
+      lastAgentMessageId,
+      markedRead,
+      markedRead ? await latestIncomingExternalId(ctx, conv._id) : undefined,
+    );
+  },
+});
+
 export const internalPersistAiMediaReply = internalMutation({
   args: {
     conversationId: v.id("conversations"),
@@ -610,10 +713,10 @@ export const generateAiReplyWorker = internalAction({
         ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
         : null;
 
-      let cleanText: string;
+      let replyMessages: string[];
 
       if (hasMatches && plannedWorkflowText !== null) {
-        cleanText = plannedWorkflowText;
+        replyMessages = [plannedWorkflowText];
       } else {
         const result = await configuredAgent.generateText(
           ctx,
@@ -625,7 +728,7 @@ export const generateAiReplyWorker = internalAction({
           ),
           { storageOptions: { saveMessages: "none" } },
         );
-        cleanText = result.text.trim();
+        replyMessages = splitAiReplyMessages(result.text);
       }
 
       const convAfterGeneration = await ctx.runQuery(
@@ -650,7 +753,7 @@ export const generateAiReplyWorker = internalAction({
       const channelMediaItems = toChannelMediaItems(allMediaItems);
 
       const allMediaUrls = allMediaItems.map((item) => item.url);
-      if (!cleanText && allMediaItems.length === 0) return;
+      if (replyMessages.length === 0 && allMediaItems.length === 0) return;
 
       let usage: { llmModel: string; creditsCharged: number };
       try {
@@ -675,27 +778,20 @@ export const generateAiReplyWorker = internalAction({
         ok: boolean;
         error?: string;
         policy?: string;
-        textExternalId?: string;
-        mediaExternalIds?: string[];
+        mediaSent: boolean;
+        sentTextCount: number;
+        textExternalIds: Array<string | null>;
+        mediaExternalIds: string[];
       } = await ctx.runAction(
-        internal.chat.inboxActions.internalSendAiReply,
+        internal.chat.inboxActions.internalSendAiReplyMessages,
         {
           conversationId: conv._id,
-          content: cleanText,
+          contents: replyMessages,
           mediaUrls: allMediaUrls,
           mediaItems: channelMediaItems,
           allowHumanAgentTag: false,
         },
       );
-
-      if (!sendResult.ok) {
-        console.error(
-          "AI reply not sent to channel:",
-          sendResult.error,
-          { conversationId: conv._id, service: conv.service },
-        );
-        return;
-      }
 
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
@@ -714,23 +810,7 @@ export const generateAiReplyWorker = internalAction({
         );
       };
 
-      if (cleanText) {
-        const persistResult: {
-          markedRead: boolean;
-          latestInboundExternalId?: string;
-        } | null = await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
-          conversationId: conv._id,
-          threadId: conv.threadId,
-          content: cleanText,
-          externalId: sendResult.textExternalId,
-          llmModel: usage.llmModel,
-          creditsCharged: usage.creditsCharged,
-          sourceEventId: args.avatarSourceEventId,
-        });
-        await enqueueMetaMarkSeenIfRead(persistResult);
-      }
-
-      if (allMediaUrls.length > 0) {
+      if (sendResult.mediaSent && allMediaUrls.length > 0) {
         const persistResult: {
           markedRead: boolean;
           latestInboundExternalId?: string;
@@ -745,6 +825,41 @@ export const generateAiReplyWorker = internalAction({
           },
         );
         await enqueueMetaMarkSeenIfRead(persistResult);
+      }
+
+      const sentMessages = replyMessages
+        .slice(0, sendResult.sentTextCount)
+        .map((content, index) => ({
+          content,
+          ...(sendResult.textExternalIds[index]
+            ? { externalId: sendResult.textExternalIds[index] as string }
+            : {}),
+        }));
+      if (sentMessages.length > 0) {
+        const persistResult: {
+          markedRead: boolean;
+          latestInboundExternalId?: string;
+        } | null = await ctx.runMutation(
+          internal.chat.inbox.internalPersistAiReplyMessages,
+          {
+            conversationId: conv._id,
+            threadId: conv.threadId,
+            messages: sentMessages,
+            llmModel: usage.llmModel,
+            creditsCharged: usage.creditsCharged,
+            sourceEventId: args.avatarSourceEventId,
+          },
+        );
+        await enqueueMetaMarkSeenIfRead(persistResult);
+      }
+
+      if (!sendResult.ok) {
+        console.error(
+          "AI reply not sent to channel:",
+          sendResult.error,
+          { conversationId: conv._id, service: conv.service },
+        );
+        return;
       }
     } finally {
       await turnTypingOff();

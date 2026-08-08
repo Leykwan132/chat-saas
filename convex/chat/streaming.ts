@@ -4,6 +4,7 @@ import { internal } from "../_generated/api";
 import { components } from "../_generated/api";
 import {
   saveMessage,
+  saveMessages,
   listUIMessages,
   syncStreams,
 } from "@convex-dev/agent";
@@ -22,6 +23,7 @@ import { isPlaygroundCreditsEnabled } from "../credits";
 import { checkModelAccess, getPlanFromStripe } from "../plans";
 import { getModelProvider } from "../llm/modelPricing";
 import { logConversationEvent } from "../conversationLogs";
+import { splitAiReplyMessages } from "./aiReplyMessages";
 
 /* ── Mutations / Queries / Actions ─────────────────────── */
 
@@ -206,18 +208,14 @@ export const generatePlaygroundResponseAsync = internalAction({
       },
     );
 
-    const replyText = (await result.text).trim();
-    if (!replyText) return;
+    const rawReplyText = await result.text;
+    const replyMessages = splitAiReplyMessages(rawReplyText);
+    if (replyMessages.length === 0) return;
 
-    const { text: cleanText, mediaUrls } = extractMediaUrls(replyText);
-    const hasMediaKeys = /\[MEDIA:(?!https?:\/\/)/.test(replyText);
-    if (!cleanText && mediaUrls.length === 0 && !hasMediaKeys) return;
-
-    const savedAssistant = result.savedMessages
+    const streamedAssistant = result.savedMessages
       ?.filter((message) => message.message?.role === "assistant")
       .at(-1);
-
-    if (!savedAssistant) return;
+    if (!streamedAssistant) return;
 
     const usage = await ctx.runMutation(internal.credits.internalDeductCredits, {
       workosUserId: args.billingUserId,
@@ -228,43 +226,72 @@ export const generatePlaygroundResponseAsync = internalAction({
       reason: "AI playground response",
     });
 
-    let contentWithKeys = replyText;
+    const mediaUrls = [
+      ...new Set(
+        replyMessages.flatMap((message) => extractMediaUrls(message).mediaUrls),
+      ),
+    ];
+    let messagesWithMediaKeys = replyMessages;
     if (mediaUrls.length > 0) {
       const urlToClientId: Record<string, string> = await ctx.runQuery(
         internal.knowledgeBaseImages.internalResolvePublicUrlsToClientIds,
         { agentId: args.agentId, urls: mediaUrls },
       );
       const urlToKey = new Map(Object.entries(urlToClientId));
-      contentWithKeys = replaceMediaUrlsWithKeys(replyText, urlToKey);
+      messagesWithMediaKeys = replyMessages.map((message) =>
+        replaceMediaUrlsWithKeys(message, urlToKey),
+      );
     }
 
-    if (contentWithKeys !== replyText) {
-      await configuredAgent.updateMessage(ctx, {
-        messageId: savedAssistant._id,
-        patch: {
-          message: { role: "assistant", content: contentWithKeys },
-          status: "success",
-        },
-      });
-    }
-
+    const [firstMessage, ...followUpMessages] = messagesWithMediaKeys;
+    await configuredAgent.updateMessage(ctx, {
+      messageId: streamedAssistant._id,
+      patch: {
+        message: { role: "assistant", content: firstMessage ?? "" },
+        status: "success",
+      },
+    });
     await ctx.runMutation(components.agent.messages.updateMessage, {
-      messageId: savedAssistant._id,
+      messageId: streamedAssistant._id,
       patch: {
         model: usage.llmModel,
         provider: getModelProvider(agent.model),
       },
     });
 
+    const savedFollowUps = followUpMessages.length
+      ? (
+          await saveMessages(ctx, components.agent, {
+            threadId: args.threadId,
+            promptMessageId: args.promptMessageId,
+            agentName: agent.name,
+            messages: followUpMessages.map((content) => ({
+              role: "assistant" as const,
+              content,
+            })),
+            metadata: followUpMessages.map(() => ({
+              model: usage.llmModel,
+              provider: getModelProvider(agent.model),
+            })),
+          })
+        ).messages
+      : [];
+
     if (conv) {
-      await ctx.runMutation(internal.chat.streaming.internalPersistPlaygroundAiUsage, {
-        conversationId: conv._id,
-        agentId: args.agentId,
-        agentMessageId: savedAssistant._id,
-        content: contentWithKeys,
-        llmModel: usage.llmModel,
-        creditsCharged: usage.creditsCharged,
-      });
+      const savedAssistantMessages = [streamedAssistant, ...savedFollowUps];
+      for (const [index, savedAssistant] of savedAssistantMessages.entries()) {
+        await ctx.runMutation(
+          internal.chat.streaming.internalPersistPlaygroundAiUsage,
+          {
+            conversationId: conv._id,
+            agentId: args.agentId,
+            agentMessageId: savedAssistant._id,
+            content: messagesWithMediaKeys[index] ?? "",
+            llmModel: usage.llmModel,
+            creditsCharged: index === 0 ? usage.creditsCharged : 0,
+          },
+        );
+      }
     }
   },
 });

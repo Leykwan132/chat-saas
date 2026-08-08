@@ -14,7 +14,9 @@ Examples:
 
 - For customer-facing emphasis, use exactly one asterisk at the start and one at the end, like *Luminar Residence*.
 - Do not use double asterisks in customer-facing replies.
-- Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
+- Do not use Markdown tables, table borders, or pipe rows in customer-facing replies. Tables render badly in WhatsApp.
+- Do not use Markdown headings like #, ##, or ###.
+- Do not use horizontal separators like ---, ***, ___, or ==== between sections.
 - When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.
 - Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups.
 - Do not include workflow metadata, media URLs, or internal action markers in customer-facing replies.`;
@@ -53,13 +55,38 @@ function formatMarkdownTableAsBullets(headers: string[], rows: string[][]) {
     .join("\n");
 }
 
+function isHorizontalRuleLine(line: string) {
+  const trimmed = line.trim();
+  return (
+    /^(-{3,}|\*{3,}|_{3,}|={3,}|\u2014{3,}|\u2013{3,})$/.test(trimmed)
+  );
+}
+
+function isLeftoverTableLine(line: string) {
+  const trimmed = line.trim();
+  if (!trimmed.includes("|")) return false;
+  if (isMarkdownTableSeparator(trimmed)) return true;
+  const cells = parseMarkdownTableRow(trimmed);
+  return cells !== null && cells.every((cell) => cell === "" || /^:?-{3,}:?$/.test(cell));
+}
+
+function stripMarkdownHeadingMarkers(line: string) {
+  return line.replace(/^\s{0,3}#{1,6}\s+/u, "");
+}
+
 function normalizeMarkdownTables(content: string) {
   const lines = content.split("\n");
   const normalized: string[] = [];
   let index = 0;
 
   while (index < lines.length) {
-    const headers = parseMarkdownTableRow(lines[index] ?? "");
+    const currentLine = lines[index] ?? "";
+    if (isHorizontalRuleLine(currentLine) || isLeftoverTableLine(currentLine)) {
+      index += 1;
+      continue;
+    }
+
+    const headers = parseMarkdownTableRow(currentLine);
     const separator = lines[index + 1] ?? "";
     if (headers !== null && isMarkdownTableSeparator(separator)) {
       const rows: string[][] = [];
@@ -76,7 +103,18 @@ function normalizeMarkdownTables(content: string) {
         continue;
       }
     }
-    normalized.push(lines[index] ?? "");
+
+    if (headers !== null) {
+      const title = headers[0]?.trim() || "Item";
+      const details = headers.slice(1).map((cell) => cell.trim()).filter(Boolean);
+      normalized.push(
+        details.length > 0 ? `- ${title}: ${details.join("; ")}` : `- ${title}`,
+      );
+      index += 1;
+      continue;
+    }
+
+    normalized.push(stripMarkdownHeadingMarkers(currentLine));
     index += 1;
   }
 
@@ -123,8 +161,18 @@ function removeInternalNarration(content: string) {
     .trim();
 }
 
+function stripInlineCitationMarkers(content: string) {
+  return content
+    .replace(/[ \t]*\[\d+\]/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export function normalizeCustomerFacingResponseFormatting(content: string): string {
-  return removeInternalNarration(normalizeMarkdownTables(content))
-    .replace(/\*{2,3}([^*\n]+?)\*{2,3}/g, "*$1*")
-    .replace(/_{2,3}([^_\n]+?)_{2,3}/g, "*$1*");
+  return stripInlineCitationMarkers(
+    removeInternalNarration(normalizeMarkdownTables(content))
+      .replace(/\*{2,3}([^*\n]+?)\*{2,3}/g, "*$1*")
+      .replace(/_{2,3}([^_\n]+?)_{2,3}/g, "*$1*"),
+  );
 }
