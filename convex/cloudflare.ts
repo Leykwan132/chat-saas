@@ -924,7 +924,12 @@ export const internalSearch = internalAction({
             filters: {
               agent_id: args.agentId,
             },
+            match_threshold: 0.4,
             max_num_results: 5,
+          },
+          reranking: {
+            enabled: true,
+            model: "@cf/baai/bge-reranker-base",
           },
         },
       },
