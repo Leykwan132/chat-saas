@@ -1,97 +1,31 @@
 import { expect, test } from "vitest";
-import type { Id } from "../_generated/dataModel";
-import {
-  aiReplyOutputSchema,
-  extractAiReplyOutputMedia,
-} from "./aiReplyOutput";
+import { aiReplyOutputSchema } from "./aiReplyOutput";
 
-const workflowContext = {
-  workflowId: "workflow-id" as Id<"workflows">,
-  edges: [],
-  nodes: [
-    {
-      nodeId: "media-node-id" as Id<"workflowNodes">,
-      kind: "sendFile",
-      title: "Send brochure",
-      incomingConditions: [],
-      allowedServices: [],
-      mediaAssets: [
-        {
-          clientId: "brochure-client-id",
-          filename: "Arden Heights Brochure.pdf",
-          mediaType: "application/pdf",
-          url: "https://cdn.example.com/arden-brochure.pdf",
-        },
-      ],
-    },
-  ],
-};
-
-test("validates final AI reply with structured output schema", () => {
+test("validates two to four ordered AI reply messages", () => {
   const output = aiReplyOutputSchema.parse({
-    workflowMatches: [
-      {
-        matched: true,
-        nodeId: "media-node-id",
-        nodeKind: "sendFile",
-        nodeTitle: "Send brochure",
-      },
-    ],
-    customerResponse: "Here is the brochure.",
-    mediaToSend: [
-      {
-        nodeId: "media-node-id",
-        url: "https://cdn.example.com/arden-brochure.pdf",
-        type: "application/pdf",
-      },
+    messages: [
+      "Thanks for reaching out!",
+      "Which service can I help you with?",
     ],
   });
 
-  expect(output.customerResponse).toBe("Here is the brochure.");
+  expect(output.messages).toEqual([
+    "Thanks for reaching out!",
+    "Which service can I help you with?",
+  ]);
   expect(() =>
     aiReplyOutputSchema.parse({
-      customerResponse: "Missing workflow metadata.",
-      mediaToSend: [],
+      messages: ["Only one message."],
     }),
   ).toThrow();
-});
-
-test("resolves structured output media through workflow context", () => {
-  const reply = extractAiReplyOutputMedia(
-    {
-      workflowMatches: [
-        {
-          matched: true,
-          nodeId: "media-node-id",
-          nodeKind: "sendFile",
-          nodeTitle: "Send brochure",
-        },
-      ],
-      customerResponse: "Here is the brochure.",
-      mediaToSend: [
-        {
-          nodeId: "media-node-id",
-          url: "https://cdn.example.com/arden-brochure.pdf",
-          type: "application/pdf",
-        },
-        {
-          nodeId: "media-node-id",
-          url: "https://evil.example.com/fake.pdf",
-          type: "application/pdf",
-        },
-      ],
-    },
-    workflowContext,
-  );
-
-  expect(reply).toEqual({
-    text: "Here is the brochure.",
-    mediaItems: [
-      {
-        nodeId: "media-node-id",
-        url: "https://cdn.example.com/arden-brochure.pdf",
-        mediaType: "application/pdf",
-      },
-    ],
-  });
+  expect(() =>
+    aiReplyOutputSchema.parse({
+      messages: ["One", "Two", "Three", "Four", "Five"],
+    }),
+  ).toThrow();
+  expect(() =>
+    aiReplyOutputSchema.parse({
+      messages: ["Valid", "   "],
+    }),
+  ).toThrow();
 });

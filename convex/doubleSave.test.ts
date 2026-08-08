@@ -48,6 +48,7 @@ vi.mock('./llm/openRouter', () => {
                 responseLanguage: 'English',
                 responseGuidance: 'Answer normally.',
                 customerResponse: 'Mock response text',
+                messages: ['Mock response one.', 'Mock response two.'],
                 mediaToSend: [],
               }),
             },
@@ -724,15 +725,13 @@ test("AI reply worker executes correctly with promptMessageId and saveMessages='
     },
   );
 
-  // Check the messages in the agent thread
-  // There should be exactly 3 messages:
-  // 1. User message "Help me" (from ingestChannelMessage)
-  // 2. User spacer message (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
-  // 3. Assistant message (from internalPersistAiReply -> saveAiReply -> saveAssistantWithOwnOrder)
-  // If the agent component had automatically saved prompt/outputs, there would be duplicates.
-  expect(agentMessages.length).toBe(3);
+  expect(agentMessages.length).toBe(5);
   expect(agentMessages[0].message.role).toBe('user');
   expect(agentMessages[0].text).toBe('Help me');
-  expect(agentMessages[1].message.role).toBe('user'); // spacer
+  expect(agentMessages[1].message.role).toBe('user');
   expect(agentMessages[2].message.role).toBe('assistant');
+  expect(agentMessages[2].text).toBe('Mock response one.');
+  expect(agentMessages[3].message.role).toBe('user');
+  expect(agentMessages[4].message.role).toBe('assistant');
+  expect(agentMessages[4].text).toBe('Mock response two.');
 });

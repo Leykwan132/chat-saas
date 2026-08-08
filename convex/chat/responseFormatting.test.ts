@@ -2,7 +2,6 @@ import { expect, test } from "vitest";
 import {
   chatResponseFormattingBlock,
   normalizeCustomerFacingResponseFormatting,
-  splitCustomerFacingResponseMessages,
 } from "./responseFormatting";
 
 test("response formatting keeps customer replies free of workflow internals", () => {
@@ -13,15 +12,6 @@ test("response formatting keeps customer replies free of workflow internals", ()
   expect(chatResponseFormattingBlock).not.toContain("<media_to_send>");
   expect(chatResponseFormattingBlock).not.toContain(
     "Start with the customer-facing answer.",
-  );
-});
-
-test("asks the model for separately sendable messages", () => {
-  expect(chatResponseFormattingBlock).toContain(
-    "Write 2-4 short, separately sendable chat messages",
-  );
-  expect(chatResponseFormattingBlock).toContain(
-    "Put a line containing only <<MESSAGE_BREAK>> between those messages.",
   );
 });
 
@@ -128,45 +118,4 @@ test("removes leaked internal planning when no customer answer remains", () => {
   ].join("\n");
 
   expect(normalizeCustomerFacingResponseFormatting(input)).toBe("");
-});
-
-test("splits explicit model message breaks", () => {
-  expect(
-    splitCustomerFacingResponseMessages(
-      "Thanks for reaching out!\n<<MESSAGE_BREAK>>\nWhich service do you need?",
-    ),
-  ).toEqual([
-    "Thanks for reaching out!",
-    "Which service do you need?",
-  ]);
-});
-
-test("falls back to paragraph and sentence boundaries", () => {
-  expect(
-    splitCustomerFacingResponseMessages(
-      "We have two options.\n\nThe first is faster.\n\nWhich do you prefer?",
-    ),
-  ).toEqual([
-    "We have two options.",
-    "The first is faster.",
-    "Which do you prefer?",
-  ]);
-  expect(
-    splitCustomerFacingResponseMessages(
-      "We are open today. We close at 6 PM. Would you like to book?",
-    ),
-  ).toEqual([
-    "We are open today.",
-    "We close at 6 PM.",
-    "Would you like to book?",
-  ]);
-});
-
-test("keeps single sentences and compact lists together", () => {
-  expect(splitCustomerFacingResponseMessages("Yes, we are open today.")).toEqual([
-    "Yes, we are open today.",
-  ]);
-  expect(
-    splitCustomerFacingResponseMessages("Available:\n- Morning\n- Afternoon"),
-  ).toEqual(["Available:\n- Morning\n- Afternoon"]);
 });

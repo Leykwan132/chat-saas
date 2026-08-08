@@ -35,10 +35,8 @@ import {
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
-import {
-  normalizeCustomerFacingResponseFormatting,
-  splitCustomerFacingResponseMessages,
-} from "./responseFormatting";
+import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import { aiReplyOutputSchema } from "./aiReplyOutput";
 import type { ChannelMediaItem } from "./channelSend";
 import {
   ensureWorkflowForAgent,
@@ -619,17 +617,25 @@ export const generateAiReplyWorker = internalAction({
         const plannedMessage = plannedWorkflowText.trim();
         responseMessages = plannedMessage ? [plannedMessage] : [];
       } else {
-        const result = await configuredAgent.generateText(
+        const result = await configuredAgent.generateObject(
           ctx,
           { threadId: conv.threadId },
-          workflowActionPlanReplyPromptArgs(
-            args,
-            workflowActionPlan,
-            workflowRuntimeContext,
-          ),
+          {
+            ...workflowActionPlanReplyPromptArgs(
+              args,
+              workflowActionPlan,
+              workflowRuntimeContext,
+            ),
+            schema: aiReplyOutputSchema,
+          },
           { storageOptions: { saveMessages: "none" } },
         );
-        responseMessages = splitCustomerFacingResponseMessages(result.text);
+        responseMessages = result.object.messages
+          .map(normalizeCustomerFacingResponseFormatting)
+          .map((message) => message.trim());
+        if (responseMessages.some((message) => !message)) {
+          throw new Error("Generated AI reply contains an empty customer message");
+        }
       }
 
       const convAfterGeneration = await ctx.runQuery(
