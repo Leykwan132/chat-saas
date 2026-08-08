@@ -1,6 +1,7 @@
 import { z } from "zod/v3";
 import type { ActionCtx } from "../_generated/server";
 import { openRouterModel } from "../llm/openRouter";
+import { AI_GENERATION_MAX_RETRIES } from "../llm/retryPolicy";
 import type { buildAgent } from "./threads";
 import type { WorkflowRuntimeContextForPrompt } from "./workflowPrompt";
 import {
@@ -221,22 +222,42 @@ export async function generateWorkflowActionPlan(
   args: AiReplyPromptArgs,
   workflowRuntimeContext: WorkflowRuntimeContextForPrompt,
 ): Promise<WorkflowActionPlan> {
-  const result = await configuredAgent.generateObject(
-    ctx,
-    { threadId },
-    {
-      ...aiReplyPromptArgs(args),
-      model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL),
-      system: buildWorkflowActionPlannerSystemPrompt(workflowRuntimeContext),
-      schema: workflowActionPlanSchema,
-    },
-    { storageOptions: { saveMessages: "none" } },
-  );
+  const maxAttempts = AI_GENERATION_MAX_RETRIES + 1;
+  let lastError: unknown;
 
-  const reconciledPlan = reconcileWorkflowActionPlan(
-    result.object,
-    workflowRuntimeContext,
-  );
-  console.log("Workflow action plan result:", reconciledPlan);
-  return reconciledPlan;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const result = await configuredAgent.generateObject(
+        ctx,
+        { threadId },
+        {
+          ...aiReplyPromptArgs(args),
+          model: openRouterModel(WORKFLOW_ACTION_PLANNER_MODEL),
+          system: buildWorkflowActionPlannerSystemPrompt(workflowRuntimeContext),
+          schema: workflowActionPlanSchema,
+          maxRetries: 0,
+        },
+        { storageOptions: { saveMessages: "none" } },
+      );
+
+      const reconciledPlan = reconcileWorkflowActionPlan(
+        result.object,
+        workflowRuntimeContext,
+      );
+      console.log("Workflow action plan result:", reconciledPlan);
+      return reconciledPlan;
+    } catch (error) {
+      lastError = error;
+      if (attempt >= maxAttempts) {
+        break;
+      }
+      console.warn("Workflow action plan generation failed; retrying", {
+        attempt,
+        maxAttempts,
+        error,
+      });
+    }
+  }
+
+  throw lastError;
 }

@@ -137,6 +137,18 @@ test("pins structured workflow planning to a dedicated DeepSeek model", () => {
   );
 });
 
+test("retries workflow action plan generation with the shared AI retry budget", () => {
+  const plannerPath = fileURLToPath(
+    new URL("./workflowActionPlanner.ts", import.meta.url),
+  );
+  const plannerSource = readFileSync(plannerPath, "utf8");
+
+  expect(plannerSource).toContain('from "../llm/retryPolicy"');
+  expect(plannerSource).toContain("maxAttempts = AI_GENERATION_MAX_RETRIES + 1");
+  expect(plannerSource).toContain("maxRetries: 0");
+  expect(plannerSource).toContain("Workflow action plan generation failed; retrying");
+});
+
 test("describes each workflow action plan schema item", () => {
   const matchSchema = workflowActionPlanSchema.shape.workflowMatches.element;
 
