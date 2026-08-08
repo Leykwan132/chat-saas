@@ -24,6 +24,7 @@ import {
   maybeCompleteWhatsAppConnectionAttempt,
 } from "./whatsappConnectionAttemptUtils";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
+import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
 import { isSkippedWhatsAppContact } from "./whatsappSkipContacts";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
 import { cancelOrScheduleWorkflowFollowUpForMessages } from "./workflowAutomationMessageActivity";
@@ -711,7 +712,8 @@ async function deleteWhatsAppConnectionForWaba(
       .collect();
 
     for (const conv of conversations) {
-      // Delete messages
+      await deleteConversationAgentThread(ctx, conv.threadId);
+
       const messages = await ctx.db
         .query("messages")
         .withIndex("by_conversationId_and_createdAt", (q) =>

@@ -1,14 +1,44 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { api, internal } from "./_generated/api";
 import schema from "./schema";
+import { withComponents } from "./testUtils";
+import agentSchema from "../node_modules/@convex-dev/agent/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
 
-test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async () => {
+const agentModules = {
+  apiKeys: () => import("../node_modules/@convex-dev/agent/dist/component/apiKeys.js"),
+  files: () => import("../node_modules/@convex-dev/agent/dist/component/files.js"),
+  messages: () => import("../node_modules/@convex-dev/agent/dist/component/messages.js"),
+  streams: () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
+  threads: () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
+  users: () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
+  "_generated/server": () =>
+    import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+};
+
+function initTest() {
   const t = convexTest(schema, modules);
+  t.registerComponent("agent", agentSchema, agentModules);
+  return t;
+}
+
+test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async () => {
+  vi.useFakeTimers();
+  const t = initTest();
   const wabaId = "waba-test-uninstall-123";
+
+  const threadId = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) =>
+      await ctx.db.insert("threads", {
+        userId: "user-123",
+        title: "Uninstall thread",
+        status: "active",
+      }),
+  );
 
   // Setup mock data
   const { channelId, convId } = await t.run(async (ctx) => {
@@ -32,7 +62,7 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
       contactAddress: "address-2",
       status: "open",
       assignToAiAgent: true,
-      threadId: "thread-123",
+      threadId,
       lastMessageAt: Date.now(),
       unreadCount: 0,
       createdAt: Date.now(),
@@ -187,6 +217,7 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
     wabaId,
     event: "PARTNER_APP_UNINSTALLED",
   });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   // Verify all data is removed
   await t.run(async (ctx) => {
@@ -232,11 +263,29 @@ test("PARTNER_APP_UNINSTALLED deletes all data associated with WABA ID", async (
     const updates = await ctx.db.query("whatsappAccountUpdates").collect();
     expect(updates.length).toBe(0);
   });
+
+  const deletedThread = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) => await ctx.db.get(threadId),
+  );
+  expect(deletedThread).toBeNull();
+  vi.useRealTimers();
 });
 
 test("PARTNER_REMOVED deletes all data associated with WABA ID", async () => {
-  const t = convexTest(schema, modules);
+  vi.useFakeTimers();
+  const t = initTest();
   const wabaId = "waba-test-partner-removed";
+
+  const threadId = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) =>
+      await ctx.db.insert("threads", {
+        userId: "user-123",
+        title: "Partner removed thread",
+        status: "active",
+      }),
+  );
 
   const { channelId, convId } = await t.run(async (ctx) => {
     const channelId = await ctx.db.insert("channels", {
@@ -256,7 +305,7 @@ test("PARTNER_REMOVED deletes all data associated with WABA ID", async () => {
       contactAddress: "address-2",
       status: "open",
       assignToAiAgent: true,
-      threadId: "thread-partner-removed",
+      threadId,
       lastMessageAt: Date.now(),
       unreadCount: 0,
       createdAt: Date.now(),
@@ -269,11 +318,19 @@ test("PARTNER_REMOVED deletes all data associated with WABA ID", async () => {
     wabaId,
     event: "PARTNER_REMOVED",
   });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
 
   await t.run(async (ctx) => {
     expect(await ctx.db.get(channelId)).toBeNull();
     expect(await ctx.db.get(convId)).toBeNull();
   });
+
+  const deletedThread = await withComponents(t).runInComponent(
+    "agent",
+    async (ctx) => await ctx.db.get(threadId),
+  );
+  expect(deletedThread).toBeNull();
+  vi.useRealTimers();
 });
 
 test("disconnect clears WhatsApp history staging", async () => {
