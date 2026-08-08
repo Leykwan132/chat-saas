@@ -1,9 +1,9 @@
 # Snapshot
+- 2026-08-08 [CODE] On `codex/disconnect-delete-agent-threads` from `origin/main`, channel disconnect and WhatsApp WABA uninstall/partner-removed cleanup now delete each conversation’s `@convex-dev/agent` thread via `deleteAllForThreadIdAsync` before removing Convex conversations/messages. Focused Node v22.22.0 tests pass (4/4). Unreleased; no changelog until production availability is confirmed.
 - 2026-08-08 [TOOL] Pushed `codex/multi-message-ai-replies` (`63760419`) and opened PR #40 into `main`: https://github.com/Leykwan132/chat-saas/pull/40. Temporary playground/inbox reply debug logs were removed before commit. Unreleased until merge/deploy.
 - 2026-08-08 [CODE] On `codex/multi-message-ai-replies`, AI replies now split into up to four natural chat bubbles via `<<<MESSAGE_BREAK>>>` plus paragraph/list-aware fallbacks (no hard char chops), send/persist media before text, strip markdown chrome and inline `[n]` markers, keep Citations intact for a playground sources footer, and charge once per turn. Playground streams again. Supersedes earlier structured-output and 200-char packing attempts. Unreleased; no changelog until production availability is confirmed.
 - 2026-08-08 [TOOL] Pushed `codex/cloudflare-ai-search-retrieval-settings` and opened PR #39 into `main`: https://github.com/Leykwan132/chat-saas/pull/39. Cloudflare AI Search retrieval now requires a 0.4 vector match threshold, retrieves up to 5 agent-filtered chunks per query, and reranks them with `@cf/baai/bge-reranker-base`. Node v22.22.0 whitespace checks and IDE diagnostics pass; dependencies are unavailable in the clean worktree, so no runtime test ran. Unreleased; no changelog entry was added.
 - 2026-08-06 [CODE] Idle/auth restore no longer sticks on “Setting up your profile...”: `RequireOrganization` waits for Convex auth (`useConvexAuth`), only provisions when authenticated, and redirects when the session is gone; `/workspace` now redirects like other gated pages when WorkOS has no user. Unreleased; no changelog yet.
-- 2026-08-05 [CODE] Local branch `codex/telegram-webhook-receiver` now implements Telegram agent notifications: reusable canonical-phone recipients, five saved enabled/disabled subscriptions per agent, non-expiring single-use hashed `/start` verification, self-contact binding, redacted webhook logging, authenticated per-row test sends, dedicated Workpool delivery, and Agent Setup controls. Escalations plus AI/manual booking creation, updates, and cancellations enqueue eligible delivery. No deployment, environment change, webhook registration, push, or changelog publication ran.
 - 2026-08-05 [TOOL] Telegram's Convex-specific type failures were fixed by preserving literal return types, importing the generated internal API, and making Vitest hooks return void. Node v22.22.0 passed the strict `convex/tsconfig.json` check, 6 focused tests, whitespace checks, and `convex codegen --typecheck enable`; codegen uploaded functions to the configured development deployment. The pre-existing generated API edit and unrelated plan remain unstaged.
 - 2026-08-04 [TOOL] Merged `origin/main` at `351f5d4b` into `codex/whatsapp-signup-cancel`; the sole `CONTINUITY.md` conflict was resolved by preserving both branches’ records. No application-code conflicts occurred. Node v22.22.0 passed 4 focused WhatsApp regressions and whitespace/conflict-marker checks.
 - 2026-08-04 [TOOL] Created and pushed `codex/whatsapp-signup-cancel` with verified WhatsApp cancellation fix commit `77abe5d6`, then opened draft PR #33 into `main`: https://github.com/Leykwan132/chat-saas/pull/33. The GitHub connector lacked PR-write permission, but `gh pr create` succeeded through the local Git credentials.
@@ -589,13 +589,13 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-08-08 [CODE] Channel disconnect / WhatsApp WABA delete now purge linked Agent component threads with conversations and messages.
 - 2026-08-02 [CODE] Unified workspace/Agents and agent Workflow expanded headers through the shared header component, including padding and collapse-control sizing.
 - 2026-08-02 [CODE] Matched the workspace/Agents sidebar KiloBot lockup to the agent Workflow sidebar’s 7.2px gap, 20px icon, and 18px wordmark.
 - 2026-08-02 [CODE] Matched the public Workflow preview KiloBot lockup to the authenticated sidebar's 7.2px icon-to-wordmark spacing.
 - 2026-08-02 [CODE] Increased the Workflow top-left title/tool/navigation inset from 16px to 24px in both live and loading states.
 - 2026-08-02 [CODE] Increased the Avatar page title from 24px to the standard 30px dashboard scale.
 - 2026-08-02 [CODE] Matched Message templates' no-WhatsApp state and action button to Broadcast's compact connection prompt.
-- 2026-08-02 [CODE] Enlarged the expanded sidebar Kilobot wordmark to 18px and reduced the adjacent icon to 20px, with a focused rendered-header regression.
 - 2026-08-01 [CODE] Implemented the approved channel-status, page-guide, Channels layout, and Broadcast connection-prompt cleanup with focused regressions and a local fake-state preview.
 - 2026-07-31 [CODE] Restored the normal WhatsApp coexistence description inside the pending connection card.
 - 2026-07-31 [CODE] Removed the redundant pending WhatsApp setup-phase block so only the Connecting/Stop action remains.
@@ -718,6 +718,7 @@
 - 2026-07-30 [CODE] Removed all 20 public-guide `Before you begin` panels and retired their unused shared component.
 
 # Working set
+- 2026-08-08 [CODE] Disconnect Agent-thread cleanup: `convex/{channelAgentThreadCleanup,channelDisconnectThreadCleanup.test,channels,whatsappWebhook,whatsappUninstall.test}.ts`; verified locally, unreleased.
 - 2026-08-02 [CODE] Shared workspace and agent Workflow header: `src/components/{ExpandedAppSidebarHeader,workspace/AgentsSidebar{,Brand.test}}.ts*`; verified locally, unreleased.
 - 2026-08-02 [CODE] Workspace sidebar brand spacing: `src/components/workspace/AgentsSidebar{,Brand.test}.ts*`; verified locally, unreleased.
 - 2026-08-02 [CODE] Workflow preview brand spacing: `src/components/landing/LandingAppPreviewSidebar{,.test}.tsx`; verified locally, unreleased.

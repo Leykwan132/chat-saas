@@ -95,6 +95,7 @@ import type * as broadcastMessageValidators from "../broadcastMessageValidators.
 import type * as broadcastPool from "../broadcastPool.js";
 import type * as calendarEvents from "../calendarEvents.js";
 import type * as calendarFormatUtils from "../calendarFormatUtils.js";
+import type * as channelAgentThreadCleanup from "../channelAgentThreadCleanup.js";
 import type * as channelSyncPools from "../channelSyncPools.js";
 import type * as channels from "../channels.js";
 import type * as chat_aiReplyMedia from "../chat/aiReplyMedia.js";
@@ -436,6 +437,7 @@ declare const fullApi: ApiFromModules<{
   broadcastPool: typeof broadcastPool;
   calendarEvents: typeof calendarEvents;
   calendarFormatUtils: typeof calendarFormatUtils;
+  channelAgentThreadCleanup: typeof channelAgentThreadCleanup;
   channelSyncPools: typeof channelSyncPools;
   channels: typeof channels;
   "chat/aiReplyMedia": typeof chat_aiReplyMedia;

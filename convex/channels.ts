@@ -14,6 +14,7 @@ import { instagramSyncPool, messengerSyncPool } from "./channelSyncPools";
 import { checkPlatformSupport, getPlanFromStripe, getChannelLimitForOrg } from "./plans";
 import { deleteWhatsAppHistoryStagingForChannel } from "./whatsappSync";
 import { assertAgentCanConnectWhatsApp } from "./whatsappChannelGuard";
+import { deleteConversationAgentThread } from "./channelAgentThreadCleanup";
 
 async function enforceChannelLimit(
   ctx: MutationCtx,
@@ -1053,9 +1054,8 @@ export const internalGetChannel = internalQuery({
 // Meta delivers Deauthorize and Data Deletion callbacks at the
 // IG-user / FB-user level. The HTTP routes verify the signed_request, then
 // hand the user id to one of these mutations to drop access tokens for
-// every affected channel row. Per product decision: we keep conversations
-// and messages — only the channel link is severed and the token cleared so
-// no further Graph calls can be made on that user's behalf.
+// every affected channel row. Conversations, messages, and linked Agent
+// component threads are removed; the channel row is marked disconnected.
 // ──────────────────────────────────────────────────────────────────────────
 
 async function cleanupChannelData(
@@ -1070,6 +1070,8 @@ async function cleanupChannelData(
     .collect();
 
   for (const conv of conversations) {
+    await deleteConversationAgentThread(ctx, conv.threadId);
+
     const messages = await ctx.db
       .query("messages")
       .withIndex("by_conversationId_and_createdAt", (q) =>
