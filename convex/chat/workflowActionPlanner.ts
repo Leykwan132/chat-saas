@@ -111,6 +111,31 @@ const PLANNER_LANGUAGE_RULES = `Rules:
 - Detect the language of the latest user message and set responseLanguage to that language. If the message mixes languages, use the dominant language. Never default to English unless the user wrote in English.
 - responseGuidance must never include uploaded filenames or instruct the later reply to display them.`;
 
+const PLANNER_OUTPUT_EXAMPLES = `Example outputs (follow this exact JSON object shape; do not wrap in markdown):
+
+Example 1 — one matching media action:
+{
+  "workflowMatches": [
+    {
+      "matched": true,
+      "nodeId": "jn7abc123",
+      "nodeKind": "sendImage",
+      "nodeTitle": "Send Type B video"
+    }
+  ],
+  "mediaNodeIdsToSend": ["jn7abc123"],
+  "responseLanguage": "English",
+  "responseGuidance": "Tell the customer the Type B video is being sent now."
+}
+
+Example 2 — no matching workflow actions:
+{
+  "workflowMatches": [],
+  "mediaNodeIdsToSend": [],
+  "responseLanguage": "Malay",
+  "responseGuidance": "Answer the customer's question normally without claiming any attachment was sent."
+}`;
+
 export function buildWorkflowActionPlannerSystemPrompt(
   context: WorkflowRuntimeContextForPrompt,
 ) {
@@ -126,7 +151,9 @@ Return a strict object matching the schema:
 - responseGuidance: one short instruction for the later customer-visible reply.
 
 ${PLANNER_LANGUAGE_RULES}
-- There are no Workflow Runtime actions available this turn. Always return empty workflowMatches and mediaNodeIdsToSend.`;
+- There are no Workflow Runtime actions available this turn. Always return empty workflowMatches and mediaNodeIdsToSend.
+
+${PLANNER_OUTPUT_EXAMPLES}`;
   }
 
   const nodeSections = actionNodes.map((node, index) => {
@@ -179,6 +206,9 @@ ${PLANNER_LANGUAGE_RULES}
 - Every matched sendText message will be sent exactly as configured. Do not paraphrase or add to it.
 - If a customer asks again for a matching photo, video, brochure, PDF, document, file, catalog, menu, or attachment, match that media node again.
 - Use an empty workflowMatches array only when none of the listed actions match.
+- Copy exact nodeId, nodeKind, and nodeTitle values from the listed nodes below into workflowMatches.
+
+${PLANNER_OUTPUT_EXAMPLES}
 
 Workflow action nodes and definitive payloads:
 ${nodeSections}`;
