@@ -35,7 +35,10 @@ import {
 import { checkAiFeature } from "../plans";
 import { logConversationEvent } from "../conversationLogs";
 import { recordAiAssistedConversationAggregate } from "../agentOverviewAggregates";
-import { normalizeCustomerFacingResponseFormatting } from "./responseFormatting";
+import {
+  normalizeCustomerFacingResponseFormatting,
+  splitCustomerFacingResponseMessages,
+} from "./responseFormatting";
 import type { ChannelMediaItem } from "./channelSend";
 import {
   ensureWorkflowForAgent,
@@ -610,10 +613,11 @@ export const generateAiReplyWorker = internalAction({
         ? resolveWorkflowActionPlanText(workflowActionPlan, workflowRuntimeContext)
         : null;
 
-      let cleanText: string;
+      let responseMessages: string[];
 
       if (hasMatches && plannedWorkflowText !== null) {
-        cleanText = plannedWorkflowText;
+        const plannedMessage = plannedWorkflowText.trim();
+        responseMessages = plannedMessage ? [plannedMessage] : [];
       } else {
         const result = await configuredAgent.generateText(
           ctx,
@@ -625,7 +629,7 @@ export const generateAiReplyWorker = internalAction({
           ),
           { storageOptions: { saveMessages: "none" } },
         );
-        cleanText = result.text.trim();
+        responseMessages = splitCustomerFacingResponseMessages(result.text);
       }
 
       const convAfterGeneration = await ctx.runQuery(
@@ -650,7 +654,7 @@ export const generateAiReplyWorker = internalAction({
       const channelMediaItems = toChannelMediaItems(allMediaItems);
 
       const allMediaUrls = allMediaItems.map((item) => item.url);
-      if (!cleanText && allMediaItems.length === 0) return;
+      if (responseMessages.length === 0 && allMediaItems.length === 0) return;
 
       let usage: { llmModel: string; creditsCharged: number };
       try {
@@ -671,32 +675,6 @@ export const generateAiReplyWorker = internalAction({
 
       await turnTypingOff();
 
-      const sendResult: {
-        ok: boolean;
-        error?: string;
-        policy?: string;
-        textExternalId?: string;
-        mediaExternalIds?: string[];
-      } = await ctx.runAction(
-        internal.chat.inboxActions.internalSendAiReply,
-        {
-          conversationId: conv._id,
-          content: cleanText,
-          mediaUrls: allMediaUrls,
-          mediaItems: channelMediaItems,
-          allowHumanAgentTag: false,
-        },
-      );
-
-      if (!sendResult.ok) {
-        console.error(
-          "AI reply not sent to channel:",
-          sendResult.error,
-          { conversationId: conv._id, service: conv.service },
-        );
-        return;
-      }
-
       const enqueueMetaMarkSeenIfRead = async (
         persistResult: {
           markedRead: boolean;
@@ -714,37 +692,67 @@ export const generateAiReplyWorker = internalAction({
         );
       };
 
-      if (cleanText) {
-        const persistResult: {
-          markedRead: boolean;
-          latestInboundExternalId?: string;
-        } | null = await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
-          conversationId: conv._id,
-          threadId: conv.threadId,
-          content: cleanText,
-          externalId: sendResult.textExternalId,
-          llmModel: usage.llmModel,
-          creditsCharged: usage.creditsCharged,
-          sourceEventId: args.avatarSourceEventId,
-        });
-        await enqueueMetaMarkSeenIfRead(persistResult);
-      }
-
-      if (allMediaUrls.length > 0) {
-        const persistResult: {
-          markedRead: boolean;
-          latestInboundExternalId?: string;
-        } | null = await ctx.runMutation(
-          internal.chat.inbox.internalPersistAiMediaReply,
+      const outboundMessages = responseMessages.length > 0 ? responseMessages : [""];
+      for (const [messageIndex, content] of outboundMessages.entries()) {
+        const includesMedia = messageIndex === 0 && allMediaUrls.length > 0;
+        const sendResult: {
+          ok: boolean;
+          error?: string;
+          policy?: string;
+          textExternalId?: string;
+          mediaExternalIds?: string[];
+        } = await ctx.runAction(
+          internal.chat.inboxActions.internalSendAiReply,
           {
             conversationId: conv._id,
-            threadId: conv.threadId,
-            mediaUrls: allMediaUrls,
-            mediaItems: channelMediaItems,
-            externalIds: sendResult.mediaExternalIds ?? [],
+            content,
+            mediaUrls: includesMedia ? allMediaUrls : [],
+            mediaItems: includesMedia ? channelMediaItems : [],
+            allowHumanAgentTag: false,
           },
         );
-        await enqueueMetaMarkSeenIfRead(persistResult);
+
+        if (!sendResult.ok) {
+          console.error(
+            "AI reply not sent to channel:",
+            sendResult.error,
+            { conversationId: conv._id, service: conv.service, messageIndex },
+          );
+          return;
+        }
+
+        if (content) {
+          const persistResult: {
+            markedRead: boolean;
+            latestInboundExternalId?: string;
+          } | null = await ctx.runMutation(internal.chat.inbox.internalPersistAiReply, {
+            conversationId: conv._id,
+            threadId: conv.threadId,
+            content,
+            externalId: sendResult.textExternalId,
+            llmModel: usage.llmModel,
+            creditsCharged: messageIndex === 0 ? usage.creditsCharged : 0,
+            sourceEventId: args.avatarSourceEventId,
+          });
+          await enqueueMetaMarkSeenIfRead(persistResult);
+        }
+
+        if (includesMedia) {
+          const persistResult: {
+            markedRead: boolean;
+            latestInboundExternalId?: string;
+          } | null = await ctx.runMutation(
+            internal.chat.inbox.internalPersistAiMediaReply,
+            {
+              conversationId: conv._id,
+              threadId: conv.threadId,
+              mediaUrls: allMediaUrls,
+              mediaItems: channelMediaItems,
+              externalIds: sendResult.mediaExternalIds ?? [],
+            },
+          );
+          await enqueueMetaMarkSeenIfRead(persistResult);
+        }
       }
     } finally {
       await turnTypingOff();

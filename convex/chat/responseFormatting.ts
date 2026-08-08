@@ -17,7 +17,13 @@ Examples:
 - Do not use Markdown tables in customer-facing replies. Tables render badly in WhatsApp.
 - When comparing several items, use a short bullet list instead. Put the item name first, then the important details in the same bullet.
 - Do not narrate internal steps, tool use, searches, context fetching, or knowledge base lookups.
-- Do not include workflow metadata, media URLs, or internal action markers in customer-facing replies.`;
+- Do not include workflow metadata, media URLs, or internal action markers in customer-facing replies.
+- Write 2-4 short, separately sendable chat messages when the answer needs more than one sentence.
+- Put a line containing only <<MESSAGE_BREAK>> between those messages.
+- Keep one message only when one short sentence fully answers the user.
+- Never put <<MESSAGE_BREAK>> at the beginning or end of the reply.`;
+
+const customerMessageBreak = "<<MESSAGE_BREAK>>";
 
 function parseMarkdownTableRow(line: string) {
   const trimmed = line.trim();
@@ -127,4 +133,41 @@ export function normalizeCustomerFacingResponseFormatting(content: string): stri
   return removeInternalNarration(normalizeMarkdownTables(content))
     .replace(/\*{2,3}([^*\n]+?)\*{2,3}/g, "*$1*")
     .replace(/_{2,3}([^_\n]+?)_{2,3}/g, "*$1*");
+}
+
+function splitSentences(content: string) {
+  return Array.from(
+    new Intl.Segmenter(undefined, { granularity: "sentence" }).segment(content),
+    ({ segment }) => segment.trim(),
+  ).filter(Boolean);
+}
+
+function groupSentences(sentences: string[], maximumMessages: number) {
+  const sentencesPerMessage = Math.ceil(sentences.length / maximumMessages);
+  const messages: string[] = [];
+  for (let index = 0; index < sentences.length; index += sentencesPerMessage) {
+    messages.push(sentences.slice(index, index + sentencesPerMessage).join(" "));
+  }
+  return messages;
+}
+
+export function splitCustomerFacingResponseMessages(content: string): string[] {
+  const normalized = normalizeCustomerFacingResponseFormatting(content).trim();
+  if (!normalized) return [];
+
+  const explicitMessages = normalized
+    .split(new RegExp(`^\\s*${customerMessageBreak}\\s*$`, "gmi"))
+    .map((message) => message.trim())
+    .filter(Boolean);
+  if (explicitMessages.length > 1) return explicitMessages;
+
+  const paragraphs = normalized
+    .split(/\n\s*\n+/)
+    .map((message) => message.trim())
+    .filter(Boolean);
+  if (paragraphs.length > 1) return paragraphs;
+  if (normalized.includes("\n")) return [normalized];
+
+  const sentences = splitSentences(normalized);
+  return sentences.length > 1 ? groupSentences(sentences, 4) : [normalized];
 }
