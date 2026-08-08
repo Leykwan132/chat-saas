@@ -15,7 +15,7 @@ export {
   shouldRunWorkflowActionPlanner,
 } from "./workflowActionExecution";
 
-export const WORKFLOW_ACTION_PLANNER_MODEL = "deepseek/deepseek-v4-flash";
+export const WORKFLOW_ACTION_PLANNER_MODEL = "xiaomi/mimo-v2.5";
 
 export const workflowActionPlanSchema = z.object({
   workflowMatches: z.array(
