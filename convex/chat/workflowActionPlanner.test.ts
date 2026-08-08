@@ -92,6 +92,9 @@ test("builds a planner prompt with definitive action payloads", () => {
   expect(prompt).toContain(
     "Detect the language of the latest user message and set responseLanguage",
   );
+  expect(prompt).toContain("Example outputs");
+  expect(prompt).toContain('"mediaNodeIdsToSend": ["jn7abc123"]');
+  expect(prompt).toContain('"workflowMatches": []');
   expect(prompt).not.toContain("https://cdn.example.com/type-b-video.mp4");
 });
 
@@ -300,6 +303,8 @@ test("builds a language-only planner prompt when no workflow actions exist", () 
   expect(prompt).toContain(
     "Detect the language of the latest user message and set responseLanguage",
   );
+  expect(prompt).toContain("Example outputs");
+  expect(prompt).toContain('"workflowMatches": []');
   expect(prompt).not.toContain("Workflow action nodes and definitive payloads");
 });
 
