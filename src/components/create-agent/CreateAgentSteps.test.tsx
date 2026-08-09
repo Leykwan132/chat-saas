@@ -24,6 +24,8 @@ test('identity step renders required business fields and an optional description
   expect(markup).toContain('Business name');
   expect(markup).toContain('Business description');
   expect(markup).toContain('Optional');
+  expect(markup).toContain('id="agent-name" required="" aria-required="true"');
+  expect(markup).toContain('id="business-name" required="" aria-required="true"');
   expect(markup).toContain('disabled=""');
 });
 
@@ -39,6 +41,9 @@ test('goal step renders only Support and Book a Service choices', () => {
 
   expect(markup).toContain('Support');
   expect(markup).toContain('Book a Service');
+  expect(markup).toContain('aria-labelledby="support-goal-label"');
+  expect(markup).toContain('aria-describedby="support-goal-description"');
+  expect(markup).toContain('id="support-goal-description"');
   expect(markup).not.toContain('General');
   expect(markup).not.toContain('Model');
 });

@@ -17,18 +17,7 @@ import {
 } from "./agentAccess";
 import { deleteSubscriptionsForAgent } from "./telegramNotifications/subscriptionAccess";
 import { mutation, query, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
-
-const templateKeyValidator = v.union(
-  v.literal("blank"),
-  v.literal("sales"),
-  v.literal("productSales"),
-  v.literal("support"),
-);
-
-const agentGoalValidator = v.union(
-  v.literal("support"),
-  v.literal("bookService"),
-);
+import { agentGoalValidator, templateKeyValidator } from "./agentValidators";
 
 async function assertEnabledModel(modelId: string) {
   if (!isEnabledModel(modelId)) {

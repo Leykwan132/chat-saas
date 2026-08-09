@@ -1,4 +1,5 @@
 # Snapshot
+- 2026-08-09 [CODE] Goal-based agent creation is implemented on `codex/goal-based-agent-creation`: required agent/business identity, optional business context, Support or Book a Service goal, backend-owned deterministic prompt/model/template selection, and Train/Playground/Channels handoff. Existing agents remain unchanged. The development Convex functions are uploaded and the local app is available at `http://127.0.0.1:5178`; production availability is UNCONFIRMED.
 - 2026-08-09 [USER] D633 ACTIVE: Approved the written goal-based agent creation spec and confirmed legacy agents remain unchanged with no automatic prompt regeneration or metadata backfill. Inline implementation in the current session is authorized.
 - 2026-08-09 [CODE] The implementation plan is `docs/superpowers/plans/2026-08-09-goal-based-agent-creation.md`; it covers shared prompts, Convex persistence and compatibility, modular creation steps, success routing, verification, and local launch.
 - 2026-08-09 [USER] D632 ACTIVE: Approved the goal-based agent creation design: deterministic backend prompt construction, persisted optional compatibility fields for business context and goal, existing advanced setup retained, and deployment routed to Channels. The written spec is pending user review before planning and implementation.
@@ -595,6 +596,7 @@
 - 2026-07-10 [USER] D232 ACTIVE: `ilmu-mini-v3.3` is the only Free model; all other enabled models require Starter+.
 
 # Done (recent)
+- 2026-08-09 [CODE] Completed and independently reviewed the goal-based creation wizard, including accessible required fields and goal descriptions, direct Playground test mode, duplicate-safe retryable submission scheduling, and modular Convex validators.
 - 2026-08-08 [CODE] Channel disconnect / WhatsApp WABA delete now purge linked Agent component threads with conversations and messages.
 - 2026-08-02 [CODE] Unified workspace/Agents and agent Workflow expanded headers through the shared header component, including padding and collapse-control sizing.
 - 2026-08-02 [CODE] Matched the workspace/Agents sidebar KiloBot lockup to the agent Workflow sidebar’s 7.2px gap, 20px icon, and 18px wordmark.
@@ -724,6 +726,7 @@
 - 2026-07-30 [CODE] Removed all 20 public-guide `Before you begin` panels and retired their unused shared component.
 
 # Working set
+- 2026-08-09 [CODE] Goal-based agent creation: `shared/agentCreationGoals*`, `convex/{agents,agentValidators,agentCreation.test,schema}.ts`, `src/components/create-agent/*`, `src/pages/CreateAgentPage.tsx`, generated API, and `docs/superpowers/{specs,plans}/2026-08-09-goal-based-agent-creation*.md`; verified and uploaded to development, unreleased.
 - 2026-08-08 [CODE] Disconnect Agent-thread cleanup: `convex/{channelAgentThreadCleanup,channelDisconnectThreadCleanup.test,channels,whatsappWebhook,whatsappUninstall.test}.ts`; verified locally, unreleased.
 - 2026-08-02 [CODE] Shared workspace and agent Workflow header: `src/components/{ExpandedAppSidebarHeader,workspace/AgentsSidebar{,Brand.test}}.ts*`; verified locally, unreleased.
 - 2026-08-02 [CODE] Workspace sidebar brand spacing: `src/components/workspace/AgentsSidebar{,Brand.test}.ts*`; verified locally, unreleased.
@@ -759,6 +762,7 @@
 - 2026-07-18 [CODE] Same-language runtime prompt: `convex/chat/{responseFormatting,responseFormatting.test}.ts` and `docs/superpowers/{specs/2026-07-18-same-language-response-prompt-design,plans/2026-07-18-same-language-response-prompt}.md`.
 
 # Open questions
+- 2026-08-09 [TOOL] OPEN: The in-app browser is signed out and redirects `/create-agent` to the public home page; the authenticated end-to-end wizard and post-create channel navigation remain for user smoke testing at the running local URL.
 - 2026-07-31 [TOOL] OPEN: The repository-wide Vitest gate reproduces eight failures outside the WhatsApp working set: four `agentOverview.test.ts`, one `agentOverviewAiHandled.test.ts`, one stale `doubleSave.test.ts` structured-output mock, one `ReferralFeatureRoute.test.ts` source regex, and one `KnowledgeBaseNavigation.test.ts` stale asset URL. The full unfiltered run also misclassifies passing Node-native Docs TAP files as empty Vitest suites. These failures must be resolved or explicitly waived before the WhatsApp implementation is committed under the finishing workflow.
 - 2026-07-29 [TOOL] OPEN: Authenticated Personal/Team Adjust Plan clicks, canceled-subscription paid Checkout, and Stripe Portal product configuration still need manual verification; the available in-app browser session was signed out.
 - 2026-07-28 [TOOL] RESOLVED by D470: development uses the two configured reusable Free Stripe price IDs; inline Free price data is removed.
@@ -776,6 +780,8 @@
 - 2026-07-03 [USER] UNCONFIRMED: Actual Stripe price IDs for extra-credit packages remain pending.
 
 # Receipts
+- 2026-08-09 [TOOL] Repository-wide raw Vitest passed 390 application files/1,259 assertions and exited nonzero only for ten `kilobot-docs` files: eight Node TAP files are misclassified as empty Vitest suites, while two rendered Docs tests cannot resolve the nested `@docusaurus/tsconfig` dependency in this worktree. No goal-based agent-creation test failed.
+- 2026-08-09 [TOOL] Node v22.22.0 passed 5 focused files/19 tests, the submission controller regression, scoped ESLint, strict Convex TypeScript, `tsc -b && vite build`, whitespace checks, and ≤300-line checks. `bunx convex codegen` generated bindings and uploaded functions to the configured development deployment. Local HTTP smoke returned 200 on port 5178; unauthenticated `/create-agent` correctly redirected to `/`.
 - 2026-08-03 [TOOL] RED/GREEN covered required-label rendering, condition-detail editor/backend enforcement, readiness derivation, draft validation, and alert placement. Node v22.22.0 passed 71 focused workflow files/219 tests, scoped ESLint, and `tsc -b && vite build`; the build retained only its existing large-chunk warning.
 - 2026-08-02 [TOOL] Origin-main `9e43b8ac` merged cleanly as `7597f8c5` after a temporary all-files safeguard stash. The stash restored the three modified and two untracked sidebar files without conflicts, then was safely dropped. Node v22.22.0 passed 3 focused tests, scoped ESLint, conflict-marker, and `git diff --check` scans.
 - 2026-08-02 [TOOL] Header-composition regression failed while the workspace sidebar carried its own expanded-header measurements, then passed after it adopted `ExpandedAppSidebarHeader`. Node v22.22.0 passed 3 focused lockup tests, scoped ESLint, and `git diff --check`.

@@ -56,13 +56,18 @@ export function CreateAgentGoalStep({
               <ToggleGroupItem
                 key={goalKey}
                 value={goalKey}
-                aria-label={option.label}
+                aria-labelledby={`${goalKey}-goal-label`}
+                aria-describedby={`${goalKey}-goal-description`}
                 className="h-auto min-h-36 items-start justify-start whitespace-normal p-4 text-left"
               >
                 <span className="flex flex-col items-start gap-3">
                   <Icon data-icon="inline-start" />
-                  <span className="font-semibold">{option.label}</span>
-                  <FieldDescription>{option.description}</FieldDescription>
+                  <span id={`${goalKey}-goal-label`} className="font-semibold">
+                    {option.label}
+                  </span>
+                  <FieldDescription id={`${goalKey}-goal-description`}>
+                    {option.description}
+                  </FieldDescription>
                 </span>
               </ToggleGroupItem>
             );

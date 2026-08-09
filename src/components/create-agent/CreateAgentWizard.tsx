@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useRef, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useMutation } from 'convex/react';
 import { usePostHog } from '@posthog/react';
 import { ArrowLeft, AlertCircle } from 'lucide-react';
@@ -13,6 +13,7 @@ import { CreateAgentGoalStep } from './CreateAgentGoalStep';
 import { CreateAgentIdentityStep } from './CreateAgentIdentityStep';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
+import { createAgentSubmissionController } from './createAgentSubmission';
 import {
   buildCreateAgentRequest,
   getCreateAgentDestinations,
@@ -42,46 +43,36 @@ export function CreateAgentWizard() {
   const [businessDescription, setBusinessDescription] = useState('');
   const [goal, setGoal] = useState<AgentGoal | null>(null);
   const [status, dispatch] = useReducer(reduceCreateAgentStatus, INITIAL_STATUS);
-  const createStartedRef = useRef(false);
+  const [submissionController] = useState(createAgentSubmissionController);
 
   useEffect(() => {
-    if (status.step !== 'creating' || createStartedRef.current || !goal) return;
-    createStartedRef.current = true;
+    return () => submissionController.cancel();
+  }, [submissionController]);
 
-    const timers = [
-      window.setTimeout(() => dispatch({ type: 'progressed', phase: 1 }), 700),
-      window.setTimeout(() => dispatch({ type: 'progressed', phase: 2 }), 1400),
-      window.setTimeout(() => {
-        void (async () => {
-          try {
-            const agentId = await createAgent(
-              buildCreateAgentRequest({
-                name,
-                businessName,
-                businessDescription,
-                goal,
-              }),
-            );
-            dispatch({ type: 'created', agentId });
-            posthog?.capture('agent_created', { goal });
-            toast.success(`"${name.trim()}" created successfully`);
-            timers.push(
-              window.setTimeout(() => dispatch({ type: 'ready' }), 700),
-            );
-          } catch (error) {
-            posthog?.captureException(error);
-            createStartedRef.current = false;
-            dispatch({
-              type: 'failed',
-              error: error instanceof Error ? error.message : 'Unable to create agent',
-            });
-          }
-        })();
-      }, 2100),
-    ];
-
-    return () => timers.forEach(window.clearTimeout);
-  }, [businessDescription, businessName, createAgent, goal, name, posthog, status.step]);
+  const handleCreate = () => {
+    if (!goal) return;
+    submissionController.start({
+      request: buildCreateAgentRequest({
+        name,
+        businessName,
+        businessDescription,
+        goal,
+      }),
+      createAgent,
+      onStarted: () => dispatch({ type: 'started' }),
+      onProgressed: (phase) => dispatch({ type: 'progressed', phase }),
+      onCreated: (agentId) => {
+        dispatch({ type: 'created', agentId });
+        posthog?.capture('agent_created', { goal });
+        toast.success(`"${name.trim()}" created successfully`);
+      },
+      onReady: () => dispatch({ type: 'ready' }),
+      onFailed: (error) => {
+        posthog?.captureException(new Error(error));
+        dispatch({ type: 'failed', error });
+      },
+    });
+  };
 
   const stepLabel =
     status.step === 'identity'
@@ -145,7 +136,7 @@ export function CreateAgentWizard() {
                       goal={goal}
                       onGoalChange={setGoal}
                       onBack={() => dispatch({ type: 'showIdentity' })}
-                      onCreate={() => dispatch({ type: 'started' })}
+                      onCreate={handleCreate}
                     />
                   </motion.div>
                 ) : null}

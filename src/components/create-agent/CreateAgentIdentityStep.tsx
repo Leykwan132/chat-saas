@@ -55,19 +55,26 @@ export function CreateAgentIdentityStep({
           <FieldLabel htmlFor="agent-name">Agent name</FieldLabel>
           <Input
             id="agent-name"
+            required
+            aria-required="true"
+            aria-describedby="agent-name-description"
             value={name}
             onChange={(event) => onNameChange(event.target.value)}
             placeholder="e.g. Maya"
             autoFocus
             autoComplete="off"
           />
-          <FieldDescription>You can change this later.</FieldDescription>
+          <FieldDescription id="agent-name-description">
+            You can change this later.
+          </FieldDescription>
         </Field>
 
         <Field>
           <FieldLabel htmlFor="business-name">Business name</FieldLabel>
           <Input
             id="business-name"
+            required
+            aria-required="true"
             value={businessName}
             onChange={(event) => onBusinessNameChange(event.target.value)}
             placeholder="e.g. Northstar Dental"

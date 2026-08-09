@@ -1,4 +1,5 @@
 import type { AgentGoal } from '../../../shared/agentCreationGoals';
+import { buildAgentSetupTestPath } from '../setup-checklist/workspaceSetupChecklistNavigation';
 
 export type CreateAgentStep = 'identity' | 'goal' | 'creating' | 'success';
 
@@ -28,7 +29,7 @@ export function hasRequiredIdentity(input: {
 export function getCreateAgentDestinations(agentId: string) {
   return {
     train: `/dashboard/${agentId}/knowledge-base/web`,
-    playground: `/dashboard/${agentId}/agent-setup`,
+    playground: buildAgentSetupTestPath(agentId),
     channels: `/dashboard/${agentId}/channels`,
   };
 }

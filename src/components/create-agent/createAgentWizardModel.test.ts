@@ -15,7 +15,7 @@ test('requires trimmed agent and business names', () => {
 test('builds the three post-creation destinations for the new agent', () => {
   expect(getCreateAgentDestinations('agent_123')).toEqual({
     train: '/dashboard/agent_123/knowledge-base/web',
-    playground: '/dashboard/agent_123/agent-setup',
+    playground: '/dashboard/agent_123/agent-setup?test=1',
     channels: '/dashboard/agent_123/channels',
   });
 });
