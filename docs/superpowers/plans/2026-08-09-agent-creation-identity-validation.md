@@ -32,7 +32,7 @@
 - Consumes: `hasRequiredIdentity(input)` for valid progression to the goal step.
 - Preserves: `CreateAgentIdentityStepProps` and the parent wizard’s creation state.
 
-- [ ] **Step 1: Write the failing validation and rendered-step tests**
+- [x] **Step 1: Write the failing validation and rendered-step tests**
 
 Add these expectations to the wizard model test:
 
@@ -52,7 +52,7 @@ expect(getIdentityValidation({ name: 'Nova', businessName: ' ' })).toEqual({
 
 Add rendered-step expectations for `Let’s set up your agent`, `Agent name *`, `Business name *`, `noValidate`, and an enabled Continue button. Assert that the removed optional-description helper sentence is absent.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run:
 
@@ -62,7 +62,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/create-agen
 
 Expected: FAIL because `getIdentityValidation` and the updated identity-step markup do not yet exist.
 
-- [ ] **Step 3: Implement the validation model and accessible identity-step feedback**
+- [x] **Step 3: Implement the validation model and accessible identity-step feedback**
 
 Add `getIdentityValidation` beside `hasRequiredIdentity` using trimmed input values and exact messages. In `CreateAgentIdentityStep`:
 
@@ -77,7 +77,7 @@ Use `noValidate` on the form. On submit, set validation visible; when `firstInva
 
 Render each missing message with `FieldError`, set the matching `Field` to `data-invalid`, set `aria-invalid`, and extend `aria-describedby` with the error ID while invalid. Clear visible validation after the user makes both required values valid. Replace the heading, add the required markers, remove the optional-description helper, and remove the `disabled` prop from Continue.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run:
 
@@ -87,7 +87,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/create-agen
 
 Expected: PASS with the new validation contract and rendered identity-step copy.
 
-- [ ] **Step 5: Run focused quality checks**
+- [x] **Step 5: Run focused quality checks**
 
 Run:
 

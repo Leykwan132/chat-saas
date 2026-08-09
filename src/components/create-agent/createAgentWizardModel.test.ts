@@ -2,6 +2,7 @@ import { expect, test } from 'vitest';
 import {
   buildCreateAgentRequest,
   getCreateAgentDestinations,
+  getIdentityValidation,
   hasRequiredIdentity,
   reduceCreateAgentStatus,
 } from './createAgentWizardModel';
@@ -10,6 +11,20 @@ test('requires trimmed agent and business names', () => {
   expect(hasRequiredIdentity({ name: 'Nova', businessName: 'Northstar' })).toBe(true);
   expect(hasRequiredIdentity({ name: ' ', businessName: 'Northstar' })).toBe(false);
   expect(hasRequiredIdentity({ name: 'Nova', businessName: ' ' })).toBe(false);
+});
+
+test('identifies every missing identity field and the first field to focus', () => {
+  expect(getIdentityValidation({ name: ' ', businessName: ' ' })).toEqual({
+    agentNameError: 'Enter an agent name.',
+    businessNameError: 'Enter a business name.',
+    firstInvalidField: 'agent-name',
+  });
+
+  expect(getIdentityValidation({ name: 'Nova', businessName: ' ' })).toEqual({
+    agentNameError: null,
+    businessNameError: 'Enter a business name.',
+    firstInvalidField: 'business-name',
+  });
 });
 
 test('builds the three post-creation destinations for the new agent', () => {

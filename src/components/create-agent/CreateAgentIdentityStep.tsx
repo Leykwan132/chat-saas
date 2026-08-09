@@ -1,14 +1,16 @@
+import { useRef, useState } from 'react';
 import { ArrowLeft, CornerDownLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { hasRequiredIdentity } from './createAgentWizardModel';
+import { getIdentityValidation } from './createAgentWizardModel';
 
 type CreateAgentIdentityStepProps = {
   name: string;
@@ -31,19 +33,34 @@ export function CreateAgentIdentityStep({
   onBack,
   onContinue,
 }: CreateAgentIdentityStepProps) {
-  const canContinue = hasRequiredIdentity({ name, businessName });
+  const [showValidation, setShowValidation] = useState(false);
+  const agentNameInputRef = useRef<HTMLInputElement>(null);
+  const businessNameInputRef = useRef<HTMLInputElement>(null);
+  const validation = getIdentityValidation({ name, businessName });
+  const agentNameError = showValidation ? validation.agentNameError : null;
+  const businessNameError = showValidation ? validation.businessNameError : null;
 
   return (
     <form
       className="flex flex-col gap-8"
+      noValidate
       onSubmit={(event) => {
         event.preventDefault();
-        if (canContinue) onContinue();
+        setShowValidation(true);
+        if (validation.firstInvalidField === 'agent-name') {
+          agentNameInputRef.current?.focus();
+          return;
+        }
+        if (validation.firstInvalidField === 'business-name') {
+          businessNameInputRef.current?.focus();
+          return;
+        }
+        onContinue();
       }}
     >
       <div className="flex flex-col gap-2">
         <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-          Tell us who your agent represents
+          Let&apos;s set up your agent
         </h1>
         <p className="text-sm text-muted-foreground">
           We&apos;ll use this context to prepare the agent&apos;s instructions.
@@ -51,15 +68,27 @@ export function CreateAgentIdentityStep({
       </div>
 
       <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor="agent-name">Agent name</FieldLabel>
+        <Field data-invalid={agentNameError ? true : undefined}>
+          <FieldLabel htmlFor="agent-name">
+            <span>Agent name</span>
+            <span aria-hidden="true">*</span>
+            <span className="sr-only">required</span>
+          </FieldLabel>
           <Input
             id="agent-name"
+            ref={agentNameInputRef}
             required
             aria-required="true"
-            aria-describedby="agent-name-description"
+            aria-invalid={agentNameError ? true : undefined}
+            aria-describedby={
+              agentNameError
+                ? 'agent-name-description agent-name-error'
+                : 'agent-name-description'
+            }
             value={name}
-            onChange={(event) => onNameChange(event.target.value)}
+            onChange={(event) => {
+              onNameChange(event.target.value);
+            }}
             placeholder="e.g. Maya"
             autoFocus
             autoComplete="off"
@@ -67,19 +96,34 @@ export function CreateAgentIdentityStep({
           <FieldDescription id="agent-name-description">
             You can change this later.
           </FieldDescription>
+          {agentNameError ? (
+            <FieldError id="agent-name-error">{agentNameError}</FieldError>
+          ) : null}
         </Field>
 
-        <Field>
-          <FieldLabel htmlFor="business-name">Business name</FieldLabel>
+        <Field data-invalid={businessNameError ? true : undefined}>
+          <FieldLabel htmlFor="business-name">
+            <span>Business name</span>
+            <span aria-hidden="true">*</span>
+            <span className="sr-only">required</span>
+          </FieldLabel>
           <Input
             id="business-name"
+            ref={businessNameInputRef}
             required
             aria-required="true"
+            aria-invalid={businessNameError ? true : undefined}
+            aria-describedby={businessNameError ? 'business-name-error' : undefined}
             value={businessName}
-            onChange={(event) => onBusinessNameChange(event.target.value)}
+            onChange={(event) => {
+              onBusinessNameChange(event.target.value);
+            }}
             placeholder="e.g. Northstar Dental"
             autoComplete="organization"
           />
+          {businessNameError ? (
+            <FieldError id="business-name-error">{businessNameError}</FieldError>
+          ) : null}
         </Field>
 
         <Field>
@@ -93,9 +137,6 @@ export function CreateAgentIdentityStep({
             placeholder="What does the business offer, and who does it serve?"
             rows={4}
           />
-          <FieldDescription>
-            A short description helps the agent give more relevant answers.
-          </FieldDescription>
         </Field>
       </FieldGroup>
 
@@ -104,7 +145,7 @@ export function CreateAgentIdentityStep({
           <ArrowLeft data-icon="inline-start" />
           Back
         </Button>
-        <Button type="submit" disabled={!canContinue}>
+        <Button type="submit">
           Continue
           <CornerDownLeft data-icon="inline-end" />
         </Button>

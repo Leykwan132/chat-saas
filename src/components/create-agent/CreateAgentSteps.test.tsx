@@ -6,7 +6,7 @@ import { CreateAgentCreationState } from './CreateAgentCreationState';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
 
-test('identity step renders required business fields and an optional description', () => {
+test('identity step renders friendly required-field guidance with a clickable continue action', () => {
   const markup = renderToStaticMarkup(
     <CreateAgentIdentityStep
       name=""
@@ -20,13 +20,17 @@ test('identity step renders required business fields and an optional description
     />,
   );
 
-  expect(markup).toContain('Agent name');
-  expect(markup).toContain('Business name');
+  expect(markup).toContain('Let&#x27;s set up your agent');
+  expect(markup).toContain('Agent name</span><span');
+  expect(markup).toContain('Business name</span><span');
+  expect(markup).toContain('aria-hidden="true">*</span>');
   expect(markup).toContain('Business description');
   expect(markup).toContain('Optional');
   expect(markup).toContain('id="agent-name" required="" aria-required="true"');
   expect(markup).toContain('id="business-name" required="" aria-required="true"');
-  expect(markup).toContain('disabled=""');
+  expect(markup).toContain('noValidate=""');
+  expect(markup).not.toContain('A short description helps the agent give more relevant answers.');
+  expect(markup).not.toContain('disabled=""');
 });
 
 test('goal step renders only Support and Book a Service choices', () => {
