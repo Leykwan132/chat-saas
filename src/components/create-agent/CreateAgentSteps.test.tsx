@@ -51,6 +51,13 @@ test('goal step renders only Support and Book a Service choices', () => {
   expect(markup).toContain('aria-labelledby="support-goal-label"');
   expect(markup).toContain('aria-describedby="support-goal-description"');
   expect(markup).toContain('id="support-goal-description"');
+  expect(markup).toContain('data-spacing="4"');
+  expect(markup).toContain('rounded-2xl');
+  expect(markup).toContain('min-h-40');
+  expect(markup).toContain('p-5');
+  expect(markup).toContain('gap-4');
+  expect(markup).toContain('data-[state=on]:border-foreground');
+  expect(markup).toContain('data-[state=on]:ring-foreground/20');
   expect(markup).not.toContain('General');
   expect(markup).not.toContain('Model');
 });

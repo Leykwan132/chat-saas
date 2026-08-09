@@ -47,6 +47,7 @@ export function CreateAgentGoalStep({
           value={goal ?? ''}
           onValueChange={(value) => onGoalChange((value as AgentGoal) || null)}
           variant="outline"
+          spacing={4}
           className="grid w-full grid-cols-1 sm:grid-cols-2"
         >
           {(Object.keys(AGENT_GOAL_OPTIONS) as AgentGoal[]).map((goalKey) => {
@@ -58,9 +59,9 @@ export function CreateAgentGoalStep({
                 value={goalKey}
                 aria-labelledby={`${goalKey}-goal-label`}
                 aria-describedby={`${goalKey}-goal-description`}
-                className="h-auto min-h-36 items-start justify-start whitespace-normal p-4 text-left"
+                className="h-auto min-h-40 items-start justify-start rounded-2xl p-5 text-left whitespace-normal data-[state=on]:border-foreground data-[state=on]:ring-1 data-[state=on]:ring-foreground/20"
               >
-                <span className="flex flex-col items-start gap-3">
+                <span className="flex flex-col items-start gap-4">
                   <Icon data-icon="inline-start" />
                   <span id={`${goalKey}-goal-label`} className="font-semibold">
                     {option.label}

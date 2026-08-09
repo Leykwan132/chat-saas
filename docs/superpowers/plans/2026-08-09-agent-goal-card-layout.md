@@ -30,11 +30,11 @@
 - Produces: spacious `rounded-2xl` goal cards with a dark-outline selected state.
 - Preserves: `AgentGoal` selection, `aria-labelledby`, `aria-describedby`, and the one-column-to-two-column responsive grid.
 
-- [ ] **Step 1: Write a failing goal-step markup test**
+- [x] **Step 1: Write a failing goal-step markup test**
 
 Extend the existing goal-step test to assert that static markup includes `data-spacing="4"`, `rounded-2xl`, `min-h-40`, `p-5`, `gap-4`, `data-[state=on]:border-foreground`, and `data-[state=on]:ring-foreground/20`.
 
-- [ ] **Step 2: Run the focused goal-step test to verify it fails**
+- [x] **Step 2: Run the focused goal-step test to verify it fails**
 
 Run:
 
@@ -44,7 +44,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/create-agen
 
 Expected: FAIL because the goal cards still use their inherited `rounded-3xl`, 8px group gap, 16px padding, and muted-only selected state.
 
-- [ ] **Step 3: Apply the card class overrides**
+- [x] **Step 3: Apply the card class overrides**
 
 Update the group and item JSX to include:
 
@@ -54,7 +54,7 @@ Update the group and item JSX to include:
     <span className="flex flex-col items-start gap-4">
 ```
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
