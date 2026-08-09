@@ -395,6 +395,11 @@ export default defineSchema({
       v.literal("productSales"),
       v.literal("support"),
     ),
+    businessName: v.optional(v.string()),
+    businessDescription: v.optional(v.string()),
+    goal: v.optional(
+      v.union(v.literal("support"), v.literal("bookService")),
+    ),
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
     fileSize: v.number(),

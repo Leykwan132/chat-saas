@@ -5,8 +5,11 @@ import { getModelProvider, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
 import { ensureWorkflowForAgent } from "./workflowCore";
-import { AGENT_PROMPT_TEMPLATES } from "../shared/agentPromptTemplates";
 import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
+import {
+  buildAgentSystemPrompt,
+  templateKeyForAgentGoal,
+} from "../shared/agentCreationGoals";
 import {
   assertCanCreateAgent,
   assertCanManageAgent,
@@ -22,13 +25,10 @@ const templateKeyValidator = v.union(
   v.literal("support"),
 );
 
-function getPrompt(templateKey: keyof typeof AGENT_PROMPT_TEMPLATES, systemPrompt: string | null) {
-  const trimmedPrompt = systemPrompt?.trim();
-  if (trimmedPrompt) {
-    return trimmedPrompt;
-  }
-  return AGENT_PROMPT_TEMPLATES[templateKey];
-}
+const agentGoalValidator = v.union(
+  v.literal("support"),
+  v.literal("bookService"),
+);
 
 async function assertEnabledModel(modelId: string) {
   if (!isEnabledModel(modelId)) {
@@ -120,9 +120,9 @@ export const canCreate = query({
 export const create = mutation({
   args: {
     name: v.string(),
-    model: v.optional(v.string()),
-    systemPrompt: v.optional(v.string()),
-    templateKey: templateKeyValidator,
+    businessName: v.string(),
+    businessDescription: v.optional(v.string()),
+    goal: agentGoalValidator,
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
     escalationEnabled: v.optional(v.boolean()),
@@ -132,6 +132,7 @@ export const create = mutation({
     formality: v.optional(v.union(v.literal("casual"), v.literal("conversational"), v.literal("professional"))),
     humorLevel: v.optional(v.union(v.literal("none"), v.literal("light"), v.literal("playful"))),
   },
+  returns: v.id("agents"),
   handler: async (ctx, args) => {
     const auth = await getAuthContext(ctx);
     const { userId, orgId } = auth;
@@ -149,12 +150,17 @@ export const create = mutation({
 
     const now = Date.now();
     const name = args.name.trim();
+    const businessName = args.businessName.trim();
+    const businessDescription = args.businessDescription?.trim() || undefined;
 
     if (!name) {
       throw new Error("Agent name is required");
     }
+    if (!businessName) {
+      throw new Error("Business name is required");
+    }
 
-    const model = args.model?.trim() || DEFAULT_AGENT_MODEL;
+    const model = DEFAULT_AGENT_MODEL;
     await assertEnabledModel(model);
 
     if (!checkModelAccess(plan, model)) {
@@ -165,8 +171,15 @@ export const create = mutation({
       name,
       provider: getModelProvider(model),
       model,
-      systemPrompt: getPrompt(args.templateKey, args.systemPrompt ?? null),
-      templateKey: args.templateKey,
+      systemPrompt: buildAgentSystemPrompt({
+        businessName,
+        businessDescription,
+        goal: args.goal,
+      }),
+      templateKey: templateKeyForAgentGoal(args.goal),
+      businessName,
+      businessDescription,
+      goal: args.goal,
       websiteUrls: args.websiteUrls ?? [],
       contacts: args.contacts?.trim() || undefined,
       fileSize: 0,
