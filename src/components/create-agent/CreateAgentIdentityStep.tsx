@@ -71,7 +71,9 @@ export function CreateAgentIdentityStep({
         <Field data-invalid={agentNameError ? true : undefined}>
           <FieldLabel htmlFor="agent-name">
             <span>Agent name</span>
-            <span aria-hidden="true">*</span>
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
             <span className="sr-only">required</span>
           </FieldLabel>
           <Input
@@ -104,7 +106,9 @@ export function CreateAgentIdentityStep({
         <Field data-invalid={businessNameError ? true : undefined}>
           <FieldLabel htmlFor="business-name">
             <span>Business name</span>
-            <span aria-hidden="true">*</span>
+            <span aria-hidden="true" className="text-destructive">
+              *
+            </span>
             <span className="sr-only">required</span>
           </FieldLabel>
           <Input
@@ -135,7 +139,7 @@ export function CreateAgentIdentityStep({
             value={businessDescription}
             onChange={(event) => onBusinessDescriptionChange(event.target.value)}
             placeholder="What does the business offer, and who does it serve?"
-            rows={4}
+            rows={5}
           />
         </Field>
       </FieldGroup>

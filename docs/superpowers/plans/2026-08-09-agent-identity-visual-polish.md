@@ -29,11 +29,11 @@
 - Produces: red visual asterisks for the two required labels and a five-row business-description field.
 - Preserves: required-input semantics, accessible `required` label text, validation, and controlled field callbacks.
 
-- [ ] **Step 1: Write the failing rendered-step expectations**
+- [x] **Step 1: Write the failing rendered-step expectations**
 
 Add static-markup assertions that require each `aria-hidden` asterisk to have the `text-destructive` class and the business-description textarea to render with `rows="5"`.
 
-- [ ] **Step 2: Run the focused rendered-step test to verify it fails**
+- [x] **Step 2: Run the focused rendered-step test to verify it fails**
 
 Run:
 
@@ -43,7 +43,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/create-agen
 
 Expected: FAIL because the asterisks have no destructive color class and the textarea has four rows.
 
-- [ ] **Step 3: Implement the minimal markup change**
+- [x] **Step 3: Implement the minimal markup change**
 
 Use the following label marker in both required labels:
 
@@ -57,7 +57,7 @@ Change the controlled business-description textarea to:
 rows={5}
 ```
 
-- [ ] **Step 4: Run focused tests and quality checks**
+- [x] **Step 4: Run focused tests and quality checks**
 
 Run:
 

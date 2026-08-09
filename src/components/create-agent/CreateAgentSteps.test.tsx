@@ -23,9 +23,12 @@ test('identity step renders friendly required-field guidance with a clickable co
   expect(markup).toContain('Let&#x27;s set up your agent');
   expect(markup).toContain('Agent name</span><span');
   expect(markup).toContain('Business name</span><span');
-  expect(markup).toContain('aria-hidden="true">*</span>');
+  expect(markup.match(/aria-hidden="true" class="text-destructive">\*<\/span>/g)).toHaveLength(
+    2,
+  );
   expect(markup).toContain('Business description');
   expect(markup).toContain('Optional');
+  expect(markup).toContain('rows="5"');
   expect(markup).toContain('id="agent-name" required="" aria-required="true"');
   expect(markup).toContain('id="business-name" required="" aria-required="true"');
   expect(markup).toContain('noValidate=""');
