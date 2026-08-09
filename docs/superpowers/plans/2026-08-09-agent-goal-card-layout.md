@@ -64,7 +64,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/create-agen
 
 Expected: both focused test files pass, lint and whitespace checks pass, and the goal-step component is below 300 lines.
 
-- [ ] **Step 5: Commit and push the existing PR branch**
+- [x] **Step 5: Commit and push the existing PR branch**
 
 ```bash
 git add src/components/create-agent/CreateAgentGoalStep.tsx src/components/create-agent/CreateAgentSteps.test.tsx docs/superpowers/specs/2026-08-09-agent-goal-card-layout-design.md docs/superpowers/plans/2026-08-09-agent-goal-card-layout.md CONTINUITY.md
