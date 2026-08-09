@@ -97,7 +97,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/create-agent/Cr
 
 Expected: ESLint and whitespace checks pass; both production files remain at or below 300 lines.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add src/components/create-agent/CreateAgentIdentityStep.tsx src/components/create-agent/createAgentWizardModel.ts src/components/create-agent/CreateAgentSteps.test.tsx src/components/create-agent/createAgentWizardModel.test.ts
