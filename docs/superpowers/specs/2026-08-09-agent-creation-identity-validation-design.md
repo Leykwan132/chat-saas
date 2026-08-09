@@ -13,9 +13,9 @@ The required labels render as:
 - `Agent name *`
 - `Business name *`
 
-The asterisk is visually clear and hidden from assistive technology. Each required input retains its native required semantics.
+The asterisk uses the destructive red text token so it is visually clear and remains hidden from assistive technology. Each required input retains its native required semantics.
 
-The optional business-description label remains unchanged. The helper sentence `A short description helps the agent give more relevant answers.` is removed.
+The optional business-description label remains unchanged. Its textarea starts at five rows for slightly more writing space. The helper sentence `A short description helps the agent give more relevant answers.` is removed.
 
 ## Validation behavior
 
