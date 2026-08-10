@@ -33,7 +33,7 @@
 ```ts
 expect(heroSource).toContain('AI Chatbot for Customer Support and Sales');
 expect(heroSource).toContain(
-  'Automate your customer inbox with Kilobot. No complex setup—get started in just 5 minutes.',
+  'No complex setup—get started in just 5 minutes.',
 );
 expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support & Sales');
 ```
@@ -48,7 +48,7 @@ Expected: the new copy assertions fail because the old sales-agent copy remains.
 
 ```tsx
 <h1>AI Chatbot for Customer Support and Sales</h1>
-<p>Automate your customer inbox with Kilobot. No complex setup—get started in just 5 minutes.</p>
+<p>No complex setup—get started in just 5 minutes.</p>
 ```
 
 ```html

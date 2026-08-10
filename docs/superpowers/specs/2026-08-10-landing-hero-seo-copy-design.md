@@ -7,7 +7,7 @@ Make Kilobot's landing page immediately understandable to customers and search e
 ## Approved copy
 
 - Hero heading: `AI Chatbot for Customer Support and Sales`
-- Hero description: `Automate your customer inbox with Kilobot. No complex setup—get started in just 5 minutes.`
+- Hero description: `No complex setup—get started in just 5 minutes.`
 - Page title: `Kilobot | AI Chatbot for Customer Support & Sales`
 - Meta, Open Graph, and Twitter description: `Automate customer conversations, answer questions instantly, and grow sales with Kilobot's AI chatbot. No complex setup—get started in just 5 minutes.`
 
