@@ -28,6 +28,7 @@ import {
   KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
+import { TextKnowledgeEditForm } from './TextKnowledgeEditForm';
 
 interface TextSectionProps {
   entries: any[] | undefined;
@@ -143,16 +144,12 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
             <SheetTitle>Edit Text Knowledge</SheetTitle>
             <SheetDescription>Update this text knowledge entry.</SheetDescription>
           </SheetHeader>
-          <div className="flex-1 px-6 py-4 space-y-4">
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Title</label>
-              <Input value={editTextTitle} onChange={(e) => setEditTextTitle(e.target.value)} placeholder="Knowledge title" />
-            </div>
-            <div className="flex flex-col gap-2">
-              <label className="text-xs font-medium text-muted-foreground">Content</label>
-              <textarea value={editTextContent} onChange={(e) => setEditTextContent(e.target.value)} rows={8} placeholder="Enter text knowledge here..." className="min-h-32 w-full resize-none rounded-lg border border-border bg-background px-3 py-3 text-sm leading-6 outline-none transition-colors focus:border-ring focus:ring-3 focus:ring-ring/30" />
-            </div>
-          </div>
+          <TextKnowledgeEditForm
+            content={editTextContent}
+            onContentChange={setEditTextContent}
+            onTitleChange={setEditTextTitle}
+            title={editTextTitle}
+          />
           <SheetFooter className="flex flex-row justify-end gap-2">
             <Button type="button" variant="destructive" onClick={() => { setEditingTextEntry(null); if (editingTextEntry) openDeleteDialog('text', editingTextEntry._id, editingTextEntry.cfItemId); }}><Trash2 className="size-4 mr-1" />Delete</Button>
             <Button type="button" onClick={handleUpdateText} disabled={!editTextTitle.trim() || !editTextContent.trim() || isSavingText}>{isSavingText ? <Spinner className="size-4" /> : "Update"}</Button>
