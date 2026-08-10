@@ -11,18 +11,21 @@ describe('Knowledge Base training status', () => {
     expect(isTraining('completed')).toBe(false);
   });
 
-  it('shows the yellow training pill with the active item count', () => {
+  it('shows the active training count in a yellow rounded badge within a neutral pill', () => {
     const markup = renderToStaticMarkup(<KnowledgeBaseTrainingStatus trainingItemCount={2} />);
 
-    expect(markup).toContain('2 training items');
-    expect(markup).toContain('bg-yellow-100');
+    expect(markup).toContain('text-yellow-950">2</span><span>training items</span>');
+    expect(markup).toContain('bg-muted');
+    expect(markup).toContain('rounded-full bg-yellow-400');
+    expect(markup).not.toContain('bg-yellow-100');
   });
 
-  it('shows an up-to-date confirmation when training is complete', () => {
+  it('shows the up-to-date check in a green rounded badge within a neutral pill', () => {
     const markup = renderToStaticMarkup(<KnowledgeBaseTrainingStatus trainingItemCount={0} />);
 
     expect(markup).toContain('Agent is up-to-date');
-    expect(markup).toContain('bg-emerald-600');
+    expect(markup).toContain('bg-muted');
+    expect(markup).toContain('rounded-full bg-emerald-600');
     expect(markup).toContain('text-white');
   });
 });
