@@ -8,7 +8,6 @@ describe('Knowledge Base training status', () => {
       <KnowledgeBaseTrainingStatus
         indexingStatus={{ isIndexing: true, queued: 0, running: 1 }}
         isCheckingStatus={false}
-        onTest={() => undefined}
       />,
     );
 
@@ -22,7 +21,6 @@ describe('Knowledge Base training status', () => {
       <KnowledgeBaseTrainingStatus
         indexingStatus={{ isIndexing: false, queued: 0, running: 0 }}
         isCheckingStatus={false}
-        onTest={() => undefined}
       />,
     );
 
@@ -32,18 +30,16 @@ describe('Knowledge Base training status', () => {
     expect(markup).toContain('text-white');
   });
 
-  it('renders a roomier Test your agent button', () => {
+  it('renders a focusable information pill instead of a Test your agent button', () => {
     const markup = renderToStaticMarkup(
       <KnowledgeBaseTrainingStatus
         indexingStatus={{ isIndexing: false, queued: 0, running: 0 }}
         isCheckingStatus={false}
-        onTest={() => undefined}
       />,
     );
 
-    expect(markup).toContain('type="button"');
-    expect(markup).toContain('aria-label="Test your agent"');
+    expect(markup).not.toContain('type="button"');
+    expect(markup).toContain('tabindex="0"');
     expect(markup).toContain('px-4 py-2');
-    expect(markup).toContain('hover:bg-muted-foreground/15');
   });
 });

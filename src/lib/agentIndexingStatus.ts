@@ -26,3 +26,13 @@ export function getAgentTrainingLabel(indexingStatus: AgentIndexingStatus) {
     ? '1 item in queue…'
     : `${indexingStatus.queued} items in queue…`;
 }
+
+export function getAgentTrainingDescription(status: AgentTrainingStatus) {
+  if (status === 'loading') {
+    return 'Checking whether your latest knowledge changes are ready.';
+  }
+  if (status === 'indexing') {
+    return 'Your latest knowledge changes are being trained and will be used once indexing finishes.';
+  }
+  return 'All knowledge changes are indexed and ready for your agent to use.';
+}

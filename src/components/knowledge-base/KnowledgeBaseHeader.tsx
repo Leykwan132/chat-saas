@@ -6,7 +6,6 @@ import type { AgentIndexingStatus } from '@/lib/agentIndexingStatus';
 type KnowledgeBaseHeaderProps = {
   isTestOpen: boolean;
   onTest: () => void;
-  onOpenTest: () => void;
   indexingStatus: AgentIndexingStatus | null;
   isCheckingStatus: boolean;
 };
@@ -18,7 +17,6 @@ export function toggleTestOpen(current: boolean) {
 export function KnowledgeBaseHeader({
   isTestOpen,
   onTest,
-  onOpenTest,
   indexingStatus,
   isCheckingStatus,
 }: KnowledgeBaseHeaderProps) {
@@ -32,7 +30,6 @@ export function KnowledgeBaseHeader({
         <KnowledgeBaseTrainingStatus
           indexingStatus={indexingStatus}
           isCheckingStatus={isCheckingStatus}
-          onTest={onOpenTest}
         />
         <Button
           type="button"

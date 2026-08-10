@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getAgentTrainingDescription,
   getAgentTrainingLabel,
   getAgentTrainingStatus,
 } from './agentIndexingStatus';
@@ -21,5 +22,14 @@ describe('agent indexing status', () => {
   it('keeps checking and ready states distinct', () => {
     expect(getAgentTrainingStatus(true, null)).toBe('loading');
     expect(getAgentTrainingStatus(false, { isIndexing: false, queued: 0, running: 0 })).toBe('ready');
+  });
+
+  it('explains each training state for status help', () => {
+    expect(getAgentTrainingDescription('indexing')).toBe(
+      'Your latest knowledge changes are being trained and will be used once indexing finishes.',
+    );
+    expect(getAgentTrainingDescription('ready')).toBe(
+      'All knowledge changes are indexed and ready for your agent to use.',
+    );
   });
 });

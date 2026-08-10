@@ -156,7 +156,6 @@ export default function KnowledgeBasePage() {
         <KnowledgeBaseHeader
           isTestOpen={isTestOpen}
           onTest={() => setIsTestOpen(toggleTestOpen)}
-          onOpenTest={() => setIsTestOpen(true)}
           indexingStatus={indexingStatus}
           isCheckingStatus={isCheckingStatus}
         />

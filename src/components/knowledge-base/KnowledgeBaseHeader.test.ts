@@ -30,7 +30,6 @@ describe('Knowledge Base header', () => {
       createElement(KnowledgeBaseHeader, {
         isTestOpen: false,
         onTest: () => undefined,
-        onOpenTest: () => undefined,
         indexingStatus: { isIndexing: false, queued: 0, running: 0 },
         isCheckingStatus: false,
       }),
@@ -53,7 +52,7 @@ describe('Knowledge Base header', () => {
     expect(pageSource).toContain('isTestOpen={isTestOpen}');
     expect(pageSource).toContain('onTest={() => setIsTestOpen(toggleTestOpen)}');
     expect(pageSource).not.toContain('onTest={() => setIsTestOpen(true)}');
-    expect(pageSource).toContain('onOpenTest={() => setIsTestOpen(true)}');
+    expect(pageSource).not.toContain('onOpenTest={() => setIsTestOpen(true)}');
     expect(headerSource).toContain('aria-pressed={isTestOpen}');
   });
 
@@ -71,14 +70,12 @@ describe('Knowledge Base header', () => {
     const Header = headerModule.KnowledgeBaseHeader as unknown as (props: {
       isTestOpen: boolean;
       onTest: () => void;
-      onOpenTest: () => void;
       indexingStatus: { isIndexing: boolean; queued: number; running: number } | null;
       isCheckingStatus: boolean;
     }) => ReactElement<Record<string, unknown>>;
     const header = Header({
       isTestOpen: true,
       onTest: () => undefined,
-      onOpenTest: () => undefined,
       indexingStatus: { isIndexing: false, queued: 0, running: 0 },
       isCheckingStatus: false,
     });
