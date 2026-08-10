@@ -48,12 +48,11 @@ export function LandingHero({
         <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-center justify-center py-16 text-center sm:min-h-[70svh]">
           <LandingAnnouncementPill />
           <h1 className="font-title text-[32px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
-            Powerful and flexible
-            <br />
-            <span className="sm:whitespace-nowrap">AI agents built for sales.</span>
+            AI Agent for Every Inbox
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 md:text-xl dark:text-zinc-500">
-            From first reply to booked meeting, handled in your sales inbox.
+            <span className="block">Handle customer support and sales conversations in one place.</span>
+            <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>
           <div className="mt-8 flex w-full max-w-sm flex-row items-center justify-center gap-3 sm:w-auto sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />

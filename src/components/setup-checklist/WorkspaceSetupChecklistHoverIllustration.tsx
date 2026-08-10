@@ -3,6 +3,7 @@ import {
   BookOpen,
   MessageCircle,
   Plug,
+  ShoppingCart,
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
@@ -17,6 +18,7 @@ const iconByStep = {
   uploadKnowledgeBase: BookOpen,
   testAgent: MessageCircle,
   createWorkflow: Workflow,
+  createService: ShoppingCart,
   connectChannel: Plug,
 } satisfies Record<WorkspaceSetupChecklistStepKey, LucideIcon>;
 

@@ -16,6 +16,9 @@ const testLayoutSource = existsSync(testLayoutUrl)
 describe('Knowledge Base header', () => {
   it('offers agent testing', () => {
     expect(headerSource).toContain('title="Knowledge Base"');
+    expect(headerSource).toContain(
+      'Build your agent’s knowledge here. Your sources are never revealed to users.',
+    );
     expect(headerSource).toContain('Test your agent');
     expect(headerSource).toContain('variant="outline"');
   });

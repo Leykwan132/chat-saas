@@ -5,7 +5,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { MediaUploadPurpose } from "../shared/mediaUploadPurpose";
 
-const TOTAL_STEP_COUNT = 5;
+const TOTAL_STEP_COUNT = 6;
 
 type DbCtx = QueryCtx | MutationCtx;
 type SetupChecklistStepKey =
@@ -13,6 +13,7 @@ type SetupChecklistStepKey =
   | "uploadKnowledgeBase"
   | "testAgent"
   | "createWorkflow"
+  | "createService"
   | "connectChannel";
 
 async function getChecklistState(ctx: DbCtx, auth: AuthContext) {
@@ -143,6 +144,14 @@ async function hasCustomizedWorkflow(ctx: DbCtx, agentId: Id<"agents">) {
   return nodes.length > 1;
 }
 
+async function hasCreatedService(ctx: DbCtx, agentId: Id<"agents">) {
+  const services = await ctx.db
+    .query("appointmentServices")
+    .withIndex("by_agentId_and_sortOrder", (q) => q.eq("agentId", agentId))
+    .take(100);
+  return services.some((service) => service.archivedAt === undefined);
+}
+
 async function hasConnectedChannel(ctx: DbCtx, auth: AuthContext, agentId: Id<"agents">) {
   const widgetSettings = await ctx.db
     .query("webWidgetSettings")
@@ -172,6 +181,7 @@ async function buildSteps(
     uploadKnowledgeBase: agentId ? await hasKnowledgeBaseContent(ctx, agentId) : false,
     testAgent: agentId ? await hasTestedAgent(ctx, auth, agentId) : false,
     createWorkflow: agentId ? await hasCustomizedWorkflow(ctx, agentId) : false,
+    createService: agentId ? await hasCreatedService(ctx, agentId) : false,
     connectChannel: agentId ? await hasConnectedChannel(ctx, auth, agentId) : false,
   };
 

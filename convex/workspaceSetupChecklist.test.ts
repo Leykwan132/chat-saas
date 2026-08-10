@@ -70,12 +70,13 @@ test("getWorkspaceSetupChecklist starts visible with empty progress", async () =
   expect(checklist.visible).toBe(true);
   expect(checklist.shouldShowIntro).toBe(true);
   expect(checklist.completedCount).toBe(0);
-  expect(checklist.totalCount).toBe(5);
+  expect(checklist.totalCount).toBe(6);
   expect(checklist.steps.map((step) => [step.key, step.completed])).toEqual([
     ["createAgent", false],
     ["uploadKnowledgeBase", false],
     ["testAgent", false],
     ["createWorkflow", false],
+    ["createService", false],
     ["connectChannel", false],
   ]);
 });
@@ -174,12 +175,17 @@ test("getWorkspaceSetupChecklist infers selected agent progress", async () => {
     });
   });
 
+  await t.withIdentity({ subject: workosUserId }).mutation(
+    api.appointmentBooking.services.createService,
+    { agentId, name: "Consultation" },
+  );
+
   const checklist = await t.withIdentity({ subject: workosUserId }).query(
     api.workspaceSetupChecklist.getWorkspaceSetupChecklist,
     { agentId: agentId as Id<"agents"> },
   );
 
-  expect(checklist.completedCount).toBe(5);
+  expect(checklist.completedCount).toBe(6);
   expect(checklist.progress).toBe(100);
   expect(checklist.visible).toBe(true);
   expect(checklist.shouldShowIntro).toBe(true);

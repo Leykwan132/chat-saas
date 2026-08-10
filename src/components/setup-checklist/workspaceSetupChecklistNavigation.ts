@@ -3,6 +3,7 @@ export type WorkspaceSetupChecklistStepKey =
   | 'uploadKnowledgeBase'
   | 'testAgent'
   | 'createWorkflow'
+  | 'createService'
   | 'connectChannel';
 
 export type SetupChecklistRouteAgent = {
@@ -27,6 +28,7 @@ const agentStepPaths = {
   uploadKnowledgeBase: 'knowledge-base/web',
   testAgent: 'agent-setup',
   createWorkflow: 'workflow',
+  createService: 'services/new',
   connectChannel: 'channels',
 } satisfies Record<Exclude<WorkspaceSetupChecklistStepKey, 'createAgent'>, string>;
 
