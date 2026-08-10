@@ -40,14 +40,18 @@ test('landing pill links to the active blog post', () => {
   expect(mainSource).toContain('BlogPostPage');
 });
 
-test('landing hero uses the concise description', () => {
+test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot', () => {
   const heroSource = readFileSync(new URL('./LandingHero.tsx', import.meta.url), 'utf8');
+  const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
 
   expect(heroSource).toContain(
-    'From first reply to booked meeting, handled in your sales inbox.',
+    'AI Chatbot for Customer Support and Sales',
   );
-  expect(heroSource).not.toContain('Enterprise-grade');
-  expect(heroSource).not.toContain('Go live in 5 minutes');
-  expect(heroSource).not.toContain('Qualify, answer, close.');
-  expect(heroSource).not.toContain('Kilobot puts AI agents in your messaging inbox');
+  expect(heroSource).toContain(
+    'Automate your customer inbox with Kilobot. No complex setup—get started in just 5 minutes.',
+  );
+  expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support &amp; Sales');
+  expect(indexSource).toContain(
+    'Automate customer conversations, answer questions instantly, and grow sales with Kilobot’s AI chatbot. No complex setup—get started in just 5 minutes.',
+  );
 });
