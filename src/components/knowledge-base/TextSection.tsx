@@ -29,6 +29,7 @@ import {
   type OpenDeleteDialog,
 } from './helpers';
 import { TextKnowledgeEditForm } from './TextKnowledgeEditForm';
+import { TextKnowledgeEntry } from './TextKnowledgeEntry';
 
 interface TextSectionProps {
   entries: any[] | undefined;
@@ -85,9 +86,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
   return (
     <>
       {canManage ? (
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Add Text</h2>
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <TextKnowledgeEntry>
           <div className="flex flex-col gap-2">
             <Input value={textTitle} onChange={(e) => setTextTitle(e.target.value)} placeholder="Knowledge title" />
           </div>
@@ -95,8 +94,7 @@ export function TextSection({ entries, agentId, openDeleteDialog, canManage = tr
           <div className="flex justify-end">
             <Button type="button" onClick={handleSaveText} disabled={!textTitle.trim() || !textContent.trim() || isSavingText}>{isSavingText ? <Spinner className="size-4" /> : "Save"}</Button>
           </div>
-        </div>
-      </div>
+      </TextKnowledgeEntry>
       ) : null}
 
       {hasEntries && (
