@@ -49,10 +49,10 @@ test("Ilmu Mini V3.3 is the default agent model", () => {
   expect(listEnabledModels().some((model) => model.value === DEFAULT_AGENT_MODEL)).toBe(true);
 });
 
-test("Free plan grants and advertises 50 monthly credits", () => {
-  expect(PLAN_CATALOG.free.monthlyCredits).toBe(50);
-  expect(PLAN_CATALOG.free.displayFeatures).toContain("50 credits / mo");
-  expect(PLAN_CATALOG.free.displayFeatures).not.toContain("100 credits / mo");
+test("Free plan grants and advertises 300 monthly credits", () => {
+  expect(PLAN_CATALOG.free.monthlyCredits).toBe(300);
+  expect(PLAN_CATALOG.free.displayFeatures).toContain("300 credits / mo");
+  expect(PLAN_CATALOG.free.displayFeatures).not.toContain("50 credits / mo");
 });
 
 test("Google Gemma models are not enabled or included in plan entitlements", () => {

@@ -7,7 +7,7 @@ export const pricingFaqs: PricingFaq[] = [
   {
     question: 'Is it free to use KiloBot?',
     answer:
-      'Yes. You can start with the Free plan, which includes 50 credits per month and core AI agent features. Paid plans unlock higher limits and more advanced features.',
+      'Yes. You can start with the Free plan, which includes 300 credits per month and core AI agent features. Paid plans unlock higher limits and more advanced features.',
   },
   {
     question: 'What happens if I use up my credits?',

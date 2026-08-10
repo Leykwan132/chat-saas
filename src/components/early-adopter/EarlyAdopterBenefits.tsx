@@ -11,7 +11,7 @@ const benefits: Benefit[] = [
   {
     title: '3 Months Free Growth',
     description:
-      'Get three months of our Growth plan completely free (worth RM 1,197). Includes 10 AI agents and 5,000 monthly chat credits.',
+      'Get three months of our Growth plan completely free (worth RM 897). Includes 5 AI agents and 8,000 monthly chat credits.',
     Icon: Play,
   },
   {

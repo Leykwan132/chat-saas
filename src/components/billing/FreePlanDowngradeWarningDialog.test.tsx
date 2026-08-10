@@ -31,6 +31,7 @@ describe('FreePlanDowngradeWarningContent', () => {
     expect(markup).toContain('Only the basic Free model will remain.');
     expect(markup).toContain('AI agents');
     expect(markup).toContain('You can use only one AI agent on Free.');
+    expect(markup).toContain('Your allowance will reset to 300 credits per month.');
     expect(markup).toContain('Chats and messages');
     expect(markup).toContain(
       'All conversations in every non-Personal workspace.',
