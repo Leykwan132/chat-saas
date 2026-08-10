@@ -29,6 +29,7 @@ import {
   KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
+import { FileUploadDropzoneContainer } from './FileUploadDropzoneContainer';
 
 interface FileSectionProps {
   entries: any[] | undefined;
@@ -72,7 +73,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
       {canManage ? (
       <div>
         <h2 className="text-sm font-semibold text-foreground mb-3">Add Files</h2>
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <FileUploadDropzoneContainer>
           <FileUploader
             handleChange={(fileOrFiles) => {
               void handleSaveFile(normalizeUploaderFiles(fileOrFiles));
@@ -93,7 +94,7 @@ export function FileSection({ entries, agentId, openDeleteDialog, maxFileSize, c
               <p className="text-xs text-muted-foreground mt-1">or click to browse (max {formatFileSize(maxFileSize)} each)</p>
             </div>
           </FileUploader>
-        </div>
+        </FileUploadDropzoneContainer>
       </div>
       ) : null}
 
