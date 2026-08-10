@@ -5,5 +5,5 @@ interface FileUploadDropzoneContainerProps {
 }
 
 export function FileUploadDropzoneContainer({ children }: FileUploadDropzoneContainerProps) {
-  return <div className="rounded-lg p-4">{children}</div>;
+  return children;
 }
