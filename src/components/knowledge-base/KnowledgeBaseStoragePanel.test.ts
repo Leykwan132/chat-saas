@@ -30,6 +30,7 @@ test('leaves clear space between storage usage and the training status pill', ()
       maxTotalSize: 1,
       trainingItemCount: 0,
       onSelect: () => undefined,
+      onTest: () => undefined,
     }),
   );
 

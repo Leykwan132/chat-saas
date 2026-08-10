@@ -260,6 +260,7 @@ export default function KnowledgeBasePage() {
               maxTotalSize={maxTotalSize}
               trainingItemCount={trainingItemCount}
               onSelect={selectKnowledgeType}
+              onTest={() => setIsTestOpen(true)}
               className="lg:col-start-2 xl:col-start-auto"
             />
           </div>

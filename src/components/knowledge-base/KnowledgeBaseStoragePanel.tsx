@@ -19,6 +19,7 @@ type KnowledgeBaseStoragePanelProps = {
   maxTotalSize: number;
   trainingItemCount: number;
   onSelect: (type: KnowledgeType) => void;
+  onTest: () => void;
   className?: string;
 };
 
@@ -28,6 +29,7 @@ export function KnowledgeBaseStoragePanel({
   maxTotalSize,
   trainingItemCount,
   onSelect,
+  onTest,
   className,
 }: KnowledgeBaseStoragePanelProps) {
   return (
@@ -66,7 +68,7 @@ export function KnowledgeBaseStoragePanel({
         </div>
       </div>
       <div className="mt-2">
-        <KnowledgeBaseTrainingStatus trainingItemCount={trainingItemCount} />
+        <KnowledgeBaseTrainingStatus trainingItemCount={trainingItemCount} onTest={onTest} />
       </div>
     </aside>
   );
