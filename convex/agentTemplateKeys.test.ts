@@ -28,6 +28,7 @@ test("agents.create maps support goals to the support template key", async () =>
   const agentId = await authed.mutation(api.agents.create, {
     name: "Support Agent",
     businessName: "Support Business",
+    businessDescription: "Customer support services",
     goal: "support",
   });
 
@@ -45,6 +46,7 @@ test("agents.create maps booking goals to the sales template key", async () => {
   const agentId = await authed.mutation(api.agents.create, {
     name: "Booking Agent",
     businessName: "Booking Business",
+    businessDescription: "Appointment booking services",
     goal: "bookService",
   });
 

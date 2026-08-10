@@ -77,6 +77,7 @@ test("agents.create provisions a default workflow", async () => {
   const agentId = await authed.mutation(api.agents.create, {
     name: "Created Agent",
     businessName: "Workflow Business",
+    businessDescription: "Workflow automation services",
     goal: "support",
   });
 

@@ -55,20 +55,20 @@ export function CreateAgentCreationState({
         </p>
       </div>
 
-      <ul className="flex w-fit flex-col gap-4">
+      <ul className="flex w-fit flex-col gap-3">
         {PROGRESS_ITEMS.map((item) => {
           const done = phase >= item.phase;
           return (
-            <li key={item.label} className="flex items-center gap-4 text-left">
+            <li key={item.label} className="flex items-center gap-3 text-left">
               <span
                 className={cn(
-                  'flex size-8 items-center justify-center rounded-full border',
+                  'flex size-6 items-center justify-center rounded-full border',
                   done
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border text-muted-foreground',
                 )}
               >
-                {done ? <Check /> : <Spinner />}
+                {done ? <Check className="size-3.5" /> : <Spinner className="size-3.5" />}
               </span>
               <span className={done ? 'text-foreground' : 'text-muted-foreground'}>
                 {item.label}

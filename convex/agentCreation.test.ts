@@ -43,18 +43,18 @@ describe("goal-based agent creation", () => {
     expect(agent?.systemPrompt).toContain("customer support AI agent");
   });
 
-  test("omits a blank description and maps booking to sales compatibility", async () => {
+  test("stores a booking description and maps booking to sales compatibility", async () => {
     const testInstance = initTest();
     const authed = testInstance.withIdentity({ subject: "booking-agent-owner" });
     const agentId = await authed.mutation(api.agents.create, {
       name: "Booking Assistant",
       businessName: "Glow Studio",
-      businessDescription: "   ",
+      businessDescription: "Beauty and wellness appointments.",
       goal: "bookService",
     });
     const agent = await authed.query(api.agents.get, { agentId });
 
-    expect(agent?.businessDescription).toBeUndefined();
+    expect(agent?.businessDescription).toBe("Beauty and wellness appointments.");
     expect(agent?.goal).toBe("bookService");
     expect(agent?.templateKey).toBe("sales");
     expect(agent?.systemPrompt).toContain("Do not claim a booking is confirmed");
@@ -68,8 +68,23 @@ describe("goal-based agent creation", () => {
       authed.mutation(api.agents.create, {
         name: "Support",
         businessName: "   ",
+        businessDescription: "Customer support services",
         goal: "support",
       }),
     ).rejects.toThrow("Business name is required");
+  });
+
+  test("rejects an empty business description", async () => {
+    const testInstance = initTest();
+    const authed = testInstance.withIdentity({ subject: "invalid-description-owner" });
+
+    await expect(
+      authed.mutation(api.agents.create, {
+        name: "Support",
+        businessName: "Support Co",
+        businessDescription: "   ",
+        goal: "support",
+      }),
+    ).rejects.toThrow("Business description is required");
   });
 });

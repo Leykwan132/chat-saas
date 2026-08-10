@@ -155,7 +155,6 @@ export function CreateAgentWizard() {
                     key="success"
                     onTrain={() => navigate(destinations.train)}
                     onPlayground={() => navigate(destinations.playground)}
-                    onDeploy={() => navigate(destinations.channels)}
                   />
                 ) : null}
               </AnimatePresence>

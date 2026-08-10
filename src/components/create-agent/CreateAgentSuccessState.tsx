@@ -1,4 +1,4 @@
-import { BookOpen, Gamepad2, RadioTower } from 'lucide-react';
+import { BookOpen, Gamepad2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { TypingAnimation } from '@/components/ui/typing-animation';
@@ -6,13 +6,11 @@ import { TypingAnimation } from '@/components/ui/typing-animation';
 type CreateAgentSuccessStateProps = {
   onTrain: () => void;
   onPlayground: () => void;
-  onDeploy: () => void;
 };
 
 export function CreateAgentSuccessState({
   onTrain,
   onPlayground,
-  onDeploy,
 }: CreateAgentSuccessStateProps) {
   return (
     <motion.div
@@ -34,18 +32,14 @@ export function CreateAgentSuccessState({
 
       <p className="text-muted-foreground">Choose what you want to do next.</p>
 
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
-        <Button type="button" onClick={onTrain}>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Button type="button" className="px-4" onClick={onTrain}>
           <BookOpen data-icon="inline-start" />
           Train your agent
         </Button>
-        <Button type="button" variant="outline" onClick={onPlayground}>
+        <Button type="button" variant="outline" className="px-4" onClick={onPlayground}>
           <Gamepad2 data-icon="inline-start" />
           Try in Playground
-        </Button>
-        <Button type="button" variant="outline" onClick={onDeploy}>
-          <RadioTower data-icon="inline-start" />
-          Deploy to a channel
         </Button>
       </div>
     </motion.div>

@@ -2,32 +2,30 @@ import { expect, test } from 'vitest';
 import {
   buildCreateAgentRequest,
   getCreateAgentDestinations,
-  getIdentityValidation,
   hasRequiredIdentity,
   reduceCreateAgentStatus,
 } from './createAgentWizardModel';
 
-test('requires trimmed agent and business names', () => {
-  expect(hasRequiredIdentity({ name: 'Nova', businessName: 'Northstar' })).toBe(true);
-  expect(hasRequiredIdentity({ name: ' ', businessName: 'Northstar' })).toBe(false);
-  expect(hasRequiredIdentity({ name: 'Nova', businessName: ' ' })).toBe(false);
+test('requires trimmed agent, business, and business description fields', () => {
+  expect(
+    hasRequiredIdentity({
+      name: 'Nova',
+      businessName: 'Northstar',
+      businessDescription: 'Dental care',
+    }),
+  ).toBe(true);
+  expect(
+    hasRequiredIdentity({ name: ' ', businessName: 'Northstar', businessDescription: 'Dental care' }),
+  ).toBe(false);
+  expect(
+    hasRequiredIdentity({ name: 'Nova', businessName: ' ', businessDescription: 'Dental care' }),
+  ).toBe(false);
+  expect(
+    hasRequiredIdentity({ name: 'Nova', businessName: 'Northstar', businessDescription: ' ' }),
+  ).toBe(false);
 });
 
-test('identifies every missing identity field and the first field to focus', () => {
-  expect(getIdentityValidation({ name: ' ', businessName: ' ' })).toEqual({
-    agentNameError: 'Enter an agent name.',
-    businessNameError: 'Enter a business name.',
-    firstInvalidField: 'agent-name',
-  });
-
-  expect(getIdentityValidation({ name: 'Nova', businessName: ' ' })).toEqual({
-    agentNameError: null,
-    businessNameError: 'Enter a business name.',
-    firstInvalidField: 'business-name',
-  });
-});
-
-test('builds the three post-creation destinations for the new agent', () => {
+test('builds the post-creation destinations for the new agent', () => {
   expect(getCreateAgentDestinations('agent_123')).toEqual({
     train: '/dashboard/agent_123/knowledge-base/web',
     playground: '/dashboard/agent_123/agent-setup?test=1',
@@ -40,13 +38,13 @@ test('builds a trimmed backend-owned creation request', () => {
     buildCreateAgentRequest({
       name: ' Nova ',
       businessName: ' Northstar ',
-      businessDescription: '   ',
+      businessDescription: ' Family dental care ',
       goal: 'support',
     }),
   ).toEqual({
     name: 'Nova',
     businessName: 'Northstar',
-    businessDescription: undefined,
+    businessDescription: 'Family dental care',
     goal: 'support',
   });
 });

@@ -18,7 +18,7 @@ export function KnowledgeBaseHeader({
     <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
       <PageTitleBlock
         title="Knowledge Base"
-        description="This is something that won’t be sent to the user."
+        description="Build your agent’s knowledge here. Your sources are never revealed to users."
       />
       <Button
         type="button"

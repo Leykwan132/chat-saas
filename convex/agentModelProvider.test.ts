@@ -23,6 +23,7 @@ test("agents.create uses the shared default model and provider", async () => {
   const agentId = await authed.mutation(api.agents.create, {
     name: "Default Ilmu Agent",
     businessName: "Default Business",
+    businessDescription: "Example business services",
     goal: "support",
   });
 

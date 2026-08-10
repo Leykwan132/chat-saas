@@ -6,7 +6,7 @@ import { CreateAgentCreationState } from './CreateAgentCreationState';
 import { CreateAgentSuccessState } from './CreateAgentSuccessState';
 import { CreateAgentVisualPanel } from './CreateAgentVisualPanel';
 
-test('identity step renders friendly required-field guidance with a clickable continue action', () => {
+test('identity step renders required business details', () => {
   const markup = renderToStaticMarkup(
     <CreateAgentIdentityStep
       name=""
@@ -20,20 +20,20 @@ test('identity step renders friendly required-field guidance with a clickable co
     />,
   );
 
-  expect(markup).toContain('Let&#x27;s set up your agent');
-  expect(markup).toContain('Agent name</span><span');
-  expect(markup).toContain('Business name</span><span');
-  expect(markup.match(/aria-hidden="true" class="text-destructive">\*<\/span>/g)).toHaveLength(
-    2,
-  );
+  expect(markup).toContain('About your agent');
+  expect(markup).toContain('text-3xl font-semibold tracking-tight sm:text-4xl');
+  expect(markup).not.toContain('We&#x27;ll use this context to prepare the agent&#x27;s instructions.');
+  expect(markup).toContain('Agent name');
+  expect(markup).toContain('Business name');
+  expect(markup.match(/aria-hidden="true" class="text-destructive">\*<\/span>/g)).toHaveLength(3);
   expect(markup).toContain('Business description');
-  expect(markup).toContain('Optional');
-  expect(markup).toContain('rows="5"');
+  expect(markup).not.toContain('Optional');
   expect(markup).toContain('id="agent-name" required="" aria-required="true"');
   expect(markup).toContain('id="business-name" required="" aria-required="true"');
-  expect(markup).toContain('noValidate=""');
+  expect(markup).toContain('id="business-description" required="" aria-required="true"');
   expect(markup).not.toContain('A short description helps the agent give more relevant answers.');
-  expect(markup).not.toContain('disabled=""');
+  expect(markup).toContain('disabled=""');
+  expect(markup).toContain('data-variant="ghost"');
 });
 
 test('goal step renders only Support and Book a Service choices', () => {
@@ -51,29 +51,38 @@ test('goal step renders only Support and Book a Service choices', () => {
   expect(markup).toContain('aria-labelledby="support-goal-label"');
   expect(markup).toContain('aria-describedby="support-goal-description"');
   expect(markup).toContain('id="support-goal-description"');
-  expect(markup).toContain('data-spacing="4"');
-  expect(markup).toContain('rounded-2xl');
-  expect(markup).toContain('min-h-40');
-  expect(markup).toContain('p-5');
-  expect(markup).toContain('gap-4');
-  expect(markup).toContain('data-[state=on]:border-foreground');
-  expect(markup).toContain('data-[state=on]:ring-foreground/20');
+  expect(markup).toContain('Set your goal');
+  expect(markup).not.toContain('>Goal<');
+  expect(markup).toContain('text-3xl font-semibold tracking-tight sm:text-4xl');
+  expect(markup).not.toContain('This prepares the starting instructions for your agent.');
+  expect(markup).toContain('data-spacing="5"');
+  expect(markup).toContain('items-stretch');
+  expect(markup).toContain('rounded-xl');
+  expect(markup).toContain('min-h-48');
+  expect(markup).toContain('h-full');
+  expect(markup).toContain('!p-8');
+  expect(markup).toContain('gap-3');
+  expect(markup).toContain('data-[state=on]:!border-2');
+  expect(markup).toContain('data-[state=on]:!border-foreground');
+  expect(markup).toContain('data-variant="ghost"');
   expect(markup).not.toContain('General');
   expect(markup).not.toContain('Model');
 });
 
-test('success state offers training, playground, and channel deployment', () => {
+test('success state offers training and playground without channel deployment', () => {
   const markup = renderToStaticMarkup(
     <CreateAgentSuccessState
       onTrain={() => undefined}
       onPlayground={() => undefined}
-      onDeploy={() => undefined}
     />,
   );
 
   expect(markup).toContain('Train your agent');
+  expect(markup).toContain('gap-2');
+  expect(markup.match(/px-4/g)).toHaveLength(2);
   expect(markup).toContain('Try in Playground');
-  expect(markup).toContain('Deploy to a channel');
+  expect(markup).not.toContain('Create a workflow');
+  expect(markup).not.toContain('Deploy to a channel');
 });
 
 test('creation state reports business context and goal preparation', () => {
@@ -83,6 +92,8 @@ test('creation state reports business context and goal preparation', () => {
 
   expect(markup).toContain('Adding business context');
   expect(markup).toContain('Applying agent goal');
+  expect(markup).toContain('size-6');
+  expect(markup).toContain('size-3.5');
   expect(markup).not.toContain('Applying role &amp; model');
 });
 

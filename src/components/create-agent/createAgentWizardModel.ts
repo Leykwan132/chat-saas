@@ -22,26 +22,9 @@ type CreateAgentStatusAction =
 export function hasRequiredIdentity(input: {
   name: string;
   businessName: string;
+  businessDescription: string;
 }): boolean {
-  return getIdentityValidation(input).firstInvalidField === null;
-}
-
-export function getIdentityValidation(input: {
-  name: string;
-  businessName: string;
-}) {
-  const agentNameError = input.name.trim() ? null : 'Enter an agent name.';
-  const businessNameError = input.businessName.trim() ? null : 'Enter a business name.';
-
-  return {
-    agentNameError,
-    businessNameError,
-    firstInvalidField: agentNameError
-      ? 'agent-name'
-      : businessNameError
-        ? 'business-name'
-        : null,
-  };
+  return Boolean(input.name.trim() && input.businessName.trim() && input.businessDescription.trim());
 }
 
 export function getCreateAgentDestinations(agentId: string) {
@@ -61,7 +44,7 @@ export function buildCreateAgentRequest(input: {
   return {
     name: input.name.trim(),
     businessName: input.businessName.trim(),
-    businessDescription: input.businessDescription.trim() || undefined,
+    businessDescription: input.businessDescription.trim(),
     goal: input.goal,
   };
 }

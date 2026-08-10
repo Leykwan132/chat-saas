@@ -110,7 +110,7 @@ export const create = mutation({
   args: {
     name: v.string(),
     businessName: v.string(),
-    businessDescription: v.optional(v.string()),
+    businessDescription: v.string(),
     goal: agentGoalValidator,
     websiteUrls: v.optional(v.array(v.string())),
     contacts: v.optional(v.string()),
@@ -140,13 +140,16 @@ export const create = mutation({
     const now = Date.now();
     const name = args.name.trim();
     const businessName = args.businessName.trim();
-    const businessDescription = args.businessDescription?.trim() || undefined;
+    const businessDescription = args.businessDescription.trim();
 
     if (!name) {
       throw new Error("Agent name is required");
     }
     if (!businessName) {
       throw new Error("Business name is required");
+    }
+    if (!businessDescription) {
+      throw new Error("Business description is required");
     }
 
     const model = DEFAULT_AGENT_MODEL;
