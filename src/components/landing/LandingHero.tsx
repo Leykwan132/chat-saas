@@ -48,7 +48,7 @@ export function LandingHero({
         <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-center justify-center py-16 text-center sm:min-h-[70svh]">
           <LandingAnnouncementPill />
           <h1 className="font-title text-[32px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
-            AI Chatbot for Every Inbox
+            AI Agent for Every Inbox
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 md:text-xl dark:text-zinc-500">
             <span className="block">Handle customer support and sales conversations in one place.</span>

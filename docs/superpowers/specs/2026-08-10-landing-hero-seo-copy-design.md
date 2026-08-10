@@ -6,16 +6,16 @@ Make Kilobot's landing page immediately understandable to customers and search e
 
 ## Approved copy
 
-- Hero heading: `AI Chatbot for Every Inbox`
+- Hero heading: `AI Agent for Every Inbox`
 - Hero description: `Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.`
-- Page title: `Kilobot | AI Chatbot for Every Inbox`
-- Meta, Open Graph, and Twitter description: `Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.`
+- Page title: `Kilobot | AI Agent for Every Inbox`
+- Meta, Open Graph, and Twitter description: `Kilobot’s AI chatbot handles customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.`
 
 ## Design
 
-The existing LandingHero remains the landing page's single, prominent H1. Its wording positions Kilobot as an inbox-first AI chatbot. The supporting description communicates support and sales coverage while removing setup friction.
+The existing LandingHero remains the landing page's single, prominent H1. Its wording positions Kilobot as an inbox-first AI agent. The supporting description communicates support and sales coverage while removing setup friction.
 
-The static homepage metadata will use the same inbox-first title and support/sales description so browser titles, search snippets, and social previews do not contradict the visible page. The existing social preview image and URL remain unchanged.
+The static homepage metadata will use the same inbox-first AI-agent title and a description containing the AI-chatbot keyword, support/sales coverage, and setup promise. The existing social preview image and URL remain unchanged.
 
 ## Verification
 
