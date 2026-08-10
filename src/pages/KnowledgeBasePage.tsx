@@ -22,6 +22,7 @@ import { WebSection } from '@/components/knowledge-base/WebSection';
 import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
+import { isTraining } from '@/components/knowledge-base/helpers';
 import {
   KnowledgeBaseHeader,
   toggleTestOpen,
@@ -91,6 +92,12 @@ export default function KnowledgeBasePage() {
   const qaSize = qaEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
 
   const totalFileSize = webSize + fileSizeVal + textSize + qaSize;
+  const trainingItemCount = [
+    ...(textEntries ?? []),
+    ...(fileEntries ?? []),
+    ...(webEntries ?? []),
+    ...(qaEntries ?? []),
+  ].filter((entry) => isTraining(entry.status)).length;
 
   const openDeleteDialog = (
     entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
@@ -251,6 +258,7 @@ export default function KnowledgeBasePage() {
               rows={statRows}
               totalFileSize={totalFileSize}
               maxTotalSize={maxTotalSize}
+              trainingItemCount={trainingItemCount}
               onSelect={selectKnowledgeType}
               className="lg:col-start-2 xl:col-start-auto"
             />

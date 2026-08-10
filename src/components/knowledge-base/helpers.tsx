@@ -45,6 +45,10 @@ export function isInProgress(status?: string) {
     status === "queued" || status === "processing" || status === "deleting";
 }
 
+export function isTraining(status?: string) {
+  return isInProgress(status) && status !== "deleting";
+}
+
 export function isKbImageInProgress(status?: string) {
   return status === "queued" || status === "uploading" || status === "deleting";
 }

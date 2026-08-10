@@ -2,6 +2,7 @@ import type { ElementType } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { formatFileSize } from '@/components/knowledge-base/helpers';
 import type { KnowledgeType } from '@/components/knowledge-base/KnowledgeBaseNavigation';
+import { KnowledgeBaseTrainingStatus } from '@/components/knowledge-base/KnowledgeBaseTrainingStatus';
 import { cn } from '@/lib/utils';
 
 export type KnowledgeBaseStorageStat = {
@@ -16,6 +17,7 @@ type KnowledgeBaseStoragePanelProps = {
   rows: KnowledgeBaseStorageStat[];
   totalFileSize: number;
   maxTotalSize: number;
+  trainingItemCount: number;
   onSelect: (type: KnowledgeType) => void;
   className?: string;
 };
@@ -24,6 +26,7 @@ export function KnowledgeBaseStoragePanel({
   rows,
   totalFileSize,
   maxTotalSize,
+  trainingItemCount,
   onSelect,
   className,
 }: KnowledgeBaseStoragePanelProps) {
@@ -62,6 +65,7 @@ export function KnowledgeBaseStoragePanel({
           {formatFileSize(totalFileSize)} of {formatFileSize(maxTotalSize)}
         </div>
       </div>
+      <KnowledgeBaseTrainingStatus trainingItemCount={trainingItemCount} />
     </aside>
   );
 }
