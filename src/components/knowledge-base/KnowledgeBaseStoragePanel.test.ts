@@ -22,7 +22,7 @@ test('knowledge base page wires storage limit rows to the same tab navigation', 
   expect(pageSource).toContain('navigate(`/dashboard/${agentId}/knowledge-base/${nextType}`)');
 });
 
-test('leaves clear space between storage usage and the training status pill', () => {
+test('keeps training status out of the storage panel', () => {
   const markup = renderToStaticMarkup(
     createElement(KnowledgeBaseStoragePanel, {
       rows: [],
@@ -34,5 +34,6 @@ test('leaves clear space between storage usage and the training status pill', ()
     }),
   );
 
-  expect(markup).toContain('class="mt-2"');
+  expect(markup).not.toContain('class="mt-2"');
+  expect(markup).not.toContain('Agent is up-to-date');
 });

@@ -1,9 +1,12 @@
 import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Button } from '@/components/ui/button';
+import { KnowledgeBaseTrainingStatus } from '@/components/knowledge-base/KnowledgeBaseTrainingStatus';
 
 type KnowledgeBaseHeaderProps = {
   isTestOpen: boolean;
   onTest: () => void;
+  onOpenTest: () => void;
+  trainingItemCount: number;
 };
 
 export function toggleTestOpen(current: boolean) {
@@ -13,6 +16,8 @@ export function toggleTestOpen(current: boolean) {
 export function KnowledgeBaseHeader({
   isTestOpen,
   onTest,
+  onOpenTest,
+  trainingItemCount,
 }: KnowledgeBaseHeaderProps) {
   return (
     <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -20,14 +25,20 @@ export function KnowledgeBaseHeader({
         title="Knowledge Base"
         description="Build your agent’s knowledge here. Your sources are never revealed to users."
       />
-      <Button
-        type="button"
-        variant="outline"
-        aria-pressed={isTestOpen}
-        onClick={onTest}
-      >
-        Test your agent
-      </Button>
+      <div className="flex shrink-0 items-center gap-2">
+        <KnowledgeBaseTrainingStatus
+          trainingItemCount={trainingItemCount}
+          onTest={onOpenTest}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          aria-pressed={isTestOpen}
+          onClick={onTest}
+        >
+          Test your agent
+        </Button>
+      </div>
     </header>
   );
 }

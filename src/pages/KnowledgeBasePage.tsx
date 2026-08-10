@@ -160,6 +160,8 @@ export default function KnowledgeBasePage() {
         <KnowledgeBaseHeader
           isTestOpen={isTestOpen}
           onTest={() => setIsTestOpen(toggleTestOpen)}
+          onOpenTest={() => setIsTestOpen(true)}
+          trainingItemCount={trainingItemCount}
         />
 
         <KnowledgeBaseTestLayout
@@ -258,9 +260,7 @@ export default function KnowledgeBasePage() {
               rows={statRows}
               totalFileSize={totalFileSize}
               maxTotalSize={maxTotalSize}
-              trainingItemCount={trainingItemCount}
               onSelect={selectKnowledgeType}
-              onTest={() => setIsTestOpen(true)}
               className="lg:col-start-2 xl:col-start-auto"
             />
           </div>

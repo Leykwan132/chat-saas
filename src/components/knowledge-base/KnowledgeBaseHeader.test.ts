@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
-import type { ReactElement } from 'react';
+import { createElement, type ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { KnowledgeBaseHeader } from './KnowledgeBaseHeader';
 
 const headerUrl = new URL('./KnowledgeBaseHeader.tsx', import.meta.url);
 const headerSource = existsSync(headerUrl) ? readFileSync(headerUrl, 'utf8') : '';
@@ -23,6 +25,20 @@ describe('Knowledge Base header', () => {
     expect(headerSource).toContain('variant="outline"');
   });
 
+  it('places the training status beside Test your agent', () => {
+    const markup = renderToStaticMarkup(
+      createElement(KnowledgeBaseHeader, {
+        isTestOpen: false,
+        onTest: () => undefined,
+        onOpenTest: () => undefined,
+        trainingItemCount: 0,
+      }),
+    );
+
+    expect(markup).toContain('Agent is up-to-date');
+    expect(markup.indexOf('Agent is up-to-date')).toBeLessThan(markup.lastIndexOf('Test your agent'));
+  });
+
   it('opens the shared test chat as its own in-page container', () => {
     expect(pageSource).toContain('const [isTestOpen, setIsTestOpen] = useState(false)');
     expect(pageSource).toContain('KnowledgeBaseTestLayout');
@@ -36,6 +52,7 @@ describe('Knowledge Base header', () => {
     expect(pageSource).toContain('isTestOpen={isTestOpen}');
     expect(pageSource).toContain('onTest={() => setIsTestOpen(toggleTestOpen)}');
     expect(pageSource).not.toContain('onTest={() => setIsTestOpen(true)}');
+    expect(pageSource).toContain('onOpenTest={() => setIsTestOpen(true)}');
     expect(headerSource).toContain('aria-pressed={isTestOpen}');
   });
 
@@ -53,13 +70,24 @@ describe('Knowledge Base header', () => {
     const Header = headerModule.KnowledgeBaseHeader as unknown as (props: {
       isTestOpen: boolean;
       onTest: () => void;
+      onOpenTest: () => void;
+      trainingItemCount: number;
     }) => ReactElement<Record<string, unknown>>;
-    const header = Header({ isTestOpen: true, onTest: () => undefined });
+    const header = Header({
+      isTestOpen: true,
+      onTest: () => undefined,
+      onOpenTest: () => undefined,
+      trainingItemCount: 0,
+    });
     const children = header.props.children as ReactElement<
       Record<string, unknown>
     >[];
 
-    expect(children[1].props['aria-pressed']).toBe(true);
+    const actions = children[1].props.children as ReactElement<
+      Record<string, unknown>
+    >[];
+
+    expect(actions[1].props['aria-pressed']).toBe(true);
   });
 
   it('keeps Knowledge Base content intact beside the responsive test panel', () => {
