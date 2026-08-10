@@ -28,9 +28,7 @@ test('keeps training status out of the storage panel', () => {
       rows: [],
       totalFileSize: 0,
       maxTotalSize: 1,
-      trainingItemCount: 0,
       onSelect: () => undefined,
-      onTest: () => undefined,
     }),
   );
 

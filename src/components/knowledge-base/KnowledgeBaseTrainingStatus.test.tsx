@@ -30,7 +30,7 @@ describe('Knowledge Base training status', () => {
     expect(markup).toContain('text-white');
   });
 
-  it('renders a focusable information pill instead of a Test your agent button', () => {
+  it('renders a static status pill without an interactive hover affordance', () => {
     const markup = renderToStaticMarkup(
       <KnowledgeBaseTrainingStatus
         indexingStatus={{ isIndexing: false, queued: 0, running: 0 }}
@@ -39,7 +39,9 @@ describe('Knowledge Base training status', () => {
     );
 
     expect(markup).not.toContain('type="button"');
-    expect(markup).toContain('tabindex="0"');
+    expect(markup).not.toContain('tabindex=');
+    expect(markup).not.toContain('data-state=');
+    expect(markup).not.toContain('focus-visible:');
     expect(markup).toContain('px-4 py-2');
   });
 });

@@ -77,7 +77,7 @@ export default function KnowledgeBasePage() {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
-  const { indexingStatus, isCheckingStatus, checkStatus } = useAgentIndexingStatus({
+  const { indexingStatus, isCheckingStatus } = useAgentIndexingStatus({
     enabled: Boolean(selectedAgentId),
   });
 
@@ -169,9 +169,6 @@ export default function KnowledgeBasePage() {
                 mode="inline"
                 open={isTestOpen}
                 onOpenChange={setIsTestOpen}
-                indexingStatus={indexingStatus}
-                isCheckingStatus={isCheckingStatus}
-                onCheckStatus={checkStatus}
               />
             ) : null
           }
