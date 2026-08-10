@@ -191,10 +191,7 @@ export default function SettingsPage() {
 
         <div className="flex flex-col gap-4 min-w-0">
           {section !== 'teams' && (
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight">{sectionTitle}</h2>
-              <Separator className="mt-4" />
-            </div>
+            <h2 className="text-3xl font-semibold tracking-tight">{sectionTitle}</h2>
           )}
 
            {section === 'profile' ? (

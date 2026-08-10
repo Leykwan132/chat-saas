@@ -42,6 +42,12 @@ test('fixed application navigation keeps its separator', () => {
   );
 });
 
+test('Settings section headings omit the long divider', () => {
+  expect(readSource('pages/SettingsPage.tsx')).not.toContain(
+    '<Separator className="mt-4" />',
+  );
+});
+
 test('internal dialog headers keep their separators', () => {
   expect(readSource('components/workflow/WorkflowInspectorForm.tsx')).toContain(
     'DialogHeader className="shrink-0 border-b border-border',

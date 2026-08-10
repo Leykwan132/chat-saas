@@ -8,7 +8,8 @@ const source = readFileSync(
 
 test('keeps renewal details without duplicating the credit reset date', () => {
   expect(source).toContain('stripeSubscriptionCurrentPeriodEnd');
-  expect(source).toContain('Renews');
+  expect(source).toContain('Renews on');
+  expect(source).toContain('formatRenewalDate');
   expect(source).not.toContain('periodEndMs');
   expect(source).not.toContain('Credits reset');
 });
