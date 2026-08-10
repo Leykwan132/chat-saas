@@ -3,6 +3,29 @@ import { describe, expect, it } from 'vitest';
 import { KnowledgeBaseTrainingStatus } from './KnowledgeBaseTrainingStatus';
 
 describe('Knowledge Base training status', () => {
+  it('shows nothing before the first polling result is available', () => {
+    const markup = renderToStaticMarkup(
+      <KnowledgeBaseTrainingStatus
+        indexingStatus={null}
+        isCheckingStatus
+      />,
+    );
+
+    expect(markup).toBe('');
+  });
+
+  it('keeps the latest result visible during a background status check', () => {
+    const markup = renderToStaticMarkup(
+      <KnowledgeBaseTrainingStatus
+        indexingStatus={{ isIndexing: false, queued: 0, running: 0 }}
+        isCheckingStatus
+      />,
+    );
+
+    expect(markup).toContain('Your agent is ready.');
+    expect(markup).not.toContain('Checking status…');
+  });
+
   it('shows the Test your agent training label in a yellow rounded badge state', () => {
     const markup = renderToStaticMarkup(
       <KnowledgeBaseTrainingStatus
