@@ -56,6 +56,8 @@ import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
+import { PlaygroundAssistantResponse } from '@/components/PlaygroundAssistantResponse';
+import { PlaygroundAssistantResponseDialog } from '@/components/PlaygroundAssistantResponseDialog';
 import {
   Attachment,
   AttachmentOpen,
@@ -346,6 +348,13 @@ const PLAYGROUND_USER_BUBBLE_CLASS =
     'ml-auto w-fit max-w-[85%] bg-blue-50 text-blue-950 dark:bg-blue-950/40 dark:text-blue-200 sm:max-w-none',
   );
 
+type ExpandedAssistantResponse = {
+  key: string;
+  mediaItems: Array<{ url: string; mediaType: string }>;
+  status: string;
+  textParts: string[];
+};
+
 export function TestChatWindow({
   agentId,
   threadId,
@@ -380,6 +389,8 @@ export function TestChatWindow({
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [expandedResponse, setExpandedResponse] =
+    useState<ExpandedAssistantResponse | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadInitRef = useRef(false);
   const shouldFocusAfterSend = useRef(false);
@@ -529,6 +540,8 @@ export function TestChatWindow({
                         (item): item is { url: string; mediaType: string } =>
                           item !== undefined,
                       );
+              const isResponseExpandable =
+                message.status !== "streaming" && message.status !== "pending";
 
               return (
               // @ts-ignore
@@ -543,7 +556,18 @@ export function TestChatWindow({
                           message.status === "pending"
                         }
                       />
-                      <div className={cn(PLAYGROUND_ASSISTANT_BUBBLE_CLASS, "space-y-3")}>
+                      <PlaygroundAssistantResponse
+                        className={cn(PLAYGROUND_ASSISTANT_BUBBLE_CLASS, "space-y-3")}
+                        expandable={isResponseExpandable}
+                        onExpand={() =>
+                          setExpandedResponse({
+                            key: message.key,
+                            mediaItems,
+                            status: message.status,
+                            textParts: assistantTexts,
+                          })
+                        }
+                      >
                         {assistantTexts.map((text, index) => (
                           <StreamingMarkdown
                             key={`${message.key}-part-${index}`}
@@ -555,7 +579,7 @@ export function TestChatWindow({
                           messageKey={message.key}
                           items={mediaItems}
                         />
-                      </div>
+                      </PlaygroundAssistantResponse>
                     </div>
                   ) : (
                     <div className={PLAYGROUND_USER_BUBBLE_CLASS}>
@@ -667,6 +691,30 @@ export function TestChatWindow({
           {renderInput(inputRef)}
         </div>
       </div>
+
+      <PlaygroundAssistantResponseDialog
+        onOpenChange={(open) => {
+          if (!open) setExpandedResponse(null);
+        }}
+        open={expandedResponse !== null}
+        title={`${displayName} response`}
+      >
+        <div className="space-y-3">
+          {expandedResponse?.textParts.map((text, index) => (
+            <StreamingMarkdown
+              key={`${expandedResponse.key}-expanded-part-${index}`}
+              status={expandedResponse.status}
+              text={text}
+            />
+          ))}
+          {expandedResponse ? (
+            <PlaygroundMessageAttachments
+              items={expandedResponse.mediaItems}
+              messageKey={expandedResponse.key}
+            />
+          ) : null}
+        </div>
+      </PlaygroundAssistantResponseDialog>
 
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent className="sm:max-w-md">
