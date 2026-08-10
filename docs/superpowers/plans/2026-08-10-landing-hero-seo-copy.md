@@ -31,9 +31,9 @@
 - [x] **Step 1: Write the failing test**
 
 ```ts
-expect(heroSource).toContain('AI Chatbot for Customer Support and Sales');
+expect(heroSource).toContain('AI Chatbot for Every Inbox');
 expect(heroSource).toContain(
-  'No complex setup—get started in just 5 minutes.',
+  'Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
 );
 expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support & Sales');
 ```
@@ -47,8 +47,8 @@ Expected: the new copy assertions fail because the old sales-agent copy remains.
 - [x] **Step 3: Write the minimal implementation**
 
 ```tsx
-<h1>AI Chatbot for Customer Support and Sales</h1>
-<p>No complex setup—get started in just 5 minutes.</p>
+<h1>AI Chatbot for Every Inbox</h1>
+<p>Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.</p>
 ```
 
 ```html

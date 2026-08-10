@@ -45,10 +45,10 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
 
   expect(heroSource).toContain(
-    'AI Chatbot for Customer Support and Sales',
+    'AI Chatbot for Every Inbox',
   );
   expect(heroSource).toContain(
-    'No complex setup—get started in just 5 minutes.',
+    'Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
   );
   expect(heroSource).not.toContain('Automate your customer inbox with Kilobot.');
   expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support &amp; Sales');
