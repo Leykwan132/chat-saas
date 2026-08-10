@@ -30,6 +30,13 @@ test('workspace agent-only step routes through the only agent', () => {
   })).toEqual({ kind: 'navigate', to: '/dashboard/agent_a/workflow' });
 });
 
+test('create service step opens the new service form for the selected agent', () => {
+  expect(resolveWorkspaceSetupChecklistAction({
+    stepKey: 'createService',
+    agents: [agents[0]],
+  })).toEqual({ kind: 'navigate', to: '/dashboard/agent_a/services/new' });
+});
+
 test('workspace agent-only step asks the user to select an agent when multiple exist', () => {
   expect(resolveWorkspaceSetupChecklistAction({
     stepKey: 'connectChannel',

@@ -26,6 +26,7 @@ import type * as agentOverviewTopics from "../agentOverviewTopics.js";
 import type * as agentRuntime from "../agentRuntime.js";
 import type * as agentUsage from "../agentUsage.js";
 import type * as agentUsageAggregatesModel from "../agentUsageAggregatesModel.js";
+import type * as agentValidators from "../agentValidators.js";
 import type * as agents from "../agents.js";
 import type * as aggregates from "../aggregates.js";
 import type * as analytics from "../analytics.js";
@@ -369,6 +370,7 @@ declare const fullApi: ApiFromModules<{
   agentRuntime: typeof agentRuntime;
   agentUsage: typeof agentUsage;
   agentUsageAggregatesModel: typeof agentUsageAggregatesModel;
+  agentValidators: typeof agentValidators;
   agents: typeof agents;
   aggregates: typeof aggregates;
   analytics: typeof analytics;

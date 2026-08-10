@@ -76,8 +76,9 @@ test("agents.create provisions a default workflow", async () => {
 
   const agentId = await authed.mutation(api.agents.create, {
     name: "Created Agent",
-    templateKey: "blank",
-    model: "ilmu-mini-v3.3",
+    businessName: "Workflow Business",
+    businessDescription: "Workflow automation services",
+    goal: "support",
   });
 
   const graph = await authed.query(api.workflows.getForAgent, { agentId });

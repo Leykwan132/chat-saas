@@ -33,6 +33,12 @@ export const workspaceSetupChecklistSteps: WorkspaceSetupChecklistStepMeta[] = [
     hoverDescription: 'Open Workflow and add the first branch, reply, handoff, or automation node.',
   },
   {
+    key: 'createService',
+    title: 'Create a service',
+    hoverTitle: 'Create a service',
+    hoverDescription: 'Open Services and create something customers can book.',
+  },
+  {
     key: 'connectChannel',
     title: 'Connect a channel',
     hoverTitle: 'Connect channel',

@@ -3,7 +3,6 @@ import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
-import { AGENT_PROMPT_TEMPLATES } from "../shared/agentPromptTemplates";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -19,20 +18,38 @@ function initTest() {
   return t;
 }
 
-test("agents.create accepts the product sales template key", async () => {
+test("agents.create maps support goals to the support template key", async () => {
   const t = initTest();
   const authed = t.withIdentity({
-    subject: "user-agent-product-sales-template",
-    email: "product-sales-template@example.com",
+    subject: "user-agent-support-goal",
+    email: "support-goal@example.com",
   });
 
   const agentId = await authed.mutation(api.agents.create, {
-    name: "Product Sales Agent",
-    templateKey: "productSales",
-    model: "ilmu-mini-v3.3",
+    name: "Support Agent",
+    businessName: "Support Business",
+    businessDescription: "Customer support services",
+    goal: "support",
   });
 
   const agent = await authed.query(api.agents.get, { agentId });
-  expect(agent?.templateKey).toBe("productSales");
-  expect(agent?.systemPrompt).toBe(AGENT_PROMPT_TEMPLATES.productSales);
+  expect(agent?.templateKey).toBe("support");
+});
+
+test("agents.create maps booking goals to the sales template key", async () => {
+  const t = initTest();
+  const authed = t.withIdentity({
+    subject: "user-agent-booking-goal",
+    email: "booking-goal@example.com",
+  });
+
+  const agentId = await authed.mutation(api.agents.create, {
+    name: "Booking Agent",
+    businessName: "Booking Business",
+    businessDescription: "Appointment booking services",
+    goal: "bookService",
+  });
+
+  const agent = await authed.query(api.agents.get, { agentId });
+  expect(agent?.templateKey).toBe("sales");
 });
