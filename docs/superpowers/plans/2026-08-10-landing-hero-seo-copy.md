@@ -32,10 +32,8 @@
 
 ```ts
 expect(heroSource).toContain('AI Chatbot for Every Inbox');
-expect(heroSource).toContain(
-  'Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
-);
-expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support & Sales');
+expect(heroSource).toContain('<span className="block">No complex setup—get started in just 5 minutes.</span>');
+expect(indexSource).toContain('Kilobot | AI Chatbot for Every Inbox');
 ```
 
 - [x] **Step 2: Run the test to verify it fails**
@@ -48,11 +46,14 @@ Expected: the new copy assertions fail because the old sales-agent copy remains.
 
 ```tsx
 <h1>AI Chatbot for Every Inbox</h1>
-<p>Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.</p>
+<p>
+  <span className="block">Handle customer support and sales conversations in one place.</span>
+  <span className="block">No complex setup—get started in just 5 minutes.</span>
+</p>
 ```
 
 ```html
-<title>Kilobot | AI Chatbot for Customer Support &amp; Sales</title>
+<title>Kilobot | AI Chatbot for Every Inbox</title>
 ```
 
 Set all description-bearing metadata tags to the approved meta description, and the Open Graph and Twitter titles to the approved page title.

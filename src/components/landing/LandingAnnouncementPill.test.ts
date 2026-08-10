@@ -47,12 +47,11 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   expect(heroSource).toContain(
     'AI Chatbot for Every Inbox',
   );
-  expect(heroSource).toContain(
-    'Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
-  );
+  expect(heroSource).toContain('Handle customer support and sales conversations in one place.');
+  expect(heroSource).toContain('<span className="block">No complex setup—get started in just 5 minutes.</span>');
   expect(heroSource).not.toContain('Automate your customer inbox with Kilobot.');
-  expect(indexSource).toContain('Kilobot | AI Chatbot for Customer Support &amp; Sales');
+  expect(indexSource).toContain('Kilobot | AI Chatbot for Every Inbox');
   expect(indexSource).toContain(
-    'Automate customer conversations, answer questions instantly, and grow sales with Kilobot’s AI chatbot. No complex setup—get started in just 5 minutes.',
+    'Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
   );
 });

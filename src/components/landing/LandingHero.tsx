@@ -51,7 +51,8 @@ export function LandingHero({
             AI Chatbot for Every Inbox
           </h1>
           <p className="mx-auto mt-3 max-w-2xl text-pretty text-lg leading-relaxed text-zinc-400 md:text-xl dark:text-zinc-500">
-            Handle customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.
+            <span className="block">Handle customer support and sales conversations in one place.</span>
+            <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>
           <div className="mt-8 flex w-full max-w-sm flex-row items-center justify-center gap-3 sm:w-auto sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
