@@ -35,5 +35,6 @@ describe('Knowledge Base training status', () => {
     expect(markup).toContain('type="button"');
     expect(markup).toContain('aria-label="Test your agent"');
     expect(markup).toContain('px-4 py-2');
+    expect(markup).toContain('hover:bg-muted-foreground/15');
   });
 });
