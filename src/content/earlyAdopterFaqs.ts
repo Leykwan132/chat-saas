@@ -12,7 +12,7 @@ export const earlyAdopterFaqs: EarlyAdopterFaq[] = [
   {
     question: 'How does the 3-month free Growth plan work?',
     answer:
-      'Once accepted, we will upgrade your account. You get 10 AI agents, 5,000 monthly credits, calendar services, and integrations free for three months.',
+      'Once accepted, we will upgrade your account. You get 5 AI agents, 8,000 monthly credits, calendar services, and integrations free for three months.',
   },
   {
     question: 'Will I get help going live?',

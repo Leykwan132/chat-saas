@@ -31,7 +31,7 @@ const lostFeatures = [
   {
     Icon: Coins,
     title: 'Monthly credits',
-    description: 'Your allowance will reset to 50 credits per month.',
+    description: 'Your allowance will reset to 300 credits per month.',
   },
   {
     Icon: Bot,

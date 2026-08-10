@@ -25,8 +25,8 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: 'Access DeepSeek, Llama, Gemma, and GPT-OSS.',
       },
       {
-        title: '1,000 Monthly Credits',
-        description: '10x more credits for messages and campaigns.',
+        title: '2,000 Monthly Credits',
+        description: 'More room for messages and campaigns.',
       },
       {
         title: 'Up to 2 AI Agents',
@@ -62,7 +62,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
         description: 'Deploy specialized agents for every department.',
       },
       {
-        title: '5,000 Monthly Credits',
+        title: '8,000 Monthly Credits',
         description: 'High credit capacity for growing chat volume.',
       },
       {
@@ -87,7 +87,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     description: 'Get enterprise credit limits, maximum channels, and priority speed.',
     features: [
       {
-        title: '15,000 Monthly Credits',
+        title: '20,000 Monthly Credits',
         description: 'Enterprise credit limits for high chat volumes.',
       },
       {
