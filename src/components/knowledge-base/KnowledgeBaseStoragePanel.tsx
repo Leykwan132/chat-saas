@@ -65,7 +65,9 @@ export function KnowledgeBaseStoragePanel({
           {formatFileSize(totalFileSize)} of {formatFileSize(maxTotalSize)}
         </div>
       </div>
-      <KnowledgeBaseTrainingStatus trainingItemCount={trainingItemCount} />
+      <div className="mt-2">
+        <KnowledgeBaseTrainingStatus trainingItemCount={trainingItemCount} />
+      </div>
     </aside>
   );
 }
