@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { AlertCircle, ExternalLink } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatRenewalDate } from '@/lib/formatRenewalDate';
 
 export function PlanTab() {
   const { isLoading: isAuthLoading } = useAuth();
@@ -122,7 +123,7 @@ export function PlanTab() {
                 ·
               </span>
               <span>
-                Renews {new Date(stripeSubscriptionCurrentPeriodEnd).toLocaleDateString()}
+                Renews on {formatRenewalDate(stripeSubscriptionCurrentPeriodEnd)}
               </span>
             </>
           )}
