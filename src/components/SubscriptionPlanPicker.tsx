@@ -420,11 +420,9 @@ export function EnterprisePlanAction({
 }
 
 export function SubscriptionPlanActionButton({
-  planId,
   label,
   disabled,
   loading,
-  emphasizeRecommended = true,
   isCurrentPlan = false,
   onClick,
 }: {
@@ -449,19 +447,13 @@ export function SubscriptionPlanActionButton({
     );
   }
 
-  const useProHighlight = emphasizeRecommended && planId === 'growth';
-
   return (
     <Button
       type="button"
-      variant={useProHighlight ? 'default' : 'secondary'}
+      variant="default"
       disabled={disabled || loading}
       onClick={onClick}
-      className={cn(
-        'h-8 w-full rounded-lg text-xs font-medium sm:text-sm',
-        useProHighlight &&
-          'border-0 bg-zinc-950 text-white hover:bg-zinc-900 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800',
-      )}
+      className="h-8 w-full rounded-lg border-0 bg-zinc-950 text-xs font-medium text-white hover:bg-zinc-900 dark:bg-zinc-950 dark:text-white dark:hover:bg-zinc-800 sm:text-sm"
     >
       {loading ? <Spinner /> : label}
     </Button>
