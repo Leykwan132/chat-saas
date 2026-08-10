@@ -1,12 +1,14 @@
 import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Button } from '@/components/ui/button';
 import { KnowledgeBaseTrainingStatus } from '@/components/knowledge-base/KnowledgeBaseTrainingStatus';
+import type { AgentIndexingStatus } from '@/lib/agentIndexingStatus';
 
 type KnowledgeBaseHeaderProps = {
   isTestOpen: boolean;
   onTest: () => void;
   onOpenTest: () => void;
-  trainingItemCount: number;
+  indexingStatus: AgentIndexingStatus | null;
+  isCheckingStatus: boolean;
 };
 
 export function toggleTestOpen(current: boolean) {
@@ -17,7 +19,8 @@ export function KnowledgeBaseHeader({
   isTestOpen,
   onTest,
   onOpenTest,
-  trainingItemCount,
+  indexingStatus,
+  isCheckingStatus,
 }: KnowledgeBaseHeaderProps) {
   return (
     <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -27,7 +30,8 @@ export function KnowledgeBaseHeader({
       />
       <div className="flex shrink-0 items-center gap-2">
         <KnowledgeBaseTrainingStatus
-          trainingItemCount={trainingItemCount}
+          indexingStatus={indexingStatus}
+          isCheckingStatus={isCheckingStatus}
           onTest={onOpenTest}
         />
         <Button

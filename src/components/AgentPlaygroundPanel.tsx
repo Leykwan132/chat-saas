@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useAction, useQuery } from 'convex/react';
+import { useState } from 'react';
+import { useQuery } from 'convex/react';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner';
-import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { TestChatWindow } from '@/components/TestChatWindow';
 import { Button } from '@/components/ui/button';
@@ -18,6 +16,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
 import { cn } from '@/lib/utils';
+import { useAgentIndexingStatus } from '@/hooks/useAgentIndexingStatus';
+import type { AgentIndexingStatus } from '@/lib/agentIndexingStatus';
 
 const PANEL_HEIGHT_CLASS = 'h-[calc(100svh-7rem)] min-h-[541px]';
 
@@ -27,6 +27,9 @@ type AgentPlaygroundPanelProps = {
   mode?: 'aside' | 'drawer' | 'inline';
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  indexingStatus?: AgentIndexingStatus | null;
+  isCheckingStatus?: boolean;
+  onCheckStatus?: () => void;
 };
 
 export function AgentPlaygroundPanel({
@@ -35,44 +38,28 @@ export function AgentPlaygroundPanel({
   mode = 'aside',
   open = true,
   onOpenChange,
+  indexingStatus,
+  isCheckingStatus,
+  onCheckStatus,
 }: AgentPlaygroundPanelProps) {
   const { can, isLoading: permissionsLoading } = usePermissions();
   const [threadId, setThreadId] = useState<string | undefined>();
   const shouldLoadAgent = mode === 'aside' || open;
   const agent = useQuery(api.agents.get, shouldLoadAgent ? { agentId } : 'skip');
 
-  const getIndexingStatus = useAction(api.cloudflare.getIndexingStatus);
-  const [indexingStatus, setIndexingStatus] = useState<{
-    isIndexing: boolean;
-    queued: number;
-    running: number;
-  } | null>(null);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-
-  const checkStatus = useCallback(async () => {
-    setIsCheckingStatus(true);
-    try {
-      const result = await getIndexingStatus();
-      setIndexingStatus({
-        isIndexing: result.isIndexing,
-        queued: result.queued ?? 0,
-        running: result.running ?? 0,
-      });
-    } catch {
-      toast.error('Failed to check agent status');
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  }, [getIndexingStatus]);
-
-  useEffect(() => {
-    if (!open) return;
-    void checkStatus();
-    const interval = setInterval(() => {
-      void checkStatus();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [checkStatus, open]);
+  const usesExternalIndexingStatus = indexingStatus !== undefined;
+  const localIndexingStatus = useAgentIndexingStatus({
+    enabled: !usesExternalIndexingStatus && open,
+  });
+  const activeIndexingStatus = usesExternalIndexingStatus
+    ? indexingStatus
+    : localIndexingStatus.indexingStatus;
+  const activeIsCheckingStatus = usesExternalIndexingStatus
+    ? isCheckingStatus
+    : localIndexingStatus.isCheckingStatus;
+  const activeCheckStatus = usesExternalIndexingStatus
+    ? onCheckStatus
+    : localIndexingStatus.checkStatus;
 
   const renderChat = (fillContainer: boolean, embedded: boolean) => {
     if (permissionsLoading) {
@@ -110,9 +97,9 @@ export function AgentPlaygroundPanel({
         threadId={threadId}
         embedded={embedded}
         onThreadIdChange={setThreadId}
-        indexingStatus={indexingStatus}
-        isCheckingStatus={isCheckingStatus}
-        onCheckStatus={checkStatus}
+        indexingStatus={activeIndexingStatus}
+        isCheckingStatus={activeIsCheckingStatus}
+        onCheckStatus={activeCheckStatus}
         fillContainer={fillContainer}
       />
     );

@@ -22,7 +22,6 @@ import { WebSection } from '@/components/knowledge-base/WebSection';
 import { FileSection } from '@/components/knowledge-base/FileSection';
 import { TextSection } from '@/components/knowledge-base/TextSection';
 import { QASection } from '@/components/knowledge-base/QASection';
-import { isTraining } from '@/components/knowledge-base/helpers';
 import {
   KnowledgeBaseHeader,
   toggleTestOpen,
@@ -38,6 +37,7 @@ import {
 import { KnowledgeBaseTestLayout } from '@/components/knowledge-base/KnowledgeBaseTestLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
+import { useAgentIndexingStatus } from '@/hooks/useAgentIndexingStatus';
 import {
   Tooltip,
   TooltipContent,
@@ -77,6 +77,9 @@ export default function KnowledgeBasePage() {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
+  const { indexingStatus, isCheckingStatus, checkStatus } = useAgentIndexingStatus({
+    enabled: Boolean(selectedAgentId),
+  });
 
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
@@ -92,13 +95,6 @@ export default function KnowledgeBasePage() {
   const qaSize = qaEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
 
   const totalFileSize = webSize + fileSizeVal + textSize + qaSize;
-  const trainingItemCount = [
-    ...(textEntries ?? []),
-    ...(fileEntries ?? []),
-    ...(webEntries ?? []),
-    ...(qaEntries ?? []),
-  ].filter((entry) => isTraining(entry.status)).length;
-
   const openDeleteDialog = (
     entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
     entryId: KnowledgeEntryId | string,
@@ -161,7 +157,8 @@ export default function KnowledgeBasePage() {
           isTestOpen={isTestOpen}
           onTest={() => setIsTestOpen(toggleTestOpen)}
           onOpenTest={() => setIsTestOpen(true)}
-          trainingItemCount={trainingItemCount}
+          indexingStatus={indexingStatus}
+          isCheckingStatus={isCheckingStatus}
         />
 
         <KnowledgeBaseTestLayout
@@ -173,6 +170,9 @@ export default function KnowledgeBasePage() {
                 mode="inline"
                 open={isTestOpen}
                 onOpenChange={setIsTestOpen}
+                indexingStatus={indexingStatus}
+                isCheckingStatus={isCheckingStatus}
+                onCheckStatus={checkStatus}
               />
             ) : null
           }

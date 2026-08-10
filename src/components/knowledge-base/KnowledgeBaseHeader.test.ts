@@ -31,12 +31,13 @@ describe('Knowledge Base header', () => {
         isTestOpen: false,
         onTest: () => undefined,
         onOpenTest: () => undefined,
-        trainingItemCount: 0,
+        indexingStatus: { isIndexing: false, queued: 0, running: 0 },
+        isCheckingStatus: false,
       }),
     );
 
-    expect(markup).toContain('Agent is up-to-date');
-    expect(markup.indexOf('Agent is up-to-date')).toBeLessThan(markup.lastIndexOf('Test your agent'));
+    expect(markup).toContain('Your agent is ready.');
+    expect(markup.indexOf('Your agent is ready.')).toBeLessThan(markup.lastIndexOf('Test your agent'));
   });
 
   it('opens the shared test chat as its own in-page container', () => {
@@ -71,13 +72,15 @@ describe('Knowledge Base header', () => {
       isTestOpen: boolean;
       onTest: () => void;
       onOpenTest: () => void;
-      trainingItemCount: number;
+      indexingStatus: { isIndexing: boolean; queued: number; running: number } | null;
+      isCheckingStatus: boolean;
     }) => ReactElement<Record<string, unknown>>;
     const header = Header({
       isTestOpen: true,
       onTest: () => undefined,
       onOpenTest: () => undefined,
-      trainingItemCount: 0,
+      indexingStatus: { isIndexing: false, queued: 0, running: 0 },
+      isCheckingStatus: false,
     });
     const children = header.props.children as ReactElement<
       Record<string, unknown>

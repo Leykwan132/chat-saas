@@ -59,6 +59,12 @@ import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
 import { PlaygroundAssistantResponse } from '@/components/PlaygroundAssistantResponse';
 import { PlaygroundAssistantResponseDialog } from '@/components/PlaygroundAssistantResponseDialog';
 import {
+  getAgentTrainingLabel,
+  getAgentTrainingStatus,
+  type AgentIndexingStatus,
+  type AgentTrainingStatus,
+} from '@/lib/agentIndexingStatus';
+import {
   Attachment,
   AttachmentOpen,
   AttachmentPreview,
@@ -210,26 +216,8 @@ function AnimatedBotIcon({
   );
 }
 
-type PlaygroundTrainingStatus = 'loading' | 'ready' | 'indexing';
-
-function getPlaygroundTrainingStatus(
-  isCheckingStatus: boolean,
-  indexingStatus:
-    | { isIndexing: boolean; queued: number; running: number }
-    | null
-    | undefined,
-): PlaygroundTrainingStatus {
-  if (isCheckingStatus || indexingStatus === null || indexingStatus === undefined) {
-    return 'loading';
-  }
-  if (indexingStatus.isIndexing) {
-    return 'indexing';
-  }
-  return 'ready';
-}
-
 const PLAYGROUND_TRAINING_STATUS_CONFIG: Record<
-  Exclude<PlaygroundTrainingStatus, 'loading'>,
+  Exclude<AgentTrainingStatus, 'loading'>,
   { bgClass: string; borderClass: string }
 > = {
   ready: {
@@ -242,27 +230,19 @@ const PLAYGROUND_TRAINING_STATUS_CONFIG: Record<
   },
 };
 
-function getUpdatingLabel(indexingStatus: { queued: number; running: number }) {
-  const { running, queued } = indexingStatus;
-  if (running > 0) {
-    return running === 1 ? 'Training 1 item…' : `Training ${running} items…`;
-  }
-  return queued === 1 ? '1 item in queue…' : `${queued} items in queue…`;
-}
-
 function PlaygroundTrainingStatusBanner({
   indexingStatus,
   isCheckingStatus,
   onCheckStatus,
 }: {
   indexingStatus:
-    | { isIndexing: boolean; queued: number; running: number }
+    | AgentIndexingStatus
     | null
     | undefined;
   isCheckingStatus: boolean;
   onCheckStatus: () => void;
 }) {
-  const status = getPlaygroundTrainingStatus(isCheckingStatus, indexingStatus);
+  const status = getAgentTrainingStatus(isCheckingStatus, indexingStatus);
   const coloredConfig =
     status === 'loading' ? null : PLAYGROUND_TRAINING_STATUS_CONFIG[status];
 
@@ -270,7 +250,7 @@ function PlaygroundTrainingStatusBanner({
     status === 'loading'
       ? 'Checking status…'
       : status === 'indexing'
-        ? getUpdatingLabel(indexingStatus!)
+        ? getAgentTrainingLabel(indexingStatus!)
         : 'Your agent is ready.';
 
   return (
@@ -372,7 +352,7 @@ export function TestChatWindow({
   embedded?: boolean;
   fillContainer?: boolean;
   onThreadIdChange?: (threadId: string) => void;
-  indexingStatus?: { isIndexing: boolean; queued: number; running: number } | null;
+  indexingStatus?: AgentIndexingStatus | null;
   isCheckingStatus?: boolean;
   onCheckStatus?: () => void;
 }) {
