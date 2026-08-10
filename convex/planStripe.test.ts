@@ -25,19 +25,36 @@ beforeEach(() => {
   Object.assign(process.env, prices, legacyPrices);
 });
 
-describe("legacy Stripe prices", () => {
-  test("resolve legacy paid prices to their current plans", async () => {
+describe("retired Stripe prices", () => {
+  test("reject legacy paid prices even when their environment variables remain set", async () => {
     const { resolvePlanKeyFromStripePriceId } = await import("./planStripe");
 
-    expect(resolvePlanKeyFromStripePriceId("price_legacy_starter_monthly")).toBe(
-      "starter",
-    );
-    expect(resolvePlanKeyFromStripePriceId("price_legacy_growth_annual")).toBe(
-      "growth",
-    );
-    expect(resolvePlanKeyFromStripePriceId("price_legacy_business_monthly")).toBe(
-      "business",
-    );
+    for (const legacyPriceId of Object.values(legacyPrices)) {
+      expect(() => resolvePlanKeyFromStripePriceId(legacyPriceId)).toThrow(
+        `Unknown Stripe price ID: ${legacyPriceId}`,
+      );
+    }
+  });
+});
+
+describe("current paid Stripe prices", () => {
+  test("return and resolve every configured paid billing interval", async () => {
+    const { getStripePriceId, resolvePlanKeyFromStripePriceId } =
+      await import("./planStripe");
+
+    const currentPaidPrices = [
+      ["starter", "monthly", "price_starter_monthly"],
+      ["starter", "annual", "price_starter_annual"],
+      ["growth", "monthly", "price_growth_monthly"],
+      ["growth", "annual", "price_growth_annual"],
+      ["business", "monthly", "price_business_monthly"],
+      ["business", "annual", "price_business_annual"],
+    ] as const;
+
+    for (const [plan, interval, priceId] of currentPaidPrices) {
+      expect(getStripePriceId(plan, interval)).toBe(priceId);
+      expect(resolvePlanKeyFromStripePriceId(priceId)).toBe(plan);
+    }
   });
 });
 
