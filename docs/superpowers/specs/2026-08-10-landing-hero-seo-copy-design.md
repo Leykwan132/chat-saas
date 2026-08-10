@@ -15,7 +15,7 @@ Make Kilobot's landing page immediately understandable to customers and search e
 
 The existing LandingHero remains the landing page's single, prominent H1. Its wording positions Kilobot as an inbox-first AI agent. The supporting description communicates support and sales coverage while removing setup friction.
 
-The static homepage metadata will use the same inbox-first AI-agent title and a description containing the AI-chatbot keyword, support/sales coverage, and setup promise. The existing social preview image and URL remain unchanged.
+The static homepage metadata will use the same inbox-first AI-agent title and a description containing the AI-chatbot keyword, support/sales coverage, and setup promise. Open Graph and Twitter share `https://storage.kilobot.app/Landing/Preview-image.png`; the canonical URL remains unchanged.
 
 ## Verification
 

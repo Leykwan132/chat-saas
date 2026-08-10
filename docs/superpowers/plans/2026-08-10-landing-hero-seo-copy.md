@@ -34,6 +34,7 @@
 expect(heroSource).toContain('AI Agent for Every Inbox');
 expect(heroSource).toContain('<span className="block">No complex setup—get started in just 5 minutes.</span>');
 expect(indexSource).toContain('Kilobot | AI Agent for Every Inbox');
+expect(indexSource).toContain('https://storage.kilobot.app/Landing/Preview-image.png');
 ```
 
 - [x] **Step 2: Run the test to verify it fails**

@@ -7,6 +7,7 @@ import {
 import { getBlogPost, requireBlogPost } from '../../content/blog/posts';
 
 const ILMU_IMAGE = 'https://storage.kilobot.app/Ilmu%20Mini%20v3.3.png';
+const LANDING_PREVIEW_IMAGE = 'https://storage.kilobot.app/Landing/Preview-image.png';
 
 test('active headline points at the supporting-ilmu post', () => {
   expect(ACTIVE_BLOG_HEADLINE.slug).toBe('supporting-ilmu');
@@ -53,5 +54,11 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   expect(indexSource).toContain('Kilobot | AI Agent for Every Inbox');
   expect(indexSource).toContain(
     'Kilobot’s AI chatbot handles customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
+  );
+  expect(indexSource).toContain(
+    `<meta property="og:image" content="${LANDING_PREVIEW_IMAGE}" />`,
+  );
+  expect(indexSource).toContain(
+    `<meta name="twitter:image" content="${LANDING_PREVIEW_IMAGE}" />`,
   );
 });
