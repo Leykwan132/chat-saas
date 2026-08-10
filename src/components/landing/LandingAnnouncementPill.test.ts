@@ -7,6 +7,7 @@ import {
 import { getBlogPost, requireBlogPost } from '../../content/blog/posts';
 
 const ILMU_IMAGE = 'https://storage.kilobot.app/Ilmu%20Mini%20v3.3.png';
+const LANDING_PREVIEW_IMAGE = 'https://storage.kilobot.app/Landing/Preview-image.png';
 
 test('active headline points at the supporting-ilmu post', () => {
   expect(ACTIVE_BLOG_HEADLINE.slug).toBe('supporting-ilmu');
@@ -40,14 +41,24 @@ test('landing pill links to the active blog post', () => {
   expect(mainSource).toContain('BlogPostPage');
 });
 
-test('landing hero uses the concise description', () => {
+test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot', () => {
   const heroSource = readFileSync(new URL('./LandingHero.tsx', import.meta.url), 'utf8');
+  const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
 
   expect(heroSource).toContain(
-    'From first reply to booked meeting, handled in your sales inbox.',
+    'AI Agent for Every Inbox',
   );
-  expect(heroSource).not.toContain('Enterprise-grade');
-  expect(heroSource).not.toContain('Go live in 5 minutes');
-  expect(heroSource).not.toContain('Qualify, answer, close.');
-  expect(heroSource).not.toContain('Kilobot puts AI agents in your messaging inbox');
+  expect(heroSource).toContain('Handle customer support and sales conversations in one place.');
+  expect(heroSource).toContain('<span className="block">No complex setup—get started in just 5 minutes.</span>');
+  expect(heroSource).not.toContain('Automate your customer inbox with Kilobot.');
+  expect(indexSource).toContain('Kilobot | AI Agent for Every Inbox');
+  expect(indexSource).toContain(
+    'Kilobot’s AI chatbot handles customer support and sales conversations in one place. No complex setup—get started in just 5 minutes.',
+  );
+  expect(indexSource).toContain(
+    `<meta property="og:image" content="${LANDING_PREVIEW_IMAGE}" />`,
+  );
+  expect(indexSource).toContain(
+    `<meta name="twitter:image" content="${LANDING_PREVIEW_IMAGE}" />`,
+  );
 });
