@@ -40,6 +40,7 @@ import {
   type OpenDeleteDialog,
 } from './helpers';
 import { hasParentWebUrl } from '../../../shared/webEntryUrl';
+import { WebLinkEntry } from './WebLinkEntry';
 
 interface WebSectionProps {
   entries: any[] | undefined;
@@ -119,11 +120,9 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
   return (
     <>
       {canManage ? (
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Add Web</h2>
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <WebLinkEntry>
+        <div className="space-y-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-muted-foreground">URL</span>
             <div className="relative">
               <Input
                 value={webInput}
@@ -139,7 +138,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
                 type="button"
                 onClick={handleSearchWeb}
                 disabled={isSearchingLinks || !webInput.trim()}
-                aria-label="Discover links from URL"
+                aria-label="Add links"
                 className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center rounded-full bg-black text-white transition-opacity hover:bg-black/90 disabled:opacity-40"
               >
                 {isSearchingLinks ? <Spinner className="size-3 text-white" /> : <ArrowRight className="size-3.5" />}
@@ -167,7 +166,7 @@ export function WebSection({ entries, agentId, openDeleteDialog, canManage = tru
             return null;
           })()}
         </div>
-      </div>
+      </WebLinkEntry>
       ) : null}
 
       {hasEntries && (

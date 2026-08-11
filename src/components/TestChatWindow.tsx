@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { BadgeCheck, RotateCw, RefreshCw, Maximize2 } from 'lucide-react';
+import { RotateCw, Maximize2 } from 'lucide-react';
 import {
   extractMediaKeys,
   stripMediaMarkers,
@@ -13,7 +13,6 @@ import { useUIMessages, useSmoothText, optimisticallySendMessage } from "@convex
 import Markdown from "react-markdown";
 import type { Components } from "react-markdown";
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import {
   parseCitations,
   stripInlineCitationMarkers,
@@ -56,6 +55,8 @@ import { ChatPromptInput } from "@/components/ChatPromptInput";
 import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { playgroundAssistantTextParts } from "@/lib/playgroundMessageParts";
+import { PlaygroundAssistantResponse } from '@/components/PlaygroundAssistantResponse';
+import { PlaygroundAssistantResponseDialog } from '@/components/PlaygroundAssistantResponseDialog';
 import {
   Attachment,
   AttachmentOpen,
@@ -208,119 +209,6 @@ function AnimatedBotIcon({
   );
 }
 
-type PlaygroundTrainingStatus = 'loading' | 'ready' | 'indexing';
-
-function getPlaygroundTrainingStatus(
-  isCheckingStatus: boolean,
-  indexingStatus:
-    | { isIndexing: boolean; queued: number; running: number }
-    | null
-    | undefined,
-): PlaygroundTrainingStatus {
-  if (isCheckingStatus || indexingStatus === null || indexingStatus === undefined) {
-    return 'loading';
-  }
-  if (indexingStatus.isIndexing) {
-    return 'indexing';
-  }
-  return 'ready';
-}
-
-const PLAYGROUND_TRAINING_STATUS_CONFIG: Record<
-  Exclude<PlaygroundTrainingStatus, 'loading'>,
-  { bgClass: string; borderClass: string }
-> = {
-  ready: {
-    bgClass: 'bg-emerald-800 dark:bg-emerald-900',
-    borderClass: 'border-emerald-700/50 dark:border-emerald-800/50',
-  },
-  indexing: {
-    bgClass: 'bg-amber-700 dark:bg-amber-850',
-    borderClass: 'border-amber-600/50 dark:border-amber-750/50',
-  },
-};
-
-function getUpdatingLabel(indexingStatus: { queued: number; running: number }) {
-  const { running, queued } = indexingStatus;
-  if (running > 0) {
-    return running === 1 ? 'Training 1 item…' : `Training ${running} items…`;
-  }
-  return queued === 1 ? '1 item in queue…' : `${queued} items in queue…`;
-}
-
-function PlaygroundTrainingStatusBanner({
-  indexingStatus,
-  isCheckingStatus,
-  onCheckStatus,
-}: {
-  indexingStatus:
-    | { isIndexing: boolean; queued: number; running: number }
-    | null
-    | undefined;
-  isCheckingStatus: boolean;
-  onCheckStatus: () => void;
-}) {
-  const status = getPlaygroundTrainingStatus(isCheckingStatus, indexingStatus);
-  const coloredConfig =
-    status === 'loading' ? null : PLAYGROUND_TRAINING_STATUS_CONFIG[status];
-
-  const label =
-    status === 'loading'
-      ? 'Checking status…'
-      : status === 'indexing'
-        ? getUpdatingLabel(indexingStatus!)
-        : 'Your agent is ready.';
-
-  return (
-    <div
-      className={cn(
-        'flex items-center gap-2 border-b px-4 py-2 text-xs transition-colors',
-        status === 'loading'
-          ? 'border-border bg-muted/30'
-          : cn(coloredConfig!.bgClass, coloredConfig!.borderClass),
-      )}
-    >
-      {status === 'loading' || status === 'indexing' ? (
-        <Spinner
-          className={cn(
-            'size-3.5 shrink-0',
-            status === 'loading' ? 'text-muted-foreground' : 'text-white/80',
-          )}
-        />
-      ) : (
-        <BadgeCheck className="size-3.5 shrink-0 text-white/80" />
-      )}
-
-      <span
-        className={cn(
-          'min-w-0',
-          status === 'loading' ? 'text-muted-foreground' : 'font-semibold text-white',
-        )}
-      >
-        {label}
-      </span>
-
-      <div className="ml-auto flex shrink-0 items-center gap-1">
-        <button
-          type="button"
-          onClick={onCheckStatus}
-          disabled={isCheckingStatus}
-          className={cn(
-            'inline-flex size-6 items-center justify-center rounded-md transition-colors disabled:opacity-50',
-            status === 'loading'
-              ? 'text-muted-foreground hover:text-foreground'
-              : 'text-white/60 hover:text-white',
-          )}
-          title="Refresh training status"
-          aria-label="Refresh training status"
-        >
-          <RefreshCw className={cn('size-3', isCheckingStatus && 'animate-spin')} />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 const PLAYGROUND_PROMPT_SHELL_CLASS =
   'rounded-2xl border border-border bg-input/50 focus-within:border-ring overflow-hidden [&_[data-slot=input-group]]:bg-transparent [&_[data-slot=input-group]]:border-none [&_[data-slot=input-group]]:shadow-none [&_[data-slot=input-group]]:ring-0';
 
@@ -346,6 +234,13 @@ const PLAYGROUND_USER_BUBBLE_CLASS =
     'ml-auto w-fit max-w-[85%] bg-blue-50 text-blue-950 dark:bg-blue-950/40 dark:text-blue-200 sm:max-w-none',
   );
 
+type ExpandedAssistantResponse = {
+  key: string;
+  mediaItems: Array<{ url: string; mediaType: string }>;
+  status: string;
+  textParts: string[];
+};
+
 export function TestChatWindow({
   agentId,
   threadId,
@@ -353,9 +248,6 @@ export function TestChatWindow({
   embedded = false,
   fillContainer = false,
   onThreadIdChange,
-  indexingStatus,
-  isCheckingStatus,
-  onCheckStatus,
 }: {
   agentId: Id<"agents">;
   threadId: string | undefined;
@@ -363,9 +255,6 @@ export function TestChatWindow({
   embedded?: boolean;
   fillContainer?: boolean;
   onThreadIdChange?: (threadId: string) => void;
-  indexingStatus?: { isIndexing: boolean; queued: number; running: number } | null;
-  isCheckingStatus?: boolean;
-  onCheckStatus?: () => void;
 }) {
   const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
@@ -380,6 +269,8 @@ export function TestChatWindow({
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [expandedResponse, setExpandedResponse] =
+    useState<ExpandedAssistantResponse | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const threadInitRef = useRef(false);
   const shouldFocusAfterSend = useRef(false);
@@ -529,6 +420,8 @@ export function TestChatWindow({
                         (item): item is { url: string; mediaType: string } =>
                           item !== undefined,
                       );
+              const isResponseExpandable =
+                message.status !== "streaming" && message.status !== "pending";
 
               return (
               // @ts-ignore
@@ -543,7 +436,18 @@ export function TestChatWindow({
                           message.status === "pending"
                         }
                       />
-                      <div className={cn(PLAYGROUND_ASSISTANT_BUBBLE_CLASS, "space-y-3")}>
+                      <PlaygroundAssistantResponse
+                        className={cn(PLAYGROUND_ASSISTANT_BUBBLE_CLASS, "space-y-3")}
+                        expandable={isResponseExpandable}
+                        onExpand={() =>
+                          setExpandedResponse({
+                            key: message.key,
+                            mediaItems,
+                            status: message.status,
+                            textParts: assistantTexts,
+                          })
+                        }
+                      >
                         {assistantTexts.map((text, index) => (
                           <StreamingMarkdown
                             key={`${message.key}-part-${index}`}
@@ -555,7 +459,7 @@ export function TestChatWindow({
                           messageKey={message.key}
                           items={mediaItems}
                         />
-                      </div>
+                      </PlaygroundAssistantResponse>
                     </div>
                   ) : (
                     <div className={PLAYGROUND_USER_BUBBLE_CLASS}>
@@ -590,13 +494,6 @@ export function TestChatWindow({
   const renderInput = (ref: React.RefObject<HTMLTextAreaElement | null>) => (
     <div className="w-full min-w-0 max-w-full shrink-0 overflow-hidden border-t border-border p-4">
       <div className={PLAYGROUND_PROMPT_SHELL_CLASS}>
-        {onCheckStatus ? (
-          <PlaygroundTrainingStatusBanner
-            indexingStatus={indexingStatus}
-            isCheckingStatus={isCheckingStatus ?? false}
-            onCheckStatus={onCheckStatus}
-          />
-        ) : null}
         <ChatPromptInput
           containerClassName="w-full max-w-full"
           disabled={isSending}
@@ -668,6 +565,30 @@ export function TestChatWindow({
         </div>
       </div>
 
+      <PlaygroundAssistantResponseDialog
+        onOpenChange={(open) => {
+          if (!open) setExpandedResponse(null);
+        }}
+        open={expandedResponse !== null}
+        title={`${displayName} response`}
+      >
+        <div className="space-y-3">
+          {expandedResponse?.textParts.map((text, index) => (
+            <StreamingMarkdown
+              key={`${expandedResponse.key}-expanded-part-${index}`}
+              status={expandedResponse.status}
+              text={text}
+            />
+          ))}
+          {expandedResponse ? (
+            <PlaygroundMessageAttachments
+              items={expandedResponse.mediaItems}
+              messageKey={expandedResponse.key}
+            />
+          ) : null}
+        </div>
+      </PlaygroundAssistantResponseDialog>
+
       <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -712,9 +633,6 @@ export function TestChatWindow({
                 threadId={threadId}
                 fillContainer
                 onThreadIdChange={onThreadIdChange}
-                indexingStatus={indexingStatus}
-                isCheckingStatus={isCheckingStatus}
-                onCheckStatus={onCheckStatus}
               />
             </div>
           </DialogContent>

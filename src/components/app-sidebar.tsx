@@ -28,6 +28,7 @@ import {
   useShowSavedReplies,
 } from '@/lib/posthogFeatureFlags';
 import { ExpandedAppSidebarHeader } from './ExpandedAppSidebarHeader';
+import { SidebarScrollCue } from './SidebarScrollCue';
 
 function formatUnreadBadgeCount(count: number): string {
   return count > 99 ? '99+' : String(count);
@@ -95,6 +96,7 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
         <ExpandedAppSidebarHeader onCollapse={toggleSidebar} />
       )}
 
+      <div className="relative flex min-h-0 flex-1 flex-col">
       <SidebarContent className="gap-0">
         {topLevelItems.length > 0 && (
           <SidebarMenu className="p-[0.45rem] group-data-[collapsible=icon]:p-0">
@@ -239,6 +241,8 @@ export function AppSidebar({ agent, ...props }: AppSidebarProps) {
           </SidebarGroup>
         )}
       </SidebarContent>
+        <SidebarScrollCue />
+      </div>
 
       <SidebarFooter className="gap-0">
         <CreditMeter />

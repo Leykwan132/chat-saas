@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useAction, useQuery } from 'convex/react';
+import { useState } from 'react';
+import { useQuery } from 'convex/react';
 import { X } from 'lucide-react';
 import { motion } from 'motion/react';
-import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { TestChatWindow } from '@/components/TestChatWindow';
@@ -41,39 +40,6 @@ export function AgentPlaygroundPanel({
   const shouldLoadAgent = mode === 'aside' || open;
   const agent = useQuery(api.agents.get, shouldLoadAgent ? { agentId } : 'skip');
 
-  const getIndexingStatus = useAction(api.cloudflare.getIndexingStatus);
-  const [indexingStatus, setIndexingStatus] = useState<{
-    isIndexing: boolean;
-    queued: number;
-    running: number;
-  } | null>(null);
-  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
-
-  const checkStatus = useCallback(async () => {
-    setIsCheckingStatus(true);
-    try {
-      const result = await getIndexingStatus();
-      setIndexingStatus({
-        isIndexing: result.isIndexing,
-        queued: result.queued ?? 0,
-        running: result.running ?? 0,
-      });
-    } catch {
-      toast.error('Failed to check agent status');
-    } finally {
-      setIsCheckingStatus(false);
-    }
-  }, [getIndexingStatus]);
-
-  useEffect(() => {
-    if (!open) return;
-    void checkStatus();
-    const interval = setInterval(() => {
-      void checkStatus();
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [checkStatus, open]);
-
   const renderChat = (fillContainer: boolean, embedded: boolean) => {
     if (permissionsLoading) {
       return (
@@ -110,9 +76,6 @@ export function AgentPlaygroundPanel({
         threadId={threadId}
         embedded={embedded}
         onThreadIdChange={setThreadId}
-        indexingStatus={indexingStatus}
-        isCheckingStatus={isCheckingStatus}
-        onCheckStatus={checkStatus}
         fillContainer={fillContainer}
       />
     );

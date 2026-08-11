@@ -28,6 +28,7 @@ import {
   KnowledgeBaseEmptyState,
   type OpenDeleteDialog,
 } from './helpers';
+import { QAEntry } from './QAEntry';
 
 interface QASectionProps {
   entries: any[] | undefined;
@@ -95,9 +96,7 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
   return (
     <>
       {canManage ? (
-      <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3">Add Q&A</h2>
-        <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <QAEntry>
           <div className="space-y-3">
             {qaPairs.map((pair, index) => (
               <div key={index} className="space-y-2">
@@ -116,8 +115,7 @@ export function QASection({ entries, agentId, openDeleteDialog, canManage = true
             <Button type="button" variant="outline" size="sm" onClick={addQAPair}><Plus className="size-3 mr-1" />Add more</Button>
             <Button type="button" onClick={handleSaveQA} disabled={isSavingQA || !qaPairs.some((p) => p.question.trim() && p.answer.trim())}>{isSavingQA ? <Spinner className="size-4" /> : "Save"}</Button>
           </div>
-        </div>
-      </div>
+      </QAEntry>
       ) : null}
 
       {hasEntries && (

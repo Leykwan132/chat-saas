@@ -37,6 +37,7 @@ import {
 import { KnowledgeBaseTestLayout } from '@/components/knowledge-base/KnowledgeBaseTestLayout';
 import { usePermissions } from '@/hooks/usePermissions';
 import { Permission } from '../../shared/permissions';
+import { useAgentIndexingStatus } from '@/hooks/useAgentIndexingStatus';
 import {
   Tooltip,
   TooltipContent,
@@ -76,6 +77,9 @@ export default function KnowledgeBasePage() {
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isTestOpen, setIsTestOpen] = useState(false);
+  const { indexingStatus, isCheckingStatus } = useAgentIndexingStatus({
+    enabled: Boolean(selectedAgentId),
+  });
 
   const storageLimits = useQuery(api.knowledgeBase.getStorageLimit);
   const maxFileSize = storageLimits?.maxFileSize ?? 4 * 1024 * 1024;
@@ -91,7 +95,6 @@ export default function KnowledgeBasePage() {
   const qaSize = qaEntries?.reduce((sum, entry) => sum + (entry.fileSize ?? 0), 0) ?? 0;
 
   const totalFileSize = webSize + fileSizeVal + textSize + qaSize;
-
   const openDeleteDialog = (
     entryType: 'web' | 'file' | 'text' | 'qa' | 'media',
     entryId: KnowledgeEntryId | string,
@@ -153,6 +156,8 @@ export default function KnowledgeBasePage() {
         <KnowledgeBaseHeader
           isTestOpen={isTestOpen}
           onTest={() => setIsTestOpen(toggleTestOpen)}
+          indexingStatus={indexingStatus}
+          isCheckingStatus={isCheckingStatus}
         />
 
         <KnowledgeBaseTestLayout
