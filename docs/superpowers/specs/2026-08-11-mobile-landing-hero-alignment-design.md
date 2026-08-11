@@ -6,7 +6,7 @@ Make the landing hero easier to scan on narrow screens by aligning its content t
 
 ## Responsive behavior
 
-Below the existing `sm` breakpoint, the announcement pill, headline, description, and call-to-action row align to the left as one visual group. The headline remains 32px. The description changes from 18px relaxed text to 16px with a tighter line height. The call-to-action buttons keep their existing equal-width mobile row.
+Below the existing `sm` breakpoint, the announcement pill, headline, description, and call-to-action row align to the left as one visual group. The headline is 28px. The description is 14px with a 20px line height. The call-to-action buttons keep their existing equal-width mobile row.
 
 At `sm` and above, the current centered alignment, description size, spacing, and button behavior remain unchanged.
 

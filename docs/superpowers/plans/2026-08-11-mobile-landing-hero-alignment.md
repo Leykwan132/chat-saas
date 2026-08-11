@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Left-align the complete landing hero content group on small screens and reduce its description to 16px while preserving the centered desktop layout.
+**Goal:** Left-align the complete landing hero content group on small screens, reduce its title to 28px, and reduce its description to 14px while preserving the centered desktop layout.
 
 **Architecture:** Change only responsive utility classes in `LandingHero`. Protect the mobile/desktop layout contract with the existing focused landing test.
 
@@ -10,8 +10,8 @@
 
 ## Global Constraints
 
-- Keep the mobile headline at 32px.
-- Use 16px description text with tighter leading below `sm`.
+- Use a 28px mobile headline below `sm`.
+- Use 14px description text with 20px leading below `sm`.
 - Preserve centered alignment and existing typography at `sm` and above.
 - Keep the equal-width mobile CTA row.
 

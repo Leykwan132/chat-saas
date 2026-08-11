@@ -47,10 +47,10 @@ export function LandingHero({
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-start justify-center py-16 text-left sm:min-h-[70svh] sm:items-center sm:text-center">
           <LandingAnnouncementPill />
-          <h1 className="font-title text-[32px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
+          <h1 className="font-title text-[28px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
             AI Agent for Every Inbox
           </h1>
-          <p className="mt-3 max-w-2xl text-pretty text-base leading-6 text-zinc-400 sm:mx-auto sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
+          <p className="mt-3 max-w-2xl text-pretty text-sm leading-5 text-zinc-400 sm:mx-auto sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
             <span className="block">Handle customer support and sales conversations in one place.</span>
             <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>

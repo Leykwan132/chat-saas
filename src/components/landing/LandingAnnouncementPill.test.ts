@@ -79,11 +79,17 @@ test('landing hero is left aligned with smaller supporting copy on mobile', () =
   const descriptionClasses = markup.match(
     /<p class="([^"]*)"><span class="block">Handle customer support/,
   )?.[1];
+  const titleClasses = markup.match(
+    /<h1 class="([^"]*)">AI Agent for Every Inbox<\/h1>/,
+  )?.[1];
 
   expect(contentClasses?.split(' ')).toEqual(
     expect.arrayContaining(['items-start', 'text-left', 'sm:items-center', 'sm:text-center']),
   );
+  expect(titleClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['text-[28px]', 'sm:text-[38px]']),
+  );
   expect(descriptionClasses?.split(' ')).toEqual(
-    expect.arrayContaining(['text-base', 'leading-6', 'sm:text-lg', 'sm:leading-relaxed']),
+    expect.arrayContaining(['text-sm', 'leading-5', 'sm:text-lg', 'sm:leading-relaxed']),
   );
 });
