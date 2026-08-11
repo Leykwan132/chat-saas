@@ -2,13 +2,13 @@
 
 ## Goal
 
-Make the landing hero easier to scan on narrow screens by aligning its content to the left and reducing the supporting description's visual weight.
+Make the landing hero easier to scan on narrow screens with a centered, compact type hierarchy and vertically stacked actions.
 
 ## Responsive behavior
 
-Below the existing `sm` breakpoint, the announcement pill, headline, description, and call-to-action row align to the left as one visual group. The headline is 28px. The description is 14px with a 20px line height. The call-to-action buttons keep their existing equal-width mobile row.
+Below the existing `sm` breakpoint, the announcement pill, headline, and description remain centered. The headline is 28px. The description is 14px with a 20px line height. The call-to-action buttons stack vertically at full width.
 
-At `sm` and above, the current centered alignment, description size, spacing, and button behavior remain unchanged.
+At `sm` and above, the centered alignment and larger type scale remain unchanged, and the call-to-action buttons return to their side-by-side layout.
 
 ## Implementation boundary
 

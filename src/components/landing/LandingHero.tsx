@@ -45,7 +45,7 @@ export function LandingHero({
   return (
     <section className="w-full bg-white px-5 pb-16 pt-28 sm:px-6 sm:pb-20 sm:pt-32 dark:bg-[#060606]">
       <div className="mx-auto max-w-7xl">
-        <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-start justify-center py-16 text-left sm:min-h-[70svh] sm:items-center sm:text-center">
+        <div className="mx-auto flex min-h-[60svh] max-w-3xl flex-col items-center justify-center py-16 text-center sm:min-h-[70svh]">
           <LandingAnnouncementPill />
           <h1 className="font-title text-[28px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
             AI Agent for Every Inbox
@@ -54,7 +54,7 @@ export function LandingHero({
             <span className="block">Handle customer support and sales conversations in one place.</span>
             <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>
-          <div className="mt-8 flex w-full max-w-sm flex-row items-center justify-center gap-3 sm:w-auto sm:gap-3.5">
+          <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
             <Link
               to="/contact?intent=demo"

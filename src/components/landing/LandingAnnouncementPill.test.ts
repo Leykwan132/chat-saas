@@ -67,7 +67,7 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   );
 });
 
-test('landing hero is left aligned with smaller supporting copy on mobile', () => {
+test('landing hero is centered with stacked actions and smaller copy on mobile', () => {
   const markup = renderToStaticMarkup(
     createElement(
       MemoryRouter,
@@ -82,14 +82,18 @@ test('landing hero is left aligned with smaller supporting copy on mobile', () =
   const titleClasses = markup.match(
     /<h1 class="([^"]*)">AI Agent for Every Inbox<\/h1>/,
   )?.[1];
+  const actionClasses = markup.match(/<div class="([^"]*mt-8[^"]*max-w-sm[^"]*)">/)?.[1];
 
   expect(contentClasses?.split(' ')).toEqual(
-    expect.arrayContaining(['items-start', 'text-left', 'sm:items-center', 'sm:text-center']),
+    expect.arrayContaining(['items-center', 'text-center']),
   );
   expect(titleClasses?.split(' ')).toEqual(
     expect.arrayContaining(['text-[28px]', 'sm:text-[38px]']),
   );
   expect(descriptionClasses?.split(' ')).toEqual(
     expect.arrayContaining(['text-sm', 'leading-5', 'sm:text-lg', 'sm:leading-relaxed']),
+  );
+  expect(actionClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['flex-col', 'items-stretch', 'sm:flex-row', 'sm:items-center']),
   );
 });
