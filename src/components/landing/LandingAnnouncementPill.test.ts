@@ -77,7 +77,7 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   );
   const contentClasses = markup.match(/<div class="([^"]*min-h-\[60svh\][^"]*)">/)?.[1];
   const descriptionClasses = markup.match(
-    /<p class="([^"]*)"><span class="block">Handle customer support/,
+    /<p class="([^"]*)"><span class="block sm:hidden">Handle customer support/,
   )?.[1];
   const titleClasses = markup.match(
     /<h1 class="([^"]*)">AI Agent for Every Inbox<\/h1>/,
@@ -116,5 +116,22 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   );
   expect(secondaryActionClasses?.split(' ')).toEqual(
     expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
+  );
+});
+
+test('landing hero uses a shorter description only on mobile', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      null,
+      createElement(LandingHero, { hasSession: false, onSignUp: () => undefined }),
+    ),
+  );
+
+  expect(markup).toContain(
+    '<span class="block sm:hidden">Handle customer support and sales in one place.</span>',
+  );
+  expect(markup).toContain(
+    '<span class="hidden sm:block"><span class="block">Handle customer support and sales conversations in one place.</span><span class="block">No complex setup—get started in just 5 minutes.</span></span>',
   );
 });

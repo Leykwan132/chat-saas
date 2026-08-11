@@ -51,8 +51,11 @@ export function LandingHero({
             AI Agent for Every Inbox
           </h1>
           <p className="mt-3 w-[320px] max-w-full text-pretty text-[15px] leading-[22px] text-zinc-400 sm:mx-auto sm:w-full sm:max-w-2xl sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
-            <span className="block">Handle customer support and sales conversations in one place.</span>
-            <span className="block">No complex setup—get started in just 5 minutes.</span>
+            <span className="block sm:hidden">Handle customer support and sales in one place.</span>
+            <span className="hidden sm:block">
+              <span className="block">Handle customer support and sales conversations in one place.</span>
+              <span className="block">No complex setup—get started in just 5 minutes.</span>
+            </span>
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
