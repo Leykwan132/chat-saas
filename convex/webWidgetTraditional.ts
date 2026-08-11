@@ -46,7 +46,7 @@ export async function traditionalDashboardConfig(
     foregroundColor: traditionalWidgetForeground(values.mainColor),
     displayUsername: channel?.displayUsername,
     displayPhoneNumber: channel?.displayPhoneNumber,
-    canActivate: Boolean(channel?.displayUsername && channel.displayPhoneNumber),
+    canInstall: Boolean(channel?.displayUsername && channel.displayPhoneNumber),
     canHideBranding: canUseCustomIcon,
     hidePoweredBy,
     poweredBy: !hidePoweredBy,

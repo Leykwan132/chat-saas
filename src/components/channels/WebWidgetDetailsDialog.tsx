@@ -89,7 +89,6 @@ export function WebWidgetDetailsDialog({
             </TabsContent>
             <TabsContent value="traditional" className="m-0 h-full min-h-0 overflow-y-auto">
               <WebWidgetTraditionalPanel
-                activeMode={settings.activeMode}
                 agentId={typedAgentId}
                 publicKey={settings.publicKey}
                 settings={settings.traditional}

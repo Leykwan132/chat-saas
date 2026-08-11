@@ -3,7 +3,6 @@ import { useMutation } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import type { WebWidgetMode } from '../../../shared/traditionalWebWidget';
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -23,31 +22,27 @@ export type TraditionalWidgetSettings = {
   canHideBranding: boolean;
   displayUsername?: string;
   displayPhoneNumber?: string;
-  canActivate: boolean;
+  canInstall: boolean;
 };
 
 type WebWidgetTraditionalPanelProps = {
-  activeMode: WebWidgetMode;
   agentId: Id<'agents'> | undefined;
   publicKey: string;
   settings: TraditionalWidgetSettings;
 };
 
 export function WebWidgetTraditionalPanel({
-  activeMode,
   agentId,
   publicKey,
   settings,
 }: WebWidgetTraditionalPanelProps) {
   const { openUpgradeModal } = useUpgradeModal();
   const updateTraditionalSettings = useMutation(api.webWidget.updateTraditionalSettings);
-  const activateMode = useMutation(api.webWidget.activateMode);
   const [label, setLabel] = useState(settings.label);
   const [prefillMessage, setPrefillMessage] = useState(settings.prefillMessage);
   const [hidePoweredBy, setHidePoweredBy] = useState(settings.hidePoweredBy);
   const [saving, setSaving] = useState(false);
-  const [activating, setActivating] = useState(false);
-  const snippet = buildWebWidgetSnippet(publicKey);
+  const snippet = buildWebWidgetSnippet(publicKey, 'traditional');
   const draft = { label, prefillMessage, hidePoweredBy };
   const saved = {
     label: settings.label,
@@ -55,9 +50,7 @@ export function WebWidgetTraditionalPanel({
     hidePoweredBy: settings.hidePoweredBy,
   };
   const formState = getTraditionalWidgetFormState({
-    activeMode,
-    busy: saving || activating,
-    canPublish: settings.canActivate,
+    busy: saving,
     draft,
     saved,
   });
@@ -83,19 +76,6 @@ export function WebWidgetTraditionalPanel({
     }
   };
 
-  const activateTraditional = async () => {
-    if (!agentId || !formState.canActivate) return;
-    setActivating(true);
-    try {
-      await activateMode({ agentId, mode: 'traditional' });
-      toast.success('Traditional widget is now active');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : String(error));
-    } finally {
-      setActivating(false);
-    }
-  };
-
   const copySnippet = () => {
     void navigator.clipboard
       .writeText(snippet)
@@ -116,13 +96,13 @@ export function WebWidgetTraditionalPanel({
   return (
     <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
       <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
-        {!settings.canActivate ? (
+        {!settings.canInstall ? (
           <p className="text-sm text-muted-foreground">
-            You need to connect WhatsApp before activating Traditional.
+            Connect WhatsApp before installing Traditional.
           </p>
         ) : null}
         <FieldGroup>
-          {settings.canActivate ? (
+          {settings.canInstall ? (
             <>
               <Field>
                 <FieldLabel>WhatsApp account</FieldLabel>
@@ -162,19 +142,16 @@ export function WebWidgetTraditionalPanel({
           <WebWidgetBrandingSection
             hidePoweredBy={hidePoweredBy}
             canHideBranding={settings.canHideBranding}
-            saving={saving || activating}
+            saving={saving}
             onChange={setHidePoweredBy}
             onRequestUpgrade={openUpgradeModal}
           />
           <TraditionalWidgetActions
-            activating={activating}
-            canActivate={formState.canActivate}
             canSave={formState.canSave}
             saving={saving}
-            onActivate={() => void activateTraditional()}
             onSave={() => void saveChanges()}
           />
-          {settings.canActivate ? (
+          {settings.canInstall ? (
             <Field>
               <FieldLabel>Installation</FieldLabel>
               <WebWidgetScriptArtifact

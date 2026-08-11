@@ -7,9 +7,6 @@ import type { WebWidgetLayout } from '../../../shared/webWidgetLayouts';
 import type { WebWidgetTheme } from '../../../shared/webWidgetThemes';
 import { DEFAULT_WEB_WIDGET_THEME } from '../../../shared/webWidgetThemes';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { WebWidgetAppearanceSection } from '@/components/channels/WebWidgetAppearanceSection';
 import { WebWidgetBrandingSection } from '@/components/channels/WebWidgetBrandingSection';
 import { WebWidgetLayoutPicker } from '@/components/channels/WebWidgetLayoutPicker';
@@ -22,7 +19,6 @@ import {
   FieldLabel,
 } from '@/components/ui/field';
 import type { TraditionalWidgetSettings } from './WebWidgetTraditionalPanel';
-import { getWebWidgetPreviewState } from './webWidgetConfigurationState';
 
 export type WebWidgetSettings = {
   channelId: Id<'channels'>;
@@ -37,7 +33,6 @@ export type WebWidgetSettings = {
   hidePoweredBy: boolean;
   canHideBranding: boolean;
   canUseCustomIcon: boolean;
-  activeMode: 'ai_powered' | 'traditional';
   traditional: TraditionalWidgetSettings;
 };
 
@@ -65,22 +60,10 @@ export function WebWidgetSettingsPanel({
   const [savingPlacement, setSavingPlacement] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
-  const [activatingMode, setActivatingMode] = useState(false);
-  const activateMode = useMutation(api.webWidget.activateMode);
-  const snippet = buildWebWidgetSnippet(settings.publicKey);
+  const snippet = buildWebWidgetSnippet(settings.publicKey, 'ai_powered');
   const normalizedAgentName = agentDisplayName.trim();
   const normalizedPlaceholder = placeholderText.trim();
   const previewPoweredBy = !(settings.canHideBranding && hidePoweredBy);
-  const previewState = getWebWidgetPreviewState(settings.activeMode);
-
-  const activateAiMode = useCallback(() => {
-    if (!agentId || previewState.enabled || activatingMode) return;
-    setActivatingMode(true);
-    void activateMode({ agentId, mode: 'ai_powered' })
-      .then(() => toast.success('AI-powered widget is now active'))
-      .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
-      .finally(() => setActivatingMode(false));
-  }, [activateMode, activatingMode, agentId, previewState.enabled]);
 
   const saveAppearance = useCallback(() => {
     if (!agentId) return;
@@ -220,22 +203,6 @@ export function WebWidgetSettingsPanel({
       <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
         <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
           <FieldGroup>
-            {previewState.inactiveMessage ? (
-              <Alert>
-                <AlertTitle>Traditional widget is active</AlertTitle>
-                <AlertDescription>{previewState.inactiveMessage}</AlertDescription>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="mt-3 w-fit"
-                  disabled={activatingMode}
-                  onClick={activateAiMode}
-                >
-                  {activatingMode ? <Spinner data-icon="inline-start" /> : null}
-                  {activatingMode ? 'Activating…' : 'Set as active'}
-                </Button>
-              </Alert>
-            ) : null}
             <WebWidgetAppearanceSection
               agentDisplayName={agentDisplayName}
               savedAgentDisplayName={settings.agentDisplayName}
@@ -279,7 +246,7 @@ export function WebWidgetSettingsPanel({
           <WebWidgetPreview
             className="min-h-[620px] lg:min-h-0"
             agentName={agentDisplayName || settings.agentDisplayName}
-            enabled={previewState.enabled}
+            enabled
             placeholder={placeholderText.trim() || settings.placeholder}
             iconUrl={settings.iconUrl}
             layout={placementLayout}

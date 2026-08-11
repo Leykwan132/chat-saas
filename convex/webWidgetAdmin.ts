@@ -23,7 +23,6 @@ import {
   getWebWidgetSettingsForAgent,
 } from "./webWidgetAccess";
 import { traditionalDashboardConfig } from "./webWidgetTraditional";
-import { DEFAULT_WEB_WIDGET_MODE } from "../shared/traditionalWebWidget";
 
 async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<"webWidgetSettings">) {
   const planState = await getWebWidgetPlanState(ctx, {
@@ -43,7 +42,6 @@ async function widgetDashboardConfig(ctx: QueryCtx | MutationCtx, settings: Doc<
     iconUrl: await resolveWidgetIconUrl(ctx, settings, planState.canUseCustomIcon),
     ...branding,
     canUseCustomIcon: planState.canUseCustomIcon,
-    activeMode: settings.mode ?? DEFAULT_WEB_WIDGET_MODE,
     traditional: await traditionalDashboardConfig(
       ctx,
       settings,

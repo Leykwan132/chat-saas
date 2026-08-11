@@ -1,19 +1,8 @@
-import type { WebWidgetMode } from '../../../shared/traditionalWebWidget';
-
 export type TraditionalWidgetValues = {
   label: string;
   prefillMessage: string;
   hidePoweredBy: boolean;
 };
-
-export function getWebWidgetPreviewState(activeMode: WebWidgetMode) {
-  return activeMode === 'ai_powered'
-    ? { enabled: true, inactiveMessage: null }
-    : {
-        enabled: false,
-        inactiveMessage: 'Set AI-powered as the active widget to use the live preview.',
-      };
-}
 
 export function getWebWidgetPreviewQueryArgs(
   enabled: boolean,
@@ -40,9 +29,7 @@ function normalizeTraditionalWidgetValues(values: TraditionalWidgetValues) {
 }
 
 export function getTraditionalWidgetFormState(args: {
-  activeMode: WebWidgetMode;
   busy: boolean;
-  canPublish: boolean;
   draft: TraditionalWidgetValues;
   saved: TraditionalWidgetValues;
 }) {
@@ -62,11 +49,5 @@ export function getTraditionalWidgetFormState(args: {
     valid,
     dirty,
     canSave: valid && dirty && !args.busy,
-    canActivate:
-      valid &&
-      !dirty &&
-      !args.busy &&
-      args.canPublish &&
-      args.activeMode !== 'traditional',
   };
 }

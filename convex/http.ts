@@ -405,6 +405,12 @@ function getWidgetVisitorId(req: Request) {
   return new URL(req.url).searchParams.get("visitorId")?.trim() ?? "";
 }
 
+function getWidgetMode(req: Request) {
+  return new URL(req.url).searchParams.get("mode") === "traditional"
+    ? "traditional" as const
+    : "ai_powered" as const;
+}
+
 const widgetConfig = httpAction(async (ctx, req) => {
   const publicKey = getWidgetKey(req);
   if (!publicKey) {
@@ -413,6 +419,7 @@ const widgetConfig = httpAction(async (ctx, req) => {
   try {
     const config = await ctx.runQuery(api.webWidget.publicGetConfig, {
       publicKey,
+      mode: getWidgetMode(req),
     });
     return widgetJsonResponse(config);
   } catch (error) {

@@ -3,7 +3,7 @@ import { buildWebWidgetSnippet } from '../channels/webWidgetSnippet';
 
 describe('Avatar embed website-widget isolation', () => {
   it('keeps generated customer widget snippets route-agnostic', () => {
-    expect(buildWebWidgetSnippet('pub_test')).not.toContain(
+    expect(buildWebWidgetSnippet('pub_test', 'ai_powered')).not.toContain(
       'data-kilobot-exclude-path-prefix',
     );
   });
