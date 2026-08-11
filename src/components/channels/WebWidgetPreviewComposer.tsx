@@ -6,6 +6,7 @@ import { WebWidgetTypingPlaceholderInput } from './WebWidgetTypingPlaceholderInp
 type WebWidgetPreviewComposerProps = {
   composerOpen: boolean;
   dark: boolean;
+  disabled?: boolean;
   draft: string;
   mobile?: boolean;
   placeholder: string;
@@ -21,6 +22,7 @@ type WebWidgetPreviewComposerProps = {
 export function WebWidgetPreviewComposer({
   composerOpen,
   dark,
+  disabled = false,
   draft,
   mobile = false,
   placeholder,
@@ -65,11 +67,13 @@ export function WebWidgetPreviewComposer({
       }
       onSubmit={(event) => {
         event.preventDefault();
+        if (disabled) return;
         onSubmit();
       }}
     >
       <WebWidgetTypingPlaceholderInput
         className="caret-current"
+        disabled={disabled}
         placeholderClassName={dark ? 'text-white/40' : 'text-black/35'}
         value={draft}
         onBlur={() => {
@@ -92,7 +96,7 @@ export function WebWidgetPreviewComposer({
           dark ? 'bg-white text-black hover:bg-white/85' : 'bg-black text-white hover:bg-black/80',
         )}
         aria-label="Send preview message"
-        disabled={sending || !draft.trim()}
+        disabled={disabled || sending || !draft.trim()}
       >
         <ArrowUp className="size-4" />
       </button>

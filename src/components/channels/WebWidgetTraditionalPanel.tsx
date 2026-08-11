@@ -3,13 +3,17 @@ import { useMutation } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
+import type { WebWidgetMode } from '../../../shared/traditionalWebWidget';
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
+import { TraditionalWidgetActions } from './TraditionalWidgetActions';
 import { WebWidgetBrandingSection } from './WebWidgetBrandingSection';
 import { WebWidgetScriptArtifact } from './WebWidgetScriptArtifact';
-import { buildWebWidgetSnippet } from './webWidgetSnippet';
 import { WebWidgetTraditionalPreview } from './WebWidgetTraditionalPreview';
+import { buildWebWidgetSnippet } from './webWidgetSnippet';
+import { getTraditionalWidgetFormState } from './webWidgetConfigurationState';
 
 export type TraditionalWidgetSettings = {
   label: string;
@@ -23,12 +27,14 @@ export type TraditionalWidgetSettings = {
 };
 
 type WebWidgetTraditionalPanelProps = {
+  activeMode: WebWidgetMode;
   agentId: Id<'agents'> | undefined;
   publicKey: string;
   settings: TraditionalWidgetSettings;
 };
 
 export function WebWidgetTraditionalPanel({
+  activeMode,
   agentId,
   publicKey,
   settings,
@@ -40,44 +46,155 @@ export function WebWidgetTraditionalPanel({
   const [prefillMessage, setPrefillMessage] = useState(settings.prefillMessage);
   const [hidePoweredBy, setHidePoweredBy] = useState(settings.hidePoweredBy);
   const [saving, setSaving] = useState(false);
+  const [activating, setActivating] = useState(false);
   const snippet = buildWebWidgetSnippet(publicKey);
-  const valid = label.trim().length >= 1 && label.trim().length <= 40 && prefillMessage.trim().length >= 1 && prefillMessage.trim().length <= 500;
+  const draft = { label, prefillMessage, hidePoweredBy };
+  const saved = {
+    label: settings.label,
+    prefillMessage: settings.prefillMessage,
+    hidePoweredBy: settings.hidePoweredBy,
+  };
+  const formState = getTraditionalWidgetFormState({
+    activeMode,
+    busy: saving || activating,
+    canPublish: settings.canActivate,
+    draft,
+    saved,
+  });
+  const labelInvalid = label.trim().length < 1 || label.trim().length > 40;
+  const messageInvalid =
+    prefillMessage.trim().length < 1 || prefillMessage.trim().length > 500;
 
-  const publishTraditional = async () => {
-    if (!agentId || !settings.canActivate || !valid) {
-      throw new Error('Complete the Traditional widget settings before installing it.');
+  const saveChanges = async () => {
+    if (!agentId || !formState.canSave) return;
+    setSaving(true);
+    try {
+      await updateTraditionalSettings({
+        agentId,
+        label: label.trim(),
+        prefillMessage: prefillMessage.trim(),
+        hidePoweredBy,
+      });
+      toast.success('Traditional widget settings saved');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      setSaving(false);
     }
-    await updateTraditionalSettings({
-      agentId,
-      label: label.trim(),
-      prefillMessage: prefillMessage.trim(),
-      hidePoweredBy,
-    });
-    await activateMode({ agentId, mode: 'traditional' });
   };
 
-  const install = (action: () => Promise<void>, successMessage: string) => {
-    if (saving) return;
-    setSaving(true);
-    void Promise.all([publishTraditional(), action()])
-      .then(() => toast.success(successMessage))
-      .catch((error) => toast.error(error instanceof Error ? error.message : String(error)))
-      .finally(() => setSaving(false));
+  const activateTraditional = async () => {
+    if (!agentId || !formState.canActivate) return;
+    setActivating(true);
+    try {
+      await activateMode({ agentId, mode: 'traditional' });
+      toast.success('Traditional widget is now active');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : String(error));
+    } finally {
+      setActivating(false);
+    }
+  };
+
+  const copySnippet = () => {
+    void navigator.clipboard
+      .writeText(snippet)
+      .then(() => toast.success('Installation copied'))
+      .catch(() => toast.error('Could not copy installation'));
+  };
+
+  const downloadSnippet = () => {
+    const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' }));
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = 'kilobot-widget.html';
+    anchor.click();
+    URL.revokeObjectURL(url);
+    toast.success('Installation downloaded');
   };
 
   return (
     <div className="grid min-h-0 gap-0 overflow-y-auto lg:grid-cols-[minmax(360px,0.9fr)_1.1fr] lg:overflow-hidden">
       <div className="flex flex-col gap-6 border-b border-border px-8 pt-4 pb-8 lg:overflow-y-auto lg:border-b-0 lg:border-r lg:px-10 lg:pt-4 lg:pb-10">
-        {!settings.canActivate ? <p className="text-sm text-muted-foreground">You need to connect WhatsApp before using Traditional.</p> : null}
+        {!settings.canActivate ? (
+          <p className="text-sm text-muted-foreground">
+            You need to connect WhatsApp before activating Traditional.
+          </p>
+        ) : null}
         <FieldGroup>
-          {settings.canActivate ? <><Field><FieldLabel>WhatsApp account</FieldLabel><Input value={settings.displayUsername} readOnly /></Field><Field><FieldLabel>WhatsApp number</FieldLabel><Input value={settings.displayPhoneNumber} readOnly /></Field></> : null}
-          <Field><FieldLabel>Pill label</FieldLabel><Input value={label} maxLength={40} onChange={(event) => setLabel(event.target.value)} /><p className="text-xs text-muted-foreground">1–40 characters</p></Field>
-          <Field><FieldLabel>Prefilled WhatsApp message</FieldLabel><textarea value={prefillMessage} maxLength={500} className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50" onChange={(event) => setPrefillMessage(event.target.value)} /><p className="text-xs text-muted-foreground">1–500 characters</p></Field>
-          <WebWidgetBrandingSection hidePoweredBy={hidePoweredBy} canHideBranding={settings.canHideBranding} saving={saving} onChange={setHidePoweredBy} onRequestUpgrade={openUpgradeModal} />
-          {settings.canActivate ? <Field><FieldLabel>Installation</FieldLabel><WebWidgetScriptArtifact code={snippet} onCopy={() => install(() => navigator.clipboard.writeText(snippet), 'Traditional installation copied')} onDownload={() => install(async () => { const url = URL.createObjectURL(new Blob([snippet], { type: 'text/html;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'kilobot-widget.html'; anchor.click(); URL.revokeObjectURL(url); }, 'Traditional installation downloaded')} /></Field> : null}
+          {settings.canActivate ? (
+            <>
+              <Field>
+                <FieldLabel>WhatsApp account</FieldLabel>
+                <Input value={settings.displayUsername} readOnly />
+              </Field>
+              <Field>
+                <FieldLabel>WhatsApp number</FieldLabel>
+                <Input value={settings.displayPhoneNumber} readOnly />
+              </Field>
+            </>
+          ) : null}
+          <Field data-invalid={labelInvalid}>
+            <FieldLabel htmlFor="traditional-widget-label">Pill label</FieldLabel>
+            <Input
+              id="traditional-widget-label"
+              value={label}
+              maxLength={40}
+              aria-invalid={labelInvalid}
+              onChange={(event) => setLabel(event.target.value)}
+            />
+            <FieldDescription>1–40 characters</FieldDescription>
+          </Field>
+          <Field data-invalid={messageInvalid}>
+            <FieldLabel htmlFor="traditional-widget-message">
+              Prefilled WhatsApp message
+            </FieldLabel>
+            <Textarea
+              id="traditional-widget-message"
+              value={prefillMessage}
+              maxLength={500}
+              aria-invalid={messageInvalid}
+              className="min-h-24"
+              onChange={(event) => setPrefillMessage(event.target.value)}
+            />
+            <FieldDescription>1–500 characters</FieldDescription>
+          </Field>
+          <WebWidgetBrandingSection
+            hidePoweredBy={hidePoweredBy}
+            canHideBranding={settings.canHideBranding}
+            saving={saving || activating}
+            onChange={setHidePoweredBy}
+            onRequestUpgrade={openUpgradeModal}
+          />
+          <TraditionalWidgetActions
+            activating={activating}
+            canActivate={formState.canActivate}
+            canSave={formState.canSave}
+            saving={saving}
+            onActivate={() => void activateTraditional()}
+            onSave={() => void saveChanges()}
+          />
+          {settings.canActivate ? (
+            <Field>
+              <FieldLabel>Installation</FieldLabel>
+              <WebWidgetScriptArtifact
+                code={snippet}
+                onCopy={copySnippet}
+                onDownload={downloadSnippet}
+              />
+            </Field>
+          ) : null}
         </FieldGroup>
       </div>
-      <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10"><WebWidgetTraditionalPreview className="min-h-[620px] lg:min-h-0" label={label} phoneNumber={settings.displayPhoneNumber} prefillMessage={prefillMessage} poweredBy={!hidePoweredBy} /></div>
+      <div className="flex min-h-0 flex-col gap-6 px-8 pt-4 pb-8 lg:overflow-y-auto lg:px-10 lg:pt-4 lg:pb-10">
+        <WebWidgetTraditionalPreview
+          className="min-h-[620px] lg:min-h-0"
+          label={label}
+          phoneNumber={settings.displayPhoneNumber}
+          prefillMessage={prefillMessage}
+          poweredBy={!hidePoweredBy}
+        />
+      </div>
     </div>
   );
 }

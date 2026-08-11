@@ -71,7 +71,7 @@ export function WebWidgetDetailsDialog({
             <Loader2 className="size-5 animate-spin text-muted-foreground" />
           </div>
         ) : settings ? (
-          <Tabs key={settings.publicKey} defaultValue="traditional" className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-0 overflow-hidden">
+          <Tabs key={settings.publicKey} defaultValue={settings.activeMode} className="grid h-full min-h-0 grid-rows-[auto_1fr] gap-0 overflow-hidden">
             <div className="flex items-center px-8 py-3 lg:px-10">
               <TabsList variant="line" aria-label="Widget mode">
                 <TabsTrigger value="traditional">Traditional</TabsTrigger>
@@ -89,6 +89,7 @@ export function WebWidgetDetailsDialog({
             </TabsContent>
             <TabsContent value="traditional" className="m-0 h-full min-h-0 overflow-y-auto">
               <WebWidgetTraditionalPanel
+                activeMode={settings.activeMode}
                 agentId={typedAgentId}
                 publicKey={settings.publicKey}
                 settings={settings.traditional}

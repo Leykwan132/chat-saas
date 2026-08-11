@@ -2,6 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import type { WebWidgetPreviewMessage } from './WebWidgetPreviewConversation';
+import {
+  canSendWebWidgetPreview,
+  getWebWidgetPreviewQueryArgs,
+} from './webWidgetConfigurationState';
 
 function previewVisitorStorageKey(publicKey: string) {
   return `kilobot:widget-preview:${publicKey}:visitorId`;
@@ -20,7 +24,7 @@ function readPreviewVisitorId(publicKey: string) {
   return next;
 }
 
-export function useWebWidgetPreviewConversation(publicKey: string) {
+export function useWebWidgetPreviewConversation(publicKey: string, enabled = true) {
   const [previewOverride, setPreviewOverride] = useState<{
     publicKey: string;
     visitorId: string;
@@ -35,10 +39,10 @@ export function useWebWidgetPreviewConversation(publicKey: string) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const receiveMessage = useMutation(api.webWidget.publicReceiveMessage);
-  const storedMessages = useQuery(api.webWidget.publicListMessages, {
-    publicKey,
-    visitorId,
-  });
+  const storedMessages = useQuery(
+    api.webWidget.publicListMessages,
+    getWebWidgetPreviewQueryArgs(enabled, publicKey, visitorId),
+  );
 
   const messages = useMemo<WebWidgetPreviewMessage[]>(
     () =>
@@ -56,7 +60,7 @@ export function useWebWidgetPreviewConversation(publicKey: string) {
   const sendMessage = useCallback(
     async (content: string) => {
       const trimmed = content.trim();
-      if (!trimmed || sending) return false;
+      if (!canSendWebWidgetPreview({ enabled, content: trimmed, sending })) return false;
       setSending(true);
       setSendError(null);
       try {
@@ -74,7 +78,7 @@ export function useWebWidgetPreviewConversation(publicKey: string) {
         setSending(false);
       }
     },
-    [publicKey, receiveMessage, sending, visitorId],
+    [enabled, publicKey, receiveMessage, sending, visitorId],
   );
 
   const resetConversation = useCallback(() => {
@@ -85,7 +89,7 @@ export function useWebWidgetPreviewConversation(publicKey: string) {
   }, [publicKey]);
 
   return {
-    loading: storedMessages === undefined,
+    loading: enabled && storedMessages === undefined,
     messages,
     resetConversation,
     sendError,
