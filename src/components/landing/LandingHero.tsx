@@ -59,12 +59,14 @@ export function LandingHero({
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
-            <Link
-              to="/contact?intent=demo"
+            <a
               className="inline-flex h-11 w-[240px] flex-none items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 sm:w-auto dark:border-white/20 dark:text-white dark:hover:bg-white/5"
+              href="https://wa.me/601167389886?text=Hey%2C%20I%20want%20to%20learn%20more%20about%20Kilobot."
+              target="_blank"
+              rel="noopener noreferrer"
             >
-              Book a demo
-            </Link>
+              Try Live Demo
+            </a>
           </div>
         </div>
         <div id="product-demo" className="mt-14 w-full scroll-mt-14 sm:mt-16">
