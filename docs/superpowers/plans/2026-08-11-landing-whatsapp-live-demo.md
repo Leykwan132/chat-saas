@@ -139,3 +139,97 @@ Expected: Vite serves the homepage at `http://127.0.0.1:5179/`; an HTTP request 
 git add index.html src/components/landing/LandingHero.tsx src/components/landing/LandingAnnouncementPill.test.ts CONTINUITY.md docs/superpowers/plans/2026-08-11-landing-whatsapp-live-demo.md
 git commit -m "Add WhatsApp live demo hero action"
 ```
+
+---
+
+### Task 2: Add the WhatsApp brand icon to the live-demo action
+
+**Files:**
+- Modify: `src/components/landing/LandingAnnouncementPill.test.ts`
+- Modify: `src/components/landing/LandingHero.tsx`
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: the external live-demo anchor produced by Task 1
+- Produces: one decorative `SiWhatsapp` icon before `Try Live Demo`
+
+- [x] **Step 1: Write the failing rendered-markup regression**
+
+Capture the live-demo anchor contents and require the approved spacing and icon:
+
+```ts
+const liveDemoAction = markup.match(
+  /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">(.*?)<\/a>/,
+);
+
+expect(liveDemoAction?.[1].split(' ')).toEqual(
+  expect.arrayContaining([
+    'h-11',
+    'w-[240px]',
+    'flex-none',
+    'gap-2',
+    'px-6',
+    'sm:w-auto',
+  ]),
+);
+expect(liveDemoAction?.[3]).toContain('<svg');
+expect(liveDemoAction?.[3]).toContain('aria-hidden="true"');
+expect(liveDemoAction?.[3]).toContain('class="size-4 shrink-0 text-[#25D366]"');
+expect(liveDemoAction?.[3]).toMatch(/<\/svg>Try Live Demo$/);
+```
+
+- [x] **Step 2: Run the focused test and verify RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingAnnouncementPill.test.ts
+```
+
+Expected: FAIL because the action lacks `gap-2` and its content contains no WhatsApp SVG.
+
+- [x] **Step 3: Add the WhatsApp icon**
+
+Import the installed brand icon:
+
+```tsx
+import { SiWhatsapp } from 'react-icons/si';
+```
+
+Add `gap-2` to the existing anchor classes and render the decorative icon before its label:
+
+```tsx
+<SiWhatsapp aria-hidden className="size-4 shrink-0 text-[#25D366]" />
+Try Live Demo
+```
+
+- [x] **Step 4: Run the focused test and verify GREEN**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingAnnouncementPill.test.ts
+```
+
+Expected: all six tests PASS.
+
+- [x] **Step 5: Run proportional verification**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/landing/LandingHero.tsx src/components/landing/LandingAnnouncementPill.test.ts
+source ~/.nvm/nvm.sh && nvm use 22 && bun run build
+git diff --check
+```
+
+Expected: scoped ESLint, production build, and whitespace validation PASS. Existing local environment and bundle-size build warnings may remain.
+
+- [x] **Step 6: Record and commit the verified follow-up**
+
+Update `CONTINUITY.md` with the RED/GREEN and verification receipts. Production availability remains `UNCONFIRMED`, so do not update `kilobot-docs/docs/releases/changelog.mdx`.
+
+```bash
+git add src/components/landing/LandingHero.tsx src/components/landing/LandingAnnouncementPill.test.ts CONTINUITY.md docs/superpowers/plans/2026-08-11-landing-whatsapp-live-demo.md
+git commit -m "Add WhatsApp icon to live demo action"
+```

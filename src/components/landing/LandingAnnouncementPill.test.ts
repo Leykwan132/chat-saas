@@ -94,7 +94,7 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
     /<button type="button" class="([^"]*)">Start for free<\/button>/,
   )?.[1];
   const liveDemoAction = markup.match(
-    /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">Try Live Demo<\/a>/,
+    /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">(.*?)<\/a>/,
   );
 
   expect(contentClasses?.split(' ')).toEqual(
@@ -122,11 +122,24 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
     expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
   );
   expect(liveDemoAction?.[1].split(' ')).toEqual(
-    expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
+    expect.arrayContaining([
+      'h-11',
+      'w-[240px]',
+      'flex-none',
+      'gap-2',
+      'px-6',
+      'sm:w-auto',
+    ]),
   );
   expect(liveDemoAction?.[2]).toBe(
     'https://wa.me/601167389886?text=Hey%2C%20I%20want%20to%20learn%20more%20about%20Kilobot.',
   );
+  expect(liveDemoAction?.[3]).toContain('<svg');
+  expect(liveDemoAction?.[3]).toContain('aria-hidden="true"');
+  expect(liveDemoAction?.[3]).toContain(
+    'class="size-4 shrink-0 text-[#25D366]"',
+  );
+  expect(liveDemoAction?.[3]).toMatch(/<\/svg>Try Live Demo$/);
 });
 
 test('landing hero uses a shorter description only on mobile', () => {
