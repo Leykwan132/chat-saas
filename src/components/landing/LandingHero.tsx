@@ -17,7 +17,7 @@ function PrimaryCta({
   label: string;
 }) {
   const className =
-    'inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-zinc-950 px-4 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 sm:w-auto sm:flex-none sm:px-6 dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100';
+    'inline-flex h-11 w-[240px] flex-none items-center justify-center gap-2 rounded-full bg-zinc-950 px-6 text-sm font-semibold text-white transition-colors hover:bg-zinc-800 sm:w-auto dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-100';
 
   if (hasSession) {
     return (
@@ -50,15 +50,15 @@ export function LandingHero({
           <h1 className="font-title text-[28px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
             AI Agent for Every Inbox
           </h1>
-          <p className="mt-3 max-w-2xl text-pretty text-sm leading-5 text-zinc-400 sm:mx-auto sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
+          <p className="mt-3 w-[300px] max-w-full text-pretty text-sm leading-5 text-zinc-400 sm:mx-auto sm:w-full sm:max-w-2xl sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
             <span className="block">Handle customer support and sales conversations in one place.</span>
             <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>
-          <div className="mt-8 flex w-full max-w-sm flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-3.5">
             <PrimaryCta hasSession={hasSession} onSignUp={onSignUp} label="Start for free" />
             <Link
               to="/contact?intent=demo"
-              className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-zinc-200 bg-transparent px-4 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 sm:w-auto sm:flex-none sm:px-6 dark:border-white/20 dark:text-white dark:hover:bg-white/5"
+              className="inline-flex h-11 w-[240px] flex-none items-center justify-center rounded-full border border-zinc-200 bg-transparent px-6 text-sm font-semibold text-zinc-950 transition-all hover:bg-zinc-50 sm:w-auto dark:border-white/20 dark:text-white dark:hover:bg-white/5"
             >
               Book a demo
             </Link>

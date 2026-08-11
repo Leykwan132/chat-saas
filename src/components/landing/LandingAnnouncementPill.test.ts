@@ -82,7 +82,13 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   const titleClasses = markup.match(
     /<h1 class="([^"]*)">AI Agent for Every Inbox<\/h1>/,
   )?.[1];
-  const actionClasses = markup.match(/<div class="([^"]*mt-8[^"]*max-w-sm[^"]*)">/)?.[1];
+  const actionClasses = markup.match(/<div class="([^"]*mt-8[^"]*)">/)?.[1];
+  const primaryActionClasses = markup.match(
+    /<button type="button" class="([^"]*)">Start for free<\/button>/,
+  )?.[1];
+  const secondaryActionClasses = markup.match(
+    /<a class="([^"]*)" href="\/contact\?intent=demo"/,
+  )?.[1];
 
   expect(contentClasses?.split(' ')).toEqual(
     expect.arrayContaining(['items-center', 'text-center']),
@@ -91,9 +97,24 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
     expect.arrayContaining(['text-[28px]', 'sm:text-[38px]']),
   );
   expect(descriptionClasses?.split(' ')).toEqual(
-    expect.arrayContaining(['text-sm', 'leading-5', 'sm:text-lg', 'sm:leading-relaxed']),
+    expect.arrayContaining([
+      'w-[300px]',
+      'max-w-full',
+      'text-sm',
+      'leading-5',
+      'sm:w-full',
+      'sm:max-w-2xl',
+      'sm:text-lg',
+      'sm:leading-relaxed',
+    ]),
   );
   expect(actionClasses?.split(' ')).toEqual(
-    expect.arrayContaining(['flex-col', 'items-stretch', 'sm:flex-row', 'sm:items-center']),
+    expect.arrayContaining(['flex-col', 'items-center', 'sm:flex-row']),
+  );
+  expect(primaryActionClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
+  );
+  expect(secondaryActionClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
   );
 });
