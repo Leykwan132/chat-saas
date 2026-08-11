@@ -50,7 +50,7 @@ export function LandingHero({
           <h1 className="font-title text-[28px] font-normal leading-tight tracking-normal text-zinc-950 sm:text-[38px] md:text-[52px] dark:text-white">
             AI Agent for Every Inbox
           </h1>
-          <p className="mt-3 w-[300px] max-w-full text-pretty text-sm leading-5 text-zinc-400 sm:mx-auto sm:w-full sm:max-w-2xl sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
+          <p className="mt-3 w-[320px] max-w-full text-pretty text-[15px] leading-[22px] text-zinc-400 sm:mx-auto sm:w-full sm:max-w-2xl sm:text-lg sm:leading-relaxed md:text-xl dark:text-zinc-500">
             <span className="block">Handle customer support and sales conversations in one place.</span>
             <span className="block">No complex setup—get started in just 5 minutes.</span>
           </p>

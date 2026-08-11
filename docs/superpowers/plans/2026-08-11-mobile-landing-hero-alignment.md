@@ -14,7 +14,7 @@
 - Use 14px description text with 20px leading below `sm`.
 - Preserve centered alignment and existing typography at `sm` and above.
 - Stack 240px-wide CTA buttons vertically below `sm`, retain their 44px height and 24px horizontal padding, and keep them side by side at `sm` and above.
-- Keep the mobile description at a fixed 300px width capped by the viewport.
+- Keep the mobile description at a fixed 320px width capped by the viewport, with 15px text and 22px leading.
 
 ---
 

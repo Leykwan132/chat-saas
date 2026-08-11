@@ -6,7 +6,7 @@ Make the landing hero easier to scan on narrow screens with a centered, compact 
 
 ## Responsive behavior
 
-Below the existing `sm` breakpoint, the announcement pill, headline, and description remain centered. The headline is 28px. The description is 300px wide, capped by the viewport, with 14px text and a 20px line height. The call-to-action buttons stack vertically at a fixed 240px width, retain 24px horizontal padding and a 44px height, and never flex-collapse.
+Below the existing `sm` breakpoint, the announcement pill, headline, and description remain centered. The headline is 28px. The description is 320px wide, capped by the viewport, with 15px text and a 22px line height. The call-to-action buttons stack vertically at a fixed 240px width, retain 24px horizontal padding and a 44px height, and never flex-collapse.
 
 At `sm` and above, the centered alignment and larger type scale remain unchanged, and the call-to-action buttons return to their side-by-side layout.
 

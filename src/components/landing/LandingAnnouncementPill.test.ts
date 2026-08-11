@@ -98,10 +98,10 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   );
   expect(descriptionClasses?.split(' ')).toEqual(
     expect.arrayContaining([
-      'w-[300px]',
+      'w-[320px]',
       'max-w-full',
-      'text-sm',
-      'leading-5',
+      'text-[15px]',
+      'leading-[22px]',
       'sm:w-full',
       'sm:max-w-2xl',
       'sm:text-lg',
