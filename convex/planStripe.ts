@@ -9,10 +9,6 @@ function requireEnvVar(name: string): string {
   return value;
 }
 
-function getOptionalEnvVar(name: string): string | undefined {
-  return process.env[name] || undefined;
-}
-
 export const STRIPE_PRICE_IDS: Record<
   PlanKey,
   Record<BillingInterval, string>
@@ -32,26 +28,6 @@ export const STRIPE_PRICE_IDS: Record<
   business: {
     monthly: requireEnvVar("STRIPE_PRICE_BUSINESS_MONTHLY"),
     annual: requireEnvVar("STRIPE_PRICE_BUSINESS_ANNUAL"),
-  },
-};
-
-const PAID_PLAN_KEYS = ["starter", "growth", "business"] as const;
-
-export const LEGACY_STRIPE_PRICE_IDS: Record<
-  (typeof PAID_PLAN_KEYS)[number],
-  Record<BillingInterval, string | undefined>
-> = {
-  starter: {
-    monthly: getOptionalEnvVar("STRIPE_LEGACY_PRICE_STARTER_MONTHLY"),
-    annual: getOptionalEnvVar("STRIPE_LEGACY_PRICE_STARTER_ANNUAL"),
-  },
-  growth: {
-    monthly: getOptionalEnvVar("STRIPE_LEGACY_PRICE_GROWTH_MONTHLY"),
-    annual: getOptionalEnvVar("STRIPE_LEGACY_PRICE_GROWTH_ANNUAL"),
-  },
-  business: {
-    monthly: getOptionalEnvVar("STRIPE_LEGACY_PRICE_BUSINESS_MONTHLY"),
-    annual: getOptionalEnvVar("STRIPE_LEGACY_PRICE_BUSINESS_ANNUAL"),
   },
 };
 
@@ -77,14 +53,6 @@ export function resolvePlanKeyFromStripePriceId(priceId: string): PlanKey {
     if (
       STRIPE_PRICE_IDS[plan].monthly === priceId ||
       STRIPE_PRICE_IDS[plan].annual === priceId
-    ) {
-      return plan;
-    }
-  }
-  for (const plan of PAID_PLAN_KEYS) {
-    if (
-      LEGACY_STRIPE_PRICE_IDS[plan].monthly === priceId ||
-      LEGACY_STRIPE_PRICE_IDS[plan].annual === priceId
     ) {
       return plan;
     }
