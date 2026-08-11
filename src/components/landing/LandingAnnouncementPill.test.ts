@@ -1,10 +1,14 @@
 import { expect, test } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import {
   ACTIVE_BLOG_HEADLINE,
   YTL_AI_LABS_LOGO_URL,
 } from '../../content/blog/activeHeadline';
 import { getBlogPost, requireBlogPost } from '../../content/blog/posts';
+import { LandingHero } from './LandingHero';
 
 const ILMU_IMAGE = 'https://storage.kilobot.app/Ilmu%20Mini%20v3.3.png';
 const LANDING_PREVIEW_IMAGE = 'https://storage.kilobot.app/Landing/Preview-image.png';
@@ -60,5 +64,26 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   );
   expect(indexSource).toContain(
     `<meta name="twitter:image" content="${LANDING_PREVIEW_IMAGE}" />`,
+  );
+});
+
+test('landing hero is left aligned with smaller supporting copy on mobile', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      null,
+      createElement(LandingHero, { hasSession: false, onSignUp: () => undefined }),
+    ),
+  );
+  const contentClasses = markup.match(/<div class="([^"]*min-h-\[60svh\][^"]*)">/)?.[1];
+  const descriptionClasses = markup.match(
+    /<p class="([^"]*)"><span class="block">Handle customer support/,
+  )?.[1];
+
+  expect(contentClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['items-start', 'text-left', 'sm:items-center', 'sm:text-center']),
+  );
+  expect(descriptionClasses?.split(' ')).toEqual(
+    expect.arrayContaining(['text-base', 'leading-6', 'sm:text-lg', 'sm:leading-relaxed']),
   );
 });
