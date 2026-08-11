@@ -7,7 +7,7 @@
 
   var publicKey = script.getAttribute("data-kilobot-widget") || "";
   var mode = script.getAttribute("data-kilobot-mode") === "traditional" ? "traditional" : "ai_powered";
-  var apiBase = (script.getAttribute("data-kilobot-api") || "https://outstanding-rabbit-215.convex.site").replace(/\/+$/, "");
+  var apiBase = (script.getAttribute("data-kilobot-api") || "https://strong-chameleon-837.convex.site").replace(/\/+$/, "");
   if (!publicKey || !apiBase) return;
   var widgetLoads = window.KilobotWidgetLoads || (window.KilobotWidgetLoads = {});
   if (widgetLoads[publicKey]) return;
