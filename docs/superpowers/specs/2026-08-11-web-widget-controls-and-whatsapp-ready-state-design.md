@@ -9,7 +9,7 @@ Make Web Widget configuration predictable and prevent inactive-mode preview cras
 - Add an explicit save action for the Traditional widget pill label and WhatsApp prefilled message.
 - Separate saving configuration from publishing a widget mode.
 - Keep AI preview queries and sends disabled while Traditional mode is active.
-- Default the setup dialog to the currently active widget mode.
+- Default the setup dialog to Traditional without changing the currently active public mode.
 - Hide WhatsApp sync progress whenever the card presents the completed `Ready` state.
 - Preserve progress during requested and syncing states that are still presented as in progress.
 
@@ -24,7 +24,7 @@ Copying or downloading the installation snippet will only copy or download. Thos
 
 The AI-powered panel will expose `Set as active widget` when Traditional is active. Activating AI mode uses the existing `activateMode` mutation. While AI is inactive, its visual configuration remains viewable, but the live conversation query and message mutation remain disabled. The UI explains that AI must be activated to use the live preview.
 
-The dialog will initially select `settings.activeMode`, so reopening setup shows the mode that is currently public.
+The dialog will initially select Traditional whenever setup opens. This changes only the visible configuration tab; the saved active mode remains the public widget mode until the user explicitly activates another mode.
 
 ## State and Data Flow
 
@@ -52,7 +52,7 @@ The channel card will treat the displayed ready state as terminal for progress p
 
 - Add a regression test proving an inactive AI preview skips its Convex query and cannot send messages.
 - Add UI coverage for Traditional save and explicit activation controls, including removal of installation side effects.
-- Add coverage that the dialog defaults to the active mode.
+- Add coverage that the dialog defaults to Traditional.
 - Add a WhatsApp status regression test proving `Ready` suppresses progress while genuine syncing states retain it.
 - Run the focused Vitest suites, scoped lint or TypeScript checks as appropriate, the production build under Node 22, and whitespace checks.
 

@@ -129,7 +129,7 @@ Run the Task 2 Vitest command and confirm both mode cases pass.
 **Interfaces:**
 - Produces: `getTraditionalWidgetFormState` from the shared state module with `valid`, `dirty`, `canSave`, and `canActivate`.
 - Produces: `TraditionalWidgetActions` using shadcn Buttons and Spinner with separate save and activation callbacks.
-- Changes: both panels receive `activeMode` and `activateMode`; the dialog defaults Tabs to `settings.activeMode`.
+- Changes: both panels receive `activeMode` and `activateMode`; the dialog defaults Tabs to Traditional.
 
 - [ ] **Step 1: Write failing action-state and rendered-control tests**
 
@@ -169,9 +169,9 @@ await updateTraditionalSettings({
 
 Make copy/download operate only on the snippet. Replace the raw textarea with the installed `Textarea` component and apply `data-invalid`/`aria-invalid` for invalid drafts.
 
-- [ ] **Step 5: Default to the active mode**
+- [ ] **Step 5: Default to Traditional**
 
-Pass `defaultValue={settings.activeMode}` to Tabs and thread the active mode to both panels.
+Pass `defaultValue="traditional"` to Tabs and thread the active mode to both panels without mutating it.
 
 - [ ] **Step 6: Run focused tests and verify GREEN**
 
