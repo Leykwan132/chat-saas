@@ -126,20 +126,16 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
       'h-11',
       'w-[240px]',
       'flex-none',
-      'gap-2',
       'px-6',
       'sm:w-auto',
     ]),
   );
+  expect(liveDemoAction?.[1].split(' ')).not.toContain('gap-2');
   expect(liveDemoAction?.[2]).toBe(
     'https://wa.me/601167389886?text=Hey%2C%20I%20want%20to%20learn%20more%20about%20Kilobot.',
   );
-  expect(liveDemoAction?.[3]).toContain('<svg');
-  expect(liveDemoAction?.[3]).toContain('aria-hidden="true"');
-  expect(liveDemoAction?.[3]).toContain(
-    'class="size-4 shrink-0 text-[#25D366]"',
-  );
-  expect(liveDemoAction?.[3]).toMatch(/<\/svg>Try Live Demo$/);
+  expect(liveDemoAction?.[3]).toBe('Try Live Demo');
+  expect(liveDemoAction?.[3]).not.toContain('<svg');
 });
 
 test('landing hero uses a shorter description only on mobile', () => {

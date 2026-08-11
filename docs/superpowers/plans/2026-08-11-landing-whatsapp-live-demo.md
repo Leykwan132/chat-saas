@@ -233,3 +233,54 @@ Update `CONTINUITY.md` with the RED/GREEN and verification receipts. Production 
 git add src/components/landing/LandingHero.tsx src/components/landing/LandingAnnouncementPill.test.ts CONTINUITY.md docs/superpowers/plans/2026-08-11-landing-whatsapp-live-demo.md
 git commit -m "Add WhatsApp icon to live demo action"
 ```
+
+---
+
+### Task 3: Restore the text-only live-demo action
+
+**Files:**
+- Modify: `src/components/landing/LandingAnnouncementPill.test.ts`
+- Modify: `src/components/landing/LandingHero.tsx`
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- Consumes: the WhatsApp live-demo anchor from Task 1
+- Produces: the same anchor with text-only `Try Live Demo` content
+
+- [x] **Step 1: Write the failing text-only regression**
+
+Keep the rendered anchor capture, remove the icon expectations, and require no icon-only gap or SVG:
+
+```ts
+expect(liveDemoAction?.[1].split(' ')).not.toContain('gap-2');
+expect(liveDemoAction?.[3]).toBe('Try Live Demo');
+expect(liveDemoAction?.[3]).not.toContain('<svg');
+```
+
+- [x] **Step 2: Run the focused test and verify RED**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingAnnouncementPill.test.ts
+```
+
+Expected: FAIL because the action still contains `gap-2` and the WhatsApp SVG.
+
+- [x] **Step 3: Remove the icon treatment**
+
+Remove `SiWhatsapp` from the imports, remove `gap-2` from the live-demo anchor, and delete the icon element. Keep all other anchor attributes and classes unchanged.
+
+- [x] **Step 4: Run the focused test and verify GREEN**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingAnnouncementPill.test.ts
+```
+
+Expected: all six tests PASS.
+
+- [x] **Step 5: Verify, record, commit, and publish**
+
+Run scoped ESLint, the Node 22 production build, and `git diff --check`. Update `CONTINUITY.md`, commit the verified files, apply the commit to the primary feature branch, push with tracking, and create a draft PR to `main` through the GitHub plugin.
