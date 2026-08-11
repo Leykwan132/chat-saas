@@ -31,17 +31,15 @@ import {
   DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { AvailableChannelCard } from '@/components/channels/AvailableChannelCard';
 import {
-  ChannelReadyStatus,
   SavedConversationStatus,
 } from '@/components/channels/ChannelReadyStatus';
+import { WhatsAppSyncSummary } from '@/components/channels/WhatsAppSyncSummary';
 import { WhatsAppConnectingAction } from '@/components/channels/WhatsAppConnectionFeedback';
 import { WebWidgetDetailsDialog } from '@/components/channels/WebWidgetDetailsDialog';
 import { WebsiteChannelCard } from '@/components/channels/WebsiteChannelCard';
-import { getWhatsAppHistoryDisplayProgress, getWhatsAppSyncStatus } from '@/lib/whatsappSyncStatus';
 import { WHATSAPP_OAUTH_REDIRECT_CODE_KEY } from '@/lib/whatsappEmbeddedSignup';
 import {
   isOpenWhatsAppConnectionAttempt,
@@ -451,15 +449,6 @@ function ConnectedChannelCard({
   const [acknowledgedDataLoss, setAcknowledgedDataLoss] = useState(false);
 
   const channelName = channelIdentifier(channel);
-  const whatsappSyncStatus =
-    channel.service === 'whatsapp' ? getWhatsAppSyncStatus(channel) : null;
-  const isSyncing =
-    channel.service === 'whatsapp' &&
-    (channel.historySyncStatus === 'requested' ||
-      channel.historySyncStatus === 'syncing' ||
-      channel.contactSyncStatus === 'requested' ||
-      channel.contactSyncStatus === 'syncing');
-
   const handleDisconnectOpenChange = useCallback((open: boolean) => {
     setDisconnectOpen(open);
     if (!open) {
@@ -554,32 +543,8 @@ function ConnectedChannelCard({
                     Setup
                   </Button>
                 </div>
-              ) : whatsappSyncStatus ? (
-                <div className="text-[11px] leading-snug space-y-1.5 w-full">
-                  {whatsappSyncStatus.showCheck ? (
-                    <ChannelReadyStatus label={whatsappSyncStatus.label} />
-                  ) : (
-                    <p className="font-medium text-foreground truncate">
-                      {whatsappSyncStatus.label}
-                    </p>
-                  )}
-                  {isSyncing && (
-                    <Progress
-                      value={getWhatsAppHistoryDisplayProgress(channel)}
-                      className={cn(
-                        "h-1.5 w-full",
-                        (channel.contactSyncStatus === 'requested' || channel.contactSyncStatus === 'syncing') &&
-                          channel.historySyncStatus !== 'syncing' &&
-                          "animate-pulse bg-emerald-500/10"
-                      )}
-                    />
-                  )}
-                  {!isSyncing && whatsappSyncStatus.detail ? (
-                    <p className="text-muted-foreground line-clamp-2">
-                      {whatsappSyncStatus.detail}
-                    </p>
-                  ) : null}
-                </div>
+              ) : channel.service === 'whatsapp' ? (
+                <WhatsAppSyncSummary channel={channel} />
               ) : (
                 <SavedConversationStatus
                   conversationCount={

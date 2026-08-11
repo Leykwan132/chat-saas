@@ -4,7 +4,10 @@ import { getTeamStripePlanHelper } from "./plans";
 import { normalizeWebWidgetLayout } from "../shared/webWidgetLayouts";
 import { DEFAULT_WEB_WIDGET_THEME } from "../shared/webWidgetThemes";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
-import { DEFAULT_WEB_WIDGET_MODE } from "../shared/traditionalWebWidget";
+import {
+  DEFAULT_WEB_WIDGET_MODE,
+  type WebWidgetMode,
+} from "../shared/traditionalWebWidget";
 import { publicTraditionalConfig } from "./webWidgetTraditional";
 
 export const RECENT_WIDGET_MESSAGES = 80;
@@ -105,11 +108,12 @@ export function resolveWebWidgetBranding(
 export async function publicConfigForSettings(
   ctx: QueryCtx,
   settings: Doc<"webWidgetSettings">,
+  mode: WebWidgetMode = DEFAULT_WEB_WIDGET_MODE,
 ) {
   if (!settings.enabled) {
     throw new Error("Widget not found");
   }
-  if ((settings.mode ?? DEFAULT_WEB_WIDGET_MODE) === "traditional") {
+  if (mode === "traditional") {
     return await publicTraditionalConfig(ctx, settings);
   }
   const planState = await getWebWidgetPlanState(ctx, {
@@ -129,12 +133,6 @@ export async function publicConfigForSettings(
     iconUrl,
     poweredBy: branding.poweredBy,
   };
-}
-
-export function assertAiWebWidget(settings: Doc<"webWidgetSettings">) {
-  if ((settings.mode ?? DEFAULT_WEB_WIDGET_MODE) === "traditional") {
-    throw new Error("AI messaging is unavailable for Traditional widgets");
-  }
 }
 
 export async function getEnabledSettingsByPublicKey(
@@ -160,7 +158,6 @@ export async function listMessagesForVisitor(
   args: { publicKey: string; visitorId: string },
 ) {
   const settings = await getEnabledSettingsByPublicKey(ctx, args.publicKey);
-  assertAiWebWidget(settings);
   const conversation = await ctx.db
     .query("conversations")
     .withIndex("by_channel_and_contactAddress", (q) =>

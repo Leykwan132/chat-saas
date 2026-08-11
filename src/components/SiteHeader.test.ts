@@ -22,3 +22,9 @@ test('site header uses three layout components with centered desktop navigation'
   expect(brandSource).toContain('flex flex-1 items-center justify-start');
   expect(actionsSource).toContain('flex flex-1 items-center justify-end');
 });
+
+test('site header balances the brand icon with the wordmark', () => {
+  expect(brandSource).toContain("'size-6 transition-all duration-300'");
+  expect(brandSource).toContain('font-title font-semibold text-[20px]');
+  expect(brandSource).not.toContain("'size-7 transition-all duration-300'");
+});

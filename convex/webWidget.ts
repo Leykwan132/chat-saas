@@ -16,7 +16,6 @@ import {
   updateWidgetSettings,
 } from "./webWidgetAdmin";
 import {
-  assertAiWebWidget,
   getEnabledSettingsByPublicKey,
   listMessagesForVisitor,
   publicConfigForSettings,
@@ -157,11 +156,13 @@ export const removeIcon = mutation({
 export const publicGetConfig = query({
   args: {
     publicKey: v.string(),
+    mode: v.optional(webWidgetModeValidator),
   },
   handler: async (ctx, args) => {
     return await publicConfigForSettings(
       ctx,
       await getEnabledSettingsByPublicKey(ctx, args.publicKey),
+      args.mode,
     );
   },
 });
@@ -191,11 +192,13 @@ export const publicReceiveMessage = mutation({
 export const internalGetConfig = internalQuery({
   args: {
     publicKey: v.string(),
+    mode: v.optional(webWidgetModeValidator),
   },
   handler: async (ctx, args) => {
     return await publicConfigForSettings(
       ctx,
       await getEnabledSettingsByPublicKey(ctx, args.publicKey),
+      args.mode,
     );
   },
 });
@@ -227,7 +230,6 @@ async function receiveWidgetMessage(
   args: ReceiveWidgetMessageArgs,
 ) {
   const settings = await getEnabledSettingsByPublicKey(ctx, args.publicKey);
-  assertAiWebWidget(settings);
   const trimmed = args.content.trim();
   if (!trimmed) {
     throw new Error("Message is required");

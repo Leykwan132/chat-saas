@@ -10,7 +10,6 @@ import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/sche
 import workpoolSchema from "../node_modules/@convex-dev/workpool/dist/component/schema.js";
 
 const modules = import.meta.glob("./**/*.ts");
-
 beforeAll(() => {
   process.env.STRIPE_PRICE_STARTER_MONTHLY = "price_starter_monthly";
   process.env.STRIPE_PRICE_STARTER_ANNUAL = "price_starter_annual";
@@ -30,8 +29,7 @@ afterEach(() => {
 const stripeModules = {
   public: () => import("../node_modules/@convex-dev/stripe/dist/component/public.js"),
   private: () => import("../node_modules/@convex-dev/stripe/dist/component/private.js"),
-  "_generated/server": () =>
-    import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
+  "_generated/server": () => import("../node_modules/@convex-dev/stripe/dist/component/_generated/server.js"),
 };
 
 const workpoolModules = {
@@ -46,14 +44,12 @@ const workpoolModules = {
   recovery: () => import("../node_modules/@convex-dev/workpool/dist/component/recovery.js"),
   stats: () => import("../node_modules/@convex-dev/workpool/dist/component/stats.js"),
   worker: () => import("../node_modules/@convex-dev/workpool/dist/component/worker.js"),
-  "_generated/server": () =>
-    import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
+  "_generated/server": () => import("../node_modules/@convex-dev/workpool/dist/component/_generated/server.js"),
 };
 
 const aggregateModules = {
   public: () => import("../node_modules/@convex-dev/aggregate/dist/component/public.js"),
-  "_generated/server": () =>
-    import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
+  "_generated/server": () => import("../node_modules/@convex-dev/aggregate/dist/component/_generated/server.js"),
 };
 
 const agentModules = {
@@ -63,8 +59,7 @@ const agentModules = {
   streams: () => import("../node_modules/@convex-dev/agent/dist/component/streams.js"),
   threads: () => import("../node_modules/@convex-dev/agent/dist/component/threads.js"),
   users: () => import("../node_modules/@convex-dev/agent/dist/component/users.js"),
-  "_generated/server": () =>
-    import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
+  "_generated/server": () => import("../node_modules/@convex-dev/agent/dist/component/_generated/server.js"),
 };
 
 function initTest() {

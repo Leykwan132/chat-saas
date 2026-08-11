@@ -33,7 +33,6 @@ export type WebWidgetSettings = {
   hidePoweredBy: boolean;
   canHideBranding: boolean;
   canUseCustomIcon: boolean;
-  activeMode: 'ai_powered' | 'traditional';
   traditional: TraditionalWidgetSettings;
 };
 
@@ -61,7 +60,7 @@ export function WebWidgetSettingsPanel({
   const [savingPlacement, setSavingPlacement] = useState(false);
   const [savingBranding, setSavingBranding] = useState(false);
   const [uploadingIcon, setUploadingIcon] = useState(false);
-  const snippet = buildWebWidgetSnippet(settings.publicKey);
+  const snippet = buildWebWidgetSnippet(settings.publicKey, 'ai_powered');
   const normalizedAgentName = agentDisplayName.trim();
   const normalizedPlaceholder = placeholderText.trim();
   const previewPoweredBy = !(settings.canHideBranding && hidePoweredBy);
@@ -247,6 +246,7 @@ export function WebWidgetSettingsPanel({
           <WebWidgetPreview
             className="min-h-[620px] lg:min-h-0"
             agentName={agentDisplayName || settings.agentDisplayName}
+            enabled
             placeholder={placeholderText.trim() || settings.placeholder}
             iconUrl={settings.iconUrl}
             layout={placementLayout}

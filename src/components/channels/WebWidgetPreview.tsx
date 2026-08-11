@@ -16,6 +16,7 @@ import { WebWidgetPreviewPanel } from './WebWidgetPreviewPanel';
 
 type WebWidgetPreviewProps = {
   agentName: string;
+  enabled?: boolean;
   iconUrl?: string;
   layout: WebWidgetLayout;
   placeholder: string;
@@ -27,6 +28,7 @@ type WebWidgetPreviewProps = {
 
 export function WebWidgetPreview({
   agentName,
+  enabled = true,
   iconUrl,
   layout,
   placeholder,
@@ -49,7 +51,7 @@ export function WebWidgetPreview({
     sendError,
     sending,
     sendMessage,
-  } = useWebWidgetPreviewConversation(publicKey);
+  } = useWebWidgetPreviewConversation(publicKey, enabled);
   const mobilePreview = previewDevice === 'mobile';
   const placeholderWords = useMemo(
     () => [
@@ -66,6 +68,7 @@ export function WebWidgetPreview({
   };
 
   const sendPreviewMessage = () => {
+    if (!enabled) return;
     const content = draft.trim();
     setPanelOpen(true);
     setFocused(true);
@@ -79,6 +82,7 @@ export function WebWidgetPreview({
 
   const composerOpen = focused || Boolean(draft.trim());
   const focusComposer = () => {
+    if (!enabled) return;
     setFocused(true);
     setPanelOpen(true);
   };
@@ -102,6 +106,7 @@ export function WebWidgetPreview({
     <WebWidgetPreviewComposer
       composerOpen={composerOpen}
       dark={dark}
+      disabled={!enabled}
       draft={draft}
       mobile={mobilePreview}
       placeholder={placeholder}
@@ -144,7 +149,7 @@ export function WebWidgetPreview({
             className="size-8 border-border/70 bg-background/90 text-muted-foreground shadow-none backdrop-blur hover:bg-background hover:text-foreground"
             aria-label="Reset preview thread"
             title="Reset preview thread"
-            disabled={sending}
+            disabled={!enabled || sending}
             onClick={resetPreviewConversation}
             onPointerDown={(event) => event.stopPropagation()}
           >
@@ -234,9 +239,11 @@ export function WebWidgetPreview({
                 className="flex size-12 items-center justify-center rounded-full bg-white text-black ring-1 ring-black/10 transition hover:bg-neutral-50"
                 aria-label="Open preview chat icon"
                 onClick={() => {
+                  if (!enabled) return;
                   setPanelOpen(true);
                   setFocused(true);
                 }}
+                disabled={!enabled}
               >
                 <LauncherAvatar iconUrl={iconUrl} name={displayName} theme={theme} />
               </button>

@@ -1,0 +1,49 @@
+# Mobile Landing Hero Alignment Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Center the landing hero on small screens with a 28px title, 14px description, and vertically stacked actions while preserving the centered desktop layout.
+
+**Architecture:** Change only responsive utility classes in `LandingHero`. Protect the mobile/desktop layout contract with the existing focused landing test.
+
+**Tech Stack:** React, Tailwind CSS, Vitest, Bun, Node 22
+
+## Global Constraints
+
+- Use a 28px mobile headline below `sm`.
+- Use 14px description text with 20px leading below `sm`.
+- Preserve centered alignment and existing typography at `sm` and above.
+- Stack 240px-wide CTA buttons vertically below `sm`, retain their 44px height and 24px horizontal padding, and keep them side by side at `sm` and above.
+- Keep the mobile description at a fixed 320px width capped by the viewport, with 15px text and 22px leading.
+
+---
+
+### Task 1: Responsive landing hero
+
+**Files:**
+- Modify: `src/components/landing/LandingHero.tsx`
+- Test: `src/components/landing/LandingAnnouncementPill.test.ts`
+
+**Interfaces:**
+- Consumes: Existing Tailwind responsive breakpoints and `LandingHero` markup.
+- Produces: A mobile-left, desktop-centered hero without component API changes.
+
+- [ ] **Step 1: Write the failing test**
+
+Add a focused assertion that rendered hero markup contains mobile `items-start` and `text-left`, desktop `sm:items-center` and `sm:text-center`, and description `text-base`, `leading-6`, `sm:text-lg`, and `sm:leading-relaxed` classes.
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/landing/LandingAnnouncementPill.test.ts` and confirm the responsive assertion fails against the centered mobile implementation.
+
+- [ ] **Step 3: Implement the minimal responsive class change**
+
+Update the hero content wrapper and description classes only. Do not change copy, routes, images, spacing, or desktop behavior.
+
+- [ ] **Step 4: Verify the implementation**
+
+Run the focused test, `bun run build`, `git diff --check`, and confirm `localhost:5178` serves the feature branch.
+
+- [ ] **Step 5: Commit and push**
+
+Commit the test, component, plan, and continuity update, then push `codex/web-widget-controls-polish`.

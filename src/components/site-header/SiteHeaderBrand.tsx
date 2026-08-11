@@ -17,7 +17,7 @@ export function SiteHeaderBrand({ isHeaderTransparent }: SiteHeaderBrandProps) {
       >
         <img
           src="/icon.svg"
-          className={cn('size-7 transition-all duration-300', isHeaderTransparent ? 'invert' : 'dark:invert')}
+          className={cn('size-6 transition-all duration-300', isHeaderTransparent ? 'invert' : 'dark:invert')}
           alt=""
         />
         <span className="font-title font-semibold text-[20px] tracking-normal">Kilobot</span>

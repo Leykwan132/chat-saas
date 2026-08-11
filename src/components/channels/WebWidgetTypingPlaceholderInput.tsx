@@ -7,6 +7,7 @@ import { TypingAnimation } from '@/registry/magicui/typing-animation';
 import { cn } from '@/lib/utils';
 
 type WebWidgetTypingPlaceholderInputProps = {
+  disabled?: boolean;
   value: string;
   placeholder: string;
   placeholderWords?: string[];
@@ -19,6 +20,7 @@ type WebWidgetTypingPlaceholderInputProps = {
 };
 
 export function WebWidgetTypingPlaceholderInput({
+  disabled = false,
   value,
   placeholder,
   placeholderWords,
@@ -51,6 +53,7 @@ export function WebWidgetTypingPlaceholderInput({
       ) : null}
       <input
         aria-label={placeholder}
+        disabled={disabled}
         className={cn(
           'relative z-10 min-w-0 w-full bg-transparent text-sm text-current outline-none',
           className,
