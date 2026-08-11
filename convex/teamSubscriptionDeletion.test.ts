@@ -201,7 +201,7 @@ describe("team subscription deletion", () => {
     expect(state.team?.stripeSubscriptionId).toBeUndefined();
     expect(state.owner?.activeTeamId).toBe(fixture.personalTeamId);
     expect(state.owner?.stripeSubscriptionStatus).toBe("canceled");
-    expect(state.creditPeriod?.grantedCredits).toBe(50);
+    expect(state.creditPeriod?.grantedCredits).toBe(300);
     expect(state.creditPeriod?.usedCredits).toBe(0);
     expect(state.creditPeriod?.planKey).toBe("free");
     expect(state.purchasedTopUp?.grantedCredits).toBe(2_000);

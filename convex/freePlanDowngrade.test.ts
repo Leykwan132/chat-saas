@@ -178,7 +178,7 @@ describe("Free plan downgrade finalization", () => {
     });
     expect(state.personalTeam?.stripeSubscriptionId).toBe("sub_paid");
     expect(state.creditPeriod).toMatchObject({
-      grantedCredits: 50,
+      grantedCredits: 300,
       usedCredits: 0,
       planKey: "free",
     });
@@ -225,7 +225,7 @@ describe("Free plan downgrade finalization", () => {
     });
     expect(state.team?.deletionStatus).toBe("deleting");
     expect(state.creditPeriod).toMatchObject({
-      grantedCredits: 50,
+      grantedCredits: 300,
       usedCredits: 0,
       planKey: "free",
     });

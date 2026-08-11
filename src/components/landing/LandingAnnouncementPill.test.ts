@@ -67,6 +67,13 @@ test('landing hero and metadata describe Kilobot as an easy-to-start AI chatbot'
   );
 });
 
+test('root page does not embed a customer website widget', () => {
+  const indexSource = readFileSync(new URL('../../../index.html', import.meta.url), 'utf8');
+
+  expect(indexSource).not.toContain('data-kilobot-widget');
+  expect(indexSource).not.toContain('pub_db21708de03541e6bfc50e6a25d9dc52');
+});
+
 test('landing hero is centered with stacked actions and smaller copy on mobile', () => {
   const markup = renderToStaticMarkup(
     createElement(
@@ -86,9 +93,9 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   const primaryActionClasses = markup.match(
     /<button type="button" class="([^"]*)">Start for free<\/button>/,
   )?.[1];
-  const secondaryActionClasses = markup.match(
-    /<a class="([^"]*)" href="\/contact\?intent=demo"/,
-  )?.[1];
+  const liveDemoAction = markup.match(
+    /<a class="([^"]*)" href="([^"]*)" target="_blank" rel="noopener noreferrer">(.*?)<\/a>/,
+  );
 
   expect(contentClasses?.split(' ')).toEqual(
     expect.arrayContaining(['items-center', 'text-center']),
@@ -114,9 +121,21 @@ test('landing hero is centered with stacked actions and smaller copy on mobile',
   expect(primaryActionClasses?.split(' ')).toEqual(
     expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
   );
-  expect(secondaryActionClasses?.split(' ')).toEqual(
-    expect.arrayContaining(['h-11', 'w-[240px]', 'flex-none', 'px-6', 'sm:w-auto']),
+  expect(liveDemoAction?.[1].split(' ')).toEqual(
+    expect.arrayContaining([
+      'h-11',
+      'w-[240px]',
+      'flex-none',
+      'px-6',
+      'sm:w-auto',
+    ]),
   );
+  expect(liveDemoAction?.[1].split(' ')).not.toContain('gap-2');
+  expect(liveDemoAction?.[2]).toBe(
+    'https://wa.me/601167389886?text=Hey%2C%20I%20want%20to%20learn%20more%20about%20Kilobot.',
+  );
+  expect(liveDemoAction?.[3]).toBe('Try Live Demo');
+  expect(liveDemoAction?.[3]).not.toContain('<svg');
 });
 
 test('landing hero uses a shorter description only on mobile', () => {

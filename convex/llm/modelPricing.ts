@@ -20,16 +20,6 @@ export type ModelPricingEntry = {
 };
 
 export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
-  "amazon/nova-micro-v1": {
-    label: "Amazon Nova Micro",
-    creditCost: 1,
-    enabled: true,
-    provider: "openrouter",
-    chef: "Amazon",
-    chefSlug: "amazon-bedrock",
-    requiredPlan: "starter",
-    labels: ["advanced"],
-  },
   "ilmu-mini-v3.3": {
     label: "Ilmu Mini V3.3",
     creditCost: 1,
