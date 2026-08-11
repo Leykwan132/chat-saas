@@ -6,7 +6,7 @@
   if (excludedPathPrefix && window.location.pathname.startsWith(excludedPathPrefix)) return;
 
   var publicKey = script.getAttribute("data-kilobot-widget") || "";
-  var apiBase = (script.getAttribute("data-kilobot-api") || "https://outstanding-rabbit-215.convex.site").replace(/\/+$/, "");
+  var apiBase = (script.getAttribute("data-kilobot-api") || "https://strong-chameleon-837.convex.site").replace(/\/+$/, "");
   if (!publicKey || !apiBase) return;
 
   var fallbackIconUrl = fallbackIcon();
