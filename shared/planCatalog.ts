@@ -74,14 +74,12 @@ export const ADVANCED_PLAN_MODELS = [
   "google/gemini-3.1-flash-lite",
   "openai/gpt-oss-120b",
   "xiaomi/mimo-v2.5",
-  "amazon/nova-micro-v1",
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "ilmu-mini-v3.3": "Ilmu Mini V3.3",
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
   "google/gemini-3.1-flash-lite": "Google Gemini 3.1 Flash Lite",
-  "amazon/nova-micro-v1": "Amazon Nova Micro",
   "openai/gpt-oss-120b": "OpenAI GPT-OSS 120B",
   "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
 };

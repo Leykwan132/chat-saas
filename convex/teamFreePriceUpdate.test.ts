@@ -149,7 +149,7 @@ describe('team Free price subscription update', () => {
     expect(state.owner?.stripePriceId).toBe('mock_free_mo');
     expect(state.owner?.stripeSubscriptionStatus).toBe('active');
     expect(state.creditPeriod?.planKey).toBe('free');
-    expect(state.creditPeriod?.grantedCredits).toBe(50);
+    expect(state.creditPeriod?.grantedCredits).toBe(300);
     expect(state.creditPeriod?.usedCredits).toBe(0);
     expect(state.jobs).toHaveLength(1);
     expect(state.creditLogs).toHaveLength(1);

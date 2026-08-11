@@ -13,7 +13,7 @@ test("calculates Ilmu cost from input and output tokens", () => {
 
 test("returns null for models without configured token rates", () => {
   expect(
-    calculateConfiguredModelCostUsd("amazon/nova-micro-v1", {
+    calculateConfiguredModelCostUsd("openai/gpt-oss-120b", {
       promptTokens: 1_000,
       completionTokens: 1_000,
     }),

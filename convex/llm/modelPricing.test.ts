@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { MODEL_PRICING, listEnabledModels } from "./modelPricing";
+import { MODEL_PRICING, getModelPricing, listEnabledModels } from "./modelPricing";
 import { PLAN_CATALOG } from "../planCatalog";
 import { DEFAULT_AGENT_MODEL } from "../../shared/agentModelDefaults";
 
@@ -18,20 +18,13 @@ test("enabled OpenRouter model ids never use free-tier variants", () => {
   expect(modelIds.filter((modelId) => modelId.endsWith(":free"))).toEqual([]);
 });
 
-test("Amazon Nova Micro is available only on paid plans", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "amazon/nova-micro-v1");
-  const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("amazon/nova-micro-v1"))
-    .map(([planKey]) => planKey);
+test("Amazon models are unavailable and excluded from plan entitlements", () => {
+  const enabledModelIds = listEnabledModels().map((model) => model.value);
+  const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
 
-  expect(model).toMatchObject({
-    label: "Amazon Nova Micro",
-    chef: "Amazon",
-    chefSlug: "amazon-bedrock",
-    requiredPlan: "starter",
-    labels: ["advanced"],
-  });
-  expect(plansWithModel).toEqual(["starter", "growth", "business"]);
+  expect(getModelPricing("amazon/nova-micro-v1")).toBeNull();
+  expect(enabledModelIds).not.toContain("amazon/nova-micro-v1");
+  expect(planModelIds).not.toContain("amazon/nova-micro-v1");
 });
 
 test("Free plan includes only Ilmu Mini V3.3", () => {
@@ -110,7 +103,7 @@ test("Ilmu Mini V3.3 is enabled for every plan", () => {
 
 test("models without custom metadata omit optional fields", () => {
   const model = listEnabledModels().find(
-    (entry) => entry.value === "amazon/nova-micro-v1",
+    (entry) => entry.value === "openai/gpt-oss-120b",
   );
 
   expect(model).not.toHaveProperty("imageUrl");

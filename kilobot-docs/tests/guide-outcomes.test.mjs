@@ -449,7 +449,6 @@ test("Agent Setup keeps model and trigger guidance focused", () => {
   assert.ok(source.includes("| English |"));
   assert.ok(source.includes("OpenAI GPT-OSS 120B"));
   assert.ok(source.includes("Xiaomi MiMo V2.5"));
-  assert.ok(source.includes("Amazon Nova Micro"));
   assert.ok(source.includes("## Triggers"));
   assert.ok(source.includes("| Automatically |"));
   assert.ok(source.includes("| Manual |"));

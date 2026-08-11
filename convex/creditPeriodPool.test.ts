@@ -53,7 +53,7 @@ test("Admin Quota Reset Flow", async () => {
     await ensureFirstCreditPeriod(ctx, userId);
   });
 
-  // Check the initial period has 50 granted and 0 used credits (default free plan)
+  // Check the initial period has 300 granted and 0 used credits (default free plan)
   const initialSnapshot = await t.run(async (ctx) => {
     return await ctx.db
       .query("userCreditPeriods")
@@ -61,7 +61,7 @@ test("Admin Quota Reset Flow", async () => {
       .unique();
   });
   expect(initialSnapshot).not.toBeNull();
-  expect(initialSnapshot?.grantedCredits).toBe(50);
+  expect(initialSnapshot?.grantedCredits).toBe(300);
   expect(initialSnapshot?.usedCredits).toBe(0);
 
   // Simulate spending some credits (e.g. 30 used credits)
@@ -88,7 +88,7 @@ test("Admin Quota Reset Flow", async () => {
   // Trigger admin manual reset
   await t.mutation(internal.creditPeriodPool.resetUserQuotaAdmin, { userId });
 
-  // Verify that the credits are reset back to 0 used and 50 granted
+  // Verify that the credits are reset back to 0 used and 300 granted
   const resetSnapshot = await t.run(async (ctx) => {
     return await ctx.db
       .query("userCreditPeriods")
@@ -96,7 +96,7 @@ test("Admin Quota Reset Flow", async () => {
       .unique();
   });
   expect(resetSnapshot?.usedCredits).toBe(0);
-  expect(resetSnapshot?.grantedCredits).toBe(50);
+  expect(resetSnapshot?.grantedCredits).toBe(300);
 
   // Verify an admin_reset or monthly_reset credit log was added
   const logs = await t.run(async (ctx) => {
