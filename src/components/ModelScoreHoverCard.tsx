@@ -46,23 +46,32 @@ export function ModelScoreHoverCard({
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardContent side="right" align="start" className="w-80 rounded-xl">
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-2">
-            <ModelSelectorLogo provider={chefSlug} src={imageUrl} className="size-4" />
-            <span className="font-semibold">{modelLabel}</span>
+          <div data-slot="model-rating" className="flex items-center gap-2">
+            <span className="text-sm font-medium">
+              {scorecard.overall.toFixed(1)}
+            </span>
+            <Rating
+              style={{ width: 88 }}
+              value={scorecard.overall}
+              itemStyles={modelRatingItemStyles}
+              readOnly
+            />
           </div>
           <div className="flex flex-col gap-2">
-            <span className="font-medium">Kilobot rating</span>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">
-                {scorecard.overall.toFixed(1)}
-              </span>
-              <Rating
-                style={{ width: 88 }}
-                value={scorecard.overall}
-                itemStyles={modelRatingItemStyles}
-                readOnly
+            <div data-slot="model-identity" className="flex items-center gap-2">
+              <ModelSelectorLogo
+                provider={chefSlug}
+                src={imageUrl}
+                className="size-4"
               />
+              <span className="font-semibold">{modelLabel}</span>
             </div>
+            <p
+              data-slot="model-description"
+              className="text-sm leading-5 text-muted-foreground"
+            >
+              {scorecard.description}
+            </p>
           </div>
           <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
             {Object.entries(scorecard.metrics).map(([metric, score]) => (
@@ -74,20 +83,24 @@ export function ModelScoreHoverCard({
               </div>
             ))}
           </dl>
-          <div className="flex flex-col gap-2">
+          <div data-slot="model-languages" className="flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Best for
+              Languages
             </span>
-            <span className="text-sm">{scorecard.bestFor}</span>
-            <div className="flex flex-wrap gap-1.5 pt-1">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               {scorecard.languages.map((language) => (
                 <span
                   key={language}
                   data-slot="model-language"
-                  className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                  className="inline-flex items-center gap-1.5 text-xs"
                 >
-                  <Check className="size-3.5 text-emerald-600" />
-                  {language}
+                  <span
+                    data-slot="model-language-check"
+                    className="inline-flex size-5 items-center justify-center rounded-md bg-muted"
+                  >
+                    <Check className="size-3.5 text-emerald-600" />
+                  </span>
+                  <span className="text-foreground">{language}</span>
                 </span>
               ))}
             </div>

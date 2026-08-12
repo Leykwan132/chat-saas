@@ -8,7 +8,7 @@ type ScorecardModule = {
       overall: number;
       metrics: Record<'quality' | 'speed' | 'reasoning' | 'value', number>;
       languages: string[];
-      bestFor: string;
+      description: string;
     }
   >;
   getModelScorecard: (modelId: string) => ScorecardModule['MODEL_SCORECARDS'][string] | null;
@@ -30,7 +30,14 @@ test('provides a complete bounded scorecard for every enabled model', async () =
         ['Malay', 'Chinese', 'English'].includes(language),
       ),
     ).toBe(true);
-    expect(scorecard.bestFor.trim().length).toBeGreaterThan(0);
+    expect(scorecard.description).toEqual(expect.any(String));
+    const descriptionSentences = scorecard.description
+      .split('.')
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+
+    expect(scorecard.description).toMatch(/^Best for /);
+    expect(descriptionSentences).toHaveLength(2);
   }
 });
 
@@ -47,11 +54,13 @@ test('positions Malay, Chinese, and English models explicitly', async () => {
       'Chinese',
       'English',
     ],
-    bestFor: 'Fast Chinese conversations',
+    description:
+      'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
   });
   expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toMatchObject({
     languages: ['English'],
-    bestFor: 'Fast English responses',
+    description:
+      'Best for fast English customer conversations. It prioritizes response speed while keeping reasoning balanced.',
   });
   expect(getModelScorecard('retired/model')).toBeNull();
 });

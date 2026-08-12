@@ -34,15 +34,15 @@
 - Consumes: existing model IDs, ratings, metrics, languages, labels, chef slugs, and provider logos.
 - Produces: `ModelScorecard.description: string` containing exactly two sentences and data slots `model-rating`, `model-identity`, `model-description`, `model-languages`, `model-language`, and `model-language-check`.
 
-- [ ] **Step 1: Write failing scorecard-content tests**
+- [x] **Step 1: Write failing scorecard-content tests**
 
   Replace `bestFor` expectations with literal two-sentence `description` values. Assert every enabled scorecard has exactly two non-empty sentences and begins with `Best for`.
 
-- [ ] **Step 2: Write the failing HoverCard hierarchy test**
+- [x] **Step 2: Write the failing HoverCard hierarchy test**
 
   Assert the rating precedes identity, the description immediately follows identity, metrics precede `Languages`, and the visible text omits `Kilobot rating`. Assert language rows have no neutral background while their check wrappers include `rounded` and `bg-muted`, and the readable language label uses `text-foreground`.
 
-- [ ] **Step 3: Run focused tests to verify RED**
+- [x] **Step 3: Run focused tests to verify RED**
 
   Run:
 
@@ -52,7 +52,7 @@
 
   Expected: FAIL because scorecards still expose `bestFor`, the identity precedes the rating, the old labels remain, and the entire language pill owns the neutral background.
 
-- [ ] **Step 4: Replace `bestFor` with two-sentence descriptions**
+- [x] **Step 4: Replace `bestFor` with two-sentence descriptions**
 
   Define the approved descriptions:
 
@@ -66,11 +66,11 @@
   'Best for fast Chinese customer conversations. It also handles everyday English support reliably.'
   ```
 
-- [ ] **Step 5: Implement the approved visual order**
+- [x] **Step 5: Implement the approved visual order**
 
   Render rating, identity, description, metrics, then Languages. Use a plain flex row for each language, a `text-foreground` label, and a small `rounded-md bg-muted` wrapper around only the green check.
 
-- [ ] **Step 6: Run focused tests to verify GREEN**
+- [x] **Step 6: Run focused tests to verify GREEN**
 
   Run:
 
@@ -80,7 +80,7 @@
 
   Expected: all focused tests pass.
 
-- [ ] **Step 7: Run the scoped quality gate**
+- [x] **Step 7: Run the scoped quality gate**
 
   Run:
 
@@ -93,7 +93,7 @@
 
   Expected: all commands pass; the production build may retain only established environment or bundle-size warnings.
 
-- [ ] **Step 8: Record continuity and commit**
+- [x] **Step 8: Record continuity and commit**
 
   Record the verified unreleased change in `CONTINUITY.md`, leave the changelog unchanged, stage only task-owned files, and commit with:
 
