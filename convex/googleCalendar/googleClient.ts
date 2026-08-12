@@ -10,6 +10,7 @@ export type GoogleCalendarRequest = {
 
 export type GoogleCalendarProviderErrorKind =
   | "needs_reauthorization"
+  | "invalid_sync_token"
   | "conflict"
   | "retryable"
   | "not_found"
@@ -19,6 +20,7 @@ export type GoogleCalendarProviderErrorKind =
 
 const providerMessages: Record<GoogleCalendarProviderErrorKind, string> = {
   needs_reauthorization: "Google Calendar needs to be reconnected.",
+  invalid_sync_token: "Google Calendar synchronization must be restarted.",
   conflict: "Google Calendar changed before this update could be applied.",
   retryable: "Google Calendar is temporarily unavailable.",
   not_found: "Google Calendar could not find the requested event.",
@@ -43,6 +45,9 @@ function errorKindForStatus(status: number): GoogleCalendarProviderErrorKind {
   }
   if (status === 412) {
     return "conflict";
+  }
+  if (status === 410) {
+    return "invalid_sync_token";
   }
   if (status === 429 || status >= 500) {
     return "retryable";
