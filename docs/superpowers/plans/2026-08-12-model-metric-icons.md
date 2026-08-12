@@ -29,11 +29,11 @@
 - Consumes: `scorecard.metrics` with `quality`, `speed`, `reasoning`, and `value` numeric properties.
 - Produces: Existing metric rows with visible labels, right-aligned scores, and decorative Lucide icons.
 
-- [ ] **Step 1: Write the failing regression assertions**
+- [x] **Step 1: Write the failing regression assertions**
 
 Import `Gem`, `Gauge`, `Brain`, and `BadgeDollarSign` in `ModelScoreHoverCard.test.tsx`. Collect each rendered icon by component type and assert that all four exist with `className="size-3.5 shrink-0 text-muted-foreground"` and `aria-hidden={true}`. Keep the existing assertions for visible metric labels and scores.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -43,7 +43,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ModelScoreH
 
 Expected: FAIL because none of the four approved metric icons render yet.
 
-- [ ] **Step 3: Add the minimal icon mapping and renderer**
+- [x] **Step 3: Add the minimal icon mapping and renderer**
 
 In `ModelScoreHoverCard.tsx`, import the approved Lucide components and define:
 
@@ -70,11 +70,11 @@ For each metric row, select `MetricIcon` from the mapping and render it directly
 
 Do not add a wrapper background, badge, tooltip, or separate scorecard data field.
 
-- [ ] **Step 4: Run focused and branch verification**
+- [x] **Step 4: Run focused and branch verification**
 
 Run the focused test, scoped ESLint, TypeScript, production build, application suite excluding `kilobot-docs/**`, Docs native tests, `git diff --check`, and code-size checks under Node 22. Expected: all supported gates pass.
 
-- [ ] **Step 5: Record and commit the verified result**
+- [x] **Step 5: Record and commit the verified result**
 
 Update the top `CONTINUITY.md` entry from pending to implemented with fresh verification receipts. Leave the production changelog unchanged because availability remains unconfirmed.
 

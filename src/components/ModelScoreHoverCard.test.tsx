@@ -1,6 +1,6 @@
 import { createElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { Rating, StickerStar } from '@smastrom/react-rating';
-import { Check } from 'lucide-react';
+import { BadgeDollarSign, Brain, Check, Gauge, Gem } from 'lucide-react';
 import { expect, test, vi } from 'vitest';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import { HoverCard } from '@/components/ui/hover-card';
@@ -105,6 +105,12 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const recommendationChecks = descendants.filter(
     (candidate) => candidate.type === Check,
   ) as ReactElement<{ className?: string }>[];
+  const metricIcons = [Gem, Gauge, Brain, BadgeDollarSign].map(
+    (MetricIcon) =>
+      descendants.find((candidate) => candidate.type === MetricIcon) as
+        | ReactElement<{ 'aria-hidden'?: boolean; className?: string }>
+        | undefined,
+  );
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
@@ -137,6 +143,13 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
   expect(text).toContain('Value');
+  expect(metricIcons).toHaveLength(4);
+  for (const metricIcon of metricIcons) {
+    expect(metricIcon?.props).toMatchObject({
+      'aria-hidden': true,
+      className: 'size-3.5 shrink-0 text-muted-foreground',
+    });
+  }
   expect(languageSlots).toHaveLength(0);
   expect(text).toContain('Recommended for');
   expect(recommendationLabel?.props.className).toContain('text-xs');

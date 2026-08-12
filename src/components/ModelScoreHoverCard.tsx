@@ -1,5 +1,5 @@
 import { Rating, StickerStar } from '@smastrom/react-rating';
-import { Check } from 'lucide-react';
+import { BadgeDollarSign, Brain, Check, Gauge, Gem } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import {
@@ -14,6 +14,13 @@ const metricLabels = {
   speed: 'Speed',
   reasoning: 'Reasoning',
   value: 'Value',
+} as const;
+
+const metricIcons = {
+  quality: Gem,
+  speed: Gauge,
+  reasoning: Brain,
+  value: BadgeDollarSign,
 } as const;
 
 type ModelScoreHoverCardProps = {
@@ -99,14 +106,23 @@ export function ModelScoreHoverCard({
             </div>
           </div>
           <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
-            {Object.entries(scorecard.metrics).map(([metric, score]) => (
-              <div key={metric} className="flex items-center justify-between gap-2">
-                <dt className="text-muted-foreground">
-                  {metricLabels[metric as keyof typeof metricLabels]}
-                </dt>
-                <dd className="font-medium">{score.toFixed(1)}</dd>
-              </div>
-            ))}
+            {Object.entries(scorecard.metrics).map(([metric, score]) => {
+              const metricKey = metric as keyof typeof metricLabels;
+              const MetricIcon = metricIcons[metricKey];
+
+              return (
+                <div key={metric} className="flex items-center justify-between gap-2">
+                  <dt className="flex items-center gap-1.5 text-muted-foreground">
+                    <MetricIcon
+                      aria-hidden
+                      className="size-3.5 shrink-0 text-muted-foreground"
+                    />
+                    <span>{metricLabels[metricKey]}</span>
+                  </dt>
+                  <dd className="font-medium">{score.toFixed(1)}</dd>
+                </div>
+              );
+            })}
           </dl>
         </div>
       </HoverCardContent>
