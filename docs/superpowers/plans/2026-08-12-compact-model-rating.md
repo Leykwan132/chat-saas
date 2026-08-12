@@ -29,7 +29,7 @@
 - Consumes: `scorecard.overall: number` and the existing `modelRatingItemStyles` object.
 - Produces: one flex row containing `scorecard.overall.toFixed(1)` followed by a read-only `Rating` with an 88px width.
 
-- [ ] **Step 1: Write the failing regression test**
+- [x] **Step 1: Write the failing regression test**
 
 Find the `Rating`, assert `style: { width: 88 }`, assert its parent is a flex row containing `4.0`, and assert the overall section does not render `4.0 / 5`.
 
@@ -44,7 +44,7 @@ expect(collectText(ratingRow)).toContain('4.0');
 expect(text).not.toContain('4.0 / 5');
 ```
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -54,7 +54,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ModelScoreH
 
 Expected: FAIL because the rating still uses a 120px maximum width and displays `4.0 / 5` separately.
 
-- [ ] **Step 3: Implement the compact rating row**
+- [x] **Step 3: Implement the compact rating row**
 
 Keep `Kilobot rating` as a small contextual label and replace the separated score and stars with:
 
@@ -70,7 +70,7 @@ Keep `Kilobot rating` as a small contextual label and replace the separated scor
 </div>
 ```
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -80,7 +80,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ModelScoreH
 
 Expected: tests, scoped ESLint, TypeScript, production build, and whitespace checks pass.
 
-- [ ] **Step 5: Record and commit**
+- [x] **Step 5: Record and commit**
 
 Update `CONTINUITY.md`, mark this plan complete, and run:
 

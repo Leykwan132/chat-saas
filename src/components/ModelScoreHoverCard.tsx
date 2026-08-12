@@ -50,18 +50,18 @@ export function ModelScoreHoverCard({
             <span className="font-semibold">{modelLabel}</span>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-medium">Kilobot rating</span>
-              <span className="text-sm text-muted-foreground">
-                {scorecard.overall.toFixed(1)} / 5
+            <span className="font-medium">Kilobot rating</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">
+                {scorecard.overall.toFixed(1)}
               </span>
+              <Rating
+                style={{ width: 88 }}
+                value={scorecard.overall}
+                itemStyles={modelRatingItemStyles}
+                readOnly
+              />
             </div>
-            <Rating
-              style={{ maxWidth: 120 }}
-              value={scorecard.overall}
-              itemStyles={modelRatingItemStyles}
-              readOnly
-            />
           </div>
           <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
             {Object.entries(scorecard.metrics).map(([metric, score]) => (

@@ -22,6 +22,11 @@ type ProgressElementProps = {
   'aria-valuenow'?: number;
 };
 
+type RatingRowProps = {
+  className?: string;
+  children?: ReactNode;
+};
+
 function collectElements(node: ReactNode): ReactElement[] {
   if (Array.isArray(node)) return node.flatMap(collectElements);
   if (!isValidElement<{ children?: ReactNode }>(node)) return [];
@@ -46,6 +51,16 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   });
   const descendants = collectElements(element);
   const rating = descendants.find((candidate) => candidate.type === Rating);
+  const ratingRow = descendants.find((candidate) => {
+    const props = candidate.props as RatingRowProps;
+    const children = Array.isArray(props.children)
+      ? props.children
+      : [props.children];
+
+    return children.some(
+      (child) => isValidElement(child) && child.type === Rating,
+    );
+  }) as ReactElement<RatingRowProps> | undefined;
   const modelLogo = descendants.find((candidate) => candidate.type === ModelSelectorLogo);
   const languageProgress = descendants.filter(
     (candidate): candidate is ReactElement<ProgressElementProps> =>
@@ -55,6 +70,7 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
 
   expect(element.type).toBe(HoverCard);
   expect(rating?.props).toMatchObject({
+    style: { width: 88 },
     value: 4,
     readOnly: true,
     itemStyles: {
@@ -66,7 +82,9 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(modelLogo?.props).toMatchObject({ provider: 'qwen', className: 'size-4' });
   expect(text).toContain('Qwen3.7 Flash');
   expect(text).toContain('Kilobot rating');
-  expect(text).toContain('4.0 / 5');
+  expect(ratingRow?.props.className).toContain('items-center');
+  expect(collectText(ratingRow)).toContain('4.0');
+  expect(collectText(ratingRow)).not.toContain('4.0 / 5');
   expect(text).toContain('Quality');
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
