@@ -4,8 +4,13 @@ import type { DataModel } from './_generated/dataModel';
 
 const migrations = new Migrations<DataModel>(components.migrations);
 
-export function getGeminiModelMigrationPatch(agent: { model: string }) {
-  if (agent.model !== 'google/gemini-3.1-flash-lite') {
+const RETIRED_AGENT_MODELS = new Set([
+  'amazon/nova-micro-v1',
+  'google/gemini-3.1-flash-lite',
+]);
+
+export function getRetiredModelMigrationPatch(agent: { model: string }) {
+  if (!RETIRED_AGENT_MODELS.has(agent.model)) {
     return undefined;
   }
 
@@ -15,12 +20,12 @@ export function getGeminiModelMigrationPatch(agent: { model: string }) {
   };
 }
 
-export const migrateGoogleGeminiAgents = migrations.define({
+export const migrateRetiredAgentModels = migrations.define({
   table: 'agents',
   batchSize: 25,
-  migrateOne: (_, agent) => getGeminiModelMigrationPatch(agent),
+  migrateOne: (_, agent) => getRetiredModelMigrationPatch(agent),
 });
 
-export const runMigrateGoogleGeminiAgents = migrations.runner(
-  internal.agentModelMigration.migrateGoogleGeminiAgents,
+export const runMigrateRetiredAgentModels = migrations.runner(
+  internal.agentModelMigration.migrateRetiredAgentModels,
 );
