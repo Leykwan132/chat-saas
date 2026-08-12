@@ -1,6 +1,6 @@
 import type { Announcement } from '@/components/whats-new/announcements';
 import { AnnouncementReleaseDetails } from '@/components/whats-new/AnnouncementReleaseDetails';
-import { CalendarDays, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -14,19 +14,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 type AnnouncementDialogListProps = {
   announcements: Announcement[];
 };
-
-const announcementDateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  timeZone: 'UTC',
-});
-
-function formatAnnouncementDate(publishedAt: string) {
-  return announcementDateFormatter.format(
-    new Date(`${publishedAt}T00:00:00Z`),
-  );
-}
 
 export function AnnouncementDialogList({
   announcements,
@@ -74,12 +61,6 @@ export function AnnouncementDialogList({
                   />
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-5">
-                  <div className="mb-3 flex items-center gap-1.5 pl-8 text-xs text-muted-foreground">
-                    <CalendarDays className="size-3.5" />
-                    <time dateTime={announcement.publishedAt}>
-                      {`Released on ${formatAnnouncementDate(announcement.publishedAt)}`}
-                    </time>
-                  </div>
                   <AnnouncementReleaseDetails announcement={announcement} />
                 </AccordionContent>
               </AccordionItem>

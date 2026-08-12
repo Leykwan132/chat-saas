@@ -1,68 +1,79 @@
-import { Archive, Sparkles } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import type { Announcement } from '@/components/whats-new/announcements';
-import { Badge } from '@/components/ui/badge';
 
 type AnnouncementReleaseDetailsProps = {
   announcement: Announcement;
 };
 
+const announcementDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function formatAnnouncementDate(publishedAt: string) {
+  return announcementDateFormatter.format(
+    new Date(`${publishedAt}T00:00:00Z`),
+  );
+}
+
 export function AnnouncementReleaseDetails({
   announcement,
 }: AnnouncementReleaseDetailsProps) {
   return (
-    <div className="flex flex-col gap-3 pl-8">
-      <section className="relative overflow-hidden rounded-xl border bg-muted/40 p-4">
-        <div className="absolute -top-8 -right-8 size-24 rounded-full bg-foreground/5" />
-        <div className="relative flex flex-col gap-3">
-          <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <span className="flex size-7 items-center justify-center rounded-full bg-foreground text-background">
-              <Sparkles className="size-3.5" />
-            </span>
-            {announcement.spotlight.eyebrow}
-          </div>
-          <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-end">
-            <div className="flex max-w-md flex-col gap-1">
-              <h3 className="text-base font-semibold">
-                {announcement.spotlight.title}
-              </h3>
-              <p className="text-sm leading-5 text-muted-foreground">
-                {announcement.spotlight.description}
-              </p>
-            </div>
-            <Badge className="shrink-0 rounded-full px-3 py-1">
-              {announcement.spotlight.value}
-            </Badge>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid gap-2 sm:grid-cols-3">
-        {announcement.modelCards.map((model) => (
-          <article
-            key={model.title}
-            className="flex min-h-32 flex-col justify-between gap-4 rounded-xl border bg-background p-3.5"
-          >
-            <div className="flex flex-col gap-1">
-              <h4 className="text-sm font-medium leading-5">{model.title}</h4>
-              <p className="text-xs leading-4 text-muted-foreground">
-                {model.description}
-              </p>
-            </div>
-            <span className="text-xs font-medium">{model.value}</span>
-          </article>
-        ))}
+    <div data-slot="announcement-release" className="flex flex-col gap-5">
+      <div className="flex flex-col gap-1.5">
+        <h3 className="text-base font-semibold">{announcement.releaseTitle}</h3>
+        <p className="text-sm leading-5 text-muted-foreground">
+          {announcement.releaseSummary}
+        </p>
       </div>
 
-      <div className="flex items-start gap-3 rounded-xl bg-muted/60 p-3.5">
-        <span className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-background">
-          <Archive className="size-3.5 text-muted-foreground" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm font-medium">{announcement.retirement.label}</span>
-          <span className="text-xs leading-4 text-muted-foreground">
-            {announcement.retirement.description}
-          </span>
-        </div>
+      <section className="flex flex-col gap-2">
+        <h4 className="text-sm font-semibold">New Models</h4>
+        <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm">
+          {announcement.newModels.map((model) => (
+            <li key={model.name} className="leading-5">
+              <span className="font-medium">{model.name}</span>{' '}
+              <span className="text-muted-foreground">{model.description}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h4 className="text-sm font-semibold">Retired Models</h4>
+        <p className="text-sm leading-5 text-muted-foreground">
+          {`${announcement.retiredModels.join(' and ')} are no longer available.`}
+        </p>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h4 className="text-sm font-semibold">Cost of Models</h4>
+        <dl className="flex flex-col gap-2 text-sm">
+          {announcement.modelCosts.map((tier) => (
+            <div
+              key={tier.cost}
+              className="grid gap-0.5 sm:grid-cols-[9rem_1fr] sm:gap-3"
+            >
+              <dt className="font-medium">{tier.cost}</dt>
+              <dd className="leading-5 text-muted-foreground">
+                {tier.models.join(', ')}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+
+      <div
+        data-slot="announcement-release-date"
+        className="flex items-center gap-1.5 border-t pt-4 text-xs text-muted-foreground"
+      >
+        <CalendarDays className="size-3.5" />
+        <time dateTime={announcement.publishedAt}>
+          {`Released on ${formatAnnouncementDate(announcement.publishedAt)}`}
+        </time>
       </div>
     </div>
   );

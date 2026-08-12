@@ -4,21 +4,14 @@ export type Announcement = {
   id: string;
   title: string;
   summary: string;
-  spotlight: {
-    eyebrow: string;
-    title: string;
+  releaseTitle: string;
+  releaseSummary: string;
+  newModels: Array<{
+    name: string;
     description: string;
-    value: string;
-  };
-  modelCards: Array<{
-    title: string;
-    description: string;
-    value: string;
   }>;
-  retirement: {
-    label: string;
-    description: string;
-  };
+  retiredModels: string[];
+  modelCosts: Array<{ cost: string; models: string[] }>;
   publishedAt: string;
   isNew: boolean;
   icon: LucideIcon;
@@ -30,35 +23,42 @@ export const ANNOUNCEMENTS: Announcement[] = [
     title: 'Model support update',
     summary: 'Choose the model that best fits each customer conversation.',
     publishedAt: '2026-08-12',
-    spotlight: {
-      eyebrow: 'New 0.5-credit tier',
-      title: 'More choice for half a credit',
-      description:
-        'Use GPT-OSS 120B for budget-friendly reasoning or Qwen3.7 Flash for fast Chinese conversations.',
-      value: '0.5 credits/message',
-    },
-    modelCards: [
+    releaseTitle: 'New Credit system for Models.',
+    releaseSummary:
+      'Model pricing now uses clear credit tiers for every message.',
+    newModels: [
       {
-        title: 'NVIDIA Nemotron 3.5 Lightning',
+        name: 'OpenAI GPT-OSS 120B',
+        description: 'Budget-friendly reasoning',
+      },
+      {
+        name: 'Qwen3.7 Flash',
+        description: 'Fast Chinese conversations',
+      },
+      {
+        name: 'NVIDIA Nemotron 3.5 Lightning',
         description: 'Fast English responses',
-        value: '1 credit/message',
       },
       {
-        title: 'DeepSeek V4 Flash',
-        description: 'Balanced everyday support',
-        value: '1 credit/message',
-      },
-      {
-        title: 'GPT-5.6 Luna',
+        name: 'GPT-5.6 Luna',
         description: 'Higher overall performance',
-        value: '2 credits/message',
       },
     ],
-    retirement: {
-      label: 'Retired models',
-      description:
-        'Amazon Nova Micro and Google Gemini 3.1 Flash Lite are no longer available.',
-    },
+    retiredModels: ['Amazon Nova Micro', 'Google Gemini 3.1 Flash Lite'],
+    modelCosts: [
+      {
+        cost: '0.5 credits/message',
+        models: ['OpenAI GPT-OSS 120B', 'Qwen3.7 Flash'],
+      },
+      {
+        cost: '1 credit/message',
+        models: ['DeepSeek V4 Flash', 'NVIDIA Nemotron 3.5 Lightning'],
+      },
+      {
+        cost: '2 credits/message',
+        models: ['GPT-5.6 Luna'],
+      },
+    ],
     isNew: true,
     icon: Orbit,
   },

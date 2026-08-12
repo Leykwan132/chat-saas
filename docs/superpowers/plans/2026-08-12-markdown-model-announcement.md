@@ -32,11 +32,11 @@
 - Consumes: `Announcement` identity, summary, icon, `publishedAt`, and `isNew` fields used by `AnnouncementDialogList`.
 - Produces: `Announcement.newModels: Array<{ name: string; description: string }>`, `Announcement.retiredModels: string[]`, `Announcement.modelCosts: Array<{ cost: string; models: string[] }>`, `Announcement.releaseTitle: string`, and `Announcement.releaseSummary: string` for `AnnouncementReleaseDetails`.
 
-- [ ] **Step 1: Write the failing data and rendering tests**
+- [x] **Step 1: Write the failing data and rendering tests**
 
   Replace the legacy spotlight/card assertions with literal expected structured release data. Assert the rendered detail order, every model and cost group, flat layout classes, and that the calendar-backed `Released on 12 Aug 2026` row is the final child.
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
   Run:
 
@@ -46,7 +46,7 @@
 
   Expected: FAIL because the production announcement still exposes spotlight/card fields, places the date before the details, and renders nested containers.
 
-- [ ] **Step 3: Replace presentation fields with structured release-note data**
+- [x] **Step 3: Replace presentation fields with structured release-note data**
 
   Define and populate:
 
@@ -67,11 +67,11 @@
   ]
   ```
 
-- [ ] **Step 4: Render the flat markdown-style hierarchy**
+- [x] **Step 4: Render the flat markdown-style hierarchy**
 
   Render the title and summary, three semantic sections with simple lists/description rows, and the date as the last bordered row. Remove legacy `Badge`, `Archive`, and `Sparkles` presentation plus the date block from `AnnouncementDialogList`.
 
-- [ ] **Step 5: Run focused verification to verify GREEN**
+- [x] **Step 5: Run focused verification to verify GREEN**
 
   Run:
 
@@ -81,7 +81,7 @@
 
   Expected: all tests pass.
 
-- [ ] **Step 6: Run the scoped quality gate**
+- [x] **Step 6: Run the scoped quality gate**
 
   Run:
 
@@ -94,7 +94,7 @@
 
   Expected: all commands pass; the build may retain only its established environment and bundle-size warnings.
 
-- [ ] **Step 7: Record continuity and commit**
+- [x] **Step 7: Record continuity and commit**
 
   Record the verified unreleased change in `CONTINUITY.md`, leave the public changelog unchanged, stage only task-owned files, and commit with:
 
