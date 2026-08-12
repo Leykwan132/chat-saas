@@ -6,6 +6,7 @@ import { afterAll, afterEach, beforeEach, expect, test, vi } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { internalMutation } from "./_generated/server";
+import { hashGoogleCalendarChannelToken } from "./googleCalendar/channelToken";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
 import schema from "./schema";
 
@@ -20,8 +21,23 @@ const watchActions = (internal as unknown as {
   googleCalendar: { watchActions: {
     createGoogleCalendarWatch: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
     renewConnectionWatch: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, null>;
+    renewExpiringGoogleCalendarWatches: FunctionReference<"action", "internal", Record<string, never>, null>;
   } };
 }).googleCalendar.watchActions;
+
+const acceptNotification = (internal as unknown as {
+  googleCalendar: { watchStore: {
+    acceptNotification: FunctionReference<"mutation", "internal", {
+      channelId: string;
+      tokenHash: string;
+      resourceId: string;
+      resourceState: "sync" | "exists" | "not_exists";
+      messageNumber: number;
+      headerExpirationAt: number;
+      now: number;
+    }, { kind: "accepted" | "duplicate" | "rejected" }>;
+  } };
+}).googleCalendar.watchStore.acceptNotification;
 
 const activationFailure = internalMutation({
   args: {
@@ -43,12 +59,12 @@ const activationFailure = internalMutation({
 });
 
 function modulesWithActivationFailure() {
-  const watchStoreModule = modules["./googleCalendar/watchStore.ts"];
-  if (watchStoreModule === undefined) throw new Error("watch store module missing");
+  const watchActivationModule = modules["./googleCalendar/watchActivation.ts"];
+  if (watchActivationModule === undefined) throw new Error("watch activation module missing");
   return {
     ...modules,
-    "./googleCalendar/watchStore.ts": async () => ({
-      ...(await watchStoreModule() as Record<string, unknown>),
+    "./googleCalendar/watchActivation.ts": async () => ({
+      ...(await watchActivationModule() as Record<string, unknown>),
       activatePendingWatch: activationFailure,
     }),
   };
@@ -96,7 +112,10 @@ async function insertWatch(t: CalendarTest, connectionId: Id<"googleCalendarConn
   }));
 }
 
-function providerFetch(stopStatus: (channelId: string) => number) {
+function providerFetch(
+  stopStatus: (channelId: string) => number,
+  beforeWatchResponse?: (body: Record<string, unknown>) => Promise<void>,
+) {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
     if (request.url === "https://api.workos.com/data-integrations/google_calendar/token") {
@@ -104,6 +123,7 @@ function providerFetch(stopStatus: (channelId: string) => number) {
     }
     const body = await request.json() as Record<string, unknown>;
     if (request.url.endsWith("/calendars/primary/events/watch")) {
+      await beforeWatchResponse?.(body);
       return Response.json({ id: body.id, resourceId: `resource-${body.id}`, resourceUri: "https://www.googleapis.com/calendar/v3/calendars/primary/events", expiration: String(now + 7 * day) });
     }
     if (request.url.endsWith("/channels/stop")) {
@@ -169,4 +189,80 @@ test("activation failure retains recoverable metadata when stop fails and mainte
 
   expect((await t.run(async (ctx) => await ctx.db.get(recoverable._id)))?.state).toBe("retired");
   expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.activeWatchChannelId).toBe(stableId);
+});
+
+test("an expired pending row retains cleanup metadata after stop failure and maintenance retires it", async () => {
+  const t = convexTest(schema, modules);
+  const connectionId = await connectionFixture(t);
+  let stopStatus = 500;
+  let watchCount = 0;
+  let rawToken = "";
+  vi.stubGlobal("fetch", providerFetch(
+    () => stopStatus,
+    async (body) => {
+      watchCount += 1;
+      if (watchCount !== 1) return;
+      rawToken = String(body.token);
+      await t.run(async (ctx) => {
+        const pending = await ctx.db.query("googleCalendarWatchChannels")
+          .withIndex("by_channelId", (q) => q.eq("channelId", String(body.id))).unique();
+        await ctx.db.patch(pending!._id, { state: "expired", updatedAt: now });
+      });
+    },
+  ));
+
+  await expect(t.action(watchActions.createGoogleCalendarWatch, { connectionId })).resolves.toMatchObject({ kind: "superseded" });
+  const [cleanup] = await watches(t, connectionId);
+  expect(cleanup).toMatchObject({ state: "retiring", resourceId: expect.stringMatching(/^resource-/), expirationAt: now + 7 * day });
+  expect(cleanup.tokenHash).not.toBe(rawToken);
+  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.activeWatchChannelId).toBeUndefined();
+  await expect(t.mutation(acceptNotification, {
+    channelId: cleanup.channelId,
+    tokenHash: await hashGoogleCalendarChannelToken(rawToken),
+    resourceId: cleanup.resourceId,
+    resourceState: "sync",
+    messageNumber: 1,
+    headerExpirationAt: cleanup.expirationAt,
+    now,
+  })).resolves.toEqual({ kind: "rejected" });
+  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.dirtyGeneration).toBe(0);
+
+  stopStatus = 204;
+  await t.action(watchActions.renewConnectionWatch, { connectionId });
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect((await t.run(async (ctx) => await ctx.db.get(cleanup._id)))?.state).toBe("retired");
+  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.activeWatchChannelId).not.toBe(cleanup._id);
+});
+
+test("a retired pending row on disconnect remains cleanup-only until maintenance stops it", async () => {
+  const t = convexTest(schema, modules);
+  const connectionId = await connectionFixture(t);
+  let stopStatus = 500;
+  let rawToken = "";
+  vi.stubGlobal("fetch", providerFetch(
+    () => stopStatus,
+    async (body) => {
+      rawToken = String(body.token);
+      await t.run(async (ctx) => {
+        const pending = await ctx.db.query("googleCalendarWatchChannels")
+          .withIndex("by_channelId", (q) => q.eq("channelId", String(body.id))).unique();
+        await ctx.db.patch(pending!._id, { state: "retired", updatedAt: now });
+        await ctx.db.patch(connectionId, { state: "disconnected", updatedAt: now });
+      });
+    },
+  ));
+
+  await expect(t.action(watchActions.createGoogleCalendarWatch, { connectionId })).resolves.toMatchObject({ kind: "superseded" });
+  const [cleanup] = await watches(t, connectionId);
+  expect(cleanup).toMatchObject({ state: "retiring", resourceId: expect.stringMatching(/^resource-/), expirationAt: now + 7 * day });
+  expect(cleanup.tokenHash).not.toBe(rawToken);
+  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.activeWatchChannelId).toBeUndefined();
+
+  stopStatus = 204;
+  await t.action(watchActions.renewExpiringGoogleCalendarWatches, {});
+  await t.finishAllScheduledFunctions(vi.runAllTimers);
+
+  expect((await t.run(async (ctx) => await ctx.db.get(cleanup._id)))?.state).toBe("retired");
+  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.activeWatchChannelId).toBeUndefined();
 });

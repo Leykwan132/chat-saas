@@ -7,14 +7,19 @@ import { CALENDAR_PAGE_FRESHNESS_MS, WATCH_RENEWAL_WINDOW_MS } from "./constants
 import { createGoogleCalendarChannelToken } from "./channelToken";
 import { googleCalendarRequest } from "./googleClient";
 import {
+  compensateActivationFailure,
+  settleSupersededWatch,
+  type WatchResponse,
+} from "./watchCompensation";
+import {
   activeGoogleCalendarCredential,
   googleCalendarWebhookAddress,
   stopExternalGoogleCalendarWatch,
   validatedGoogleCalendarWatchResponse,
-  type GoogleCalendarWatchCredential,
 } from "./watchProvider";
-type ConnectionState = "connected" | "syncing";
-type ConnectionForWatch = { connectionId: Id<"googleCalendarConnections">; workosUserId: string; state: ConnectionState };
+type ConnectionState = "connected" | "syncing" | "needs_reauthorization" | "disconnected";
+type WatchableConnectionState = "connected" | "syncing";
+type ConnectionForWatch = { connectionId: Id<"googleCalendarConnections">; workosUserId: string; state: WatchableConnectionState };
 type StopChannel = {
   channelId: Id<"googleCalendarWatchChannels">;
   connectionId: Id<"googleCalendarConnections">;
@@ -29,6 +34,7 @@ type Maintenance = {
   activeExpirationAt?: number;
   hasPending: boolean;
   retiringChannelIds: Id<"googleCalendarWatchChannels">[];
+  connectionState: ConnectionState;
 };
 type PaginationResult = { page: Id<"googleCalendarConnections">[]; isDone: boolean; continueCursor: string };
 type Reservation =
@@ -38,24 +44,21 @@ type Reservation =
 type Activation =
   | { kind: "activated"; retiringChannelId?: Id<"googleCalendarWatchChannels"> }
   | { kind: "superseded" };
-type Recovery = { kind: "active" | "recoverable" | "terminal" };
-type WatchResponse = { resourceId: string; resourceUri: string; expirationAt: number };
 const refs = (internal as unknown as {
   googleCalendar: {
+    watchActivation: {
+      activatePendingWatch: FunctionReference<"mutation", "internal", { pendingChannelId: Id<"googleCalendarWatchChannels">; expectedChannelId: string; resourceId: string; resourceUri: string; expirationAt: number; replacingChannelId?: Id<"googleCalendarWatchChannels">; now: number }, Activation>;
+    };
     watchStore: {
       getConnectionForWatch: FunctionReference<"query", "internal", { connectionId: Id<"googleCalendarConnections"> }, ConnectionForWatch>;
       reservePendingWatch: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; channelId: string; tokenHash: string; pendingExpirationAt: number; replacingChannelId?: Id<"googleCalendarWatchChannels">; now: number }, Reservation>;
-      activatePendingWatch: FunctionReference<"mutation", "internal", { pendingChannelId: Id<"googleCalendarWatchChannels">; expectedChannelId: string; resourceId: string; resourceUri: string; expirationAt: number; replacingChannelId?: Id<"googleCalendarWatchChannels">; now: number }, Activation>;
       getChannelForStop: FunctionReference<"query", "internal", { channelId: Id<"googleCalendarWatchChannels"> }, StopChannel>;
       markWatchStopped: FunctionReference<"mutation", "internal", { channelId: Id<"googleCalendarWatchChannels">; state: "retired" | "expired"; now: number }, null>;
-    };
-    watchRecovery: {
-      recordUnactivatedWatch: FunctionReference<"mutation", "internal", { pendingChannelId: Id<"googleCalendarWatchChannels">; expectedChannelId: string; resourceId: string; resourceUri: string; expirationAt: number; now: number }, Recovery>;
     };
     watchMaintenance: {
       listMaintenanceConnectionIds: FunctionReference<"query", "internal", { state: ConnectionState; paginationOpts: { numItems: number; cursor: string | null } }, PaginationResult>;
       getWatchMaintenance: FunctionReference<"query", "internal", { connectionId: Id<"googleCalendarConnections">; now: number }, Maintenance>;
-      scheduleStaleSyncBatch: FunctionReference<"mutation", "internal", { state: ConnectionState; paginationOpts: { numItems: number; cursor: string | null }; staleBefore: number; now: number }, { isDone: boolean; continueCursor: string }>;
+      scheduleStaleSyncBatch: FunctionReference<"mutation", "internal", { state: WatchableConnectionState; paginationOpts: { numItems: number; cursor: string | null }; staleBefore: number; now: number }, { isDone: boolean; continueCursor: string }>;
     };
     watchActions: {
       continueWatchRenewal: FunctionReference<"action", "internal", { state: ConnectionState; cursor: string | null }, null>;
@@ -67,58 +70,8 @@ const refs = (internal as unknown as {
     };
   };
 }).googleCalendar;
-async function compensateActivationFailure(args: {
-  ctx: ActionCtx;
-  pendingChannelId: Id<"googleCalendarWatchChannels">;
-  externalChannelId: string;
-  response: WatchResponse;
-  credential: GoogleCalendarWatchCredential;
-  activationError: unknown;
-}) {
-  const recoveryArgs = {
-    pendingChannelId: args.pendingChannelId,
-    expectedChannelId: args.externalChannelId,
-    ...args.response,
-    now: Date.now(),
-  };
-  let recovery: Recovery;
-  try {
-    recovery = await args.ctx.runMutation(refs.watchRecovery.recordUnactivatedWatch, recoveryArgs);
-  } catch {
-    try {
-      await stopExternalGoogleCalendarWatch(
-        args.credential,
-        args.externalChannelId,
-        args.response.resourceId,
-      );
-      await args.ctx.runMutation(refs.watchStore.markWatchStopped, {
-        channelId: args.pendingChannelId,
-        state: "retired",
-        now: Date.now(),
-      });
-    } catch {
-      await args.ctx.runMutation(refs.watchRecovery.recordUnactivatedWatch, recoveryArgs);
-    }
-    throw args.activationError;
-  }
-  if (recovery.kind === "active") {
-    return { kind: "active" as const, channelId: args.pendingChannelId };
-  }
-  try {
-    await stopExternalGoogleCalendarWatch(
-      args.credential,
-      args.externalChannelId,
-      args.response.resourceId,
-    );
-    await args.ctx.runMutation(refs.watchStore.markWatchStopped, {
-      channelId: args.pendingChannelId,
-      state: "retired",
-      now: Date.now(),
-    });
-  } catch {
-    throw args.activationError;
-  }
-  throw args.activationError;
+function isWatchableConnectionState(state: ConnectionState): state is WatchableConnectionState {
+  return state === "connected" || state === "syncing";
 }
 async function createWatch(
   ctx: ActionCtx,
@@ -159,7 +112,7 @@ async function createWatch(
   }
   let activated: Activation;
   try {
-    activated = await ctx.runMutation(refs.watchStore.activatePendingWatch, {
+    activated = await ctx.runMutation(refs.watchActivation.activatePendingWatch, {
       pendingChannelId: reservation.channelId,
       expectedChannelId: externalChannelId,
       ...response,
@@ -177,8 +130,13 @@ async function createWatch(
     });
   }
   if (activated.kind === "superseded") {
-    await stopExternalGoogleCalendarWatch(credential, externalChannelId, response.resourceId);
-    await ctx.runMutation(refs.watchStore.markWatchStopped, { channelId: reservation.channelId, state: "retired", now: Date.now() });
+    await settleSupersededWatch({
+      ctx,
+      channelId: reservation.channelId,
+      externalChannelId,
+      resourceId: response.resourceId,
+      credential,
+    });
     return { kind: "superseded" as const };
   }
   if (activated.retiringChannelId !== undefined) {
@@ -237,7 +195,7 @@ export const renewConnectionWatch = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     const maintenance: Maintenance = await ctx.runQuery(refs.watchMaintenance.getWatchMaintenance, { connectionId: args.connectionId, now: Date.now() });
-    if (!maintenance.hasPending && (maintenance.activeExpirationAt === undefined || maintenance.activeExpirationAt <= Date.now() + WATCH_RENEWAL_WINDOW_MS)) {
+    if (isWatchableConnectionState(maintenance.connectionState) && !maintenance.hasPending && (maintenance.activeExpirationAt === undefined || maintenance.activeExpirationAt <= Date.now() + WATCH_RENEWAL_WINDOW_MS)) {
       await createWatch(ctx, args.connectionId, maintenance.currentChannelId);
     }
     for (const channelId of maintenance.retiringChannelIds) {
@@ -250,7 +208,7 @@ export const renewConnectionWatch = internalAction({
 });
 
 export const continueWatchRenewal = internalAction({
-  args: { state: v.union(v.literal("connected"), v.literal("syncing")), cursor: v.union(v.string(), v.null()) },
+  args: { state: v.union(v.literal("connected"), v.literal("syncing"), v.literal("needs_reauthorization"), v.literal("disconnected")), cursor: v.union(v.string(), v.null()) },
   returns: v.null(),
   handler: async (ctx, args) => {
     const page: PaginationResult = await ctx.runQuery(refs.watchMaintenance.listMaintenanceConnectionIds, { state: args.state, paginationOpts: { numItems: 20, cursor: args.cursor } });
@@ -263,7 +221,7 @@ export const continueWatchRenewal = internalAction({
 export const renewExpiringGoogleCalendarWatches = internalAction({
   args: {}, returns: v.null(),
   handler: async (ctx) => {
-    for (const state of ["connected", "syncing"] as const) await ctx.scheduler.runAfter(0, refs.watchActions.continueWatchRenewal, { state, cursor: null });
+    for (const state of ["connected", "syncing", "needs_reauthorization", "disconnected"] as const) await ctx.scheduler.runAfter(0, refs.watchActions.continueWatchRenewal, { state, cursor: null });
     return null;
   },
 });

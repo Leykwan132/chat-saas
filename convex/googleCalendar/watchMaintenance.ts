@@ -7,6 +7,13 @@ import type { Id } from "../_generated/dataModel";
 const connectionStateValidator = v.union(
   v.literal("connected"),
   v.literal("syncing"),
+  v.literal("needs_reauthorization"),
+  v.literal("disconnected"),
+);
+
+const watchableConnectionStateValidator = v.union(
+  v.literal("connected"),
+  v.literal("syncing"),
 );
 
 const syncWorker = (internal as unknown as {
@@ -39,6 +46,7 @@ export const getWatchMaintenance = internalQuery({
     activeExpirationAt: v.optional(v.number()),
     hasPending: v.boolean(),
     retiringChannelIds: v.array(v.id("googleCalendarWatchChannels")),
+    connectionState: connectionStateValidator,
   }),
   handler: async (ctx, args) => {
     const connection = await ctx.db.get(args.connectionId);
@@ -59,12 +67,13 @@ export const getWatchMaintenance = internalQuery({
       activeExpirationAt: active?.state === "active" ? active.expirationAt : undefined,
       hasPending: pending.some((channel) => channel.expirationAt > args.now),
       retiringChannelIds: retiring.map((channel) => channel._id),
+      connectionState: connection.state,
     };
   },
 });
 
 export const scheduleStaleSyncBatch = internalMutation({
-  args: { state: connectionStateValidator, paginationOpts: paginationOptsValidator, staleBefore: v.number(), now: v.number() },
+  args: { state: watchableConnectionStateValidator, paginationOpts: paginationOptsValidator, staleBefore: v.number(), now: v.number() },
   returns: v.object({ isDone: v.boolean(), continueCursor: v.string() }),
   handler: async (ctx, args) => {
     const page = await ctx.db.query("googleCalendarConnections")
