@@ -65,13 +65,15 @@ export function templateKeyForAgentGoal(goal: AgentGoal): "support" | "sales" {
 }
 
 export function buildAgentSystemPrompt(input: {
-  businessName: string;
-  businessDescription: string;
+  businessName?: string;
+  businessDescription?: string;
   goal: AgentGoal;
 }): string {
-  const businessName = input.businessName.trim();
-  const businessDescription = input.businessDescription.trim();
-  const businessContext = `Business name: ${businessName}\nBusiness description: ${businessDescription}`;
+  const businessName = input.businessName?.trim();
+  const businessDescription = input.businessDescription?.trim();
+  const businessContext = businessName && businessDescription
+    ? `Business name: ${businessName}\nBusiness description: ${businessDescription}`
+    : "Use the business profile, uploaded knowledge, and conversation context to understand what the business offers and what customers need.";
   const goalPrompt = input.goal === "support" ? SUPPORT_PROMPT : BOOK_SERVICE_PROMPT;
 
   return [
