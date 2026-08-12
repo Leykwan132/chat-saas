@@ -9,10 +9,13 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Render an outlined `What’s new` header button with Lucide’s `Package` icon before the support control.
 - Clicking the button opens one accessible modal. Hovering does not open it.
 - The modal follows the supplied reference: `What’s new in Kilobot` heading, white surface, roomy announcement rows, icons, titles, optional `New` badges, summaries, and right-side disclosure affordances.
+- Render `https://storage.kilobot.app/dashboard/new%20feature%402x.png` as a full-width, wide-cropped banner above the modal heading. Preserve the modal corner radius and use `object-cover` so the 3840×2160 source matches the reference’s shallow hero treatment.
 - Announcements render in a bounded ScrollArea as a single-open Accordion.
 - Clicking an announcement expands its Accordion item and shows the full detail list inline.
+- Closed announcement rows show a right-pointing chevron. The same chevron rotates down only while its row is expanded; shared Accordion indicators elsewhere remain unchanged.
 - Remove the intermediate Popover, `View full update` action, and secondary announcement detail Dialog.
 - The first announcement is `Model support update` and explains Qwen3.7 Flash for Chinese conversations, NVIDIA Nemotron 3.5 Lightning for fast English responses, GPT-5.6 Luna for stronger performance, and GPT-OSS 120B for budget-friendly reasoning.
+- The first announcement uses Lucide’s `Orbit` icon as the installed asteroid-style symbol, displays `12 Aug 2026` from its structured ISO announcement date, and renders its `New` badge with a subtle neutral background and border.
 - Announcement data remains local and structured for future additions. No read state or backend persistence is introduced.
 
 ## Model scorecards
@@ -60,6 +63,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Dialog content retains a visible title and description.
 - Rating is read-only and accompanied by visible `x.x / 5` text.
 - The Dialog list is bounded and scrollable on small viewports.
+- The banner keeps a wide crop on narrow viewports without forcing the announcement list below the viewport.
 
 ## Verification
 
@@ -67,7 +71,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
 - Model scorecard tests assert the visible identity header contains the supplied model name and the shared provider icon.
 - Model scorecard tests assert the Rating uses `StickerStar`, the approved amber fills, and remains read-only.
-- Announcement tests assert Package-icon button copy, click-open Dialog, single Accordion behavior, `New` badge, and inline expanded detail content with no secondary action or Dialog.
+- Announcement tests assert Package-icon button copy, the supplied banner, click-open Dialog, formatted announcement date, neutral `New` badge, right-to-down chevron behavior, single Accordion behavior, and inline expanded detail content with no secondary action or Dialog.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
 
