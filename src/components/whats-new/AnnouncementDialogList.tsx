@@ -1,4 +1,3 @@
-import { ArrowRight } from 'lucide-react';
 import type { Announcement } from '@/components/whats-new/announcements';
 import {
   Accordion,
@@ -7,23 +6,21 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-type AnnouncementPopoverListProps = {
+type AnnouncementDialogListProps = {
   announcements: Announcement[];
-  onViewDetails: (announcement: Announcement) => void;
 };
 
-export function AnnouncementPopoverList({
+export function AnnouncementDialogList({
   announcements,
-  onViewDetails,
-}: AnnouncementPopoverListProps) {
+}: AnnouncementDialogListProps) {
   return (
     <div className="flex flex-col">
-      <div className="px-6 pt-6 pb-3">
-        <h2 className="text-base font-semibold">What’s new in Kilobot</h2>
-      </div>
+      <DialogHeader className="px-6 pt-6 pb-3">
+        <DialogTitle>What’s new in Kilobot</DialogTitle>
+      </DialogHeader>
       <ScrollArea className="max-h-[min(32rem,70vh)]">
         <Accordion type="single" collapsible className="rounded-none border-0">
           {announcements.map((announcement) => {
@@ -47,16 +44,12 @@ export function AnnouncementPopoverList({
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="flex justify-end px-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onViewDetails(announcement)}
-                  >
-                    {announcement.actionLabel}
-                    <ArrowRight data-icon="inline-end" />
-                  </Button>
+                <AccordionContent className="px-6 pb-5">
+                  <ul className="flex list-disc flex-col gap-2 pl-8 text-sm text-muted-foreground">
+                    {announcement.details.map((detail) => (
+                      <li key={detail}>{detail}</li>
+                    ))}
+                  </ul>
                 </AccordionContent>
               </AccordionItem>
             );

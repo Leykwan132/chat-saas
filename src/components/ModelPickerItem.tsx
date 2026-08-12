@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, type KeyboardEvent } from 'react';
+import { memo, type KeyboardEvent } from 'react';
 import { DollarSign, LockKeyhole } from 'lucide-react';
 import type { PlanKey } from '../../shared/planCatalog';
 import {
@@ -51,56 +51,55 @@ type ModelPickerItemProps = {
   onUpgrade: () => void;
 };
 
-export const ModelPickerItem = memo(function ModelPickerItem({
+export function ModelPickerItemView({
   option,
   selected,
   onSelect,
   onUpgrade,
 }: ModelPickerItemProps) {
-  const handleSelect = useCallback(() => {
+  const handleSelect = () => {
     if (resolveModelPickerAction(option.accessible) === 'upgrade') {
       onUpgrade();
       return;
     }
     onSelect(option.value);
-  }, [onSelect, onUpgrade, option.accessible, option.value]);
+  };
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
-      const keyboardAction = resolveModelPickerKeyboardAction(event.key);
-      if (keyboardAction === 'ignore') return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (keyboardAction === 'activate') {
-        handleSelect();
-        return;
-      }
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const keyboardAction = resolveModelPickerKeyboardAction(event.key);
+    if (keyboardAction === 'ignore') return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (keyboardAction === 'activate') {
+      handleSelect();
+      return;
+    }
 
-      const list = event.currentTarget.closest('[cmdk-list]');
-      const modelItems = Array.from(
-        list?.querySelectorAll<HTMLElement>('[cmdk-item]') ?? [],
-      );
-      const targetIndex = getModelPickerFocusTargetIndex(
-        modelItems.indexOf(event.currentTarget),
-        modelItems.length,
-        keyboardAction,
-      );
-      if (targetIndex !== null) modelItems[targetIndex]?.focus();
-    },
-    [handleSelect],
-  );
+    const list = event.currentTarget.closest('[cmdk-list]');
+    const modelItems = Array.from(
+      list?.querySelectorAll<HTMLElement>('[cmdk-item]') ?? [],
+    );
+    const targetIndex = getModelPickerFocusTargetIndex(
+      modelItems.indexOf(event.currentTarget),
+      modelItems.length,
+      keyboardAction,
+    );
+    if (targetIndex !== null) modelItems[targetIndex]?.focus();
+  };
 
-  const labels = useMemo(
-    () =>
-      (option.labels ?? (option.isPopular ? ['popular'] : [])).filter(
-        (label) =>
-          label !== 'basic' && label !== 'advanced' && label !== 'latest',
-      ),
-    [option.labels, option.isPopular],
+  const labels = (
+    option.labels ?? (option.isPopular ? ['popular' as const] : [])
+  ).filter(
+    (label) => label !== 'basic' && label !== 'advanced' && label !== 'latest',
   );
 
   return (
-    <ModelScoreHoverCard modelId={option.value}>
+    <ModelScoreHoverCard
+      modelId={option.value}
+      modelLabel={option.label}
+      chefSlug={option.chefSlug}
+      imageUrl={option.imageUrl}
+    >
       <ModelSelectorItem
         value={option.value}
         onSelect={handleSelect}
@@ -170,4 +169,6 @@ export const ModelPickerItem = memo(function ModelPickerItem({
       </ModelSelectorItem>
     </ModelScoreHoverCard>
   );
-});
+}
+
+export const ModelPickerItem = memo(ModelPickerItemView);

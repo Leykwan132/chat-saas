@@ -32,11 +32,11 @@
 - Consumes: `EXTRA_CREDITS_PACKS`, `EXTRA_CREDITS_PACK_NOTE`, and `formatExtraCreditsPackPrice(pack)` from `shared/extraCreditsCatalog.ts`.
 - Produces: the existing `pricingFaqs` entry for `What happens if I use up my credits?` with all canonical package prices and policy text.
 
-- [ ] **Step 1: Write the failing customer-visible FAQ regression**
+- [x] **Step 1: Write the failing customer-visible FAQ regression**
 
 Change the existing credit-limit test to assert the literal customer answer contains `2,000 credits for RM 49`, `5,000 credits for RM 99`, `15,000 credits for RM 249`, the carry-forward/non-expiry note, and the existing top-up/cycle/upgrade choices.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 Run:
 
@@ -46,7 +46,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/content/pricingFaqs.te
 
 Expected: FAIL because the existing answer does not include package prices or the carry-forward policy.
 
-- [ ] **Step 3: Build the answer from the shared catalog**
+- [x] **Step 3: Build the answer from the shared catalog**
 
 Import the three shared catalog exports and build the package sentence with:
 
@@ -58,7 +58,7 @@ const topUpPackageSummary = EXTRA_CREDITS_PACKS.map(
 
 Use that summary and `EXTRA_CREDITS_PACK_NOTE` in the existing FAQ answer before the paused-usage explanation.
 
-- [ ] **Step 4: Run the focused test and verify GREEN**
+- [x] **Step 4: Run the focused test and verify GREEN**
 
 Run the Step 2 command and expect all Pricing FAQ tests to pass.
 
@@ -73,7 +73,7 @@ Run the Step 2 command and expect all Pricing FAQ tests to pass.
 - Consumes: `ModelPickerOption.label`, `chefSlug`, and optional `imageUrl`.
 - Produces: `ModelScoreHoverCard({ modelId, modelLabel, chefSlug, imageUrl?, children })` with a shared model logo, visible name, and read-only StickerStar Rating.
 
-- [ ] **Step 1: Write the failing identity and rating-style regression**
+- [x] **Step 1: Write the failing identity and rating-style regression**
 
 Pass `modelLabel: 'Qwen3.7 Flash'`, `chefSlug: 'qwen'`, and no image URL into the scorecard test. Assert rendered text contains the model label, descendants contain `ModelSelectorLogo` with provider `qwen` and class `size-4`, and the Rating props contain:
 
@@ -89,7 +89,7 @@ Pass `modelLabel: 'Qwen3.7 Flash'`, `chefSlug: 'qwen'`, and no image URL into th
 }
 ```
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [x] **Step 2: Run the focused tests and verify RED**
 
 Run:
 
@@ -99,7 +99,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ModelScoreH
 
 Expected: FAIL because identity props, the identity row, and StickerStar styles do not exist.
 
-- [ ] **Step 3: Add the identity props and shared logo row**
+- [x] **Step 3: Add the identity props and shared logo row**
 
 Extend `ModelScoreHoverCardProps` with `modelLabel`, `chefSlug`, and optional `imageUrl`. Render this before `Kilobot rating`:
 
@@ -112,7 +112,7 @@ Extend `ModelScoreHoverCardProps` with `modelLabel`, `chefSlug`, and optional `i
 
 Update `ModelPickerItem` to pass `option.label`, `option.chefSlug`, and `option.imageUrl` into the wrapper. Preserve all row handlers and state.
 
-- [ ] **Step 4: Apply the one read-only StickerStar style**
+- [x] **Step 4: Apply the one read-only StickerStar style**
 
 Import `StickerStar` and define:
 
@@ -126,7 +126,7 @@ const modelRatingItemStyles = {
 
 Pass it through the existing Rating’s `itemStyles` prop without changing its value, read-only state, or 120px maximum width.
 
-- [ ] **Step 5: Run the focused tests and verify GREEN**
+- [x] **Step 5: Run the focused tests and verify GREEN**
 
 Run the Step 2 command and expect all focused scorecard and selection tests to pass.
 
@@ -145,11 +145,11 @@ Run the Step 2 command and expect all focused scorecard and selection tests to p
 - Produces: `AnnouncementDialogList({ announcements })` with one-open Accordion and inline detail lists.
 - Produces: `WhatsNewDialog` using one shadcn Dialog triggered by the existing Package button.
 
-- [ ] **Step 1: Write the failing single-modal regression**
+- [x] **Step 1: Write the failing single-modal regression**
 
 Update tests to assert `WhatsNewDialog` renders the Package button through a Dialog trigger, the announcement has no `actionLabel`, and `AnnouncementDialogList` contains `Accordion type="single" collapsible`, the `New` badge, and every detail string inline with no `View full update` text.
 
-- [ ] **Step 2: Run the focused tests and verify RED**
+- [x] **Step 2: Run the focused tests and verify RED**
 
 Run:
 
@@ -159,7 +159,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because the implementation still uses a Popover, action button, and secondary detail Dialog.
 
-- [ ] **Step 3: Create the modal Accordion list**
+- [x] **Step 3: Create the modal Accordion list**
 
 Move the existing header, ScrollArea, icons, titles, summaries, and badges into `AnnouncementDialogList`. Replace the action Button with:
 
@@ -171,15 +171,15 @@ Move the existing header, ScrollArea, icons, titles, summaries, and badges into 
 </AccordionContent>
 ```
 
-- [ ] **Step 4: Compose one accessible Dialog**
+- [x] **Step 4: Compose one accessible Dialog**
 
 Replace Popover/state/detail selection in `WhatsNewDialog` with `Dialog`, `DialogTrigger asChild`, and one `DialogContent` containing a visible `DialogTitle`, an `sr-only` `DialogDescription`, and `AnnouncementDialogList`. Keep the Package button copy and header placement unchanged.
 
-- [ ] **Step 5: Remove obsolete two-stage files and data**
+- [x] **Step 5: Remove obsolete two-stage files and data**
 
 Delete `AnnouncementPopoverList.tsx` and `AnnouncementDetailsDialog.tsx`. Remove `actionLabel` from the announcement type and data.
 
-- [ ] **Step 6: Run the focused tests and verify GREEN**
+- [x] **Step 6: Run the focused tests and verify GREEN**
 
 Run the Step 2 command and expect all announcement/header tests to pass.
 
@@ -192,23 +192,23 @@ Run the Step 2 command and expect all announcement/header tests to pass.
 - Consumes: Tasks 1–3.
 - Produces: a verified local commit on `codex/model-catalog-refresh`.
 
-- [ ] **Step 1: Run the combined focused suite**
+- [x] **Step 1: Run the combined focused suite**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/content/pricingFaqs.test.ts src/components/ModelScoreHoverCard.test.tsx src/components/modelPickerSelection.test.ts src/components/WhatsNewDialog.test.tsx src/components/SupportHoverCard.test.ts
 ```
 
-- [ ] **Step 2: Run scoped lint, production build, and whitespace validation**
+- [x] **Step 2: Run scoped lint, production build, and whitespace validation**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/content/pricingFaqs.ts src/content/pricingFaqs.test.ts src/components/ModelScoreHoverCard.tsx src/components/ModelScoreHoverCard.test.tsx src/components/ModelPickerItem.tsx src/components/WhatsNewDialog.tsx src/components/WhatsNewDialog.test.tsx src/components/whats-new/announcements.ts src/components/whats-new/AnnouncementDialogList.tsx && bun run build && git diff --check
 ```
 
-- [ ] **Step 3: Update continuity and request independent review**
+- [x] **Step 3: Update continuity and request independent review**
 
 Record exact test/build receipts, the three customer-facing outcomes, unchanged changelog state, release migration ordering, and preservation of `pricing-knowledge-base-updated.md`. Request review and resolve all Critical or Important findings.
 
-- [ ] **Step 4: Commit the verified implementation**
+- [x] **Step 4: Commit the verified implementation**
 
 Stage only the planned implementation/test/ledger files and commit:
 

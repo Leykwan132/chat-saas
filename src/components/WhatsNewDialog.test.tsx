@@ -2,7 +2,14 @@ import { Bot, type LucideIcon } from 'lucide-react';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
-import { Accordion } from '@/components/ui/accordion';
+import { Accordion, AccordionContent } from '@/components/ui/accordion';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { ANNOUNCEMENTS } from '@/components/whats-new/announcements';
 import { WhatsNewDialog } from './WhatsNewDialog';
 
@@ -13,13 +20,11 @@ type Announcement = {
   details: string[];
   isNew: boolean;
   icon: LucideIcon;
-  actionLabel: string;
 };
 
-type PopoverListModule = {
-  AnnouncementPopoverList: (props: {
+type DialogListModule = {
+  AnnouncementDialogList: (props: {
     announcements: Announcement[];
-    onViewDetails: (announcement: Announcement) => void;
   }) => ReactElement;
 };
 
@@ -38,9 +43,17 @@ function collectText(node: ReactNode): string {
 
 test('renders a labeled Package button that opens the announcement panel', () => {
   const markup = renderToStaticMarkup(<WhatsNewDialog />);
+  const element = WhatsNewDialog();
+  const descendants = collectElements(element);
 
   expect(markup).toContain('lucide-package');
   expect(markup).toContain('>What’s new<');
+  expect(markup).toContain('data-slot="dialog-trigger"');
+  expect(markup).not.toContain('data-slot="popover-trigger"');
+  expect(element.type).toBe(Dialog);
+  expect(descendants.some((candidate) => candidate.type === DialogTrigger)).toBe(true);
+  expect(descendants.some((candidate) => candidate.type === DialogContent)).toBe(true);
+  expect(descendants.some((candidate) => candidate.type === DialogDescription)).toBe(true);
 });
 
 test('provides the model support announcement as structured detail data', () => {
@@ -49,19 +62,18 @@ test('provides the model support announcement as structured detail data', () => 
     id: 'model-support-update',
     title: 'Model support update',
     isNew: true,
-    actionLabel: 'View full update',
   });
   expect(ANNOUNCEMENTS[0].details).toEqual([
     'Use Qwen3.7 Flash for fast Chinese conversations.',
-    'Use NVIDIA Nemotron 3.5 Lightning for faster English responses.',
-    'Use GPT-5.6 Luna for slightly stronger performance.',
+    'Use NVIDIA Nemotron 3.5 Lightning for fast English responses.',
+    'Use GPT-5.6 Luna for stronger performance.',
     'Use GPT-OSS 120B for budget-friendly reasoning.',
   ]);
 });
 
-test('renders a single-open accordion with one full-update action per announcement', async () => {
-  const { AnnouncementPopoverList } = await vi.importActual<PopoverListModule>(
-    './whats-new/AnnouncementPopoverList',
+test('renders a single-open accordion with full details inline', async () => {
+  const { AnnouncementDialogList } = await vi.importActual<DialogListModule>(
+    './whats-new/AnnouncementDialogList',
   );
   const announcement: Announcement = {
     id: 'model-support-update',
@@ -70,18 +82,20 @@ test('renders a single-open accordion with one full-update action per announceme
     details: ['Use Qwen for Chinese conversations.'],
     isNew: true,
     icon: Bot,
-    actionLabel: 'View full update',
   };
-  const element = AnnouncementPopoverList({
-    announcements: [announcement],
-    onViewDetails: () => undefined,
-  });
-  const accordion = collectElements(element).find((candidate) => candidate.type === Accordion);
+  const element = AnnouncementDialogList({ announcements: [announcement] });
+  const descendants = collectElements(element);
+  const accordion = descendants.find((candidate) => candidate.type === Accordion);
+  const accordionContent = descendants.find(
+    (candidate) => candidate.type === AccordionContent,
+  );
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(accordion?.props).toMatchObject({ type: 'single', collapsible: true });
+  expect(descendants.some((candidate) => candidate.type === DialogTitle)).toBe(true);
   expect(text).toContain('What’s new in Kilobot');
   expect(text).toContain('Model support update');
   expect(text).toContain('New');
-  expect(text.match(/View full update/g)).toHaveLength(1);
+  expect(collectText(accordionContent)).toContain('Use Qwen for Chinese conversations.');
+  expect(text).not.toContain('View full update');
 });

@@ -1,5 +1,6 @@
-import { Rating } from '@smastrom/react-rating';
+import { Rating, StickerStar } from '@smastrom/react-rating';
 import type { ReactElement } from 'react';
+import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import { Badge } from '@/components/ui/badge';
 import {
   HoverCard,
@@ -17,10 +18,25 @@ const metricLabels = {
 
 type ModelScoreHoverCardProps = {
   modelId: string;
+  modelLabel: string;
+  chefSlug: string;
+  imageUrl?: string;
   children: ReactElement;
 };
 
-export function ModelScoreHoverCard({ modelId, children }: ModelScoreHoverCardProps) {
+const modelRatingItemStyles = {
+  itemShapes: StickerStar,
+  activeFillColor: '#f59e0b',
+  inactiveFillColor: '#ffedd5',
+};
+
+export function ModelScoreHoverCard({
+  modelId,
+  modelLabel,
+  chefSlug,
+  imageUrl,
+  children,
+}: ModelScoreHoverCardProps) {
   const scorecard = getModelScorecard(modelId);
 
   if (scorecard === null) return children;
@@ -30,6 +46,10 @@ export function ModelScoreHoverCard({ modelId, children }: ModelScoreHoverCardPr
       <HoverCardTrigger asChild>{children}</HoverCardTrigger>
       <HoverCardContent side="right" align="start" className="w-80 rounded-xl">
         <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <ModelSelectorLogo provider={chefSlug} src={imageUrl} className="size-4" />
+            <span className="font-semibold">{modelLabel}</span>
+          </div>
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between gap-3">
               <span className="font-medium">Kilobot rating</span>
@@ -37,7 +57,12 @@ export function ModelScoreHoverCard({ modelId, children }: ModelScoreHoverCardPr
                 {scorecard.overall.toFixed(1)} / 5
               </span>
             </div>
-            <Rating style={{ maxWidth: 120 }} value={scorecard.overall} readOnly />
+            <Rating
+              style={{ maxWidth: 120 }}
+              value={scorecard.overall}
+              itemStyles={modelRatingItemStyles}
+              readOnly
+            />
           </div>
           <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
             {Object.entries(scorecard.metrics).map(([metric, score]) => (

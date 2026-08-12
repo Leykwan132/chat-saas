@@ -1,10 +1,17 @@
 import { createElement, isValidElement, type ReactElement, type ReactNode } from 'react';
-import { Rating } from '@smastrom/react-rating';
+import { Rating, StickerStar } from '@smastrom/react-rating';
 import { expect, test, vi } from 'vitest';
+import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import { HoverCard } from '@/components/ui/hover-card';
 
 type HoverCardModule = {
-  ModelScoreHoverCard: (props: { modelId: string; children: ReactElement }) => ReactElement;
+  ModelScoreHoverCard: (props: {
+    modelId: string;
+    modelLabel: string;
+    chefSlug: string;
+    imageUrl?: string;
+    children: ReactElement;
+  }) => ReactElement;
 };
 
 function collectElements(node: ReactNode): ReactElement[] {
@@ -23,13 +30,29 @@ function collectText(node: ReactNode): string {
 test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const { ModelScoreHoverCard } = await vi.importActual<HoverCardModule>('./ModelScoreHoverCard');
   const child = createElement('button', null, 'Qwen3.7 Flash');
-  const element = ModelScoreHoverCard({ modelId: 'qwen/qwen3.7-flash', children: child });
+  const element = ModelScoreHoverCard({
+    modelId: 'qwen/qwen3.7-flash',
+    modelLabel: 'Qwen3.7 Flash',
+    chefSlug: 'qwen',
+    children: child,
+  });
   const descendants = collectElements(element);
   const rating = descendants.find((candidate) => candidate.type === Rating);
+  const modelLogo = descendants.find((candidate) => candidate.type === ModelSelectorLogo);
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
-  expect(rating?.props).toMatchObject({ value: 4, readOnly: true });
+  expect(rating?.props).toMatchObject({
+    value: 4,
+    readOnly: true,
+    itemStyles: {
+      itemShapes: StickerStar,
+      activeFillColor: '#f59e0b',
+      inactiveFillColor: '#ffedd5',
+    },
+  });
+  expect(modelLogo?.props).toMatchObject({ provider: 'qwen', className: 'size-4' });
+  expect(text).toContain('Qwen3.7 Flash');
   expect(text).toContain('Kilobot rating');
   expect(text).toContain('4.0 / 5');
   expect(text).toContain('Quality');
@@ -45,5 +68,12 @@ test('leaves unknown historical models without an empty HoverCard', async () => 
   const { ModelScoreHoverCard } = await vi.importActual<HoverCardModule>('./ModelScoreHoverCard');
   const child = createElement('button', null, 'Historical model');
 
-  expect(ModelScoreHoverCard({ modelId: 'retired/model', children: child })).toBe(child);
+  expect(
+    ModelScoreHoverCard({
+      modelId: 'retired/model',
+      modelLabel: 'Historical model',
+      chefSlug: 'historical',
+      children: child,
+    }),
+  ).toBe(child);
 });

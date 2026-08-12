@@ -1,7 +1,20 @@
+import {
+  EXTRA_CREDITS_PACK_NOTE,
+  EXTRA_CREDITS_PACKS,
+  formatExtraCreditsPackPrice,
+} from '../../shared/extraCreditsCatalog';
+
 export type PricingFaq = {
   question: string;
   answer: string;
 };
+
+const topUpPackageLabels = EXTRA_CREDITS_PACKS.map(
+  (pack) =>
+    `${pack.credits.toLocaleString()} credits for ${formatExtraCreditsPackPrice(pack)}`,
+);
+
+const topUpPackageSummary = `${topUpPackageLabels.slice(0, -1).join(', ')}, and ${topUpPackageLabels.at(-1)}`;
 
 export const pricingFaqs: PricingFaq[] = [
   {
@@ -11,8 +24,7 @@ export const pricingFaqs: PricingFaq[] = [
   },
   {
     question: 'What happens if I use up my credits?',
-    answer:
-      'We offer credit top-ups whenever you need extra usage. If your monthly credits run out, AI usage pauses until you top up, wait for the next billing cycle, or upgrade to a plan with a larger monthly allowance.',
+    answer: `We offer ${topUpPackageSummary}. ${EXTRA_CREDITS_PACK_NOTE} If your monthly credits run out, AI usage pauses until you top up, wait for the next billing cycle, or upgrade to a plan with a larger monthly allowance.`,
   },
   {
     question: 'Do I get agentic follow-up / booking in the Free plan?',
