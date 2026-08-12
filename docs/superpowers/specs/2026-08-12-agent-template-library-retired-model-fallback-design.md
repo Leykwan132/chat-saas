@@ -2,7 +2,7 @@
 
 ## Goal
 
-Align Agent Setup's system-prompt Template Library with the two goals offered during agent creation, and ensure agents that still use either retired model move safely to DeepSeek V4 Flash.
+Align Agent Setup's system-prompt Template Library with the two goals offered during agent creation, ensure agents that still use either retired model move safely to DeepSeek V4 Flash, and add concise scenario guidance to every supported model HoverCard.
 
 ## Scope
 
@@ -17,6 +17,8 @@ The retired-model migration will cover exactly:
 
 - `amazon/nova-micro-v1`
 - `google/gemini-3.1-flash-lite`
+
+Every supported model HoverCard will include one or two recommended scenarios.
 
 ## Shared Agent Goal Templates
 
@@ -67,6 +69,24 @@ The migration must be deployed while the retired model identifiers are still rec
 
 The migration changes persisted agent configuration only. It does not add runtime fallback behavior that silently changes arbitrary invalid models during a request.
 
+## Model Recommendations
+
+Each model scorecard stores a typed `recommendedFor` list containing one or two short customer scenarios. The HoverCard renders this list after Quality, Speed, Reasoning, and Value under the heading `Recommended for`.
+
+Each scenario is a plain row rather than a badge or card. A small green rounded background contains a white check, followed by normal foreground text. The existing rating, model identity, two-sentence description, and four metric scores remain unchanged.
+
+The scenario mapping is:
+
+| Model | Recommended scenarios |
+| --- | --- |
+| Ilmu Mini | Malay-language conversations; Budget-friendly FAQs |
+| Xiaomi MiMo | Chinese-language conversations; General customer support |
+| DeepSeek V4 Flash | Everyday customer support; Chinese and English conversations |
+| GPT-OSS 120B | Budget-friendly reasoning; English-language support |
+| GPT-5.6 Luna | Complex customer conversations; Higher-quality responses |
+| NVIDIA Nemotron 3.5 Lightning | Fast English-language replies; High-volume support |
+| Qwen3.7 Flash | Fast Chinese-language replies; Chinese and English conversations |
+
 ## Testing
 
 Tests will verify:
@@ -78,6 +98,9 @@ Tests will verify:
 - Amazon Nova Micro migrates to DeepSeek V4 Flash with provider `openrouter`.
 - Google Gemini 3.1 Flash Lite migrates to DeepSeek V4 Flash with provider `openrouter`.
 - DeepSeek and other supported models receive no migration patch.
+- Every enabled scorecard contains one or two non-empty recommended scenarios with the approved wording.
+- HoverCards render `Recommended for` after the four metrics.
+- Each scenario has a green rounded check background, white check icon, and plain foreground text without a scenario card or badge.
 - Focused tests, scoped lint, TypeScript, production build, application tests, Docs tests, whitespace checks, and code-size limits pass.
 
 ## Release Documentation
