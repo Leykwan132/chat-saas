@@ -1,3 +1,5 @@
+import { WorkOS } from "@workos-inc/node";
+
 const WORKOS_API_BASE = "https://api.workos.com";
 
 export function getWorkOSApiKey(): string {
@@ -8,6 +10,13 @@ export function getWorkOSApiKey(): string {
     );
   }
   return apiKey;
+}
+
+export function createWorkOSClient(fetchImplementation: typeof fetch = fetch): WorkOS {
+  return new WorkOS({
+    apiKey: getWorkOSApiKey(),
+    fetchFn: fetchImplementation,
+  });
 }
 
 export async function workosRequest<T>(
