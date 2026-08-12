@@ -15,32 +15,15 @@ type HoverCardModule = {
   }) => ReactElement;
 };
 
-type ProgressElementProps = {
-  role?: string;
-  'aria-label'?: string;
-  'aria-valuemin'?: number;
-  'aria-valuemax'?: number;
-  'aria-valuenow'?: number;
-};
-
 type RatingRowProps = {
   className?: string;
   children?: ReactNode;
-};
-
-type LanguagePillProps = {
-  className?: string;
-  'data-slot'?: string;
 };
 
 type SlotElementProps = {
   className?: string;
   children?: ReactNode;
   'data-slot'?: string;
-};
-
-type CheckIconProps = {
-  className?: string;
 };
 
 function collectElements(node: ReactNode): ReactElement[] {
@@ -83,10 +66,6 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const metricsIndex = descendants.findIndex(
     (candidate) => candidate.type === 'dl',
   );
-  const languagesIndex = descendants.findIndex(
-    (candidate) =>
-      (candidate.props as SlotElementProps)['data-slot'] === 'model-languages',
-  );
   const ratingRow = descendants.find((candidate) => {
     const props = candidate.props as RatingRowProps;
     const children = Array.isArray(props.children)
@@ -98,33 +77,14 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
     );
   }) as ReactElement<RatingRowProps> | undefined;
   const modelLogo = descendants.find((candidate) => candidate.type === ModelSelectorLogo);
-  const languageProgress = descendants.filter(
-    (candidate): candidate is ReactElement<ProgressElementProps> =>
-      (candidate.props as ProgressElementProps).role === 'progressbar',
-  );
-  const languagePills = descendants.filter(
-    (candidate): candidate is ReactElement<LanguagePillProps> =>
-      (candidate.props as LanguagePillProps)['data-slot'] === 'model-language',
+  const languageSlots = descendants.filter((candidate) =>
+    (candidate.props as SlotElementProps)['data-slot']?.startsWith(
+      'model-language',
+    ),
   );
   const languageChecks = descendants.filter(
-    (candidate): candidate is ReactElement<CheckIconProps> =>
-      candidate.type === Check,
+    (candidate) => candidate.type === Check,
   );
-  const languageCheckWrappers = descendants.filter(
-    (candidate): candidate is ReactElement<SlotElementProps> =>
-      (candidate.props as SlotElementProps)['data-slot'] ===
-      'model-language-check',
-  );
-  const firstLanguageLabel = languagePills[0]
-    ? collectElements(languagePills[0]).find((candidate) => {
-        const props = candidate.props as SlotElementProps;
-        return (
-          candidate.type === 'span' &&
-          collectText(candidate) === 'Chinese' &&
-          props.className?.includes('text-foreground')
-        );
-      })
-    : undefined;
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
@@ -144,12 +104,11 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain(
     'Best for fast Chinese customer conversations. It also handles everyday English support reliably.',
   );
-  expect(text).toContain('Languages');
+  expect(text).not.toContain('Languages');
   expect(ratingIndex).toBeGreaterThan(-1);
   expect(identityIndex).toBeGreaterThan(ratingIndex);
   expect(descriptionIndex).toBeGreaterThan(identityIndex);
   expect(metricsIndex).toBeGreaterThan(descriptionIndex);
-  expect(languagesIndex).toBeGreaterThan(metricsIndex);
   expect(ratingRow?.props.className).toContain('items-center');
   expect(collectText(ratingRow)).toContain('4.0');
   expect(collectText(ratingRow)).not.toContain('4.0 / 5');
@@ -157,18 +116,8 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
   expect(text).toContain('Value');
-  expect(text).not.toContain('Language fit');
-  expect(languageProgress).toHaveLength(0);
-  expect(text).toContain('Chinese');
-  expect(text).toContain('English');
-  expect(languagePills).toHaveLength(2);
-  expect(languagePills[0]?.props.className).not.toContain('bg-muted');
-  expect(firstLanguageLabel).toBeDefined();
-  expect(languageCheckWrappers).toHaveLength(2);
-  expect(languageCheckWrappers[0]?.props.className).toContain('rounded');
-  expect(languageCheckWrappers[0]?.props.className).toContain('bg-muted');
-  expect(languageChecks).toHaveLength(2);
-  expect(languageChecks[0]?.props.className).toContain('text-emerald-600');
+  expect(languageSlots).toHaveLength(0);
+  expect(languageChecks).toHaveLength(0);
 });
 
 test('leaves unknown historical models without an empty HoverCard', async () => {

@@ -1,5 +1,4 @@
 import { Rating, StickerStar } from '@smastrom/react-rating';
-import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import {
@@ -83,28 +82,6 @@ export function ModelScoreHoverCard({
               </div>
             ))}
           </dl>
-          <div data-slot="model-languages" className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Languages
-            </span>
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {scorecard.languages.map((language) => (
-                <span
-                  key={language}
-                  data-slot="model-language"
-                  className="inline-flex items-center gap-1.5 text-xs"
-                >
-                  <span
-                    data-slot="model-language-check"
-                    className="inline-flex size-5 items-center justify-center rounded-md bg-muted"
-                  >
-                    <Check className="size-3.5 text-emerald-600" />
-                  </span>
-                  <span className="text-foreground">{language}</span>
-                </span>
-              ))}
-            </div>
-          </div>
         </div>
       </HoverCardContent>
     </HoverCard>
