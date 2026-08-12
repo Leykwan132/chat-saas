@@ -93,6 +93,7 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     chefSlug: "qwen",
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
+    imageUrl: "/model-logos/qwen.svg",
   },
 };
 

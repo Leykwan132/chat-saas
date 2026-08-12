@@ -39,7 +39,8 @@ test('places What’s new and support before dark mode only in authenticated hea
   expect(workspaceSource).toContain("import { SupportHoverCard } from '@/components/SupportHoverCard'");
   expect(dashboardSource).toContain("import { WhatsNewDialog } from '@/components/WhatsNewDialog'");
   expect(workspaceSource).toContain("import { WhatsNewDialog } from '@/components/WhatsNewDialog'");
-  expect(whatsNewSource).toContain('aria-label="What’s new"');
+  expect(whatsNewSource).toContain("import { Package } from 'lucide-react'");
+  expect(whatsNewSource).toContain('What’s new');
   expect(dashboardSource.indexOf('<WhatsNewDialog />')).toBeLessThan(
     dashboardSource.indexOf('<SupportHoverCard />'),
   );
