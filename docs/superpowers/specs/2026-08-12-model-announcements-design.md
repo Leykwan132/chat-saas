@@ -7,11 +7,11 @@ Give authenticated users a compact announcement experience and clearer model-sel
 ## What’s new interaction
 
 - Render an outlined `What’s new` header button with Lucide’s `Package` icon before the support control.
-- Clicking the button opens a wide, right-aligned Popover. Hovering does not open it.
-- The Popover follows the supplied reference: `What’s new in Kilobot` heading, white surface, roomy announcement rows, icons, titles, optional `New` badges, summaries, and right-side disclosure affordances.
+- Clicking the button opens one accessible modal. Hovering does not open it.
+- The modal follows the supplied reference: `What’s new in Kilobot` heading, white surface, roomy announcement rows, icons, titles, optional `New` badges, summaries, and right-side disclosure affordances.
 - Announcements render in a bounded ScrollArea as a single-open Accordion.
-- Expanding an announcement reveals exactly one action, `View full update`.
-- The action closes the Popover and opens an accessible full Dialog for that announcement.
+- Clicking an announcement expands its Accordion item and shows the full detail list inline.
+- Remove the intermediate Popover, `View full update` action, and secondary announcement detail Dialog.
 - The first announcement is `Model support update` and explains Qwen3.7 Flash for Chinese conversations, NVIDIA Nemotron 3.5 Lightning for fast English responses, GPT-5.6 Luna for stronger performance, and GPT-OSS 120B for budget-friendly reasoning.
 - Announcement data remains local and structured for future additions. No read state or backend persistence is introduced.
 
@@ -55,11 +55,11 @@ Give authenticated users a compact announcement experience and clearer model-sel
 
 ## Accessibility and layout
 
-- Popover and HoverCard triggers use `asChild` with existing interactive controls.
+- Dialog and HoverCard triggers use `asChild` with existing interactive controls.
 - Accordion triggers expose their expanded state and support keyboard activation.
 - Dialog content retains a visible title and description.
 - Rating is read-only and accompanied by visible `x.x / 5` text.
-- The Popover and Dialog lists are bounded and scrollable on small viewports.
+- The Dialog list is bounded and scrollable on small viewports.
 
 ## Verification
 
@@ -67,7 +67,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
 - Model scorecard tests assert the visible identity header contains the supplied model name and the shared provider icon.
 - Model scorecard tests assert the Rating uses `StickerStar`, the approved amber fills, and remains read-only.
-- Announcement tests assert Package-icon button copy, click Popover, single Accordion behavior, `New` badge, one action, and full Dialog handoff.
+- Announcement tests assert Package-icon button copy, click-open Dialog, single Accordion behavior, `New` badge, and inline expanded detail content with no secondary action or Dialog.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
 
