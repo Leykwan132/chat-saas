@@ -1,144 +1,134 @@
-# Model Refresh and Announcements Implementation Plan
+# Model Announcements and Scorecards Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove Google Gemini 3.1 Flash Lite safely, reintroduce GPT-OSS 120B as a low-cost model, adjust model credit costs, and add a scrollable What’s new dialog to authenticated headers.
+**Goal:** Build the approved click-open announcement panel, model scorecard HoverCards, and recognizable Qwen branding.
 
-**Architecture:** `shared/planCatalog.ts` controls selectable paid models, while `convex/llm/modelPricing.ts` controls dashboard runtime metadata and credit costs. A small `WhatsNewDialog` component consumes local announcement data and is mounted beside `SupportHoverCard` in the dashboard and workspace headers.
+**Architecture:** Local typed data modules own announcement and scorecard content. `WhatsNewDialog` composes shadcn Popover, Accordion, ScrollArea, and Dialog, while `ModelScoreHoverCard` wraps each existing model row without changing its selection behavior. Convex model pricing supplies the local Qwen logo URL to the existing picker interface.
 
-**Tech Stack:** TypeScript, React, shadcn/ui Dialog and ScrollArea, Vitest, Node.js 22, Bun.
+**Tech Stack:** React, TypeScript, Vite, shadcn/ui, Radix primitives, `@smastrom/react-rating`, Convex, Vitest, Node.js 22, Bun.
 
 ## Global Constraints
 
-- Remove `google/gemini-3.1-flash-lite` from every current model-support surface and migrate persisted Gemini agents to `deepseek/deepseek-v4-flash` before release.
-- Charge Qwen3.7 Flash and GPT-OSS 120B 0.5 credits, DeepSeek and NVIDIA one credit, and GPT-5.6 Luna two credits.
-- Keep Qwen, NVIDIA, and Luna available only to Starter, Growth, and Business with Advanced and Latest labels.
-- Use local structured announcement data with no persistence or backend schema.
-- Use the existing Dialog and ScrollArea components, include DialogTitle and DialogDescription, and keep the list scrollable.
-- Run tests and scripts under Node.js 22.
-- Do not update the public release changelog until production availability is confirmed.
+- Keep source files below 300 lines and avoid code comments.
+- Use the existing shadcn Popover, Accordion, HoverCard, Badge, Dialog, Button, and ScrollArea components.
+- Use Lucide’s `Package` icon for the header button.
+- Ratings are static Kilobot editorial guidance, not external benchmark or customer-review claims.
+- Preserve existing model selection and upgrade behavior.
+- Preserve the unrelated `convex/_generated/api.d.ts` and `pricing-knowledge-base-updated.md` working-tree changes.
+- Do not update the production changelog until availability is confirmed.
 
 ---
 
-### Task 1: Lock the refreshed model contract
+### Task 1: Lock scorecard and logo behavior
 
 **Files:**
+- Create: `src/config/modelScorecards.test.ts`
+- Create: `src/components/ModelScoreHoverCard.test.ts`
 - Modify: `convex/llm/modelPricing.test.ts`
-- Modify: `src/config/agentLimits.test.ts`
-- Modify: `src/components/landing/landingAppPreviewData.test.ts`
-- Modify: `kilobot-docs/tests/guide-outcomes.test.mjs`
+- Create: `public/model-logos/qwen.svg`
+- Create: `src/config/modelScorecards.ts`
+- Create: `src/components/ModelScoreHoverCard.tsx`
+- Modify: `src/components/ModelPickerItem.tsx`
+- Modify: `convex/llm/modelPricing.ts`
+- Modify: `src/main.tsx`
 
 **Interfaces:**
-- Consumes: `listEnabledModels()`, `PLAN_CATALOG`, upgrade copy, and the Agent Setup guide.
-- Produces: regression coverage for the current selectable catalog and its credit prices.
+- Produces: `MODEL_SCORECARDS: Record<EnabledModelId, ModelScorecard>` and `getModelScorecard(modelId: string): ModelScorecard | null`.
+- Produces: `ModelScoreHoverCard({ modelId, children })` that preserves its child trigger.
+- Consumes: `ModelPickerOption.value` and the existing Qwen `imageUrl` transport.
 
-- [ ] **Step 1: Write failing model assertions**
+- [ ] **Step 1: Write failing scorecard, HoverCard, and Qwen-logo tests**
 
-```ts
-expect(getModelPricing('google/gemini-3.1-flash-lite')).toBeNull();
-expect(model.creditCost).toBe(0.5);
-expect(luna.creditCost).toBe(2);
-```
+Assert all seven enabled model IDs have bounded overall/metric values, explicit language strengths, and the approved initial content. Assert the HoverCard imports `Rating`, passes `readOnly`, renders four metrics and language badges, and wraps model rows. Assert Qwen pricing returns `/model-logos/qwen.svg`.
 
 - [ ] **Step 2: Run the focused tests and verify RED**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && TMPDIR=/private/tmp BUN_TMPDIR=/private/tmp BUN_INSTALL_CACHE_DIR=/private/tmp/bun-cache bunx vitest run convex/llm/modelPricing.test.ts src/config/agentLimits.test.ts src/components/landing/landingAppPreviewData.test.ts`
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/config/modelScorecards.test.ts src/components/ModelScoreHoverCard.test.ts convex/llm/modelPricing.test.ts`
 
-Expected: FAIL because Gemini remains enabled and Qwen/Luna have the prior prices.
+Expected: FAIL because scorecards, HoverCard composition, and the local Qwen image do not exist.
 
-- [ ] **Step 3: Update all current catalog surfaces**
+- [ ] **Step 3: Add the local Qwen SVG and scorecard record**
 
-```ts
-"qwen/qwen3.7-flash": { creditCost: 0.5 }
-"openai/gpt-5.6-luna": { creditCost: 2 }
-```
+Define `ModelMetricScore`, `ModelLanguageStrength`, and `ModelScorecard` with numeric scores constrained by tests to `0 <= value <= 5`. Add exactly the seven approved records and a null-returning lookup for unknown historical IDs.
 
-- [ ] **Step 4: Run the focused tests and Docs guide test to verify GREEN**
+- [ ] **Step 4: Build the read-only model HoverCard**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && TMPDIR=/private/tmp BUN_TMPDIR=/private/tmp BUN_INSTALL_CACHE_DIR=/private/tmp/bun-cache bunx vitest run convex/llm/modelPricing.test.ts src/config/agentLimits.test.ts src/components/landing/landingAppPreviewData.test.ts`
+Import the package stylesheet once in `src/main.tsx`. Render the overall `Rating`, visible score text, four supporting metric rows, language `Badge` values, and `bestFor` copy inside `HoverCardContent`.
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && node --test kilobot-docs/tests/guide-outcomes.test.mjs`
+- [ ] **Step 5: Wrap every current picker row**
 
-Expected: both commands exit 0.
+Wrap `ModelSelectorItem` with `ModelScoreHoverCard` using `option.value`. Keep `handleSelect`, `aria-disabled`, selected styling, price rendering, and upgrade behavior unchanged.
 
-### Task 2: Add the What’s new announcement dialog
+- [ ] **Step 6: Route Qwen to its local brand asset**
+
+Set Qwen3.7 Flash’s pricing `imageUrl` to `/model-logos/qwen.svg` while retaining `chefSlug: "qwen"`.
+
+- [ ] **Step 7: Run focused tests and verify GREEN**
+
+Run the Task 1 command and expect all tests to pass.
+
+### Task 2: Replace the immediate dialog with the announcement panel
 
 **Files:**
-- Create: `src/components/whats-new/announcements.ts`
-- Create: `src/components/WhatsNewDialog.tsx`
-- Create: `src/components/WhatsNewDialog.test.ts`
-- Modify: `src/layouts/DashboardLayout.tsx`
-- Modify: `src/pages/WorkspacePage.tsx`
-- Modify: `src/components/SupportHoverCard.test.ts`
+- Modify: `src/components/whats-new/announcements.ts`
+- Create: `src/components/whats-new/AnnouncementDetailsDialog.tsx`
+- Create: `src/components/whats-new/AnnouncementPopoverList.tsx`
+- Modify: `src/components/WhatsNewDialog.tsx`
+- Modify: `src/components/WhatsNewDialog.test.ts`
 
 **Interfaces:**
-- Consumes: local `ANNOUNCEMENTS` data and existing shadcn `Button`, `Dialog`, and `ScrollArea` components.
-- Produces: `WhatsNewDialog`, mounted before support in both authenticated headers.
+- Produces: `Announcement` records with `id`, `title`, `summary`, `details`, `isNew`, `icon`, and `actionLabel`.
+- Produces: `AnnouncementPopoverList({ announcements, onViewDetails })` with one-open Accordion behavior.
+- Produces: `AnnouncementDetailsDialog({ announcement, open, onOpenChange })`.
 
-- [ ] **Step 1: Write failing UI and header-placement tests**
+- [ ] **Step 1: Write failing announcement interaction tests**
 
-```ts
-expect(componentSource).toContain('New, more capable AI models');
-expect(componentSource).toContain('<ScrollArea');
-expect(componentSource).toContain('<DialogTitle>What’s new</DialogTitle>');
-expect(dashboardSource).toContain('<WhatsNewDialog />');
-```
+Assert the header control uses `Package` and visible `What’s new` copy, the click surface is a `PopoverTrigger`, the list uses `Accordion type="single" collapsible`, the first row has a `New` Badge, and the expanded content has exactly one `View full update` action that selects the full Dialog.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [ ] **Step 2: Run the focused tests and verify RED**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && TMPDIR=/private/tmp BUN_TMPDIR=/private/tmp BUN_INSTALL_CACHE_DIR=/private/tmp/bun-cache bunx vitest run src/components/WhatsNewDialog.test.ts src/components/SupportHoverCard.test.ts`
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.ts src/components/SupportHoverCard.test.ts`
 
-Expected: FAIL because the component and header trigger do not exist.
+Expected: FAIL because the current icon-only trigger opens the Dialog immediately.
 
-- [ ] **Step 3: Implement local data and dialog**
+- [ ] **Step 3: Extend structured announcement data**
 
-```tsx
-<Dialog>
-  <DialogTrigger asChild><Button aria-label="What’s new" /></DialogTrigger>
-  <DialogContent>
-    <DialogHeader><DialogTitle>What’s new</DialogTitle></DialogHeader>
-    <ScrollArea className="max-h-[60vh]">...</ScrollArea>
-  </DialogContent>
-</Dialog>
-```
+Rename the first item to `Model support update`, add `Bot` as its icon component, mark it new, and preserve the four approved model recommendations.
 
-- [ ] **Step 4: Mount the trigger beside support in both authenticated headers**
+- [ ] **Step 4: Implement the reference-style Popover and Accordion list**
 
-```tsx
-<WhatsNewDialog />
-<SupportHoverCard />
-```
+Render `What’s new in Kilobot`, a bounded ScrollArea, roomy disclosure rows, optional `Badge`, summary text, and one Button in each Accordion content area.
 
-- [ ] **Step 5: Run the focused tests to verify GREEN**
+- [ ] **Step 5: Implement the selected-announcement Dialog handoff**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && TMPDIR=/private/tmp BUN_TMPDIR=/private/tmp/bun-cache bunx vitest run src/components/WhatsNewDialog.test.ts src/components/SupportHoverCard.test.ts`
+Opening details closes the Popover, stores the selected announcement, and opens the full Dialog with its title, summary, and detail list.
 
-Expected: both tests exit 0.
+- [ ] **Step 6: Run focused tests and verify GREEN**
 
-### Task 3: Verify and prepare review
+Run the Task 2 command and expect all tests to pass.
+
+### Task 3: Verify and prepare local review
 
 **Files:**
 - Modify: `CONTINUITY.md`
 
-- [ ] **Step 1: Run verification**
+**Interfaces:**
+- Consumes: all Task 1 and Task 2 deliverables.
+- Produces: a verified local branch and release sequencing record.
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && TMPDIR=/private/tmp BUN_TMPDIR=/private/tmp/bun-cache bunx eslint shared/planCatalog.ts convex/llm/modelPricing.ts convex/llm/modelPricing.test.ts src/components/WhatsNewDialog.tsx src/components/WhatsNewDialog.test.ts src/layouts/DashboardLayout.tsx src/pages/WorkspacePage.tsx src/components/SupportHoverCard.test.ts src/config/upgradeScenarios.ts src/config/agentLimits.test.ts && npx tsc --noEmit && bun run build && git diff --check`
+- [ ] **Step 1: Run scoped lint**
 
-Expected: exit 0.
+Run ESLint against all changed TypeScript and TSX source/test files under Node 22.
 
-- [ ] **Step 2: Update the continuity ledger**
+- [ ] **Step 2: Run TypeScript and the production build**
 
-Record the model costs, modal behavior, verification outcome, and unconfirmed production availability.
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bun run build`
 
-- [ ] **Step 3: Release Gemini migration before catalog removal**
+- [ ] **Step 3: Run whitespace and status checks**
 
-Deploy `agentModelMigration.ts` while Google Gemini 3.1 Flash Lite is still enabled, then run:
+Run: `git diff --check && git status --short` and verify unrelated user changes remain untouched.
 
-```sh
-npx convex run --prod agentModelMigration:runMigrateGoogleGeminiAgents '{"dryRun":true}'
-npx convex run --prod agentModelMigration:runMigrateGoogleGeminiAgents
-```
+- [ ] **Step 4: Update continuity**
 
-Verify the migration completes, then deploy the catalog-removal and announcement release. Do not leave Google-configured agents in a deployment where the model is unavailable.
-
-- [ ] **Step 4: Request independent review and leave the branch ready for local review**
+Record the click-open announcement panel, scorecard metrics/languages, Qwen logo correction, verification evidence, and the still-required migration-before-removal release order.
