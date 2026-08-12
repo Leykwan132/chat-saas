@@ -64,15 +64,35 @@ export const MODEL_PRICING: Record<string, ModelPricingEntry> = {
     requiredPlan: "starter",
     labels: ["advanced", "latest"],
   },
-  "openai/gpt-oss-120b": {
-    label: "OpenAI GPT-OSS 120B",
+  "openai/gpt-5.6-luna": {
+    label: "OpenAI GPT-5.6 Luna",
     creditCost: 1,
     enabled: true,
     provider: "openrouter",
     chef: "OpenAI",
     chefSlug: "openai",
     requiredPlan: "starter",
-    labels: ["advanced"],
+    labels: ["advanced", "latest"],
+  },
+  "nvidia/nemotron-3.5-lightning": {
+    label: "NVIDIA Nemotron 3.5 Lightning",
+    creditCost: 1,
+    enabled: true,
+    provider: "openrouter",
+    chef: "NVIDIA",
+    chefSlug: "nvidia",
+    requiredPlan: "starter",
+    labels: ["advanced", "latest"],
+  },
+  "qwen/qwen3.7-flash": {
+    label: "Qwen3.7 Flash",
+    creditCost: 1,
+    enabled: true,
+    provider: "openrouter",
+    chef: "Qwen",
+    chefSlug: "qwen",
+    requiredPlan: "starter",
+    labels: ["advanced", "latest"],
   },
 };
 

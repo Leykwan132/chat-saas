@@ -49,6 +49,9 @@ export function getCleanModelName(
   const found = findSupportedModel(model, supportedModels);
   if (found) return found.label;
 
+  const historical = getHistoricalModelDisplayMetadata(model);
+  if (historical) return historical.label;
+
   const baseName = model.split('/').pop() || model;
   return baseName.split('-').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 }
@@ -59,6 +62,9 @@ export function getModelChef(
 ): string {
   const found = findSupportedModel(model, supportedModels);
   if (found?.chef) return found.chef;
+
+  const historical = getHistoricalModelDisplayMetadata(model);
+  if (historical) return historical.chef;
 
   const parts = model.split('/');
   return parts.length > 1 ? parts[0]! : 'openrouter';
@@ -81,3 +87,4 @@ export function buildModelColorMap(
   });
   return colorMap;
 }
+import { getHistoricalModelDisplayMetadata } from '../../../shared/modelMetadata';

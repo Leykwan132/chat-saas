@@ -65,3 +65,14 @@ test("upgrade scenarios advertise the approved monthly credits", () => {
     expect.objectContaining({ title: "20,000 Monthly Credits" }),
   );
 });
+
+test("Starter upgrade copy advertises current advanced models", () => {
+  const advancedModels = UPGRADE_SCENARIOS.free_to_starter.features.find(
+    (feature) => feature.title === "Advanced AI Models",
+  );
+
+  expect(advancedModels?.description).toContain("GPT-5.6 Luna");
+  expect(advancedModels?.description).toContain("Nemotron");
+  expect(advancedModels?.description).toContain("Qwen3.7 Flash");
+  expect(advancedModels?.description).not.toContain("GPT-OSS");
+});

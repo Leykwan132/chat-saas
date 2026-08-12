@@ -22,7 +22,7 @@ export const UPGRADE_SCENARIOS: Record<'free_to_starter' | 'starter_to_growth' |
     features: [
       {
         title: 'Advanced AI Models',
-        description: 'Access DeepSeek, Llama, Gemma, and GPT-OSS.',
+        description: 'Access DeepSeek, Gemini, GPT-5.6 Luna, Nemotron, and Qwen3.7 Flash.',
       },
       {
         title: '2,000 Monthly Credits',
