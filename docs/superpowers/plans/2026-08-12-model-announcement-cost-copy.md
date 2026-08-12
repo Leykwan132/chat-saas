@@ -32,7 +32,7 @@
 - Preserves: `Announcement.details: string[]`.
 - Produces: five exact customer-facing detail strings covering tier, additions, retained DeepSeek, and removals.
 
-- [ ] **Step 1: Write the failing exact-copy regression**
+- [x] **Step 1: Write the failing exact-copy regression**
 
 Expect these detail strings:
 
@@ -46,7 +46,7 @@ Expect these detail strings:
 ]
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.tsx
@@ -54,17 +54,17 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because the current details describe use cases instead of catalog changes and costs.
 
-- [ ] **Step 3: Replace the announcement detail data**
+- [x] **Step 3: Replace the announcement detail data**
 
 Set `ANNOUNCEMENTS[0].details` to the exact five strings from Step 1. Do not change the component or announcement type.
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.tsx src/components/SupportHoverCard.test.ts && bunx eslint src/components/WhatsNewDialog.test.tsx src/components/whats-new/announcements.ts && bun run build && git diff --check
 ```
 
-- [ ] **Step 5: Update continuity and commit**
+- [x] **Step 5: Update continuity and commit**
 
 Record the exact copy outcome and verification receipt, then stage only the plan, test, announcement data, and continuity ledger:
 

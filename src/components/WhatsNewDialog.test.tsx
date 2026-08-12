@@ -93,10 +93,11 @@ test('provides the model support announcement as structured detail data', () => 
     icon: Orbit,
   });
   expect(ANNOUNCEMENTS[0].details).toEqual([
-    'Use Qwen3.7 Flash for fast Chinese conversations.',
-    'Use NVIDIA Nemotron 3.5 Lightning for fast English responses.',
-    'Use GPT-5.6 Luna for stronger performance.',
-    'Use GPT-OSS 120B for budget-friendly reasoning.',
+    'New 0.5-credit tier: GPT-OSS 120B and Qwen3.7 Flash — 0.5 credits/message.',
+    'New: NVIDIA Nemotron 3.5 Lightning — 1 credit/message.',
+    'New: GPT-5.6 Luna — 2 credits/message.',
+    'Also available: DeepSeek V4 Flash — 1 credit/message.',
+    'Removed: Amazon Nova Micro and Google Gemini 3.1 Flash Lite.',
   ]);
 });
 
