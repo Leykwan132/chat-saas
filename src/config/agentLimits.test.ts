@@ -72,7 +72,8 @@ test("Starter upgrade copy advertises current advanced models", () => {
   );
 
   expect(advancedModels?.description).toContain("GPT-5.6 Luna");
+  expect(advancedModels?.description).toContain("GPT-OSS 120B");
   expect(advancedModels?.description).toContain("Nemotron");
   expect(advancedModels?.description).toContain("Qwen3.7 Flash");
-  expect(advancedModels?.description).not.toContain("GPT-OSS");
+  expect(advancedModels?.description).not.toContain("Gemini");
 });
