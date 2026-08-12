@@ -8,6 +8,7 @@ type ScorecardModule = {
       overall: number;
       metrics: Record<'quality' | 'speed' | 'reasoning' | 'value', number>;
       description: string;
+      recommendedFor: readonly string[];
     }
   >;
   getModelScorecard: (modelId: string) => ScorecardModule['MODEL_SCORECARDS'][string] | null;
@@ -23,6 +24,7 @@ test('provides a complete bounded scorecard for every enabled model', async () =
       'description',
       'metrics',
       'overall',
+      'recommendedFor',
     ]);
     expect(scorecard.overall).toBeGreaterThan(0);
     expect(scorecard.overall).toBeLessThanOrEqual(5);
@@ -36,7 +38,43 @@ test('provides a complete bounded scorecard for every enabled model', async () =
 
     expect(scorecard.description).toMatch(/^Best for /);
     expect(descriptionSentences).toHaveLength(2);
+    expect(scorecard.recommendedFor.length).toBeGreaterThanOrEqual(1);
+    expect(scorecard.recommendedFor.length).toBeLessThanOrEqual(2);
+    expect(scorecard.recommendedFor.every((scenario) => scenario.trim().length > 0)).toBe(true);
   }
+});
+
+test('provides the approved recommended scenarios for every model', async () => {
+  const { MODEL_SCORECARDS } = await vi.importActual<ScorecardModule>('./modelScorecards');
+
+  expect(
+    Object.fromEntries(
+      Object.entries(MODEL_SCORECARDS).map(([modelId, scorecard]) => [
+        modelId,
+        scorecard.recommendedFor,
+      ]),
+    ),
+  ).toEqual({
+    'ilmu-mini-v3.3': ['Malay-language conversations', 'Budget-friendly FAQs'],
+    'xiaomi/mimo-v2.5': ['Chinese-language conversations', 'General customer support'],
+    'deepseek/deepseek-v4-flash': [
+      'Everyday customer support',
+      'Chinese and English conversations',
+    ],
+    'openai/gpt-oss-120b': ['Budget-friendly reasoning', 'English-language support'],
+    'openai/gpt-5.6-luna': [
+      'Complex customer conversations',
+      'Higher-quality responses',
+    ],
+    'nvidia/nemotron-3.5-lightning': [
+      'Fast English-language replies',
+      'High-volume support',
+    ],
+    'qwen/qwen3.7-flash': [
+      'Fast Chinese-language replies',
+      'Chinese and English conversations',
+    ],
+  });
 });
 
 test('provides the intended model positioning descriptions', async () => {
