@@ -28,7 +28,7 @@
 - Produces: `getRetiredModelMigrationPatch(agent): { model: 'deepseek/deepseek-v4-flash'; provider: 'openrouter' } | undefined`.
 - Produces: `migrateRetiredAgentModels` and `runMigrateRetiredAgentModels`.
 
-- [ ] **Step 1: Add the failing Amazon case and rename the contract**
+- [x] **Step 1: Add the failing Amazon case and rename the contract**
 
 Test the same DeepSeek/OpenRouter patch for `amazon/nova-micro-v1` and `google/gemini-3.1-flash-lite`. Test `qwen/qwen3.7-flash` and DeepSeek return `undefined`.
 
@@ -41,13 +41,13 @@ for (const model of ['amazon/nova-micro-v1', 'google/gemini-3.1-flash-lite']) {
 }
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/agentModelMigration.test.ts`.
 
 Expected: FAIL because the helper and migration currently cover only Gemini.
 
-- [ ] **Step 3: Implement the retired-model set**
+- [x] **Step 3: Implement the retired-model set**
 
 Use a readonly set containing the two exact retired IDs. Return the constant DeepSeek/OpenRouter patch only when the set contains `agent.model`. Rename the migration definition and runner to describe all retired agents while preserving batch size 25.
 
@@ -63,7 +63,7 @@ export function getRetiredModelMigrationPatch(agent: { model: string }) {
 }
 ```
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run the focused test, scoped ESLint, and TypeScript. Commit both files with message `Migrate retired agent models to DeepSeek`.
 
@@ -75,10 +75,10 @@ Run the focused test, scoped ESLint, and TypeScript. Commit both files with mess
 **Interfaces:**
 - Produces: an operational record requiring deploy, run, and verification of `runMigrateRetiredAgentModels` before catalog removal.
 
-- [ ] **Step 1: Record the migration sequence**
+- [x] **Step 1: Record the migration sequence**
 
 State that both retired IDs are covered, the target is DeepSeek/OpenRouter, the migration has not been run against a deployment unless a verified run occurs, and catalog removal must follow successful migration verification.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 Commit the ledger update with the final task verification record.

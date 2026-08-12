@@ -29,7 +29,7 @@
 - Produces: `buildAgentSystemPrompt({ businessName?, businessDescription?, goal }): string` supporting both complete and absent business context.
 - Preserves: `templateKeyForAgentGoal(goal): 'support' | 'sales'`.
 
-- [ ] **Step 1: Add a failing generic-context test**
+- [x] **Step 1: Add a failing generic-context test**
 
 Assert a `bookService` prompt built without business fields contains the shared booking role, goal, conversation guidance, guardrails, and a generic About the business instruction; assert it contains neither `undefined` nor empty `Business name:` lines.
 
@@ -41,13 +41,13 @@ expect(prompt).not.toContain('undefined');
 expect(prompt).not.toContain('Business name:');
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/agentCreationGoals.test.ts`.
 
 Expected: TypeScript or assertion failure because business fields are currently required and no generic business context exists.
 
-- [ ] **Step 3: Implement the optional business context**
+- [x] **Step 3: Implement the optional business context**
 
 Make the two business fields optional at the builder boundary. Use the existing exact business block when both trimmed values exist; otherwise use `Use the business profile, uploaded knowledge, and conversation context to understand what the business offers and what customers need.` Keep all goal-specific sections shared.
 
@@ -59,7 +59,7 @@ export function buildAgentSystemPrompt(input: {
 }): string
 ```
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run the focused test, then commit `shared/agentCreationGoals.ts` and its test with message `Share agent goal prompt templates`.
 
@@ -76,7 +76,7 @@ Run the focused test, then commit `shared/agentCreationGoals.ts` and its test wi
 - `templateOptions` produces exactly `{ goal, key, icon }[]` for `support/support` and `bookService/sales`.
 - `onApplyTemplate` consumes an `AgentGoal`.
 
-- [ ] **Step 1: Add failing option-contract assertions**
+- [x] **Step 1: Add failing option-contract assertions**
 
 Assert the visible options are exactly `support` then `bookService`, their stored keys are `support` then `sales`, and their labels/descriptions equal `AGENT_GOAL_OPTIONS`.
 
@@ -87,13 +87,13 @@ expect(templateOptions.map(({ goal, key }) => ({ goal, key }))).toEqual([
 ]);
 ```
 
-- [ ] **Step 2: Verify RED**
+- [x] **Step 2: Verify RED**
 
 Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/agent-setup/agentSetupOptions.test.ts`.
 
 Expected: FAIL because four legacy options are currently visible.
 
-- [ ] **Step 3: Implement shared two-option rendering and application**
+- [x] **Step 3: Implement shared two-option rendering and application**
 
 Use Headphones for Support and CalendarCheck for Book a Service. Render labels and descriptions from `AGENT_GOAL_OPTIONS`. In `InstructionsPage`, derive the stored key with `templateKeyForAgentGoal` and prompt with `buildAgentSystemPrompt`, passing the agent's optional business fields.
 
@@ -108,6 +108,6 @@ const applyTemplate = (goal: AgentGoal) => {
 };
 ```
 
-- [ ] **Step 4: Verify GREEN and commit**
+- [x] **Step 4: Verify GREEN and commit**
 
 Run the goal and Agent Setup tests, scoped ESLint, and TypeScript. Commit the five UI files and test with message `Align Agent Setup templates with creation goals`.
