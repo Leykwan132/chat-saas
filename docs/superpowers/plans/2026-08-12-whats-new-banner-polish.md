@@ -33,11 +33,11 @@
 - Produces: `Announcement.publishedAt: string` containing ISO date `2026-08-12`.
 - Produces: a modal-top image whose `src` is the supplied storage URL and whose class includes `aspect-[12/5]`, `w-full`, and `object-cover`.
 
-- [ ] **Step 1: Write the failing banner and metadata regression**
+- [x] **Step 1: Write the failing banner and metadata regression**
 
 Extend `WhatsNewDialog.test.tsx` so the rendered Dialog tree contains an `img` with the literal supplied URL and wide-crop classes. Assert the first announcement has `publishedAt: '2026-08-12'` and `icon: Orbit`.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.tsx
@@ -45,7 +45,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because the banner, date field, and Orbit icon are missing.
 
-- [ ] **Step 3: Add the banner and structured metadata**
+- [x] **Step 3: Add the banner and structured metadata**
 
 Add `publishedAt: string` to `Announcement`, change the first icon to `Orbit`, and set `publishedAt: '2026-08-12'`. Render this image before `AnnouncementDialogList`:
 
@@ -57,7 +57,7 @@ Add `publishedAt: string` to `Announcement`, change the first icon to `Orbit`, a
 />
 ```
 
-- [ ] **Step 4: Run the focused test and verify GREEN**
+- [x] **Step 4: Run the focused test and verify GREEN**
 
 Run the Step 2 command and expect all `WhatsNewDialog` tests to pass.
 
@@ -72,11 +72,11 @@ Run the Step 2 command and expect all `WhatsNewDialog` tests to pass.
 - Produces: `formatAnnouncementDate(publishedAt: string): string` with the literal display `12 Aug 2026`.
 - Produces: an Accordion trigger with `showIndicator={false}` and one local `ChevronRight` using `group-data-[state=open]/accordion-trigger:rotate-90`.
 
-- [ ] **Step 1: Write the failing presentation regression**
+- [x] **Step 1: Write the failing presentation regression**
 
 Update the announcement test fixture with `publishedAt: '2026-08-12'`. Assert rendered text contains `12 Aug 2026`, the tree contains `time` with `dateTime="2026-08-12"`, the New badge includes neutral `bg-muted` styling, the trigger disables its shared indicator, and its `ChevronRight` includes the expanded-state 90-degree rotation class.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.tsx
@@ -84,7 +84,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because date rendering, the neutral badge, and local chevron are missing.
 
-- [ ] **Step 3: Implement the approved presentation**
+- [x] **Step 3: Implement the approved presentation**
 
 Format the ISO date in UTC with `Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })`. Render the semantic date beneath the summary, add `bg-muted text-muted-foreground` to the outline Badge, set `showIndicator={false}`, and add:
 
@@ -95,7 +95,7 @@ Format the ISO date in UTC with `Intl.DateTimeFormat('en-GB', { day: 'numeric', 
 />
 ```
 
-- [ ] **Step 4: Run the focused test and verify GREEN**
+- [x] **Step 4: Run the focused test and verify GREEN**
 
 Run the Step 2 command and expect all announcement tests to pass.
 
@@ -109,23 +109,23 @@ Run the Step 2 command and expect all announcement tests to pass.
 - Consumes: Tasks 1–2.
 - Produces: a verified local commit on `codex/model-catalog-refresh`.
 
-- [ ] **Step 1: Run focused verification**
+- [x] **Step 1: Run focused verification**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDialog.test.tsx src/components/SupportHoverCard.test.ts
 ```
 
-- [ ] **Step 2: Run scoped lint, build, and whitespace checks**
+- [x] **Step 2: Run scoped lint, build, and whitespace checks**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/WhatsNewDialog.tsx src/components/WhatsNewDialog.test.tsx src/components/whats-new/AnnouncementDialogList.tsx src/components/whats-new/announcements.ts && bun run build && git diff --check
 ```
 
-- [ ] **Step 3: Update continuity and review the diff**
+- [x] **Step 3: Update continuity and review the diff**
 
 Record the banner/date/icon/tag/chevron result, exact verification receipts, unchanged changelog state, and preservation of `pricing-knowledge-base-updated.md`. Confirm every changed code file remains below 300 lines.
 
-- [ ] **Step 4: Commit the verified implementation**
+- [x] **Step 4: Commit the verified implementation**
 
 ```bash
 git add CONTINUITY.md docs/superpowers/plans/2026-08-12-whats-new-banner-polish.md src/components/WhatsNewDialog.tsx src/components/WhatsNewDialog.test.tsx src/components/whats-new/AnnouncementDialogList.tsx src/components/whats-new/announcements.ts

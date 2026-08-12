@@ -1,4 +1,5 @@
 import type { Announcement } from '@/components/whats-new/announcements';
+import { ChevronRight } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -13,22 +14,38 @@ type AnnouncementDialogListProps = {
   announcements: Announcement[];
 };
 
+const announcementDateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+function formatAnnouncementDate(publishedAt: string) {
+  return announcementDateFormatter.format(
+    new Date(`${publishedAt}T00:00:00Z`),
+  );
+}
+
 export function AnnouncementDialogList({
   announcements,
 }: AnnouncementDialogListProps) {
   return (
-    <div className="flex flex-col">
+    <div className="flex min-h-0 flex-col overflow-hidden">
       <DialogHeader className="px-6 pt-6 pb-3">
         <DialogTitle>What’s new in Kilobot</DialogTitle>
       </DialogHeader>
-      <ScrollArea className="max-h-[min(32rem,70vh)]">
+      <ScrollArea className="min-h-0 flex-1">
         <Accordion type="single" collapsible className="rounded-none border-0">
           {announcements.map((announcement) => {
             const Icon = announcement.icon;
 
             return (
               <AccordionItem key={announcement.id} value={announcement.id}>
-                <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                <AccordionTrigger
+                  showIndicator={false}
+                  className="px-6 py-4 hover:no-underline"
+                >
                   <div className="flex min-w-0 items-start gap-3">
                     <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center [&_svg]:size-4">
                       <Icon />
@@ -36,13 +53,30 @@ export function AnnouncementDialogList({
                     <span className="flex min-w-0 flex-col gap-1 text-left">
                       <span className="flex items-center gap-2">
                         <span className="font-medium">{announcement.title}</span>
-                        {announcement.isNew ? <Badge variant="outline">New</Badge> : null}
+                        {announcement.isNew ? (
+                          <Badge
+                            variant="outline"
+                            className="bg-muted text-muted-foreground"
+                          >
+                            New
+                          </Badge>
+                        ) : null}
                       </span>
                       <span className="font-normal leading-5 text-muted-foreground">
                         {announcement.summary}
                       </span>
+                      <time
+                        dateTime={announcement.publishedAt}
+                        className="text-xs font-normal text-muted-foreground"
+                      >
+                        {formatAnnouncementDate(announcement.publishedAt)}
+                      </time>
                     </span>
                   </div>
+                  <ChevronRight
+                    data-slot="announcement-chevron"
+                    className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-data-[state=open]/accordion-trigger:rotate-90"
+                  />
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-5">
                   <ul className="flex list-disc flex-col gap-2 pl-8 text-sm text-muted-foreground">
