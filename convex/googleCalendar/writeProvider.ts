@@ -26,17 +26,17 @@ function providerEvent(value: unknown, expectedId: string) {
   return event;
 }
 
-async function getEvent(
-  credential: Credential,
-  externalEventId: string,
-  fetchImplementation: typeof fetch,
-) {
+export async function getGoogleCalendarEventForWrite(args: {
+  credential: Credential;
+  externalEventId: string;
+  fetchImplementation: typeof fetch;
+}) {
   const value = await googleCalendarRequest<unknown>(
-    credential,
-    { method: "GET", path: eventPath(externalEventId) },
-    fetchImplementation,
+    args.credential,
+    { method: "GET", path: eventPath(args.externalEventId) },
+    args.fetchImplementation,
   );
-  return providerEvent(value, externalEventId);
+  return providerEvent(value, args.externalEventId);
 }
 
 export async function insertGoogleCalendarEvent(args: {
@@ -67,11 +67,7 @@ export async function insertGoogleCalendarEvent(args: {
     if (!(error instanceof GoogleCalendarProviderError) || error.kind !== "conflict") {
       throw error;
     }
-    const existing = await getEvent(
-      args.credential,
-      args.externalEventId,
-      args.fetchImplementation,
-    );
+    const existing = await getGoogleCalendarEventForWrite(args);
     if (
       existing.extendedProperties?.private?.kilobotOperationKey !== args.operationKey
     ) {
@@ -88,11 +84,7 @@ export async function patchGoogleCalendarEvent(args: {
   event: GoogleCalendarWriteInput;
   fetchImplementation: typeof fetch;
 }) {
-  const current = await getEvent(
-    args.credential,
-    args.externalEventId,
-    args.fetchImplementation,
-  );
+  const current = await getGoogleCalendarEventForWrite(args);
   if (
     args.knownEtag === undefined || current.etag === undefined ||
     current.etag !== args.knownEtag
@@ -115,7 +107,7 @@ export async function patchGoogleCalendarEvent(args: {
 export async function removeGoogleCalendarEvent(args: {
   credential: Credential;
   externalEventId: string;
-  knownEtag?: string;
+  knownEtag: string;
   fetchImplementation: typeof fetch;
 }) {
   await googleCalendarRequest<undefined>(

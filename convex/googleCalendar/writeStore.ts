@@ -2,26 +2,30 @@ import { v } from "convex/values";
 import type { Doc } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import {
-  googleCalendarErrorKindValidator,
   googleCalendarOperationError,
   googleCalendarOperationResultValidator,
   googleCalendarWriteActionValidator,
 } from "./contracts";
-import { mappedGoogleCalendarEventValidator, type MappedGoogleCalendarEvent } from "./eventMapping";
-import {
-  removeParticipantAvailabilityIntervals,
-  syncCalendarEventAvailabilityIntervals,
-} from "../calendarAvailabilityIntervals";
 
 const preparedWriteValidator = v.union(
   v.object({ kind: v.literal("error"), result: googleCalendarOperationResultValidator }),
   v.object({
-    kind: v.literal("ready"),
+    kind: v.literal("reserved"),
     operationId: v.id("googleCalendarWriteOperations"),
     workosUserId: v.string(),
     timeZone: v.string(),
     externalEventId: v.string(),
-    knownEtag: v.optional(v.string()),
+    payloadPreconditionEtag: v.union(v.string(), v.null()),
+  }),
+);
+
+const attemptValidator = v.union(
+  v.object({ kind: v.literal("error"), result: googleCalendarOperationResultValidator }),
+  v.object({ kind: v.literal("success"), externalEventId: v.string() }),
+  v.object({
+    kind: v.literal("ready"),
+    attemptGeneration: v.number(),
+    intendedEtag: v.optional(v.string()),
   }),
 );
 
@@ -71,15 +75,20 @@ function unhealthyConnectionResult(connection: Doc<"googleCalendarConnections">)
   return null;
 }
 
-function validOwnedEvent(
+async function eventIsOwned(
+  ctx: MutationCtx,
   event: Doc<"calendarEvents">,
   connection: Doc<"googleCalendarConnections">,
   action: "create" | "update" | "delete",
   externalEventId?: string,
 ) {
+  const membership = await ctx.db.query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", connection.userId).eq("teamId", event.teamId),
+    ).unique();
   if (
-    event.externalProvider !== "google" || event.externalCalendarId !== "primary" ||
-    event.externalOwnerUserId !== connection.userId
+    membership === null || event.externalProvider !== "google" ||
+    event.externalCalendarId !== "primary" || event.externalOwnerUserId !== connection.userId
   ) return false;
   if (action === "create") {
     return event.externalOrigin === "kilobot" &&
@@ -103,10 +112,8 @@ export const prepare = internalMutation({
     if (connection === null || args.operationKey.trim().length === 0) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
-    const unhealthy = unhealthyConnectionResult(connection);
-    if (unhealthy !== null) return { kind: "error" as const, result: unhealthy };
     const event = await ctx.db.get(args.calendarEventId);
-    if (event === null || !validOwnedEvent(event, connection, args.action, args.externalEventId)) {
+    if (event === null || !await eventIsOwned(ctx, event, connection, args.action, args.externalEventId)) {
       return { kind: "error" as const, result: googleCalendarOperationError("forbidden") };
     }
     const expectedExternalId = args.action === "create" ? args.externalEventId : event.externalEventId;
@@ -121,6 +128,10 @@ export const prepare = internalMutation({
     )) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
+    if (existing !== null && existing.payloadBindingVersion !== 1) {
+      return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+    }
+    const precondition = existing?.payloadPreconditionEtag ?? event.externalEtag ?? null;
     const operationId = existing?._id ?? await ctx.db.insert("googleCalendarWriteOperations", {
       connectionId: connection._id,
       calendarEventId: event._id,
@@ -128,144 +139,77 @@ export const prepare = internalMutation({
       action: args.action,
       state: "pending",
       externalEventId: expectedExternalId,
+      payloadBindingVersion: 1,
+      payloadPreconditionEtag: precondition,
+      intendedEtag: event.externalEtag,
+      attemptGeneration: 0,
       attemptCount: 0,
       createdAt: args.now,
       updatedAt: args.now,
     });
-    const attemptCount = (existing?.attemptCount ?? 0) + 1;
-    await ctx.db.patch(operationId, { state: "running", errorKind: undefined, attemptCount, updatedAt: args.now });
     return {
-      kind: "ready" as const,
+      kind: "reserved" as const,
       operationId,
       workosUserId: connection.workosUserId,
       timeZone: connection.timeZone,
       externalEventId: expectedExternalId,
-      knownEtag: event.externalEtag,
+      payloadPreconditionEtag: precondition,
     };
   },
 });
 
-function activeEventPatch(event: MappedGoogleCalendarEvent, now: number) {
-  if (
-    event.status === "cancelled" || event.title === undefined || event.startAt === undefined ||
-    event.endAt === undefined || event.timeZone === undefined || event.allDay === undefined
-  ) throw new Error("Google Calendar write returned an incomplete event");
-  return {
-    title: event.title,
-    description: event.description,
-    location: event.location,
-    link: event.link,
-    startAt: event.startAt,
-    endAt: event.endAt,
-    timeZone: event.timeZone,
-    allDay: event.allDay,
-    startDate: event.startDate,
-    endDate: event.endDate,
-    status: event.status,
-    externalICalUID: event.iCalUID,
-    externalEtag: event.etag,
-    externalHtmlLink: event.htmlLink,
-    externalUpdatedAt: event.updatedAt,
-    externalStatus: event.status,
-    externalTransparency: event.transparency,
-    externalCanEdit: event.canEdit,
-    externalSyncState: "synced" as const,
-    updatedAt: now,
-  };
-}
-
-async function ownedOperation(ctx: MutationCtx, operationId: Doc<"googleCalendarWriteOperations">["_id"]) {
-  const operation = await ctx.db.get(operationId);
-  if (operation === null) throw new Error("Google Calendar write operation not found");
-  const connection = await ctx.db.get(operation.connectionId);
-  if (connection === null) throw new Error("Google Calendar connection not found");
-  const event = operation.calendarEventId === undefined ? null : await ctx.db.get(operation.calendarEventId);
-  if (
-    event === null || event.externalProvider !== "google" ||
-    event.externalCalendarId !== "primary" || event.externalOwnerUserId !== connection.userId
-  ) {
-    throw new Error("Google Calendar write operation lost event ownership");
-  }
-  return { operation, connection, event };
-}
-
-export const finalizeEvent = internalMutation({
-  args: { operationId: v.id("googleCalendarWriteOperations"), event: mappedGoogleCalendarEventValidator, now: v.number() },
-  returns: v.string(),
-  handler: async (ctx, args) => {
-    const { operation, connection, event } = await ownedOperation(ctx, args.operationId);
-    if (operation.action === "delete" || operation.externalEventId !== args.event.eventId) {
-      throw new Error("Google Calendar write finalization does not match its operation");
-    }
-    await ctx.db.patch(event._id, {
-      ...activeEventPatch(args.event, args.now),
-      externalEventId: args.event.eventId,
-      externalOperationKey: operation.action === "create" ? operation.operationKey : event.externalOperationKey,
-    });
-    await syncCalendarEventAvailabilityIntervals(ctx, event._id, args.now);
-    await ctx.db.patch(operation._id, { state: "succeeded", errorKind: undefined, updatedAt: args.now });
-    await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
-    return args.event.eventId;
-  },
-});
-
-export const finalizeDelete = internalMutation({
-  args: { operationId: v.id("googleCalendarWriteOperations"), now: v.number() },
-  returns: v.string(),
-  handler: async (ctx, args) => {
-    const { operation, connection, event } = await ownedOperation(ctx, args.operationId);
-    if (operation.action !== "delete" || operation.externalEventId === undefined) {
-      throw new Error("Google Calendar delete finalization does not match its operation");
-    }
-    if (event.externalOrigin === "kilobot") {
-      await ctx.db.patch(event._id, {
-        status: "cancelled", externalStatus: "cancelled", externalSyncState: "synced", updatedAt: args.now,
-      });
-      await syncCalendarEventAvailabilityIntervals(ctx, event._id, args.now);
-    } else {
-      const participants = await ctx.db.query("calendarEventParticipants")
-        .withIndex("by_eventId", (q) => q.eq("eventId", event._id)).take(51);
-      if (participants.length > 50) {
-        throw new Error("Google Calendar event has too many participants to delete");
-      }
-      for (const participant of participants) {
-        await removeParticipantAvailabilityIntervals(ctx, participant._id);
-        await ctx.db.delete(participant._id);
-      }
-      await ctx.db.delete(event._id);
-    }
-    await ctx.db.patch(operation._id, { state: "succeeded", errorKind: undefined, updatedAt: args.now });
-    await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
-    return operation.externalEventId;
-  },
-});
-
-export const recordOutcome = internalMutation({
+export const beginAttempt = internalMutation({
   args: {
     operationId: v.id("googleCalendarWriteOperations"),
-    kind: googleCalendarErrorKindValidator,
+    payloadFingerprint: v.string(),
     now: v.number(),
   },
-  returns: v.null(),
+  returns: attemptValidator,
   handler: async (ctx, args) => {
     const operation = await ctx.db.get(args.operationId);
-    if (operation === null) throw new Error("Google Calendar write operation not found");
+    if (
+      operation === null || operation.payloadBindingVersion !== 1 ||
+      operation.externalEventId === undefined || operation.calendarEventId === undefined
+    ) return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+    if (
+      operation.payloadFingerprint !== undefined &&
+      operation.payloadFingerprint !== args.payloadFingerprint
+    ) return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+    if (operation.state === "succeeded") {
+      return { kind: "success" as const, externalEventId: operation.externalEventId };
+    }
     const connection = await ctx.db.get(operation.connectionId);
-    if (connection === null) throw new Error("Google Calendar connection not found");
+    const event = await ctx.db.get(operation.calendarEventId);
+    if (
+      connection === null || event === null ||
+      !await eventIsOwned(ctx, event, connection, operation.action, operation.externalEventId)
+    ) return { kind: "error" as const, result: googleCalendarOperationError("forbidden") };
+    const unhealthy = unhealthyConnectionResult(connection);
+    if (unhealthy !== null) {
+      if (operation.payloadFingerprint === undefined) {
+        await ctx.db.patch(operation._id, {
+          payloadFingerprint: args.payloadFingerprint,
+          updatedAt: args.now,
+        });
+      }
+      return { kind: "error" as const, result: unhealthy };
+    }
+    const expectedEtag = operation.intendedEtag;
+    const etagMatches = operation.action === "create" ||
+      event.externalEtag === expectedEtag ||
+      (operation.action === "delete" && event.externalEtag === undefined);
+    if (!etagMatches) {
+      return { kind: "error" as const, result: googleCalendarOperationError("conflict") };
+    }
+    const attemptGeneration = (operation.attemptGeneration ?? 0) + 1;
     await ctx.db.patch(operation._id, {
-      state: args.kind === "conflict"
-        ? "conflict"
-        : args.kind === "retryable" ? "pending" : "failed",
-      errorKind: args.kind,
+      payloadFingerprint: operation.payloadFingerprint ?? args.payloadFingerprint,
+      attemptGeneration,
+      attemptCount: operation.attemptCount + 1,
+      state: "running",
+      errorKind: undefined,
       updatedAt: args.now,
     });
-    if (args.kind === "needs_reauthorization" || args.kind === "forbidden") {
-      await ctx.db.patch(connection._id, { state: "needs_reauthorization", lastErrorKind: args.kind, updatedAt: args.now });
-    } else if (args.kind === "not_connected") {
-      await ctx.db.patch(connection._id, { state: "disconnected", lastErrorKind: args.kind, updatedAt: args.now });
-    } else if (args.kind === "retryable" || args.kind === "failed") {
-      await ctx.db.patch(connection._id, { lastErrorKind: args.kind, updatedAt: args.now });
-    }
-    return null;
+    return { kind: "ready" as const, attemptGeneration, intendedEtag: expectedEtag };
   },
 });

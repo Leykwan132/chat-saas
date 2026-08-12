@@ -5,6 +5,7 @@ import {
   syncCalendarEventAvailabilityIntervals,
 } from "../calendarAvailabilityIntervals";
 import type { MappedGoogleCalendarEvent } from "./eventMapping";
+import type { GoogleCalendarReconciliationTarget } from "./writeReconciliation";
 
 type ActiveMappedEvent = MappedGoogleCalendarEvent & {
   status: "confirmed" | "tentative";
@@ -111,9 +112,10 @@ export async function upsertGoogleCalendarProjection(
   event: ActiveMappedEvent,
   run: Doc<"googleCalendarSyncRuns">,
   now: number,
-  reconciledEvent: Doc<"calendarEvents"> | null,
+  reconciliationTarget: GoogleCalendarReconciliationTarget | null,
 ) {
-  if (reconciledEvent !== null && reconciledEvent.teamId === teamId) {
+  if (reconciliationTarget !== null && reconciliationTarget.event.teamId === teamId) {
+    const reconciledEvent = reconciliationTarget.event;
     await ctx.db.patch(reconciledEvent._id, {
       ...synchronizedFields(event, now),
       externalProvider: "google",
@@ -129,6 +131,12 @@ export async function upsertGoogleCalendarProjection(
       ctx, reconciledEvent._id, teamId, owner, event.startAt, event.endAt, now,
     );
     await syncCalendarEventAvailabilityIntervals(ctx, reconciledEvent._id, now);
+    await ctx.db.patch(reconciliationTarget.operationId, {
+      state: "succeeded",
+      errorKind: undefined,
+      providerEtag: event.etag,
+      updatedAt: now,
+    });
     return "updated" as const;
   }
   const existing = await ctx.db.query("calendarEvents").withIndex(

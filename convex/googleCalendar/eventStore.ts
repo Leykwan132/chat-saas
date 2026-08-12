@@ -51,7 +51,7 @@ export const applyPage = internalMutation({
     for (const mapped of args.events) {
       const reconciledEvent = mapped.status === "cancelled"
         ? null
-        : await reconcileGoogleCalendarCreate(ctx, connection, mapped, args.now);
+        : await reconcileGoogleCalendarCreate(ctx, connection, mapped);
       for (const membership of membershipPage.page) {
         if (mapped.status === "cancelled") {
           cancelledCount += await cancelGoogleCalendarProjection(ctx, membership.teamId, owner._id, mapped, args.now);

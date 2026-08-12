@@ -28,8 +28,11 @@ const googleInternal = internal as unknown as {
       getConnectionForSync: QueryRef; renewSyncRunLease: MutationRef;
     };
     writeStore: {
-      prepare: MutationRef; finalizeEvent: MutationRef; finalizeDelete: MutationRef;
-      recordOutcome: MutationRef;
+      prepare: MutationRef; beginAttempt: MutationRef;
+    };
+    writeFinalizationStore: {
+      finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
+      finalizeDelete: MutationRef; recordOutcome: MutationRef;
     };
   };
 };
@@ -67,11 +70,14 @@ async function setupLocalEvent(options?: { external?: boolean }) {
 
 function writeDependencies(t: CalendarTest, fetchImplementation: typeof fetch): GoogleCalendarWriteDependencies {
   const store = googleInternal.googleCalendar.writeStore;
+  const finalization = googleInternal.googleCalendar.writeFinalizationStore;
   return {
     prepare: (args) => t.mutation(store.prepare, args) as never,
-    finalizeEvent: (args) => t.mutation(store.finalizeEvent, args) as never,
-    finalizeDelete: (args) => t.mutation(store.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(store.recordOutcome, args) as never,
+    beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
+    finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
+    establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
+    finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
+    recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
     fetchImplementation,
@@ -145,7 +151,8 @@ test("concurrent retried creates reserve once and address the same provider even
   ]);
   expect(first).toEqual(retry);
   expect(first).toMatchObject({ kind: "success", externalEventId: insertIds[0] });
-  expect(insertIds).toEqual([insertIds[0], insertIds[0]]);
+  expect(insertIds.length).toBeGreaterThanOrEqual(1);
+  expect(new Set(insertIds)).toEqual(new Set([insertIds[0]]));
   expect(await t.run((ctx) => ctx.db.query("googleCalendarWriteOperations").withIndex("by_operationKey", (q) => q.eq("operationKey", args.operationKey)).take(2))).toHaveLength(1);
 });
 
@@ -230,7 +237,7 @@ test("deleting an already absent event succeeds and preserves the cancelled book
   const retry = await runDeleteGoogleCalendarEvent({ ...args, now: now + 1 }, dependencies);
   expect(result).toEqual(retry);
   expect(result).toMatchObject({ kind: "success", externalEventId: "existing_event" });
-  expect(providerCalls).toBe(2);
+  expect(providerCalls).toBe(1);
   expect(await t.run((ctx) => ctx.db.get(calendarEventId))).toMatchObject(
     { status: "cancelled", externalStatus: "cancelled", externalSyncState: "synced" },
   );

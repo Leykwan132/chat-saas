@@ -47,13 +47,27 @@ export type GoogleCalendarEventWriteArgs = GoogleCalendarWriteArgs & {
 export type GoogleCalendarPreparedWrite =
   | { kind: "error"; result: GoogleCalendarOperationResult }
   | {
-      kind: "ready";
+      kind: "reserved";
       operationId: Id<"googleCalendarWriteOperations">;
       workosUserId: string;
       timeZone: string;
       externalEventId: string;
-      knownEtag?: string;
+      payloadPreconditionEtag: string | null;
     };
+
+export type GoogleCalendarAttempt =
+  | { kind: "error"; result: GoogleCalendarOperationResult }
+  | { kind: "success"; externalEventId: string }
+  | {
+      kind: "ready";
+      attemptGeneration: number;
+      intendedEtag?: string;
+    };
+
+export type GoogleCalendarFinalization =
+  | { kind: "success"; externalEventId: string }
+  | { kind: "conflict" }
+  | { kind: "stale" };
 
 export type GoogleCalendarWriteDependencies = {
   prepare(args: {
@@ -64,20 +78,35 @@ export type GoogleCalendarWriteDependencies = {
     externalEventId?: string;
     now: number;
   }): Promise<GoogleCalendarPreparedWrite>;
+  beginAttempt(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    payloadFingerprint: string;
+    now: number;
+  }): Promise<GoogleCalendarAttempt>;
   finalizeEvent(args: {
     operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
     event: MappedGoogleCalendarEvent;
     now: number;
-  }): Promise<string>;
+  }): Promise<GoogleCalendarFinalization>;
+  establishDeletePrecondition(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
+    providerEtag: string;
+    now: number;
+  }): Promise<GoogleCalendarFinalization | { kind: "ready"; intendedEtag: string }>;
   finalizeDelete(args: {
     operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
+    confirmedAbsent: boolean;
     now: number;
-  }): Promise<string>;
+  }): Promise<GoogleCalendarFinalization>;
   recordOutcome(args: {
     operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
     kind: Exclude<GoogleCalendarOperationResult["kind"], "success">;
     now: number;
-  }): Promise<null>;
+  }): Promise<GoogleCalendarFinalization | { kind: "recorded" }>;
   getCredential(workosUserId: string): Promise<GoogleCalendarCredentialResult>;
   refresh(args: { connectionId: Id<"googleCalendarConnections"> }): Promise<unknown>;
   fetchImplementation: typeof fetch;
