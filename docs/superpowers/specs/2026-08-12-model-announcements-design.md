@@ -27,13 +27,14 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Language fit uses explicit editorial scores from one to five and covers Malay, Chinese, and English where applicable. Existing `Primary`, `Strong`, and `Supported` judgments become `5.0`, `4.0`, and `3.0` respectively.
 - Hovering or focusing a model row in the selection Dialog opens a shadcn HoverCard.
 - The HoverCard uses `@smastrom/react-rating` in read-only mode for the overall score, compact text rows for the four supporting metrics, per-language progress rows with `x.x / 5` values, and the `bestFor` statement.
-- The read-only rating uses `StickerStar` with active fill `#f59e0b` and inactive fill `#ffedd5`, preserving its 120px maximum width and visible numeric score.
+- Under the `Kilobot rating` label, render the one-decimal overall score immediately followed by five compact StickerStars on the same line, matching the supplied reference. Omit `/ 5` and any review count because these are Kilobot editorial scores rather than customer reviews.
+- The read-only rating uses `StickerStar` with active fill `#f59e0b` and inactive fill `#ffedd5`, reducing the star row from its earlier 120px treatment to an 88px width.
 - The selection row remains clickable and inaccessible models keep their existing upgrade behavior.
 
 ## Scorecard identity header
 
 - Add a top identity row to every model scorecard HoverCard with the model’s existing 16px provider icon and semibold display name.
-- Place the existing `Kilobot rating` row immediately below the identity row, followed by the rating stars, metrics, language fit, and best-for guidance.
+- Place the `Kilobot rating` label immediately below the identity row, followed by one inline score-and-stars row, metrics, language fit, and best-for guidance.
 - Pass the current model label, chef slug, and optional image URL from `ModelPickerItem` into `ModelScoreHoverCard` rather than duplicating catalog identity in the scorecard record.
 - Render the icon through `ModelSelectorLogo` so Qwen uses LobeHub’s colored Qwen icon and every other provider preserves its current image behavior.
 - Unknown historical models continue returning the picker row without an empty HoverCard.
@@ -72,6 +73,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
 - Model scorecard tests assert the visible identity header contains the supplied model name and the shared provider icon.
 - Model scorecard tests assert the Rating uses `StickerStar`, the approved amber fills, and remains read-only.
+- Model scorecard tests assert the decimal overall score and 88px StickerStar rating share one flex row, and that the old `/ 5` overall copy is absent.
 - Announcement tests assert Package-icon button copy, the supplied banner, click-open Dialog, the calendar-backed `Released on` date only inside expanded content, neutral `New` badge, right-to-down chevron behavior, single Accordion behavior, the featured 0.5-credit panel, model cards, the retired-model footer, and no generic detail list or secondary Dialog.
 - Model scorecard tests assert every language score is greater than zero and no greater than five, and HoverCard tests assert visible `x.x / 5` language values with progress semantics rather than qualitative badges.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
