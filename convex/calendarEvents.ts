@@ -24,6 +24,10 @@ import {
   loadCalendarRangeProjection,
   projectCalendarEvent,
 } from "./googleCalendar/calendarProjection";
+import {
+  removeParticipantAvailabilityIntervals,
+  syncCalendarEventAvailabilityIntervals,
+} from "./calendarAvailabilityIntervals";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -228,6 +232,7 @@ async function deleteParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents"
     .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
     .take(100);
   for (const participant of participants) {
+    await removeParticipantAvailabilityIntervals(ctx, participant._id);
     await ctx.db.delete(participant._id);
   }
 }
@@ -435,6 +440,7 @@ export const create = mutation({
       eventEndAt: args.endAt,
       now,
     });
+    await syncCalendarEventAvailabilityIntervals(ctx, eventId, now);
 
     return eventId;
   },
@@ -620,6 +626,7 @@ export const update = mutation({
         });
       }
     }
+    await syncCalendarEventAvailabilityIntervals(ctx, args.eventId, Date.now());
 
     const conversationId = await getConversationIdForEvent(ctx, event);
     const isCancellation = args.status === "cancelled" && event.status !== "cancelled";

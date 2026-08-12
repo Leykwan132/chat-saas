@@ -5,16 +5,30 @@ import { getUserByWorkosId } from "../teamHelpers";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
 import {
-  hasCalendarConflict,
+  calendarAvailabilityHasConflict,
+  loadCalendarAvailabilityByUser,
   loadGoogleCalendarHealthByUser,
+  type UserCalendarAvailability,
 } from "../googleCalendar/availability";
 
-type AvailabilityRosterEntry = RosterEntry & { googleCalendarHealthy: boolean };
+type AvailabilityRosterEntry = RosterEntry & {
+  calendarAvailability: UserCalendarAvailability;
+  futureAssignedEventCount: number;
+  googleCalendarHealthy: boolean;
+};
 
-async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<AvailabilityRosterEntry[]> {
+async function loadRoster(
+  ctx: MutationCtx,
+  args: {
+    agentId: Id<"agents">;
+    teamId: Id<"teams">;
+    windowStartAt: number;
+    windowEndAt: number;
+  },
+): Promise<AvailabilityRosterEntry[]> {
   const schedules = await ctx.db
     .query("userSchedules")
-    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+    .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
     .take(100);
   const entries: RosterEntry[] = [];
   for (const schedule of schedules) {
@@ -30,9 +44,32 @@ async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<Avai
     entries.push({ schedule, shifts, timeOff, user });
   }
   const userIds = entries.flatMap((entry) => entry.user === null ? [] : [entry.user._id]);
-  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds, Date.now());
+  const now = Date.now();
+  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds, now);
+  const availabilityByUser = await loadCalendarAvailabilityByUser(ctx, {
+    teamId: args.teamId,
+    userIds,
+    startAt: args.windowStartAt,
+    endAt: args.windowEndAt,
+    now,
+  });
+  const futureCounts = new Map(await Promise.all([...new Set(userIds)].map(async (userId) => {
+    const rows = await ctx.db
+      .query("calendarEventParticipants")
+      .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) => q
+        .eq("teamId", args.teamId)
+        .eq("role", "assigned")
+        .eq("userId", userId)
+        .gte("eventStartAt", now))
+      .take(100);
+    return [userId, rows.length] as const;
+  })));
   return entries.map((entry) => ({
     ...entry,
+    calendarAvailability: entry.user === null
+      ? { safe: false, intervals: [] }
+      : availabilityByUser.get(entry.user._id) ?? { safe: false, intervals: [] },
+    futureAssignedEventCount: entry.user === null ? 0 : futureCounts.get(entry.user._id) ?? 0,
     googleCalendarHealthy: entry.user !== null && healthByUser.get(entry.user._id) === true,
   }));
 }
@@ -61,9 +98,7 @@ function hasTimeOffOverlap(startAt: number, endAt: number, rows: Doc<"userTimeOf
   return rows.some((row) => overlaps(startAt, endAt, row.startAt, row.endAt));
 }
 
-async function entryAvailableForSlot(
-  ctx: MutationCtx,
-  teamId: Id<"teams">,
+function entryAvailableForSlot(
   entry: AvailabilityRosterEntry,
   startAt: number,
   endAt: number,
@@ -73,31 +108,15 @@ async function entryAvailableForSlot(
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
   if (!entry.googleCalendarHealthy) return false;
-  return !(await hasCalendarConflict(ctx, {
-    teamId,
-    userId: entry.user._id,
+  return !calendarAvailabilityHasConflict(
+    entry.calendarAvailability,
     startAt,
     endAt,
     excludeEventId,
-  }));
+  );
 }
 
-async function countFutureAssignedEvents(ctx: MutationCtx, teamId: Id<"teams">, userId: Id<"users">, now: number) {
-  const rows = await ctx.db
-    .query("calendarEventParticipants")
-    .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) =>
-      q
-        .eq("teamId", teamId)
-        .eq("role", "assigned")
-        .eq("userId", userId)
-        .gte("eventStartAt", now),
-    )
-    .take(100);
-  return rows.length;
-}
-
-async function chooseAssigneeForSlot(
-  ctx: MutationCtx,
+function chooseAssigneeForSlot(
   args: {
     service: Doc<"appointmentServices">;
     conversation?: Doc<"conversations">;
@@ -107,10 +126,10 @@ async function chooseAssigneeForSlot(
     endAt: number;
     excludeEventId?: Id<"calendarEvents">;
   },
-): Promise<RosterEntry | null> {
+): RosterEntry | null {
   const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
-    if (await entryAvailableForSlot(ctx, args.teamId, entry, args.startAt, args.endAt, args.excludeEventId)) {
+    if (entryAvailableForSlot(entry, args.startAt, args.endAt, args.excludeEventId)) {
       available.push(entry);
     }
   }
@@ -133,14 +152,10 @@ async function chooseAssigneeForSlot(
     return sorted[(lastIndex + 1) % sorted.length] ?? null;
   }
 
-  const withCounts = [];
-  for (const entry of available) {
-    if (entry.user === null) continue;
-    withCounts.push({
-      entry,
-      count: await countFutureAssignedEvents(ctx, args.teamId, entry.user._id, Date.now()),
-    });
-  }
+  const withCounts = available.map((entry) => ({
+    entry,
+    count: entry.futureAssignedEventCount,
+  }));
   withCounts.sort((a, b) => {
     if (a.count !== b.count) return a.count - b.count;
     return a.entry.schedule.createdAt - b.entry.schedule.createdAt;
@@ -195,18 +210,31 @@ export async function generateSlots(
     excludeEventId?: Id<"calendarEvents">;
   },
 ): Promise<BookingSlot[]> {
-  const roster = await loadRoster(ctx, args.service.agentId);
   const durationMs = args.service.durationMinutes * 60 * 1000;
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
   const slots: BookingSlot[] = [];
   const maxCandidates = 200;
+  const firstStartAt = roundUpToSlotInterval(args.rangeStartAt);
+  if (firstStartAt + durationMs > args.rangeEndAt) return [];
+  const lastCandidateStartAt = Math.min(
+    args.rangeEndAt - durationMs,
+    firstStartAt + (maxCandidates - 1) * 30 * 60 * 1000,
+  );
+  const roster = await loadRoster(ctx, {
+    agentId: args.service.agentId,
+    teamId: args.teamId,
+    windowStartAt: firstStartAt - bufferMs,
+    windowEndAt: lastCandidateStartAt + durationMs + bufferMs,
+  });
+  let candidateCount = 0;
   for (
-    let startAt = roundUpToSlotInterval(args.rangeStartAt);
-    startAt + durationMs <= args.rangeEndAt && slots.length < maxCandidates;
+    let startAt = firstStartAt;
+    startAt + durationMs <= args.rangeEndAt && candidateCount < maxCandidates;
     startAt += 30 * 60 * 1000
   ) {
+    candidateCount += 1;
     const endAt = startAt + durationMs;
-    const assignee = await chooseAssigneeForSlot(ctx, {
+    const assignee = chooseAssigneeForSlot({
       service: args.service,
       conversation: args.conversation,
       teamId: args.teamId,
@@ -239,9 +267,14 @@ export async function resolveAvailableInterval(
   },
 ): Promise<BookingSlot | null> {
   if (args.endAt <= args.startAt) return null;
-  const entries = await loadRoster(ctx, args.service.agentId);
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
-  const assignee = await chooseAssigneeForSlot(ctx, {
+  const entries = await loadRoster(ctx, {
+    agentId: args.service.agentId,
+    teamId: args.teamId,
+    windowStartAt: args.startAt - bufferMs,
+    windowEndAt: args.endAt + bufferMs,
+  });
+  const assignee = chooseAssigneeForSlot({
     service: args.service,
     conversation: args.conversation,
     teamId: args.teamId,

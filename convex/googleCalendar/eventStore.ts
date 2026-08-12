@@ -3,6 +3,10 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import type { MappedGoogleCalendarEvent } from "./eventMapping";
 import { ownedSyncRun } from "./syncOwnership";
+import {
+  removeParticipantAvailabilityIntervals,
+  syncCalendarEventAvailabilityIntervals,
+} from "../calendarAvailabilityIntervals";
 
 const MAX_EVENTS_PER_PAGE = 20;
 
@@ -61,7 +65,10 @@ async function deleteParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents"
   if (participants.length > 50) {
     throw new Error("Google Calendar event has too many participants to synchronize");
   }
-  for (const participant of participants) await ctx.db.delete(participant._id);
+  for (const participant of participants) {
+    await removeParticipantAvailabilityIntervals(ctx, participant._id);
+    await ctx.db.delete(participant._id);
+  }
 }
 
 async function upsertOwnerParticipant(
@@ -158,6 +165,7 @@ async function upsertProjection(
         run.requestKind === "full" ? run._id : existing.externalLastSeenSyncRunId,
     });
     await upsertOwnerParticipant(ctx, existing._id, teamId, owner, event.startAt, event.endAt, now);
+    await syncCalendarEventAvailabilityIntervals(ctx, existing._id, now);
     return "updated" as const;
   }
   const eventId = await ctx.db.insert("calendarEvents", {
@@ -174,6 +182,7 @@ async function upsertProjection(
     createdAt: now,
   });
   await upsertOwnerParticipant(ctx, eventId, teamId, owner, event.startAt, event.endAt, now);
+  await syncCalendarEventAvailabilityIntervals(ctx, eventId, now);
   return "imported" as const;
 }
 
@@ -205,6 +214,7 @@ async function cancelProjection(
         externalUpdatedAt: event.updatedAt,
         updatedAt: now,
       });
+      await syncCalendarEventAvailabilityIntervals(ctx, candidate._id, now);
     } else {
       await deleteParticipants(ctx, candidate._id);
       await ctx.db.delete(candidate._id);

@@ -5,6 +5,7 @@ import { logConversationEvent } from "../conversationLogs";
 import { getExistingBookingSession } from "./sessionStore";
 import { cancelWorkflowRemindersForAppointment } from "../workflowReminderRuntime";
 import { notifyAppointmentEvent } from "../telegramNotifications/events";
+import { syncCalendarEventAvailabilityIntervals } from "../calendarAvailabilityIntervals";
 
 export const cancelBookingSession = internalMutation({
   args: { conversationId: v.id("conversations") },
@@ -32,6 +33,7 @@ export const cancelBookingSession = internalMutation({
         status: "cancelled",
         updatedAt: now,
       });
+      await syncCalendarEventAvailabilityIntervals(ctx, event._id, now);
       await cancelWorkflowRemindersForAppointment(ctx, event._id, "Appointment cancelled");
       await logConversationEvent(ctx, {
         conversationId: args.conversationId,
@@ -85,6 +87,7 @@ export const cancelBookingSession = internalMutation({
         status: "cancelled",
         updatedAt: now,
       });
+      await syncCalendarEventAvailabilityIntervals(ctx, active.calendarEventId, now);
       await cancelWorkflowRemindersForAppointment(
         ctx,
         active.calendarEventId,

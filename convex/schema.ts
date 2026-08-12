@@ -1651,6 +1651,7 @@ export default defineSchema({
     displayName: v.optional(v.string()),
     eventStartAt: v.number(),
     eventEndAt: v.optional(v.number()),
+    availabilityIndexedAt: v.optional(v.number()),
     responseStatus: v.optional(
       v.union(
         v.literal("needsAction"),
@@ -1685,11 +1686,44 @@ export default defineSchema({
       "userId",
       "eventEndAt",
     ])
+    .index("by_teamId_and_role_and_userId_and_availabilityIndexedAt", [
+      "teamId",
+      "role",
+      "userId",
+      "availabilityIndexedAt",
+    ])
     .index("by_teamId_and_role_and_customerId_and_eventStartAt", [
       "teamId",
       "role",
       "customerId",
       "eventStartAt",
+    ]),
+  calendarAvailabilityIntervals: defineTable({
+    participantId: v.id("calendarEventParticipants"),
+    eventId: v.id("calendarEvents"),
+    teamId: v.id("teams"),
+    userId: v.id("users"),
+    bucketKind: v.union(v.literal("day"), v.literal("month"), v.literal("long")),
+    bucketKey: v.string(),
+    startAt: v.number(),
+    endAt: v.number(),
+    externalOwnerUserId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  })
+    .index("by_participantId", ["participantId"])
+    .index("by_teamId_and_userId_and_bucketKind_and_bucketKey_and_startAt", [
+      "teamId",
+      "userId",
+      "bucketKind",
+      "bucketKey",
+      "startAt",
+    ])
+    .index("by_teamId_and_userId_and_bucketKind_and_bucketKey_and_endAt", [
+      "teamId",
+      "userId",
+      "bucketKind",
+      "bucketKey",
+      "endAt",
     ]),
   whatsappBroadcastSchedules: defineTable({
     agentId: v.id("agents"),

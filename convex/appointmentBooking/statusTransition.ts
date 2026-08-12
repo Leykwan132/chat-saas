@@ -9,6 +9,7 @@ import {
   cancelWorkflowRemindersForAppointment,
   scheduleWorkflowRemindersForAppointment,
 } from "../workflowReminderRuntime";
+import { syncCalendarEventAvailabilityIntervals } from "../calendarAvailabilityIntervals";
 
 export const editableBookingStatusValidator = v.union(
   v.literal(AppointmentBookingSessionStatus.Booked),
@@ -53,6 +54,7 @@ export const updateAppointmentBookingStatus = async (
     status: calendarStatusForBookingStatus(args.status),
     updatedAt: now,
   });
+  await syncCalendarEventAvailabilityIntervals(ctx, event._id, now);
   if (args.status === AppointmentBookingSessionStatus.Booked) {
     await scheduleWorkflowRemindersForAppointment(ctx, event._id);
   } else {

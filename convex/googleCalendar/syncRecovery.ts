@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { ownedSyncRun } from "./syncOwnership";
+import { removeParticipantAvailabilityIntervals } from "../calendarAvailabilityIntervals";
 
 const RECOVERY_EVENT_BATCH_SIZE = 40;
 
@@ -33,7 +34,10 @@ async function deleteParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents"
   if (participants.length > 50) {
     throw new Error("Google Calendar recovery participant batch is too large");
   }
-  for (const participant of participants) await ctx.db.delete(participant._id);
+  for (const participant of participants) {
+    await removeParticipantAvailabilityIntervals(ctx, participant._id);
+    await ctx.db.delete(participant._id);
+  }
 }
 
 export const recoverInvalidSyncToken = internalMutation({
