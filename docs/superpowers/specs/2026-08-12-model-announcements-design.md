@@ -39,8 +39,9 @@ Give authenticated users a compact announcement experience and clearer model-sel
 
 ## Qwen branding
 
-- Store a recognizable Qwen brand SVG locally under `public/model-logos/qwen.svg`.
-- Set Qwen3.7 Flash’s `imageUrl` to the local asset so the picker no longer uses models.dev’s generic sparkle glyph.
+- Render LobeHub’s `Qwen.Color` component from the shared model-selector logo component whenever the provider slug is `qwen`.
+- Reuse that shared rendering path in both the selected-model trigger and model rows so Qwen branding stays consistent.
+- Remove the local Qwen SVG and Qwen-specific `imageUrl`; all other providers retain their existing image and models.dev behavior.
 - Keep the model ID, provider, chef, and chef slug unchanged.
 
 ## Accessibility and layout
@@ -56,7 +57,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model scorecard tests assert complete enabled-model coverage, score bounds, language labels, and the initial editorial values.
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
 - Announcement tests assert Package-icon button copy, click Popover, single Accordion behavior, `New` badge, one action, and full Dialog handoff.
-- Pricing tests assert Qwen uses the local logo path.
+- Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
 
 ## Release state
