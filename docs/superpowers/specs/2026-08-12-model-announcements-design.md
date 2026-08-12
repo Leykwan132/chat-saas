@@ -25,6 +25,14 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - The HoverCard uses `@smastrom/react-rating` in read-only mode for the overall score, compact text rows for the four supporting metrics, language badges, and the `bestFor` statement.
 - The selection row remains clickable and inaccessible models keep their existing upgrade behavior.
 
+## Scorecard identity header
+
+- Add a top identity row to every model scorecard HoverCard with the model’s existing 16px provider icon and semibold display name.
+- Place the existing `Kilobot rating` row immediately below the identity row, followed by the rating stars, metrics, language fit, and best-for guidance.
+- Pass the current model label, chef slug, and optional image URL from `ModelPickerItem` into `ModelScoreHoverCard` rather than duplicating catalog identity in the scorecard record.
+- Render the icon through `ModelSelectorLogo` so Qwen uses LobeHub’s colored Qwen icon and every other provider preserves its current image behavior.
+- Unknown historical models continue returning the picker row without an empty HoverCard.
+
 ## Initial scorecards
 
 | Model | Overall | Quality | Speed | Reasoning | Value | Language strengths | Best for |
@@ -56,6 +64,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 
 - Model scorecard tests assert complete enabled-model coverage, score bounds, language labels, and the initial editorial values.
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
+- Model scorecard tests assert the visible identity header contains the supplied model name and the shared provider icon.
 - Announcement tests assert Package-icon button copy, click Popover, single Accordion behavior, `New` badge, one action, and full Dialog handoff.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
