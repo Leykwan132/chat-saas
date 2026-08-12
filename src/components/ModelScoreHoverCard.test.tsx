@@ -91,15 +91,15 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
     (candidate) =>
       (candidate.props as SlotElementProps)['data-slot'] ===
       'model-recommendation',
-  );
+  ) as ReactElement<SlotElementProps>[];
   const recommendationCheckWrappers = descendants.filter(
     (candidate) =>
       (candidate.props as SlotElementProps)['data-slot'] ===
       'model-recommendation-check',
-  );
+  ) as ReactElement<SlotElementProps>[];
   const recommendationChecks = descendants.filter(
     (candidate) => candidate.type === Check,
-  );
+  ) as ReactElement<{ className?: string }>[];
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
