@@ -7,6 +7,7 @@ import {
 } from "./calendarAvailabilityIntervals";
 
 const LEGACY_REPAIR_BATCH_SIZE = 4;
+const STALE_SNAPSHOT_BATCH_SIZE = 16;
 const INTERVAL_QUERY_LIMIT = 250;
 const MAX_INTERVALS_PER_USER = 250;
 
@@ -45,7 +46,7 @@ async function resetPreload(
   await ctx.db.patch(preload._id, {
     userIds,
     state: "pending",
-    phase: "repair",
+    phase: "cleanup",
     generation,
     nextUserIndex: 0,
     revision: undefined,
@@ -105,7 +106,9 @@ export async function ensureCalendarAvailabilityPreload(
   }
   const userRows = await ctx.db
     .query("calendarAvailabilityPreloadUsers")
-    .withIndex("by_preloadId", (q) => q.eq("preloadId", preload._id))
+    .withIndex("by_preloadId_and_generation", (q) => q
+      .eq("preloadId", preload._id)
+      .eq("generation", preload.generation))
     .take(101);
   if (userRows.length > 100) {
     return { state: "pending", worker: await resetPreload(ctx, preload, args.userIds, args.now) };
@@ -114,6 +117,15 @@ export async function ensureCalendarAvailabilityPreload(
     .filter((row) => row.generation === preload.generation)
     .map((row) => [row.userId, row]));
   if (args.userIds.some((userId) => !currentRows.has(userId))) {
+    return { state: "pending", worker: await resetPreload(ctx, preload, args.userIds, args.now) };
+  }
+  const staleRow = await ctx.db
+    .query("calendarAvailabilityPreloadUsers")
+    .withIndex("by_preloadId_and_generation", (q) => q
+      .eq("preloadId", preload._id)
+      .lt("generation", preload.generation))
+    .first();
+  if (staleRow !== null) {
     return { state: "pending", worker: await resetPreload(ctx, preload, args.userIds, args.now) };
   }
   const ownerIds = [...new Set([...currentRows.values()].flatMap((row) =>
@@ -227,6 +239,21 @@ export async function advanceCalendarAvailabilityPreload(
   const preload = await ctx.db.get(args.preloadId);
   if (preload === null || preload.state !== "pending" || preload.generation !== args.generation) {
     return { continue: false };
+  }
+  if (preload.phase === "cleanup") {
+    const staleRows = await ctx.db
+      .query("calendarAvailabilityPreloadUsers")
+      .withIndex("by_preloadId_and_generation", (q) => q
+        .eq("preloadId", preload._id)
+        .lt("generation", preload.generation))
+      .take(STALE_SNAPSHOT_BATCH_SIZE + 1);
+    for (const row of staleRows.slice(0, STALE_SNAPSHOT_BATCH_SIZE)) {
+      await ctx.db.delete(row._id);
+    }
+    if (staleRows.length <= STALE_SNAPSHOT_BATCH_SIZE) {
+      await ctx.db.patch(preload._id, { phase: "repair", nextUserIndex: 0, updatedAt: args.now });
+    }
+    return { continue: true, worker: workerPointer(preload._id, preload.generation) };
   }
   if (preload.phase === "repair") {
     if (preload.nextUserIndex >= preload.userIds.length) {

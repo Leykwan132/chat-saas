@@ -1737,7 +1737,7 @@ export default defineSchema({
     windowEndAt: v.number(),
     userIds: v.array(v.id("users")),
     state: v.union(v.literal("pending"), v.literal("ready")),
-    phase: v.union(v.literal("repair"), v.literal("load")),
+    phase: v.union(v.literal("cleanup"), v.literal("repair"), v.literal("load")),
     generation: v.number(),
     nextUserIndex: v.number(),
     revision: v.optional(v.number()),
@@ -1765,6 +1765,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_preloadId", ["preloadId"])
+    .index("by_preloadId_and_generation", ["preloadId", "generation"])
     .index("by_preloadId_and_userId", ["preloadId", "userId"])
     .index("by_teamId", ["teamId"]),
   whatsappBroadcastSchedules: defineTable({

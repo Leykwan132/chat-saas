@@ -34,7 +34,7 @@ async function setupMaxRoster(t: CalendarTest) {
       createdAt: now, updatedAt: now,
     });
     let lastWorkosUserId = "";
-    for (let index = 0; index < 96; index += 1) {
+    for (let index = 0; index < 100; index += 1) {
       const workosUserId = `budget-user-${index}`;
       const userId = await ctx.db.insert("users", {
         workosUserId, email: `${workosUserId}@example.com`, createdAt: now, updatedAt: now,
@@ -51,7 +51,7 @@ async function setupMaxRoster(t: CalendarTest) {
         timeZone: "UTC", state: "connected", dirtyGeneration: 0, lastSuccessfulSyncAt: now,
         createdAt: now, updatedAt: now,
       });
-      const isLast = index === 95;
+      const isLast = index === 99;
       const eventStartAt = isLast ? now + 2 * day : now - 20 * day;
       const eventEndAt = isLast ? eventStartAt + day : now - 19 * day;
       const eventId = await ctx.db.insert("calendarEvents", {
@@ -71,11 +71,85 @@ async function setupMaxRoster(t: CalendarTest) {
       assignmentStrategy: "specific_user", specificWorkosUserId: lastWorkosUserId,
       createdAt: now, updatedAt: now,
     });
-    return { now, serviceId, teamId };
+    return { agentId, now, serviceId, teamId };
   });
 }
 
-test("max roster availability preloads within global transaction budgets and finds a late conflict", async () => {
+function availabilityCheck(t: CalendarTest, fixture: Awaited<ReturnType<typeof setupMaxRoster>>) {
+  return t.run(async (ctx) => resolveAvailableInterval(ctx, {
+    service: (await ctx.db.get(fixture.serviceId)) as Doc<"appointmentServices">,
+    teamId: fixture.teamId,
+    startAt: fixture.now + day,
+    endAt: fixture.now + 31 * day,
+  }));
+}
+
+async function replaceLastRosterUser(
+  t: CalendarTest,
+  fixture: Awaited<ReturnType<typeof setupMaxRoster>>,
+  replacedWorkosUserId: string,
+  suffix: string,
+) {
+  return await t.run(async (ctx) => {
+    const schedules = await ctx.db
+      .query("userSchedules")
+      .withIndex("by_agentId", (q) => q.eq("agentId", fixture.agentId))
+      .take(100);
+    const replaced = schedules.find((schedule) => schedule.workosUserId === replacedWorkosUserId);
+    if (replaced === undefined) throw new Error("Replacement schedule not found");
+    await ctx.db.delete(replaced._id);
+    const workosUserId = `replacement-${suffix}`;
+    const userId = await ctx.db.insert("users", {
+      workosUserId, email: `${workosUserId}@example.com`,
+      createdAt: fixture.now, updatedAt: fixture.now,
+    });
+    await ctx.db.insert("teamMemberships", {
+      teamId: fixture.teamId, userId, role: "member", createdAt: fixture.now,
+    });
+    await ctx.db.insert("userSchedules", {
+      agentId: fixture.agentId, workosUserId, mode: "manual", manualStatus: "available",
+      timezone: "UTC", enabled: true, createdAt: fixture.now + 100, updatedAt: fixture.now,
+    });
+    await ctx.db.insert("googleCalendarConnections", {
+      userId, workosUserId, provider: "google_calendar", primaryCalendarId: "primary",
+      timeZone: "UTC", state: "connected", dirtyGeneration: 0,
+      lastSuccessfulSyncAt: fixture.now, createdAt: fixture.now, updatedAt: fixture.now,
+    });
+    const startAt = fixture.now + 2 * day;
+    const eventId = await ctx.db.insert("calendarEvents", {
+      teamId: fixture.teamId, title: `Replacement ${suffix}`, startAt, endAt: startAt + day,
+      timeZone: "UTC", status: "confirmed", createdBy: userId,
+      createdAt: fixture.now, updatedAt: fixture.now,
+    });
+    await ctx.db.insert("calendarEventParticipants", {
+      eventId, teamId: fixture.teamId, participantType: "teamUser", role: "assigned", userId,
+      email: `${workosUserId}@example.com`, eventStartAt: startAt,
+      createdAt: fixture.now, updatedAt: fixture.now,
+    });
+    await ctx.db.patch(fixture.serviceId, {
+      specificWorkosUserId: workosUserId,
+      updatedAt: fixture.now,
+    });
+    return { userId, workosUserId };
+  });
+}
+
+async function preload(t: CalendarTest) {
+  return await t.run((ctx) => ctx.db
+    .query("calendarAvailabilityPreloads")
+    .withIndex("by_teamId_and_agentId_and_windowStartAt_and_windowEndAt")
+    .unique());
+}
+
+async function finishAvailabilityWorkers(t: CalendarTest) {
+  const finish = t.finishAllScheduledFunctions as unknown as (
+    advanceTimers: () => void,
+    maxIterations: number,
+  ) => Promise<void>;
+  await finish(vi.runAllTimers, 500);
+}
+
+test("exact 100-user availability preloads within global transaction budgets", async () => {
   vi.useFakeTimers();
   const t = convexTest({
     schema,
@@ -87,18 +161,8 @@ test("max roster availability preloads within global transaction budgets and fin
     },
   });
   const fixture = await setupMaxRoster(t);
-  const checkAvailability = async () => await t.run(async (ctx) => resolveAvailableInterval(ctx, {
-    service: (await ctx.db.get(fixture.serviceId)) as Doc<"appointmentServices">,
-    teamId: fixture.teamId,
-    startAt: fixture.now + day,
-    endAt: fixture.now + 31 * day,
-  }));
-
-  expect(await checkAvailability()).toBeNull();
-  const initial = await t.run((ctx) => ctx.db
-    .query("calendarAvailabilityPreloads")
-    .withIndex("by_teamId_and_agentId_and_windowStartAt_and_windowEndAt")
-    .unique());
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+  const initial = await preload(t);
   expect(initial).toMatchObject({ state: "pending", phase: "repair", nextUserIndex: 0 });
   await t.mutation(internal.appointmentBooking.availability.continueCalendarAvailabilityPreload, {
     preloadId: initial!._id,
@@ -112,11 +176,75 @@ test("max roster availability preloads within global transaction budgets and fin
     state: "pending",
     nextUserIndex: 1,
   });
-  await t.finishAllScheduledFunctions(vi.runAllTimers);
+  await finishAvailabilityWorkers(t);
   expect(await t.run((ctx) => ctx.db.get(initial!._id))).toMatchObject({
     state: "ready",
     phase: "load",
-    nextUserIndex: 96,
+    nextUserIndex: 100,
   });
-  expect(await checkAvailability()).toBeNull();
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+});
+
+test("roster replacements clean stale generations and ignore obsolete workers", async () => {
+  vi.useFakeTimers();
+  const t = convexTest({
+    schema,
+    modules,
+    transactionLimits: { databaseQueries: 700, documentsWritten: 650, functionsScheduled: 1 },
+  });
+  const fixture = await setupMaxRoster(t);
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+  await finishAvailabilityWorkers(t);
+  const initial = await preload(t);
+  expect(initial).toMatchObject({ state: "ready", generation: 1, nextUserIndex: 100 });
+
+  const replacementA = await replaceLastRosterUser(t, fixture, "budget-user-99", "a");
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+  const generationTwo = await preload(t);
+  expect(generationTwo).toMatchObject({ state: "pending", generation: 2, nextUserIndex: 0 });
+
+  const replacementB = await replaceLastRosterUser(t, fixture, replacementA.workosUserId, "b");
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+  const generationThree = await preload(t);
+  expect(generationThree).toMatchObject({
+    state: "pending",
+    phase: "cleanup",
+    generation: 3,
+    nextUserIndex: 0,
+  });
+  const currentSnapshotId = await t.run((ctx) => ctx.db.insert("calendarAvailabilityPreloadUsers", {
+    preloadId: generationThree!._id,
+    teamId: fixture.teamId,
+    userId: replacementB.userId,
+    generation: 3,
+    safe: true,
+    intervals: [],
+    updatedAt: fixture.now,
+  }));
+  await t.mutation(internal.appointmentBooking.availability.continueCalendarAvailabilityPreload, {
+    preloadId: generationTwo!._id,
+    generation: generationTwo!.generation,
+  });
+  expect(await preload(t)).toMatchObject({ generation: 3, nextUserIndex: 0 });
+  expect(await t.run((ctx) => ctx.db.get(currentSnapshotId))).not.toBeNull();
+  await t.mutation(internal.appointmentBooking.availability.continueCalendarAvailabilityPreload, {
+    preloadId: generationThree!._id,
+    generation: generationThree!.generation,
+  });
+  expect(await preload(t)).toMatchObject({ generation: 3, phase: "cleanup" });
+  expect(await t.run((ctx) => ctx.db.get(currentSnapshotId))).not.toBeNull();
+
+  await finishAvailabilityWorkers(t);
+  expect(await availabilityCheck(t, fixture)).toBeNull();
+  const ready = await preload(t);
+  expect(ready).toMatchObject({ state: "ready", generation: 3, nextUserIndex: 100 });
+  const snapshots = await t.run((ctx) => ctx.db
+    .query("calendarAvailabilityPreloadUsers")
+    .withIndex("by_preloadId", (q) => q.eq("preloadId", ready!._id))
+    .take(101));
+  expect(snapshots).toHaveLength(100);
+  expect(snapshots.every((snapshot) => snapshot.generation === 3)).toBe(true);
+  expect(snapshots.some((snapshot) =>
+    snapshot.intervals.some((interval) => interval.startAt === fixture.now + 2 * day),
+  )).toBe(true);
 });
