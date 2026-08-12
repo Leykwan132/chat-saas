@@ -21,7 +21,10 @@ export type GoogleCalendarEvent = {
   recurringEventId?: string;
   originalStartTime?: GoogleCalendarEventDateTime;
   organizer?: { self?: boolean };
-  extendedProperties?: { private?: { kilobotOperationKey?: string } };
+  extendedProperties?: { private?: {
+    kilobotOperationKey?: string;
+    kilobotOperationFingerprint?: string;
+  } };
   start?: GoogleCalendarEventDateTime;
   end?: GoogleCalendarEventDateTime;
 };

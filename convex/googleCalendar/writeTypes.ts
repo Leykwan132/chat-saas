@@ -60,6 +60,11 @@ export type GoogleCalendarAttempt =
   | { kind: "success"; externalEventId: string }
   | { kind: "running" }
   | {
+      kind: "recovering";
+      attemptGeneration: number;
+      intendedEtag?: string;
+    }
+  | {
       kind: "ready";
       attemptGeneration: number;
       intendedEtag?: string;
@@ -68,6 +73,11 @@ export type GoogleCalendarAttempt =
 export type GoogleCalendarFinalization =
   | { kind: "success"; externalEventId: string }
   | { kind: "conflict" }
+  | { kind: "stale" };
+
+export type GoogleCalendarAttemptLeaseResult =
+  | { kind: "ready" }
+  | { kind: "success"; externalEventId: string }
   | { kind: "stale" };
 
 export type GoogleCalendarWriteDependencies = {
@@ -84,6 +94,17 @@ export type GoogleCalendarWriteDependencies = {
     payloadFingerprint: string;
     now: number;
   }): Promise<GoogleCalendarAttempt>;
+  renewAttemptLease(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
+    phase: "preparing" | "provider_mutation_started";
+    now: number;
+  }): Promise<GoogleCalendarAttemptLeaseResult>;
+  deferMutationRecovery(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
+    now: number;
+  }): Promise<null>;
   finalizeEvent(args: {
     operationId: Id<"googleCalendarWriteOperations">;
     attemptGeneration: number;
@@ -110,5 +131,6 @@ export type GoogleCalendarWriteDependencies = {
   }): Promise<GoogleCalendarFinalization | { kind: "recorded" }>;
   getCredential(workosUserId: string): Promise<GoogleCalendarCredentialResult>;
   refresh(args: { connectionId: Id<"googleCalendarConnections"> }): Promise<unknown>;
+  clock(): number;
   fetchImplementation: typeof fetch;
 };

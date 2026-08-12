@@ -24,6 +24,11 @@ const attemptValidator = v.union(
   v.object({ kind: v.literal("success"), externalEventId: v.string() }),
   v.object({ kind: v.literal("running") }),
   v.object({
+    kind: v.literal("recovering"),
+    attemptGeneration: v.number(),
+    intendedEtag: v.optional(v.string()),
+  }),
+  v.object({
     kind: v.literal("ready"),
     attemptGeneration: v.number(),
     intendedEtag: v.optional(v.string()),
@@ -129,7 +134,10 @@ export const prepare = internalMutation({
     )) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
-    if (existing !== null && existing.payloadBindingVersion !== 1) {
+    if (
+      existing !== null && existing.payloadBindingVersion !== 2 &&
+      existing.state !== "succeeded"
+    ) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
     let precondition: string | null;
@@ -148,7 +156,7 @@ export const prepare = internalMutation({
       action: args.action,
       state: "pending",
       externalEventId: expectedExternalId,
-      payloadBindingVersion: 1,
+      payloadBindingVersion: 2,
       payloadPreconditionEtag: precondition,
       intendedEtag: event.externalEtag ?? null,
       attemptGeneration: 0,
@@ -177,9 +185,15 @@ export const beginAttempt = internalMutation({
   handler: async (ctx, args) => {
     const operation = await ctx.db.get(args.operationId);
     if (
-      operation === null || operation.payloadBindingVersion !== 1 ||
-      operation.externalEventId === undefined || operation.calendarEventId === undefined
+      operation === null || operation.externalEventId === undefined ||
+      operation.calendarEventId === undefined
     ) return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+    if (operation.state === "succeeded" && operation.payloadBindingVersion !== 2) {
+      return { kind: "success" as const, externalEventId: operation.externalEventId };
+    }
+    if (operation.payloadBindingVersion !== 2) {
+      return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+    }
     if (
       operation.payloadFingerprint !== undefined &&
       operation.payloadFingerprint !== args.payloadFingerprint
@@ -188,9 +202,22 @@ export const beginAttempt = internalMutation({
       return { kind: "success" as const, externalEventId: operation.externalEventId };
     }
     if (
-      operation.action === "update" && operation.state === "running" &&
-      operation.attemptLeaseExpiresAt !== undefined &&
-      args.now < operation.attemptLeaseExpiresAt
+      operation.attemptPhase === "provider_mutation_started" &&
+      operation.attemptGeneration !== undefined
+    ) {
+      if (
+        operation.attemptLeaseExpiresAt !== undefined &&
+        args.now < operation.attemptLeaseExpiresAt
+      ) return { kind: "running" as const };
+      return {
+        kind: "recovering" as const,
+        attemptGeneration: operation.attemptGeneration,
+        intendedEtag: operation.intendedEtag ?? undefined,
+      };
+    }
+    if (
+      operation.attemptPhase === "preparing" && operation.state === "running" &&
+      operation.attemptLeaseExpiresAt !== undefined && args.now < operation.attemptLeaseExpiresAt
     ) return { kind: "running" as const };
     const connection = await ctx.db.get(operation.connectionId);
     const event = await ctx.db.get(operation.calendarEventId);
@@ -221,7 +248,9 @@ export const beginAttempt = internalMutation({
       attemptGeneration,
       attemptCount: operation.attemptCount + 1,
       state: "running",
-      attemptLeaseExpiresAt: operation.action === "update" ? args.now + 60_000 : undefined,
+      attemptLeaseExpiresAt: args.now + 60_000,
+      attemptPhase: "preparing",
+      providerMutationStartedAt: undefined,
       errorKind: undefined,
       updatedAt: args.now,
     });

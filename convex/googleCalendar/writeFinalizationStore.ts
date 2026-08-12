@@ -77,6 +77,11 @@ function currentAttempt(
     return { kind: "success" as const, externalEventId: operation.externalEventId };
   }
   if (
+    operation.attemptGeneration === attemptGeneration &&
+    operation.attemptPhase === "provider_mutation_started" &&
+    operation.state !== "conflict"
+  ) return null;
+  if (
     operation.state !== "running" ||
     operation.attemptGeneration !== attemptGeneration
   ) return { kind: "stale" as const };
@@ -108,6 +113,8 @@ export const finalizeEvent = internalMutation({
           errorKind: "conflict",
           providerEtag: args.event.etag,
           attemptLeaseExpiresAt: undefined,
+          attemptPhase: undefined,
+          providerMutationStartedAt: undefined,
           updatedAt: args.now,
         });
         return { kind: "conflict" as const };
@@ -129,6 +136,8 @@ export const finalizeEvent = internalMutation({
       errorKind: undefined,
       providerEtag: args.event.etag,
       attemptLeaseExpiresAt: undefined,
+      attemptPhase: undefined,
+      providerMutationStartedAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
@@ -163,6 +172,8 @@ export const establishDeletePrecondition = internalMutation({
         errorKind: "conflict",
         providerEtag: args.providerEtag,
         attemptLeaseExpiresAt: undefined,
+        attemptPhase: undefined,
+        providerMutationStartedAt: undefined,
         updatedAt: args.now,
       });
       return { kind: "conflict" as const };
@@ -223,6 +234,8 @@ export const finalizeDelete = internalMutation({
       state: "succeeded",
       errorKind: undefined,
       attemptLeaseExpiresAt: undefined,
+      attemptPhase: undefined,
+      providerMutationStartedAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
@@ -245,10 +258,19 @@ export const recordOutcome = internalMutation({
     if (terminal !== null) return terminal;
     const connection = await ctx.db.get(operation.connectionId);
     if (connection === null) throw new Error("Google Calendar connection not found");
+    const providerMutationAmbiguous =
+      operation.attemptPhase === "provider_mutation_started" &&
+      (args.kind === "retryable" || args.kind === "failed");
     await ctx.db.patch(operation._id, {
-      state: args.kind === "conflict" ? "conflict" : args.kind === "retryable" ? "pending" : "failed",
+      state: providerMutationAmbiguous
+        ? "pending"
+        : args.kind === "conflict" ? "conflict" : args.kind === "retryable" ? "pending" : "failed",
       errorKind: args.kind,
       attemptLeaseExpiresAt: undefined,
+      attemptPhase: providerMutationAmbiguous ? operation.attemptPhase : undefined,
+      providerMutationStartedAt: providerMutationAmbiguous
+        ? operation.providerMutationStartedAt
+        : undefined,
       updatedAt: args.now,
     });
     if (args.kind === "needs_reauthorization" || args.kind === "forbidden") {
@@ -259,7 +281,7 @@ export const recordOutcome = internalMutation({
       await ctx.db.patch(connection._id, {
         state: "disconnected", lastErrorKind: args.kind, updatedAt: args.now,
       });
-    } else if (args.kind === "retryable" || args.kind === "failed") {
+    } else if (!providerMutationAmbiguous && (args.kind === "retryable" || args.kind === "failed")) {
       await ctx.db.patch(connection._id, { lastErrorKind: args.kind, updatedAt: args.now });
     }
     return { kind: "recorded" as const };

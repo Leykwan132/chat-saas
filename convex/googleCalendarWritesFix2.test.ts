@@ -3,11 +3,14 @@ import { convexTest, type TestConvex } from "convex-test";
 import type { FunctionReference } from "convex/server";
 import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import type { GoogleCalendarEvent } from "./googleCalendar/eventMapping";
 import { runGoogleCalendarSync, type GoogleCalendarSyncDependencies } from "./googleCalendar/syncWorker";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
-import { runCreateGoogleCalendarEvent, runUpdateGoogleCalendarEvent } from "./googleCalendar/writeActions";
+import {
+  deriveGoogleCalendarEventId,
+  runCreateGoogleCalendarEvent,
+  runUpdateGoogleCalendarEvent,
+} from "./googleCalendar/writeActions";
 import { fingerprintGoogleCalendarWritePayload } from "./googleCalendar/writeFingerprint";
 import type { GoogleCalendarWriteDependencies, GoogleCalendarWriteInput } from "./googleCalendar/writeTypes";
 import schema from "./schema";
@@ -24,7 +27,10 @@ const googleInternal = internal as unknown as {
       beginSyncRun: MutationRef; failSyncRun: MutationRef; finalizeSyncRun: MutationRef;
       getConnectionForSync: QueryRef; renewSyncRunLease: MutationRef;
     };
-    writeStore: { prepare: MutationRef; beginAttempt: MutationRef };
+    writeStore: {
+      prepare: MutationRef; beginAttempt: MutationRef;
+    };
+    writeAttemptLeaseStore: { renewAttemptLease: MutationRef; deferMutationRecovery: MutationRef };
     writeFinalizationStore: {
       finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
       finalizeDelete: MutationRef; recordOutcome: MutationRef;
@@ -38,14 +44,22 @@ const eventInput: GoogleCalendarWriteInput = {
   end: { dateTime: "2026-08-15T10:00:00+08:00", timeZone: "Asia/Kuala_Lumpur" },
 };
 
-function providerEvent(id: string, etag: string, operationKey?: string): GoogleCalendarEvent {
+function providerEvent(
+  id: string,
+  etag: string,
+  operationKey?: string,
+  payloadFingerprint?: string,
+): GoogleCalendarEvent {
   return {
     id, status: "confirmed", summary: eventInput.summary, etag,
     updated: "2026-08-13T08:00:00.000Z", transparency: "opaque",
     organizer: { self: true }, start: eventInput.start, end: eventInput.end,
     extendedProperties: operationKey === undefined
       ? undefined
-      : { private: { kilobotOperationKey: operationKey } },
+      : { private: {
+          kilobotOperationKey: operationKey,
+          kilobotOperationFingerprint: payloadFingerprint,
+        } },
   };
 }
 
@@ -67,18 +81,26 @@ async function setupEvent(external = false) {
   return { t, connectionId, calendarEventId };
 }
 
-function dependencies(t: CalendarTest, fetchImplementation: typeof fetch): GoogleCalendarWriteDependencies {
+function dependencies(
+  t: CalendarTest,
+  fetchImplementation: typeof fetch,
+  clock: () => number = () => now,
+): GoogleCalendarWriteDependencies {
   const store = googleInternal.googleCalendar.writeStore;
+  const leaseStore = googleInternal.googleCalendar.writeAttemptLeaseStore;
   const finalization = googleInternal.googleCalendar.writeFinalizationStore;
   return {
     prepare: (args) => t.mutation(store.prepare, args) as never,
     beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
+    renewAttemptLease: (args) => t.mutation(leaseStore.renewAttemptLease, args) as never,
+    deferMutationRecovery: (args) => t.mutation(leaseStore.deferMutationRecovery, args) as never,
     finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
     establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
     recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
+    clock,
     fetchImplementation,
   };
 }
@@ -139,70 +161,107 @@ test("an identical create retry succeeds after sync reconciles interrupted final
   expect(retryProviderCalls).toBe(0);
 });
 
-async function fingerprint(event: GoogleCalendarWriteInput) {
-  return await fingerprintGoogleCalendarWritePayload({
-    action: "update",
-    connectionId: "connection" as Id<"googleCalendarConnections">,
-    calendarEventId: "event" as Id<"calendarEvents">,
-    externalEventId: "external",
-    payloadPreconditionEtag: '"etag"',
-    event,
-  });
-}
-
-test("canonical payload preserves every optional Google PATCH field presence", async () => {
-  const cases: Array<[string, GoogleCalendarWriteInput]> = [
-    ["description", { ...eventInput, description: "" }],
-    ["location", { ...eventInput, location: "" }],
-    ["transparency", { ...eventInput, transparency: "opaque" }],
-    ["attendees", { ...eventInput, attendees: [] }],
-    ["start date", { ...eventInput, start: { ...eventInput.start, date: "" } }],
-    ["start dateTime", { ...eventInput, start: { timeZone: eventInput.start.timeZone } }],
-    ["start timeZone", { ...eventInput, start: { dateTime: eventInput.start.dateTime } }],
-    ["end date", { ...eventInput, end: { ...eventInput.end, date: "" } }],
-    ["end dateTime", { ...eventInput, end: { timeZone: eventInput.end.timeZone } }],
-    ["end timeZone", { ...eventInput, end: { dateTime: eventInput.end.dateTime } }],
-  ];
-  const baseline = await fingerprint(eventInput);
-  for (const [field, changed] of cases) {
-    expect(await fingerprint(changed), field).not.toBe(baseline);
-  }
-  expect(await fingerprint({ ...eventInput, attendees: [{ email: "a@example.com" }] }))
-    .not.toBe(await fingerprint({
-      ...eventInput, attendees: [{ email: "a@example.com", displayName: "" }],
-    }));
-});
-
-test("canonical payload treats attendee ordering as equivalent", async () => {
-  const first = { email: "z@example.com", displayName: "Zulu" };
-  const second = { email: "a@example.com", displayName: "Alpha" };
-  expect(await fingerprint({ ...eventInput, attendees: [first, second] }))
-    .toBe(await fingerprint({ ...eventInput, attendees: [second, first] }));
-});
-
-test("an overlapping identical update issues exactly one provider PATCH", async () => {
+test("an update retry after the lease expires cannot overlap a held provider PATCH", async () => {
   const { t, connectionId, calendarEventId } = await setupEvent(true);
   let releasePatch: (() => void) | undefined;
   let signalPatch: (() => void) | undefined;
   const patchStarted = new Promise<void>((resolve) => { signalPatch = resolve; });
   const patchRelease = new Promise<void>((resolve) => { releasePatch = resolve; });
   let patchCalls = 0;
+  let currentTime = now;
   const write = dependencies(t, async (_request, init) => {
     if (init?.method === "GET") return Response.json(providerEvent("existing_event", '"etag_n"'));
     patchCalls += 1;
-    signalPatch!();
-    await patchRelease;
+    if (patchCalls === 1) {
+      signalPatch!();
+      await patchRelease;
+    }
     return Response.json(providerEvent("existing_event", '"etag_n1"'));
-  });
+  }, () => currentTime);
   const args = { connectionId, calendarEventId, operationKey: "fix2:update:overlap", event: eventInput, now };
   const first = runUpdateGoogleCalendarEvent(args, write);
   await patchStarted;
-  const retry = await runUpdateGoogleCalendarEvent({ ...args, now: now + 1 }, write);
+  currentTime = now + 60_001;
+  const retry = await runUpdateGoogleCalendarEvent({ ...args, now: now + 60_001 }, write);
   expect(retry).toMatchObject({ kind: "retryable" });
   expect(patchCalls).toBe(1);
   releasePatch!();
   expect(await first).toMatchObject({ kind: "success" });
   expect(await t.run((ctx) => ctx.db.get(calendarEventId))).toMatchObject({ externalEtag: '"etag_n1"' });
+  expect(await t.run((ctx) => ctx.db.query("googleCalendarWriteOperations")
+    .withIndex("by_operationKey", (q) => q.eq("operationKey", args.operationKey)).unique()))
+    .toMatchObject({ attemptCount: 1, attemptGeneration: 1, state: "succeeded" });
+});
+
+test("retry recovers a provider-applied update without issuing another PATCH", async () => {
+  const { t, connectionId, calendarEventId } = await setupEvent(true);
+  const operationKey = "fix3:update:recovery";
+  let current = providerEvent("existing_event", '"etag_n"');
+  let patchCalls = 0;
+  const firstWrite = dependencies(t, async (_request, init) => {
+    if (init?.method === "GET") return Response.json(current);
+    patchCalls += 1;
+    const body = JSON.parse(String(init?.body)) as {
+      extendedProperties: { private: { kilobotOperationFingerprint: string } };
+    };
+    current = providerEvent(
+      "existing_event", '"etag_n1"', operationKey,
+      body.extendedProperties.private.kilobotOperationFingerprint,
+    );
+    return Response.json(current);
+  });
+  firstWrite.finalizeEvent = async () => { throw new Error("interrupted"); };
+  const args = { connectionId, calendarEventId, operationKey, event: eventInput, now };
+  expect(await runUpdateGoogleCalendarEvent(args, firstWrite)).toMatchObject({ kind: "retryable" });
+  expect(await runUpdateGoogleCalendarEvent(
+    { ...args, now: now + 60_001 },
+    dependencies(t, async () => Response.json(current), () => now + 60_001),
+  )).toMatchObject({ kind: "success" });
+  expect(patchCalls).toBe(1);
+  expect(await t.run((ctx) => ctx.db.get(calendarEventId))).toMatchObject({ externalEtag: '"etag_n1"' });
+});
+
+test("version 1 terminal success remains retryable as its stored result", async () => {
+  const { t, connectionId, calendarEventId } = await setupEvent();
+  const operationKey = "fix3:v1:succeeded";
+  const externalEventId = await deriveGoogleCalendarEventId(operationKey);
+  await t.run(async (ctx) => {
+    await ctx.db.patch(calendarEventId, { externalEventId, externalEtag: '"created"' });
+    await ctx.db.insert("googleCalendarWriteOperations", {
+      connectionId, calendarEventId, operationKey, action: "create", state: "succeeded",
+      externalEventId, payloadBindingVersion: 1, payloadFingerprint: "v1-bound",
+      payloadPreconditionEtag: null, intendedEtag: null, attemptCount: 1,
+      createdAt: now, updatedAt: now,
+    });
+  });
+  let providerCalls = 0;
+  expect(await runCreateGoogleCalendarEvent(
+    { connectionId, calendarEventId, operationKey, event: eventInput, now },
+    dependencies(t, async () => { providerCalls += 1; return Response.json({}); }),
+  )).toMatchObject({ kind: "success", externalEventId });
+  expect(providerCalls).toBe(0);
+});
+
+test("version 1 nonterminal operations fail before provider access", async () => {
+  const { t, connectionId, calendarEventId } = await setupEvent();
+  const operationKey = "fix3:v1:pending";
+  const externalEventId = await deriveGoogleCalendarEventId(operationKey);
+  const payloadFingerprint = await fingerprintGoogleCalendarWritePayload({
+    action: "create", connectionId, calendarEventId, externalEventId,
+    payloadPreconditionEtag: null, event: eventInput,
+  });
+  await t.run((ctx) => ctx.db.insert("googleCalendarWriteOperations", {
+    connectionId, calendarEventId, operationKey, action: "create", state: "pending",
+    externalEventId, payloadBindingVersion: 1, payloadFingerprint,
+    payloadPreconditionEtag: null, intendedEtag: null, attemptCount: 0,
+    createdAt: now, updatedAt: now,
+  }));
+  let providerCalls = 0;
+  expect(await runCreateGoogleCalendarEvent(
+    { connectionId, calendarEventId, operationKey, event: eventInput, now },
+    dependencies(t, async () => { providerCalls += 1; return Response.json({}); }),
+  )).toMatchObject({ kind: "invalid_request" });
+  expect(providerCalls).toBe(0);
 });
 
 test("an expired update attempt lease can be taken over", async () => {

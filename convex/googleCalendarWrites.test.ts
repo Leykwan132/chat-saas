@@ -30,6 +30,7 @@ const googleInternal = internal as unknown as {
     writeStore: {
       prepare: MutationRef; beginAttempt: MutationRef;
     };
+    writeAttemptLeaseStore: { renewAttemptLease: MutationRef; deferMutationRecovery: MutationRef };
     writeFinalizationStore: {
       finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
       finalizeDelete: MutationRef; recordOutcome: MutationRef;
@@ -70,16 +71,20 @@ async function setupLocalEvent(options?: { external?: boolean }) {
 
 function writeDependencies(t: CalendarTest, fetchImplementation: typeof fetch): GoogleCalendarWriteDependencies {
   const store = googleInternal.googleCalendar.writeStore;
+  const leaseStore = googleInternal.googleCalendar.writeAttemptLeaseStore;
   const finalization = googleInternal.googleCalendar.writeFinalizationStore;
   return {
     prepare: (args) => t.mutation(store.prepare, args) as never,
     beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
+    renewAttemptLease: (args) => t.mutation(leaseStore.renewAttemptLease, args) as never,
+    deferMutationRecovery: (args) => t.mutation(leaseStore.deferMutationRecovery, args) as never,
     finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
     establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
     recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
+    clock: () => now,
     fetchImplementation,
   };
 }

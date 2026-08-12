@@ -11,8 +11,8 @@ import { getGoogleCalendarCredential } from "./workosToken";
 import {
   runCreateGoogleCalendarEvent,
   runDeleteGoogleCalendarEvent,
-  runUpdateGoogleCalendarEvent,
 } from "./writeExecution";
+import { runUpdateGoogleCalendarEvent } from "./writeUpdateExecution";
 import {
   googleCalendarWriteInputValidator,
   type GoogleCalendarWriteDependencies,
@@ -22,8 +22,8 @@ export { deriveGoogleCalendarEventId } from "./writeFingerprint";
 export {
   runCreateGoogleCalendarEvent,
   runDeleteGoogleCalendarEvent,
-  runUpdateGoogleCalendarEvent,
 } from "./writeExecution";
+export { runUpdateGoogleCalendarEvent } from "./writeUpdateExecution";
 export type { GoogleCalendarWriteDependencies } from "./writeTypes";
 
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
@@ -34,6 +34,10 @@ const googleCalendarInternal = (internal as unknown as {
     writeStore: {
       prepare: StoreMutation<Parameters<GoogleCalendarWriteDependencies["prepare"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["prepare"]>>>;
       beginAttempt: StoreMutation<Parameters<GoogleCalendarWriteDependencies["beginAttempt"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["beginAttempt"]>>>;
+    };
+    writeAttemptLeaseStore: {
+      renewAttemptLease: StoreMutation<Parameters<GoogleCalendarWriteDependencies["renewAttemptLease"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["renewAttemptLease"]>>>;
+      deferMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["deferMutationRecovery"]>[0], null>;
     };
     writeFinalizationStore: {
       finalizeEvent: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finalizeEvent"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finalizeEvent"]>>>;
@@ -51,6 +55,8 @@ function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
   return {
     prepare: (args) => ctx.runMutation(googleCalendarInternal.writeStore.prepare, args),
     beginAttempt: (args) => ctx.runMutation(googleCalendarInternal.writeStore.beginAttempt, args),
+    renewAttemptLease: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.renewAttemptLease, args),
+    deferMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.deferMutationRecovery, args),
     finalizeEvent: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.finalizeEvent, args),
     establishDeletePrecondition: (args) => ctx.runMutation(
       googleCalendarInternal.writeFinalizationStore.establishDeletePrecondition, args,
@@ -59,6 +65,7 @@ function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
     recordOutcome: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.recordOutcome, args),
     getCredential: getGoogleCalendarCredential,
     refresh: (args) => ctx.runAction(googleCalendarInternal.syncWorker.run, args),
+    clock: Date.now,
     fetchImplementation: fetch,
   };
 }

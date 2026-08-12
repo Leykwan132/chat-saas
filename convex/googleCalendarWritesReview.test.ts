@@ -30,6 +30,7 @@ const googleInternal = internal as unknown as {
     writeStore: {
       prepare: MutationRef; beginAttempt: MutationRef;
     };
+    writeAttemptLeaseStore: { renewAttemptLease: MutationRef; deferMutationRecovery: MutationRef };
     writeFinalizationStore: {
       finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
       finalizeDelete: MutationRef; recordOutcome: MutationRef;
@@ -71,16 +72,20 @@ async function setupEvent(external = false) {
 
 function dependencies(t: CalendarTest, fetchImplementation: typeof fetch): GoogleCalendarWriteDependencies {
   const store = googleInternal.googleCalendar.writeStore;
+  const leaseStore = googleInternal.googleCalendar.writeAttemptLeaseStore;
   const finalization = googleInternal.googleCalendar.writeFinalizationStore;
   return {
     prepare: (args) => t.mutation(store.prepare, args) as never,
     beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
+    renewAttemptLease: (args) => t.mutation(leaseStore.renewAttemptLease, args) as never,
+    deferMutationRecovery: (args) => t.mutation(leaseStore.deferMutationRecovery, args) as never,
     finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
     establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
     recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
+    clock: () => now,
     fetchImplementation,
   };
 }
@@ -136,7 +141,7 @@ test("an update operation key cannot be reused for different attendees or title"
   expect(version).toBe(1);
 });
 
-test("a slower provider failure cannot downgrade a concurrent successful attempt", async () => {
+test("a concurrent retry cannot overtake a provider mutation or poison health", async () => {
   const { t, connectionId, calendarEventId } = await setupEvent();
   const operationKey = "concurrent:create";
   let releaseSlow: (() => void) | undefined;
@@ -159,11 +164,11 @@ test("a slower provider failure cannot downgrade a concurrent successful attempt
     }),
   );
   releaseSlow!();
-  expect(await slowResult).toMatchObject({ kind: "success" });
-  expect(fastResult).toMatchObject({ kind: "success" });
+  expect(await slowResult).toMatchObject({ kind: "retryable" });
+  expect(fastResult).toMatchObject({ kind: "retryable" });
   const operation = await t.run((ctx) => ctx.db.query("googleCalendarWriteOperations")
     .withIndex("by_operationKey", (q) => q.eq("operationKey", operationKey)).unique());
-  expect(operation).toMatchObject({ state: "succeeded", attemptCount: 2 });
+  expect(operation).toMatchObject({ state: "pending", attemptCount: 1 });
   expect((await t.run((ctx) => ctx.db.get(connectionId)))?.lastErrorKind).toBeUndefined();
 });
 

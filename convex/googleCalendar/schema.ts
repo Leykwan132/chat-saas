@@ -109,6 +109,11 @@ export const googleCalendarTables = {
     providerEtag: v.optional(v.string()),
     attemptGeneration: v.optional(v.number()),
     attemptLeaseExpiresAt: v.optional(v.number()),
+    attemptPhase: v.optional(v.union(
+      v.literal("preparing"),
+      v.literal("provider_mutation_started"),
+    )),
+    providerMutationStartedAt: v.optional(v.number()),
     errorKind: v.optional(googleCalendarErrorKindValidator),
     attemptCount: v.number(),
     createdAt: v.number(),

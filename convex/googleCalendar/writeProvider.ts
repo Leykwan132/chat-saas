@@ -43,61 +43,55 @@ export async function insertGoogleCalendarEvent(args: {
   credential: Credential;
   externalEventId: string;
   operationKey: string;
+  payloadFingerprint: string;
   event: GoogleCalendarWriteInput;
   fetchImplementation: typeof fetch;
 }) {
-  try {
-    const value = await googleCalendarRequest<unknown>(
-      args.credential,
-      {
-        method: "POST",
-        path: eventPath(),
-        body: {
-          ...args.event,
-          id: args.externalEventId,
-          extendedProperties: {
-            private: { kilobotOperationKey: args.operationKey },
+  const value = await googleCalendarRequest<unknown>(
+    args.credential,
+    {
+      method: "POST",
+      path: eventPath(),
+      body: {
+        ...args.event,
+        id: args.externalEventId,
+        extendedProperties: {
+          private: {
+            kilobotOperationKey: args.operationKey,
+            kilobotOperationFingerprint: args.payloadFingerprint,
           },
         },
       },
-      args.fetchImplementation,
-    );
-    return providerEvent(value, args.externalEventId);
-  } catch (error) {
-    if (!(error instanceof GoogleCalendarProviderError) || error.kind !== "conflict") {
-      throw error;
-    }
-    const existing = await getGoogleCalendarEventForWrite(args);
-    if (
-      existing.extendedProperties?.private?.kilobotOperationKey !== args.operationKey
-    ) {
-      throw new GoogleCalendarProviderError("conflict");
-    }
-    return existing;
-  }
+    },
+    args.fetchImplementation,
+  );
+  return providerEvent(value, args.externalEventId);
 }
 
 export async function patchGoogleCalendarEvent(args: {
   credential: Credential;
   externalEventId: string;
-  knownEtag?: string;
+  knownEtag: string;
+  operationKey: string;
+  payloadFingerprint: string;
   event: GoogleCalendarWriteInput;
   fetchImplementation: typeof fetch;
 }) {
-  const current = await getGoogleCalendarEventForWrite(args);
-  if (
-    args.knownEtag === undefined || current.etag === undefined ||
-    current.etag !== args.knownEtag
-  ) {
-    throw new GoogleCalendarProviderError("conflict");
-  }
   const value = await googleCalendarRequest<unknown>(
     args.credential,
     {
       method: "PATCH",
       path: eventPath(args.externalEventId),
-      body: args.event,
-      ifMatch: current.etag,
+      body: {
+        ...args.event,
+        extendedProperties: {
+          private: {
+            kilobotOperationKey: args.operationKey,
+            kilobotOperationFingerprint: args.payloadFingerprint,
+          },
+        },
+      },
+      ifMatch: args.knownEtag,
     },
     args.fetchImplementation,
   );
