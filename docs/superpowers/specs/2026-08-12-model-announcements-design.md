@@ -9,7 +9,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Render an outlined `What’s new` header button with Lucide’s `Package` icon before the support control.
 - Clicking the button opens one accessible modal. Hovering does not open it.
 - The modal follows the supplied reference: `What’s new in Kilobot` heading, white surface, roomy announcement rows, icons, titles, optional `New` badges, summaries, and right-side disclosure affordances.
-- Render `https://storage.kilobot.app/dashboard/new%20feature%402x.png` as a full-width, wide-cropped banner above the modal heading. Preserve the modal corner radius and use `object-cover` so the 3840×2160 source matches the reference’s shallow hero treatment.
+- Render `https://storage.kilobot.app/dashboard/new%20feature%402x.png` as a full-width, 4:1 cropped banner above the modal heading. Preserve the modal corner radius and use `object-cover`; this makes the banner 40% shorter than the earlier 12:5 treatment.
 - Announcements render in a bounded ScrollArea as a single-open Accordion.
 - Clicking an announcement expands its Accordion item and shows the full detail list inline.
 - Closed announcement rows show a right-pointing chevron. The same chevron rotates down only while its row is expanded; shared Accordion indicators elsewhere remain unchanged.
@@ -63,7 +63,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Dialog content retains a visible title and description.
 - Rating is read-only and accompanied by visible `x.x / 5` text.
 - The Dialog list is bounded and scrollable on small viewports.
-- The banner keeps a wide crop on narrow viewports without forcing the announcement list below the viewport.
+- The banner keeps its 4:1 crop on narrow viewports, caps at `21dvh`, and does not force the announcement list below the viewport.
 
 ## Verification
 

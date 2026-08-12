@@ -25,7 +25,7 @@ export function WhatsNewDialog() {
         <img
           src="https://storage.kilobot.app/dashboard/new%20feature%402x.png"
           alt="Kilobot AI conversations and call analytics preview"
-          className="aspect-[12/5] max-h-[35dvh] w-full object-cover"
+          className="aspect-[4/1] max-h-[21dvh] w-full object-cover"
         />
         <AnnouncementDialogList announcements={ANNOUNCEMENTS} />
       </DialogContent>

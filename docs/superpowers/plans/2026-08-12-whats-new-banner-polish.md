@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- Use `https://storage.kilobot.app/dashboard/new%20feature%402x.png` as a full-width `object-cover` banner with a wide 12:5 crop.
+- Use `https://storage.kilobot.app/dashboard/new%20feature%402x.png` as a full-width `object-cover` banner with a 4:1 crop and `21dvh` cap, reducing the earlier banner height by 40%.
 - Use Lucide’s `Orbit` icon for the first announcement.
 - Store the announcement date as `2026-08-12` and display it as `12 Aug 2026` in a semantic `time` element.
 - Render the New badge with a neutral background and border.

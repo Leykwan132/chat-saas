@@ -77,8 +77,8 @@ test('renders a labeled Package button that opens the announcement panel', () =>
     src: 'https://storage.kilobot.app/dashboard/new%20feature%402x.png',
     alt: 'Kilobot AI conversations and call analytics preview',
   });
-  expect(banner?.props.className).toContain('aspect-[12/5]');
-  expect(banner?.props.className).toContain('max-h-[35dvh]');
+  expect(banner?.props.className).toContain('aspect-[4/1]');
+  expect(banner?.props.className).toContain('max-h-[21dvh]');
   expect(banner?.props.className).toContain('w-full');
   expect(banner?.props.className).toContain('object-cover');
 });
