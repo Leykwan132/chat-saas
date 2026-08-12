@@ -4,6 +4,10 @@ import { getZonedDayAndMinutes } from "../leadRouting/eligibility";
 import { getUserByWorkosId } from "../teamHelpers";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
+import {
+  calendarEventBlocksAvailability,
+  hasHealthyGoogleCalendarConnection,
+} from "../googleCalendar/availability";
 
 async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<RosterEntry[]> {
   const schedules = await ctx.db
@@ -76,7 +80,7 @@ async function hasCalendarConflict(
     if (
       event !== null &&
       event._id !== args.excludeEventId &&
-      event.status !== "cancelled" &&
+      calendarEventBlocksAvailability(event) &&
       overlaps(args.startAt, args.endAt, event.startAt, event.endAt)
     ) {
       return true;
@@ -96,6 +100,7 @@ async function entryAvailableForSlot(
   if (entry.user === null) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
+  if (!(await hasHealthyGoogleCalendarConnection(ctx, entry.user._id))) return false;
   return !(await hasCalendarConflict(ctx, {
     teamId,
     userId: entry.user._id,

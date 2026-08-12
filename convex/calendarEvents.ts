@@ -17,6 +17,12 @@ import {
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
 import { customerSearchText } from "./customerSearch";
 import { notifyAppointmentEvent } from "./telegramNotifications/events";
+import {
+  canMutateCalendarEvent,
+  canViewGoogleEventDetails,
+  loadCalendarRangeProjection,
+  projectCalendarEvent,
+} from "./googleCalendar/calendarProjection";
 
 const eventStatusValidator = v.union(
   v.literal("confirmed"),
@@ -221,21 +227,6 @@ async function deleteParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents"
   }
 }
 
-async function loadEventWithParticipants(
-  ctx: QueryCtx,
-  event: Doc<"calendarEvents">,
-) {
-  const participants = await ctx.db
-    .query("calendarEventParticipants")
-    .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
-    .take(50);
-
-  return {
-    ...event,
-    participants,
-  };
-}
-
 function formatEventDateTime(event: Doc<"calendarEvents">) {
   if (event.allDay) {
     return {
@@ -254,6 +245,22 @@ export const getAppointmentDetails = query({
     const event = await ctx.db.get(args.eventId);
     if (event === null || event.teamId !== auth.activeTeamId) {
       return null;
+    }
+
+    if (!canViewGoogleEventDetails(event, auth.userDbId)) {
+      const { date, timeRange } = formatEventDateTime(event);
+      return {
+        eventId: event._id,
+        title: "Busy",
+        status: event.status,
+        isAppointmentBooking: false,
+        serviceName: "Busy",
+        serviceFields: [],
+        collectedFields: {},
+        date,
+        timeRange,
+        attendeeNames: [],
+      };
     }
 
     const participants = await ctx.db
@@ -307,70 +314,11 @@ export const listForRange = query({
       throw new Error("Invalid calendar range");
     }
 
-    let eventIds: Set<Id<"calendarEvents">> | null = null;
-
-    if (args.assignedUserId !== undefined) {
-      const rows = await ctx.db
-        .query("calendarEventParticipants")
-        .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) =>
-          q
-            .eq("teamId", auth.activeTeamId)
-            .eq("role", "assigned")
-            .eq("userId", args.assignedUserId)
-            .gte("eventStartAt", args.startAt)
-            .lt("eventStartAt", args.endAt),
-        )
-        .take(250);
-      eventIds = new Set(rows.map((row) => row.eventId));
-    }
-
-    if (args.customerId !== undefined) {
-      const rows = await ctx.db
-        .query("calendarEventParticipants")
-        .withIndex("by_teamId_and_role_and_customerId_and_eventStartAt", (q) =>
-          q
-            .eq("teamId", auth.activeTeamId)
-            .eq("role", "customer")
-            .eq("customerId", args.customerId)
-            .gte("eventStartAt", args.startAt)
-            .lt("eventStartAt", args.endAt),
-        )
-        .take(250);
-      const customerEventIds = new Set(rows.map((row) => row.eventId));
-      eventIds =
-        eventIds === null
-          ? customerEventIds
-          : new Set([...eventIds].filter((eventId) => customerEventIds.has(eventId)));
-    }
-
-    const events =
-      eventIds === null
-        ? await ctx.db
-            .query("calendarEvents")
-            .withIndex("by_teamId_and_startAt", (q) =>
-              q
-                .eq("teamId", auth.activeTeamId)
-                .gte("startAt", args.startAt)
-                .lt("startAt", args.endAt),
-            )
-            .take(250)
-        : await Promise.all([...eventIds].map((eventId) => ctx.db.get(eventId)));
-
-    const visibleEvents = events
-      .filter(
-        (event): event is Doc<"calendarEvents"> =>
-          event !== null &&
-          event.teamId === auth.activeTeamId &&
-          event.startAt >= args.startAt &&
-          event.startAt < args.endAt,
-      )
-      .sort((a, b) => a.startAt - b.startAt);
-
-    const result = [];
-    for (const event of visibleEvents) {
-      result.push(await loadEventWithParticipants(ctx, event));
-    }
-    return result;
+    return await loadCalendarRangeProjection(ctx, {
+      teamId: auth.activeTeamId,
+      viewerUserId: auth.userDbId,
+      ...args,
+    });
   },
 });
 
@@ -507,6 +455,9 @@ export const update = mutation({
     const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
     const event = await ctx.db.get(args.eventId);
     if (event === null || event.teamId !== auth.activeTeamId) {
+      throw new Error("Calendar event not found");
+    }
+    if (!canMutateCalendarEvent(event, auth.userDbId)) {
       throw new Error("Calendar event not found");
     }
 
@@ -704,6 +655,9 @@ export const remove = mutation({
     if (event === null || event.teamId !== auth.activeTeamId) {
       throw new Error("Calendar event not found");
     }
+    if (!canMutateCalendarEvent(event, auth.userDbId)) {
+      throw new Error("Calendar event not found");
+    }
     const conversationId = await getConversationIdForEvent(ctx, event);
     await deleteParticipants(ctx, args.eventId);
     await ctx.db.delete(args.eventId);
@@ -728,13 +682,9 @@ export const getEventForEditing = query({
     if (event === null || event.teamId !== auth.activeTeamId) {
       return null;
     }
-    const participants = await ctx.db
-      .query("calendarEventParticipants")
-      .withIndex("by_eventId", (q) => q.eq("eventId", event._id))
-      .take(50);
-    return {
-      ...event,
-      participants,
-    };
+    if (!canViewGoogleEventDetails(event, auth.userDbId)) {
+      return null;
+    }
+    return await projectCalendarEvent(ctx, event, auth.userDbId);
   },
 });
