@@ -1,3 +1,5 @@
+import { v } from "convex/values";
+
 export type GoogleCalendarEventDateTime = {
   date?: string;
   dateTime?: string;
@@ -19,6 +21,7 @@ export type GoogleCalendarEvent = {
   recurringEventId?: string;
   originalStartTime?: GoogleCalendarEventDateTime;
   organizer?: { self?: boolean };
+  extendedProperties?: { private?: { kilobotOperationKey?: string } };
   start?: GoogleCalendarEventDateTime;
   end?: GoogleCalendarEventDateTime;
 };
@@ -45,7 +48,33 @@ export type MappedGoogleCalendarEvent = {
   allDay?: boolean;
   startDate?: string;
   endDate?: string;
+  operationKey?: string;
 };
+
+export const mappedGoogleCalendarEventValidator = v.object({
+  eventId: v.string(),
+  status: v.union(v.literal("confirmed"), v.literal("tentative"), v.literal("cancelled")),
+  title: v.optional(v.string()),
+  description: v.optional(v.string()),
+  location: v.optional(v.string()),
+  link: v.optional(v.string()),
+  htmlLink: v.optional(v.string()),
+  iCalUID: v.optional(v.string()),
+  etag: v.optional(v.string()),
+  updatedAt: v.optional(v.number()),
+  transparency: v.union(v.literal("opaque"), v.literal("transparent")),
+  blocksAvailability: v.boolean(),
+  canEdit: v.boolean(),
+  recurringEventId: v.optional(v.string()),
+  originalStartAt: v.optional(v.number()),
+  startAt: v.optional(v.number()),
+  endAt: v.optional(v.number()),
+  timeZone: v.optional(v.string()),
+  allDay: v.optional(v.boolean()),
+  startDate: v.optional(v.string()),
+  endDate: v.optional(v.string()),
+  operationKey: v.optional(v.string()),
+});
 
 function requiredEventId(eventId: string) {
   if (eventId.trim().length === 0) {
@@ -168,6 +197,7 @@ export function mapGoogleEvent(
     originalStartAt: recurringOriginalStartAt,
     etag: event.etag,
     updatedAt,
+    operationKey: event.extendedProperties?.private?.kilobotOperationKey,
   };
   if (event.status === "cancelled") {
     return common;

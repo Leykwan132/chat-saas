@@ -106,3 +106,23 @@ export type GoogleCalendarOperationResult =
         | "failed";
       message: string;
     };
+
+const googleCalendarOperationMessages: Record<
+  Exclude<GoogleCalendarOperationResult["kind"], "success">,
+  string
+> = {
+  not_connected: "Google Calendar is not connected.",
+  needs_reauthorization: "Google Calendar needs to be reconnected.",
+  retryable: "Google Calendar is temporarily unavailable.",
+  conflict: "Google Calendar changed before this update could be applied.",
+  not_found: "Google Calendar could not find the requested event.",
+  forbidden: "Google Calendar denied this request.",
+  invalid_request: "Google Calendar could not process this request.",
+  failed: "Google Calendar request failed.",
+};
+
+export function googleCalendarOperationError(
+  kind: Exclude<GoogleCalendarOperationResult["kind"], "success">,
+): GoogleCalendarOperationResult {
+  return { kind, message: googleCalendarOperationMessages[kind] };
+}

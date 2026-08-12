@@ -2,7 +2,7 @@ const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/";
 const GOOGLE_CALENDAR_API_ORIGIN = new URL(GOOGLE_CALENDAR_API_BASE).origin;
 
 export type GoogleCalendarRequest = {
-  method: "GET" | "POST" | "PUT" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   body?: unknown;
   ifMatch?: string;
@@ -48,6 +48,9 @@ function errorKindForStatus(
     return "needs_reauthorization";
   }
   if (status === 412) {
+    return "conflict";
+  }
+  if (status === 409) {
     return "conflict";
   }
   if (status === 410) {
