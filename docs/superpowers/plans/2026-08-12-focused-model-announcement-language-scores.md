@@ -30,7 +30,7 @@
 - Produces: `ModelLanguageScore = { name: 'Malay' | 'Chinese' | 'English'; score: number }`.
 - Produces: HoverCard language rows containing a language name, `x.x / 5`, and a progress track whose accessible value is the score.
 
-- [ ] **Step 1: Write failing scorecard and HoverCard tests**
+- [x] **Step 1: Write failing scorecard and HoverCard tests**
 
 Assert all language values are bounded and the representative records are numeric:
 
@@ -44,7 +44,7 @@ expect(getModelScorecard('qwen/qwen3.7-flash')?.languages).toEqual([
 
 Assert the HoverCard contains `Chinese 5.0 / 5` and `English 4.0 / 5`, with no `Primary` or `Strong` copy.
 
-- [ ] **Step 2: Run Task 1 tests to verify RED**
+- [x] **Step 2: Run Task 1 tests to verify RED**
 
 Run:
 
@@ -54,7 +54,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/config/modelScorecards
 
 Expected: FAIL because the data still exposes `strength` strings and the HoverCard still renders badges.
 
-- [ ] **Step 3: Replace strengths with scores and render progress rows**
+- [x] **Step 3: Replace strengths with scores and render progress rows**
 
 Use the approved mapping in `MODEL_SCORECARDS`: `Primary = 5`, `Strong = 4`, and `Supported = 3`. Replace the badge group with a definition list:
 
@@ -84,11 +84,11 @@ Use the approved mapping in `MODEL_SCORECARDS`: `Primary = 5`, `Strong = 4`, and
 </dl>
 ```
 
-- [ ] **Step 4: Verify Task 1 GREEN**
+- [x] **Step 4: Verify Task 1 GREEN**
 
 Run the Task 1 test command again. Expected: both files pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add src/config/modelScorecards.ts src/config/modelScorecards.test.ts src/components/ModelScoreHoverCard.tsx src/components/ModelScoreHoverCard.test.tsx
@@ -111,11 +111,11 @@ git commit -m "Show numeric model language scores"
 - Produces: `AnnouncementReleaseDetails({ announcement }: { announcement: Announcement })`.
 - Consumes: the existing formatted announcement date in `AnnouncementDialogList`.
 
-- [ ] **Step 1: Write the failing announcement regression**
+- [x] **Step 1: Write the failing announcement regression**
 
 Assert expanded content includes a `CalendarDays` icon, `Released on 12 Aug 2026`, `More choice for half a credit`, `0.5 credits/message`, the three supporting model cards, and `Retired models`. Assert it contains no `ul` element.
 
-- [ ] **Step 2: Run Task 2 test to verify RED**
+- [x] **Step 2: Run Task 2 test to verify RED**
 
 Run:
 
@@ -125,7 +125,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because expanded content still uses a plain date and bullet list.
 
-- [ ] **Step 3: Add structured announcement data**
+- [x] **Step 3: Add structured announcement data**
 
 Replace `details: string[]` with:
 
@@ -147,11 +147,11 @@ retirement: {
 },
 ```
 
-- [ ] **Step 4: Render the release hierarchy**
+- [x] **Step 4: Render the release hierarchy**
 
 Create `AnnouncementReleaseDetails` with one tinted spotlight panel, a responsive model-card grid, and a muted retirement footer. In `AnnouncementDialogList`, render `CalendarDays` beside `Released on {date}` and mount `AnnouncementReleaseDetails` below it.
 
-- [ ] **Step 5: Run the focused verification gate**
+- [x] **Step 5: Run the focused verification gate**
 
 Run:
 
@@ -161,7 +161,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: focused tests, scoped ESLint, TypeScript, production build, and whitespace checks pass.
 
-- [ ] **Step 6: Record and commit Task 2**
+- [x] **Step 6: Record and commit Task 2**
 
 Update `CONTINUITY.md` with both customer-visible outcomes and verification evidence, then run:
 

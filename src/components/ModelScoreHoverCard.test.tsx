@@ -14,6 +14,14 @@ type HoverCardModule = {
   }) => ReactElement;
 };
 
+type ProgressElementProps = {
+  role?: string;
+  'aria-label'?: string;
+  'aria-valuemin'?: number;
+  'aria-valuemax'?: number;
+  'aria-valuenow'?: number;
+};
+
 function collectElements(node: ReactNode): ReactElement[] {
   if (Array.isArray(node)) return node.flatMap(collectElements);
   if (!isValidElement<{ children?: ReactNode }>(node)) return [];
@@ -40,7 +48,8 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const rating = descendants.find((candidate) => candidate.type === Rating);
   const modelLogo = descendants.find((candidate) => candidate.type === ModelSelectorLogo);
   const languageProgress = descendants.filter(
-    (candidate) => candidate.props.role === 'progressbar',
+    (candidate): candidate is ReactElement<ProgressElementProps> =>
+      (candidate.props as ProgressElementProps).role === 'progressbar',
   );
   const text = collectText(element).replace(/\s+/g, ' ');
 

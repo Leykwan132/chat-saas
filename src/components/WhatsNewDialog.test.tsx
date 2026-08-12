@@ -1,4 +1,10 @@
-import { Bot, ChevronRight, Orbit, type LucideIcon } from 'lucide-react';
+import {
+  Bot,
+  CalendarDays,
+  ChevronRight,
+  Orbit,
+  type LucideIcon,
+} from 'lucide-react';
 import { isValidElement, type ReactElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, test, vi } from 'vitest';
@@ -17,13 +23,21 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { ANNOUNCEMENTS } from '@/components/whats-new/announcements';
+import { AnnouncementReleaseDetails } from '@/components/whats-new/AnnouncementReleaseDetails';
 import { WhatsNewDialog } from './WhatsNewDialog';
 
 type Announcement = {
   id: string;
   title: string;
   summary: string;
-  details: string[];
+  spotlight: {
+    eyebrow: string;
+    title: string;
+    description: string;
+    value: string;
+  };
+  modelCards: Array<{ title: string; description: string; value: string }>;
+  retirement: { label: string; description: string };
   publishedAt: string;
   isNew: boolean;
   icon: LucideIcon;
@@ -92,13 +106,35 @@ test('provides the model support announcement as structured detail data', () => 
     isNew: true,
     icon: Orbit,
   });
-  expect(ANNOUNCEMENTS[0].details).toEqual([
-    'New 0.5-credit tier: GPT-OSS 120B and Qwen3.7 Flash — 0.5 credits/message.',
-    'New: NVIDIA Nemotron 3.5 Lightning — 1 credit/message.',
-    'New: GPT-5.6 Luna — 2 credits/message.',
-    'Also available: DeepSeek V4 Flash — 1 credit/message.',
-    'Removed: Amazon Nova Micro and Google Gemini 3.1 Flash Lite.',
+  expect(ANNOUNCEMENTS[0].spotlight).toEqual({
+    eyebrow: 'New 0.5-credit tier',
+    title: 'More choice for half a credit',
+    description:
+      'Use GPT-OSS 120B for budget-friendly reasoning or Qwen3.7 Flash for fast Chinese conversations.',
+    value: '0.5 credits/message',
+  });
+  expect(ANNOUNCEMENTS[0].modelCards).toEqual([
+    {
+      title: 'NVIDIA Nemotron 3.5 Lightning',
+      description: 'Fast English responses',
+      value: '1 credit/message',
+    },
+    {
+      title: 'DeepSeek V4 Flash',
+      description: 'Balanced everyday support',
+      value: '1 credit/message',
+    },
+    {
+      title: 'GPT-5.6 Luna',
+      description: 'Higher overall performance',
+      value: '2 credits/message',
+    },
   ]);
+  expect(ANNOUNCEMENTS[0].retirement).toEqual({
+    label: 'Retired models',
+    description:
+      'Amazon Nova Micro and Google Gemini 3.1 Flash Lite are no longer available.',
+  });
 });
 
 test('renders a single-open accordion with full details inline', async () => {
@@ -109,7 +145,33 @@ test('renders a single-open accordion with full details inline', async () => {
     id: 'model-support-update',
     title: 'Model support update',
     summary: 'Choose the best model for each conversation.',
-    details: ['Use Qwen for Chinese conversations.'],
+    spotlight: {
+      eyebrow: 'New 0.5-credit tier',
+      title: 'More choice for half a credit',
+      description: 'Use Qwen for Chinese conversations.',
+      value: '0.5 credits/message',
+    },
+    modelCards: [
+      {
+        title: 'NVIDIA Nemotron 3.5 Lightning',
+        description: 'Fast English responses',
+        value: '1 credit/message',
+      },
+      {
+        title: 'DeepSeek V4 Flash',
+        description: 'Balanced everyday support',
+        value: '1 credit/message',
+      },
+      {
+        title: 'GPT-5.6 Luna',
+        description: 'Higher overall performance',
+        value: '2 credits/message',
+      },
+    ],
+    retirement: {
+      label: 'Retired models',
+      description: 'Amazon Nova Micro and Google Gemini are no longer available.',
+    },
     publishedAt: '2026-08-12',
     isNew: true,
     icon: Bot,
@@ -131,6 +193,18 @@ test('renders a single-open accordion with full details inline', async () => {
         (candidate) => candidate.type === 'time',
       )
     : undefined;
+  const calendar = accordionContent
+    ? collectElements(accordionContent).find(
+        (candidate) => candidate.type === CalendarDays,
+      )
+    : undefined;
+  const releaseDetails = descendants.find(
+    (candidate) => candidate.type === AnnouncementReleaseDetails,
+  ) as ReactElement<{ announcement: Announcement }> | undefined;
+  const renderedReleaseDetails = releaseDetails
+    ? AnnouncementReleaseDetails(releaseDetails.props)
+    : undefined;
+  const releaseText = collectText(renderedReleaseDetails).replace(/\s+/g, ' ');
   const chevron = descendants.find(
     (candidate) => candidate.type === ChevronRight,
   ) as ReactElement<{ className?: string }> | undefined;
@@ -148,13 +222,24 @@ test('renders a single-open accordion with full details inline', async () => {
   expect(text).toContain('Model support update');
   expect(text).toContain('New');
   expect(collectText(accordionTrigger)).not.toContain('12 Aug 2026');
-  expect(collectText(accordionContent)).toContain('12 Aug 2026');
+  expect(collectText(accordionContent)).toContain('Released on 12 Aug 2026');
   expect(contentDate?.props).toMatchObject({ dateTime: '2026-08-12' });
+  expect(calendar).toBeDefined();
   expect(badge?.props.className).toContain('bg-muted');
   expect(accordionTrigger?.props.showIndicator).toBe(false);
   expect(chevron?.props.className).toContain(
     'group-data-[state=open]/accordion-trigger:rotate-90',
   );
-  expect(collectText(accordionContent)).toContain('Use Qwen for Chinese conversations.');
+  expect(releaseText).toContain('More choice for half a credit');
+  expect(releaseText).toContain('0.5 credits/message');
+  expect(releaseText).toContain('NVIDIA Nemotron 3.5 Lightning');
+  expect(releaseText).toContain('DeepSeek V4 Flash');
+  expect(releaseText).toContain('GPT-5.6 Luna');
+  expect(releaseText).toContain('Retired models');
+  expect(
+    collectElements(renderedReleaseDetails).some(
+      (candidate) => candidate.type === 'ul',
+    ),
+  ).toBe(false);
   expect(text).not.toContain('View full update');
 });

@@ -1,5 +1,6 @@
 import type { Announcement } from '@/components/whats-new/announcements';
-import { ChevronRight } from 'lucide-react';
+import { AnnouncementReleaseDetails } from '@/components/whats-new/AnnouncementReleaseDetails';
+import { CalendarDays, ChevronRight } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -73,17 +74,13 @@ export function AnnouncementDialogList({
                   />
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-5">
-                  <time
-                    dateTime={announcement.publishedAt}
-                    className="mb-3 block pl-8 text-xs font-normal text-muted-foreground"
-                  >
-                    {formatAnnouncementDate(announcement.publishedAt)}
-                  </time>
-                  <ul className="flex list-disc flex-col gap-2 pl-8 text-sm text-muted-foreground">
-                    {announcement.details.map((detail) => (
-                      <li key={detail}>{detail}</li>
-                    ))}
-                  </ul>
+                  <div className="mb-3 flex items-center gap-1.5 pl-8 text-xs text-muted-foreground">
+                    <CalendarDays className="size-3.5" />
+                    <time dateTime={announcement.publishedAt}>
+                      {`Released on ${formatAnnouncementDate(announcement.publishedAt)}`}
+                    </time>
+                  </div>
+                  <AnnouncementReleaseDetails announcement={announcement} />
                 </AccordionContent>
               </AccordionItem>
             );
