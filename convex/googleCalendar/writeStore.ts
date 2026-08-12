@@ -22,6 +22,7 @@ const preparedWriteValidator = v.union(
 const attemptValidator = v.union(
   v.object({ kind: v.literal("error"), result: googleCalendarOperationResultValidator }),
   v.object({ kind: v.literal("success"), externalEventId: v.string() }),
+  v.object({ kind: v.literal("running") }),
   v.object({
     kind: v.literal("ready"),
     attemptGeneration: v.number(),
@@ -131,7 +132,15 @@ export const prepare = internalMutation({
     if (existing !== null && existing.payloadBindingVersion !== 1) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
-    const precondition = existing?.payloadPreconditionEtag ?? event.externalEtag ?? null;
+    let precondition: string | null;
+    if (existing === null) {
+      precondition = event.externalEtag ?? null;
+    } else {
+      if (existing.payloadPreconditionEtag === undefined) {
+        return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
+      }
+      precondition = existing.payloadPreconditionEtag;
+    }
     const operationId = existing?._id ?? await ctx.db.insert("googleCalendarWriteOperations", {
       connectionId: connection._id,
       calendarEventId: event._id,
@@ -141,7 +150,7 @@ export const prepare = internalMutation({
       externalEventId: expectedExternalId,
       payloadBindingVersion: 1,
       payloadPreconditionEtag: precondition,
-      intendedEtag: event.externalEtag,
+      intendedEtag: event.externalEtag ?? null,
       attemptGeneration: 0,
       attemptCount: 0,
       createdAt: args.now,
@@ -178,6 +187,11 @@ export const beginAttempt = internalMutation({
     if (operation.state === "succeeded") {
       return { kind: "success" as const, externalEventId: operation.externalEventId };
     }
+    if (
+      operation.action === "update" && operation.state === "running" &&
+      operation.attemptLeaseExpiresAt !== undefined &&
+      args.now < operation.attemptLeaseExpiresAt
+    ) return { kind: "running" as const };
     const connection = await ctx.db.get(operation.connectionId);
     const event = await ctx.db.get(operation.calendarEventId);
     if (
@@ -207,9 +221,14 @@ export const beginAttempt = internalMutation({
       attemptGeneration,
       attemptCount: operation.attemptCount + 1,
       state: "running",
+      attemptLeaseExpiresAt: operation.action === "update" ? args.now + 60_000 : undefined,
       errorKind: undefined,
       updatedAt: args.now,
     });
-    return { kind: "ready" as const, attemptGeneration, intendedEtag: expectedEtag };
+    return {
+      kind: "ready" as const,
+      attemptGeneration,
+      intendedEtag: expectedEtag ?? undefined,
+    };
   },
 });

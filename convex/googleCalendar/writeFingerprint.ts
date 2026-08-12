@@ -3,45 +3,70 @@ import type { GoogleCalendarWriteInput } from "./writeTypes";
 
 const BASE32HEX_ALPHABET = "0123456789abcdefghijklmnopqrstuv";
 
+function compareCodePoints(left: string, right: string) {
+  const leftCodePoints = Array.from(left, (value) => value.codePointAt(0)!);
+  const rightCodePoints = Array.from(right, (value) => value.codePointAt(0)!);
+  const length = Math.min(leftCodePoints.length, rightCodePoints.length);
+  for (let index = 0; index < length; index += 1) {
+    if (leftCodePoints[index] !== rightCodePoints[index]) {
+      return leftCodePoints[index] - rightCodePoints[index];
+    }
+  }
+  return leftCodePoints.length - rightCodePoints.length;
+}
+
 function stableValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(stableValue);
   if (value === null || typeof value !== "object") return value;
   return Object.fromEntries(
     Object.entries(value as Record<string, unknown>)
       .filter(([, item]) => item !== undefined)
-      .sort(([left], [right]) => left.localeCompare(right))
+      .sort(([left], [right]) => compareCodePoints(left, right))
       .map(([key, item]) => [key, stableValue(item)]),
   );
 }
 
-function normalizedEvent(event: GoogleCalendarWriteInput) {
-  const attendees = [...(event.attendees ?? [])]
-    .map((attendee) => ({
-      displayName: attendee.displayName ?? null,
-      email: attendee.email.trim().toLowerCase(),
-    }))
-    .sort((left, right) =>
-      left.email.localeCompare(right.email) ||
-      String(left.displayName).localeCompare(String(right.displayName)),
-    );
+function optionalValue(value: unknown) {
+  return value === undefined
+    ? { present: false as const }
+    : { present: true as const, value };
+}
+
+function canonicalAttendee(attendee: { email: string; displayName?: string }) {
   return {
-    allDay: event.start.date !== undefined,
+    displayName: optionalValue(attendee.displayName),
+    email: attendee.email,
+  };
+}
+
+function normalizedEvent(event: GoogleCalendarWriteInput) {
+  const attendees = event.attendees === undefined
+    ? { present: false as const }
+    : {
+        present: true as const,
+        value: event.attendees.map(canonicalAttendee).sort((left, right) =>
+          compareCodePoints(
+            JSON.stringify(stableValue(left)),
+            JSON.stringify(stableValue(right)),
+          ),
+        ),
+      };
+  return {
     attendees,
-    description: event.description ?? null,
+    description: optionalValue(event.description),
     end: {
-      date: event.end.date ?? null,
-      dateTime: event.end.dateTime ?? null,
-      timeZone: event.end.timeZone ?? null,
+      date: optionalValue(event.end.date),
+      dateTime: optionalValue(event.end.dateTime),
+      timeZone: optionalValue(event.end.timeZone),
     },
-    location: event.location ?? null,
+    location: optionalValue(event.location),
     start: {
-      date: event.start.date ?? null,
-      dateTime: event.start.dateTime ?? null,
-      timeZone: event.start.timeZone ?? null,
+      date: optionalValue(event.start.date),
+      dateTime: optionalValue(event.start.dateTime),
+      timeZone: optionalValue(event.start.timeZone),
     },
-    timeZone: event.start.timeZone ?? event.end.timeZone ?? null,
     title: event.summary,
-    transparency: event.transparency ?? "opaque",
+    transparency: optionalValue(event.transparency),
   };
 }
 

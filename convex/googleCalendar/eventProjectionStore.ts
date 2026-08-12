@@ -135,6 +135,7 @@ export async function upsertGoogleCalendarProjection(
       state: "succeeded",
       errorKind: undefined,
       providerEtag: event.etag,
+      attemptLeaseExpiresAt: undefined,
       updatedAt: now,
     });
     return "updated" as const;

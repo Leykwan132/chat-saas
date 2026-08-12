@@ -2,6 +2,7 @@ import type { Id } from "../_generated/dataModel";
 import { googleCalendarOperationError, type GoogleCalendarOperationResult } from "./contracts";
 import { mapGoogleEvent } from "./eventMapping";
 import { GoogleCalendarProviderError } from "./googleClient";
+import { finalizeGoogleCalendarDelete } from "./writeDeleteFinalization";
 import { deriveGoogleCalendarEventId, fingerprintGoogleCalendarWritePayload } from "./writeFingerprint";
 import {
   getGoogleCalendarEventForWrite,
@@ -121,7 +122,9 @@ export async function runCreateGoogleCalendarEvent(
   const reserved = await reserveAndBegin(writeArgs, dependencies, "create", externalEventId, event);
   if (!("attempt" in reserved)) return reserved.result;
   if (reserved.attempt.kind !== "ready") {
-    return reserved.attempt.kind === "error" ? reserved.attempt.result : reserved.attempt;
+    if (reserved.attempt.kind === "error") return reserved.attempt.result;
+    return reserved.attempt.kind === "running"
+      ? googleCalendarOperationError("retryable") : reserved.attempt;
   }
   const { prepared, attempt } = reserved;
   const credential = await credentialForWrite(
@@ -167,7 +170,9 @@ export async function runUpdateGoogleCalendarEvent(
   const reserved = await reserveAndBegin(writeArgs, dependencies, "update", undefined, event);
   if (!("attempt" in reserved)) return reserved.result;
   if (reserved.attempt.kind !== "ready") {
-    return reserved.attempt.kind === "error" ? reserved.attempt.result : reserved.attempt;
+    if (reserved.attempt.kind === "error") return reserved.attempt.result;
+    return reserved.attempt.kind === "running"
+      ? googleCalendarOperationError("retryable") : reserved.attempt;
   }
   const { prepared, attempt } = reserved;
   const credential = await credentialForWrite(
@@ -212,7 +217,9 @@ export async function runDeleteGoogleCalendarEvent(
   const reserved = await reserveAndBegin(args, dependencies, "delete", undefined);
   if (!("attempt" in reserved)) return reserved.result;
   if (reserved.attempt.kind !== "ready") {
-    return reserved.attempt.kind === "error" ? reserved.attempt.result : reserved.attempt;
+    if (reserved.attempt.kind === "error") return reserved.attempt.result;
+    return reserved.attempt.kind === "running"
+      ? googleCalendarOperationError("retryable") : reserved.attempt;
   }
   const { prepared, attempt } = reserved;
   const credential = await credentialForWrite(
@@ -248,7 +255,9 @@ export async function runDeleteGoogleCalendarEvent(
     } catch (error) {
       const kind = classifiedProviderError(error);
       if (kind === "not_found") {
-        return await finalizeDelete(dependencies, prepared.operationId, attempt.attemptGeneration, args.now);
+        return await finalizeGoogleCalendarDelete(
+          dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        );
       }
       return await refreshFailure(
         dependencies, args, prepared.operationId, attempt.attemptGeneration, kind,
@@ -270,28 +279,7 @@ export async function runDeleteGoogleCalendarEvent(
       );
     }
   }
-  return await finalizeDelete(
+  return await finalizeGoogleCalendarDelete(
     dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
   );
-}
-
-async function finalizeDelete(
-  dependencies: GoogleCalendarWriteDependencies,
-  operationId: Id<"googleCalendarWriteOperations">,
-  attemptGeneration: number,
-  now: number,
-) {
-  try {
-    const finalized = await dependencies.finalizeDelete({
-      operationId,
-      attemptGeneration,
-      confirmedAbsent: true,
-      now,
-    });
-    return finalized.kind === "success"
-      ? finalized
-      : googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
-  } catch {
-    return googleCalendarOperationError("retryable");
-  }
 }

@@ -107,6 +107,7 @@ export const finalizeEvent = internalMutation({
           state: "conflict",
           errorKind: "conflict",
           providerEtag: args.event.etag,
+          attemptLeaseExpiresAt: undefined,
           updatedAt: args.now,
         });
         return { kind: "conflict" as const };
@@ -127,6 +128,7 @@ export const finalizeEvent = internalMutation({
       state: "succeeded",
       errorKind: undefined,
       providerEtag: args.event.etag,
+      attemptLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
@@ -160,6 +162,7 @@ export const establishDeletePrecondition = internalMutation({
         state: "conflict",
         errorKind: "conflict",
         providerEtag: args.providerEtag,
+        attemptLeaseExpiresAt: undefined,
         updatedAt: args.now,
       });
       return { kind: "conflict" as const };
@@ -219,6 +222,7 @@ export const finalizeDelete = internalMutation({
     await ctx.db.patch(operation._id, {
       state: "succeeded",
       errorKind: undefined,
+      attemptLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
@@ -244,6 +248,7 @@ export const recordOutcome = internalMutation({
     await ctx.db.patch(operation._id, {
       state: args.kind === "conflict" ? "conflict" : args.kind === "retryable" ? "pending" : "failed",
       errorKind: args.kind,
+      attemptLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     if (args.kind === "needs_reauthorization" || args.kind === "forbidden") {

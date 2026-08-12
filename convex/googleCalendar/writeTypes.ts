@@ -58,6 +58,7 @@ export type GoogleCalendarPreparedWrite =
 export type GoogleCalendarAttempt =
   | { kind: "error"; result: GoogleCalendarOperationResult }
   | { kind: "success"; externalEventId: string }
+  | { kind: "running" }
   | {
       kind: "ready";
       attemptGeneration: number;
