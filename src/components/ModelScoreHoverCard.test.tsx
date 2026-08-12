@@ -1,5 +1,6 @@
 import { createElement, isValidElement, type ReactElement, type ReactNode } from 'react';
 import { Rating, StickerStar } from '@smastrom/react-rating';
+import { Check } from 'lucide-react';
 import { expect, test, vi } from 'vitest';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import { HoverCard } from '@/components/ui/hover-card';
@@ -25,6 +26,15 @@ type ProgressElementProps = {
 type RatingRowProps = {
   className?: string;
   children?: ReactNode;
+};
+
+type LanguagePillProps = {
+  className?: string;
+  'data-slot'?: string;
+};
+
+type CheckIconProps = {
+  className?: string;
 };
 
 function collectElements(node: ReactNode): ReactElement[] {
@@ -66,6 +76,14 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
     (candidate): candidate is ReactElement<ProgressElementProps> =>
       (candidate.props as ProgressElementProps).role === 'progressbar',
   );
+  const languagePills = descendants.filter(
+    (candidate): candidate is ReactElement<LanguagePillProps> =>
+      (candidate.props as LanguagePillProps)['data-slot'] === 'model-language',
+  );
+  const languageChecks = descendants.filter(
+    (candidate): candidate is ReactElement<CheckIconProps> =>
+      candidate.type === Check,
+  );
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
@@ -89,18 +107,15 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
   expect(text).toContain('Value');
-  expect(text).toContain('Chinese 5.0 / 5');
-  expect(text).toContain('English 4.0 / 5');
-  expect(text).not.toContain('Primary');
-  expect(text).not.toContain('Strong');
-  expect(languageProgress).toHaveLength(2);
-  expect(languageProgress[0]?.props).toMatchObject({
-    'aria-label': 'Chinese language fit',
-    'aria-valuemin': 0,
-    'aria-valuemax': 5,
-    'aria-valuenow': 5,
-  });
+  expect(text).not.toContain('Language fit');
+  expect(languageProgress).toHaveLength(0);
   expect(text).toContain('Fast Chinese conversations');
+  expect(text).toContain('Chinese');
+  expect(text).toContain('English');
+  expect(languagePills).toHaveLength(2);
+  expect(languagePills[0]?.props.className).toContain('bg-muted');
+  expect(languageChecks).toHaveLength(2);
+  expect(languageChecks[0]?.props.className).toContain('text-emerald-600');
 });
 
 test('leaves unknown historical models without an empty HoverCard', async () => {

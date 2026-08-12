@@ -1,4 +1,5 @@
 import { Rating, StickerStar } from '@smastrom/react-rating';
+import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import {
@@ -75,39 +76,21 @@ export function ModelScoreHoverCard({
           </dl>
           <div className="flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Language fit
-            </span>
-            <dl className="flex flex-col gap-2.5">
-              {scorecard.languages.map((language) => (
-                <div key={language.name} className="flex flex-col gap-1.5">
-                  <div className="flex items-center justify-between text-sm">
-                    <dt>{language.name}</dt>
-                    <dd className="font-medium">
-                      {language.score.toFixed(1)} / 5
-                    </dd>
-                  </div>
-                  <div
-                    role="progressbar"
-                    aria-label={`${language.name} language fit`}
-                    aria-valuemin={0}
-                    aria-valuemax={5}
-                    aria-valuenow={language.score}
-                    className="h-1.5 overflow-hidden rounded-full bg-muted"
-                  >
-                    <div
-                      className="h-full rounded-full bg-foreground"
-                      style={{ width: `${language.score * 20}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </dl>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Best for
             </span>
             <span className="text-sm">{scorecard.bestFor}</span>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {scorecard.languages.map((language) => (
+                <span
+                  key={language}
+                  data-slot="model-language"
+                  className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                >
+                  <Check className="size-3.5 text-emerald-600" />
+                  {language}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </HoverCardContent>

@@ -7,7 +7,7 @@ type ScorecardModule = {
     {
       overall: number;
       metrics: Record<'quality' | 'speed' | 'reasoning' | 'value', number>;
-      languages: Array<{ name: string; score: number }>;
+      languages: string[];
       bestFor: string;
     }
   >;
@@ -26,7 +26,9 @@ test('provides a complete bounded scorecard for every enabled model', async () =
     expect(Object.values(scorecard.metrics).every((score) => score > 0 && score <= 5)).toBe(true);
     expect(scorecard.languages.length).toBeGreaterThan(0);
     expect(
-      scorecard.languages.every(({ score }) => score > 0 && score <= 5),
+      scorecard.languages.every((language) =>
+        ['Malay', 'Chinese', 'English'].includes(language),
+      ),
     ).toBe(true);
     expect(scorecard.bestFor.trim().length).toBeGreaterThan(0);
   }
@@ -36,19 +38,19 @@ test('positions Malay, Chinese, and English models explicitly', async () => {
   const { getModelScorecard } = await vi.importActual<ScorecardModule>('./modelScorecards');
 
   expect(getModelScorecard('ilmu-mini-v3.3')?.languages).toEqual([
-    { name: 'Malay', score: 5 },
-    { name: 'English', score: 3 },
+    'Malay',
+    'English',
   ]);
   expect(getModelScorecard('qwen/qwen3.7-flash')).toMatchObject({
     overall: 4,
     languages: [
-      { name: 'Chinese', score: 5 },
-      { name: 'English', score: 4 },
+      'Chinese',
+      'English',
     ],
     bestFor: 'Fast Chinese conversations',
   });
   expect(getModelScorecard('nvidia/nemotron-3.5-lightning')).toMatchObject({
-    languages: [{ name: 'English', score: 5 }],
+    languages: ['English'],
     bestFor: 'Fast English responses',
   });
   expect(getModelScorecard('retired/model')).toBeNull();

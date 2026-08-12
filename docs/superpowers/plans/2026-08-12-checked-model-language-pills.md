@@ -31,7 +31,7 @@
 - Produces: `ModelLanguage = 'Malay' | 'Chinese' | 'English'` and `ModelScorecard.languages: ModelLanguage[]`.
 - Produces: neutral `data-slot="model-language"` pills beneath `bestFor`, each containing a green Lucide `Check` and its language name.
 
-- [ ] **Step 1: Write the failing data and HoverCard tests**
+- [x] **Step 1: Write the failing data and HoverCard tests**
 
 Change scorecard expectations to language-name arrays:
 
@@ -55,7 +55,7 @@ expect(text).toContain('Chinese');
 expect(text).toContain('English');
 ```
 
-- [ ] **Step 2: Run focused tests to verify RED**
+- [x] **Step 2: Run focused tests to verify RED**
 
 Run:
 
@@ -65,7 +65,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/config/modelScorecards
 
 Expected: FAIL because language data remains scored and the HoverCard still renders the Language fit progress section.
 
-- [ ] **Step 3: Simplify the scorecard language data**
+- [x] **Step 3: Simplify the scorecard language data**
 
 Replace `ModelLanguageScore` with:
 
@@ -75,7 +75,7 @@ export type ModelLanguage = 'Malay' | 'Chinese' | 'English';
 
 Convert every language record to its existing language name without changing which languages are associated with a model.
 
-- [ ] **Step 4: Render checked language pills under Best for**
+- [x] **Step 4: Render checked language pills under Best for**
 
 Delete the Language fit block and extend the Best for block with:
 
@@ -94,7 +94,7 @@ Delete the Language fit block and extend the Best for block with:
 </div>
 ```
 
-- [ ] **Step 5: Run focused verification**
+- [x] **Step 5: Run focused verification**
 
 Run:
 
@@ -104,7 +104,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/config/modelScorecards
 
 Expected: focused tests, scoped ESLint, TypeScript, production build, and whitespace checks pass.
 
-- [ ] **Step 6: Record and commit**
+- [x] **Step 6: Record and commit**
 
 Update `CONTINUITY.md`, mark this plan complete, and run:
 
