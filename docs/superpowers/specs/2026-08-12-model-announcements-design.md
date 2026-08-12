@@ -24,9 +24,9 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Add a typed `MODEL_SCORECARDS` record keyed by every enabled model ID.
 - Each scorecard contains an overall 1–5 Kilobot editorial rating, Quality, Speed, Reasoning, and Value scores, explicit language strengths, and one concise `bestFor` statement.
 - Ratings are Kilobot recommendations, not customer reviews or external benchmark claims.
-- Language fit uses explicit editorial scores from one to five and covers Malay, Chinese, and English where applicable. Existing `Primary`, `Strong`, and `Supported` judgments become `5.0`, `4.0`, and `3.0` respectively.
+- Store only the applicable Malay, Chinese, and English language names for each model. Do not present language fit as a scored or qualitative rating.
 - Hovering or focusing a model row in the selection Dialog opens a shadcn HoverCard.
-- The HoverCard uses `@smastrom/react-rating` in read-only mode for the overall score, compact text rows for the four supporting metrics, per-language progress rows with `x.x / 5` values, and the `bestFor` statement.
+- The HoverCard uses `@smastrom/react-rating` in read-only mode for the overall score, compact text rows for the four supporting metrics, and the `bestFor` statement followed by checked language pills.
 - Under the `Kilobot rating` label, render the one-decimal overall score immediately followed by five compact StickerStars on the same line, matching the supplied reference. Omit `/ 5` and any review count because these are Kilobot editorial scores rather than customer reviews.
 - The read-only rating uses `StickerStar` with active fill `#f59e0b` and inactive fill `#ffedd5`, reducing the star row from its earlier 120px treatment to an 88px width.
 - The selection row remains clickable and inaccessible models keep their existing upgrade behavior.
@@ -41,15 +41,15 @@ Give authenticated users a compact announcement experience and clearer model-sel
 
 ## Initial scorecards
 
-| Model | Overall | Quality | Speed | Reasoning | Value | Language scores | Best for |
+| Model | Overall | Quality | Speed | Reasoning | Value | Languages | Best for |
 |---|---:|---:|---:|---:|---:|---|---|
-| Ilmu Mini V3.3 | 3.0 | 3.0 | 4.0 | 2.5 | 5.0 | Malay 5.0, English 3.0 | Free Malay-first conversations |
-| Xiaomi MiMo V2.5 | 3.5 | 3.5 | 4.0 | 3.5 | 4.0 | Chinese 5.0, English 4.0 | General-purpose Chinese conversations |
-| DeepSeek V4 Flash | 4.0 | 4.0 | 4.0 | 4.0 | 4.0 | Chinese 4.0, English 4.0 | Balanced everyday support |
-| OpenAI GPT-OSS 120B | 3.5 | 3.5 | 3.5 | 4.0 | 5.0 | English 5.0 | Budget-friendly reasoning |
-| OpenAI GPT-5.6 Luna | 4.5 | 4.5 | 3.5 | 4.5 | 3.0 | English 5.0, Chinese 3.0 | Strongest overall performance |
-| NVIDIA Nemotron 3.5 Lightning | 4.0 | 4.0 | 5.0 | 4.0 | 4.0 | English 5.0 | Fast English responses |
-| Qwen3.7 Flash | 4.0 | 4.0 | 4.5 | 4.0 | 5.0 | Chinese 5.0, English 4.0 | Fast Chinese conversations |
+| Ilmu Mini V3.3 | 3.0 | 3.0 | 4.0 | 2.5 | 5.0 | Malay, English | Free Malay-first conversations |
+| Xiaomi MiMo V2.5 | 3.5 | 3.5 | 4.0 | 3.5 | 4.0 | Chinese, English | General-purpose Chinese conversations |
+| DeepSeek V4 Flash | 4.0 | 4.0 | 4.0 | 4.0 | 4.0 | Chinese, English | Balanced everyday support |
+| OpenAI GPT-OSS 120B | 3.5 | 3.5 | 3.5 | 4.0 | 5.0 | English | Budget-friendly reasoning |
+| OpenAI GPT-5.6 Luna | 4.5 | 4.5 | 3.5 | 4.5 | 3.0 | English, Chinese | Strongest overall performance |
+| NVIDIA Nemotron 3.5 Lightning | 4.0 | 4.0 | 5.0 | 4.0 | 4.0 | English | Fast English responses |
+| Qwen3.7 Flash | 4.0 | 4.0 | 4.5 | 4.0 | 5.0 | Chinese, English | Fast Chinese conversations |
 
 ## Qwen branding
 
@@ -75,7 +75,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model scorecard tests assert the Rating uses `StickerStar`, the approved amber fills, and remains read-only.
 - Model scorecard tests assert the decimal overall score and 88px StickerStar rating share one flex row, and that the old `/ 5` overall copy is absent.
 - Announcement tests assert Package-icon button copy, the supplied banner, click-open Dialog, the calendar-backed `Released on` date only inside expanded content, neutral `New` badge, right-to-down chevron behavior, single Accordion behavior, the featured 0.5-credit panel, model cards, the retired-model footer, and no generic detail list or secondary Dialog.
-- Model scorecard tests assert every language score is greater than zero and no greater than five, and HoverCard tests assert visible `x.x / 5` language values with progress semantics rather than qualitative badges.
+- Model scorecard tests assert each model keeps at least one recognized language name. HoverCard tests assert the `Language fit` section and progress bars are absent, and that Best for is followed by neutral language pills with green Lucide check icons.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
 
