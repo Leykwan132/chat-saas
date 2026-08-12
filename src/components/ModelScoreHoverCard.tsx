@@ -73,6 +73,31 @@ export function ModelScoreHoverCard({
               {scorecard.description}
             </p>
           </div>
+          <div data-slot="model-recommendations" className="flex flex-col gap-1.5">
+            <span
+              data-slot="model-recommendations-label"
+              className="text-xs font-medium text-muted-foreground"
+            >
+              Recommended for
+            </span>
+            <div className="flex flex-col gap-1.5">
+              {scorecard.recommendedFor.map((scenario) => (
+                <div
+                  key={scenario}
+                  data-slot="model-recommendation"
+                  className="flex items-center gap-2 text-sm text-foreground"
+                >
+                  <span
+                    data-slot="model-recommendation-check"
+                    className="inline-flex size-4 shrink-0 items-center justify-center rounded-full bg-emerald-600"
+                  >
+                    <Check className="size-2.5 text-white" />
+                  </span>
+                  <span>{scenario}</span>
+                </div>
+              ))}
+            </div>
+          </div>
           <dl className="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
             {Object.entries(scorecard.metrics).map(([metric, score]) => (
               <div key={metric} className="flex items-center justify-between gap-2">
@@ -83,28 +108,6 @@ export function ModelScoreHoverCard({
               </div>
             ))}
           </dl>
-          <div data-slot="model-recommendations" className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Recommended for
-            </span>
-            <div className="flex flex-col gap-2">
-              {scorecard.recommendedFor.map((scenario) => (
-                <div
-                  key={scenario}
-                  data-slot="model-recommendation"
-                  className="flex items-center gap-2 text-sm text-foreground"
-                >
-                  <span
-                    data-slot="model-recommendation-check"
-                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-emerald-600"
-                  >
-                    <Check className="size-3.5 text-white" />
-                  </span>
-                  <span>{scenario}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </HoverCardContent>
     </HoverCard>

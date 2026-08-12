@@ -71,7 +71,9 @@ The migration changes persisted agent configuration only. It does not add runtim
 
 ## Model Recommendations
 
-Each model scorecard stores a typed `recommendedFor` list containing one or two short customer scenarios. The HoverCard renders this list after Quality, Speed, Reasoning, and Value under the heading `Recommended for`.
+Each model scorecard stores a typed `recommendedFor` list containing one or two short customer scenarios. The HoverCard renders this list after the model description and before Quality, Speed, Reasoning, and Value under the heading `Recommended for`.
+
+The heading uses normal casing without tracking. Each scenario keeps its 14px text and uses a compact 16px circular emerald marker with a 10px white check, with tighter spacing between rows.
 
 Each scenario is a plain row rather than a badge or card. A small green rounded background contains a white check, followed by normal foreground text. The existing rating, model identity, two-sentence description, and four metric scores remain unchanged.
 
@@ -99,7 +101,8 @@ Tests will verify:
 - Google Gemini 3.1 Flash Lite migrates to DeepSeek V4 Flash with provider `openrouter`.
 - DeepSeek and other supported models receive no migration patch.
 - Every enabled scorecard contains one or two non-empty recommended scenarios with the approved wording.
-- HoverCards render `Recommended for` after the four metrics.
+- HoverCards render `Recommended for` after the description and before the four metrics.
+- Recommendation headings remain normally cased, and compact circular check markers do not overpower their scenario text.
 - Each scenario has a green rounded check background, white check icon, and plain foreground text without a scenario card or badge.
 - Focused tests, scoped lint, TypeScript, production build, application tests, Docs tests, whitespace checks, and code-size limits pass.
 

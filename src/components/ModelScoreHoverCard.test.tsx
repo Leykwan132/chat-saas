@@ -92,6 +92,11 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
       (candidate.props as SlotElementProps)['data-slot'] ===
       'model-recommendation',
   ) as ReactElement<SlotElementProps>[];
+  const recommendationLabel = descendants.find(
+    (candidate) =>
+      (candidate.props as SlotElementProps)['data-slot'] ===
+      'model-recommendations-label',
+  ) as ReactElement<SlotElementProps> | undefined;
   const recommendationCheckWrappers = descendants.filter(
     (candidate) =>
       (candidate.props as SlotElementProps)['data-slot'] ===
@@ -123,8 +128,8 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(ratingIndex).toBeGreaterThan(-1);
   expect(identityIndex).toBeGreaterThan(ratingIndex);
   expect(descriptionIndex).toBeGreaterThan(identityIndex);
-  expect(metricsIndex).toBeGreaterThan(descriptionIndex);
-  expect(recommendationsIndex).toBeGreaterThan(metricsIndex);
+  expect(recommendationsIndex).toBeGreaterThan(descriptionIndex);
+  expect(metricsIndex).toBeGreaterThan(recommendationsIndex);
   expect(ratingRow?.props.className).toContain('items-center');
   expect(collectText(ratingRow)).toContain('4.0');
   expect(collectText(ratingRow)).not.toContain('4.0 / 5');
@@ -134,14 +139,20 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Value');
   expect(languageSlots).toHaveLength(0);
   expect(text).toContain('Recommended for');
+  expect(recommendationLabel?.props.className).toContain('text-xs');
+  expect(recommendationLabel?.props.className).not.toContain('uppercase');
+  expect(recommendationLabel?.props.className).not.toContain('tracking-wide');
   expect(text).toContain('Fast Chinese-language replies');
   expect(text).toContain('Chinese and English conversations');
   expect(recommendationRows).toHaveLength(2);
   expect(recommendationRows[0]?.props.className).not.toContain('bg-');
   expect(recommendationCheckWrappers).toHaveLength(2);
-  expect(recommendationCheckWrappers[0]?.props.className).toContain('rounded');
+  expect(recommendationCheckWrappers[0]?.props.className).toContain('size-4');
+  expect(recommendationCheckWrappers[0]?.props.className).toContain('rounded-full');
+  expect(recommendationCheckWrappers[0]?.props.className).not.toContain('size-5');
   expect(recommendationCheckWrappers[0]?.props.className).toContain('bg-emerald-600');
   expect(recommendationChecks).toHaveLength(2);
+  expect(recommendationChecks[0]?.props.className).toContain('size-2.5');
   expect(recommendationChecks[0]?.props.className).toContain('text-white');
 });
 
