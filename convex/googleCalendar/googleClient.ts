@@ -6,6 +6,7 @@ export type GoogleCalendarRequest = {
   path: string;
   body?: unknown;
   ifMatch?: string;
+  invalidSyncTokenOnGone?: boolean;
 };
 
 export type GoogleCalendarProviderErrorKind =
@@ -39,7 +40,10 @@ export class GoogleCalendarProviderError extends Error {
   }
 }
 
-function errorKindForStatus(status: number): GoogleCalendarProviderErrorKind {
+function errorKindForStatus(
+  status: number,
+  invalidSyncTokenOnGone: boolean,
+): GoogleCalendarProviderErrorKind {
   if (status === 401) {
     return "needs_reauthorization";
   }
@@ -47,7 +51,7 @@ function errorKindForStatus(status: number): GoogleCalendarProviderErrorKind {
     return "conflict";
   }
   if (status === 410) {
-    return "invalid_sync_token";
+    return invalidSyncTokenOnGone ? "invalid_sync_token" : "not_found";
   }
   if (status === 429 || status >= 500) {
     return "retryable";
@@ -119,7 +123,9 @@ export async function googleCalendarRequest<T>(
     throw new GoogleCalendarProviderError("retryable");
   }
   if (!response.ok) {
-    throw new GoogleCalendarProviderError(errorKindForStatus(response.status));
+    throw new GoogleCalendarProviderError(
+      errorKindForStatus(response.status, request.invalidSyncTokenOnGone === true),
+    );
   }
   const responseBody = await response.text();
   if (responseBody.length === 0) {

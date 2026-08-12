@@ -25,6 +25,7 @@ export const googleCalendarExternalEventFields = {
   externalCanEdit: v.optional(v.boolean()),
   externalRecurringEventId: v.optional(v.string()),
   externalOriginalStartAt: v.optional(v.number()),
+  externalLastSeenSyncRunId: v.optional(v.id("googleCalendarSyncRuns")),
   externalSyncState: v.optional(googleCalendarExternalSyncStateValidator),
   externalOperationKey: v.optional(v.string()),
 };

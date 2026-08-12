@@ -96,3 +96,74 @@ export const recoverInvalidSyncToken = internalMutation({
     return { complete: true, deletedCount };
   },
 });
+
+export const reconcileFullSync = internalMutation({
+  args: {
+    connectionId: v.id("googleCalendarConnections"),
+    runId: v.id("googleCalendarSyncRuns"),
+    cursor: v.optional(v.string()),
+  },
+  returns: v.object({
+    complete: v.boolean(),
+    cursor: v.optional(v.string()),
+    deletedCount: v.number(),
+  }),
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    const run = await ctx.db.get(args.runId);
+    if (
+      connection === null || run === null || run.connectionId !== connection._id ||
+      run.state !== "running" || run.requestKind !== "full"
+    ) {
+      throw new Error("Google Calendar full sync run is not active");
+    }
+    const cursor = decodeCursor(args.cursor);
+    const membershipPage = await ctx.db
+      .query("teamMemberships")
+      .withIndex("by_userId", (q) => q.eq("userId", connection.userId))
+      .paginate({ cursor: cursor.membershipCursor, numItems: 1 });
+    const membership = membershipPage.page[0];
+    if (membership === undefined) return { complete: true, deletedCount: 0 };
+    const eventPage = await ctx.db
+      .query("calendarEvents")
+      .withIndex(
+        "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+        (q) => q
+          .eq("teamId", membership.teamId)
+          .eq("externalOwnerUserId", connection.userId)
+          .eq("externalCalendarId", connection.primaryCalendarId),
+      )
+      .paginate({ cursor: cursor.eventCursor, numItems: RECOVERY_EVENT_BATCH_SIZE });
+    let deletedCount = 0;
+    for (const event of eventPage.page) {
+      if (
+        event.externalProvider !== "google" || event.externalOrigin !== "google" ||
+        event.externalLastSeenSyncRunId === run._id
+      ) continue;
+      await deleteParticipants(ctx, event._id);
+      await ctx.db.delete(event._id);
+      deletedCount += 1;
+    }
+    if (!eventPage.isDone) {
+      return {
+        complete: false,
+        cursor: JSON.stringify({
+          membershipCursor: cursor.membershipCursor,
+          eventCursor: eventPage.continueCursor,
+        }),
+        deletedCount,
+      };
+    }
+    if (!membershipPage.isDone) {
+      return {
+        complete: false,
+        cursor: JSON.stringify({
+          membershipCursor: membershipPage.continueCursor,
+          eventCursor: null,
+        }),
+        deletedCount,
+      };
+    }
+    return { complete: true, deletedCount };
+  },
+});

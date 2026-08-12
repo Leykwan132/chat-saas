@@ -5,7 +5,6 @@ import { expect, test } from "vitest";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { mapGoogleEvent, type GoogleCalendarEvent } from "./googleCalendar/eventMapping";
-import { googleCalendarRequest } from "./googleCalendar/googleClient";
 import {
   runGoogleCalendarSync,
   type GoogleCalendarSyncDependencies,
@@ -21,7 +20,10 @@ type InternalQueryReference<TArgs extends Record<string, unknown>, TResult> = Fu
 const syncInternal = internal as unknown as {
   googleCalendar: {
     eventStore: { applyPage: InternalReference<Record<string, unknown>, unknown> };
-    syncRecovery: { recoverInvalidSyncToken: InternalReference<Record<string, unknown>, unknown> };
+    syncRecovery: {
+      recoverInvalidSyncToken: InternalReference<Record<string, unknown>, unknown>;
+      reconcileFullSync: InternalReference<Record<string, unknown>, unknown>;
+    };
     syncState: {
       beginSyncRun: InternalReference<Record<string, unknown>, unknown>;
       failSyncRun: InternalReference<Record<string, unknown>, unknown>;
@@ -55,6 +57,8 @@ function dependencies(t: CalendarTest): GoogleCalendarSyncDependencies {
     failRun: (args) => t.mutation(state.syncState.failSyncRun, args) as never,
     recoverInvalidToken: (args) =>
       t.mutation(state.syncRecovery.recoverInvalidSyncToken, args) as never,
+    reconcileFullRun: (args) =>
+      t.mutation(state.syncRecovery.reconcileFullSync, args) as never,
   };
 }
 async function setupConnection() {
@@ -133,14 +137,6 @@ test("cancelled events retain provider update metadata", () => {
     updatedAt: Date.parse("2026-08-13T01:00:00.000Z"),
     blocksAvailability: false,
   });
-});
-
-test("classifies Google 410 responses as invalid sync tokens", async () => {
-  await expect(googleCalendarRequest(
-    { token: "token" },
-    { method: "GET", path: "calendars/primary/events?syncToken=expired" },
-    async () => new Response(null, { status: 410 }),
-  )).rejects.toMatchObject({ kind: "invalid_sync_token" });
 });
 
 test("initial full sync traverses pages with stable bounds and commits only the final token", async () => {

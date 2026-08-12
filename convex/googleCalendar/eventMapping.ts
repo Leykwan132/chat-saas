@@ -176,7 +176,6 @@ export function mapGoogleEvent(
   return {
     ...common,
     ...times,
-    originalStartAt: recurringOriginalStartAt ?? times.startAt,
     title: event.summary ?? "",
     description: event.description,
     location: event.location,

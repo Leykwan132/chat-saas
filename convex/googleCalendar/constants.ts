@@ -5,3 +5,4 @@ export const AVAILABILITY_FRESHNESS_MS = 60 * 1000;
 export const WATCH_RENEWAL_WINDOW_MS = 48 * 60 * 60 * 1000;
 export const FULL_SYNC_PAST_DAYS = 90;
 export const FULL_SYNC_FUTURE_MONTHS = 18;
+export const SYNC_RUN_LEASE_MS = 5 * 60 * 1000;

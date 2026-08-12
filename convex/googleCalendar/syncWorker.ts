@@ -4,82 +4,30 @@ import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { FULL_SYNC_FUTURE_MONTHS, FULL_SYNC_PAST_DAYS } from "./constants";
-import { mapGoogleEvent, type GoogleCalendarEvent } from "./eventMapping";
-import { GoogleCalendarProviderError, googleCalendarRequest } from "./googleClient";
+import { mapGoogleEvent } from "./eventMapping";
+import { listGoogleCalendarPage } from "./syncProvider";
 import { getGoogleCalendarCredential } from "./workosToken";
+import type {
+  GoogleCalendarConnectionSnapshot,
+  GoogleCalendarSyncDependencies,
+  GoogleCalendarSyncErrorKind,
+  GoogleCalendarSyncPage,
+  GoogleCalendarSyncRequest,
+  GoogleCalendarSyncResult,
+} from "./syncTypes";
+
+export type {
+  GoogleCalendarSyncDependencies,
+  GoogleCalendarSyncPage,
+  GoogleCalendarSyncRequest,
+} from "./syncTypes";
 
 const DAY_MS = 86_400_000;
 const MAX_PASSES_PER_WORKER = 20;
 const PAGE_SIZE = 20;
 
-type SyncErrorKind = "not_connected" | "needs_reauthorization" | "retryable" | "conflict" | "not_found" | "forbidden" | "invalid_request" | "failed";
-type ConnectionSnapshot = {
-  connectionId: Id<"googleCalendarConnections">;
-  userId: Id<"users">;
-  workosUserId: string;
-  primaryCalendarId: "primary";
-  timeZone: string;
-  state: "connected" | "syncing";
-  syncToken?: string;
-  fullSyncStartAt?: number;
-  fullSyncEndAt?: number;
-  dirtyGeneration: number;
-};
-export type GoogleCalendarSyncRequest = {
-  kind: "full" | "incremental";
-  singleEvents: true;
-  showDeleted: true;
-  pageSize: number;
-  pageToken?: string;
-  syncToken?: string;
-  timeMin?: number;
-  timeMax?: number;
-};
-export type GoogleCalendarSyncPage = {
-  items: GoogleCalendarEvent[];
-  nextPageToken?: string;
-  nextSyncToken?: string;
-};
-export type GoogleCalendarSyncDependencies = {
-  getConnection: (args: { connectionId: Id<"googleCalendarConnections"> }) => Promise<ConnectionSnapshot>;
-  beginRun: (args: {
-    connectionId: Id<"googleCalendarConnections">;
-    requestKind: "full" | "incremental";
-    fullSyncStartAt?: number;
-    fullSyncEndAt?: number;
-    now: number;
-  }) => Promise<{ kind: "already_running" } | { kind: "started"; runId: Id<"googleCalendarSyncRuns"> }>;
-  applyPage: (args: {
-    connectionId: Id<"googleCalendarConnections">;
-    runId: Id<"googleCalendarSyncRuns">;
-    events: ReturnType<typeof mapGoogleEvent>[];
-    membershipCursor?: string;
-    nextPageToken?: string;
-    candidateSyncToken?: string;
-    now: number;
-  }) => Promise<{ nextMembershipCursor?: string }>;
-  finalizeRun: (args: {
-    connectionId: Id<"googleCalendarConnections">;
-    runId: Id<"googleCalendarSyncRuns">;
-    syncToken: string;
-    now: number;
-  }) => Promise<{ dirty: boolean }>;
-  failRun: (args: {
-    connectionId: Id<"googleCalendarConnections">;
-    runId: Id<"googleCalendarSyncRuns">;
-    errorKind: SyncErrorKind;
-    now: number;
-  }) => Promise<unknown>;
-  recoverInvalidToken: (args: {
-    connectionId: Id<"googleCalendarConnections">;
-    runId: Id<"googleCalendarSyncRuns">;
-    cursor?: string;
-    now: number;
-  }) => Promise<{ complete: boolean; cursor?: string; deletedCount: number }>;
-};
 type DependencyArgs<T extends keyof GoogleCalendarSyncDependencies> = Parameters<GoogleCalendarSyncDependencies[T]>[0];
 type DependencyResult<T extends keyof GoogleCalendarSyncDependencies> = Awaited<ReturnType<GoogleCalendarSyncDependencies[T]>>;
-type SyncWorkerResult = { kind: "completed" | "coalesced"; passes: number; dirty: boolean };
 const googleCalendarInternal = (internal as unknown as {
   googleCalendar: {
     syncState: {
@@ -93,9 +41,10 @@ const googleCalendarInternal = (internal as unknown as {
     };
     syncRecovery: {
       recoverInvalidSyncToken: FunctionReference<"mutation", "internal", DependencyArgs<"recoverInvalidToken">, DependencyResult<"recoverInvalidToken">>;
+      reconcileFullSync: FunctionReference<"mutation", "internal", DependencyArgs<"reconcileFullRun">, DependencyResult<"reconcileFullRun">>;
     };
     syncWorker: {
-      run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, SyncWorkerResult>;
+      run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, GoogleCalendarSyncResult>;
     };
   };
 }).googleCalendar;
@@ -122,13 +71,16 @@ function fullSyncBounds(now: number) {
     timeMax: addUtcMonths(now, FULL_SYNC_FUTURE_MONTHS),
   };
 }
-function requiresMonthlyRebase(connection: ConnectionSnapshot, now: number) {
+function requiresMonthlyRebase(connection: GoogleCalendarConnectionSnapshot, now: number) {
   if (connection.syncToken === undefined) return true;
   if (connection.fullSyncStartAt === undefined || connection.fullSyncEndAt === undefined) return false;
   const previousAnchor = connection.fullSyncStartAt + FULL_SYNC_PAST_DAYS * DAY_MS;
   return now >= addUtcMonths(previousAnchor, 1);
 }
-function baseRequest(connection: ConnectionSnapshot, now: number): GoogleCalendarSyncRequest {
+function baseRequest(
+  connection: GoogleCalendarConnectionSnapshot,
+  now: number,
+): GoogleCalendarSyncRequest {
   if (requiresMonthlyRebase(connection, now)) {
     const bounds = fullSyncBounds(now);
     return { kind: "full", singleEvents: true, showDeleted: true, pageSize: PAGE_SIZE, ...bounds };
@@ -142,7 +94,7 @@ function baseRequest(connection: ConnectionSnapshot, now: number): GoogleCalenda
     syncToken: connection.syncToken,
   };
 }
-function classifiedError(error: unknown): SyncErrorKind {
+function classifiedError(error: unknown): GoogleCalendarSyncErrorKind {
   if (typeof error !== "object" || error === null || !("kind" in error)) return "failed";
   const kind = error.kind;
   if (
@@ -169,6 +121,21 @@ async function recoverInvalidToken(
     batch = await dependencies.recoverInvalidToken({ connectionId, runId, cursor, now });
   }
 }
+async function reconcileFullRun(
+  dependencies: GoogleCalendarSyncDependencies,
+  connectionId: Id<"googleCalendarConnections">,
+  runId: Id<"googleCalendarSyncRuns">,
+) {
+  let cursor: string | undefined;
+  let batch = await dependencies.reconcileFullRun({ connectionId, runId, cursor });
+  while (!batch.complete) {
+    if (batch.cursor === undefined) {
+      throw new Error("Google Calendar reconciliation did not return a cursor");
+    }
+    cursor = batch.cursor;
+    batch = await dependencies.reconcileFullRun({ connectionId, runId, cursor });
+  }
+}
 export async function runGoogleCalendarSync(args: {
   connectionId: Id<"googleCalendarConnections">;
   now: number;
@@ -185,7 +152,9 @@ export async function runGoogleCalendarSync(args: {
       fullSyncEndAt: request.timeMax,
       now: args.now,
     });
-    if (started.kind === "already_running") return { kind: "coalesced" as const, passes: pass, dirty: true };
+    if (started.kind === "already_running") {
+      return { kind: "coalesced" as const, passes: pass, dirty: false };
+    }
     let pageToken: string | undefined;
     let finalSyncToken: string | undefined;
     try {
@@ -213,6 +182,9 @@ export async function runGoogleCalendarSync(args: {
         finalSyncToken = page.nextSyncToken ?? finalSyncToken;
       } while (pageToken !== undefined);
       if (finalSyncToken === undefined) throw new Error("Google Calendar final page omitted its sync token");
+      if (request.kind === "full") {
+        await reconcileFullRun(args.dependencies, args.connectionId, started.runId);
+      }
       const finalized = await args.dependencies.finalizeRun({
         connectionId: args.connectionId,
         runId: started.runId,
@@ -222,8 +194,18 @@ export async function runGoogleCalendarSync(args: {
       if (!finalized.dirty) return { kind: "completed" as const, passes: pass + 1, dirty: false };
     } catch (error) {
       if (request.kind === "incremental" && invalidSyncToken(error)) {
-        await recoverInvalidToken(args.dependencies, args.connectionId, started.runId, args.now);
-        continue;
+        try {
+          await recoverInvalidToken(args.dependencies, args.connectionId, started.runId, args.now);
+          continue;
+        } catch (recoveryError) {
+          await args.dependencies.failRun({
+            connectionId: args.connectionId,
+            runId: started.runId,
+            errorKind: classifiedError(recoveryError),
+            now: args.now,
+          });
+          throw recoveryError;
+        }
       }
       await args.dependencies.failRun({
         connectionId: args.connectionId,
@@ -237,32 +219,6 @@ export async function runGoogleCalendarSync(args: {
   return { kind: "completed" as const, passes: MAX_PASSES_PER_WORKER, dirty: true };
 }
 
-function listEventsPath(request: GoogleCalendarSyncRequest) {
-  const params = new URLSearchParams({
-    singleEvents: String(request.singleEvents),
-    showDeleted: String(request.showDeleted),
-    maxResults: String(request.pageSize),
-  });
-  if (request.syncToken !== undefined) params.set("syncToken", request.syncToken);
-  if (request.timeMin !== undefined) params.set("timeMin", new Date(request.timeMin).toISOString());
-  if (request.timeMax !== undefined) params.set("timeMax", new Date(request.timeMax).toISOString());
-  if (request.pageToken !== undefined) params.set("pageToken", request.pageToken);
-  return `calendars/primary/events?${params.toString()}`;
-}
-
-function validatedPage(value: unknown): GoogleCalendarSyncPage {
-  if (typeof value !== "object" || value === null) throw new GoogleCalendarProviderError("failed");
-  const page = value as { items?: unknown; nextPageToken?: unknown; nextSyncToken?: unknown };
-  if (page.items !== undefined && !Array.isArray(page.items)) throw new GoogleCalendarProviderError("failed");
-  if (page.nextPageToken !== undefined && typeof page.nextPageToken !== "string") throw new GoogleCalendarProviderError("failed");
-  if (page.nextSyncToken !== undefined && typeof page.nextSyncToken !== "string") throw new GoogleCalendarProviderError("failed");
-  return {
-    items: (page.items ?? []) as GoogleCalendarEvent[],
-    nextPageToken: page.nextPageToken,
-    nextSyncToken: page.nextSyncToken,
-  };
-}
-
 export const run = internalAction({
   args: { connectionId: v.id("googleCalendarConnections") },
   returns: v.object({
@@ -270,7 +226,7 @@ export const run = internalAction({
     passes: v.number(),
     dirty: v.boolean(),
   }),
-  handler: async (ctx, args): Promise<SyncWorkerResult> => {
+  handler: async (ctx, args): Promise<GoogleCalendarSyncResult> => {
     let credential: Awaited<ReturnType<typeof getGoogleCalendarCredential>> | undefined;
     const result = await runGoogleCalendarSync({
       connectionId: args.connectionId,
@@ -282,6 +238,7 @@ export const run = internalAction({
         finalizeRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.finalizeSyncRun, value),
         failRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.failSyncRun, value),
         recoverInvalidToken: (value) => ctx.runMutation(googleCalendarInternal.syncRecovery.recoverInvalidSyncToken, value),
+        reconcileFullRun: (value) => ctx.runMutation(googleCalendarInternal.syncRecovery.reconcileFullSync, value),
       },
       listPage: async (request) => {
         if (credential === undefined) {
@@ -289,11 +246,19 @@ export const run = internalAction({
           credential = await getGoogleCalendarCredential(connection.workosUserId);
         }
         if (credential.kind !== "active") throw new GoogleCalendarCredentialStateError(credential.kind);
-        const page = await googleCalendarRequest<unknown>(credential, { method: "GET", path: listEventsPath(request) });
-        return validatedPage(page);
+        return await listGoogleCalendarPage(credential, request);
       },
     });
-    if (result.dirty) await ctx.scheduler.runAfter(0, googleCalendarInternal.syncWorker.run, args);
+    await scheduleGoogleCalendarFollowUp(result, () =>
+      ctx.scheduler.runAfter(0, googleCalendarInternal.syncWorker.run, args),
+    );
     return result;
   },
 });
+
+export async function scheduleGoogleCalendarFollowUp(
+  result: GoogleCalendarSyncResult,
+  schedule: () => Promise<unknown>,
+) {
+  if (result.kind === "completed" && result.dirty) await schedule();
+}

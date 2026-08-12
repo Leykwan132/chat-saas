@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { googleCalendarErrorKindValidator, googleCalendarSyncRequestKindValidator } from "./contracts";
+import { SYNC_RUN_LEASE_MS } from "./constants";
 
 const connectionForSyncValidator = v.object({
   connectionId: v.id("googleCalendarConnections"),
@@ -76,7 +77,24 @@ export const beginSyncRun = internalMutation({
         q.eq("connectionId", args.connectionId).eq("state", "running"),
       )
       .take(2);
-    if (activeRuns.length > 0) return { kind: "already_running" as const };
+    const currentRun = activeRuns.find(
+      (run) => args.now - run.updatedAt <= SYNC_RUN_LEASE_MS,
+    );
+    if (currentRun !== undefined) {
+      await ctx.db.patch(connection._id, {
+        dirtyGeneration: connection.dirtyGeneration + 1,
+        updatedAt: args.now,
+      });
+      return { kind: "already_running" as const };
+    }
+    for (const staleRun of activeRuns) {
+      await ctx.db.patch(staleRun._id, {
+        state: "failed",
+        errorKind: "retryable",
+        completedAt: args.now,
+        updatedAt: args.now,
+      });
+    }
     const runId = await ctx.db.insert("googleCalendarSyncRuns", {
       connectionId: connection._id,
       state: "running",

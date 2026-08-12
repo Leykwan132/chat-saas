@@ -32,7 +32,6 @@ const mappedEventValidator = v.object({
 type ActiveMappedEvent = MappedGoogleCalendarEvent & {
   status: "confirmed" | "tentative";
   title: string;
-  originalStartAt: number;
   startAt: number;
   endAt: number;
   timeZone: string;
@@ -42,8 +41,8 @@ type ActiveMappedEvent = MappedGoogleCalendarEvent & {
 function activeEvent(event: MappedGoogleCalendarEvent): ActiveMappedEvent {
   if (
     event.status === "cancelled" || event.title === undefined ||
-    event.originalStartAt === undefined || event.startAt === undefined ||
-    event.endAt === undefined || event.timeZone === undefined || event.allDay === undefined
+    event.startAt === undefined || event.endAt === undefined ||
+    event.timeZone === undefined || event.allDay === undefined
   ) {
     throw new Error("Google Calendar active event is incomplete");
   }
@@ -134,6 +133,7 @@ async function upsertProjection(
   teamId: Id<"teams">,
   owner: Doc<"users">,
   event: ActiveMappedEvent,
+  run: Doc<"googleCalendarSyncRuns">,
   now: number,
 ) {
   const existing = await ctx.db
@@ -149,7 +149,11 @@ async function upsertProjection(
     )
     .unique();
   if (existing !== null) {
-    await ctx.db.patch(existing._id, synchronizedFields(event, now));
+    await ctx.db.patch(existing._id, {
+      ...synchronizedFields(event, now),
+      externalLastSeenSyncRunId:
+        run.requestKind === "full" ? run._id : existing.externalLastSeenSyncRunId,
+    });
     await upsertOwnerParticipant(ctx, existing._id, teamId, owner, event.startAt, now);
     return "updated" as const;
   }
@@ -163,6 +167,7 @@ async function upsertProjection(
     externalOwnerUserId: owner._id,
     externalOrigin: "google",
     externalOriginalStartAt: event.originalStartAt,
+    externalLastSeenSyncRunId: run.requestKind === "full" ? run._id : undefined,
     createdAt: now,
   });
   await upsertOwnerParticipant(ctx, eventId, teamId, owner, event.startAt, now);
@@ -244,7 +249,14 @@ export const applyPage = internalMutation({
         if (mapped.status === "cancelled") {
           cancelledCount += await cancelProjection(ctx, membership.teamId, owner._id, mapped, args.now);
         } else {
-          const result = await upsertProjection(ctx, membership.teamId, owner, activeEvent(mapped), args.now);
+          const result = await upsertProjection(
+            ctx,
+            membership.teamId,
+            owner,
+            activeEvent(mapped),
+            run,
+            args.now,
+          );
           if (result === "imported") importedCount += 1;
           else updatedCount += 1;
         }
