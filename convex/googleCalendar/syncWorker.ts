@@ -3,12 +3,11 @@ import type { FunctionReference } from "convex/server";
 import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { FULL_SYNC_FUTURE_MONTHS, FULL_SYNC_PAST_DAYS } from "./constants";
 import { mapGoogleEvent } from "./eventMapping";
+import { GOOGLE_CALENDAR_SYNC_PAGE_SIZE, googleCalendarSyncRequest } from "./syncRequest";
 import { listGoogleCalendarPage } from "./syncProvider";
 import { getGoogleCalendarCredential } from "./workosToken";
 import type {
-  GoogleCalendarConnectionSnapshot,
   GoogleCalendarSyncDependencies,
   GoogleCalendarSyncErrorKind,
   GoogleCalendarSyncPage,
@@ -22,9 +21,7 @@ export type {
   GoogleCalendarSyncRequest,
 } from "./syncTypes";
 
-const DAY_MS = 86_400_000;
 const MAX_PASSES_PER_WORKER = 20;
-const PAGE_SIZE = 20;
 
 type DependencyArgs<T extends keyof GoogleCalendarSyncDependencies> = Parameters<GoogleCalendarSyncDependencies[T]>[0];
 type DependencyResult<T extends keyof GoogleCalendarSyncDependencies> = Awaited<ReturnType<GoogleCalendarSyncDependencies[T]>>;
@@ -33,6 +30,7 @@ const googleCalendarInternal = (internal as unknown as {
     syncState: {
       getConnectionForSync: FunctionReference<"query", "internal", DependencyArgs<"getConnection">, DependencyResult<"getConnection">>;
       beginSyncRun: FunctionReference<"mutation", "internal", DependencyArgs<"beginRun">, DependencyResult<"beginRun">>;
+      renewSyncRunLease: FunctionReference<"mutation", "internal", DependencyArgs<"renewRun">, DependencyResult<"renewRun">>;
       finalizeSyncRun: FunctionReference<"mutation", "internal", DependencyArgs<"finalizeRun">, DependencyResult<"finalizeRun">>;
       failSyncRun: FunctionReference<"mutation", "internal", DependencyArgs<"failRun">, DependencyResult<"failRun">>;
     };
@@ -55,44 +53,13 @@ class GoogleCalendarCredentialStateError extends Error {
     this.kind = kind;
   }
 }
-function addUtcMonths(timestamp: number, months: number) {
-  const source = new Date(timestamp);
-  const target = new Date(timestamp);
-  const sourceDay = source.getUTCDate();
-  target.setUTCDate(1);
-  target.setUTCMonth(target.getUTCMonth() + months);
-  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-  target.setUTCDate(Math.min(sourceDay, lastDay));
-  return target.getTime();
+class GoogleCalendarOwnedRunLostError extends Error {}
+type GoogleCalendarSyncClock = number | (() => number);
+function currentTime(clock: GoogleCalendarSyncClock) {
+  return typeof clock === "number" ? clock : clock();
 }
-function fullSyncBounds(now: number) {
-  return {
-    timeMin: now - FULL_SYNC_PAST_DAYS * DAY_MS,
-    timeMax: addUtcMonths(now, FULL_SYNC_FUTURE_MONTHS),
-  };
-}
-function requiresMonthlyRebase(connection: GoogleCalendarConnectionSnapshot, now: number) {
-  if (connection.syncToken === undefined) return true;
-  if (connection.fullSyncStartAt === undefined || connection.fullSyncEndAt === undefined) return false;
-  const previousAnchor = connection.fullSyncStartAt + FULL_SYNC_PAST_DAYS * DAY_MS;
-  return now >= addUtcMonths(previousAnchor, 1);
-}
-function baseRequest(
-  connection: GoogleCalendarConnectionSnapshot,
-  now: number,
-): GoogleCalendarSyncRequest {
-  if (requiresMonthlyRebase(connection, now)) {
-    const bounds = fullSyncBounds(now);
-    return { kind: "full", singleEvents: true, showDeleted: true, pageSize: PAGE_SIZE, ...bounds };
-  }
-  if (connection.syncToken === undefined) throw new Error("Google Calendar incremental sync token is missing");
-  return {
-    kind: "incremental",
-    singleEvents: true,
-    showDeleted: true,
-    pageSize: PAGE_SIZE,
-    syncToken: connection.syncToken,
-  };
+function requireOwned(result: { kind: string }) {
+  if (result.kind === "lost") throw new GoogleCalendarOwnedRunLostError();
 }
 function classifiedError(error: unknown): GoogleCalendarSyncErrorKind {
   if (typeof error !== "object" || error === null || !("kind" in error)) return "failed";
@@ -111,46 +78,76 @@ async function recoverInvalidToken(
   dependencies: GoogleCalendarSyncDependencies,
   connectionId: Id<"googleCalendarConnections">,
   runId: Id<"googleCalendarSyncRuns">,
-  now: number,
+  clock: GoogleCalendarSyncClock,
 ) {
   let cursor: string | undefined;
-  let batch = await dependencies.recoverInvalidToken({ connectionId, runId, cursor, now });
+  let batch = await dependencies.recoverInvalidToken({
+    connectionId,
+    runId,
+    cursor,
+    now: currentTime(clock),
+  });
+  requireOwned(batch);
+  if (batch.kind === "lost") return;
   while (!batch.complete) {
     if (batch.cursor === undefined) throw new Error("Google Calendar recovery did not return a cursor");
     cursor = batch.cursor;
-    batch = await dependencies.recoverInvalidToken({ connectionId, runId, cursor, now });
+    batch = await dependencies.recoverInvalidToken({
+      connectionId,
+      runId,
+      cursor,
+      now: currentTime(clock),
+    });
+    requireOwned(batch);
+    if (batch.kind === "lost") return;
   }
 }
 async function reconcileFullRun(
   dependencies: GoogleCalendarSyncDependencies,
   connectionId: Id<"googleCalendarConnections">,
   runId: Id<"googleCalendarSyncRuns">,
+  clock: GoogleCalendarSyncClock,
 ) {
   let cursor: string | undefined;
-  let batch = await dependencies.reconcileFullRun({ connectionId, runId, cursor });
+  let batch = await dependencies.reconcileFullRun({
+    connectionId,
+    runId,
+    cursor,
+    now: currentTime(clock),
+  });
+  requireOwned(batch);
+  if (batch.kind === "lost") return;
   while (!batch.complete) {
     if (batch.cursor === undefined) {
       throw new Error("Google Calendar reconciliation did not return a cursor");
     }
     cursor = batch.cursor;
-    batch = await dependencies.reconcileFullRun({ connectionId, runId, cursor });
+    batch = await dependencies.reconcileFullRun({
+      connectionId,
+      runId,
+      cursor,
+      now: currentTime(clock),
+    });
+    requireOwned(batch);
+    if (batch.kind === "lost") return;
   }
 }
 export async function runGoogleCalendarSync(args: {
   connectionId: Id<"googleCalendarConnections">;
-  now: number;
+  now: GoogleCalendarSyncClock;
   dependencies: GoogleCalendarSyncDependencies;
   listPage: (request: GoogleCalendarSyncRequest) => Promise<GoogleCalendarSyncPage>;
 }) {
   for (let pass = 0; pass < MAX_PASSES_PER_WORKER; pass += 1) {
     const connection = await args.dependencies.getConnection({ connectionId: args.connectionId });
-    const request = baseRequest(connection, args.now);
+    const passStartedAt = currentTime(args.now);
+    const request = googleCalendarSyncRequest(connection, passStartedAt);
     const started = await args.dependencies.beginRun({
       connectionId: args.connectionId,
       requestKind: request.kind,
       fullSyncStartAt: request.timeMin,
       fullSyncEndAt: request.timeMax,
-      now: args.now,
+      now: passStartedAt,
     });
     if (started.kind === "already_running") {
       return { kind: "coalesced" as const, passes: pass, dirty: false };
@@ -159,8 +156,18 @@ export async function runGoogleCalendarSync(args: {
     let finalSyncToken: string | undefined;
     try {
       do {
+        requireOwned(await args.dependencies.renewRun({
+          connectionId: args.connectionId,
+          runId: started.runId,
+          now: currentTime(args.now),
+        }));
         const page = await args.listPage({ ...request, pageToken });
-        if (page.items.length > PAGE_SIZE) throw new Error("Google Calendar page exceeds the requested page size");
+        requireOwned(await args.dependencies.renewRun({
+          connectionId: args.connectionId,
+          runId: started.runId,
+          now: currentTime(args.now),
+        }));
+        if (page.items.length > GOOGLE_CALENDAR_SYNC_PAGE_SIZE) throw new Error("Google Calendar page exceeds the requested page size");
         if (page.nextPageToken !== undefined && page.nextSyncToken !== undefined) {
           throw new Error("Google Calendar page cannot contain both continuation tokens");
         }
@@ -174,8 +181,10 @@ export async function runGoogleCalendarSync(args: {
             membershipCursor,
             nextPageToken: page.nextPageToken,
             candidateSyncToken: page.nextSyncToken,
-            now: args.now,
+            now: currentTime(args.now),
           });
+          requireOwned(applied);
+          if (applied.kind === "lost") throw new GoogleCalendarOwnedRunLostError();
           membershipCursor = applied.nextMembershipCursor;
         } while (membershipCursor !== undefined);
         pageToken = page.nextPageToken;
@@ -183,36 +192,46 @@ export async function runGoogleCalendarSync(args: {
       } while (pageToken !== undefined);
       if (finalSyncToken === undefined) throw new Error("Google Calendar final page omitted its sync token");
       if (request.kind === "full") {
-        await reconcileFullRun(args.dependencies, args.connectionId, started.runId);
+        await reconcileFullRun(args.dependencies, args.connectionId, started.runId, args.now);
       }
       const finalized = await args.dependencies.finalizeRun({
         connectionId: args.connectionId,
         runId: started.runId,
         syncToken: finalSyncToken,
-        now: args.now,
+        now: currentTime(args.now),
       });
+      requireOwned(finalized);
+      if (finalized.kind === "lost") throw new GoogleCalendarOwnedRunLostError();
       if (!finalized.dirty) return { kind: "completed" as const, passes: pass + 1, dirty: false };
     } catch (error) {
+      if (error instanceof GoogleCalendarOwnedRunLostError) {
+        return { kind: "coalesced" as const, passes: pass, dirty: false };
+      }
       if (request.kind === "incremental" && invalidSyncToken(error)) {
         try {
           await recoverInvalidToken(args.dependencies, args.connectionId, started.runId, args.now);
           continue;
         } catch (recoveryError) {
-          await args.dependencies.failRun({
+          if (recoveryError instanceof GoogleCalendarOwnedRunLostError) {
+            return { kind: "coalesced" as const, passes: pass, dirty: false };
+          }
+          const failed = await args.dependencies.failRun({
             connectionId: args.connectionId,
             runId: started.runId,
             errorKind: classifiedError(recoveryError),
-            now: args.now,
+            now: currentTime(args.now),
           });
+          if (failed.kind === "lost") return { kind: "coalesced" as const, passes: pass, dirty: false };
           throw recoveryError;
         }
       }
-      await args.dependencies.failRun({
+      const failed = await args.dependencies.failRun({
         connectionId: args.connectionId,
         runId: started.runId,
         errorKind: classifiedError(error),
-        now: args.now,
+        now: currentTime(args.now),
       });
+      if (failed.kind === "lost") return { kind: "coalesced" as const, passes: pass, dirty: false };
       throw error;
     }
   }
@@ -230,10 +249,11 @@ export const run = internalAction({
     let credential: Awaited<ReturnType<typeof getGoogleCalendarCredential>> | undefined;
     const result = await runGoogleCalendarSync({
       connectionId: args.connectionId,
-      now: Date.now(),
+      now: Date.now,
       dependencies: {
         getConnection: (value) => ctx.runQuery(googleCalendarInternal.syncState.getConnectionForSync, value),
         beginRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.beginSyncRun, value),
+        renewRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.renewSyncRunLease, value),
         applyPage: (value) => ctx.runMutation(googleCalendarInternal.eventStore.applyPage, value),
         finalizeRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.finalizeSyncRun, value),
         failRun: (value) => ctx.runMutation(googleCalendarInternal.syncState.failSyncRun, value),

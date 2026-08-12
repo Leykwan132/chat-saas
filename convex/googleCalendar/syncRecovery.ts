@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
+import { ownedSyncRun } from "./syncOwnership";
 
 const RECOVERY_EVENT_BATCH_SIZE = 40;
 
@@ -42,13 +43,19 @@ export const recoverInvalidSyncToken = internalMutation({
     cursor: v.optional(v.string()),
     now: v.number(),
   },
-  returns: v.object({ complete: v.boolean(), cursor: v.optional(v.string()), deletedCount: v.number() }),
+  returns: v.union(
+    v.object({ kind: v.literal("lost") }),
+    v.object({
+      kind: v.literal("progress"),
+      complete: v.boolean(),
+      cursor: v.optional(v.string()),
+      deletedCount: v.number(),
+    }),
+  ),
   handler: async (ctx, args) => {
-    const connection = await ctx.db.get(args.connectionId);
-    const run = await ctx.db.get(args.runId);
-    if (connection === null || run === null || run.connectionId !== connection._id || run.state !== "running") {
-      throw new Error("Google Calendar sync recovery run is not active");
-    }
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    const { connection, run } = owned;
     const cursor = decodeCursor(args.cursor);
     const membershipPage = await ctx.db
       .query("teamMemberships")
@@ -57,8 +64,13 @@ export const recoverInvalidSyncToken = internalMutation({
     const membership = membershipPage.page[0];
     if (membership === undefined) {
       await ctx.db.patch(run._id, { state: "failed", errorKind: "invalid_request", completedAt: args.now, updatedAt: args.now });
-      await ctx.db.patch(connection._id, { syncToken: undefined, updatedAt: args.now });
-      return { complete: true, deletedCount: 0 };
+      await ctx.db.patch(connection._id, {
+        state: "connected",
+        activeSyncRunId: undefined,
+        syncToken: undefined,
+        updatedAt: args.now,
+      });
+      return { kind: "progress" as const, complete: true, deletedCount: 0 };
     }
     const eventPage = await ctx.db
       .query("calendarEvents")
@@ -78,22 +90,31 @@ export const recoverInvalidSyncToken = internalMutation({
       deletedCount += 1;
     }
     if (!eventPage.isDone) {
+      await ctx.db.patch(run._id, { updatedAt: args.now });
       return {
+        kind: "progress" as const,
         complete: false,
         cursor: JSON.stringify({ membershipCursor: cursor.membershipCursor, eventCursor: eventPage.continueCursor }),
         deletedCount,
       };
     }
     if (!membershipPage.isDone) {
+      await ctx.db.patch(run._id, { updatedAt: args.now });
       return {
+        kind: "progress" as const,
         complete: false,
         cursor: JSON.stringify({ membershipCursor: membershipPage.continueCursor, eventCursor: null }),
         deletedCount,
       };
     }
     await ctx.db.patch(run._id, { state: "failed", errorKind: "invalid_request", completedAt: args.now, updatedAt: args.now });
-    await ctx.db.patch(connection._id, { syncToken: undefined, updatedAt: args.now });
-    return { complete: true, deletedCount };
+    await ctx.db.patch(connection._id, {
+      state: "connected",
+      activeSyncRunId: undefined,
+      syncToken: undefined,
+      updatedAt: args.now,
+    });
+    return { kind: "progress" as const, complete: true, deletedCount };
   },
 });
 
@@ -102,28 +123,32 @@ export const reconcileFullSync = internalMutation({
     connectionId: v.id("googleCalendarConnections"),
     runId: v.id("googleCalendarSyncRuns"),
     cursor: v.optional(v.string()),
+    now: v.number(),
   },
-  returns: v.object({
-    complete: v.boolean(),
-    cursor: v.optional(v.string()),
-    deletedCount: v.number(),
-  }),
+  returns: v.union(
+    v.object({ kind: v.literal("lost") }),
+    v.object({
+      kind: v.literal("progress"),
+      complete: v.boolean(),
+      cursor: v.optional(v.string()),
+      deletedCount: v.number(),
+    }),
+  ),
   handler: async (ctx, args) => {
-    const connection = await ctx.db.get(args.connectionId);
-    const run = await ctx.db.get(args.runId);
-    if (
-      connection === null || run === null || run.connectionId !== connection._id ||
-      run.state !== "running" || run.requestKind !== "full"
-    ) {
-      throw new Error("Google Calendar full sync run is not active");
-    }
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    const { connection, run } = owned;
+    if (run.requestKind !== "full") throw new Error("Google Calendar full sync requires a full run");
     const cursor = decodeCursor(args.cursor);
     const membershipPage = await ctx.db
       .query("teamMemberships")
       .withIndex("by_userId", (q) => q.eq("userId", connection.userId))
       .paginate({ cursor: cursor.membershipCursor, numItems: 1 });
     const membership = membershipPage.page[0];
-    if (membership === undefined) return { complete: true, deletedCount: 0 };
+    if (membership === undefined) {
+      await ctx.db.patch(run._id, { updatedAt: args.now });
+      return { kind: "progress" as const, complete: true, deletedCount: 0 };
+    }
     const eventPage = await ctx.db
       .query("calendarEvents")
       .withIndex(
@@ -145,7 +170,9 @@ export const reconcileFullSync = internalMutation({
       deletedCount += 1;
     }
     if (!eventPage.isDone) {
+      await ctx.db.patch(run._id, { updatedAt: args.now });
       return {
+        kind: "progress" as const,
         complete: false,
         cursor: JSON.stringify({
           membershipCursor: cursor.membershipCursor,
@@ -155,7 +182,9 @@ export const reconcileFullSync = internalMutation({
       };
     }
     if (!membershipPage.isDone) {
+      await ctx.db.patch(run._id, { updatedAt: args.now });
       return {
+        kind: "progress" as const,
         complete: false,
         cursor: JSON.stringify({
           membershipCursor: membershipPage.continueCursor,
@@ -164,6 +193,7 @@ export const reconcileFullSync = internalMutation({
         deletedCount,
       };
     }
-    return { complete: true, deletedCount };
+    await ctx.db.patch(run._id, { updatedAt: args.now });
+    return { kind: "progress" as const, complete: true, deletedCount };
   },
 });

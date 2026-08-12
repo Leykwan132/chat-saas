@@ -30,6 +30,7 @@ const syncInternal = internal as unknown as {
       finalizeSyncRun: InternalReference<Record<string, unknown>, unknown>;
       getConnectionForSync: InternalQueryReference<Record<string, unknown>, unknown>;
       markGoogleCalendarDirty: InternalReference<Record<string, unknown>, unknown>;
+      renewSyncRunLease: InternalReference<Record<string, unknown>, unknown>;
     };
   };
 };
@@ -52,6 +53,7 @@ function dependencies(t: CalendarTest): GoogleCalendarSyncDependencies {
   return {
     getConnection: (args) => t.query(state.syncState.getConnectionForSync, args) as never,
     beginRun: (args) => t.mutation(state.syncState.beginSyncRun, args) as never,
+    renewRun: (args) => t.mutation(state.syncState.renewSyncRunLease, args) as never,
     applyPage: (args) => t.mutation(state.eventStore.applyPage, args) as never,
     finalizeRun: (args) => t.mutation(state.syncState.finalizeSyncRun, args) as never,
     failRun: (args) => t.mutation(state.syncState.failSyncRun, args) as never,

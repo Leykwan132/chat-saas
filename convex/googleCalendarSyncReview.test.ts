@@ -33,6 +33,7 @@ const calendarInternal = (internal as unknown as {
       finalizeSyncRun: InternalMutation;
       getConnectionForSync: InternalQuery;
       markGoogleCalendarDirty: InternalMutation;
+      renewSyncRunLease: InternalMutation;
     };
   };
 }).googleCalendar;
@@ -65,6 +66,7 @@ function dependencies(t: CalendarTest): GoogleCalendarSyncDependencies {
   return {
     getConnection: (args) => t.query(calendarInternal.syncState.getConnectionForSync, args) as never,
     beginRun: (args) => t.mutation(calendarInternal.syncState.beginSyncRun, args) as never,
+    renewRun: (args) => t.mutation(calendarInternal.syncState.renewSyncRunLease, args) as never,
     applyPage: (args) => t.mutation(calendarInternal.eventStore.applyPage, args) as never,
     finalizeRun: (args) => t.mutation(calendarInternal.syncState.finalizeSyncRun, args) as never,
     failRun: (args) => t.mutation(calendarInternal.syncState.failSyncRun, args) as never,

@@ -55,6 +55,11 @@ export type GoogleCalendarSyncDependencies = {
     | { kind: "already_running" }
     | { kind: "started"; runId: Id<"googleCalendarSyncRuns"> }
   >;
+  renewRun: (args: {
+    connectionId: Id<"googleCalendarConnections">;
+    runId: Id<"googleCalendarSyncRuns">;
+    now: number;
+  }) => Promise<{ kind: "renewed" } | { kind: "lost" }>;
   applyPage: (args: {
     connectionId: Id<"googleCalendarConnections">;
     runId: Id<"googleCalendarSyncRuns">;
@@ -63,30 +68,47 @@ export type GoogleCalendarSyncDependencies = {
     nextPageToken?: string;
     candidateSyncToken?: string;
     now: number;
-  }) => Promise<{ nextMembershipCursor?: string }>;
+  }) => Promise<
+    | { kind: "lost" }
+    | {
+        kind: "applied";
+        importedCount: number;
+        updatedCount: number;
+        cancelledCount: number;
+        conflictCount: number;
+        nextMembershipCursor?: string;
+      }
+  >;
   finalizeRun: (args: {
     connectionId: Id<"googleCalendarConnections">;
     runId: Id<"googleCalendarSyncRuns">;
     syncToken: string;
     now: number;
-  }) => Promise<{ dirty: boolean }>;
+  }) => Promise<{ kind: "finalized"; dirty: boolean } | { kind: "lost" }>;
   failRun: (args: {
     connectionId: Id<"googleCalendarConnections">;
     runId: Id<"googleCalendarSyncRuns">;
     errorKind: GoogleCalendarSyncErrorKind;
     now: number;
-  }) => Promise<unknown>;
+  }) => Promise<{ kind: "failed" } | { kind: "lost" }>;
   recoverInvalidToken: (args: {
     connectionId: Id<"googleCalendarConnections">;
     runId: Id<"googleCalendarSyncRuns">;
     cursor?: string;
     now: number;
-  }) => Promise<{ complete: boolean; cursor?: string; deletedCount: number }>;
+  }) => Promise<
+    | { kind: "lost" }
+    | { kind: "progress"; complete: boolean; cursor?: string; deletedCount: number }
+  >;
   reconcileFullRun: (args: {
     connectionId: Id<"googleCalendarConnections">;
     runId: Id<"googleCalendarSyncRuns">;
     cursor?: string;
-  }) => Promise<{ complete: boolean; cursor?: string; deletedCount: number }>;
+    now: number;
+  }) => Promise<
+    | { kind: "lost" }
+    | { kind: "progress"; complete: boolean; cursor?: string; deletedCount: number }
+  >;
 };
 
 export type GoogleCalendarSyncResult = {

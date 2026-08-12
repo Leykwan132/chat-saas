@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import type { MappedGoogleCalendarEvent } from "./eventMapping";
+import { ownedSyncRun } from "./syncOwnership";
 
 const MAX_EVENTS_PER_PAGE = 20;
 
@@ -221,20 +222,22 @@ export const applyPage = internalMutation({
     candidateSyncToken: v.optional(v.string()),
     now: v.number(),
   },
-  returns: v.object({
-    importedCount: v.number(),
-    updatedCount: v.number(),
-    cancelledCount: v.number(),
-    conflictCount: v.number(),
-    nextMembershipCursor: v.optional(v.string()),
-  }),
+  returns: v.union(
+    v.object({ kind: v.literal("lost") }),
+    v.object({
+      kind: v.literal("applied"),
+      importedCount: v.number(),
+      updatedCount: v.number(),
+      cancelledCount: v.number(),
+      conflictCount: v.number(),
+      nextMembershipCursor: v.optional(v.string()),
+    }),
+  ),
   handler: async (ctx, args) => {
     if (args.events.length > MAX_EVENTS_PER_PAGE) throw new Error("Google Calendar page exceeds the synchronization batch limit");
-    const connection = await ctx.db.get(args.connectionId);
-    const run = await ctx.db.get(args.runId);
-    if (connection === null || run === null || run.connectionId !== connection._id || run.state !== "running") {
-      throw new Error("Google Calendar sync run is not active");
-    }
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    const { connection, run } = owned;
     const owner = await ctx.db.get(connection.userId);
     if (owner === null) throw new Error("Google Calendar connection owner not found");
     const membershipPage = await ctx.db
@@ -271,6 +274,7 @@ export const applyPage = internalMutation({
       updatedAt: args.now,
     });
     return {
+      kind: "applied" as const,
       importedCount,
       updatedCount,
       cancelledCount,

@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery } from "../_generated/server";
 import { googleCalendarErrorKindValidator, googleCalendarSyncRequestKindValidator } from "./contracts";
 import { SYNC_RUN_LEASE_MS } from "./constants";
+import { ownedSyncRun } from "./syncOwnership";
 
 const connectionForSyncValidator = v.object({
   connectionId: v.id("googleCalendarConnections"),
@@ -71,24 +72,35 @@ export const beginSyncRun = internalMutation({
   handler: async (ctx, args) => {
     const connection = await ctx.db.get(args.connectionId);
     if (connection === null) throw new Error("Google Calendar connection not found");
-    const activeRuns = await ctx.db
-      .query("googleCalendarSyncRuns")
-      .withIndex("by_connectionId_and_state", (q) =>
-        q.eq("connectionId", args.connectionId).eq("state", "running"),
-      )
-      .take(2);
-    const currentRun = activeRuns.find(
-      (run) => args.now - run.updatedAt <= SYNC_RUN_LEASE_MS,
-    );
-    if (currentRun !== undefined) {
+    let currentRun = connection.activeSyncRunId === undefined
+      ? undefined
+      : await ctx.db.get(connection.activeSyncRunId);
+    if (currentRun !== undefined && currentRun !== null && currentRun.connectionId !== connection._id) {
+      throw new Error("Google Calendar active sync run belongs to another connection");
+    }
+    if (currentRun === undefined && connection.state === "syncing") {
+      const legacyRuns = await ctx.db
+        .query("googleCalendarSyncRuns")
+        .withIndex("by_connectionId_and_state", (q) =>
+          q.eq("connectionId", args.connectionId).eq("state", "running"),
+        )
+        .take(2);
+      if (legacyRuns.length > 1) throw new Error("Google Calendar connection has multiple active sync runs");
+      currentRun = legacyRuns[0];
+    }
+    if (
+      currentRun !== undefined && currentRun !== null && currentRun.state === "running" &&
+      args.now - currentRun.updatedAt <= SYNC_RUN_LEASE_MS
+    ) {
       await ctx.db.patch(connection._id, {
+        activeSyncRunId: currentRun._id,
         dirtyGeneration: connection.dirtyGeneration + 1,
         updatedAt: args.now,
       });
       return { kind: "already_running" as const };
     }
-    for (const staleRun of activeRuns) {
-      await ctx.db.patch(staleRun._id, {
+    if (currentRun !== undefined && currentRun !== null && currentRun.state === "running") {
+      await ctx.db.patch(currentRun._id, {
         state: "failed",
         errorKind: "retryable",
         completedAt: args.now,
@@ -112,10 +124,29 @@ export const beginSyncRun = internalMutation({
     });
     await ctx.db.patch(connection._id, {
       state: "syncing",
+      activeSyncRunId: runId,
       lastSyncAttemptedAt: args.now,
       updatedAt: args.now,
     });
     return { kind: "started" as const, runId };
+  },
+});
+
+export const renewSyncRunLease = internalMutation({
+  args: {
+    connectionId: v.id("googleCalendarConnections"),
+    runId: v.id("googleCalendarSyncRuns"),
+    now: v.number(),
+  },
+  returns: v.union(
+    v.object({ kind: v.literal("renewed") }),
+    v.object({ kind: v.literal("lost") }),
+  ),
+  handler: async (ctx, args) => {
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    await ctx.db.patch(owned.run._id, { updatedAt: args.now });
+    return { kind: "renewed" as const };
   },
 });
 
@@ -126,16 +157,18 @@ export const finalizeSyncRun = internalMutation({
     syncToken: v.string(),
     now: v.number(),
   },
-  returns: v.object({ dirty: v.boolean() }),
+  returns: v.union(
+    v.object({ kind: v.literal("finalized"), dirty: v.boolean() }),
+    v.object({ kind: v.literal("lost") }),
+  ),
   handler: async (ctx, args) => {
-    const connection = await ctx.db.get(args.connectionId);
-    const run = await ctx.db.get(args.runId);
-    if (connection === null || run === null || run.connectionId !== connection._id || run.state !== "running") {
-      throw new Error("Google Calendar sync run is not active");
-    }
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    const { connection, run } = owned;
     await ctx.db.patch(run._id, { state: "completed", candidateSyncToken: args.syncToken, completedAt: args.now, updatedAt: args.now });
     await ctx.db.patch(connection._id, {
       state: "connected",
+      activeSyncRunId: undefined,
       syncToken: args.syncToken,
       fullSyncStartAt: run.requestKind === "full" ? run.fullSyncStartAt : connection.fullSyncStartAt,
       fullSyncEndAt: run.requestKind === "full" ? run.fullSyncEndAt : connection.fullSyncEndAt,
@@ -143,7 +176,7 @@ export const finalizeSyncRun = internalMutation({
       lastErrorKind: undefined,
       updatedAt: args.now,
     });
-    return { dirty: connection.dirtyGeneration > run.dirtyGeneration };
+    return { kind: "finalized" as const, dirty: connection.dirtyGeneration > run.dirtyGeneration };
   },
 });
 
@@ -154,21 +187,21 @@ export const failSyncRun = internalMutation({
     errorKind: googleCalendarErrorKindValidator,
     now: v.number(),
   },
-  returns: v.null(),
+  returns: v.union(
+    v.object({ kind: v.literal("failed") }),
+    v.object({ kind: v.literal("lost") }),
+  ),
   handler: async (ctx, args) => {
-    const connection = await ctx.db.get(args.connectionId);
-    const run = await ctx.db.get(args.runId);
-    if (connection === null || run === null || run.connectionId !== connection._id) {
-      throw new Error("Google Calendar sync run not found");
-    }
-    if (run.state === "running") {
-      await ctx.db.patch(run._id, { state: "failed", errorKind: args.errorKind, completedAt: args.now, updatedAt: args.now });
-    }
+    const owned = await ownedSyncRun(ctx, args.connectionId, args.runId);
+    if (owned === undefined) return { kind: "lost" as const };
+    const { connection, run } = owned;
+    await ctx.db.patch(run._id, { state: "failed", errorKind: args.errorKind, completedAt: args.now, updatedAt: args.now });
     await ctx.db.patch(connection._id, {
       state: args.errorKind === "needs_reauthorization" ? "needs_reauthorization" : "connected",
+      activeSyncRunId: undefined,
       lastErrorKind: args.errorKind,
       updatedAt: args.now,
     });
-    return null;
+    return { kind: "failed" as const };
   },
 });

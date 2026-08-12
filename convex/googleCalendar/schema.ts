@@ -45,6 +45,7 @@ export const googleCalendarTables = {
     lastSyncAttemptedAt: v.optional(v.number()),
     lastSuccessfulSyncAt: v.optional(v.number()),
     lastErrorKind: v.optional(googleCalendarErrorKindValidator),
+    activeSyncRunId: v.optional(v.id("googleCalendarSyncRuns")),
     activeWatchChannelId: v.optional(v.id("googleCalendarWatchChannels")),
     createdAt: v.number(),
     updatedAt: v.number(),
