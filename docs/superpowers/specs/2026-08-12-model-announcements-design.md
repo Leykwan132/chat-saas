@@ -23,6 +23,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Language strengths use `Primary`, `Strong`, and `Supported` labels and explicitly cover Malay, Chinese, and English where applicable.
 - Hovering or focusing a model row in the selection Dialog opens a shadcn HoverCard.
 - The HoverCard uses `@smastrom/react-rating` in read-only mode for the overall score, compact text rows for the four supporting metrics, language badges, and the `bestFor` statement.
+- The read-only rating uses `StickerStar` with active fill `#f59e0b` and inactive fill `#ffedd5`, preserving its 120px maximum width and visible numeric score.
 - The selection row remains clickable and inaccessible models keep their existing upgrade behavior.
 
 ## Scorecard identity header
@@ -65,6 +66,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Model scorecard tests assert complete enabled-model coverage, score bounds, language labels, and the initial editorial values.
 - Model picker tests assert each row is wrapped in the scorecard HoverCard and the Rating package is read-only.
 - Model scorecard tests assert the visible identity header contains the supplied model name and the shared provider icon.
+- Model scorecard tests assert the Rating uses `StickerStar`, the approved amber fills, and remains read-only.
 - Announcement tests assert Package-icon button copy, click Popover, single Accordion behavior, `New` badge, one action, and full Dialog handoff.
 - Model-selector tests assert Qwen uses LobeHub’s colored component and other providers retain their existing image behavior.
 - Run focused Vitest, scoped ESLint, Node 22 TypeScript, production build, and `git diff --check`.
