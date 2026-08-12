@@ -65,12 +65,6 @@ export function AnnouncementDialogList({
                       <span className="font-normal leading-5 text-muted-foreground">
                         {announcement.summary}
                       </span>
-                      <time
-                        dateTime={announcement.publishedAt}
-                        className="text-xs font-normal text-muted-foreground"
-                      >
-                        {formatAnnouncementDate(announcement.publishedAt)}
-                      </time>
                     </span>
                   </div>
                   <ChevronRight
@@ -79,6 +73,12 @@ export function AnnouncementDialogList({
                   />
                 </AccordionTrigger>
                 <AccordionContent className="px-6 pb-5">
+                  <time
+                    dateTime={announcement.publishedAt}
+                    className="mb-3 block pl-8 text-xs font-normal text-muted-foreground"
+                  >
+                    {formatAnnouncementDate(announcement.publishedAt)}
+                  </time>
                   <ul className="flex list-disc flex-col gap-2 pl-8 text-sm text-muted-foreground">
                     {announcement.details.map((detail) => (
                       <li key={detail}>{detail}</li>

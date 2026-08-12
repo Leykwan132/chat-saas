@@ -29,7 +29,7 @@
 - Consumes: `Announcement.publishedAt: string` and the existing `formatAnnouncementDate(publishedAt: string): string` behavior.
 - Produces: `WhatsNewDialog` using `https://storage.kilobot.app/dashboard/new-feature.png`; `AnnouncementDialogList` with a semantic `time` element inside `AccordionContent` only.
 
-- [ ] **Step 1: Write the failing regression test**
+- [x] **Step 1: Write the failing regression test**
 
 Update the banner assertion and assert that the trigger omits the date while expanded content contains the semantic date:
 
@@ -46,7 +46,7 @@ expect(
 ).toMatchObject({ dateTime: '2026-08-12' });
 ```
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -56,7 +56,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: FAIL because the banner still uses `new%20feature%402x.png` and the date remains inside `AccordionTrigger`.
 
-- [ ] **Step 3: Implement the minimal UI change**
+- [x] **Step 3: Implement the minimal UI change**
 
 Set the banner source:
 
@@ -82,7 +82,7 @@ Move the existing `time` element into `AccordionContent`, before the list:
 </AccordionContent>
 ```
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -92,7 +92,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/WhatsNewDia
 
 Expected: all tests, lint, build, and whitespace checks pass.
 
-- [ ] **Step 5: Record and commit the verified change**
+- [x] **Step 5: Record and commit the verified change**
 
 Update `CONTINUITY.md` with the user-visible behavior, verification result, and unreleased status, then run:
 

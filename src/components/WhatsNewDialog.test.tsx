@@ -74,7 +74,7 @@ test('renders a labeled Package button that opens the announcement panel', () =>
   );
   expect(descendants.some((candidate) => candidate.type === DialogDescription)).toBe(true);
   expect(banner?.props).toMatchObject({
-    src: 'https://storage.kilobot.app/dashboard/new%20feature%402x.png',
+    src: 'https://storage.kilobot.app/dashboard/new-feature.png',
     alt: 'Kilobot AI conversations and call analytics preview',
   });
   expect(banner?.props.className).toContain('aspect-[4/1]');
@@ -126,7 +126,11 @@ test('renders a single-open accordion with full details inline', async () => {
   const badge = descendants.find(
     (candidate) => candidate.type === Badge,
   ) as ReactElement<{ className?: string }> | undefined;
-  const date = descendants.find((candidate) => candidate.type === 'time');
+  const contentDate = accordionContent
+    ? collectElements(accordionContent).find(
+        (candidate) => candidate.type === 'time',
+      )
+    : undefined;
   const chevron = descendants.find(
     (candidate) => candidate.type === ChevronRight,
   ) as ReactElement<{ className?: string }> | undefined;
@@ -143,8 +147,9 @@ test('renders a single-open accordion with full details inline', async () => {
   expect(text).toContain('What’s new in Kilobot');
   expect(text).toContain('Model support update');
   expect(text).toContain('New');
-  expect(text).toContain('12 Aug 2026');
-  expect(date?.props).toMatchObject({ dateTime: '2026-08-12' });
+  expect(collectText(accordionTrigger)).not.toContain('12 Aug 2026');
+  expect(collectText(accordionContent)).toContain('12 Aug 2026');
+  expect(contentDate?.props).toMatchObject({ dateTime: '2026-08-12' });
   expect(badge?.props.className).toContain('bg-muted');
   expect(accordionTrigger?.props.showIndicator).toBe(false);
   expect(chevron?.props.className).toContain(
