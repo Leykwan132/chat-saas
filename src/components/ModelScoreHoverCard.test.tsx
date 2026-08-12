@@ -39,6 +39,9 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const descendants = collectElements(element);
   const rating = descendants.find((candidate) => candidate.type === Rating);
   const modelLogo = descendants.find((candidate) => candidate.type === ModelSelectorLogo);
+  const languageProgress = descendants.filter(
+    (candidate) => candidate.props.role === 'progressbar',
+  );
   const text = collectText(element).replace(/\s+/g, ' ');
 
   expect(element.type).toBe(HoverCard);
@@ -59,8 +62,17 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Speed');
   expect(text).toContain('Reasoning');
   expect(text).toContain('Value');
-  expect(text).toContain('Chinese · Primary');
-  expect(text).toContain('English · Strong');
+  expect(text).toContain('Chinese 5.0 / 5');
+  expect(text).toContain('English 4.0 / 5');
+  expect(text).not.toContain('Primary');
+  expect(text).not.toContain('Strong');
+  expect(languageProgress).toHaveLength(2);
+  expect(languageProgress[0]?.props).toMatchObject({
+    'aria-label': 'Chinese language fit',
+    'aria-valuemin': 0,
+    'aria-valuemax': 5,
+    'aria-valuenow': 5,
+  });
   expect(text).toContain('Fast Chinese conversations');
 });
 

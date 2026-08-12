@@ -1,7 +1,6 @@
 import { Rating, StickerStar } from '@smastrom/react-rating';
 import type { ReactElement } from 'react';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
-import { Badge } from '@/components/ui/badge';
 import {
   HoverCard,
   HoverCardContent,
@@ -78,13 +77,31 @@ export function ModelScoreHoverCard({
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               Language fit
             </span>
-            <div className="flex flex-wrap gap-2">
+            <dl className="flex flex-col gap-2.5">
               {scorecard.languages.map((language) => (
-                <Badge key={language.name} variant="secondary">
-                  {language.name} · {language.strength}
-                </Badge>
+                <div key={language.name} className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <dt>{language.name}</dt>
+                    <dd className="font-medium">
+                      {language.score.toFixed(1)} / 5
+                    </dd>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-label={`${language.name} language fit`}
+                    aria-valuemin={0}
+                    aria-valuemax={5}
+                    aria-valuenow={language.score}
+                    className="h-1.5 overflow-hidden rounded-full bg-muted"
+                  >
+                    <div
+                      className="h-full rounded-full bg-foreground"
+                      style={{ width: `${language.score * 20}%` }}
+                    />
+                  </div>
+                </div>
               ))}
-            </div>
+            </dl>
           </div>
           <div className="flex flex-col gap-1">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
