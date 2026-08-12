@@ -14,7 +14,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Clicking an announcement expands its Accordion item and shows the full detail list inline.
 - Closed announcement rows show a right-pointing chevron. The same chevron rotates down only while its row is expanded; shared Accordion indicators elsewhere remain unchanged.
 - Remove the intermediate Popover, `View full update` action, and secondary announcement detail Dialog.
-- The first announcement is `Model support update` and explains Qwen3.7 Flash for Chinese conversations, NVIDIA Nemotron 3.5 Lightning for fast English responses, GPT-5.6 Luna for stronger performance, and GPT-OSS 120B for budget-friendly reasoning.
+- The first announcement is `Model support update` and uses a scan-friendly list that states: GPT-OSS 120B and Qwen3.7 Flash introduce a new 0.5-credit-per-message tier; NVIDIA Nemotron 3.5 Lightning is new at one credit per message; GPT-5.6 Luna is new at two credits per message; DeepSeek V4 Flash remains available at one credit per message; Amazon Nova Micro and Google Gemini 3.1 Flash Lite are removed.
 - The first announcement uses Lucide’s `Orbit` icon as the installed asteroid-style symbol, displays `12 Aug 2026` from its structured ISO announcement date, and renders its `New` badge with a subtle neutral background and border.
 - Announcement data remains local and structured for future additions. No read state or backend persistence is introduced.
 
