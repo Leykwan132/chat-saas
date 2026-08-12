@@ -60,6 +60,9 @@ export const DIRECT_ORG_TABLES = [
 ] as const satisfies readonly TableNames[];
 
 export const TEAM_ID_TABLES = [
+  "calendarAvailabilityPreloadUsers",
+  "calendarAvailabilityPreloads",
+  "calendarAvailabilityRevisions",
   "calendarAvailabilityIntervals",
   "calendarEventParticipants",
   "calendarEvents",
@@ -113,6 +116,9 @@ const orgIndexByTable: Record<(typeof DIRECT_ORG_TABLES)[number], string> = {
 };
 
 const teamIndexByTable: Record<(typeof TEAM_ID_TABLES)[number], string> = {
+  calendarAvailabilityPreloadUsers: "by_teamId",
+  calendarAvailabilityPreloads: "by_teamId_and_agentId_and_windowStartAt_and_windowEndAt",
+  calendarAvailabilityRevisions: "by_teamId",
   calendarAvailabilityIntervals: "by_teamId_and_userId_and_bucketKind_and_bucketKey_and_startAt",
   calendarEventParticipants: "by_teamId_and_userId_and_eventStartAt",
   calendarEvents: "by_teamId_and_startAt",

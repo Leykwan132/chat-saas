@@ -1725,6 +1725,48 @@ export default defineSchema({
       "bucketKey",
       "endAt",
     ]),
+  calendarAvailabilityRevisions: defineTable({
+    teamId: v.id("teams"),
+    revision: v.number(),
+    updatedAt: v.number(),
+  }).index("by_teamId", ["teamId"]),
+  calendarAvailabilityPreloads: defineTable({
+    teamId: v.id("teams"),
+    agentId: v.id("agents"),
+    windowStartAt: v.number(),
+    windowEndAt: v.number(),
+    userIds: v.array(v.id("users")),
+    state: v.union(v.literal("pending"), v.literal("ready")),
+    phase: v.union(v.literal("repair"), v.literal("load")),
+    generation: v.number(),
+    nextUserIndex: v.number(),
+    revision: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_teamId_and_agentId_and_windowStartAt_and_windowEndAt", [
+    "teamId",
+    "agentId",
+    "windowStartAt",
+    "windowEndAt",
+  ]),
+  calendarAvailabilityPreloadUsers: defineTable({
+    preloadId: v.id("calendarAvailabilityPreloads"),
+    teamId: v.id("teams"),
+    userId: v.id("users"),
+    generation: v.number(),
+    safe: v.boolean(),
+    intervals: v.array(v.object({
+      eventId: v.id("calendarEvents"),
+      startAt: v.number(),
+      endAt: v.number(),
+      externalOwnerUserId: v.optional(v.id("users")),
+    })),
+    updatedAt: v.number(),
+  })
+    .index("by_preloadId", ["preloadId"])
+    .index("by_preloadId_and_userId", ["preloadId", "userId"])
+    .index("by_teamId", ["teamId"]),
   whatsappBroadcastSchedules: defineTable({
     agentId: v.id("agents"),
     orgId: v.string(),

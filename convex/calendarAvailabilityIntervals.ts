@@ -9,6 +9,32 @@ const MAX_INTERVAL_BUCKETS = 32;
 export type AvailabilityBucketKind = "day" | "month" | "long";
 export type AvailabilityBucket = { kind: AvailabilityBucketKind; key: string };
 
+export async function readCalendarAvailabilityRevision(
+  ctx: MutationCtx,
+  teamId: Id<"teams">,
+) {
+  return (await ctx.db
+    .query("calendarAvailabilityRevisions")
+    .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+    .unique())?.revision ?? 0;
+}
+
+async function bumpCalendarAvailabilityRevision(
+  ctx: MutationCtx,
+  teamId: Id<"teams">,
+  now: number,
+) {
+  const current = await ctx.db
+    .query("calendarAvailabilityRevisions")
+    .withIndex("by_teamId", (q) => q.eq("teamId", teamId))
+    .unique();
+  if (current === null) {
+    await ctx.db.insert("calendarAvailabilityRevisions", { teamId, revision: 1, updatedAt: now });
+    return;
+  }
+  await ctx.db.patch(current._id, { revision: current.revision + 1, updatedAt: now });
+}
+
 function monthKey(time: number) {
   const date = new Date(time);
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
@@ -74,6 +100,9 @@ export async function removeParticipantAvailabilityIntervals(
     throw new Error("Calendar participant availability index is invalid");
   }
   for (const interval of intervals) await ctx.db.delete(interval._id);
+  for (const teamId of new Set(intervals.map((interval) => interval.teamId))) {
+    await bumpCalendarAvailabilityRevision(ctx, teamId, Date.now());
+  }
 }
 
 async function insertParticipantAvailabilityIntervals(
@@ -100,6 +129,7 @@ async function insertParticipantAvailabilityIntervals(
         createdAt: indexedAt,
       });
     }
+    await bumpCalendarAvailabilityRevision(ctx, participant.teamId, indexedAt);
   }
   await ctx.db.patch(participant._id, {
     eventEndAt: event?.endAt ?? participant.eventEndAt,

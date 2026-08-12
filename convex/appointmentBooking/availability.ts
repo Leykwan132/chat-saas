@@ -1,21 +1,13 @@
+import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { getZonedDayAndMinutes } from "../leadRouting/eligibility";
-import { getUserByWorkosId } from "../teamHelpers";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
-import {
-  calendarAvailabilityHasConflict,
-  loadCalendarAvailabilityByUser,
-  loadGoogleCalendarHealthByUser,
-  type UserCalendarAvailability,
-} from "../googleCalendar/availability";
-
-type AvailabilityRosterEntry = RosterEntry & {
-  calendarAvailability: UserCalendarAvailability;
-  futureAssignedEventCount: number;
-  googleCalendarHealthy: boolean;
-};
+import { calendarAvailabilityHasConflict } from "../googleCalendar/availability";
+import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
+import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
 
 async function loadRoster(
   ctx: MutationCtx,
@@ -26,52 +18,15 @@ async function loadRoster(
     windowEndAt: number;
   },
 ): Promise<AvailabilityRosterEntry[]> {
-  const schedules = await ctx.db
-    .query("userSchedules")
-    .withIndex("by_agentId", (q) => q.eq("agentId", args.agentId))
-    .take(100);
-  const entries: RosterEntry[] = [];
-  for (const schedule of schedules) {
-    const shifts = await ctx.db
-      .query("userShifts")
-      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
-      .take(100);
-    const timeOff = await ctx.db
-      .query("userTimeOff")
-      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
-      .take(100);
-    const user = await getUserByWorkosId(ctx, schedule.workosUserId);
-    entries.push({ schedule, shifts, timeOff, user });
+  const loaded = await loadAvailabilityRoster(ctx, args);
+  if (loaded.worker !== undefined) {
+    await ctx.scheduler.runAfter(
+      0,
+      internal.appointmentBooking.availability.continueCalendarAvailabilityPreload,
+      loaded.worker,
+    );
   }
-  const userIds = entries.flatMap((entry) => entry.user === null ? [] : [entry.user._id]);
-  const now = Date.now();
-  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds, now);
-  const availabilityByUser = await loadCalendarAvailabilityByUser(ctx, {
-    teamId: args.teamId,
-    userIds,
-    startAt: args.windowStartAt,
-    endAt: args.windowEndAt,
-    now,
-  });
-  const futureCounts = new Map(await Promise.all([...new Set(userIds)].map(async (userId) => {
-    const rows = await ctx.db
-      .query("calendarEventParticipants")
-      .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) => q
-        .eq("teamId", args.teamId)
-        .eq("role", "assigned")
-        .eq("userId", userId)
-        .gte("eventStartAt", now))
-      .take(100);
-    return [userId, rows.length] as const;
-  })));
-  return entries.map((entry) => ({
-    ...entry,
-    calendarAvailability: entry.user === null
-      ? { safe: false, intervals: [] }
-      : availabilityByUser.get(entry.user._id) ?? { safe: false, intervals: [] },
-    futureAssignedEventCount: entry.user === null ? 0 : futureCounts.get(entry.user._id) ?? 0,
-    googleCalendarHealthy: entry.user !== null && healthByUser.get(entry.user._id) === true,
-  }));
+  return loaded.entries;
 }
 
 function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
@@ -291,3 +246,22 @@ export async function resolveAvailableInterval(
     assignedDisplayName: displayNameForUser(assignee.user),
   };
 }
+
+export const continueCalendarAvailabilityPreload = internalMutation({
+  args: {
+    preloadId: v.id("calendarAvailabilityPreloads"),
+    generation: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const result = await advanceCalendarAvailabilityPreload(ctx, { ...args, now: Date.now() });
+    if (result.continue && result.worker !== undefined) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.appointmentBooking.availability.continueCalendarAvailabilityPreload,
+        result.worker,
+      );
+    }
+    return null;
+  },
+});
