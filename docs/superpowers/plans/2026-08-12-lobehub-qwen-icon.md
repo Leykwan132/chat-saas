@@ -34,7 +34,7 @@
 - Consumes: `ModelSelectorLogo({ provider: string, src?: string, className?: string })` and `Qwen.Color` from `@lobehub/icons`.
 - Produces: a Qwen-specific SVG branch inside `ModelSelectorLogo`; non-Qwen providers continue returning an `<img>` resolved by `getModelSelectorLogoSource`.
 
-- [ ] **Step 1: Write the failing rendered-logo regression**
+- [x] **Step 1: Write the failing rendered-logo regression**
 
 Rename the test to TSX, import `renderToStaticMarkup` and `ModelSelectorLogo`, and add this behavior test:
 
@@ -49,7 +49,7 @@ test('renders the colored LobeHub Qwen icon for the qwen provider', () => {
 
 Keep the existing literal tests for custom source and models.dev fallback resolution. This catches replacing the shared Qwen branch with the generic image path.
 
-- [ ] **Step 2: Lock Qwen’s catalog boundary**
+- [x] **Step 2: Lock Qwen’s catalog boundary**
 
 Change the existing Qwen pricing assertion to:
 
@@ -60,7 +60,7 @@ expect(model?.chefSlug).toBe('qwen');
 
 This catches accidentally restoring a Qwen-only asset transport while preserving the provider key used by the shared renderer.
 
-- [ ] **Step 3: Run the focused tests and verify RED**
+- [x] **Step 3: Run the focused tests and verify RED**
 
 Run:
 
@@ -70,16 +70,16 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/ai-elements
 
 Expected: the rendered-logo test fails because Qwen still produces an `<img>`, and the pricing test fails because Qwen still has `/model-logos/qwen.svg`.
 
-- [ ] **Step 4: Add the minimal shared Qwen rendering branch**
+- [x] **Step 4: Add the minimal shared Qwen rendering branch**
 
-Import `Qwen` and render its colored component before the existing image branch:
+Import the color-only Qwen component subpath and render it before the existing image branch. The package root and compounded Qwen entry import unrelated `@lobehub/ui` feature modules, while this subpath contains only the requested icon:
 
 ```tsx
-import { Qwen } from '@lobehub/icons';
+import QwenColor from '@lobehub/icons/es/Qwen/components/Color';
 
 if (provider === 'qwen') {
   return (
-    <Qwen.Color
+    <QwenColor
       aria-label="Qwen logo"
       className={cn('size-3', className)}
       size={12}
@@ -90,15 +90,15 @@ if (provider === 'qwen') {
 
 Keep the existing `<img>` implementation unchanged for every other provider. The existing `className="size-4"` calls continue overriding visual size through the shared class name while the SVG retains a 12px default.
 
-- [ ] **Step 5: Remove the obsolete asset transport**
+- [x] **Step 5: Remove the obsolete asset transport**
 
 Delete Qwen’s `imageUrl` property from `convex/llm/modelPricing.ts` and delete `public/model-logos/qwen.svg`. Keep `chefSlug: "qwen"` unchanged so both picker surfaces select the LobeHub branch.
 
-- [ ] **Step 6: Run focused tests and verify GREEN**
+- [x] **Step 6: Run focused tests and verify GREEN**
 
 Run the Step 3 command and expect all focused tests to pass.
 
-- [ ] **Step 7: Run scoped verification**
+- [x] **Step 7: Run scoped verification**
 
 Run:
 
@@ -108,7 +108,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx eslint src/components/ai-elements/mod
 
 Expected: ESLint, TypeScript/Vite production build, and whitespace validation all exit successfully.
 
-- [ ] **Step 8: Update continuity and commit**
+- [x] **Step 8: Update continuity and commit**
 
 Record the LobeHub Qwen renderer, removed local asset, focused test count, lint/build evidence, unchanged changelog state, and untouched unrelated pricing note. Stage only the planned files and commit:
 

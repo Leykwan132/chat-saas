@@ -9,6 +9,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from "@/components/ui/command";
+import QwenColor from "@lobehub/icons/es/Qwen/components/Color";
 import {
   Dialog,
   DialogContent,
@@ -188,16 +189,28 @@ export const ModelSelectorLogo = ({
   src,
   className,
   ...props
-}: ModelSelectorLogoProps) => (
-  <img
-    {...props}
-    alt={`${provider} logo`}
-    className={cn("size-3 dark:invert", className)}
-    height={12}
-    src={getModelSelectorLogoSource(provider, src)}
-    width={12}
-  />
-);
+}: ModelSelectorLogoProps) => {
+  if (provider === "qwen") {
+    return (
+      <QwenColor
+        aria-label="Qwen logo"
+        className={cn("size-3", className)}
+        size={12}
+      />
+    );
+  }
+
+  return (
+    <img
+      {...props}
+      alt={`${provider} logo`}
+      className={cn("size-3 dark:invert", className)}
+      height={12}
+      src={getModelSelectorLogoSource(provider, src)}
+      width={12}
+    />
+  );
+};
 
 export type ModelSelectorLogoGroupProps = ComponentProps<"div">;
 

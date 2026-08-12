@@ -113,12 +113,13 @@ test("models without custom metadata omit optional fields", () => {
   expect(model).not.toHaveProperty("outputCostMyrPerMillion");
 });
 
-test("Qwen3.7 Flash uses the recognizable local Qwen brand asset", () => {
+test("Qwen3.7 Flash delegates branding to its provider slug", () => {
   const model = listEnabledModels().find(
     (entry) => entry.value === "qwen/qwen3.7-flash",
   );
 
-  expect(model?.imageUrl).toBe("/model-logos/qwen.svg");
+  expect(model).not.toHaveProperty("imageUrl");
+  expect(model?.chefSlug).toBe("qwen");
 });
 
 test("trimmed model options are not enabled or included in plan entitlements", () => {
