@@ -22,7 +22,10 @@ export function AnnouncementReleaseDetails({
   announcement,
 }: AnnouncementReleaseDetailsProps) {
   return (
-    <div data-slot="announcement-release" className="flex flex-col gap-5">
+    <div
+      data-slot="announcement-release"
+      className="flex flex-col gap-6 rounded-xl bg-muted/40 p-5"
+    >
       <div className="flex flex-col gap-1.5">
         <h3 className="text-base font-semibold">{announcement.releaseTitle}</h3>
         <p className="text-sm leading-5 text-muted-foreground">

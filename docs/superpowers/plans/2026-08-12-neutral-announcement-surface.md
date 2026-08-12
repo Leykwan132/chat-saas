@@ -30,11 +30,11 @@
 - Consumes: the existing `data-slot="announcement-release"` root and semantic release sections.
 - Produces: one root surface with `rounded-xl bg-muted/40 p-5 gap-6`, while section content retains `gap-2` and descendants remain free of border or background-card treatments.
 
-- [ ] **Step 1: Write the failing surface test**
+- [x] **Step 1: Write the failing surface test**
 
   Assert the release root includes `rounded-xl`, `bg-muted/40`, `p-5`, and `gap-6`. Assert its descendants contain no other `bg-muted/40`, `rounded-xl`, or `border` classes except the existing date divider’s `border-t`.
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
   Run:
 
@@ -44,7 +44,7 @@
 
   Expected: FAIL because the release root currently has only `flex flex-col gap-5`.
 
-- [ ] **Step 3: Apply the approved root treatment**
+- [x] **Step 3: Apply the approved root treatment**
 
   Change the release root class to:
 
@@ -54,7 +54,7 @@
 
   Leave the existing section `gap-2` classes and date divider unchanged.
 
-- [ ] **Step 4: Run focused verification to verify GREEN**
+- [x] **Step 4: Run focused verification to verify GREEN**
 
   Run:
 
@@ -64,7 +64,7 @@
 
   Expected: all tests pass.
 
-- [ ] **Step 5: Run the scoped quality gate**
+- [x] **Step 5: Run the scoped quality gate**
 
   Run:
 
@@ -77,7 +77,7 @@
 
   Expected: all commands pass; the build may retain only established bundle-size warnings.
 
-- [ ] **Step 6: Record continuity and commit**
+- [x] **Step 6: Record continuity and commit**
 
   Record the verified unreleased visual improvement in `CONTINUITY.md`, leave the changelog unchanged, stage only task-owned files, and commit with:
 

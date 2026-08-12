@@ -214,7 +214,8 @@ test('renders a single-open accordion with full details inline', async () => {
     (candidate) => candidate.type === CalendarDays,
   );
   const releaseText = collectText(renderedReleaseDetails).replace(/\s+/g, ' ');
-  const releaseClassNames = renderedReleaseElements
+  const nestedReleaseClassNames = renderedReleaseElements
+    .slice(1)
     .map(
       (candidate) =>
         (candidate as ReactElement<{ className?: string }>).props.className,
@@ -284,9 +285,13 @@ test('renders a single-open accordion with full details inline', async () => {
     'Released on 12 Aug 2026',
   );
   expect(renderedReleaseDetails?.props.className).not.toContain('pl-8');
-  expect(releaseClassNames).not.toContain('rounded-xl');
-  expect(releaseClassNames).not.toContain('bg-muted/40');
-  expect(releaseClassNames).not.toContain('bg-muted/60');
-  expect(releaseClassNames).not.toContain('grid-cols-3');
+  expect(renderedReleaseDetails?.props.className).toContain('rounded-xl');
+  expect(renderedReleaseDetails?.props.className).toContain('bg-muted/40');
+  expect(renderedReleaseDetails?.props.className).toContain('p-5');
+  expect(renderedReleaseDetails?.props.className).toContain('gap-6');
+  expect(nestedReleaseClassNames).not.toContain('rounded-xl');
+  expect(nestedReleaseClassNames).not.toContain('bg-muted/40');
+  expect(nestedReleaseClassNames).not.toContain('bg-muted/60');
+  expect(nestedReleaseClassNames).not.toContain('grid-cols-3');
   expect(text).not.toContain('View full update');
 });
