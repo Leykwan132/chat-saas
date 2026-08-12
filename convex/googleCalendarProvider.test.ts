@@ -111,6 +111,26 @@ test("sends the Google authorization header and conditional match header", async
   expect(await receivedRequest?.text()).toBe('{"summary":"Updated meeting"}');
 });
 
+test.each(["https://attacker.example/events", "//attacker.example/events"])(
+  "rejects the cross-origin path %s before attaching a Google token",
+  async (path) => {
+    let fetchInvoked = false;
+
+    await expect(
+      googleCalendarRequest(
+        { token: "token" },
+        { method: "GET", path },
+        async () => {
+          fetchInvoked = true;
+          return responseJson({});
+        },
+      ),
+    ).rejects.toMatchObject({ kind: "invalid_request" });
+
+    expect(fetchInvoked).toBe(false);
+  },
+);
+
 test("returns undefined for an empty successful Google response", async () => {
   const result = await googleCalendarRequest<undefined>(
     { token: "token" },

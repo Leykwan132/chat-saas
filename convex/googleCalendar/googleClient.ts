@@ -1,4 +1,5 @@
 const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/";
+const GOOGLE_CALENDAR_API_ORIGIN = new URL(GOOGLE_CALENDAR_API_BASE).origin;
 
 export type GoogleCalendarRequest = {
   method: "GET" | "POST" | "PUT" | "DELETE";
@@ -59,7 +60,22 @@ function errorKindForStatus(status: number): GoogleCalendarProviderErrorKind {
 }
 
 function requestUrl(path: string): string {
-  return new URL(path.replace(/^\/+/, ""), GOOGLE_CALENDAR_API_BASE).toString();
+  const relativePath = path.trim();
+  if (
+    relativePath.startsWith("//") ||
+    relativePath.startsWith("\\") ||
+    /^[a-z][a-z\d+.-]*:/i.test(relativePath)
+  ) {
+    throw new GoogleCalendarProviderError("invalid_request");
+  }
+  const url = new URL(relativePath.replace(/^\/+/, ""), GOOGLE_CALENDAR_API_BASE);
+  if (
+    url.origin !== GOOGLE_CALENDAR_API_ORIGIN ||
+    !url.pathname.startsWith("/calendar/v3/")
+  ) {
+    throw new GoogleCalendarProviderError("invalid_request");
+  }
+  return url.toString();
 }
 
 function requestBody(request: GoogleCalendarRequest): string | undefined {
@@ -78,6 +94,7 @@ export async function googleCalendarRequest<T>(
   request: GoogleCalendarRequest,
   fetchImplementation: typeof fetch = fetch,
 ): Promise<T> {
+  const url = requestUrl(request.path);
   const body = requestBody(request);
   const headers = new Headers({ Authorization: `Bearer ${credential.token}` });
   if (body !== undefined) {
@@ -88,7 +105,7 @@ export async function googleCalendarRequest<T>(
   }
   let response: Response;
   try {
-    response = await fetchImplementation(requestUrl(request.path), {
+    response = await fetchImplementation(url, {
       method: request.method,
       headers,
       body,
