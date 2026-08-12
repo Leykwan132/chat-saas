@@ -1,32 +1,23 @@
-import { Banknote, Bot, Mail, ShoppingBag, type LucideIcon } from 'lucide-react';
+import { CalendarCheck, Headphones, type LucideIcon } from 'lucide-react';
+import type { AgentGoal } from '../../../shared/agentCreationGoals';
 import type { AgentTemplateKey } from '@/lib/agentTemplates';
 
 export type AgentTemplateOption = {
+  goal: AgentGoal;
   key: AgentTemplateKey;
   icon: LucideIcon;
-  description: string;
 };
 
 export const templateOptions: AgentTemplateOption[] = [
   {
-    key: 'blank',
-    icon: Bot,
-    description: 'Flexible assistant for custom instructions.',
-  },
-  {
-    key: 'sales',
-    icon: Banknote,
-    description: 'Book real estate showroom visits and qualify buyers.',
-  },
-  {
-    key: 'productSales',
-    icon: ShoppingBag,
-    description: 'Sell products and guide buyers to the next purchase step.',
-  },
-  {
+    goal: 'support',
     key: 'support',
-    icon: Mail,
-    description: 'Resolve customer issues with care.',
+    icon: Headphones,
+  },
+  {
+    goal: 'bookService',
+    key: 'sales',
+    icon: CalendarCheck,
   },
 ];
 

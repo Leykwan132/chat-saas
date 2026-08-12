@@ -1,4 +1,4 @@
-import type { AgentTemplateKey } from '@/lib/agentTemplates';
+import type { AgentGoal } from '../../../shared/agentCreationGoals';
 import type { Id } from '../../../convex/_generated/dataModel';
 import type { ModelPickerOption } from '@/components/ModelPicker';
 import { AgentPlaygroundPanel } from '@/components/AgentPlaygroundPanel';
@@ -33,7 +33,7 @@ type AgentSetupPanelsProps = {
   onNameChange: (value: string) => void;
   onModelChange: (value: string) => void;
   onSystemPromptChange: (value: string) => void;
-  onApplyTemplate: (key: AgentTemplateKey) => void;
+  onApplyTemplate: (goal: AgentGoal) => void;
   onResponseLengthChange: (value: ResponseLength) => void;
   onEmojiUseChange: (value: EmojiUse) => void;
   onFormalityChange: (value: Formality) => void;

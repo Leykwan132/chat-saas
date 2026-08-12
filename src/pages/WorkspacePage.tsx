@@ -16,6 +16,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { RequireOrganization } from '@/components/RequireOrganization';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
 import { SupportHoverCard } from '@/components/SupportHoverCard';
+import { WhatsNewDialog } from '@/components/WhatsNewDialog';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { Button } from '@/components/ui/button';
@@ -42,6 +43,7 @@ function WorkspaceShell() {
           </Breadcrumb>
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden items-center gap-1 md:flex">
+              <WhatsNewDialog />
               <SupportHoverCard />
               <ModeToggle />
             </div>

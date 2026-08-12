@@ -11,7 +11,12 @@ import { Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
-import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
+import {
+  buildAgentSystemPrompt,
+  templateKeyForAgentGoal,
+  type AgentGoal,
+} from '../../shared/agentCreationGoals';
+import type { AgentTemplateKey } from '@/lib/agentTemplates';
 import { AgentSetupHeader } from '@/components/agent-setup/AgentSetupHeader';
 import { AgentSetupPanels } from '@/components/agent-setup/AgentSetupPanels';
 import { UnsavedChangesDialog } from '@/components/agent-setup/UnsavedChangesDialog';
@@ -120,9 +125,13 @@ export default function InstructionsPage() {
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty]);
-  const applyTemplate = (key: AgentTemplateKey) => {
-    setTemplateKey(key);
-    setSystemPrompt(AGENT_TEMPLATES[key].prompt);
+  const applyTemplate = (goal: AgentGoal) => {
+    setTemplateKey(templateKeyForAgentGoal(goal));
+    setSystemPrompt(buildAgentSystemPrompt({
+      businessName: agent?.businessName,
+      businessDescription: agent?.businessDescription,
+      goal,
+    }));
   };
   const handlePublish = async () => {
     if (!selectedAgentId || !agent || !canPublish) return;

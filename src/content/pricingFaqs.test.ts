@@ -9,13 +9,13 @@ test('Free FAQ advertises the approved 300-credit allowance', () => {
   expect(freeFaq?.answer).toContain('300 credits per month');
 });
 
-test('credit-limit FAQ leads with top-ups before explaining paused usage', () => {
+test('credit-limit FAQ shows canonical top-up packages and usage choices', () => {
   const creditLimitFaq = pricingFaqs.find(
     ({ question }) => question === 'What happens if I use up my credits?',
   );
 
   expect(creditLimitFaq?.answer).toBe(
-    'We offer credit top-ups whenever you need extra usage. If your monthly credits run out, AI usage pauses until you top up, wait for the next billing cycle, or upgrade to a plan with a larger monthly allowance.',
+    "We offer 2,000 credits for RM 49, 5,000 credits for RM 99, and 15,000 credits for RM 249. Extra credit will be carried forward and won't expire. If your monthly credits run out, AI usage pauses until you top up, wait for the next billing cycle, or upgrade to a plan with a larger monthly allowance.",
   );
 });
 

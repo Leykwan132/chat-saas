@@ -51,6 +51,23 @@ describe("agent creation goals", () => {
     expect(prompt).not.toContain("Business description:\n\n");
   });
 
+  test("builds a safe booking template for legacy agents without business details", () => {
+    const prompt = buildAgentSystemPrompt({
+      businessName: "",
+      businessDescription: "",
+      goal: "bookService",
+    });
+
+    expect(prompt).toContain("help customers book services");
+    expect(prompt).toContain(
+      "Use the business profile, uploaded knowledge, and conversation context to understand what the business offers and what customers need.",
+    );
+    expect(prompt).toContain("Do not claim a booking is confirmed");
+    expect(prompt).not.toContain("undefined");
+    expect(prompt).not.toContain("Business name:");
+    expect(prompt).not.toContain("Business description:");
+  });
+
   test("maps goals to compatible legacy template keys", () => {
     expect(templateKeyForAgentGoal("support")).toBe("support");
     expect(templateKeyForAgentGoal("bookService")).toBe("sales");
