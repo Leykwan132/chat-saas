@@ -1,4 +1,4 @@
-import { cronJobs } from "convex/server";
+import { cronJobs, type FunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 import { parseAdvancedAnalyticsCronUtc } from "./analyticsCronSchedule";
 
@@ -6,6 +6,13 @@ const crons = cronJobs();
 const advancedAnalyticsCronSchedule = parseAdvancedAnalyticsCronUtc(
   process.env.ADVANCED_ANALYTICS_CRON_UTC,
 );
+const dailyGoogleCalendarMaintenance = (internal as unknown as {
+  googleCalendar: {
+    watchActions: {
+      runDailyGoogleCalendarMaintenance: FunctionReference<"action", "internal", Record<string, never>, null>;
+    };
+  };
+}).googleCalendar.watchActions.runDailyGoogleCalendarMaintenance;
 
 // Refresh long-lived Instagram tokens daily. Each token is valid for 60 days
 // but can be refreshed any time after it is 24 hours old, so we sweep every
@@ -32,6 +39,13 @@ crons.interval(
   "dispatch dirty conversation analytics",
   { minutes: 15 },
   internal.analyticsDirtyDispatcher.dispatchDue,
+  {},
+);
+
+crons.interval(
+  "maintain google calendar synchronization",
+  { hours: 24 },
+  dailyGoogleCalendarMaintenance,
   {},
 );
 
