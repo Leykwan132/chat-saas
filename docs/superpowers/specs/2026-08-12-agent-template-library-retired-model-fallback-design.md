@@ -77,6 +77,8 @@ The heading uses normal casing without tracking. Each scenario keeps its 14px te
 
 Each scenario is a plain row rather than a badge or card. A small green rounded background contains a white check, followed by normal foreground text. The existing rating, model identity, two-sentence description, and four metric scores remain unchanged.
 
+Each metric label includes one 14px muted Lucide icon directly beside its text, without a badge, background, or additional container. Quality uses `Gem`, Speed uses `Gauge`, Reasoning uses `Brain`, and Value uses `BadgeDollarSign`. The numeric score remains right-aligned, and the icons are decorative because the visible labels carry the meaning.
+
 The scenario mapping is:
 
 | Model | Recommended scenarios |
@@ -104,6 +106,8 @@ Tests will verify:
 - HoverCards render `Recommended for` after the description and before the four metrics.
 - Recommendation headings remain normally cased, and compact circular check markers do not overpower their scenario text.
 - Each scenario has a green rounded check background, white check icon, and plain foreground text without a scenario card or badge.
+- Quality, Speed, Reasoning, and Value render their approved inline icons while preserving visible labels and right-aligned scores.
+- Metric icons use the muted 14px treatment with no background container and remain hidden from assistive technology.
 - Focused tests, scoped lint, TypeScript, production build, application tests, Docs tests, whitespace checks, and code-size limits pass.
 
 ## Release Documentation
