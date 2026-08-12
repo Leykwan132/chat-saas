@@ -1,6 +1,9 @@
 import { describe, expect, test } from "vitest";
 import type { GoogleCalendarEvent } from "./eventMapping";
-import { providerMatchesGoogleCalendarWriteInput } from "./writePayloadMatch";
+import {
+  providerMatchesGoogleCalendarCreateInput,
+  providerMatchesGoogleCalendarUpdateInput,
+} from "./writePayloadMatch";
 import type { GoogleCalendarWriteInput } from "./writeTypes";
 
 const intended: GoogleCalendarWriteInput = {
@@ -29,7 +32,7 @@ const provider: GoogleCalendarEvent = {
 
 describe("Google Calendar recovery payload matching", () => {
   test("matches semantic instants and attendee order independently", () => {
-    expect(providerMatchesGoogleCalendarWriteInput(provider, intended)).toBe(true);
+    expect(providerMatchesGoogleCalendarUpdateInput(provider, intended)).toBe(true);
   });
 
   test.each([
@@ -41,14 +44,14 @@ describe("Google Calendar recovery payload matching", () => {
     ["end timezone", { end: { dateTime: "2026-08-15T10:00:00+08:00", timeZone: "UTC" } }],
     ["attendees", { attendees: [{ email: "other@example.com" }] }],
   ])("rejects a changed %s", (_label, providerPatch) => {
-    expect(providerMatchesGoogleCalendarWriteInput(
+    expect(providerMatchesGoogleCalendarUpdateInput(
       { ...provider, ...providerPatch } as GoogleCalendarEvent,
       intended,
     )).toBe(false);
   });
 
   test("distinguishes all-day and timed boundaries", () => {
-    expect(providerMatchesGoogleCalendarWriteInput(
+    expect(providerMatchesGoogleCalendarUpdateInput(
       { ...provider, start: { date: "2026-08-15" }, end: { date: "2026-08-16" } },
       intended,
     )).toBe(false);
@@ -61,9 +64,43 @@ describe("Google Calendar recovery payload matching", () => {
       start: intended.start,
       end: intended.end,
     };
-    expect(providerMatchesGoogleCalendarWriteInput(
+    expect(providerMatchesGoogleCalendarUpdateInput(
       { ...provider, description: undefined, location: "Human edit", transparency: "opaque" },
       patch,
     )).toBe(true);
+  });
+
+  test("create accepts normalized defaults for omitted optional fields", () => {
+    const create = { summary: intended.summary, start: intended.start, end: intended.end };
+    expect(providerMatchesGoogleCalendarCreateInput({
+      ...provider, description: undefined, location: "", transparency: "opaque", attendees: [],
+    }, create)).toBe(true);
+  });
+
+  test("create requires explicitly present optional strings exactly", () => {
+    const create = {
+      summary: intended.summary, description: "", start: intended.start, end: intended.end,
+    };
+    expect(providerMatchesGoogleCalendarCreateInput({
+      ...provider, description: undefined, location: undefined,
+      transparency: "opaque", attendees: [],
+    }, create)).toBe(false);
+    expect(providerMatchesGoogleCalendarCreateInput({
+      ...provider, description: "", location: undefined,
+      transparency: "opaque", attendees: [],
+    }, create)).toBe(true);
+  });
+
+  test.each([
+    ["description", { description: "Human edit" }],
+    ["location", { location: "Human edit" }],
+    ["transparency", { transparency: "transparent" }],
+    ["attendees", { attendees: [{ email: "human@example.com" }] }],
+  ])("create rejects provider %s drift when the field was omitted", (_label, patch) => {
+    const create = { summary: intended.summary, start: intended.start, end: intended.end };
+    expect(providerMatchesGoogleCalendarCreateInput(
+      { ...provider, description: undefined, location: undefined, transparency: "opaque", attendees: [], ...patch } as GoogleCalendarEvent,
+      create,
+    )).toBe(false);
   });
 });

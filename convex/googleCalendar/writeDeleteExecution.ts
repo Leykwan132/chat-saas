@@ -4,6 +4,7 @@ import {
   classifiedProviderError,
   claimMutationRecovery,
   credentialForWrite,
+  finishClaimedMutationRecovery,
   isOperationResult,
   recordRecoveryConflict,
   refreshFailure,
@@ -151,7 +152,8 @@ async function recoverDelete(
     const claimed = await claimMutationRecovery(
       dependencies, prepared.operationId, attempt.attemptGeneration,
     );
-    if (claimed !== null) return claimed;
+    if (claimed.kind !== "ready") return claimed;
+    const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
     try {
       await removeGoogleCalendarEvent({
         credential, externalEventId: prepared.externalEventId,
@@ -159,16 +161,24 @@ async function recoverDelete(
         fetchImplementation: dependencies.fetchImplementation,
       });
     } catch (error) {
-      if (classifiedProviderError(error) !== "not_found") throw error;
+      const kind = classifiedProviderError(error);
+      if (kind !== "not_found") {
+        return await finishClaimedMutationRecovery(
+          dependencies, prepared.operationId, attempt.attemptGeneration,
+          recoveryClaimGeneration, kind,
+        );
+      }
     }
-    const renewed = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (renewed !== null) return renewed;
-    return await finalizeGoogleCalendarDelete(
-      dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
-    );
+    const finalized = await dependencies.finalizeDelete({
+      operationId: prepared.operationId,
+      attemptGeneration: attempt.attemptGeneration,
+      recoveryClaimGeneration,
+      confirmedAbsent: true,
+      now: args.now,
+    });
+    return finalized.kind === "success"
+      ? finalized
+      : googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
   } catch (error) {
     const kind = classifiedProviderError(error);
     if (kind === "not_found") {

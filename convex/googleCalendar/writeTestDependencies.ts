@@ -12,11 +12,13 @@ const stores = (internal as unknown as { googleCalendar: {
   writeAttemptLeaseStore: {
     renewAttemptLease: MutationRef; claimMutationRecovery: MutationRef;
     deferMutationRecovery: MutationRef; recordRecoveryConflict: MutationRef;
+    finishMutationRecovery: MutationRef;
   };
   writeFinalizationStore: {
     finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
-    finalizeDelete: MutationRef; recordOutcome: MutationRef;
+    finalizeDelete: MutationRef;
   };
+  writeOutcomeStore: { recordOutcome: MutationRef };
 } }).googleCalendar;
 
 export function googleCalendarWriteTestDependencies(
@@ -30,11 +32,12 @@ export function googleCalendarWriteTestDependencies(
     renewAttemptLease: (args) => t.mutation(stores.writeAttemptLeaseStore.renewAttemptLease, args) as never,
     claimMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.claimMutationRecovery, args) as never,
     deferMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.deferMutationRecovery, args) as never,
+    finishMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.finishMutationRecovery, args) as never,
     recordRecoveryConflict: (args) => t.mutation(stores.writeAttemptLeaseStore.recordRecoveryConflict, args) as never,
     finalizeEvent: (args) => t.mutation(stores.writeFinalizationStore.finalizeEvent, args) as never,
     establishDeletePrecondition: (args) => t.mutation(stores.writeFinalizationStore.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(stores.writeFinalizationStore.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(stores.writeFinalizationStore.recordOutcome, args) as never,
+    recordOutcome: (args) => t.mutation(stores.writeOutcomeStore.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
     clock,

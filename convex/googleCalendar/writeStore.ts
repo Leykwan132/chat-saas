@@ -256,6 +256,7 @@ export const beginAttempt = internalMutation({
       providerMutationStartedAt: undefined,
       recoveryRetryCount: 0,
       recoveryExhausted: undefined,
+      recoveryClaimLeaseExpiresAt: undefined,
       errorKind: undefined,
       updatedAt: args.now,
     });

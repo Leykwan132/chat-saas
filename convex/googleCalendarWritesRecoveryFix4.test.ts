@@ -28,12 +28,14 @@ const googleInternal = internal as unknown as {
     writeStore: { prepare: MutationRef; beginAttempt: MutationRef };
     writeAttemptLeaseStore: {
       renewAttemptLease: MutationRef; claimMutationRecovery: MutationRef;
-      deferMutationRecovery: MutationRef; recordRecoveryConflict: MutationRef;
+      deferMutationRecovery: MutationRef; finishMutationRecovery: MutationRef;
+      recordRecoveryConflict: MutationRef;
     };
     writeFinalizationStore: {
       finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
-      finalizeDelete: MutationRef; recordOutcome: MutationRef;
+      finalizeDelete: MutationRef;
     };
+    writeOutcomeStore: { recordOutcome: MutationRef };
   };
 };
 const now = Date.UTC(2026, 7, 13, 8);
@@ -94,11 +96,12 @@ function dependencies(
     renewAttemptLease: (args) => t.mutation(lease.renewAttemptLease, args) as never,
     claimMutationRecovery: (args) => t.mutation(lease.claimMutationRecovery, args) as never,
     deferMutationRecovery: (args) => t.mutation(lease.deferMutationRecovery, args) as never,
+    finishMutationRecovery: (args) => t.mutation(lease.finishMutationRecovery, args) as never,
     recordRecoveryConflict: (args) => t.mutation(lease.recordRecoveryConflict, args) as never,
     finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
     establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
+    recordOutcome: (args) => t.mutation(googleInternal.googleCalendar.writeOutcomeStore.recordOutcome, args) as never,
     getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
     refresh: async () => undefined,
     fetchImplementation,
@@ -230,7 +233,7 @@ test("a delayed original PATCH and recovery produce one semantic update", async 
   clock += 120_001;
   expect(await runUpdateGoogleCalendarEvent({ ...args, event: eventInput, now: clock }, write))
     .toMatchObject({ kind: "conflict" });
-  clock += 60_001;
+  clock += 120_001;
   expect(await runUpdateGoogleCalendarEvent({ ...args, event: eventInput, now: clock }, write))
     .toMatchObject({ kind: "success" });
   expect(patchCalls).toBe(1);
@@ -255,7 +258,7 @@ test("provider mutation recovery exhausts after three failed reissues", async ()
     expect(await runCreateGoogleCalendarEvent({ ...args, event: eventInput, now: clock }, write))
       .toMatchObject({ kind: "retryable" });
   }
-  clock += 60_001;
+  clock += 120_001;
   expect(await runCreateGoogleCalendarEvent({ ...args, event: eventInput, now: clock }, write))
     .toMatchObject({ kind: "failed" });
   expect(postCalls).toBe(3);

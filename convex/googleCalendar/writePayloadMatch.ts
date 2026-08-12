@@ -6,6 +6,11 @@ function matchesOptionalString(provider: string | undefined, intended: string | 
   return intended === "" ? provider === undefined || provider === "" : provider === intended;
 }
 
+function matchesCreatedString(provider: string | undefined, intended: string | undefined) {
+  if (intended === undefined) return provider === undefined || provider === "";
+  return provider === intended;
+}
+
 function sameInstant(left: string, right: string) {
   const leftTime = Date.parse(left);
   const rightTime = Date.parse(right);
@@ -46,7 +51,7 @@ function matchesAttendees(
     providerKeys.every((value, index) => value === intendedKeys[index]);
 }
 
-export function providerMatchesGoogleCalendarWriteInput(
+export function providerMatchesGoogleCalendarUpdateInput(
   provider: GoogleCalendarEvent,
   intended: GoogleCalendarWriteInput,
 ) {
@@ -57,4 +62,21 @@ export function providerMatchesGoogleCalendarWriteInput(
     matchesBoundary(provider.end, intended.end) &&
     (intended.transparency === undefined || provider.transparency === intended.transparency) &&
     matchesAttendees(provider.attendees, intended.attendees);
+}
+
+export function providerMatchesGoogleCalendarCreateInput(
+  provider: GoogleCalendarEvent,
+  intended: GoogleCalendarWriteInput,
+) {
+  const transparencyMatches = intended.transparency === undefined
+    ? provider.transparency === undefined || provider.transparency === "opaque"
+    : provider.transparency === intended.transparency;
+  const attendeesMatch = intended.attendees === undefined
+    ? (provider.attendees?.length ?? 0) === 0
+    : matchesAttendees(provider.attendees, intended.attendees);
+  return provider.status !== "cancelled" && provider.summary === intended.summary &&
+    matchesCreatedString(provider.description, intended.description) &&
+    matchesCreatedString(provider.location, intended.location) &&
+    matchesBoundary(provider.start, intended.start) &&
+    matchesBoundary(provider.end, intended.end) && transparencyMatches && attendeesMatch;
 }

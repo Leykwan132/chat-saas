@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { internalMutation } from "../_generated/server";
+import { googleCalendarErrorKindValidator } from "./contracts";
 
 const leaseResultValidator = v.union(
   v.object({ kind: v.literal("ready") }),
@@ -8,8 +9,17 @@ const leaseResultValidator = v.union(
 );
 
 const recoveryClaimValidator = v.union(
-  leaseResultValidator,
+  v.object({ kind: v.literal("ready"), recoveryClaimGeneration: v.number() }),
+  v.object({ kind: v.literal("success"), externalEventId: v.string() }),
+  v.object({ kind: v.literal("running") }),
+  v.object({ kind: v.literal("stale") }),
   v.object({ kind: v.literal("exhausted") }),
+);
+
+const recoveryOutcomeValidator = v.union(
+  v.object({ kind: v.literal("recorded") }),
+  v.object({ kind: v.literal("success"), externalEventId: v.string() }),
+  v.object({ kind: v.literal("stale") }),
 );
 
 export const renewAttemptLease = internalMutation({
@@ -69,11 +79,16 @@ export const claimMutationRecovery = internalMutation({
       operation.providerMutationStartedAt === undefined ||
       args.now < operation.providerMutationStartedAt + 120_000
     ) return { kind: "stale" as const };
+    if (
+      operation.recoveryClaimLeaseExpiresAt !== undefined &&
+      args.now < operation.recoveryClaimLeaseExpiresAt
+    ) return { kind: "running" as const };
     if ((operation.recoveryRetryCount ?? 0) >= 3) {
       await ctx.db.patch(operation._id, {
         state: "failed",
         errorKind: "failed",
         recoveryExhausted: true,
+        recoveryClaimLeaseExpiresAt: undefined,
         attemptLeaseExpiresAt: undefined,
         attemptPhase: undefined,
         providerMutationStartedAt: undefined,
@@ -81,28 +96,30 @@ export const claimMutationRecovery = internalMutation({
       });
       return { kind: "exhausted" as const };
     }
+    const recoveryClaimGeneration = (operation.recoveryClaimGeneration ?? 0) + 1;
+    const recoveryClaimLeaseExpiresAt = args.now + 120_000;
     await ctx.db.patch(operation._id, {
       recoveryRetryCount: (operation.recoveryRetryCount ?? 0) + 1,
+      recoveryClaimGeneration,
+      recoveryClaimLeaseExpiresAt,
       state: "running",
       errorKind: undefined,
-      attemptLeaseExpiresAt: args.now + 60_000,
+      attemptLeaseExpiresAt: recoveryClaimLeaseExpiresAt,
       updatedAt: args.now,
     });
-    return { kind: "ready" as const };
+    return { kind: "ready" as const, recoveryClaimGeneration };
   },
 });
 
-export const recordRecoveryConflict = internalMutation({
+export const finishMutationRecovery = internalMutation({
   args: {
     operationId: v.id("googleCalendarWriteOperations"),
     attemptGeneration: v.number(),
+    recoveryClaimGeneration: v.number(),
+    kind: googleCalendarErrorKindValidator,
     now: v.number(),
   },
-  returns: v.union(
-    v.object({ kind: v.literal("recorded") }),
-    v.object({ kind: v.literal("success"), externalEventId: v.string() }),
-    v.object({ kind: v.literal("stale") }),
-  ),
+  returns: recoveryOutcomeValidator,
   handler: async (ctx, args) => {
     const operation = await ctx.db.get(args.operationId);
     if (operation === null) return { kind: "stale" as const };
@@ -111,7 +128,63 @@ export const recordRecoveryConflict = internalMutation({
     }
     if (
       operation.attemptGeneration !== args.attemptGeneration ||
+      operation.recoveryClaimGeneration !== args.recoveryClaimGeneration ||
       operation.attemptPhase !== "provider_mutation_started"
+    ) return { kind: "stale" as const };
+    const connection = await ctx.db.get(operation.connectionId);
+    if (connection === null) return { kind: "stale" as const };
+    const providerMutationAmbiguous =
+      args.kind === "conflict" || args.kind === "retryable" || args.kind === "failed";
+    await ctx.db.patch(operation._id, {
+      state: providerMutationAmbiguous ? "pending" : "failed",
+      errorKind: args.kind,
+      attemptLeaseExpiresAt: providerMutationAmbiguous
+        ? operation.recoveryClaimLeaseExpiresAt
+        : undefined,
+      attemptPhase: providerMutationAmbiguous ? operation.attemptPhase : undefined,
+      providerMutationStartedAt: providerMutationAmbiguous
+        ? operation.providerMutationStartedAt
+        : undefined,
+      recoveryClaimLeaseExpiresAt: providerMutationAmbiguous
+        ? operation.recoveryClaimLeaseExpiresAt
+        : undefined,
+      updatedAt: args.now,
+    });
+    if (args.kind === "needs_reauthorization" || args.kind === "forbidden") {
+      await ctx.db.patch(connection._id, {
+        state: "needs_reauthorization", lastErrorKind: args.kind, updatedAt: args.now,
+      });
+    } else if (args.kind === "not_connected") {
+      await ctx.db.patch(connection._id, {
+        state: "disconnected", lastErrorKind: args.kind, updatedAt: args.now,
+      });
+    }
+    return { kind: "recorded" as const };
+  },
+});
+
+export const recordRecoveryConflict = internalMutation({
+  args: {
+    operationId: v.id("googleCalendarWriteOperations"),
+    attemptGeneration: v.number(),
+    recoveryClaimGeneration: v.optional(v.number()),
+    now: v.number(),
+  },
+  returns: recoveryOutcomeValidator,
+  handler: async (ctx, args) => {
+    const operation = await ctx.db.get(args.operationId);
+    if (operation === null) return { kind: "stale" as const };
+    if (operation.state === "succeeded" && operation.externalEventId !== undefined) {
+      return { kind: "success" as const, externalEventId: operation.externalEventId };
+    }
+    if (
+      operation.attemptGeneration !== args.attemptGeneration ||
+      operation.attemptPhase !== "provider_mutation_started" ||
+      (args.recoveryClaimGeneration !== undefined &&
+        operation.recoveryClaimGeneration !== args.recoveryClaimGeneration) ||
+      (args.recoveryClaimGeneration === undefined &&
+        operation.recoveryClaimLeaseExpiresAt !== undefined &&
+        args.now < operation.recoveryClaimLeaseExpiresAt)
     ) return { kind: "stale" as const };
     await ctx.db.patch(operation._id, {
       state: "conflict",
@@ -119,6 +192,7 @@ export const recordRecoveryConflict = internalMutation({
       attemptLeaseExpiresAt: undefined,
       attemptPhase: undefined,
       providerMutationStartedAt: undefined,
+      recoveryClaimLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     return { kind: "recorded" as const };

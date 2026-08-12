@@ -116,6 +116,8 @@ export const googleCalendarTables = {
     providerMutationStartedAt: v.optional(v.number()),
     recoveryRetryCount: v.optional(v.number()),
     recoveryExhausted: v.optional(v.boolean()),
+    recoveryClaimGeneration: v.optional(v.number()),
+    recoveryClaimLeaseExpiresAt: v.optional(v.number()),
     errorKind: v.optional(googleCalendarErrorKindValidator),
     attemptCount: v.number(),
     createdAt: v.number(),

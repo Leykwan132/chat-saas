@@ -127,7 +127,7 @@ export async function claimMutationRecovery(
   const claim = await dependencies.claimMutationRecovery({
     operationId, attemptGeneration, now: dependencies.clock(),
   });
-  if (claim.kind === "ready") return null;
+  if (claim.kind === "ready") return claim;
   if (claim.kind === "success") return claim;
   return googleCalendarOperationError(claim.kind === "exhausted" ? "failed" : "retryable");
 }
@@ -137,9 +137,26 @@ export async function recordRecoveryConflict(
   operationId: Id<"googleCalendarWriteOperations">,
   attemptGeneration: number,
   now: number,
+  recoveryClaimGeneration?: number,
 ) {
   const result = await dependencies.recordRecoveryConflict({
-    operationId, attemptGeneration, now,
+    operationId, attemptGeneration, recoveryClaimGeneration, now,
   });
-  return result.kind === "success" ? result : googleCalendarOperationError("conflict");
+  if (result.kind === "success") return result;
+  return googleCalendarOperationError(result.kind === "stale" ? "retryable" : "conflict");
+}
+
+export async function finishClaimedMutationRecovery(
+  dependencies: GoogleCalendarWriteDependencies,
+  operationId: Id<"googleCalendarWriteOperations">,
+  attemptGeneration: number,
+  recoveryClaimGeneration: number,
+  kind: Exclude<GoogleCalendarOperationResult["kind"], "success">,
+) {
+  const result = await dependencies.finishMutationRecovery({
+    operationId, attemptGeneration, recoveryClaimGeneration,
+    kind, now: dependencies.clock(),
+  });
+  if (result.kind === "success") return result;
+  return googleCalendarOperationError(result.kind === "stale" ? "retryable" : kind);
 }

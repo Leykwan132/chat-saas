@@ -5,7 +5,6 @@ import {
   removeParticipantAvailabilityIntervals,
   syncCalendarEventAvailabilityIntervals,
 } from "../calendarAvailabilityIntervals";
-import { googleCalendarErrorKindValidator } from "./contracts";
 import { mappedGoogleCalendarEventValidator, type MappedGoogleCalendarEvent } from "./eventMapping";
 
 const finalizationValidator = v.union(
@@ -14,10 +13,6 @@ const finalizationValidator = v.union(
   v.object({ kind: v.literal("stale") }),
 );
 
-const outcomeValidator = v.union(
-  finalizationValidator,
-  v.object({ kind: v.literal("recorded") }),
-);
 
 async function ownedOperation(
   ctx: MutationCtx,
@@ -72,10 +67,15 @@ function activeEventPatch(event: MappedGoogleCalendarEvent, now: number) {
 function currentAttempt(
   operation: Doc<"googleCalendarWriteOperations">,
   attemptGeneration: number,
+  recoveryClaimGeneration?: number,
 ) {
   if (operation.state === "succeeded" && operation.externalEventId !== undefined) {
     return { kind: "success" as const, externalEventId: operation.externalEventId };
   }
+  if (
+    recoveryClaimGeneration !== undefined &&
+    operation.recoveryClaimGeneration !== recoveryClaimGeneration
+  ) return { kind: "stale" as const };
   if (
     operation.attemptGeneration === attemptGeneration &&
     operation.attemptPhase === "provider_mutation_started" &&
@@ -92,13 +92,16 @@ export const finalizeEvent = internalMutation({
   args: {
     operationId: v.id("googleCalendarWriteOperations"),
     attemptGeneration: v.number(),
+    recoveryClaimGeneration: v.optional(v.number()),
     event: mappedGoogleCalendarEventValidator,
     now: v.number(),
   },
   returns: finalizationValidator,
   handler: async (ctx, args) => {
     const { operation, connection, event } = await ownedOperation(ctx, args.operationId);
-    const terminal = currentAttempt(operation, args.attemptGeneration);
+    const terminal = currentAttempt(
+      operation, args.attemptGeneration, args.recoveryClaimGeneration,
+    );
     if (terminal !== null) return terminal;
     if (operation.action === "delete" || operation.externalEventId !== args.event.eventId) {
       throw new Error("Google Calendar write finalization does not match its operation");
@@ -115,6 +118,7 @@ export const finalizeEvent = internalMutation({
           attemptLeaseExpiresAt: undefined,
           attemptPhase: undefined,
           providerMutationStartedAt: undefined,
+          recoveryClaimLeaseExpiresAt: undefined,
           updatedAt: args.now,
         });
         return { kind: "conflict" as const };
@@ -138,6 +142,7 @@ export const finalizeEvent = internalMutation({
       attemptLeaseExpiresAt: undefined,
       attemptPhase: undefined,
       providerMutationStartedAt: undefined,
+      recoveryClaimLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
@@ -207,13 +212,16 @@ export const finalizeDelete = internalMutation({
   args: {
     operationId: v.id("googleCalendarWriteOperations"),
     attemptGeneration: v.number(),
+    recoveryClaimGeneration: v.optional(v.number()),
     confirmedAbsent: v.boolean(),
     now: v.number(),
   },
   returns: finalizationValidator,
   handler: async (ctx, args) => {
     const { operation, connection, event } = await ownedOperation(ctx, args.operationId);
-    const terminal = currentAttempt(operation, args.attemptGeneration);
+    const terminal = currentAttempt(
+      operation, args.attemptGeneration, args.recoveryClaimGeneration,
+    );
     if (terminal !== null) return terminal;
     if (
       operation.action !== "delete" || operation.externalEventId === undefined ||
@@ -236,54 +244,10 @@ export const finalizeDelete = internalMutation({
       attemptLeaseExpiresAt: undefined,
       attemptPhase: undefined,
       providerMutationStartedAt: undefined,
+      recoveryClaimLeaseExpiresAt: undefined,
       updatedAt: args.now,
     });
     await ctx.db.patch(connection._id, { lastErrorKind: undefined, updatedAt: args.now });
     return { kind: "success" as const, externalEventId: operation.externalEventId };
-  },
-});
-
-export const recordOutcome = internalMutation({
-  args: {
-    operationId: v.id("googleCalendarWriteOperations"),
-    attemptGeneration: v.number(),
-    kind: googleCalendarErrorKindValidator,
-    now: v.number(),
-  },
-  returns: outcomeValidator,
-  handler: async (ctx, args) => {
-    const operation = await ctx.db.get(args.operationId);
-    if (operation === null) throw new Error("Google Calendar write operation not found");
-    const terminal = currentAttempt(operation, args.attemptGeneration);
-    if (terminal !== null) return terminal;
-    const connection = await ctx.db.get(operation.connectionId);
-    if (connection === null) throw new Error("Google Calendar connection not found");
-    const providerMutationAmbiguous =
-      operation.attemptPhase === "provider_mutation_started" &&
-      (args.kind === "retryable" || args.kind === "failed");
-    await ctx.db.patch(operation._id, {
-      state: providerMutationAmbiguous
-        ? "pending"
-        : args.kind === "conflict" ? "conflict" : args.kind === "retryable" ? "pending" : "failed",
-      errorKind: args.kind,
-      attemptLeaseExpiresAt: undefined,
-      attemptPhase: providerMutationAmbiguous ? operation.attemptPhase : undefined,
-      providerMutationStartedAt: providerMutationAmbiguous
-        ? operation.providerMutationStartedAt
-        : undefined,
-      updatedAt: args.now,
-    });
-    if (args.kind === "needs_reauthorization" || args.kind === "forbidden") {
-      await ctx.db.patch(connection._id, {
-        state: "needs_reauthorization", lastErrorKind: args.kind, updatedAt: args.now,
-      });
-    } else if (args.kind === "not_connected") {
-      await ctx.db.patch(connection._id, {
-        state: "disconnected", lastErrorKind: args.kind, updatedAt: args.now,
-      });
-    } else if (!providerMutationAmbiguous && (args.kind === "retryable" || args.kind === "failed")) {
-      await ctx.db.patch(connection._id, { lastErrorKind: args.kind, updatedAt: args.now });
-    }
-    return { kind: "recorded" as const };
   },
 });

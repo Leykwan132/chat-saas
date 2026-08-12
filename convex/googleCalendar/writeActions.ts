@@ -39,12 +39,15 @@ const googleCalendarInternal = (internal as unknown as {
       renewAttemptLease: StoreMutation<Parameters<GoogleCalendarWriteDependencies["renewAttemptLease"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["renewAttemptLease"]>>>;
       claimMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["claimMutationRecovery"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["claimMutationRecovery"]>>>;
       deferMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["deferMutationRecovery"]>[0], null>;
+      finishMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finishMutationRecovery"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finishMutationRecovery"]>>>;
       recordRecoveryConflict: StoreMutation<Parameters<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>>>;
     };
     writeFinalizationStore: {
       finalizeEvent: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finalizeEvent"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finalizeEvent"]>>>;
       establishDeletePrecondition: StoreMutation<Parameters<GoogleCalendarWriteDependencies["establishDeletePrecondition"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["establishDeletePrecondition"]>>>;
       finalizeDelete: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finalizeDelete"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finalizeDelete"]>>>;
+    };
+    writeOutcomeStore: {
       recordOutcome: StoreMutation<Parameters<GoogleCalendarWriteDependencies["recordOutcome"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["recordOutcome"]>>>;
     };
     syncWorker: {
@@ -60,13 +63,14 @@ function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
     renewAttemptLease: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.renewAttemptLease, args),
     claimMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.claimMutationRecovery, args),
     deferMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.deferMutationRecovery, args),
+    finishMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.finishMutationRecovery, args),
     recordRecoveryConflict: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.recordRecoveryConflict, args),
     finalizeEvent: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.finalizeEvent, args),
     establishDeletePrecondition: (args) => ctx.runMutation(
       googleCalendarInternal.writeFinalizationStore.establishDeletePrecondition, args,
     ),
     finalizeDelete: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.finalizeDelete, args),
-    recordOutcome: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.recordOutcome, args),
+    recordOutcome: (args) => ctx.runMutation(googleCalendarInternal.writeOutcomeStore.recordOutcome, args),
     getCredential: getGoogleCalendarCredential,
     refresh: (args) => ctx.runAction(googleCalendarInternal.syncWorker.run, args),
     clock: Date.now,
