@@ -3,13 +3,15 @@ import { mapGoogleEvent } from "./eventMapping";
 import { GoogleCalendarProviderError } from "./googleClient";
 import {
   classifiedProviderError,
+  claimMutationRecovery,
   credentialForWrite,
   isOperationResult,
-  recordError,
+  recordRecoveryConflict,
   refreshFailure,
   renewAttemptLease,
   reserveAndBegin,
 } from "./writeExecutionSupport";
+import { providerMatchesGoogleCalendarWriteInput } from "./writePayloadMatch";
 import {
   getGoogleCalendarEventForWrite,
   patchGoogleCalendarEvent,
@@ -124,21 +126,60 @@ async function recoverUpdate(
       marker?.kilobotOperationKey === args.operationKey &&
       marker.kilobotOperationFingerprint === payloadFingerprint
     ) {
+      if (!providerMatchesGoogleCalendarWriteInput(providerEvent, args.event)) {
+        return await recordRecoveryConflict(
+          dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        );
+      }
       return await finalizeUpdate(
         args, dependencies, prepared, attempt.attemptGeneration, providerEvent,
       );
     }
-    if (providerEvent.etag !== attempt.intendedEtag) {
-      return await recordError(
-        dependencies, prepared.operationId, attempt.attemptGeneration, "conflict", args.now,
+    const intendedEtag = attempt.intendedEtag;
+    if (intendedEtag === undefined || providerEvent.etag !== intendedEtag) {
+      return await recordRecoveryConflict(
+        dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
       );
     }
-    await dependencies.deferMutationRecovery({
-      operationId: prepared.operationId,
-      attemptGeneration: attempt.attemptGeneration,
-      now: dependencies.clock(),
-    });
-    return googleCalendarOperationError("retryable");
+    const claimed = await claimMutationRecovery(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+    );
+    if (claimed !== null) return claimed;
+    let updated;
+    try {
+      updated = await patchGoogleCalendarEvent({
+        credential, externalEventId: prepared.externalEventId,
+        knownEtag: intendedEtag, operationKey: args.operationKey,
+        payloadFingerprint, event: args.event,
+        fetchImplementation: dependencies.fetchImplementation,
+      });
+    } catch (error) {
+      if (error instanceof GoogleCalendarProviderError && error.kind === "conflict") {
+        await dependencies.deferMutationRecovery({
+          operationId: prepared.operationId,
+          attemptGeneration: attempt.attemptGeneration,
+          now: dependencies.clock(),
+        });
+        return googleCalendarOperationError("conflict");
+      }
+      throw error;
+    }
+    const renewed = await renewAttemptLease(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      "provider_mutation_started",
+    );
+    if (renewed !== null) return renewed;
+    const updatedMarker = updated.extendedProperties?.private;
+    if (
+      updatedMarker?.kilobotOperationKey !== args.operationKey ||
+      updatedMarker.kilobotOperationFingerprint !== payloadFingerprint ||
+      !providerMatchesGoogleCalendarWriteInput(updated, args.event)
+    ) return await recordRecoveryConflict(
+      dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+    );
+    return await finalizeUpdate(
+      args, dependencies, prepared, attempt.attemptGeneration, updated,
+    );
   } catch (error) {
     return await refreshFailure(
       dependencies, args, prepared.operationId, attempt.attemptGeneration,

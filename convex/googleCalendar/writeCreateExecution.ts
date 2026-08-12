@@ -4,13 +4,15 @@ import { GoogleCalendarProviderError } from "./googleClient";
 import { deriveGoogleCalendarEventId } from "./writeFingerprint";
 import {
   classifiedProviderError,
+  claimMutationRecovery,
   credentialForWrite,
   isOperationResult,
-  recordError,
+  recordRecoveryConflict,
   refreshFailure,
   renewAttemptLease,
   reserveAndBegin,
 } from "./writeExecutionSupport";
+import { providerMatchesGoogleCalendarWriteInput } from "./writePayloadMatch";
 import {
   getGoogleCalendarEventForWrite,
   insertGoogleCalendarEvent,
@@ -78,7 +80,8 @@ export async function runCreateGoogleCalendarEvent(
       const marker = existing.extendedProperties?.private;
       if (
         marker?.kilobotOperationKey !== args.operationKey ||
-        marker.kilobotOperationFingerprint !== payloadFingerprint
+        marker.kilobotOperationFingerprint !== payloadFingerprint ||
+        !providerMatchesGoogleCalendarWriteInput(existing, event)
       ) throw new GoogleCalendarProviderError("conflict");
       providerEvent = existing;
     }
@@ -141,10 +144,11 @@ async function recoverCreate(
     const marker = providerEvent.extendedProperties?.private;
     if (
       marker?.kilobotOperationKey !== args.operationKey ||
-      marker.kilobotOperationFingerprint !== payloadFingerprint
+      marker.kilobotOperationFingerprint !== payloadFingerprint ||
+      !providerMatchesGoogleCalendarWriteInput(providerEvent, args.event)
     ) {
-      return await recordError(
-        dependencies, prepared.operationId, attempt.attemptGeneration, "conflict", args.now,
+      return await recordRecoveryConflict(
+        dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
       );
     }
     const finalized = await dependencies.finalizeEvent({
@@ -158,16 +162,67 @@ async function recoverCreate(
       : googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
   } catch (error) {
     const kind = classifiedProviderError(error);
-    if (kind === "not_found") {
-      await dependencies.deferMutationRecovery({
-        operationId: prepared.operationId,
-        attemptGeneration: attempt.attemptGeneration,
-        now: dependencies.clock(),
-      });
-      return googleCalendarOperationError("retryable");
-    }
+    if (kind === "not_found") return await reissueCreate(args, dependencies, reserved);
     return await refreshFailure(
       dependencies, args, prepared.operationId, attempt.attemptGeneration, kind,
+    );
+  }
+}
+
+async function reissueCreate(
+  args: GoogleCalendarEventWriteArgs,
+  dependencies: GoogleCalendarWriteDependencies,
+  reserved: Extract<Awaited<ReturnType<typeof reserveAndBegin>>, { attempt: unknown }>,
+): Promise<GoogleCalendarOperationResult> {
+  if (reserved.attempt.kind !== "recovering") return googleCalendarOperationError("retryable");
+  const { prepared, attempt, payloadFingerprint } = reserved;
+  const claimed = await claimMutationRecovery(
+    dependencies, prepared.operationId, attempt.attemptGeneration,
+  );
+  if (claimed !== null) return claimed;
+  const credential = await credentialForWrite(
+    dependencies, prepared.operationId, attempt.attemptGeneration,
+    prepared.workosUserId, args.now,
+  );
+  if (isOperationResult(credential)) return credential;
+  try {
+    let providerEvent;
+    try {
+      providerEvent = await insertGoogleCalendarEvent({
+        credential, externalEventId: prepared.externalEventId,
+        operationKey: args.operationKey, payloadFingerprint, event: args.event,
+        fetchImplementation: dependencies.fetchImplementation,
+      });
+    } catch (error) {
+      if (!(error instanceof GoogleCalendarProviderError) || error.kind !== "conflict") throw error;
+      providerEvent = await getGoogleCalendarEventForWrite({
+        credential, externalEventId: prepared.externalEventId,
+        fetchImplementation: dependencies.fetchImplementation,
+      });
+    }
+    const renewed = await renewAttemptLease(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      "provider_mutation_started",
+    );
+    if (renewed !== null) return renewed;
+    const marker = providerEvent.extendedProperties?.private;
+    if (
+      marker?.kilobotOperationKey !== args.operationKey ||
+      marker.kilobotOperationFingerprint !== payloadFingerprint ||
+      !providerMatchesGoogleCalendarWriteInput(providerEvent, args.event)
+    ) return await recordRecoveryConflict(
+      dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+    );
+    const finalized = await dependencies.finalizeEvent({
+      operationId: prepared.operationId, attemptGeneration: attempt.attemptGeneration,
+      event: mapGoogleEvent(providerEvent, prepared.timeZone), now: args.now,
+    });
+    return finalized.kind === "success" ? finalized :
+      googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
+  } catch (error) {
+    return await refreshFailure(
+      dependencies, args, prepared.operationId, attempt.attemptGeneration,
+      classifiedProviderError(error),
     );
   }
 }

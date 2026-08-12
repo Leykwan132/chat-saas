@@ -136,7 +136,7 @@ export const prepare = internalMutation({
     }
     if (
       existing !== null && existing.payloadBindingVersion !== 2 &&
-      existing.state !== "succeeded"
+      !(existing.payloadBindingVersion === 1 && existing.state === "succeeded")
     ) {
       return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     }
@@ -188,7 +188,7 @@ export const beginAttempt = internalMutation({
       operation === null || operation.externalEventId === undefined ||
       operation.calendarEventId === undefined
     ) return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
-    if (operation.state === "succeeded" && operation.payloadBindingVersion !== 2) {
+    if (operation.state === "succeeded" && operation.payloadBindingVersion === 1) {
       return { kind: "success" as const, externalEventId: operation.externalEventId };
     }
     if (operation.payloadBindingVersion !== 2) {
@@ -200,6 +200,9 @@ export const beginAttempt = internalMutation({
     ) return { kind: "error" as const, result: googleCalendarOperationError("invalid_request") };
     if (operation.state === "succeeded") {
       return { kind: "success" as const, externalEventId: operation.externalEventId };
+    }
+    if (operation.recoveryExhausted === true) {
+      return { kind: "error" as const, result: googleCalendarOperationError("failed") };
     }
     if (
       operation.attemptPhase === "provider_mutation_started" &&
@@ -251,6 +254,8 @@ export const beginAttempt = internalMutation({
       attemptLeaseExpiresAt: args.now + 60_000,
       attemptPhase: "preparing",
       providerMutationStartedAt: undefined,
+      recoveryRetryCount: 0,
+      recoveryExhausted: undefined,
       errorKind: undefined,
       updatedAt: args.now,
     });

@@ -37,7 +37,9 @@ const googleCalendarInternal = (internal as unknown as {
     };
     writeAttemptLeaseStore: {
       renewAttemptLease: StoreMutation<Parameters<GoogleCalendarWriteDependencies["renewAttemptLease"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["renewAttemptLease"]>>>;
+      claimMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["claimMutationRecovery"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["claimMutationRecovery"]>>>;
       deferMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["deferMutationRecovery"]>[0], null>;
+      recordRecoveryConflict: StoreMutation<Parameters<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>>>;
     };
     writeFinalizationStore: {
       finalizeEvent: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finalizeEvent"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finalizeEvent"]>>>;
@@ -56,7 +58,9 @@ function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
     prepare: (args) => ctx.runMutation(googleCalendarInternal.writeStore.prepare, args),
     beginAttempt: (args) => ctx.runMutation(googleCalendarInternal.writeStore.beginAttempt, args),
     renewAttemptLease: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.renewAttemptLease, args),
+    claimMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.claimMutationRecovery, args),
     deferMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.deferMutationRecovery, args),
+    recordRecoveryConflict: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.recordRecoveryConflict, args),
     finalizeEvent: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.finalizeEvent, args),
     establishDeletePrecondition: (args) => ctx.runMutation(
       googleCalendarInternal.writeFinalizationStore.establishDeletePrecondition, args,

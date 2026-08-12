@@ -2,9 +2,10 @@ import { googleCalendarOperationError, type GoogleCalendarOperationResult } from
 import { finalizeGoogleCalendarDelete } from "./writeDeleteFinalization";
 import {
   classifiedProviderError,
+  claimMutationRecovery,
   credentialForWrite,
   isOperationResult,
-  recordError,
+  recordRecoveryConflict,
   refreshFailure,
   renewAttemptLease,
   reserveAndBegin,
@@ -138,16 +139,36 @@ async function recoverDelete(
     );
     if (afterGet !== null) return afterGet;
     if (providerEvent.etag !== attempt.intendedEtag) {
-      return await recordError(
-        dependencies, prepared.operationId, attempt.attemptGeneration, "conflict", args.now,
+      return await recordRecoveryConflict(
+        dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
       );
     }
-    await dependencies.deferMutationRecovery({
-      operationId: prepared.operationId,
-      attemptGeneration: attempt.attemptGeneration,
-      now: dependencies.clock(),
-    });
-    return googleCalendarOperationError("retryable");
+    if (attempt.intendedEtag === undefined) {
+      return await recordRecoveryConflict(
+        dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+      );
+    }
+    const claimed = await claimMutationRecovery(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+    );
+    if (claimed !== null) return claimed;
+    try {
+      await removeGoogleCalendarEvent({
+        credential, externalEventId: prepared.externalEventId,
+        knownEtag: attempt.intendedEtag,
+        fetchImplementation: dependencies.fetchImplementation,
+      });
+    } catch (error) {
+      if (classifiedProviderError(error) !== "not_found") throw error;
+    }
+    const renewed = await renewAttemptLease(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      "provider_mutation_started",
+    );
+    if (renewed !== null) return renewed;
+    return await finalizeGoogleCalendarDelete(
+      dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+    );
   } catch (error) {
     const kind = classifiedProviderError(error);
     if (kind === "not_found") {

@@ -114,6 +114,8 @@ export const googleCalendarTables = {
       v.literal("provider_mutation_started"),
     )),
     providerMutationStartedAt: v.optional(v.number()),
+    recoveryRetryCount: v.optional(v.number()),
+    recoveryExhausted: v.optional(v.boolean()),
     errorKind: v.optional(googleCalendarErrorKindValidator),
     attemptCount: v.number(),
     createdAt: v.number(),

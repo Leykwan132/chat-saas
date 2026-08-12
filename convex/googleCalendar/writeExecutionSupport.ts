@@ -118,3 +118,28 @@ export async function renewAttemptLease(
     ? result
     : googleCalendarOperationError("retryable");
 }
+
+export async function claimMutationRecovery(
+  dependencies: GoogleCalendarWriteDependencies,
+  operationId: Id<"googleCalendarWriteOperations">,
+  attemptGeneration: number,
+) {
+  const claim = await dependencies.claimMutationRecovery({
+    operationId, attemptGeneration, now: dependencies.clock(),
+  });
+  if (claim.kind === "ready") return null;
+  if (claim.kind === "success") return claim;
+  return googleCalendarOperationError(claim.kind === "exhausted" ? "failed" : "retryable");
+}
+
+export async function recordRecoveryConflict(
+  dependencies: GoogleCalendarWriteDependencies,
+  operationId: Id<"googleCalendarWriteOperations">,
+  attemptGeneration: number,
+  now: number,
+) {
+  const result = await dependencies.recordRecoveryConflict({
+    operationId, attemptGeneration, now,
+  });
+  return result.kind === "success" ? result : googleCalendarOperationError("conflict");
+}

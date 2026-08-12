@@ -80,6 +80,12 @@ export type GoogleCalendarAttemptLeaseResult =
   | { kind: "success"; externalEventId: string }
   | { kind: "stale" };
 
+export type GoogleCalendarRecoveryClaim =
+  | { kind: "ready" }
+  | { kind: "success"; externalEventId: string }
+  | { kind: "stale" }
+  | { kind: "exhausted" };
+
 export type GoogleCalendarWriteDependencies = {
   prepare(args: {
     connectionId: Id<"googleCalendarConnections">;
@@ -100,6 +106,11 @@ export type GoogleCalendarWriteDependencies = {
     phase: "preparing" | "provider_mutation_started";
     now: number;
   }): Promise<GoogleCalendarAttemptLeaseResult>;
+  claimMutationRecovery(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
+    now: number;
+  }): Promise<GoogleCalendarRecoveryClaim>;
   deferMutationRecovery(args: {
     operationId: Id<"googleCalendarWriteOperations">;
     attemptGeneration: number;
@@ -127,6 +138,11 @@ export type GoogleCalendarWriteDependencies = {
     operationId: Id<"googleCalendarWriteOperations">;
     attemptGeneration: number;
     kind: Exclude<GoogleCalendarOperationResult["kind"], "success">;
+    now: number;
+  }): Promise<GoogleCalendarFinalization | { kind: "recorded" }>;
+  recordRecoveryConflict(args: {
+    operationId: Id<"googleCalendarWriteOperations">;
+    attemptGeneration: number;
     now: number;
   }): Promise<GoogleCalendarFinalization | { kind: "recorded" }>;
   getCredential(workosUserId: string): Promise<GoogleCalendarCredentialResult>;

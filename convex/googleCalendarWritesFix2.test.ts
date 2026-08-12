@@ -6,13 +6,14 @@ import { internal } from "./_generated/api";
 import type { GoogleCalendarEvent } from "./googleCalendar/eventMapping";
 import { runGoogleCalendarSync, type GoogleCalendarSyncDependencies } from "./googleCalendar/syncWorker";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
+import { googleCalendarWriteTestDependencies } from "./googleCalendar/writeTestDependencies";
 import {
   deriveGoogleCalendarEventId,
   runCreateGoogleCalendarEvent,
   runUpdateGoogleCalendarEvent,
 } from "./googleCalendar/writeActions";
 import { fingerprintGoogleCalendarWritePayload } from "./googleCalendar/writeFingerprint";
-import type { GoogleCalendarWriteDependencies, GoogleCalendarWriteInput } from "./googleCalendar/writeTypes";
+import type { GoogleCalendarWriteInput } from "./googleCalendar/writeTypes";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -26,14 +27,6 @@ const googleInternal = internal as unknown as {
     syncState: {
       beginSyncRun: MutationRef; failSyncRun: MutationRef; finalizeSyncRun: MutationRef;
       getConnectionForSync: QueryRef; renewSyncRunLease: MutationRef;
-    };
-    writeStore: {
-      prepare: MutationRef; beginAttempt: MutationRef;
-    };
-    writeAttemptLeaseStore: { renewAttemptLease: MutationRef; deferMutationRecovery: MutationRef };
-    writeFinalizationStore: {
-      finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
-      finalizeDelete: MutationRef; recordOutcome: MutationRef;
     };
   };
 };
@@ -85,24 +78,8 @@ function dependencies(
   t: CalendarTest,
   fetchImplementation: typeof fetch,
   clock: () => number = () => now,
-): GoogleCalendarWriteDependencies {
-  const store = googleInternal.googleCalendar.writeStore;
-  const leaseStore = googleInternal.googleCalendar.writeAttemptLeaseStore;
-  const finalization = googleInternal.googleCalendar.writeFinalizationStore;
-  return {
-    prepare: (args) => t.mutation(store.prepare, args) as never,
-    beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
-    renewAttemptLease: (args) => t.mutation(leaseStore.renewAttemptLease, args) as never,
-    deferMutationRecovery: (args) => t.mutation(leaseStore.deferMutationRecovery, args) as never,
-    finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
-    establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
-    finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
-    getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
-    refresh: async () => undefined,
-    clock,
-    fetchImplementation,
-  };
+) {
+  return googleCalendarWriteTestDependencies(t, fetchImplementation, clock);
 }
 
 function syncDependencies(t: CalendarTest): GoogleCalendarSyncDependencies {
@@ -142,8 +119,13 @@ test("an identical create retry succeeds after sync reconciles interrupted final
   const operationKey = "fix2:create:reconciled";
   let created: GoogleCalendarEvent | undefined;
   const write = dependencies(t, async (_request, init) => {
-    const body = JSON.parse(String(init?.body)) as { id: string };
-    created = providerEvent(body.id, '"created"', operationKey);
+    const body = JSON.parse(String(init?.body)) as {
+      id: string; extendedProperties: { private: { kilobotOperationFingerprint: string } };
+    };
+    created = providerEvent(
+      body.id, '"created"', operationKey,
+      body.extendedProperties.private.kilobotOperationFingerprint,
+    );
     return Response.json(created);
   });
   write.finalizeEvent = async () => { throw new Error("interrupted"); };
@@ -241,6 +223,30 @@ test("version 1 terminal success remains retryable as its stored result", async 
   )).toMatchObject({ kind: "success", externalEventId });
   expect(providerCalls).toBe(0);
 });
+
+test.each([undefined, 3])(
+  "terminal payload binding version %s fails before provider access",
+  async (payloadBindingVersion) => {
+    const { t, connectionId, calendarEventId } = await setupEvent();
+    const operationKey = `fix4:legacy:${String(payloadBindingVersion)}`;
+    const externalEventId = await deriveGoogleCalendarEventId(operationKey);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(calendarEventId, { externalEventId, externalEtag: '"created"' });
+      await ctx.db.insert("googleCalendarWriteOperations", {
+        connectionId, calendarEventId, operationKey, action: "create", state: "succeeded",
+        externalEventId, payloadBindingVersion, payloadFingerprint: "legacy-bound",
+        payloadPreconditionEtag: null, intendedEtag: null, attemptCount: 1,
+        createdAt: now, updatedAt: now,
+      });
+    });
+    let providerCalls = 0;
+    expect(await runCreateGoogleCalendarEvent(
+      { connectionId, calendarEventId, operationKey, event: eventInput, now },
+      dependencies(t, async () => { providerCalls += 1; return Response.json({}); }),
+    )).toMatchObject({ kind: "invalid_request" });
+    expect(providerCalls).toBe(0);
+  },
+);
 
 test("version 1 nonterminal operations fail before provider access", async () => {
   const { t, connectionId, calendarEventId } = await setupEvent();

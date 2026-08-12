@@ -18,6 +18,7 @@ export type GoogleCalendarEvent = {
   etag?: string;
   updated?: string;
   transparency?: "opaque" | "transparent";
+  attendees?: Array<{ email?: string; displayName?: string }>;
   recurringEventId?: string;
   originalStartTime?: GoogleCalendarEventDateTime;
   organizer?: { self?: boolean };
@@ -52,6 +53,7 @@ export type MappedGoogleCalendarEvent = {
   startDate?: string;
   endDate?: string;
   operationKey?: string;
+  operationFingerprint?: string;
 };
 
 export const mappedGoogleCalendarEventValidator = v.object({
@@ -77,6 +79,7 @@ export const mappedGoogleCalendarEventValidator = v.object({
   startDate: v.optional(v.string()),
   endDate: v.optional(v.string()),
   operationKey: v.optional(v.string()),
+  operationFingerprint: v.optional(v.string()),
 });
 
 function requiredEventId(eventId: string) {
@@ -201,6 +204,7 @@ export function mapGoogleEvent(
     etag: event.etag,
     updatedAt,
     operationKey: event.extendedProperties?.private?.kilobotOperationKey,
+    operationFingerprint: event.extendedProperties?.private?.kilobotOperationFingerprint,
   };
   if (event.status === "cancelled") {
     return common;

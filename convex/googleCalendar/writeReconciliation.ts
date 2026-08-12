@@ -21,7 +21,8 @@ export async function reconcileGoogleCalendarCreate(
     operation === null || operation.connectionId !== connection._id ||
     operation.action !== "create" || operation.externalEventId !== event.eventId ||
     operation.calendarEventId === undefined || operation.payloadBindingVersion !== 2 ||
-    operation.payloadFingerprint === undefined
+    operation.payloadFingerprint === undefined ||
+    event.operationFingerprint !== operation.payloadFingerprint
   ) return null;
   const localEvent = await ctx.db.get(operation.calendarEventId);
   if (

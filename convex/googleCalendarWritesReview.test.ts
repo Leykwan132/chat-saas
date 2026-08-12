@@ -6,12 +6,12 @@ import { internal } from "./_generated/api";
 import type { GoogleCalendarEvent } from "./googleCalendar/eventMapping";
 import { runGoogleCalendarSync, type GoogleCalendarSyncDependencies } from "./googleCalendar/syncWorker";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
+import { googleCalendarWriteTestDependencies } from "./googleCalendar/writeTestDependencies";
 import {
   deriveGoogleCalendarEventId,
   runCreateGoogleCalendarEvent,
   runDeleteGoogleCalendarEvent,
   runUpdateGoogleCalendarEvent,
-  type GoogleCalendarWriteDependencies,
 } from "./googleCalendar/writeActions";
 import schema from "./schema";
 
@@ -27,14 +27,6 @@ const googleInternal = internal as unknown as {
       beginSyncRun: MutationRef; failSyncRun: MutationRef; finalizeSyncRun: MutationRef;
       getConnectionForSync: QueryRef; renewSyncRunLease: MutationRef;
     };
-    writeStore: {
-      prepare: MutationRef; beginAttempt: MutationRef;
-    };
-    writeAttemptLeaseStore: { renewAttemptLease: MutationRef; deferMutationRecovery: MutationRef };
-    writeFinalizationStore: {
-      finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
-      finalizeDelete: MutationRef; recordOutcome: MutationRef;
-    };
   };
 };
 const now = Date.UTC(2026, 7, 13, 8);
@@ -45,11 +37,15 @@ const eventInput = {
   attendees: [{ email: "customer@example.com", displayName: "Customer" }],
 };
 
-function providerEvent(id: string, title: string, etag: string, operationKey?: string): GoogleCalendarEvent {
+function providerEvent(
+  id: string, title: string, etag: string, operationKey?: string, payloadFingerprint?: string,
+): GoogleCalendarEvent {
   return {
     id, status: "confirmed", summary: title, etag, updated: "2026-08-13T08:00:00.000Z",
     transparency: "opaque", organizer: { self: true }, start: eventInput.start, end: eventInput.end,
-    extendedProperties: operationKey === undefined ? undefined : { private: { kilobotOperationKey: operationKey } },
+    extendedProperties: operationKey === undefined ? undefined : { private: {
+      kilobotOperationKey: operationKey, kilobotOperationFingerprint: payloadFingerprint,
+    } },
   };
 }
 
@@ -70,25 +66,8 @@ async function setupEvent(external = false) {
   return { t, userId, teamIds, connectionId, calendarEventId };
 }
 
-function dependencies(t: CalendarTest, fetchImplementation: typeof fetch): GoogleCalendarWriteDependencies {
-  const store = googleInternal.googleCalendar.writeStore;
-  const leaseStore = googleInternal.googleCalendar.writeAttemptLeaseStore;
-  const finalization = googleInternal.googleCalendar.writeFinalizationStore;
-  return {
-    prepare: (args) => t.mutation(store.prepare, args) as never,
-    beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
-    renewAttemptLease: (args) => t.mutation(leaseStore.renewAttemptLease, args) as never,
-    deferMutationRecovery: (args) => t.mutation(leaseStore.deferMutationRecovery, args) as never,
-    finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
-    establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
-    finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(finalization.recordOutcome, args) as never,
-    getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
-    refresh: async () => undefined,
-    clock: () => now,
-    fetchImplementation,
-  };
-}
+const dependencies = (t: CalendarTest, provider: typeof fetch) =>
+  googleCalendarWriteTestDependencies(t, provider, () => now);
 
 function syncDependencies(t: CalendarTest): GoogleCalendarSyncDependencies {
   const value = googleInternal.googleCalendar;
@@ -250,6 +229,34 @@ test("sync does not reconcile an operation after its local event link changes", 
   expect(operation?.state).not.toBe("succeeded");
   expect((await t.run((ctx) => ctx.db.get(calendarEventId)))?.externalOperationKey).toBe("another-operation");
 });
+
+test.each([undefined, "wrong"])(
+  "sync imports normally when a create fingerprint marker is %s",
+  async (providerFingerprint) => {
+  const { t, connectionId, calendarEventId } = await setupEvent();
+  const operationKey = `identity:fingerprint:${String(providerFingerprint)}`;
+  let created: GoogleCalendarEvent | undefined;
+  const write = dependencies(t, async (_request, init) => {
+    const body = JSON.parse(String(init?.body)) as { id: string };
+    created = providerEvent(
+      body.id, eventInput.summary, '"created"', operationKey, providerFingerprint,
+    );
+    return Response.json(created);
+  });
+  write.finalizeEvent = async () => { throw new Error("interrupted"); };
+  await runCreateGoogleCalendarEvent(
+    { connectionId, calendarEventId, operationKey, event: eventInput, now }, write,
+  );
+  await runGoogleCalendarSync({
+    connectionId, now: now + 1, dependencies: syncDependencies(t),
+    listPage: async () => ({ items: [created!], nextSyncToken: "fingerprint_sync" }),
+  });
+  const operation = await t.run((ctx) => ctx.db.query("googleCalendarWriteOperations")
+    .withIndex("by_operationKey", (q) => q.eq("operationKey", operationKey)).unique());
+  expect(operation?.state).not.toBe("succeeded");
+  expect((await t.run((ctx) => ctx.db.get(calendarEventId)))?.externalEventId).toBeUndefined();
+  },
+);
 
 test("legacy unbound operation rows fail before provider access", async () => {
   const { t, connectionId, calendarEventId } = await setupEvent();
