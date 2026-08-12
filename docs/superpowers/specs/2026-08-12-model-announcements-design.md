@@ -34,7 +34,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 ## Scorecard identity header
 
 - Add a top identity row to every model scorecard HoverCard with the model’s existing 16px provider icon and semibold display name.
-- Place the `Kilobot rating` label immediately below the identity row, followed by one inline score-and-stars row, metrics, language fit, and best-for guidance.
+- Place the `Kilobot rating` label immediately below the identity row, followed by one inline score-and-stars row, metrics, and best-for guidance with checked language pills.
 - Pass the current model label, chef slug, and optional image URL from `ModelPickerItem` into `ModelScoreHoverCard` rather than duplicating catalog identity in the scorecard record.
 - Render the icon through `ModelSelectorLogo` so Qwen uses LobeHub’s colored Qwen icon and every other provider preserves its current image behavior.
 - Unknown historical models continue returning the picker row without an empty HoverCard.
@@ -63,7 +63,7 @@ Give authenticated users a compact announcement experience and clearer model-sel
 - Dialog and HoverCard triggers use `asChild` with existing interactive controls.
 - Accordion triggers expose their expanded state and support keyboard activation.
 - Dialog content retains a visible title and description.
-- Rating is read-only and accompanied by visible `x.x / 5` text.
+- Rating is read-only and accompanied by its visible one-decimal score.
 - The Dialog list is bounded and scrollable on small viewports.
 - The banner keeps its 4:1 crop on narrow viewports, caps at `21dvh`, and does not force the announcement list below the viewport.
 
