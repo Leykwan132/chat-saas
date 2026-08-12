@@ -1,8 +1,42 @@
 import type { TestConvex } from "convex-test";
+import type { FunctionReference } from "convex/server";
 import type { Id } from "../_generated/dataModel";
+import { internal } from "../_generated/api";
 import schema from "../schema";
+import type { GoogleCalendarConnectionState } from "./contracts";
 
 type CalendarTest = TestConvex<typeof schema>;
+
+const googleCalendarInternal = internal as unknown as {
+  googleCalendar: {
+    connectionStore: {
+      reserve: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          userId: Id<"users">;
+          primaryCalendarId: "primary";
+          timeZone: string;
+          state: GoogleCalendarConnectionState;
+        },
+        Id<"googleCalendarConnections">
+      >;
+    };
+    writeStore: {
+      reserve: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          connectionId: Id<"googleCalendarConnections">;
+          calendarEventId?: Id<"calendarEvents">;
+          operationKey: string;
+          action: "create" | "update" | "delete";
+        },
+        Id<"googleCalendarWriteOperations">
+      >;
+    };
+  };
+};
 
 const fixtureTime = Date.UTC(2026, 7, 13, 9, 0, 0);
 
@@ -33,18 +67,20 @@ export async function createUserAcrossTwoTeams(t: CalendarTest) {
       }),
     );
     await ctx.db.patch(userId, { activeTeamId: teamIds[0], updatedAt: fixtureTime });
-    const connectionId = await ctx.db.insert("googleCalendarConnections", {
-      userId,
-      workosUserId: "user_google_calendar",
-      provider: "google_calendar",
-      primaryCalendarId: "primary",
-      timeZone: "Asia/Kuala_Lumpur",
-      state: "connected",
-      dirtyGeneration: 0,
-      createdAt: fixtureTime,
-      updatedAt: fixtureTime,
-    });
-    return { connectionId, userId, teamIds };
+    return { userId, teamIds };
+  });
+}
+
+export async function reserveConnection(
+  t: CalendarTest,
+  userId: Id<"users">,
+  primaryCalendarId = "primary",
+) {
+  return await t.mutation(googleCalendarInternal.googleCalendar.connectionStore.reserve, {
+    userId,
+    primaryCalendarId: primaryCalendarId as "primary",
+    timeZone: "Asia/Kuala_Lumpur",
+    state: "connected",
   });
 }
 
@@ -57,8 +93,39 @@ export async function readConnection(t: CalendarTest, userId: Id<"users">) {
   );
 }
 
+export async function readConnectionsForUser(t: CalendarTest, userId: Id<"users">) {
+  return await t.run((ctx) =>
+    ctx.db
+      .query("googleCalendarConnections")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .take(2),
+  );
+}
+
+export async function reserveWriteOperation(
+  t: CalendarTest,
+  connectionId: Id<"googleCalendarConnections">,
+  operationKey: string,
+) {
+  return await t.mutation(googleCalendarInternal.googleCalendar.writeStore.reserve, {
+    connectionId,
+    operationKey,
+    action: "create",
+  });
+}
+
+export async function readWriteOperationsByKey(t: CalendarTest, operationKey: string) {
+  return await t.run((ctx) =>
+    ctx.db
+      .query("googleCalendarWriteOperations")
+      .withIndex("by_operationKey", (q) => q.eq("operationKey", operationKey))
+      .take(2),
+  );
+}
+
 export async function insertActiveAndPendingReplacement(t: CalendarTest) {
-  const { connectionId } = await createUserAcrossTwoTeams(t);
+  const { userId } = await createUserAcrossTwoTeams(t);
+  const connectionId = await reserveConnection(t, userId);
   return await t.run(async (ctx) => {
     for (const [state, channelId] of [
       ["active", "channel_active"],
@@ -136,12 +203,24 @@ export async function insertSameGoogleEventForTwoOwnersAndTwoInstances(t: Calend
         });
       }
     }
-    return await ctx.db
-      .query("calendarEvents")
-      .withIndex(
-        "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
-        (q) => q.eq("teamId", teamId),
-      )
-      .take(4);
+    return await Promise.all(
+      ownerIds.flatMap((ownerId) =>
+        [fixtureTime, fixtureTime + 86_400_000].map(async (originalStartAt) =>
+          await ctx.db
+            .query("calendarEvents")
+            .withIndex(
+              "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+              (q) =>
+                q
+                  .eq("teamId", teamId)
+                  .eq("externalOwnerUserId", ownerId)
+                  .eq("externalCalendarId", "primary")
+                  .eq("externalEventId", "recurring_google_event")
+                  .eq("externalOriginalStartAt", originalStartAt),
+            )
+            .unique(),
+        ),
+      ),
+    );
   });
 }
