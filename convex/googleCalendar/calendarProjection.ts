@@ -1,5 +1,5 @@
 import type { Doc, Id } from "../_generated/dataModel";
-import type { QueryCtx } from "../_generated/server";
+import type { MutationCtx, QueryCtx } from "../_generated/server";
 
 type CalendarRange = {
   teamId: Id<"teams">;
@@ -23,9 +23,23 @@ export function canViewGoogleEventDetails(
 
 export function canMutateCalendarEvent(
   event: Doc<"calendarEvents">,
-  viewerUserId: Id<"users">,
 ) {
-  return !isImportedGoogleEvent(event) || event.externalOwnerUserId === viewerUserId;
+  return !isImportedGoogleEvent(event);
+}
+
+export async function externalEventEligibleInTeam(
+  ctx: QueryCtx | MutationCtx,
+  event: Doc<"calendarEvents">,
+) {
+  if (!isImportedGoogleEvent(event)) return true;
+  if (event.externalOwnerUserId === undefined) return false;
+  const externalOwnerUserId = event.externalOwnerUserId;
+  return await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_userId_and_teamId", (q) =>
+      q.eq("userId", externalOwnerUserId).eq("teamId", event.teamId),
+    )
+    .unique() !== null;
 }
 
 async function loadParticipants(ctx: QueryCtx, eventId: Id<"calendarEvents">) {
@@ -48,9 +62,6 @@ function teammateBusyProjection(event: Doc<"calendarEvents">) {
     startDate: event.startDate,
     endDate: event.endDate,
     status: event.status,
-    externalProvider: event.externalProvider,
-    externalOrigin: event.externalOrigin,
-    participants: [],
   };
 }
 

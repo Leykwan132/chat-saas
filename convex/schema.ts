@@ -1650,6 +1650,7 @@ export default defineSchema({
     email: v.string(),
     displayName: v.optional(v.string()),
     eventStartAt: v.number(),
+    eventEndAt: v.optional(v.number()),
     responseStatus: v.optional(
       v.union(
         v.literal("needsAction"),
@@ -1677,6 +1678,12 @@ export default defineSchema({
       "role",
       "userId",
       "eventStartAt",
+    ])
+    .index("by_teamId_and_role_and_userId_and_eventEndAt", [
+      "teamId",
+      "role",
+      "userId",
+      "eventEndAt",
     ])
     .index("by_teamId_and_role_and_customerId_and_eventStartAt", [
       "teamId",

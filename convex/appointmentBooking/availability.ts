@@ -5,11 +5,13 @@ import { getUserByWorkosId } from "../teamHelpers";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
 import {
-  calendarEventBlocksAvailability,
-  hasHealthyGoogleCalendarConnection,
+  hasCalendarConflict,
+  loadGoogleCalendarHealthByUser,
 } from "../googleCalendar/availability";
 
-async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<RosterEntry[]> {
+type AvailabilityRosterEntry = RosterEntry & { googleCalendarHealthy: boolean };
+
+async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<AvailabilityRosterEntry[]> {
   const schedules = await ctx.db
     .query("userSchedules")
     .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
@@ -27,7 +29,12 @@ async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<Rost
     const user = await getUserByWorkosId(ctx, schedule.workosUserId);
     entries.push({ schedule, shifts, timeOff, user });
   }
-  return entries;
+  const userIds = entries.flatMap((entry) => entry.user === null ? [] : [entry.user._id]);
+  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds, Date.now());
+  return entries.map((entry) => ({
+    ...entry,
+    googleCalendarHealthy: entry.user !== null && healthByUser.get(entry.user._id) === true,
+  }));
 }
 
 function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
@@ -54,45 +61,10 @@ function hasTimeOffOverlap(startAt: number, endAt: number, rows: Doc<"userTimeOf
   return rows.some((row) => overlaps(startAt, endAt, row.startAt, row.endAt));
 }
 
-async function hasCalendarConflict(
-  ctx: MutationCtx,
-  args: {
-    teamId: Id<"teams">;
-    userId: Id<"users">;
-    startAt: number;
-    endAt: number;
-    excludeEventId?: Id<"calendarEvents">;
-  },
-) {
-  const participants = await ctx.db
-    .query("calendarEventParticipants")
-    .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) =>
-      q
-        .eq("teamId", args.teamId)
-        .eq("role", "assigned")
-        .eq("userId", args.userId)
-        .gte("eventStartAt", args.startAt - 24 * 60 * 60 * 1000)
-        .lt("eventStartAt", args.endAt),
-    )
-    .take(100);
-  for (const participant of participants) {
-    const event = await ctx.db.get(participant.eventId);
-    if (
-      event !== null &&
-      event._id !== args.excludeEventId &&
-      calendarEventBlocksAvailability(event) &&
-      overlaps(args.startAt, args.endAt, event.startAt, event.endAt)
-    ) {
-      return true;
-    }
-  }
-  return false;
-}
-
 async function entryAvailableForSlot(
   ctx: MutationCtx,
   teamId: Id<"teams">,
-  entry: RosterEntry,
+  entry: AvailabilityRosterEntry,
   startAt: number,
   endAt: number,
   excludeEventId?: Id<"calendarEvents">,
@@ -100,7 +72,7 @@ async function entryAvailableForSlot(
   if (entry.user === null) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
-  if (!(await hasHealthyGoogleCalendarConnection(ctx, entry.user._id))) return false;
+  if (!entry.googleCalendarHealthy) return false;
   return !(await hasCalendarConflict(ctx, {
     teamId,
     userId: entry.user._id,
@@ -130,13 +102,13 @@ async function chooseAssigneeForSlot(
     service: Doc<"appointmentServices">;
     conversation?: Doc<"conversations">;
     teamId: Id<"teams">;
-    entries: RosterEntry[];
+    entries: AvailabilityRosterEntry[];
     startAt: number;
     endAt: number;
     excludeEventId?: Id<"calendarEvents">;
   },
 ): Promise<RosterEntry | null> {
-  const available: RosterEntry[] = [];
+  const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
     if (await entryAvailableForSlot(ctx, args.teamId, entry, args.startAt, args.endAt, args.excludeEventId)) {
       available.push(entry);

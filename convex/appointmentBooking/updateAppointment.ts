@@ -104,6 +104,7 @@ export const updateBookingAppointment = internalMutation({
       assignedUser,
       bookingDisplayName: attendeeName,
       eventStartAt: selectedSlot.startAt,
+      eventEndAt: selectedSlot.endAt,
       now,
     });
     await ctx.db.patch(session._id, {

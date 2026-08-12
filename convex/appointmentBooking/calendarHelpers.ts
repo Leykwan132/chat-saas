@@ -58,6 +58,7 @@ export async function insertCalendarParticipants(
     assignedUser: Doc<"users">;
     bookingDisplayName: string;
     eventStartAt: number;
+    eventEndAt: number;
     now: number;
   },
 ) {
@@ -70,6 +71,7 @@ export async function insertCalendarParticipants(
     email: args.customer.email?.trim() || args.customer.contactAddress,
     displayName: args.bookingDisplayName,
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "needsAction",
     createdAt: args.now,
     updatedAt: args.now,
@@ -83,6 +85,7 @@ export async function insertCalendarParticipants(
     email: args.assignedUser.email,
     displayName: displayNameForUser(args.assignedUser),
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "accepted",
     createdAt: args.now,
     updatedAt: args.now,
@@ -108,6 +111,7 @@ export async function replaceCalendarParticipants(
     assignedUser: Doc<"users">;
     bookingDisplayName: string;
     eventStartAt: number;
+    eventEndAt: number;
     now: number;
   },
 ) {

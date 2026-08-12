@@ -6,11 +6,9 @@ import { api } from "./_generated/api";
 import { resolveAvailableInterval } from "./appointmentBooking/availability";
 import { AVAILABILITY_FRESHNESS_MS } from "./googleCalendar/constants";
 import schema from "./schema";
-
 const modules = import.meta.glob("./**/*.ts");
 type CalendarTest = TestConvex<typeof schema>;
 const hour = 60 * 60 * 1000;
-
 afterEach(() => {
   vi.useRealTimers();
 });
@@ -87,6 +85,7 @@ async function setupPrivacyFixture(t: CalendarTest) {
       email: "external-owner@example.com",
       displayName: "External Owner",
       eventStartAt: startAt,
+      eventEndAt: startAt + hour,
       createdAt: now,
       updatedAt: now,
     });
@@ -113,7 +112,7 @@ test("the connection owner receives full Google event details", async () => {
     link: "https://meet.google.com/private",
     externalOrigin: "google",
   }]);
-  expect(events[0]?.participants).toHaveLength(1);
+  expect((events[0] as { participants: unknown[] }).participants).toHaveLength(1);
 });
 
 test("a teammate receives Busy without private fields from the server", async () => {
@@ -129,12 +128,14 @@ test("a teammate receives Busy without private fields from the server", async ()
     { eventId: fixture.eventId },
   );
 
-  expect(events).toEqual([expect.objectContaining({ title: "Busy", externalOrigin: "google" })]);
+  expect(events).toEqual([expect.objectContaining({ title: "Busy" })]);
   expect(events[0]).not.toHaveProperty("description");
   expect(events[0]).not.toHaveProperty("location");
   expect(events[0]).not.toHaveProperty("link");
   expect(events[0]).not.toHaveProperty("externalEventId");
-  expect(events[0]?.participants).toEqual([]);
+  expect(events[0]).not.toHaveProperty("externalProvider");
+  expect(events[0]).not.toHaveProperty("externalOrigin");
+  expect(events[0]).not.toHaveProperty("participants");
   expect(details).toMatchObject({ title: "Busy", collectedFields: {}, attendeeNames: [] });
   expect(details).not.toHaveProperty("description");
   expect(details).not.toHaveProperty("link");
@@ -239,6 +240,7 @@ async function insertGoogleBlock(
       await ctx.db.insert("calendarEventParticipants", {
         eventId, teamId, participantType: "teamUser", role: "assigned", userId: fixture.ownerId,
         email: "connected-staff@example.com", eventStartAt: startAt, createdAt: startAt, updatedAt: startAt,
+        eventEndAt: startAt + hour,
       });
     }
   });

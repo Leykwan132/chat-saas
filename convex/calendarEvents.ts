@@ -20,6 +20,7 @@ import { notifyAppointmentEvent } from "./telegramNotifications/events";
 import {
   canMutateCalendarEvent,
   canViewGoogleEventDetails,
+  externalEventEligibleInTeam,
   loadCalendarRangeProjection,
   projectCalendarEvent,
 } from "./googleCalendar/calendarProjection";
@@ -162,6 +163,7 @@ async function insertParticipants(
     eventId: Id<"calendarEvents">;
     teamId: Id<"teams">;
     eventStartAt: number;
+    eventEndAt: number;
     now: number;
   },
 ) {
@@ -177,6 +179,7 @@ async function insertParticipants(
     email: customer.email?.trim() || customer.contactAddress,
     displayName: customerDisplayName(customer),
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "needsAction",
     createdAt: args.now,
     updatedAt: args.now,
@@ -191,6 +194,7 @@ async function insertParticipants(
     email: assignedUser.email,
     displayName: userDisplayName(assignedUser),
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "accepted",
     createdAt: args.now,
     updatedAt: args.now,
@@ -210,6 +214,7 @@ async function insertParticipants(
       email: attendee.email,
       displayName: userDisplayName(attendee),
       eventStartAt: args.eventStartAt,
+      eventEndAt: args.eventEndAt,
       responseStatus: "needsAction",
       createdAt: args.now,
       updatedAt: args.now,
@@ -243,7 +248,10 @@ export const getAppointmentDetails = query({
   handler: async (ctx, args) => {
     const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
     const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId) {
+    if (
+      event === null || event.teamId !== auth.activeTeamId ||
+      !(await externalEventEligibleInTeam(ctx, event))
+    ) {
       return null;
     }
 
@@ -424,6 +432,7 @@ export const create = mutation({
       assignedUserId: args.assignedUserId,
       attendeeUserIds: args.attendeeUserIds,
       eventStartAt: args.startAt,
+      eventEndAt: args.endAt,
       now,
     });
 
@@ -457,7 +466,7 @@ export const update = mutation({
     if (event === null || event.teamId !== auth.activeTeamId) {
       throw new Error("Calendar event not found");
     }
-    if (!canMutateCalendarEvent(event, auth.userDbId)) {
+    if (!canMutateCalendarEvent(event)) {
       throw new Error("Calendar event not found");
     }
 
@@ -595,16 +604,18 @@ export const update = mutation({
         assignedUserId,
         attendeeUserIds: args.attendeeUserIds ?? existingAttendees,
         eventStartAt: nextStartAt,
+        eventEndAt: nextEndAt,
         now: Date.now(),
       });
-    } else if (args.startAt !== undefined) {
+    } else if (args.startAt !== undefined || args.endAt !== undefined) {
       const participants = await ctx.db
         .query("calendarEventParticipants")
         .withIndex("by_eventId", (q) => q.eq("eventId", args.eventId))
         .take(100);
       for (const participant of participants) {
         await ctx.db.patch(participant._id, {
-          eventStartAt: args.startAt,
+          eventStartAt: nextStartAt,
+          eventEndAt: nextEndAt,
           updatedAt: Date.now(),
         });
       }
@@ -655,7 +666,7 @@ export const remove = mutation({
     if (event === null || event.teamId !== auth.activeTeamId) {
       throw new Error("Calendar event not found");
     }
-    if (!canMutateCalendarEvent(event, auth.userDbId)) {
+    if (!canMutateCalendarEvent(event)) {
       throw new Error("Calendar event not found");
     }
     const conversationId = await getConversationIdForEvent(ctx, event);
@@ -679,7 +690,10 @@ export const getEventForEditing = query({
   handler: async (ctx, args) => {
     const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
     const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId) {
+    if (
+      event === null || event.teamId !== auth.activeTeamId ||
+      !(await externalEventEligibleInTeam(ctx, event))
+    ) {
       return null;
     }
     if (!canViewGoogleEventDetails(event, auth.userDbId)) {

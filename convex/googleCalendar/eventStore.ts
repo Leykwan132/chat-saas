@@ -70,6 +70,7 @@ async function upsertOwnerParticipant(
   teamId: Id<"teams">,
   owner: Doc<"users">,
   eventStartAt: number,
+  eventEndAt: number,
   now: number,
 ) {
   const participants = await ctx.db
@@ -84,7 +85,7 @@ async function upsertOwnerParticipant(
     participant.role === "assigned" && participant.userId === owner._id,
   );
   if (assignedOwner !== undefined) {
-    await ctx.db.patch(assignedOwner._id, { eventStartAt, updatedAt: now });
+    await ctx.db.patch(assignedOwner._id, { eventStartAt, eventEndAt, updatedAt: now });
     return;
   }
   const displayName = [owner.firstName, owner.lastName].filter(Boolean).join(" ").trim();
@@ -97,6 +98,7 @@ async function upsertOwnerParticipant(
     email: owner.email,
     displayName: displayName || owner.email,
     eventStartAt,
+    eventEndAt,
     responseStatus: "accepted",
     createdAt: now,
     updatedAt: now,
@@ -155,7 +157,7 @@ async function upsertProjection(
       externalLastSeenSyncRunId:
         run.requestKind === "full" ? run._id : existing.externalLastSeenSyncRunId,
     });
-    await upsertOwnerParticipant(ctx, existing._id, teamId, owner, event.startAt, now);
+    await upsertOwnerParticipant(ctx, existing._id, teamId, owner, event.startAt, event.endAt, now);
     return "updated" as const;
   }
   const eventId = await ctx.db.insert("calendarEvents", {
@@ -171,7 +173,7 @@ async function upsertProjection(
     externalLastSeenSyncRunId: run.requestKind === "full" ? run._id : undefined,
     createdAt: now,
   });
-  await upsertOwnerParticipant(ctx, eventId, teamId, owner, event.startAt, now);
+  await upsertOwnerParticipant(ctx, eventId, teamId, owner, event.startAt, event.endAt, now);
   return "imported" as const;
 }
 

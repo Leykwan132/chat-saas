@@ -64,6 +64,7 @@ export async function createManualBookingRecords(
     assignedUser: args.assignedUser,
     bookingDisplayName: attendeeName,
     eventStartAt: args.selectedSlot.startAt,
+    eventEndAt: args.selectedSlot.endAt,
     now,
   });
   const sessionId = await ctx.db.insert("appointmentBookingSessions", {
