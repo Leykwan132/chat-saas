@@ -66,6 +66,11 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   const metricsIndex = descendants.findIndex(
     (candidate) => candidate.type === 'dl',
   );
+  const recommendationsIndex = descendants.findIndex(
+    (candidate) =>
+      (candidate.props as SlotElementProps)['data-slot'] ===
+      'model-recommendations',
+  );
   const ratingRow = descendants.find((candidate) => {
     const props = candidate.props as RatingRowProps;
     const children = Array.isArray(props.children)
@@ -82,7 +87,17 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
       'model-language',
     ),
   );
-  const languageChecks = descendants.filter(
+  const recommendationRows = descendants.filter(
+    (candidate) =>
+      (candidate.props as SlotElementProps)['data-slot'] ===
+      'model-recommendation',
+  );
+  const recommendationCheckWrappers = descendants.filter(
+    (candidate) =>
+      (candidate.props as SlotElementProps)['data-slot'] ===
+      'model-recommendation-check',
+  );
+  const recommendationChecks = descendants.filter(
     (candidate) => candidate.type === Check,
   );
   const text = collectText(element).replace(/\s+/g, ' ');
@@ -109,6 +124,7 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(identityIndex).toBeGreaterThan(ratingIndex);
   expect(descriptionIndex).toBeGreaterThan(identityIndex);
   expect(metricsIndex).toBeGreaterThan(descriptionIndex);
+  expect(recommendationsIndex).toBeGreaterThan(metricsIndex);
   expect(ratingRow?.props.className).toContain('items-center');
   expect(collectText(ratingRow)).toContain('4.0');
   expect(collectText(ratingRow)).not.toContain('4.0 / 5');
@@ -117,7 +133,16 @@ test('shows the model scorecard in a read-only rating HoverCard', async () => {
   expect(text).toContain('Reasoning');
   expect(text).toContain('Value');
   expect(languageSlots).toHaveLength(0);
-  expect(languageChecks).toHaveLength(0);
+  expect(text).toContain('Recommended for');
+  expect(text).toContain('Fast Chinese-language replies');
+  expect(text).toContain('Chinese and English conversations');
+  expect(recommendationRows).toHaveLength(2);
+  expect(recommendationRows[0]?.props.className).not.toContain('bg-');
+  expect(recommendationCheckWrappers).toHaveLength(2);
+  expect(recommendationCheckWrappers[0]?.props.className).toContain('rounded');
+  expect(recommendationCheckWrappers[0]?.props.className).toContain('bg-emerald-600');
+  expect(recommendationChecks).toHaveLength(2);
+  expect(recommendationChecks[0]?.props.className).toContain('text-white');
 });
 
 test('leaves unknown historical models without an empty HoverCard', async () => {

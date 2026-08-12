@@ -1,4 +1,5 @@
 import { Rating, StickerStar } from '@smastrom/react-rating';
+import { Check } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { ModelSelectorLogo } from '@/components/ai-elements/model-selector';
 import {
@@ -82,6 +83,28 @@ export function ModelScoreHoverCard({
               </div>
             ))}
           </dl>
+          <div data-slot="model-recommendations" className="flex flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Recommended for
+            </span>
+            <div className="flex flex-col gap-2">
+              {scorecard.recommendedFor.map((scenario) => (
+                <div
+                  key={scenario}
+                  data-slot="model-recommendation"
+                  className="flex items-center gap-2 text-sm text-foreground"
+                >
+                  <span
+                    data-slot="model-recommendation-check"
+                    className="inline-flex size-5 shrink-0 items-center justify-center rounded-md bg-emerald-600"
+                  >
+                    <Check className="size-3.5 text-white" />
+                  </span>
+                  <span>{scenario}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </HoverCardContent>
     </HoverCard>
