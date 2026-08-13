@@ -3,8 +3,8 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes; Convex stays the booking layer. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Task 8 conversation-scoped agent calendar tools are implemented on `cursor/google-calendar-booking-sync-10b0` (PR #56). [CODE] 2026-08-13
-- Next: Task 9 Calendar connection UI, status, source badges, and owner controls. [USER] 2026-08-13
+- Now: Shortened the Google event identity index so Convex schema push succeeds (`by_googleExternalEventIdentity`). [CODE] 2026-08-13
+- Next: User retries `npx convex dev` on `cursor/google-calendar-booking-sync-10b0`; Task 9 Calendar connection UI after that. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; no changelog until confirmed. [USER] 2026-08-13
 
 # Done (recent)
@@ -31,6 +31,7 @@
 - src/components/inbox/CreateCustomerBookingDialog.tsx
 
 # Receipts
+- 2026-08-13 [TOOL] Convex push failed: `calendarEvents` index name exceeded 64 characters. Renamed to `by_googleExternalEventIdentity`.
 - 2026-08-13 [TOOL] Task 8 tests: 6 agent-tool + 2 prompt + 5 booking sync passed under Node v22.
 - 2026-08-13 [TOOL] Task 7 focused suite: 14 files / 59 tests pass under Node v22. File limits and whitespace pass. Base Tasks 1–6 remain on `codex/google-calendar-sync` `f9f5865`.
 - 2026-08-13 [CODE] Public actions: `calendarEvents.update/remove`, `calendarManualBooking.create`, `manualBooking.create`; AI book/update/cancel are internal actions.

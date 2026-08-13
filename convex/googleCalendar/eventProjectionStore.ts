@@ -10,6 +10,7 @@ import {
   applyKilobotBookingGoogleCancellation,
   applyKilobotBookingGoogleMove,
 } from "./bookingGoogleChange";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./constants";
 
 type ActiveMappedEvent = MappedGoogleCalendarEvent & {
   status: "confirmed" | "tentative";
@@ -152,7 +153,7 @@ export async function upsertGoogleCalendarProjection(
     return "updated" as const;
   }
   const existing = await ctx.db.query("calendarEvents").withIndex(
-    "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+    GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX,
     (q) => q.eq("teamId", teamId).eq("externalOwnerUserId", owner._id)
       .eq("externalCalendarId", "primary").eq("externalEventId", event.eventId)
       .eq("externalOriginalStartAt", event.originalStartAt),

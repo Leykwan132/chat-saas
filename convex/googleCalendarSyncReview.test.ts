@@ -13,6 +13,7 @@ import {
   type GoogleCalendarSyncDependencies,
 } from "./googleCalendar/syncWorker";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 import schema from "./schema";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -88,7 +89,7 @@ async function ownerEvents(t: CalendarTest, userId: Id<"users">) {
       rows.push(...await ctx.db
         .query("calendarEvents")
         .withIndex(
-          "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+          GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX,
           (q) => q.eq("teamId", membership.teamId).eq("externalOwnerUserId", userId),
         )
         .take(20));

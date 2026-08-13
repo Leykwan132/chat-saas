@@ -4,6 +4,7 @@ import type { Id } from "../_generated/dataModel";
 import { internal } from "../_generated/api";
 import schema from "../schema";
 import type { GoogleCalendarConnectionState } from "./contracts";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./constants";
 
 type CalendarTest = TestConvex<typeof schema>;
 
@@ -209,7 +210,7 @@ export async function insertSameGoogleEventForTwoOwnersAndTwoInstances(t: Calend
           await ctx.db
             .query("calendarEvents")
             .withIndex(
-              "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+              GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX,
               (q) =>
                 q
                   .eq("teamId", teamId)

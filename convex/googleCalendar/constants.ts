@@ -1,4 +1,5 @@
 export const GOOGLE_CALENDAR_PROVIDER = "google_calendar" as const;
+export const GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX = "by_googleExternalEventIdentity" as const;
 export const GOOGLE_CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 export const CALENDAR_PAGE_FRESHNESS_MS = 5 * 60 * 1000;
 export const AVAILABILITY_FRESHNESS_MS = 60 * 1000;

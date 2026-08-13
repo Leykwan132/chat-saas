@@ -46,6 +46,7 @@ import {
   googleCalendarExternalEventFields,
   googleCalendarTables,
 } from "./googleCalendar/schema";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -1625,16 +1626,13 @@ export default defineSchema({
       "externalProvider",
       "externalEventId",
     ])
-    .index(
-      "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
-      [
-        "teamId",
-        "externalOwnerUserId",
-        "externalCalendarId",
-        "externalEventId",
-        "externalOriginalStartAt",
-      ],
-    ),
+    .index(GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX, [
+      "teamId",
+      "externalOwnerUserId",
+      "externalCalendarId",
+      "externalEventId",
+      "externalOriginalStartAt",
+    ]),
   ...googleCalendarTables,
   calendarEventParticipants: defineTable({
     eventId: v.id("calendarEvents"),

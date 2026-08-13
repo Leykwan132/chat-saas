@@ -3,6 +3,7 @@ import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { ownedSyncRun } from "./syncOwnership";
 import { removeParticipantAvailabilityIntervals } from "../calendarAvailabilityIntervals";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./constants";
 
 const RECOVERY_EVENT_BATCH_SIZE = 40;
 
@@ -79,7 +80,7 @@ export const recoverInvalidSyncToken = internalMutation({
     const eventPage = await ctx.db
       .query("calendarEvents")
       .withIndex(
-        "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+        GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX,
         (q) => q
           .eq("teamId", membership.teamId)
           .eq("externalOwnerUserId", connection.userId)
@@ -156,7 +157,7 @@ export const reconcileFullSync = internalMutation({
     const eventPage = await ctx.db
       .query("calendarEvents")
       .withIndex(
-        "by_teamId_and_externalOwnerUserId_and_externalCalendarId_and_externalEventId_and_externalOriginalStartAt",
+        GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX,
         (q) => q
           .eq("teamId", membership.teamId)
           .eq("externalOwnerUserId", connection.userId)

@@ -12,8 +12,13 @@ import {
   reserveWriteOperation,
 } from "./googleCalendar/testFixtures";
 import schema from "./schema";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 
 const modules = import.meta.glob("./**/*.ts");
+
+test("external event identity index name fits Convex identifier limits", () => {
+  expect(GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX.length).toBeLessThanOrEqual(64);
+});
 
 test("one Google Calendar connection follows a user across workspaces", async () => {
   const t = convexTest(schema, modules);
