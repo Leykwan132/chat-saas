@@ -244,7 +244,9 @@ export function WeeklyAvailabilityEditor({
                     />
                   ))}
                 </div>
-              ) : null}
+              ) : (
+                <span className="py-1.5 text-sm text-muted-foreground">Unavailable</span>
+              )}
             </div>
           );
         })}
