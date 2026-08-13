@@ -18,7 +18,7 @@
 # State
 
 - 2026-08-13 [USER] Now: investigate slot availability during creation on local branch `codex/fix-slot-availability-create`.
-- 2026-08-13 [USER] Next: review the approved nearest-slot design, then implement and verify it.
+- 2026-08-13 [TOOL] Next: execute `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md` inline with test-first checkpoints.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -31,6 +31,7 @@
 - `docs/superpowers/specs/2026-08-13-manual-booking-service-eligibility-design.md`
 - `docs/superpowers/plans/2026-08-13-manual-booking-service-eligibility.md`
 - `docs/superpowers/specs/2026-08-13-manual-booking-nearest-slot-design.md`
+- `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md`
 
 # Receipts
 
@@ -42,3 +43,4 @@
 - 2026-08-13 [TOOL] `git push -u origin codex/fix-booking-active-services` succeeded; GitHub connector PR create returned 403 and local `gh auth status` reports an invalid `Leykwan132` token.
 - 2026-08-13 [TOOL] Created and checked out local branch `codex/fix-slot-availability-create`; preserved unrelated untracked `pricing-knowledge-base-updated.md`.
 - 2026-08-13 [USER] Confirmed the nearest default starts immediately at the next valid 30-minute slot.
+- 2026-08-13 [CODE] Approved scope is Inbox Create booking; Calendar New Booking remains unchanged because customer-specific availability is unavailable before the customer selection.
