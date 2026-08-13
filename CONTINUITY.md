@@ -47,3 +47,4 @@
 - 2026-08-13 [CODE] Approved scope is Inbox Create booking; Calendar New Booking remains unchanged because customer-specific availability is unavailable before the customer selection.
 - 2026-08-13 [TOOL] `bunx convex codegen` completed under Node v22.22.0 and uploaded the generated functions to its configured Convex deployment; deployment environment and production availability are UNCONFIRMED.
 - 2026-08-13 [TOOL] Focused booking regression suite passed 13/13 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
+- 2026-08-13 [TOOL] Full `bunx vitest run` passed 1,346 tests across 415 files but exited non-zero on the same 10 Docs runner/configuration suites treated as empty by Vitest; unrelated to this booking change.
