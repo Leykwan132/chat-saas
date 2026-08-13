@@ -3,27 +3,27 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Calendar HTTP vends a Pipes access token and calls Google directly. WorkOS Relay is removed. [USER] 2026-08-13
+- Now: Connected Calendar header uses the same outline button as Connect, labeled Connected with a check; click opens a Disconnect dropdown (confirm dialog kept). [USER] 2026-08-13
 - Next: User deploys latest Convex and reconnects. Logs should show `[google-calendar] WorkOS access token { active: true, hasAccessToken: true }`. [USER] 2026-08-13
-- Open questions: production availability UNCONFIRMED. [USER] 2026-08-13
+- Open questions: production availability UNCONFIRMED. Connected-button UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [USER] Connected Google Calendar header button matches Connect; check mark; click opens Disconnect dropdown, then existing confirm dialog.
 - 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 - 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
 - 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
 - 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
-- 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Authorize URL body is `{ user_id }` only.
 
 # Working set
-- convex/googleCalendar/googleClient.ts
-- convex/googleCalendar/connectionWorkos.ts
-- convex/googleCalendar/constants.ts
-- convex/googleCalendarProvider.test.ts
+- src/components/calendar/GoogleCalendarConnectionCard.tsx
+- src/components/calendar/GoogleCalendarConnection.test.tsx
+- src/components/calendar/GoogleCalendarDisconnectDialog.tsx
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [CODE] Connected header button: same outline control as Connect, check icon, Disconnect in dropdown.
 - 2026-08-13 [TOOL] Access-token Google Calendar after Relay removal: 180 passed (24 files).
 - 2026-08-13 [CODE] D651: WorkOS Relay removed. Calendar HTTP vends `POST /data-integrations/google-calendar/token` with `{ user_id }` and calls Google directly.
 - 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
@@ -37,6 +37,7 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
+- 2026-08-13 [USER] D652 ACTIVE: When Google Calendar is connected, the header control is the same outline button as Connect, labeled Connected with a check. Click opens a dropdown with Disconnect; the existing confirm dialog still runs before disconnect.
 - 2026-08-13 [USER] D651 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.
 - 2026-08-13 [USER] D650 SUPERSEDED by D651: Relay path routing is removed because Relay early access may be unavailable.
 - 2026-08-13 [USER] D649 SUPERSEDED by D651: Relay URL routing is removed.

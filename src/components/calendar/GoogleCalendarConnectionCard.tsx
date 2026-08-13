@@ -1,4 +1,12 @@
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
@@ -24,47 +32,50 @@ export function GoogleCalendarConnectionCard({
   onReconnect,
   onDisconnect,
 }: GoogleCalendarConnectionCardProps) {
+  const connected = state === "connected";
   const connectLabel =
     pending || state === "syncing"
       ? "Connecting..."
       : state === "needs_reauthorization"
         ? "Reconnect"
         : "Connect";
+  const button = (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-8 w-fit gap-2"
+      disabled={pending}
+      {...(connected
+        ? { "aria-label": "Google Calendar connected" }
+        : { onClick: state === "needs_reauthorization" ? onReconnect : onConnect })}
+    >
+      <GoogleCalendarIcon />
+      {connected ? "Connected" : connectLabel}
+      {connected ? <Check data-icon="inline-end" /> : null}
+    </Button>
+  );
 
   return (
     <div className="flex items-center gap-1.5" data-calendar-header-section="google-calendar">
-      {state === "connected" ? (
-        <>
-          <span className="inline-flex h-8 items-center gap-2 px-1 text-sm text-foreground">
-            <GoogleCalendarIcon />
-            Connected
-          </span>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-8"
-            disabled={pending}
-            onClick={onDisconnect}
-          >
-            Disconnect
-          </Button>
-        </>
+      {connected ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>{button}</DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                variant="destructive"
+                disabled={pending}
+                onSelect={onDisconnect}
+              >
+                Disconnect
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       ) : (
         <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 w-fit gap-2"
-              disabled={pending}
-              onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
-            >
-              <GoogleCalendarIcon />
-              {connectLabel}
-            </Button>
-          </TooltipTrigger>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
           <TooltipContent side="bottom">
             {state === "needs_reauthorization"
               ? "Reconnect Google Calendar"

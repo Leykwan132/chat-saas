@@ -41,14 +41,18 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("TooltipContent");
   });
 
-  it("shows Connected and Disconnect when connected", () => {
+  it("shows a Connected button with a check and a disconnect dropdown", () => {
     const markup = renderConnectionCard({
       state: "connected",
       lastSuccessfulSyncAt: Date.UTC(2026, 7, 13, 4, 0, 0),
     });
     expect(markup).toContain("Connected");
-    expect(markup).toContain("Disconnect");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(markup).toContain("aria-label=\"Google Calendar connected\"");
+    const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
+    expect(source).toContain("DropdownMenu");
+    expect(source).toContain("Disconnect");
+    expect(source).toContain("<Check data-icon=\"inline-end\" />");
   });
 
   it("shows reconnect recovery without claiming connected", () => {
