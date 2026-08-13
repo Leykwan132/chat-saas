@@ -29,7 +29,7 @@
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [CODE] User-scoped Pipes widget token: POST `/widgets/token` with `{ user_id }` only; Calendar hook stopped using AuthKit `getAccessToken`.
+- 2026-08-13 [TOOL] User-scoped Pipes widget token tests: 34 passed (`googleCalendarProvider`, connection UI, connection lifecycle). POST `/widgets/token` body is `{ user_id }` only.
 - 2026-08-13 [TOOL] Task 9 tests: 35 passed (connection UI, sidebar, projection, connection lifecycle). `npx convex typecheck` passed.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
 - 2026-08-13 [TOOL] `npx convex typecheck` passed after fixing Google Calendar typing (159 errors → 0). Focused tests: 18 passed (schema, agent tools, booking sync).
