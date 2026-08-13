@@ -22,7 +22,8 @@
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [TOOL] Relay Google Calendar suite: 182 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
+- 2026-08-13 [TOOL] Relay path routing (`/relay/google-calendar`): 182 passed (24 files).
+- 2026-08-13 [CODE] D650: URL routing to `www.googleapis.com` resolved slug `google` and 404'd the `google-calendar` connection.
 - 2026-08-13 [CODE] D649: Google Calendar HTTP posts to `https://api.workos.com/relay` with `X-Relay-URL` and `X-Relay-User`. Authorize/connected-account stay on slug `google-calendar`.
 - 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
 - 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
