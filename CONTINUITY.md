@@ -24,24 +24,17 @@
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [TOOL] Sidebar Google Calendar card: 26 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`, `googleCalendarConnection.test.ts`).
-- 2026-08-13 [CODE] Sidebar Google Calendar card: icon + title; connected row is emerald dot + email + trash; confirm dialog kept.
-- 2026-08-13 [CODE] Connected header chip: ghost `bg-input/50` + Google Calendar + chevron; menu item `Disconnect Google Calendar`.
-- 2026-08-13 [TOOL] + Google Calendar header button: 12 passed (`GoogleCalendarConnection.test.tsx`).
+- 2026-08-13 [TOOL] Connected email + green check + Connected since: 26 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`, `googleCalendarConnection.test.ts`).
+- 2026-08-13 [CODE] Connected card row is email + emerald CheckCircle2 and `Connected since {createdAt}`; trash stays.
+- 2026-08-13 [CODE] Sidebar Google Calendar card: icon + title below Assigned to me; confirm dialog kept. Header chip/dropdown Connect UI superseded.
 - 2026-08-13 [CODE] Connect button: official Google Calendar logo + label `+ Google Calendar`.
 - 2026-08-13 [TOOL] Create booking empty-services tests: 6 passed (`CreateBookingDialog`, `CreateCustomerBookingDialog`).
 - 2026-08-13 [CODE] Create booking empty state: Empty + Create service link to `/services/new`; Create booking footer hidden when there are no services.
-- 2026-08-13 [TOOL] Connected header button dropdown: 12 passed (`GoogleCalendarConnection.test.tsx`).
-- 2026-08-13 [CODE] Connected header button: same outline control as Connect, check icon, Disconnect in dropdown.
 - 2026-08-13 [TOOL] Access-token Google Calendar after Relay removal: 180 passed (24 files).
 - 2026-08-13 [CODE] D651: WorkOS Relay removed. Calendar HTTP vends `POST /data-integrations/google-calendar/token` with `{ user_id }` and calls Google directly.
-- 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
-- 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
-- 2026-08-13 [TOOL] WorkOS connected-account console log: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
-- 2026-08-13 [USER] Connect logs WorkOS connected-account GET (`status` + `body`) to the browser console and Convex function logs.
-- 2026-08-13 [TOOL] Persist-after-connect: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
-- 2026-08-13 [CODE] D647: Connect polls reconcile while the WorkOS tab is open; `requireWorkosAccount` retries 404s and throws if still missing. `needs_reauthorization` now inserts a row.
-- 2026-08-13 [TOOL] Connect tooltip / header Connect / slug `google-calendar` / custom Connect UI: 43 passed. Authorize body is `{ user_id }` only.
+- 2026-08-13 [TOOL] Full-sync reconcile paginate-limit tests: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
+- 2026-08-13 [TOOL] Persist-after-connect / WorkOS connected-account log: 43 passed.
+- 2026-08-13 [CODE] D647: Connect polls reconcile while the WorkOS tab is open; `requireWorkosAccount` retries 404s and throws if still missing.
 - 2026-08-13 [TOOL] Task 7–9 + typecheck milestone: Calendar schema/agent/booking/watch suites passed under Node v22 after `origin/main` merge `16e7d1f`.
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
