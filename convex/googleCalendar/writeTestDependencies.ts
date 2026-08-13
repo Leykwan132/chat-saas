@@ -30,8 +30,12 @@ function withRelayUpstreamStatus(googleFetch: typeof fetch): typeof fetch {
     if (response.headers.has("X-Relay-Upstream-Status")) return response;
     const headers = new Headers(response.headers);
     headers.set("X-Relay-Upstream-Status", String(response.status));
+    const status = response.status;
+    if (status === 204 || status === 205 || status === 304) {
+      return new Response(null, { status, statusText: response.statusText, headers });
+    }
     return new Response(await response.arrayBuffer(), {
-      status: response.status,
+      status,
       statusText: response.statusText,
       headers,
     });
