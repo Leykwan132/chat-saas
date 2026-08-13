@@ -3,24 +3,24 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: WorkOS Pipes Google Calendar slug is `google-calendar`. Custom Connect button uses that authorize URL. [USER] 2026-08-13
+- Now: Calendar Connect sits left of the time zone control. Today button removed. WorkOS slug is `google-calendar`. [USER] 2026-08-13
 - Next: User reconnects Google Calendar if needed; confirm Relay is enabled for the WorkOS environment. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; Relay is early access. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
 - 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
 - 2026-08-13 [USER] D643: Google Calendar provider calls use WorkOS Pipes Relay instead of `pipes.getAccessToken`. Omit `X-Relay-Organization`. Connection health uses connected-account GET.
 - 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Authorize URL body is `{ user_id }` only (widget tokens superseded by D644).
 - 2026-08-13 [CODE] Task 9: Calendar sidebar Google connect, refresh/disconnect, source badges, owner-only Google event edit/delete.
 - 2026-08-13 [CODE] Watch/agent `internal` cycle, Convex typecheck, and `origin/main` `16e7d1f` merge on `cursor/google-calendar-booking-sync-10b0`.
-- 2026-08-13 [CODE] Task 8: booking-capable agents get busy-only `listCalendarEvents` and guarded Kilobot update/delete tools.
 
 # Working set
-- convex/googleCalendar/constants.ts
-- convex/googleCalendar/connectionWorkos.ts
-- convex/googleCalendar/workosToken.ts
-- convex/googleCalendarProvider.test.ts
+- src/pages/CalendarPage.tsx
+- src/components/calendar/GoogleCalendarConnectionCard.tsx
+- src/components/calendar/CalendarSidebar.tsx
+- src/components/calendar/GoogleCalendarConnection.test.tsx
 - docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
 - CONTINUITY.md
 
@@ -41,8 +41,9 @@
 - 2026-08-13 [TOOL] bun was missing in the cloud environment; installed bun 1.3.9 then `bun install`. `nvm use 22`.
 
 # Decisions
+- 2026-08-13 [USER] D646 ACTIVE: Calendar Google Connect sits in the Calendar header to the left of the time zone control. The header Today button is removed.
 - 2026-08-13 [USER] D645 ACTIVE: WorkOS Pipes Google Calendar provider slug is `google-calendar`. Use it on authorize, connected-account, and stored connection rows. Do not use `google_calendar`.
-- 2026-08-13 [USER] D644 ACTIVE: Calendar Google Calendar connect uses Kilobot UI (Google icon + Connect below Assigned to me). Backend vends `POST /data-integrations/google-calendar/authorize` with `user_id` only; the browser opens that URL. Do not embed the hosted WorkOS `<Pipes>` widget.
+- 2026-08-13 [USER] D644 ACTIVE: Calendar Google Calendar connect uses Kilobot UI (Google icon + Connect). Backend vends `POST /data-integrations/google-calendar/authorize` with `user_id` only; the browser opens that URL. Do not embed the hosted WorkOS `<Pipes>` widget.
 - 2026-08-13 [USER] D643 ACTIVE: Google Calendar HTTP uses WorkOS Pipes Relay (`https://api.workos.com/relay`) with `X-Relay-URL` and `X-Relay-User`. Do not call `pipes.getAccessToken` or attach Google tokens. Omit `X-Relay-Organization` (user-scoped). Connection health is WorkOS connected-account GET plus required `calendar.events` scope.
 - 2026-08-13 [USER] D642 ACTIVE: WorkOS Pipes Google Calendar connections are user-scoped. Authorize URL requests send `user_id` only (no `organization_id`). Hosted widget tokens superseded by D644.
 - 2026-08-13 [USER] D641 ACTIVE: Primary-calendar-only for v1, including push-assisted incremental sync, channel renewal, fail-closed connected-calendar operations, privacy redaction, idempotent writes, and conversation-scoped agent mutations. Spec: `docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md`.

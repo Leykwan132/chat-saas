@@ -31,7 +31,6 @@ type CalendarSidebarProps = {
   onCreateBooking: () => void;
   onShowAllEvents: () => void;
   onAssignedToMe: () => void;
-  connectionCard?: ReactNode;
 };
 
 function CalendarSidebarFilterRow({
@@ -95,7 +94,6 @@ export function CalendarSidebar({
   onCreateBooking,
   onShowAllEvents,
   onAssignedToMe,
-  connectionCard,
 }: CalendarSidebarProps) {
   return (
     <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
@@ -145,8 +143,6 @@ export function CalendarSidebar({
             disabled={!hasCurrentUser}
           />
         </CalendarSidebarFilterSection>
-
-        {connectionCard}
       </div>
     </aside>
   );

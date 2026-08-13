@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
-import { CalendarSidebar } from "./CalendarSidebar";
 import {
   GOOGLE_CALENDAR_ICON_SRC,
   GoogleCalendarConnectionCard,
@@ -22,7 +21,6 @@ function renderConnectionCard(
       pending={false}
       onConnect={() => undefined}
       onReconnect={() => undefined}
-      onRefresh={() => undefined}
       onDisconnect={() => undefined}
       {...props}
     />,
@@ -37,13 +35,13 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Connect Google Calendar");
   });
 
-  it("shows last sync and Refresh when connected", () => {
+  it("shows Connected and Disconnect when connected", () => {
     const markup = renderConnectionCard({
       state: "connected",
       lastSuccessfulSyncAt: Date.UTC(2026, 7, 13, 4, 0, 0),
     });
     expect(markup).toContain("Connected");
-    expect(markup).toContain("Refresh");
+    expect(markup).toContain("Disconnect");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
   });
 
@@ -137,35 +135,11 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google");
   });
 
-  it("places the Connect button below Assigned to me", () => {
-    const markup = renderToStaticMarkup(
-      <CalendarSidebar
-        assignedToMeOnly={false}
-        canManageCalendar
-        hasCurrentUser
-        selectedDate={new Date(2026, 7, 13)}
-        visibleMonth={new Date(2026, 7, 1)}
-        onAssignedToMe={() => undefined}
-        onChangeMonth={() => undefined}
-        onCreateBooking={() => undefined}
-        onShowAllEvents={() => undefined}
-        connectionCard={
-          <GoogleCalendarConnectionCard
-            state="not_connected"
-            pending={false}
-            onConnect={() => undefined}
-            onReconnect={() => undefined}
-            onRefresh={() => undefined}
-            onDisconnect={() => undefined}
-          />
-        }
-      />,
-    );
-    expect(markup.indexOf("Assigned to me")).toBeLessThan(
-      markup.indexOf('data-calendar-sidebar-section="google-calendar"'),
-    );
-    expect(markup.indexOf("Assigned to me")).toBeGreaterThan(markup.indexOf("New Booking"));
-    expect(markup).toContain("Connect");
-    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+  it("places Connect to the left of the timezone control and omits Today", () => {
+    const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
+    const header = page.slice(page.indexOf("inboxColumnHeaderClassName"));
+    expect(header.indexOf("<GoogleCalendarConnectionCard")).toBeLessThan(header.indexOf("<TimeZoneSelect"));
+    expect(page).not.toContain("connectionCard");
+    expect(page).not.toContain(">Today</Button>");
   });
 });
