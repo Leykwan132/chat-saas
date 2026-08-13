@@ -31,7 +31,7 @@
 - docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
 
 # Receipts
-- 2026-08-13 [CODE] Task 9: connection query/actions, Calendar sidebar Connect control, Pipes dialog, source badges, owner Google mutate path. Production availability UNCONFIRMED; changelog deferred.
+- 2026-08-13 [TOOL] Task 9 tests: 35 passed (connection UI, sidebar, projection, connection lifecycle). `npx convex typecheck` passed.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
 - 2026-08-13 [TOOL] `npx convex typecheck` passed after fixing Google Calendar typing (159 errors → 0). Focused tests: 18 passed (schema, agent tools, booking sync).
 - 2026-08-13 [TOOL] `git merge origin/main` (`16e7d1f` Refresh model catalog and enhance announcement designs #55). Sole conflict: `CONTINUITY.md`. Kept bounded Snapshot/Done/Working set/Receipts; kept Google Calendar D641–D637; kept main D637 (paid model tiers / What’s new) without renumbering.
