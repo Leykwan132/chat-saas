@@ -5,11 +5,15 @@ import { getWorkOSApiKey } from "../workosClient";
 const WORKOS_API_BASE = "https://api.workos.com";
 const MISSING_ACCOUNT_RETRY_DELAYS_MS = [1000, 2000, 4000];
 
-export type GoogleCalendarCredentialResult =
+export type GoogleCalendarCredentialResult = (
   | ({ kind: "active" } & GoogleCalendarActor)
   | { kind: "not_connected" }
   | { kind: "needs_reauthorization" }
-  | { kind: "retryable" };
+  | { kind: "retryable" }
+) & {
+  workosHttpStatus?: number;
+  workosConnectedAccount?: unknown;
+};
 
 export type GoogleCalendarCredentialOptions = {
   retryMissing?: boolean;
@@ -62,6 +66,16 @@ export function classifyWorkosConnectedAccount(
   return { kind: "needs_reauthorization" };
 }
 
+async function readWorkosBody(response: Response): Promise<unknown> {
+  const text = await response.text();
+  if (text.length === 0) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
 async function fetchGoogleCalendarCredential(
   workosUserId: string,
   fetchImplementation: typeof fetch,
@@ -76,18 +90,26 @@ async function fetchGoogleCalendarCredential(
         },
       },
     );
+    const body = await readWorkosBody(response);
+    console.log("[google-calendar] WorkOS connected-account GET", {
+      status: response.status,
+      workosUserId,
+      body,
+    });
     if (response.status === 404) {
-      return { kind: "not_connected" };
+      return { kind: "not_connected", workosHttpStatus: response.status, workosConnectedAccount: body };
     }
     if (!response.ok) {
-      return { kind: "retryable" };
+      return { kind: "retryable", workosHttpStatus: response.status, workosConnectedAccount: body };
     }
-    const account = JSON.parse(await response.text()) as {
-      state?: unknown;
-      scopes?: unknown;
+    const account = body as { state?: unknown; scopes?: unknown };
+    return {
+      ...classifyWorkosConnectedAccount(workosUserId, account),
+      workosHttpStatus: response.status,
+      workosConnectedAccount: body,
     };
-    return classifyWorkosConnectedAccount(workosUserId, account);
-  } catch {
+  } catch (error) {
+    console.log("[google-calendar] WorkOS connected-account GET failed", error);
     return { kind: "retryable" };
   }
 }

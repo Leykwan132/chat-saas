@@ -10,4 +10,6 @@ export type GoogleCalendarConnectionStatus = {
   lastErrorKind?: string;
   lastErrorMessage?: string;
   timeZone?: string;
+  workosHttpStatus?: number;
+  workosConnectedAccount?: unknown;
 };

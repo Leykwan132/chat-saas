@@ -55,10 +55,12 @@ test("treats a connected account with the events scope as active", async () => {
     workosFetchReturning(connectedAccount()),
   );
 
-  expect(result).toEqual({
+  expect(result).toMatchObject({
     kind: "active",
     workosUserId: "user_123",
   });
+  expect(result.workosHttpStatus).toBe(200);
+  expect(result.workosConnectedAccount).toEqual(connectedAccount());
 });
 
 test("treats a connected account with the full calendar scope as active", async () => {

@@ -23,11 +23,21 @@ export async function reconcileUntilGoogleCalendarReady(
   const pollMs = options.pollMs ?? CONNECT_POLL_MS;
   while (Date.now() < deadline) {
     const status = await reconcile({});
+    console.log("[google-calendar] WorkOS connected-account", {
+      status: status.workosHttpStatus,
+      body: status.workosConnectedAccount,
+      kilobotState: status.state,
+    });
     if (status.state === "connected" || status.state === "syncing") return status;
     if (options.shouldStop?.()) break;
     await sleep(pollMs);
   }
   const status = await reconcile({ requireWorkosAccount: true });
+  console.log("[google-calendar] WorkOS connected-account", {
+    status: status.workosHttpStatus,
+    body: status.workosConnectedAccount,
+    kilobotState: status.state,
+  });
   if (status.state === "connected" || status.state === "syncing") return status;
   if (status.state === "needs_reauthorization") {
     throw new Error("Google Calendar needs to be reconnected.");

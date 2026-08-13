@@ -78,6 +78,7 @@ describe("Google Calendar connection UI", () => {
     expect(hook).toContain("window.location.assign");
     expect(hook).toContain("reconcileUntilGoogleCalendarReady");
     expect(hook).toContain("requireWorkosAccount");
+    expect(hook).toContain('console.log("[google-calendar] WorkOS connected-account"');
     expect(hook).not.toContain("waitForPopupClose");
     expect(hook).not.toContain("getCurrentPipesWidgetToken");
     expect(hook).not.toContain("getAccessToken");

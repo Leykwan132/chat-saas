@@ -19,6 +19,8 @@ export const googleCalendarConnectionStatusValidator = v.object({
   lastErrorKind: v.optional(googleCalendarErrorKindValidator),
   lastErrorMessage: v.optional(v.string()),
   timeZone: v.optional(v.string()),
+  workosHttpStatus: v.optional(v.number()),
+  workosConnectedAccount: v.optional(v.any()),
 });
 
 export type GoogleCalendarUiState =
@@ -33,6 +35,8 @@ export type GoogleCalendarConnectionStatus = {
   lastErrorKind?: GoogleCalendarOperationFailure["kind"];
   lastErrorMessage?: string;
   timeZone?: string;
+  workosHttpStatus?: number;
+  workosConnectedAccount?: unknown;
 };
 
 function uiState(state: GoogleCalendarConnectionState | undefined): GoogleCalendarUiState {

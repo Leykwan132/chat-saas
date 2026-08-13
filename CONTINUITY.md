@@ -3,7 +3,7 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Persist `googleCalendarConnections` as soon as WorkOS reports the account; do not wait for the authorize tab to close. [USER] 2026-08-13
+- Now: Persist `googleCalendarConnections` as soon as WorkOS reports the account. Connect logs the WorkOS connected-account GET in the browser console and Convex logs. [USER] 2026-08-13
 - Next: User reconnects on this branch so Convex gets a connection row; confirm Relay is enabled. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; Relay is early access. [USER] 2026-08-13
 
@@ -27,6 +27,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [USER] Connect logs WorkOS connected-account GET (`status` + `body`) to the browser console and Convex function logs.
 - 2026-08-13 [TOOL] Persist-after-connect: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
 - 2026-08-13 [CODE] D647: Connect polls reconcile while the WorkOS tab is open; `requireWorkosAccount` retries 404s and throws if still missing. `needs_reauthorization` now inserts a row.
 - 2026-08-13 [TOOL] Connect tooltip: 10 connection UI tests passed.
