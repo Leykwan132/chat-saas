@@ -3,11 +3,19 @@ import { convexTest, type TestConvex } from "convex-test";
 import { afterEach, expect, test, vi } from "vitest";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
+import type { FunctionReference } from "convex/server";
 import { resolveAvailableInterval } from "./appointmentBooking/availability";
 import { AVAILABILITY_FRESHNESS_MS } from "./googleCalendar/constants";
 import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 type CalendarTest = TestConvex<typeof schema>;
+const googleInternal = internal as unknown as {
+  googleCalendar: {
+    calendarEventPrepare: {
+      prepareUpdate: FunctionReference<"mutation", "internal", Record<string, unknown>, { kind: string }>;
+    };
+  };
+};
 const hour = 60 * 60 * 1000;
 afterEach(() => {
   vi.useRealTimers();
@@ -183,7 +191,7 @@ test("the Google event owner can prepare an update without calendar.manage", asy
     });
   });
   const prepared = await t.withIdentity({ subject: "external-owner" }).mutation(
-    internal.googleCalendar.calendarEventPrepare.prepareUpdate,
+    googleInternal.googleCalendar.calendarEventPrepare.prepareUpdate,
     { eventId: fixture.eventId, title: "Owner edit", refreshed: true },
   );
   expect(prepared.kind).toBe("google");

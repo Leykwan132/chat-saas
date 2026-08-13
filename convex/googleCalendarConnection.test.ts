@@ -2,7 +2,7 @@
 import { convexTest, type TestConvex } from "convex-test";
 import { expect, test } from "vitest";
 import type { FunctionReference } from "convex/server";
-import { api, internal } from "./_generated/api";
+import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { ActionCtx } from "./_generated/server";
 import schema from "./schema";
@@ -25,11 +25,24 @@ const googleInternal = internal as unknown as {
       getForUser: FunctionReference<"query", "internal", { userId: Id<"users"> }, { _id: Id<"googleCalendarConnections">; state: string } | null>;
       purgeImportedGoogleEvents: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     };
-    calendarEventPrepare: {
-      prepareUpdate: FunctionReference<"mutation", "internal", Record<string, unknown>, { kind: string }>;
+    connectionQueries: {
+      getCurrentConnectionStatus: FunctionReference<"query", "public", Record<string, never>, { state: string }>;
     };
   };
 };
+
+function actionCtx(t: CalendarTest) {
+  const authed = t.withIdentity({ subject: "user_google_calendar" });
+  return {
+    runQuery: (ref: FunctionReference<"query", "internal" | "public", Record<string, unknown>, unknown>, args: Record<string, unknown>) =>
+      authed.query(ref, args),
+    runMutation: (ref: FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>, args: Record<string, unknown>) =>
+      authed.mutation(ref, args),
+    runAction: () => {
+      throw new Error("unexpected action");
+    },
+  } as unknown as ActionCtx;
+}
 
 async function setupUser(t: CalendarTest) {
   return await t.run(async (ctx) => {
@@ -82,7 +95,7 @@ test("getCurrentConnectionStatus reports connected after ensureSyncing plus a lo
     await ctx.db.patch(connectionId, { state: "connected", lastSuccessfulSyncAt: Date.now() });
   });
   const status = await t.withIdentity({ subject: "user_google_calendar" }).query(
-    api.googleCalendar.connectionQueries.getCurrentConnectionStatus,
+    googleInternal.googleCalendar.connectionQueries.getCurrentConnectionStatus,
     {},
   );
   expect(status.state).toBe("connected");
@@ -132,7 +145,7 @@ test("purgeImportedGoogleEvents deletes Google copies and keeps Kilobot bookings
 
 test("reconcile runs initial sync and watch when WorkOS is active", async () => {
   const t = convexTest(schema, modules);
-  const { userId, teamId } = await setupUser(t);
+  await setupUser(t);
   const calls: string[] = [];
   const deps: GoogleCalendarConnectionDependencies = {
     getCredential: async () => ({ kind: "active", token: "token", expiresAt: null }),
@@ -150,37 +163,14 @@ test("reconcile runs initial sync and watch when WorkOS is active", async () => 
       calls.push("delete");
     },
   };
-  const ctx = {
-    runQuery: async (ref: FunctionReference<"query", "internal" | "public", Record<string, unknown>, unknown>, args: Record<string, unknown>) => {
-      if (ref === internal.authUtils.resolveAuthScope) {
-        return {
-          userId: "user_google_calendar",
-          userDbId: userId,
-          activeTeamId: teamId,
-          orgId: "",
-          role: "owner",
-          roles: ["owner"],
-          permissions: [],
-          identity: { subject: "user_google_calendar" },
-        };
-      }
-      return await t.query(ref, args);
-    },
-    runMutation: async (ref: FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>, args: Record<string, unknown>) => {
-      return await t.mutation(ref, args);
-    },
-    runAction: async () => {
-      throw new Error("unexpected action");
-    },
-  } as unknown as ActionCtx;
-  const status = await reconcileGoogleCalendarConnection(ctx, deps);
+  const status = await reconcileGoogleCalendarConnection(actionCtx(t), deps);
   expect(calls).toEqual(["sync", "watch"]);
   expect(["syncing", "connected", "not_connected"]).toContain(status.state);
 });
 
 test("refresh skips Google sync when the last sync is fresh", async () => {
   const t = convexTest(schema, modules);
-  const { userId, teamId } = await setupUser(t);
+  const { userId } = await setupUser(t);
   const now = Date.now();
   await t.mutation(googleInternal.googleCalendar.connectionLifecycle.ensureSyncing, {
     userId,
@@ -196,26 +186,7 @@ test("refresh skips Google sync when the last sync is fresh", async () => {
     });
   });
   let synced = false;
-  const ctx = {
-    runQuery: async (ref: FunctionReference<"query", "internal" | "public", Record<string, unknown>, unknown>, args: Record<string, unknown>) => {
-      if (ref === internal.authUtils.resolveAuthScope) {
-        return {
-          userId: "user_google_calendar",
-          userDbId: userId,
-          activeTeamId: teamId,
-          orgId: "",
-          role: "owner",
-          roles: ["owner"],
-          permissions: [],
-          identity: { subject: "user_google_calendar" },
-        };
-      }
-      return await t.query(ref, args);
-    },
-    runMutation: async () => null,
-    runAction: async () => null,
-  } as unknown as ActionCtx;
-  await refreshGoogleCalendarConnection(ctx, {
+  await refreshGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "active", token: "token", expiresAt: null }),
     getPrimaryTimeZone: async () => "UTC",
     runSync: async () => {
@@ -255,28 +226,7 @@ test("disconnect deletes the WorkOS account and imported events", async () => {
     });
   });
   let deletedAccount = false;
-  const ctx = {
-    runQuery: async (ref: FunctionReference<"query", "internal" | "public", Record<string, unknown>, unknown>, args: Record<string, unknown>) => {
-      if (ref === internal.authUtils.resolveAuthScope) {
-        return {
-          userId: "user_google_calendar",
-          userDbId: userId,
-          activeTeamId: teamId,
-          orgId: "",
-          role: "owner",
-          roles: ["owner"],
-          permissions: [],
-          identity: { subject: "user_google_calendar" },
-        };
-      }
-      return await t.query(ref, args);
-    },
-    runMutation: async (ref: FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>, args: Record<string, unknown>) => {
-      return await t.mutation(ref, args);
-    },
-    runAction: async () => null,
-  } as unknown as ActionCtx;
-  const status = await disconnectGoogleCalendarConnection(ctx, {
+  const status = await disconnectGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "not_connected" }),
     getPrimaryTimeZone: async () => "UTC",
     runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),

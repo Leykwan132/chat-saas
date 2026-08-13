@@ -2,17 +2,17 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useAction, useQuery } from "convex/react";
 import { useAuth } from "@workos-inc/authkit-react";
 import { toast } from "sonner";
-import { api } from "../../../convex/_generated/api";
+import { googleCalendarApi } from "./googleCalendarApi";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 export function useGoogleCalendarConnection() {
   const { getAccessToken } = useAuth();
-  const status = useQuery(api.googleCalendar.connectionQueries.getCurrentConnectionStatus) as
+  const status = useQuery(googleCalendarApi.connectionQueries.getCurrentConnectionStatus) as
     | GoogleCalendarConnectionStatus
     | undefined;
-  const reconcile = useAction(api.googleCalendar.connectionActions.reconcileCurrentConnection);
-  const refresh = useAction(api.googleCalendar.connectionActions.refreshCurrentConnection);
-  const disconnect = useAction(api.googleCalendar.connectionActions.disconnectCurrentConnection);
+  const reconcile = useAction(googleCalendarApi.connectionActions.reconcileCurrentConnection);
+  const refresh = useAction(googleCalendarApi.connectionActions.refreshCurrentConnection);
+  const disconnect = useAction(googleCalendarApi.connectionActions.disconnectCurrentConnection);
   const [pipesOpen, setPipesOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [pending, setPending] = useState(false);

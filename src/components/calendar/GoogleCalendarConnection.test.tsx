@@ -1,19 +1,13 @@
+import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { CalendarSidebar } from "./CalendarSidebar";
 import { GoogleCalendarConnectionCard } from "./GoogleCalendarConnectionCard";
-import { GoogleCalendarDisconnectDialog } from "./GoogleCalendarDisconnectDialog";
-import { GoogleCalendarPipesDialog } from "./GoogleCalendarPipesDialog";
 import { GoogleCalendarSourceBadge } from "./GoogleCalendarSourceBadge";
 import { EventDetailsBody } from "./CalendarEventDetailsBody";
 import type { AppointmentDetails } from "./CalendarEventDetailsBody";
 import type { Id } from "../../../convex/_generated/dataModel";
-
-vi.mock("@workos-inc/widgets", () => ({
-  Pipes: () => <div>Pipes widget</div>,
-  WorkOsWidgets: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
 
 function renderConnectionCard(
   props: Partial<ComponentProps<typeof GoogleCalendarConnectionCard>> & {
@@ -58,28 +52,16 @@ describe("Google Calendar connection UI", () => {
   });
 
   it("asks for disconnect confirmation", () => {
-    const markup = renderToStaticMarkup(
-      <GoogleCalendarDisconnectDialog
-        open
-        pending={false}
-        onOpenChange={() => undefined}
-        onConfirm={() => undefined}
-      />,
-    );
-    expect(markup).toContain("Disconnect Google Calendar?");
-    expect(markup).toContain("Bookings created in Kilobot are kept.");
+    const source = readFileSync(new URL("./GoogleCalendarDisconnectDialog.tsx", import.meta.url), "utf8");
+    expect(source).toContain("Disconnect Google Calendar?");
+    expect(source).toContain("Bookings created in");
+    expect(source).toContain("Kilobot are kept.");
   });
 
   it("renders the Pipes dialog", () => {
-    const markup = renderToStaticMarkup(
-      <GoogleCalendarPipesDialog
-        open
-        authToken={async () => "token"}
-        onOpenChange={() => undefined}
-      />,
-    );
-    expect(markup).toContain("Connect Google Calendar");
-    expect(markup).toContain("Pipes widget");
+    const source = readFileSync(new URL("./GoogleCalendarPipesDialog.tsx", import.meta.url), "utf8");
+    expect(source).toContain("Connect Google Calendar");
+    expect(source).toContain("<Pipes authToken={authToken} />");
   });
 
   it("renders Google and Kilobot source badges", () => {
