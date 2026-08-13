@@ -21,6 +21,7 @@ export function CreateCustomerBookingDialog({
   );
   const checkAvailability = useMutation(api.appointmentBooking.manualBooking.checkAvailability);
   const createBooking = useMutation(api.appointmentBooking.manualBooking.create);
+  const loadNearestSlot = useMutation(api.appointmentBooking.manualBooking.getNextAvailableSlot);
 
   return (
     <CreateBookingDialog
@@ -29,6 +30,7 @@ export function CreateCustomerBookingDialog({
       agentId={agentId}
       services={options?.services}
       fixedCustomer={options?.customer}
+      loadNearestSlot={(serviceId) => loadNearestSlot({ conversationId, serviceId })}
       checkAvailability={(input) => checkAvailability({ conversationId, ...input })}
       createBooking={(input) => createBooking({ conversationId, ...input })}
     />

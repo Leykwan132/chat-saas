@@ -1,16 +1,18 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { format } from 'date-fns';
 import type { Id } from '../../../convex/_generated/dataModel';
 import {
   buildManualBookingCollectedFields,
   defaultManualBookingEndTime,
   getManualBookingSelection,
+  manualBookingScheduleFromSlot,
 } from '@/components/inbox/manualBookingScheduleModel';
 import type { ManualBookingScheduleFeedback } from '@/components/inbox/ManualBookingScheduleField';
 import type {
   BookingAvailabilityResult,
   BookingCreateInput,
   BookingCustomerDetails,
+  BookingDefaultSlot,
   BookingIntervalInput,
   BookingService,
 } from './bookingDialogTypes';
@@ -27,12 +29,14 @@ export function useCreateBookingController({
   initialDate,
   checkAvailability,
   createBooking,
+  loadNearestSlot,
 }: {
   services: BookingService[];
   customer: BookingCustomerDetails | null;
   initialDate?: string;
   checkAvailability: (input: BookingIntervalInput) => Promise<BookingAvailabilityResult>;
   createBooking: (input: BookingCreateInput) => Promise<unknown>;
+  loadNearestSlot?: (serviceId: Id<'appointmentServices'>) => Promise<BookingDefaultSlot | null>;
 }) {
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
@@ -42,7 +46,10 @@ export function useCreateBookingController({
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
+  const nearestSlotRequestRef = useRef(0);
+  const loadNearestSlotRef = useRef(loadNearestSlot);
   const endTimeCustomizedRef = useRef(false);
+  loadNearestSlotRef.current = loadNearestSlot;
   const effectiveServiceId = serviceId || services[0]?.serviceId || '';
   const effectiveFields = {
     name: customer?.name ?? '',
@@ -95,6 +102,27 @@ export function useCreateBookingController({
   const resetCustomerFields = () => {
     setAvailability({ kind: 'idle' });
   };
+
+  useEffect(() => {
+    const loadNearestSlot = loadNearestSlotRef.current;
+    if (!service || !loadNearestSlot) return;
+    const requestId = ++nearestSlotRequestRef.current;
+    void (async () => {
+      const slot = await loadNearestSlot(service.serviceId);
+      if (nearestSlotRequestRef.current !== requestId || slot === null) return;
+      const nextSchedule = manualBookingScheduleFromSlot(slot, service.timeZone);
+      endTimeCustomizedRef.current = false;
+      setDate(nextSchedule.date);
+      setStartTime(nextSchedule.startTime);
+      setEndTime(nextSchedule.endTime);
+      void runAvailabilityCheck(
+        service.serviceId,
+        nextSchedule.date,
+        nextSchedule.startTime,
+        nextSchedule.endTime,
+      );
+    })();
+  }, [effectiveServiceId, service?.timeZone]);
 
   return {
     serviceId: effectiveServiceId, date, startTime, endTime, remarks,

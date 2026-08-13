@@ -46,3 +46,8 @@ export type BookingCreateInput = BookingIntervalInput & {
 export type BookingAvailabilityResult =
   | { available: true }
   | { available: false; message: string };
+
+export type BookingDefaultSlot = {
+  startAt: number;
+  endAt: number;
+};
