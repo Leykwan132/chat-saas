@@ -3,11 +3,8 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useUpgradeModal } from '@/components/upgradeModalContext';
-import {
-  getPriceLevel,
-  ModelPickerItem,
-  type ModelPickerOption,
-} from '@/components/ModelPickerItem';
+import { ModelPickerItem, type ModelPickerOption } from '@/components/ModelPickerItem';
+import { getPriceLevel } from '@/components/modelPickerPrice';
 import {
   ModelSelector,
   ModelSelectorContent,

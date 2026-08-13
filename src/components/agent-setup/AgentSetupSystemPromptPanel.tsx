@@ -1,5 +1,7 @@
 import { List } from 'lucide-react';
 import { Link } from 'react-router';
+import type { AgentGoal } from '../../../shared/agentCreationGoals';
+import { AGENT_GOAL_OPTIONS } from '../../../shared/agentCreationGoals';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,13 +10,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { AGENT_TEMPLATES, type AgentTemplateKey } from '@/lib/agentTemplates';
 import { templateOptions } from '@/components/agent-setup/agentSetupOptions';
 
 type AgentSetupSystemPromptPanelProps = {
   value: string;
   onChange: (value: string) => void;
-  onApplyTemplate: (key: AgentTemplateKey) => void;
+  onApplyTemplate: (goal: AgentGoal) => void;
   workflowHref: string;
 };
 
@@ -43,12 +44,12 @@ export function AgentSetupSystemPromptPanel({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-80 p-1.5">
-            {templateOptions.map(({ key, icon: Icon, description }) => {
-              const template = AGENT_TEMPLATES[key];
+            {templateOptions.map(({ goal, icon: Icon }) => {
+              const template = AGENT_GOAL_OPTIONS[goal];
               return (
                 <DropdownMenuItem
-                  key={key}
-                  onSelect={() => onApplyTemplate(key)}
+                  key={goal}
+                  onSelect={() => onApplyTemplate(goal)}
                   className="flex cursor-pointer flex-col items-start gap-1 p-2.5"
                 >
                   <div className="flex items-center gap-2 text-[13px] font-semibold text-foreground">
@@ -56,7 +57,7 @@ export function AgentSetupSystemPromptPanel({
                     <span>{template.label}</span>
                   </div>
                   <span className="text-[11px] leading-normal text-muted-foreground">
-                    {description}
+                    {template.description}
                   </span>
                 </DropdownMenuItem>
               );

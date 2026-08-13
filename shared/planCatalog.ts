@@ -71,16 +71,20 @@ export const ALL_CHANNELS_LABEL = "All channels";
 export const ADVANCED_PLAN_MODELS = [
   "ilmu-mini-v3.3",
   "deepseek/deepseek-v4-flash",
-  "google/gemini-3.1-flash-lite",
   "openai/gpt-oss-120b",
+  "openai/gpt-5.6-luna",
+  "nvidia/nemotron-3.5-lightning",
+  "qwen/qwen3.7-flash",
   "xiaomi/mimo-v2.5",
 ] as const;
 
 export const MODEL_DISPLAY_NAMES: Record<string, string> = {
   "ilmu-mini-v3.3": "Ilmu Mini V3.3",
   "deepseek/deepseek-v4-flash": "DeepSeek V4 Flash",
-  "google/gemini-3.1-flash-lite": "Google Gemini 3.1 Flash Lite",
   "openai/gpt-oss-120b": "OpenAI GPT-OSS 120B",
+  "openai/gpt-5.6-luna": "OpenAI GPT-5.6 Luna",
+  "nvidia/nemotron-3.5-lightning": "NVIDIA Nemotron 3.5 Lightning",
+  "qwen/qwen3.7-flash": "Qwen3.7 Flash",
   "xiaomi/mimo-v2.5": "Xiaomi MiMo V2.5",
 };
 

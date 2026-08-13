@@ -18,13 +18,15 @@ test("enabled OpenRouter model ids never use free-tier variants", () => {
   expect(modelIds.filter((modelId) => modelId.endsWith(":free"))).toEqual([]);
 });
 
-test("Amazon models are unavailable and excluded from plan entitlements", () => {
+test("retired Amazon and Google models are unavailable and excluded from plan entitlements", () => {
   const enabledModelIds = listEnabledModels().map((model) => model.value);
   const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
 
-  expect(getModelPricing("amazon/nova-micro-v1")).toBeNull();
-  expect(enabledModelIds).not.toContain("amazon/nova-micro-v1");
-  expect(planModelIds).not.toContain("amazon/nova-micro-v1");
+  for (const modelId of ["amazon/nova-micro-v1", "google/gemini-3.1-flash-lite"]) {
+    expect(getModelPricing(modelId)).toBeNull();
+    expect(enabledModelIds).not.toContain(modelId);
+    expect(planModelIds).not.toContain(modelId);
+  }
 });
 
 test("Free plan includes only Ilmu Mini V3.3", () => {
@@ -103,12 +105,21 @@ test("Ilmu Mini V3.3 is enabled for every plan", () => {
 
 test("models without custom metadata omit optional fields", () => {
   const model = listEnabledModels().find(
-    (entry) => entry.value === "openai/gpt-oss-120b",
+    (entry) => entry.value === "xiaomi/mimo-v2.5",
   );
 
   expect(model).not.toHaveProperty("imageUrl");
   expect(model).not.toHaveProperty("inputCostMyrPerMillion");
   expect(model).not.toHaveProperty("outputCostMyrPerMillion");
+});
+
+test("Qwen3.7 Flash delegates branding to its provider slug", () => {
+  const model = listEnabledModels().find(
+    (entry) => entry.value === "qwen/qwen3.7-flash",
+  );
+
+  expect(model).not.toHaveProperty("imageUrl");
+  expect(model?.chefSlug).toBe("qwen");
 });
 
 test("trimmed model options are not enabled or included in plan entitlements", () => {
@@ -132,20 +143,24 @@ test("trimmed model options are not enabled or included in plan entitlements", (
   }
 });
 
-test("OpenAI GPT-OSS 120B is enabled and included in paid plan entitlements", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "openai/gpt-oss-120b");
-  const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("openai/gpt-oss-120b"))
-    .map(([planKey]) => planKey);
+test.each([
+  ["openai/gpt-5.6-luna", "OpenAI GPT-5.6 Luna", "OpenAI", "openai", 2],
+  ["nvidia/nemotron-3.5-lightning", "NVIDIA Nemotron 3.5 Lightning", "NVIDIA", "nvidia", 1],
+  ["qwen/qwen3.7-flash", "Qwen3.7 Flash", "Qwen", "qwen", 0.5],
+  ["openai/gpt-oss-120b", "OpenAI GPT-OSS 120B", "OpenAI", "openai", 0.5],
+])("%s is enabled for every paid plan", (modelId, label, chef, chefSlug, creditCost) => {
+  const model = listEnabledModels().find((entry) => entry.value === modelId);
 
   expect(model).toMatchObject({
-    label: "OpenAI GPT-OSS 120B",
-    chef: "OpenAI",
-    chefSlug: "openai",
+    label,
+    creditCost,
+    provider: "openrouter",
+    chef,
+    chefSlug,
     requiredPlan: "starter",
-    labels: ["advanced"],
+    labels: ["advanced", "latest"],
   });
-  expect(plansWithModel).toEqual(["starter", "growth", "business"]);
+  expect(plansWithModel(modelId)).toEqual(["starter", "growth", "business"]);
 });
 
 test("Qwen models are not enabled or included in plan entitlements", () => {
@@ -190,18 +205,12 @@ test("Xiaomi MiMo V2.5 is enabled and included in paid plan entitlements", () =>
   expect(plansWithModel).toEqual(["starter", "growth", "business"]);
 });
 
-test("Google Gemini 3.1 Flash Lite is enabled and included in paid plan entitlements", () => {
-  const model = listEnabledModels().find((entry) => entry.value === "google/gemini-3.1-flash-lite");
-  const plansWithModel = Object.entries(PLAN_CATALOG)
-    .filter(([, plan]) => plan.models.includes("google/gemini-3.1-flash-lite"))
-    .map(([planKey]) => planKey);
+test("Google Gemini 3.1 Flash Lite is unavailable and excluded from paid plan entitlements", () => {
+  const modelId = "google/gemini-3.1-flash-lite";
+  const enabledModelIds = listEnabledModels().map((model) => model.value);
+  const planModelIds = Object.values(PLAN_CATALOG).flatMap((plan) => plan.models);
 
-  expect(model).toMatchObject({
-    label: "Google Gemini 3.1 Flash Lite",
-    chef: "Google",
-    chefSlug: "google",
-    requiredPlan: "starter",
-    labels: ["advanced", "latest"],
-  });
-  expect(plansWithModel).toEqual(["starter", "growth", "business"]);
+  expect(getModelPricing(modelId)).toBeNull();
+  expect(enabledModelIds).not.toContain(modelId);
+  expect(planModelIds).not.toContain(modelId);
 });

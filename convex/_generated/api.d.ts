@@ -13,6 +13,7 @@ import type * as adminUsageCostAggregation from "../adminUsageCostAggregation.js
 import type * as adminUsageCosts from "../adminUsageCosts.js";
 import type * as agentAccess from "../agentAccess.js";
 import type * as agentCostAggregateModel from "../agentCostAggregateModel.js";
+import type * as agentModelMigration from "../agentModelMigration.js";
 import type * as agentOverview from "../agentOverview.js";
 import type * as agentOverviewAbandonments from "../agentOverviewAbandonments.js";
 import type * as agentOverviewAggregates from "../agentOverviewAggregates.js";
@@ -357,6 +358,7 @@ declare const fullApi: ApiFromModules<{
   adminUsageCosts: typeof adminUsageCosts;
   agentAccess: typeof agentAccess;
   agentCostAggregateModel: typeof agentCostAggregateModel;
+  agentModelMigration: typeof agentModelMigration;
   agentOverview: typeof agentOverview;
   agentOverviewAbandonments: typeof agentOverviewAbandonments;
   agentOverviewAggregates: typeof agentOverviewAggregates;

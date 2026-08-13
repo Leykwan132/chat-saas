@@ -7,6 +7,7 @@ function readSource(relativePath: string) {
 }
 
 const componentSource = readSource('./SupportHoverCard.tsx');
+const whatsNewSource = readSource('./WhatsNewDialog.tsx');
 const dashboardSource = readSource('../layouts/DashboardLayout.tsx');
 const workspaceSource = readSource('../pages/WorkspacePage.tsx');
 const siteHeaderSource = readSource('./site-header/SiteHeaderActions.tsx');
@@ -33,9 +34,19 @@ test('uses the requested icons and fully clickable three-card composition', () =
   expect(componentSource).toContain('onClick={() => setOpen(false)}');
 });
 
-test('places support before dark mode only in authenticated headers', () => {
+test('places What’s new and support before dark mode only in authenticated headers', () => {
   expect(dashboardSource).toContain("import { SupportHoverCard } from '@/components/SupportHoverCard'");
   expect(workspaceSource).toContain("import { SupportHoverCard } from '@/components/SupportHoverCard'");
+  expect(dashboardSource).toContain("import { WhatsNewDialog } from '@/components/WhatsNewDialog'");
+  expect(workspaceSource).toContain("import { WhatsNewDialog } from '@/components/WhatsNewDialog'");
+  expect(whatsNewSource).toContain("import { Package } from 'lucide-react'");
+  expect(whatsNewSource).toContain('What’s new');
+  expect(dashboardSource.indexOf('<WhatsNewDialog />')).toBeLessThan(
+    dashboardSource.indexOf('<SupportHoverCard />'),
+  );
+  expect(workspaceSource.indexOf('<WhatsNewDialog />')).toBeLessThan(
+    workspaceSource.indexOf('<SupportHoverCard />'),
+  );
   expect(dashboardSource.indexOf('<SupportHoverCard />')).toBeLessThan(
     dashboardSource.indexOf('<ModeToggle />'),
   );

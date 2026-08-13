@@ -3,18 +3,18 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes; Convex stays the booking layer. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Shortened the Google event identity index so Convex schema push succeeds (`by_googleExternalEventIdentity`). [CODE] 2026-08-13
-- Next: User retries `npx convex dev` on `cursor/google-calendar-booking-sync-10b0`; Task 9 Calendar connection UI after that. [USER] 2026-08-13
+- Now: Merged `origin/main` `16e7d1f` (model catalog / What’s new). Only `CONTINUITY.md` conflicted. [TOOL] 2026-08-13
+- Next: User retries `npx convex dev` on this branch; then Convex typecheck fixes; Task 9 Calendar connection UI after that. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; no changelog until confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [TOOL] Merged `origin/main` `16e7d1f` into `cursor/google-calendar-booking-sync-10b0`; resolved `CONTINUITY.md` only.
 - 2026-08-13 [CODE] Task 8: booking-capable agents get busy-only `listCalendarEvents` and guarded Kilobot update/delete tools; structured failures cannot be claimed as success.
 - 2026-08-13 [CODE] Task 7: AI/staff/Calendar booking create/update/cancel go prepare → Google write → finalize; Kilobot Google deletes stay cancelled local history; remarks-only updates stay local.
 - 2026-08-13 [CODE] Tasks 1–6 on `codex/google-calendar-sync` `f9f5865`: contracts, WorkOS/Google client, mapping/sync, privacy, webhooks, idempotent writes.
 - 2026-08-12 [CODE] Calendar projection review queue + staff review UI.
 - 2026-08-12 [USER] Google Calendar design + implementation plan approved (D637–D641).
 - 2026-08-11 [CODE] Appointment booking v1 live.
-- 2026-08-09 [CODE] Goal-based agent creation wizard independently reviewed.
 
 # Working set
 - docs/superpowers/plans/2026-08-13-google-calendar-sync.md
@@ -31,6 +31,7 @@
 - src/components/inbox/CreateCustomerBookingDialog.tsx
 
 # Receipts
+- 2026-08-13 [TOOL] `git merge origin/main` (`16e7d1f` Refresh model catalog and enhance announcement designs #55). Sole conflict: `CONTINUITY.md`. Kept bounded Snapshot/Done/Working set/Receipts; kept Google Calendar D641–D637; kept main D637 (paid model tiers / What’s new) without renumbering.
 - 2026-08-13 [TOOL] Convex push failed: `calendarEvents` index name exceeded 64 characters. Renamed to `by_googleExternalEventIdentity`.
 - 2026-08-13 [TOOL] Task 8 tests: 6 agent-tool + 2 prompt + 5 booking sync passed under Node v22.
 - 2026-08-13 [TOOL] Task 7 focused suite: 14 files / 59 tests pass under Node v22. File limits and whitespace pass. Base Tasks 1–6 remain on `codex/google-calendar-sync` `f9f5865`.
@@ -51,6 +52,7 @@
 - 2026-08-12 [USER] D639 ACTIVE: Users see full details for their own Google events; teammates see those events only as Busy; Kilobot bookings keep existing calendar visibility.
 - 2026-08-12 [USER] D638 ACTIVE: Read-through synchronized cache: Convex remains the normalized calendar/booking layer; Google events refresh at calendar, availability, and agent-operation boundaries; retries are idempotent.
 - 2026-08-12 [USER] D637 ACTIVE: Individual Google Calendar connections per team member. Agent-created events belong on the assigned teammate's calendar. Missing connections must surface explicitly.
+- 2026-08-12 [USER] D637 ACTIVE: Paid model tiers are GPT-OSS/Qwen at 0.5 credits, DeepSeek/NVIDIA at one credit, and Luna at two credits. What’s new uses one click-open modal with inline expandable announcements; model rating HoverCards show the model identity and read-only StickerStars.
 - 2026-08-11 [USER] D636 ACTIVE: AI-powered and Traditional website widgets are independently installable through mode-specific snippets sharing the stable `/widget/v1.js` loader; copying a snippet selects the runtime and no active-widget dashboard control is exposed. Missing mode defaults to AI-powered.
 - 2026-08-10 [USER] D635 ACTIVE: Implement the competitive pricing revision: Free 300 credits; Starter RM79/month with 2,000 credits; Growth RM299/month with 8,000 credits; Business RM499/month with 20,000 credits. Retain add-ons at RM49/2,000, RM99/5,000, and RM249/15,000. Pricing analysis assumes two DeepSeek V4 Flash calls per AI reply plus Xiaomi MiMo media recognition on roughly 5% of replies.
 - 2026-08-05 [USER] D634 ACTIVE: Approved the globally reusable Telegram recipient-verification specification and authorized detailed implementation planning; implementation awaits the user's execution-mode choice.

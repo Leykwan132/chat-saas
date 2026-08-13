@@ -14,6 +14,7 @@ import { formatCreditLogEventType } from "./creditLogs";
 import { getBillingEntityForUser, getPlanFromStripe, getPlan } from "./plans";
 import { getActiveTeamForUser, normalizeTimeZone, teamToOrgId } from "./teamHelpers";
 import { getModelPricing } from "./llm/modelPricing";
+import { getHistoricalModelDisplayMetadata } from "../shared/modelMetadata";
 import {
   getDateKeysInTimeZoneRange,
   toTimeZoneDateKey,
@@ -74,11 +75,11 @@ async function resolveSpentOn(
   return conversation ? formatCreditSpentOn(conversation) : "Unknown conversation";
 }
 
-function resolveModelLabel(modelId: string | undefined) {
+export function getCreditUsageModelLabel(modelId: string | undefined) {
   if (!modelId) {
     return "Unknown model";
   }
-  return getModelPricing(modelId)?.label ?? modelId;
+  return getModelPricing(modelId)?.label ?? getHistoricalModelDisplayMetadata(modelId)?.label ?? modelId;
 }
 
 type CreditSpendEntry = {
@@ -118,7 +119,7 @@ async function mapUsageEventToEntry(
     id: event._id,
     spentOn: await resolveSpentOn(ctx, event.conversationId, conversationCache),
     agentName: await resolveAgentName(ctx, event.agentId, agentCache),
-    modelLabel: resolveModelLabel(event.modelId),
+    modelLabel: getCreditUsageModelLabel(event.modelId),
     modelId: event.modelId ?? null,
     credits: event.credits,
     createdAt: event.createdAt,
@@ -140,7 +141,7 @@ async function mapUsageLogToEntry(
     id: log._id,
     spentOn: await resolveSpentOn(ctx, log.conversationId, conversationCache),
     agentName,
-    modelLabel: resolveModelLabel(log.modelId),
+    modelLabel: getCreditUsageModelLabel(log.modelId),
     modelId: log.modelId ?? null,
     credits: log.creditCost ?? Math.abs(log.amount),
     createdAt: log.createdAt,
@@ -588,7 +589,7 @@ function buildAgentModelCreditDailyUsage(
     label:
       modelId === "unknown"
         ? "Unknown model"
-        : resolveModelLabel(modelId),
+        : getCreditUsageModelLabel(modelId),
     color: modelUsageChartColor(index),
   }));
 

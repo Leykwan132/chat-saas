@@ -11,6 +11,7 @@ import { RequireOrganization } from '@/components/RequireOrganization';
 import { UserProfileButton } from '@/components/UserProfileButton';
 import { TeamSwitcher } from '@/components/TeamSwitcher';
 import { SupportHoverCard } from '@/components/SupportHoverCard';
+import { WhatsNewDialog } from '@/components/WhatsNewDialog';
 import { ModeToggle } from '@/components/mode-toggle';
 import {
   Breadcrumb,
@@ -105,6 +106,7 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
       </Breadcrumb>
       <div className="ml-auto flex items-center gap-3">
         <div className="hidden items-center gap-1 md:flex">
+          <WhatsNewDialog />
           <SupportHoverCard />
           <ModeToggle />
         </div>

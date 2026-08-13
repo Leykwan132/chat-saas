@@ -7,6 +7,7 @@ import {
 } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
 import { getModelPricing } from "./llm/modelPricing";
+import { getHistoricalModelDisplayMetadata } from "../shared/modelMetadata";
 import { getPlanFromStripe, getBillingEntityForUser } from "./plans";
 import {
   buildTopUpLabel,
@@ -538,7 +539,7 @@ export const getCreditHistory = query({
         eventType,
         label: formatCreditLogLabel(log),
         modelId: log.modelId ?? null,
-        modelLabel: pricing?.label ?? log.modelId ?? null,
+        modelLabel: pricing?.label ?? (log.modelId ? getHistoricalModelDisplayMetadata(log.modelId)?.label : null) ?? log.modelId ?? null,
         creditCost: creditCost ?? null,
         amount: log.amount,
         balanceBefore: log.balanceBefore,
