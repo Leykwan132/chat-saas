@@ -26,6 +26,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
 - 2026-08-13 [TOOL] WorkOS connected-account console log: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
 - 2026-08-13 [USER] Connect logs WorkOS connected-account GET (`status` + `body`) to the browser console and Convex function logs.
 - 2026-08-13 [TOOL] Persist-after-connect: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
@@ -34,7 +35,6 @@
 - 2026-08-13 [TOOL] Header Connect + Today removed: 12 passed (connection UI + sidebar).
 - 2026-08-13 [TOOL] WorkOS slug `google-calendar`: 18 provider/authorize tests passed. Authorize and connected-account URLs use `/google-calendar`.
 - 2026-08-13 [TOOL] Custom Calendar Connect UI: 30 passed (18 provider/authorize URL + 12 connection UI/sidebar). Authorize POST body is `{ user_id }` only; button sits below Assigned to me.
-- 2026-08-13 [TOOL] Pipes Relay switch: 133 passed (109 provider/writes/watch/webhook + 24 schema/sync/availability).
 - 2026-08-13 [TOOL] User-scoped Pipes widget token tests: 34 passed (`googleCalendarProvider`, connection UI, connection lifecycle). POST `/widgets/token` body is `{ user_id }` only.
 - 2026-08-13 [TOOL] Task 9 tests: 35 passed (connection UI, sidebar, projection, connection lifecycle). `npx convex typecheck` passed.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.

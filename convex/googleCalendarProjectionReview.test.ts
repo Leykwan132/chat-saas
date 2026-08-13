@@ -141,7 +141,7 @@ test.each([
 });
 
 test.each([true, false])(
-  "an imported event with externalCanEdit=%s cannot mutate the cache before write-through exists",
+  "an imported event with externalCanEdit=%s cannot mutate the cache without Google write-through",
   async (externalCanEdit) => {
     const t = convexTest(schema, modules);
     const fixture = await setup(t);
@@ -151,14 +151,20 @@ test.each([true, false])(
       canEdit: externalCanEdit,
     });
     const owner = t.withIdentity({ subject: "review-staff" });
+    const expected = externalCanEdit
+      ? "Google Calendar credential is unavailable"
+      : "Calendar event not found";
 
     await expect(owner.action(api.calendarEvents.update, {
       eventId: eventId as Id<"calendarEvents">,
       title: "Cache-only edit",
-    })).rejects.toThrow("Calendar event not found");
+    })).rejects.toThrow(expected);
     await expect(owner.action(api.calendarEvents.remove, {
       eventId: eventId as Id<"calendarEvents">,
-    })).rejects.toThrow("Calendar event not found");
+    })).rejects.toThrow(expected);
+    expect(await t.run((ctx) => ctx.db.get(eventId as Id<"calendarEvents">))).toMatchObject({
+      title: "Private Google event",
+    });
   },
 );
 

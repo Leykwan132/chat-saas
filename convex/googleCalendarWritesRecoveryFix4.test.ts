@@ -1,8 +1,6 @@
 /// <reference types="vite/client" />
-import { convexTest, type TestConvex } from "convex-test";
-import type { FunctionReference } from "convex/server";
+import { convexTest } from "convex-test";
 import { expect, test } from "vitest";
-import { internal } from "./_generated/api";
 import type { GoogleCalendarEvent } from "./googleCalendar/eventMapping";
 import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/testFixtures";
 import {
@@ -14,32 +12,14 @@ import {
   deriveGoogleCalendarEventId,
   fingerprintGoogleCalendarWritePayload,
 } from "./googleCalendar/writeFingerprint";
+import { googleCalendarWriteTestDependencies } from "./googleCalendar/writeTestDependencies";
 import type {
   GoogleCalendarWriteArgs,
   GoogleCalendarWriteDependencies,
 } from "./googleCalendar/writeTypes";
 import schema from "./schema";
 
-process.env.WORKOS_API_KEY ??= "sk_test_google_calendar";
-
 const modules = import.meta.glob("./**/*.ts");
-type CalendarTest = TestConvex<typeof schema>;
-type MutationRef = FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>;
-const googleInternal = internal as unknown as {
-  googleCalendar: {
-    writeStore: { prepare: MutationRef; beginAttempt: MutationRef };
-    writeAttemptLeaseStore: {
-      renewAttemptLease: MutationRef; claimMutationRecovery: MutationRef;
-      finishMutationRecovery: MutationRef;
-      recordRecoveryConflict: MutationRef;
-    };
-    writeFinalizationStore: {
-      finalizeEvent: MutationRef; establishDeletePrecondition: MutationRef;
-      finalizeDelete: MutationRef;
-    };
-    writeOutcomeStore: { recordOutcome: MutationRef };
-  };
-};
 const now = Date.UTC(2026, 7, 13, 8);
 const eventInput = {
   summary: "Customer appointment",
@@ -84,31 +64,7 @@ async function setupEvent(external: boolean) {
   return { t, connectionId, calendarEventId };
 }
 
-function dependencies(
-  t: CalendarTest,
-  fetchImplementation: typeof fetch,
-  clock: () => number,
-): GoogleCalendarWriteDependencies {
-  const store = googleInternal.googleCalendar.writeStore;
-  const lease = googleInternal.googleCalendar.writeAttemptLeaseStore;
-  const finalization = googleInternal.googleCalendar.writeFinalizationStore;
-  return {
-    prepare: (args) => t.mutation(store.prepare, args) as never,
-    beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
-    renewAttemptLease: (args) => t.mutation(lease.renewAttemptLease, args) as never,
-    claimMutationRecovery: (args) => t.mutation(lease.claimMutationRecovery, args) as never,
-    finishMutationRecovery: (args) => t.mutation(lease.finishMutationRecovery, args) as never,
-    recordRecoveryConflict: (args) => t.mutation(lease.recordRecoveryConflict, args) as never,
-    finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
-    establishDeletePrecondition: (args) => t.mutation(finalization.establishDeletePrecondition, args) as never,
-    finalizeDelete: (args) => t.mutation(finalization.finalizeDelete, args) as never,
-    recordOutcome: (args) => t.mutation(googleInternal.googleCalendar.writeOutcomeStore.recordOutcome, args) as never,
-    getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
-    refresh: async () => undefined,
-    fetchImplementation,
-    clock,
-  };
-}
+const dependencies = googleCalendarWriteTestDependencies;
 
 async function stageMutationStarted(
   write: GoogleCalendarWriteDependencies,
