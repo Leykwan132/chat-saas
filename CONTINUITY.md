@@ -13,12 +13,12 @@
 # Decisions
 
 - 2026-08-13 D001 ACTIVE [USER] AI workflow service selections constrain AI booking only. Staff manual bookings use the active service catalogue.
-- 2026-08-13 D002 ACTIVE [USER] Create booking defaults to the first valid 30-minute slot at or after the current time; it has no lead-time delay and must not prioritize preferred service times over temporal proximity.
+- 2026-08-13 D002 ACTIVE [USER] Inbox Create booking and Calendar + New Booking default to the first valid 30-minute slot at or after the current time; there is no lead-time delay and temporal proximity overrides preferred times.
 
 # State
 
-- 2026-08-13 [CODE] Now: Inbox Create booking preselects the nearest valid 30-minute slot on `codex/fix-slot-availability-create`.
-- 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
+- 2026-08-13 [USER] Now: extend nearest-slot prefilling to Calendar + New Booking on `codex/fix-slot-availability-create`.
+- 2026-08-13 [TOOL] Next: execute `docs/superpowers/plans/2026-08-13-calendar-manual-booking-nearest-slot.md` test-first.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -33,6 +33,7 @@
 - `src/components/inbox/manualBookingScheduleModel.ts`
 - `docs/superpowers/specs/2026-08-13-manual-booking-nearest-slot-design.md`
 - `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md`
+- `docs/superpowers/plans/2026-08-13-calendar-manual-booking-nearest-slot.md`
 
 # Receipts
 
@@ -48,3 +49,4 @@
 - 2026-08-13 [TOOL] `bunx convex codegen` completed under Node v22.22.0 and uploaded the generated functions to its configured Convex deployment; deployment environment and production availability are UNCONFIRMED.
 - 2026-08-13 [TOOL] Focused booking regression suite passed 13/13 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
 - 2026-08-13 [TOOL] Full `bunx vitest run` passed 1,346 tests across 415 files but exited non-zero on the same 10 Docs runner/configuration suites treated as empty by Vitest; unrelated to this booking change.
+- 2026-08-13 [USER] Screenshot confirmed the Calendar + New Booking flow was not included in the prior implementation; user authorized extending it.
