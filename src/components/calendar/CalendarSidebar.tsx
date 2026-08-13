@@ -31,7 +31,6 @@ type CalendarSidebarProps = {
   onCreateBooking: () => void;
   onShowAllEvents: () => void;
   onAssignedToMe: () => void;
-  googleCalendarConnection?: ReactNode;
 };
 
 function CalendarSidebarFilterRow({
@@ -95,7 +94,6 @@ export function CalendarSidebar({
   onCreateBooking,
   onShowAllEvents,
   onAssignedToMe,
-  googleCalendarConnection,
 }: CalendarSidebarProps) {
   return (
     <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
@@ -145,9 +143,6 @@ export function CalendarSidebar({
             disabled={!hasCurrentUser}
           />
         </CalendarSidebarFilterSection>
-        {googleCalendarConnection ? (
-          <div className="px-4 py-[0.45rem]">{googleCalendarConnection}</div>
-        ) : null}
       </div>
     </aside>
   );

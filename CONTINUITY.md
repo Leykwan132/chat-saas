@@ -3,12 +3,12 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Google Calendar sidebar block has no outer border; disconnected action is + Connect. [USER] 2026-08-13
+- Now: Google Calendar sits beside the timezone control. Connected is icon + Gmail + filled BadgeCheck. Disconnected is + Connect. [USER] 2026-08-13
 - Next: User deploys latest Convex so `connectedAccountEmail` exists; missing emails fill on calendar refresh. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. Sidebar card and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
-- 2026-08-13 [USER] Google Calendar moved below Assigned to me as a card: icon + Google Calendar title, connected email with green check and Connected x days ago, trash disconnect.
+- 2026-08-13 [USER] Google Calendar is beside the timezone control: connected shows icon + Gmail + filled check; disconnected is + Connect. Clicking connected still confirms disconnect.
 - 2026-08-13 [CODE] Persist `connectedAccountEmail` from Google primary calendar id (when it looks like an email) or WorkOS account email fields.
 - 2026-08-13 [USER] Calendar Connect uses the official Google Calendar logo and the label + Google Calendar.
 - 2026-08-13 [USER] Create booking with no active services uses Empty and a Create service action instead of a disabled Create booking button.
@@ -18,9 +18,7 @@
 
 # Working set
 - src/components/calendar/GoogleCalendarConnectionCard.tsx
-- src/components/calendar/CalendarSidebar.tsx
 - src/pages/CalendarPage.tsx
-- convex/googleCalendar/connectedAccountEmail.ts
 - CONTINUITY.md
 
 # Receipts
@@ -39,7 +37,7 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
-- 2026-08-13 [USER] D654 ACTIVE: Google Calendar lives in the Calendar sidebar below Assigned to me. Title is the official Google Calendar icon plus `Google Calendar`. There is no outer card border. Disconnected uses a borderless `+ Connect` action. Connected shows the Google account email with a filled green `BadgeCheck`, `Connected x days ago`, and a trash control. Missing emails are filled on calendar refresh from the primary calendar id. This supersedes D646 header placement, D653's connected header chip, and D653's `+ Google Calendar` button label.
+- 2026-08-13 [USER] D654 ACTIVE: Google Calendar sits in the Calendar header to the left of the time zone control. Disconnected is a quiet `+ Connect` control with the official Calendar icon. Connected is the Calendar icon, the Gmail address, and a filled green `BadgeCheck`. Clicking connected still opens the disconnect confirmation. There is no sidebar card, outer border, relative-age line, or trash icon. Missing emails are filled on calendar refresh from the primary calendar id. This supersedes D646 only for Today (still removed) and D653's chip/label copy.
 - 2026-08-13 [USER] D653 SUPERSEDED by D654 for connected UI: the quiet header chip is replaced by the sidebar card. Official logo and `+ Google Calendar` connect label remain.
 - 2026-08-13 [USER] D652 SUPERSEDED by D653, then D654: Connected outline "Connected" + check button is gone. Disconnect confirmation dialog remains.
 - 2026-08-13 [USER] D651 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.

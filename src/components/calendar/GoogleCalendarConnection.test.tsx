@@ -11,7 +11,6 @@ import { reconcileUntilGoogleCalendarReady } from "./useGoogleCalendarConnection
 import { GoogleCalendarSourceBadge } from "./GoogleCalendarSourceBadge";
 import { EventDetailsBody } from "./CalendarEventDetailsBody";
 import type { AppointmentDetails } from "./CalendarEventDetailsBody";
-import { formatPrefixedRelativeAge } from "@/lib/formatRelativeAge";
 
 function renderConnectionCard(
   props: Partial<ComponentProps<typeof GoogleCalendarConnectionCard>> & {
@@ -32,7 +31,7 @@ function renderConnectionCard(
 }
 
 describe("Google Calendar connection UI", () => {
-  it("offers a + Connect action under the Google Calendar title", () => {
+  it("offers a + Connect action with the official Calendar icon", () => {
     const markup = renderConnectionCard({ state: "not_connected" });
     expect(markup).toContain("+ Connect");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
@@ -41,38 +40,29 @@ describe("Google Calendar connection UI", () => {
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain("Connect Google Calendar");
     expect(source).toContain("TooltipContent");
-    expect(source).not.toContain("border-border");
   });
 
-  it("shows the connected account in a card with a trash disconnect", () => {
-    const createdAt = Date.now() - 3 * 24 * 60 * 60 * 1000;
+  it("shows the Google icon, account email, and a filled check when connected", () => {
     const markup = renderConnectionCard({
       state: "connected",
       connectedAccountEmail: "owner@gmail.com",
-      createdAt,
     });
-    expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
     expect(markup).toContain("owner@gmail.com");
     expect(markup).not.toContain("Google account");
+    expect(markup).not.toContain("Connected ");
     expect(markup).toContain("fill-green-600");
     expect(markup).toContain("text-white");
     expect(markup).toContain('aria-label="Active"');
-    expect(markup).toContain(formatPrefixedRelativeAge("Connected", createdAt));
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
-    expect(source).toContain("formatPrefixedRelativeAge");
     expect(source).toContain("fill-green-600");
-    expect(source).toContain("text-white");
     expect(source).toContain("BadgeCheck");
     expect(source).not.toContain("CheckCircle2");
-    expect(source).not.toContain("rounded-4xl");
-    expect(source).not.toContain("border-border");
-    expect(source).toContain("Trash2");
-    expect(source).toContain("Disconnect Google Calendar");
+    expect(source).not.toContain("Trash2");
+    expect(source).not.toContain("formatPrefixedRelativeAge");
     expect(source).not.toContain("DropdownMenu");
-    expect(source).not.toContain("ChevronDown");
   });
 
   it("shows reconnect recovery without claiming connected", () => {
@@ -169,13 +159,11 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google");
   });
 
-  it("places Google Calendar below Assigned to me, not in the header", () => {
+  it("places Google Calendar to the left of the timezone control", () => {
     const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
-    const sidebar = page.indexOf("googleCalendarConnection=");
-    const header = page.indexOf("inboxColumnHeaderClassName, 'justify-between px-4'");
-    expect(sidebar).toBeGreaterThan(-1);
-    expect(sidebar).toBeLessThan(header);
-    expect(page.slice(header)).not.toContain("<GoogleCalendarConnectionCard");
+    const header = page.slice(page.indexOf("inboxColumnHeaderClassName, 'justify-between px-4'"));
+    expect(header.indexOf("<GoogleCalendarConnectionCard")).toBeLessThan(header.indexOf("<TimeZoneSelect"));
+    expect(page).not.toContain("googleCalendarConnection=");
     expect(page).not.toContain(">Today</Button>");
   });
 
