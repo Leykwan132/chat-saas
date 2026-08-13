@@ -24,8 +24,8 @@
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [TOOL] Connected x days ago card copy: 15 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`).
-- 2026-08-13 [CODE] Connected age uses `formatPrefixedRelativeAge('Connected', createdAt)`, same as Channels.
+- 2026-08-13 [TOOL] Tighter Google Calendar card + email backfill: 26 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`, `googleCalendarConnection.test.ts`).
+- 2026-08-13 [CODE] Card is `rounded-xl` + border + no shadow; check is `text-green-600`; refresh fills missing Google email.
 - 2026-08-13 [CODE] Sidebar Google Calendar card: icon + title below Assigned to me; confirm dialog kept. Header chip/dropdown Connect UI superseded.
 - 2026-08-13 [CODE] Connect button: official Google Calendar logo + label `+ Google Calendar`.
 - 2026-08-13 [TOOL] Create booking empty-services tests: 6 passed (`CreateBookingDialog`, `CreateCustomerBookingDialog`).
