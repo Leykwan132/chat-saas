@@ -5,7 +5,7 @@ import type { MutationCtx } from "../_generated/server";
 import { resolveAvailableInterval } from "./availability";
 import {
   assertAppointmentBookingManage,
-  listActiveBookingServicesForAgent,
+  listActiveManualBookingServicesForAgent,
   loadService,
   resolveTeamForAgent,
 } from "./access";
@@ -54,7 +54,7 @@ export const getCreateOptions = query({
   handler: async (ctx, args) => {
     const { conversation, agent, team } = await loadManualBookingScope(ctx, args.conversationId);
     const customer = conversation.customerId ? await ctx.db.get(conversation.customerId) : null;
-    const services = await listActiveBookingServicesForAgent(ctx, agent._id);
+    const services = await listActiveManualBookingServicesForAgent(ctx, agent._id);
     return {
       customer: {
         name: customer?.name,

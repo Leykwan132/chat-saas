@@ -8,13 +8,13 @@
 - Open questions: production availability UNCONFIRMED. Sidebar card and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [TOOL] Merged `origin/main` `1643a45` (manual Create booking uses all active services, not workflow-filtered).
 - 2026-08-13 [USER] Google Calendar is beside the timezone control: no Gmail yet shows Google Calendar; connected with email shows icon + Gmail + filled check.
 - 2026-08-13 [CODE] Persist `connectedAccountEmail` from Google primary calendar id (when it looks like an email) or WorkOS account email fields.
 - 2026-08-13 [USER] Calendar Connect uses the official Google Calendar logo and the label + Google Calendar.
 - 2026-08-13 [USER] Create booking with no active services uses Empty and a Create service action instead of a disabled Create booking button.
 - 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 - 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
-- 2026-08-13 [USER] D646 SUPERSEDED by D654 for Connect placement; header Today button remains removed.
 
 # Working set
 - src/components/calendar/GoogleCalendarConnectionCard.tsx
@@ -22,6 +22,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Merged `origin/main` `1643a45` into `cursor/google-calendar-booking-sync-10b0`. CONTINUITY kept this branch's Google Calendar ledger; D655 records the manual-booking eligibility rule from main.
 - 2026-08-13 [TOOL] Tighter Google Calendar card + email backfill: 26 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`, `googleCalendarConnection.test.ts`).
 - 2026-08-13 [CODE] Card is `rounded-xl` + border + no shadow; check is `text-green-600`; refresh fills missing Google email.
 - 2026-08-13 [CODE] Sidebar Google Calendar card: icon + title below Assigned to me; confirm dialog kept. Header chip/dropdown Connect UI superseded.
@@ -37,7 +38,8 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
-- 2026-08-13 [USER] D654 ACTIVE: Google Calendar sits in the Calendar header to the left of the time zone control. Disconnected is a quiet `+ Connect` control with the official Calendar icon. Connected is the Calendar icon, the Gmail address, and a filled green `BadgeCheck`. Clicking connected still opens the disconnect confirmation. There is no sidebar card, outer border, relative-age line, or trash icon. Missing emails are filled on calendar refresh from the primary calendar id. This supersedes D646 only for Today (still removed) and D653's chip/label copy.
+- 2026-08-13 [USER] D655 ACTIVE: AI workflow service selections constrain AI booking only. Staff manual Create booking / New booking uses every active unarchived service. Merged from `origin/main` `1643a45`.
+- 2026-08-13 [USER] D654 ACTIVE: Google Calendar sits in the Calendar header to the left of the time zone control. If no Gmail is connected, the chip is the official Calendar icon plus `Google Calendar`. Connected with an email is the Calendar icon, the Gmail address, and a filled green `BadgeCheck`. Clicking connected still opens the disconnect confirmation. There is no sidebar card, outer border, relative-age line, or trash icon. Missing emails are filled on calendar refresh from the primary calendar id. This supersedes D646 only for Today (still removed) and D653's chip/label copy.
 - 2026-08-13 [USER] D653 SUPERSEDED by D654 for connected UI: the quiet header chip is replaced by the sidebar card. Official logo and `+ Google Calendar` connect label remain.
 - 2026-08-13 [USER] D652 SUPERSEDED by D653, then D654: Connected outline "Connected" + check button is gone. Disconnect confirmation dialog remains.
 - 2026-08-13 [USER] D651 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.

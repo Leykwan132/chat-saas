@@ -131,6 +131,9 @@ test("manual booking checks and revalidates the exact selected slot", async () =
     service: "whatsapp",
     contactAddress: "+60123456789",
   });
+  expect(options.services.map((service) => service.serviceId)).toEqual([
+    fixture.serviceId,
+  ]);
 
   await expect(authed.mutation(
     api.appointmentBooking.manualBooking.checkAvailability,

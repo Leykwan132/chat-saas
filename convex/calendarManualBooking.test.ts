@@ -99,6 +99,11 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     startAt,
     endAt,
   };
+  const options = await authed.query(
+    api.appointmentBooking.calendarManualBooking.getCreateOptions,
+    { agentId: fixture.agentId },
+  );
+  expect(options.map((service) => service.serviceId)).toEqual([fixture.serviceId]);
 
   await expect(authed.mutation(
     api.appointmentBooking.calendarManualBooking.checkAvailability,
