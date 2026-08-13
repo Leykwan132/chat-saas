@@ -13,11 +13,12 @@
 # Decisions
 
 - 2026-08-13 D001 ACTIVE [USER] AI workflow service selections constrain AI booking only. Staff manual bookings use the active service catalogue.
+- 2026-08-13 D002 ACTIVE [USER] Create booking defaults to the first valid 30-minute slot at or after the current time; it has no lead-time delay and must not prioritize preferred service times over temporal proximity.
 
 # State
 
-- 2026-08-13 [TOOL] Now: final branch handoff for the manual-booking eligibility fix.
-- 2026-08-13 [TOOL] Next: review, commit, and release the branch when authorized.
+- 2026-08-13 [USER] Now: investigate slot availability during creation on local branch `codex/fix-slot-availability-create`.
+- 2026-08-13 [USER] Next: review the approved nearest-slot design, then implement and verify it.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -29,6 +30,7 @@
 - `convex/calendarManualBooking.test.ts`
 - `docs/superpowers/specs/2026-08-13-manual-booking-service-eligibility-design.md`
 - `docs/superpowers/plans/2026-08-13-manual-booking-service-eligibility.md`
+- `docs/superpowers/specs/2026-08-13-manual-booking-nearest-slot-design.md`
 
 # Receipts
 
@@ -38,3 +40,5 @@
 - 2026-08-13 [TOOL] `bunx tsc --noEmit` and `git diff --check` passed.
 - 2026-08-13 [TOOL] `bunx vitest run` passed 1,345 tests across 415 files; 10 Docs suites remain incompatible with the root Vitest runner because Node TAP files are treated as empty suites and Docusaurus test dependencies are unavailable.
 - 2026-08-13 [TOOL] `git push -u origin codex/fix-booking-active-services` succeeded; GitHub connector PR create returned 403 and local `gh auth status` reports an invalid `Leykwan132` token.
+- 2026-08-13 [TOOL] Created and checked out local branch `codex/fix-slot-availability-create`; preserved unrelated untracked `pricing-knowledge-base-updated.md`.
+- 2026-08-13 [USER] Confirmed the nearest default starts immediately at the next valid 30-minute slot.
