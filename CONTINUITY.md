@@ -4,6 +4,7 @@
 - 2026-08-13 [CODE] Branch `codex/fix-booking-active-services` separates staff manual-booking service eligibility from AI workflow eligibility. Inbox and Calendar option queries now return every active, unarchived service; AI booking sessions remain workflow-filtered.
 - 2026-08-13 [TOOL] Regression tests were RED with empty service arrays in both manual flows, then GREEN: 4/4 focused tests, Node v22.22.0 `tsc --noEmit`, and `git diff --check` pass. The full Vitest command has 1,345 passing tests but exits non-zero on 10 established Docs runner/configuration suites outside this change.
 - 2026-08-13 [TOOL] Commit `6affb7ac` is pushed to `origin/codex/fix-booking-active-services`; `git merge-tree --write-tree origin/main HEAD` completed without conflicts. GitHub PR creation is blocked by connector 403 `Resource not accessible by integration`, while local `gh` has an invalid token. Production availability is UNCONFIRMED; no changelog entry is due before release.
+- 2026-08-13 [USER] A selected current day must keep only its circular selection indicator, without the square muted calendar background.
 
 # Done (recent)
 
@@ -17,7 +18,7 @@
 
 # State
 
-- 2026-08-13 [CODE] Now: Inbox Create booking and Calendar + New Booking prefill the nearest valid 30-minute slot on `codex/fix-slot-availability-create`.
+- 2026-08-13 [CODE] Now: `codex/fix-slot-availability-create` also makes a selected current calendar day transparent at the cell level, retaining its circular selected indicator.
 - 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
@@ -31,9 +32,8 @@
 - `src/components/booking/useCreateBookingController.ts`
 - `src/components/inbox/CreateCustomerBookingDialog.tsx`
 - `src/components/inbox/manualBookingScheduleModel.ts`
-- `docs/superpowers/specs/2026-08-13-manual-booking-nearest-slot-design.md`
-- `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md`
-- `docs/superpowers/plans/2026-08-13-calendar-manual-booking-nearest-slot.md`
+- `src/components/ui/calendar.tsx`
+- `src/components/ui/calendar.test.tsx`
 
 # Receipts
 
@@ -51,3 +51,4 @@
 - 2026-08-13 [TOOL] Full `bunx vitest run` passed 1,346 tests across 415 files but exited non-zero on the same 10 Docs runner/configuration suites treated as empty by Vitest; unrelated to this booking change.
 - 2026-08-13 [USER] Screenshot confirmed the Calendar + New Booking flow was not included in the prior implementation; user authorized extending it.
 - 2026-08-13 [TOOL] Calendar nearest-slot lookup, customer-selection recheck, focused booking tests (13/13), `bunx tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
+- 2026-08-13 [TOOL] Calendar selected-today regression was RED before the styling change and GREEN afterward; `CalendarSidebar.test.tsx` (2/2), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
