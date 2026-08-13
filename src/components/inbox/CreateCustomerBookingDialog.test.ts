@@ -28,7 +28,7 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('<SelectContent className="text-sm">');
   expect(source).toContain('className="py-2.5 text-sm"');
   expect(source).toContain("import { Link } from 'react-router'");
-  expect(source).toContain("import { Plus } from 'lucide-react'");
+  expect(source).toContain("import { CalendarCheck, Plus } from 'lucide-react'");
   expect(source).toContain('to={`/dashboard/${agentId}/services/new`}');
   expect(source).toContain('Create new service');
   expect(source).toContain('const comboboxPortalContainerRef = useRef<HTMLDivElement>(null)');
