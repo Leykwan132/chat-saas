@@ -17,8 +17,8 @@
 
 # State
 
-- 2026-08-13 [USER] Now: investigate slot availability during creation on local branch `codex/fix-slot-availability-create`.
-- 2026-08-13 [TOOL] Next: execute `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md` inline with test-first checkpoints.
+- 2026-08-13 [CODE] Now: Inbox Create booking preselects the nearest valid 30-minute slot on `codex/fix-slot-availability-create`.
+- 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -28,8 +28,9 @@
 - `convex/appointmentBooking/calendarManualBooking.ts`
 - `convex/manualBookingAvailability.test.ts`
 - `convex/calendarManualBooking.test.ts`
-- `docs/superpowers/specs/2026-08-13-manual-booking-service-eligibility-design.md`
-- `docs/superpowers/plans/2026-08-13-manual-booking-service-eligibility.md`
+- `src/components/booking/useCreateBookingController.ts`
+- `src/components/inbox/CreateCustomerBookingDialog.tsx`
+- `src/components/inbox/manualBookingScheduleModel.ts`
 - `docs/superpowers/specs/2026-08-13-manual-booking-nearest-slot-design.md`
 - `docs/superpowers/plans/2026-08-13-manual-booking-nearest-slot.md`
 
@@ -44,3 +45,5 @@
 - 2026-08-13 [TOOL] Created and checked out local branch `codex/fix-slot-availability-create`; preserved unrelated untracked `pricing-knowledge-base-updated.md`.
 - 2026-08-13 [USER] Confirmed the nearest default starts immediately at the next valid 30-minute slot.
 - 2026-08-13 [CODE] Approved scope is Inbox Create booking; Calendar New Booking remains unchanged because customer-specific availability is unavailable before the customer selection.
+- 2026-08-13 [TOOL] `bunx convex codegen` completed under Node v22.22.0 and uploaded the generated functions to its configured Convex deployment; deployment environment and production availability are UNCONFIRMED.
+- 2026-08-13 [TOOL] Focused booking regression suite passed 13/13 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
