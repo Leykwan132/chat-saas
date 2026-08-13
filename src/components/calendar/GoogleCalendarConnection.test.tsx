@@ -161,8 +161,11 @@ describe("Google Calendar connection UI", () => {
         }
       />,
     );
-    expect(markup.indexOf("Assigned to me")).toBeLessThan(markup.indexOf(GOOGLE_CALENDAR_ICON_SRC));
+    expect(markup.indexOf("Assigned to me")).toBeLessThan(
+      markup.indexOf('data-calendar-sidebar-section="google-calendar"'),
+    );
     expect(markup.indexOf("Assigned to me")).toBeGreaterThan(markup.indexOf("New Booking"));
     expect(markup).toContain("Connect");
+    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
   });
 });
