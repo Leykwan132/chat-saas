@@ -3,17 +3,16 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Calendar Connect uses the official Google Calendar logo and reads + Google Calendar. Connected still uses the same button with a check and a Disconnect dropdown. [USER] 2026-08-13
+- Now: Connected Google Calendar is a quiet header chip (logo + Google Calendar + chevron, matching the timezone control). Disconnect menu says Disconnect Google Calendar. [USER] 2026-08-13
 - Next: User deploys latest Convex and reconnects. Logs should show `[google-calendar] WorkOS access token { active: true, hasAccessToken: true }`. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. Connected-button and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [USER] Connected Google Calendar is a quiet header chip matching the timezone control; disconnect says Disconnect Google Calendar.
 - 2026-08-13 [USER] Calendar Connect uses the official Google Calendar logo and the label + Google Calendar.
 - 2026-08-13 [USER] Create booking with no active services uses Empty and a Create service action instead of a disabled Create booking button.
-- 2026-08-13 [USER] Connected Google Calendar header button matches Connect; check mark; click opens Disconnect dropdown, then existing confirm dialog.
 - 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 - 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
-- 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 
 # Working set
@@ -22,6 +21,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [CODE] Connected header chip: ghost `bg-input/50` + Google Calendar + chevron; menu item `Disconnect Google Calendar`.
 - 2026-08-13 [TOOL] + Google Calendar header button: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connect button: official Google Calendar logo + label `+ Google Calendar`.
 - 2026-08-13 [TOOL] Create booking empty-services tests: 6 passed (`CreateBookingDialog`, `CreateCustomerBookingDialog`).
@@ -41,8 +41,8 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
-- 2026-08-13 [USER] D653 ACTIVE: Calendar Connect uses the official Google Calendar product logo and the label `+ Google Calendar`. Connected still uses that same outline button with Connected + check and a Disconnect dropdown. This supersedes D644's Connect label and D652's Connect copy.
-- 2026-08-13 [USER] D652 ACTIVE: When Google Calendar is connected, the header control is the same outline button as Connect, labeled Connected with a check. Click opens a dropdown with Disconnect; the existing confirm dialog still runs before disconnect. Connect label superseded by D653.
+- 2026-08-13 [USER] D653 ACTIVE: Calendar Connect uses the official Google Calendar product logo and the label `+ Google Calendar`. Connected is a quiet header chip (logo + Google Calendar + chevron, `bg-input/50` like the timezone control), not an outline Connected check button. Disconnect menu says Disconnect Google Calendar. This supersedes D644's Connect label and D652's Connected check copy.
+- 2026-08-13 [USER] D652 SUPERSEDED by D653: Connected outline "Connected" + check button is replaced by a quiet Google Calendar chip. Disconnect confirmation dialog remains.
 - 2026-08-13 [USER] D651 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.
 - 2026-08-13 [USER] D650 SUPERSEDED by D651: Relay path routing is removed because Relay early access may be unavailable.
 - 2026-08-13 [USER] D649 SUPERSEDED by D651: Relay URL routing is removed.
