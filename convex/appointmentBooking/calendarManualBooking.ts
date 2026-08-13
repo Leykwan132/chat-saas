@@ -107,5 +107,8 @@ export const create = action({
     eventId: v.id("calendarEvents"),
     sessionId: v.id("appointmentBookingSessions"),
   }),
-  handler: async (ctx, args) => runCalendarStaffBooking(ctx, args),
+  handler: async (ctx, args): Promise<{
+    eventId: Id<"calendarEvents">;
+    sessionId: Id<"appointmentBookingSessions">;
+  }> => runCalendarStaffBooking(ctx, args),
 });

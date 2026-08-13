@@ -92,20 +92,22 @@ export const googleCalendarOperationResultValidator = v.union(
   }),
 );
 
+export type GoogleCalendarOperationFailure = {
+  kind:
+    | "not_connected"
+    | "needs_reauthorization"
+    | "retryable"
+    | "conflict"
+    | "not_found"
+    | "forbidden"
+    | "invalid_request"
+    | "failed";
+  message: string;
+};
+
 export type GoogleCalendarOperationResult =
   | { kind: "success"; externalEventId: string }
-  | {
-      kind:
-        | "not_connected"
-        | "needs_reauthorization"
-        | "retryable"
-        | "conflict"
-        | "not_found"
-        | "forbidden"
-        | "invalid_request"
-        | "failed";
-      message: string;
-    };
+  | GoogleCalendarOperationFailure;
 
 const googleCalendarOperationMessages: Record<
   Exclude<GoogleCalendarOperationResult["kind"], "success">,
@@ -122,7 +124,7 @@ const googleCalendarOperationMessages: Record<
 };
 
 export function googleCalendarOperationError(
-  kind: Exclude<GoogleCalendarOperationResult["kind"], "success">,
-): GoogleCalendarOperationResult {
+  kind: GoogleCalendarOperationFailure["kind"],
+): GoogleCalendarOperationFailure {
   return { kind, message: googleCalendarOperationMessages[kind] };
 }

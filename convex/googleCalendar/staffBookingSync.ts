@@ -74,28 +74,30 @@ export async function runStaffBooking(
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
   FunctionReference<"mutation", "internal", TArgs, TResult>;
 
-const googleInternal = (internal as unknown as {
-  googleCalendar: {
-    staffBookingPrepare: {
-      prepareCalendarStaffBook: StoreMutation<Record<string, unknown>, StaffPrepareResult>;
-      prepareInboxStaffBook: StoreMutation<Record<string, unknown>, StaffPrepareResult>;
-    };
-    staffBookingFinalize: {
-      rollbackStaffBook: StoreMutation<{
-        calendarEventId: Id<"calendarEvents">;
-        sessionId: Id<"appointmentBookingSessions">;
-      }, null>;
-      finalizeStaffBook: StoreMutation<{
-        calendarEventId: Id<"calendarEvents">;
-        sessionId: Id<"appointmentBookingSessions">;
-        recordInboxBooking: boolean;
-      }, StaffIds>;
-    };
-    syncWorker: {
-      run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
-    };
+type GoogleStaffCalendarApi = {
+  staffBookingPrepare: {
+    prepareCalendarStaffBook: StoreMutation<Record<string, unknown>, StaffPrepareResult>;
+    prepareInboxStaffBook: StoreMutation<Record<string, unknown>, StaffPrepareResult>;
   };
-}).googleCalendar;
+  staffBookingFinalize: {
+    rollbackStaffBook: StoreMutation<{
+      calendarEventId: Id<"calendarEvents">;
+      sessionId: Id<"appointmentBookingSessions">;
+    }, null>;
+    finalizeStaffBook: StoreMutation<{
+      calendarEventId: Id<"calendarEvents">;
+      sessionId: Id<"appointmentBookingSessions">;
+      recordInboxBooking: boolean;
+    }, StaffIds>;
+  };
+  syncWorker: {
+    run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
+  };
+};
+
+const googleInternal: GoogleStaffCalendarApi = (
+  internal as unknown as { googleCalendar: GoogleStaffCalendarApi }
+).googleCalendar;
 
 export function googleCalendarStaffBookingDependencies(
   ctx: ActionCtx,
@@ -123,13 +125,13 @@ export async function runCalendarStaffBooking(
     startAt: number;
     endAt: number;
   },
-) {
+): Promise<StaffIds> {
   return await runStaffBooking(googleCalendarStaffBookingDependencies(
     ctx,
-    (refreshed) => ctx.runMutation(googleInternal.staffBookingPrepare.prepareCalendarStaffBook, {
-      ...args,
-      refreshed,
-    }),
+    (refreshed): Promise<StaffPrepareResult> => ctx.runMutation(
+      googleInternal.staffBookingPrepare.prepareCalendarStaffBook,
+      { ...args, refreshed },
+    ),
     false,
   ));
 }
@@ -144,13 +146,13 @@ export async function runInboxStaffBooking(
     startAt: number;
     endAt: number;
   },
-) {
+): Promise<StaffIds> {
   return await runStaffBooking(googleCalendarStaffBookingDependencies(
     ctx,
-    (refreshed) => ctx.runMutation(googleInternal.staffBookingPrepare.prepareInboxStaffBook, {
-      ...args,
-      refreshed,
-    }),
+    (refreshed): Promise<StaffPrepareResult> => ctx.runMutation(
+      googleInternal.staffBookingPrepare.prepareInboxStaffBook,
+      { ...args, refreshed },
+    ),
     true,
   ));
 }

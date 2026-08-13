@@ -27,11 +27,16 @@ export const guardEvent = internalMutation({
   handler: async (ctx, args) => {
     const event = await ctx.db.get(args.eventId);
     const guard = guardKilobotConversationEvent(event, args.conversationId);
-    if (guard.kind !== "ok") return guard;
-    return {
-      kind: "ok" as const,
-      serviceId: guard.event.appointmentServiceId,
-      startAt: guard.event.startAt,
-    };
+    if (guard.kind === "ok") {
+      return {
+        kind: "ok" as const,
+        serviceId: guard.event.appointmentServiceId,
+        startAt: guard.event.startAt,
+      };
+    }
+    if (guard.kind !== "not_found" && guard.kind !== "forbidden") {
+      throw new Error(guard.message);
+    }
+    return { kind: guard.kind, success: false as const, message: guard.message };
   },
 });

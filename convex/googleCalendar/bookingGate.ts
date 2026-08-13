@@ -1,11 +1,15 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
-import { googleCalendarOperationError, type GoogleCalendarOperationResult } from "./contracts";
+import {
+  googleCalendarOperationError,
+  type GoogleCalendarOperationFailure,
+  type GoogleCalendarOperationResult,
+} from "./contracts";
 
 export type GoogleCalendarBookingGate =
   | { kind: "local" }
   | { kind: "google"; connectionId: Id<"googleCalendarConnections"> }
-  | { kind: "error"; result: GoogleCalendarOperationResult };
+  | { kind: "error"; result: GoogleCalendarOperationFailure };
 
 export async function loadGoogleCalendarConnectionForUser(
   ctx: MutationCtx,

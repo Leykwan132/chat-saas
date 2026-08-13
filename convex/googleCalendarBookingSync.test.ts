@@ -119,10 +119,14 @@ async function createBookingFixture(t: CalendarTest, options?: {
   });
 }
 
+type BookingTestDependencies = GoogleCalendarBookingSyncDependencies & {
+  refreshCount(): number;
+};
+
 function bookingDependencies(
   t: CalendarTest,
   provider: typeof fetch,
-): GoogleCalendarBookingSyncDependencies {
+): BookingTestDependencies {
   const stores = googleInternal.googleCalendar;
   let refreshCount = 0;
   const write = googleCalendarWriteTestDependencies(t, provider, Date.now);
@@ -139,7 +143,7 @@ function bookingDependencies(
     },
     write,
     refreshCount: () => refreshCount,
-  } as GoogleCalendarBookingSyncDependencies & { refreshCount(): number };
+  } as BookingTestDependencies;
 }
 
 function createFetch(): typeof fetch {
@@ -184,7 +188,7 @@ test("a connected assignee is refreshed, then Google creation succeeds before th
     deps,
   );
   expect(result).toMatchObject({ success: true });
-  expect((deps as { refreshCount(): number }).refreshCount()).toBeGreaterThan(0);
+  expect(deps.refreshCount()).toBeGreaterThan(0);
   const event = await t.run(async (ctx) => (await ctx.db.query("calendarEvents").take(1))[0]);
   expect(event?.externalOrigin).toBe("kilobot");
   expect(event?.externalEventId).toEqual(expect.any(String));
