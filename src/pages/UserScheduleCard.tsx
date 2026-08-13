@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
@@ -101,7 +102,23 @@ export function UserScheduleCard({
         )}
       >
         <div className="min-w-0">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="outline" className="text-[11px]">
+              {isAdmin ? 'Admin' : 'Member'}
+            </Badge>
+            {isTimeOff && (
+              <Badge
+                variant="outline"
+                className="text-[11px] border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-400"
+              >
+                Away
+              </Badge>
+            )}
+            <Badge variant="secondary" className="text-[11px]">
+              {assignedLeadCount === 1 ? '1 lead' : `${assignedLeadCount} leads`}
+            </Badge>
+          </div>
+          <div className="mt-2 flex items-start justify-between gap-2">
             <span
               className={cn(
                 'truncate font-semibold text-foreground',
@@ -134,32 +151,12 @@ export function UserScheduleCard({
           >
             {email}
           </p>
-          <div
-            className={cn(
-              'flex flex-wrap items-center gap-1.5',
-              isMemberView ? 'mt-3' : 'mt-2',
-            )}
-          >
-            <Badge variant="outline" className="text-[11px]">
-              {isAdmin ? 'Admin' : 'Member'}
-            </Badge>
-            {isTimeOff && (
-              <Badge
-                variant="outline"
-                className="text-[11px] border-amber-500/30 bg-amber-500/15 text-amber-700 dark:text-amber-400"
-              >
-                Away
-              </Badge>
-            )}
-            <Badge variant="secondary" className="text-[11px]">
-              {assignedLeadCount === 1 ? '1 lead' : `${assignedLeadCount} leads`}
-            </Badge>
-          </div>
           <div className="mt-2 space-y-1">
             {availabilityLines.map((line) => (
-              <p key={line} className="text-xs text-muted-foreground">
-                {line}
-              </p>
+              <div key={line} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="size-3 shrink-0" aria-hidden />
+                <span>{line}</span>
+              </div>
             ))}
           </div>
         </div>
