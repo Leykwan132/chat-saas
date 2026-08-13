@@ -55,7 +55,8 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google account");
     expect(markup).toContain("rounded-xl");
     expect(markup).toContain("shadow-none");
-    expect(markup).toContain("text-green-600");
+    expect(markup).toContain("fill-green-600");
+    expect(markup).toContain("text-white");
     expect(markup).toContain('aria-label="Active"');
     expect(markup).toContain(formatPrefixedRelativeAge("Connected", createdAt));
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
@@ -64,7 +65,8 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("formatPrefixedRelativeAge");
     expect(source).toContain("rounded-xl");
     expect(source).toContain("shadow-none");
-    expect(source).toContain("text-green-600");
+    expect(source).toContain("fill-green-600");
+    expect(source).toContain("text-white");
     expect(source).toContain("BadgeCheck");
     expect(source).not.toContain("CheckCircle2");
     expect(source).not.toContain("rounded-4xl");

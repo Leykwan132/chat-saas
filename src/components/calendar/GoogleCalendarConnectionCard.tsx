@@ -62,7 +62,7 @@ export function GoogleCalendarConnectionCard({
                 </span>
                 {connectedAccountEmail ? (
                   <BadgeCheck
-                    className="size-3.5 shrink-0 text-green-600"
+                    className="size-3.5 shrink-0 fill-green-600 text-white"
                     aria-label="Active"
                   />
                 ) : null}

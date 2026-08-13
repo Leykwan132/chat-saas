@@ -3,7 +3,7 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Google Calendar sidebar card uses rounded-xl, no shadow, a BadgeCheck, and the real Google account email. [USER] 2026-08-13
+- Now: Google Calendar sidebar card uses rounded-xl, no shadow, a filled BadgeCheck, and the real Google account email. [USER] 2026-08-13
 - Next: User deploys latest Convex so `connectedAccountEmail` exists; missing emails fill on calendar refresh. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. Sidebar card and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
