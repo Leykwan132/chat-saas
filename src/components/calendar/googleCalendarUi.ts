@@ -11,6 +11,7 @@ export type GoogleCalendarConnectionStatus = {
   lastErrorMessage?: string;
   timeZone?: string;
   connectedAccountEmail?: string;
+  createdAt?: number;
   workosHttpStatus?: number;
   workosConnectedAccount?: unknown;
 };

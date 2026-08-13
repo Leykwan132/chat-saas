@@ -43,19 +43,22 @@ describe("Google Calendar connection UI", () => {
   });
 
   it("shows the connected account in a card with a trash disconnect", () => {
+    const createdAt = Date.UTC(2026, 7, 13, 12, 0, 0);
     const markup = renderConnectionCard({
       state: "connected",
       connectedAccountEmail: "owner@gmail.com",
-      lastSuccessfulSyncAt: Date.UTC(2026, 7, 13, 4, 0, 0),
+      createdAt,
     });
     expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
     expect(markup).toContain("owner@gmail.com");
-    expect(markup).toContain("bg-emerald-600");
+    expect(markup).toContain("text-emerald-600");
     expect(markup).toContain('aria-label="Active"');
+    expect(markup).toContain("Connected since 13 Aug 2026");
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
+    expect(source).toContain("CheckCircle2");
     expect(source).toContain("Trash2");
     expect(source).toContain("Disconnect Google Calendar");
     expect(source).not.toContain("DropdownMenu");

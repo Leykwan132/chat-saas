@@ -1,4 +1,5 @@
-import { Trash2 } from "lucide-react";
+import { CheckCircle2, Trash2 } from "lucide-react";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -23,9 +24,17 @@ function GoogleCalendarIcon() {
   return <img src={GOOGLE_CALENDAR_ICON_SRC} alt="" className="size-4" />;
 }
 
+function connectedSinceLabel(createdAt?: number, lastSuccessfulSyncAt?: number) {
+  const at = createdAt ?? lastSuccessfulSyncAt;
+  if (at === undefined) return undefined;
+  return `Connected since ${format(at, "d MMM yyyy")}`;
+}
+
 export function GoogleCalendarConnectionCard({
   state,
   connectedAccountEmail,
+  createdAt,
+  lastSuccessfulSyncAt,
   lastErrorMessage,
   pending = false,
   onConnect,
@@ -39,6 +48,7 @@ export function GoogleCalendarConnectionCard({
         ? "Reconnect"
         : "+ Google Calendar";
   const accountLabel = connectedAccountEmail ?? "Google account";
+  const sinceLabel = connectedSinceLabel(createdAt, lastSuccessfulSyncAt);
 
   return (
     <Card
@@ -54,14 +64,19 @@ export function GoogleCalendarConnectionCard({
       </CardHeader>
       <CardContent className="px-3">
         {state === "connected" ? (
-          <div className="flex items-center gap-2">
-            <span
-              className="size-2 shrink-0 rounded-full bg-emerald-600"
-              aria-label="Active"
-            />
-            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
-              {accountLabel}
-            </span>
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <span className="min-w-0 truncate text-sm font-medium">{accountLabel}</span>
+                <CheckCircle2
+                  className="size-3.5 shrink-0 text-emerald-600"
+                  aria-label="Active"
+                />
+              </div>
+              {sinceLabel ? (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{sinceLabel}</p>
+              ) : null}
+            </div>
             <Button
               type="button"
               variant="ghost"

@@ -27,7 +27,7 @@ const googleInternal = internal as unknown as {
       purgeImportedGoogleEvents: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     };
     connectionQueries: {
-      getCurrentConnectionStatus: FunctionReference<"query", "public", Record<string, never>, { state: string; connectedAccountEmail?: string }>;
+      getCurrentConnectionStatus: FunctionReference<"query", "public", Record<string, never>, { state: string; connectedAccountEmail?: string; createdAt?: number }>;
     };
   };
 };
@@ -112,6 +112,7 @@ test("getCurrentConnectionStatus reports connected after ensureSyncing plus a lo
   );
   expect(status.state).toBe("connected");
   expect(status.connectedAccountEmail).toBe("calendar@example.com");
+  expect(typeof status.createdAt).toBe("number");
 });
 
 test("purgeImportedGoogleEvents deletes Google copies and keeps Kilobot bookings", async () => {
