@@ -5,7 +5,7 @@ import { getAuthContext, resolveChannelOrgId } from "../authUtils";
 import { resolveAvailableInterval } from "./availability";
 import {
   assertAppointmentBookingManage,
-  listActiveBookingServicesForAgent,
+  listActiveManualBookingServicesForAgent,
   loadService,
   resolveTeamForAgent,
 } from "./access";
@@ -57,7 +57,7 @@ export const getCreateOptions = query({
   handler: async (ctx, args) => {
     const agent = await assertAppointmentBookingManage(ctx, args.agentId);
     const team = await resolveTeamForAgent(ctx, agent);
-    const services = await listActiveBookingServicesForAgent(ctx, agent._id);
+    const services = await listActiveManualBookingServicesForAgent(ctx, agent._id);
     return services.map((service) => ({
       ...serviceSnapshot(service),
       fields: service.fields,

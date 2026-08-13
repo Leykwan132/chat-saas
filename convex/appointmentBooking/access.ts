@@ -118,14 +118,16 @@ export async function resolveTeamForAgent(ctx: DbCtx, agent: Doc<"agents">) {
 }
 
 export async function listActiveBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents">) {
+  const activeServices = await listActiveManualBookingServicesForAgent(ctx, agentId);
+  return await filterServicesByWorkflowBookingSelection(ctx, agentId, activeServices);
+}
+
+export async function listActiveManualBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents">) {
   const agent = await ctx.db.get(agentId);
   if (agent === null) {
     return [];
   }
-  const activeServices = (await listServices(ctx, agentId)).filter(
-    (service) => service.isActive && service.archivedAt === undefined,
-  );
-  return await filterServicesByWorkflowBookingSelection(ctx, agentId, activeServices);
+  return (await listServices(ctx, agentId)).filter((service) => service.isActive);
 }
 
 export async function resolveBookingService(
