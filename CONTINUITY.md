@@ -24,6 +24,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Sidebar Google Calendar card: 26 passed (`GoogleCalendarConnection.test.tsx`, `CalendarSidebar.test.tsx`, `googleCalendarConnection.test.ts`).
 - 2026-08-13 [CODE] Sidebar Google Calendar card: icon + title; connected row is emerald dot + email + trash; confirm dialog kept.
 - 2026-08-13 [CODE] Connected header chip: ghost `bg-input/50` + Google Calendar + chevron; menu item `Disconnect Google Calendar`.
 - 2026-08-13 [TOOL] + Google Calendar header button: 12 passed (`GoogleCalendarConnection.test.tsx`).

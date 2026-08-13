@@ -158,9 +158,11 @@ describe("Google Calendar connection UI", () => {
 
   it("places Google Calendar below Assigned to me, not in the header", () => {
     const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
-    const header = page.slice(page.indexOf("inboxColumnHeaderClassName"));
-    expect(header).not.toContain("<GoogleCalendarConnectionCard");
-    expect(page).toContain("googleCalendarConnection=");
+    const sidebar = page.indexOf("googleCalendarConnection=");
+    const header = page.indexOf("inboxColumnHeaderClassName, 'justify-between px-4'");
+    expect(sidebar).toBeGreaterThan(-1);
+    expect(sidebar).toBeLessThan(header);
+    expect(page.slice(header)).not.toContain("<GoogleCalendarConnectionCard");
     expect(page).not.toContain(">Today</Button>");
   });
 
