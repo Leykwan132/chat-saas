@@ -25,6 +25,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Header Connect + Today removed: 12 passed (connection UI + sidebar).
 - 2026-08-13 [TOOL] WorkOS slug `google-calendar`: 18 provider/authorize tests passed. Authorize and connected-account URLs use `/google-calendar`.
 - 2026-08-13 [TOOL] Custom Calendar Connect UI: 30 passed (18 provider/authorize URL + 12 connection UI/sidebar). Authorize POST body is `{ user_id }` only; button sits below Assigned to me.
 - 2026-08-13 [TOOL] Pipes Relay switch: 133 passed (109 provider/writes/watch/webhook + 24 schema/sync/availability).
