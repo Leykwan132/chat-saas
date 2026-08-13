@@ -9,11 +9,19 @@ const calendarDialogSource = readFileSync(new URL('../calendar/CalendarCreateBoo
 const calendarSidebarSource = readFileSync(new URL('../calendar/CalendarSidebar.tsx', import.meta.url), 'utf8');
 const calendarPageSource = readFileSync(new URL('../../pages/CalendarPage.tsx', import.meta.url), 'utf8');
 const calendarEventsSource = readFileSync(new URL('../../../convex/calendarEvents.ts', import.meta.url), 'utf8');
+const controllerSource = readFileSync(new URL('./useCreateBookingController.ts', import.meta.url), 'utf8');
 
 test('shares the booking dialog between Inbox and Calendar', () => {
   expect(inboxSource).toContain('<CreateBookingDialog');
   expect(calendarDialogSource).toContain('<CreateBookingDialog');
   expect(calendarDialogSource).toContain('api.appointmentBooking.calendarManualBooking');
+  expect(calendarDialogSource).toContain('useAction(api.appointmentBooking.calendarManualBooking.create)');
+  expect(inboxSource).toContain('useAction(api.appointmentBooking.manualBooking.create)');
+  expect(calendarDialogSource).toContain('getNextAvailableSlot');
+  expect(calendarDialogSource).toContain('loadNearestSlot={(serviceId) =>');
+  expect(controllerSource).toContain('if (customer === previousCustomer) return;');
+  expect(controllerSource).toContain('const customerRef = useRef(customer);');
+  expect(controllerSource).toContain('const checkAvailabilityRef = useRef(checkAvailability);');
   expect(calendarDialogSource).not.toContain('searchCustomerOptions');
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');
   expect(dialogSource).toContain('BookingCustomerCombobox');

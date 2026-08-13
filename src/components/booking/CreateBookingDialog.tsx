@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { CalendarCheck, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
+import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -24,6 +25,7 @@ import type {
   BookingCreateInput,
   BookingCustomer,
   BookingCustomerDetails,
+  BookingDefaultSlot,
   BookingIntervalInput,
   BookingService,
 } from './bookingDialogTypes';
@@ -41,6 +43,7 @@ export function CreateBookingDialog({
   initialDate,
   checkAvailability,
   createBooking,
+  loadNearestSlot,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -53,6 +56,7 @@ export function CreateBookingDialog({
   initialDate?: string;
   checkAvailability: (input: BookingIntervalInput) => Promise<BookingAvailabilityResult>;
   createBooking: (input: BookingCreateInput) => Promise<unknown>;
+  loadNearestSlot?: (serviceId: Id<'appointmentServices'>) => Promise<BookingDefaultSlot | null>;
 }) {
   const [selectedCustomer, setSelectedCustomer] = useState<BookingCustomer | null>(null);
   const customer = fixedCustomer ?? selectedCustomer;
@@ -63,6 +67,7 @@ export function CreateBookingDialog({
     initialDate,
     checkAvailability: (input) => checkAvailability({ customerId: customer?._id, ...input }),
     createBooking: (input) => createBooking({ customerId: customer?._id, ...input }),
+    loadNearestSlot,
   });
 
   const handleCreate = async () => {

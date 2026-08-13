@@ -105,6 +105,19 @@ test("creates and transitions a customer-direct Calendar booking without a conve
   );
   expect(options.map((service) => service.serviceId)).toEqual([fixture.serviceId]);
 
+  const beforeNearestSlotRequestAt = Date.now();
+  const nearestSlot = await authed.mutation(
+    api.appointmentBooking.calendarManualBooking.getNextAvailableSlot,
+    {
+      agentId: fixture.agentId,
+      serviceId: fixture.serviceId,
+    },
+  );
+  expect(nearestSlot).not.toBeNull();
+  expect(nearestSlot!.startAt).toBeGreaterThanOrEqual(beforeNearestSlotRequestAt);
+  expect(nearestSlot!.startAt - beforeNearestSlotRequestAt).toBeLessThan(31 * 60 * 1000);
+  expect(nearestSlot!.endAt - nearestSlot!.startAt).toBe(45 * 60 * 1000);
+
   await expect(authed.mutation(
     api.appointmentBooking.calendarManualBooking.checkAvailability,
     selection,

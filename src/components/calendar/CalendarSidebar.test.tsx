@@ -32,4 +32,10 @@ describe('CalendarSidebar', () => {
   it('keeps New Booking hidden without Calendar management permission', () => {
     expect(renderCalendarSidebar(false)).not.toContain('New Booking');
   });
+
+  it('renders the active View filter as a fully rounded pill', () => {
+    expect(renderCalendarSidebar()).toMatch(
+      /<button(?=[^>]*rounded-full)[^>]*>.*All events.*<\/button>/,
+    );
+  });
 });

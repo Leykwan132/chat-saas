@@ -166,6 +166,7 @@ export async function generateSlots(
     rangeStartAt: number;
     rangeEndAt: number;
     limit: number;
+    prioritizePreferredTimes?: boolean;
     excludeEventId?: Id<"calendarEvents">;
     ignoreGoogleHealth?: boolean;
   },
@@ -173,13 +174,12 @@ export async function generateSlots(
   const durationMs = args.service.durationMinutes * 60 * 1000;
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
   const slots: BookingSlot[] = [];
-  const maxCandidates = 200;
   const firstStartAt = roundUpToSlotInterval(args.rangeStartAt);
   if (firstStartAt + durationMs > args.rangeEndAt) return [];
-  const lastCandidateStartAt = Math.min(
-    args.rangeEndAt - durationMs,
-    firstStartAt + (maxCandidates - 1) * 30 * 60 * 1000,
-  );
+  const stopOnFilledLimit = args.prioritizePreferredTimes === false;
+  const lastCandidateStartAt = stopOnFilledLimit
+    ? args.rangeEndAt - durationMs
+    : Math.min(args.rangeEndAt - durationMs, firstStartAt + 199 * 30 * 60 * 1000);
   const roster = await loadRoster(ctx, {
     agentId: args.service.agentId,
     teamId: args.teamId,
@@ -189,7 +189,8 @@ export async function generateSlots(
   let candidateCount = 0;
   for (
     let startAt = firstStartAt;
-    startAt + durationMs <= args.rangeEndAt && candidateCount < maxCandidates;
+    startAt + durationMs <= args.rangeEndAt &&
+    (stopOnFilledLimit ? slots.length < args.limit : candidateCount < 200);
     startAt += 30 * 60 * 1000
   ) {
     candidateCount += 1;
@@ -214,7 +215,10 @@ export async function generateSlots(
       });
     }
   }
-  return sortSlotsWithPreferredTime(slots, args.service).slice(0, args.limit);
+  const orderedSlots = args.prioritizePreferredTimes === false
+    ? slots
+    : sortSlotsWithPreferredTime(slots, args.service);
+  return orderedSlots.slice(0, args.limit);
 }
 
 export async function resolveAvailableInterval(

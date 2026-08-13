@@ -3,27 +3,27 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Google Calendar debug `console.log`s removed; WorkOS connected-account bodies stay server-side. [CODE] 2026-08-13
+- Now: Merged `origin/main` `313edd6` (nearest-slot Create booking prefill + calendar selection polish). Create stays a Google-first action. [TOOL] 2026-08-13
 - Next: User deploys latest Convex so `connectedAccountEmail` exists; missing emails fill on calendar refresh. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. Sidebar card and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [TOOL] Merged `origin/main` `313edd6` (Inbox/Calendar Create booking prefills the next valid 30-minute slot; selected today and View pills polished).
 - 2026-08-13 [CODE] Removed Google Calendar WorkOS debug `console.log`s and stopped sending connected-account bodies to the browser.
 - 2026-08-13 [TOOL] Merged `origin/main` `1643a45` (manual Create booking uses all active services, not workflow-filtered).
 - 2026-08-13 [USER] Google Calendar is beside the timezone control: no Gmail yet shows Google Calendar; connected with email shows icon + Gmail + filled check.
 - 2026-08-13 [CODE] Persist `connectedAccountEmail` from Google primary calendar id (when it looks like an email) or WorkOS account email fields.
 - 2026-08-13 [USER] Calendar Connect uses the official Google Calendar logo and the label + Google Calendar.
 - 2026-08-13 [USER] Create booking with no active services uses Empty and a Create service action instead of a disabled Create booking button.
-- 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 
 # Working set
-- src/components/calendar/useGoogleCalendarConnection.ts
-- convex/googleCalendar/workosToken.ts
-- convex/googleCalendar/connectionWorkos.ts
-- convex/googleCalendar/connectionRuntime.ts
+- convex/appointmentBooking/availability.ts
+- src/components/calendar/CalendarCreateBookingDialog.tsx
+- src/components/inbox/CreateCustomerBookingDialog.tsx
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Merged `origin/main` `313edd6` into `cursor/google-calendar-booking-sync-10b0`. CONTINUITY kept this branch's Google Calendar ledger; D656 records nearest-slot prefill and calendar selection polish from main. Create stays a Google-first action.
 - 2026-08-13 [TOOL] Google Calendar debug-log cleanup tests: 46 passed (`GoogleCalendarConnection.test.tsx`, `googleCalendarProvider.test.ts`, `googleCalendarConnection.test.ts`).
 - 2026-08-13 [CODE] Google Calendar debug logs removed from Connect poll, WorkOS GET, and access-token vend. Client status no longer includes `workosHttpStatus` / `workosConnectedAccount`.
 - 2026-08-13 [TOOL] Merged `origin/main` `1643a45` into `cursor/google-calendar-booking-sync-10b0`. CONTINUITY kept this branch's Google Calendar ledger; D655 records the manual-booking eligibility rule from main.
@@ -42,6 +42,7 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
+- 2026-08-13 [USER] D656 ACTIVE: Inbox Create booking and Calendar New Booking default to the first valid 30-minute slot at or after now; no lead-time delay. Selected current day keeps only the circular indicator; Calendar View filter uses fully rounded pills. Merged from `origin/main` `313edd6`.
 - 2026-08-13 [USER] D655 ACTIVE: AI workflow service selections constrain AI booking only. Staff manual Create booking / New booking uses every active unarchived service. Merged from `origin/main` `1643a45`.
 - 2026-08-13 [USER] D654 ACTIVE: Google Calendar sits in the Calendar header to the left of the time zone control. If no Gmail is connected, the chip is the official Calendar icon plus `Google Calendar`. Connected with an email is the Calendar icon, the Gmail address, and a filled green `BadgeCheck`. Clicking connected still opens the disconnect confirmation. There is no sidebar card, outer border, relative-age line, or trash icon. Missing emails are filled on calendar refresh from the primary calendar id. This supersedes D646 only for Today (still removed) and D653's chip/label copy.
 - 2026-08-13 [USER] D653 SUPERSEDED by D654 for connected UI: the quiet header chip is replaced by the sidebar card. Official logo and `+ Google Calendar` connect label remain.
