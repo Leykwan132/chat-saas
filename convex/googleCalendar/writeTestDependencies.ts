@@ -24,6 +24,20 @@ const stores = (internal as unknown as { googleCalendar: {
   writeOutcomeStore: { recordOutcome: MutationRef };
 } }).googleCalendar;
 
+function withRelayUpstreamStatus(googleFetch: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const response = await googleFetch(input, init);
+    if (response.headers.has("X-Relay-Upstream-Status")) return response;
+    const headers = new Headers(response.headers);
+    headers.set("X-Relay-Upstream-Status", String(response.status));
+    return new Response(await response.arrayBuffer(), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  };
+}
+
 export function googleCalendarWriteTestDependencies(
   t: CalendarTest,
   fetchImplementation: typeof fetch,
@@ -43,6 +57,6 @@ export function googleCalendarWriteTestDependencies(
     getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
     refresh: async () => undefined,
     clock,
-    fetchImplementation,
+    fetchImplementation: withRelayUpstreamStatus(fetchImplementation),
   };
 }
