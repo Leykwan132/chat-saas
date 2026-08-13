@@ -32,14 +32,16 @@ function renderConnectionCard(
 }
 
 describe("Google Calendar connection UI", () => {
-  it("offers a + Google Calendar button with the official Calendar icon", () => {
+  it("offers a + Connect action under the Google Calendar title", () => {
     const markup = renderConnectionCard({ state: "not_connected" });
-    expect(markup).toContain("+ Google Calendar");
+    expect(markup).toContain("+ Connect");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(markup).not.toContain("+ Google Calendar");
     expect(GOOGLE_CALENDAR_ICON_SRC).toContain("gstatic.com/images/branding/productlogos/calendar_2026_13");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain("Connect Google Calendar");
     expect(source).toContain("TooltipContent");
+    expect(source).not.toContain("border-border");
   });
 
   it("shows the connected account in a card with a trash disconnect", () => {
@@ -53,8 +55,6 @@ describe("Google Calendar connection UI", () => {
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
     expect(markup).toContain("owner@gmail.com");
     expect(markup).not.toContain("Google account");
-    expect(markup).toContain("rounded-xl");
-    expect(markup).toContain("shadow-none");
     expect(markup).toContain("fill-green-600");
     expect(markup).toContain("text-white");
     expect(markup).toContain('aria-label="Active"');
@@ -63,13 +63,12 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain("formatPrefixedRelativeAge");
-    expect(source).toContain("rounded-xl");
-    expect(source).toContain("shadow-none");
     expect(source).toContain("fill-green-600");
     expect(source).toContain("text-white");
     expect(source).toContain("BadgeCheck");
     expect(source).not.toContain("CheckCircle2");
     expect(source).not.toContain("rounded-4xl");
+    expect(source).not.toContain("border-border");
     expect(source).toContain("Trash2");
     expect(source).toContain("Disconnect Google Calendar");
     expect(source).not.toContain("DropdownMenu");

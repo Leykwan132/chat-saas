@@ -40,19 +40,16 @@ export function GoogleCalendarConnectionCard({
       ? "Connecting..."
       : state === "needs_reauthorization"
         ? "Reconnect"
-        : "+ Google Calendar";
+        : "+ Connect";
   const connectedAge = connectedAgeLabel(createdAt, lastSuccessfulSyncAt);
 
   return (
-    <div
-      className="rounded-xl border border-border bg-card px-3 py-3 shadow-none"
-      data-calendar-sidebar-section="google-calendar"
-    >
+    <div data-calendar-sidebar-section="google-calendar">
       <div className="flex items-center gap-2 text-sm font-medium">
         <GoogleCalendarIcon />
         Google Calendar
       </div>
-      <div className="mt-3">
+      <div className="mt-2">
         {state === "connected" ? (
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
@@ -87,13 +84,12 @@ export function GoogleCalendarConnectionCard({
             <TooltipTrigger asChild>
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="h-8 w-full gap-2"
+                className="h-8 w-full justify-start px-0"
                 disabled={pending}
                 onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
               >
-                <GoogleCalendarIcon />
                 {connectLabel}
               </Button>
             </TooltipTrigger>
