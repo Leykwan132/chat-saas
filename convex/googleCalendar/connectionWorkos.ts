@@ -33,57 +33,6 @@ export async function createUserScopedGoogleCalendarAuthorizeUrl(
   return payload.url;
 }
 
-export type GoogleCalendarAccessTokenResult =
-  | { kind: "active"; accessToken: string }
-  | { kind: "not_connected" }
-  | { kind: "needs_reauthorization" }
-  | { kind: "retryable" }
-  | { kind: "failed" };
-
-export async function vendGoogleCalendarAccessToken(
-  workosUserId: string,
-  fetchImplementation: typeof fetch = fetch,
-): Promise<GoogleCalendarAccessTokenResult> {
-  try {
-    const response = await fetchImplementation(
-      `${WORKOS_AUTHORIZE_URL_PREFIX}${GOOGLE_CALENDAR_PROVIDER}/token`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${getWorkOSApiKey()}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ user_id: workosUserId }),
-      },
-    );
-    const text = await response.text();
-    if (!response.ok) {
-      console.log("[google-calendar] WorkOS access token", { status: response.status });
-      return { kind: response.status >= 500 ? "retryable" : "failed" };
-    }
-    const payload = JSON.parse(text) as {
-      active?: unknown;
-      error?: unknown;
-      access_token?: { access_token?: unknown };
-    };
-    console.log("[google-calendar] WorkOS access token", {
-      active: payload.active,
-      error: payload.error,
-      hasAccessToken: typeof payload.access_token?.access_token === "string",
-    });
-    if (payload.active === false) {
-      return payload.error === "not_installed" ? { kind: "not_connected" } : { kind: "needs_reauthorization" };
-    }
-    const accessToken = payload.access_token?.access_token;
-    if (typeof accessToken !== "string" || accessToken.length === 0) {
-      return { kind: "failed" };
-    }
-    return { kind: "active", accessToken };
-  } catch {
-    return { kind: "retryable" };
-  }
-}
-
 export async function deleteWorkosGoogleCalendarAccount(
   workosUserId: string,
   fetchImplementation: typeof fetch = fetch,

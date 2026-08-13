@@ -4,7 +4,7 @@
 
 **Goal:** Add user-scoped primary Google Calendar synchronization through WorkOS Pipes, Google push notifications, privacy-safe Calendar views, and conversation-scoped agent booking writes.
 
-**Architecture:** Convex stays the normalized calendar and booking layer. Focused Google Calendar modules obtain WorkOS-vended credentials, map and synchronize Google events into user-owned records, project those records into authorized team views, and process push notifications as dirty signals for incremental sync. Existing booking entrypoints call a single synchronization service so dashboard and agent operations share idempotency, conflict, availability, and failure behavior.
+**Architecture:** Convex stays the normalized calendar and booking layer. Focused Google Calendar modules call Google through WorkOS Relay, map and synchronize Google events into user-owned records, project those records into authorized team views, and process push notifications as dirty signals for incremental sync. Existing booking entrypoints call a single synchronization service so dashboard and agent operations share idempotency, conflict, availability, and failure behavior.
 
 **Tech Stack:** TypeScript 6, Convex actions/mutations/queries/HTTP actions/crons, React 19, React Router 7, WorkOS AuthKit and Pipes Widgets, Google Calendar REST API v3, Vitest, convex-test, shadcn UI, Bun under Node.js 22.
 
@@ -213,7 +213,7 @@ WorkOS connected-account GET (no Google token):
 GET /user_management/users/${workosUserId}/connected_accounts/${GOOGLE_CALENDAR_PROVIDER}
 ```
 
-Google Calendar HTTP vends a Pipes access token (`user_id` only) and calls Google Calendar directly.
+Google Calendar HTTP uses WorkOS Relay URL routing (`https://api.workos.com/relay` with `X-Relay-URL` and `X-Relay-User`). Omit `X-Relay-Organization`.
 
 Implement a single typed Google request helper supporting `GET`, `POST`, `PUT`, and `DELETE`, conditional `If-Match`, empty successful bodies, JSON validation, and safe error categories. Provider response bodies must not be included in thrown customer-visible errors or logs.
 
