@@ -21,8 +21,6 @@ export const googleCalendarConnectionStatusValidator = v.object({
   timeZone: v.optional(v.string()),
   connectedAccountEmail: v.optional(v.string()),
   createdAt: v.optional(v.number()),
-  workosHttpStatus: v.optional(v.number()),
-  workosConnectedAccount: v.optional(v.any()),
 });
 
 export type GoogleCalendarUiState =
@@ -39,8 +37,6 @@ export type GoogleCalendarConnectionStatus = {
   timeZone?: string;
   connectedAccountEmail?: string;
   createdAt?: number;
-  workosHttpStatus?: number;
-  workosConnectedAccount?: unknown;
 };
 
 function uiState(state: GoogleCalendarConnectionState | undefined): GoogleCalendarUiState {

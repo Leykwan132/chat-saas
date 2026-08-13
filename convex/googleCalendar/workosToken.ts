@@ -91,11 +91,6 @@ async function fetchGoogleCalendarCredential(
       },
     );
     const body = await readWorkosBody(response);
-    console.log("[google-calendar] WorkOS connected-account GET", {
-      status: response.status,
-      workosUserId,
-      body,
-    });
     if (response.status === 404) {
       return { kind: "not_connected", workosHttpStatus: response.status, workosConnectedAccount: body };
     }
@@ -108,8 +103,7 @@ async function fetchGoogleCalendarCredential(
       workosHttpStatus: response.status,
       workosConnectedAccount: body,
     };
-  } catch (error) {
-    console.log("[google-calendar] WorkOS connected-account GET failed", error);
+  } catch {
     return { kind: "retryable" };
   }
 }

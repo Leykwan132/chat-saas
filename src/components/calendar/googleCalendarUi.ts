@@ -12,6 +12,4 @@ export type GoogleCalendarConnectionStatus = {
   timeZone?: string;
   connectedAccountEmail?: string;
   createdAt?: number;
-  workosHttpStatus?: number;
-  workosConnectedAccount?: unknown;
 };

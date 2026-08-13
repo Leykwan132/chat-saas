@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterAll, expect, test } from "vitest";
 import { createUserScopedGoogleCalendarAuthorizeUrl } from "./googleCalendar/connectionWorkos";
 import {
@@ -295,4 +296,11 @@ test("rejects an authorize URL that is not a WorkOS data-integration redirect", 
       responseJson({ url: "https://evil.example/phish" }),
     ),
   ).rejects.toThrow("WorkOS authorize URL was invalid.");
+});
+
+test("does not log WorkOS connected-account or access-token payloads", () => {
+  const token = readFileSync(new URL("./googleCalendar/workosToken.ts", import.meta.url), "utf8");
+  const workos = readFileSync(new URL("./googleCalendar/connectionWorkos.ts", import.meta.url), "utf8");
+  expect(token).not.toContain("console.log");
+  expect(workos).not.toContain("console.log");
 });

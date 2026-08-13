@@ -58,7 +58,6 @@ export async function vendGoogleCalendarAccessToken(
     );
     const text = await response.text();
     if (!response.ok) {
-      console.log("[google-calendar] WorkOS access token", { status: response.status });
       return { kind: response.status >= 500 ? "retryable" : "failed" };
     }
     const payload = JSON.parse(text) as {
@@ -66,11 +65,6 @@ export async function vendGoogleCalendarAccessToken(
       error?: unknown;
       access_token?: { access_token?: unknown };
     };
-    console.log("[google-calendar] WorkOS access token", {
-      active: payload.active,
-      error: payload.error,
-      hasAccessToken: typeof payload.access_token?.access_token === "string",
-    });
     if (payload.active === false) {
       return payload.error === "not_installed" ? { kind: "not_connected" } : { kind: "needs_reauthorization" };
     }

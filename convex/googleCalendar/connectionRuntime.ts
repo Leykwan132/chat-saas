@@ -86,17 +86,9 @@ export function googleCalendarConnectionDependencies(
 async function currentStatus(
   ctx: ActionCtx,
   userId: Id<"users">,
-  credential?: GoogleCalendarCredentialResult,
 ): Promise<GoogleCalendarConnectionStatus> {
   const connection = await ctx.runQuery(refs.connectionLifecycle.getForUser, { userId });
-  const status = googleCalendarConnectionStatus(connection);
-  if (credential?.workosHttpStatus !== undefined) {
-    status.workosHttpStatus = credential.workosHttpStatus;
-  }
-  if (credential?.workosConnectedAccount !== undefined) {
-    status.workosConnectedAccount = credential.workosConnectedAccount;
-  }
-  return status;
+  return googleCalendarConnectionStatus(connection);
 }
 
 export async function reconcileGoogleCalendarConnection(
@@ -114,14 +106,14 @@ export async function reconcileGoogleCalendarConnection(
         "Google Calendar is not connected in WorkOS yet. Finish the Google prompt, then try Connect again.",
       );
     }
-    return await currentStatus(ctx, auth.userDbId, credential);
+    return await currentStatus(ctx, auth.userDbId);
   }
   if (credential.kind === "needs_reauthorization") {
     await ctx.runMutation(refs.connectionLifecycle.markNeedsReauthorization, {
       userId: auth.userDbId,
       now: Date.now(),
     });
-    return await currentStatus(ctx, auth.userDbId, credential);
+    return await currentStatus(ctx, auth.userDbId);
   }
   if (credential.kind !== "active") {
     throw new Error("Google Calendar is temporarily unavailable.");
@@ -160,7 +152,7 @@ export async function reconcileGoogleCalendarConnection(
     });
     throw error instanceof Error ? error : new Error("Google Calendar watch setup failed.");
   }
-  return await currentStatus(ctx, auth.userDbId, credential);
+  return await currentStatus(ctx, auth.userDbId);
 }
 
 async function persistMissingConnectedAccountEmail(
