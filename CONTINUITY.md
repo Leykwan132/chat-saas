@@ -29,7 +29,7 @@
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [TOOL] Pipes Relay switch: 109 passed (provider, connection, writes, watch, webhook, sync review, connection UI).
+- 2026-08-13 [TOOL] Pipes Relay switch: 133 passed (109 provider/writes/watch/webhook + 24 schema/sync/availability).
 - 2026-08-13 [TOOL] User-scoped Pipes widget token tests: 34 passed (`googleCalendarProvider`, connection UI, connection lifecycle). POST `/widgets/token` body is `{ user_id }` only.
 - 2026-08-13 [TOOL] Task 9 tests: 35 passed (connection UI, sidebar, projection, connection lifecycle). `npx convex typecheck` passed.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
