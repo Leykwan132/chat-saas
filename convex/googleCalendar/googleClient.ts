@@ -1,5 +1,4 @@
-import { getWorkOSApiKey } from "../workosClient";
-import { GOOGLE_CALENDAR_PROVIDER, WORKOS_RELAY_URL } from "./constants";
+import { vendGoogleCalendarAccessToken } from "./connectionWorkos";
 
 const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/";
 const GOOGLE_CALENDAR_API_ORIGIN = new URL(GOOGLE_CALENDAR_API_BASE).origin;
@@ -75,23 +74,7 @@ function errorKindForStatus(
   return "failed";
 }
 
-function failedResponseKind(
-  response: Response,
-  invalidSyncTokenOnGone: boolean,
-): GoogleCalendarProviderErrorKind {
-  const upstream = response.headers.get("X-Relay-Upstream-Status");
-  if (upstream !== null) {
-    const status = Number(upstream);
-    if (Number.isFinite(status)) {
-      return errorKindForStatus(status, invalidSyncTokenOnGone);
-    }
-  }
-  if (response.status === 402) return "needs_reauthorization";
-  if (response.status === 404 || response.status === 401) return "failed";
-  return errorKindForStatus(response.status, invalidSyncTokenOnGone);
-}
-
-function googleCalendarUrl(path: string): URL {
+function requestUrl(path: string): string {
   const relativePath = path.trim();
   if (
     relativePath.startsWith("//") ||
@@ -107,20 +90,7 @@ function googleCalendarUrl(path: string): URL {
   ) {
     throw new GoogleCalendarProviderError("invalid_request");
   }
-  return url;
-}
-
-function relayRequestUrl(googleUrl: URL): string {
-  return `${WORKOS_RELAY_URL}/${GOOGLE_CALENDAR_PROVIDER}${googleUrl.pathname}${googleUrl.search}`;
-}
-
-function peekRelayCode(body: string): string | undefined {
-  try {
-    const payload = JSON.parse(body) as { code?: unknown };
-    return typeof payload.code === "string" ? payload.code : undefined;
-  } catch {
-    return undefined;
-  }
+  return url.toString();
 }
 
 function requestBody(request: GoogleCalendarRequest): string | undefined {
@@ -134,6 +104,12 @@ function requestBody(request: GoogleCalendarRequest): string | undefined {
   }
 }
 
+function accessTokenError(kind: "not_connected" | "needs_reauthorization" | "retryable" | "failed") {
+  if (kind === "retryable") return new GoogleCalendarProviderError("retryable");
+  if (kind === "failed") return new GoogleCalendarProviderError("failed");
+  return new GoogleCalendarProviderError("needs_reauthorization");
+}
+
 export async function googleCalendarRequest<T>(
   actor: GoogleCalendarActor,
   request: GoogleCalendarRequest,
@@ -143,11 +119,14 @@ export async function googleCalendarRequest<T>(
   if (workosUserId.length === 0) {
     throw new GoogleCalendarProviderError("invalid_request");
   }
-  const googleUrl = googleCalendarUrl(request.path);
+  const url = requestUrl(request.path);
+  const token = await vendGoogleCalendarAccessToken(workosUserId, fetchImplementation);
+  if (token.kind !== "active") {
+    throw accessTokenError(token.kind);
+  }
   const body = requestBody(request);
   const headers = new Headers({
-    Authorization: `Bearer ${getWorkOSApiKey()}`,
-    "X-Relay-User": workosUserId,
+    Authorization: `Bearer ${token.accessToken}`,
   });
   if (body !== undefined) {
     headers.set("Content-Type", "application/json");
@@ -157,7 +136,7 @@ export async function googleCalendarRequest<T>(
   }
   let response: Response;
   try {
-    response = await fetchImplementation(relayRequestUrl(googleUrl), {
+    response = await fetchImplementation(url, {
       method: request.method,
       headers,
       body,
@@ -165,17 +144,12 @@ export async function googleCalendarRequest<T>(
   } catch {
     throw new GoogleCalendarProviderError("retryable");
   }
-  const responseBody = await response.text();
-  console.log("[google-calendar] WorkOS relay", {
-    status: response.status,
-    upstreamStatus: response.headers.get("X-Relay-Upstream-Status"),
-    code: peekRelayCode(responseBody),
-  });
   if (!response.ok) {
     throw new GoogleCalendarProviderError(
-      failedResponseKind(response, request.invalidSyncTokenOnGone === true),
+      errorKindForStatus(response.status, request.invalidSyncTokenOnGone === true),
     );
   }
+  const responseBody = await response.text();
   if (responseBody.length === 0) {
     return undefined as T;
   }

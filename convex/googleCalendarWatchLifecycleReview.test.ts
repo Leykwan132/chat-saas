@@ -125,7 +125,13 @@ function providerFetch(
         scopes: ["https://www.googleapis.com/auth/calendar.events"],
       });
     }
-    const googleUrl = request.headers.get("X-Relay-URL") ?? request.url;
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
+      });
+    }
+    const googleUrl = request.url;
     const body = await request.json() as Record<string, unknown>;
     if (googleUrl.includes("/calendars/primary/events/watch")) {
       await beforeWatchResponse?.(body);
@@ -133,9 +139,7 @@ function providerFetch(
     }
     if (googleUrl.endsWith("/channels/stop")) {
       const status = stopStatus(String(body.id));
-      return status === 204
-        ? new Response(null, { status })
-        : Response.json({}, { status, headers: { "X-Relay-Upstream-Status": String(status) } });
+      return status === 204 ? new Response(null, { status }) : Response.json({}, { status });
     }
     return Response.json({}, { status: 400 });
   };

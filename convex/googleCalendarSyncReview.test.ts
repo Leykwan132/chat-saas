@@ -130,8 +130,16 @@ test("moving a one-off event updates one stable projection per team", async () =
 });
 
 test("scopes Google 410 invalid-token classification to sync-list requests", async () => {
-  const response: typeof fetch = async () =>
-    new Response(null, { status: 410, headers: { "X-Relay-Upstream-Status": "410" } });
+  const response: typeof fetch = async (input, init) => {
+    const request = new Request(input, init);
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
+      });
+    }
+    return new Response(null, { status: 410 });
+  };
   await expect(googleCalendarRequest(
     { workosUserId: "user_123" },
     { method: "DELETE", path: "calendars/primary/events/event_1" },

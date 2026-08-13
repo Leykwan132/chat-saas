@@ -153,7 +153,13 @@ function providerFetch(t: CalendarTest, onWatch: (body: Record<string, unknown>)
         scopes: ["https://www.googleapis.com/auth/calendar.events"],
       });
     }
-    const googleUrl = request.headers.get("X-Relay-URL") ?? request.url;
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
+      });
+    }
+    const googleUrl = request.url;
     const body = await request.json() as Record<string, unknown>;
     calls.push(body);
     if (googleUrl.includes("/calendars/primary/events/watch")) {
@@ -240,11 +246,13 @@ test("stopping tolerates Google not finding an unexpired channel", async () => {
         scopes: ["https://www.googleapis.com/auth/calendar.events"],
       });
     }
-    const googleUrl = request.headers.get("X-Relay-URL") ?? request.url;
-    if (googleUrl.includes("/channels/stop")) {
-      return Response.json({}, { status: 404, headers: { "X-Relay-Upstream-Status": "404" } });
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
+      });
     }
-    return Response.json({}, { status: 404, headers: { "X-Relay-Upstream-Status": "404" } });
+    return Response.json({}, { status: 404 });
   });
   await expect(t.action(watchActions.stopGoogleCalendarWatch, { channelId })).resolves.toMatchObject({ kind: "stopped" });
   expect((await t.run(async (ctx) => await ctx.db.get(channelId)))?.state).toBe("retired");

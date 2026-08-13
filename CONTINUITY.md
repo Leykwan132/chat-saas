@@ -1,29 +1,30 @@
 # CONTINUITY.md
 
 # Snapshot
-- Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
+- Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Calendar HTTP uses Relay path routing (`/relay/google-calendar/...`) so the lookup matches the connected provider. [CODE] 2026-08-13
-- Next: User deploys latest Convex and reconnects. Logs should show `[google-calendar] WorkOS relay { status, upstreamStatus, code }`. [USER] 2026-08-13
+- Now: Calendar HTTP vends a Pipes access token and calls Google directly. WorkOS Relay is removed. [USER] 2026-08-13
+- Next: User deploys latest Convex and reconnects. Logs should show `[google-calendar] WorkOS access token { active: true, hasAccessToken: true }`. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. [USER] 2026-08-13
 
 # Done (recent)
-- 2026-08-13 [CODE] D650: Relay URL routing mapped `www.googleapis.com` to slug `google` and 404'd the `google-calendar` connection. Path routing uses `/relay/google-calendar` plus the Calendar path.
-- 2026-08-13 [USER] D649: Call Google Calendar through WorkOS Relay. Omit `X-Relay-Organization`. Do not vend or store Google tokens. A 404 without `X-Relay-Upstream-Status` is a Relay failure, not a missing event.
+- 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 - 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
 - 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
 - 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
+- 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Authorize URL body is `{ user_id }` only.
 
 # Working set
 - convex/googleCalendar/googleClient.ts
+- convex/googleCalendar/connectionWorkos.ts
+- convex/googleCalendar/constants.ts
 - convex/googleCalendarProvider.test.ts
 - CONTINUITY.md
 
 # Receipts
-- 2026-08-13 [TOOL] Relay path routing (`/relay/google-calendar`): 182 passed (24 files).
-- 2026-08-13 [CODE] D650: URL routing to `www.googleapis.com` resolved slug `google` and 404'd the `google-calendar` connection.
+- 2026-08-13 [CODE] D651: WorkOS Relay removed. Calendar HTTP vends `POST /data-integrations/google-calendar/token` with `{ user_id }` and calls Google directly.
 - 2026-08-13 [CODE] D649: Google Calendar HTTP posts to `https://api.workos.com/relay` with `X-Relay-URL` and `X-Relay-User`. Authorize/connected-account stay on slug `google-calendar`.
 - 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
 - 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
@@ -36,14 +37,15 @@
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 
 # Decisions
-- 2026-08-13 [USER] D650 ACTIVE: Google Calendar Relay uses path routing (`https://api.workos.com/relay/google-calendar` plus the Google Calendar path and query). Omit `X-Relay-URL` and `X-Relay-Organization`. URL routing resolves `www.googleapis.com` to slug `google` and cannot see a `google-calendar` connection.
-- 2026-08-13 [USER] D649 SUPERSEDED by D650: Relay URL routing (`X-Relay-URL` to `www.googleapis.com`) is no longer used.
-- 2026-08-13 [USER] D648 SUPERSEDED by D649: Direct Pipes access-token vend (`POST /data-integrations/google-calendar/token`) is no longer used for Calendar HTTP.
+- 2026-08-13 [USER] D651 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.
+- 2026-08-13 [USER] D650 SUPERSEDED by D651: Relay path routing is removed because Relay early access may be unavailable.
+- 2026-08-13 [USER] D649 SUPERSEDED by D651: Relay URL routing is removed.
+- 2026-08-13 [USER] D648 SUPERSEDED by D649, then restored by D651: Direct Pipes access-token vend is the Calendar HTTP path.
 - 2026-08-13 [USER] D647 ACTIVE: Kilobot writes `googleCalendarConnections` as soon as WorkOS GET reports a connected Google Calendar account. Connect polls while the authorize tab is open and does not wait for that tab to close. If WorkOS is still missing after the prompt, Connect errors instead of staying silent. WorkOS `state=connected` is treated as active unless granted scopes clearly omit Calendar.
 - 2026-08-13 [USER] D646 ACTIVE: Calendar Google Connect sits in the Calendar header to the left of the time zone control. The header Today button is removed.
-- 2026-08-13 [USER] D645 ACTIVE: WorkOS Pipes Google Calendar provider slug is `google-calendar`. Use it on authorize, connected-account, Relay path routing, and stored connection rows. Do not use `google_calendar` or Relay URL routing to `www.googleapis.com` (that host maps to slug `google`).
+- 2026-08-13 [USER] D645 ACTIVE: WorkOS Pipes Google Calendar provider slug is `google-calendar`. Use it on authorize, connected-account, token vend, and stored connection rows. Do not use `google_calendar`.
 - 2026-08-13 [USER] D644 ACTIVE: Calendar Google Calendar connect uses Kilobot UI (Google icon + Connect). Backend vends `POST /data-integrations/google-calendar/authorize` with `user_id` only; the browser opens that URL. Do not embed the hosted WorkOS `<Pipes>` widget.
-- 2026-08-13 [USER] D643 SUPERSEDED by D648, then restored by D649: Google Calendar HTTP uses Relay again.
+- 2026-08-13 [USER] D643 SUPERSEDED by D648/D651: Relay is not used for Google Calendar HTTP.
 - 2026-08-13 [USER] D642 ACTIVE: WorkOS Pipes Google Calendar connections are user-scoped. Authorize URL requests send `user_id` only (no `organization_id`). Hosted widget tokens superseded by D644.
 - 2026-08-13 [USER] D641 ACTIVE: Primary-calendar-only for v1, including push-assisted incremental sync, channel renewal, fail-closed connected-calendar operations, privacy redaction, idempotent writes, and conversation-scoped agent mutations. Spec: `docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md`.
 - 2026-08-13 [USER] D640 ACTIVE: Customer-facing agent mutations are limited to Kilobot-created events for the active conversation, with explicit confirmation and no false success claims.

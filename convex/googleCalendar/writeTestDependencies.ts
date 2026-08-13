@@ -1,6 +1,7 @@
 import type { TestConvex } from "convex-test";
 import type { FunctionReference } from "convex/server";
 import { internal } from "../_generated/api";
+import { WORKOS_GOOGLE_CALENDAR_TOKEN_URL } from "./constants";
 import type { GoogleCalendarWriteDependencies } from "./writeTypes";
 import schema from "../schema";
 
@@ -24,21 +25,22 @@ const stores = (internal as unknown as { googleCalendar: {
   writeOutcomeStore: { recordOutcome: MutationRef };
 } }).googleCalendar;
 
-function withRelayUpstreamStatus(googleFetch: typeof fetch): typeof fetch {
+function withVendedAccessToken(googleFetch: typeof fetch): typeof fetch {
   return async (input, init) => {
-    const response = await googleFetch(input, init);
-    if (response.headers.has("X-Relay-Upstream-Status")) return response;
-    const headers = new Headers(response.headers);
-    headers.set("X-Relay-Upstream-Status", String(response.status));
-    const status = response.status;
-    if (status === 204 || status === 205 || status === 304) {
-      return new Response(null, { status, statusText: response.statusText, headers });
+    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+    const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+    if (method === "POST" && url === WORKOS_GOOGLE_CALENDAR_TOKEN_URL) {
+      return Response.json({
+        active: true,
+        access_token: {
+          object: "access_token",
+          access_token: "ya29.test",
+          scopes: [],
+          missing_scopes: [],
+        },
+      });
     }
-    return new Response(await response.arrayBuffer(), {
-      status,
-      statusText: response.statusText,
-      headers,
-    });
+    return googleFetch(input, init);
   };
 }
 
@@ -61,6 +63,6 @@ export function googleCalendarWriteTestDependencies(
     getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
     refresh: async () => undefined,
     clock,
-    fetchImplementation: withRelayUpstreamStatus(fetchImplementation),
+    fetchImplementation: withVendedAccessToken(fetchImplementation),
   };
 }
