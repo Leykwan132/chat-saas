@@ -74,7 +74,7 @@ The page shows:
 - Last successful synchronization time.
 - Connect, reconnect, refresh, and disconnect actions appropriate to the current state.
 
-After connection authorization succeeds, Kilobot discovers the primary calendar, performs the initial sync, and creates the Google Events watch channel. The UI does not report the integration as ready until the initial sync and watch registration succeed.
+After connection authorization succeeds, Kilobot polls WorkOS while the authorize tab is still open and writes a `googleCalendarConnections` row as soon as the connected account exists. It does not wait for that tab to close. If WorkOS is not connected after the prompt finishes, Connect fails with an error instead of leaving the table empty. The UI does not report the integration as ready until the initial sync and watch registration succeed.
 
 Disconnecting asks for confirmation because WorkOS removes the stored authorization. Kilobot stops the active Google watch channel when possible, removes imported Google-originated event copies and connection sync state, and preserves Kilobot-created booking history. Kilobot-created events already written to Google remain in Google Calendar; disconnect is not bulk deletion.
 

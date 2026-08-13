@@ -3,6 +3,7 @@ import type { GoogleCalendarActor } from "./googleClient";
 import { getWorkOSApiKey } from "../workosClient";
 
 const WORKOS_API_BASE = "https://api.workos.com";
+const MISSING_ACCOUNT_RETRY_DELAYS_MS = [1000, 2000, 4000];
 
 export type GoogleCalendarCredentialResult =
   | ({ kind: "active" } & GoogleCalendarActor)
@@ -10,9 +11,60 @@ export type GoogleCalendarCredentialResult =
   | { kind: "needs_reauthorization" }
   | { kind: "retryable" };
 
-export async function getGoogleCalendarCredential(
+export type GoogleCalendarCredentialOptions = {
+  retryMissing?: boolean;
+  retryDelaysMs?: number[];
+};
+
+function delay(ms: number) {
+  return new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function connectedAccountScopes(scopes: unknown): string[] {
+  if (!Array.isArray(scopes)) return [];
+  return scopes.flatMap((item) => {
+    if (typeof item === "string") return [item];
+    if (
+      item !== null &&
+      typeof item === "object" &&
+      "scope" in item &&
+      typeof item.scope === "string"
+    ) {
+      return [item.scope];
+    }
+    return [];
+  });
+}
+
+function hasGoogleCalendarScope(scopes: string[]): boolean {
+  return scopes.some(
+    (scope) =>
+      scope === GOOGLE_CALENDAR_EVENTS_SCOPE ||
+      scope === "https://www.googleapis.com/auth/calendar" ||
+      scope.endsWith("/auth/calendar.events") ||
+      scope.endsWith("/auth/calendar"),
+  );
+}
+
+export function classifyWorkosConnectedAccount(
   workosUserId: string,
-  fetchImplementation: typeof fetch = fetch,
+  account: { state?: unknown; scopes?: unknown },
+): GoogleCalendarCredentialResult {
+  const scopes = connectedAccountScopes(account.scopes);
+  if (account.state === "connected") {
+    if (scopes.length > 0 && !hasGoogleCalendarScope(scopes)) {
+      return { kind: "needs_reauthorization" };
+    }
+    return { kind: "active", workosUserId };
+  }
+  return { kind: "needs_reauthorization" };
+}
+
+async function fetchGoogleCalendarCredential(
+  workosUserId: string,
+  fetchImplementation: typeof fetch,
 ): Promise<GoogleCalendarCredentialResult> {
   try {
     const response = await fetchImplementation(
@@ -34,14 +86,23 @@ export async function getGoogleCalendarCredential(
       state?: unknown;
       scopes?: unknown;
     };
-    const scopes = Array.isArray(account.scopes)
-      ? account.scopes.filter((scope): scope is string => typeof scope === "string")
-      : [];
-    if (account.state === "connected" && scopes.includes(GOOGLE_CALENDAR_EVENTS_SCOPE)) {
-      return { kind: "active", workosUserId };
-    }
-    return { kind: "needs_reauthorization" };
+    return classifyWorkosConnectedAccount(workosUserId, account);
   } catch {
     return { kind: "retryable" };
   }
+}
+
+export async function getGoogleCalendarCredential(
+  workosUserId: string,
+  fetchImplementation: typeof fetch = fetch,
+  options: GoogleCalendarCredentialOptions = {},
+): Promise<GoogleCalendarCredentialResult> {
+  let result = await fetchGoogleCalendarCredential(workosUserId, fetchImplementation);
+  if (!options.retryMissing) return result;
+  for (const waitMs of options.retryDelaysMs ?? MISSING_ACCOUNT_RETRY_DELAYS_MS) {
+    if (result.kind !== "not_connected" && result.kind !== "retryable") return result;
+    await delay(waitMs);
+    result = await fetchGoogleCalendarCredential(workosUserId, fetchImplementation);
+  }
+  return result;
 }

@@ -28,7 +28,10 @@ type WatchResult = { kind: string };
 type StopWatchResult = { kind: "stopped" | "expired" | "already_stopped" };
 
 export type GoogleCalendarConnectionDependencies = {
-  getCredential: (workosUserId: string) => Promise<GoogleCalendarCredentialResult>;
+  getCredential: (
+    workosUserId: string,
+    options?: { retryMissing?: boolean },
+  ) => Promise<GoogleCalendarCredentialResult>;
   getPrimaryTimeZone: (actor: { workosUserId: string }, fallbackTimeZone: string) => Promise<string>;
   runSync: (connectionId: Id<"googleCalendarConnections">) => Promise<SyncResult>;
   createWatch: (connectionId: Id<"googleCalendarConnections">) => Promise<WatchResult>;
@@ -61,7 +64,8 @@ export function googleCalendarConnectionDependencies(
   ctx: ActionCtx,
 ): GoogleCalendarConnectionDependencies {
   return {
-    getCredential: (workosUserId) => getGoogleCalendarCredential(workosUserId),
+    getCredential: (workosUserId, options) =>
+      getGoogleCalendarCredential(workosUserId, fetch, options),
     getPrimaryTimeZone: (credential, fallbackTimeZone) =>
       getPrimaryCalendarTimeZone(credential, fallbackTimeZone),
     runSync: (connectionId) => ctx.runAction(refs.syncWorker.run, { connectionId }),
@@ -84,10 +88,20 @@ async function currentStatus(
 export async function reconcileGoogleCalendarConnection(
   ctx: ActionCtx,
   dependencies: GoogleCalendarConnectionDependencies,
+  options: { requireWorkosAccount?: boolean } = {},
 ): Promise<GoogleCalendarConnectionStatus> {
   const auth = await getAuthContext(ctx);
-  const credential = await dependencies.getCredential(auth.userId);
-  if (credential.kind === "not_connected") return await currentStatus(ctx, auth.userDbId);
+  const credential = await dependencies.getCredential(auth.userId, {
+    retryMissing: options.requireWorkosAccount === true,
+  });
+  if (credential.kind === "not_connected") {
+    if (options.requireWorkosAccount === true) {
+      throw new Error(
+        "Google Calendar is not connected in WorkOS yet. Finish the Google prompt, then try Connect again.",
+      );
+    }
+    return await currentStatus(ctx, auth.userDbId);
+  }
   if (credential.kind === "needs_reauthorization") {
     await ctx.runMutation(refs.connectionLifecycle.markNeedsReauthorization, {
       userId: auth.userDbId,

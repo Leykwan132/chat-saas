@@ -143,6 +143,61 @@ test("purgeImportedGoogleEvents deletes Google copies and keeps Kilobot bookings
   expect((await t.run((ctx) => ctx.db.get(ids.kilobotEventId)))?.title).toBe("Booking");
 });
 
+test("reconcile does not insert a connection when WorkOS is not connected", async () => {
+  const t = convexTest(schema, modules);
+  const { userId } = await setupUser(t);
+  const status = await reconcileGoogleCalendarConnection(actionCtx(t), {
+    getCredential: async () => ({ kind: "not_connected" }),
+    getPrimaryTimeZone: async () => "UTC",
+    runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
+    createWatch: async () => ({ kind: "active" }),
+    stopWatch: async () => ({ kind: "stopped" }),
+    deleteConnectedAccount: async () => undefined,
+  });
+  expect(status.state).toBe("not_connected");
+  expect(await t.query(googleInternal.googleCalendar.connectionLifecycle.getForUser, { userId })).toBeNull();
+});
+
+test("reconcile throws when a finished connect still has no WorkOS account", async () => {
+  const t = convexTest(schema, modules);
+  await setupUser(t);
+  let retryMissing: boolean | undefined;
+  await expect(
+    reconcileGoogleCalendarConnection(
+      actionCtx(t),
+      {
+        getCredential: async (_workosUserId, options) => {
+          retryMissing = options?.retryMissing;
+          return { kind: "not_connected" };
+        },
+        getPrimaryTimeZone: async () => "UTC",
+        runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
+        createWatch: async () => ({ kind: "active" }),
+        stopWatch: async () => ({ kind: "stopped" }),
+        deleteConnectedAccount: async () => undefined,
+      },
+      { requireWorkosAccount: true },
+    ),
+  ).rejects.toThrow("Google Calendar is not connected in WorkOS yet");
+  expect(retryMissing).toBe(true);
+});
+
+test("reconcile inserts a row when WorkOS needs reauthorization", async () => {
+  const t = convexTest(schema, modules);
+  const { userId } = await setupUser(t);
+  const status = await reconcileGoogleCalendarConnection(actionCtx(t), {
+    getCredential: async () => ({ kind: "needs_reauthorization" }),
+    getPrimaryTimeZone: async () => "UTC",
+    runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
+    createWatch: async () => ({ kind: "active" }),
+    stopWatch: async () => ({ kind: "stopped" }),
+    deleteConnectedAccount: async () => undefined,
+  });
+  expect(status.state).toBe("needs_reauthorization");
+  expect((await t.query(googleInternal.googleCalendar.connectionLifecycle.getForUser, { userId }))?.state)
+    .toBe("needs_reauthorization");
+});
+
 test("reconcile runs initial sync and watch when WorkOS is active", async () => {
   const t = convexTest(schema, modules);
   await setupUser(t);

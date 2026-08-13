@@ -114,11 +114,27 @@ export const markNeedsReauthorization = internalMutation({
   args: { userId: v.id("users"), now: v.number() },
   returns: v.null(),
   handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (user === null) throw new Error("User not found");
     const existing = await ctx.db
       .query("googleCalendarConnections")
       .withIndex("by_userId", (q) => q.eq("userId", args.userId))
       .unique();
-    if (existing === null) return null;
+    if (existing === null) {
+      await ctx.db.insert("googleCalendarConnections", {
+        userId: user._id,
+        workosUserId: user.workosUserId,
+        provider: GOOGLE_CALENDAR_PROVIDER,
+        primaryCalendarId: "primary",
+        timeZone: "UTC",
+        state: "needs_reauthorization",
+        lastErrorKind: "needs_reauthorization",
+        dirtyGeneration: 0,
+        createdAt: args.now,
+        updatedAt: args.now,
+      });
+      return null;
+    }
     await ctx.db.patch(existing._id, {
       state: "needs_reauthorization",
       lastErrorKind: "needs_reauthorization",

@@ -61,6 +61,46 @@ test("treats a connected account with the events scope as active", async () => {
   });
 });
 
+test("treats a connected account with the full calendar scope as active", async () => {
+  const result = await getGoogleCalendarCredential(
+    "user_123",
+    workosFetchReturning(connectedAccount(["https://www.googleapis.com/auth/calendar"])),
+  );
+  expect(result.kind).toBe("active");
+});
+
+test("treats a connected account with empty scopes as active", async () => {
+  const result = await getGoogleCalendarCredential(
+    "user_123",
+    workosFetchReturning(connectedAccount([])),
+  );
+  expect(result.kind).toBe("active");
+});
+
+test("retries a missing connected account until WorkOS returns it", async () => {
+  let calls = 0;
+  const fetchImplementation: typeof fetch = async (input, init) => {
+    calls += 1;
+    const request = new Request(input, init);
+    if (
+      request.method !== "GET" ||
+      request.url !== "https://api.workos.com/user_management/users/user_123/connected_accounts/google-calendar"
+    ) {
+      return responseJson({ error: "unexpected_request" }, 400);
+    }
+    if (calls < 3) return responseJson({ error: "missing" }, 404);
+    return responseJson(connectedAccount());
+  };
+
+  const result = await getGoogleCalendarCredential("user_123", fetchImplementation, {
+    retryMissing: true,
+    retryDelaysMs: [0, 0, 0],
+  });
+
+  expect(result.kind).toBe("active");
+  expect(calls).toBe(3);
+});
+
 test.each([
   [404, "not_connected"],
   [connectedAccount(["https://www.googleapis.com/auth/calendar.readonly"]), "needs_reauthorization"],

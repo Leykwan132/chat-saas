@@ -5,15 +5,34 @@ import { googleCalendarApi } from "./googleCalendarApi";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 const GOOGLE_CALENDAR_CONNECT_FLAG = "kilobot.googleCalendar.connect";
+const CONNECT_POLL_MS = 1500;
+const CONNECT_TIMEOUT_MS = 120_000;
+const REDIRECT_CONNECT_TIMEOUT_MS = 20_000;
 
-function waitForPopupClose(popup: Window) {
+function sleep(ms: number) {
   return new Promise<void>((resolve) => {
-    const timer = window.setInterval(() => {
-      if (!popup.closed) return;
-      window.clearInterval(timer);
-      resolve();
-    }, 400);
+    setTimeout(resolve, ms);
   });
+}
+
+export async function reconcileUntilGoogleCalendarReady(
+  reconcile: (args: { requireWorkosAccount?: boolean }) => Promise<GoogleCalendarConnectionStatus>,
+  options: { shouldStop?: () => boolean; timeoutMs?: number; pollMs?: number } = {},
+): Promise<GoogleCalendarConnectionStatus> {
+  const deadline = Date.now() + (options.timeoutMs ?? CONNECT_TIMEOUT_MS);
+  const pollMs = options.pollMs ?? CONNECT_POLL_MS;
+  while (Date.now() < deadline) {
+    const status = await reconcile({});
+    if (status.state === "connected" || status.state === "syncing") return status;
+    if (options.shouldStop?.()) break;
+    await sleep(pollMs);
+  }
+  const status = await reconcile({ requireWorkosAccount: true });
+  if (status.state === "connected" || status.state === "syncing") return status;
+  if (status.state === "needs_reauthorization") {
+    throw new Error("Google Calendar needs to be reconnected.");
+  }
+  throw new Error("Google Calendar is not connected yet.");
 }
 
 export function useGoogleCalendarConnection() {
@@ -64,8 +83,13 @@ export function useGoogleCalendarConnection() {
         window.location.assign(url);
         return;
       }
-      await waitForPopupClose(popup);
-      await reconcile({});
+      const nextStatus = await reconcileUntilGoogleCalendarReady(reconcile, {
+        shouldStop: () => popup.closed,
+      });
+      popup.close();
+      if (nextStatus.state === "connected" || nextStatus.state === "syncing") {
+        toast.success("Google Calendar connected");
+      }
     }, "Could not connect Google Calendar");
   }, [getAuthorizeUrl, reconcile, run]);
 
@@ -78,8 +102,15 @@ export function useGoogleCalendarConnection() {
   useEffect(() => {
     if (sessionStorage.getItem(GOOGLE_CALENDAR_CONNECT_FLAG) !== "1") return;
     sessionStorage.removeItem(GOOGLE_CALENDAR_CONNECT_FLAG);
-    void reconcileConnection();
-  }, [reconcileConnection]);
+    void run(async () => {
+      const nextStatus = await reconcileUntilGoogleCalendarReady(reconcile, {
+        timeoutMs: REDIRECT_CONNECT_TIMEOUT_MS,
+      });
+      if (nextStatus.state === "connected" || nextStatus.state === "syncing") {
+        toast.success("Google Calendar connected");
+      }
+    }, "Could not connect Google Calendar");
+  }, [reconcile, run]);
 
   return {
     status,

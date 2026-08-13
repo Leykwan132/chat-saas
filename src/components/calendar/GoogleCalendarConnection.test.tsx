@@ -7,6 +7,7 @@ import {
   GOOGLE_CALENDAR_ICON_SRC,
   GoogleCalendarConnectionCard,
 } from "./GoogleCalendarConnectionCard";
+import { reconcileUntilGoogleCalendarReady } from "./useGoogleCalendarConnection";
 import { GoogleCalendarSourceBadge } from "./GoogleCalendarSourceBadge";
 import { EventDetailsBody } from "./CalendarEventDetailsBody";
 import type { AppointmentDetails } from "./CalendarEventDetailsBody";
@@ -75,6 +76,9 @@ describe("Google Calendar connection UI", () => {
     expect(hook).toContain("getCurrentAuthorizeUrl");
     expect(hook).toContain("window.open");
     expect(hook).toContain("window.location.assign");
+    expect(hook).toContain("reconcileUntilGoogleCalendarReady");
+    expect(hook).toContain("requireWorkosAccount");
+    expect(hook).not.toContain("waitForPopupClose");
     expect(hook).not.toContain("getCurrentPipesWidgetToken");
     expect(hook).not.toContain("getAccessToken");
     expect(hook).not.toContain("@workos-inc/widgets");
@@ -146,5 +150,27 @@ describe("Google Calendar connection UI", () => {
     expect(header.indexOf("<GoogleCalendarConnectionCard")).toBeLessThan(header.indexOf("<TimeZoneSelect"));
     expect(page).not.toContain("connectionCard");
     expect(page).not.toContain(">Today</Button>");
+  });
+
+  it("keeps reconciling while the authorize tab is open", async () => {
+    let calls = 0;
+    const status = await reconcileUntilGoogleCalendarReady(
+      async () => {
+        calls += 1;
+        return { state: calls < 3 ? "not_connected" : "connected" };
+      },
+      { pollMs: 0 },
+    );
+    expect(status.state).toBe("connected");
+    expect(calls).toBe(3);
+  });
+
+  it("fails loudly if WorkOS still has no account after the prompt", async () => {
+    await expect(
+      reconcileUntilGoogleCalendarReady(async () => ({ state: "not_connected" }), {
+        shouldStop: () => true,
+        pollMs: 0,
+      }),
+    ).rejects.toThrow("Google Calendar is not connected yet.");
   });
 });

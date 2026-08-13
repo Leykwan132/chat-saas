@@ -3,28 +3,32 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Calendar Connect is left of the time zone control, with a “Connect Google Calendar” hover tooltip. [USER] 2026-08-13
-- Next: User reconnects Google Calendar if needed; confirm Relay is enabled for the WorkOS environment. [USER] 2026-08-13
+- Now: Persist `googleCalendarConnections` as soon as WorkOS reports the account; do not wait for the authorize tab to close. [USER] 2026-08-13
+- Next: User reconnects on this branch so Convex gets a connection row; confirm Relay is enabled. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; Relay is early access. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
 - 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
 - 2026-08-13 [USER] D643: Google Calendar provider calls use WorkOS Pipes Relay instead of `pipes.getAccessToken`. Omit `X-Relay-Organization`. Connection health uses connected-account GET.
 - 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Authorize URL body is `{ user_id }` only (widget tokens superseded by D644).
-- 2026-08-13 [CODE] Task 9: Calendar sidebar Google connect, refresh/disconnect, source badges, owner-only Google event edit/delete.
-- 2026-08-13 [CODE] Watch/agent `internal` cycle, Convex typecheck, and `origin/main` `16e7d1f` merge on `cursor/google-calendar-booking-sync-10b0`.
+- 2026-08-13 [CODE] Task 9 UI plus watch/agent `internal` cycle and `origin/main` `16e7d1f` merge on `cursor/google-calendar-booking-sync-10b0`.
 
 # Working set
-- src/pages/CalendarPage.tsx
-- src/components/calendar/GoogleCalendarConnectionCard.tsx
-- src/components/calendar/CalendarSidebar.tsx
+- src/components/calendar/useGoogleCalendarConnection.ts
+- convex/googleCalendar/workosToken.ts
+- convex/googleCalendar/connectionRuntime.ts
+- convex/googleCalendar/connectionLifecycle.ts
+- convex/googleCalendar/connectionActions.ts
 - src/components/calendar/GoogleCalendarConnection.test.tsx
 - docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [CODE] D647: Connect polls reconcile while the WorkOS tab is open; `requireWorkosAccount` retries 404s and throws if still missing. `needs_reauthorization` now inserts a row.
+- 2026-08-13 [TOOL] Connect tooltip: 10 connection UI tests passed.
 - 2026-08-13 [TOOL] Header Connect + Today removed: 12 passed (connection UI + sidebar).
 - 2026-08-13 [TOOL] WorkOS slug `google-calendar`: 18 provider/authorize tests passed. Authorize and connected-account URLs use `/google-calendar`.
 - 2026-08-13 [TOOL] Custom Calendar Connect UI: 30 passed (18 provider/authorize URL + 12 connection UI/sidebar). Authorize POST body is `{ user_id }` only; button sits below Assigned to me.
@@ -42,6 +46,7 @@
 - 2026-08-13 [TOOL] bun was missing in the cloud environment; installed bun 1.3.9 then `bun install`. `nvm use 22`.
 
 # Decisions
+- 2026-08-13 [USER] D647 ACTIVE: Kilobot writes `googleCalendarConnections` as soon as WorkOS GET reports a connected Google Calendar account. Connect polls while the authorize tab is open and does not wait for that tab to close. If WorkOS is still missing after the prompt, Connect errors instead of staying silent. WorkOS `state=connected` is treated as active unless granted scopes clearly omit Calendar.
 - 2026-08-13 [USER] D646 ACTIVE: Calendar Google Connect sits in the Calendar header to the left of the time zone control. The header Today button is removed.
 - 2026-08-13 [USER] D645 ACTIVE: WorkOS Pipes Google Calendar provider slug is `google-calendar`. Use it on authorize, connected-account, and stored connection rows. Do not use `google_calendar`.
 - 2026-08-13 [USER] D644 ACTIVE: Calendar Google Calendar connect uses Kilobot UI (Google icon + Connect). Backend vends `POST /data-integrations/google-calendar/authorize` with `user_id` only; the browser opens that URL. Do not embed the hosted WorkOS `<Pipes>` widget.

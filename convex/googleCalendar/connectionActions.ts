@@ -14,12 +14,13 @@ import {
 } from "./connectionRuntime";
 
 export const reconcileCurrentConnection = action({
-  args: {},
+  args: { requireWorkosAccount: v.optional(v.boolean()) },
   returns: googleCalendarConnectionStatusValidator,
-  handler: async (ctx): Promise<GoogleCalendarConnectionStatus> => {
+  handler: async (ctx, args): Promise<GoogleCalendarConnectionStatus> => {
     return await reconcileGoogleCalendarConnection(
       ctx,
       googleCalendarConnectionDependencies(ctx),
+      { requireWorkosAccount: args.requireWorkosAccount === true },
     );
   },
 });

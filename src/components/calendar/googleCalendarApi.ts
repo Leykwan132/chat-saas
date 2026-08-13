@@ -15,7 +15,7 @@ type GoogleCalendarClientApi = {
     reconcileCurrentConnection: FunctionReference<
       "action",
       "public",
-      Record<string, never>,
+      { requireWorkosAccount?: boolean },
       GoogleCalendarConnectionStatus
     >;
     refreshCurrentConnection: FunctionReference<
