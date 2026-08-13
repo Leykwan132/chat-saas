@@ -24,8 +24,8 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Access-token Google Calendar after Relay removal: 180 passed (24 files).
 - 2026-08-13 [CODE] D651: WorkOS Relay removed. Calendar HTTP vends `POST /data-integrations/google-calendar/token` with `{ user_id }` and calls Google directly.
-- 2026-08-13 [CODE] D649: Google Calendar HTTP posts to `https://api.workos.com/relay` with `X-Relay-URL` and `X-Relay-User`. Authorize/connected-account stay on slug `google-calendar`.
 - 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
 - 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
 - 2026-08-13 [TOOL] WorkOS connected-account console log: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
