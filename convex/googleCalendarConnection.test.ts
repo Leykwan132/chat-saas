@@ -14,6 +14,7 @@ import {
   type GoogleCalendarConnectionDependencies,
 } from "./googleCalendar/connectionRuntime";
 import { googleCalendarConnectionStatus } from "./googleCalendar/connectionStatus";
+import { googleCalendarAccountEmail } from "./googleCalendar/connectedAccountEmail";
 import { CALENDAR_PAGE_FRESHNESS_MS } from "./googleCalendar/constants";
 
 const modules = import.meta.glob("./**/*.ts");
@@ -26,7 +27,7 @@ const googleInternal = internal as unknown as {
       purgeImportedGoogleEvents: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     };
     connectionQueries: {
-      getCurrentConnectionStatus: FunctionReference<"query", "public", Record<string, never>, { state: string }>;
+      getCurrentConnectionStatus: FunctionReference<"query", "public", Record<string, never>, { state: string; connectedAccountEmail?: string }>;
     };
   };
 };
@@ -83,6 +84,13 @@ test("maps disconnected and missing rows to not_connected", () => {
   });
 });
 
+test("prefers the primary calendar id when it is an email", () => {
+  expect(googleCalendarAccountEmail({ email: "pipes@example.com" }, "owner@gmail.com"))
+    .toBe("owner@gmail.com");
+  expect(googleCalendarAccountEmail({ identity: { email: "pipes@example.com" } }))
+    .toBe("pipes@example.com");
+});
+
 test("getCurrentConnectionStatus reports connected after ensureSyncing plus a local connected patch", async () => {
   const t = convexTest(schema, modules);
   const { userId } = await setupUser(t);
@@ -92,13 +100,18 @@ test("getCurrentConnectionStatus reports connected after ensureSyncing plus a lo
     now: Date.now(),
   });
   await t.run(async (ctx) => {
-    await ctx.db.patch(connectionId, { state: "connected", lastSuccessfulSyncAt: Date.now() });
+    await ctx.db.patch(connectionId, {
+      state: "connected",
+      lastSuccessfulSyncAt: Date.now(),
+      connectedAccountEmail: "calendar@example.com",
+    });
   });
   const status = await t.withIdentity({ subject: "user_google_calendar" }).query(
     googleInternal.googleCalendar.connectionQueries.getCurrentConnectionStatus,
     {},
   );
   expect(status.state).toBe("connected");
+  expect(status.connectedAccountEmail).toBe("calendar@example.com");
 });
 
 test("purgeImportedGoogleEvents deletes Google copies and keeps Kilobot bookings", async () => {
@@ -148,7 +161,7 @@ test("reconcile does not insert a connection when WorkOS is not connected", asyn
   const { userId } = await setupUser(t);
   const status = await reconcileGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "not_connected" }),
-    getPrimaryTimeZone: async () => "UTC",
+    getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
     runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
     createWatch: async () => ({ kind: "active" }),
     stopWatch: async () => ({ kind: "stopped" }),
@@ -170,7 +183,7 @@ test("reconcile throws when a finished connect still has no WorkOS account", asy
           retryMissing = options?.retryMissing;
           return { kind: "not_connected" };
         },
-        getPrimaryTimeZone: async () => "UTC",
+        getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
         runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
         createWatch: async () => ({ kind: "active" }),
         stopWatch: async () => ({ kind: "stopped" }),
@@ -187,7 +200,7 @@ test("reconcile inserts a row when WorkOS needs reauthorization", async () => {
   const { userId } = await setupUser(t);
   const status = await reconcileGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "needs_reauthorization" }),
-    getPrimaryTimeZone: async () => "UTC",
+    getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
     runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
     createWatch: async () => ({ kind: "active" }),
     stopWatch: async () => ({ kind: "stopped" }),
@@ -204,7 +217,7 @@ test("reconcile runs initial sync and watch when WorkOS is active", async () => 
   const calls: string[] = [];
   const deps: GoogleCalendarConnectionDependencies = {
     getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
-    getPrimaryTimeZone: async () => "Asia/Kuala_Lumpur",
+    getPrimaryCalendar: async () => ({ timeZone: "Asia/Kuala_Lumpur", calendarId: "calendar@example.com" }),
     runSync: async () => {
       calls.push("sync");
       return { kind: "completed", passes: 1, dirty: false };
@@ -221,6 +234,7 @@ test("reconcile runs initial sync and watch when WorkOS is active", async () => 
   const status = await reconcileGoogleCalendarConnection(actionCtx(t), deps);
   expect(calls).toEqual(["sync", "watch"]);
   expect(["syncing", "connected", "not_connected"]).toContain(status.state);
+  expect(status.connectedAccountEmail).toBe("calendar@example.com");
 });
 
 test("refresh skips Google sync when the last sync is fresh", async () => {
@@ -243,7 +257,7 @@ test("refresh skips Google sync when the last sync is fresh", async () => {
   let synced = false;
   await refreshGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
-    getPrimaryTimeZone: async () => "UTC",
+    getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
     runSync: async () => {
       synced = true;
       return { kind: "completed", passes: 1, dirty: false };
@@ -283,7 +297,7 @@ test("disconnect deletes the WorkOS account and imported events", async () => {
   let deletedAccount = false;
   const status = await disconnectGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "not_connected" }),
-    getPrimaryTimeZone: async () => "UTC",
+    getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
     runSync: async () => ({ kind: "completed", passes: 0, dirty: false }),
     createWatch: async () => ({ kind: "active" }),
     stopWatch: async () => ({ kind: "already_stopped" }),

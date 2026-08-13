@@ -1108,6 +1108,17 @@ export default function CalendarPage() {
         onChangeMonth={handleChangeMonth}
         onCreateBooking={() => setCreateBookingOpen(true)}
         onShowAllEvents={() => setAssignedToMeOnly(false)}
+        googleCalendarConnection={
+          googleCalendar.status ? (
+            <GoogleCalendarConnectionCard
+              {...googleCalendar.status}
+              pending={googleCalendar.pending}
+              onConnect={() => void googleCalendar.connectGoogleCalendar()}
+              onReconnect={() => void googleCalendar.connectGoogleCalendar()}
+              onDisconnect={() => googleCalendar.setDisconnectOpen(true)}
+            />
+          ) : null
+        }
       />
 
       <section className={cn(inboxColumnClassName, 'border-r border-border')}>
@@ -1118,15 +1129,6 @@ export default function CalendarPage() {
             </h2>
           </div>
           <div className="flex items-center gap-1.5">
-            {googleCalendar.status ? (
-              <GoogleCalendarConnectionCard
-                {...googleCalendar.status}
-                pending={googleCalendar.pending}
-                onConnect={() => void googleCalendar.connectGoogleCalendar()}
-                onReconnect={() => void googleCalendar.connectGoogleCalendar()}
-                onDisconnect={() => googleCalendar.setDisconnectOpen(true)}
-              />
-            ) : null}
             <TimeZoneSelect
               value={displayTimeZone}
               options={CALENDAR_TIMEZONE_OPTIONS}

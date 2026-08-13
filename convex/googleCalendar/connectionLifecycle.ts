@@ -20,6 +20,7 @@ const connectionSnapshotValidator = v.union(
     lastSuccessfulSyncAt: v.optional(v.number()),
     lastErrorKind: v.optional(googleCalendarErrorKindValidator),
     timeZone: v.string(),
+    connectedAccountEmail: v.optional(v.string()),
     activeWatchChannelId: v.optional(v.id("googleCalendarWatchChannels")),
   }),
 );
@@ -66,6 +67,9 @@ export const getForUser = internalQuery({
         : { lastSuccessfulSyncAt: connection.lastSuccessfulSyncAt }),
       ...(connection.lastErrorKind === undefined ? {} : { lastErrorKind: connection.lastErrorKind }),
       timeZone: connection.timeZone,
+      ...(connection.connectedAccountEmail === undefined
+        ? {}
+        : { connectedAccountEmail: connection.connectedAccountEmail }),
       ...(connection.activeWatchChannelId === undefined
         ? {}
         : { activeWatchChannelId: connection.activeWatchChannelId }),
@@ -78,6 +82,7 @@ export const ensureSyncing = internalMutation({
     userId: v.id("users"),
     timeZone: v.string(),
     now: v.number(),
+    connectedAccountEmail: v.optional(v.string()),
   },
   returns: v.id("googleCalendarConnections"),
   handler: async (ctx, args) => {
@@ -92,6 +97,9 @@ export const ensureSyncing = internalMutation({
         state: "syncing",
         timeZone: args.timeZone,
         lastErrorKind: undefined,
+        ...(args.connectedAccountEmail === undefined
+          ? {}
+          : { connectedAccountEmail: args.connectedAccountEmail }),
         updatedAt: args.now,
       });
       return existing._id;
@@ -104,6 +112,9 @@ export const ensureSyncing = internalMutation({
       timeZone: args.timeZone,
       state: "syncing",
       dirtyGeneration: 0,
+      ...(args.connectedAccountEmail === undefined
+        ? {}
+        : { connectedAccountEmail: args.connectedAccountEmail }),
       createdAt: args.now,
       updatedAt: args.now,
     });
@@ -175,6 +186,7 @@ export const markDisconnected = internalMutation({
       activeSyncRunId: undefined,
       activeWatchChannelId: undefined,
       lastErrorKind: undefined,
+      connectedAccountEmail: undefined,
       updatedAt: args.now,
     });
     return null;

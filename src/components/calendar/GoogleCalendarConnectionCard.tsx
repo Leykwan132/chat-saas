@@ -1,12 +1,11 @@
-import { ChevronDown } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
@@ -26,6 +25,7 @@ function GoogleCalendarIcon() {
 
 export function GoogleCalendarConnectionCard({
   state,
+  connectedAccountEmail,
   lastErrorMessage,
   pending = false,
   onConnect,
@@ -38,62 +38,67 @@ export function GoogleCalendarConnectionCard({
       : state === "needs_reauthorization"
         ? "Reconnect"
         : "+ Google Calendar";
+  const accountLabel = connectedAccountEmail ?? "Google account";
 
   return (
-    <div className="flex items-center gap-1.5" data-calendar-header-section="google-calendar">
-      {state === "connected" ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+    <Card
+      size="sm"
+      className="gap-3 py-3 shadow-sm"
+      data-calendar-sidebar-section="google-calendar"
+    >
+      <CardHeader className="px-3">
+        <CardTitle className="flex items-center gap-2 text-sm">
+          <GoogleCalendarIcon />
+          Google Calendar
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-3">
+        {state === "connected" ? (
+          <div className="flex items-center gap-2">
+            <span
+              className="size-2 shrink-0 rounded-full bg-emerald-600"
+              aria-label="Active"
+            />
+            <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">
+              {accountLabel}
+            </span>
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-8 w-fit gap-1.5 border-transparent bg-input/50 px-2.5 font-normal shadow-none"
+              size="icon-xs"
               disabled={pending}
-              aria-label="Google Calendar connected"
+              aria-label="Disconnect Google Calendar"
+              onClick={onDisconnect}
             >
-              <GoogleCalendarIcon />
-              Google Calendar
-              <ChevronDown data-icon="inline-end" />
+              <Trash2 />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuGroup>
-              <DropdownMenuItem
-                variant="destructive"
+          </div>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-full gap-2"
                 disabled={pending}
-                onSelect={onDisconnect}
+                onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
               >
-                Disconnect Google Calendar
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 w-fit gap-2"
-              disabled={pending}
-              onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
-            >
-              <GoogleCalendarIcon />
-              {connectLabel}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {state === "needs_reauthorization"
-              ? "Reconnect Google Calendar"
-              : "Connect Google Calendar"}
-          </TooltipContent>
-        </Tooltip>
-      )}
-      {state === "syncing" && lastErrorMessage ? (
-        <p className="max-w-40 truncate text-xs text-destructive">{lastErrorMessage}</p>
-      ) : null}
-    </div>
+                <GoogleCalendarIcon />
+                {connectLabel}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {state === "needs_reauthorization"
+                ? "Reconnect Google Calendar"
+                : "Connect Google Calendar"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {state === "syncing" && lastErrorMessage ? (
+          <p className="mt-2 truncate text-xs text-destructive">{lastErrorMessage}</p>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

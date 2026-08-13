@@ -42,20 +42,24 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("TooltipContent");
   });
 
-  it("shows Google Calendar as a quiet header menu with disconnect", () => {
+  it("shows the connected account in a card with a trash disconnect", () => {
     const markup = renderConnectionCard({
       state: "connected",
+      connectedAccountEmail: "owner@gmail.com",
       lastSuccessfulSyncAt: Date.UTC(2026, 7, 13, 4, 0, 0),
     });
     expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).toContain("aria-label=\"Google Calendar connected\"");
+    expect(markup).toContain("owner@gmail.com");
+    expect(markup).toContain("bg-emerald-600");
+    expect(markup).toContain('aria-label="Active"');
+    expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
-    expect(source).toContain("DropdownMenu");
+    expect(source).toContain("Trash2");
     expect(source).toContain("Disconnect Google Calendar");
-    expect(source).toContain("bg-input/50");
-    expect(source).toContain("ChevronDown");
+    expect(source).not.toContain("DropdownMenu");
+    expect(source).not.toContain("ChevronDown");
   });
 
   it("shows reconnect recovery without claiming connected", () => {
@@ -152,11 +156,11 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google");
   });
 
-  it("places Connect to the left of the timezone control and omits Today", () => {
+  it("places Google Calendar below Assigned to me, not in the header", () => {
     const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
     const header = page.slice(page.indexOf("inboxColumnHeaderClassName"));
-    expect(header.indexOf("<GoogleCalendarConnectionCard")).toBeLessThan(header.indexOf("<TimeZoneSelect"));
-    expect(page).not.toContain("connectionCard");
+    expect(header).not.toContain("<GoogleCalendarConnectionCard");
+    expect(page).toContain("googleCalendarConnection=");
     expect(page).not.toContain(">Today</Button>");
   });
 

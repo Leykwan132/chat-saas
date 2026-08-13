@@ -4,7 +4,8 @@ import type { Id } from "../_generated/dataModel";
 import type { ActionCtx } from "../_generated/server";
 import { getAuthContext } from "../authUtils";
 import { CALENDAR_PAGE_FRESHNESS_MS } from "./constants";
-import { getPrimaryCalendarTimeZone } from "./calendarTimezone";
+import { getPrimaryCalendar } from "./calendarTimezone";
+import { googleCalendarAccountEmail } from "./connectedAccountEmail";
 import {
   googleCalendarConnectionStatus,
   type GoogleCalendarConnectionStatus,
@@ -20,6 +21,7 @@ type ConnectionSnapshot = {
   lastSuccessfulSyncAt?: number;
   lastErrorKind?: GoogleCalendarConnectionStatus["lastErrorKind"];
   timeZone: string;
+  connectedAccountEmail?: string;
   activeWatchChannelId?: Id<"googleCalendarWatchChannels">;
 };
 
@@ -32,7 +34,10 @@ export type GoogleCalendarConnectionDependencies = {
     workosUserId: string,
     options?: { retryMissing?: boolean },
   ) => Promise<GoogleCalendarCredentialResult>;
-  getPrimaryTimeZone: (actor: { workosUserId: string }, fallbackTimeZone: string) => Promise<string>;
+  getPrimaryCalendar: (
+    actor: { workosUserId: string },
+    fallbackTimeZone: string,
+  ) => Promise<{ timeZone: string; calendarId?: string }>;
   runSync: (connectionId: Id<"googleCalendarConnections">) => Promise<SyncResult>;
   createWatch: (connectionId: Id<"googleCalendarConnections">) => Promise<WatchResult>;
   stopWatch: (channelId: Id<"googleCalendarWatchChannels">) => Promise<StopWatchResult>;
@@ -43,7 +48,7 @@ type GoogleConnectionRefs = {
   connectionLifecycle: {
     getForUser: FunctionReference<"query", "internal", { userId: Id<"users"> }, ConnectionSnapshot | null>;
     getFallbackTimeZone: FunctionReference<"query", "internal", { teamId: Id<"teams"> }, string>;
-    ensureSyncing: FunctionReference<"mutation", "internal", { userId: Id<"users">; timeZone: string; now: number }, Id<"googleCalendarConnections">>;
+    ensureSyncing: FunctionReference<"mutation", "internal", { userId: Id<"users">; timeZone: string; now: number; connectedAccountEmail?: string }, Id<"googleCalendarConnections">>;
     markNeedsReauthorization: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     markReconcileFailed: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; errorKind: "failed"; now: number }, null>;
     markDisconnected: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; now: number }, null>;
@@ -66,8 +71,8 @@ export function googleCalendarConnectionDependencies(
   return {
     getCredential: (workosUserId, options) =>
       getGoogleCalendarCredential(workosUserId, fetch, options),
-    getPrimaryTimeZone: (credential, fallbackTimeZone) =>
-      getPrimaryCalendarTimeZone(credential, fallbackTimeZone),
+    getPrimaryCalendar: (credential, fallbackTimeZone) =>
+      getPrimaryCalendar(credential, fallbackTimeZone),
     runSync: (connectionId) => ctx.runAction(refs.syncWorker.run, { connectionId }),
     createWatch: (connectionId) =>
       ctx.runAction(refs.watchActions.createGoogleCalendarWatch, { connectionId }),
@@ -125,15 +130,23 @@ export async function reconcileGoogleCalendarConnection(
     { teamId: auth.activeTeamId },
   );
   let timeZone = fallbackTimeZone;
+  let calendarId: string | undefined;
   try {
-    timeZone = await dependencies.getPrimaryTimeZone(credential, fallbackTimeZone);
+    const calendar = await dependencies.getPrimaryCalendar(credential, fallbackTimeZone);
+    timeZone = calendar.timeZone;
+    calendarId = calendar.calendarId;
   } catch {
     timeZone = fallbackTimeZone;
   }
+  const connectedAccountEmail = googleCalendarAccountEmail(
+    credential.workosConnectedAccount,
+    calendarId,
+  );
   const connectionId = await ctx.runMutation(refs.connectionLifecycle.ensureSyncing, {
     userId: auth.userDbId,
     timeZone,
     now: Date.now(),
+    ...(connectedAccountEmail === undefined ? {} : { connectedAccountEmail }),
   });
   await dependencies.runSync(connectionId);
   try {

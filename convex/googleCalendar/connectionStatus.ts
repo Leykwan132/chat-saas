@@ -19,6 +19,7 @@ export const googleCalendarConnectionStatusValidator = v.object({
   lastErrorKind: v.optional(googleCalendarErrorKindValidator),
   lastErrorMessage: v.optional(v.string()),
   timeZone: v.optional(v.string()),
+  connectedAccountEmail: v.optional(v.string()),
   workosHttpStatus: v.optional(v.number()),
   workosConnectedAccount: v.optional(v.any()),
 });
@@ -35,6 +36,7 @@ export type GoogleCalendarConnectionStatus = {
   lastErrorKind?: GoogleCalendarOperationFailure["kind"];
   lastErrorMessage?: string;
   timeZone?: string;
+  connectedAccountEmail?: string;
   workosHttpStatus?: number;
   workosConnectedAccount?: unknown;
 };
@@ -50,6 +52,7 @@ export function googleCalendarConnectionStatus(
     lastSuccessfulSyncAt?: number;
     lastErrorKind?: GoogleCalendarOperationFailure["kind"];
     timeZone: string;
+    connectedAccountEmail?: string;
   } | null,
 ): GoogleCalendarConnectionStatus {
   if (connection === null) return { state: "not_connected" };
@@ -57,6 +60,9 @@ export function googleCalendarConnectionStatus(
   const status: GoogleCalendarConnectionStatus = { state, timeZone: connection.timeZone };
   if (connection.lastSuccessfulSyncAt !== undefined) {
     status.lastSuccessfulSyncAt = connection.lastSuccessfulSyncAt;
+  }
+  if (connection.connectedAccountEmail !== undefined) {
+    status.connectedAccountEmail = connection.connectedAccountEmail;
   }
   if (connection.lastErrorKind !== undefined) {
     status.lastErrorKind = connection.lastErrorKind;
