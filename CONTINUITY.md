@@ -23,6 +23,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Connected header button dropdown: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connected header button: same outline control as Connect, check icon, Disconnect in dropdown.
 - 2026-08-13 [TOOL] Access-token Google Calendar after Relay removal: 180 passed (24 files).
 - 2026-08-13 [CODE] D651: WorkOS Relay removed. Calendar HTTP vends `POST /data-integrations/google-calendar/token` with `{ user_id }` and calls Google directly.
