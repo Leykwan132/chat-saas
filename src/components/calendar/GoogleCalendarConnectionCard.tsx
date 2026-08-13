@@ -35,7 +35,7 @@ export function GoogleCalendarConnectionCard({
       ? "Connecting..."
       : state === "needs_reauthorization"
         ? "Reconnect"
-        : "+ Connect";
+        : "Google Calendar";
   const connected = state === "connected";
   const tooltip = connected
     ? "Disconnect Google Calendar"

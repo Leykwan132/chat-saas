@@ -31,11 +31,11 @@ function renderConnectionCard(
 }
 
 describe("Google Calendar connection UI", () => {
-  it("offers a + Connect action with the official Calendar icon", () => {
+  it("shows Google Calendar when no Gmail account is connected", () => {
     const markup = renderConnectionCard({ state: "not_connected" });
-    expect(markup).toContain("+ Connect");
+    expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).not.toContain("+ Google Calendar");
+    expect(markup).not.toContain("+ Connect");
     expect(GOOGLE_CALENDAR_ICON_SRC).toContain("gstatic.com/images/branding/productlogos/calendar_2026_13");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain("Connect Google Calendar");
