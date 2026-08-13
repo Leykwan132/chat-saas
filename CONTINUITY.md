@@ -20,7 +20,7 @@
 # State
 
 - 2026-08-13 [CODE] Now: `codex/fix-slot-availability-create` renders active Calendar View filters as fully rounded pills and selected current calendar days without a square background.
-- 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
+- 2026-08-13 [TOOL] Next: review PR #58; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -56,3 +56,4 @@
 - 2026-08-13 [TOOL] Calendar nearest-slot lookup, customer-selection recheck, focused booking tests (13/13), `bunx tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-13 [TOOL] Calendar selected-today regression was RED before the styling change and GREEN afterward; `CalendarSidebar.test.tsx` (2/2), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-13 [TOOL] Calendar View filter pill regression was RED before the local active-row override and GREEN afterward; `CalendarSidebar.test.tsx` (3/3), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
+- 2026-08-13 [TOOL] Pushed `codex/fix-slot-availability-create` and opened ready-for-review PR #58; 16 focused tests and `tsc --noEmit` passed immediately before PR creation.
