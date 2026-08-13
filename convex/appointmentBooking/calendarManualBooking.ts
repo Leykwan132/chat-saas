@@ -2,7 +2,7 @@ import { v } from "convex/values";
 import { mutation, query, type MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "../authUtils";
-import { resolveAvailableInterval } from "./availability";
+import { generateSlots, resolveAvailableInterval } from "./availability";
 import {
   assertAppointmentBookingManage,
   listActiveManualBookingServicesForAgent,
@@ -63,6 +63,38 @@ export const getCreateOptions = query({
       fields: service.fields,
       timeZone: serviceTimeZone(service, team),
     }));
+  },
+});
+
+export const getNextAvailableSlot = mutation({
+  args: {
+    agentId: v.id("agents"),
+    serviceId: v.id("appointmentServices"),
+  },
+  returns: v.union(
+    v.object({
+      startAt: v.number(),
+      endAt: v.number(),
+    }),
+    v.null(),
+  ),
+  handler: async (ctx, args) => {
+    const agent = await assertAppointmentBookingManage(ctx, args.agentId);
+    const team = await resolveTeamForAgent(ctx, agent);
+    const service = await loadService(ctx, args.serviceId);
+    if (service.agentId !== agent._id || !service.isActive) {
+      throw new Error("Selected service is not available");
+    }
+    const now = Date.now();
+    const [slot] = await generateSlots(ctx, {
+      service,
+      teamId: team._id,
+      rangeStartAt: now,
+      rangeEndAt: now + 14 * 24 * 60 * 60 * 1000,
+      limit: 1,
+      prioritizePreferredTimes: false,
+    });
+    return slot ? { startAt: slot.startAt, endAt: slot.endAt } : null;
   },
 });
 

@@ -17,8 +17,8 @@
 
 # State
 
-- 2026-08-13 [USER] Now: extend nearest-slot prefilling to Calendar + New Booking on `codex/fix-slot-availability-create`.
-- 2026-08-13 [TOOL] Next: execute `docs/superpowers/plans/2026-08-13-calendar-manual-booking-nearest-slot.md` test-first.
+- 2026-08-13 [CODE] Now: Inbox Create booking and Calendar + New Booking prefill the nearest valid 30-minute slot on `codex/fix-slot-availability-create`.
+- 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -50,3 +50,4 @@
 - 2026-08-13 [TOOL] Focused booking regression suite passed 13/13 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
 - 2026-08-13 [TOOL] Full `bunx vitest run` passed 1,346 tests across 415 files but exited non-zero on the same 10 Docs runner/configuration suites treated as empty by Vitest; unrelated to this booking change.
 - 2026-08-13 [USER] Screenshot confirmed the Calendar + New Booking flow was not included in the prior implementation; user authorized extending it.
+- 2026-08-13 [TOOL] Calendar nearest-slot lookup, customer-selection recheck, focused booking tests (13/13), `bunx tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.

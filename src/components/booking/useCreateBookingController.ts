@@ -48,8 +48,13 @@ export function useCreateBookingController({
   const availabilityRequestRef = useRef(0);
   const nearestSlotRequestRef = useRef(0);
   const loadNearestSlotRef = useRef(loadNearestSlot);
+  const checkAvailabilityRef = useRef(checkAvailability);
+  const customerRef = useRef(customer);
+  const previousCustomerRef = useRef(customer);
   const endTimeCustomizedRef = useRef(false);
   loadNearestSlotRef.current = loadNearestSlot;
+  checkAvailabilityRef.current = checkAvailability;
+  customerRef.current = customer;
   const effectiveServiceId = serviceId || services[0]?.serviceId || '';
   const effectiveFields = {
     name: customer?.name ?? '',
@@ -77,13 +82,13 @@ export function useCreateBookingController({
     const nextSelection = nextService
       ? getManualBookingSelection(nextServiceId, nextDate, nextStart, nextEnd, nextService.timeZone)
       : { kind: 'incomplete' as const };
-    if (customer === null || nextSelection.kind !== 'ready') {
+    if (customerRef.current === null || nextSelection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
     setAvailability({ kind: 'checking', key: nextSelection.key });
     try {
-      const result = await checkAvailability({
+      const result = await checkAvailabilityRef.current({
         serviceId: nextServiceId as Id<'appointmentServices'>,
         startAt: nextSelection.startAt,
         endAt: nextSelection.endAt,
@@ -123,6 +128,17 @@ export function useCreateBookingController({
       );
     })();
   }, [effectiveServiceId, service?.timeZone]);
+
+  useEffect(() => {
+    const previousCustomer = previousCustomerRef.current;
+    previousCustomerRef.current = customer;
+    if (customer === previousCustomer) return;
+    if (customer === null || selection.kind !== 'ready') {
+      setAvailability({ kind: 'idle' });
+      return;
+    }
+    void runAvailabilityCheck(effectiveServiceId, date, startTime, endTime);
+  }, [customer, effectiveServiceId, date, startTime, endTime]);
 
   return {
     serviceId: effectiveServiceId, date, startTime, endTime, remarks,
