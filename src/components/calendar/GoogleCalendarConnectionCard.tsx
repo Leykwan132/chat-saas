@@ -1,4 +1,4 @@
-import { Check, Trash2 } from "lucide-react";
+import { BadgeCheck, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrefixedRelativeAge } from "@/lib/formatRelativeAge";
@@ -61,9 +61,8 @@ export function GoogleCalendarConnectionCard({
                   {connectedAccountEmail}
                 </span>
                 {connectedAccountEmail ? (
-                  <Check
+                  <BadgeCheck
                     className="size-3.5 shrink-0 text-green-600"
-                    strokeWidth={2.5}
                     aria-label="Active"
                   />
                 ) : null}

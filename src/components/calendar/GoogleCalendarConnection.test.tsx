@@ -65,6 +65,7 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("rounded-xl");
     expect(source).toContain("shadow-none");
     expect(source).toContain("text-green-600");
+    expect(source).toContain("BadgeCheck");
     expect(source).not.toContain("CheckCircle2");
     expect(source).not.toContain("rounded-4xl");
     expect(source).toContain("Trash2");
