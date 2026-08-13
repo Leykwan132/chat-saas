@@ -22,6 +22,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Create booking empty-services tests: 6 passed (`CreateBookingDialog`, `CreateCustomerBookingDialog`).
 - 2026-08-13 [CODE] Create booking empty state: Empty + Create service link to `/services/new`; Create booking footer hidden when there are no services.
 - 2026-08-13 [TOOL] Connected header button dropdown: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connected header button: same outline control as Connect, check icon, Disconnect in dropdown.
