@@ -207,16 +207,13 @@ Expected: FAIL because the provider modules do not exist.
 
 - [ ] **Step 3: Implement the WorkOS and Google boundaries**
 
-Use the WorkOS SDK already pinned in `package.json`:
+WorkOS connected-account GET (no Google token):
 
 ```ts
-const result = await workos.pipes.getAccessToken({
-  provider: GOOGLE_CALENDAR_PROVIDER,
-  userId: workosUserId,
-});
+GET /user_management/users/${workosUserId}/connected_accounts/${GOOGLE_CALENDAR_PROVIDER}
 ```
 
-Branch on `active` before reading the discriminated fields. Accept the exact installed-SDK access-token shape verified from TypeScript diagnostics; normalize it into `{ token, expiresAt, scopes }`. Do not cache the token.
+Google Calendar HTTP goes through Pipes Relay with `X-Relay-User` only.
 
 Implement a single typed Google request helper supporting `GET`, `POST`, `PUT`, and `DELETE`, conditional `If-Match`, empty successful bodies, JSON validation, and safe error categories. Provider response bodies must not be included in thrown customer-visible errors or logs.
 

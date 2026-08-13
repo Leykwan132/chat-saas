@@ -118,15 +118,20 @@ function providerFetch(
 ) {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.url === "https://api.workos.com/data-integrations/google_calendar/token") {
-      return Response.json({ active: true, access_token: { access_token: "google-token", expires_at: null, scopes: ["https://www.googleapis.com/auth/calendar.events"] } });
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+      return Response.json({
+        object: "connected_account",
+        state: "connected",
+        scopes: ["https://www.googleapis.com/auth/calendar.events"],
+      });
     }
+    const relayUrl = request.headers.get("X-Relay-URL") ?? "";
     const body = await request.json() as Record<string, unknown>;
-    if (request.url.endsWith("/calendars/primary/events/watch")) {
+    if (relayUrl.endsWith("/calendars/primary/events/watch")) {
       await beforeWatchResponse?.(body);
       return Response.json({ id: body.id, resourceId: `resource-${body.id}`, resourceUri: "https://www.googleapis.com/calendar/v3/calendars/primary/events", expiration: String(now + 7 * day) });
     }
-    if (request.url.endsWith("/channels/stop")) {
+    if (request.url.endsWith("/channels/stop") || relayUrl.endsWith("/channels/stop")) {
       const status = stopStatus(String(body.id));
       return status === 204 ? new Response(null, { status }) : Response.json({}, { status });
     }

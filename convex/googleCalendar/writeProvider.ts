@@ -5,7 +5,7 @@ import {
 } from "./googleClient";
 import type { GoogleCalendarWriteInput } from "./writeTypes";
 
-type Credential = { token: string };
+type Credential = { workosUserId: string };
 
 function eventPath(externalEventId?: string) {
   const suffix = externalEventId === undefined ? "" : `/${encodeURIComponent(externalEventId)}`;

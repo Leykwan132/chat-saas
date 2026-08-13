@@ -2,26 +2,16 @@ import { afterAll, expect, test } from "vitest";
 import { createUserScopedPipesWidgetToken } from "./googleCalendar/connectionWorkos";
 import {
   getGoogleCalendarCredential,
-  type GoogleCalendarCredentialResult,
 } from "./googleCalendar/workosToken";
 import {
   GoogleCalendarProviderError,
   googleCalendarRequest,
 } from "./googleCalendar/googleClient";
-
-const workosAccessToken = {
-  active: true,
-  access_token: {
-    object: "access_token",
-    access_token: "token",
-    expires_at: "2026-08-14T00:00:00.000Z",
-    scopes: ["https://www.googleapis.com/auth/calendar.events"],
-    missing_scopes: [],
-  },
-};
+import { WORKOS_RELAY_URL } from "./googleCalendar/constants";
 
 const originalWorkOSApiKey = process.env.WORKOS_API_KEY;
 process.env.WORKOS_API_KEY = "sk_test_google_calendar";
+const actor = { workosUserId: "user_123" };
 
 afterAll(() => {
   if (originalWorkOSApiKey === undefined) {
@@ -38,56 +28,51 @@ function responseJson(payload: unknown, status = 200) {
   });
 }
 
-function workosFetchReturning(payload: unknown): typeof fetch {
+function workosFetchReturning(payload: unknown, status = 200): typeof fetch {
   return async (input, init) => {
     const request = new Request(input, init);
     if (
-      request.method !== "POST" ||
-      request.url !== "https://api.workos.com/data-integrations/google_calendar/token" ||
-      JSON.stringify(await request.json()) !== '{"user_id":"user_123"}'
+      request.method !== "GET" ||
+      request.url !== "https://api.workos.com/user_management/users/user_123/connected_accounts/google_calendar"
     ) {
       return responseJson({ error: "unexpected_request" }, 400);
     }
-    return responseJson(payload);
+    return responseJson(payload, status);
   };
 }
 
-function activeCredentialWithoutRequiredScope() {
+function connectedAccount(scopes = ["https://www.googleapis.com/auth/calendar.events"]) {
   return {
-    ...workosAccessToken,
-    access_token: {
-      ...workosAccessToken.access_token,
-      scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
-    },
+    object: "connected_account",
+    state: "connected",
+    scopes,
   };
 }
 
-function credentialFromPayload(payload: unknown): Promise<GoogleCalendarCredentialResult> {
-  return getGoogleCalendarCredential("user_123", workosFetchReturning(payload));
-}
-
-test("returns an active Google token only when the events scope is present", async () => {
+test("treats a connected account with the events scope as active", async () => {
   const result = await getGoogleCalendarCredential(
     "user_123",
-    workosFetchReturning(workosAccessToken),
+    workosFetchReturning(connectedAccount()),
   );
 
   expect(result).toEqual({
     kind: "active",
-    token: "token",
-    expiresAt: "2026-08-14T00:00:00.000Z",
+    workosUserId: "user_123",
   });
 });
 
 test.each([
-  [{ active: false, error: "not_installed" }, "not_connected"],
-  [{ active: false, error: "needs_reauthorization" }, "needs_reauthorization"],
-  [activeCredentialWithoutRequiredScope(), "needs_reauthorization"],
-])("classifies WorkOS credential state", async (payload, expectedKind) => {
-  expect((await credentialFromPayload(payload)).kind).toBe(expectedKind);
+  [404, "not_connected"],
+  [connectedAccount(["https://www.googleapis.com/auth/calendar.readonly"]), "needs_reauthorization"],
+  [{ object: "connected_account", state: "needs_reauthorization", scopes: [] }, "needs_reauthorization"],
+])("classifies WorkOS connected-account state", async (payloadOrStatus, expectedKind) => {
+  const fetchImplementation = typeof payloadOrStatus === "number"
+    ? workosFetchReturning({ error: "missing" }, payloadOrStatus)
+    : workosFetchReturning(payloadOrStatus);
+  expect((await getGoogleCalendarCredential("user_123", fetchImplementation)).kind).toBe(expectedKind);
 });
 
-test("sends the Google authorization header and conditional match header", async () => {
+test("relays Google Calendar calls without a provider token or organization", async () => {
   let receivedRequest: Request | undefined;
   const fetchImplementation: typeof fetch = async (input, init) => {
     receivedRequest = new Request(input, init);
@@ -95,7 +80,7 @@ test("sends the Google authorization header and conditional match header", async
   };
 
   const result = await googleCalendarRequest<{ id: string }>(
-    { token: "token" },
+    actor,
     {
       method: "PUT",
       path: "/calendars/primary/events/event_123",
@@ -106,20 +91,26 @@ test("sends the Google authorization header and conditional match header", async
   );
 
   expect(result).toEqual({ id: "event_123" });
-  expect(receivedRequest?.headers.get("Authorization")).toBe("Bearer token");
+  expect(receivedRequest?.url).toBe(WORKOS_RELAY_URL);
+  expect(receivedRequest?.headers.get("Authorization")).toBe("Bearer sk_test_google_calendar");
+  expect(receivedRequest?.headers.get("X-Relay-User")).toBe("user_123");
+  expect(receivedRequest?.headers.get("X-Relay-Organization")).toBeNull();
+  expect(receivedRequest?.headers.get("X-Relay-URL")).toBe(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events/event_123",
+  );
   expect(receivedRequest?.headers.get("If-Match")).toBe('"etag_123"');
   expect(receivedRequest?.headers.get("Content-Type")).toBe("application/json");
   expect(await receivedRequest?.text()).toBe('{"summary":"Updated meeting"}');
 });
 
 test.each(["https://attacker.example/events", "//attacker.example/events"])(
-  "rejects the cross-origin path %s before attaching a Google token",
+  "rejects the cross-origin path %s before calling relay",
   async (path) => {
     let fetchInvoked = false;
 
     await expect(
       googleCalendarRequest(
-        { token: "token" },
+        actor,
         { method: "GET", path },
         async () => {
           fetchInvoked = true;
@@ -134,7 +125,7 @@ test.each(["https://attacker.example/events", "//attacker.example/events"])(
 
 test("returns undefined for an empty successful Google response", async () => {
   const result = await googleCalendarRequest<undefined>(
-    { token: "token" },
+    actor,
     {
       method: "DELETE",
       path: "/calendars/primary/events/event_123",
@@ -148,7 +139,7 @@ test("returns undefined for an empty successful Google response", async () => {
 test("rejects malformed successful Google JSON without exposing the response body", async () => {
   await expect(
     googleCalendarRequest(
-      { token: "token" },
+      actor,
       { method: "GET", path: "/calendars/primary/events" },
       async () => new Response("provider diagnostic", { status: 200 }),
     ),
@@ -162,13 +153,14 @@ test("rejects malformed successful Google JSON without exposing the response bod
 
 test.each([
   [401, "needs_reauthorization"],
+  [402, "needs_reauthorization"],
   [412, "conflict"],
   [429, "retryable"],
   [500, "retryable"],
 ])("classifies Google response %i", async (status, expectedKind) => {
   await expect(
     googleCalendarRequest(
-      { token: "token" },
+      actor,
       { method: "GET", path: "/calendars/primary/events" },
       async () => new Response("provider diagnostic", { status }),
     ),
@@ -178,7 +170,7 @@ test.each([
 test("classifies network failures as retryable without exposing the error", async () => {
   await expect(
     googleCalendarRequest(
-      { token: "token" },
+      actor,
       { method: "POST", path: "/calendars/primary/events", body: { summary: "Meeting" } },
       async () => {
         throw new Error("provider diagnostic");

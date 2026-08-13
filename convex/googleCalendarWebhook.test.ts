@@ -146,16 +146,21 @@ test("acknowledges duplicate and out-of-order message numbers without duplicate 
 function providerFetch(t: CalendarTest, onWatch: (body: Record<string, unknown>) => Promise<void>, calls: Array<Record<string, unknown>>) {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.url === "https://api.workos.com/data-integrations/google_calendar/token") {
-      return Response.json({ active: true, access_token: { access_token: "google-token", expires_at: null, scopes: ["https://www.googleapis.com/auth/calendar.events"] } });
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+      return Response.json({
+        object: "connected_account",
+        state: "connected",
+        scopes: ["https://www.googleapis.com/auth/calendar.events"],
+      });
     }
+    const relayUrl = request.headers.get("X-Relay-URL") ?? "";
     const body = await request.json() as Record<string, unknown>;
     calls.push(body);
-    if (request.url.endsWith("/calendars/primary/events/watch")) {
+    if (relayUrl.endsWith("/calendars/primary/events/watch")) {
       await onWatch(body);
       return Response.json({ id: body.id, resourceId: `resource-${body.id}`, resourceUri: "https://www.googleapis.com/calendar/v3/calendars/primary/events", expiration: String(now + 7 * day) });
     }
-    if (request.url.endsWith("/channels/stop")) return new Response(null, { status: 204 });
+    if (request.url.endsWith("/channels/stop") || relayUrl.endsWith("/channels/stop")) return new Response(null, { status: 204 });
     return Response.json({}, { status: 400 });
   };
 }
@@ -228,8 +233,12 @@ test("stopping tolerates Google not finding an unexpired channel", async () => {
   const { t, channelId } = await fixture();
   vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.url === "https://api.workos.com/data-integrations/google_calendar/token") {
-      return Response.json({ active: true, access_token: { access_token: "google-token", expires_at: null, scopes: ["https://www.googleapis.com/auth/calendar.events"] } });
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+      return Response.json({
+        object: "connected_account",
+        state: "connected",
+        scopes: ["https://www.googleapis.com/auth/calendar.events"],
+      });
     }
     return Response.json({}, { status: 404 });
   });

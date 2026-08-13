@@ -51,12 +51,12 @@ function validatedPage(value: unknown): GoogleCalendarSyncPage {
 }
 
 export async function listGoogleCalendarPage(
-  credential: { token: string },
+  actor: { workosUserId: string },
   request: GoogleCalendarSyncRequest,
   fetchImplementation: typeof fetch = fetch,
 ) {
   const page = await googleCalendarRequest<unknown>(
-    credential,
+    actor,
     {
       method: "GET",
       path: listEventsPath(request),

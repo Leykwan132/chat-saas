@@ -2,7 +2,7 @@
 
 ## Summary
 
-Kilobot will let each authenticated user connect their own primary Google Calendar through WorkOS Pipes. WorkOS owns the OAuth authorization flow, encrypted credential storage, and token refresh. Kilobot requests short-lived access tokens only on the backend and never stores Google access or refresh tokens.
+Kilobot will let each authenticated user connect their own primary Google Calendar through WorkOS Pipes. WorkOS owns the OAuth authorization flow, encrypted credential storage, token refresh, and provider HTTP via Pipes Relay. Kilobot never fetches or stores Google access or refresh tokens.
 
 Convex remains the normalized calendar, booking, permissions, availability, reminders, and audit layer. Google Calendar is an external source and destination synchronized into that layer. Google push notifications trigger incremental synchronization when a user changes Google Calendar directly, while read-through synchronization remains the recovery mechanism before availability checks, agent operations, and Calendar page reads.
 
@@ -132,7 +132,8 @@ Failure responses contain customer-safe recovery guidance and never include Work
 
 New Google Calendar code is split by responsibility so no code file exceeds 300 lines:
 
-- A WorkOS Pipes token adapter obtains and validates fresh `google_calendar` access tokens.
+- A WorkOS Pipes connection-health adapter reads connected-account state without vending Google tokens.
+- Google Calendar HTTP calls go through WorkOS Pipes Relay (`X-Relay-URL` + `X-Relay-User`, no `X-Relay-Organization`).
 - A Google Calendar HTTP client owns request construction, response validation, pagination, ETags, and error classification.
 - Event mapping modules translate between Google events and the normalized Convex calendar model.
 - Connection functions own authorization state, initial sync, disconnect, and connection health.
@@ -271,9 +272,10 @@ Deletes are idempotent. A Google event already absent is treated as externally d
 
 ## Permissions and privacy
 
-- WorkOS access-token requests use the authenticated WorkOS user ID and the configured provider slug `google_calendar`.
-- Google API calls run only in Convex actions or backend HTTP handlers.
-- Google tokens never enter the browser, agent prompt, logs, database, webhook token, or client-visible error.
+- WorkOS connected-account reads use the authenticated WorkOS user ID and the configured provider slug `google_calendar`.
+- Google API calls run only in Convex actions or backend HTTP handlers, proxied through WorkOS Pipes Relay.
+- Google tokens never enter Convex, the browser, agent prompt, logs, database, webhook token, or client-visible error.
+- Relay requests omit `X-Relay-Organization` so connections stay user-scoped.
 - The requested Google scope is `https://www.googleapis.com/auth/calendar.events`, which supports reading and editing events without calendar-sharing administration.
 - Existing `CALENDAR_READ` and `CALENDAR_MANAGE` permissions continue to guard team Calendar access.
 - Google-originated details require both team access and ownership by the current Convex user.

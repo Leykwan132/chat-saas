@@ -1,12 +1,12 @@
 import { googleCalendarRequest } from "./googleClient";
 
 export async function getPrimaryCalendarTimeZone(
-  credential: { token: string },
+  actor: { workosUserId: string },
   fallbackTimeZone: string,
   fetchImplementation: typeof fetch = fetch,
 ) {
   const calendar = await googleCalendarRequest<{ timeZone?: string }>(
-    credential,
+    actor,
     { method: "GET", path: "calendars/primary" },
     fetchImplementation,
   );

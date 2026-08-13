@@ -148,7 +148,7 @@ test("reconcile runs initial sync and watch when WorkOS is active", async () => 
   await setupUser(t);
   const calls: string[] = [];
   const deps: GoogleCalendarConnectionDependencies = {
-    getCredential: async () => ({ kind: "active", token: "token", expiresAt: null }),
+    getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
     getPrimaryTimeZone: async () => "Asia/Kuala_Lumpur",
     runSync: async () => {
       calls.push("sync");
@@ -187,7 +187,7 @@ test("refresh skips Google sync when the last sync is fresh", async () => {
   });
   let synced = false;
   await refreshGoogleCalendarConnection(actionCtx(t), {
-    getCredential: async () => ({ kind: "active", token: "token", expiresAt: null }),
+    getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
     getPrimaryTimeZone: async () => "UTC",
     runSync: async () => {
       synced = true;

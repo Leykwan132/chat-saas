@@ -1,7 +1,7 @@
 import { googleCalendarRequest } from "./googleClient";
 import { getGoogleCalendarCredential } from "./workosToken";
 
-export type GoogleCalendarWatchCredential = { token: string };
+export type GoogleCalendarWatchCredential = { workosUserId: string };
 
 export function googleCalendarWebhookAddress() {
   const siteUrl = process.env.CONVEX_SITE_URL;

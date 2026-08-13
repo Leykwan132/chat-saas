@@ -16,6 +16,9 @@ import { createUserAcrossTwoTeams, reserveConnection } from "./googleCalendar/te
 import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 import schema from "./schema";
 
+const originalWorkOSApiKey = process.env.WORKOS_API_KEY;
+process.env.WORKOS_API_KEY = "sk_test_google_calendar";
+
 const modules = import.meta.glob("./**/*.ts");
 type CalendarTest = TestConvex<typeof schema>;
 type InternalMutation = FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>;
@@ -129,12 +132,12 @@ test("moving a one-off event updates one stable projection per team", async () =
 test("scopes Google 410 invalid-token classification to sync-list requests", async () => {
   const response = async () => new Response(null, { status: 410 });
   await expect(googleCalendarRequest(
-    { token: "token" },
+    { workosUserId: "user_123" },
     { method: "DELETE", path: "calendars/primary/events/event_1" },
     response,
   )).rejects.toMatchObject({ kind: "not_found" });
   await expect(listGoogleCalendarPage(
-    { token: "token" },
+    { workosUserId: "user_123" },
     {
       kind: "incremental",
       singleEvents: true,
@@ -145,7 +148,7 @@ test("scopes Google 410 invalid-token classification to sync-list requests", asy
     response,
   )).rejects.toMatchObject({ kind: "invalid_sync_token" });
   await expect(listGoogleCalendarPage(
-    { token: "token" },
+    { workosUserId: "user_123" },
     {
       kind: "full",
       singleEvents: true,

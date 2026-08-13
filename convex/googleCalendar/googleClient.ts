@@ -1,5 +1,12 @@
+import { getWorkOSApiKey } from "../workosClient";
+import { WORKOS_RELAY_URL } from "./constants";
+
 const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3/";
 const GOOGLE_CALENDAR_API_ORIGIN = new URL(GOOGLE_CALENDAR_API_BASE).origin;
+
+export type GoogleCalendarActor = {
+  workosUserId: string;
+};
 
 export type GoogleCalendarRequest = {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -44,13 +51,10 @@ function errorKindForStatus(
   status: number,
   invalidSyncTokenOnGone: boolean,
 ): GoogleCalendarProviderErrorKind {
-  if (status === 401) {
+  if (status === 401 || status === 402) {
     return "needs_reauthorization";
   }
-  if (status === 412) {
-    return "conflict";
-  }
-  if (status === 409) {
+  if (status === 412 || status === 409) {
     return "conflict";
   }
   if (status === 410) {
@@ -101,14 +105,33 @@ function requestBody(request: GoogleCalendarRequest): string | undefined {
   }
 }
 
+function failedResponseKind(
+  response: Response,
+  invalidSyncTokenOnGone: boolean,
+): GoogleCalendarProviderErrorKind {
+  const upstream = response.headers.get("X-Relay-Upstream-Status");
+  if (upstream !== null) {
+    return errorKindForStatus(Number(upstream), invalidSyncTokenOnGone);
+  }
+  return errorKindForStatus(response.status, invalidSyncTokenOnGone);
+}
+
 export async function googleCalendarRequest<T>(
-  credential: Pick<{ token: string }, "token">,
+  actor: GoogleCalendarActor,
   request: GoogleCalendarRequest,
   fetchImplementation: typeof fetch = fetch,
 ): Promise<T> {
+  const workosUserId = actor.workosUserId.trim();
+  if (workosUserId.length === 0) {
+    throw new GoogleCalendarProviderError("invalid_request");
+  }
   const url = requestUrl(request.path);
   const body = requestBody(request);
-  const headers = new Headers({ Authorization: `Bearer ${credential.token}` });
+  const headers = new Headers({
+    Authorization: `Bearer ${getWorkOSApiKey()}`,
+    "X-Relay-URL": url,
+    "X-Relay-User": workosUserId,
+  });
   if (body !== undefined) {
     headers.set("Content-Type", "application/json");
   }
@@ -117,7 +140,7 @@ export async function googleCalendarRequest<T>(
   }
   let response: Response;
   try {
-    response = await fetchImplementation(url, {
+    response = await fetchImplementation(WORKOS_RELAY_URL, {
       method: request.method,
       headers,
       body,
@@ -127,7 +150,7 @@ export async function googleCalendarRequest<T>(
   }
   if (!response.ok) {
     throw new GoogleCalendarProviderError(
-      errorKindForStatus(response.status, request.invalidSyncTokenOnGone === true),
+      failedResponseKind(response, request.invalidSyncTokenOnGone === true),
     );
   }
   const responseBody = await response.text();

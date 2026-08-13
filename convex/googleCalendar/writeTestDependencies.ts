@@ -4,6 +4,9 @@ import { internal } from "../_generated/api";
 import type { GoogleCalendarWriteDependencies } from "./writeTypes";
 import schema from "../schema";
 
+const originalWorkOSApiKey = process.env.WORKOS_API_KEY;
+process.env.WORKOS_API_KEY = originalWorkOSApiKey ?? "sk_test_google_calendar";
+
 type CalendarTest = TestConvex<typeof schema>;
 type MutationRef = FunctionReference<"mutation", "internal", Record<string, unknown>, unknown>;
 
@@ -37,7 +40,7 @@ export function googleCalendarWriteTestDependencies(
     establishDeletePrecondition: (args) => t.mutation(stores.writeFinalizationStore.establishDeletePrecondition, args) as never,
     finalizeDelete: (args) => t.mutation(stores.writeFinalizationStore.finalizeDelete, args) as never,
     recordOutcome: (args) => t.mutation(stores.writeOutcomeStore.recordOutcome, args) as never,
-    getCredential: async () => ({ kind: "active", token: "secret", expiresAt: null }),
+    getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
     refresh: async () => undefined,
     clock,
     fetchImplementation,

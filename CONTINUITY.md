@@ -1,14 +1,15 @@
 # CONTINUITY.md
 
 # Snapshot
-- Goal: Google Calendar sync via WorkOS Pipes; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
+- Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Pipes widget uses a user-scoped WorkOS widget token (`user_id` only); AuthKit org session is no longer passed to `<Pipes>`. [CODE] 2026-08-13
-- Next: User reconnects Google Calendar so the connection is stored on the user, not the active org. [USER] 2026-08-13
-- Open questions: production availability UNCONFIRMED; no changelog until confirmed. [USER] 2026-08-13
+- Now: Google Calendar HTTP goes through WorkOS Pipes Relay (`X-Relay-User` only). Kilobot no longer vends Google access tokens. [CODE] 2026-08-13
+- Next: User reconnects Google Calendar if needed; confirm Relay is enabled for the WorkOS environment. [USER] 2026-08-13
+- Open questions: production availability UNCONFIRMED; Relay is early access. [USER] 2026-08-13
 
 # Done (recent)
-- 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Widget tokens omit `organization_id`; backend `getAccessToken` already used `userId` only.
+- 2026-08-13 [USER] D643: Google Calendar provider calls use WorkOS Pipes Relay instead of `pipes.getAccessToken`. Omit `X-Relay-Organization`. Connection health uses connected-account GET.
+- 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Widget tokens omit `organization_id`.
 - 2026-08-13 [CODE] Task 9: Calendar sidebar Connect Google Calendar card, WorkOS Pipes dialog, refresh/disconnect, source badges, owner-only Google event edit/delete.
 - 2026-08-13 [CODE] Watch/agent `internal` cycle, Convex typecheck, and `origin/main` `16e7d1f` merge on `cursor/google-calendar-booking-sync-10b0`.
 - 2026-08-13 [CODE] Task 8: booking-capable agents get busy-only `listCalendarEvents` and guarded Kilobot update/delete tools; structured failures cannot be claimed as success.
@@ -16,19 +17,19 @@
 - 2026-08-13 [CODE] Tasks 1–6 on `codex/google-calendar-sync` `f9f5865`: contracts, WorkOS/Google client, mapping/sync, privacy, webhooks, idempotent writes.
 
 # Working set
-- convex/googleCalendar/connectionWorkos.ts
-- convex/googleCalendar/connectionActions.ts
+- convex/googleCalendar/googleClient.ts
 - convex/googleCalendar/workosToken.ts
-- src/components/calendar/useGoogleCalendarConnection.ts
-- src/components/calendar/googleCalendarApi.ts
-- src/components/calendar/GoogleCalendarPipesDialog.tsx
-- src/components/calendar/GoogleCalendarConnection.test.tsx
+- convex/googleCalendar/constants.ts
+- convex/googleCalendar/writeProvider.ts
+- convex/googleCalendar/watchProvider.ts
+- convex/googleCalendar/syncProvider.ts
+- convex/googleCalendar/calendarTimezone.ts
 - convex/googleCalendarProvider.test.ts
 - docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
-- docs/superpowers/plans/2026-08-13-google-calendar-sync.md
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Pipes Relay switch: 109 passed (provider, connection, writes, watch, webhook, sync review, connection UI).
 - 2026-08-13 [TOOL] User-scoped Pipes widget token tests: 34 passed (`googleCalendarProvider`, connection UI, connection lifecycle). POST `/widgets/token` body is `{ user_id }` only.
 - 2026-08-13 [TOOL] Task 9 tests: 35 passed (connection UI, sidebar, projection, connection lifecycle). `npx convex typecheck` passed.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
@@ -42,7 +43,8 @@
 - 2026-08-13 [TOOL] bun was missing in the cloud environment; installed bun 1.3.9 then `bun install`. `nvm use 22`.
 
 # Decisions
-- 2026-08-13 [USER] D642 ACTIVE: WorkOS Pipes Google Calendar connections are user-scoped. Mint widget tokens with `user_id` only (no `organization_id`). Do not pass the AuthKit organization session token to `<Pipes>`. Backend credential vending already calls `pipes.getAccessToken({ provider, userId })` without `organizationId`.
+- 2026-08-13 [USER] D643 ACTIVE: Google Calendar HTTP uses WorkOS Pipes Relay (`https://api.workos.com/relay`) with `X-Relay-URL` and `X-Relay-User`. Do not call `pipes.getAccessToken` or attach Google tokens. Omit `X-Relay-Organization` (user-scoped). Connection health is WorkOS connected-account GET plus required `calendar.events` scope.
+- 2026-08-13 [USER] D642 ACTIVE: WorkOS Pipes Google Calendar connections are user-scoped. Mint widget tokens with `user_id` only (no `organization_id`). Do not pass the AuthKit organization session token to `<Pipes>`.
 - 2026-08-13 [USER] D641 ACTIVE: Primary-calendar-only for v1, including push-assisted incremental sync, channel renewal, fail-closed connected-calendar operations, privacy redaction, idempotent writes, and conversation-scoped agent mutations. Spec: `docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md`.
 - 2026-08-13 [USER] D640 ACTIVE: Customer-facing agent mutations are limited to Kilobot-created events for the active conversation, with explicit confirmation and no false success claims.
 - 2026-08-12 [USER] D639 ACTIVE: Users see full details for their own Google events; teammates see those events only as Busy; Kilobot bookings keep existing calendar visibility.

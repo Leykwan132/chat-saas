@@ -29,7 +29,7 @@ type StopWatchResult = { kind: "stopped" | "expired" | "already_stopped" };
 
 export type GoogleCalendarConnectionDependencies = {
   getCredential: (workosUserId: string) => Promise<GoogleCalendarCredentialResult>;
-  getPrimaryTimeZone: (credential: { token: string }, fallbackTimeZone: string) => Promise<string>;
+  getPrimaryTimeZone: (actor: { workosUserId: string }, fallbackTimeZone: string) => Promise<string>;
   runSync: (connectionId: Id<"googleCalendarConnections">) => Promise<SyncResult>;
   createWatch: (connectionId: Id<"googleCalendarConnections">) => Promise<WatchResult>;
   stopWatch: (channelId: Id<"googleCalendarWatchChannels">) => Promise<StopWatchResult>;
