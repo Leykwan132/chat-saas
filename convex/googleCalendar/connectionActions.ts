@@ -1,8 +1,11 @@
+import { v } from "convex/values";
 import { action } from "../_generated/server";
+import { getAuthContext } from "../authUtils";
 import {
   googleCalendarConnectionStatusValidator,
   type GoogleCalendarConnectionStatus,
 } from "./connectionStatus";
+import { createUserScopedPipesWidgetToken } from "./connectionWorkos";
 import {
   disconnectGoogleCalendarConnection,
   googleCalendarConnectionDependencies,
@@ -29,6 +32,15 @@ export const refreshCurrentConnection = action({
       ctx,
       googleCalendarConnectionDependencies(ctx),
     );
+  },
+});
+
+export const getCurrentPipesWidgetToken = action({
+  args: {},
+  returns: v.string(),
+  handler: async (ctx): Promise<string> => {
+    const auth = await getAuthContext(ctx);
+    return await createUserScopedPipesWidgetToken(auth.userId);
   },
 });
 

@@ -59,7 +59,7 @@
 - `convex/googleCalendar/calendarProjection.ts`: owner detail versus teammate Busy projection.
 - `convex/googleCalendar/agentTools.ts`: busy-only reads and active-conversation mutation guards.
 - `src/components/calendar/GoogleCalendarConnectionCard.tsx`: status and actions.
-- `src/components/calendar/GoogleCalendarPipesDialog.tsx`: extracted `<Pipes authToken={getAccessToken} />` dialog.
+- `src/components/calendar/GoogleCalendarPipesDialog.tsx`: extracted `<Pipes authToken={authToken} />` dialog.
 - `src/components/calendar/GoogleCalendarSourceBadge.tsx`: compact source indicator.
 - `src/components/calendar/useGoogleCalendarConnection.ts`: connection query, widget-close reconciliation, range-refresh orchestration.
 - `kilobot-docs/docs/bookings/calendar.mdx`: customer-facing connection, privacy, synchronization, and recovery guidance.
@@ -677,7 +677,7 @@ git commit -m "Give agents safe Google Calendar tools"
 - Modify: `src/pages/CalendarPage.tsx`
 
 **Interfaces:**
-- Consumes: authenticated AuthKit `getAccessToken`, WorkOS `<Pipes>`, connection state queries/actions, privacy-projected events, and existing Calendar components.
+- Consumes: a user-scoped WorkOS widget token (`user_id` only), WorkOS `<Pipes>`, connection state queries/actions, privacy-projected events, and existing Calendar components.
 - Produces: user-visible connect/reconnect/refresh/disconnect workflow, source badges, last-sync health, and owner-only Google event edit/delete controls.
 
 - [ ] **Step 1: Write failing connection and privacy UI tests**
@@ -720,6 +720,7 @@ Expose:
 export const getCurrentConnectionStatus = query({ args: {}, handler });
 export const reconcileCurrentConnection = action({ args: {}, handler });
 export const refreshCurrentConnection = action({ args: {}, handler });
+export const getCurrentPipesWidgetToken = action({ args: {}, handler });
 export const disconnectCurrentConnection = action({ args: {}, handler });
 ```
 
@@ -732,10 +733,10 @@ Disconnect calls WorkOS connected-account deletion using the installed SDK/API s
 Use:
 
 ```tsx
-<Pipes authToken={getAccessToken} />
+<Pipes authToken={authToken} />
 ```
 
-inside `GoogleCalendarPipesDialog`, wrapped by the existing WorkOS widget provider conventions. The hook reconciles after dialog close and on `window` focus while open, prevents duplicate operations, and requests a range refresh when the visible month becomes older than `CALENDAR_PAGE_FRESHNESS_MS`.
+`authToken` comes from `getCurrentPipesWidgetToken`, which mints a WorkOS widget token with `user_id` only so Google Calendar connections stay user-scoped instead of following the active AuthKit organization. The hook reconciles after dialog close and on `window` focus while open, prevents duplicate operations, and requests a range refresh when the visible month becomes older than `CALENDAR_PAGE_FRESHNESS_MS`.
 
 Add the compact connection card to `CalendarSidebar`, source badge to event surfaces, and owner-only external edit/delete routing. Keep new behavior outside the already oversized `CalendarPage.tsx`.
 

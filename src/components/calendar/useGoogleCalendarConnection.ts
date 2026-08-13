@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAction, useQuery } from "convex/react";
-import { useAuth } from "@workos-inc/authkit-react";
 import { toast } from "sonner";
 import { googleCalendarApi } from "./googleCalendarApi";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 export function useGoogleCalendarConnection() {
-  const { getAccessToken } = useAuth();
   const status = useQuery(googleCalendarApi.connectionQueries.getCurrentConnectionStatus) as
     | GoogleCalendarConnectionStatus
     | undefined;
   const reconcile = useAction(googleCalendarApi.connectionActions.reconcileCurrentConnection);
   const refresh = useAction(googleCalendarApi.connectionActions.refreshCurrentConnection);
   const disconnect = useAction(googleCalendarApi.connectionActions.disconnectCurrentConnection);
+  const getPipesWidgetToken = useAction(googleCalendarApi.connectionActions.getCurrentPipesWidgetToken);
   const [pipesOpen, setPipesOpen] = useState(false);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -46,10 +45,10 @@ export function useGoogleCalendarConnection() {
   }, [disconnect, run]);
 
   const authToken = useCallback(async () => {
-    const token = await getAccessToken();
+    const token = await getPipesWidgetToken({});
     if (!token) throw new Error("Not authenticated");
     return token;
-  }, [getAccessToken]);
+  }, [getPipesWidgetToken]);
 
   useEffect(() => {
     if (status?.state === "connected") {

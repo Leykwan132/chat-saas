@@ -64,6 +64,13 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("<Pipes authToken={authToken} />");
   });
 
+  it("loads a user-scoped Pipes widget token instead of the AuthKit org session", () => {
+    const source = readFileSync(new URL("./useGoogleCalendarConnection.ts", import.meta.url), "utf8");
+    expect(source).toContain("getCurrentPipesWidgetToken");
+    expect(source).not.toContain("getAccessToken");
+    expect(source).not.toContain("@workos-inc/authkit-react");
+  });
+
   it("renders Google and Kilobot source badges", () => {
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="google" />)).toContain("Google");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toContain("Kilobot");

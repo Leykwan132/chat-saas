@@ -1,4 +1,5 @@
 import { afterAll, expect, test } from "vitest";
+import { createUserScopedPipesWidgetToken } from "./googleCalendar/connectionWorkos";
 import {
   getGoogleCalendarCredential,
   type GoogleCalendarCredentialResult,
@@ -193,4 +194,17 @@ test("classifies network failures as retryable without exposing the error", asyn
 
 test("exposes the classified error type", () => {
   expect(new GoogleCalendarProviderError("conflict")).toBeInstanceOf(Error);
+});
+
+test("mints a Pipes widget token with user_id only", async () => {
+  let receivedRequest: Request | undefined;
+  const token = await createUserScopedPipesWidgetToken("user_123", async (input, init) => {
+    receivedRequest = new Request(input, init);
+    return responseJson({ token: "widget_token" });
+  });
+
+  expect(token).toBe("widget_token");
+  expect(receivedRequest?.method).toBe("POST");
+  expect(receivedRequest?.url).toBe("https://api.workos.com/widgets/token");
+  expect(await receivedRequest?.json()).toEqual({ user_id: "user_123" });
 });
