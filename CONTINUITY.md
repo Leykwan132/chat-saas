@@ -3,18 +3,18 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes; Convex stays the booking layer. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Convex typecheck is green after the `origin/main` merge. [TOOL] 2026-08-13
-- Next: User pulls `cursor/google-calendar-booking-sync-10b0` and retries `npx convex dev`; Task 9 Calendar connection UI after that. [USER] 2026-08-13
+- Now: Watch-action circular `any` was poisoning Convex document types; typecheck is green. [CODE] 2026-08-13
+- Next: User pulls this branch and retries `npx convex dev`; Task 9 Calendar connection UI after that. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; no changelog until confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [CODE] Broke the Google Calendar watch/agent `internal` circular `any` that made `ctx.db.get` look like every table at once.
 - 2026-08-13 [CODE] Convex typecheck is green: duplicate helper import, booking-gate error typing, staff-booking return types, and agent-tool return narrowing.
 - 2026-08-13 [TOOL] Merged `origin/main` `16e7d1f` into `cursor/google-calendar-booking-sync-10b0`; resolved `CONTINUITY.md` only.
 - 2026-08-13 [CODE] Task 8: booking-capable agents get busy-only `listCalendarEvents` and guarded Kilobot update/delete tools; structured failures cannot be claimed as success.
 - 2026-08-13 [CODE] Task 7: AI/staff/Calendar booking create/update/cancel go prepare → Google write → finalize; Kilobot Google deletes stay cancelled local history; remarks-only updates stay local.
 - 2026-08-13 [CODE] Tasks 1–6 on `codex/google-calendar-sync` `f9f5865`: contracts, WorkOS/Google client, mapping/sync, privacy, webhooks, idempotent writes.
 - 2026-08-12 [CODE] Calendar projection review queue + staff review UI.
-- 2026-08-12 [USER] Google Calendar design + implementation plan approved (D637–D641).
 
 # Working set
 - docs/superpowers/plans/2026-08-13-google-calendar-sync.md
@@ -31,6 +31,7 @@
 - src/components/inbox/CreateCustomerBookingDialog.tsx
 
 # Receipts
+- 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
 - 2026-08-13 [TOOL] `npx convex typecheck` passed after fixing Google Calendar typing (159 errors → 0). Focused tests: 18 passed (schema, agent tools, booking sync).
 - 2026-08-13 [TOOL] `git merge origin/main` (`16e7d1f` Refresh model catalog and enhance announcement designs #55). Sole conflict: `CONTINUITY.md`. Kept bounded Snapshot/Done/Working set/Receipts; kept Google Calendar D641–D637; kept main D637 (paid model tiers / What’s new) without renumbering.
 - 2026-08-13 [TOOL] Convex push failed: `calendarEvents` index name exceeded 64 characters. Renamed to `by_googleExternalEventIdentity`.

@@ -51,45 +51,46 @@ export type GoogleCalendarAgentToolDependencies = {
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
   FunctionReference<"mutation", "internal", TArgs, TResult>;
 
-const googleInternal = (internal as unknown as {
-  googleCalendar: {
-    agentToolList: {
-      prepareList: StoreMutation<{
-        conversationId: Id<"conversations">;
-        rangeStartAt: number;
-        rangeEndAt: number;
-        refreshed?: boolean;
-      }, PrepareListResult>;
-    };
-    agentToolMutate: {
-      guardEvent: StoreMutation<{
-        conversationId: Id<"conversations">;
-        eventId: Id<"calendarEvents">;
-      }, GuardEventResult>;
-    };
-    agentTools: {
-      listCalendarEvents: FunctionReference<"action", "internal", {
-        conversationId: Id<"conversations">;
-        rangeStartAt: number;
-        rangeEndAt: number;
-      }, AgentCalendarBusyInterval[] | AgentCalendarToolFailure>;
-      updateCalendarEvent: FunctionReference<"action", "internal", {
-        conversationId: Id<"conversations">;
-        eventId: Id<"calendarEvents">;
-        startAt?: number;
-        confirmed: boolean;
-      }, { kind: string; success: boolean; message: string }>;
-      deleteCalendarEvent: FunctionReference<"action", "internal", {
-        conversationId: Id<"conversations">;
-        eventId: Id<"calendarEvents">;
-        confirmed: boolean;
-      }, { kind: string; success: boolean; message: string }>;
-    };
-    syncWorker: {
-      run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
-    };
+type GoogleAgentToolInternal = {
+  agentToolList: {
+    prepareList: StoreMutation<{
+      conversationId: Id<"conversations">;
+      rangeStartAt: number;
+      rangeEndAt: number;
+      refreshed?: boolean;
+    }, PrepareListResult>;
   };
-}).googleCalendar;
+  agentToolMutate: {
+    guardEvent: StoreMutation<{
+      conversationId: Id<"conversations">;
+      eventId: Id<"calendarEvents">;
+    }, GuardEventResult>;
+  };
+  agentTools: {
+    listCalendarEvents: FunctionReference<"action", "internal", {
+      conversationId: Id<"conversations">;
+      rangeStartAt: number;
+      rangeEndAt: number;
+    }, AgentCalendarBusyInterval[] | AgentCalendarToolFailure>;
+    updateCalendarEvent: FunctionReference<"action", "internal", {
+      conversationId: Id<"conversations">;
+      eventId: Id<"calendarEvents">;
+      startAt?: number;
+      confirmed: boolean;
+    }, { kind: string; success: boolean; message: string }>;
+    deleteCalendarEvent: FunctionReference<"action", "internal", {
+      conversationId: Id<"conversations">;
+      eventId: Id<"calendarEvents">;
+      confirmed: boolean;
+    }, { kind: string; success: boolean; message: string }>;
+  };
+  syncWorker: {
+    run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
+  };
+};
+const googleInternal: GoogleAgentToolInternal = (
+  internal as unknown as { googleCalendar: GoogleAgentToolInternal }
+).googleCalendar;
 
 function bookingResult(result: BookingToolResult) {
   if (result.success) {

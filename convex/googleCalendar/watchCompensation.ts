@@ -10,19 +10,20 @@ import {
 type Recovery = { kind: "active" | "recoverable" };
 export type WatchResponse = { resourceId: string; resourceUri: string; expirationAt: number };
 
-const refs = (internal as unknown as {
-  googleCalendar: {
-    watchRecovery: {
-      recordUnactivatedWatch: FunctionReference<"mutation", "internal", { pendingChannelId: Id<"googleCalendarWatchChannels">; expectedChannelId: string; resourceId: string; resourceUri: string; expirationAt: number; now: number }, Recovery>;
-    };
-    watchStore: {
-      markWatchStopped: FunctionReference<"mutation", "internal", { channelId: Id<"googleCalendarWatchChannels">; state: "retired" | "expired"; now: number }, null>;
-    };
-    watchActions: {
-      cleanupRetiringWatch: FunctionReference<"action", "internal", { channelId: Id<"googleCalendarWatchChannels"> }, null>;
-    };
+type GoogleWatchCompensationRefs = {
+  watchRecovery: {
+    recordUnactivatedWatch: FunctionReference<"mutation", "internal", { pendingChannelId: Id<"googleCalendarWatchChannels">; expectedChannelId: string; resourceId: string; resourceUri: string; expirationAt: number; now: number }, Recovery>;
   };
-}).googleCalendar;
+  watchStore: {
+    markWatchStopped: FunctionReference<"mutation", "internal", { channelId: Id<"googleCalendarWatchChannels">; state: "retired" | "expired"; now: number }, null>;
+  };
+  watchActions: {
+    cleanupRetiringWatch: FunctionReference<"action", "internal", { channelId: Id<"googleCalendarWatchChannels"> }, null>;
+  };
+};
+const refs: GoogleWatchCompensationRefs = (
+  internal as unknown as { googleCalendar: GoogleWatchCompensationRefs }
+).googleCalendar;
 
 export async function compensateActivationFailure(args: {
   ctx: ActionCtx;
