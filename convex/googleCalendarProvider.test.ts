@@ -142,13 +142,13 @@ test("calls Google Calendar through WorkOS Relay with no organization", async ()
 
   expect(result).toEqual({ id: "event_123" });
   expect(received).toHaveLength(1);
-  expect(received[0]?.url).toBe(WORKOS_RELAY_URL);
+  expect(received[0]?.url).toBe(
+    `${WORKOS_RELAY_URL}/google-calendar/calendar/v3/calendars/primary/events/event_123`,
+  );
   expect(received[0]?.headers.get("Authorization")).toBe("Bearer sk_test_google_calendar");
   expect(received[0]?.headers.get("X-Relay-User")).toBe("user_123");
   expect(received[0]?.headers.get("X-Relay-Organization")).toBeNull();
-  expect(received[0]?.headers.get("X-Relay-URL")).toBe(
-    "https://www.googleapis.com/calendar/v3/calendars/primary/events/event_123",
-  );
+  expect(received[0]?.headers.get("X-Relay-URL")).toBeNull();
   expect(received[0]?.headers.get("If-Match")).toBe('"etag_123"');
   expect(received[0]?.headers.get("Content-Type")).toBe("application/json");
   expect(await received[0]?.text()).toBe('{"summary":"Updated meeting"}');
@@ -231,6 +231,10 @@ test("maps Relay 402 to reconnect without an organization header", async () => {
   ).rejects.toMatchObject({ kind: "needs_reauthorization" });
   expect(received?.headers.get("X-Relay-Organization")).toBeNull();
   expect(received?.headers.get("X-Relay-User")).toBe("user_123");
+  expect(received?.headers.get("X-Relay-URL")).toBeNull();
+  expect(received?.url).toBe(
+    `${WORKOS_RELAY_URL}/google-calendar/calendar/v3/calendars/primary/events`,
+  );
 });
 
 test.each([404, 401])(

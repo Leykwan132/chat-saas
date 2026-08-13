@@ -213,7 +213,7 @@ WorkOS connected-account GET (no Google token):
 GET /user_management/users/${workosUserId}/connected_accounts/${GOOGLE_CALENDAR_PROVIDER}
 ```
 
-Google Calendar HTTP uses WorkOS Relay URL routing (`https://api.workos.com/relay` with `X-Relay-URL` and `X-Relay-User`). Omit `X-Relay-Organization`.
+Google Calendar HTTP uses WorkOS Relay path routing (`https://api.workos.com/relay/google-calendar/...` with `X-Relay-User`). Omit `X-Relay-Organization` and `X-Relay-URL`.
 
 Implement a single typed Google request helper supporting `GET`, `POST`, `PUT`, and `DELETE`, conditional `If-Match`, empty successful bodies, JSON validation, and safe error categories. Provider response bodies must not be included in thrown customer-visible errors or logs.
 
