@@ -32,10 +32,11 @@ function renderConnectionCard(
 }
 
 describe("Google Calendar connection UI", () => {
-  it("offers a simple Connect button with the Google Calendar icon", () => {
+  it("offers a + Google Calendar button with the official Calendar icon", () => {
     const markup = renderConnectionCard({ state: "not_connected" });
-    expect(markup).toContain("Connect");
+    expect(markup).toContain("+ Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(GOOGLE_CALENDAR_ICON_SRC).toContain("gstatic.com/images/branding/productlogos/calendar_2026_13");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain("Connect Google Calendar");
     expect(source).toContain("TooltipContent");

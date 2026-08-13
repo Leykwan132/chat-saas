@@ -11,7 +11,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 export const GOOGLE_CALENDAR_ICON_SRC =
-  "https://cdn-icons-png.flaticon.com/128/5968/5968499.png";
+  "https://www.gstatic.com/images/branding/productlogos/calendar_2026_13/v2/png/calendar_2026_13_96dp.png";
 
 export type GoogleCalendarConnectionCardProps = GoogleCalendarConnectionStatus & {
   pending?: boolean;
@@ -38,7 +38,7 @@ export function GoogleCalendarConnectionCard({
       ? "Connecting..."
       : state === "needs_reauthorization"
         ? "Reconnect"
-        : "Connect";
+        : "+ Google Calendar";
   const button = (
     <Button
       type="button"
