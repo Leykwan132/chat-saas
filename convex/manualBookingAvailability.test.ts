@@ -111,6 +111,10 @@ test("manual booking checks and revalidates the exact selected slot", async () =
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
       assignmentStrategy: "balanced",
+      preferredTimeMinutes: [
+        new Date(now + 2 * 60 * 60 * 1000).getUTCHours() * 60
+          + new Date(now + 2 * 60 * 60 * 1000).getUTCMinutes(),
+      ],
       createdAt: now,
       updatedAt: now,
     });
@@ -134,6 +138,19 @@ test("manual booking checks and revalidates the exact selected slot", async () =
   expect(options.services.map((service) => service.serviceId)).toEqual([
     fixture.serviceId,
   ]);
+
+  const beforeNearestSlotRequestAt = Date.now();
+  const nearestSlot = await authed.mutation(
+    api.appointmentBooking.manualBooking.getNextAvailableSlot,
+    {
+      conversationId: fixture.conversationId,
+      serviceId: fixture.serviceId,
+    },
+  );
+  expect(nearestSlot).not.toBeNull();
+  expect(nearestSlot!.startAt).toBeGreaterThanOrEqual(beforeNearestSlotRequestAt);
+  expect(nearestSlot!.startAt - beforeNearestSlotRequestAt).toBeLessThan(31 * 60 * 1000);
+  expect(nearestSlot!.endAt - nearestSlot!.startAt).toBe(30 * 60 * 1000);
 
   await expect(authed.mutation(
     api.appointmentBooking.manualBooking.checkAvailability,

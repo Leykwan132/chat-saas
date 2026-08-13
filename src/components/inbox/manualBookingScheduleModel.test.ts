@@ -3,6 +3,7 @@ import {
   buildManualBookingCollectedFields,
   defaultManualBookingEndTime,
   getManualBookingSelection,
+  manualBookingScheduleFromSlot,
   manualBookingCustomerFields,
 } from './manualBookingScheduleModel';
 
@@ -44,6 +45,20 @@ describe('manual booking schedule model', () => {
       key: 'service-1|2026-07-14|2:07 PM|3:22 PM|Asia/Kuala_Lumpur',
       startAt: 1784009220000,
       endAt: 1784013720000,
+    });
+  });
+
+  it('formats an available slot in the service time zone', () => {
+    expect(manualBookingScheduleFromSlot(
+      {
+        startAt: Date.UTC(2026, 6, 14, 1, 30),
+        endAt: Date.UTC(2026, 6, 14, 2, 15),
+      },
+      'Asia/Kuala_Lumpur',
+    )).toEqual({
+      date: '2026-07-14',
+      startTime: '9:30am',
+      endTime: '10:15am',
     });
   });
 

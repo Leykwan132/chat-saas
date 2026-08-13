@@ -56,6 +56,7 @@ function CalendarSidebarFilterRow({
       className={cn(
         inboxSidebarItemClassName,
         isActive ? inboxSidebarItemActiveClassName : inboxSidebarItemInactiveClassName,
+        isActive && '!rounded-full',
         disabled && 'pointer-events-none opacity-50',
       )}
     >

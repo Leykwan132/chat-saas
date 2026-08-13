@@ -1,5 +1,7 @@
 import {
   combineDateTimeInTimeZone,
+  dateKeyInTimeZone,
+  formatTimestampInTimeZone,
   minutesToCalendarTimeLabel,
   parseCalendarTimeLabel,
 } from '../../lib/calendarTimeUtils';
@@ -23,6 +25,26 @@ export function defaultManualBookingEndTime(startTime: string, durationMinutes: 
   if (parsed === null) return '';
   const endMinutes = parsed.hours24 * 60 + parsed.minutes + durationMinutes;
   return minutesToCalendarTimeLabel(endMinutes % (24 * 60));
+}
+
+export function manualBookingScheduleFromSlot(
+  slot: { startAt: number; endAt: number },
+  timeZone: string,
+) {
+  const timeFormat: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  };
+  return {
+    date: dateKeyInTimeZone(slot.startAt, timeZone),
+    startTime: formatTimestampInTimeZone(slot.startAt, timeZone, timeFormat)
+      .replace(/\s/g, '')
+      .toLowerCase(),
+    endTime: formatTimestampInTimeZone(slot.endAt, timeZone, timeFormat)
+      .replace(/\s/g, '')
+      .toLowerCase(),
+  };
 }
 
 export function getManualBookingSelection(
