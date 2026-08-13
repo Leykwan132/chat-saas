@@ -24,6 +24,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Full-sync one-paginate reconcile: 22 passed (`googleCalendarSyncLease`, `googleCalendarSync`, `googleCalendarSyncReview`).
 - 2026-08-13 [TOOL] Access-token Google Calendar (no Relay): 180 passed (24 files: provider, writes, watch/webhook, booking, projection, connection UI).
 - 2026-08-13 [TOOL] WorkOS connected-account console log: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
 - 2026-08-13 [USER] Connect logs WorkOS connected-account GET (`status` + `body`) to the browser console and Convex function logs.
