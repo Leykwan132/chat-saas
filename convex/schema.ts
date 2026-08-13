@@ -1632,6 +1632,10 @@ export default defineSchema({
       "externalCalendarId",
       "externalEventId",
       "externalOriginalStartAt",
+    ])
+    .index("by_externalOwnerUserId_and_externalOrigin", [
+      "externalOwnerUserId",
+      "externalOrigin",
     ]),
   ...googleCalendarTables,
   calendarEventParticipants: defineTable({

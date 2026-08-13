@@ -1,15 +1,18 @@
 import { v } from "convex/values";
-import { internalMutation } from "../_generated/server";
-import { Permission } from "../../shared/permissions";
-import { canMutateCalendarEvent } from "./calendarProjection";
-import { assertCalendarAccess, calendarEventUpdateArgs } from "../calendarEventsHelpers";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+import {
+  assertMutableCalendarEvent,
+  calendarEventUpdateArgs,
+} from "../calendarEventsHelpers";
 import { applyKilobotBookingGoogleCancellation } from "./bookingGoogleChange";
 import {
   googleCalendarBookingGate,
   loadGoogleCalendarConnectionForUser,
 } from "./bookingGate";
+import { googleCalendarOperationError } from "./contracts";
 import { googleCalendarEventOperationKey, googleCalendarWriteInputFromEvent } from "./bookingPayload";
 import { googleCalendarWriteInputValidator } from "./writeTypes";
+import type { Doc, Id } from "../_generated/dataModel";
 
 const calendarEventPrepareValidator = v.union(
   v.object({ kind: v.literal("local") }),
@@ -46,25 +49,60 @@ function needsGoogleWrite(args: {
     || args.status !== undefined;
 }
 
+async function googleWriteGate(
+  ctx: MutationCtx,
+  event: Doc<"calendarEvents">,
+  refreshed: boolean | undefined,
+  requireWrite: boolean,
+) {
+  const ownerId = event.externalOwnerUserId ?? event.createdBy;
+  const connection = await loadGoogleCalendarConnectionForUser(ctx, ownerId);
+  const gate = googleCalendarBookingGate(connection);
+  if (event.externalOrigin === "google") {
+    if (gate.kind === "error") throw new Error(gate.result.message);
+    if (gate.kind !== "google") {
+      throw new Error(googleCalendarOperationError("not_connected").message);
+    }
+    if (!requireWrite) return { kind: "local" as const };
+    if (refreshed !== true) {
+      return { kind: "needs_refresh" as const, connectionId: gate.connectionId };
+    }
+    return { kind: "google" as const, connectionId: gate.connectionId };
+  }
+  if (gate.kind === "error") throw new Error(gate.result.message);
+  if (gate.kind !== "google" || event.externalOrigin !== "kilobot" || !requireWrite) {
+    return { kind: "local" as const };
+  }
+  if (refreshed !== true) {
+    return { kind: "needs_refresh" as const, connectionId: gate.connectionId };
+  }
+  return { kind: "google" as const, connectionId: gate.connectionId };
+}
+
+function googleWriteResult(
+  connectionId: Id<"googleCalendarConnections">,
+  event: Doc<"calendarEvents">,
+  action: "update" | "delete",
+  next: Doc<"calendarEvents">,
+) {
+  return {
+    kind: "google" as const,
+    connectionId,
+    calendarEventId: event._id,
+    operationKey: googleCalendarEventOperationKey(event._id, action),
+    action,
+    event: googleCalendarWriteInputFromEvent(next),
+    now: Date.now(),
+  };
+}
+
 export const prepareUpdate = internalMutation({
   args: { ...calendarEventUpdateArgs, refreshed: v.optional(v.boolean()) },
   returns: calendarEventPrepareValidator,
   handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
-    const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId || !canMutateCalendarEvent(event)) {
-      throw new Error("Calendar event not found");
-    }
-    const ownerId = event.externalOwnerUserId ?? event.createdBy;
-    const connection = await loadGoogleCalendarConnectionForUser(ctx, ownerId);
-    const gate = googleCalendarBookingGate(connection);
-    if (gate.kind === "error") throw new Error(gate.result.message);
-    if (gate.kind !== "google" || event.externalOrigin !== "kilobot" || !needsGoogleWrite(args)) {
-      return { kind: "local" as const };
-    }
-    if (args.refreshed !== true) {
-      return { kind: "needs_refresh" as const, connectionId: gate.connectionId };
-    }
+    const { event } = await assertMutableCalendarEvent(ctx, args.eventId);
+    const gated = await googleWriteGate(ctx, event, args.refreshed, needsGoogleWrite(args));
+    if (gated.kind !== "google") return gated;
     const next = {
       ...event,
       title: args.title?.trim() || event.title,
@@ -77,18 +115,12 @@ export const prepareUpdate = internalMutation({
       startDate: args.startDate ?? event.startDate,
       endDate: args.endDate ?? event.endDate,
     };
-    return {
-      kind: "google" as const,
-      connectionId: gate.connectionId,
-      calendarEventId: event._id,
-      operationKey: googleCalendarEventOperationKey(
-        event._id,
-        args.status === "cancelled" ? "delete" : "update",
-      ),
-      action: args.status === "cancelled" ? "delete" as const : "update" as const,
-      event: googleCalendarWriteInputFromEvent(next),
-      now: Date.now(),
-    };
+    return googleWriteResult(
+      gated.connectionId,
+      event,
+      args.status === "cancelled" ? "delete" : "update",
+      next,
+    );
   },
 });
 
@@ -96,30 +128,10 @@ export const prepareRemove = internalMutation({
   args: { eventId: v.id("calendarEvents"), refreshed: v.optional(v.boolean()) },
   returns: calendarEventPrepareValidator,
   handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
-    const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId || !canMutateCalendarEvent(event)) {
-      throw new Error("Calendar event not found");
-    }
-    const ownerId = event.externalOwnerUserId ?? event.createdBy;
-    const connection = await loadGoogleCalendarConnectionForUser(ctx, ownerId);
-    const gate = googleCalendarBookingGate(connection);
-    if (gate.kind === "error") throw new Error(gate.result.message);
-    if (gate.kind !== "google" || event.externalOrigin !== "kilobot") {
-      return { kind: "local" as const };
-    }
-    if (args.refreshed !== true) {
-      return { kind: "needs_refresh" as const, connectionId: gate.connectionId };
-    }
-    return {
-      kind: "google" as const,
-      connectionId: gate.connectionId,
-      calendarEventId: event._id,
-      operationKey: googleCalendarEventOperationKey(event._id, "delete"),
-      action: "delete" as const,
-      event: googleCalendarWriteInputFromEvent(event),
-      now: Date.now(),
-    };
+    const { event } = await assertMutableCalendarEvent(ctx, args.eventId);
+    const gated = await googleWriteGate(ctx, event, args.refreshed, true);
+    if (gated.kind !== "google") return gated;
+    return googleWriteResult(gated.connectionId, event, "delete", event);
   },
 });
 

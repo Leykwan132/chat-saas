@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { canMutateCalendarEvent } from "./googleCalendar/calendarProjection";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { getAuthContext } from "./authUtils";
@@ -111,6 +112,20 @@ export async function assertCalendarAccess(ctx: DbCtx, permission: PermissionSlu
     throw new Error("Forbidden");
   }
   return auth;
+}
+
+export async function assertMutableCalendarEvent(ctx: DbCtx, eventId: Id<"calendarEvents">) {
+  const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_READ);
+  const event = await ctx.db.get(eventId);
+  if (event === null || event.teamId !== auth.activeTeamId) {
+    throw new Error("Calendar event not found");
+  }
+  const permissions = await calendarPermissionsForCurrentUser(ctx);
+  const canManage = permissions.includes(Permission.CALENDAR_MANAGE);
+  if (!canMutateCalendarEvent(event, auth.userDbId, canManage)) {
+    throw new Error("Calendar event not found");
+  }
+  return { auth, event, canManage };
 }
 
 export async function assertTeamUser(ctx: DbCtx, teamId: Id<"teams">, userId: Id<"users">) {

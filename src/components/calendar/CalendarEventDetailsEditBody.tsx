@@ -134,6 +134,7 @@ export function CalendarEventDetailsEditBody({
   serviceFields,
   teamUsers,
   actions,
+  bookingFields = true,
   onFormChange,
   onCollectedFieldChange,
 }: {
@@ -141,6 +142,7 @@ export function CalendarEventDetailsEditBody({
   serviceFields: ServiceFieldDefinition[];
   teamUsers: TeamUserOption[];
   actions?: ReactNode;
+  bookingFields?: boolean;
   onFormChange: (patch: Partial<EventEditFormState>) => void;
   onCollectedFieldChange: (key: string, value: string) => void;
 }) {
@@ -200,6 +202,7 @@ export function CalendarEventDetailsEditBody({
           </EditRow>
         </EditSection>
 
+        {bookingFields ? (
         <EditSection title="Customer detail">
           <EditRow label="Name" icon={User}>
             <Input
@@ -216,12 +219,14 @@ export function CalendarEventDetailsEditBody({
             />
           </EditRow>
         </EditSection>
+        ) : null}
       </div>
 
       <section className="flex flex-col gap-5">
         <h3 className="text-xl font-semibold tracking-tight text-foreground">
           Internal details
         </h3>
+        {bookingFields ? (
         <div className="flex items-center gap-4">
           <Avatar size="lg">
             <AvatarFallback>{initials(selectedMemberName)}</AvatarFallback>
@@ -249,6 +254,8 @@ export function CalendarEventDetailsEditBody({
             />
           </div>
         </div>
+        ) : null}
+        {bookingFields ? (
         <EditRow label="Internal notes" icon={NotebookPen}>
           <Textarea
             value={form.remarks}
@@ -257,6 +264,7 @@ export function CalendarEventDetailsEditBody({
             className="min-h-24"
           />
         </EditRow>
+        ) : null}
         <EditRow label="Summary" icon={AlignLeft}>
           <Textarea
             value={form.description}
@@ -267,11 +275,13 @@ export function CalendarEventDetailsEditBody({
         </EditRow>
       </section>
 
+      {bookingFields ? (
       <CustomerFieldInputs
         fields={serviceFields}
         form={form}
         onCollectedFieldChange={onCollectedFieldChange}
       />
+      ) : null}
     </form>
   );
 }

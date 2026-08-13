@@ -3,34 +3,35 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes; Convex stays the booking layer. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Watch-action circular `any` was poisoning Convex document types; typecheck is green. [CODE] 2026-08-13
-- Next: User pulls this branch and retries `npx convex dev`; Task 9 Calendar connection UI after that. [USER] 2026-08-13
+- Now: Task 9 Calendar connection UI is on the branch: Connect Google Calendar in the Calendar left sidebar. [CODE] 2026-08-13
+- Next: User pulls this branch and retries `npx convex dev`; connect control should appear beside New Booking. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; no changelog until confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [CODE] Task 9: Calendar sidebar Connect Google Calendar card, WorkOS Pipes dialog, refresh/disconnect, source badges, owner-only Google event edit/delete.
 - 2026-08-13 [CODE] Broke the Google Calendar watch/agent `internal` circular `any` that made `ctx.db.get` look like every table at once.
 - 2026-08-13 [CODE] Convex typecheck is green: duplicate helper import, booking-gate error typing, staff-booking return types, and agent-tool return narrowing.
 - 2026-08-13 [TOOL] Merged `origin/main` `16e7d1f` into `cursor/google-calendar-booking-sync-10b0`; resolved `CONTINUITY.md` only.
 - 2026-08-13 [CODE] Task 8: booking-capable agents get busy-only `listCalendarEvents` and guarded Kilobot update/delete tools; structured failures cannot be claimed as success.
 - 2026-08-13 [CODE] Task 7: AI/staff/Calendar booking create/update/cancel go prepare → Google write → finalize; Kilobot Google deletes stay cancelled local history; remarks-only updates stay local.
 - 2026-08-13 [CODE] Tasks 1–6 on `codex/google-calendar-sync` `f9f5865`: contracts, WorkOS/Google client, mapping/sync, privacy, webhooks, idempotent writes.
-- 2026-08-12 [CODE] Calendar projection review queue + staff review UI.
 
 # Working set
+- convex/googleCalendar/connectionQueries.ts
+- convex/googleCalendar/connectionActions.ts
+- convex/googleCalendar/connectionRuntime.ts
+- convex/googleCalendar/connectionLifecycle.ts
+- src/components/calendar/GoogleCalendarConnectionCard.tsx
+- src/components/calendar/useGoogleCalendarConnection.ts
+- src/components/calendar/CalendarSidebar.tsx
+- src/pages/CalendarPage.tsx
+- convex/googleCalendar/calendarEventPrepare.ts
+- convex/googleCalendar/calendarProjection.ts
 - docs/superpowers/plans/2026-08-13-google-calendar-sync.md
 - docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
-- convex/googleCalendar/bookingSync.ts
-- convex/googleCalendar/staffBookingSync.ts
-- convex/googleCalendar/calendarEventSync.ts
-- convex/googleCalendar/agentTools.ts
-- convex/appointmentBooking/bookAppointment.ts
-- convex/calendarEvents.ts
-- convex/chat/threads.ts
-- src/components/calendar/EditBookingDialog.tsx
-- src/components/calendar/CalendarCreateBookingDialog.tsx
-- src/components/inbox/CreateCustomerBookingDialog.tsx
 
 # Receipts
+- 2026-08-13 [CODE] Task 9: connection query/actions, Calendar sidebar Connect control, Pipes dialog, source badges, owner Google mutate path. Production availability UNCONFIRMED; changelog deferred.
 - 2026-08-13 [TOOL] Annotated `watchActions` / `watchCompensation` / `agentTools` `internal` casts. `npx convex typecheck` passed. Watch/webhook/agent-tool tests: 30 passed.
 - 2026-08-13 [TOOL] `npx convex typecheck` passed after fixing Google Calendar typing (159 errors → 0). Focused tests: 18 passed (schema, agent tools, booking sync).
 - 2026-08-13 [TOOL] `git merge origin/main` (`16e7d1f` Refresh model catalog and enhance announcement designs #55). Sole conflict: `CONTINUITY.md`. Kept bounded Snapshot/Done/Working set/Receipts; kept Google Calendar D641–D637; kept main D637 (paid model tiers / What’s new) without renumbering.
@@ -40,13 +41,6 @@
 - 2026-08-13 [CODE] Public actions: `calendarEvents.update/remove`, `calendarManualBooking.create`, `manualBooking.create`; AI book/update/cancel are internal actions.
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
 - 2026-08-13 [TOOL] bun was missing in the cloud environment; installed bun 1.3.9 then `bun install`. `nvm use 22`.
-- 2026-08-13 [CODE] Task 6 inbound sync tests: 11 passed.
-- 2026-08-13 [CODE] Task 5 webhook ingest tests: 6 passed.
-- 2026-08-13 [CODE] Task 4 writes: 11 passed.
-- 2026-08-13 [CODE] Task 3 mapping: 16 passed.
-- 2026-08-13 [CODE] Task 2 connect: 16 passed.
-- 2026-08-13 [CODE] Task 1 schema: 6 passed.
-- 2026-08-12 [CODE] Projection review tests: 22 passed.
 
 # Decisions
 - 2026-08-13 [USER] D641 ACTIVE: Primary-calendar-only for v1, including push-assisted incremental sync, channel renewal, fail-closed connected-calendar operations, privacy redaction, idempotent writes, and conversation-scoped agent mutations. Spec: `docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md`.

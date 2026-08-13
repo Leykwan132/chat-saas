@@ -23,8 +23,13 @@ export function canViewGoogleEventDetails(
 
 export function canMutateCalendarEvent(
   event: Doc<"calendarEvents">,
+  viewerUserId: Id<"users">,
+  canManage: boolean,
 ) {
-  return !isImportedGoogleEvent(event);
+  if (isImportedGoogleEvent(event)) {
+    return event.externalOwnerUserId === viewerUserId && event.externalCanEdit !== false;
+  }
+  return canManage;
 }
 
 export async function externalEventEligibleInTeam(
@@ -62,6 +67,7 @@ function teammateBusyProjection(event: Doc<"calendarEvents">) {
     startDate: event.startDate,
     endDate: event.endDate,
     status: event.status,
+    viewerCanMutate: false as const,
   };
 }
 

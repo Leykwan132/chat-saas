@@ -84,6 +84,11 @@ import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
+import { GoogleCalendarConnectionCard } from '@/components/calendar/GoogleCalendarConnectionCard';
+import { GoogleCalendarDisconnectDialog } from '@/components/calendar/GoogleCalendarDisconnectDialog';
+import { GoogleCalendarPipesDialog } from '@/components/calendar/GoogleCalendarPipesDialog';
+import { GoogleCalendarSourceBadge } from '@/components/calendar/GoogleCalendarSourceBadge';
+import { useGoogleCalendarConnection } from '@/components/calendar/useGoogleCalendarConnection';
 import { cn } from '@/lib/utils';
 
 const calendarApi = api.calendarEvents;
@@ -121,6 +126,10 @@ type CalendarEvent = {
   customFieldResponses?: Record<string, string | number | boolean | null>;
   remarks?: string;
   participants: CalendarParticipant[];
+  externalOrigin?: 'google' | 'kilobot';
+  externalOwnerUserId?: Id<'users'>;
+  externalCanEdit?: boolean;
+  viewerCanMutate?: boolean;
 };
 
 type CustomerOption = {
@@ -402,8 +411,9 @@ function CalendarGridEventItem({
         isSelected && 'ring-1 ring-inset ring-foreground/15',
       )}
     >
-      <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-foreground">
-        {event.title}
+      <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] leading-tight text-foreground">
+        <span className="min-w-0 truncate">{event.title}</span>
+        <GoogleCalendarSourceBadge origin={event.externalOrigin} />
       </span>
       <span
         className={cn(
@@ -580,13 +590,14 @@ function CalendarDayEventRow({
       <span className="min-w-0 flex-1">
         <span
           className={cn(
-            'block truncate text-[0.9375rem]',
+            'flex min-w-0 items-center gap-1.5 truncate text-[0.9375rem]',
             isNotPast
               ? 'font-medium text-foreground'
               : 'font-normal text-foreground/80',
           )}
         >
-          {event.title}
+          <span className="min-w-0 truncate">{event.title}</span>
+          <GoogleCalendarSourceBadge origin={event.externalOrigin} />
         </span>
         <span className="mt-0.5 block truncate text-sm leading-snug text-muted-foreground">
           {range}
@@ -685,6 +696,7 @@ export default function CalendarPage() {
   const canManageCalendar = can(Permission.CALENDAR_MANAGE);
 
   const currentUser = useQuery(api.users.currentUser);
+  const googleCalendar = useGoogleCalendarConnection();
   const activeTeam = useQuery(api.teams.getActiveTeam);
   const teamUsers = useQuery(api.users.getUsers, {});
   const customerOptions = useQuery(calendarApi.listCustomerOptions, {});
@@ -813,8 +825,28 @@ export default function CalendarPage() {
   }, [editingEvent, formState, savedFormState]);
 
   const canEditEventSheet = editingEvent
-    ? canEditCalendarEvent({ canManageCalendar, endAt: editingEvent.endAt })
+    ? canEditCalendarEvent({
+        canManageCalendar,
+        endAt: editingEvent.endAt,
+        viewerCanMutate: editingEvent.viewerCanMutate,
+        externalOrigin: editingEvent.externalOrigin,
+        externalOwnerUserId: editingEvent.externalOwnerUserId,
+        viewerUserId: currentUser?._id,
+        externalCanEdit: editingEvent.externalCanEdit,
+      })
     : canManageCalendar;
+  const detailsEvent = events?.find((event) => event._id === detailsDialogEventId);
+  const canEditDetailsEvent = detailsEvent
+    ? canEditCalendarEvent({
+        canManageCalendar,
+        endAt: detailsEvent.endAt,
+        viewerCanMutate: detailsEvent.viewerCanMutate,
+        externalOrigin: detailsEvent.externalOrigin,
+        externalOwnerUserId: detailsEvent.externalOwnerUserId,
+        viewerUserId: currentUser?._id,
+        externalCanEdit: detailsEvent.externalCanEdit,
+      })
+    : false;
 
   const filteredDayEvents = useMemo(() => {
     const query = dayEventSearchQuery.trim().toLowerCase();
@@ -1077,6 +1109,18 @@ export default function CalendarPage() {
         onChangeMonth={handleChangeMonth}
         onCreateBooking={() => setCreateBookingOpen(true)}
         onShowAllEvents={() => setAssignedToMeOnly(false)}
+        connectionCard={
+          googleCalendar.status ? (
+            <GoogleCalendarConnectionCard
+              {...googleCalendar.status}
+              pending={googleCalendar.pending}
+              onConnect={googleCalendar.openPipes}
+              onReconnect={googleCalendar.openPipes}
+              onRefresh={() => void googleCalendar.refreshConnection()}
+              onDisconnect={() => googleCalendar.setDisconnectOpen(true)}
+            />
+          ) : null
+        }
       />
 
       <section className={cn(inboxColumnClassName, 'border-r border-border')}>
@@ -1530,8 +1574,20 @@ export default function CalendarPage() {
         eventId={detailsDialogEventId}
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        canEdit={canManageCalendar}
+        canEdit={canEditDetailsEvent}
         onDeleteSuccess={() => setSelectedEventId(null)}
+      />
+
+      <GoogleCalendarPipesDialog
+        open={googleCalendar.pipesOpen}
+        authToken={googleCalendar.authToken}
+        onOpenChange={googleCalendar.handlePipesOpenChange}
+      />
+      <GoogleCalendarDisconnectDialog
+        open={googleCalendar.disconnectOpen}
+        pending={googleCalendar.pending}
+        onOpenChange={googleCalendar.setDisconnectOpen}
+        onConfirm={() => void googleCalendar.disconnectConnection()}
       />
 
       {editDialogOpen && editDialogEventId && (

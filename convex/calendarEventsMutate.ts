@@ -2,15 +2,13 @@ import { v } from "convex/values";
 import { internalMutation } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { logConversationEvent } from "./conversationLogs";
-import { Permission } from "../shared/permissions";
 import { normalizeTimeZone } from "./teamHelpers";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
 import { customerSearchText } from "./customerSearch";
 import { notifyAppointmentEvent } from "./telegramNotifications/events";
-import { canMutateCalendarEvent } from "./googleCalendar/calendarProjection";
 import { syncCalendarEventAvailabilityIntervals } from "./calendarAvailabilityIntervals";
 import {
-  assertCalendarAccess,
+  assertMutableCalendarEvent,
   bookingDisplayName,
   deleteParticipants,
   getConversationIdForEvent,
@@ -24,14 +22,7 @@ export const applyUpdate = internalMutation({
   args: calendarEventUpdateArgs,
   returns: v.null(),
   handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
-    const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId) {
-      throw new Error("Calendar event not found");
-    }
-    if (!canMutateCalendarEvent(event)) {
-      throw new Error("Calendar event not found");
-    }
+    const { auth, event } = await assertMutableCalendarEvent(ctx, args.eventId);
 
     const nextStartAt = args.startAt ?? event.startAt;
     const nextEndAt = args.endAt ?? event.endAt;
@@ -227,14 +218,7 @@ export const applyRemove = internalMutation({
   args: { eventId: v.id("calendarEvents") },
   returns: v.null(),
   handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
-    const event = await ctx.db.get(args.eventId);
-    if (event === null || event.teamId !== auth.activeTeamId) {
-      throw new Error("Calendar event not found");
-    }
-    if (!canMutateCalendarEvent(event)) {
-      throw new Error("Calendar event not found");
-    }
+    const { event } = await assertMutableCalendarEvent(ctx, args.eventId);
     const conversationId = await getConversationIdForEvent(ctx, event);
     await deleteParticipants(ctx, args.eventId);
     await ctx.db.delete(args.eventId);
