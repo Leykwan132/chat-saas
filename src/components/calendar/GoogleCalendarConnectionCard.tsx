@@ -1,11 +1,5 @@
-import { CheckCircle2, Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatPrefixedRelativeAge } from "@/lib/formatRelativeAge";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
@@ -47,31 +41,32 @@ export function GoogleCalendarConnectionCard({
       : state === "needs_reauthorization"
         ? "Reconnect"
         : "+ Google Calendar";
-  const accountLabel = connectedAccountEmail ?? "Google account";
   const connectedAge = connectedAgeLabel(createdAt, lastSuccessfulSyncAt);
 
   return (
-    <Card
-      size="sm"
-      className="gap-3 py-3 shadow-sm"
+    <div
+      className="rounded-xl border border-border bg-card px-3 py-3 shadow-none"
       data-calendar-sidebar-section="google-calendar"
     >
-      <CardHeader className="px-3">
-        <CardTitle className="flex items-center gap-2 text-sm">
-          <GoogleCalendarIcon />
-          Google Calendar
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="px-3">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <GoogleCalendarIcon />
+        Google Calendar
+      </div>
+      <div className="mt-3">
         {state === "connected" ? (
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="min-w-0 truncate text-sm font-medium">{accountLabel}</span>
-                <CheckCircle2
-                  className="size-3.5 shrink-0 text-emerald-600"
-                  aria-label="Active"
-                />
+                <span className="min-w-0 truncate text-sm font-medium">
+                  {connectedAccountEmail}
+                </span>
+                {connectedAccountEmail ? (
+                  <Check
+                    className="size-3.5 shrink-0 text-green-600"
+                    strokeWidth={2.5}
+                    aria-label="Active"
+                  />
+                ) : null}
               </div>
               {connectedAge ? (
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">{connectedAge}</p>
@@ -113,7 +108,7 @@ export function GoogleCalendarConnectionCard({
         {state === "syncing" && lastErrorMessage ? (
           <p className="mt-2 truncate text-xs text-destructive">{lastErrorMessage}</p>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

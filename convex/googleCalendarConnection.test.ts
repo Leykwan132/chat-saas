@@ -23,7 +23,7 @@ const googleInternal = internal as unknown as {
   googleCalendar: {
     connectionLifecycle: {
       ensureSyncing: FunctionReference<"mutation", "internal", { userId: Id<"users">; timeZone: string; now: number }, Id<"googleCalendarConnections">>;
-      getForUser: FunctionReference<"query", "internal", { userId: Id<"users"> }, { _id: Id<"googleCalendarConnections">; state: string } | null>;
+      getForUser: FunctionReference<"query", "internal", { userId: Id<"users"> }, { _id: Id<"googleCalendarConnections">; state: string; connectedAccountEmail?: string } | null>;
       purgeImportedGoogleEvents: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     };
     connectionQueries: {
@@ -256,9 +256,9 @@ test("refresh skips Google sync when the last sync is fresh", async () => {
     });
   });
   let synced = false;
-  await refreshGoogleCalendarConnection(actionCtx(t), {
+  const status = await refreshGoogleCalendarConnection(actionCtx(t), {
     getCredential: async () => ({ kind: "active", workosUserId: "user_google_calendar" }),
-    getPrimaryCalendar: async () => ({ timeZone: "UTC" }),
+    getPrimaryCalendar: async () => ({ timeZone: "UTC", calendarId: "owner@gmail.com" }),
     runSync: async () => {
       synced = true;
       return { kind: "completed", passes: 1, dirty: false };
@@ -268,6 +268,7 @@ test("refresh skips Google sync when the last sync is fresh", async () => {
     deleteConnectedAccount: async () => undefined,
   }, now);
   expect(synced).toBe(false);
+  expect(status.connectedAccountEmail).toBe("owner@gmail.com");
   expect(now - (now - 1_000) < CALENDAR_PAGE_FRESHNESS_MS).toBe(true);
 });
 

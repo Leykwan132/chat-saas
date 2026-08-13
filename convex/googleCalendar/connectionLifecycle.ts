@@ -193,6 +193,24 @@ export const markDisconnected = internalMutation({
   },
 });
 
+export const setConnectedAccountEmail = internalMutation({
+  args: {
+    connectionId: v.id("googleCalendarConnections"),
+    connectedAccountEmail: v.string(),
+    now: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const connection = await ctx.db.get(args.connectionId);
+    if (connection === null) return null;
+    await ctx.db.patch(connection._id, {
+      connectedAccountEmail: args.connectedAccountEmail,
+      updatedAt: args.now,
+    });
+    return null;
+  },
+});
+
 export const purgeImportedGoogleEvents = internalMutation({
   args: { userId: v.id("users"), now: v.number() },
   returns: v.null(),

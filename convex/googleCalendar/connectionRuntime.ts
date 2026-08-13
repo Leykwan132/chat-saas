@@ -52,6 +52,7 @@ type GoogleConnectionRefs = {
     markNeedsReauthorization: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
     markReconcileFailed: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; errorKind: "failed"; now: number }, null>;
     markDisconnected: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; now: number }, null>;
+    setConnectedAccountEmail: FunctionReference<"mutation", "internal", { connectionId: Id<"googleCalendarConnections">; connectedAccountEmail: string; now: number }, null>;
     purgeImportedGoogleEvents: FunctionReference<"mutation", "internal", { userId: Id<"users">; now: number }, null>;
   };
   syncWorker: {
@@ -162,6 +163,29 @@ export async function reconcileGoogleCalendarConnection(
   return await currentStatus(ctx, auth.userDbId, credential);
 }
 
+async function persistMissingConnectedAccountEmail(
+  ctx: ActionCtx,
+  dependencies: GoogleCalendarConnectionDependencies,
+  connection: ConnectionSnapshot,
+  workosUserId: string,
+  now: number,
+) {
+  if (connection.connectedAccountEmail !== undefined) return;
+  const credential = await dependencies.getCredential(workosUserId);
+  if (credential.kind !== "active") return;
+  const calendar = await dependencies.getPrimaryCalendar(credential, connection.timeZone);
+  const connectedAccountEmail = googleCalendarAccountEmail(
+    credential.workosConnectedAccount,
+    calendar.calendarId,
+  );
+  if (connectedAccountEmail === undefined) return;
+  await ctx.runMutation(refs.connectionLifecycle.setConnectedAccountEmail, {
+    connectionId: connection._id,
+    connectedAccountEmail,
+    now,
+  });
+}
+
 export async function refreshGoogleCalendarConnection(
   ctx: ActionCtx,
   dependencies: GoogleCalendarConnectionDependencies,
@@ -177,6 +201,13 @@ export async function refreshGoogleCalendarConnection(
   if (connection.state === "needs_reauthorization") {
     return await currentStatus(ctx, auth.userDbId);
   }
+  await persistMissingConnectedAccountEmail(
+    ctx,
+    dependencies,
+    connection,
+    auth.userId,
+    now,
+  );
   if (
     connection.lastSuccessfulSyncAt !== undefined &&
     now - connection.lastSuccessfulSyncAt < CALENDAR_PAGE_FRESHNESS_MS
