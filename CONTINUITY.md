@@ -22,6 +22,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] + Google Calendar header button: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connect button: official Google Calendar logo + label `+ Google Calendar`.
 - 2026-08-13 [TOOL] Create booking empty-services tests: 6 passed (`CreateBookingDialog`, `CreateCustomerBookingDialog`).
 - 2026-08-13 [CODE] Create booking empty state: Empty + Create service link to `/services/new`; Create booking footer hidden when there are no services.
@@ -49,7 +50,7 @@
 - 2026-08-13 [USER] D647 ACTIVE: Kilobot writes `googleCalendarConnections` as soon as WorkOS GET reports a connected Google Calendar account. Connect polls while the authorize tab is open and does not wait for that tab to close. If WorkOS is still missing after the prompt, Connect errors instead of staying silent. WorkOS `state=connected` is treated as active unless granted scopes clearly omit Calendar.
 - 2026-08-13 [USER] D646 ACTIVE: Calendar Google Connect sits in the Calendar header to the left of the time zone control. The header Today button is removed.
 - 2026-08-13 [USER] D645 ACTIVE: WorkOS Pipes Google Calendar provider slug is `google-calendar`. Use it on authorize, connected-account, token vend, and stored connection rows. Do not use `google_calendar`.
-- 2026-08-13 [USER] D644 ACTIVE: Calendar Google Calendar connect uses Kilobot UI (Google icon + Connect). Backend vends `POST /data-integrations/google-calendar/authorize` with `user_id` only; the browser opens that URL. Do not embed the hosted WorkOS `<Pipes>` widget.
+- 2026-08-13 [USER] D644 SUPERSEDED in part by D653: Calendar Google Calendar connect uses Kilobot UI, not the hosted WorkOS `<Pipes>` widget. Authorize still vends `POST /data-integrations/google-calendar/authorize` with `user_id` only. The Connect label and icon are now D653.
 - 2026-08-13 [USER] D643 SUPERSEDED by D648/D651: Relay is not used for Google Calendar HTTP.
 - 2026-08-13 [USER] D642 ACTIVE: WorkOS Pipes Google Calendar connections are user-scoped. Authorize URL requests send `user_id` only (no `organization_id`). Hosted widget tokens superseded by D644.
 - 2026-08-13 [USER] D641 ACTIVE: Primary-calendar-only for v1, including push-assisted incremental sync, channel renewal, fail-closed connected-calendar operations, privacy redaction, idempotent writes, and conversation-scoped agent mutations. Spec: `docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md`.
