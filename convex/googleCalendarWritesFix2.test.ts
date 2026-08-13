@@ -143,7 +143,7 @@ test("an identical create retry succeeds after sync reconciles interrupted final
   expect(retryProviderCalls).toBe(0);
 });
 
-test("an update retry after the lease expires cannot overlap a held provider PATCH", async () => {
+test("an update retry before the lease expires cannot overlap a held provider PATCH", async () => {
   const { t, connectionId, calendarEventId } = await setupEvent(true);
   let releasePatch: (() => void) | undefined;
   let signalPatch: (() => void) | undefined;
@@ -163,8 +163,8 @@ test("an update retry after the lease expires cannot overlap a held provider PAT
   const args = { connectionId, calendarEventId, operationKey: "fix2:update:overlap", event: eventInput, now };
   const first = runUpdateGoogleCalendarEvent(args, write);
   await patchStarted;
-  currentTime = now + 60_001;
-  const retry = await runUpdateGoogleCalendarEvent({ ...args, now: now + 60_001 }, write);
+  currentTime = now + 59_999;
+  const retry = await runUpdateGoogleCalendarEvent({ ...args, now: now + 59_999 }, write);
   expect(retry).toMatchObject({ kind: "retryable" });
   expect(patchCalls).toBe(1);
   releasePatch!();

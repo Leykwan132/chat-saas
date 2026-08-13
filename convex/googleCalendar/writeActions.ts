@@ -38,7 +38,6 @@ const googleCalendarInternal = (internal as unknown as {
     writeAttemptLeaseStore: {
       renewAttemptLease: StoreMutation<Parameters<GoogleCalendarWriteDependencies["renewAttemptLease"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["renewAttemptLease"]>>>;
       claimMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["claimMutationRecovery"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["claimMutationRecovery"]>>>;
-      deferMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["deferMutationRecovery"]>[0], null>;
       finishMutationRecovery: StoreMutation<Parameters<GoogleCalendarWriteDependencies["finishMutationRecovery"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["finishMutationRecovery"]>>>;
       recordRecoveryConflict: StoreMutation<Parameters<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>[0], Awaited<ReturnType<GoogleCalendarWriteDependencies["recordRecoveryConflict"]>>>;
     };
@@ -62,7 +61,6 @@ function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
     beginAttempt: (args) => ctx.runMutation(googleCalendarInternal.writeStore.beginAttempt, args),
     renewAttemptLease: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.renewAttemptLease, args),
     claimMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.claimMutationRecovery, args),
-    deferMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.deferMutationRecovery, args),
     finishMutationRecovery: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.finishMutationRecovery, args),
     recordRecoveryConflict: (args) => ctx.runMutation(googleCalendarInternal.writeAttemptLeaseStore.recordRecoveryConflict, args),
     finalizeEvent: (args) => ctx.runMutation(googleCalendarInternal.writeFinalizationStore.finalizeEvent, args),

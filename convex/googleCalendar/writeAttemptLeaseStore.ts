@@ -39,6 +39,7 @@ export const renewAttemptLease = internalMutation({
     if (
       operation.payloadBindingVersion !== 2 ||
       operation.attemptGeneration !== args.attemptGeneration ||
+      operation.recoveryClaimGeneration !== undefined ||
       (args.phase === "preparing" && operation.attemptPhase !== "preparing") ||
       (args.phase === "provider_mutation_started" &&
         operation.attemptPhase !== "preparing" &&
@@ -75,10 +76,12 @@ export const claimMutationRecovery = internalMutation({
       operation.attemptGeneration !== args.attemptGeneration ||
       operation.attemptPhase !== "provider_mutation_started"
     ) return { kind: "stale" as const };
+    if (operation.providerMutationStartedAt === undefined) return { kind: "stale" as const };
     if (
-      operation.providerMutationStartedAt === undefined ||
-      args.now < operation.providerMutationStartedAt + 120_000
-    ) return { kind: "stale" as const };
+      operation.recoveryClaimGeneration === undefined &&
+      operation.attemptLeaseExpiresAt !== undefined &&
+      args.now < operation.attemptLeaseExpiresAt
+    ) return { kind: "running" as const };
     if (
       operation.recoveryClaimLeaseExpiresAt !== undefined &&
       args.now < operation.recoveryClaimLeaseExpiresAt
@@ -180,11 +183,7 @@ export const recordRecoveryConflict = internalMutation({
     if (
       operation.attemptGeneration !== args.attemptGeneration ||
       operation.attemptPhase !== "provider_mutation_started" ||
-      (args.recoveryClaimGeneration !== undefined &&
-        operation.recoveryClaimGeneration !== args.recoveryClaimGeneration) ||
-      (args.recoveryClaimGeneration === undefined &&
-        operation.recoveryClaimLeaseExpiresAt !== undefined &&
-        args.now < operation.recoveryClaimLeaseExpiresAt)
+      operation.recoveryClaimGeneration !== args.recoveryClaimGeneration
     ) return { kind: "stale" as const };
     await ctx.db.patch(operation._id, {
       state: "conflict",
@@ -196,30 +195,5 @@ export const recordRecoveryConflict = internalMutation({
       updatedAt: args.now,
     });
     return { kind: "recorded" as const };
-  },
-});
-
-export const deferMutationRecovery = internalMutation({
-  args: {
-    operationId: v.id("googleCalendarWriteOperations"),
-    attemptGeneration: v.number(),
-    now: v.number(),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const operation = await ctx.db.get(args.operationId);
-    if (
-      operation !== null && operation.state !== "succeeded" &&
-      operation.attemptGeneration === args.attemptGeneration &&
-      operation.attemptPhase === "provider_mutation_started"
-    ) {
-      await ctx.db.patch(operation._id, {
-        state: "pending",
-        errorKind: "retryable",
-        attemptLeaseExpiresAt: args.now + 60_000,
-        updatedAt: args.now,
-      });
-    }
-    return null;
   },
 });

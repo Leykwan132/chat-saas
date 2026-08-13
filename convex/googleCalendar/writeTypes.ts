@@ -112,11 +112,6 @@ export type GoogleCalendarWriteDependencies = {
     attemptGeneration: number;
     now: number;
   }): Promise<GoogleCalendarRecoveryClaim>;
-  deferMutationRecovery(args: {
-    operationId: Id<"googleCalendarWriteOperations">;
-    attemptGeneration: number;
-    now: number;
-  }): Promise<null>;
   finishMutationRecovery(args: {
     operationId: Id<"googleCalendarWriteOperations">;
     attemptGeneration: number;

@@ -72,10 +72,9 @@ function currentAttempt(
   if (operation.state === "succeeded" && operation.externalEventId !== undefined) {
     return { kind: "success" as const, externalEventId: operation.externalEventId };
   }
-  if (
-    recoveryClaimGeneration !== undefined &&
-    operation.recoveryClaimGeneration !== recoveryClaimGeneration
-  ) return { kind: "stale" as const };
+  if (operation.recoveryClaimGeneration !== recoveryClaimGeneration) {
+    return { kind: "stale" as const };
+  }
   if (
     operation.attemptGeneration === attemptGeneration &&
     operation.attemptPhase === "provider_mutation_started" &&

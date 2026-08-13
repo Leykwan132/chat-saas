@@ -126,22 +126,17 @@ async function recoverCreate(
     prepared.workosUserId, args.now,
   );
   if (isOperationResult(credential)) return credential;
+  const claimed = await claimMutationRecovery(
+    dependencies, prepared.operationId, attempt.attemptGeneration,
+  );
+  if (claimed.kind !== "ready") return claimed;
+  const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
   try {
-    const beforeGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (beforeGet !== null) return beforeGet;
     const providerEvent = await getGoogleCalendarEventForWrite({
       credential,
       externalEventId: prepared.externalEventId,
       fetchImplementation: dependencies.fetchImplementation,
     });
-    const afterGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (afterGet !== null) return afterGet;
     const marker = providerEvent.extendedProperties?.private;
     if (
       marker?.kilobotOperationKey !== args.operationKey ||
@@ -150,11 +145,13 @@ async function recoverCreate(
     ) {
       return await recordRecoveryConflict(
         dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        recoveryClaimGeneration,
       );
     }
     const finalized = await dependencies.finalizeEvent({
       operationId: prepared.operationId,
       attemptGeneration: attempt.attemptGeneration,
+      recoveryClaimGeneration,
       event: mapGoogleEvent(providerEvent, prepared.timeZone),
       now: args.now,
     });
@@ -163,9 +160,12 @@ async function recoverCreate(
       : googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
   } catch (error) {
     const kind = classifiedProviderError(error);
-    if (kind === "not_found") return await reissueCreate(args, dependencies, reserved);
-    return await refreshFailure(
-      dependencies, args, prepared.operationId, attempt.attemptGeneration, kind,
+    if (kind === "not_found") return await reissueCreate(
+      args, dependencies, reserved, credential, recoveryClaimGeneration,
+    );
+    return await finishClaimedMutationRecovery(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      recoveryClaimGeneration, kind,
     );
   }
 }
@@ -174,19 +174,11 @@ async function reissueCreate(
   args: GoogleCalendarEventWriteArgs,
   dependencies: GoogleCalendarWriteDependencies,
   reserved: Extract<Awaited<ReturnType<typeof reserveAndBegin>>, { attempt: unknown }>,
+  credential: Extract<Awaited<ReturnType<typeof credentialForWrite>>, { kind: "active" }>,
+  recoveryClaimGeneration: number,
 ): Promise<GoogleCalendarOperationResult> {
   if (reserved.attempt.kind !== "recovering") return googleCalendarOperationError("retryable");
   const { prepared, attempt, payloadFingerprint } = reserved;
-  const credential = await credentialForWrite(
-    dependencies, prepared.operationId, attempt.attemptGeneration,
-    prepared.workosUserId, args.now,
-  );
-  if (isOperationResult(credential)) return credential;
-  const claimed = await claimMutationRecovery(
-    dependencies, prepared.operationId, attempt.attemptGeneration,
-  );
-  if (claimed.kind !== "ready") return claimed;
-  const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
   try {
     let providerEvent;
     try {

@@ -123,37 +123,29 @@ async function recoverDelete(
     prepared.workosUserId, args.now,
   );
   if (isOperationResult(credential)) return credential;
+  const claimed = await claimMutationRecovery(
+    dependencies, prepared.operationId, attempt.attemptGeneration,
+  );
+  if (claimed.kind !== "ready") return claimed;
+  const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
   try {
-    const beforeGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (beforeGet !== null) return beforeGet;
     const providerEvent = await getGoogleCalendarEventForWrite({
       credential,
       externalEventId: prepared.externalEventId,
       fetchImplementation: dependencies.fetchImplementation,
     });
-    const afterGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (afterGet !== null) return afterGet;
     if (providerEvent.etag !== attempt.intendedEtag) {
       return await recordRecoveryConflict(
         dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        recoveryClaimGeneration,
       );
     }
     if (attempt.intendedEtag === undefined) {
       return await recordRecoveryConflict(
         dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        recoveryClaimGeneration,
       );
     }
-    const claimed = await claimMutationRecovery(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-    );
-    if (claimed.kind !== "ready") return claimed;
-    const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
     try {
       await removeGoogleCalendarEvent({
         credential, externalEventId: prepared.externalEventId,
@@ -182,12 +174,20 @@ async function recoverDelete(
   } catch (error) {
     const kind = classifiedProviderError(error);
     if (kind === "not_found") {
-      return await finalizeGoogleCalendarDelete(
-        dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
-      );
+      const finalized = await dependencies.finalizeDelete({
+        operationId: prepared.operationId,
+        attemptGeneration: attempt.attemptGeneration,
+        recoveryClaimGeneration,
+        confirmedAbsent: true,
+        now: args.now,
+      });
+      return finalized.kind === "success"
+        ? finalized
+        : googleCalendarOperationError(finalized.kind === "conflict" ? "conflict" : "retryable");
     }
-    return await refreshFailure(
-      dependencies, args, prepared.operationId, attempt.attemptGeneration, kind,
+    return await finishClaimedMutationRecovery(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      recoveryClaimGeneration, kind,
     );
   }
 }

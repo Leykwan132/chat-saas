@@ -106,22 +106,17 @@ async function recoverUpdate(
     prepared.workosUserId, args.now,
   );
   if (isOperationResult(credential)) return credential;
+  const claimed = await claimMutationRecovery(
+    dependencies, prepared.operationId, attempt.attemptGeneration,
+  );
+  if (claimed.kind !== "ready") return claimed;
+  const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
   try {
-    const beforeGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (beforeGet !== null) return beforeGet;
     const providerEvent = await getGoogleCalendarEventForWrite({
       credential,
       externalEventId: prepared.externalEventId,
       fetchImplementation: dependencies.fetchImplementation,
     });
-    const afterGet = await renewAttemptLease(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-      "provider_mutation_started",
-    );
-    if (afterGet !== null) return afterGet;
     const marker = providerEvent.extendedProperties?.private;
     if (
       marker?.kilobotOperationKey === args.operationKey &&
@@ -130,23 +125,21 @@ async function recoverUpdate(
       if (!providerMatchesGoogleCalendarUpdateInput(providerEvent, args.event)) {
         return await recordRecoveryConflict(
           dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+          recoveryClaimGeneration,
         );
       }
       return await finalizeUpdate(
         args, dependencies, prepared, attempt.attemptGeneration, providerEvent,
+        recoveryClaimGeneration,
       );
     }
     const intendedEtag = attempt.intendedEtag;
     if (intendedEtag === undefined || providerEvent.etag !== intendedEtag) {
       return await recordRecoveryConflict(
         dependencies, prepared.operationId, attempt.attemptGeneration, args.now,
+        recoveryClaimGeneration,
       );
     }
-    const claimed = await claimMutationRecovery(
-      dependencies, prepared.operationId, attempt.attemptGeneration,
-    );
-    if (claimed.kind !== "ready") return claimed;
-    const recoveryClaimGeneration = claimed.recoveryClaimGeneration;
     let updated;
     try {
       updated = await patchGoogleCalendarEvent({
@@ -175,9 +168,9 @@ async function recoverUpdate(
       recoveryClaimGeneration,
     );
   } catch (error) {
-    return await refreshFailure(
-      dependencies, args, prepared.operationId, attempt.attemptGeneration,
-      classifiedProviderError(error),
+    return await finishClaimedMutationRecovery(
+      dependencies, prepared.operationId, attempt.attemptGeneration,
+      recoveryClaimGeneration, classifiedProviderError(error),
     );
   }
 }

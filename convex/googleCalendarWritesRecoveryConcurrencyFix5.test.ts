@@ -86,14 +86,11 @@ test("concurrent recovery callers acquire one claim and issue one create", async
   let settled = 0;
   let releaseGets!: () => void;
   let releaseFirstPost!: () => void;
-  let resolveAllGets!: () => void;
   const getBarrier = new Promise<void>((resolve) => { releaseGets = resolve; });
   const firstPostBarrier = new Promise<void>((resolve) => { releaseFirstPost = resolve; });
-  const allGets = new Promise<void>((resolve) => { resolveAllGets = resolve; });
   const write = googleCalendarWriteTestDependencies(t, async (_input, init) => {
     if (init?.method === "GET") {
       getCalls += 1;
-      if (getCalls === 8) resolveAllGets();
       await getBarrier;
       return new Response(null, { status: 404 });
     }
@@ -114,8 +111,9 @@ test("concurrent recovery callers acquire one claim and issue one create", async
   const calls = Array.from({ length: 8 }, () => runCreateGoogleCalendarEvent({
     connectionId, calendarEventId, operationKey, event: eventInput, now: clock,
   }, write).finally(() => { settled += 1; }));
-  await allGets;
+  while (getCalls < 1) await new Promise((resolve) => setTimeout(resolve, 0));
   releaseGets();
+  while (postCalls < 1) await new Promise((resolve) => setTimeout(resolve, 0));
   while (settled < 7) await new Promise((resolve) => setTimeout(resolve, 0));
   expect(postCalls).toBe(1);
   releaseFirstPost();

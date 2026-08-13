@@ -11,7 +11,7 @@ const stores = (internal as unknown as { googleCalendar: {
   writeStore: { prepare: MutationRef; beginAttempt: MutationRef };
   writeAttemptLeaseStore: {
     renewAttemptLease: MutationRef; claimMutationRecovery: MutationRef;
-    deferMutationRecovery: MutationRef; recordRecoveryConflict: MutationRef;
+    recordRecoveryConflict: MutationRef;
     finishMutationRecovery: MutationRef;
   };
   writeFinalizationStore: {
@@ -31,7 +31,6 @@ export function googleCalendarWriteTestDependencies(
     beginAttempt: (args) => t.mutation(stores.writeStore.beginAttempt, args) as never,
     renewAttemptLease: (args) => t.mutation(stores.writeAttemptLeaseStore.renewAttemptLease, args) as never,
     claimMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.claimMutationRecovery, args) as never,
-    deferMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.deferMutationRecovery, args) as never,
     finishMutationRecovery: (args) => t.mutation(stores.writeAttemptLeaseStore.finishMutationRecovery, args) as never,
     recordRecoveryConflict: (args) => t.mutation(stores.writeAttemptLeaseStore.recordRecoveryConflict, args) as never,
     finalizeEvent: (args) => t.mutation(stores.writeFinalizationStore.finalizeEvent, args) as never,

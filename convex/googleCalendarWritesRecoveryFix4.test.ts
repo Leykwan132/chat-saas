@@ -28,7 +28,7 @@ const googleInternal = internal as unknown as {
     writeStore: { prepare: MutationRef; beginAttempt: MutationRef };
     writeAttemptLeaseStore: {
       renewAttemptLease: MutationRef; claimMutationRecovery: MutationRef;
-      deferMutationRecovery: MutationRef; finishMutationRecovery: MutationRef;
+      finishMutationRecovery: MutationRef;
       recordRecoveryConflict: MutationRef;
     };
     writeFinalizationStore: {
@@ -95,7 +95,6 @@ function dependencies(
     beginAttempt: (args) => t.mutation(store.beginAttempt, args) as never,
     renewAttemptLease: (args) => t.mutation(lease.renewAttemptLease, args) as never,
     claimMutationRecovery: (args) => t.mutation(lease.claimMutationRecovery, args) as never,
-    deferMutationRecovery: (args) => t.mutation(lease.deferMutationRecovery, args) as never,
     finishMutationRecovery: (args) => t.mutation(lease.finishMutationRecovery, args) as never,
     recordRecoveryConflict: (args) => t.mutation(lease.recordRecoveryConflict, args) as never,
     finalizeEvent: (args) => t.mutation(finalization.finalizeEvent, args) as never,
