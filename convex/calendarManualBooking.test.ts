@@ -105,7 +105,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     selection,
   )).resolves.toEqual({ available: true });
 
-  const result = await authed.mutation(
+  const result = await authed.action(
     api.appointmentBooking.calendarManualBooking.create,
     {
       ...selection,

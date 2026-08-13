@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { useParams } from 'react-router';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
@@ -20,7 +20,7 @@ export function CreateCustomerBookingDialog({
     open ? { conversationId } : 'skip',
   );
   const checkAvailability = useMutation(api.appointmentBooking.manualBooking.checkAvailability);
-  const createBooking = useMutation(api.appointmentBooking.manualBooking.create);
+  const createBooking = useAction(api.appointmentBooking.manualBooking.create);
 
   return (
     <CreateBookingDialog

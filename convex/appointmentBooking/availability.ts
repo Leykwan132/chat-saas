@@ -58,11 +58,12 @@ function entryAvailableForSlot(
   startAt: number,
   endAt: number,
   excludeEventId?: Id<"calendarEvents">,
+  ignoreGoogleHealth = false,
 ) {
   if (entry.user === null) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
-  if (!entry.googleCalendarHealthy) return false;
+  if (!ignoreGoogleHealth && !entry.googleCalendarHealthy) return false;
   return !calendarAvailabilityHasConflict(
     entry.calendarAvailability,
     startAt,
@@ -80,11 +81,14 @@ function chooseAssigneeForSlot(
     startAt: number;
     endAt: number;
     excludeEventId?: Id<"calendarEvents">;
+    ignoreGoogleHealth?: boolean;
   },
 ): RosterEntry | null {
   const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
-    if (entryAvailableForSlot(entry, args.startAt, args.endAt, args.excludeEventId)) {
+    if (entryAvailableForSlot(
+      entry, args.startAt, args.endAt, args.excludeEventId, args.ignoreGoogleHealth,
+    )) {
       available.push(entry);
     }
   }
@@ -163,6 +167,7 @@ export async function generateSlots(
     rangeEndAt: number;
     limit: number;
     excludeEventId?: Id<"calendarEvents">;
+    ignoreGoogleHealth?: boolean;
   },
 ): Promise<BookingSlot[]> {
   const durationMs = args.service.durationMinutes * 60 * 1000;
@@ -197,6 +202,7 @@ export async function generateSlots(
       startAt: startAt - bufferMs,
       endAt: endAt + bufferMs,
       excludeEventId: args.excludeEventId,
+      ignoreGoogleHealth: args.ignoreGoogleHealth,
     });
     if (assignee?.user) {
       slots.push({
@@ -219,6 +225,7 @@ export async function resolveAvailableInterval(
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;
+    ignoreGoogleHealth?: boolean;
   },
 ): Promise<BookingSlot | null> {
   if (args.endAt <= args.startAt) return null;
@@ -236,6 +243,7 @@ export async function resolveAvailableInterval(
     entries,
     startAt: args.startAt - bufferMs,
     endAt: args.endAt + bufferMs,
+    ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
   if (assignee?.user === undefined || assignee.user === null) return null;
   return {

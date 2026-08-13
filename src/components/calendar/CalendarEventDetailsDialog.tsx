@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -50,8 +50,8 @@ export function CalendarEventDetailsDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const updateEvent = useMutation(api.calendarEvents.update);
-  const removeEvent = useMutation(api.calendarEvents.remove);
+  const updateEvent = useAction(api.calendarEvents.update);
+  const removeEvent = useAction(api.calendarEvents.remove);
 
   const details = useQuery(
     api.calendarEvents.getAppointmentDetails,

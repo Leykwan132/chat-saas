@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { CreateBookingDialog } from '@/components/booking/CreateBookingDialog';
@@ -22,7 +22,7 @@ export function CalendarCreateBookingDialog({
   );
   const customers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
   const checkAvailability = useMutation(api.appointmentBooking.calendarManualBooking.checkAvailability);
-  const createBooking = useMutation(api.appointmentBooking.calendarManualBooking.create);
+  const createBooking = useAction(api.appointmentBooking.calendarManualBooking.create);
 
   return (
     <CreateBookingDialog

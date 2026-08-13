@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query } from "../_generated/server";
+import { action, mutation, query } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { resolveAvailableInterval } from "./availability";
@@ -9,15 +9,13 @@ import {
   loadService,
   resolveTeamForAgent,
 } from "./access";
-import { resolveCustomerForConversation } from "./calendarHelpers";
 import {
   serviceSnapshot,
   serviceTimeZone,
 } from "./fields";
 import { collectedFieldsValidator } from "./validators";
 import { validateManualBookingInterval } from "./manualBookingCore";
-import { manualBookingFieldsForCustomer } from "./manualBookingFields";
-import { createStaffBooking } from "./staffBooking";
+import { runInboxStaffBooking } from "../googleCalendar/staffBookingSync";
 
 async function loadManualBookingScope(
   ctx: Parameters<typeof assertAppointmentBookingManage>[0],
@@ -105,7 +103,7 @@ export const checkAvailability = mutation({
   },
 });
 
-export const create = mutation({
+export const create = action({
   args: {
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
@@ -114,35 +112,9 @@ export const create = mutation({
     startAt: v.number(),
     endAt: v.number(),
   },
-  handler: async (ctx, args) => {
-    validateManualBookingInterval(args.startAt, args.endAt);
-    const { conversation, agent, team } = await loadManualBookingScope(ctx, args.conversationId);
-    const service = await loadService(ctx, args.serviceId);
-    if (service.agentId !== agent._id || !service.isActive) {
-      throw new Error("Selected service is not available");
-    }
-    const selectedSlot = await resolveManualBookingSlot(ctx, {
-      service,
-      conversation,
-      teamId: team._id,
-      startAt: args.startAt,
-      endAt: args.endAt,
-    });
-    if (selectedSlot === null) throw new Error("That slot is no longer available.");
-    const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
-    if (assignedUser === null) throw new Error("Assigned teammate not found");
-    const customer = await resolveCustomerForConversation(ctx, conversation, args.collectedFields);
-    const collectedFields = manualBookingFieldsForCustomer(customer, args.collectedFields);
-    return await createStaffBooking(ctx, {
-      service,
-      team,
-      customer,
-      conversation,
-      assignedUser,
-      selectedSlot,
-      collectedFields,
-      remarks: args.remarks,
-      recordInboxBooking: true,
-    });
-  },
+  returns: v.object({
+    eventId: v.id("calendarEvents"),
+    sessionId: v.id("appointmentBookingSessions"),
+  }),
+  handler: async (ctx, args) => runInboxStaffBooking(ctx, args),
 });

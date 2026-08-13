@@ -28,6 +28,10 @@ export async function createManualBookingRecords(
     collectedFields: CollectedFields;
     remarks?: string;
     bookingSource: "manual" | "ai";
+    googlePending?: {
+      ownerUserId: Id<"users">;
+      operationKey: string;
+    };
   },
 ) {
   const now = Date.now();
@@ -54,6 +58,17 @@ export async function createManualBookingRecords(
     bookingSource: args.bookingSource,
     remarks,
     customFieldResponses: args.collectedFields,
+    ...(args.googlePending !== undefined ? {
+      externalProvider: "google" as const,
+      externalCalendarId: "primary" as const,
+      externalOwnerUserId: args.googlePending.ownerUserId,
+      externalOrigin: "kilobot" as const,
+      externalStatus: "confirmed" as const,
+      externalTransparency: "opaque" as const,
+      externalCanEdit: true,
+      externalSyncState: "pending" as const,
+      externalOperationKey: args.googlePending.operationKey,
+    } : {}),
     createdAt: now,
     updatedAt: now,
   });

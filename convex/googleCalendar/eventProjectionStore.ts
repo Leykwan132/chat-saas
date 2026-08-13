@@ -6,6 +6,10 @@ import {
 } from "../calendarAvailabilityIntervals";
 import type { MappedGoogleCalendarEvent } from "./eventMapping";
 import type { GoogleCalendarReconciliationTarget } from "./writeReconciliation";
+import {
+  applyKilobotBookingGoogleCancellation,
+  applyKilobotBookingGoogleMove,
+} from "./bookingGoogleChange";
 
 type ActiveMappedEvent = MappedGoogleCalendarEvent & {
   status: "confirmed" | "tentative";
@@ -131,6 +135,11 @@ export async function upsertGoogleCalendarProjection(
       ctx, reconciledEvent._id, teamId, owner, event.startAt, event.endAt, now,
     );
     await syncCalendarEventAvailabilityIntervals(ctx, reconciledEvent._id, now);
+    if (reconciledEvent.externalOrigin === "kilobot") {
+      await applyKilobotBookingGoogleMove(
+        ctx, reconciledEvent, event.startAt, event.endAt, now,
+      );
+    }
     await ctx.db.patch(reconciliationTarget.operationId, {
       state: "succeeded",
       errorKind: undefined,
@@ -149,6 +158,8 @@ export async function upsertGoogleCalendarProjection(
       .eq("externalOriginalStartAt", event.originalStartAt),
   ).unique();
   if (existing !== null) {
+    const previousStartAt = existing.startAt;
+    const previousEndAt = existing.endAt;
     await ctx.db.patch(existing._id, {
       ...synchronizedFields(event, now),
       externalLastSeenSyncRunId:
@@ -156,6 +167,11 @@ export async function upsertGoogleCalendarProjection(
     });
     await upsertOwnerParticipant(ctx, existing._id, teamId, owner, event.startAt, event.endAt, now);
     await syncCalendarEventAvailabilityIntervals(ctx, existing._id, now);
+    if (existing.externalOrigin === "kilobot") {
+      await applyKilobotBookingGoogleMove(
+        ctx, { ...existing, startAt: previousStartAt, endAt: previousEndAt }, event.startAt, event.endAt, now,
+      );
+    }
     return "updated" as const;
   }
   const eventId = await ctx.db.insert("calendarEvents", {
@@ -204,7 +220,7 @@ export async function cancelGoogleCalendarProjection(
         externalUpdatedAt: event.updatedAt,
         updatedAt: now,
       });
-      await syncCalendarEventAvailabilityIntervals(ctx, candidate._id, now);
+      await applyKilobotBookingGoogleCancellation(ctx, candidate, now);
     } else {
       await deleteParticipants(ctx, candidate._id);
       await ctx.db.delete(candidate._id);

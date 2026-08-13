@@ -55,7 +55,7 @@ const googleCalendarInternal = (internal as unknown as {
   };
 }).googleCalendar;
 
-function actionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
+export function googleCalendarWriteActionDependencies(ctx: ActionCtx): GoogleCalendarWriteDependencies {
   return {
     prepare: (args) => ctx.runMutation(googleCalendarInternal.writeStore.prepare, args),
     beginAttempt: (args) => ctx.runMutation(googleCalendarInternal.writeStore.beginAttempt, args),
@@ -94,17 +94,17 @@ export const createGoogleCalendarEvent = internalAction({
   args: eventWriteArgs,
   returns: googleCalendarOperationResultValidator,
   handler: async (ctx, args): Promise<GoogleCalendarOperationResult> =>
-    runCreateGoogleCalendarEvent(args, actionDependencies(ctx)),
+    runCreateGoogleCalendarEvent(args, googleCalendarWriteActionDependencies(ctx)),
 });
 export const updateGoogleCalendarEvent = internalAction({
   args: eventWriteArgs,
   returns: googleCalendarOperationResultValidator,
   handler: async (ctx, args): Promise<GoogleCalendarOperationResult> =>
-    runUpdateGoogleCalendarEvent(args, actionDependencies(ctx)),
+    runUpdateGoogleCalendarEvent(args, googleCalendarWriteActionDependencies(ctx)),
 });
 export const deleteGoogleCalendarEvent = internalAction({
   args: deleteWriteArgs,
   returns: googleCalendarOperationResultValidator,
   handler: async (ctx, args): Promise<GoogleCalendarOperationResult> =>
-    runDeleteGoogleCalendarEvent(args, actionDependencies(ctx)),
+    runDeleteGoogleCalendarEvent(args, googleCalendarWriteActionDependencies(ctx)),
 });

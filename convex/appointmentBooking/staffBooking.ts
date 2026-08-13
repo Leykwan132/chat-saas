@@ -19,6 +19,10 @@ type StaffBookingInput = {
   collectedFields: CollectedFields;
   remarks?: string;
   recordInboxBooking: boolean;
+  googlePending?: {
+    ownerUserId: Doc<"users">["_id"];
+    operationKey: string;
+  };
 };
 
 export async function createStaffBooking(
@@ -35,7 +39,11 @@ export async function createStaffBooking(
     collectedFields: args.collectedFields,
     remarks: args.remarks,
     bookingSource: "manual",
+    googlePending: args.googlePending,
   });
+  if (args.googlePending !== undefined) {
+    return { eventId, sessionId };
+  }
   if (args.recordInboxBooking) {
     if (!args.conversation) {
       throw new Error("Inbox staff booking requires a conversation");

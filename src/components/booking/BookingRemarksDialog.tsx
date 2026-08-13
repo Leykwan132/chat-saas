@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useMutation } from 'convex/react';
+import { useAction } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
@@ -30,7 +30,7 @@ export function BookingRemarksDialog({
 }: BookingRemarksDialogProps) {
   const [remarks, setRemarks] = useState(initialRemarks);
   const [isSaving, setIsSaving] = useState(false);
-  const updateEvent = useMutation(api.calendarEvents.update);
+  const updateEvent = useAction(api.calendarEvents.update);
 
   useEffect(() => {
     if (open) {

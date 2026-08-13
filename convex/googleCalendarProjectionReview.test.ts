@@ -152,11 +152,11 @@ test.each([true, false])(
     });
     const owner = t.withIdentity({ subject: "review-staff" });
 
-    await expect(owner.mutation(api.calendarEvents.update, {
+    await expect(owner.action(api.calendarEvents.update, {
       eventId: eventId as Id<"calendarEvents">,
       title: "Cache-only edit",
     })).rejects.toThrow("Calendar event not found");
-    await expect(owner.mutation(api.calendarEvents.remove, {
+    await expect(owner.action(api.calendarEvents.remove, {
       eventId: eventId as Id<"calendarEvents">,
     })).rejects.toThrow("Calendar event not found");
   },

@@ -149,11 +149,11 @@ test.each(["workspace-owner", "workspace-admin"])(
     const fixture = await setupPrivacyFixture(t);
     const authed = t.withIdentity({ subject });
 
-    await expect(authed.mutation(api.calendarEvents.update, {
+    await expect(authed.action(api.calendarEvents.update, {
       eventId: fixture.eventId,
       title: "Leaked edit",
     })).rejects.toThrow("Calendar event not found");
-    await expect(authed.mutation(api.calendarEvents.remove, {
+    await expect(authed.action(api.calendarEvents.remove, {
       eventId: fixture.eventId,
     })).rejects.toThrow("Calendar event not found");
     expect((await t.run((ctx) => ctx.db.get(fixture.eventId)))?.title).toBe("Private interview");

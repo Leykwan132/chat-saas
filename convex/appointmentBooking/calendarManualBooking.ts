@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { mutation, query, type MutationCtx } from "../_generated/server";
+import { action, mutation, query, type MutationCtx } from "../_generated/server";
 import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthContext, resolveChannelOrgId } from "../authUtils";
 import { resolveAvailableInterval } from "./availability";
@@ -11,9 +11,8 @@ import {
 } from "./access";
 import { serviceSnapshot, serviceTimeZone } from "./fields";
 import { validateManualBookingInterval } from "./manualBookingCore";
-import { manualBookingFieldsForCustomer } from "./manualBookingFields";
-import { createStaffBooking } from "./staffBooking";
 import { collectedFieldsValidator } from "./validators";
+import { runCalendarStaffBooking } from "../googleCalendar/staffBookingSync";
 
 async function loadCalendarBookingScope(
   ctx: MutationCtx,
@@ -94,7 +93,7 @@ export const checkAvailability = mutation({
   },
 });
 
-export const create = mutation({
+export const create = action({
   args: {
     agentId: v.id("agents"),
     customerId: v.id("customers"),
@@ -104,37 +103,9 @@ export const create = mutation({
     startAt: v.number(),
     endAt: v.number(),
   },
-  handler: async (ctx, args) => {
-    validateManualBookingInterval(args.startAt, args.endAt);
-    const scope = await loadCalendarBookingScope(ctx, args);
-    const service = await loadService(ctx, args.serviceId);
-    if (service.agentId !== scope.agent._id || !service.isActive) {
-      throw new Error("Selected service is not available");
-    }
-    const selectedSlot = await resolveCalendarSlot(ctx, {
-      service,
-      conversation: scope.conversation,
-      teamId: scope.team._id,
-      startAt: args.startAt,
-      endAt: args.endAt,
-    });
-    if (selectedSlot === null) throw new Error("That slot is no longer available.");
-    const assignedUser = await ctx.db.get(selectedSlot.assignedUserId);
-    if (assignedUser === null) throw new Error("Assigned teammate not found");
-    const collectedFields = manualBookingFieldsForCustomer(
-      scope.customer,
-      args.collectedFields,
-    );
-    return await createStaffBooking(ctx, {
-      service,
-      team: scope.team,
-      customer: scope.customer,
-      conversation: scope.conversation,
-      assignedUser,
-      selectedSlot,
-      collectedFields,
-      remarks: args.remarks,
-      recordInboxBooking: false,
-    });
-  },
+  returns: v.object({
+    eventId: v.id("calendarEvents"),
+    sessionId: v.id("appointmentBookingSessions"),
+  }),
+  handler: async (ctx, args) => runCalendarStaffBooking(ctx, args),
 });
