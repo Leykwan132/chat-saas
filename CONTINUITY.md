@@ -21,6 +21,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] Quiet connected Google Calendar chip: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connected header chip: ghost `bg-input/50` + Google Calendar + chevron; menu item `Disconnect Google Calendar`.
 - 2026-08-13 [TOOL] + Google Calendar header button: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connect button: official Google Calendar logo + label `+ Google Calendar`.
