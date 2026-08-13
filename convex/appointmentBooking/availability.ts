@@ -215,6 +215,7 @@ export async function generateSlots(
     rangeStartAt: number;
     rangeEndAt: number;
     limit: number;
+    prioritizePreferredTimes?: boolean;
     excludeEventId?: Id<"calendarEvents">;
   },
 ): Promise<BookingSlot[]> {
@@ -222,7 +223,7 @@ export async function generateSlots(
   const durationMs = args.service.durationMinutes * 60 * 1000;
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
   const slots: BookingSlot[] = [];
-  const maxCandidates = 200;
+  const maxCandidates = args.prioritizePreferredTimes === false ? args.limit : 200;
   for (
     let startAt = roundUpToSlotInterval(args.rangeStartAt);
     startAt + durationMs <= args.rangeEndAt && slots.length < maxCandidates;
@@ -248,7 +249,10 @@ export async function generateSlots(
       });
     }
   }
-  return sortSlotsWithPreferredTime(slots, args.service).slice(0, args.limit);
+  const orderedSlots = args.prioritizePreferredTimes === false
+    ? slots
+    : sortSlotsWithPreferredTime(slots, args.service);
+  return orderedSlots.slice(0, args.limit);
 }
 
 export async function resolveAvailableInterval(
