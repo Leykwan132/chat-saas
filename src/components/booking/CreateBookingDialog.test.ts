@@ -30,6 +30,15 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(dialogSource).not.toContain('controller.updateField');
 });
 
+test('guides users to create a service when none are active', () => {
+  expect(dialogSource).toContain('from \'@/components/ui/empty\'');
+  expect(dialogSource).toContain('<EmptyTitle>No active services</EmptyTitle>');
+  expect(dialogSource).toContain('Create a service so you can book appointments.');
+  expect(dialogSource).toContain('Create service');
+  expect(dialogSource).toContain('to={`/dashboard/${agentId}/services/new`}');
+  expect(dialogSource).not.toContain('No active Services are configured.');
+});
+
 test('shows a spinner without changing the label while creating a booking', () => {
   expect(dialogSource).toContain("import { Spinner } from '@/components/ui/spinner';");
   expect(dialogSource).toContain('{controller.busy && <Spinner data-icon="inline-start" />}');

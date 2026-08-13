@@ -1,9 +1,17 @@
 import { useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { CalendarCheck, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
@@ -79,7 +87,25 @@ export function CreateBookingDialog({
         {services === undefined ? (
           <div className="h-32 rounded-md bg-muted motion-safe:animate-pulse" />
         ) : services.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No active Services are configured.</p>
+          <Empty className="py-6">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarCheck />
+              </EmptyMedia>
+              <EmptyTitle>No active services</EmptyTitle>
+              <EmptyDescription>
+                Create a service so you can book appointments.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link to={`/dashboard/${agentId}/services/new`}>
+                  <Plus data-icon="inline-start" />
+                  Create service
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ) : (
           <div className="grid gap-5">
             {fixedCustomer === undefined ? (
@@ -171,14 +197,16 @@ export function CreateBookingDialog({
         )}
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button
-            type="button"
-            disabled={controller.busy || !controller.selectionAvailable}
-            onClick={() => void handleCreate()}
-          >
-            {controller.busy && <Spinner data-icon="inline-start" />}
-            Create booking
-          </Button>
+          {services !== undefined && services.length > 0 ? (
+            <Button
+              type="button"
+              disabled={controller.busy || !controller.selectionAvailable}
+              onClick={() => void handleCreate()}
+            >
+              {controller.busy && <Spinner data-icon="inline-start" />}
+              Create booking
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>

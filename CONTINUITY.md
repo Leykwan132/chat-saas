@@ -3,26 +3,26 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Connected Calendar header uses the same outline button as Connect, labeled Connected with a check; click opens a Disconnect dropdown (confirm dialog kept). [USER] 2026-08-13
+- Now: Create booking empty state uses Empty and a Create service link when no active services exist. [USER] 2026-08-13
 - Next: User deploys latest Convex and reconnects. Logs should show `[google-calendar] WorkOS access token { active: true, hasAccessToken: true }`. [USER] 2026-08-13
-- Open questions: production availability UNCONFIRMED. Connected-button UI not in changelog until production date is confirmed. [USER] 2026-08-13
+- Open questions: production availability UNCONFIRMED. Connected-button and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [USER] Create booking with no active services uses Empty and a Create service action instead of a disabled Create booking button.
 - 2026-08-13 [USER] Connected Google Calendar header button matches Connect; check mark; click opens Disconnect dropdown, then existing confirm dialog.
 - 2026-08-13 [USER] D651: Remove WorkOS Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only and call Google Calendar with that Bearer token. Do not persist or log the token.
 - 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
 - 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
-- 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
 
 # Working set
-- src/components/calendar/GoogleCalendarConnectionCard.tsx
-- src/components/calendar/GoogleCalendarConnection.test.tsx
-- src/components/calendar/GoogleCalendarDisconnectDialog.tsx
+- src/components/booking/CreateBookingDialog.tsx
+- src/components/booking/CreateBookingDialog.test.ts
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [CODE] Create booking empty state: Empty + Create service link to `/services/new`; Create booking footer hidden when there are no services.
 - 2026-08-13 [TOOL] Connected header button dropdown: 12 passed (`GoogleCalendarConnection.test.tsx`).
 - 2026-08-13 [CODE] Connected header button: same outline control as Connect, check icon, Disconnect in dropdown.
 - 2026-08-13 [TOOL] Access-token Google Calendar after Relay removal: 180 passed (24 files).
