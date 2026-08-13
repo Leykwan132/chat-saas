@@ -11,7 +11,7 @@ import { reconcileUntilGoogleCalendarReady } from "./useGoogleCalendarConnection
 import { GoogleCalendarSourceBadge } from "./GoogleCalendarSourceBadge";
 import { EventDetailsBody } from "./CalendarEventDetailsBody";
 import type { AppointmentDetails } from "./CalendarEventDetailsBody";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { formatPrefixedRelativeAge } from "@/lib/formatRelativeAge";
 
 function renderConnectionCard(
   props: Partial<ComponentProps<typeof GoogleCalendarConnectionCard>> & {
@@ -43,7 +43,7 @@ describe("Google Calendar connection UI", () => {
   });
 
   it("shows the connected account in a card with a trash disconnect", () => {
-    const createdAt = Date.UTC(2026, 7, 13, 12, 0, 0);
+    const createdAt = Date.now() - 3 * 24 * 60 * 60 * 1000;
     const markup = renderConnectionCard({
       state: "connected",
       connectedAccountEmail: "owner@gmail.com",
@@ -54,10 +54,11 @@ describe("Google Calendar connection UI", () => {
     expect(markup).toContain("owner@gmail.com");
     expect(markup).toContain("text-emerald-600");
     expect(markup).toContain('aria-label="Active"');
-    expect(markup).toContain("Connected since 13 Aug 2026");
+    expect(markup).toContain(formatPrefixedRelativeAge("Connected", createdAt));
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
+    expect(source).toContain("formatPrefixedRelativeAge");
     expect(source).toContain("CheckCircle2");
     expect(source).toContain("Trash2");
     expect(source).toContain("Disconnect Google Calendar");

@@ -1,5 +1,4 @@
 import { CheckCircle2, Trash2 } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatPrefixedRelativeAge } from "@/lib/formatRelativeAge";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 export const GOOGLE_CALENDAR_ICON_SRC =
@@ -24,10 +24,10 @@ function GoogleCalendarIcon() {
   return <img src={GOOGLE_CALENDAR_ICON_SRC} alt="" className="size-4" />;
 }
 
-function connectedSinceLabel(createdAt?: number, lastSuccessfulSyncAt?: number) {
+function connectedAgeLabel(createdAt?: number, lastSuccessfulSyncAt?: number) {
   const at = createdAt ?? lastSuccessfulSyncAt;
   if (at === undefined) return undefined;
-  return `Connected since ${format(at, "d MMM yyyy")}`;
+  return formatPrefixedRelativeAge("Connected", at);
 }
 
 export function GoogleCalendarConnectionCard({
@@ -48,7 +48,7 @@ export function GoogleCalendarConnectionCard({
         ? "Reconnect"
         : "+ Google Calendar";
   const accountLabel = connectedAccountEmail ?? "Google account";
-  const sinceLabel = connectedSinceLabel(createdAt, lastSuccessfulSyncAt);
+  const connectedAge = connectedAgeLabel(createdAt, lastSuccessfulSyncAt);
 
   return (
     <Card
@@ -73,8 +73,8 @@ export function GoogleCalendarConnectionCard({
                   aria-label="Active"
                 />
               </div>
-              {sinceLabel ? (
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">{sinceLabel}</p>
+              {connectedAge ? (
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{connectedAge}</p>
               ) : null}
             </div>
             <Button
