@@ -27,6 +27,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] WorkOS connected-account console log: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
 - 2026-08-13 [USER] Connect logs WorkOS connected-account GET (`status` + `body`) to the browser console and Convex function logs.
 - 2026-08-13 [TOOL] Persist-after-connect: 43 passed (21 provider/authorize, 10 connection runtime, 12 connection UI).
 - 2026-08-13 [CODE] D647: Connect polls reconcile while the WorkOS tab is open; `requireWorkosAccount` retries 404s and throws if still missing. `needs_reauthorization` now inserts a row.
