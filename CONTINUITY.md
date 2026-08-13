@@ -3,7 +3,7 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes Relay; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Calendar Connect sits left of the time zone control. Today button removed. WorkOS slug is `google-calendar`. [USER] 2026-08-13
+- Now: Calendar Connect is left of the time zone control, with a “Connect Google Calendar” hover tooltip. [USER] 2026-08-13
 - Next: User reconnects Google Calendar if needed; confirm Relay is enabled for the WorkOS environment. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED; Relay is early access. [USER] 2026-08-13
 

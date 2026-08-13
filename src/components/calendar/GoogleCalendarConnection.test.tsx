@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   GOOGLE_CALENDAR_ICON_SRC,
   GoogleCalendarConnectionCard,
@@ -17,13 +18,15 @@ function renderConnectionCard(
   },
 ) {
   return renderToStaticMarkup(
-    <GoogleCalendarConnectionCard
-      pending={false}
-      onConnect={() => undefined}
-      onReconnect={() => undefined}
-      onDisconnect={() => undefined}
-      {...props}
-    />,
+    <TooltipProvider>
+      <GoogleCalendarConnectionCard
+        pending={false}
+        onConnect={() => undefined}
+        onReconnect={() => undefined}
+        onDisconnect={() => undefined}
+        {...props}
+      />
+    </TooltipProvider>,
   );
 }
 
@@ -32,7 +35,9 @@ describe("Google Calendar connection UI", () => {
     const markup = renderConnectionCard({ state: "not_connected" });
     expect(markup).toContain("Connect");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).not.toContain("Connect Google Calendar");
+    const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
+    expect(source).toContain("Connect Google Calendar");
+    expect(source).toContain("TooltipContent");
   });
 
   it("shows Connected and Disconnect when connected", () => {

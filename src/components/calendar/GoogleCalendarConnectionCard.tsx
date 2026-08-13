@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
 export const GOOGLE_CALENDAR_ICON_SRC =
@@ -50,17 +51,26 @@ export function GoogleCalendarConnectionCard({
           </Button>
         </>
       ) : (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          className="h-8 w-fit gap-2"
-          disabled={pending}
-          onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
-        >
-          <GoogleCalendarIcon />
-          {connectLabel}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 w-fit gap-2"
+              disabled={pending}
+              onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
+            >
+              <GoogleCalendarIcon />
+              {connectLabel}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {state === "needs_reauthorization"
+              ? "Reconnect Google Calendar"
+              : "Connect Google Calendar"}
+          </TooltipContent>
+        </Tooltip>
       )}
       {state === "syncing" && lastErrorMessage ? (
         <p className="max-w-40 truncate text-xs text-destructive">{lastErrorMessage}</p>
