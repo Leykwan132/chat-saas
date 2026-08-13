@@ -5,6 +5,7 @@
 - 2026-08-13 [TOOL] Regression tests were RED with empty service arrays in both manual flows, then GREEN: 4/4 focused tests, Node v22.22.0 `tsc --noEmit`, and `git diff --check` pass. The full Vitest command has 1,345 passing tests but exits non-zero on 10 established Docs runner/configuration suites outside this change.
 - 2026-08-13 [TOOL] Commit `6affb7ac` is pushed to `origin/codex/fix-booking-active-services`; `git merge-tree --write-tree origin/main HEAD` completed without conflicts. GitHub PR creation is blocked by connector 403 `Resource not accessible by integration`, while local `gh` has an invalid token. Production availability is UNCONFIRMED; no changelog entry is due before release.
 - 2026-08-13 [USER] A selected current day must keep only its circular selection indicator, without the square muted calendar background.
+- 2026-08-13 [USER] The selected Calendar View filter needs fully rounded pill corners.
 
 # Done (recent)
 
@@ -18,7 +19,7 @@
 
 # State
 
-- 2026-08-13 [CODE] Now: `codex/fix-slot-availability-create` also makes a selected current calendar day transparent at the cell level, retaining its circular selected indicator.
+- 2026-08-13 [CODE] Now: `codex/fix-slot-availability-create` renders active Calendar View filters as fully rounded pills and selected current calendar days without a square background.
 - 2026-08-13 [TOOL] Next: hand off the verified branch; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
@@ -34,6 +35,8 @@
 - `src/components/inbox/manualBookingScheduleModel.ts`
 - `src/components/ui/calendar.tsx`
 - `src/components/ui/calendar.test.tsx`
+- `src/components/calendar/CalendarSidebar.tsx`
+- `src/components/calendar/CalendarSidebar.test.tsx`
 
 # Receipts
 
@@ -52,3 +55,4 @@
 - 2026-08-13 [USER] Screenshot confirmed the Calendar + New Booking flow was not included in the prior implementation; user authorized extending it.
 - 2026-08-13 [TOOL] Calendar nearest-slot lookup, customer-selection recheck, focused booking tests (13/13), `bunx tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-13 [TOOL] Calendar selected-today regression was RED before the styling change and GREEN afterward; `CalendarSidebar.test.tsx` (2/2), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
+- 2026-08-13 [TOOL] Calendar View filter pill regression was RED before the local active-row override and GREEN afterward; `CalendarSidebar.test.tsx` (3/3), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
