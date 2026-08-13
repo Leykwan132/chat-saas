@@ -153,14 +153,20 @@ function providerFetch(t: CalendarTest, onWatch: (body: Record<string, unknown>)
         scopes: ["https://www.googleapis.com/auth/calendar.events"],
       });
     }
-    const relayUrl = request.headers.get("X-Relay-URL") ?? "";
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
+      });
+    }
+    const googleUrl = request.url;
     const body = await request.json() as Record<string, unknown>;
     calls.push(body);
-    if (relayUrl.endsWith("/calendars/primary/events/watch")) {
+    if (googleUrl.includes("/calendars/primary/events/watch")) {
       await onWatch(body);
       return Response.json({ id: body.id, resourceId: `resource-${body.id}`, resourceUri: "https://www.googleapis.com/calendar/v3/calendars/primary/events", expiration: String(now + 7 * day) });
     }
-    if (request.url.endsWith("/channels/stop") || relayUrl.endsWith("/channels/stop")) return new Response(null, { status: 204 });
+    if (request.url.endsWith("/channels/stop") || googleUrl.endsWith("/channels/stop")) return new Response(null, { status: 204 });
     return Response.json({}, { status: 400 });
   };
 }
@@ -238,6 +244,12 @@ test("stopping tolerates Google not finding an unexpired channel", async () => {
         object: "connected_account",
         state: "connected",
         scopes: ["https://www.googleapis.com/auth/calendar.events"],
+      });
+    }
+    if (request.method === "POST" && request.url.includes("/data-integrations/google-calendar/token")) {
+      return Response.json({
+        active: true,
+        access_token: { object: "access_token", access_token: "ya29.test", scopes: [], missing_scopes: [] },
       });
     }
     return Response.json({}, { status: 404 });

@@ -213,7 +213,7 @@ WorkOS connected-account GET (no Google token):
 GET /user_management/users/${workosUserId}/connected_accounts/${GOOGLE_CALENDAR_PROVIDER}
 ```
 
-Google Calendar HTTP goes through Pipes Relay with `X-Relay-User` only.
+Google Calendar HTTP vends a Pipes access token (`user_id` only) and calls Google Calendar directly.
 
 Implement a single typed Google request helper supporting `GET`, `POST`, `PUT`, and `DELETE`, conditional `If-Match`, empty successful bodies, JSON validation, and safe error categories. Provider response bodies must not be included in thrown customer-visible errors or logs.
 
