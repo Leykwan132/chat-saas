@@ -51,7 +51,7 @@ async function setup(t: CalendarTest) {
     await ctx.db.patch(managerId, { activeTeamId: teams[0]!.teamId, updatedAt: now });
     await ctx.db.patch(staffId, { activeTeamId: teams[0]!.teamId, updatedAt: now });
     await ctx.db.insert("googleCalendarConnections", {
-      userId: staffId, workosUserId: "review-staff", provider: "google_calendar",
+      userId: staffId, workosUserId: "review-staff", provider: "google-calendar",
       primaryCalendarId: "primary", timeZone: "UTC", state: "connected", dirtyGeneration: 0,
       lastSuccessfulSyncAt: now, createdAt: now, updatedAt: now,
     });
@@ -170,7 +170,7 @@ test("connection health is queried once per distinct roster user", async () => {
       workosUserId: "health-user", email: "health@example.com", createdAt: now, updatedAt: now,
     });
     await ctx.db.insert("googleCalendarConnections", {
-      userId, workosUserId: "health-user", provider: "google_calendar",
+      userId, workosUserId: "health-user", provider: "google-calendar",
       primaryCalendarId: "primary", timeZone: "UTC", state: "connected", dirtyGeneration: 0,
       lastSuccessfulSyncAt: now, createdAt: now, updatedAt: now,
     });

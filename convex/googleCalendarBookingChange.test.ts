@@ -111,7 +111,7 @@ async function createSyncedBooking(t: CalendarTest) {
       createdAt: now, updatedAt: now,
     });
     const connectionId = await ctx.db.insert("googleCalendarConnections", {
-      userId, workosUserId: "sync-owner", provider: "google_calendar", primaryCalendarId: "primary",
+      userId, workosUserId: "sync-owner", provider: "google-calendar", primaryCalendarId: "primary",
       timeZone: "UTC", state: "connected", dirtyGeneration: 1, syncToken: "sync_1",
       lastSuccessfulSyncAt: now, createdAt: now, updatedAt: now,
     });

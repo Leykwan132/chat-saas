@@ -146,7 +146,7 @@ test("acknowledges duplicate and out-of-order message numbers without duplicate 
 function providerFetch(t: CalendarTest, onWatch: (body: Record<string, unknown>) => Promise<void>, calls: Array<Record<string, unknown>>) {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google-calendar")) {
       return Response.json({
         object: "connected_account",
         state: "connected",
@@ -233,7 +233,7 @@ test("stopping tolerates Google not finding an unexpired channel", async () => {
   const { t, channelId } = await fixture();
   vi.stubGlobal("fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google-calendar")) {
       return Response.json({
         object: "connected_account",
         state: "connected",

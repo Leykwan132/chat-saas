@@ -98,7 +98,7 @@ async function createBookingFixture(t: CalendarTest, options?: {
     let connectionId: Id<"googleCalendarConnections"> | undefined;
     if (options?.connect !== undefined) {
       connectionId = await ctx.db.insert("googleCalendarConnections", {
-        userId, workosUserId: "booking-owner", provider: "google_calendar", primaryCalendarId: "primary",
+        userId, workosUserId: "booking-owner", provider: "google-calendar", primaryCalendarId: "primary",
         timeZone: "UTC",
         state: options.connect === "healthy" ? "connected" : "needs_reauthorization",
         dirtyGeneration: 0,

@@ -38,7 +38,7 @@ async function setup(t: CalendarTest) {
       assignmentStrategy: "balanced", createdAt: now, updatedAt: now,
     });
     await ctx.db.insert("googleCalendarConnections", {
-      userId, workosUserId: "interval-user", provider: "google_calendar", primaryCalendarId: "primary",
+      userId, workosUserId: "interval-user", provider: "google-calendar", primaryCalendarId: "primary",
       timeZone: "UTC", state: "connected", dirtyGeneration: 0, lastSuccessfulSyncAt: now,
       createdAt: now, updatedAt: now,
     });

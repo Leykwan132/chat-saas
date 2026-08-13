@@ -33,7 +33,7 @@ function workosFetchReturning(payload: unknown, status = 200): typeof fetch {
     const request = new Request(input, init);
     if (
       request.method !== "GET" ||
-      request.url !== "https://api.workos.com/user_management/users/user_123/connected_accounts/google_calendar"
+      request.url !== "https://api.workos.com/user_management/users/user_123/connected_accounts/google-calendar"
     ) {
       return responseJson({ error: "unexpected_request" }, 400);
     }
@@ -202,7 +202,7 @@ test("vends a user-scoped Google Calendar authorize URL", async () => {
   );
   expect(receivedRequest?.method).toBe("POST");
   expect(receivedRequest?.url).toBe(
-    "https://api.workos.com/data-integrations/google_calendar/authorize",
+    "https://api.workos.com/data-integrations/google-calendar/authorize",
   );
   expect(await receivedRequest?.json()).toEqual({ user_id: "user_123" });
 });

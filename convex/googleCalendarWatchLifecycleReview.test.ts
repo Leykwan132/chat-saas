@@ -118,7 +118,7 @@ function providerFetch(
 ) {
   return async (input: RequestInfo | URL, init?: RequestInit) => {
     const request = new Request(input, init);
-    if (request.method === "GET" && request.url.includes("/connected_accounts/google_calendar")) {
+    if (request.method === "GET" && request.url.includes("/connected_accounts/google-calendar")) {
       return Response.json({
         object: "connected_account",
         state: "connected",

@@ -150,7 +150,7 @@ Existing entrypoints remain stable. `convex/http.ts`, `convex/crons.ts`, `convex
 A `googleCalendarConnections` table stores one row per Convex user:
 
 - Convex user ID and WorkOS user ID.
-- Provider slug `google_calendar`.
+- Provider slug `google-calendar`.
 - Primary Google calendar ID and time zone.
 - State: `connected`, `syncing`, `needs_reauthorization`, or `disconnected`.
 - Stored incremental `syncToken`.
@@ -272,7 +272,7 @@ Deletes are idempotent. A Google event already absent is treated as externally d
 
 ## Permissions and privacy
 
-- WorkOS connected-account reads use the authenticated WorkOS user ID and the configured provider slug `google_calendar`.
+- WorkOS connected-account reads use the authenticated WorkOS user ID and the configured provider slug `google-calendar`.
 - Google API calls run only in Convex actions or backend HTTP handlers, proxied through WorkOS Pipes Relay.
 - Google tokens never enter Convex, the browser, agent prompt, logs, database, webhook token, or client-visible error.
 - Relay requests omit `X-Relay-Organization` so connections stay user-scoped.
@@ -367,7 +367,7 @@ Using the configured WorkOS sandbox or production test account:
 
 WorkOS Google Calendar provider configuration is already complete according to the user. Before production enablement, verify:
 
-- Provider slug is `google_calendar`.
+- Provider slug is `google-calendar`.
 - Required scope `https://www.googleapis.com/auth/calendar.events` is granted.
 - Production uses the intended custom Google OAuth credentials rather than sandbox-only shared credentials.
 - The Convex Google webhook URL is publicly reachable over HTTPS.

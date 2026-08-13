@@ -15,7 +15,7 @@
 - No application code file may exceed 300 lines. Keep `convex/http.ts`, `convex/crons.ts`, `convex/chat/threads.ts`, and `src/pages/CalendarPage.tsx` as composition-only edits.
 - Do not add comments unless a non-obvious external protocol constraint cannot be made self-explanatory through naming and module boundaries.
 - Use WorkOS Pipes for OAuth storage and refresh; never persist or log Google access or refresh tokens.
-- Use provider slug `google_calendar` and require `https://www.googleapis.com/auth/calendar.events`.
+- Use provider slug `google-calendar` and require `https://www.googleapis.com/auth/calendar.events`.
 - Version one supports one user-scoped connection and only the user's primary Google Calendar.
 - A connection follows the user across every workspace and eligible agent; team projections remain permission-scoped.
 - Users who never connect Google retain Kilobot-only calendars. Previously connected but unhealthy calendars fail closed for availability and external writes.
@@ -120,7 +120,7 @@ Expected: FAIL because the Google Calendar schema tables and event ownership fie
 Define exact constants:
 
 ```ts
-export const GOOGLE_CALENDAR_PROVIDER = "google_calendar" as const;
+export const GOOGLE_CALENDAR_PROVIDER = "google-calendar" as const;
 export const GOOGLE_CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 export const CALENDAR_PAGE_FRESHNESS_MS = 5 * 60 * 1000;
 export const AVAILABILITY_FRESHNESS_MS = 60 * 1000;

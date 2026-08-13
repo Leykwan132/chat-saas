@@ -180,7 +180,7 @@ test("the Google event owner can prepare an update without calendar.manage", asy
     await ctx.db.insert("googleCalendarConnections", {
       userId: event.externalOwnerUserId,
       workosUserId: "external-owner",
-      provider: "google_calendar",
+      provider: "google-calendar",
       primaryCalendarId: "primary",
       timeZone: "UTC",
       state: "connected",
@@ -235,7 +235,7 @@ async function setupAvailabilityFixture(t: CalendarTest, connected = true): Prom
       teams.push({ teamId, serviceId });
     }
     const connectionId = connected ? await ctx.db.insert("googleCalendarConnections", {
-      userId: ownerId, workosUserId: "connected-staff", provider: "google_calendar",
+      userId: ownerId, workosUserId: "connected-staff", provider: "google-calendar",
       primaryCalendarId: "primary", timeZone: "UTC", state: "connected", dirtyGeneration: 0,
       lastSuccessfulSyncAt: now, createdAt: now, updatedAt: now,
     }) : undefined;

@@ -47,7 +47,7 @@ async function setupMaxRoster(t: CalendarTest) {
         enabled: true, createdAt: now + index, updatedAt: now,
       });
       await ctx.db.insert("googleCalendarConnections", {
-        userId, workosUserId, provider: "google_calendar", primaryCalendarId: "primary",
+        userId, workosUserId, provider: "google-calendar", primaryCalendarId: "primary",
         timeZone: "UTC", state: "connected", dirtyGeneration: 0, lastSuccessfulSyncAt: now,
         createdAt: now, updatedAt: now,
       });
@@ -111,7 +111,7 @@ async function replaceLastRosterUser(
       timezone: "UTC", enabled: true, createdAt: fixture.now + 100, updatedAt: fixture.now,
     });
     await ctx.db.insert("googleCalendarConnections", {
-      userId, workosUserId, provider: "google_calendar", primaryCalendarId: "primary",
+      userId, workosUserId, provider: "google-calendar", primaryCalendarId: "primary",
       timeZone: "UTC", state: "connected", dirtyGeneration: 0,
       lastSuccessfulSyncAt: fixture.now, createdAt: fixture.now, updatedAt: fixture.now,
     });
