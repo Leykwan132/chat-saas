@@ -208,3 +208,40 @@ test("reconciliation and invalid-token cleanup renew their leases across batches
     })).toEqual({ kind: "already_running" });
   }
 });
+
+test("full-sync reconciliation scans one team event page per call", async () => {
+  const { t, userId, teamIds, connectionId } = await setup();
+  await insertGoogleRows(t, userId, teamIds[0], 1);
+  await insertGoogleRows(t, userId, teamIds[1], 1);
+  const deps = dependencies(t);
+  const started = await deps.beginRun({
+    connectionId,
+    requestKind: "full",
+    fullSyncStartAt: baseNow,
+    fullSyncEndAt: baseNow + 86_400_000,
+    now: baseNow,
+  });
+  if (started.kind !== "started") throw new Error("Expected owner run");
+  const first = await deps.reconcileFullRun({
+    connectionId,
+    runId: started.runId,
+    now: baseNow + 1,
+  });
+  expect(first).toMatchObject({ kind: "progress", complete: false, deletedCount: 1 });
+  const remainingAfterFirst = await t.run(async (ctx) =>
+    (await ctx.db.query("calendarEvents").take(10))
+      .filter((row) => row.externalOrigin === "google").length,
+  );
+  expect(remainingAfterFirst).toBe(1);
+  const second = await deps.reconcileFullRun({
+    connectionId,
+    runId: started.runId,
+    cursor: first.kind === "progress" ? first.cursor : undefined,
+    now: baseNow + 2,
+  });
+  expect(second).toMatchObject({ kind: "progress", complete: true, deletedCount: 1 });
+  expect(await t.run(async (ctx) =>
+    (await ctx.db.query("calendarEvents").take(10))
+      .filter((row) => row.externalOrigin === "google").length,
+  )).toBe(0);
+});

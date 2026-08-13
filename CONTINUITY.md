@@ -3,26 +3,24 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Google Calendar HTTP vends a Pipes access token per call and calls Google directly. No Relay. [USER] 2026-08-13
-- Next: User reconnects on this branch so initial sync can list events with a Google Bearer token. [USER] 2026-08-13
+- Now: Full-sync reconcile was crashing on two `.paginate()` calls in one mutation. Events paginate; memberships use `take()`. [CODE] 2026-08-13
+- Next: User reconnects so the first full sync can finish and list Google events. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. [USER] 2026-08-13
 
 # Done (recent)
+- 2026-08-13 [CODE] Full-sync reconcile uses one paginated query per mutation: event pages only. Team memberships load with `take()`.
 - 2026-08-13 [USER] D648: Stop using WorkOS Pipes Relay. Vend `POST /data-integrations/google-calendar/token` with `user_id` only, call Google Calendar with that Bearer token, and never store it. Do not send `organization_id` or the `google_calendar` slug.
 - 2026-08-13 [USER] D647: After Google grants access, Kilobot polls WorkOS and writes the connection row without waiting for the success tab to close. Missing WorkOS accounts fail loudly instead of leaving the table empty.
 - 2026-08-13 [USER] D646: Calendar Connect is in the header left of the time zone control. The Today button is removed.
 - 2026-08-13 [USER] D645: WorkOS Pipes provider slug is `google-calendar` (hyphen), not `google_calendar`.
 - 2026-08-13 [USER] D644: Calendar Google connect uses Kilobot UI plus WorkOS authorize URL (`user_id` only). Hosted `<Pipes>` widget removed from Calendar.
 - 2026-08-13 [USER] D642: Pipes Google Calendar connections are user-scoped. Authorize URL body is `{ user_id }` only (widget tokens superseded by D644).
-- 2026-08-13 [CODE] Task 9 UI plus watch/agent `internal` cycle and `origin/main` `16e7d1f` merge on `cursor/google-calendar-booking-sync-10b0`.
 
 # Working set
+- convex/googleCalendar/syncRecovery.ts
+- convex/googleCalendarSyncLease.test.ts
 - convex/googleCalendar/googleClient.ts
 - convex/googleCalendar/connectionWorkos.ts
-- convex/googleCalendar/constants.ts
-- convex/googleCalendar/writeTestDependencies.ts
-- convex/googleCalendarProvider.test.ts
-- docs/superpowers/specs/2026-08-13-google-calendar-sync-design.md
 - CONTINUITY.md
 
 # Receipts
