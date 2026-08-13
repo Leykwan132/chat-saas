@@ -23,6 +23,7 @@
 - CONTINUITY.md
 
 # Receipts
+- 2026-08-13 [TOOL] After merging `origin/main` `313edd6`: 37 passed (Create booking, nearest-slot, calendar selection, Google Calendar availability/connection).
 - 2026-08-13 [TOOL] Merged `origin/main` `313edd6` into `cursor/google-calendar-booking-sync-10b0`. CONTINUITY kept this branch's Google Calendar ledger; D656 records nearest-slot prefill and calendar selection polish from main. Create stays a Google-first action.
 - 2026-08-13 [TOOL] Google Calendar debug-log cleanup tests: 46 passed (`GoogleCalendarConnection.test.tsx`, `googleCalendarProvider.test.ts`, `googleCalendarConnection.test.ts`).
 - 2026-08-13 [CODE] Google Calendar debug logs removed from Connect poll, WorkOS GET, and access-token vend. Client status no longer includes `workosHttpStatus` / `workosConnectedAccount`.
