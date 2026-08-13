@@ -5,7 +5,7 @@ import {
   googleCalendarConnectionStatusValidator,
   type GoogleCalendarConnectionStatus,
 } from "./connectionStatus";
-import { createUserScopedPipesWidgetToken } from "./connectionWorkos";
+import { createUserScopedGoogleCalendarAuthorizeUrl } from "./connectionWorkos";
 import {
   disconnectGoogleCalendarConnection,
   googleCalendarConnectionDependencies,
@@ -35,12 +35,12 @@ export const refreshCurrentConnection = action({
   },
 });
 
-export const getCurrentPipesWidgetToken = action({
+export const getCurrentAuthorizeUrl = action({
   args: {},
-  returns: v.string(),
-  handler: async (ctx): Promise<string> => {
+  returns: v.object({ url: v.string() }),
+  handler: async (ctx): Promise<{ url: string }> => {
     const auth = await getAuthContext(ctx);
-    return await createUserScopedPipesWidgetToken(auth.userId);
+    return { url: await createUserScopedGoogleCalendarAuthorizeUrl(auth.userId) };
   },
 });
 

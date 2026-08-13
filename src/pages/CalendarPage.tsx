@@ -86,7 +86,6 @@ import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreat
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { GoogleCalendarConnectionCard } from '@/components/calendar/GoogleCalendarConnectionCard';
 import { GoogleCalendarDisconnectDialog } from '@/components/calendar/GoogleCalendarDisconnectDialog';
-import { GoogleCalendarPipesDialog } from '@/components/calendar/GoogleCalendarPipesDialog';
 import { GoogleCalendarSourceBadge } from '@/components/calendar/GoogleCalendarSourceBadge';
 import { useGoogleCalendarConnection } from '@/components/calendar/useGoogleCalendarConnection';
 import { cn } from '@/lib/utils';
@@ -1114,8 +1113,8 @@ export default function CalendarPage() {
             <GoogleCalendarConnectionCard
               {...googleCalendar.status}
               pending={googleCalendar.pending}
-              onConnect={googleCalendar.openPipes}
-              onReconnect={googleCalendar.openPipes}
+              onConnect={() => void googleCalendar.connectGoogleCalendar()}
+              onReconnect={() => void googleCalendar.connectGoogleCalendar()}
               onRefresh={() => void googleCalendar.refreshConnection()}
               onDisconnect={() => googleCalendar.setDisconnectOpen(true)}
             />
@@ -1578,11 +1577,6 @@ export default function CalendarPage() {
         onDeleteSuccess={() => setSelectedEventId(null)}
       />
 
-      <GoogleCalendarPipesDialog
-        open={googleCalendar.pipesOpen}
-        authToken={googleCalendar.authToken}
-        onOpenChange={googleCalendar.handlePipesOpenChange}
-      />
       <GoogleCalendarDisconnectDialog
         open={googleCalendar.disconnectOpen}
         pending={googleCalendar.pending}

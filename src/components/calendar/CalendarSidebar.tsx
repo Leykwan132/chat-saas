@@ -128,8 +128,6 @@ export function CalendarSidebar({
           </div>
         ) : null}
 
-        {connectionCard}
-
         <CalendarSidebarFilterSection title="View">
           <CalendarSidebarFilterRow
             label="All events"
@@ -147,6 +145,8 @@ export function CalendarSidebar({
             disabled={!hasCurrentUser}
           />
         </CalendarSidebarFilterSection>
+
+        {connectionCard}
       </div>
     </aside>
   );

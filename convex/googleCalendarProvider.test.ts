@@ -1,5 +1,5 @@
 import { afterAll, expect, test } from "vitest";
-import { createUserScopedPipesWidgetToken } from "./googleCalendar/connectionWorkos";
+import { createUserScopedGoogleCalendarAuthorizeUrl } from "./googleCalendar/connectionWorkos";
 import {
   getGoogleCalendarCredential,
 } from "./googleCalendar/workosToken";
@@ -188,15 +188,29 @@ test("exposes the classified error type", () => {
   expect(new GoogleCalendarProviderError("conflict")).toBeInstanceOf(Error);
 });
 
-test("mints a Pipes widget token with user_id only", async () => {
+test("vends a user-scoped Google Calendar authorize URL", async () => {
   let receivedRequest: Request | undefined;
-  const token = await createUserScopedPipesWidgetToken("user_123", async (input, init) => {
+  const url = await createUserScopedGoogleCalendarAuthorizeUrl("user_123", async (input, init) => {
     receivedRequest = new Request(input, init);
-    return responseJson({ token: "widget_token" });
+    return responseJson({
+      url: "https://api.workos.com/data-integrations/q2czJKmVAraSBg8xFpT7M9uR/authorize-redirect",
+    });
   });
 
-  expect(token).toBe("widget_token");
+  expect(url).toBe(
+    "https://api.workos.com/data-integrations/q2czJKmVAraSBg8xFpT7M9uR/authorize-redirect",
+  );
   expect(receivedRequest?.method).toBe("POST");
-  expect(receivedRequest?.url).toBe("https://api.workos.com/widgets/token");
+  expect(receivedRequest?.url).toBe(
+    "https://api.workos.com/data-integrations/google_calendar/authorize",
+  );
   expect(await receivedRequest?.json()).toEqual({ user_id: "user_123" });
+});
+
+test("rejects an authorize URL that is not a WorkOS data-integration redirect", async () => {
+  await expect(
+    createUserScopedGoogleCalendarAuthorizeUrl("user_123", async () =>
+      responseJson({ url: "https://evil.example/phish" }),
+    ),
+  ).rejects.toThrow("WorkOS authorize URL was invalid.");
 });

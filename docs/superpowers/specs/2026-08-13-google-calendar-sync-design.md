@@ -65,7 +65,7 @@ Once a connection is enabled, Google synchronization is part of that user's cale
 
 ### Connection management
 
-The Calendar page adds a Google Calendar connection control for the current user. It opens the WorkOS Pipes interface in a dedicated dialog using a user-scoped WorkOS widget token (`user_id` only, no `organization_id`) and the WorkOS Widgets provider.
+The Calendar page adds a custom Google Calendar connection control for the current user below Assigned to me. Connect uses a WorkOS Pipes authorize URL minted with `user_id` only (no `organization_id`) and Kilobot UI, not the hosted Pipes widget.
 
 The page shows:
 

@@ -4,6 +4,18 @@ import { toast } from "sonner";
 import { googleCalendarApi } from "./googleCalendarApi";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
+const GOOGLE_CALENDAR_CONNECT_FLAG = "kilobot.googleCalendar.connect";
+
+function waitForPopupClose(popup: Window) {
+  return new Promise<void>((resolve) => {
+    const timer = window.setInterval(() => {
+      if (!popup.closed) return;
+      window.clearInterval(timer);
+      resolve();
+    }, 400);
+  });
+}
+
 export function useGoogleCalendarConnection() {
   const status = useQuery(googleCalendarApi.connectionQueries.getCurrentConnectionStatus) as
     | GoogleCalendarConnectionStatus
@@ -11,8 +23,7 @@ export function useGoogleCalendarConnection() {
   const reconcile = useAction(googleCalendarApi.connectionActions.reconcileCurrentConnection);
   const refresh = useAction(googleCalendarApi.connectionActions.refreshCurrentConnection);
   const disconnect = useAction(googleCalendarApi.connectionActions.disconnectCurrentConnection);
-  const getPipesWidgetToken = useAction(googleCalendarApi.connectionActions.getCurrentPipesWidgetToken);
-  const [pipesOpen, setPipesOpen] = useState(false);
+  const getAuthorizeUrl = useAction(googleCalendarApi.connectionActions.getCurrentAuthorizeUrl);
   const [disconnectOpen, setDisconnectOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
@@ -44,11 +55,19 @@ export function useGoogleCalendarConnection() {
     setDisconnectOpen(false);
   }, [disconnect, run]);
 
-  const authToken = useCallback(async () => {
-    const token = await getPipesWidgetToken({});
-    if (!token) throw new Error("Not authenticated");
-    return token;
-  }, [getPipesWidgetToken]);
+  const connectGoogleCalendar = useCallback(() => {
+    return run(async () => {
+      const { url } = await getAuthorizeUrl({});
+      const popup = window.open(url, "google-calendar-connect", "popup=yes,width=520,height=720");
+      if (!popup) {
+        sessionStorage.setItem(GOOGLE_CALENDAR_CONNECT_FLAG, "1");
+        window.location.assign(url);
+        return;
+      }
+      await waitForPopupClose(popup);
+      await reconcile({});
+    }, "Could not connect Google Calendar");
+  }, [getAuthorizeUrl, reconcile, run]);
 
   useEffect(() => {
     if (status?.state === "connected") {
@@ -57,28 +76,17 @@ export function useGoogleCalendarConnection() {
   }, [refreshConnection, status?.state]);
 
   useEffect(() => {
-    if (!pipesOpen) return;
-    const onFocus = () => {
-      void reconcileConnection();
-    };
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, [pipesOpen, reconcileConnection]);
-
-  const handlePipesOpenChange = (open: boolean) => {
-    setPipesOpen(open);
-    if (!open) void reconcileConnection();
-  };
+    if (sessionStorage.getItem(GOOGLE_CALENDAR_CONNECT_FLAG) !== "1") return;
+    sessionStorage.removeItem(GOOGLE_CALENDAR_CONNECT_FLAG);
+    void reconcileConnection();
+  }, [reconcileConnection]);
 
   return {
     status,
     pending,
-    pipesOpen,
     disconnectOpen,
-    authToken,
     setDisconnectOpen,
-    openPipes: () => setPipesOpen(true),
-    handlePipesOpenChange,
+    connectGoogleCalendar,
     refreshConnection,
     disconnectConnection,
   };

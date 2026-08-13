@@ -3,7 +3,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
 import { CalendarSidebar } from "./CalendarSidebar";
-import { GoogleCalendarConnectionCard } from "./GoogleCalendarConnectionCard";
+import {
+  GOOGLE_CALENDAR_ICON_SRC,
+  GoogleCalendarConnectionCard,
+} from "./GoogleCalendarConnectionCard";
 import { GoogleCalendarSourceBadge } from "./GoogleCalendarSourceBadge";
 import { EventDetailsBody } from "./CalendarEventDetailsBody";
 import type { AppointmentDetails } from "./CalendarEventDetailsBody";
@@ -27,8 +30,11 @@ function renderConnectionCard(
 }
 
 describe("Google Calendar connection UI", () => {
-  it("offers Connect Google Calendar when no connection exists", () => {
-    expect(renderConnectionCard({ state: "not_connected" })).toContain("Connect Google Calendar");
+  it("offers a simple Connect button with the Google Calendar icon", () => {
+    const markup = renderConnectionCard({ state: "not_connected" });
+    expect(markup).toContain("Connect");
+    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(markup).not.toContain("Connect Google Calendar");
   });
 
   it("shows last sync and Refresh when connected", () => {
@@ -38,17 +44,19 @@ describe("Google Calendar connection UI", () => {
     });
     expect(markup).toContain("Connected");
     expect(markup).toContain("Refresh");
+    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
   });
 
   it("shows reconnect recovery without claiming connected", () => {
     const markup = renderConnectionCard({ state: "needs_reauthorization" });
-    expect(markup).toContain("Reconnect required");
+    expect(markup).toContain("Reconnect");
     expect(markup).not.toContain(">Connected<");
   });
 
   it("disables pending actions", () => {
     const markup = renderConnectionCard({ state: "not_connected", pending: true });
     expect(markup).toContain("disabled");
+    expect(markup).toContain("Connecting...");
   });
 
   it("asks for disconnect confirmation", () => {
@@ -58,17 +66,17 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("Kilobot are kept.");
   });
 
-  it("renders the Pipes dialog", () => {
-    const source = readFileSync(new URL("./GoogleCalendarPipesDialog.tsx", import.meta.url), "utf8");
-    expect(source).toContain("Connect Google Calendar");
-    expect(source).toContain("<Pipes authToken={authToken} />");
-  });
-
-  it("loads a user-scoped Pipes widget token instead of the AuthKit org session", () => {
-    const source = readFileSync(new URL("./useGoogleCalendarConnection.ts", import.meta.url), "utf8");
-    expect(source).toContain("getCurrentPipesWidgetToken");
-    expect(source).not.toContain("getAccessToken");
-    expect(source).not.toContain("@workos-inc/authkit-react");
+  it("connects through a custom authorize URL instead of the hosted Pipes widget", () => {
+    const hook = readFileSync(new URL("./useGoogleCalendarConnection.ts", import.meta.url), "utf8");
+    const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
+    expect(hook).toContain("getCurrentAuthorizeUrl");
+    expect(hook).toContain("window.open");
+    expect(hook).toContain("window.location.assign");
+    expect(hook).not.toContain("getCurrentPipesWidgetToken");
+    expect(hook).not.toContain("getAccessToken");
+    expect(hook).not.toContain("@workos-inc/widgets");
+    expect(page).not.toContain("GoogleCalendarPipesDialog");
+    expect(page).not.toContain("@workos-inc/widgets");
   });
 
   it("renders Google and Kilobot source badges", () => {
@@ -129,7 +137,7 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google");
   });
 
-  it("places the connection card on the Calendar sidebar", () => {
+  it("places the Connect button below Assigned to me", () => {
     const markup = renderToStaticMarkup(
       <CalendarSidebar
         assignedToMeOnly={false}
@@ -153,7 +161,8 @@ describe("Google Calendar connection UI", () => {
         }
       />,
     );
-    expect(markup).toContain("Connect Google Calendar");
-    expect(markup.indexOf("New Booking")).toBeLessThan(markup.indexOf("Connect Google Calendar"));
+    expect(markup.indexOf("Assigned to me")).toBeLessThan(markup.indexOf(GOOGLE_CALENDAR_ICON_SRC));
+    expect(markup.indexOf("Assigned to me")).toBeGreaterThan(markup.indexOf("New Booking"));
+    expect(markup).toContain("Connect");
   });
 });

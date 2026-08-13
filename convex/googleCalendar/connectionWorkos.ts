@@ -2,28 +2,35 @@ import { GOOGLE_CALENDAR_PROVIDER } from "./constants";
 import { getWorkOSApiKey } from "../workosClient";
 
 const WORKOS_API_BASE = "https://api.workos.com";
+const WORKOS_AUTHORIZE_URL_PREFIX = `${WORKOS_API_BASE}/data-integrations/`;
 
-export async function createUserScopedPipesWidgetToken(
+export async function createUserScopedGoogleCalendarAuthorizeUrl(
   workosUserId: string,
   fetchImplementation: typeof fetch = fetch,
 ): Promise<string> {
-  const response = await fetchImplementation(`${WORKOS_API_BASE}/widgets/token`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getWorkOSApiKey()}`,
-      "Content-Type": "application/json",
+  const response = await fetchImplementation(
+    `${WORKOS_AUTHORIZE_URL_PREFIX}${GOOGLE_CALENDAR_PROVIDER}/authorize`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${getWorkOSApiKey()}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ user_id: workosUserId }),
     },
-    body: JSON.stringify({ user_id: workosUserId }),
-  });
+  );
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(text.slice(0, 200) || `WorkOS widget token failed (${response.status})`);
+    throw new Error(text.slice(0, 200) || `WorkOS authorize URL failed (${response.status})`);
   }
-  const payload = JSON.parse(text) as { token?: unknown };
-  if (typeof payload.token !== "string" || payload.token.length === 0) {
-    throw new Error("WorkOS widget token response was empty.");
+  const payload = JSON.parse(text) as { url?: unknown };
+  if (typeof payload.url !== "string" || payload.url.length === 0) {
+    throw new Error("WorkOS authorize URL response was empty.");
   }
-  return payload.token;
+  if (!payload.url.startsWith(WORKOS_AUTHORIZE_URL_PREFIX)) {
+    throw new Error("WorkOS authorize URL was invalid.");
+  }
+  return payload.url;
 }
 
 export async function deleteWorkosGoogleCalendarAccount(

@@ -2,6 +2,9 @@ import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
+export const GOOGLE_CALENDAR_ICON_SRC =
+  "https://cdn-icons-png.flaticon.com/128/5968/5968499.png";
+
 export type GoogleCalendarConnectionCardProps = GoogleCalendarConnectionStatus & {
   pending?: boolean;
   onConnect: () => void;
@@ -9,6 +12,10 @@ export type GoogleCalendarConnectionCardProps = GoogleCalendarConnectionStatus &
   onRefresh: () => void;
   onDisconnect: () => void;
 };
+
+function GoogleCalendarIcon() {
+  return <img src={GOOGLE_CALENDAR_ICON_SRC} alt="" className="size-4" />;
+}
 
 export function GoogleCalendarConnectionCard({
   state,
@@ -20,81 +27,67 @@ export function GoogleCalendarConnectionCard({
   onRefresh,
   onDisconnect,
 }: GoogleCalendarConnectionCardProps) {
+  const connectLabel =
+    pending || state === "syncing"
+      ? "Connecting..."
+      : state === "needs_reauthorization"
+        ? "Reconnect"
+        : "Connect";
+
   return (
-    <div className="px-4 pb-3" data-calendar-sidebar-section="google-calendar">
-      <div className="rounded-xl border border-border bg-card p-3">
-        <p className="text-sm font-medium text-foreground">Google Calendar</p>
-        {state === "not_connected" ? (
+    <div className="px-4 pb-3 pt-1" data-calendar-sidebar-section="google-calendar">
+      {state === "connected" ? (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-8 items-center gap-2 text-sm text-foreground">
+              <GoogleCalendarIcon />
+              Connected
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              disabled={pending}
+              onClick={onRefresh}
+            >
+              Refresh
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8"
+              disabled={pending}
+              onClick={onDisconnect}
+            >
+              Disconnect
+            </Button>
+          </div>
+          {lastSuccessfulSyncAt !== undefined ? (
+            <p className="px-1 text-xs text-muted-foreground">
+              Last synced {formatDistanceToNow(lastSuccessfulSyncAt, { addSuffix: true })}
+            </p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1">
           <Button
             type="button"
-            className="mt-3 h-9 w-full"
+            variant="outline"
+            size="sm"
+            className="h-8 w-fit gap-2"
             disabled={pending}
-            onClick={onConnect}
+            onClick={state === "needs_reauthorization" ? onReconnect : onConnect}
           >
-            Connect Google Calendar
+            <GoogleCalendarIcon />
+            {connectLabel}
           </Button>
-        ) : null}
-        {state === "connected" ? (
-          <div className="mt-2 flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">Connected</p>
-            {lastSuccessfulSyncAt !== undefined ? (
-              <p className="text-xs text-muted-foreground">
-                Last synced {formatDistanceToNow(lastSuccessfulSyncAt, { addSuffix: true })}
-              </p>
-            ) : null}
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                disabled={pending}
-                onClick={onRefresh}
-              >
-                Refresh
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={pending}
-                onClick={onDisconnect}
-              >
-                Disconnect
-              </Button>
-            </div>
-          </div>
-        ) : null}
-        {state === "needs_reauthorization" ? (
-          <div className="mt-2 flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">Reconnect required</p>
-            <Button
-              type="button"
-              className="h-9 w-full"
-              disabled={pending}
-              onClick={onReconnect}
-            >
-              Reconnect
-            </Button>
-          </div>
-        ) : null}
-        {state === "syncing" ? (
-          <div className="mt-2 flex flex-col gap-2">
-            <p className="text-sm text-muted-foreground">Connecting...</p>
-            {lastErrorMessage ? (
-              <p className="text-xs text-destructive">{lastErrorMessage}</p>
-            ) : null}
-            <Button
-              type="button"
-              className="h-9 w-full"
-              disabled={pending}
-              onClick={onConnect}
-            >
-              Retry
-            </Button>
-          </div>
-        ) : null}
-      </div>
+          {state === "syncing" && lastErrorMessage ? (
+            <p className="px-1 text-xs text-destructive">{lastErrorMessage}</p>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }

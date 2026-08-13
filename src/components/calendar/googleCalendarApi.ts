@@ -30,11 +30,11 @@ type GoogleCalendarClientApi = {
       Record<string, never>,
       GoogleCalendarConnectionStatus
     >;
-    getCurrentPipesWidgetToken: FunctionReference<
+    getCurrentAuthorizeUrl: FunctionReference<
       "action",
       "public",
       Record<string, never>,
-      string
+      { url: string }
     >;
   };
 };
