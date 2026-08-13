@@ -40,6 +40,7 @@ import { aiReplyMessageBreakBlock } from "./aiReplyMessages";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
+import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -742,6 +743,14 @@ export function buildAgent(
           conversationId,
         });
       },
+    });
+  }
+
+  if (conversationId) {
+    registerGoogleCalendarTools({
+      tools,
+      conversationId,
+      eligible: appointmentBookingEnabled,
     });
   }
 

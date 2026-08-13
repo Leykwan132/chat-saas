@@ -553,7 +553,7 @@ git commit -m "Write Google Calendar events safely"
 - Consumes: Task 6 write APIs and Task 4 freshness/ownership resolution.
 - Produces: one booking synchronization boundary used by AI booking, manual booking, Calendar edit/delete, and external Google-change reconciliation.
 
-- [ ] **Step 1: Write failing booking orchestration tests**
+- [x] **Step 1: Write failing booking orchestration tests**
 
 Cover these observable outcomes:
 
@@ -565,7 +565,7 @@ Cover these observable outcomes:
 - A Google webhook move updates participant time indexes, booking-session selected slot, reminders, and audit action.
 - A Google deletion cancels the session, reminders, and booked conversation state without sending a customer message.
 
-- [ ] **Step 2: Run booking tests and verify RED**
+- [x] **Step 2: Run booking tests and verify RED**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarBookingSync.test.ts convex/appointmentBookingCancel.test.ts
@@ -573,13 +573,13 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarBooki
 
 Expected: FAIL because existing booking mutations are local-only.
 
-- [ ] **Step 3: Implement the shared booking boundary**
+- [x] **Step 3: Implement the shared booking boundary**
 
 Move external orchestration into actions because provider calls cannot run in mutations. Keep transactional local create/update/cancel helpers internal and make them accept the confirmed Google identity/result. Use a prepare-external-finalize sequence with write-operation recovery so a provider success cannot create a duplicate or false confirmation.
 
 Preserve existing public/internal function names where callers already depend on them; add action entrypoints only where the runtime must cross into network access. Existing confirmation tools receive success only after finalization.
 
-- [ ] **Step 4: Run booking and calendar regressions**
+- [x] **Step 4: Run booking and calendar regressions**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarBookingSync.test.ts convex/appointmentBookingCancel.test.ts convex/appointmentBookingComplete.test.ts convex/calendarEvents.test.ts convex/calendarManualBooking.test.ts
@@ -587,7 +587,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarBooki
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit booking synchronization**
+- [x] **Step 5: Commit booking synchronization**
 
 ```bash
 git add convex/appointmentBooking convex/calendarEvents.ts convex/googleCalendar convex/googleCalendarBookingSync.test.ts
@@ -609,7 +609,7 @@ git commit -m "Sync appointment bookings with Google"
 - Consumes: booking sync action results, active conversation ID, selected assignee, and privacy projection.
 - Produces: tool definitions for busy-only calendar reads and guarded create/update/cancel behavior without exposing external details.
 
-- [ ] **Step 1: Write failing agent-tool contract tests**
+- [x] **Step 1: Write failing agent-tool contract tests**
 
 Test the actual tool builder or extracted definitions:
 
@@ -631,7 +631,7 @@ test("agent cancellation requires an explicit current cancellation request", asy
 
 Also verify tools are absent outside booking-capable conversations and structured failures do not allow the prompt to claim success.
 
-- [ ] **Step 2: Run agent-tool tests and verify RED**
+- [x] **Step 2: Run agent-tool tests and verify RED**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarAgentTools.test.ts convex/chat/workflowBackendHandling.test.ts
@@ -639,13 +639,13 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarAgent
 
 Expected: FAIL because the extracted safe Google tool adapters do not exist.
 
-- [ ] **Step 3: Implement guarded agent tools and prompt rules**
+- [x] **Step 3: Implement guarded agent tools and prompt rules**
 
 Keep `convex/chat/threads.ts` composition-only by importing a `registerGoogleCalendarTools` function. The adapter accepts `tools`, `conversationId`, `agentId`, and active booking services, then registers tools only when eligible.
 
 Do not pass private Google titles, descriptions, attendees, links, account identity, or WorkOS state into the model. Mutations load the event server-side and require `externalOrigin === "kilobot"` plus matching `conversationId`.
 
-- [ ] **Step 4: Run agent and booking tests**
+- [x] **Step 4: Run agent and booking tests**
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarAgentTools.test.ts convex/chat/workflowBackendHandling.test.ts convex/googleCalendarBookingSync.test.ts
@@ -653,7 +653,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarAgent
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit agent tools**
+- [x] **Step 5: Commit agent tools**
 
 ```bash
 git add convex/chat convex/googleCalendar convex/googleCalendarAgentTools.test.ts
