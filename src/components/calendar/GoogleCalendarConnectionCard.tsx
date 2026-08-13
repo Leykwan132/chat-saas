@@ -64,9 +64,9 @@ export function GoogleCalendarConnectionCard({
           <GoogleCalendarIcon />
           {connected ? (
             <>
-              {connectedAccountEmail ? (
-                <span className="min-w-0 truncate">{connectedAccountEmail}</span>
-              ) : null}
+              <span className="min-w-0 truncate">
+                {connectedAccountEmail ?? "Google Calendar"}
+              </span>
               <BadgeCheck
                 className="size-3.5 shrink-0 fill-green-600 text-white"
                 aria-label="Active"

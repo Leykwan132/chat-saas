@@ -65,6 +65,13 @@ describe("Google Calendar connection UI", () => {
     expect(source).not.toContain("DropdownMenu");
   });
 
+  it("falls back to Google Calendar when the connected email is missing", () => {
+    const markup = renderConnectionCard({ state: "connected" });
+    expect(markup).toContain("Google Calendar");
+    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(markup).toContain("fill-green-600");
+  });
+
   it("shows reconnect recovery without claiming connected", () => {
     const markup = renderConnectionCard({ state: "needs_reauthorization" });
     expect(markup).toContain("Reconnect");

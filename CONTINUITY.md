@@ -3,7 +3,7 @@
 # Snapshot
 - Goal: Google Calendar sync via WorkOS Pipes access tokens; Convex stays the booking layer. Connections are per user, not per team. [USER] 2026-08-13
 - Success: connected assignees write Google-first; never-connected stays local; unhealthy connected fails closed. [USER] 2026-08-13
-- Now: Google Calendar sits beside the timezone control. Connected is icon + Gmail + filled BadgeCheck. Disconnected is + Connect. [USER] 2026-08-13
+- Now: Google Calendar sits beside the timezone control. Connected is icon + Gmail (or Google Calendar if email is missing) + filled BadgeCheck. [USER] 2026-08-13
 - Next: User deploys latest Convex so `connectedAccountEmail` exists; missing emails fill on calendar refresh. [USER] 2026-08-13
 - Open questions: production availability UNCONFIRMED. Sidebar card and empty-services UI not in changelog until production date is confirmed. [USER] 2026-08-13
 
