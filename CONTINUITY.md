@@ -7,6 +7,7 @@
 - 2026-08-13 [USER] A selected current day must keep only its circular selection indicator, without the square muted calendar background.
 - 2026-08-13 [USER] The selected Calendar View filter needs fully rounded pill corners.
 - 2026-08-13 [USER] When a weekly availability switch is off, retain the current layout and show the word “Unavailable”.
+- 2026-08-14 [USER] Availability roster cards should show each teammate's compact available-time summary directly on the card.
 
 # Done (recent)
 
@@ -18,11 +19,12 @@
 - 2026-08-13 D001 ACTIVE [USER] AI workflow service selections constrain AI booking only. Staff manual bookings use the active service catalogue.
 - 2026-08-13 D002 ACTIVE [USER] Inbox Create booking and Calendar + New Booking default to the first valid 30-minute slot at or after the current time; there is no lead-time delay and temporal proximity overrides preferred times.
 - 2026-08-13 D003 ACTIVE [USER] A disabled weekday retains its existing row and displays the muted label “Unavailable” in its time-slot area.
+- 2026-08-14 D004 ACTIVE [USER] Roster cards retain their current contact and lead controls and add the existing compact weekly summary below their badges.
 
 # State
 
-- 2026-08-13 [CODE] Now: local branch `codex/show-unavailable-availability` renders “Unavailable” for disabled weekly availability days.
-- 2026-08-13 [TOOL] Next: commit the verified implementation; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: local branch `codex/show-unavailable-availability` renders compact weekly hours directly on availability roster cards.
+- 2026-08-14 [TOOL] Next: commit the verified roster-card implementation; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -31,6 +33,12 @@
 - `src/components/WeeklyAvailabilityEditor.test.ts`
 - `docs/superpowers/specs/2026-08-13-weekly-availability-unavailable-label-design.md`
 - `docs/superpowers/plans/2026-08-13-weekly-availability-unavailable-label.md`
+- `src/pages/SchedulePage.tsx`
+- `src/pages/SchedulePage.test.tsx`
+- `src/pages/UserScheduleCard.tsx`
+- `src/pages/SchedulePageSkeleton.tsx`
+- `docs/superpowers/specs/2026-08-14-availability-card-hours-design.md`
+- `docs/superpowers/plans/2026-08-14-availability-card-hours.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -41,3 +49,6 @@
 - 2026-08-13 [CODE] Committed approved availability-label design as `2b41926d`; specification self-review found no placeholders or ambiguous scope.
 - 2026-08-13 [TOOL] RED: Weekly availability editor regression failed because the initial markup contained no “Unavailable” labels.
 - 2026-08-13 [TOOL] GREEN: `bunx vitest run src/components/WeeklyAvailabilityEditor.test.ts` passed 4/4 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
+- 2026-08-14 [CODE] Committed approved roster-card hours design as `79caad36`; specification self-review found no placeholders or ambiguous scope.
+- 2026-08-14 [TOOL] RED: SchedulePage roster-card regression failed because saved weekly hours were absent from card markup.
+- 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after rendering saved hours and no-hours states; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
