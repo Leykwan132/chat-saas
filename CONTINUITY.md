@@ -44,7 +44,6 @@
 - 2026-08-13 [TOOL] Task 7 focused suite: 14 files / 59 tests pass under Node v22. File limits and whitespace pass. Base Tasks 1–6 remain on `codex/google-calendar-sync` `f9f5865`.
 - 2026-08-13 [CODE] Public actions: `calendarEvents.update/remove`, `calendarManualBooking.create`, `manualBooking.create`; AI book/update/cancel are internal actions.
 - 2026-08-13 [CODE] Branch `cursor/google-calendar-booking-sync-10b0` off `codex/google-calendar-sync` @ f9f5865.
-- 2026-08-13 [TOOL] bun was missing in the cloud environment; installed bun 1.3.9 then `bun install`. `nvm use 22`.
 
 # Decisions
 - 2026-08-13 [USER] D648 ACTIVE: Google Calendar HTTP vends a WorkOS Pipes access token (`POST /data-integrations/google-calendar/token` with `{ user_id }` only) and calls Google Calendar directly. Do not use Relay, `organization_id`, or the `google_calendar` slug. Do not persist or log the token. Connection health remains WorkOS connected-account GET.
