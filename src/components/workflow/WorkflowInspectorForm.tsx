@@ -15,7 +15,7 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { bookingAvailabilityBlocksApply, conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
+import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowBookingInspectorRequirements } from './WorkflowBookingInspectorRequirements';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
@@ -61,7 +61,6 @@ export function WorkflowInspectorForm({
     Id<'appointmentServices'>[] | undefined
   >(node.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined);
   const [hasBookableService, setHasBookableService] = useState<boolean>();
-  const [hasAcceptingLeadMember, setHasAcceptingLeadMember] = useState<boolean>();
   const [hasReadyMedia, setHasReadyMedia] = useState<boolean>();
   const [attemptedApply, setAttemptedApply] = useState(false);
   const selectedTitle = name.trim() || workflowNodeTitle(node.kind);
@@ -104,9 +103,8 @@ export function WorkflowInspectorForm({
   const hasConditionDetail = !conditionDetailBlocksApply(conditionEnabled, conditionDetail);
   const hasActionDescription = !saveRequiresDescription || Boolean(goal.trim());
   const hasAppointmentService = !isBookAppointmentAction || !agentId || hasBookableService === true;
-  const hasAppointmentAvailability = !isBookAppointmentAction || !agentId || !bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
   const hasMedia = !hasMediaSection || !agentId || hasReadyMedia === true;
-  const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasAppointmentService && hasAppointmentAvailability && hasMedia;
+  const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasAppointmentService && hasMedia;
   const saveDisabled = isSaving || !name.trim();
 
   const handleApply = () => {
@@ -231,9 +229,7 @@ export function WorkflowInspectorForm({
                   allowedServiceIds={allowedAppointmentServiceIds}
                   onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
                   onServiceEligibilityChange={setHasBookableService}
-                  onAvailabilityEligibilityChange={setHasAcceptingLeadMember}
                   showServiceWarning={attemptedApply && !hasAppointmentService}
-                  showAvailabilityWarning={attemptedApply && !hasAppointmentAvailability}
                 />
               ) : null}
               {hasMediaSection && agentId ? (

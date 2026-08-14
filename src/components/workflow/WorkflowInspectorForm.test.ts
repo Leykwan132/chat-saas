@@ -27,13 +27,11 @@ test('workflow inspector allows immediate media and keeps Apply icon-free', () =
   expect(source).toContain('<Loader2');
 });
 
-test('book appointment places availability below services and gates Apply', () => {
+test('book appointment only requires a selected active service', () => {
   expect(source).toContain('<WorkflowBookingInspectorRequirements');
-  expect(bookingRequirementsSource.indexOf('<WorkflowBookingServicesSection')).toBeLessThan(
-    bookingRequirementsSource.indexOf('<WorkflowBookingAvailabilitySection'),
-  );
-  expect(source).toContain('bookingAvailabilityBlocksApply(');
-  expect(source).toContain('onAvailabilityEligibilityChange={setHasAcceptingLeadMember}');
+  expect(bookingRequirementsSource).toContain('<WorkflowBookingServicesSection');
+  expect(bookingRequirementsSource).not.toContain('WorkflowBookingAvailabilitySection');
+  expect(source).not.toContain('bookingAvailabilityBlocksApply(');
 });
 
 test('keeps workflow labels close to their booking controls', () => {
@@ -53,12 +51,12 @@ test('explains incomplete requirements when Apply is attempted', () => {
   expect(source).toContain('Detail is required before applying.');
   expect(source).toContain('is required before applying.');
   expect(bookingRequirementsSource).toContain('Select at least one active service before applying.');
-  expect(bookingRequirementsSource).toContain('Select at least one teammate who can accept appointment leads.');
+  expect(bookingRequirementsSource).not.toContain('Select at least one teammate who can accept appointment leads.');
   expect(mediaSectionSource).toContain('Please add at least one photo or video before applying.');
   expect(mediaSectionSource).toContain('Please add at least one file before applying.');
 });
 
-test('uses the matching sidebar icons for booking sections', () => {
+test('uses the matching sidebar icon for services', () => {
   expect(bookingRequirementsSource).toContain('ShoppingCart');
-  expect(bookingRequirementsSource).toContain('Clock3');
+  expect(bookingRequirementsSource).not.toContain('Clock3');
 });

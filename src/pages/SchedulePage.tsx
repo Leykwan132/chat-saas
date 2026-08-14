@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Navigate, useParams } from 'react-router';
-import { useMutation, useQuery } from 'convex/react';
-import { Search, X, Star } from 'lucide-react';
-import { toast } from 'sonner';
+import { useQuery } from 'convex/react';
+import { Search, X } from 'lucide-react';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
 import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Input } from '@/components/ui/input';
-import { Toggle } from '@/components/ui/toggle';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { Permission } from '../../shared/permissions';
@@ -23,18 +21,12 @@ type RosterEntry = {
   timeOff: Array<{ _id: Id<'userTimeOff'>; startAt: number; endAt: number; label?: string }>;
 };
 
-type TeamUser = Doc<'users'> & {
-  isAdmin: boolean;
-  role: Doc<'teamMemberships'>['role'];
-};
-
 export default function SchedulePage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const { agentId } = useParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading, role } = usePermissions();
   const { activeTeam } = useActiveTeam();
   const canReadSchedule = can(Permission.AVAILABILITY_READ);
-  const canManage = can(Permission.ROUTING_MANAGE);
   const showTeamRoster = canViewAvailabilityRoster(activeTeam, role);
 
   const roster = useQuery(
@@ -57,42 +49,7 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
       : 'skip',
   );
 
-  const addUser = useMutation(api.leadRouting.schedules.addUser);
-  const updateUser = useMutation(api.leadRouting.schedules.updateUser);
-
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterActiveOnly, setFilterActiveOnly] = useState(false);
-
-  const handleToggleEnabled = async (
-    targetUserId: string,
-    scheduleId: Id<'userSchedules'>,
-    enabled: boolean,
-  ) => {
-    const toastId = toast.loading(enabled ? 'Turning on availability…' : 'Turning off availability…');
-    let activeId = scheduleId;
-    const isTemporary = scheduleId.startsWith('temp_');
-    if (isTemporary) {
-      try {
-        activeId = await addUser({ agentId: typedAgentId!, workosUserId: targetUserId });
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : 'Could not initialize schedule', {
-          id: toastId,
-        });
-        return;
-      }
-    }
-
-    try {
-      await updateUser({ userScheduleId: activeId, enabled });
-      toast.success(enabled ? 'Availability turned on' : 'Availability turned off', {
-        id: toastId,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Update failed', {
-        id: toastId,
-      });
-    }
-  };
 
   const sortedTeammates = useMemo(() => {
     if (!teamUsers || !currentUser) return [];
@@ -105,27 +62,12 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
       if (a.workosUserId === currentUser.workosUserId) return -1;
       if (b.workosUserId === currentUser.workosUserId) return 1;
 
-      const existingA = (roster as RosterEntry[] ?? []).find((r: RosterEntry) => r.schedule.workosUserId === a.workosUserId);
-      const isEnabledA = existingA ? existingA.schedule.enabled : false;
-      const existingB = (roster as RosterEntry[] ?? []).find((r: RosterEntry) => r.schedule.workosUserId === b.workosUserId);
-      const isEnabledB = existingB ? existingB.schedule.enabled : false;
-
-      if (isEnabledA && !isEnabledB) return -1;
-      if (!isEnabledA && isEnabledB) return 1;
-
       return memberLabel(a).localeCompare(memberLabel(b));
     });
-  }, [teamUsers, currentUser, roster, showTeamRoster]);
+  }, [teamUsers, currentUser, showTeamRoster]);
 
   const filteredTeammates = useMemo(() => {
     let list = sortedTeammates;
-
-    if (filterActiveOnly) {
-      list = list.filter((teammate) => {
-        const existing = (roster as RosterEntry[] ?? []).find((r: RosterEntry) => r.schedule.workosUserId === teammate.workosUserId);
-        return existing ? existing.schedule.enabled === true : false;
-      });
-    }
 
     if (!searchQuery) return list;
     const query = searchQuery.toLowerCase().trim();
@@ -134,17 +76,9 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
       const email = teammate.email.toLowerCase();
       return label.includes(query) || email.includes(query);
     });
-  }, [sortedTeammates, searchQuery, filterActiveOnly, roster]);
+  }, [sortedTeammates, searchQuery]);
 
   const displayTeammates = showTeamRoster ? filteredTeammates : sortedTeammates;
-
-  const activeCount = useMemo(() => {
-    if (!teamUsers) return 0;
-    return (teamUsers as TeamUser[]).filter((teammate) => {
-      const existing = (roster as RosterEntry[] ?? []).find((r: RosterEntry) => r.schedule.workosUserId === teammate.workosUserId);
-      return existing ? existing.schedule.enabled === true : false;
-    }).length;
-  }, [teamUsers, roster]);
 
   if (!typedAgentId) return null;
 
@@ -163,7 +97,6 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
     return (
       <SchedulePageSkeleton
         hideHeader={hideHeader}
-        showReceiveLeadsToggle={canManage}
         showTeamRoster={showTeamRoster}
       />
     );
@@ -216,15 +149,6 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
                   </button>
                 )}
               </div>
-              <Toggle
-                pressed={filterActiveOnly}
-                onPressedChange={setFilterActiveOnly}
-                variant="outline"
-                className="h-10 text-xs px-4 border border-input text-muted-foreground data-[state=on]:text-foreground data-[state=on]:bg-muted/50"
-              >
-                <Star className="size-4 text-muted-foreground group-data-[state=on]/toggle:text-foreground group-data-[state=on]/toggle:fill-foreground" />
-                Active ({activeCount})
-              </Toggle>
             </div>
           ) : null}
 
@@ -245,11 +169,6 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
                 const existing = (roster as RosterEntry[] ?? []).find(
                   (r) => r.schedule.workosUserId === teammate.workosUserId,
                 );
-                const schedule = existing?.schedule ?? {
-                  _id: `temp_${teammate.workosUserId}` as Id<'userSchedules'>,
-                  enabled: false,
-                  note: '',
-                };
                 const timeOff = existing?.timeOff ?? [];
                 const isSelf = currentUser?.workosUserId === teammate.workosUserId;
                 const label = memberLabel(teammate) + (isSelf ? ' (You)' : '');
@@ -263,14 +182,9 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
                     email={teammate.email}
                     role={teammate.role}
                     assignedLeadCount={openLeadCounts[teammate.workosUserId] ?? 0}
-                    scheduleEnabled={schedule.enabled}
                     shifts={existing?.shifts ?? []}
                     timeOff={timeOff}
-                    showReceiveLeadsToggle={canManage}
                     isMemberView={!showTeamRoster}
-                    onToggleEnabled={(enabled) =>
-                      void handleToggleEnabled(teammate.workosUserId, schedule._id, enabled)
-                    }
                   />
                 );
               })}

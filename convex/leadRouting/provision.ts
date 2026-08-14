@@ -2,12 +2,12 @@ import type { Id } from "../_generated/dataModel";
 import type { MutationCtx } from "../_generated/server";
 import { PERSONAL_ORG_FALLBACK } from "../authUtils";
 import { ensureUserScheduleForAgent } from "./schedules";
+import { appendTeammateToAgentServices } from "../appointmentBooking/serviceAssignments";
 
 function isTeamOrgId(orgId: string) {
   return orgId !== "personal" && orgId !== PERSONAL_ORG_FALLBACK;
 }
 
-/** Default 9am–5pm schedule for every agent in the org; starts inactive until an admin enables. */
 export async function provisionMemberSchedulesForOrg(
   ctx: MutationCtx,
   workosOrgId: string,
@@ -18,7 +18,7 @@ export async function provisionMemberSchedulesForOrg(
   const agents = await ctx.db
     .query("agents")
     .withIndex("by_orgId", (q) => q.eq("orgId", workosOrgId))
-    .collect();
+    .take(100);
 
   for (const agent of agents) {
     await ensureUserScheduleForAgent(ctx, {
@@ -26,6 +26,7 @@ export async function provisionMemberSchedulesForOrg(
       workosUserId,
       enabled: true,
     });
+    await appendTeammateToAgentServices(ctx, agent._id, workosUserId);
   }
 }
 
@@ -46,7 +47,7 @@ export async function provisionOrgMemberSchedulesForAgent(
   const memberships = await ctx.db
     .query("teamMemberships")
     .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
-    .collect();
+    .take(100);
 
   for (const membership of memberships) {
     const user = await ctx.db.get(membership.userId);

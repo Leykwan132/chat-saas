@@ -7,14 +7,12 @@ import { MAX_WORKFLOW_EDGES } from './workflowCore';
 const MAX_RUNTIME_MEDIA = 500;
 const MAX_RUNTIME_SERVICES = 100;
 const MAX_WORKFLOW_NODES = 100;
-const MAX_ROUTING_SCHEDULES = 100;
 
 type DbCtx = Pick<QueryCtx, 'db'> | Pick<MutationCtx, 'db'>;
 
 export type WorkflowNodeReadinessFacts = {
   readyMediaNodeIds: Set<Id<'workflowNodes'>>;
   activeAppointmentServiceIds: Set<Id<'appointmentServices'>>;
-  hasAcceptingLeadMember: boolean;
   configuredConditionNodeIds: Set<Id<'workflowNodes'>>;
 };
 
@@ -56,7 +54,6 @@ export function getWorkflowNodeReadinessIssueCount(
     return count + (facts.readyMediaNodeIds.has(node._id) ? 0 : 1);
   }
   if (node.kind === 'bookAppointment') {
-    if (!facts.hasAcceptingLeadMember) count += 1;
     if (!hasActiveAllowedService(node, facts.activeAppointmentServiceIds)) count += 1;
   }
   return count;
@@ -69,16 +66,13 @@ export async function getWorkflowNodeReadinessFactsForAgent(
   const workflow = await ctx.db.query('workflows')
     .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
     .unique();
-  const [mediaRows, services, schedules, edges] = await Promise.all([
+  const [mediaRows, services, edges] = await Promise.all([
     ctx.db.query('mediaUploads')
       .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
       .take(MAX_RUNTIME_MEDIA),
     ctx.db.query('appointmentServices')
       .withIndex('by_agentId_and_isActive', (q) => q.eq('agentId', agentId).eq('isActive', true))
       .take(MAX_RUNTIME_SERVICES),
-    ctx.db.query('userSchedules')
-      .withIndex('by_agentId', (q) => q.eq('agentId', agentId))
-      .take(MAX_ROUTING_SCHEDULES),
     workflow === null
       ? Promise.resolve([])
       : ctx.db.query('workflowEdges')
@@ -102,7 +96,6 @@ export async function getWorkflowNodeReadinessFactsForAgent(
         .filter((service) => service.archivedAt === undefined)
         .map((service) => service._id),
     ),
-    hasAcceptingLeadMember: schedules.some((schedule) => schedule.enabled),
     configuredConditionNodeIds: new Set(
       edges
         .filter((edge) => Boolean(edge.detail?.trim()))

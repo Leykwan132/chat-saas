@@ -4,11 +4,9 @@ import { UserScheduleCardSkeleton } from './UserScheduleCard';
 
 export function SchedulePageSkeleton({
   hideHeader = false,
-  showReceiveLeadsToggle = true,
   showTeamRoster = true,
 }: {
   hideHeader?: boolean;
-  showReceiveLeadsToggle?: boolean;
   showTeamRoster?: boolean;
 } = {}) {
   return (
@@ -36,13 +34,12 @@ export function SchedulePageSkeleton({
         )}
       >
         <UserScheduleCardSkeleton
-          showReceiveLeadsToggle={showReceiveLeadsToggle}
           isMemberView={!showTeamRoster}
         />
         {showTeamRoster ? (
           <>
-            <UserScheduleCardSkeleton showReceiveLeadsToggle={showReceiveLeadsToggle} />
-            <UserScheduleCardSkeleton showReceiveLeadsToggle={showReceiveLeadsToggle} />
+            <UserScheduleCardSkeleton />
+            <UserScheduleCardSkeleton />
           </>
         ) : null}
       </div>

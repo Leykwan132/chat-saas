@@ -1503,6 +1503,7 @@ export default defineSchema({
     salesStyle: appointmentSalesStyleValidator,
     assignmentStrategy: appointmentAssignmentStrategyValidator,
     specificWorkosUserId: v.optional(v.string()),
+    assignedWorkosUserIds: v.optional(v.array(v.string())),
     lastAssignedWorkosUserId: v.optional(v.string()),
     lastAssignedAt: v.optional(v.number()),
     createdAt: v.number(),

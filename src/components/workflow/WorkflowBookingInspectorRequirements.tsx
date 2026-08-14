@@ -1,8 +1,7 @@
-import { Clock3, Globe2, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router';
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import type { Id } from '../../../convex/_generated/dataModel';
-import { WorkflowBookingAvailabilitySection } from './WorkflowBookingAvailabilitySection';
 import { WorkflowBookingServicesSection } from './WorkflowBookingServicesSection';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
 
@@ -11,9 +10,7 @@ type WorkflowBookingInspectorRequirementsProps = {
   allowedServiceIds: Id<'appointmentServices'>[] | undefined;
   onAllowedServiceIdsChange: (serviceIds: Id<'appointmentServices'>[]) => void;
   onServiceEligibilityChange: (eligible: boolean | undefined) => void;
-  onAvailabilityEligibilityChange: (eligible: boolean | undefined) => void;
   showServiceWarning: boolean;
-  showAvailabilityWarning: boolean;
 };
 
 function BookingRequirementHeading({
@@ -46,12 +43,8 @@ export function WorkflowBookingInspectorRequirements({
   allowedServiceIds,
   onAllowedServiceIdsChange,
   onServiceEligibilityChange,
-  onAvailabilityEligibilityChange,
   showServiceWarning,
-  showAvailabilityWarning,
 }: WorkflowBookingInspectorRequirementsProps) {
-  const [availabilityTimezone, setAvailabilityTimezone] = useState<string>();
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
@@ -77,29 +70,6 @@ export function WorkflowBookingInspectorRequirements({
         {showServiceWarning ? (
           <p className="text-xs text-destructive" role="alert">
             Select at least one active service before applying.
-          </p>
-        ) : null}
-      </div>
-      <div className="flex flex-col gap-3">
-        <BookingRequirementHeading
-          icon={Clock3}
-          title="Availability"
-          description="Choose who can accept appointment leads."
-          action={availabilityTimezone ? (
-            <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-              <Globe2 className="size-3.5" aria-hidden="true" />
-              {availabilityTimezone}
-            </span>
-          ) : undefined}
-        />
-        <WorkflowBookingAvailabilitySection
-          agentId={agentId}
-          onEligibilityChange={onAvailabilityEligibilityChange}
-          onTimezoneChange={setAvailabilityTimezone}
-        />
-        {showAvailabilityWarning ? (
-          <p className="text-xs text-destructive" role="alert">
-            Select at least one teammate who can accept appointment leads.
           </p>
         ) : null}
       </div>

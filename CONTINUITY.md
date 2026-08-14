@@ -16,6 +16,7 @@
 - 2026-08-14 [USER] Availability hours must load instead of remaining indefinitely on the weekly editor skeleton; lead-eligibility simplification is paused until this is fixed.
 - 2026-08-14 [USER] Direct organizational-admin Availability needs the same explanatory copy as the personal view.
 - 2026-08-14 [USER] Remove Accepting leads; weekly hours and time off govern leads, while selected teammates govern which services they can book.
+- 2026-08-14 [USER] Service editing prioritizes booking assignment, limits bulk teammate inclusion to new services, and removes booking-status metric tiles.
 
 # Done (recent)
 
@@ -37,11 +38,23 @@
 - 2026-08-14 D011 ACTIVE [USER] Personal Availability loading mirrors the simplified completed page; organization member loading retains the teammate-detail skeleton.
 - 2026-08-14 D012 ACTIVE [USER] Every direct Availability view explains that it sets availability for leads and bookings.
 - 2026-08-14 D013 ACTIVE [USER] Lead eligibility is based only on weekly hours and time off; booking also requires service teammate assignment and calendar availability.
+- 2026-08-14 D014 ACTIVE [USER] Any direct Availability view, including an organizational admin's self-view, omits name, email, and role metadata.
+- 2026-08-14 D015 ACTIVE [USER] Service teammate selection uses switches; the routing-strategy control is labeled “Assignment method.”
+- 2026-08-14 D016 ACTIVE [USER] Availability shows each teammate's active assigned services between available hours and Time off.
+- 2026-08-14 D017 ACTIVE [USER] The service editor labels its top-level enabled switch as Active or Inactive.
+- 2026-08-14 D018 ACTIVE [USER] Service teammate helper copy is “Bookings go to selected teammates who are available.”
+- 2026-08-14 D019 ACTIVE [USER] Each service teammate switch shows whether that teammate is Included or Not included.
+- 2026-08-14 D020 ACTIVE [USER] Availability lists Active services as compact cards with name, duration, and an optional service description.
+- 2026-08-14 D021 ACTIVE [USER] Service teammate selection includes a one-click Include all teammates action alongside individual switches.
+- 2026-08-14 D022 ACTIVE [USER] Every Availability detail page embeds the weekly timetable directly; no Availability detail page shows Active services.
+- 2026-08-14 D023 ACTIVE [USER] Service editing uses left-side section navigation and no longer displays booking-status metric tiles.
+- 2026-08-14 D024 SUPERSEDED [USER] Booking assignment was initially the first service-editor section; Include all teammates remains create-only.
+- 2026-08-14 D025 ACTIVE [USER] Service-editor navigation uses icons and the order Service details, Appointment duration, Booking team, and Booking form.
 
 # State
 
-- 2026-08-14 [CODE] Now: approved service-availability and lead-routing design is documented; implementation has not started.
-- 2026-08-14 [TOOL] Next: commit and user-review the service-availability spec before planning implementation.
+- 2026-08-14 [CODE] Now: service teammate selection, direct weekly timetables on all Availability detail pages, weekly-hours/time-off booking checks, removed Accepting leads controls, and prioritized service-editor navigation are implemented locally.
+- 2026-08-14 [TOOL] Next: review the completed mixed-worktree availability and service-editor change and decide whether to commit it; production deployment and migration execution remain unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -61,6 +74,7 @@
 - `docs/superpowers/specs/2026-08-14-admin-availability-description-design.md`
 - `docs/superpowers/plans/2026-08-14-admin-availability-description.md`
 - `docs/superpowers/specs/2026-08-14-service-availability-routing-design.md`
+- `docs/superpowers/plans/2026-08-14-service-availability-routing.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -82,3 +96,24 @@
 - 2026-08-14 [TOOL] RED: an editor given a complete cached schedule still rendered only skeleton rows because post-mount effects reset its ready state.
 - 2026-08-14 [TOOL] GREEN: the cached-schedule regression, 8 focused Availability tests, TypeScript, diff checks, and full `bun run test` all pass under Node v22.22.0.
 - 2026-08-14 [TOOL] RED then GREEN: organizational-admin direct Availability lacked the purpose description; the new route test, TypeScript, and diff checks pass under Node v22.22.0.
+- 2026-08-14 [CODE] Added optional service teammate assignments with a bounded backfill migration; new services start with all teammates selected and joining teammates are appended to migrated service assignments.
+- 2026-08-14 [CODE] Lead eligibility and appointment availability now ignore legacy schedule status, use weekly hours and time off, and booking additionally filters to the service's selected teammates and calendar conflicts.
+- 2026-08-14 [TOOL] GREEN: direct organizational-admin Availability no longer renders profile metadata; its focused route test, TypeScript, and diff checks pass under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: service teammate switches and naming pass their focused component/form tests, TypeScript, and diff checks under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: Availability services data and placement pass focused Convex/page/component tests, TypeScript, generated API types, and diff checks under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: top-level service status label passes its focused page test, TypeScript, and diff checks under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: simplified service teammate helper copy passes its focused component test, TypeScript, and diff checks under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: teammate inclusion labels pass the focused service component test, TypeScript, and diff checks under Node v22.22.0.
+- 2026-08-14 [CODE] Active-services cards and bulk teammate-selection design documented in commits `9aea3196` and `b4841a80`; implementation awaits user review of the design document.
+- 2026-08-14 [CODE] Implementation plan self-reviewed: every approved requirement maps to a task; no placeholders or contradictory interfaces remain.
+- 2026-08-14 [TOOL] GREEN: Active services cards and Include all teammates pass 8 focused tests, TypeScript, and diff checks under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: full `bun run test` passes with 425 test files and 1,361 tests under Node v22.22.0 after updating the schedule-query contract fixture.
+- 2026-08-14 [CODE] Inline Availability timetable design documented and committed as `1e6696ce`; implementation awaits user review of the design document.
+- 2026-08-14 [CODE] Inline timetable implementation plan self-reviewed: it covers each approved layout and query change without placeholders or interface mismatches.
+- 2026-08-14 [TOOL] GREEN: Availability detail pages have no service payload/cards and embed the timetable for team owners; 7 focused tests, TypeScript, diff checks, and full `bun run test` pass under Node v22.22.0.
+- 2026-08-14 [CODE] Service-editor navigation design and priority update documented in commits `db817dbd` and `ef7d65c7`.
+- 2026-08-14 [CODE] Service editing now prioritizes Booking assignment in focused left-side navigation, omits booking-status metrics, and restricts Include all teammates to service creation.
+- 2026-08-14 [TOOL] GREEN: 426 test files / 1,363 tests, 63 Docs tests, the 3 focused service editor tests, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: service navigation icon/copy test, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: the full `bun run test` suite passes with 426 test files / 1,363 tests and 63 Docs tests under Node v22.22.0 after the navigation icon update.
+- 2026-08-14 [TOOL] GREEN: the Booking team navigation-order test, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.

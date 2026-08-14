@@ -53,7 +53,7 @@ export async function ensureUserScheduleForAgent(
     mode: "scheduled",
     manualStatus: "available",
     timezone: args.timezone?.trim() || DEFAULT_TIMEZONE,
-    enabled: args.enabled ?? false,
+    enabled: args.enabled ?? true,
     createdAt: now,
     updatedAt: now,
   });
@@ -166,7 +166,6 @@ export const getForAgentUser = query({
         q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
       )
       .unique();
-
     if (schedule === null) {
       return {
         user: {
@@ -232,7 +231,7 @@ export const addUser = mutation({
       agentId: args.agentId,
       workosUserId: args.workosUserId,
       timezone: args.timezone,
-      enabled: false,
+      enabled: true,
     });
   },
 });

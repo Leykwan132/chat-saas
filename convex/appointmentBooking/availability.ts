@@ -27,10 +27,6 @@ async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<Rost
 }
 
 function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
-  if (!schedule.enabled) return false;
-  if (schedule.mode === "manual") {
-    return schedule.manualStatus === "available";
-  }
   const start = getZonedDayAndMinutes(startAt, schedule.timezone);
   const end = getZonedDayAndMinutes(Math.max(startAt, endAt - 1), schedule.timezone);
   if (start.dayOfWeek !== end.dayOfWeek) return false;
@@ -40,6 +36,13 @@ function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedu
       start.minutes >= shift.startMinutes &&
       end.minutes < shift.endMinutes,
   );
+}
+
+export function isAssignedToService(
+  service: Doc<"appointmentServices">,
+  workosUserId: string,
+) {
+  return service.assignedWorkosUserIds === undefined || service.assignedWorkosUserIds.includes(workosUserId);
 }
 
 function overlaps(startA: number, endA: number, startB: number, endB: number) {
@@ -87,6 +90,7 @@ async function hasCalendarConflict(
 
 async function entryAvailableForSlot(
   ctx: MutationCtx,
+  service: Doc<"appointmentServices">,
   teamId: Id<"teams">,
   entry: RosterEntry,
   startAt: number,
@@ -94,6 +98,7 @@ async function entryAvailableForSlot(
   excludeEventId?: Id<"calendarEvents">,
 ) {
   if (entry.user === null) return false;
+  if (!isAssignedToService(service, entry.schedule.workosUserId)) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
   return !(await hasCalendarConflict(ctx, {
@@ -133,7 +138,7 @@ async function chooseAssigneeForSlot(
 ): Promise<RosterEntry | null> {
   const available: RosterEntry[] = [];
   for (const entry of args.entries) {
-    if (await entryAvailableForSlot(ctx, args.teamId, entry, args.startAt, args.endAt, args.excludeEventId)) {
+    if (await entryAvailableForSlot(ctx, args.service, args.teamId, entry, args.startAt, args.endAt, args.excludeEventId)) {
       available.push(entry);
     }
   }

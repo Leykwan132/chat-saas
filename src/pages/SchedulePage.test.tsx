@@ -86,6 +86,9 @@ test('shows saved weekly hours on each availability card', () => {
     markup.indexOf('>Ley Kwan Choo (You)</span>'),
   );
   expect(markup.match(/lucide-clock/g)).toHaveLength(2);
+  expect(markup).not.toContain('Accepting leads');
+  expect(markup).not.toContain('>Active</span>');
+  expect(markup).not.toContain('>Inactive</span>');
 });
 
 test('does not render the roster for a personal workspace', () => {

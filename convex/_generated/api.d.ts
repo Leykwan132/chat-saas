@@ -72,6 +72,7 @@ import type * as appointmentBooking_fields from "../appointmentBooking/fields.js
 import type * as appointmentBooking_manualBooking from "../appointmentBooking/manualBooking.js";
 import type * as appointmentBooking_manualBookingCore from "../appointmentBooking/manualBookingCore.js";
 import type * as appointmentBooking_manualBookingFields from "../appointmentBooking/manualBookingFields.js";
+import type * as appointmentBooking_serviceAssignments from "../appointmentBooking/serviceAssignments.js";
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
@@ -207,6 +208,7 @@ import type * as referralCodeRecords from "../referralCodeRecords.js";
 import type * as referralProgramConfig from "../referralProgramConfig.js";
 import type * as referralRedemption from "../referralRedemption.js";
 import type * as referrals from "../referrals.js";
+import type * as serviceAvailabilityMigration from "../serviceAvailabilityMigration.js";
 import type * as signedRequest from "../signedRequest.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeBillingSessions from "../stripeBillingSessions.js";
@@ -417,6 +419,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/manualBooking": typeof appointmentBooking_manualBooking;
   "appointmentBooking/manualBookingCore": typeof appointmentBooking_manualBookingCore;
   "appointmentBooking/manualBookingFields": typeof appointmentBooking_manualBookingFields;
+  "appointmentBooking/serviceAssignments": typeof appointmentBooking_serviceAssignments;
   "appointmentBooking/services": typeof appointmentBooking_services;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;
@@ -552,6 +555,7 @@ declare const fullApi: ApiFromModules<{
   referralProgramConfig: typeof referralProgramConfig;
   referralRedemption: typeof referralRedemption;
   referrals: typeof referrals;
+  serviceAvailabilityMigration: typeof serviceAvailabilityMigration;
   signedRequest: typeof signedRequest;
   stripe: typeof stripe;
   stripeBillingSessions: typeof stripeBillingSessions;

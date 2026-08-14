@@ -51,6 +51,7 @@ export type ServiceForm = {
   preferredTimeEnabled: boolean;
   preferredTimes: string[];
   salesStyle: SalesStyle;
+  assignedWorkosUserIds: string[];
   assignmentStrategy: AssignmentStrategy;
   specificWorkosUserId: string;
 };
@@ -73,6 +74,7 @@ export type ServiceRow = {
   }>;
   preferredTimeMinutes?: number[];
   salesStyle: SalesStyle;
+  assignedWorkosUserIds?: string[];
   assignmentStrategy: AssignmentStrategy;
   specificWorkosUserId?: string;
 };
@@ -90,6 +92,7 @@ export const DEFAULT_SERVICE_FORM: ServiceForm = {
   preferredTimeEnabled: false,
   preferredTimes: [DEFAULT_PREFERRED_TIME],
   salesStyle: 'neutral',
+  assignedWorkosUserIds: [],
   assignmentStrategy: 'balanced',
   specificWorkosUserId: '',
 };
@@ -126,7 +129,7 @@ function storedFieldToForm(field: ServiceRow['fields'][number]): ServiceFieldFor
   };
 }
 
-export function serviceToForm(service: ServiceRow): ServiceForm {
+export function serviceToForm(service: ServiceRow, teamWorkosUserIds: string[]): ServiceForm {
   const preferredTimeMinutes = normalizePreferredTimeMinutes(service.preferredTimeMinutes);
   return {
     name: service.name,
@@ -145,6 +148,7 @@ export function serviceToForm(service: ServiceRow): ServiceForm {
         ? preferredTimeMinutes.map((value) => minutesToCalendarTimeLabel(value))
         : [DEFAULT_PREFERRED_TIME],
     salesStyle: service.salesStyle,
+    assignedWorkosUserIds: service.assignedWorkosUserIds ?? teamWorkosUserIds,
     assignmentStrategy: service.assignmentStrategy,
     specificWorkosUserId: service.specificWorkosUserId ?? '',
   };
@@ -173,9 +177,23 @@ export function buildServiceMutationArgs(form: ServiceForm) {
     })),
     preferredTimeMinutes: preferredTimeMinutes.length > 0 ? preferredTimeMinutes : null,
     salesStyle: form.salesStyle,
+    assignedWorkosUserIds: form.assignedWorkosUserIds,
     assignmentStrategy: form.assignmentStrategy,
     specificWorkosUserId: form.specificWorkosUserId,
   };
+}
+
+export function validateServiceAssignment(
+  form: Pick<ServiceForm, 'assignedWorkosUserIds' | 'assignmentStrategy' | 'specificWorkosUserId'>,
+) {
+  if (form.assignedWorkosUserIds.length === 0) return 'Select at least one teammate.';
+  if (
+    form.assignmentStrategy === 'specific_user' &&
+    !form.assignedWorkosUserIds.includes(form.specificWorkosUserId)
+  ) {
+    return 'Select the specific teammate for this service.';
+  }
+  return null;
 }
 
 export function fieldTypeLabel(type: FieldType) {

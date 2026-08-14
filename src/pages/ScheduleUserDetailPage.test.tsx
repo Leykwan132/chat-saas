@@ -51,7 +51,8 @@ test('shows personal availability inline without dashboard back navigation', () 
 
   mocks.useQuery
     .mockReturnValueOnce(detail)
-    .mockReturnValueOnce(currentUser);
+    .mockReturnValueOnce(currentUser)
+    .mockReturnValueOnce(detail);
 
   const markup = renderToStaticMarkup(
     <MemoryRouter initialEntries={['/dashboard/agent-1/availability/user-ley']}>
@@ -72,6 +73,13 @@ test('shows personal availability inline without dashboard back navigation', () 
   expect(markup).not.toContain('ley@example.com');
   expect(markup).not.toContain('>Owner</span>');
   expect(markup).not.toContain('>Active</span>');
+  expect(markup).not.toContain('Accepting leads');
+  expect(markup).not.toContain('Active services');
+  expect(markup).not.toContain('Consultation');
+  expect(markup).not.toContain('Follow-up');
+  expect(markup).not.toContain('45 min');
+  expect(markup).not.toContain('Meet to discuss your goals.');
+  expect(markup).toContain('Monday');
   expect(markup.indexOf('Time off')).toBeLessThan(markup.indexOf('Request time off'));
 });
 
@@ -95,7 +103,7 @@ test('matches the personal Availability layout while details load', () => {
   expect(markup).toContain('Set when you’re available to receive leads and bookings.');
 });
 
-test('describes direct Availability for an organizational admin', () => {
+test('keeps direct organizational-admin Availability free of profile metadata', () => {
   mocks.activeTeam = { type: 'organizational' };
   mocks.role = 'admin';
   const currentUser = {
@@ -132,4 +140,50 @@ test('describes direct Availability for an organizational admin', () => {
 
   expect(markup).toContain('Availability</h1>');
   expect(markup).toContain('Set when you’re available to receive leads and bookings.');
+  expect(markup).not.toContain('Admin User (You)');
+  expect(markup).not.toContain('admin@example.com');
+  expect(markup).not.toContain('>Admin</span>');
+});
+
+test('shows the timetable inline for an organizational owner viewing their detail', () => {
+  mocks.activeTeam = { type: 'organizational' };
+  mocks.role = 'owner';
+  const currentUser = {
+    workosUserId: 'user-ley',
+    email: 'ley@example.com',
+    firstName: 'Ley',
+    lastName: 'Kwan Choo',
+  };
+  const detail = {
+    user: { ...currentUser, role: 'owner' },
+    schedule: {
+      _id: 'schedule-ley',
+      enabled: true,
+      timezone: 'Asia/Kuala_Lumpur',
+    },
+    shifts: [{ dayOfWeek: 1, startMinutes: 540, endMinutes: 1020 }],
+    timeOff: [],
+  };
+
+  mocks.useQuery
+    .mockReturnValueOnce(detail)
+    .mockReturnValueOnce(currentUser)
+    .mockReturnValueOnce(detail);
+
+  const markup = renderToStaticMarkup(
+    <MemoryRouter initialEntries={['/dashboard/agent-1/availability/user-ley']}>
+      <Routes>
+        <Route
+          path="/dashboard/:agentId/availability/:workosUserId"
+          element={<ScheduleUserDetailPage />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('Ley Kwan Choo (You)');
+  expect(markup).toContain('ley@example.com');
+  expect(markup).toContain('Monday');
+  expect(markup).not.toContain('/dashboard/agent-1/availability/user-ley/edit');
+  expect(markup).not.toContain('Available hours');
 });
