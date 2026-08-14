@@ -145,7 +145,7 @@ export const getForAgentUser = query({
             .unique()
         : null;
 
-    let isAdmin = false;
+    let role: "owner" | "admin" | "member" = "owner";
     if (team !== null) {
       const membership = await ctx.db
         .query("teamMemberships")
@@ -153,8 +153,12 @@ export const getForAgentUser = query({
           q.eq("userId", user._id).eq("teamId", team._id),
         )
         .unique();
-      isAdmin = membership?.role === "owner" || membership?.role === "admin";
+      if (membership === null) {
+        throw new Error("Team membership not found");
+      }
+      role = membership.role;
     }
+    const isAdmin = role === "owner" || role === "admin";
 
     const schedule = await ctx.db
       .query("userSchedules")
@@ -171,6 +175,7 @@ export const getForAgentUser = query({
           firstName: user.firstName,
           lastName: user.lastName,
           isAdmin,
+          role,
         },
         schedule: null,
         shifts: [],
@@ -194,6 +199,7 @@ export const getForAgentUser = query({
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin,
+        role,
       },
       schedule: {
         ...schedule,

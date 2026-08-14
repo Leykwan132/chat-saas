@@ -239,7 +239,11 @@ export default function ScheduleUserDetailPage() {
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="outline" className="text-[12px]">
-                {detail.user.isAdmin ? 'Admin' : 'Member'}
+                {detail.user.role === 'owner'
+                  ? 'Owner'
+                  : detail.user.role === 'admin'
+                    ? 'Admin'
+                    : 'Member'}
               </Badge>
               <Badge
                 variant={isActive ? 'outline' : 'secondary'}

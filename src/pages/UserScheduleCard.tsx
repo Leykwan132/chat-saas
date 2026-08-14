@@ -56,7 +56,7 @@ export function UserScheduleCard({
   workosUserId,
   label,
   email,
-  isAdmin,
+  role,
   assignedLeadCount,
   scheduleEnabled,
   shifts,
@@ -69,7 +69,7 @@ export function UserScheduleCard({
   workosUserId: string;
   label: string;
   email: string;
-  isAdmin: boolean;
+  role: 'owner' | 'admin' | 'member';
   assignedLeadCount: number;
   scheduleEnabled: boolean;
   shifts: ScheduleShift[];
@@ -104,7 +104,7 @@ export function UserScheduleCard({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="outline" className="text-[11px]">
-              {isAdmin ? 'Admin' : 'Member'}
+              {role === 'owner' ? 'Owner' : role === 'admin' ? 'Admin' : 'Member'}
             </Badge>
             {isTimeOff && (
               <Badge

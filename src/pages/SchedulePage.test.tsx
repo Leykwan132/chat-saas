@@ -72,7 +72,9 @@ test('shows saved weekly hours on each availability card', () => {
 
   expect(markup).toContain('Mon - Fri, 9:00 AM - 5:00 PM');
   expect(markup).toContain('No available hours');
-  expect(markup.indexOf('>Admin</span>')).toBeLessThan(
+  expect(markup).toContain('>Owner</span>');
+  expect(markup).not.toContain('>Admin</span>');
+  expect(markup.indexOf('>Owner</span>')).toBeLessThan(
     markup.indexOf('>Ley Kwan Choo (You)</span>'),
   );
   expect(markup.match(/lucide-clock/g)).toHaveLength(2);
