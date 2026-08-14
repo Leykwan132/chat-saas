@@ -10,6 +10,7 @@
 - 2026-08-14 [USER] Availability roster cards should show each teammate's compact available-time summary directly on the card.
 - 2026-08-14 [USER] Move role and lead badges above the teammate name and add a clock alongside each card's availability summary.
 - 2026-08-14 [USER] Personal Availability opens directly to the user's detail page; only organizational owners see the team roster; new schedules accept leads by default; role labels distinguish Owner, Admin, and Member.
+- 2026-08-14 [USER] Switching workspaces must show a neutral switching state instead of a transient unavailable-workspace error.
 
 # Done (recent)
 
@@ -24,29 +25,25 @@
 - 2026-08-14 D004 ACTIVE [USER] Roster cards retain their current contact and lead controls and add the existing compact weekly summary below their badges.
 - 2026-08-14 D005 ACTIVE [USER] Card metadata badges precede the identity row, and every availability line uses a muted clock icon.
 - 2026-08-14 D006 ACTIVE [USER] Availability uses direct self-detail navigation outside organizational owner context, and all future schedule provisioning starts enabled without altering existing schedules.
+- 2026-08-14 D007 ACTIVE [USER] Active workspace switches take precedence over stale-route recovery and display only a switching loader until they succeed or fail.
 
 # State
 
-- 2026-08-14 [CODE] Now: workspace-aware Availability navigation, exact Owner/Admin/Member labels, and enabled-by-default schedule provisioning are implemented locally on `codex/show-unavailable-availability` for draft PR #59.
-- 2026-08-14 [TOOL] Next: obtain explicit approval to deploy the Convex backend, then push the tested commits to update draft PR #59; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: approved workspace-switch transition design is documented alongside the locally implemented Availability work on `codex/show-unavailable-availability` for draft PR #59.
+- 2026-08-14 [TOOL] Next: review the switching design, implement it, then obtain explicit deployment approval and push draft PR #59; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
 
-- `convex/agents.ts`
-- `convex/leadRouting/provision.ts`
-- `convex/workosWebhookAvailability.test.ts`
-- `convex/leadRouting/schedules.ts`
-- `convex/agentCreation.test.ts`
-- `convex/leadRoutingSchedules.test.ts`
-- `src/pages/SchedulePage.tsx`
-- `src/pages/SchedulePage.test.tsx`
-- `src/pages/UserScheduleCard.tsx`
+- `src/components/TeamSwitcher.tsx`
+- `src/components/WorkspaceUnavailable.tsx`
+- `src/components/WorkspaceUnavailable.test.tsx`
+- `src/layouts/DashboardLayout.tsx`
 - `src/pages/ScheduleUserDetailPage.tsx`
 - `src/lib/availabilityWorkspace.ts`
-- `src/lib/availabilityWorkspace.test.ts`
 - `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
 - `docs/superpowers/plans/2026-08-14-availability-workspace-defaults.md`
+- `docs/superpowers/specs/2026-08-14-workspace-switching-transition-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -68,3 +65,4 @@
 - 2026-08-14 [TOOL] RED: schedule provisioning tests found no personal schedule and inactive organizational/member schedules; role and non-owner roster regressions also failed before implementation.
 - 2026-08-14 [TOOL] GREEN: 15 focused tests, `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] Convex deployment verification is pending explicit authorization after `bunx convex dev --once` was correctly blocked as an external deployment action.
+- 2026-08-14 [CODE] Approved workspace-switch design keeps real unavailable-workspace recovery intact while suppressing it during an active switch.
