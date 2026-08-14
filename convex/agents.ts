@@ -4,6 +4,7 @@ import { getAuthContext, PERSONAL_ORG_FALLBACK } from "./authUtils";
 import { getModelProvider, isEnabledModel } from "./llm/modelPricing";
 import { checkModelAccess, checkAgentCreationLimit, getPlanFromStripe, getPlan } from "./plans";
 import { provisionOrgMemberSchedulesForAgent } from "./leadRouting/provision";
+import { ensureUserScheduleForAgent } from "./leadRouting/schedules";
 import { ensureWorkflowForAgent } from "./workflowCore";
 import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
 import {
@@ -185,6 +186,12 @@ export const create = mutation({
       humorLevel: args.humorLevel ?? "light",
       createdAt: now,
       updatedAt: now,
+    });
+
+    await ensureUserScheduleForAgent(ctx, {
+      agentId,
+      workosUserId: userId,
+      enabled: true,
     });
 
     if (orgId && orgId !== "personal") {

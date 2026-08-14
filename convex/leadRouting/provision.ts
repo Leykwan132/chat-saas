@@ -24,7 +24,7 @@ export async function provisionMemberSchedulesForOrg(
     await ensureUserScheduleForAgent(ctx, {
       agentId: agent._id,
       workosUserId,
-      enabled: false,
+      enabled: true,
     });
   }
 }
@@ -54,7 +54,7 @@ export async function provisionOrgMemberSchedulesForAgent(
     await ensureUserScheduleForAgent(ctx, {
       agentId,
       workosUserId: user.workosUserId,
-      enabled: false,
+      enabled: true,
     });
   }
 }
