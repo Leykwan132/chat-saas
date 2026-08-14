@@ -23,7 +23,7 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` includes the requested shared plan-card presentation update and awaits push to draft PR #60.
+- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` includes the requested shared plan-card presentation update and is published to draft PR #60.
 - 2026-08-14 [TOOL] Next: review updated PR #60; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-13 [USER] Open questions: none.
 
@@ -64,3 +64,4 @@
 - 2026-08-14 [TOOL] Commit `538cd6c1` was pushed to `origin/codex/ai-lead-temperature`; CLI-created draft PR #60 is `https://github.com/Leykwan132/chat-saas/pull/60`.
 - 2026-08-14 [TOOL] RED then GREEN: compact pricing-card test failed before catalog derivation and passes with 6 focused pricing tests under Node v22.22.0; TypeScript and diff checks pass.
 - 2026-08-14 [TOOL] Full `bunx vitest run` now passes 1,349 tests across 417 files but exits non-zero on the same 10 Docs runner/dependency suites and unrelated Calendar time-sensitive fixture.
+- 2026-08-14 [TOOL] Commit `87703a84` was pushed to `origin/codex/ai-lead-temperature`, updating draft PR #60 with the compact-card feature list.
