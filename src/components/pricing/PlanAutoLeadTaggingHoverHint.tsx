@@ -4,20 +4,23 @@ import {
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
 import {
-  AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION,
   AI_LEAD_TEMPERATURE_HOVER_TITLE,
+  getAiLeadTemperatureHoverDescription,
   isAiLeadTemperatureLabel,
+  type PlanKey,
 } from '../../../shared/planCatalog';
 import { pricingFeatureHoverTriggerClass } from './pricingStyles';
 
 type PlanAutoLeadTaggingHoverHintProps = {
   label: string;
   className?: string;
+  planId?: PlanKey;
 };
 
 export function PlanAutoLeadTaggingHoverHint({
   label,
   className,
+  planId,
 }: PlanAutoLeadTaggingHoverHintProps) {
   if (!isAiLeadTemperatureLabel(label)) {
     return <span className={className}>{label}</span>;
@@ -36,7 +39,7 @@ export function PlanAutoLeadTaggingHoverHint({
       <HoverCardContent align="start" className="w-72">
         <p className="font-medium text-foreground">{AI_LEAD_TEMPERATURE_HOVER_TITLE}</p>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          {AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION}
+          {getAiLeadTemperatureHoverDescription(planId)}
         </p>
         <ul className="mt-2 list-disc list-inside text-sm text-muted-foreground space-y-1 pl-1">
           <li>Hot</li>

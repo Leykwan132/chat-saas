@@ -35,7 +35,13 @@ export function renderPricingFeatureLabel(
   }
 
   if (isAiLeadTemperatureLabel(text)) {
-    return <PlanAutoLeadTaggingHoverHint label={text} className={className} />;
+    return (
+      <PlanAutoLeadTaggingHoverHint
+        label={text}
+        className={className}
+        planId={planId}
+      />
+    );
   }
 
   if (isPlanFeatureDescriptionHoverLabel(text)) {

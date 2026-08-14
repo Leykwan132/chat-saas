@@ -438,8 +438,12 @@ export function isAiTaggedPlanFeature(label: string): boolean {
 }
 
 export const AI_LEAD_TEMPERATURE_HOVER_TITLE = "AI Lead Temperature";
+export const AI_LEAD_TEMPERATURE_STARTER_HOVER_DESCRIPTION =
+  "AI classifies each lead as Hot, Warm, or Cold once when the conversation is initially synced.";
+export const AI_LEAD_TEMPERATURE_DAILY_HOVER_DESCRIPTION =
+  "AI classifies each lead as Hot, Warm, or Cold during initial sync and refreshes eligible active conversations daily when new messages arrive.";
 export const AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION =
-  "AI analyzes customer conversations and classifies each lead as Hot, Warm, or Cold, helping your team prioritize follow-ups.";
+  "Starter classifies leads once during initial sync. Growth and Business refresh eligible active conversations daily when new messages arrive.";
 
 export const KNOWLEDGE_BASE_HOVER_TITLE = "Knowledge base";
 export const KNOWLEDGE_BASE_HOVER_DESCRIPTION =
@@ -483,6 +487,16 @@ export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
 
 export function isAiLeadTemperatureLabel(label: string): boolean {
   return label === AI_LEAD_TEMPERATURE_LABEL;
+}
+
+export function getAiLeadTemperatureHoverDescription(planId?: PlanKey): string {
+  if (planId === "starter") {
+    return AI_LEAD_TEMPERATURE_STARTER_HOVER_DESCRIPTION;
+  }
+  if (planId === "growth" || planId === "business") {
+    return AI_LEAD_TEMPERATURE_DAILY_HOVER_DESCRIPTION;
+  }
+  return AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION;
 }
 
 export function isChatSummaryLabel(label: string): boolean {

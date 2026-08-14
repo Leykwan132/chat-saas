@@ -14,8 +14,8 @@ Present AI Lead Temperature as a standalone pricing feature directly above Advan
 
 ## Hover content
 
-The standalone hover title is `AI Lead Temperature`. Its description is: “AI analyzes customer conversations and classifies each lead as Hot, Warm, or Cold, helping your team prioritize follow-ups.” It continues to show the three classifications as the existing hover does.
+The standalone hover title is `AI Lead Temperature` and continues to show Hot, Warm, and Cold. On Starter cards, its copy explains that classification runs once when a conversation is initially synced. On Growth and Business cards, its copy explains that the initial classification is refreshed daily for eligible active conversations with new messages. Comparison-table hover copy states both tiers' behavior.
 
 ## Verification
 
-Focused pricing-catalog tests will assert the standalone label, analytics-group ordering, unchanged plan availability, compact-card placement, dedicated hover copy, and Advanced Analytics' two-item hover list. No Convex code generation or migration is required because no backend interface changes.
+Focused pricing-catalog tests will assert the standalone label, analytics-group ordering, unchanged plan availability, compact-card placement, tier-specific hover copy, and Advanced Analytics' two-item hover list. No Convex code generation or migration is required because no backend interface changes.

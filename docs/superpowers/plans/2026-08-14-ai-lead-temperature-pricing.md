@@ -142,7 +142,46 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/planKeyFeatur
 
 Expected: PASS with no failures.
 
-### Task 4: Verify and publish the focused feature branch
+### Task 4: Differentiate one-time and daily-refresh hover copy
+
+**Files:**
+- Modify: `shared/planCatalog.ts:425-470`
+- Modify: `src/components/pricing/PlanAutoLeadTaggingHoverHint.tsx:7-50`
+- Modify: `src/components/pricing/pricingFeatureHover.tsx:20-75`
+- Modify: `src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+
+**Interfaces:**
+- Produces: `getAiLeadTemperatureHoverDescription(planId?: PlanKey): string`.
+- Consumes: `planId` from the shared pricing-card renderer.
+
+- [ ] **Step 1: Write the failing tier-specific hover test**
+
+```ts
+expect(collectReactText(starterElement)).toContain(
+  "once when the conversation is initially synced",
+);
+expect(collectReactText(growthElement)).toContain(
+  "refreshes eligible active conversations daily when new messages arrive",
+);
+```
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+
+Expected: FAIL because the current hover does not receive the card plan and only provides generic classification copy.
+
+- [ ] **Step 3: Implement plan-aware hover copy**
+
+Add a catalog helper that returns Starter one-time copy, Growth/Business daily-refresh copy, and generic comparison-table copy. Pass the plan ID from `renderPricingFeatureLabel` into the hover component; leave the comparison-table call without a plan ID.
+
+- [ ] **Step 4: Run focused tests and verify GREEN**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/planKeyFeatures.test.ts convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+
+Expected: PASS with no failures.
+
+### Task 5: Verify and publish the focused feature branch
 
 **Files:**
 - Modify: `CONTINUITY.md`
