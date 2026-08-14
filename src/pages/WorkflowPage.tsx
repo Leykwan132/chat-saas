@@ -75,6 +75,8 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         selectedNodeId,
         layoutOrientation,
         messageActions.isGraphMutating,
+        'standard',
+        agentId,
       ),
     [
       latestGraph,

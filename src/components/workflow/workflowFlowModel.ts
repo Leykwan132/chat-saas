@@ -162,6 +162,7 @@ export function workflowGraphToFlow(
   layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
   disabled = false,
   nodeDensity: WorkflowNodeDensity = 'standard',
+  bookingAgentId?: Id<'agents'>,
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
   const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
@@ -181,6 +182,8 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          allowedAppointmentServiceIds: node.allowedAppointmentServiceIds,
+          bookingAgentId,
           isReady: node.isReady === true,
           readinessIssueCount: node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
           density: nodeDensity,

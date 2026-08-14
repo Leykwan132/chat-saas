@@ -21,6 +21,7 @@ const workflowId = 'workflow' as Id<'workflows'>;
 const agentId = 'agent' as Id<'agents'>;
 const startNodeId = 'start' as Id<'workflowNodes'>;
 const textNodeId = 'text' as Id<'workflowNodes'>;
+const serviceId = 'service' as Id<'appointmentServices'>;
 
 function workflowNode(
   id: Id<'workflowNodes'>,
@@ -151,6 +152,30 @@ test('workflowGraphToFlow carries persisted readiness and missing-item count int
 
   expect(sendTextNode?.data.isReady).toBe(false);
   expect(sendTextNode?.data.readinessIssueCount).toBe(2);
+});
+
+test('workflowGraphToFlow carries booking service controls into appointment nodes', () => {
+  const graph = workflowGraph();
+  graph.nodes[1] = {
+    ...graph.nodes[1]!,
+    kind: 'bookAppointment',
+    allowedAppointmentServiceIds: [serviceId],
+  } as Doc<'workflowNodes'>;
+
+  const flow = workflowGraphToFlow(
+    graph,
+    () => {},
+    () => {},
+    undefined,
+    'horizontal',
+    false,
+    'standard',
+    agentId,
+  );
+  const bookingNode = flow.nodes.find((node) => node.id === textNodeId);
+
+  expect(bookingNode?.data.bookingAgentId).toBe(agentId);
+  expect(bookingNode?.data.allowedAppointmentServiceIds).toEqual([serviceId]);
 });
 
 test('workflowGraphToFlow propagates compact density to persisted nodes only', () => {

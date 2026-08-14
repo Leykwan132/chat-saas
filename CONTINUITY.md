@@ -53,30 +53,28 @@
 - 2026-08-14 D025 ACTIVE [USER] Service-editor navigation uses icons and the order Service details, Appointment duration, Booking team, and Booking form.
 - 2026-08-14 D026 ACTIVE [USER] AI Lead Temperature is available from Starter upward; only Growth compact cards call it out directly, while Business inherits the capability.
 - 2026-08-14 D027 ACTIVE [USER] Workflow service links open the service detail page on its Service details pane; its name field label is Name.
+- 2026-08-15 D028 ACTIVE [USER] Standard Book appointment nodes directly list active services, their assigned teammate count and hover names, and immediate-save booking switches; the inspector no longer duplicates that selection.
 
 # State
 
-- 2026-08-14 [CODE] Now: service detail pages open on Service details with a concise Name field label; existing workflow service links use this landing pane.
-- 2026-08-14 [TOOL] Next: validate and review the current local feature branch; production deployment and migration execution remain unapproved.
+- 2026-08-15 [CODE] Now: Book appointment workflow nodes list enabled services and assigned teammates with immediate selection switches; service selection is no longer duplicated in the inspector.
+- 2026-08-15 [TOOL] Next: review the current local feature branch; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
 
-- `src/components/TeamSwitcher.tsx`
-- `src/components/WorkspaceUnavailable.tsx`
-- `src/components/WorkspaceUnavailable.test.tsx`
-- `src/layouts/DashboardLayout.tsx`
-- `src/pages/ScheduleUserDetailPage.tsx`
-- `src/pages/ScheduleUserDetailPage.test.tsx`
-- `src/pages/ScheduleUserAvailabilityPage.tsx`
-- `src/components/schedule/`
-- `src/components/schedule/ScheduleAvailabilityEditor.test.tsx`
-- `src/lib/availabilityWorkspace.ts`
-- `src/components/ServiceForm.tsx`
-- `src/components/ServiceForm.test.tsx`
-- `src/components/services/serviceFormShared.tsx`
-- `docs/superpowers/specs/2026-08-14-service-details-default-design.md`
-- `docs/superpowers/plans/2026-08-14-service-details-default.md`
+- `convex/workflowAppointmentServices.ts`
+- `convex/workflowAppointmentServices.test.ts`
+- `src/components/workflow/WorkflowBookingNodeServices.tsx`
+- `src/components/workflow/workflowBookingNodeServicesModel.ts`
+- `src/components/workflow/workflowBookingNodeServicesModel.test.ts`
+- `src/components/workflow/WorkflowNode.tsx`
+- `src/components/workflow/WorkflowInspectorForm.tsx`
+- `src/components/workflow/workflowFlowModel.ts`
+- `src/components/workflow/workflowFlowModel.test.ts`
+- `src/pages/WorkflowPage.tsx`
+- `docs/superpowers/specs/2026-08-15-booking-node-services-design.md`
+- `docs/superpowers/plans/2026-08-15-booking-node-services.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -122,3 +120,4 @@
 - 2026-08-14 [TOOL] Merge receipt: `origin/main` commit `db0c156a` adds AI Lead Temperature pricing work; its draft PR is #60.
 - 2026-08-14 [TOOL] GREEN: after merge commit `1184ae98`, `bun run test` passed 426 files / 1,363 tests and 63 Docs tests; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] RED then GREEN: ServiceForm initially selected Booking team; the focused regression now confirms Service details is selected first and its Name field is visible under Node v22.22.0.
+- 2026-08-15 [TOOL] RED then GREEN: workflow services did not expose assigned teammates, booking-node flow data did not carry the agent/selection, and the inspector retained duplicate controls; 5 focused suites, TypeScript, diff checks, and `bun run test` (429 files / 1,369 tests plus 63 Docs tests) pass under Node v22.22.0.
