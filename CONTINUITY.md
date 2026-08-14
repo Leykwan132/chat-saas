@@ -14,6 +14,7 @@
 - 2026-08-14 [USER] Personal and member Availability needs its own title, no dashboard back link, and inline editable weekly hours.
 - 2026-08-14 [USER] Personal Availability should omit profile metadata, describe its purpose, and place Request time off with Time off.
 - 2026-08-14 [USER] Availability hours must load instead of remaining indefinitely on the weekly editor skeleton; lead-eligibility simplification is paused until this is fixed.
+- 2026-08-14 [USER] Direct organizational-admin Availability needs the same explanatory copy as the personal view.
 
 # Done (recent)
 
@@ -33,12 +34,13 @@
 - 2026-08-14 D009 ACTIVE [USER] Personal Availability omits the identity/status header, shows its leads-and-bookings purpose, and owns the time-off action within the Time off section.
 - 2026-08-14 D010 ACTIVE [CODE] Root test verification uses `bun run test`, which runs Vitest for the application and Convex suites and Node's test runner for Docs; `bun test` bypasses the required Vite/Vitest environment.
 - 2026-08-14 D011 ACTIVE [USER] Personal Availability loading mirrors the simplified completed page; organization member loading retains the teammate-detail skeleton.
+- 2026-08-14 D012 ACTIVE [USER] Every direct Availability view explains that it sets availability for leads and bookings.
 
 # State
 
-- 2026-08-14 [CODE] Now: the Availability editor loading fix is committed locally; cached detail renders directly without competing hydration effects.
-- 2026-08-14 [TOOL] Next: return to the paused Accepting leads redesign after user verification; external push and deployment remain unapproved.
-- 2026-08-14 [USER] Open question: whether weekly hours continue limiting lead assignment after the Accepting leads control is removed.
+- 2026-08-14 [CODE] Now: approved admin-description design is documented; no implementation has started.
+- 2026-08-14 [TOOL] Next: user review of the committed description spec, then implementation planning.
+- 2026-08-14 [USER] Open question: service-specific teammate assignment scope for removing Accepting leads remains awaiting approval.
 
 # Working set
 
@@ -54,6 +56,7 @@
 - `src/lib/availabilityWorkspace.ts`
 - `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
 - `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
+- `docs/superpowers/specs/2026-08-14-admin-availability-description-design.md`
 - `CONTINUITY.md`
 
 # Receipts
