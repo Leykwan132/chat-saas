@@ -17,6 +17,7 @@
 - 2026-08-14 [USER] Direct organizational-admin Availability needs the same explanatory copy as the personal view.
 - 2026-08-14 [USER] Remove Accepting leads; weekly hours and time off govern leads, while selected teammates govern which services they can book.
 - 2026-08-14 [USER] Service editing prioritizes booking assignment, limits bulk teammate inclusion to new services, and removes booking-status metric tiles.
+- 2026-08-14 [CODE] Merged `origin/main` adds the standalone AI Lead Temperature pricing feature and its Growth-only compact-card callout.
 
 # Done (recent)
 
@@ -50,6 +51,7 @@
 - 2026-08-14 D023 ACTIVE [USER] Service editing uses left-side section navigation and no longer displays booking-status metric tiles.
 - 2026-08-14 D024 SUPERSEDED [USER] Booking assignment was initially the first service-editor section; Include all teammates remains create-only.
 - 2026-08-14 D025 ACTIVE [USER] Service-editor navigation uses icons and the order Service details, Appointment duration, Booking team, and Booking form.
+- 2026-08-14 D026 ACTIVE [USER] AI Lead Temperature is available from Starter upward; only Growth compact cards call it out directly, while Business inherits the capability.
 
 # State
 
@@ -117,3 +119,4 @@
 - 2026-08-14 [TOOL] GREEN: service navigation icon/copy test, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-14 [TOOL] GREEN: the full `bun run test` suite passes with 426 test files / 1,363 tests and 63 Docs tests under Node v22.22.0 after the navigation icon update.
 - 2026-08-14 [TOOL] GREEN: the Booking team navigation-order test, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [TOOL] Merge receipt: `origin/main` commit `db0c156a` adds AI Lead Temperature pricing work; its draft PR is #60.
