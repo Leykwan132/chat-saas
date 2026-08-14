@@ -30,11 +30,12 @@
 - 2026-08-14 D007 ACTIVE [USER] Active workspace switches take precedence over stale-route recovery and display only a switching loader until they succeed or fail.
 - 2026-08-14 D008 ACTIVE [USER] Direct Availability views provide the complete weekly-hours editor in place, while organizational owner teammate details retain their compact summary and edit route.
 - 2026-08-14 D009 ACTIVE [USER] Personal Availability omits the identity/status header, shows its leads-and-bookings purpose, and owns the time-off action within the Time off section.
+- 2026-08-14 D010 ACTIVE [CODE] Root test verification uses `bun run test`, which runs Vitest for the application and Convex suites and Node's test runner for Docs; `bun test` bypasses the required Vite/Vitest environment.
 
 # State
 
-- 2026-08-14 [CODE] Now: personal Availability header simplification is committed locally for draft PR #59; it removes personal metadata, adds purpose copy, and places the time-off action within its section.
-- 2026-08-14 [TOOL] Next: return to the repository-wide runner limitation before external deployment and PR update.
+- 2026-08-14 [CODE] Now: root test runner repair is committed locally; it separates incompatible Vitest and Node test suites and removes a calendar fixture's weekday dependency.
+- 2026-08-14 [TOOL] Next: external push and PR update need authorization.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -47,41 +48,22 @@
 - `src/pages/ScheduleUserAvailabilityPage.tsx`
 - `src/components/schedule/`
 - `src/lib/availabilityWorkspace.ts`
-- `docs/superpowers/specs/2026-08-14-direct-availability-page-design.md`
-- `docs/superpowers/plans/2026-08-14-direct-availability-page.md`
-- `docs/superpowers/specs/2026-08-14-personal-availability-header-design.md`
-- `docs/superpowers/plans/2026-08-14-personal-availability-header.md`
+- `convex/calendarManualBooking.test.ts`
+- `src/pages/DashboardDetailPageTitles.test.ts`
+- `vitest.config.ts`
+- `package.json`
 - `CONTINUITY.md`
 
 # Receipts
 
-- 2026-08-13 [TOOL] Manual booking availability suite passed 13/13 under Node v22.22.0; full Vitest has 10 established Docs runner/configuration suite failures unrelated to booking work.
-- 2026-08-13 [TOOL] Created and checked out local branch `codex/fix-slot-availability-create`; 16 focused tests and `tsc --noEmit` passed before PR #58.
 - 2026-08-13 [TOOL] Created and checked out local branch `codex/show-unavailable-availability`; preserved unrelated untracked `pricing-knowledge-base-updated.md`.
-- 2026-08-13 [CODE] Committed approved availability-label design as `2b41926d`; specification self-review found no placeholders or ambiguous scope.
-- 2026-08-13 [TOOL] RED: Weekly availability editor regression failed because the initial markup contained no “Unavailable” labels.
-- 2026-08-13 [TOOL] GREEN: `bunx vitest run src/components/WeeklyAvailabilityEditor.test.ts` passed 4/4 under Node v22.22.0; `bunx tsc --noEmit` and `git diff --check` passed.
-- 2026-08-14 [CODE] Committed approved roster-card hours design as `79caad36`; specification self-review found no placeholders or ambiguous scope.
-- 2026-08-14 [TOOL] RED: SchedulePage roster-card regression failed because saved weekly hours were absent from card markup.
-- 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after rendering saved hours and no-hours states; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
-- 2026-08-14 [CODE] Committed approved availability-card metadata layout design as `1375df18`; specification self-review found no placeholders or ambiguous scope.
-- 2026-08-14 [TOOL] RED: roster-card test showed Admin markup after the teammate name; availability lines had no clock icons.
-- 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after the metadata reorder and clock rendering; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
+- 2026-08-13 [CODE] Availability-label design committed as `2b41926d`; focused editor suite, TypeScript, and diff checks passed.
+- 2026-08-14 [CODE] Roster card availability and metadata designs committed as `79caad36` and `1375df18`; focused suites, TypeScript, and diff checks passed.
 - 2026-08-14 [TOOL] Pushed `codex/show-unavailable-availability`; GitHub plugin PR creation received integration 403, then CLI fallback created draft PR #59.
-- 2026-08-14 [CODE] Approved workspace-defaults design covers personal and non-owner direct navigation, Owner/Admin/Member labels, and enabled default schedules for new agents and members.
-- 2026-08-14 [TOOL] RED: schedule provisioning tests found no personal schedule and inactive organizational/member schedules; role and non-owner roster regressions also failed before implementation.
-- 2026-08-14 [TOOL] GREEN: 15 focused tests, `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
-- 2026-08-14 [TOOL] Convex deployment verification is pending explicit authorization after `bunx convex dev --once` was correctly blocked as an external deployment action.
-- 2026-08-14 [CODE] Approved workspace-switch design keeps real unavailable-workspace recovery intact while suppressing it during an active switch.
-- 2026-08-14 [TOOL] RED: transition regression found no dashboard switch state or TeamSwitcher lifecycle callbacks.
-- 2026-08-14 [TOOL] GREEN: workspace transition and availability page suites passed 7/7 with `tsc --noEmit` and `git diff --check` under Node v22.22.0.
-- 2026-08-14 [CODE] Approved direct-Availability design places weekly-hours editing on the personal/member page and preserves organizational-owner teammate detail navigation.
-- 2026-08-14 [CODE] User approved the direct-Availability specification; its implementation plan extracts a reusable weekly-hours editor and composes it inline only for direct views.
-- 2026-08-14 [CODE] User approved a plan correction replacing source inspections with rendered route tests and extracting the oversized detail page into focused components.
-- 2026-08-14 [TOOL] RED: direct personal Availability retained `Back to dashboard` and the edit-only availability link; the owner edit route hid its heading behind the old page-level skeleton.
-- 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after inline editor composition and page extraction.
-- 2026-08-14 [TOOL] Full `bun test` is blocked independently of this work: 1,153 pass, 135 fail, and 87 errors from unsupported `import.meta.glob`, missing Stripe variables, and unsupported Vitest timer APIs.
-- 2026-08-14 [CODE] Approved personal-header design removes personal profile metadata, adds purpose copy, and relocates the time-off action to its section heading.
-- 2026-08-14 [CODE] User approved the personal-header specification; its implementation plan preserves organizational views while simplifying only personal Availability.
-- 2026-08-14 [TOOL] RED: the personal route lacked purpose copy and still rendered the profile header and top-level time-off action.
-- 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after the personal-header simplification.
+- 2026-08-14 [CODE] Workspace defaults and workspace-switch designs were implemented; focused suites, TypeScript, and diff checks passed. Deployment remains unapproved.
+- 2026-08-14 [CODE] Direct Availability editing and the personal-header simplification were committed locally as `1d0bd376` and `62635f3b`.
+- 2026-08-14 [TOOL] Initial full `bun test` failed because Bun's runner lacks the Vite/Vitest setup required by application and Convex tests; root `package.json` did not define a test script.
+- 2026-08-14 [TOOL] RED: full Vitest reported 10 Docs Node-runner files as empty suites, a stale Thursday-only Calendar fixture, and a page-title source assertion made obsolete by component extraction.
+- 2026-08-14 [TOOL] GREEN: corrected Calendar and page-title tests passed 3/3 under Node v22.22.0.
+- 2026-08-14 [TOOL] GREEN: `bun run test` exits 0 under Node v22.22.0; it runs the full Vitest application/Convex suite and Docs Node suite (63/63).
+- 2026-08-14 [TOOL] GREEN: `bunx tsc --noEmit` and `git diff --check` pass under Node v22.22.0.

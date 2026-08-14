@@ -6,6 +6,13 @@ function pageSource(fileName: string) {
   return readFileSync(fileURLToPath(new URL(fileName, import.meta.url)), 'utf8');
 }
 
+function componentSource(fileName: string) {
+  return readFileSync(
+    fileURLToPath(new URL(`../components/${fileName}`, import.meta.url)),
+    'utf8',
+  );
+}
+
 function titleClassBeforeMarker(source: string, marker: string) {
   const markerIndex = source.indexOf(marker);
   expect(markerIndex).toBeGreaterThan(-1);
@@ -29,7 +36,9 @@ test('uses KiloBot typography for authenticated detail page titles', () => {
   const templateSource = pageSource('./TemplateDetailPage.tsx');
   const serviceSource = pageSource('./ServicePage.tsx');
   const availabilitySource = pageSource('./ScheduleUserAvailabilityPage.tsx');
-  const scheduleDetailSource = pageSource('./ScheduleUserDetailPage.tsx');
+  const scheduleDetailHeaderSource = componentSource(
+    'schedule/ScheduleUserDetailHeader.tsx',
+  );
 
   expectBrandTitle(customerSource, "customer.name?.trim() || 'Unnamed Customer'");
   const followUpHeaderStart = followUpSource.indexOf('Back to Follow-ups');
@@ -41,7 +50,7 @@ test('uses KiloBot typography for authenticated detail page titles', () => {
   expectBrandTitle(templateSource, '{template.name}');
   expectBrandTitle(serviceSource, "form.name.trim() || 'Edit service'");
   expectBrandTitle(availabilitySource, '          Available hours\n        </h1>');
-  expectBrandTitle(scheduleDetailSource, '{displayName}');
+  expectBrandTitle(scheduleDetailHeaderSource, '{displayName}');
 });
 
 test('keeps described detail headers 24px from their content', () => {

@@ -1,5 +1,5 @@
 import path from "node:path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -9,6 +9,7 @@ export default defineConfig({
   },
   test: {
     environment: "edge-runtime",
+    exclude: [...configDefaults.exclude, "kilobot-docs/**"],
     env: {
       STRIPE_PRICE_FREE_MONTHLY: "mock_free_mo",
       STRIPE_PRICE_FREE_ANNUAL: "mock_free_yr",
