@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useMutation } from 'convex/react';
-import { Trash2 } from 'lucide-react';
+import { CalendarOff, Trash2 } from 'lucide-react';
 import { type DateRange } from 'react-day-picker';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -37,8 +37,6 @@ type ScheduleTimeOffSectionProps = {
   workosUserId: string;
   scheduleId?: Id<'userSchedules'>;
   timeOff: TimeOff[];
-  requestOpen: boolean;
-  onRequestOpenChange: (open: boolean) => void;
 };
 
 type TimeOffStep = 'pick' | 'review';
@@ -48,13 +46,12 @@ export function ScheduleTimeOffSection({
   workosUserId,
   scheduleId,
   timeOff,
-  requestOpen,
-  onRequestOpenChange,
 }: ScheduleTimeOffSectionProps) {
   const addUser = useMutation(api.leadRouting.schedules.addUser);
   const addTimeOff = useMutation(api.leadRouting.schedules.addTimeOff);
   const removeTimeOff = useMutation(api.leadRouting.schedules.removeTimeOff);
   const [timeOffStep, setTimeOffStep] = useState<TimeOffStep>('pick');
+  const [isRequestOpen, setIsRequestOpen] = useState(false);
   const [timeOffRange, setTimeOffRange] = useState<DateRange | undefined>();
   const [timeOffNote, setTimeOffNote] = useState('');
   const [submittingTimeOff, setSubmittingTimeOff] = useState(false);
@@ -68,7 +65,7 @@ export function ScheduleTimeOffSection({
   const bookedTimeOffDays = useMemo(() => calendarDaysForTimeOff(timeOff), [timeOff]);
 
   const closeTimeOffSheet = () => {
-    onRequestOpenChange(false);
+    setIsRequestOpen(false);
     setTimeOffStep('pick');
     setTimeOffRange(undefined);
     setTimeOffNote('');
@@ -119,7 +116,13 @@ export function ScheduleTimeOffSection({
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-foreground">Time off</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-semibold text-foreground">Time off</h2>
+        <Button type="button" variant="outline" onClick={() => setIsRequestOpen(true)}>
+          <CalendarOff className="size-4" />
+          Request time off
+        </Button>
+      </div>
 
       {sortedTimeOff.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
@@ -153,10 +156,10 @@ export function ScheduleTimeOffSection({
       )}
 
       <Sheet
-        open={requestOpen}
+        open={isRequestOpen}
         onOpenChange={(open) => {
           if (!open) closeTimeOffSheet();
-          else onRequestOpenChange(true);
+          else setIsRequestOpen(true);
         }}
       >
         <SheetContent side="right" className="w-full sm:max-w-md" showCloseButton={false}>

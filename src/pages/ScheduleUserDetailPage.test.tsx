@@ -61,6 +61,12 @@ test('shows personal availability inline without dashboard back navigation', () 
   );
 
   expect(markup).toContain('Availability</h1>');
+  expect(markup).toContain('Set when you’re available to receive leads and bookings.');
   expect(markup).not.toContain('Back to dashboard');
   expect(markup).not.toContain('/dashboard/agent-1/availability/user-ley/edit');
+  expect(markup).not.toContain('Ley Kwan Choo (You)');
+  expect(markup).not.toContain('ley@example.com');
+  expect(markup).not.toContain('>Owner</span>');
+  expect(markup).not.toContain('>Active</span>');
+  expect(markup.indexOf('Time off')).toBeLessThan(markup.indexOf('Request time off'));
 });

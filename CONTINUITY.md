@@ -33,8 +33,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: personal Availability specification is user-approved and its test-first implementation plan is documented locally for draft PR #59.
-- 2026-08-14 [TOOL] Next: select execution approach, then implement the personal-only header simplification; external deployment and PR update remain pending test-runner resolution or waiver.
+- 2026-08-14 [CODE] Now: personal Availability header simplification is committed locally for draft PR #59; it removes personal metadata, adds purpose copy, and places the time-off action within its section.
+- 2026-08-14 [TOOL] Next: return to the repository-wide runner limitation before external deployment and PR update.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -83,3 +83,5 @@
 - 2026-08-14 [TOOL] Full `bun test` is blocked independently of this work: 1,153 pass, 135 fail, and 87 errors from unsupported `import.meta.glob`, missing Stripe variables, and unsupported Vitest timer APIs.
 - 2026-08-14 [CODE] Approved personal-header design removes personal profile metadata, adds purpose copy, and relocates the time-off action to its section heading.
 - 2026-08-14 [CODE] User approved the personal-header specification; its implementation plan preserves organizational views while simplifying only personal Availability.
+- 2026-08-14 [TOOL] RED: the personal route lacked purpose copy and still rendered the profile header and top-level time-off action.
+- 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after the personal-header simplification.

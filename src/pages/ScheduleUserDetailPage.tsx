@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { ArrowLeft, ChevronRight, Globe } from 'lucide-react';
@@ -47,7 +46,6 @@ export default function ScheduleUserDetailPage() {
   const currentUser = useQuery(api.users.currentUser);
   const addUser = useMutation(api.leadRouting.schedules.addUser);
   const updateUser = useMutation(api.leadRouting.schedules.updateUser);
-  const [isTimeOffRequestOpen, setIsTimeOffRequestOpen] = useState(false);
 
   if (!typedAgentId || !decodedWorkosUserId) return null;
 
@@ -71,6 +69,7 @@ export default function ScheduleUserDetailPage() {
   }
 
   const isDirectAvailabilityView = !showTeamRoster;
+  const isPersonalAvailabilityView = activeTeam?.type === 'personal';
   const rosterPath = availabilityBackPath(typedAgentId, showTeamRoster);
 
   if (detail === null) {
@@ -122,7 +121,16 @@ export default function ScheduleUserDetailPage() {
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
-      {isDirectAvailabilityView ? (
+      {isPersonalAvailabilityView ? (
+        <div className="space-y-1.5">
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
+            Availability
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Set when you’re available to receive leads and bookings.
+          </p>
+        </div>
+      ) : isDirectAvailabilityView ? (
         <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
           Availability
         </h1>
@@ -136,17 +144,18 @@ export default function ScheduleUserDetailPage() {
         </Link>
       )}
 
-      <ScheduleUserDetailHeader
-        displayName={displayName}
-        email={detail.user.email}
-        headingAs={isDirectAvailabilityView ? 'h2' : 'h1'}
-        role={detail.user.role}
-        statusLabel={statusLabel}
-        isActive={isActive}
-        isTimeOff={isTimeOff}
-        scheduleEnabled={scheduleEnabled}
-        onRequestTimeOff={() => setIsTimeOffRequestOpen(true)}
-      />
+      {!isPersonalAvailabilityView ? (
+        <ScheduleUserDetailHeader
+          displayName={displayName}
+          email={detail.user.email}
+          headingAs={isDirectAvailabilityView ? 'h2' : 'h1'}
+          role={detail.user.role}
+          statusLabel={statusLabel}
+          isActive={isActive}
+          isTimeOff={isTimeOff}
+          scheduleEnabled={scheduleEnabled}
+        />
+      ) : null}
 
       <section className="space-y-3">
         {isDirectAvailabilityView ? (
@@ -174,8 +183,6 @@ export default function ScheduleUserDetailPage() {
         workosUserId={decodedWorkosUserId}
         scheduleId={detail.schedule?._id}
         timeOff={detail.timeOff}
-        requestOpen={isTimeOffRequestOpen}
-        onRequestOpenChange={setIsTimeOffRequestOpen}
       />
 
       {canManage ? (
