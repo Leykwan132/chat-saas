@@ -60,7 +60,12 @@ export default function ScheduleUserDetailPage() {
     currentUser === undefined;
 
   if (isLoading) {
-    return <ScheduleUserDetailSkeleton showStatusSection={canManage} />;
+    return (
+      <ScheduleUserDetailSkeleton
+        isPersonalAvailabilityView={activeTeam?.type === 'personal'}
+        showStatusSection={canManage}
+      />
+    );
   }
 
   const isOwnProfile = decodedWorkosUserId === currentUser.workosUserId;
@@ -232,7 +237,30 @@ function AvailabilitySummary({
   );
 }
 
-function ScheduleUserDetailSkeleton({ showStatusSection }: { showStatusSection: boolean }) {
+function ScheduleUserDetailSkeleton({
+  isPersonalAvailabilityView,
+  showStatusSection,
+}: {
+  isPersonalAvailabilityView: boolean;
+  showStatusSection: boolean;
+}) {
+  if (isPersonalAvailabilityView) {
+    return (
+      <div className="flex w-full max-w-3xl flex-col gap-6">
+        <div className="space-y-1.5">
+          <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
+            Availability
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Set when you’re available to receive leads and bookings.
+          </p>
+        </div>
+        <Skeleton className="h-72 w-full rounded-xl" />
+        <Skeleton className="h-28 w-full rounded-xl" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full max-w-3xl flex-col gap-8">
       <div className="space-y-4">

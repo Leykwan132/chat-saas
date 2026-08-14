@@ -70,3 +70,23 @@ test('shows personal availability inline without dashboard back navigation', () 
   expect(markup).not.toContain('>Active</span>');
   expect(markup.indexOf('Time off')).toBeLessThan(markup.indexOf('Request time off'));
 });
+
+test('matches the personal Availability layout while details load', () => {
+  mocks.useQuery
+    .mockReturnValueOnce(undefined)
+    .mockReturnValueOnce({ workosUserId: 'user-ley' });
+
+  const markup = renderToStaticMarkup(
+    <MemoryRouter initialEntries={['/dashboard/agent-1/availability/user-ley']}>
+      <Routes>
+        <Route
+          path="/dashboard/:agentId/availability/:workosUserId"
+          element={<ScheduleUserDetailPage />}
+        />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('Availability</h1>');
+  expect(markup).toContain('Set when you’re available to receive leads and bookings.');
+});

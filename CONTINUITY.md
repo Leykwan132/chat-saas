@@ -31,11 +31,12 @@
 - 2026-08-14 D008 ACTIVE [USER] Direct Availability views provide the complete weekly-hours editor in place, while organizational owner teammate details retain their compact summary and edit route.
 - 2026-08-14 D009 ACTIVE [USER] Personal Availability omits the identity/status header, shows its leads-and-bookings purpose, and owns the time-off action within the Time off section.
 - 2026-08-14 D010 ACTIVE [CODE] Root test verification uses `bun run test`, which runs Vitest for the application and Convex suites and Node's test runner for Docs; `bun test` bypasses the required Vite/Vitest environment.
+- 2026-08-14 D011 ACTIVE [USER] Personal Availability loading mirrors the simplified completed page; organization member loading retains the teammate-detail skeleton.
 
 # State
 
-- 2026-08-14 [CODE] Now: personal Availability skeleton design is committed locally and awaits user review before implementation.
-- 2026-08-14 [TOOL] Next: write and review the skeleton implementation plan after user approval; external push and PR update remain unapproved.
+- 2026-08-14 [CODE] Now: personal Availability skeleton fix is committed locally; its loading state matches the simplified completed page without changing organization loading.
+- 2026-08-14 [TOOL] Next: decide whether to push the committed work to draft PR #59; external deployment remains unapproved.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -50,6 +51,7 @@
 - `src/components/schedule/`
 - `src/lib/availabilityWorkspace.ts`
 - `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
+- `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -66,3 +68,5 @@
 - 2026-08-14 [TOOL] GREEN: `bun run test` exits 0 under Node v22.22.0; it runs the full Vitest application/Convex suite and Docs Node suite (63/63).
 - 2026-08-14 [TOOL] GREEN: `bunx tsc --noEmit` and `git diff --check` pass under Node v22.22.0.
 - 2026-08-14 [CODE] Approved skeleton design keeps personal Availability loading free of teammate-profile placeholders and leaves organizational loading intact.
+- 2026-08-14 [TOOL] RED: personal Availability loading rendered the generic teammate-detail skeleton without the page title or purpose description.
+- 2026-08-14 [TOOL] GREEN: focused Availability route tests passed 3/3, TypeScript and diff checks passed, and the full `bun run test` command exited 0 under Node v22.22.0.
