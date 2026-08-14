@@ -5,10 +5,10 @@ import {
   TOPIC_ANALYTICS_LABEL,
 } from './planCatalog';
 
-test('compact pricing cards surface AI Lead Temperature on every eligible plan', () => {
+test('compact pricing cards surface AI Lead Temperature only on Growth', () => {
   expect(getPlanKeyFeatures('free')).not.toContain(AI_LEAD_TEMPERATURE_LABEL);
-  expect(getPlanKeyFeatures('starter')).toContain(AI_LEAD_TEMPERATURE_LABEL);
-  expect(getPlanKeyFeatures('business')).toContain(AI_LEAD_TEMPERATURE_LABEL);
+  expect(getPlanKeyFeatures('starter')).not.toContain(AI_LEAD_TEMPERATURE_LABEL);
+  expect(getPlanKeyFeatures('business')).not.toContain(AI_LEAD_TEMPERATURE_LABEL);
 
   const growthFeatures = getPlanKeyFeatures('growth');
 

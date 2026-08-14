@@ -201,3 +201,26 @@ Confirm the diff contains only the pricing catalogue, pricing hover, focused tes
 Run: `git add shared/planCatalog.ts convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.tsx src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx docs/superpowers/specs/2026-08-14-ai-lead-temperature-pricing-design.md docs/superpowers/plans/2026-08-14-ai-lead-temperature-pricing.md CONTINUITY.md && git commit -m "feat: separate AI lead temperature pricing" && git push -u origin codex/ai-lead-temperature && gh pr create --draft --base main --head codex/ai-lead-temperature --title "feat: separate AI lead temperature pricing" --body "## Summary\n- present AI Lead Temperature as its own Analytics feature\n- clarify the dedicated hover content\n- keep Advanced Analytics focused on topics and sentiment\n\n## Testing\n- bunx vitest run convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx\n- bunx tsc --noEmit"`
 
 Expected: a draft pull-request URL is returned and the worktree remains available for review feedback.
+
+### Task 6: Restrict the compact-card callout to Growth
+
+**Files:**
+- Modify: `shared/planCatalog.ts`
+- Modify: `shared/planKeyFeatures.test.ts`
+- Modify: `src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+
+**Interfaces:**
+- Produces: a Growth-only compact-card `AI Lead Temperature` line directly before `Advanced Analytics`.
+- Preserves: Starter's one-time sync and Growth-and-higher daily refresh information in the detailed comparison hover.
+
+- [x] **Step 1: Write failing compact-card and comparison-hover regressions**
+
+- [x] **Step 2: Confirm RED**
+
+The compact-card test showed Starter still included the label and the comparison hover still explicitly named Business.
+
+- [x] **Step 3: Update the shared catalog presentation**
+
+Keep the entitlement flags unchanged, add the label only to Growth's `displayFeatures`, and return unmodified compact lists from the shared helper.
+
+- [ ] **Step 4: Run focused, static, and full verification; push PR #60**

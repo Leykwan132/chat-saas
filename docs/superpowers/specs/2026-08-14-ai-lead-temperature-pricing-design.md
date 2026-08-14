@@ -8,13 +8,13 @@ Present AI Lead Temperature as a standalone pricing feature directly above Advan
 
 - Rename the existing pricing label `Auto lead tagging` to `AI Lead Temperature`.
 - Keep the existing Starter-and-up plan availability. This change does not alter feature flags, model processing, or customer lead-temperature behavior.
-- Move the feature from the AI group into the Analytics group, immediately before Advanced Analytics in all plan cards and the comparison table.
+- Move the feature from the AI group into the Analytics group, immediately before Advanced Analytics in the detailed comparison table and the Growth compact card.
 - Advanced Analytics remains available on Growth, Business, and Enterprise. Its hover list contains only Common Topic Detection and Customer Sentiment.
-- Add AI Lead Temperature to every eligible self-serve compact plan-card feature list. Growth places it immediately before Advanced Analytics; Starter and Business include it in their compact lists without changing their plan flags. Public pricing, onboarding, and the upgrade dialog consume these lists through `getPlanPickerCards()`.
+- Add AI Lead Temperature only to the Growth compact plan-card feature list, immediately before Advanced Analytics. Starter's one-time sync is represented accurately in the detailed comparison, while Business inherits Growth features through its “Everything in Growth, plus” card header without repeating the line. Public pricing, onboarding, and the upgrade dialog consume these lists through `getPlanPickerCards()`.
 
 ## Hover content
 
-The standalone hover title is `AI Lead Temperature` and continues to show Hot, Warm, and Cold. On Starter cards, its copy explains that classification runs once when a conversation is initially synced. On Growth and Business cards, its copy explains that the initial classification is refreshed daily for eligible active conversations with new messages. Comparison-table hover copy states both tiers' behavior.
+The standalone hover title is `AI Lead Temperature` and continues to show Hot, Warm, and Cold. The Growth card explains that eligible active conversations refresh daily when new messages arrive. The detailed comparison hover explains both the one-time Starter sync and the daily refresh available on Growth and higher plans.
 
 ## Verification
 

@@ -8,6 +8,7 @@
 - 2026-08-13 [USER] The selected Calendar View filter needs fully rounded pill corners.
 - 2026-08-14 [USER] AI Lead Temperature must be a standalone pricing feature placed directly above Advanced Analytics, with hover copy that explains the capability.
 - 2026-08-14 [USER] Every compact pricing card, including public pricing, onboarding, and upgrades, must show AI Lead Temperature as a separate eligible-plan feature.
+- 2026-08-14 [USER] Compact cards should call out AI Lead Temperature only on Growth; Business inherits it without repetition, while Starter's one-time sync remains accurate in the detailed comparison.
 
 # Done (recent)
 
@@ -19,13 +20,15 @@
 - 2026-08-13 D001 ACTIVE [USER] AI workflow service selections constrain AI booking only. Staff manual bookings use the active service catalogue.
 - 2026-08-13 D002 ACTIVE [USER] Inbox Create booking and Calendar + New Booking default to the first valid 30-minute slot at or after the current time; there is no lead-time delay and temporal proximity overrides preferred times.
 - 2026-08-14 D003 ACTIVE [USER] AI Lead Temperature remains enabled from Starter upward, while Advanced Analytics remains Growth-and-up and lists only topic detection and customer sentiment.
-- 2026-08-14 D004 ACTIVE [USER] Compact pricing cards derive AI Lead Temperature from the existing lead-tagging entitlement, placing it before Advanced Analytics when present.
-- 2026-08-14 D005 ACTIVE [USER] Starter hover copy states its one-time initial-sync classification; Growth and Business hover copy states daily refreshes for eligible active conversations with new messages.
+- 2026-08-14 D004 SUPERSEDED [USER] Compact pricing cards previously derived AI Lead Temperature from the existing lead-tagging entitlement.
+- 2026-08-14 D005 SUPERSEDED [USER] Compact-card hover copy previously differentiated Starter, Growth, and Business.
+- 2026-08-14 D006 ACTIVE [USER] Only the Growth compact card lists AI Lead Temperature, immediately before Advanced Analytics; Business inherits it via its Growth-inclusive header and Starter's one-time sync stays in the detailed comparison.
+- 2026-08-14 D007 ACTIVE [USER] The Growth card hover describes daily refreshes; generic comparison hover states Starter's one-time sync and Growth-and-higher daily refresh.
 
 # State
 
-- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` includes the verified one-time-versus-daily hover copy and is published to draft PR #60.
-- 2026-08-14 [TOOL] Next: review updated PR #60; do not add a release changelog entry until production availability is confirmed.
+- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` implements the Growth-only compact-card callout without changing Starter-and-up entitlement flags.
+- 2026-08-14 [TOOL] Next: commit and push this PR #60 update; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -69,3 +72,6 @@
 - 2026-08-14 [TOOL] RED then GREEN: Starter and Growth hover-cadence tests failed before the plan-aware copy and pass with 7 focused pricing tests under Node v22.22.0; TypeScript and diff checks pass.
 - 2026-08-14 [TOOL] Full `bunx vitest run` now passes 1,350 tests across 417 files but exits non-zero on the same 10 Docs runner/dependency suites and unrelated Calendar time-sensitive fixture.
 - 2026-08-14 [TOOL] Commit `c5e627a5` was pushed to `origin/codex/ai-lead-temperature`, updating draft PR #60 with plan-specific Lead Temperature cadence copy.
+- 2026-08-14 [TOOL] RED: Growth-only compact-card and generic-hover regressions failed because Starter was listed and the generic copy named Business.
+- 2026-08-14 [TOOL] GREEN: 7 focused pricing tests, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [TOOL] Full `bunx vitest run` has 1,350 passing tests across 417 files but exits non-zero on 10 established Docs runner/dependency suites and an unrelated time-sensitive Calendar fixture.

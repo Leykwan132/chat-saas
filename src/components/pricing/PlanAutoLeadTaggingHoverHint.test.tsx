@@ -4,7 +4,7 @@ import { HoverCard } from '@/components/ui/hover-card';
 import { PlanAutoLeadTaggingHoverHint } from './PlanAutoLeadTaggingHoverHint';
 
 type PlanAwareHoverProps = Parameters<typeof PlanAutoLeadTaggingHoverHint>[0] & {
-  planId: 'starter' | 'growth';
+  planId?: 'growth';
 };
 
 function collectReactText(node: ReactNode): string {
@@ -14,19 +14,18 @@ function collectReactText(node: ReactNode): string {
   return collectReactText(node.props.children);
 }
 
-test('explains the Starter one-time AI Lead Temperature classification', () => {
+test('explains the Starter and Growth cadence in the comparison hover', () => {
   const element = PlanAutoLeadTaggingHoverHint({
     label: 'AI Lead Temperature',
-    planId: 'starter',
   } satisfies PlanAwareHoverProps);
   const text = collectReactText(element);
 
   expect(isValidElement(element) && element.type).toBe(HoverCard);
   expect(text).toContain('AI Lead Temperature');
+  expect(text).toContain('Starter classifies leads once during initial sync');
   expect(text).toContain(
-    'once when the conversation is initially synced',
+    'Growth and higher plans refresh eligible active conversations daily when new messages arrive',
   );
-  expect(text).not.toContain('refreshes eligible active conversations daily');
   expect(text).toContain('Hot');
   expect(text).toContain('Warm');
   expect(text).toContain('Cold');

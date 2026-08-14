@@ -207,6 +207,7 @@ export const PLAN_CATALOG: Record<PlanKey, PlanCatalogEntry> = {
       "8,000 credits / mo",
       "20MB per agent",
       "Visual & Voice Intelligence",
+      "AI Lead Temperature",
       "Advanced Analytics",
       "10 team members",
     ],
@@ -311,24 +312,9 @@ export function getPlanKeyFeatures(planId: ComparisonPlanKey): string[] {
     return ENTERPRISE_KEY_FEATURES;
   }
 
-  const features = PLAN_CATALOG[planId].displayFeatures.filter(
+  return PLAN_CATALOG[planId].displayFeatures.filter(
     (feature) => !feature.startsWith("Everything in "),
   );
-
-  if (!PLAN_CATALOG[planId].features.lead_tagging) {
-    return features;
-  }
-
-  const advancedAnalyticsIndex = features.indexOf(TOPIC_ANALYTICS_LABEL);
-  if (advancedAnalyticsIndex === -1) {
-    return [...features, AI_LEAD_TEMPERATURE_LABEL];
-  }
-
-  return [
-    ...features.slice(0, advancedAnalyticsIndex),
-    AI_LEAD_TEMPERATURE_LABEL,
-    ...features.slice(advancedAnalyticsIndex),
-  ];
 }
 
 export const ENTERPRISE_PLAN: EnterprisePlanEntry = {
@@ -438,12 +424,10 @@ export function isAiTaggedPlanFeature(label: string): boolean {
 }
 
 export const AI_LEAD_TEMPERATURE_HOVER_TITLE = "AI Lead Temperature";
-export const AI_LEAD_TEMPERATURE_STARTER_HOVER_DESCRIPTION =
-  "AI classifies each lead as Hot, Warm, or Cold once when the conversation is initially synced.";
 export const AI_LEAD_TEMPERATURE_DAILY_HOVER_DESCRIPTION =
   "AI classifies each lead as Hot, Warm, or Cold during initial sync and refreshes eligible active conversations daily when new messages arrive.";
 export const AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION =
-  "Starter classifies leads once during initial sync. Growth and Business refresh eligible active conversations daily when new messages arrive.";
+  "Starter classifies leads once during initial sync. Growth and higher plans refresh eligible active conversations daily when new messages arrive.";
 
 export const KNOWLEDGE_BASE_HOVER_TITLE = "Knowledge base";
 export const KNOWLEDGE_BASE_HOVER_DESCRIPTION =
@@ -490,10 +474,7 @@ export function isAiLeadTemperatureLabel(label: string): boolean {
 }
 
 export function getAiLeadTemperatureHoverDescription(planId?: PlanKey): string {
-  if (planId === "starter") {
-    return AI_LEAD_TEMPERATURE_STARTER_HOVER_DESCRIPTION;
-  }
-  if (planId === "growth" || planId === "business") {
+  if (planId === "growth") {
     return AI_LEAD_TEMPERATURE_DAILY_HOVER_DESCRIPTION;
   }
   return AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION;
