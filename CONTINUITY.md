@@ -28,7 +28,7 @@
 # State
 
 - 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` implements the Growth-only compact-card callout without changing Starter-and-up entitlement flags.
-- 2026-08-14 [TOOL] Next: commit and push this PR #60 update; do not add a release changelog entry until production availability is confirmed.
+- 2026-08-14 [TOOL] Next: review updated draft PR #60; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -75,3 +75,4 @@
 - 2026-08-14 [TOOL] RED: Growth-only compact-card and generic-hover regressions failed because Starter was listed and the generic copy named Business.
 - 2026-08-14 [TOOL] GREEN: 7 focused pricing tests, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-14 [TOOL] Full `bunx vitest run` has 1,350 passing tests across 417 files but exits non-zero on 10 established Docs runner/dependency suites and an unrelated time-sensitive Calendar fixture.
+- 2026-08-14 [TOOL] Commit `47a7543c` was pushed to `origin/codex/ai-lead-temperature`, updating draft PR #60 with the Growth-only compact-card callout.
