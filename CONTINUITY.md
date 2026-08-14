@@ -38,8 +38,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: approved admin-description design is documented; no implementation has started.
-- 2026-08-14 [TOOL] Next: user review of the committed description spec, then implementation planning.
+- 2026-08-14 [CODE] Now: direct organizational Availability uses the same leads-and-bookings explanation as personal Availability.
+- 2026-08-14 [TOOL] Next: complete local verification and commit the small header change; service assignment and team-roster permission designs remain pending.
 - 2026-08-14 [USER] Open question: service-specific teammate assignment scope for removing Accepting leads remains awaiting approval.
 
 # Working set
@@ -57,6 +57,7 @@
 - `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
 - `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
 - `docs/superpowers/specs/2026-08-14-admin-availability-description-design.md`
+- `docs/superpowers/plans/2026-08-14-admin-availability-description.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -77,3 +78,4 @@
 - 2026-08-14 [TOOL] GREEN: focused Availability route tests passed 3/3, TypeScript and diff checks passed, and the full `bun run test` command exited 0 under Node v22.22.0.
 - 2026-08-14 [TOOL] RED: an editor given a complete cached schedule still rendered only skeleton rows because post-mount effects reset its ready state.
 - 2026-08-14 [TOOL] GREEN: the cached-schedule regression, 8 focused Availability tests, TypeScript, diff checks, and full `bun run test` all pass under Node v22.22.0.
+- 2026-08-14 [TOOL] RED then GREEN: organizational-admin direct Availability lacked the purpose description; the new route test, TypeScript, and diff checks pass under Node v22.22.0.

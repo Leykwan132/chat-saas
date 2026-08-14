@@ -126,7 +126,7 @@ export default function ScheduleUserDetailPage() {
 
   return (
     <div className="flex w-full max-w-3xl flex-col gap-6">
-      {isPersonalAvailabilityView ? (
+      {isPersonalAvailabilityView || isDirectAvailabilityView ? (
         <div className="space-y-1.5">
           <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
             Availability
@@ -135,10 +135,6 @@ export default function ScheduleUserDetailPage() {
             Set when you’re available to receive leads and bookings.
           </p>
         </div>
-      ) : isDirectAvailabilityView ? (
-        <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
-          Availability
-        </h1>
       ) : (
         <Link
           to={rosterPath}
