@@ -25,8 +25,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: local branch `codex/show-unavailable-availability` puts roster-card role/lead badges above the identity and clocks alongside availability lines.
-- 2026-08-14 [TOOL] Next: commit the verified metadata-layout implementation; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: draft PR #59 contains the availability-row and roster-card improvements from `codex/show-unavailable-availability`.
+- 2026-08-14 [TOOL] Next: user review of PR #59; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -59,3 +59,4 @@
 - 2026-08-14 [CODE] Committed approved availability-card metadata layout design as `1375df18`; specification self-review found no placeholders or ambiguous scope.
 - 2026-08-14 [TOOL] RED: roster-card test showed Admin markup after the teammate name; availability lines had no clock icons.
 - 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after the metadata reorder and clock rendering; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
+- 2026-08-14 [TOOL] Pushed `codex/show-unavailable-availability`; GitHub plugin PR creation received integration 403, then CLI fallback created draft PR #59.
