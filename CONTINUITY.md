@@ -34,8 +34,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: root test runner repair is committed locally; it separates incompatible Vitest and Node test suites and removes a calendar fixture's weekday dependency.
-- 2026-08-14 [TOOL] Next: external push and PR update need authorization.
+- 2026-08-14 [CODE] Now: personal Availability skeleton design is committed locally and awaits user review before implementation.
+- 2026-08-14 [TOOL] Next: write and review the skeleton implementation plan after user approval; external push and PR update remain unapproved.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -45,13 +45,11 @@
 - `src/components/WorkspaceUnavailable.test.tsx`
 - `src/layouts/DashboardLayout.tsx`
 - `src/pages/ScheduleUserDetailPage.tsx`
+- `src/pages/ScheduleUserDetailPage.test.tsx`
 - `src/pages/ScheduleUserAvailabilityPage.tsx`
 - `src/components/schedule/`
 - `src/lib/availabilityWorkspace.ts`
-- `convex/calendarManualBooking.test.ts`
-- `src/pages/DashboardDetailPageTitles.test.ts`
-- `vitest.config.ts`
-- `package.json`
+- `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -67,3 +65,4 @@
 - 2026-08-14 [TOOL] GREEN: corrected Calendar and page-title tests passed 3/3 under Node v22.22.0.
 - 2026-08-14 [TOOL] GREEN: `bun run test` exits 0 under Node v22.22.0; it runs the full Vitest application/Convex suite and Docs Node suite (63/63).
 - 2026-08-14 [TOOL] GREEN: `bunx tsc --noEmit` and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [CODE] Approved skeleton design keeps personal Availability loading free of teammate-profile placeholders and leaves organizational loading intact.
