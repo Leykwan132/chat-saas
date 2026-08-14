@@ -24,7 +24,7 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` includes the verified one-time-versus-daily hover copy and awaits push to draft PR #60.
+- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` includes the verified one-time-versus-daily hover copy and is published to draft PR #60.
 - 2026-08-14 [TOOL] Next: review updated PR #60; do not add a release changelog entry until production availability is confirmed.
 - 2026-08-13 [USER] Open questions: none.
 
@@ -68,3 +68,4 @@
 - 2026-08-14 [TOOL] Commit `87703a84` was pushed to `origin/codex/ai-lead-temperature`, updating draft PR #60 with the compact-card feature list.
 - 2026-08-14 [TOOL] RED then GREEN: Starter and Growth hover-cadence tests failed before the plan-aware copy and pass with 7 focused pricing tests under Node v22.22.0; TypeScript and diff checks pass.
 - 2026-08-14 [TOOL] Full `bunx vitest run` now passes 1,350 tests across 417 files but exits non-zero on the same 10 Docs runner/dependency suites and unrelated Calendar time-sensitive fixture.
+- 2026-08-14 [TOOL] Commit `c5e627a5` was pushed to `origin/codex/ai-lead-temperature`, updating draft PR #60 with plan-specific Lead Temperature cadence copy.
