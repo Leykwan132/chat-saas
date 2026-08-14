@@ -6,7 +6,7 @@ import { PlanDescriptionHoverHint } from './PlanDescriptionHoverHint';
 import { PlanKnowledgeBaseHoverHint } from './PlanKnowledgeBaseHoverHint';
 import { PlanModelsHoverHint } from './PlanModelsHoverHint';
 import {
-  isAutoLeadTaggingLabel,
+  isAiLeadTemperatureLabel,
   isChannelLimitLabel,
   isChannelsComparisonLabel,
   isKnowledgeBaseLimitLabel,
@@ -34,8 +34,14 @@ export function renderPricingFeatureLabel(
     return <PlanKnowledgeBaseHoverHint label={text} className={className} />;
   }
 
-  if (isAutoLeadTaggingLabel(text)) {
-    return <PlanAutoLeadTaggingHoverHint label={text} className={className} />;
+  if (isAiLeadTemperatureLabel(text)) {
+    return (
+      <PlanAutoLeadTaggingHoverHint
+        label={text}
+        className={className}
+        planId={planId}
+      />
+    );
   }
 
   if (isPlanFeatureDescriptionHoverLabel(text)) {
@@ -60,7 +66,7 @@ export function renderPricingFeatureLabel(
 export function renderPricingComparisonRowLabel(label: string) {
   const className = 'text-sm font-medium text-muted-foreground';
 
-  if (isAutoLeadTaggingLabel(label)) {
+  if (isAiLeadTemperatureLabel(label)) {
     return <PlanAutoLeadTaggingHoverHint label={label} className={className} />;
   }
 
