@@ -31,8 +31,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: direct Availability specification is user-approved and its test-first implementation plan is documented locally on `codex/show-unavailable-availability` for draft PR #59.
-- 2026-08-14 [TOOL] Next: select execution approach, then implement the tested local change; deployment and PR update remain pending explicit authorization.
+- 2026-08-14 [CODE] Now: direct Availability is committed locally with inline weekly-hours editing, no dashboard back link, and focused page components that meet the 300-line limit.
+- 2026-08-14 [TOOL] Next: obtain explicit external deployment and draft PR #59 update authorization; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -43,11 +43,8 @@
 - `src/layouts/DashboardLayout.tsx`
 - `src/pages/ScheduleUserDetailPage.tsx`
 - `src/pages/ScheduleUserAvailabilityPage.tsx`
+- `src/components/schedule/`
 - `src/lib/availabilityWorkspace.ts`
-- `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
-- `docs/superpowers/plans/2026-08-14-availability-workspace-defaults.md`
-- `docs/superpowers/specs/2026-08-14-workspace-switching-transition-design.md`
-- `docs/superpowers/plans/2026-08-14-workspace-switching-transition.md`
 - `docs/superpowers/specs/2026-08-14-direct-availability-page-design.md`
 - `docs/superpowers/plans/2026-08-14-direct-availability-page.md`
 - `CONTINUITY.md`
@@ -76,3 +73,6 @@
 - 2026-08-14 [TOOL] GREEN: workspace transition and availability page suites passed 7/7 with `tsc --noEmit` and `git diff --check` under Node v22.22.0.
 - 2026-08-14 [CODE] Approved direct-Availability design places weekly-hours editing on the personal/member page and preserves organizational-owner teammate detail navigation.
 - 2026-08-14 [CODE] User approved the direct-Availability specification; its implementation plan extracts a reusable weekly-hours editor and composes it inline only for direct views.
+- 2026-08-14 [CODE] User approved a plan correction replacing source inspections with rendered route tests and extracting the oversized detail page into focused components.
+- 2026-08-14 [TOOL] RED: direct personal Availability retained `Back to dashboard` and the edit-only availability link; the owner edit route hid its heading behind the old page-level skeleton.
+- 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after inline editor composition and page extraction.
