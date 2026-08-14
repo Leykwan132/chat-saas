@@ -29,8 +29,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: approved workspace-switch transition design is documented alongside the locally implemented Availability work on `codex/show-unavailable-availability` for draft PR #59.
-- 2026-08-14 [TOOL] Next: review the switching design, implement it, then obtain explicit deployment approval and push draft PR #59; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: workspace-switch transition is implemented locally alongside the Availability work on `codex/show-unavailable-availability` for draft PR #59.
+- 2026-08-14 [TOOL] Next: obtain explicit deployment approval and push the tested commits to update draft PR #59; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -44,6 +44,7 @@
 - `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
 - `docs/superpowers/plans/2026-08-14-availability-workspace-defaults.md`
 - `docs/superpowers/specs/2026-08-14-workspace-switching-transition-design.md`
+- `docs/superpowers/plans/2026-08-14-workspace-switching-transition.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -66,3 +67,5 @@
 - 2026-08-14 [TOOL] GREEN: 15 focused tests, `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] Convex deployment verification is pending explicit authorization after `bunx convex dev --once` was correctly blocked as an external deployment action.
 - 2026-08-14 [CODE] Approved workspace-switch design keeps real unavailable-workspace recovery intact while suppressing it during an active switch.
+- 2026-08-14 [TOOL] RED: transition regression found no dashboard switch state or TeamSwitcher lifecycle callbacks.
+- 2026-08-14 [TOOL] GREEN: workspace transition and availability page suites passed 7/7 with `tsc --noEmit` and `git diff --check` under Node v22.22.0.
