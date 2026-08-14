@@ -12,6 +12,7 @@
 - 2026-08-14 [USER] Personal Availability opens directly to the user's detail page; only organizational owners see the team roster; new schedules accept leads by default; role labels distinguish Owner, Admin, and Member.
 - 2026-08-14 [USER] Switching workspaces must show a neutral switching state instead of a transient unavailable-workspace error.
 - 2026-08-14 [USER] Personal and member Availability needs its own title, no dashboard back link, and inline editable weekly hours.
+- 2026-08-14 [USER] Personal Availability should omit profile metadata, describe its purpose, and place Request time off with Time off.
 
 # Done (recent)
 
@@ -28,11 +29,12 @@
 - 2026-08-14 D006 ACTIVE [USER] Availability uses direct self-detail navigation outside organizational owner context, and all future schedule provisioning starts enabled without altering existing schedules.
 - 2026-08-14 D007 ACTIVE [USER] Active workspace switches take precedence over stale-route recovery and display only a switching loader until they succeed or fail.
 - 2026-08-14 D008 ACTIVE [USER] Direct Availability views provide the complete weekly-hours editor in place, while organizational owner teammate details retain their compact summary and edit route.
+- 2026-08-14 D009 ACTIVE [USER] Personal Availability omits the identity/status header, shows its leads-and-bookings purpose, and owns the time-off action within the Time off section.
 
 # State
 
-- 2026-08-14 [CODE] Now: direct Availability is committed locally with inline weekly-hours editing, no dashboard back link, and focused page components that meet the 300-line limit.
-- 2026-08-14 [TOOL] Next: obtain explicit external deployment and draft PR #59 update authorization; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: approved personal Availability header design is documented locally; the current direct Availability implementation remains committed on `codex/show-unavailable-availability` for draft PR #59.
+- 2026-08-14 [TOOL] Next: obtain review of the personal-header specification, then write its implementation plan; external deployment and PR update remain pending test-runner resolution or waiver.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -47,6 +49,7 @@
 - `src/lib/availabilityWorkspace.ts`
 - `docs/superpowers/specs/2026-08-14-direct-availability-page-design.md`
 - `docs/superpowers/plans/2026-08-14-direct-availability-page.md`
+- `docs/superpowers/specs/2026-08-14-personal-availability-header-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -76,3 +79,5 @@
 - 2026-08-14 [CODE] User approved a plan correction replacing source inspections with rendered route tests and extracting the oversized detail page into focused components.
 - 2026-08-14 [TOOL] RED: direct personal Availability retained `Back to dashboard` and the edit-only availability link; the owner edit route hid its heading behind the old page-level skeleton.
 - 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after inline editor composition and page extraction.
+- 2026-08-14 [TOOL] Full `bun test` is blocked independently of this work: 1,153 pass, 135 fail, and 87 errors from unsupported `import.meta.glob`, missing Stripe variables, and unsupported Vitest timer APIs.
+- 2026-08-14 [CODE] Approved personal-header design removes personal profile metadata, adds purpose copy, and relocates the time-off action to its section heading.
