@@ -15,6 +15,7 @@
 - 2026-08-14 [USER] Personal Availability should omit profile metadata, describe its purpose, and place Request time off with Time off.
 - 2026-08-14 [USER] Availability hours must load instead of remaining indefinitely on the weekly editor skeleton; lead-eligibility simplification is paused until this is fixed.
 - 2026-08-14 [USER] Direct organizational-admin Availability needs the same explanatory copy as the personal view.
+- 2026-08-14 [USER] Remove Accepting leads; weekly hours and time off govern leads, while selected teammates govern which services they can book.
 
 # Done (recent)
 
@@ -35,12 +36,13 @@
 - 2026-08-14 D010 ACTIVE [CODE] Root test verification uses `bun run test`, which runs Vitest for the application and Convex suites and Node's test runner for Docs; `bun test` bypasses the required Vite/Vitest environment.
 - 2026-08-14 D011 ACTIVE [USER] Personal Availability loading mirrors the simplified completed page; organization member loading retains the teammate-detail skeleton.
 - 2026-08-14 D012 ACTIVE [USER] Every direct Availability view explains that it sets availability for leads and bookings.
+- 2026-08-14 D013 ACTIVE [USER] Lead eligibility is based only on weekly hours and time off; booking also requires service teammate assignment and calendar availability.
 
 # State
 
-- 2026-08-14 [CODE] Now: direct organizational Availability uses the same leads-and-bookings explanation as personal Availability.
-- 2026-08-14 [TOOL] Next: complete local verification and commit the small header change; service assignment and team-roster permission designs remain pending.
-- 2026-08-14 [USER] Open question: service-specific teammate assignment scope for removing Accepting leads remains awaiting approval.
+- 2026-08-14 [CODE] Now: approved service-availability and lead-routing design is documented; implementation has not started.
+- 2026-08-14 [TOOL] Next: commit and user-review the service-availability spec before planning implementation.
+- 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
 
@@ -58,6 +60,7 @@
 - `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
 - `docs/superpowers/specs/2026-08-14-admin-availability-description-design.md`
 - `docs/superpowers/plans/2026-08-14-admin-availability-description.md`
+- `docs/superpowers/specs/2026-08-14-service-availability-routing-design.md`
 - `CONTINUITY.md`
 
 # Receipts
