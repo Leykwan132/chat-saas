@@ -7,11 +7,12 @@ Make service configuration easier to navigate by showing one focused section at 
 ## Layout
 
 - The service edit page uses a two-column layout on medium and larger screens.
-- A sticky left navigation lists Your service, Timing & availability, Data to collect, and Booking assignment.
+- A sticky left navigation lists Booking assignment, Your service, Timing & availability, and Data to collect in that priority order.
 - The selected item uses the rounded highlighted-row treatment from the approved reference.
 - The right column renders only the selected section’s existing title, description, and fields.
 - On narrow screens, the navigation becomes a horizontal, wrapping control above the active section.
 - Form state remains shared across sections, so switching sections never discards edits.
+- Include all teammates appears in the create-service assignment step only; it is absent while editing an existing service.
 
 ## Scope
 
