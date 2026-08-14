@@ -24,7 +24,21 @@ beforeEach(() => {
 });
 
 test('keeps the owner edit route around the extracted editor', () => {
-  mocks.useQuery.mockReturnValue({ workosUserId: 'user-ada' });
+  mocks.useQuery
+    .mockReturnValueOnce({ workosUserId: 'user-ada' })
+    .mockReturnValueOnce({
+      user: {
+        workosUserId: 'user-ada',
+        email: 'ada@example.com',
+        firstName: 'Ada',
+        lastName: 'Lovelace',
+        isAdmin: true,
+        role: 'owner',
+      },
+      schedule: null,
+      shifts: [],
+      timeOff: [],
+    });
 
   const markup = renderToStaticMarkup(
     <MemoryRouter initialEntries={['/dashboard/agent-1/availability/user-ada/edit']}>

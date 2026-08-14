@@ -1,13 +1,12 @@
-import { startTransition, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
-import type { Id } from '../../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../../convex/_generated/dataModel';
 import { WeeklyAvailabilityEditor } from '@/components/WeeklyAvailabilityEditor';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  DEFAULT_SCHEDULE_TIMEZONE,
   resolveScheduleTimezone,
   SCHEDULE_TIME_OPTIONS,
 } from '@/lib/scheduleUtils';
@@ -25,6 +24,11 @@ type ScheduleAvailabilityEditorProps = {
   onSaved?: () => void;
 };
 
+type ScheduleAvailabilityDetail = {
+  schedule: Doc<'userSchedules'> | null;
+  shifts: Doc<'userShifts'>[];
+};
+
 export function ScheduleAvailabilityEditor({
   agentId,
   workosUserId,
@@ -34,38 +38,48 @@ export function ScheduleAvailabilityEditor({
     agentId,
     workosUserId,
   });
+
+  if (detail === undefined) {
+    return <ScheduleAvailabilityEditorSkeleton />;
+  }
+
+  if (detail === null) {
+    return <p className="text-sm text-muted-foreground">Team member not found.</p>;
+  }
+
+  return (
+    <LoadedScheduleAvailabilityEditor
+      key={`${agentId}:${workosUserId}:${detail.schedule?.updatedAt ?? 'new'}`}
+      agentId={agentId}
+      workosUserId={workosUserId}
+      onSaved={onSaved}
+      detail={detail}
+    />
+  );
+}
+
+function LoadedScheduleAvailabilityEditor({
+  agentId,
+  workosUserId,
+  onSaved,
+  detail,
+}: ScheduleAvailabilityEditorProps & { detail: ScheduleAvailabilityDetail }) {
   const addUser = useMutation(api.leadRouting.schedules.addUser);
   const updateUser = useMutation(api.leadRouting.schedules.updateUser);
   const setShifts = useMutation(api.leadRouting.schedules.setShifts);
-  const [shiftDrafts, setShiftDrafts] = useState<ShiftDraft[]>([]);
-  const [timezoneDraft, setTimezoneDraft] = useState(DEFAULT_SCHEDULE_TIMEZONE);
+  const [shiftDrafts, setShiftDrafts] = useState<ShiftDraft[]>(() =>
+    shiftsToDrafts(getInitialShiftsFromDetail(detail)),
+  );
+  const [timezoneDraft, setTimezoneDraft] = useState(() =>
+    resolveScheduleTimezone(detail.schedule?.timezone),
+  );
   const [saving, setSaving] = useState(false);
-  const [isContentReady, setIsContentReady] = useState(false);
-
-  useEffect(() => {
-    setIsContentReady(false);
-    setShiftDrafts([]);
-    setTimezoneDraft(DEFAULT_SCHEDULE_TIMEZONE);
-  }, [agentId, workosUserId]);
-
-  useLayoutEffect(() => {
-    if (detail === undefined) return;
-    if (detail === null) {
-      startTransition(() => setIsContentReady(true));
-      return;
-    }
-
-    setShiftDrafts(shiftsToDrafts(getInitialShiftsFromDetail(detail)));
-    setTimezoneDraft(resolveScheduleTimezone(detail.schedule?.timezone));
-    startTransition(() => setIsContentReady(true));
-  }, [detail]);
 
   const savedTimezone = resolveScheduleTimezone(detail?.schedule?.timezone);
   const hasChanges = useMemo(() => {
-    if (!isContentReady) return false;
     if (timezoneDraft !== savedTimezone) return true;
     return !areScheduleShiftsEqual(draftsToShifts(shiftDrafts), detail?.shifts ?? []);
-  }, [detail?.shifts, isContentReady, savedTimezone, shiftDrafts, timezoneDraft]);
+  }, [detail?.shifts, savedTimezone, shiftDrafts, timezoneDraft]);
 
   const ensureSchedule = async (): Promise<Id<'userSchedules'>> => {
     if (detail?.schedule) return detail.schedule._id;
@@ -96,14 +110,6 @@ export function ScheduleAvailabilityEditor({
       setSaving(false);
     }
   };
-
-  if (detail === undefined || !isContentReady) {
-    return <ScheduleAvailabilityEditorSkeleton />;
-  }
-
-  if (detail === null) {
-    return <p className="text-sm text-muted-foreground">Team member not found.</p>;
-  }
 
   return (
     <div className="space-y-4">

@@ -13,6 +13,7 @@
 - 2026-08-14 [USER] Switching workspaces must show a neutral switching state instead of a transient unavailable-workspace error.
 - 2026-08-14 [USER] Personal and member Availability needs its own title, no dashboard back link, and inline editable weekly hours.
 - 2026-08-14 [USER] Personal Availability should omit profile metadata, describe its purpose, and place Request time off with Time off.
+- 2026-08-14 [USER] Availability hours must load instead of remaining indefinitely on the weekly editor skeleton; lead-eligibility simplification is paused until this is fixed.
 
 # Done (recent)
 
@@ -35,9 +36,9 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: personal Availability skeleton fix is committed locally; its loading state matches the simplified completed page without changing organization loading.
-- 2026-08-14 [TOOL] Next: decide whether to push the committed work to draft PR #59; external deployment remains unapproved.
-- 2026-08-13 [USER] Open questions: none.
+- 2026-08-14 [CODE] Now: the Availability editor loading fix is committed locally; cached detail renders directly without competing hydration effects.
+- 2026-08-14 [TOOL] Next: return to the paused Accepting leads redesign after user verification; external push and deployment remain unapproved.
+- 2026-08-14 [USER] Open question: whether weekly hours continue limiting lead assignment after the Accepting leads control is removed.
 
 # Working set
 
@@ -49,6 +50,7 @@
 - `src/pages/ScheduleUserDetailPage.test.tsx`
 - `src/pages/ScheduleUserAvailabilityPage.tsx`
 - `src/components/schedule/`
+- `src/components/schedule/ScheduleAvailabilityEditor.test.tsx`
 - `src/lib/availabilityWorkspace.ts`
 - `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
 - `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
@@ -70,3 +72,5 @@
 - 2026-08-14 [CODE] Approved skeleton design keeps personal Availability loading free of teammate-profile placeholders and leaves organizational loading intact.
 - 2026-08-14 [TOOL] RED: personal Availability loading rendered the generic teammate-detail skeleton without the page title or purpose description.
 - 2026-08-14 [TOOL] GREEN: focused Availability route tests passed 3/3, TypeScript and diff checks passed, and the full `bun run test` command exited 0 under Node v22.22.0.
+- 2026-08-14 [TOOL] RED: an editor given a complete cached schedule still rendered only skeleton rows because post-mount effects reset its ready state.
+- 2026-08-14 [TOOL] GREEN: the cached-schedule regression, 8 focused Availability tests, TypeScript, diff checks, and full `bun run test` all pass under Node v22.22.0.
