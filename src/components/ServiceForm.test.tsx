@@ -3,7 +3,7 @@ import { expect, test, vi } from 'vitest';
 import { ServiceForm } from './ServiceForm';
 import { DEFAULT_SERVICE_FORM } from '@/lib/serviceForm';
 
-test('orders service configuration before the booking team section', () => {
+test('opens service details by default', () => {
   const markup = renderToStaticMarkup(
     <ServiceForm
       form={DEFAULT_SERVICE_FORM}
@@ -23,7 +23,10 @@ test('orders service configuration before the booking team section', () => {
   expect(markup).toContain('lucide-briefcase-business size-4');
   expect(markup).toContain('lucide-calendar-clock size-4');
   expect(markup).toContain('lucide-clipboard-list size-4');
-  expect(markup).toContain('aria-pressed="true"');
-  expect(markup).toContain('Service teammates');
+  const selectedNavigationItem = markup.match(/<button[^>]*aria-pressed="true"[^>]*>[\s\S]*?<\/button>/)?.[0];
+
+  expect(selectedNavigationItem).toContain('Service details');
+  expect(markup).toContain('>Name</span>');
+  expect(markup).not.toContain('Service teammates');
   expect(markup).not.toContain('Service name');
 });

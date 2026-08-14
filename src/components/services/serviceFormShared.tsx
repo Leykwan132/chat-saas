@@ -383,7 +383,7 @@ export function ServiceDetailsFields({
   return (
     <div className="flex flex-col gap-6">
       <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Service name</span>
+        <span className="text-sm font-medium">Name</span>
         <Input
           value={form.name}
           disabled={disabled}

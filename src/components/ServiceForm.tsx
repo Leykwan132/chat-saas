@@ -33,7 +33,7 @@ export function ServiceForm({
   canManage,
 }: ServiceFormProps) {
   const disabled = !canManage;
-  const [activeSection, setActiveSection] = useState<ServiceFormSection>('assignment');
+  const [activeSection, setActiveSection] = useState<ServiceFormSection>('details');
 
   return (
     <div className="grid gap-8 md:grid-cols-[13rem_minmax(0,1fr)]">
