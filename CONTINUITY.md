@@ -9,6 +9,7 @@
 - 2026-08-13 [USER] When a weekly availability switch is off, retain the current layout and show the word “Unavailable”.
 - 2026-08-14 [USER] Availability roster cards should show each teammate's compact available-time summary directly on the card.
 - 2026-08-14 [USER] Move role and lead badges above the teammate name and add a clock alongside each card's availability summary.
+- 2026-08-14 [USER] Personal Availability opens directly to the user's detail page; only organizational owners see the team roster; new schedules accept leads by default; role labels distinguish Owner, Admin, and Member.
 
 # Done (recent)
 
@@ -22,11 +23,12 @@
 - 2026-08-13 D003 ACTIVE [USER] A disabled weekday retains its existing row and displays the muted label “Unavailable” in its time-slot area.
 - 2026-08-14 D004 ACTIVE [USER] Roster cards retain their current contact and lead controls and add the existing compact weekly summary below their badges.
 - 2026-08-14 D005 ACTIVE [USER] Card metadata badges precede the identity row, and every availability line uses a muted clock icon.
+- 2026-08-14 D006 ACTIVE [USER] Availability uses direct self-detail navigation outside organizational owner context, and all future schedule provisioning starts enabled without altering existing schedules.
 
 # State
 
-- 2026-08-14 [CODE] Now: draft PR #59 contains the availability-row and roster-card improvements from `codex/show-unavailable-availability`.
-- 2026-08-14 [TOOL] Next: user review of PR #59; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: approved design for owner-aware Availability navigation, exact role labels, and active-by-default schedule provisioning is documented; draft PR #59 contains the earlier availability UI work.
+- 2026-08-14 [TOOL] Next: review the new implementation design, then implement and update draft PR #59; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -43,6 +45,7 @@
 - `docs/superpowers/plans/2026-08-14-availability-card-hours.md`
 - `docs/superpowers/specs/2026-08-14-availability-card-metadata-layout-design.md`
 - `docs/superpowers/plans/2026-08-14-availability-card-metadata-layout.md`
+- `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -60,3 +63,4 @@
 - 2026-08-14 [TOOL] RED: roster-card test showed Admin markup after the teammate name; availability lines had no clock icons.
 - 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after the metadata reorder and clock rendering; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] Pushed `codex/show-unavailable-availability`; GitHub plugin PR creation received integration 403, then CLI fallback created draft PR #59.
+- 2026-08-14 [CODE] Approved workspace-defaults design covers personal and non-owner direct navigation, Owner/Admin/Member labels, and enabled default schedules for new agents and members.
