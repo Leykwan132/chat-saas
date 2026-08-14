@@ -19,7 +19,14 @@ Make a teammate’s assigned services easy to scan from Availability without rep
 - Extend the existing schedule-detail services payload with `durationMinutes` and optional `description`.
 - Do not add service editing, pricing, assignment-method details, or booking controls to Availability.
 
+## Service Teammate Selection
+
+- Add an `Include all teammates` button beside the Service teammates heading.
+- The action selects every teammate in the service form while preserving individual switches for later adjustments.
+- Keep the action disabled when the form is disabled.
+
 ## Verification
 
 - Page coverage verifies the new title, service duration, optional description, placement before Time off, and absence of the removed helper text.
+- Service form coverage verifies that Include all teammates selects every available teammate.
 - TypeScript and diff checks remain clean.
