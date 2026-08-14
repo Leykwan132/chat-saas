@@ -33,8 +33,8 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: approved personal Availability header design is documented locally; the current direct Availability implementation remains committed on `codex/show-unavailable-availability` for draft PR #59.
-- 2026-08-14 [TOOL] Next: obtain review of the personal-header specification, then write its implementation plan; external deployment and PR update remain pending test-runner resolution or waiver.
+- 2026-08-14 [CODE] Now: personal Availability specification is user-approved and its test-first implementation plan is documented locally for draft PR #59.
+- 2026-08-14 [TOOL] Next: select execution approach, then implement the personal-only header simplification; external deployment and PR update remain pending test-runner resolution or waiver.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -50,6 +50,7 @@
 - `docs/superpowers/specs/2026-08-14-direct-availability-page-design.md`
 - `docs/superpowers/plans/2026-08-14-direct-availability-page.md`
 - `docs/superpowers/specs/2026-08-14-personal-availability-header-design.md`
+- `docs/superpowers/plans/2026-08-14-personal-availability-header.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -81,3 +82,4 @@
 - 2026-08-14 [TOOL] GREEN: 9 focused Availability tests, `tsc --noEmit`, and `git diff --check` pass under Node v22.22.0 after inline editor composition and page extraction.
 - 2026-08-14 [TOOL] Full `bun test` is blocked independently of this work: 1,153 pass, 135 fail, and 87 errors from unsupported `import.meta.glob`, missing Stripe variables, and unsupported Vitest timer APIs.
 - 2026-08-14 [CODE] Approved personal-header design removes personal profile metadata, adds purpose copy, and relocates the time-off action to its section heading.
+- 2026-08-14 [CODE] User approved the personal-header specification; its implementation plan preserves organizational views while simplifying only personal Availability.
