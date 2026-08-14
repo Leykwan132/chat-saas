@@ -52,11 +52,12 @@
 - 2026-08-14 D024 SUPERSEDED [USER] Booking assignment was initially the first service-editor section; Include all teammates remains create-only.
 - 2026-08-14 D025 ACTIVE [USER] Service-editor navigation uses icons and the order Service details, Appointment duration, Booking team, and Booking form.
 - 2026-08-14 D026 ACTIVE [USER] AI Lead Temperature is available from Starter upward; only Growth compact cards call it out directly, while Business inherits the capability.
+- 2026-08-14 D027 ACTIVE [USER] Workflow service links open the service detail page on its Service details pane; its name field label is Name.
 
 # State
 
-- 2026-08-14 [CODE] Now: service teammate selection, direct weekly timetables on all Availability detail pages, weekly-hours/time-off booking checks, removed Accepting leads controls, and prioritized service-editor navigation are implemented locally.
-- 2026-08-14 [TOOL] Next: review the completed mixed-worktree availability and service-editor change and decide whether to commit it; production deployment and migration execution remain unapproved.
+- 2026-08-14 [CODE] Now: service detail pages open on Service details with a concise Name field label; existing workflow service links use this landing pane.
+- 2026-08-14 [TOOL] Next: validate and review the current local feature branch; production deployment and migration execution remain unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -71,12 +72,11 @@
 - `src/components/schedule/`
 - `src/components/schedule/ScheduleAvailabilityEditor.test.tsx`
 - `src/lib/availabilityWorkspace.ts`
-- `docs/superpowers/specs/2026-08-14-personal-availability-skeleton-design.md`
-- `docs/superpowers/plans/2026-08-14-personal-availability-skeleton.md`
-- `docs/superpowers/specs/2026-08-14-admin-availability-description-design.md`
-- `docs/superpowers/plans/2026-08-14-admin-availability-description.md`
-- `docs/superpowers/specs/2026-08-14-service-availability-routing-design.md`
-- `docs/superpowers/plans/2026-08-14-service-availability-routing.md`
+- `src/components/ServiceForm.tsx`
+- `src/components/ServiceForm.test.tsx`
+- `src/components/services/serviceFormShared.tsx`
+- `docs/superpowers/specs/2026-08-14-service-details-default-design.md`
+- `docs/superpowers/plans/2026-08-14-service-details-default.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -121,3 +121,4 @@
 - 2026-08-14 [TOOL] GREEN: the Booking team navigation-order test, `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-14 [TOOL] Merge receipt: `origin/main` commit `db0c156a` adds AI Lead Temperature pricing work; its draft PR is #60.
 - 2026-08-14 [TOOL] GREEN: after merge commit `1184ae98`, `bun run test` passed 426 files / 1,363 tests and 63 Docs tests; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
+- 2026-08-14 [TOOL] RED then GREEN: ServiceForm initially selected Booking team; the focused regression now confirms Service details is selected first and its Name field is visible under Node v22.22.0.
