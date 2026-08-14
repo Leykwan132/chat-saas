@@ -21,7 +21,12 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { Permission } from '../../shared/permissions';
+import {
+  availabilityBackPath,
+  canViewAvailabilityRoster,
+} from '@/lib/availabilityWorkspace';
 import { cn } from '@/lib/utils';
 import { formatTimeZoneDisplayLabel } from '@/lib/calendarTimeUtils';
 import {
@@ -48,9 +53,11 @@ export default function ScheduleUserDetailPage() {
     ? decodeURIComponent(workosUserIdParam)
     : undefined;
 
-  const { can, isLoading: permissionsLoading } = usePermissions();
+  const { can, isLoading: permissionsLoading, role } = usePermissions();
+  const { activeTeam } = useActiveTeam();
   const canReadSchedule = can(Permission.AVAILABILITY_READ);
   const canManage = can(Permission.ROUTING_MANAGE);
+  const showTeamRoster = canViewAvailabilityRoster(activeTeam, role);
 
   const detail = useQuery(
     api.leadRouting.schedules.getForAgentUser,
@@ -187,7 +194,11 @@ export default function ScheduleUserDetailPage() {
     return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
   }
 
-  const isLoading = permissionsLoading || detail === undefined || currentUser === undefined;
+  const isLoading =
+    permissionsLoading ||
+    activeTeam === undefined ||
+    detail === undefined ||
+    currentUser === undefined;
 
   const isOwnProfile =
     currentUser ? decodedWorkosUserId === currentUser.workosUserId : false;
@@ -206,22 +217,24 @@ export default function ScheduleUserDetailPage() {
     );
   }
 
+  const schedulePath = availabilityBackPath(typedAgentId, showTeamRoster);
+  const backLabel = showTeamRoster ? 'Back' : 'Back to dashboard';
+
   if (detail === null) {
     return (
       <div className="flex w-full max-w-3xl flex-col gap-4">
         <Link
-          to={`/dashboard/${typedAgentId}/availability`}
+          to={schedulePath}
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back
+          {backLabel}
         </Link>
         <p className="text-sm text-muted-foreground">Team member not found.</p>
       </div>
     );
   }
 
-  const schedulePath = `/dashboard/${typedAgentId}/availability`;
   const availabilityPath = `/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}/edit`;
 
   return (
@@ -232,7 +245,7 @@ export default function ScheduleUserDetailPage() {
           className="inline-flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="size-4" />
-          Back 
+          {backLabel}
         </Link>
 
         <div className="flex flex-wrap items-start justify-between gap-4">

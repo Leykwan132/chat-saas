@@ -27,25 +27,26 @@
 
 # State
 
-- 2026-08-14 [CODE] Now: approved design for owner-aware Availability navigation, exact role labels, and active-by-default schedule provisioning is documented; draft PR #59 contains the earlier availability UI work.
-- 2026-08-14 [TOOL] Next: review the new implementation design, then implement and update draft PR #59; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: workspace-aware Availability navigation, exact Owner/Admin/Member labels, and enabled-by-default schedule provisioning are implemented locally on `codex/show-unavailable-availability` for draft PR #59.
+- 2026-08-14 [TOOL] Next: obtain explicit approval to deploy the Convex backend, then push the tested commits to update draft PR #59; production availability remains UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
 
-- `src/components/WeeklyAvailabilityEditor.tsx`
-- `src/components/WeeklyAvailabilityEditor.test.ts`
-- `docs/superpowers/specs/2026-08-13-weekly-availability-unavailable-label-design.md`
-- `docs/superpowers/plans/2026-08-13-weekly-availability-unavailable-label.md`
+- `convex/agents.ts`
+- `convex/leadRouting/provision.ts`
+- `convex/workosWebhookAvailability.test.ts`
+- `convex/leadRouting/schedules.ts`
+- `convex/agentCreation.test.ts`
+- `convex/leadRoutingSchedules.test.ts`
 - `src/pages/SchedulePage.tsx`
 - `src/pages/SchedulePage.test.tsx`
 - `src/pages/UserScheduleCard.tsx`
-- `src/pages/SchedulePageSkeleton.tsx`
-- `docs/superpowers/specs/2026-08-14-availability-card-hours-design.md`
-- `docs/superpowers/plans/2026-08-14-availability-card-hours.md`
-- `docs/superpowers/specs/2026-08-14-availability-card-metadata-layout-design.md`
-- `docs/superpowers/plans/2026-08-14-availability-card-metadata-layout.md`
+- `src/pages/ScheduleUserDetailPage.tsx`
+- `src/lib/availabilityWorkspace.ts`
+- `src/lib/availabilityWorkspace.test.ts`
 - `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
+- `docs/superpowers/plans/2026-08-14-availability-workspace-defaults.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -64,3 +65,6 @@
 - 2026-08-14 [TOOL] GREEN: `bunx vitest run src/pages/SchedulePage.test.tsx` passed 1/1 after the metadata reorder and clock rendering; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] Pushed `codex/show-unavailable-availability`; GitHub plugin PR creation received integration 403, then CLI fallback created draft PR #59.
 - 2026-08-14 [CODE] Approved workspace-defaults design covers personal and non-owner direct navigation, Owner/Admin/Member labels, and enabled default schedules for new agents and members.
+- 2026-08-14 [TOOL] RED: schedule provisioning tests found no personal schedule and inactive organizational/member schedules; role and non-owner roster regressions also failed before implementation.
+- 2026-08-14 [TOOL] GREEN: 15 focused tests, `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
+- 2026-08-14 [TOOL] Convex deployment verification is pending explicit authorization after `bunx convex dev --once` was correctly blocked as an external deployment action.

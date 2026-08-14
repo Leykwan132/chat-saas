@@ -9,7 +9,9 @@ import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Input } from '@/components/ui/input';
 import { Toggle } from '@/components/ui/toggle';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useActiveTeam } from '@/hooks/useActiveTeam';
 import { Permission } from '../../shared/permissions';
+import { canViewAvailabilityRoster } from '@/lib/availabilityWorkspace';
 import { cn } from '@/lib/utils';
 import { memberLabel } from '@/lib/scheduleUtils';
 import { UserScheduleCard } from './UserScheduleCard';
@@ -29,29 +31,28 @@ type TeamUser = Doc<'users'> & {
 export default function SchedulePage({ hideHeader = false }: { hideHeader?: boolean } = {}) {
   const { agentId } = useParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
-  const { can, isLoading: permissionsLoading } = usePermissions();
+  const { can, isLoading: permissionsLoading, role } = usePermissions();
+  const { activeTeam } = useActiveTeam();
   const canReadSchedule = can(Permission.AVAILABILITY_READ);
   const canManage = can(Permission.ROUTING_MANAGE);
-  const showTeamRoster = canManage;
+  const showTeamRoster = canViewAvailabilityRoster(activeTeam, role);
 
   const roster = useQuery(
     api.leadRouting.schedules.listForAgent,
-    typedAgentId ? { agentId: typedAgentId } : 'skip',
+    typedAgentId && showTeamRoster ? { agentId: typedAgentId } : 'skip',
   );
-  const teamUsers = useQuery(api.users.getUsers, {});
+  const teamUsers = useQuery(api.users.getUsers, showTeamRoster ? {} : 'skip');
   const currentUser = useQuery(api.users.currentUser);
 
   const workosUserIdsForLeadCounts = useMemo(() => {
     if (currentUser === undefined || currentUser === null) return undefined;
-    if (showTeamRoster) {
-      return (teamUsers ?? []).map((u) => u.workosUserId);
-    }
-    return [currentUser.workosUserId];
+    if (!showTeamRoster) return undefined;
+    return (teamUsers ?? []).map((u) => u.workosUserId);
   }, [showTeamRoster, teamUsers, currentUser]);
 
   const openLeadCounts = useQuery(
     api.leadRouting.settings.getRosterOpenLeadCounts,
-    typedAgentId && workosUserIdsForLeadCounts !== undefined
+    typedAgentId && showTeamRoster && workosUserIdsForLeadCounts !== undefined
       ? { agentId: typedAgentId, workosUserIds: workosUserIdsForLeadCounts }
       : 'skip',
   );
@@ -153,10 +154,10 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
 
   const isLoading =
     permissionsLoading ||
-    roster === undefined ||
+    activeTeam === undefined ||
     currentUser === undefined ||
-    teamUsers === undefined ||
-    openLeadCounts === undefined;
+    (showTeamRoster &&
+      (roster === undefined || teamUsers === undefined || openLeadCounts === undefined));
 
   if (isLoading) {
     return (
@@ -164,6 +165,15 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
         hideHeader={hideHeader}
         showReceiveLeadsToggle={canManage}
         showTeamRoster={showTeamRoster}
+      />
+    );
+  }
+
+  if (!showTeamRoster && currentUser) {
+    return (
+      <Navigate
+        to={`/dashboard/${typedAgentId}/availability/${encodeURIComponent(currentUser.workosUserId)}`}
+        replace
       />
     );
   }
