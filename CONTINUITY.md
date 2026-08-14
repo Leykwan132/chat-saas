@@ -11,6 +11,7 @@
 - 2026-08-14 [USER] Move role and lead badges above the teammate name and add a clock alongside each card's availability summary.
 - 2026-08-14 [USER] Personal Availability opens directly to the user's detail page; only organizational owners see the team roster; new schedules accept leads by default; role labels distinguish Owner, Admin, and Member.
 - 2026-08-14 [USER] Switching workspaces must show a neutral switching state instead of a transient unavailable-workspace error.
+- 2026-08-14 [USER] Personal and member Availability needs its own title, no dashboard back link, and inline editable weekly hours.
 
 # Done (recent)
 
@@ -26,11 +27,12 @@
 - 2026-08-14 D005 ACTIVE [USER] Card metadata badges precede the identity row, and every availability line uses a muted clock icon.
 - 2026-08-14 D006 ACTIVE [USER] Availability uses direct self-detail navigation outside organizational owner context, and all future schedule provisioning starts enabled without altering existing schedules.
 - 2026-08-14 D007 ACTIVE [USER] Active workspace switches take precedence over stale-route recovery and display only a switching loader until they succeed or fail.
+- 2026-08-14 D008 ACTIVE [USER] Direct Availability views provide the complete weekly-hours editor in place, while organizational owner teammate details retain their compact summary and edit route.
 
 # State
 
-- 2026-08-14 [CODE] Now: workspace-switch transition is implemented locally alongside the Availability work on `codex/show-unavailable-availability` for draft PR #59.
-- 2026-08-14 [TOOL] Next: obtain explicit deployment approval and push the tested commits to update draft PR #59; production availability remains UNCONFIRMED.
+- 2026-08-14 [CODE] Now: approved direct Availability design is documented locally alongside the workspace-switch and Availability work on `codex/show-unavailable-availability` for draft PR #59.
+- 2026-08-14 [TOOL] Next: obtain user review of the direct-Availability specification, then write the implementation plan; deployment and PR update remain pending explicit authorization.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
@@ -40,11 +42,13 @@
 - `src/components/WorkspaceUnavailable.test.tsx`
 - `src/layouts/DashboardLayout.tsx`
 - `src/pages/ScheduleUserDetailPage.tsx`
+- `src/pages/ScheduleUserAvailabilityPage.tsx`
 - `src/lib/availabilityWorkspace.ts`
 - `docs/superpowers/specs/2026-08-14-availability-workspace-defaults-design.md`
 - `docs/superpowers/plans/2026-08-14-availability-workspace-defaults.md`
 - `docs/superpowers/specs/2026-08-14-workspace-switching-transition-design.md`
 - `docs/superpowers/plans/2026-08-14-workspace-switching-transition.md`
+- `docs/superpowers/specs/2026-08-14-direct-availability-page-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -69,3 +73,4 @@
 - 2026-08-14 [CODE] Approved workspace-switch design keeps real unavailable-workspace recovery intact while suppressing it during an active switch.
 - 2026-08-14 [TOOL] RED: transition regression found no dashboard switch state or TeamSwitcher lifecycle callbacks.
 - 2026-08-14 [TOOL] GREEN: workspace transition and availability page suites passed 7/7 with `tsc --noEmit` and `git diff --check` under Node v22.22.0.
+- 2026-08-14 [CODE] Approved direct-Availability design places weekly-hours editing on the personal/member page and preserves organizational-owner teammate detail navigation.
