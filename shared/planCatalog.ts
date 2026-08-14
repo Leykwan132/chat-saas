@@ -311,9 +311,24 @@ export function getPlanKeyFeatures(planId: ComparisonPlanKey): string[] {
     return ENTERPRISE_KEY_FEATURES;
   }
 
-  return PLAN_CATALOG[planId].displayFeatures.filter(
+  const features = PLAN_CATALOG[planId].displayFeatures.filter(
     (feature) => !feature.startsWith("Everything in "),
   );
+
+  if (!PLAN_CATALOG[planId].features.lead_tagging) {
+    return features;
+  }
+
+  const advancedAnalyticsIndex = features.indexOf(TOPIC_ANALYTICS_LABEL);
+  if (advancedAnalyticsIndex === -1) {
+    return [...features, AI_LEAD_TEMPERATURE_LABEL];
+  }
+
+  return [
+    ...features.slice(0, advancedAnalyticsIndex),
+    AI_LEAD_TEMPERATURE_LABEL,
+    ...features.slice(advancedAnalyticsIndex),
+  ];
 }
 
 export const ENTERPRISE_PLAN: EnterprisePlanEntry = {

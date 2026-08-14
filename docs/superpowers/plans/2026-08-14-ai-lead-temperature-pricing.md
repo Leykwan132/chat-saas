@@ -106,11 +106,50 @@ Expected: PASS with no failures.
 ### Task 3: Verify and publish the focused feature branch
 
 **Files:**
+- Modify: `shared/planCatalog.ts:309-317`
+- Create: `shared/planKeyFeatures.test.ts`
+
+**Interfaces:**
+- Consumes: `PLAN_CATALOG[planId].displayFeatures` and `AI_LEAD_TEMPERATURE_LABEL`.
+- Produces: `getPlanKeyFeatures(planId)` lists that include AI Lead Temperature for every eligible self-serve plan and position it before Advanced Analytics.
+
+- [ ] **Step 1: Write the failing compact-card feature test**
+
+```ts
+expect(getPlanKeyFeatures("free")).not.toContain(AI_LEAD_TEMPERATURE_LABEL);
+expect(getPlanKeyFeatures("starter")).toContain(AI_LEAD_TEMPERATURE_LABEL);
+expect(getPlanKeyFeatures("business")).toContain(AI_LEAD_TEMPERATURE_LABEL);
+
+const growthFeatures = getPlanKeyFeatures("growth");
+expect(growthFeatures.indexOf(AI_LEAD_TEMPERATURE_LABEL)).toBeLessThan(
+  growthFeatures.indexOf(TOPIC_ANALYTICS_LABEL),
+);
+```
+
+- [ ] **Step 2: Run the focused test and verify RED**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/planKeyFeatures.test.ts`
+
+Expected: FAIL because compact plan-card lists still omit AI Lead Temperature.
+
+- [ ] **Step 3: Implement the shared compact-card list update**
+
+Update `getPlanKeyFeatures` to add AI Lead Temperature when `lead_tagging` is enabled and it is not already present. Insert it immediately before Advanced Analytics when present; otherwise append it. Do not change `displayFeatures`, feature flags, plan-card components, or backend data.
+
+- [ ] **Step 4: Run focused tests and verify GREEN**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/planKeyFeatures.test.ts convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+
+Expected: PASS with no failures.
+
+### Task 4: Verify and publish the focused feature branch
+
+**Files:**
 - Modify: `CONTINUITY.md`
 
 - [ ] **Step 1: Run static and focused verification**
 
-Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx && bunx tsc --noEmit && git diff --check`
+Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run shared/planKeyFeatures.test.ts convex/analyticsInsights.test.ts src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx && bunx tsc --noEmit && git diff --check`
 
 Expected: every command exits 0.
 
