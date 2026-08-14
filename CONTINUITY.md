@@ -6,6 +6,7 @@
 - 2026-08-13 [TOOL] Commit `6affb7ac` is pushed to `origin/codex/fix-booking-active-services`; `git merge-tree --write-tree origin/main HEAD` completed without conflicts. GitHub PR creation is blocked by connector 403 `Resource not accessible by integration`, while local `gh` has an invalid token. Production availability is UNCONFIRMED; no changelog entry is due before release.
 - 2026-08-13 [USER] A selected current day must keep only its circular selection indicator, without the square muted calendar background.
 - 2026-08-13 [USER] The selected Calendar View filter needs fully rounded pill corners.
+- 2026-08-14 [USER] AI Lead Temperature must be a standalone pricing feature placed directly above Advanced Analytics, with hover copy that explains the capability.
 
 # Done (recent)
 
@@ -16,27 +17,24 @@
 
 - 2026-08-13 D001 ACTIVE [USER] AI workflow service selections constrain AI booking only. Staff manual bookings use the active service catalogue.
 - 2026-08-13 D002 ACTIVE [USER] Inbox Create booking and Calendar + New Booking default to the first valid 30-minute slot at or after the current time; there is no lead-time delay and temporal proximity overrides preferred times.
+- 2026-08-14 D003 ACTIVE [USER] AI Lead Temperature remains enabled from Starter upward, while Advanced Analytics remains Growth-and-up and lists only topic detection and customer sentiment.
 
 # State
 
-- 2026-08-13 [CODE] Now: `codex/fix-slot-availability-create` renders active Calendar View filters as fully rounded pills and selected current calendar days without a square background.
-- 2026-08-13 [TOOL] Next: review PR #58; production availability is UNCONFIRMED.
+- 2026-08-14 [CODE] Now: `codex/ai-lead-temperature` implements the requested pricing presentation; the branch is awaiting commit and requested PR creation.
+- 2026-08-14 [TOOL] Next: publish the isolated feature branch and create its draft PR; production availability is UNCONFIRMED.
 - 2026-08-13 [USER] Open questions: none.
 
 # Working set
 
-- `convex/appointmentBooking/access.ts`
-- `convex/appointmentBooking/manualBooking.ts`
-- `convex/appointmentBooking/calendarManualBooking.ts`
-- `convex/manualBookingAvailability.test.ts`
-- `convex/calendarManualBooking.test.ts`
-- `src/components/booking/useCreateBookingController.ts`
-- `src/components/inbox/CreateCustomerBookingDialog.tsx`
-- `src/components/inbox/manualBookingScheduleModel.ts`
-- `src/components/ui/calendar.tsx`
-- `src/components/ui/calendar.test.tsx`
-- `src/components/calendar/CalendarSidebar.tsx`
-- `src/components/calendar/CalendarSidebar.test.tsx`
+- `shared/planCatalog.ts`
+- `convex/analyticsInsights.test.ts`
+- `src/components/pricing/PlanAutoLeadTaggingHoverHint.tsx`
+- `src/components/pricing/PlanAutoLeadTaggingHoverHint.test.tsx`
+- `src/components/pricing/pricingFeatureHover.tsx`
+- `docs/superpowers/specs/2026-08-14-ai-lead-temperature-pricing-design.md`
+- `docs/superpowers/plans/2026-08-14-ai-lead-temperature-pricing.md`
+- `CONTINUITY.md`
 
 # Receipts
 
@@ -57,3 +55,6 @@
 - 2026-08-13 [TOOL] Calendar selected-today regression was RED before the styling change and GREEN afterward; `CalendarSidebar.test.tsx` (2/2), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-13 [TOOL] Calendar View filter pill regression was RED before the local active-row override and GREEN afterward; `CalendarSidebar.test.tsx` (3/3), `tsc --noEmit`, and `git diff --check` passed under Node v22.22.0.
 - 2026-08-13 [TOOL] Pushed `codex/fix-slot-availability-create` and opened ready-for-review PR #58; 16 focused tests and `tsc --noEmit` passed immediately before PR creation.
+- 2026-08-14 [TOOL] RED: standalone-pricing and hover tests failed before implementation because Lead Temperature remained in Advanced Analytics and the standalone label had no hover.
+- 2026-08-14 [TOOL] GREEN: focused pricing tests (5/5), `bunx tsc --noEmit`, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-14 [TOOL] Full `bunx vitest run` passed 1,348 tests across 416 files but exited non-zero on 10 established Docs runner/dependency suites and an unrelated time-sensitive Calendar fixture.

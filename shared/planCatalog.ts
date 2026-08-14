@@ -390,7 +390,7 @@ export function isKnowledgeBaseLimitLabel(label: string): boolean {
   return /^[\d,]+(?:KB|MB)(?: per agent)?$/.test(label);
 }
 
-export const AUTO_LEAD_TAGGING_LABEL = "Auto lead tagging";
+export const AI_LEAD_TEMPERATURE_LABEL = "AI Lead Temperature";
 export const CHAT_SUMMARY_LABEL = "Chat summary";
 export const BASIC_ANALYTICS_LABEL = "Basic Analytics";
 export const AI_WORKFLOWS_LABEL = "AI Workflows";
@@ -402,7 +402,6 @@ export const TOPIC_ANALYTICS_LABEL = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_INCLUDES = [
   "Common Topic Detection",
   "Customer Sentiment",
-  "Lead Temperature",
 ] as const;
 export const CREDITS_COMPARISON_LABEL = "Credits / mo";
 export const CHANNELS_COMPARISON_LABEL = "Channels";
@@ -414,7 +413,7 @@ export const SUPPORTED_CHANNEL_DISPLAY_NAMES = [
 ] as const;
 
 export const AI_TAGGED_PLAN_FEATURE_LABELS = [
-  AUTO_LEAD_TAGGING_LABEL,
+  AI_LEAD_TEMPERATURE_LABEL,
   CHAT_SUMMARY_LABEL,
   TOPIC_ANALYTICS_LABEL,
 ] as const;
@@ -423,9 +422,9 @@ export function isAiTaggedPlanFeature(label: string): boolean {
   return (AI_TAGGED_PLAN_FEATURE_LABELS as readonly string[]).includes(label);
 }
 
-export const AUTO_LEAD_TAGGING_HOVER_TITLE = "Auto lead tagging";
-export const AUTO_LEAD_TAGGING_HOVER_DESCRIPTION =
-  "Our AI will help to categorize into the following category:";
+export const AI_LEAD_TEMPERATURE_HOVER_TITLE = "AI Lead Temperature";
+export const AI_LEAD_TEMPERATURE_HOVER_DESCRIPTION =
+  "AI analyzes customer conversations and classifies each lead as Hot, Warm, or Cold, helping your team prioritize follow-ups.";
 
 export const KNOWLEDGE_BASE_HOVER_TITLE = "Knowledge base";
 export const KNOWLEDGE_BASE_HOVER_DESCRIPTION =
@@ -467,8 +466,8 @@ export const ADVANCED_ANALYTICS_HOVER_TITLE = "Advanced Analytics";
 export const ADVANCED_ANALYTICS_HOVER_DESCRIPTION =
   "AI-powered conversation insights to help you understand what customers talk about and how they feel.";
 
-export function isAutoLeadTaggingLabel(label: string): boolean {
-  return label === AUTO_LEAD_TAGGING_LABEL;
+export function isAiLeadTemperatureLabel(label: string): boolean {
+  return label === AI_LEAD_TEMPERATURE_LABEL;
 }
 
 export function isChatSummaryLabel(label: string): boolean {
@@ -756,19 +755,6 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
   },
   {
     group: "ai_features",
-    comparisonLabel: AUTO_LEAD_TAGGING_LABEL,
-    getSelfServeCardRow: (planId) => ({
-      text: AUTO_LEAD_TAGGING_LABEL,
-      included: PLAN_CATALOG[planId].features.lead_tagging,
-    }),
-    getEnterpriseCardRow: () => ({
-      text: AUTO_LEAD_TAGGING_LABEL,
-      included: true,
-    }),
-    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.lead_tagging,
-  },
-  {
-    group: "ai_features",
     comparisonLabel: CHAT_SUMMARY_LABEL,
     getSelfServeCardRow: (planId) => ({
       text: CHAT_SUMMARY_LABEL,
@@ -806,6 +792,19 @@ const PLAN_FEATURE_ROW_SPECS: PlanFeatureRowSpec[] = [
       included: true,
     }),
     getComparisonValue: (planId) => PLAN_CATALOG[planId].features.team_analytics,
+  },
+  {
+    group: "analytics",
+    comparisonLabel: AI_LEAD_TEMPERATURE_LABEL,
+    getSelfServeCardRow: (planId) => ({
+      text: AI_LEAD_TEMPERATURE_LABEL,
+      included: PLAN_CATALOG[planId].features.lead_tagging,
+    }),
+    getEnterpriseCardRow: () => ({
+      text: AI_LEAD_TEMPERATURE_LABEL,
+      included: true,
+    }),
+    getComparisonValue: (planId) => PLAN_CATALOG[planId].features.lead_tagging,
   },
   {
     group: "analytics",

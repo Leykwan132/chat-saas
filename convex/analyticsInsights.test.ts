@@ -6,6 +6,7 @@ import {
 } from "./analyticsInsightsContract";
 import {
   ADVANCED_ANALYTICS_INCLUDES,
+  getGroupedPlanComparisonRows,
   isAdvancedAnalyticsPlan,
 } from "../shared/planCatalog";
 
@@ -52,11 +53,27 @@ test("combined analytics prompt covers all three analyses", () => {
   expect(prompt).toContain("Business: It starts at RM99.");
 });
 
-test("pricing lists every combined Advanced Analytics insight", () => {
+test("pricing presents AI Lead Temperature before Advanced Analytics", () => {
   expect(ADVANCED_ANALYTICS_INCLUDES).toEqual([
     "Common Topic Detection",
     "Customer Sentiment",
-    "Lead Temperature",
+  ]);
+  expect(
+    getGroupedPlanComparisonRows().find((group) => group.title === "Analytics")?.rows,
+  ).toMatchObject([
+    { label: "Basic Analytics" },
+    { label: "Team analytics" },
+    {
+      label: "AI Lead Temperature",
+      values: {
+        free: false,
+        starter: true,
+        growth: true,
+        business: true,
+        enterprise: true,
+      },
+    },
+    { label: "Advanced Analytics" },
   ]);
 });
 
