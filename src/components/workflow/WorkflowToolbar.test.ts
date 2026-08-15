@@ -21,6 +21,6 @@ test('workflow toolbar exposes a toggle-style horizontal or vertical button', ()
 
 test('workflow toolbar explains the purpose of the canvas', () => {
   expect(source).toContain(
-    'Map how your agent responds, sends content, handles bookings, and routes conversations.',
+    'Tighter control over every step of your agent’s responses, content, bookings, and conversation routing.',
   );
 });

@@ -58,6 +58,7 @@
 - 2026-08-15 D030 ACTIVE [USER] Book appointment nodes and their detail panels use the same direct service-switch controls; only their surrounding layout differs.
 - 2026-08-15 D031 ACTIVE [USER] Full editable workflow nodes expose their primary action controls directly; Human escalation surfaces and directly edits its incoming `When` condition.
 - 2026-08-15 D032 ACTIVE [USER] Workflow Cleanup uses measured rendered node dimensions when available, preserving its horizontal or vertical arrangement without overlap.
+- 2026-08-15 D033 ACTIVE [USER] Workflow toolbar description is “Tighter control over every step of your agent’s responses, content, bookings, and conversation routing.”
 
 # State
 
@@ -137,3 +138,4 @@
 - 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 433 application/Convex test files (1,381 tests) and 63 Docs tests after measured Cleanup verification. Known unrelated test stderr remains non-failing.
 - 2026-08-15 [TOOL] Pushed `codex/show-unavailable-availability` through `b8348407`; existing PR #59 targets `main` from that branch. Connector metadata update returned 403 `Resource not accessible by integration`; local `gh` authentication is expired.
 - 2026-08-15 [TOOL] GREEN: fixed the pasted `tsc -b` errors; 6 focused suites (16 tests), Node v22.22.0 `bun run build`, and `git diff --check` pass.
+- 2026-08-15 [TOOL] RED then GREEN: the Workflow toolbar copy regression failed for the prior description and passes for the approved tighter-control wording.

@@ -62,7 +62,7 @@ export function WorkflowToolbar({
           Workflow
         </h1>
         <p className="max-w-sm text-sm text-muted-foreground">
-          Map how your agent responds, sends content, handles bookings, and routes conversations.
+          Tighter control over every step of your agent’s responses, content, bookings, and conversation routing.
         </p>
         <div className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 backdrop-blur">
           <Button type="button" variant="ghost" size="icon-sm" onClick={() => zoomIn()}>
