@@ -134,7 +134,7 @@ git add src/components/services src/components/ServiceForm.tsx && git commit -m 
 
 **Interfaces:** Consumes `mode`, `teamEnabled`, `onModeChange`, and `onUpgrade`; produces accessible `For myself` and `For team` radio cards.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```tsx
 render(<CreateServiceAssignmentCards mode="self" teamEnabled={false} onModeChange={onModeChange} onUpgrade={onUpgrade} />);
@@ -146,17 +146,17 @@ expect(onModeChange).not.toHaveBeenCalled();
 
 Assert that the locked Team card contains a centered Upgrade control and the darker hover/focus overlay.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx`
 
 Expected: FAIL because the component is absent.
 
-- [ ] **Step 3: Implement the cards**
+- [x] **Step 3: Implement the cards**
 
 Use `RadioGroup`. Each card contains a foreground `UserRound` or `UsersRound` icon tile with two offset bordered tiles behind it. A locked Team card stays focusable; its `group-hover` and `group-focus-within` overlay darkens slightly and reveals centered Upgrade. Card and overlay both call `onUpgrade` without changing selection. An eligible workspace selects team normally.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx`
 
