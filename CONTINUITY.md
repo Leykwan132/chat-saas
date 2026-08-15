@@ -56,11 +56,12 @@
 - 2026-08-15 D028 SUPERSEDED [USER] Standard Book appointment nodes directly list active services, their assigned teammate count and hover names, and immediate-save booking switches; the inspector no longer duplicates that selection.
 - 2026-08-15 D029 SUPERSEDED [USER] Standard Book appointment nodes remain the direct service-selection surface; their detail panels also show a read-only summary of currently enabled services and assigned teammates.
 - 2026-08-15 D030 ACTIVE [USER] Book appointment nodes and their detail panels use the same direct service-switch controls; only their surrounding layout differs.
+- 2026-08-15 D031 ACTIVE [USER] Full editable workflow nodes expose their primary action controls directly; Human escalation surfaces and directly edits its incoming `When` condition.
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment nodes and inspectors reuse one switch-enabled booking-service component; both show all active services and immediate saves.
-- 2026-08-15 [TOOL] Next: run the complete test suite and finalize the local branch; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Book appointment is the only full-canvas action with a direct primary control; other full editable nodes need focused controls and Human escalation needs an incoming-condition display.
+- 2026-08-15 [TOOL] Next: user review of the workflow-node-controls design, then implementation planning and verification; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -78,6 +79,7 @@
 - `docs/superpowers/specs/2026-08-15-booking-node-services-design.md`
 - `docs/superpowers/specs/2026-08-15-booking-inspector-services-design.md`
 - `docs/superpowers/specs/2026-08-15-shared-booking-service-controls-design.md`
+- `docs/superpowers/specs/2026-08-15-workflow-node-controls-design.md`
 - `docs/superpowers/plans/2026-08-15-booking-node-services.md`
 - `CONTINUITY.md`
 
@@ -131,3 +133,4 @@
 - 2026-08-15 [USER] Book appointment detail panels must use the same switch-enabled service component as their canvas nodes.
 - 2026-08-15 [TOOL] RED then GREEN: inspector-presentation markup initially lacked the shared component presentation marker; it now renders every active service with its existing live switch and excludes inactive services. Three focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 430 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
+- 2026-08-15 [USER] Full editable nodes should provide direct action controls, and Human escalation must show its incoming `When` condition.
