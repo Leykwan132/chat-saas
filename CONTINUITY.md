@@ -63,8 +63,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment's shared service control renders the standard Empty component and agent-scoped Create service action for an all-inactive service list; the change awaits review and PR publication.
-- 2026-08-15 [TOOL] RED then GREEN: the new no-active-services test first failed against the plain message, then passed with the reusable Empty state; Node v22.22.0 `bun run test`, `bun run build`, and `git diff --check` exit 0.
+- 2026-08-15 [CODE] Now: Book appointment's shared service control renders the standard Empty component and agent-scoped Create service action for an all-inactive service list; its CTA is drag/pan isolated in workflow-node presentation and awaits PR publication.
+- 2026-08-15 [TOOL] RED then GREEN: no-active-services and node CTA-isolation regressions failed against the old rendering, then passed; Node v22.22.0 `bun run test`, `bun run build`, and `git diff --check` exit 0 after review fixes.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 

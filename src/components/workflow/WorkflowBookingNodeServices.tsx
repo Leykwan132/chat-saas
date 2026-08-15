@@ -107,7 +107,11 @@ export function WorkflowBookingNodeServices({
               Create a service before this workflow can book appointments.
             </EmptyDescription>
           </EmptyHeader>
-          <EmptyContent>
+          <EmptyContent
+            className="nodrag nopan"
+            onClick={(event) => event.stopPropagation()}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
             <Button asChild size="sm">
               <Link to={`/dashboard/${agentId}/services/new`}>Create service</Link>
             </Button>

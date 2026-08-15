@@ -72,3 +72,19 @@ test('guides administrators to create a service when no active services exist', 
   expect(markup).toContain('href="/dashboard/empty-agent/services/new"');
   expect(markup).toContain('Create service');
 });
+
+test('keeps the empty-state create-service action interactive in node presentation', () => {
+  const markup = renderToStaticMarkup(
+    <MemoryRouter>
+      <WorkflowBookingNodeServices
+        agentId={'empty-agent' as Id<'agents'>}
+        nodeId={'node' as Id<'workflowNodes'>}
+        disabled={false}
+      />
+    </MemoryRouter>,
+  );
+
+  expect(markup).toContain('data-booking-service-presentation="node"');
+  expect(markup).toContain('href="/dashboard/empty-agent/services/new"');
+  expect(markup).toContain('nodrag nopan');
+});
