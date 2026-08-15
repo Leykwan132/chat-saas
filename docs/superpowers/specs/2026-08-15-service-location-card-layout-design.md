@@ -21,6 +21,8 @@ Location is a dropdown with exactly two options:
 - Google Meet maps to the existing `remote` service location mode.
 - In person maps to the existing `in_person` mode and reveals Address (optional).
 
+Google Meet uses the official hosted Google Meet product image at `https://fonts.gstatic.com/s/i/productlogos/meet_2020q4/v6/web-48dp/logo_meet_2020q4_color_1x_web_48dp.png`, displayed at the same compact size as the existing Google Calendar image treatment. It replaces the generic camera icon in the selected dropdown trigger and Google Meet menu entry. In person retains its map-pin icon.
+
 Google Meet appears as an available choice only when the current user has an active Google Calendar connection. It retains the current calendar early-access gate.
 
 For an eligible user without a connection, the Google Meet entry appears unavailable. Hovering or focusing the entry opens a card that says Google Meet requires Google Calendar and provides a Connect Google Calendar button. The unavailable entry cannot be selected or saved. The card's action uses the existing authorization flow. If the connection flow is cancelled or fails, the service remains In person and unchanged.
