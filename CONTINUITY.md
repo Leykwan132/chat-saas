@@ -50,32 +50,21 @@
 - 2026-08-15 [CODE] Manual calendar-event creation now uses the Google-aware action, synchronizes connected creators' primary calendars fail-closed, and retains local-only behavior without a connection; connection status now shows a white check in its green badge. The feature remains unreleased.
 - 2026-08-15 [CODE] The approved Create Service dialog design, including stacked assignment-card icons and advanced timing details, is committed at `7108bf85`.
 - 2026-08-15 [CODE] Create Service now hides Description and Advanced settings, removes the footer rule, and simplifies assignment cards; focused verification is pending commit.
+- 2026-08-15 [TOOL] Merged `origin/main` Book appointment empty-state implementation; its workflow changes and supporting spec/plan are retained.
 
 # Working set
-- `src/components/calendar/GoogleCalendarConnectionCard.tsx`
 - `src/pages/CalendarPage.tsx`
-- `src/components/calendar/GoogleCalendarConnection.test.tsx`
+- `src/components/calendar/GoogleCalendarConnectionCard.tsx`
 - `src/components/booking/CreateBookingDialog.test.ts`
 - `convex/calendarEvents.ts`
-- `convex/calendarEventsHelpers.ts`
 - `convex/googleCalendar/calendarEventCreatePrepare.ts`
 - `convex/googleCalendar/calendarEventCreateSync.ts`
-- `convex/googleCalendarManualEventSync.test.ts`
 - `convex/appointmentBooking/services.ts`
-- `convex/googleCalendar/bookingPrepare.ts`
-- `convex/googleCalendar/staffBookingPrepare.ts`
-- `convex/googleCalendar/writeProvider.ts`
-- `convex/googleCalendarProvider.test.ts`
 - `src/components/services/ServiceLocationField.tsx`
 - `src/components/services/CreateServiceWizard.tsx`
 - `src/components/ServiceForm.tsx`
 - `src/pages/ServicePage.tsx`
-- `src/pages/ServicesPage.tsx`
-- `docs/superpowers/specs/2026-08-15-create-service-dialog-design.md`
-- `docs/superpowers/specs/2026-08-15-service-location-card-layout-design.md`
-- `docs/superpowers/plans/2026-08-15-service-details-google-meet-guard.md`
-- `docs/superpowers/specs/2026-08-15-manual-event-google-calendar-sync-design.md`
-- `docs/superpowers/plans/2026-08-15-manual-event-google-calendar-sync.md`
+- `src/components/workflow/WorkflowBookingNodeServices.tsx`
 - `CONTINUITY.md`
 
 # Receipts
