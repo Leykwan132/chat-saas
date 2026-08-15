@@ -12,6 +12,7 @@ import type { WorkflowInspectorSaveValues } from "@/components/workflow/Workflow
 import { WorkflowPageSkeleton } from "@/components/workflow/WorkflowPageSkeleton";
 import { WorkflowTemplatePreviewDialog } from "@/components/workflow/WorkflowTemplatePreviewDialog";
 import { workflowGraphToFlow } from "@/components/workflow/workflowFlowModel";
+import type { WorkflowLayoutNodeMeasurements } from "@/components/workflow/workflowLayoutMeasurements";
 import { getNextWorkflowLayoutOrientation } from "@/components/workflow/workflowLayout";
 import type { WorkflowTemplate } from "@/components/workflow/workflowTemplates";
 import {
@@ -141,8 +142,8 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
     setTemplatePreview(undefined);
     setArrangeFocusRequest((value) => value + 1);
   };
-  const handleCleanup = async () => {
-    const graph = await messageActions.applyLayout(layoutOrientation);
+  const handleCleanup = async (measurements: WorkflowLayoutNodeMeasurements) => {
+    const graph = await messageActions.applyLayout(layoutOrientation, measurements);
     if (graph) setArrangeFocusRequest((value) => value + 1);
   };
   const handleArrange = async () => {
@@ -174,7 +175,7 @@ function WorkflowEditor({ agentId, persistedGraph }: WorkflowEditorProps) {
         }
         onEdgeRemoved={(edgeId) => void messageActions.removeEdge(edgeId)}
         layoutOrientation={layoutOrientation}
-        onCleanup={() => void handleCleanup()}
+        onCleanup={(measurements) => void handleCleanup(measurements)}
         onArrange={() => void handleArrange()}
         isDirty={automationDraft.isDirty}
         isSaving={isSaving}

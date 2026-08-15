@@ -13,6 +13,7 @@ import type {
   WorkflowGraph,
   WorkflowLayoutOrientation,
 } from "../components/workflow/workflowTypes";
+import type { WorkflowLayoutNodeMeasurements } from "../components/workflow/workflowLayoutMeasurements";
 import { findNewWorkflowNodeId } from "./workflowPageNodeSelection";
 import { toWorkflowLayoutApplyArgs } from "./workflowLayoutPersistence";
 import { toWorkflowTemplateReplacementPayload } from "./workflowTemplateReplacementPersistence";
@@ -160,11 +161,12 @@ export function useWorkflowMessageActions({
 
   const applyLayout = useCallback(async (
     orientation: WorkflowLayoutOrientation,
+    measurements?: WorkflowLayoutNodeMeasurements,
   ) => {
     return await runGraphMutation(
       () => applyWorkflowLayout({
         agentId,
-        ...toWorkflowLayoutApplyArgs(graph, orientation),
+        ...toWorkflowLayoutApplyArgs(graph, orientation, measurements),
       }),
       "Could not arrange workflow",
     );

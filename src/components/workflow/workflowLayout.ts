@@ -11,6 +11,7 @@ import {
   workflowNodeDisplayTitle,
 } from '../../../shared/workflows';
 import type { WorkflowGraph, WorkflowLayoutOrientation } from './workflowTypes';
+import type { WorkflowLayoutNodeMeasurements } from './workflowLayoutMeasurements';
 
 const NODE_MIN_WIDTH = 176;
 const NODE_DESCRIPTION_WIDTH = 220;
@@ -81,7 +82,19 @@ function getWorkflowNodeControlRailWidth(node: WorkflowGraph['nodes'][number]) {
   );
 }
 
-export function getWorkflowCleanupNodeSize(node: WorkflowGraph['nodes'][number]) {
+function isFinitePositiveSize(size: { width: number; height: number } | undefined) {
+  return size !== undefined &&
+    Number.isFinite(size.width) &&
+    Number.isFinite(size.height) &&
+    size.width > 0 &&
+    size.height > 0;
+}
+
+export function getWorkflowCleanupNodeSize(
+  node: WorkflowGraph['nodes'][number],
+  measuredSize?: { width: number; height: number },
+) {
+  if (isFinitePositiveSize(measuredSize)) return { ...measuredSize };
   const size = getWorkflowLayoutNodeSize(node);
 
   return {
@@ -137,6 +150,7 @@ function resolveLayoutOverlaps(items: WorkflowLayoutPosition[]) {
 export function getWorkflowCleanupPositions(
   graph: WorkflowGraph,
   orientation: WorkflowLayoutOrientation = 'vertical',
+  measurements: WorkflowLayoutNodeMeasurements = new Map(),
 ): WorkflowCleanupPosition[] {
   const layoutGraph = new Graph<GraphLabel, NodeLabel, EdgeLabel>()
     .setDefaultEdgeLabel(() => ({}))
@@ -153,11 +167,23 @@ export function getWorkflowCleanupPositions(
     Id<'workflowNodes'>,
     ReturnType<typeof getWorkflowLayoutNodeSize>
   >();
+  const cleanupNodeSizeById = new Map<
+    Id<'workflowNodes'>,
+    ReturnType<typeof getWorkflowCleanupNodeSize>
+  >();
 
   for (const node of graph.nodes) {
-    const size = getWorkflowLayoutNodeSize(node);
+    const measuredSize = measurements.get(node._id);
+    const size = isFinitePositiveSize(measuredSize)
+      ? { ...measuredSize }
+      : getWorkflowLayoutNodeSize(node);
+    const cleanupSize = getWorkflowCleanupNodeSize(
+      node,
+      measuredSize,
+    );
     nodeSizeById.set(node._id, size);
-    layoutGraph.setNode(node._id, size);
+    cleanupNodeSizeById.set(node._id, cleanupSize);
+    layoutGraph.setNode(node._id, { ...size });
   }
 
   for (const edge of graph.edges) {
@@ -169,9 +195,11 @@ export function getWorkflowCleanupPositions(
   const positions = graph.nodes.flatMap<WorkflowLayoutPosition>((node) => {
     const layoutNode = layoutGraph.node(node._id);
     const size = nodeSizeById.get(node._id);
+    const cleanupSize = cleanupNodeSizeById.get(node._id);
     if (
       !layoutNode ||
       !size ||
+      !cleanupSize ||
       layoutNode.x === undefined ||
       layoutNode.y === undefined
     ) {
@@ -184,8 +212,8 @@ export function getWorkflowCleanupPositions(
         x: layoutNode.x - size.width / 2,
         y: layoutNode.y - size.height / 2,
       },
-      width: getWorkflowCleanupNodeSize(node).width,
-      height: size.height,
+      width: cleanupSize.width,
+      height: cleanupSize.height,
       centerY: layoutNode.y,
     }];
   });
