@@ -53,12 +53,13 @@
 - 2026-08-14 D025 ACTIVE [USER] Service-editor navigation uses icons and the order Service details, Appointment duration, Booking team, and Booking form.
 - 2026-08-14 D026 ACTIVE [USER] AI Lead Temperature is available from Starter upward; only Growth compact cards call it out directly, while Business inherits the capability.
 - 2026-08-14 D027 ACTIVE [USER] Workflow service links open the service detail page on its Service details pane; its name field label is Name.
-- 2026-08-15 D028 ACTIVE [USER] Standard Book appointment nodes directly list active services, their assigned teammate count and hover names, and immediate-save booking switches; the inspector no longer duplicates that selection.
+- 2026-08-15 D028 SUPERSEDED [USER] Standard Book appointment nodes directly list active services, their assigned teammate count and hover names, and immediate-save booking switches; the inspector no longer duplicates that selection.
+- 2026-08-15 D029 ACTIVE [USER] Standard Book appointment nodes remain the direct service-selection surface; their detail panels also show a read-only summary of currently enabled services and assigned teammates.
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment workflow nodes list enabled services and assigned teammates with immediate selection switches; service selection is no longer duplicated in the inspector.
-- 2026-08-15 [TOOL] Next: review the current local feature branch; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Book appointment workflow nodes list enabled services and assigned teammates with immediate selection switches; their inspector needs a matching read-only service summary.
+- 2026-08-15 [TOOL] Next: user review of the inspector-services design, then implementation and verification; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -74,6 +75,7 @@
 - `src/components/workflow/workflowFlowModel.test.ts`
 - `src/pages/WorkflowPage.tsx`
 - `docs/superpowers/specs/2026-08-15-booking-node-services-design.md`
+- `docs/superpowers/specs/2026-08-15-booking-inspector-services-design.md`
 - `docs/superpowers/plans/2026-08-15-booking-node-services.md`
 - `CONTINUITY.md`
 
@@ -121,3 +123,4 @@
 - 2026-08-14 [TOOL] GREEN: after merge commit `1184ae98`, `bun run test` passed 426 files / 1,363 tests and 63 Docs tests; `bunx tsc --noEmit` and `git diff --check` passed under Node v22.22.0.
 - 2026-08-14 [TOOL] RED then GREEN: ServiceForm initially selected Booking team; the focused regression now confirms Service details is selected first and its Name field is visible under Node v22.22.0.
 - 2026-08-15 [TOOL] RED then GREEN: workflow services did not expose assigned teammates, booking-node flow data did not carry the agent/selection, and the inspector retained duplicate controls; 5 focused suites, TypeScript, diff checks, and `bun run test` (429 files / 1,369 tests plus 63 Docs tests) pass under Node v22.22.0.
+- 2026-08-15 [USER] Book appointment inspectors must also display the enabled services; the canvas node remains the direct switch control.
