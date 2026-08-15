@@ -1,6 +1,18 @@
 import { expect, test } from "vitest";
 import type { Doc, Id } from "./_generated/dataModel";
-import { buildCalendarEventDescription } from "./appointmentBooking/fields";
+import { buildCalendarEventDescription, serviceBookingLocation } from "./appointmentBooking/fields";
+
+test("uses an address only for in-person services", () => {
+  expect(serviceBookingLocation({
+    locationMode: "in_person",
+    location: "  88 Jalan Ampang, Kuala Lumpur  ",
+  })).toBe("88 Jalan Ampang, Kuala Lumpur");
+  expect(serviceBookingLocation({
+    locationMode: "remote",
+    location: "88 Jalan Ampang, Kuala Lumpur",
+  })).toBeUndefined();
+  expect(serviceBookingLocation({})).toBeUndefined();
+});
 
 test("calendar event description includes customer context and interest details", () => {
   const service = {

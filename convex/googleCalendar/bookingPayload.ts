@@ -3,6 +3,7 @@ import type { GoogleCalendarWriteInput } from "./writeTypes";
 
 export function googleCalendarWriteInputFromEvent(
   event: Doc<"calendarEvents">,
+  options?: { conferenceRequestId?: string },
 ): GoogleCalendarWriteInput {
   if (event.allDay === true && event.startDate !== undefined && event.endDate !== undefined) {
     return {
@@ -11,6 +12,7 @@ export function googleCalendarWriteInputFromEvent(
       location: event.location,
       start: { date: event.startDate },
       end: { date: event.endDate },
+      conferenceRequestId: options?.conferenceRequestId,
     };
   }
   return {
@@ -25,6 +27,7 @@ export function googleCalendarWriteInputFromEvent(
       dateTime: new Date(event.endAt).toISOString(),
       timeZone: event.timeZone,
     },
+    conferenceRequestId: options?.conferenceRequestId,
   };
 }
 

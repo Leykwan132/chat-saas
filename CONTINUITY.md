@@ -16,6 +16,7 @@
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access, currently enabled only for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: a connected event creator's manual calendar event is fail-closed: Google write failure prevents the event from being retained locally.
 - 2026-08-15 [USER] D659 ACTIVE: remote bookings generate a Google Meet link only through the assigned staff member's connected Google Calendar; connecting remains optional.
+- 2026-08-15 [CODE] Now: services support Remote or In person meeting locations; remote AI and staff bookings use an idempotent Google Meet request only when the assigned teammate is connected, and the returned Meet link is stored on the booking event.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
@@ -46,6 +47,11 @@
 - `convex/googleCalendar/calendarEventCreatePrepare.ts`
 - `convex/googleCalendar/calendarEventCreateSync.ts`
 - `convex/googleCalendarManualEventSync.test.ts`
+- `convex/appointmentBooking/services.ts`
+- `convex/googleCalendar/bookingPrepare.ts`
+- `convex/googleCalendar/staffBookingPrepare.ts`
+- `convex/googleCalendar/writeProvider.ts`
+- `convex/googleCalendarProvider.test.ts`
 - `docs/superpowers/specs/2026-08-15-manual-event-google-calendar-sync-design.md`
 - `docs/superpowers/plans/2026-08-15-manual-event-google-calendar-sync.md`
 - `CONTINUITY.md`
@@ -70,3 +76,5 @@
 - 2026-08-15 [TOOL] Manual-event Google sync tests were RED before implementation, then focused API, backend, and UI verification passed 26/26 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check` passing.
 - 2026-08-15 [CODE] Committed manual-event Google synchronization as `e7f62b4d`, the public action integration as `c2a0d0de`, and the white-check indicator as `65f39dc2`.
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 still reports pre-existing Google Calendar projection and booking-sync failures; the manual-event and connection-card suites passed.
+- 2026-08-15 [CODE] Service location settings are committed at `1b524e6b`; the verified, uncommitted follow-up makes remote bookings request an idempotent Google Meet conference and requires Google to return its video link before local finalization.
+- 2026-08-15 [TOOL] Final focused verification passed 43/43 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`; `convex/googleCalendarBookingSync.test.ts` continues to have its known four unrelated failures.

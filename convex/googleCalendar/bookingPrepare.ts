@@ -10,6 +10,7 @@ import {
   buildCalendarEventDescription,
   missingServiceFields,
   serviceTimeZone,
+  serviceBookingLocation,
 } from "../appointmentBooking/fields";
 import { getActiveSession } from "../appointmentBooking/sessionStore";
 import { handleBookingCreated } from "../appointmentBooking/bookingEvents";
@@ -121,12 +122,16 @@ export const prepareBook = internalMutation({
     ) {
       const pending = await ctx.db.get(session.calendarEventId);
       if (pending !== null && pending.status !== "cancelled") {
+        const operationKey = pending.externalOperationKey
+          ?? googleCalendarBookingOperationKey(session._id, "create");
         return {
           kind: "google" as const,
           connectionId: gate.connectionId,
           calendarEventId: pending._id,
-          operationKey: pending.externalOperationKey ?? googleCalendarBookingOperationKey(session._id, "create"),
-          event: googleCalendarWriteInputFromEvent(pending),
+          operationKey,
+          event: googleCalendarWriteInputFromEvent(pending, {
+            conferenceRequestId: service.locationMode === "remote" ? operationKey : undefined,
+          }),
           now: Date.now(),
         };
       }
@@ -144,6 +149,7 @@ export const prepareBook = internalMutation({
         conversation,
         collectedFields,
       }),
+      location: serviceBookingLocation(service),
       startAt: selectedSlot.startAt,
       endAt: selectedSlot.endAt,
       timeZone: bookingTimeZone,
@@ -193,7 +199,11 @@ export const prepareBook = internalMutation({
         connectionId: gate.connectionId,
         calendarEventId: eventId,
         operationKey: googleCalendarBookingOperationKey(session._id, "create"),
-        event: googleCalendarWriteInputFromEvent(event),
+        event: googleCalendarWriteInputFromEvent(event, {
+          conferenceRequestId: service.locationMode === "remote"
+            ? googleCalendarBookingOperationKey(session._id, "create")
+            : undefined,
+        }),
         now,
       };
     }

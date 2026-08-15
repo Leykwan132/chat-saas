@@ -82,6 +82,8 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       sortOrder: 0,
       durationMinutes: 45,
       timeZone: "UTC",
+      locationMode: "in_person",
+      location: "  88 Jalan Ampang, Kuala Lumpur  ",
       fields: [
         { key: "date", label: "Booking Date", type: "date" },
         { key: "time", label: "Booking Time", type: "time" },
@@ -154,6 +156,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     appointmentServiceId: fixture.serviceId,
     bookingSource: "manual",
     remarks: "Customer prefers the window seat.",
+    location: "88 Jalan Ampang, Kuala Lumpur",
     startAt,
     endAt,
   });

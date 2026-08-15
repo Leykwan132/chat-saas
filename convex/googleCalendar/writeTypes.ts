@@ -21,6 +21,7 @@ export const googleCalendarWriteInputValidator = v.object({
     email: v.string(),
     displayName: v.optional(v.string()),
   }))),
+  conferenceRequestId: v.optional(v.string()),
 });
 
 export type GoogleCalendarWriteInput = {
@@ -31,6 +32,7 @@ export type GoogleCalendarWriteInput = {
   end: { date?: string; dateTime?: string; timeZone?: string };
   transparency?: "opaque" | "transparent";
   attendees?: Array<{ email: string; displayName?: string }>;
+  conferenceRequestId?: string;
 };
 
 export type GoogleCalendarWriteArgs = {

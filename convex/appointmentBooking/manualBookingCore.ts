@@ -6,6 +6,7 @@ import {
   bookingDisplayName,
   buildCalendarEventDescription,
   serviceTimeZone,
+  serviceBookingLocation,
 } from "./fields";
 import type { BookingSlot, CollectedFields } from "./types";
 
@@ -47,6 +48,7 @@ export async function createManualBookingRecords(
       conversation: args.conversation,
       collectedFields: args.collectedFields,
     }),
+    location: serviceBookingLocation(args.service),
     startAt: args.selectedSlot.startAt,
     endAt: args.selectedSlot.endAt,
     timeZone,

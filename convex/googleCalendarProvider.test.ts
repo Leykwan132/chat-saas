@@ -6,6 +6,8 @@ import {
 } from "./googleCalendar/workosToken";
 import { googleCalendarRequest } from "./googleCalendar/googleClient";
 import { WORKOS_GOOGLE_CALENDAR_TOKEN_URL } from "./googleCalendar/constants";
+import { mapGoogleEvent } from "./googleCalendar/eventMapping";
+import { insertGoogleCalendarEvent } from "./googleCalendar/writeProvider";
 
 const originalWorkOSApiKey = process.env.WORKOS_API_KEY;
 process.env.WORKOS_API_KEY = "sk_test_google_calendar";
@@ -168,6 +170,69 @@ test("calls Google Calendar with a vended Pipes access token and no organization
   expect(received[1]?.headers.get("If-Match")).toBe('"etag_123"');
   expect(received[1]?.headers.get("Content-Type")).toBe("application/json");
   expect(await received[1]?.text()).toBe('{"summary":"Updated meeting"}');
+});
+
+test("creates a Google Meet conference for remote bookings", async () => {
+  let googleRequest: Request | undefined;
+  const event = await insertGoogleCalendarEvent({
+    credential: actor,
+    externalEventId: "booking_123",
+    operationKey: "booking:create:123",
+    payloadFingerprint: "fingerprint_123",
+    event: {
+      title: "Remote consultation",
+      start: { dateTime: "2026-08-15T02:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+      end: { dateTime: "2026-08-15T03:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+      conferenceRequestId: "booking:create:123",
+    },
+    fetchImplementation: withAccessToken(async (input, init) => {
+      googleRequest = new Request(input, init);
+      return responseJson({
+        id: "booking_123",
+        status: "confirmed",
+        start: { dateTime: "2026-08-15T02:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+        end: { dateTime: "2026-08-15T03:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+        conferenceData: {
+          entryPoints: [{ entryPointType: "video", uri: "https://meet.google.com/abc-defg-hij" }],
+        },
+      });
+    }),
+  });
+
+  expect(googleRequest?.url).toBe(
+    "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+  );
+  const body = await googleRequest?.json();
+  expect(body).toMatchObject({
+    id: "booking_123",
+    conferenceData: {
+      createRequest: {
+        requestId: "booking:create:123",
+        conferenceSolutionKey: { type: "hangoutsMeet" },
+      },
+    },
+  });
+  expect(body).not.toHaveProperty("conferenceRequestId");
+  expect(mapGoogleEvent(event).link).toBe("https://meet.google.com/abc-defg-hij");
+});
+
+test("rejects a remote booking response without a Google Meet link", async () => {
+  await expect(insertGoogleCalendarEvent({
+    credential: actor,
+    externalEventId: "booking_123",
+    operationKey: "booking:create:123",
+    payloadFingerprint: "fingerprint_123",
+    event: {
+      title: "Remote consultation",
+      start: { dateTime: "2026-08-15T02:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+      end: { dateTime: "2026-08-15T03:00:00.000Z", timeZone: "Asia/Kuala_Lumpur" },
+      conferenceRequestId: "booking:create:123",
+    },
+    fetchImplementation: withAccessToken(async () => responseJson({
+      id: "booking_123",
+      status: "confirmed",
+    })),
+  })).rejects.toMatchObject({ kind: "failed" });
 });
 
 test.each(["https://attacker.example/events", "//attacker.example/events"])(

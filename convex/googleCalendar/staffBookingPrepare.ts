@@ -136,7 +136,9 @@ async function completeStaffBooking(
     calendarEventId: ids.eventId,
     sessionId: ids.sessionId,
     operationKey,
-    event: googleCalendarWriteInputFromEvent(event),
+    event: googleCalendarWriteInputFromEvent(event, {
+      conferenceRequestId: args.service.locationMode === "remote" ? operationKey : undefined,
+    }),
     now: Date.now(),
   };
 }

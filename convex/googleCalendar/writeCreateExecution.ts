@@ -71,6 +71,7 @@ export async function runCreateGoogleCalendarEvent(
       const existing = await getGoogleCalendarEventForWrite({
         credential,
         externalEventId,
+        conferenceRequired: event.conferenceRequestId !== undefined,
         fetchImplementation: dependencies.fetchImplementation,
       });
       const afterGet = await renewAttemptLease(
@@ -135,6 +136,7 @@ async function recoverCreate(
     const providerEvent = await getGoogleCalendarEventForWrite({
       credential,
       externalEventId: prepared.externalEventId,
+      conferenceRequired: args.event.conferenceRequestId !== undefined,
       fetchImplementation: dependencies.fetchImplementation,
     });
     const marker = providerEvent.extendedProperties?.private;
@@ -191,6 +193,7 @@ async function reissueCreate(
       if (!(error instanceof GoogleCalendarProviderError) || error.kind !== "conflict") throw error;
       providerEvent = await getGoogleCalendarEventForWrite({
         credential, externalEventId: prepared.externalEventId,
+        conferenceRequired: args.event.conferenceRequestId !== undefined,
         fetchImplementation: dependencies.fetchImplementation,
       });
     }

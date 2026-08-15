@@ -14,6 +14,9 @@ export type GoogleCalendarEvent = {
   location?: string;
   htmlLink?: string;
   hangoutLink?: string;
+  conferenceData?: {
+    entryPoints?: Array<{ entryPointType?: string; uri?: string }>;
+  };
   iCalUID?: string;
   etag?: string;
   updated?: string;
@@ -183,6 +186,11 @@ function activeTimes(event: GoogleCalendarEvent, calendarTimeZone?: string) {
   };
 }
 
+function googleMeetLink(event: GoogleCalendarEvent) {
+  return event.hangoutLink ?? event.conferenceData?.entryPoints
+    ?.find((entryPoint) => entryPoint.entryPointType === "video")?.uri;
+}
+
 export function mapGoogleEvent(
   event: GoogleCalendarEvent,
   calendarTimeZone?: string,
@@ -216,7 +224,7 @@ export function mapGoogleEvent(
     title: event.summary ?? "",
     description: event.description,
     location: event.location,
-    link: event.hangoutLink,
+    link: googleMeetLink(event),
     htmlLink: event.htmlLink,
     iCalUID: event.iCalUID,
     etag: event.etag,

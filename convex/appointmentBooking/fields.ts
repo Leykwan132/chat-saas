@@ -221,6 +221,14 @@ export function serviceTimeZone(
   return service.timeZone?.trim() || normalizeTimeZone(team?.timeZone);
 }
 
+export function serviceBookingLocation(
+  service: Pick<Doc<"appointmentServices">, "locationMode" | "location">,
+) {
+  return service.locationMode === "in_person"
+    ? service.location?.trim() || undefined
+    : undefined;
+}
+
 export function buildBookingConfirmationMessage(args: {
   service: Doc<"appointmentServices">;
   collectedFields: CollectedFields;

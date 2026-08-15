@@ -7,12 +7,17 @@ import type { GoogleCalendarWriteInput } from "./writeTypes";
 
 type Credential = { workosUserId: string };
 
-function eventPath(externalEventId?: string) {
+function eventPath(externalEventId?: string, conferenceDataVersion = false) {
   const suffix = externalEventId === undefined ? "" : `/${encodeURIComponent(externalEventId)}`;
-  return `calendars/primary/events${suffix}`;
+  return `calendars/primary/events${suffix}${conferenceDataVersion ? "?conferenceDataVersion=1" : ""}`;
 }
 
-function providerEvent(value: unknown, expectedId: string) {
+function providerMeetLink(event: GoogleCalendarEvent) {
+  return event.hangoutLink ?? event.conferenceData?.entryPoints
+    ?.find((entryPoint) => entryPoint.entryPointType === "video")?.uri;
+}
+
+function providerEvent(value: unknown, expectedId: string, conferenceRequired = false) {
   if (typeof value !== "object" || value === null) {
     throw new GoogleCalendarProviderError("failed");
   }
@@ -23,12 +28,16 @@ function providerEvent(value: unknown, expectedId: string) {
   ) {
     throw new GoogleCalendarProviderError("failed");
   }
+  if (conferenceRequired && providerMeetLink(event) === undefined) {
+    throw new GoogleCalendarProviderError("failed", "Google Calendar did not create a Meet link.");
+  }
   return event;
 }
 
 export async function getGoogleCalendarEventForWrite(args: {
   credential: Credential;
   externalEventId: string;
+  conferenceRequired?: boolean;
   fetchImplementation: typeof fetch;
 }) {
   const value = await googleCalendarRequest<unknown>(
@@ -36,7 +45,7 @@ export async function getGoogleCalendarEventForWrite(args: {
     { method: "GET", path: eventPath(args.externalEventId) },
     args.fetchImplementation,
   );
-  return providerEvent(value, args.externalEventId);
+  return providerEvent(value, args.externalEventId, args.conferenceRequired);
 }
 
 export async function insertGoogleCalendarEvent(args: {
@@ -47,13 +56,14 @@ export async function insertGoogleCalendarEvent(args: {
   event: GoogleCalendarWriteInput;
   fetchImplementation: typeof fetch;
 }) {
+  const { conferenceRequestId, ...event } = args.event;
   const value = await googleCalendarRequest<unknown>(
     args.credential,
     {
       method: "POST",
-      path: eventPath(),
+      path: eventPath(undefined, conferenceRequestId !== undefined),
       body: {
-        ...args.event,
+        ...event,
         id: args.externalEventId,
         extendedProperties: {
           private: {
@@ -61,11 +71,19 @@ export async function insertGoogleCalendarEvent(args: {
             kilobotOperationFingerprint: args.payloadFingerprint,
           },
         },
+        ...(conferenceRequestId === undefined ? {} : {
+          conferenceData: {
+            createRequest: {
+              requestId: conferenceRequestId,
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
+        }),
       },
     },
     args.fetchImplementation,
   );
-  return providerEvent(value, args.externalEventId);
+  return providerEvent(value, args.externalEventId, conferenceRequestId !== undefined);
 }
 
 export async function patchGoogleCalendarEvent(args: {

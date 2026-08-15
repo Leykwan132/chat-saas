@@ -53,6 +53,7 @@ function normalizedEvent(event: GoogleCalendarWriteInput) {
       };
   return {
     attendees,
+    conferenceRequestId: optionalValue(event.conferenceRequestId),
     description: optionalValue(event.description),
     end: {
       date: optionalValue(event.end.date),
