@@ -19,6 +19,7 @@
 - 2026-08-15 [USER] D660 ACTIVE: service configuration exposes only Google Meet and In person; Google Meet remains unavailable until the current eligible user connects Google Calendar, with hover/focus connection guidance.
 - 2026-08-15 [CODE] Now: services support Remote or In person meeting locations; remote AI and staff bookings use an idempotent Google Meet request only when the assigned teammate is connected, and the returned Meet link is stored on the booking event.
 - 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately.
+- 2026-08-15 [USER] D661 ACTIVE: Free-plan workspaces cannot select a team service; its Team card shows Upgrade and opens the shared upgrade modal.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions

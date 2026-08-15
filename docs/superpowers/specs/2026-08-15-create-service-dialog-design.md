@@ -21,6 +21,8 @@ Below the service information are two selectable cards:
 
 Each card has a leading icon inside a small foreground card with two offset, bordered cards visibly stacked behind it. The card treatment is decorative; selecting either card remains a single accessible radio-style interaction.
 
+For a Free-plan workspace, For team is visibly locked: it uses the muted card treatment and displays an Upgrade badge beside its label. Clicking or keyboard-activating that card opens the existing shared upgrade modal and does not change the selected For myself card or advance the dialog. Paid workspaces can select For team normally.
+
 Choosing For myself and pressing Create creates the service immediately. Choosing For team and pressing Continue moves to the team-selection step.
 
 Google Meet and In person retain the approved Location dropdown behavior. Google Meet continues to require the eligible current user to connect Google Calendar and uses the hosted Google Meet product image.
@@ -45,4 +47,4 @@ This replaces the creation wizard UI and changes no calendar-sync, service-locat
 
 ## Verification
 
-Focused tests cover opening and closing the dialog, personal and team branching, current-user-only default assignment, default booking fields, navigation to the created service, location guard behavior, minutes suffix, and Advanced timing accordion. TypeScript and diff checks run under Node v22.
+Focused tests cover opening and closing the dialog, Free-plan Team upgrade behavior, personal and team branching, current-user-only default assignment, default booking fields, navigation to the created service, location guard behavior, minutes suffix, and Advanced timing accordion. TypeScript and diff checks run under Node v22.
