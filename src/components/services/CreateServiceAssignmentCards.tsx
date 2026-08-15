@@ -20,18 +20,6 @@ type AssignmentCardProps = {
   icon: React.ComponentType<{ className?: string }>;
 };
 
-function StackedIcon({ Icon }: { Icon: AssignmentCardProps['icon'] }) {
-  return (
-    <span className="relative flex size-11 shrink-0 items-center justify-center">
-      <span className="pointer-events-none absolute bottom-px left-0 flex size-9 origin-bottom-left -translate-x-0.5 -rotate-10 scale-[.84] items-center justify-center rounded-md border bg-card shadow-none" />
-      <span className="pointer-events-none absolute right-0 bottom-px flex size-9 origin-bottom-right translate-x-0.5 rotate-10 scale-[.84] items-center justify-center rounded-md border bg-card shadow-none" />
-      <span className="relative flex size-9 items-center justify-center rounded-md border bg-card shadow-sm">
-        <Icon className="size-4" />
-      </span>
-    </span>
-  );
-}
-
 function AssignmentCard({
   value,
   title,
@@ -41,6 +29,7 @@ function AssignmentCard({
   icon,
 }: AssignmentCardProps) {
   const id = `service-assignment-${value}`;
+  const Icon = icon;
 
   return (
     <FieldLabel
@@ -50,13 +39,13 @@ function AssignmentCard({
         selected ? 'has-[>[data-slot=field]]:bg-background has-[>[data-slot=field]]:shadow-sm' : 'has-[>[data-slot=field]]:border-border hover:has-[>[data-slot=field]]:border-foreground/30 hover:has-[>[data-slot=field]]:bg-accent/25',
       )}
     >
-      <Field orientation="horizontal" className="min-h-32 items-start gap-3">
-        <StackedIcon Icon={icon} />
-        <FieldContent className="pt-0.5">
+      <Field orientation="horizontal" className="relative min-h-32 flex-col items-start gap-3">
+        <Icon className="size-5" />
+        <FieldContent>
           <FieldTitle>{title}</FieldTitle>
           <FieldDescription className="text-xs leading-snug">{description}</FieldDescription>
         </FieldContent>
-        <RadioGroupItem value={value} id={id} />
+        <RadioGroupItem value={value} id={id} className="absolute top-4 right-4" />
       </Field>
       {locked ? (
         <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-foreground/10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">

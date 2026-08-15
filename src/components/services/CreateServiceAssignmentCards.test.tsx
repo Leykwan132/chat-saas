@@ -32,3 +32,11 @@ test('uses the shared Field and RadioGroup choice-card controls', () => {
   expect(source).toContain('FieldContent');
   expect(source).not.toContain("import { Check");
 });
+
+test('places a simple icon above each choice title and description', () => {
+  const source = readFileSync(new URL('./CreateServiceAssignmentCards.tsx', import.meta.url), 'utf8');
+
+  expect(source).not.toContain('StackedIcon');
+  expect(source).toContain('flex-col items-start');
+  expect(source).toContain('absolute top-4 right-4');
+});

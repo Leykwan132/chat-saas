@@ -441,3 +441,41 @@ Expected: PASS.
 ```bash
 git add src/components/services/ServiceTimingFields.tsx src/components/services/serviceFormShared.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Show service timing settings directly"
 ```
+
+### Task 11: Simplify assignment-card icon layout
+
+**Files:**
+- Modify: `src/components/services/CreateServiceAssignmentCards.tsx`
+- Test: `src/components/services/CreateServiceAssignmentCards.test.tsx`
+
+**Interfaces:** Choice cards retain controlled Field and RadioGroup behavior while presenting the icon above title and description.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).not.toContain('StackedIcon');
+expect(source).toContain('flex-col items-start');
+expect(source).toContain('absolute top-4 right-4');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx`
+
+Expected: FAIL because the cards still use the left/right stacked tiles and horizontal layout.
+
+- [x] **Step 3: Render a vertical card body**
+
+Remove the stacked icon helper. Render the provided card icon directly above `FieldContent`, use a vertical visual flow, and position the existing radio control at the top right. Keep the Team upgrade overlay and all plan-gating behavior unchanged.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx src/components/services/CreateServiceDialog.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceAssignmentCards.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Simplify service assignment cards"
+```
