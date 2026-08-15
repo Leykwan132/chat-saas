@@ -14,14 +14,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Search,
-  Trash2,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -83,6 +76,8 @@ import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
+import { CalendarDayEmptyState } from '@/components/calendar/CalendarDayEmptyState';
+import { CalendarDayHeader } from '@/components/calendar/CalendarDayHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
 import { GoogleCalendarConnectionCard } from '@/components/calendar/GoogleCalendarConnectionCard';
 import { GoogleCalendarDisconnectDialog } from '@/components/calendar/GoogleCalendarDisconnectDialog';
@@ -1207,33 +1202,12 @@ export default function CalendarPage() {
 
       <aside className={inboxColumnClassName}>
         <div className={cn(inboxColumnHeaderClassName, 'px-4')}>
-          <div className="flex min-w-0 items-center gap-[15px]">
-            <div className="flex min-w-0 items-center gap-2">
-              {selectedDayKey === todayKey ? (
-                <div className="flex min-w-0 items-center gap-2">
-                  <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
-                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-                    {format(selectedDate, 'd')}
-                  </span>
-                </div>
-              ) : (
-                <h2 className="truncate text-sm font-semibold text-foreground">
-                  {format(selectedDate, 'EEEE, MMM d')}
-                </h2>
-              )}
-            </div>
-            {canManageCalendar ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setCreateBookingOpen(true)}
-              >
-                <Plus data-icon="inline-start" />
-                New Booking
-              </Button>
-            ) : null}
-          </div>
+          <CalendarDayHeader
+            selectedDate={selectedDate}
+            isToday={selectedDayKey === todayKey}
+            canManageCalendar={canManageCalendar}
+            onCreateBooking={() => setCreateBookingOpen(true)}
+          />
         </div>
 
         <div className={cn(inboxColumnScrollClassName, 'min-h-0 flex-1 p-3')}>
@@ -1284,13 +1258,10 @@ export default function CalendarPage() {
               )}
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-              <CalendarIcon className="mb-3 size-8 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">No events</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Nothing scheduled for this day yet.
-              </p>
-            </div>
+            <CalendarDayEmptyState
+              canManageCalendar={canManageCalendar}
+              onCreateBooking={() => setCreateBookingOpen(true)}
+            />
           )}
         </div>
       </aside>

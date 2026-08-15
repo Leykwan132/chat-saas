@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [USER] Now: approved a Calendar header refinement: Today/date left and dark New Booking right, plus a shared empty-state booking action tested through extracted presentation components.
-- 2026-08-15 [USER] Next: execute the revised testable-component implementation plan inline.
+- 2026-08-15 [CODE] Now: Calendar day header and no-events state use separate presentation components with dark permission-gated booking actions; integration commit is pending.
+- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the Calendar action refinement.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Superseded fixed-gap header placement: New Booking is right-aligned with the Today/date group left, and it appears in the no-events state.
@@ -25,16 +25,14 @@
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
-- 2026-08-15 [CODE] Calendar New Booking remains permission-gated and keeps the selected date for the dialog; the approved header-and-empty-state refinement remains unreleased.
+- 2026-08-15 [CODE] Calendar New Booking is right-aligned in the selected-day header and available in the shared no-events state; both actions remain permission-gated and preserve the selected dialog date.
 
 # Working set
-- `convex/googleCalendar/bookingActions.ts`
-- `convex/googleCalendar/bookingSync.ts`
-- `convex/schema.ts`
-- `src/components/calendar/CalendarSidebar.tsx`
 - `src/components/calendar/CalendarSidebar.test.tsx`
+- `src/components/calendar/CalendarDayHeader.tsx`
+- `src/components/calendar/CalendarDayEmptyState.tsx`
+- `src/components/calendar/CalendarDayPanel.test.tsx`
 - `src/pages/CalendarPage.tsx`
-- `src/pages/CalendarNewBookingAction.test.ts`
 - `docs/superpowers/specs/2026-08-15-calendar-new-booking-empty-state-design.md`
 - `docs/superpowers/plans/2026-08-15-calendar-new-booking-empty-state.md`
 - `CONTINUITY.md`
@@ -57,3 +55,4 @@
 - 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).
 - 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
 - 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
+- 2026-08-15 [TOOL] Calendar day component tests were RED before the components existed, then focused Calendar verification passed 5/5 under Node v22.22.0 with `git diff --check` passing.
