@@ -5,6 +5,7 @@
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
 - 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is ready to commit.
 - 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is ready to commit.
+- 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -41,7 +42,7 @@
 - `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
 - `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
 - `docs/superpowers/specs/2026-08-15-calendar-google-event-indicators-design.md`
-- `docs/superpowers/plans/2026-08-15-calendar-google-event-indicators.md`
+- `docs/superpowers/specs/2026-08-15-calendar-event-modal-google-icon-design.md`
 - `CONTINUITY.md`
 
 # Receipts
