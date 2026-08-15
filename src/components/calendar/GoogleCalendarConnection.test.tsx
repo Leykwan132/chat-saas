@@ -51,15 +51,13 @@ describe("Google Calendar connection UI", () => {
     expect(markup).toContain("owner@gmail.com");
     expect(markup).not.toContain("Google account");
     expect(markup).not.toContain("Connected ");
-    expect(markup).toContain("fill-green-600");
     expect(markup).toContain("text-green-600");
-    expect(markup).not.toContain("text-white");
     expect(markup).toContain('aria-label="Active"');
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
-    expect(source).toContain("fill-green-600");
-    expect(source).toContain("BadgeCheck");
+    expect(source).toContain('from "react-icons/hi2"');
+    expect(source).toContain("<HiCheckBadge");
     expect(source).not.toContain("CheckCircle2");
     expect(source).not.toContain("Trash2");
     expect(source).not.toContain("formatPrefixedRelativeAge");
@@ -70,7 +68,7 @@ describe("Google Calendar connection UI", () => {
     const markup = renderConnectionCard({ state: "connected" });
     expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).toContain("fill-green-600");
+    expect(markup).toContain("text-green-600");
   });
 
   it("shows reconnect recovery without claiming connected", () => {
