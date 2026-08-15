@@ -61,6 +61,12 @@ test('workflow node standard density keeps the existing production classes', () 
   expect(source).toContain("'text-xs leading-relaxed'");
 });
 
+test('workflow node only embeds direct controls for standard nodes with an agent', () => {
+  expect(source).toContain('WorkflowNodeDirectControls');
+  expect(source).toContain("data.density !== 'compact'");
+  expect(source).toContain('data.agentId !== undefined');
+});
+
 test('workflow add control applies the compact button size and radius together', () => {
   expect(addMenuSource).toContain("size={compact ? 'icon-sm' : 'icon'}");
   expect(addMenuSource).toContain("compact ? 'rounded-lg' : 'rounded-xl'");

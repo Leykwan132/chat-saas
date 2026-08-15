@@ -20,8 +20,9 @@ type WorkflowSendMediaSectionProps = {
   agentId: Id<'agents'>;
   nodeId: Id<'workflowNodes'>;
   nodeKind: 'sendImage' | 'sendFile';
-  onReadinessChange: (ready: boolean | undefined) => void;
-  showRequirementWarning: boolean;
+  onReadinessChange?: (ready: boolean | undefined) => void;
+  showRequirementWarning?: boolean;
+  presentation?: 'inspector' | 'node';
 };
 
 export function WorkflowSendMediaSection({
@@ -30,6 +31,7 @@ export function WorkflowSendMediaSection({
   nodeKind,
   onReadinessChange,
   showRequirementWarning,
+  presentation = 'inspector',
 }: WorkflowSendMediaSectionProps) {
   const entries = useQuery(api.workflowMedia.listForNode, { agentId, nodeId });
   const legacyEntries = useQuery(api.workflowMedia.listLegacyUnassigned, { agentId, nodeId });
@@ -55,7 +57,7 @@ export function WorkflowSendMediaSection({
   const readiness = isLoading ? undefined : mediaEntries.length > 0;
 
   useEffect(() => {
-    onReadinessChange(readiness);
+    onReadinessChange?.(readiness);
   }, [onReadinessChange, readiness]);
 
   const handleDelete = async (clientId: string) => {
@@ -88,7 +90,7 @@ export function WorkflowSendMediaSection({
   };
 
   return (
-    <div className="space-y-3">
+    <div className={presentation === 'node' ? 'space-y-2' : 'space-y-3'}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="flex size-7 shrink-0 items-center justify-center text-muted-foreground">
@@ -142,7 +144,7 @@ export function WorkflowSendMediaSection({
         </WorkflowMediaGrid>
       </div>
       <p className="text-xs text-muted-foreground">{mediaCopy.status}</p>
-      {showRequirementWarning ? (
+      {presentation === 'inspector' && showRequirementWarning ? (
         <p className="text-xs text-destructive" role="alert">
           {nodeKind === 'sendFile'
             ? 'Please add at least one file before applying.'
