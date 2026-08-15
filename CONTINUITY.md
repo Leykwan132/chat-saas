@@ -62,7 +62,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Workflow Cleanup returns the guard-narrowed rendered measurement object, preserving complete width and height types through its layout map.
+- 2026-08-15 [USER] Now: Book appointment workflow configuration must show the shared empty-state component and a direct service-creation action whenever the agent has no active services.
+- 2026-08-15 [TOOL] Baseline: Node v22.22.0 `bun run test` passes with 433 application/Convex files (1,381 tests) and 63 Docs tests; known non-failing stderr remains unrelated.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
