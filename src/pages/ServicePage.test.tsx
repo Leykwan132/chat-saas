@@ -1,4 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
+import { readFileSync } from 'node:fs';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { expect, test, vi } from 'vitest';
 import ServicePage from './ServicePage';
@@ -69,4 +70,11 @@ test('Back to Services darkens without adding a hover background', () => {
   expect(markup).not.toContain('>Completed</span>');
   expect(markup).not.toContain('>Cancelled</span>');
   expect(markup).not.toContain('>No-show</span>');
+});
+
+test('new-service routes redirect to the dialog query', () => {
+  const source = readFileSync(new URL('./ServicePage.tsx', import.meta.url), 'utf8');
+
+  expect(source).toContain('/services?create=1');
+  expect(source).not.toContain('CreateServiceWizard');
 });

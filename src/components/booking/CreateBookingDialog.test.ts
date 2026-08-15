@@ -43,7 +43,7 @@ test('guides users to create a service when none are active', () => {
   expect(dialogSource).toContain('<EmptyTitle>No active services</EmptyTitle>');
   expect(dialogSource).toContain('Create a service so you can book appointments.');
   expect(dialogSource).toContain('Create service');
-  expect(dialogSource).toContain('to={`/dashboard/${agentId}/services/new`}');
+  expect(dialogSource).toContain('to={`/dashboard/${agentId}/services?create=1`}');
   expect(dialogSource).not.toContain('No active Services are configured.');
 });
 

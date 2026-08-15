@@ -104,7 +104,7 @@ export function CreateBookingDialog({
             </EmptyHeader>
             <EmptyContent>
               <Button asChild>
-                <Link to={`/dashboard/${agentId}/services/new`}>
+                <Link to={`/dashboard/${agentId}/services?create=1`}>
                   <Plus data-icon="inline-start" />
                   Create service
                 </Link>
@@ -159,7 +159,7 @@ export function CreateBookingDialog({
               <div className="flex items-center justify-between gap-3">
                 <Label>Service</Label>
                 <Button asChild variant="linkAccent" size="sm" className="h-auto p-0">
-                  <Link to={`/dashboard/${agentId}/services/new`}>
+                  <Link to={`/dashboard/${agentId}/services?create=1`}>
                     <Plus data-icon="inline-start" aria-hidden="true" />
                     Create new service
                   </Link>

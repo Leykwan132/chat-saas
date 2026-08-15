@@ -230,7 +230,7 @@ git add src/components/services/CreateServiceInfoStep.tsx src/components/service
 
 **Interfaces:** ServicesPage passes `currentUser.workosUserId` and `planAndUsage?.plan` to the dialog. `/services/new` redirects to `/services?create=1`. The query opens the dialog and is cleared when it closes. `GOOGLE_MEET_ICON_SRC` is exported next to Calendar branding.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 expect(servicesSource).toContain('CreateServiceDialog');
@@ -241,17 +241,17 @@ expect(locationSource).not.toContain('<Video');
 
 Also assert the query opens the dialog and props use workspace-plan/current-user query data rather than auth-user data.
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/pages/ServicesPage.test.tsx src/pages/ServicePage.test.tsx src/components/services/serviceFormShared.test.tsx`
 
 Expected: FAIL because entry points still use the full-screen wizard and Meet uses `Video`.
 
-- [ ] **Step 3: Implement integration**
+- [x] **Step 3: Implement integration**
 
 Host one dialog in ServicesPage. Header, empty card, and booking-dialog external link use `?create=1`. Use `useSearchParams` to open and clear it on discard or success. Redirect the `/services/new` branch to that query URL while leaving normal service editing unchanged. Render the hosted Meet image at 16px in selected and menu states. Delete the retired wizard and unused imports.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/pages/ServicesPage.test.tsx src/pages/ServicePage.test.tsx src/components/services/serviceFormShared.test.tsx src/components/services/CreateServiceDialog.test.tsx`
 

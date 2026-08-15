@@ -58,6 +58,8 @@ test('blocks Google Meet until Google Calendar is connected', () => {
 
   const source = readFileSync(new URL('./ServiceLocationField.tsx', import.meta.url), 'utf8');
   expect(source).toContain('Google Meet');
+  expect(source).toContain('GOOGLE_MEET_ICON_SRC');
+  expect(source).not.toContain('<Video');
   expect(source).toContain('aria-disabled="true"');
   expect(source).toContain('Google Meet requires you to connect your Google Calendar.');
   expect(source).toContain('Connect Google Calendar');

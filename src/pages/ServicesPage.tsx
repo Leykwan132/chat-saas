@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Link, Navigate, useParams } from 'react-router';
+import { Navigate, useParams, useSearchParams } from 'react-router';
 import { useMutation, useQuery } from 'convex/react';
 import { format } from 'date-fns';
 import {
@@ -8,21 +8,23 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
+import type { Doc, Id } from '../../convex/_generated/dataModel';
+import { CreateServiceDialog } from '@/components/services/CreateServiceDialog';
+import { AddServiceCard, ServiceCard } from '@/components/services/ServiceCards';
 import { PageTitleBlock } from '@/components/PageTitleBlock';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermissions } from '@/hooks/usePermissions';
-import { type ServiceRow } from '@/lib/serviceForm';
-import { cn } from '@/lib/utils';
+import { teamMemberRoleLabel, type ServiceRow, type TeamMemberRole, type TeamUserOption } from '@/lib/serviceForm';
 import { Permission } from '../../shared/permissions';
 
-function formatBookingCount(count: number) {
-  if (count === 1) return '1 booking';
-  return `${count} bookings`;
+type TeamUser = Doc<'users'> & { isAdmin: boolean; role: TeamMemberRole };
+
+function memberLabel(user: { firstName?: string; lastName?: string; email: string }) {
+  const fullName = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  return fullName || user.email;
 }
 
 function formatDateTime(value: number) {
@@ -31,6 +33,7 @@ function formatDateTime(value: number) {
 
 export default function ServicesPage() {
   const { agentId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const typedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
   const canRead = can(Permission.AUTOMATION_READ) || can(Permission.CALENDAR_READ);
@@ -41,9 +44,21 @@ export default function ServicesPage() {
     typedAgentId && canRead ? { agentId: typedAgentId } : 'skip',
   );
   const updateService = useMutation(api.appointmentBooking.services.updateService);
+  const currentUser = useQuery(api.users.currentUser);
+  const teamUsers = useQuery(api.users.getUsers, {});
+  const planAndUsage = useQuery(api.plans.getPlanAndUsage, {});
   const overviewServices = overview?.services;
   const services = useMemo(() => (overviewServices ?? []) as ServiceRow[], [overviewServices]);
-  const createServiceHref = `/dashboard/${typedAgentId}/services/new`;
+  const teamUserOptions = useMemo(
+    (): TeamUserOption[] =>
+      ((teamUsers ?? []) as TeamUser[]).map((user) => ({
+        value: user.workosUserId,
+        name: memberLabel(user),
+        roleLabel: teamMemberRoleLabel(user.role),
+      })),
+    [teamUsers],
+  );
+  const createServiceOpen = searchParams.get('create') === '1';
 
   if (!typedAgentId) return null;
 
@@ -51,7 +66,7 @@ export default function ServicesPage() {
     return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
   }
 
-  const isLoading = permissionsLoading || overview === undefined;
+  const isLoading = permissionsLoading || overview === undefined || currentUser === undefined || teamUsers === undefined || planAndUsage === undefined;
   if (isLoading) {
     return <ServicesSkeleton />;
   }
@@ -68,6 +83,13 @@ export default function ServicesPage() {
     }
   };
 
+  const setCreateServiceOpen = (open: boolean) => {
+    const nextSearchParams = new URLSearchParams(searchParams);
+    if (open) nextSearchParams.set('create', '1');
+    else nextSearchParams.delete('create');
+    setSearchParams(nextSearchParams, { replace: !open });
+  };
+
   return (
     <div className="flex w-full flex-col gap-6">
       <header className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -76,11 +98,9 @@ export default function ServicesPage() {
           description="Create the services customers can book with your team."
         />
         {canManage ? (
-          <Button asChild className="gap-1.5 font-semibold">
-            <Link to={createServiceHref}>
-              <Plus className="size-4" />
-              Add a service
-            </Link>
+          <Button className="gap-1.5 font-semibold" onClick={() => setCreateServiceOpen(true)}>
+            <Plus className="size-4" />
+            Add a service
           </Button>
         ) : null}
       </header>
@@ -111,7 +131,7 @@ export default function ServicesPage() {
                   onToggleActive={(isActive) => void handleToggleActive(service._id, isActive)}
                 />
               ))}
-              {canManage ? <AddServiceCard href={createServiceHref} /> : null}
+              {canManage ? <AddServiceCard onClick={() => setCreateServiceOpen(true)} /> : null}
             </div>
           )}
         </TabsContent>
@@ -181,83 +201,17 @@ export default function ServicesPage() {
           </div>
         </TabsContent>
       </Tabs>
+      {canManage && currentUser ? (
+        <CreateServiceDialog
+          agentId={typedAgentId}
+          teamUserOptions={teamUserOptions}
+          currentWorkosUserId={currentUser.workosUserId}
+          workspacePlan={planAndUsage?.plan}
+          open={createServiceOpen}
+          onOpenChange={setCreateServiceOpen}
+        />
+      ) : null}
     </div>
-  );
-}
-
-function AddServiceCard({ href }: { href: string }) {
-  return (
-    <Link
-      to={href}
-      className={cn(
-        'flex size-56 flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-card px-3.5 py-3.5 transition-colors',
-        'text-muted-foreground hover:border-foreground/20 hover:bg-muted/30 hover:text-foreground',
-      )}
-      aria-label="Add a service"
-    >
-      <Plus className="size-6" strokeWidth={1.75} />
-      <span className="text-xs font-medium">Add a service</span>
-    </Link>
-  );
-}
-
-function ServiceCard({
-  service,
-  canManage,
-  detailHref,
-  onToggleActive,
-}: {
-  service: ServiceRow;
-  canManage: boolean;
-  detailHref: string;
-  onToggleActive: (isActive: boolean) => void;
-}) {
-  return (
-    <Link
-      to={detailHref}
-      className={cn(
-        'group flex size-56 flex-col rounded-lg border border-border bg-card px-3.5 py-3.5 transition-colors',
-        'hover:border-foreground/20 hover:bg-muted/30',
-      )}
-    >
-      <div className="flex min-h-0 flex-1 flex-col">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{service.name}</h3>
-        </div>
-
-        {service.description?.trim() ? (
-          <p className="mt-1.5 text-xs leading-snug text-muted-foreground">
-            {service.description.trim()}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-        <p className="text-xs text-muted-foreground">
-          {formatBookingCount(service.bookingCount ?? 0)}
-        </p>
-
-        <div
-          className="relative z-10 flex shrink-0 items-center gap-1.5"
-          onClick={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-          }}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          <span className="text-xs text-muted-foreground">
-            {service.isActive ? 'Active' : 'Inactive'}
-          </span>
-          <Switch
-            checked={service.isActive}
-            onCheckedChange={onToggleActive}
-            disabled={!canManage}
-            aria-label={`${service.isActive ? 'Turn off' : 'Turn on'} ${service.name}`}
-            className="scale-90 data-[state=checked]:bg-emerald-600 data-[state=unchecked]:bg-input"
-          />
-        </div>
-      </div>
-    </Link>
   );
 }
 

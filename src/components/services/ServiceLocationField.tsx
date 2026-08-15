@@ -1,4 +1,5 @@
-import { ChevronDown, MapPin, Video } from 'lucide-react';
+import { ChevronDown, MapPin } from 'lucide-react';
+import { GOOGLE_MEET_ICON_SRC } from '@/components/calendar/googleCalendarBranding';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -19,6 +20,10 @@ type ServiceLocationFieldProps = {
 
 function locationName(locationMode: ServiceForm['locationMode']) {
   return locationMode === 'remote' ? 'Google Meet' : 'In person';
+}
+
+function GoogleMeetIcon() {
+  return <img src={GOOGLE_MEET_ICON_SRC} alt="" className="size-4 shrink-0" />;
 }
 
 export function ServiceLocationField({
@@ -47,7 +52,7 @@ export function ServiceLocationField({
         <DropdownMenuTrigger asChild>
           <Button type="button" variant="outline" disabled={disabled} className="w-full justify-between">
             <span className="flex items-center gap-2">
-              {form.locationMode === 'remote' ? <Video className="size-4" /> : <MapPin className="size-4" />}
+              {form.locationMode === 'remote' ? <GoogleMeetIcon /> : <MapPin className="size-4" />}
               {locationName(form.locationMode)}
             </span>
             <ChevronDown className="size-4 text-muted-foreground" />
@@ -56,7 +61,7 @@ export function ServiceLocationField({
         <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)">
           {canUseGoogleMeet ? (
             <DropdownMenuItem onSelect={() => chooseLocation('remote')}>
-              <Video />
+              <GoogleMeetIcon />
               Google Meet
             </DropdownMenuItem>
           ) : (
@@ -69,7 +74,7 @@ export function ServiceLocationField({
                   className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-sm font-medium text-muted-foreground opacity-60 outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={(event) => event.preventDefault()}
                 >
-                  <Video className="size-4" />
+                  <GoogleMeetIcon />
                   Google Meet
                 </button>
               </HoverCardTrigger>

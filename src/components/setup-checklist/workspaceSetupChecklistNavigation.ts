@@ -28,7 +28,7 @@ const agentStepPaths = {
   uploadKnowledgeBase: 'knowledge-base/web',
   testAgent: 'agent-setup',
   createWorkflow: 'workflow',
-  createService: 'services/new',
+  createService: 'services?create=1',
   connectChannel: 'channels',
 } satisfies Record<Exclude<WorkspaceSetupChecklistStepKey, 'createAgent'>, string>;
 
