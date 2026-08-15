@@ -58,8 +58,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment workflow nodes list enabled services and assigned teammates with immediate selection switches; their inspector needs a matching read-only service summary.
-- 2026-08-15 [TOOL] Next: user review of the inspector-services design, then implementation and verification; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Book appointment inspectors list their enabled active services and assigned teammates read-only; nodes remain the direct service-selection control. Teammate counts use dotted hover affordances in both locations.
+- 2026-08-15 [TOOL] Next: run the complete test suite and finalize the local branch; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -124,3 +124,4 @@
 - 2026-08-14 [TOOL] RED then GREEN: ServiceForm initially selected Booking team; the focused regression now confirms Service details is selected first and its Name field is visible under Node v22.22.0.
 - 2026-08-15 [TOOL] RED then GREEN: workflow services did not expose assigned teammates, booking-node flow data did not carry the agent/selection, and the inspector retained duplicate controls; 5 focused suites, TypeScript, diff checks, and `bun run test` (429 files / 1,369 tests plus 63 Docs tests) pass under Node v22.22.0.
 - 2026-08-15 [USER] Book appointment inspectors must also display the enabled services; the canvas node remains the direct switch control.
+- 2026-08-15 [TOOL] RED then GREEN: inspector-service selection initially lacked `getSelectedBookingServices`; the behavior test now confirms explicit selection excludes inactive services and legacy nodes include every active service. The 2 focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.

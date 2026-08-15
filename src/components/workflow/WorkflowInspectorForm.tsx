@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
+import { WorkflowBookingInspectorServices } from './WorkflowBookingInspectorServices';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -219,6 +220,12 @@ export function WorkflowInspectorForm({
                   nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
                   onReadinessChange={setHasReadyMedia}
                   showRequirementWarning={attemptedApply && !hasMedia}
+                />
+              ) : null}
+              {node.kind === 'bookAppointment' && agentId ? (
+                <WorkflowBookingInspectorServices
+                  agentId={agentId}
+                  allowedServiceIds={node.allowedAppointmentServiceIds}
                 />
               ) : null}
             </section>

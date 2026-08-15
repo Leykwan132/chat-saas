@@ -23,9 +23,9 @@ test('workflow inspector allows immediate media and keeps Apply icon-free', () =
   expect(source).toContain('<Loader2');
 });
 
-test('book appointment service selection belongs to the workflow node', () => {
+test('book appointment inspector shows services without duplicate editing controls', () => {
   expect(source).not.toContain('WorkflowBookingInspectorRequirements');
-  expect(source).not.toContain('allowedAppointmentServiceIds');
+  expect(source).toContain('WorkflowBookingInspectorServices');
   expect(source).not.toContain('hasBookableService');
   expect(source).not.toContain('bookingAvailabilityBlocksApply(');
 });

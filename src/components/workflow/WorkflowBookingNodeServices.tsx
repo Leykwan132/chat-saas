@@ -91,7 +91,7 @@ export function WorkflowBookingNodeServices({
                     <span className="block truncate text-xs font-medium text-foreground">{service.name}</span>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="mt-0.5 inline-flex cursor-default items-center gap-1 text-[11px] text-muted-foreground">
+                        <span className="mt-0.5 inline-flex cursor-help items-center gap-1 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-4">
                           <UsersRound className="size-3" />
                           {bookingTeammateAvailabilityLabel(teammateCount)}
                         </span>

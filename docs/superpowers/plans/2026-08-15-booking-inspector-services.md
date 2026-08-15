@@ -12,7 +12,7 @@
 
 - Use Node v22 for all scripts: `source ~/.nvm/nvm.sh && nvm use 22`.
 - The canvas Book appointment node remains the only direct editing surface for service assignment.
-- Inspector rows show active selected services only, with service name, dotted-underlined pointer teammate count, and teammate-name hover tooltip; descriptions and switches do not appear.
+- Inspector rows show active selected services only, with service name, dotted-underlined pointer teammate count, and teammate-name hover tooltip; descriptions and switches do not appear. The matching node teammate count uses the same hover affordance.
 - A missing `allowedAppointmentServiceIds` list means every current active service is selected.
 - Keep source modules below 300 lines and do not add comments.
 
@@ -32,7 +32,7 @@
 - Produces: `getSelectedBookingServices(allowedServiceIds, services)`, which returns active services permitted by an explicit selection or a legacy missing selection.
 - Integrates: `WorkflowInspectorForm` renders the component only when `node.kind === 'bookAppointment'` and `agentId` is present; `WorkflowInspectorSaveValues` remains unchanged.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add a behavior test in `workflowBookingNodeServicesModel.test.ts`:
 
@@ -56,7 +56,7 @@ test('returns only active services enabled for an inspector booking node', () =>
 
 The regression fails if a future change includes an inactive or unselected service, or stops treating legacy nodes as selecting all active services.
 
-- [ ] **Step 2: Run the focused tests to verify RED**
+- [x] **Step 2: Run the focused tests to verify RED**
 
 Run:
 
@@ -66,7 +66,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/wo
 
 Expected: FAIL because `getSelectedBookingServices` does not exist.
 
-- [ ] **Step 3: Add the minimal read-only component and wire it into the inspector**
+- [x] **Step 3: Add the minimal read-only component and wire it into the inspector**
 
 Add `getSelectedBookingServices` to `workflowBookingNodeServicesModel.ts`; it uses `getEffectiveBookingServiceIds` and returns only active selected rows. Create a query-backed `WorkflowBookingInspectorServices` component with this interface:
 
@@ -92,7 +92,7 @@ In `WorkflowInspectorForm`, pass `node.allowedAppointmentServiceIds` only to the
 
 Do not add the IDs to `WorkflowInspectorSaveValues` or `handleApply`.
 
-- [ ] **Step 4: Run focused tests to verify GREEN**
+- [x] **Step 4: Run focused tests to verify GREEN**
 
 Run:
 
@@ -102,7 +102,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/wo
 
 Expected: PASS.
 
-- [ ] **Step 5: Run static validation**
+- [x] **Step 5: Run static validation**
 
 Run:
 
