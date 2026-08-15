@@ -1,9 +1,8 @@
 import { v } from "convex/values";
-import { action, mutation, query } from "./_generated/server";
+import { action, query } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { resolveChannelOrgId } from "./authUtils";
 import { Permission } from "../shared/permissions";
-import { normalizeTimeZone } from "./teamHelpers";
 import {
   formatCalendarAllDayDate,
   formatCalendarDateTime,
@@ -14,23 +13,16 @@ import {
   loadCalendarRangeProjection,
   projectCalendarEvent,
 } from "./googleCalendar/calendarProjection";
-import { syncCalendarEventAvailabilityIntervals } from "./calendarAvailabilityIntervals";
 import {
   assertCalendarAccess,
-  insertParticipants,
-  validateTime,
+  calendarEventCreateArgs,
   calendarEventUpdateArgs,
 } from "./calendarEventsHelpers";
 import {
   runCalendarEventRemove,
   runCalendarEventUpdate,
 } from "./googleCalendar/calendarEventSync";
-
-const eventStatusValidator = v.union(
-  v.literal("confirmed"),
-  v.literal("tentative"),
-  v.literal("cancelled"),
-);
+import { runCalendarEventCreate } from "./googleCalendar/calendarEventCreateSync";
 
 function formatEventDateTime(event: Doc<"calendarEvents">) {
   if (event.allDay) {
@@ -151,65 +143,10 @@ export const listCustomerOptions = query({
   },
 });
 
-export const create = mutation({
-  args: {
-    title: v.string(),
-    description: v.optional(v.string()),
-    location: v.optional(v.string()),
-    link: v.optional(v.string()),
-    startAt: v.number(),
-    endAt: v.number(),
-    timeZone: v.string(),
-    allDay: v.optional(v.boolean()),
-    startDate: v.optional(v.string()),
-    endDate: v.optional(v.string()),
-    status: v.optional(eventStatusValidator),
-    customerId: v.id("customers"),
-    assignedUserId: v.id("users"),
-    attendeeUserIds: v.optional(v.array(v.id("users"))),
-  },
-  handler: async (ctx, args) => {
-    const auth = await assertCalendarAccess(ctx, Permission.CALENDAR_MANAGE);
-    validateTime(args);
-
-    const title = args.title.trim();
-    if (!title) {
-      throw new Error("Event title is required");
-    }
-
-    const now = Date.now();
-    const eventId = await ctx.db.insert("calendarEvents", {
-      teamId: auth.activeTeamId,
-      title,
-      description: args.description?.trim() || undefined,
-      location: args.location?.trim() || undefined,
-      link: args.link?.trim() || undefined,
-      startAt: args.startAt,
-      endAt: args.endAt,
-      timeZone: normalizeTimeZone(args.timeZone),
-      allDay: args.allDay,
-      startDate: args.startDate,
-      endDate: args.endDate,
-      status: args.status ?? "confirmed",
-      createdBy: auth.userDbId,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    await insertParticipants(ctx, {
-      eventId,
-      teamId: auth.activeTeamId,
-      customerId: args.customerId,
-      assignedUserId: args.assignedUserId,
-      attendeeUserIds: args.attendeeUserIds,
-      eventStartAt: args.startAt,
-      eventEndAt: args.endAt,
-      now,
-    });
-    await syncCalendarEventAvailabilityIntervals(ctx, eventId, now);
-
-    return eventId;
-  },
+export const create = action({
+  args: calendarEventCreateArgs,
+  returns: v.id("calendarEvents"),
+  handler: async (ctx, args) => await runCalendarEventCreate(ctx, args),
 });
 
 export const update = action({

@@ -179,6 +179,8 @@ import type * as googleCalendar_bookingPrepare from "../googleCalendar/bookingPr
 import type * as googleCalendar_bookingSync from "../googleCalendar/bookingSync.js";
 import type * as googleCalendar_bookingTypes from "../googleCalendar/bookingTypes.js";
 import type * as googleCalendar_bookingUpdatePrepare from "../googleCalendar/bookingUpdatePrepare.js";
+import type * as googleCalendar_calendarEventCreatePrepare from "../googleCalendar/calendarEventCreatePrepare.js";
+import type * as googleCalendar_calendarEventCreateSync from "../googleCalendar/calendarEventCreateSync.js";
 import type * as googleCalendar_calendarEventPrepare from "../googleCalendar/calendarEventPrepare.js";
 import type * as googleCalendar_calendarEventSync from "../googleCalendar/calendarEventSync.js";
 import type * as googleCalendar_calendarProjection from "../googleCalendar/calendarProjection.js";
@@ -604,6 +606,8 @@ declare const fullApi: ApiFromModules<{
   "googleCalendar/bookingSync": typeof googleCalendar_bookingSync;
   "googleCalendar/bookingTypes": typeof googleCalendar_bookingTypes;
   "googleCalendar/bookingUpdatePrepare": typeof googleCalendar_bookingUpdatePrepare;
+  "googleCalendar/calendarEventCreatePrepare": typeof googleCalendar_calendarEventCreatePrepare;
+  "googleCalendar/calendarEventCreateSync": typeof googleCalendar_calendarEventCreateSync;
   "googleCalendar/calendarEventPrepare": typeof googleCalendar_calendarEventPrepare;
   "googleCalendar/calendarEventSync": typeof googleCalendar_calendarEventSync;
   "googleCalendar/calendarProjection": typeof googleCalendar_calendarProjection;

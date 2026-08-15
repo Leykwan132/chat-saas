@@ -92,7 +92,7 @@ test("generic event creation has no booking lifecycle or conversation log side e
   });
   const authed = t.withIdentity({ subject: workosUserId });
 
-  const eventId = await authed.mutation(api.calendarEvents.create, {
+  const eventId = await authed.action(api.calendarEvents.create, {
     title: "Internal event",
     startAt: Date.UTC(2026, 6, 18, 8, 0, 0),
     endAt: Date.UTC(2026, 6, 18, 9, 0, 0),

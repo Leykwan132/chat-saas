@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
   endOfMonth,
@@ -747,7 +747,7 @@ export default function CalendarPage() {
       : 'skip',
   ) as CalendarEvent[] | undefined;
 
-  const createEvent = useMutation(calendarApi.create);
+  const createEvent = useAction(calendarApi.create);
   const updateEvent = useMutation(calendarApi.update);
   const removeEvent = useMutation(calendarApi.remove);
   const updateTeamTimeZone = useMutation(api.teams.updateActiveTeamTimeZone);

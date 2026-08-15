@@ -78,4 +78,6 @@ test('uses the booking dialog for Calendar creation actions', () => {
   expect(calendarPageSource).toContain('setCreateBookingOpen(true);');
   expect(calendarPageSource).toContain('Create Booking');
   expect(calendarPageSource).not.toContain('Create event');
+  expect(calendarPageSource).toContain('useAction(calendarApi.create)');
+  expect(calendarPageSource).not.toContain('useMutation(calendarApi.create)');
 });
