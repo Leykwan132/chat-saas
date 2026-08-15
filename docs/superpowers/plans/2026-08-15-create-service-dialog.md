@@ -93,7 +93,7 @@ git add src/components/services/createServiceDialogModel.ts src/components/servi
 
 **Interfaces:** `ServiceDetailsFields({ form, setForm, disabled })` renders Name, Description, Location, then conditional Address. `ServiceTimingFields({ form, setForm, disabled })` renders Duration and a collapsed Advanced accordion holding Gap and Preferred times. `ServiceAssignmentFields({ form, setForm, teamUserOptions, disabled, showIncludeAll })` stays the teammate-selection interface. `ServiceDataCollectionFields({ form, setForm, disabled })` keeps booking-form editing. `WizardNumberField` accepts `inputSuffix?: string`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```ts
 expect(detailsMarkup.indexOf('>Name<')).toBeLessThan(detailsMarkup.indexOf('>Description<'));
@@ -104,17 +104,17 @@ expect(timingMarkup).toContain('>Gap<');
 expect(timingMarkup).toContain('Preferred times');
 ```
 
-- [ ] **Step 2: Run tests to verify they fail**
+- [x] **Step 2: Run tests to verify they fail**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx src/components/services/ServiceTimingFields.test.tsx`
 
 Expected: FAIL because Description follows Location and advanced timing is exposed.
 
-- [ ] **Step 3: Implement the extraction**
+- [x] **Step 3: Implement the extraction**
 
 Move `WizardNumberField`, `WizardRadioOptionGroup`, `WizardSelectField`, `SelectFieldOptionsEditor`, `WizardSelectOption`, and option constants to `serviceFormControls.tsx`. Move the existing teammate switch list and assignment-method controls to `ServiceAssignmentFields.tsx`. Move the existing add-field dialog, suggestions, and field editor to `ServiceDataCollectionFields.tsx`. Put Name/Description/Location in `ServiceDetailsFields.tsx` and timing in `ServiceTimingFields.tsx`. Use `inputSuffix="Minutes"` for Duration and the existing Accordion primitives for a closed Advanced panel with Gap and `PreferredTimesEditor`. Convert `serviceFormShared.tsx` into re-exports only, then update `ServiceForm.tsx` and tests to import the focused components directly. This preserves the edit Booking team and Booking form sections while making every code file at most 300 lines.
 
-- [ ] **Step 4: Run tests to verify they pass**
+- [x] **Step 4: Run tests to verify they pass**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx src/components/services/ServiceTimingFields.test.tsx src/components/ServiceForm.test.tsx`
 
