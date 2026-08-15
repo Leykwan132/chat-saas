@@ -1,26 +1,42 @@
-# Service Location Card Layout Design
+# Service Details and Location Design
 
 ## Goal
 
-Make the service Location setting clearer and easier to scan without changing its stored values or booking behavior.
+Make the core service setup easy to finish in one focused page while keeping advanced booking configuration separate. A service can be configured for Google Meet only after Google Calendar is connected.
 
-## Interface
+## Service editor layout
 
-The service details section labels the control `Location`. It presents two equal option cards:
+The edit experience has three sections:
 
-- Remote uses a video-camera icon, the title `Remote`, and the existing Google Meet connection description.
-- In person uses a map-pin icon, the title `In person`, and the existing appointment-address description.
+- Service details contains name, description, duration, and location in one scrolling page.
+- Booking team remains separate.
+- Booking form remains separate.
 
-Each card keeps its radio indicator and selection behavior. The icon is placed beside a text column so the title appears above the description rather than alongside it. The responsive two-column layout remains unchanged.
+The Service details section replaces the separate Details and Appointment duration panels. The active label and switch in service cards align vertically in their shared row.
 
-When In person is selected, the address input label becomes `Address (optional)`. Its value, placeholder, visibility, and persistence stay unchanged.
+## Location selector
+
+Location is a dropdown with exactly two options:
+
+- Google Meet maps to the existing `remote` service location mode.
+- In person maps to the existing `in_person` mode and reveals Address (optional).
+
+Google Meet appears as an available choice only when the current user has an active Google Calendar connection. It retains the current calendar early-access gate.
+
+For an eligible user without a connection, the Google Meet entry appears unavailable. Hovering or focusing the entry opens a card that says Google Meet requires Google Calendar and provides a Connect Google Calendar button. The unavailable entry cannot be selected or saved. The card's action uses the existing authorization flow. If the connection flow is cancelled or fails, the service remains In person and unchanged.
+
+For users outside the early-access gate, the unavailable entry explains that Google Meet is not available yet and does not expose a connection action.
+
+## Existing behavior
+
+Existing services with no explicit location remain In person with no address. The existing service fields, location persistence, booking routing, and Google Meet event creation behavior remain unchanged. This design changes only configuration UI and prevents a new Google Meet service from being saved before connection.
 
 ## Non-goals
 
-- Changing Remote or In person values, defaults, or booking behavior.
-- Changing the Google Meet connection requirement or address storage.
-- Altering the Location control's responsive card layout or selection affordance.
+- Moving booking team or booking-form configuration into Service details.
+- Adding third-party meeting providers, custom links, or additional in-person variants.
+- Changing calendar sync, booking assignment, or existing Google Meet creation behavior.
 
 ## Verification
 
-The service-details markup test asserts the Location label, both icon identifiers, vertically grouped option text, and Address (optional) label. Run the service form tests, TypeScript check, and diff check under Node v22.
+Tests cover the merged Service details panel, separate advanced sections, two-option Location selector, unavailable Google Meet hover/focus guidance, connection action, and centered active control. Focused frontend tests, TypeScript, and diff checks run under Node v22.
