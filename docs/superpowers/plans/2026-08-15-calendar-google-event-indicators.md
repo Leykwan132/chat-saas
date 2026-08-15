@@ -31,7 +31,7 @@
 - Produces: `GoogleCalendarSourceBadge({ origin?: 'google' | 'kilobot' })`, which renders a tooltip-enabled Google icon, a Kilobot badge, or `null`.
 - Consumes: `Tooltip`, `TooltipContent`, and `TooltipTrigger` from `@/components/ui/tooltip`.
 
-- [ ] **Step 1: Write failing rendering tests**
+- [x] **Step 1: Write failing rendering tests**
 
 Update the existing connected-card assertions and source-badge test:
 
@@ -59,7 +59,7 @@ Extend the existing Google event-details test with:
 expect(markup.indexOf(GOOGLE_CALENDAR_ICON_SRC)).toBeLessThan(markup.indexOf('Dentist'));
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -69,7 +69,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: FAIL because the status marker uses `text-white` and Google-origin source badges render nothing.
 
-- [ ] **Step 3: Extract the brand asset and implement the presentation components**
+- [x] **Step 3: Extract the brand asset and implement the presentation components**
 
 Create `googleCalendarBranding.ts`:
 
@@ -95,7 +95,7 @@ Update `GoogleCalendarSourceBadge` so its Google branch is:
 
 Keep the existing Kilobot span unchanged and return `null` for unknown origins.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -116,7 +116,7 @@ Expected: PASS with solid green status markup, an accessible Google event icon, 
 - Consumes: `GoogleCalendarSourceBadge` from Task 1.
 - Produces: calendar grid, selected-day list, and event-details titles that begin with the source indicator when present.
 
-- [ ] **Step 1: Write failing call-site order tests**
+- [x] **Step 1: Write failing call-site order tests**
 
 Add source-order checks for the two `CalendarPage` title containers:
 
@@ -130,7 +130,7 @@ expect(page.lastIndexOf(sourceBadge)).toBeLessThan(page.lastIndexOf(eventTitleSo
 
 Keep the event-details static markup assertion from Task 1, which proves the icon precedes `Dentist`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -140,11 +140,11 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: FAIL because each current source indicator follows the title.
 
-- [ ] **Step 3: Move each shared source component before its title**
+- [x] **Step 3: Move each shared source component before its title**
 
 In both `CalendarPage` event-title spans, render the source component immediately before `<span className="min-w-0 truncate">{event.title}</span>`. In `CalendarEventDetailsBody`, render it immediately before the `<h2>` title. Preserve each existing flex, truncation, and spacing class.
 
-- [ ] **Step 4: Run focused verification and formatting checks**
+- [x] **Step 4: Run focused verification and formatting checks**
 
 Run:
 
@@ -155,7 +155,7 @@ git diff --check
 
 Expected: PASS with all connection UI tests green and no diff errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/calendar/googleCalendarBranding.ts src/components/calendar/GoogleCalendarConnectionCard.tsx src/components/calendar/GoogleCalendarSourceBadge.tsx src/components/calendar/CalendarEventDetailsBody.tsx src/components/calendar/GoogleCalendarConnection.test.tsx src/pages/CalendarPage.tsx CONTINUITY.md docs/superpowers/plans/2026-08-15-calendar-google-event-indicators.md

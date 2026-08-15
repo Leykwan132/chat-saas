@@ -410,8 +410,8 @@ function CalendarGridEventItem({
       )}
     >
       <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] leading-tight text-foreground">
-        <span className="min-w-0 truncate">{event.title}</span>
         <GoogleCalendarSourceBadge origin={event.externalOrigin} />
+        <span className="min-w-0 truncate">{event.title}</span>
       </span>
       <span
         className={cn(
@@ -594,8 +594,8 @@ function CalendarDayEventRow({
               : 'font-normal text-foreground/80',
           )}
         >
-          <span className="min-w-0 truncate">{event.title}</span>
           <GoogleCalendarSourceBadge origin={event.externalOrigin} />
+          <span className="min-w-0 truncate">{event.title}</span>
         </span>
         <span className="mt-0.5 block truncate text-sm leading-snug text-muted-foreground">
           {range}

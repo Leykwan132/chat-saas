@@ -2,10 +2,10 @@ import { BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { GOOGLE_CALENDAR_ICON_SRC } from "./googleCalendarBranding";
 import type { GoogleCalendarConnectionStatus } from "./googleCalendarUi";
 
-export const GOOGLE_CALENDAR_ICON_SRC =
-  "https://www.gstatic.com/images/branding/productlogos/calendar_2026_13/v2/png/calendar_2026_13_96dp.png";
+export { GOOGLE_CALENDAR_ICON_SRC } from "./googleCalendarBranding";
 
 export type GoogleCalendarConnectionCardProps = GoogleCalendarConnectionStatus & {
   pending?: boolean;
@@ -68,7 +68,7 @@ export function GoogleCalendarConnectionCard({
                 {connectedAccountEmail ?? "Google Calendar"}
               </span>
               <BadgeCheck
-                className="size-3.5 shrink-0 fill-green-600 text-white"
+                className="size-3.5 shrink-0 fill-green-600 text-green-600"
                 aria-label="Active"
               />
             </>

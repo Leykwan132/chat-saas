@@ -4,8 +4,7 @@
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
 - 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is ready to commit.
-- 2026-08-15 [USER] Now: make the connected Google Calendar status marker solid green by removing its white stroke.
-- 2026-08-15 [USER] Now: show the Google Calendar icon before every Google-synced event title and expose `Event synced with Google Calendar` on hover.
+- 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is ready to commit.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -33,11 +32,11 @@
 
 # Working set
 - `src/components/calendar/GoogleCalendarConnectionCard.tsx`
+- `src/components/calendar/googleCalendarBranding.ts`
 - `src/components/calendar/GoogleCalendarSourceBadge.tsx`
 - `src/components/calendar/CalendarEventDetailsBody.tsx`
 - `src/pages/CalendarPage.tsx`
 - `src/lib/posthogFeatureFlags.ts`
-- `src/lib/posthogFeatureFlags.test.ts`
 - `src/components/calendar/GoogleCalendarConnection.test.tsx`
 - `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
 - `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
@@ -46,7 +45,6 @@
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-15 [USER] Approved the corrected header-placement spec and requested implementation planning.
 - 2026-08-15 [TOOL] Header-action test was RED before implementation; focused Calendar tests then passed 3/3 under Node v22.22.0, and `git diff --check` passed.
 - 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).
 - 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
@@ -66,3 +64,4 @@
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 again reproduced the existing Google Calendar projection (4) and booking-sync (4) failures; the PostHog connection-gate suite passed 13/13.
 - 2026-08-15 [TOOL] Expanded the active PostHog connection-control rollout to the two approved email accounts, each at 100%.
 - 2026-08-15 [TOOL] Google badge regression test was RED before implementation, then focused Calendar verification passed 13/13 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [TOOL] Google event-indicator tests were RED before implementation, then focused Calendar verification passed 14/14 under Node v22.22.0 with `git diff --check` passing.

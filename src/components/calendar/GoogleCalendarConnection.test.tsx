@@ -52,7 +52,8 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Google account");
     expect(markup).not.toContain("Connected ");
     expect(markup).toContain("fill-green-600");
-    expect(markup).toContain("text-white");
+    expect(markup).toContain("text-green-600");
+    expect(markup).not.toContain("text-white");
     expect(markup).toContain('aria-label="Active"');
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
@@ -111,10 +112,26 @@ describe("Google Calendar connection UI", () => {
     expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
   });
 
-  it("hides Google source badges and retains Kilobot source badges", () => {
-    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="google" />)).toBe("");
+  it("shows Google source icons and retains Kilobot source badges", () => {
+    const googleSourceMarkup = renderToStaticMarkup(
+      <TooltipProvider>
+        <GoogleCalendarSourceBadge origin="google" />
+      </TooltipProvider>,
+    );
+    expect(googleSourceMarkup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(googleSourceMarkup).toContain('aria-label="Event synced with Google Calendar"');
+    const source = readFileSync(new URL("./GoogleCalendarSourceBadge.tsx", import.meta.url), "utf8");
+    expect(source).toContain("Event synced with Google Calendar");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toContain("Kilobot");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge />)).toBe("");
+  });
+
+  it("places source indicators before event titles in calendar lists", () => {
+    const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
+    const eventTitleSource = '<span className="min-w-0 truncate">{event.title}</span>';
+    const sourceBadge = "<GoogleCalendarSourceBadge origin={event.externalOrigin} />";
+    expect(page.indexOf(sourceBadge)).toBeLessThan(page.indexOf(eventTitleSource));
+    expect(page.lastIndexOf(sourceBadge)).toBeLessThan(page.lastIndexOf(eventTitleSource));
   });
 
   it("shows owner edit and delete on a Google event", () => {
@@ -132,17 +149,20 @@ describe("Google Calendar connection UI", () => {
       externalOrigin: "google",
     };
     const markup = renderToStaticMarkup(
-      <EventDetailsBody
-        details={details}
-        actions={
-          <div>
-            <button type="button" aria-label="Update event">Edit</button>
-            <button type="button" aria-label="Delete event">Delete</button>
-          </div>
-        }
-      />,
+      <TooltipProvider>
+        <EventDetailsBody
+          details={details}
+          actions={
+            <div>
+              <button type="button" aria-label="Update event">Edit</button>
+              <button type="button" aria-label="Delete event">Delete</button>
+            </div>
+          }
+        />
+      </TooltipProvider>,
     );
-    expect(markup).not.toContain("Google");
+    expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
+    expect(markup.indexOf(`<img src="${GOOGLE_CALENDAR_ICON_SRC}"`)).toBeLessThan(markup.indexOf("Dentist"));
     expect(markup).toContain("aria-label=\"Update event\"");
     expect(markup).toContain("aria-label=\"Delete event\"");
   });
