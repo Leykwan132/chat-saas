@@ -23,9 +23,11 @@ test('workflow inspector allows immediate media and keeps Apply icon-free', () =
   expect(source).toContain('<Loader2');
 });
 
-test('book appointment inspector shows services without duplicate editing controls', () => {
+test('book appointment inspector shares the node service controls', () => {
   expect(source).not.toContain('WorkflowBookingInspectorRequirements');
-  expect(source).toContain('WorkflowBookingInspectorServices');
+  expect(source).not.toContain('WorkflowBookingInspectorServices');
+  expect(source).toContain('WorkflowBookingNodeServices');
+  expect(source).toContain('presentation="inspector"');
   expect(source).not.toContain('hasBookableService');
   expect(source).not.toContain('bookingAvailabilityBlocksApply(');
 });

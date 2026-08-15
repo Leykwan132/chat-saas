@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
-import { WorkflowBookingInspectorServices } from './WorkflowBookingInspectorServices';
+import { WorkflowBookingNodeServices } from './WorkflowBookingNodeServices';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -223,9 +223,12 @@ export function WorkflowInspectorForm({
                 />
               ) : null}
               {node.kind === 'bookAppointment' && agentId ? (
-                <WorkflowBookingInspectorServices
+                <WorkflowBookingNodeServices
                   agentId={agentId}
+                  nodeId={node._id}
                   allowedServiceIds={node.allowedAppointmentServiceIds}
+                  disabled={isSaving}
+                  presentation="inspector"
                 />
               ) : null}
             </section>

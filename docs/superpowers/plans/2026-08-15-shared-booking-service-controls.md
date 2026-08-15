@@ -34,7 +34,7 @@
 - Produces: the same active-service rows, switches, teammate tooltip, immediate mutation, optimistic state, and failure behavior in both presentations.
 - Integrates: `WorkflowInspectorForm` passes `node._id`, `node.allowedAppointmentServiceIds`, and `isSaving` to `WorkflowBookingNodeServices` for `bookAppointment` nodes with an `agentId`.
 
-- [ ] **Step 1: Write a failing inspector-presentation component test**
+- [x] **Step 1: Write a failing inspector-presentation component test**
 
 Create `WorkflowBookingNodeServices.test.tsx`. Mock only `convex/react` query and mutation hooks, render the actual shared component with `renderToStaticMarkup`, and assert the user-visible outcome:
 
@@ -60,7 +60,7 @@ test('renders all active services with booking switches in inspector presentatio
 
 The mocked query returns complete service rows: active `Consultation`, active `Follow-up`, and inactive `Inactive service`, each with their assigned teammates. The test fails before the `presentation` property exists.
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -70,7 +70,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: FAIL because `presentation` is not accepted by the shared component.
 
-- [ ] **Step 3: Implement the single component boundary**
+- [x] **Step 3: Implement the single component boundary**
 
 Add the optional property and default in `WorkflowBookingNodeServices`:
 
@@ -94,7 +94,7 @@ In `WorkflowInspectorForm`, replace `WorkflowBookingInspectorServices` with:
 
 Delete `WorkflowBookingInspectorServices.tsx`. Remove `getSelectedBookingServices` and its obsolete selection-filter regression test because the inspector now displays the same active-service set as the node.
 
-- [ ] **Step 4: Run focused tests to verify GREEN**
+- [x] **Step 4: Run focused tests to verify GREEN**
 
 Run:
 
@@ -104,7 +104,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: PASS.
 
-- [ ] **Step 5: Run static validation**
+- [x] **Step 5: Run static validation**
 
 Run:
 

@@ -16,16 +16,6 @@ export function getUpdatedBookingServiceIds<T extends string>(
   return [...nextIds];
 }
 
-export function getSelectedBookingServices<
-  T extends { _id: string; isActive: boolean },
->(
-  allowedServiceIds: readonly T['_id'][] | undefined,
-  services: readonly T[],
-) {
-  const selectedServiceIds = new Set(getEffectiveBookingServiceIds(allowedServiceIds, services));
-  return services.filter((service) => service.isActive && selectedServiceIds.has(service._id));
-}
-
 export function bookingTeammateAvailabilityLabel(count: number) {
   return count === 1 ? '1 teammate available' : `${count} teammates available`;
 }

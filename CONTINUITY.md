@@ -59,8 +59,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment inspectors show a read-only service summary while the matching canvas component has direct switches; that split must be replaced by a shared editor.
-- 2026-08-15 [TOOL] Next: user review of the shared-control design, then implementation and verification; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Book appointment nodes and inspectors reuse one switch-enabled booking-service component; both show all active services and immediate saves.
+- 2026-08-15 [TOOL] Next: run the complete test suite and finalize the local branch; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -129,3 +129,4 @@
 - 2026-08-15 [TOOL] RED then GREEN: inspector-service selection initially lacked `getSelectedBookingServices`; the behavior test now confirms explicit selection excludes inactive services and legacy nodes include every active service. The 2 focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 429 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
 - 2026-08-15 [USER] Book appointment detail panels must use the same switch-enabled service component as their canvas nodes.
+- 2026-08-15 [TOOL] RED then GREEN: inspector-presentation markup initially lacked the shared component presentation marker; it now renders every active service with its existing live switch and excludes inactive services. Three focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.

@@ -24,6 +24,7 @@ type WorkflowBookingNodeServicesProps = {
   nodeId: Id<'workflowNodes'>;
   allowedServiceIds?: Id<'appointmentServices'>[];
   disabled: boolean;
+  presentation?: 'node' | 'inspector';
 };
 
 export function WorkflowBookingNodeServices({
@@ -31,6 +32,7 @@ export function WorkflowBookingNodeServices({
   nodeId,
   allowedServiceIds,
   disabled,
+  presentation = 'node',
 }: WorkflowBookingNodeServicesProps) {
   const services = useQuery(api.workflowAppointmentServices.listForAgent, { agentId }) as
     | BookingServiceRow[]
@@ -44,7 +46,14 @@ export function WorkflowBookingNodeServices({
   }, [allowedServiceIds]);
 
   if (services === undefined) {
-    return <div className="mt-3 h-12 w-full animate-pulse rounded-lg bg-muted" />;
+    return (
+      <div
+        className={presentation === 'node'
+          ? 'mt-3 h-12 w-full animate-pulse rounded-lg bg-muted'
+          : 'h-16 w-full animate-pulse rounded-xl bg-muted'}
+        data-booking-service-presentation={presentation}
+      />
+    );
   }
 
   const activeServices = services.filter((service) => service.isActive);
@@ -72,27 +81,42 @@ export function WorkflowBookingNodeServices({
   };
 
   return (
-    <div className="mt-3 w-full border-t border-border pt-3">
+    <div
+      className={presentation === 'node'
+        ? 'mt-3 w-full border-t border-border pt-3'
+        : 'w-full'}
+      data-booking-service-presentation={presentation}
+    >
       <span className="text-xs font-medium text-muted-foreground">Services</span>
       {activeServices.length === 0 ? (
         <p className="mt-2 text-xs text-muted-foreground">No active services available.</p>
       ) : (
         <TooltipProvider>
-          <div className="mt-2 flex flex-col gap-1.5">
+          <div className={presentation === 'node' ? 'mt-2 flex flex-col gap-1.5' : 'mt-2 flex flex-col gap-2'}>
             {activeServices.map((service) => {
               const teammateCount = service.assignedTeammates.length;
               const checked = selectedServiceIdSet.has(service._id);
               return (
                 <div
                   key={service._id}
-                  className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-muted/60 px-2.5 py-2"
+                  className={presentation === 'node'
+                    ? 'flex min-w-0 items-center justify-between gap-2 rounded-lg bg-muted/60 px-2.5 py-2'
+                    : 'flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border px-3 py-2.5'}
                 >
                   <div className="min-w-0">
-                    <span className="block truncate text-xs font-medium text-foreground">{service.name}</span>
+                    <span className={presentation === 'node'
+                      ? 'block truncate text-xs font-medium text-foreground'
+                      : 'block truncate text-sm font-medium text-foreground'}
+                    >
+                      {service.name}
+                    </span>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <span className="mt-0.5 inline-flex cursor-help items-center gap-1 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-4">
-                          <UsersRound className="size-3" />
+                        <span className={presentation === 'node'
+                          ? 'mt-0.5 inline-flex cursor-help items-center gap-1 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-4'
+                          : 'mt-0.5 inline-flex cursor-help items-center gap-1 text-xs text-muted-foreground underline decoration-dotted underline-offset-4'}
+                        >
+                          <UsersRound className={presentation === 'node' ? 'size-3' : 'size-3.5'} />
                           {bookingTeammateAvailabilityLabel(teammateCount)}
                         </span>
                       </TooltipTrigger>
