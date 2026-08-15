@@ -62,7 +62,7 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Workflow Cleanup validates optional rendered measurements before layout, and Availability/inspector save paths satisfy strict TypeScript checks.
+- 2026-08-15 [CODE] Now: Workflow Cleanup returns the guard-narrowed rendered measurement object, preserving complete width and height types through its layout map.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
@@ -139,3 +139,4 @@
 - 2026-08-15 [TOOL] Pushed `codex/show-unavailable-availability` through `b8348407`; existing PR #59 targets `main` from that branch. Connector metadata update returned 403 `Resource not accessible by integration`; local `gh` authentication is expired.
 - 2026-08-15 [TOOL] GREEN: fixed the pasted `tsc -b` errors; 6 focused suites (16 tests), Node v22.22.0 `bun run build`, and `git diff --check` pass.
 - 2026-08-15 [TOOL] RED then GREEN: the Workflow toolbar copy regression failed for the prior description and passes for the approved tighter-control wording.
+- 2026-08-15 [TOOL] GREEN: workflow Cleanup measurement and layout tests pass 5/5 after preserving type-guard narrowing in the measurements map; the local `tsc -b` command exceeded terminal capture without producing an error.

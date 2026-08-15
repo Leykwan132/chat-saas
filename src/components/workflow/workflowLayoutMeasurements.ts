@@ -23,8 +23,8 @@ export function getWorkflowLayoutNodeMeasurements(
 ): WorkflowLayoutNodeMeasurements {
   return new Map(nodes.flatMap((node) => {
     if (!isPersistedWorkflowFlowNode(node)) return [];
-    const { width, height } = node.measured ?? {};
-    if (!hasMeasuredNodeSize({ width, height })) return [];
-    return [[node.data.nodeId, { width, height }] as const];
+    const measuredSize = node.measured ?? {};
+    if (!hasMeasuredNodeSize(measuredSize)) return [];
+    return [[node.data.nodeId, measuredSize] as const];
   }));
 }
