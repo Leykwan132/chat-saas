@@ -28,7 +28,7 @@
 
 **Interfaces:** Exports `CreateServiceAssignmentMode = 'self' | 'team'`, `getCreateServiceAssignmentDefaults(currentWorkosUserId)`, `canCreateTeamService(plan)`, and `getCreateServicePrimaryAction(mode)`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```ts
 expect(getCreateServiceAssignmentDefaults('user-ley')).toEqual({
@@ -42,13 +42,13 @@ expect(getCreateServicePrimaryAction('self')).toBe('Create');
 expect(getCreateServicePrimaryAction('team')).toBe('Continue');
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/createServiceDialogModel.test.ts`
 
 Expected: FAIL because the model module is absent.
 
-- [ ] **Step 3: Implement the pure model**
+- [x] **Step 3: Implement the pure model**
 
 ```ts
 export function canCreateTeamService(plan: PlanKey | undefined) {
@@ -66,7 +66,7 @@ export function getCreateServiceAssignmentDefaults(currentWorkosUserId: string) 
 
 An unavailable workspace plan must not be treated as paid.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/createServiceDialogModel.test.ts`
 
