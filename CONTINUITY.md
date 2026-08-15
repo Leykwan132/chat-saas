@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; implementation commit is pending.
+- 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -71,3 +71,4 @@
 - 2026-08-15 [TOOL] Created active PostHog flag `enable_google_calendar_connect` (ID `822558`) with a 100% exact-email rollout for the requested early-access account.
 - 2026-08-15 [USER] Approved the Google Calendar connect early-access spec and requested implementation planning.
 - 2026-08-15 [TOOL] PostHog flag and Google Calendar connection focused tests were RED before implementation, then passed 17/17 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [CODE] Committed the client-side PostHog gate as `a9385f61`.

@@ -30,7 +30,7 @@
 - `useEnableGoogleCalendarConnect(): ProductFeatureFlagState` calls `useFeatureFlagEnabled` with that key.
 - `CalendarPage` uses `isProductFeatureEnabled(useEnableGoogleCalendarConnect())` to decide whether to render `GoogleCalendarConnectionCard`.
 
-- [ ] **Step 1: Write failing flag and Calendar gate assertions**
+- [x] **Step 1: Write failing flag and Calendar gate assertions**
 
 Add the new expected key to the `POSTHOG_FEATURE_FLAGS` object assertion:
 
@@ -46,7 +46,7 @@ expect(page).toContain('isProductFeatureEnabled(googleCalendarConnectState)');
 expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
 ```
 
-- [ ] **Step 2: Run focused tests to verify they fail**
+- [x] **Step 2: Run focused tests to verify they fail**
 
 Run:
 
@@ -56,7 +56,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/lib/posthogFeatureFlag
 
 Expected: FAIL because the new key, hook, and Calendar gate do not exist.
 
-- [ ] **Step 3: Add the flag hook and render gate**
+- [x] **Step 3: Add the flag hook and render gate**
 
 In `posthogFeatureFlags.ts`, add the key and hook:
 
@@ -91,7 +91,7 @@ Change the existing connection-card condition to:
 ) : null}
 ```
 
-- [ ] **Step 4: Run focused verification**
+- [x] **Step 4: Run focused verification**
 
 Run:
 
@@ -102,7 +102,7 @@ git diff --check
 
 Expected: PASS with the PostHog flag contract and Calendar gate assertions passing.
 
-- [ ] **Step 5: Commit the client gate and verification ledger**
+- [x] **Step 5: Commit the client gate and verification ledger**
 
 Update `CONTINUITY.md` with the focused verification receipt, then commit:
 
