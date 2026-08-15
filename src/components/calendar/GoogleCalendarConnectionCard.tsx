@@ -1,4 +1,4 @@
-import { HiCheck, HiCheckBadge } from "react-icons/hi2";
+import { HiCheck } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -67,9 +67,8 @@ export function GoogleCalendarConnectionCard({
               <span className="min-w-0 truncate">
                 {connectedAccountEmail ?? "Google Calendar"}
               </span>
-              <span className="relative grid size-5 shrink-0 place-items-center" aria-label="Active">
-                <HiCheckBadge className="size-5 text-green-600" aria-hidden="true" />
-                <HiCheck className="absolute size-3 text-white" aria-hidden="true" />
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-green-600" aria-label="Active">
+                <HiCheck className="size-3 text-white" aria-hidden="true" />
               </span>
             </>
           ) : (

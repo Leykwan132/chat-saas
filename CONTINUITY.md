@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
-- 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is committed.
+- 2026-08-16 [CODE] Now: only Google-synced events show a source indicator; local events no longer show a Kilobot tag.
 - 2026-08-15 [CODE] Now: connected Google Calendar status has a solid green badge with a white check, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is committed.
 - 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
 - 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is committed.
@@ -29,6 +29,7 @@
 - 2026-08-15 [USER] D668 ACTIVE: all standard application Dialog and Sheet backdrops use Create Booking’s light `bg-black/10`, unblurred treatment; non-modal overlays and content-level effects remain unchanged.
 - 2026-08-16 [USER] D669 ACTIVE: Service-card descriptions appear directly below the service title while the booking count and active switch remain at the card bottom.
 - 2026-08-16 [USER] D670 ACTIVE: Calendar Internal details places Summary beside staff details on desktop, uses neutral text surfaces for Summary and Internal notes, and aligns their icons at the top. Calendar edit time fields normalize existing event values for prefill.
+- 2026-08-16 [USER] D671 ACTIVE: Calendar provenance communicates Google synchronization only; connected Google Calendar status uses one white check inside a solid green circle.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -50,7 +51,7 @@
 - 2026-08-15 [CODE] Google Calendar connection is early access for the two approved accounts; synced events include the approved indicator treatment.
 - 2026-08-15 [CODE] Service creation, location, Google Meet booking links, workspace-plan team access, and personal-service migration are implemented locally.
 - 2026-08-15 [CODE] Standard Dialog and Sheet backdrops use the unblurred light overlay, and service-card descriptions sit directly below their titles.
-- 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, and Internal details uses the approved responsive Summary/notes presentation.
+- 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, Internal details uses the approved responsive Summary/notes presentation, and source/status indicators use the simplified Google-only treatment.
 
 # Working set
 - `src/pages/CalendarPage.tsx`

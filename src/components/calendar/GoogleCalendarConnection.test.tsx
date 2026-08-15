@@ -43,7 +43,7 @@ describe("Google Calendar connection UI", () => {
     expect(source).toContain("TooltipContent");
   });
 
-  it("shows the Google icon, account email, and a filled check when connected", () => {
+  it("shows the Google icon, account email, and one connected check when connected", () => {
     const markup = renderConnectionCard({
       state: "connected",
       connectedAccountEmail: "owner@gmail.com",
@@ -52,24 +52,20 @@ describe("Google Calendar connection UI", () => {
     expect(markup).toContain("owner@gmail.com");
     expect(markup).not.toContain("Google account");
     expect(markup).not.toContain("Connected ");
-    expect(markup).toContain("text-green-600");
+    expect(markup).toContain("rounded-full bg-green-600");
+    expect(markup.match(/<svg/g)).toHaveLength(1);
     expect(markup).toContain('aria-label="Active"');
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
     expect(source).toContain('from "react-icons/hi2"');
-    expect(source).toContain("<HiCheckBadge");
-    expect(source).not.toContain("CheckCircle2");
-    expect(source).not.toContain("Trash2");
-    expect(source).not.toContain("formatPrefixedRelativeAge");
-    expect(source).not.toContain("DropdownMenu");
   });
 
   it("falls back to Google Calendar when the connected email is missing", () => {
     const markup = renderConnectionCard({ state: "connected" });
     expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).toContain("text-green-600");
+    expect(markup).toContain("rounded-full bg-green-600");
   });
 
   it("shows reconnect recovery without claiming connected", () => {
@@ -111,7 +107,7 @@ describe("Google Calendar connection UI", () => {
     expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
   });
 
-  it("shows Google source icons and retains Kilobot source badges", () => {
+  it("shows Google source icons and hides local source badges", () => {
     const googleSourceMarkup = renderToStaticMarkup(
       <TooltipProvider>
         <GoogleCalendarSourceBadge origin="google" />
@@ -121,7 +117,7 @@ describe("Google Calendar connection UI", () => {
     expect(googleSourceMarkup).toContain('aria-label="Event synced with Google Calendar"');
     const source = readFileSync(new URL("./GoogleCalendarSourceBadge.tsx", import.meta.url), "utf8");
     expect(source).toContain("Event synced with Google Calendar");
-    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toContain("Kilobot");
+    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toBe("");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge />)).toBe("");
   });
 
