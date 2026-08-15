@@ -41,8 +41,8 @@
 - `src/components/calendar/GoogleCalendarConnection.test.tsx`
 - `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
 - `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
-- `docs/superpowers/specs/2026-08-15-calendar-google-event-indicators-design.md`
 - `docs/superpowers/specs/2026-08-15-calendar-event-modal-google-icon-design.md`
+- `docs/superpowers/plans/2026-08-15-calendar-event-modal-google-icon.md`
 - `CONTINUITY.md`
 
 # Receipts
