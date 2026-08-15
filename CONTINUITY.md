@@ -4,10 +4,10 @@
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
 - 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is committed.
-- 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is committed.
+- 2026-08-15 [CODE] Now: connected Google Calendar status has a solid green badge with a white check, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is committed.
 - 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
 - 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is committed.
-- 2026-08-15 [USER] Now: manually created events must be written to the creator's Google Calendar when they have an active connection; a Google failure fails the creation and rolls back its local draft.
+- 2026-08-15 [CODE] Now: manual calendar events are local-only for disconnected creators and otherwise use the creator's primary Google Calendar with one refresh, idempotent writes, and rollback on failure; the implementation is committed.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -33,26 +33,23 @@
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
 - 2026-08-15 [CODE] Calendar New Booking is pinned to the selected-day header edge, shown in the shared no-events state, and opened by the grid Create Booking action after selecting its date; it remains unreleased.
+- 2026-08-15 [CODE] Manual calendar-event creation now uses the Google-aware action, synchronizes connected creators' primary calendars fail-closed, and retains local-only behavior without a connection; connection status now shows a white check in its green badge. The feature remains unreleased.
 
 # Working set
 - `src/components/calendar/GoogleCalendarConnectionCard.tsx`
-- `src/components/calendar/googleCalendarBranding.ts`
-- `src/components/calendar/GoogleCalendarSourceBadge.tsx`
-- `src/components/calendar/CalendarEventDetailsBody.tsx`
 - `src/pages/CalendarPage.tsx`
-- `src/lib/posthogFeatureFlags.ts`
 - `src/components/calendar/GoogleCalendarConnection.test.tsx`
-- `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
-- `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
-- `docs/superpowers/specs/2026-08-15-calendar-event-modal-google-icon-design.md`
-- `docs/superpowers/plans/2026-08-15-calendar-event-modal-google-icon.md`
+- `src/components/booking/CreateBookingDialog.test.ts`
+- `convex/calendarEvents.ts`
+- `convex/calendarEventsHelpers.ts`
+- `convex/googleCalendar/calendarEventCreatePrepare.ts`
+- `convex/googleCalendar/calendarEventCreateSync.ts`
+- `convex/googleCalendarManualEventSync.test.ts`
+- `docs/superpowers/specs/2026-08-15-manual-event-google-calendar-sync-design.md`
+- `docs/superpowers/plans/2026-08-15-manual-event-google-calendar-sync.md`
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).
-- 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
-- 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
-- 2026-08-15 [TOOL] Calendar day component tests were RED before the components existed, then focused Calendar verification passed 5/5 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [CODE] Committed the Calendar action components as `f2641c33` and CalendarPage integration as `5c08c8ef`.
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 reconfirmed existing Google Calendar failures, including projection (4) and booking-sync (4); the new Calendar day-panel suite passed.
 - 2026-08-15 [USER] Approved a unified booking-dialog design for header, no-events, and grid context-menu actions; spec review is pending.
@@ -69,3 +66,6 @@
 - 2026-08-15 [TOOL] Google badge regression test was RED before implementation, then focused Calendar verification passed 13/13 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [TOOL] Google event-indicator tests were RED before implementation, then focused Calendar verification passed 14/14 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [TOOL] Modal Google icon test was RED before implementation, then focused Calendar verification passed 15/15 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [TOOL] Manual-event Google sync tests were RED before implementation, then focused API, backend, and UI verification passed 26/26 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check` passing.
+- 2026-08-15 [CODE] Committed manual-event Google synchronization as `e7f62b4d`, the public action integration as `c2a0d0de`, and the white-check indicator as `65f39dc2`.
+- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 still reports pre-existing Google Calendar projection and booking-sync failures; the manual-event and connection-card suites passed.

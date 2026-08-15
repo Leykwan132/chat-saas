@@ -36,7 +36,7 @@
 - Produces: `runCalendarEventCreate(ctx, args): Promise<Id<"calendarEvents">>` and injected `runPreparedCalendarEventCreate(args, dependencies)`.
 - Consumes: calendar access helpers, participant/availability helpers, the Google connection gate, and the existing Google writer.
 
-- [ ] **Step 1: Write failing create-flow tests**
+- [x] **Step 1: Write failing create-flow tests**
 
 Create a personal-workspace fixture with an owner, customer, team membership, and optional Google connection. Add tests using injected dependencies:
 
@@ -66,13 +66,13 @@ test("a failed Google write removes its pending event", async () => {
 
 Also call authenticated `prepareCreate` directly. Assert local preparation has no external fields; connected preparation returns `kind: "google"`, has the creator in `externalOwnerUserId`, and persists `externalSyncState: "pending"` before the writer runs.
 
-- [ ] **Step 2: Verify the tests are red**
+- [x] **Step 2: Verify the tests are red**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarManualEventSync.test.ts`
 
 Expected: FAIL because no create preparation or orchestration module exists.
 
-- [ ] **Step 3: Define one creation argument contract**
+- [x] **Step 3: Define one creation argument contract**
 
 In `calendarEventsHelpers.ts`, export this validator map and matching `CalendarEventCreateInput` TypeScript type with generated `Id` values:
 
@@ -97,7 +97,7 @@ export const calendarEventCreateArgs = {
 
 Keep `eventStatusValidator` private to the helper module; both public and internal creation consume the exported map.
 
-- [ ] **Step 4: Implement creation preparation and rollback**
+- [x] **Step 4: Implement creation preparation and rollback**
 
 Implement `prepareCreate` as an `internalMutation` with `{ ...calendarEventCreateArgs, refreshed: v.optional(v.boolean()) }` and this discriminated result:
 
@@ -137,7 +137,7 @@ Return `googleCalendarWriteInputFromEvent(event)`. Do not create availability in
 
 Implement `rollbackCreate` as `internalMutation({ args: { eventId: v.id("calendarEvents") }, returns: v.null() })`. Only when the event remains pending, load up to 100 participants, remove each participant's availability intervals, delete the participants, then delete the event.
 
-- [ ] **Step 5: Implement action-safe orchestration**
+- [x] **Step 5: Implement action-safe orchestration**
 
 In `calendarEventCreateSync.ts`, make `runPreparedCalendarEventCreate` prepare with `refreshed: false`, invoke the existing sync worker once for `needs_refresh`, prepare again with `refreshed: true`, and immediately return a local event ID. For a Google preparation, call:
 
@@ -153,13 +153,13 @@ const result = await runCreateGoogleCalendarEvent({
 
 For a non-success result, call `dependencies.rollback({ eventId: prepared.calendarEventId })` and throw `new Error(result.message)`. Return `prepared.calendarEventId` only after success. Export `runCalendarEventCreate(ctx, args)`, passing internal prepare/rollback calls, the existing sync worker, and `googleCalendarWriteActionDependencies(ctx)` to the injected runner.
 
-- [ ] **Step 6: Run focused backend verification**
+- [x] **Step 6: Run focused backend verification**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/googleCalendarManualEventSync.test.ts convex/calendarEvents.test.ts`
 
 Expected: PASS for local-only creation, one refresh before Google creation, finalized metadata, and rollback after provider failure.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add convex/calendarEventsHelpers.ts convex/googleCalendar/calendarEventCreatePrepare.ts convex/googleCalendar/calendarEventCreateSync.ts convex/googleCalendarManualEventSync.test.ts
@@ -181,7 +181,7 @@ git commit -m "Sync manual calendar events to Google"
 - Produces: public `calendarEvents.create` action returning `v.id("calendarEvents")`.
 - Consumes: `calendarApi.create` through React `useAction`.
 
-- [ ] **Step 1: Write failing API and client checks**
+- [x] **Step 1: Write failing API and client checks**
 
 Change the generic-event test to call `authed.action(api.calendarEvents.create, input)` and retain assertions for no booking-session or conversation-log side effects. Add this source assertion:
 
@@ -191,13 +191,13 @@ expect(calendarPageSource).toContain("useAction(calendarApi.create)");
 expect(calendarPageSource).not.toContain("useMutation(calendarApi.create)");
 ```
 
-- [ ] **Step 2: Verify the tests are red**
+- [x] **Step 2: Verify the tests are red**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/calendarEvents.test.ts src/components/booking/CreateBookingDialog.test.ts`
 
 Expected: FAIL because `create` is still a mutation and the page still uses `useMutation`.
 
-- [ ] **Step 3: Replace the entrypoint**
+- [x] **Step 3: Replace the entrypoint**
 
 In `convex/calendarEvents.ts`, remove the inline creation mutation and unused imports. Import `calendarEventCreateArgs` and `runCalendarEventCreate`, then expose:
 
@@ -217,13 +217,13 @@ const createEvent = useAction(calendarApi.create);
 
 Keep the save payload, selected-event behavior, toast copy, loading state, and error handling unchanged.
 
-- [ ] **Step 4: Run focused API and page verification**
+- [x] **Step 4: Run focused API and page verification**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/calendarEvents.test.ts convex/googleCalendarManualEventSync.test.ts src/components/booking/CreateBookingDialog.test.ts`
 
 Expected: PASS and confirm both public local-only creation and client action usage.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add convex/calendarEvents.ts convex/calendarEvents.test.ts src/pages/CalendarPage.tsx src/components/booking/CreateBookingDialog.test.ts
@@ -242,7 +242,7 @@ git commit -m "Use Google-aware calendar event creation"
 - Produces: the connected button's existing `aria-label="Active"`, rendered by `HiCheckBadge` from `react-icons/hi2`.
 - Preserves: Google icon, account-email text, connection action, and tooltip behavior.
 
-- [ ] **Step 1: Write a failing glyph regression check**
+- [x] **Step 1: Write a failing glyph regression check**
 
 Replace the Lucide assertion with:
 
@@ -252,13 +252,13 @@ expect(source).toContain("<HiCheckBadge");
 expect(source).toContain('aria-label="Active"');
 ```
 
-- [ ] **Step 2: Verify the test is red**
+- [x] **Step 2: Verify the test is red**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/GoogleCalendarConnection.test.tsx`
 
 Expected: FAIL because the card still imports and renders Lucide `BadgeCheck`.
 
-- [ ] **Step 3: Render the Heroicons status badge**
+- [x] **Step 3: Render the Heroicons status badge**
 
 Replace the Lucide import with `import { HiCheckBadge } from "react-icons/hi2";`. Replace `BadgeCheck` with:
 
@@ -271,13 +271,13 @@ Replace the Lucide import with `import { HiCheckBadge } from "react-icons/hi2";`
 
 Do not add a wrapper or change spacing. The filled Heroicons badge keeps the green marker and makes its check visible in white.
 
-- [ ] **Step 4: Run focused UI verification**
+- [x] **Step 4: Run focused UI verification**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/GoogleCalendarConnection.test.tsx`
 
 Expected: PASS with connection and Google-source-indicator coverage intact.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/calendar/GoogleCalendarConnectionCard.tsx src/components/calendar/GoogleCalendarConnection.test.tsx
@@ -296,17 +296,17 @@ git commit -m "Restore Google calendar connection check"
 - Consumes: completed Tasks 1–3.
 - Produces: generated Convex API types and a factual verification record.
 
-- [ ] **Step 1: Record completion without release publication**
+- [x] **Step 1: Record completion without release publication**
 
 Mark completed plan checkboxes. In `CONTINUITY.md`, replace the in-progress manual-event item with a factual completed state covering local-only behavior, fail-closed connected behavior, and the white-check indicator. Keep production availability `UNCONFIRMED`; do not edit the release changelog.
 
-- [ ] **Step 2: Generate Convex API types**
+- [x] **Step 2: Generate Convex API types**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 && bunx convex codegen`
 
 Expected: PASS and generate the action type for `calendarEvents.create`.
 
-- [ ] **Step 3: Run type, focused, and diff verification**
+- [x] **Step 3: Run type, focused, and diff verification**
 
 Run:
 
@@ -318,7 +318,7 @@ git diff --check
 
 Expected: all commands PASS. If the full suite still has the known unrelated Google Calendar projection or booking-sync failures, record the exact failures instead of calling it green.
 
-- [ ] **Step 4: Commit verification records**
+- [x] **Step 4: Commit verification records**
 
 ```bash
 git add CONTINUITY.md docs/superpowers/plans/2026-08-15-manual-event-google-calendar-sync.md convex/_generated
