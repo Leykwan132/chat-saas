@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [CODE] Now: New Booking has moved from the sidebar to the right Calendar panel’s selected-day header with a 15px gap; it opens the dialog using the selected date. The full suite has unrelated existing Google Calendar failures.
+- 2026-08-15 [CODE] Now: New Booking is committed in the right Calendar panel’s selected-day header with a 15px gap; it opens the dialog using the selected date. The full suite has unrelated existing Google Calendar failures.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar header adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -54,3 +54,4 @@
 - 2026-08-15 [USER] Corrected New Booking placement to the right Calendar panel header, after the Today/date group; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the corrected header-placement spec and requested implementation planning.
 - 2026-08-15 [TOOL] Header-action test was RED before implementation; focused Calendar tests then passed 3/3 under Node v22.22.0, and `git diff --check` passed.
+- 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).

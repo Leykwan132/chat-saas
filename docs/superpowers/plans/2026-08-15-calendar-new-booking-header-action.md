@@ -32,7 +32,7 @@
 - Consumes: `canManageCalendar`, `selectedDate`, `selectedDayKey`, `todayKey`, and `setCreateBookingOpen` in `CalendarPage`.
 - Produces: a right-panel header Button calling `setCreateBookingOpen(true)`; `CalendarCreateBookingDialog` receives the formatted selected date.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Remove sidebar-specific New Booking expectations and props from `CalendarSidebar.test.tsx`. Create `CalendarNewBookingAction.test.ts` with source-level assertions:
 
@@ -44,7 +44,7 @@ expect(page).toContain('onClick={() => setCreateBookingOpen(true)}');
 expect(page).toContain("initialDate={format(selectedDate, 'yyyy-MM-dd')}");
 ```
 
-- [ ] **Step 2: Run the focused tests to verify they fail**
+- [x] **Step 2: Run the focused tests to verify they fail**
 
 Run:
 
@@ -54,7 +54,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: FAIL because the current button remains in `CalendarSidebar` and the right header lacks the 15px action group.
 
-- [ ] **Step 3: Move the existing Button and clean sidebar props**
+- [x] **Step 3: Move the existing Button and clean sidebar props**
 
 Remove `Button`/`Plus` imports, `canManageCalendar`/`onCreateBooking` props, sidebar `relative` class, bottom padding, and floating Button from `CalendarSidebar`. Remove the corresponding prop call site in `CalendarPage`.
 
@@ -85,7 +85,7 @@ Wrap the selected-day label in this right-header group and append the permission
 </div>
 ```
 
-- [ ] **Step 4: Run the focused tests to verify they pass**
+- [x] **Step 4: Run the focused tests to verify they pass**
 
 Run:
 
@@ -95,7 +95,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: PASS with every focused test passing.
 
-- [ ] **Step 5: Check formatting and commit**
+- [x] **Step 5: Check formatting and commit**
 
 Run:
 
