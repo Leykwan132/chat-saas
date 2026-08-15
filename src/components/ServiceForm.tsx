@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BriefcaseBusiness, CalendarClock, ClipboardList, UsersRound } from 'lucide-react';
+import { BriefcaseBusiness, ClipboardList, UsersRound } from 'lucide-react';
 import {
   SERVICE_SECTION_COPY,
   ServiceAssignmentFields,
@@ -19,7 +19,6 @@ interface ServiceFormProps {
 
 const SERVICE_FORM_SECTIONS = [
   { id: 'details', copy: SERVICE_SECTION_COPY.details, Icon: BriefcaseBusiness },
-  { id: 'timing', copy: SERVICE_SECTION_COPY.timing, Icon: CalendarClock },
   { id: 'assignment', copy: SERVICE_SECTION_COPY.assignment, Icon: UsersRound },
   { id: 'data', copy: SERVICE_SECTION_COPY.data, Icon: ClipboardList },
 ] as const;
@@ -79,10 +78,10 @@ export function ServiceForm({
           />
         ) : null}
         {activeSection === 'details' ? (
-          <ServiceDetailsFields form={form} setForm={setForm} disabled={disabled} />
-        ) : null}
-        {activeSection === 'timing' ? (
-          <ServiceTimingFields form={form} setForm={setForm} disabled={disabled} />
+          <div className="flex flex-col gap-8">
+            <ServiceDetailsFields form={form} setForm={setForm} disabled={disabled} />
+            <ServiceTimingFields form={form} setForm={setForm} disabled={disabled} />
+          </div>
         ) : null}
         {activeSection === 'data' ? (
           <ServiceDataCollectionFields form={form} setForm={setForm} disabled={disabled} />
