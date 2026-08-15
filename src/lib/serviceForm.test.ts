@@ -41,3 +41,26 @@ test('requires a selected teammate and a selected specific teammate', () => {
     specificWorkosUserId: 'member-id',
   })).toBe('Select the specific teammate for this service.');
 });
+
+test('maps meeting locations for remote and in-person services', () => {
+  expect(DEFAULT_SERVICE_FORM).toMatchObject({
+    locationMode: 'in_person',
+    location: '',
+  });
+  expect(serviceToForm({
+    ...service,
+    locationMode: 'remote',
+    location: 'Old office',
+  }, ['owner-id'])).toMatchObject({
+    locationMode: 'remote',
+    location: '',
+  });
+  expect(buildServiceMutationArgs({
+    ...DEFAULT_SERVICE_FORM,
+    locationMode: 'in_person',
+    location: 'Level 8, KL',
+  })).toMatchObject({
+    locationMode: 'in_person',
+    location: 'Level 8, KL',
+  });
+});

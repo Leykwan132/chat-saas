@@ -6,6 +6,7 @@ import {
 
 export type FieldType = 'text' | 'number' | 'select' | 'boolean' | 'date' | 'time' | 'phone';
 export type SalesStyle = 'proactive' | 'neutral' | 'gentle';
+export type ServiceLocationMode = 'remote' | 'in_person';
 export type AssignmentStrategy = 'conversation_owner' | 'balanced' | 'round_robin' | 'specific_user';
 export type TeamMemberRole = 'owner' | 'admin' | 'member';
 
@@ -43,6 +44,8 @@ export const DEFAULT_SERVICE_FIELDS: ServiceFieldForm[] = [
 export type ServiceForm = {
   name: string;
   description: string;
+  locationMode: ServiceLocationMode;
+  location: string;
   isActive: boolean;
   durationMinutes: number;
   bufferMinutes: number;
@@ -60,6 +63,8 @@ export type ServiceRow = {
   _id: Id<'appointmentServices'>;
   name: string;
   description?: string;
+  locationMode?: ServiceLocationMode;
+  location?: string;
   isActive: boolean;
   bookingCount?: number;
   sortOrder: number;
@@ -84,6 +89,8 @@ export const DEFAULT_PREFERRED_TIME = '10:00am';
 export const DEFAULT_SERVICE_FORM: ServiceForm = {
   name: '',
   description: '',
+  locationMode: 'in_person',
+  location: '',
   isActive: true,
   durationMinutes: 30,
   bufferMinutes: 0,
@@ -134,6 +141,8 @@ export function serviceToForm(service: ServiceRow, teamWorkosUserIds: string[]):
   return {
     name: service.name,
     description: service.description ?? '',
+    locationMode: service.locationMode ?? 'in_person',
+    location: service.locationMode === 'remote' ? '' : service.location ?? '',
     isActive: service.isActive,
     durationMinutes: service.durationMinutes,
     bufferMinutes: service.bufferMinutes ?? 0,
@@ -162,6 +171,8 @@ export function buildServiceMutationArgs(form: ServiceForm) {
   return {
     name: form.name,
     description: form.description,
+    locationMode: form.locationMode,
+    location: form.location,
     isActive: form.isActive,
     durationMinutes: form.durationMinutes,
     bufferMinutes: form.bufferMinutes,
