@@ -14,6 +14,7 @@ import {
   ReplyAll,
   ScanFace,
   ShoppingCart,
+  Split,
   UserRoundCheck,
   Users,
   Workflow,
@@ -83,7 +84,7 @@ export function getNavItems(
       { to: `/dashboard/${agentId}/templates`, icon: FileText, label: 'Message Templates', requiredPermission: Permission.BROADCAST_READ },
     ],
     team: [
-      { to: `/dashboard/${agentId}/lead-assignment`, icon: UserRoundCheck, label: 'Lead Assignment', requiredPermission: Permission.ROUTING_READ },
+      { to: `/dashboard/${agentId}/lead-assignment`, icon: Split, label: 'Routing', requiredPermission: Permission.ROUTING_READ },
       { to: `/dashboard/${agentId}/analytics`, icon: BarChart3, label: 'Analytics', requiredPermission: Permission.ANALYTICS_READ },
     ],
     configuration: [

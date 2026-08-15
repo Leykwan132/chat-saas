@@ -66,6 +66,7 @@ export function CreateServiceDialog({
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const wasOpen = useRef(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const teamEnabled = canCreateTeamService(workspacePlan);
 
   const reset = () => {
@@ -90,6 +91,7 @@ export function CreateServiceDialog({
     const name = form.name.trim();
     if (!name) {
       setError('Service name is required.');
+      nameInputRef.current?.focus();
       return;
     }
     if (mode === 'team' && step === 1) {
@@ -135,13 +137,13 @@ export function CreateServiceDialog({
           </DialogDescription>
         </DialogHeader>
         {error ? <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
-        {step === 1 ? <CreateServiceInfoStep form={form} setForm={setForm} mode={mode} teamEnabled={teamEnabled} onModeChange={setMode} onUpgrade={openUpgradeModal} /> : null}
+        {step === 1 ? <CreateServiceInfoStep form={form} setForm={(nextForm) => setForm((previous) => { const next = typeof nextForm === 'function' ? nextForm(previous) : nextForm; if (error && next.name.trim()) setError(null); return next; })} mode={mode} teamEnabled={teamEnabled} onModeChange={setMode} onUpgrade={openUpgradeModal} nameInputRef={nameInputRef} /> : null}
         {step === 2 ? <CreateServiceTeamStep form={form} setForm={setForm} teamUserOptions={teamUserOptions} /> : null}
         <DialogFooter className="pt-2 sm:justify-between">
           <div>{step === 2 ? <Button type="button" variant="link" className="px-0" onClick={() => { setStep(1); setError(null); }}>Back</Button> : null}</div>
           <div className="flex items-center gap-3">
             <Button type="button" variant="ghost" className="text-muted-foreground" onClick={closeDialog}>Close</Button>
-            <Button type="button" disabled={saving || !form.name.trim()} onClick={() => void saveService()}>{saving ? 'Creating…' : primaryAction}</Button>
+            <Button type="button" disabled={saving} onClick={() => void saveService()}>{saving ? 'Creating…' : primaryAction}</Button>
           </div>
         </DialogFooter>
       </DialogContent>

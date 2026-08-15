@@ -53,4 +53,20 @@ describe('Available 24/7 editor', () => {
     expect(editorSource).not.toContain('self-start rounded-xl border border-border bg-card p-6');
     expect(pageSource).not.toContain('self-start rounded-xl border border-border bg-card p-6');
   });
+
+  it('renders editable time controls with standard-size day labels', () => {
+    const markup = renderToStaticMarkup(
+      createElement(WeeklyAvailabilityEditor, {
+        shiftDrafts: [{ key: 'monday-9-to-5', dayOfWeek: 1, startMinutes: 540, endMinutes: 1020 }],
+        onShiftDraftsChange: () => undefined,
+        timezone: 'Asia/Kuala_Lumpur',
+        onTimezoneChange: () => undefined,
+        timeOptions: SCHEDULE_TIME_OPTIONS,
+      }),
+    );
+
+    expect(markup).toContain('aria-label="Monday start time"');
+    expect(markup).toContain('aria-label="Monday end time"');
+    expect(editorSource).not.toContain('text-lg font-medium');
+  });
 });

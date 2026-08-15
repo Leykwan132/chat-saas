@@ -38,3 +38,10 @@ test('uses a ghost button to close the dialog', () => {
 
   expect(source).toContain('variant="ghost" className="text-muted-foreground" onClick={closeDialog}>Close</Button>');
 });
+
+test('keeps Create available to explain a missing service name', () => {
+  const source = readFileSync(new URL('./CreateServiceDialog.tsx', import.meta.url), 'utf8');
+
+  expect(source).not.toContain('disabled={saving || !form.name.trim()}');
+  expect(source).toContain('nameInputRef.current?.focus()');
+});

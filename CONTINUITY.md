@@ -31,6 +31,7 @@
 - 2026-08-16 [USER] D670 ACTIVE: Calendar Internal details places Summary beside staff details on desktop, uses neutral text surfaces for Summary and Internal notes, and aligns their icons at the top. Calendar edit time fields normalize existing event values for prefill.
 - 2026-08-16 [USER] D671 ACTIVE: Calendar provenance communicates Google synchronization only; connected Google Calendar status uses one white check inside a solid green circle.
 - 2026-08-16 [USER] D672 ACTIVE: Create Service assignment cards use content height without a forced minimum; desktop siblings remain equal-height through the grid.
+- 2026-08-16 [USER] D673 ACTIVE: service creation explains and focuses a missing Name; Calendar Internal details uses icon-and-label header rows; weekly availability accepts typed compatible times; Routing replaces Lead Assignment with the approved icon swap; Google connection uses a green badge with only a white tick; and Calendar header account/timezone controls have subtle hover feedback.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -53,6 +54,7 @@
 - 2026-08-15 [CODE] Service creation, location, Google Meet booking links, workspace-plan team access, and personal-service migration are implemented locally.
 - 2026-08-15 [CODE] Standard Dialog and Sheet backdrops use the unblurred light overlay, and service-card descriptions sit directly below their titles.
 - 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, Internal details uses the approved responsive Summary/notes presentation, source/status indicators use the simplified Google-only treatment, and Create Service assignment cards no longer reserve empty lower space.
+- 2026-08-16 [CODE] Implemented the approved service validation, availability combobox, Routing copy/icons, Calendar connection badge, and Calendar header hover refinements; focused verification passed.
 
 # Working set
 - `src/pages/CalendarPage.tsx`

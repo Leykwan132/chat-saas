@@ -107,8 +107,9 @@ export default function LeadAssignmentPage() {
     <div className="flex w-full max-w-5xl flex-col gap-6">
       <header>
         <h1 className="m-0 font-title text-3xl font-normal tracking-tight text-foreground">
-          Lead Assignment
+          Routing
         </h1>
+        <p className="mt-1 text-sm text-muted-foreground">Control how incoming leads are routed to your team.</p>
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_500px] gap-8 lg:gap-16 items-start mt-2">

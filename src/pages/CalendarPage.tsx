@@ -1127,7 +1127,7 @@ export default function CalendarPage() {
               onChange={handleChangeTimeZone}
               showGlobe
               triggerAriaLabel="Calendar time zone"
-              triggerClassName="w-fit border-transparent bg-input/50 px-2.5 py-1.5 hover:bg-input/50"
+              triggerClassName="w-fit border-transparent bg-input/50 px-2.5 py-1.5 transition-colors hover:bg-muted"
             />
             <div className="flex items-center">
               <Button

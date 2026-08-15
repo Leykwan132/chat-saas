@@ -26,7 +26,8 @@ test('renders summary beside internal notes in neutral content surfaces', () => 
   const markup = renderToStaticMarkup(<EventDetailsBody details={details} />);
 
   expect(markup).toContain('sm:grid-cols-2');
-  expect(markup).toContain('items-start gap-4');
+  expect(markup.match(/flex items-center gap-3/g)).toHaveLength(2);
+  expect(markup.match(/flex flex-col gap-1.5/g)).toHaveLength(2);
   expect(markup).toContain('rounded-lg bg-muted px-4 py-3');
   expect(markup.indexOf('Internal notes')).toBeLessThan(markup.indexOf('Summary'));
 });

@@ -1,12 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { ScheduleTimeCombobox } from '@/components/ScheduleTimeCombobox';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { TimeZoneSelect } from '@/components/TimeZoneSelect';
@@ -71,49 +65,25 @@ function TimeSlotRow({
   onAdd: () => void;
 }) {
   const endOptions = endTimeOptionsForStart(timeOptions, shift.startMinutes);
+  const dayLabel = SCHEDULE_DAYS[shift.dayOfWeek]!.label;
 
   return (
     <div className="flex items-center gap-1.5">
-      <Select
-        value={String(shift.startMinutes)}
-        onValueChange={(value) => {
-          const startMinutes = Number(value);
+      <ScheduleTimeCombobox
+        value={shift.startMinutes}
+        options={timeOptions.filter((option) => Number(option.value) < MINUTES_PER_DAY)}
+        maxValue={MINUTES_PER_DAY - 1}
+        ariaLabel={`${dayLabel} start time`}
+        onChange={(startMinutes) => {
           const endMinutes =
             shift.endMinutes <= startMinutes
               ? Math.min(startMinutes + 15, MINUTES_PER_DAY - 15)
               : shift.endMinutes;
           onUpdate({ startMinutes, endMinutes });
         }}
-      >
-        <SelectTrigger className="w-[6.75rem]" size="sm" hideIcon>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {timeOptions
-            .filter((option) => Number(option.value) < MINUTES_PER_DAY)
-            .map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
+      />
       <span className="text-sm text-muted-foreground">-</span>
-      <Select
-        value={String(shift.endMinutes)}
-        onValueChange={(value) => onUpdate({ endMinutes: Number(value) })}
-      >
-        <SelectTrigger className="w-[6.75rem]" size="sm" hideIcon>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {endOptions.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <ScheduleTimeCombobox value={shift.endMinutes} options={endOptions} maxValue={MINUTES_PER_DAY} ariaLabel={`${dayLabel} end time`} onChange={(endMinutes) => onUpdate({ endMinutes })} />
       {showRemove ? (
         <Button
           type="button"
@@ -219,7 +189,7 @@ export function WeeklyAvailabilityEditor({
                 />
                 <span
                   className={cn(
-                    'w-[7.5rem] text-lg font-medium',
+                    'w-[7.5rem] text-base font-medium',
                     isAvailable ? 'text-foreground' : 'text-muted-foreground',
                   )}
                 >

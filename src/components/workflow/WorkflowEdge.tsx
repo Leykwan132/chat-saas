@@ -5,7 +5,7 @@ import {
   getBezierPath,
   type EdgeProps,
 } from '@xyflow/react';
-import { Split } from 'lucide-react';
+import { SignpostBig } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import type { WorkflowFlowEdge } from './workflowTypes';
 
@@ -44,7 +44,7 @@ export function WorkflowEdge({
       className="relative z-10 flex max-w-48 items-center gap-1.5 truncate rounded-full bg-black px-2.5 py-1 text-xs font-medium text-white"
     >
       <span className="sr-only">Condition:</span>
-      <Split className="size-3 shrink-0" aria-hidden="true" />
+      <SignpostBig className="size-3 shrink-0" aria-hidden="true" />
       <span className="min-w-0 truncate">{label}</span>
     </button>
   );

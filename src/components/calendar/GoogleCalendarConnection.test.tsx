@@ -52,20 +52,23 @@ describe("Google Calendar connection UI", () => {
     expect(markup).toContain("owner@gmail.com");
     expect(markup).not.toContain("Google account");
     expect(markup).not.toContain("Connected ");
-    expect(markup).toContain("rounded-full bg-green-600");
+    expect(markup).toContain('fill="currentColor"');
+    expect(markup).toContain('stroke="white"');
     expect(markup.match(/<svg/g)).toHaveLength(1);
     expect(markup).toContain('aria-label="Active"');
     expect(markup).toContain('aria-label="Disconnect Google Calendar"');
     expect(markup).not.toContain(">Connected<");
     const source = readFileSync(new URL("./GoogleCalendarConnectionCard.tsx", import.meta.url), "utf8");
-    expect(source).toContain('from "react-icons/hi2"');
+    expect(source).not.toContain('react-icons/hi2');
+    expect(source).toContain('hover:bg-muted');
   });
 
   it("falls back to Google Calendar when the connected email is missing", () => {
     const markup = renderConnectionCard({ state: "connected" });
     expect(markup).toContain("Google Calendar");
     expect(markup).toContain(GOOGLE_CALENDAR_ICON_SRC);
-    expect(markup).toContain("rounded-full bg-green-600");
+    expect(markup).toContain('text-green-600');
+    expect(markup).toContain('stroke="white"');
   });
 
   it("shows reconnect recovery without claiming connected", () => {

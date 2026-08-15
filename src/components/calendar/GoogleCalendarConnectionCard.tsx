@@ -1,4 +1,3 @@
-import { HiCheck } from "react-icons/hi2";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -15,7 +14,7 @@ export type GoogleCalendarConnectionCardProps = GoogleCalendarConnectionStatus &
 };
 
 const headerControlClassName =
-  "h-8 max-w-56 gap-1.5 border-transparent bg-input/50 px-2.5 py-1.5 shadow-none hover:bg-input/50";
+  "h-8 max-w-56 gap-1.5 border-transparent bg-input/50 px-2.5 py-1.5 shadow-none transition-colors hover:bg-muted";
 
 function GoogleCalendarIcon() {
   return <img src={GOOGLE_CALENDAR_ICON_SRC} alt="" className="size-4 shrink-0" />;
@@ -67,9 +66,7 @@ export function GoogleCalendarConnectionCard({
               <span className="min-w-0 truncate">
                 {connectedAccountEmail ?? "Google Calendar"}
               </span>
-              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-green-600" aria-label="Active">
-                <HiCheck className="size-3 text-white" aria-hidden="true" />
-              </span>
+              <span className="size-5 shrink-0 text-green-600" aria-label="Active"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" /><path stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" /></svg></span>
             </>
           ) : (
             connectLabel
