@@ -25,3 +25,10 @@ test('keeps creation focused on name, location, and duration without advanced se
   const dialogSource = readFileSync(new URL('./CreateServiceDialog.tsx', import.meta.url), 'utf8');
   expect(dialogSource).not.toContain('border-t pt-4');
 });
+
+test('uses a plain dimmed backdrop with a tighter modal radius', () => {
+  const source = readFileSync(new URL('./CreateServiceDialog.tsx', import.meta.url), 'utf8');
+
+  expect(source).toContain('overlayClassName="bg-black/35 supports-backdrop-filter:backdrop-blur-none"');
+  expect(source).toContain('rounded-3xl');
+});

@@ -10,6 +10,8 @@ The Services page opens the dialog from both Add a service entry points. The exi
 
 The footer has a text-only Close button that immediately discards the in-progress form and closes the dialog. It has no separating rule above it. After a successful create, the dialog closes and the app opens that service's detail page.
 
+Create Service uses a plain black dim overlay without background blur and a `rounded-3xl` container. This presentation override applies only to Create Service, not shared dialogs.
+
 ## Step 1: Service info and assignment mode
 
 The first dialog step collects only the service's Name, Location, and Duration. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field. Description and Advanced timing settings are configured from the service detail page after creation.

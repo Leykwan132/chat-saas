@@ -326,3 +326,40 @@ Expected: PASS.
 ```bash
 git add src/components/services/CreateServiceBasicsFields.tsx src/components/services/CreateServiceInfoStep.tsx src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Simplify service creation dialog"
 ```
+
+### Task 8: Refine Create Service modal presentation
+
+**Files:**
+- Modify: `src/components/services/CreateServiceDialog.tsx`
+- Test: `src/components/services/CreateServiceDialog.test.tsx`
+
+**Interfaces:** `DialogContent` receives a component-specific `overlayClassName` and caller radius class without changing the shared Dialog defaults.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).toContain('overlayClassName="bg-black/35 supports-backdrop-filter:backdrop-blur-none"');
+expect(source).toContain('rounded-3xl');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx`
+
+Expected: FAIL because Create Service inherited the shared backdrop blur and `rounded-4xl` radius.
+
+- [x] **Step 3: Implement the local presentation override**
+
+Set the dialog overlay to `bg-black/35 supports-backdrop-filter:backdrop-blur-none` and the content container to `rounded-3xl`. Do not change shared Dialog styling or other modal behavior.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx src/components/services/CreateServiceAssignmentCards.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Refine service dialog presentation"
+```

@@ -21,6 +21,7 @@
 - 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately. The implementation plan is ready for execution.
 - 2026-08-15 [USER] D661 ACTIVE: Team-service access ignores the person's personal plan and is based only on the active workspace plan. On Free, hovering or focusing the Team card darkens it slightly, reveals a centered Upgrade control, and opens the shared workspace-plan upgrade modal.
 - 2026-08-15 [USER] D662 ACTIVE: creation collects only Name, Location, and Duration; Description and Advanced timing are configured after creation. The footer has no separator, and assignment cards use the compact stacked-card treatment.
+- 2026-08-15 [USER] D663 ACTIVE: Create Service uses a plain dim overlay without blur and a slightly tighter `rounded-3xl` container; shared dialogs remain unchanged.
 - 2026-08-15 [TOOL] Now: compact Create Service dialog refinement is committed at `55ea1b03`; focused verification passed 26/26 with TypeScript and diff checks clean. Full `bun run test` remains blocked by Google Calendar projection (4) and booking-sync (4) failures; output was truncated after those failures.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
