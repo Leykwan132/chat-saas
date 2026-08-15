@@ -327,6 +327,7 @@ import type * as workflowMediaInternal from "../workflowMediaInternal.js";
 import type * as workflowMediaShared from "../workflowMediaShared.js";
 import type * as workflowMessageGraphSave from "../workflowMessageGraphSave.js";
 import type * as workflowMigrations from "../workflowMigrations.js";
+import type * as workflowNodeCanvasControls from "../workflowNodeCanvasControls.js";
 import type * as workflowNodeConfig from "../workflowNodeConfig.js";
 import type * as workflowNodeReadiness from "../workflowNodeReadiness.js";
 import type * as workflowNodeReadinessMigration from "../workflowNodeReadinessMigration.js";
@@ -674,6 +675,7 @@ declare const fullApi: ApiFromModules<{
   workflowMediaShared: typeof workflowMediaShared;
   workflowMessageGraphSave: typeof workflowMessageGraphSave;
   workflowMigrations: typeof workflowMigrations;
+  workflowNodeCanvasControls: typeof workflowNodeCanvasControls;
   workflowNodeConfig: typeof workflowNodeConfig;
   workflowNodeReadiness: typeof workflowNodeReadiness;
   workflowNodeReadinessMigration: typeof workflowNodeReadinessMigration;

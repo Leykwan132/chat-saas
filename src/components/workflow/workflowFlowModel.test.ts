@@ -174,8 +174,34 @@ test('workflowGraphToFlow carries booking service controls into appointment node
   );
   const bookingNode = flow.nodes.find((node) => node.id === textNodeId);
 
-  expect(bookingNode?.data.bookingAgentId).toBe(agentId);
+  expect(bookingNode?.data.agentId).toBe(agentId);
   expect(bookingNode?.data.allowedAppointmentServiceIds).toEqual([serviceId]);
+});
+
+test('workflowGraphToFlow carries the incoming When condition into Human escalation nodes', () => {
+  const graph = workflowGraph(undefined, 'When the customer asks for a person.');
+  graph.nodes[1] = {
+    ...graph.nodes[1]!,
+    kind: 'humanEscalation',
+  } as Doc<'workflowNodes'>;
+
+  const flow = workflowGraphToFlow(
+    graph,
+    () => {},
+    () => {},
+    undefined,
+    'horizontal',
+    false,
+    'standard',
+    agentId,
+  );
+  const escalationNode = flow.nodes.find((node) => node.id === textNodeId);
+
+  expect(escalationNode?.data.agentId).toBe(agentId);
+  expect(escalationNode?.data.incomingCondition).toEqual({
+    edgeId: 'edge',
+    detail: 'When the customer asks for a person.',
+  });
 });
 
 test('workflowGraphToFlow propagates compact density to persisted nodes only', () => {
