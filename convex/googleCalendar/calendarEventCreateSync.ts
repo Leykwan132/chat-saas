@@ -7,7 +7,6 @@ import { runCreateGoogleCalendarEvent } from "./writeExecution";
 import { googleCalendarWriteActionDependencies } from "./writeActions";
 import type { GoogleCalendarOperationResult } from "./contracts";
 import type { CalendarEventCreatePreparation } from "./calendarEventCreatePrepare";
-import type { GoogleCalendarWriteDependencies } from "./writeTypes";
 
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
   FunctionReference<"mutation", "internal", TArgs, TResult>;

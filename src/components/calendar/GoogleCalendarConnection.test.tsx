@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentProps } from "react";
 import { describe, expect, it } from "vitest";
+import type { Id } from "../../../convex/_generated/dataModel";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import {
   GOOGLE_CALENDAR_ICON_SRC,

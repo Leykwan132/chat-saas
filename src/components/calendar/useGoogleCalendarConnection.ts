@@ -61,10 +61,6 @@ export function useGoogleCalendarConnection() {
     }
   }, []);
 
-  const reconcileConnection = useCallback(() => {
-    return run(() => reconcile({}), "Could not connect Google Calendar");
-  }, [reconcile, run]);
-
   const refreshConnection = useCallback(() => {
     return run(() => refresh({}), "Could not refresh Google Calendar");
   }, [refresh, run]);

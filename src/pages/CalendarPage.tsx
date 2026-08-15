@@ -748,8 +748,8 @@ export default function CalendarPage() {
   ) as CalendarEvent[] | undefined;
 
   const createEvent = useAction(calendarApi.create);
-  const updateEvent = useMutation(calendarApi.update);
-  const removeEvent = useMutation(calendarApi.remove);
+  const updateEvent = useAction(calendarApi.update);
+  const removeEvent = useAction(calendarApi.remove);
   const updateTeamTimeZone = useMutation(api.teams.updateActiveTeamTimeZone);
 
   const editingAppointmentDetails = useQuery(
@@ -920,19 +920,6 @@ export default function CalendarPage() {
       toast.error(err instanceof Error ? err.message : 'Could not update time zone');
     }
   };
-
-  const openCreateEventSheet = (date = selectedDate) => {
-    setEditingEvent(null);
-    setFormState(
-      createInitialFormState(
-        date,
-        displayTimeZone,
-        currentUser?._id as Id<'users'> | undefined,
-      ),
-    );
-    setEventSheetOpen(true);
-  };
-
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEventId(event._id);

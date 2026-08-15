@@ -2,7 +2,6 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthContext } from "../authUtils";
 import { getOwnedAgent } from "../leadRouting/helpers";
 import {
-  getActiveTeamForUser,
   getTeamByWorkosOrgId,
   getPersonalTeamForUser,
   getUserByWorkosId,
