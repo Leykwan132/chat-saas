@@ -12,7 +12,7 @@
 
 - Use Node v22 for all scripts: `source ~/.nvm/nvm.sh && nvm use 22`.
 - The canvas Book appointment node remains the only direct editing surface for service assignment.
-- Inspector rows show active selected services only, with service name, teammate count, and teammate-name hover tooltip; descriptions and switches do not appear.
+- Inspector rows show active selected services only, with service name, dotted-underlined pointer teammate count, and teammate-name hover tooltip; descriptions and switches do not appear.
 - A missing `allowedAppointmentServiceIds` list means every current active service is selected.
 - Keep source modules below 300 lines and do not add comments.
 
@@ -50,6 +50,7 @@ test('booking inspector lists selected services without editable switches', () =
   expect(source).toContain('No services selected.');
   expect(source).toContain('bookingTeammateAvailabilityLabel');
   expect(source).toContain('Available teammates');
+  expect(source).toContain('decoration-dotted');
   expect(source).not.toContain('<Switch');
 });
 ```
@@ -75,7 +76,7 @@ type WorkflowBookingInspectorServicesProps = {
 };
 ```
 
-The component must query `listForAgent`, filter to active rows whose IDs are in `getEffectiveBookingServiceIds`, show a compact loading placeholder while the query is unresolved, and render the service name plus the existing teammate-count tooltip pattern. Render `No services selected.` when filtering leaves no rows. Do not import or render `Switch` and do not mutate workflow services.
+The component must query `listForAgent`, filter to active rows whose IDs are in `getEffectiveBookingServiceIds`, show a compact loading placeholder while the query is unresolved, and render the service name plus the existing teammate-count tooltip pattern. The count must use a dotted underline and pointer cursor to signal its hoverable teammate list. Render `No services selected.` when filtering leaves no rows. Do not import or render `Switch` and do not mutate workflow services.
 
 In `WorkflowInspectorForm`, pass `node.allowedAppointmentServiceIds` only to the new child component and render it directly below the Book appointment action fields:
 

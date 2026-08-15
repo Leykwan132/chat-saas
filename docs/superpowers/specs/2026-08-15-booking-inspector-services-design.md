@@ -8,7 +8,7 @@ Let workflow builders confirm the services enabled for a Book appointment node f
 
 - The standard Book appointment detail panel includes a Services section beneath its editable node configuration.
 - It lists only the active services currently enabled for that node.
-- Each row shows the service name and its assigned-teammate count. Hovering the count lists the assigned teammates by name.
+- Each row shows the service name and its assigned-teammate count. The count uses a dotted underline and pointer cursor to signal that hovering it lists the assigned teammates by name.
 - Service descriptions and selection switches do not render in the inspector.
 - When no active service is enabled, the section states that no services are selected.
 
