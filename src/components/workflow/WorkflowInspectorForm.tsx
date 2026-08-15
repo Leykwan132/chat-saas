@@ -15,9 +15,9 @@ import {
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { bookingAvailabilityBlocksApply, conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
-import { WorkflowBookingInspectorRequirements } from './WorkflowBookingInspectorRequirements';
+import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 import { WorkflowRequiredLabel } from './WorkflowRequiredLabel';
+import { WorkflowBookingNodeServices } from './WorkflowBookingNodeServices';
 import { WorkflowSendMediaSection } from './WorkflowSendMediaSection';
 
 const CUSTOM_ACTION_CONDITION_SUGGESTIONS = [
@@ -31,7 +31,6 @@ export type WorkflowInspectorSaveValues = {
   description: string;
   conditionName?: string;
   conditionDetail?: string;
-  allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
 };
 
 type WorkflowInspectorFormProps = {
@@ -57,11 +56,6 @@ export function WorkflowInspectorForm({
     workflowConditionDisplayLabel(conditionEdge?.label) ?? '',
   );
   const [conditionDetail, setConditionDetail] = useState(conditionEdge?.detail ?? '');
-  const [allowedAppointmentServiceIds, setAllowedAppointmentBookingServiceIds] = useState<
-    Id<'appointmentServices'>[] | undefined
-  >(node.kind === 'bookAppointment' ? node.allowedAppointmentServiceIds : undefined);
-  const [hasBookableService, setHasBookableService] = useState<boolean>();
-  const [hasAcceptingLeadMember, setHasAcceptingLeadMember] = useState<boolean>();
   const [hasReadyMedia, setHasReadyMedia] = useState<boolean>();
   const [attemptedApply, setAttemptedApply] = useState(false);
   const selectedTitle = name.trim() || workflowNodeTitle(node.kind);
@@ -78,7 +72,6 @@ export function WorkflowInspectorForm({
     goalLabel,
   } = getWorkflowInspectorBehavior(node.kind, Boolean(node.description));
   const isCustomAction = node.kind === 'aiResponds';
-  const isBookAppointmentAction = node.kind === 'bookAppointment';
   const isHumanEscalationAction = node.kind === 'humanEscalation';
   let conditionNamePlaceholder = 'e.g., Yes';
   let conditionDetailPlaceholder = 'Describe when this action should run';
@@ -103,10 +96,8 @@ export function WorkflowInspectorForm({
     : 'grid gap-8';
   const hasConditionDetail = !conditionDetailBlocksApply(conditionEnabled, conditionDetail);
   const hasActionDescription = !saveRequiresDescription || Boolean(goal.trim());
-  const hasAppointmentService = !isBookAppointmentAction || !agentId || hasBookableService === true;
-  const hasAppointmentAvailability = !isBookAppointmentAction || !agentId || !bookingAvailabilityBlocksApply(node.kind, hasAcceptingLeadMember);
   const hasMedia = !hasMediaSection || !agentId || hasReadyMedia === true;
-  const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasAppointmentService && hasAppointmentAvailability && hasMedia;
+  const hasRequiredConfiguration = hasConditionDetail && hasActionDescription && hasMedia;
   const saveDisabled = isSaving || !name.trim();
 
   const handleApply = () => {
@@ -119,9 +110,6 @@ export function WorkflowInspectorForm({
       description: hasGoalField ? goal : '',
       conditionName: conditionEnabled ? conditionName : undefined,
       conditionDetail: conditionEnabled ? conditionDetail : undefined,
-      allowedAppointmentServiceIds: isBookAppointmentAction
-        ? allowedAppointmentServiceIds
-        : undefined,
     });
   };
 
@@ -225,17 +213,6 @@ export function WorkflowInspectorForm({
                   ) : null}
                 </Field>
               ) : null}
-              {isBookAppointmentAction && agentId ? (
-                <WorkflowBookingInspectorRequirements
-                  agentId={agentId}
-                  allowedServiceIds={allowedAppointmentServiceIds}
-                  onAllowedServiceIdsChange={setAllowedAppointmentBookingServiceIds}
-                  onServiceEligibilityChange={setHasBookableService}
-                  onAvailabilityEligibilityChange={setHasAcceptingLeadMember}
-                  showServiceWarning={attemptedApply && !hasAppointmentService}
-                  showAvailabilityWarning={attemptedApply && !hasAppointmentAvailability}
-                />
-              ) : null}
               {hasMediaSection && agentId ? (
                 <WorkflowSendMediaSection
                   agentId={agentId}
@@ -243,6 +220,15 @@ export function WorkflowInspectorForm({
                   nodeKind={isSendFileAction ? 'sendFile' : 'sendImage'}
                   onReadinessChange={setHasReadyMedia}
                   showRequirementWarning={attemptedApply && !hasMedia}
+                />
+              ) : null}
+              {node.kind === 'bookAppointment' && agentId ? (
+                <WorkflowBookingNodeServices
+                  agentId={agentId}
+                  nodeId={node._id}
+                  allowedServiceIds={node.allowedAppointmentServiceIds}
+                  disabled={isSaving}
+                  presentation="inspector"
                 />
               ) : null}
             </section>

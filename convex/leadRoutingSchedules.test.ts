@@ -59,6 +59,23 @@ test("personal user can initialize their own availability schedule", async () =>
     workosUserId,
     timezone: "Asia/Kuala_Lumpur",
   });
+  await t.run(async (ctx) => {
+    const now = Date.now();
+    await ctx.db.insert("appointmentServices", {
+      agentId,
+      name: "Consultation",
+      isActive: true,
+      sortOrder: 0,
+      durationMinutes: 30,
+      fields: [],
+      timeSlotPolicy: "offer_slots",
+      salesStyle: "neutral",
+      assignmentStrategy: "balanced",
+      assignedWorkosUserIds: [workosUserId],
+      createdAt: now,
+      updatedAt: now,
+    });
+  });
 
   const detail = await authed.query(api.leadRouting.schedules.getForAgentUser, {
     agentId,
@@ -68,6 +85,8 @@ test("personal user can initialize their own availability schedule", async () =>
   expect(detail?.schedule?._id).toBe(userScheduleId);
   expect(detail?.schedule?.timezone).toBe("Asia/Kuala_Lumpur");
   expect(detail?.shifts).toHaveLength(7);
+  expect(detail?.user.role).toBe("owner");
+  expect(detail).not.toHaveProperty("services");
 });
 
 test("all-day availability survives the save and detail-query round trip", async () => {

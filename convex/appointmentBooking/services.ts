@@ -23,6 +23,7 @@ import {
 } from "./validators";
 import { filterServicesByWorkflowBookingSelection } from "../workflowAppointmentServices";
 import { refreshWorkflowNodeReadinessForAgent } from "../workflowNodeReadiness";
+import { listTeamWorkosUserIds } from "./serviceAssignments";
 
 export const getOverview = query({
   args: { agentId: v.id("agents") },
@@ -93,8 +94,12 @@ export const getServiceMetrics = query({
 export const createService = mutation({
   args: { agentId: v.id("agents"), name: v.string() },
   handler: async (ctx, args) => {
-    await assertAppointmentBookingManage(ctx, args.agentId);
+    const agent = await assertAppointmentBookingManage(ctx, args.agentId);
     const services = await listServices(ctx, args.agentId);
+    const assignedWorkosUserIds = await listTeamWorkosUserIds(ctx, agent);
+    if (assignedWorkosUserIds.length === 0) {
+      throw new Error("No teammates are available for this service");
+    }
     const now = Date.now();
     const serviceId = await ctx.db.insert("appointmentServices", {
       agentId: args.agentId,
@@ -107,6 +112,7 @@ export const createService = mutation({
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
       assignmentStrategy: "balanced",
+      assignedWorkosUserIds,
       createdAt: now,
       updatedAt: now,
     });
@@ -130,10 +136,30 @@ export const updateService = mutation({
     salesStyle: v.optional(salesStyleValidator),
     assignmentStrategy: v.optional(assignmentStrategyValidator),
     specificWorkosUserId: v.optional(v.string()),
+    assignedWorkosUserIds: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const service = await loadService(ctx, args.serviceId);
-    await assertAppointmentBookingManage(ctx, service.agentId);
+    const agent = await assertAppointmentBookingManage(ctx, service.agentId);
+    const teamWorkosUserIds = new Set(await listTeamWorkosUserIds(ctx, agent));
+    const selectedWorkosUserIds = args.assignedWorkosUserIds
+      ?? service.assignedWorkosUserIds
+      ?? [...teamWorkosUserIds];
+    const uniqueWorkosUserIds = [...new Set(selectedWorkosUserIds)];
+    if (uniqueWorkosUserIds.length === 0) {
+      throw new Error("Select at least one teammate");
+    }
+    if (uniqueWorkosUserIds.some((workosUserId) => !teamWorkosUserIds.has(workosUserId))) {
+      throw new Error("Selected teammate is not part of this team");
+    }
+    const assignmentStrategy = args.assignmentStrategy ?? service.assignmentStrategy;
+    const specificWorkosUserId = args.specificWorkosUserId?.trim() || service.specificWorkosUserId;
+    if (
+      assignmentStrategy === "specific_user" &&
+      (specificWorkosUserId === undefined || !uniqueWorkosUserIds.includes(specificWorkosUserId))
+    ) {
+      throw new Error("Select the specific teammate for this service");
+    }
     const patch: Partial<Doc<"appointmentServices">> = { updatedAt: Date.now() };
     if (args.name !== undefined) patch.name = args.name.trim() || service.name;
     if (args.description !== undefined) patch.description = args.description.trim() || undefined;
@@ -151,6 +177,7 @@ export const updateService = mutation({
     if (args.salesStyle !== undefined) patch.salesStyle = args.salesStyle;
     if (args.assignmentStrategy !== undefined) patch.assignmentStrategy = args.assignmentStrategy;
     if (args.specificWorkosUserId !== undefined) patch.specificWorkosUserId = args.specificWorkosUserId.trim() || undefined;
+    patch.assignedWorkosUserIds = uniqueWorkosUserIds;
     await ctx.db.patch(service._id, patch);
     await refreshWorkflowNodeReadinessForAgent(ctx, service.agentId);
   },

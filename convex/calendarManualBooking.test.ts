@@ -50,12 +50,16 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.insert("userShifts", {
-      userScheduleId,
-      dayOfWeek: 4,
-      startMinutes: 0,
-      endMinutes: 1440,
-    });
+    await Promise.all(
+      Array.from({ length: 7 }, (_, dayOfWeek) =>
+        ctx.db.insert("userShifts", {
+          userScheduleId,
+          dayOfWeek,
+          startMinutes: 0,
+          endMinutes: 1440,
+        }),
+      ),
+    );
     const customerId = await ctx.db.insert("customers", {
       orgId: "",
       service: "manual",

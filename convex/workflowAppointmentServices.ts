@@ -2,12 +2,30 @@ import { v } from "convex/values";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { assertManageableAgent } from "./agentAccess";
+import { resolveTeamForAgent } from "./appointmentBooking/access";
 import { getWorkflowForAgent, listWorkflowNodes } from "./workflowCore";
 import { refreshWorkflowNodeReadinessForAgent } from "./workflowNodeReadiness";
 
 const MAX_BOOKING_SERVICES = 100;
 
 type DbCtx = QueryCtx | MutationCtx;
+
+function teamMemberName(user: Pick<Doc<"users">, "email" | "firstName" | "lastName">) {
+  return [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email;
+}
+
+async function listServiceTeammates(ctx: QueryCtx, agent: Doc<"agents">) {
+  const team = await resolveTeamForAgent(ctx, agent);
+  const memberships = await ctx.db
+    .query("teamMemberships")
+    .withIndex("by_teamId", (q) => q.eq("teamId", team._id))
+    .take(MAX_BOOKING_SERVICES);
+  const users = await Promise.all(memberships.map((membership) => ctx.db.get(membership.userId)));
+  return users.flatMap((user) => user === null ? [] : [{
+    workosUserId: user.workosUserId,
+    name: teamMemberName(user),
+  }]);
+}
 
 async function getWorkflowBookAppointmentNodes(ctx: DbCtx, agentId: Id<"agents">) {
   const workflow = await getWorkflowForAgent(ctx, agentId);
@@ -90,6 +108,7 @@ export const listForAgent = query({
   args: { agentId: v.id("agents") },
   handler: async (ctx, args) => {
     const { agent } = await assertManageableAgent(ctx, args.agentId);
+    const teammates = await listServiceTeammates(ctx, agent);
     const services = await ctx.db
       .query("appointmentServices")
       .withIndex("by_agentId_and_sortOrder", (q) => q.eq("agentId", agent._id))
@@ -98,6 +117,9 @@ export const listForAgent = query({
     const rows = [];
     for (const service of services) {
       if (service.archivedAt !== undefined) continue;
+      const assignedTeammates = service.assignedWorkosUserIds === undefined
+        ? teammates
+        : teammates.filter((teammate) => service.assignedWorkosUserIds?.includes(teammate.workosUserId));
       rows.push({
         _id: service._id,
         name: service.name,
@@ -105,6 +127,7 @@ export const listForAgent = query({
         isActive: service.isActive,
         durationMinutes: service.durationMinutes,
         sortOrder: service.sortOrder,
+        assignedTeammates,
       });
     }
     return rows;

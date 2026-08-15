@@ -9,6 +9,10 @@ const layoutSource = readFileSync(
   new URL("../layouts/DashboardLayout.tsx", import.meta.url),
   "utf8",
 );
+const teamSwitcherSource = readFileSync(
+  new URL("./TeamSwitcher.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("workspace unavailable recovery", () => {
   test("shows only the approved recovery message and action", () => {
@@ -24,5 +28,18 @@ describe("workspace unavailable recovery", () => {
     expect(layoutSource).toContain(
       "navigate('/workspace', { replace: true })",
     );
+  });
+
+  test("shows a switching screen before stale-agent recovery", () => {
+    expect(layoutSource).toContain("isSwitchingWorkspace");
+    expect(layoutSource).toContain("Switching workspace...");
+    expect(layoutSource.indexOf("isSwitchingWorkspace")).toBeLessThan(
+      layoutSource.indexOf("if (agent === null)"),
+    );
+  });
+
+  test("notifies the dashboard when a workspace switch begins or fails", () => {
+    expect(teamSwitcherSource).toContain("onTeamSwitchStart");
+    expect(teamSwitcherSource).toContain("onTeamSwitchFailed");
   });
 });

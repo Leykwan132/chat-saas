@@ -18,6 +18,10 @@ import { WorkflowAutomationStateProvider } from './workflowAutomationState';
 import type { WorkflowCanvasDataMode } from './workflowAutomationContext';
 import { workflowCanvasEdgeTypes, workflowCanvasNodeTypes } from './workflowCanvasConfig';
 import { WORKFLOW_EDGE_Z_INDEX } from './workflowFlowModel';
+import {
+  getWorkflowLayoutNodeMeasurements,
+  type WorkflowLayoutNodeMeasurements,
+} from './workflowLayoutMeasurements';
 import type { WorkflowLayoutOrientation } from './workflowLayout';
 import type { WorkflowFlowEdge, WorkflowFlowNode } from './workflowTypes';
 import type { WorkflowTemplate } from './workflowTemplates';
@@ -46,7 +50,7 @@ type WorkflowCanvasProps = {
   onNodesConnected: (sourceNodeId: Id<'workflowNodes'>, targetNodeId: Id<'workflowNodes'>) => void;
   onEdgeRemoved: (edgeId: Id<'workflowEdges'>) => void;
   layoutOrientation: WorkflowLayoutOrientation;
-  onCleanup: () => void;
+  onCleanup: (measurements: WorkflowLayoutNodeMeasurements) => void;
   onArrange: () => void;
   isDirty: boolean;
   isSaving: boolean;
@@ -233,7 +237,7 @@ function WorkflowCanvasInner({
         activeView={activeView}
         layoutOrientation={layoutOrientation}
         onViewChange={handleViewChange}
-        onCleanup={onCleanup}
+        onCleanup={() => onCleanup(getWorkflowLayoutNodeMeasurements(localNodes))}
         onArrange={onArrange}
         onTemplateApply={onTemplateApply}
         cleanupDisabled={cleanupDisabled || activeView !== 'messageHandling'}

@@ -37,9 +37,16 @@ const teamMenuItemClassName =
 type TeamSwitcherProps = {
   settingsPath?: string;
   onTeamSwitch?: () => void;
+  onTeamSwitchStart?: () => void;
+  onTeamSwitchFailed?: () => void;
 };
 
-export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) {
+export function TeamSwitcher({
+  settingsPath,
+  onTeamSwitch,
+  onTeamSwitchStart,
+  onTeamSwitchFailed,
+}: TeamSwitcherProps) {
   const navigate = useNavigate();
   const { activeTeam, isPersonal, switchTeam } = useActiveTeam();
   const teams = useQuery(api.teams.listForCurrentUser);
@@ -56,6 +63,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
     if (!personalTeam || isPersonal || switchingTeamId !== null) return;
 
     setSwitchingTeamId('personal');
+    onTeamSwitchStart?.();
     try {
       await switchTeam({ teamId: personalTeam._id as Id<'teams'> });
       onTeamSwitch?.();
@@ -64,6 +72,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not switch workspace');
+      onTeamSwitchFailed?.();
       setSwitchingTeamId(null);
     }
   };
@@ -72,6 +81,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
     if (team.isActive || switchingTeamId !== null || !team.workosOrgId) return;
 
     setSwitchingTeamId(team._id);
+    onTeamSwitchStart?.();
     try {
       await switchTeam({
         teamId: team._id as Id<'teams'>,
@@ -83,6 +93,7 @@ export function TeamSwitcher({ settingsPath, onTeamSwitch }: TeamSwitcherProps) 
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Could not switch workspace');
+      onTeamSwitchFailed?.();
       setSwitchingTeamId(null);
     }
   };

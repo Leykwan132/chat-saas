@@ -1,9 +1,5 @@
 import { expect, test } from 'vitest';
-import {
-  bookingAvailabilityBlocksApply,
-  conditionDetailBlocksApply,
-  getWorkflowInspectorBehavior,
-} from './workflowInspectorBehavior';
+import { conditionDetailBlocksApply, getWorkflowInspectorBehavior } from './workflowInspectorBehavior';
 
 test('send photo and file nodes replace the goal field with media to send', () => {
   expect(getWorkflowInspectorBehavior('sendImage', true)).toMatchObject({
@@ -34,13 +30,6 @@ test('book appointment replaces the goal field with services', () => {
     hasGoalField: false,
     saveRequiresDescription: false,
   });
-});
-
-test('book appointment Apply requires one teammate accepting leads', () => {
-  expect(bookingAvailabilityBlocksApply('bookAppointment', undefined)).toBe(true);
-  expect(bookingAvailabilityBlocksApply('bookAppointment', false)).toBe(true);
-  expect(bookingAvailabilityBlocksApply('bookAppointment', true)).toBe(false);
-  expect(bookingAvailabilityBlocksApply('sendText', undefined)).toBe(false);
 });
 
 test('Apply requires detail only when the node has a displayed condition', () => {

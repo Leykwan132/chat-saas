@@ -36,6 +36,7 @@ import {
   buildServiceMutationArgs,
   DEFAULT_SERVICE_FORM,
   fieldTypePreview,
+  validateServiceAssignment,
   type ServiceForm,
   type TeamUserOption,
 } from '@/lib/serviceForm';
@@ -80,6 +81,13 @@ export function CreateServiceWizard({
   const backHref = `/dashboard/${agentId}/services`;
   const trimmedName = form.name.trim();
 
+  useEffect(() => {
+    if (teamUserOptions.length === 0) return;
+    setForm((previous) => previous.assignedWorkosUserIds.length > 0
+      ? previous
+      : { ...previous, assignedWorkosUserIds: teamUserOptions.map((user) => user.value) });
+  }, [teamUserOptions]);
+
   const slideStepMotion = {
     initial: { opacity: 0, x: 16 },
     animate: { opacity: 1, x: 0 },
@@ -107,7 +115,15 @@ export function CreateServiceWizard({
     if (step === 1 && trimmedName) setStep(2);
     else if (step === 2) setStep(3);
     else if (step === 3) setStep(4);
-    else if (step === 4) setStep(5);
+    else if (step === 4) {
+      const assignmentError = validateServiceAssignment(form);
+      if (assignmentError) {
+        setError(assignmentError);
+        return;
+      }
+      setError(null);
+      setStep(5);
+    }
   };
 
   useEffect(() => {
@@ -362,6 +378,7 @@ export function CreateServiceWizard({
                             form={form}
                             setForm={setForm}
                             teamUserOptions={teamUserOptions}
+                            showIncludeAll
                           />
 
                           <div className="flex items-center justify-between rounded-xl border border-border p-4">

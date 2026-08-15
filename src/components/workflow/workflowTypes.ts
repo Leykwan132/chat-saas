@@ -21,6 +21,12 @@ export type WorkflowNodeData = Record<string, unknown> & {
   kind: WorkflowNodeKind;
   title: string;
   description?: string;
+  allowedAppointmentServiceIds?: Id<'appointmentServices'>[];
+  agentId?: Id<'agents'>;
+  incomingCondition?: {
+    edgeId: Id<'workflowEdges'>;
+    detail?: string;
+  };
   isReady: boolean;
   readinessIssueCount: number;
   density?: WorkflowNodeDensity;

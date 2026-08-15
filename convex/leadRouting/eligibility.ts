@@ -55,10 +55,6 @@ export function isUserEligible(
   shifts: Doc<"userShifts">[],
   timeOffRows: Doc<"userTimeOff">[],
 ): boolean {
-  if (!schedule.enabled) return false;
   if (hasActiveTimeOff(now, timeOffRows)) return false;
-  if (schedule.mode === "manual") {
-    return schedule.manualStatus === "available";
-  }
   return isOnShift(now, schedule.timezone, shifts);
 }

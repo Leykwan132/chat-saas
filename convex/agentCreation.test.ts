@@ -5,6 +5,7 @@ import { api } from "./_generated/api";
 import schema from "./schema";
 import stripeSchema from "../node_modules/@convex-dev/stripe/dist/component/schema.js";
 import { DEFAULT_AGENT_MODEL } from "../shared/agentModelDefaults";
+import { Permission } from "../shared/permissions";
 
 const modules = import.meta.glob("./**/*.ts");
 
@@ -86,5 +87,104 @@ describe("goal-based agent creation", () => {
         goal: "support",
       }),
     ).rejects.toThrow("Business description is required");
+  });
+
+  test("enables the creator's schedule for a new personal agent", async () => {
+    const testInstance = initTest();
+    const workosUserId = "personal-schedule-owner";
+    const agentId = await testInstance
+      .withIdentity({ subject: workosUserId })
+      .mutation(api.agents.create, {
+        name: "Personal Schedule Agent",
+        businessName: "Personal Business",
+        businessDescription: "Personal availability defaults",
+        goal: "support",
+      });
+
+    const schedule = await testInstance.run(async (ctx) =>
+      await ctx.db
+        .query("userSchedules")
+        .withIndex("by_agentId_and_workosUserId", (q) =>
+          q.eq("agentId", agentId).eq("workosUserId", workosUserId),
+        )
+        .unique(),
+    );
+
+    expect(schedule?.enabled).toBe(true);
+  });
+
+  test("enables every current member's schedule for a new organizational agent", async () => {
+    const testInstance = initTest();
+    const { ownerWorkosUserId, memberWorkosUserId } = await testInstance.run(
+      async (ctx) => {
+        const now = Date.now();
+        const ownerWorkosUserId = "org-schedule-owner";
+        const memberWorkosUserId = "org-schedule-member";
+        const ownerId = await ctx.db.insert("users", {
+          workosUserId: ownerWorkosUserId,
+          email: "owner@example.com",
+          createdAt: now,
+          updatedAt: now,
+        });
+        const memberId = await ctx.db.insert("users", {
+          workosUserId: memberWorkosUserId,
+          email: "member@example.com",
+          createdAt: now,
+          updatedAt: now,
+        });
+        const teamId = await ctx.db.insert("teams", {
+          type: "organizational",
+          name: "Schedule Defaults",
+          ownerId,
+          workosOrgId: "org-schedule-defaults",
+          createdAt: now,
+          updatedAt: now,
+        });
+        await ctx.db.insert("teamMemberships", {
+          teamId,
+          userId: ownerId,
+          role: "owner",
+          createdAt: now,
+        });
+        await ctx.db.insert("teamMemberships", {
+          teamId,
+          userId: memberId,
+          role: "member",
+          createdAt: now,
+        });
+        await ctx.db.patch(ownerId, { activeTeamId: teamId, updatedAt: now });
+        return { ownerWorkosUserId, memberWorkosUserId };
+      },
+    );
+    const agentId = await testInstance
+      .withIdentity({
+        subject: ownerWorkosUserId,
+        permissions: [Permission.AGENTS_CREATE],
+      })
+      .mutation(api.agents.create, {
+        name: "Organizational Schedule Agent",
+        businessName: "Organizational Business",
+        businessDescription: "Organizational availability defaults",
+        goal: "support",
+      });
+
+    const schedules = await testInstance.run(async (ctx) =>
+      await ctx.db
+        .query("userSchedules")
+        .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
+        .collect(),
+    );
+
+    expect(
+      schedules
+        .map((schedule) => ({
+          workosUserId: schedule.workosUserId,
+          enabled: schedule.enabled,
+        }))
+        .sort((a, b) => a.workosUserId.localeCompare(b.workosUserId)),
+    ).toEqual([
+      { workosUserId: memberWorkosUserId, enabled: true },
+      { workosUserId: ownerWorkosUserId, enabled: true },
+    ]);
   });
 });

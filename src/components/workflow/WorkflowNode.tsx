@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { isWorkflowTerminalNodeKind } from '../../../shared/workflows';
 import { WorkflowAddNodeMenu } from './WorkflowAddNodeMenu';
+import { WorkflowNodeDirectControls } from './WorkflowNodeDirectControls';
 import { workflowKindIcons } from './workflowCatalog';
 import type { WorkflowPersistedFlowNode } from './workflowTypes';
 
@@ -27,13 +28,22 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
   const isProtected = data.kind === 'start' || data.kind === 'end';
   const isVertical = data.layoutOrientation === 'vertical';
   const isCompact = data.density === 'compact';
+  const hasDirectControls = (
+    data.density !== 'compact' &&
+    data.agentId !== undefined &&
+    ['sendText', 'sendImage', 'sendFile', 'bookAppointment', 'humanEscalation', 'closeConversation'].includes(data.kind)
+  );
   const setupItemLabel = workflowNodeSetupItemLabel(data.readinessIssueCount);
   const targetPosition = isVertical ? Position.Top : Position.Left;
   const sourcePosition = isVertical ? Position.Bottom : Position.Right;
-  const nodeFrameClassName = isCompact
+  const nodeFrameClassName = hasDirectControls
+    ? 'min-w-[280px] max-w-[340px]'
+    : isCompact
     ? 'min-w-[150px] max-w-[255px]'
     : 'min-w-[176px] max-w-[300px]';
-  const nodeCardClassName = isCompact
+  const nodeCardClassName = hasDirectControls
+    ? 'min-h-20 w-full gap-1.5 rounded-xl px-4 py-3.5'
+    : isCompact
     ? 'min-h-[68px] min-w-[150px] max-w-[255px] gap-[5px] rounded-[10px] px-3.5 py-3'
     : 'min-h-20 min-w-[176px] max-w-[300px] gap-1.5 rounded-xl px-4 py-3.5';
   const describedNodeWidthClassName = isCompact ? 'min-w-[187px]' : 'min-w-[220px]';
@@ -55,7 +65,7 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           'relative z-10 flex w-fit flex-col items-start justify-center border border-border bg-card text-left text-card-foreground transition-all group-focus-within:bg-muted group-hover:bg-muted',
           nodeCardClassName,
           selected && 'border-ring ring-1 ring-ring',
-          data.description && describedNodeWidthClassName,
+          (data.description || hasDirectControls) && describedNodeWidthClassName,
         )}
       >
         <div className={cn(
@@ -81,6 +91,17 @@ export function WorkflowNode({ data, selected }: NodeProps<WorkflowPersistedFlow
           )}>
             {data.description}
           </p>
+        ) : null}
+        {hasDirectControls && data.agentId ? (
+          <WorkflowNodeDirectControls
+            agentId={data.agentId}
+            nodeId={data.nodeId}
+            kind={data.kind}
+            description={data.description}
+            incomingCondition={data.incomingCondition}
+            allowedServiceIds={data.allowedAppointmentServiceIds}
+            disabled={data.disabled}
+          />
         ) : null}
       </div>
       {!data.isReady && data.kind !== 'start' && !isCompact ? (

@@ -53,7 +53,7 @@ export async function ensureUserScheduleForAgent(
     mode: "scheduled",
     manualStatus: "available",
     timezone: args.timezone?.trim() || DEFAULT_TIMEZONE,
-    enabled: args.enabled ?? false,
+    enabled: args.enabled ?? true,
     createdAt: now,
     updatedAt: now,
   });
@@ -145,7 +145,7 @@ export const getForAgentUser = query({
             .unique()
         : null;
 
-    let isAdmin = false;
+    let role: "owner" | "admin" | "member" = "owner";
     if (team !== null) {
       const membership = await ctx.db
         .query("teamMemberships")
@@ -153,8 +153,12 @@ export const getForAgentUser = query({
           q.eq("userId", user._id).eq("teamId", team._id),
         )
         .unique();
-      isAdmin = membership?.role === "owner" || membership?.role === "admin";
+      if (membership === null) {
+        throw new Error("Team membership not found");
+      }
+      role = membership.role;
     }
+    const isAdmin = role === "owner" || role === "admin";
 
     const schedule = await ctx.db
       .query("userSchedules")
@@ -162,7 +166,6 @@ export const getForAgentUser = query({
         q.eq("agentId", args.agentId).eq("workosUserId", args.workosUserId),
       )
       .unique();
-
     if (schedule === null) {
       return {
         user: {
@@ -171,6 +174,7 @@ export const getForAgentUser = query({
           firstName: user.firstName,
           lastName: user.lastName,
           isAdmin,
+          role,
         },
         schedule: null,
         shifts: [],
@@ -194,6 +198,7 @@ export const getForAgentUser = query({
         firstName: user.firstName,
         lastName: user.lastName,
         isAdmin,
+        role,
       },
       schedule: {
         ...schedule,
@@ -226,7 +231,7 @@ export const addUser = mutation({
       agentId: args.agentId,
       workosUserId: args.workosUserId,
       timezone: args.timezone,
-      enabled: false,
+      enabled: true,
     });
   },
 });

@@ -30,10 +30,6 @@ async function loadRoster(
 }
 
 function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
-  if (!schedule.enabled) return false;
-  if (schedule.mode === "manual") {
-    return schedule.manualStatus === "available";
-  }
   const start = getZonedDayAndMinutes(startAt, schedule.timezone);
   const end = getZonedDayAndMinutes(Math.max(startAt, endAt - 1), schedule.timezone);
   if (start.dayOfWeek !== end.dayOfWeek) return false;
@@ -45,6 +41,13 @@ function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedu
   );
 }
 
+export function isAssignedToService(
+  service: Doc<"appointmentServices">,
+  workosUserId: string,
+) {
+  return service.assignedWorkosUserIds === undefined || service.assignedWorkosUserIds.includes(workosUserId);
+}
+
 function overlaps(startA: number, endA: number, startB: number, endB: number) {
   return startA < endB && endA > startB;
 }
@@ -54,6 +57,7 @@ function hasTimeOffOverlap(startAt: number, endAt: number, rows: Doc<"userTimeOf
 }
 
 function entryAvailableForSlot(
+  service: Doc<"appointmentServices">,
   entry: AvailabilityRosterEntry,
   startAt: number,
   endAt: number,
@@ -61,6 +65,7 @@ function entryAvailableForSlot(
   ignoreGoogleHealth = false,
 ) {
   if (entry.user === null) return false;
+  if (!isAssignedToService(service, entry.schedule.workosUserId)) return false;
   if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
   if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
   if (!ignoreGoogleHealth && !entry.googleCalendarHealthy) return false;
@@ -87,7 +92,7 @@ function chooseAssigneeForSlot(
   const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
     if (entryAvailableForSlot(
-      entry, args.startAt, args.endAt, args.excludeEventId, args.ignoreGoogleHealth,
+      args.service, entry, args.startAt, args.endAt, args.excludeEventId, args.ignoreGoogleHealth,
     )) {
       available.push(entry);
     }

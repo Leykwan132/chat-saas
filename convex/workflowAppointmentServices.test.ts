@@ -69,7 +69,33 @@ async function createPersonalAgent(
       createdAt: now,
       updatedAt: now,
     });
-    return { agentId };
+    return { agentId, teamId, ownerWorkosUserId: workosUserId };
+  });
+}
+
+async function createTeamMember(
+  t: ReturnType<typeof initTest>,
+  teamId: Id<"teams">,
+  workosUserId: string,
+  firstName: string,
+  lastName: string,
+) {
+  await t.run(async (ctx) => {
+    const now = Date.now();
+    const userId = await ctx.db.insert("users", {
+      workosUserId,
+      email: `${workosUserId}@example.com`,
+      firstName,
+      lastName,
+      createdAt: now,
+      updatedAt: now,
+    });
+    await ctx.db.insert("teamMemberships", {
+      teamId,
+      userId,
+      role: "member",
+      createdAt: now,
+    });
   });
 }
 
@@ -79,6 +105,7 @@ async function createBookingService(
   name: string,
   sortOrder: number,
   isActive = true,
+  assignedWorkosUserIds?: string[],
 ) {
   return await t.run(async (ctx) => {
     const now = Date.now();
@@ -96,11 +123,42 @@ async function createBookingService(
       timeSlotPolicy: "offer_slots",
       salesStyle: "neutral",
       assignmentStrategy: "balanced",
+      assignedWorkosUserIds,
       createdAt: now,
       updatedAt: now,
     });
   });
 }
+
+test("workflow service rows include assigned teammate names", async () => {
+  const t = initTest();
+  const ownerWorkosUserId = "user-workflow-service-team";
+  const { agentId, teamId } = await createPersonalAgent(t, ownerWorkosUserId);
+  const teammateWorkosUserId = "taylor-workos-id";
+  await createTeamMember(t, teamId, teammateWorkosUserId, "Taylor", "Walker");
+  await createBookingService(t, agentId, "Consultation", 0);
+  await createBookingService(
+    t,
+    agentId,
+    "Installation",
+    1,
+    true,
+    [teammateWorkosUserId],
+  );
+
+  const rows = await t.withIdentity({ subject: ownerWorkosUserId }).query(
+    api.workflowAppointmentServices.listForAgent,
+    { agentId },
+  );
+
+  expect(rows.find((service) => service.name === "Consultation")?.assignedTeammates)
+    .toEqual(expect.arrayContaining([
+      expect.objectContaining({ workosUserId: ownerWorkosUserId }),
+      expect.objectContaining({ name: "Taylor Walker" }),
+    ]));
+  expect(rows.find((service) => service.name === "Installation")?.assignedTeammates)
+    .toEqual([{ workosUserId: teammateWorkosUserId, name: "Taylor Walker" }]);
+});
 
 test("book appointment service selection filters active booking services", async () => {
   const t = initTest();

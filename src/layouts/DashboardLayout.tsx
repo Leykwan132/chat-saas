@@ -38,9 +38,15 @@ import { toast } from 'sonner';
 
 type DashboardHeaderProps = {
   agent: { _id: Id<'agents'>; name: string };
+  onTeamSwitchStart: () => void;
+  onTeamSwitchFailed: () => void;
 };
 
-function DashboardHeader({ agent }: DashboardHeaderProps) {
+function DashboardHeader({
+  agent,
+  onTeamSwitchStart,
+  onTeamSwitchFailed,
+}: DashboardHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const allAgents = useQuery(api.agents.list);
@@ -56,7 +62,12 @@ function DashboardHeader({ agent }: DashboardHeaderProps) {
     <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background px-4">
       <Breadcrumb>
         <BreadcrumbList>
-          <TeamSwitcher settingsPath={settingsPath} onTeamSwitch={handleTeamSwitch} />
+          <TeamSwitcher
+            settingsPath={settingsPath}
+            onTeamSwitch={handleTeamSwitch}
+            onTeamSwitchStart={onTeamSwitchStart}
+            onTeamSwitchFailed={onTeamSwitchFailed}
+          />
 
           <BreadcrumbSeparator />
 
@@ -122,6 +133,7 @@ function DashboardContent() {
   const { isPersonal, switchTeam } = useActiveTeam();
   const teams = useQuery(api.teams.listForCurrentUser);
   const [switchingToPersonal, setSwitchingToPersonal] = useState(false);
+  const [isSwitchingWorkspace, setIsSwitchingWorkspace] = useState(false);
   const location = useLocation();
   const isInboxPage = /\/inbox\/?$/.test(location.pathname);
   const isCalendarPage = /\/calendar\/?$/.test(location.pathname);
@@ -157,6 +169,15 @@ function DashboardContent() {
 
   if (!agentId) {
     return <Navigate to="/workspace" replace />;
+  }
+
+  if (isSwitchingWorkspace) {
+    return (
+      <div className="flex min-h-[100svh] flex-col items-center justify-center gap-4 bg-background">
+        <Spinner className="size-8 text-muted-foreground" />
+        <p className="text-sm font-medium text-muted-foreground">Switching workspace...</p>
+      </div>
+    );
   }
 
   if (agent === undefined) {
@@ -199,7 +220,11 @@ function DashboardContent() {
           )}
         >
           {/* Top header with breadcrumb */}
-          <DashboardHeader agent={agent} />
+          <DashboardHeader
+            agent={agent}
+            onTeamSwitchStart={() => setIsSwitchingWorkspace(true)}
+            onTeamSwitchFailed={() => setIsSwitchingWorkspace(false)}
+          />
 
           {/* Page content */}
           <main
