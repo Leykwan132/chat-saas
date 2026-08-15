@@ -4,6 +4,7 @@
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
 - 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is ready to commit.
+- 2026-08-15 [USER] Now: make the connected Google Calendar status marker solid green by removing its white stroke.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -30,8 +31,7 @@
 - 2026-08-15 [CODE] Calendar New Booking is pinned to the selected-day header edge, shown in the shared no-events state, and opened by the grid Create Booking action after selecting its date; it remains unreleased.
 
 # Working set
-- `src/components/calendar/CalendarDayPanel.test.tsx`
-- `src/components/calendar/GoogleCalendarSourceBadge.tsx`
+- `src/components/calendar/GoogleCalendarConnectionCard.tsx`
 - `src/pages/CalendarPage.tsx`
 - `src/lib/posthogFeatureFlags.ts`
 - `src/lib/posthogFeatureFlags.test.ts`
@@ -39,8 +39,7 @@
 - `docs/superpowers/specs/2026-08-15-calendar-unified-booking-actions-design.md`
 - `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
 - `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
-- `docs/superpowers/specs/2026-08-15-calendar-hide-google-event-badge-design.md`
-- `docs/superpowers/plans/2026-08-15-calendar-hide-google-event-badge.md`
+- `docs/superpowers/specs/2026-08-15-calendar-solid-connected-status-design.md`
 - `CONTINUITY.md`
 
 # Receipts
