@@ -57,3 +57,4 @@
 - 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
 - 2026-08-15 [TOOL] Calendar day component tests were RED before the components existed, then focused Calendar verification passed 5/5 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [CODE] Committed the Calendar action components as `f2641c33` and CalendarPage integration as `5c08c8ef`.
+- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 reconfirmed existing Google Calendar failures, including projection (4) and booking-sync (4); the new Calendar day-panel suite passed.
