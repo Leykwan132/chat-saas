@@ -3,16 +3,18 @@
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
 - 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
-- 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is ready to commit.
-- 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is ready to commit.
+- 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is committed.
+- 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is committed.
 - 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
-- 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is ready to commit.
+- 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is committed.
+- 2026-08-15 [USER] Now: manually created events must be written to the creator's Google Calendar when they have an active connection; a Google failure fails the creation and rolls back its local draft.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Superseded header action layout: New Booking fills the day-header row and is pinned to the far-right edge.
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog; the grid action is named Create Booking and first selects its date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access, currently enabled only for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
+- 2026-08-15 [USER] D658 ACTIVE: a connected event creator's manual calendar event is fail-closed: Google write failure prevents the event from being retained locally.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
