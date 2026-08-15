@@ -60,8 +60,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment is the only full-canvas action with a direct primary control; other full editable nodes need focused controls and Human escalation needs an incoming-condition display.
-- 2026-08-15 [TOOL] Next: user review of the workflow-node-controls design, then implementation planning and verification; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: the approved workflow-node-controls plan is committed; implementation awaits the user’s execution-mode choice.
+- 2026-08-15 [TOOL] Next: implement and verify direct controls for standard workflow nodes; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -80,6 +80,7 @@
 - `docs/superpowers/specs/2026-08-15-booking-inspector-services-design.md`
 - `docs/superpowers/specs/2026-08-15-shared-booking-service-controls-design.md`
 - `docs/superpowers/specs/2026-08-15-workflow-node-controls-design.md`
+- `docs/superpowers/plans/2026-08-15-workflow-node-controls.md`
 - `docs/superpowers/plans/2026-08-15-booking-node-services.md`
 - `CONTINUITY.md`
 
@@ -134,3 +135,4 @@
 - 2026-08-15 [TOOL] RED then GREEN: inspector-presentation markup initially lacked the shared component presentation marker; it now renders every active service with its existing live switch and excludes inactive services. Three focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.
 - 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 430 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
 - 2026-08-15 [USER] Full editable nodes should provide direct action controls, and Human escalation must show its incoming `When` condition.
+- 2026-08-15 [CODE] Workflow node-controls design and implementation plan are committed as `1432038c` and `16193d83`; user-approved execution mode is pending.
