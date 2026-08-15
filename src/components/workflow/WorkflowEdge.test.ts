@@ -11,7 +11,7 @@ vi.mock('@xyflow/react', () => ({
 
 import { WorkflowEdge } from './WorkflowEdge';
 
-test('workflow condition labels use the Split icon', () => {
+test('workflow condition labels use the SignpostBig icon', () => {
   const markup = renderToStaticMarkup(
     createElement(WorkflowEdge, {
       label: 'Customer is ready to book',
@@ -22,6 +22,6 @@ test('workflow condition labels use the Split icon', () => {
     } as ComponentProps<typeof WorkflowEdge>),
   );
 
-  expect(markup).toContain('lucide-split');
+  expect(markup).toContain('lucide-signpost-big');
   expect(markup).not.toContain('lucide-clipboard-list');
 });
