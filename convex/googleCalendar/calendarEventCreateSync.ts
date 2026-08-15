@@ -22,7 +22,9 @@ type GoogleCalendarCreateApi = {
   };
 };
 
-const googleInternal = (internal as unknown as { googleCalendar: GoogleCalendarCreateApi }).googleCalendar;
+const googleInternal: GoogleCalendarCreateApi = (
+  internal as unknown as { googleCalendar: GoogleCalendarCreateApi }
+).googleCalendar;
 
 export type CalendarEventCreateDependencies = {
   prepare: (args: CalendarEventCreateInput & { refreshed: boolean }) => Promise<CalendarEventCreatePreparation>;
@@ -53,9 +55,12 @@ export async function runPreparedCalendarEventCreate(
 export async function runCalendarEventCreate(
   ctx: ActionCtx,
   args: CalendarEventCreateInput,
-) {
+): Promise<Id<"calendarEvents">> {
   return await runPreparedCalendarEventCreate(args, {
-    prepare: (input) => ctx.runMutation(googleInternal.calendarEventCreatePrepare.prepareCreate, input),
+    prepare: (input): Promise<CalendarEventCreatePreparation> => ctx.runMutation(
+      googleInternal.calendarEventCreatePrepare.prepareCreate,
+      input,
+    ),
     refresh: (input) => ctx.runAction(googleInternal.syncWorker.run, input),
     write: async (prepared) => await runCreateGoogleCalendarEvent({
       connectionId: prepared.connectionId,

@@ -26,6 +26,7 @@
 - 2026-08-15 [USER] D665 ACTIVE: Create Service Close uses the ghost button treatment; Back remains a text link.
 - 2026-08-15 [USER] D666 ACTIVE: the Google Meet Location option is visible only to accounts included in the Google Calendar feature flag; eligible but disconnected accounts receive connection guidance.
 - 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
+- 2026-08-15 [CODE] Now: Convex deployment typechecking excludes Vitest fixtures, and the Calendar event-create action has explicit internal contracts that keep production type inference stable.
 - 2026-08-15 [TOOL] Now: compact Create Service dialog refinement is committed at `55ea1b03`; focused verification passed 26/26 with TypeScript and diff checks clean. Full `bun run test` remains blocked by Google Calendar projection (4) and booking-sync (4) failures; output was truncated after those failures.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 

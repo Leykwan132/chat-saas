@@ -119,6 +119,9 @@ export const prepareCreate = internalMutation({
     }
     const gate = googleCalendarBookingGate(connection);
     if (gate.kind === "error") throw new Error(gate.result.message);
+    if (gate.kind !== "google") {
+      throw new Error("Google Calendar connection is unavailable");
+    }
     if (args.refreshed !== true) {
       return { kind: "needs_refresh", connectionId: gate.connectionId };
     }
