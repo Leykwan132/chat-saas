@@ -161,19 +161,37 @@ function NotesBlock({ remarks }: { remarks?: string }) {
   const hasRemarks = Boolean(remarks?.trim());
 
   return (
-    <div className="flex items-center gap-4">
-      <NotebookPen className="size-5 shrink-0 text-muted-foreground" />
-      <div className="min-w-0 flex-1 py-0.5">
+    <div className="flex items-start gap-4">
+      <NotebookPen className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
         <h3 className="text-sm font-semibold text-muted-foreground">Internal notes</h3>
-        {hasRemarks ? (
+        <div className="mt-1.5 rounded-lg bg-muted px-4 py-3">
+          {hasRemarks ? (
+            <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-foreground">
+              {remarks}
+            </p>
+          ) : (
+            <p className="text-base leading-relaxed text-muted-foreground">
+              No internal notes yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SummaryBlock({ summary }: { summary: string }) {
+  return (
+    <div className="flex items-start gap-4">
+      <AlignLeft className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <h3 className="text-sm font-semibold text-muted-foreground">Summary</h3>
+        <div className="mt-1.5 rounded-lg bg-muted px-4 py-3">
           <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-foreground">
-            {remarks}
+            {summary}
           </p>
-        ) : (
-          <p className="text-base leading-relaxed text-muted-foreground">
-            No internal notes yet.
-          </p>
-        )}
+        </div>
       </div>
     </div>
   );
@@ -231,22 +249,14 @@ export function EventDetailsBody({
         <h3 className="text-xl font-semibold tracking-tight text-foreground">
           Internal details
         </h3>
-        <div className="flex flex-col gap-5">
-          <TeamMemberBlock name={details.teamMember} />
-          <DetailSection title="Team" rows={attendeeRows} />
-          <NotesBlock remarks={details.remarks} />
-        </div>
-        {hasSummary ? (
-          <div className="flex items-center gap-4">
-            <AlignLeft className="size-5 shrink-0 text-muted-foreground" />
-            <div className="min-w-0 flex-1 py-0.5">
-              <h3 className="text-sm font-semibold text-muted-foreground">Summary</h3>
-              <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-foreground">
-                {details.description}
-              </p>
-            </div>
+        <div className={hasSummary ? 'grid grid-cols-1 gap-5 sm:grid-cols-2' : 'flex flex-col gap-5'}>
+          <div className="flex flex-col gap-5">
+            <TeamMemberBlock name={details.teamMember} />
+            <DetailSection title="Team" rows={attendeeRows} />
+            <NotesBlock remarks={details.remarks} />
           </div>
-        ) : null}
+          {hasSummary ? <SummaryBlock summary={details.description!} /> : null}
+        </div>
       </section>
 
       <DetailSection title="Customer detail" rows={customerFieldRows} />

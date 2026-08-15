@@ -28,6 +28,7 @@
 - 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
 - 2026-08-15 [USER] D668 ACTIVE: all standard application Dialog and Sheet backdrops use Create Booking’s light `bg-black/10`, unblurred treatment; non-modal overlays and content-level effects remain unchanged.
 - 2026-08-16 [USER] D669 ACTIVE: Service-card descriptions appear directly below the service title while the booking count and active switch remain at the card bottom.
+- 2026-08-16 [USER] D670 ACTIVE: Calendar Internal details places Summary beside staff details on desktop, uses neutral text surfaces for Summary and Internal notes, and aligns their icons at the top. Calendar edit time fields normalize existing event values for prefill.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -43,18 +44,13 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-13 [CODE] Tasks 1–6 complete through `5c650fd6`: Google connection/contracts, typed provider boundary, normalized sync, private availability, watch/push lifecycle, and conflict-safe idempotent writes.
-- 2026-08-15 [CODE] Task 7 committed initial Google-backed booking orchestration at `8494f5c6`; follow-up reservation/ownership changes remain on the feature history.
-- 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
-- 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
-- 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
-- 2026-08-15 [CODE] Calendar New Booking is pinned to the selected-day header edge, shown in the shared no-events state, and opened by the grid Create Booking action after selecting its date; it remains unreleased.
-- 2026-08-15 [CODE] Manual calendar-event creation now uses the Google-aware action, synchronizes connected creators' primary calendars fail-closed, and retains local-only behavior without a connection; connection status now shows a white check in its green badge. The feature remains unreleased.
-- 2026-08-15 [CODE] The approved Create Service dialog design, including stacked assignment-card icons and advanced timing details, is committed at `7108bf85`.
-- 2026-08-15 [CODE] Create Service now hides Description and Advanced settings, removes the footer rule, and simplifies assignment cards; focused verification is pending commit.
-- 2026-08-15 [TOOL] Merged `origin/main` Book appointment empty-state implementation; its workflow changes and supporting spec/plan are retained.
-- 2026-08-15 [CODE] Dialog and Sheet backdrops now inherit the approved light, unblurred style; redundant visual overrides were removed from Booking, Create Service, and fullscreen Test Chat.
-- 2026-08-16 [CODE] Service-card titles no longer expand vertically, so descriptions sit directly beneath them.
+- 2026-08-13 [CODE] Google Calendar connection, sync, private availability, watch lifecycle, and idempotent writes landed through `5c650fd6`.
+- 2026-08-15 [CODE] The feature branch merged `origin/main`, preserving Google availability checks and service teammate filtering.
+- 2026-08-15 [CODE] Calendar booking creation is unified across header, empty-state, and grid actions; connected manual events synchronize fail-closed to the creator's primary calendar.
+- 2026-08-15 [CODE] Google Calendar connection is early access for the two approved accounts; synced events include the approved indicator treatment.
+- 2026-08-15 [CODE] Service creation, location, Google Meet booking links, workspace-plan team access, and personal-service migration are implemented locally.
+- 2026-08-15 [CODE] Standard Dialog and Sheet backdrops use the unblurred light overlay, and service-card descriptions sit directly below their titles.
+- 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, and Internal details uses the approved responsive Summary/notes presentation.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
