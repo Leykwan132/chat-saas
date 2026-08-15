@@ -138,6 +138,18 @@ function storedFieldToForm(field: ServiceRow['fields'][number]): ServiceFieldFor
 
 export function serviceToForm(service: ServiceRow, teamWorkosUserIds: string[]): ServiceForm {
   const preferredTimeMinutes = normalizePreferredTimeMinutes(service.preferredTimeMinutes);
+  const selectedWorkosUserIds = service.assignedWorkosUserIds?.filter((workosUserId) =>
+    teamWorkosUserIds.includes(workosUserId),
+  );
+  const assignedWorkosUserIds =
+    selectedWorkosUserIds === undefined || selectedWorkosUserIds.length === 0
+      ? teamWorkosUserIds
+      : selectedWorkosUserIds;
+  const specificWorkosUserId =
+    service.assignmentStrategy === 'specific_user' &&
+    !assignedWorkosUserIds.includes(service.specificWorkosUserId ?? '')
+      ? (assignedWorkosUserIds[0] ?? '')
+      : service.specificWorkosUserId ?? '';
   return {
     name: service.name,
     description: service.description ?? '',
@@ -157,9 +169,9 @@ export function serviceToForm(service: ServiceRow, teamWorkosUserIds: string[]):
         ? preferredTimeMinutes.map((value) => minutesToCalendarTimeLabel(value))
         : [DEFAULT_PREFERRED_TIME],
     salesStyle: service.salesStyle,
-    assignedWorkosUserIds: service.assignedWorkosUserIds ?? teamWorkosUserIds,
+    assignedWorkosUserIds,
     assignmentStrategy: service.assignmentStrategy,
-    specificWorkosUserId: service.specificWorkosUserId ?? '',
+    specificWorkosUserId,
   };
 }
 

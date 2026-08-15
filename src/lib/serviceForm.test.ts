@@ -31,6 +31,20 @@ test('uses the team for a service that has not been migrated', () => {
     .assignedWorkosUserIds).toEqual(['owner-id', 'member-id']);
 });
 
+test('replaces stale service teammates with the active workspace team', () => {
+  expect(serviceToForm({ ...service, assignedWorkosUserIds: ['former-org-member'] }, ['owner-id'])
+    .assignedWorkosUserIds).toEqual(['owner-id']);
+});
+
+test('replaces a stale specific teammate with the active workspace owner', () => {
+  expect(serviceToForm({
+    ...service,
+    assignedWorkosUserIds: ['former-org-member'],
+    assignmentStrategy: 'specific_user',
+    specificWorkosUserId: 'former-org-member',
+  }, ['owner-id']).specificWorkosUserId).toBe('owner-id');
+});
+
 test('requires a selected teammate and a selected specific teammate', () => {
   expect(validateServiceAssignment({ ...DEFAULT_SERVICE_FORM, assignedWorkosUserIds: [] }))
     .toBe('Select at least one teammate.');

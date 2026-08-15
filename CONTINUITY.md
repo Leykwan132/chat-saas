@@ -28,7 +28,7 @@
 - 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
 - 2026-08-15 [CODE] Now: Convex deployment typechecking excludes Vitest fixtures, and the Calendar event-create action has explicit internal contracts that keep production type inference stable.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
-- 2026-08-15 [TOOL] Now: compact Create Service dialog refinement is committed at `55ea1b03`; focused verification passed 26/26 with TypeScript and diff checks clean. Full `bun run test` remains blocked by Google Calendar projection (4) and booking-sync (4) failures; output was truncated after those failures.
+- 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
@@ -60,6 +60,7 @@
 - `convex/googleCalendar/calendarEventCreatePrepare.ts`
 - `convex/googleCalendar/calendarEventCreateSync.ts`
 - `convex/appointmentBooking/services.ts`
+- `convex/serviceAvailabilityMigration.ts`
 - `src/components/services/ServiceLocationField.tsx`
 - `src/components/services/CreateServiceWizard.tsx`
 - `src/components/ServiceForm.tsx`
