@@ -64,3 +64,4 @@
 - 2026-08-15 [USER] Approved the unified-booking spec and requested implementation planning.
 - 2026-08-15 [TOOL] Unified booking-action tests were RED before implementation, then focused Calendar verification passed 10/10 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [CODE] Committed unified Calendar booking actions as `ec1637d9`.
+- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 again reproduced the existing Google Calendar projection (4) and booking-sync (4) failures; the unified Calendar day-panel suite passed.
