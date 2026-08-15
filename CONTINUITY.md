@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: local branch was fast-forwarded to `origin/cursor/google-calendar-booking-sync-10b0`; merge conflicts with `origin/main` are resolved and the merge is awaiting verification/commit.
+- 2026-08-15 [TOOL] Now: local branch includes `origin/main` at merge commit `0b6c9760`; its focused Google Calendar booking tests pass under Node v22.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
@@ -36,4 +36,5 @@
 # Receipts
 - 2026-08-15 [TOOL] Stashed the prior branch’s two unrelated workspace changes as `codex-auto-stash-before-google-calendar-branch-switch` before switching branches.
 - 2026-08-15 [TOOL] Fetched `origin --prune`, switched local checkout to `cursor/google-calendar-booking-sync-10b0`, then fast-forwarded it to `5ed043cb`.
-- 2026-08-15 [TOOL] `git merge --no-ff origin/main` encountered conflicts only in `CONTINUITY.md` and `convex/appointmentBooking/availability.ts`; resolution combines both feature sets.
+- 2026-08-15 [TOOL] `git merge --no-ff origin/main` encountered conflicts only in `CONTINUITY.md` and `convex/appointmentBooking/availability.ts`; merge commit `0b6c9760` combines both feature sets.
+- 2026-08-15 [TOOL] Focused booking verification passed: 26 tests in 4 suites under Node v22.22.0.
