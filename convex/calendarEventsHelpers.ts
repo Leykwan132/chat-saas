@@ -20,6 +20,40 @@ const eventStatusValidator = v.union(
   v.literal("cancelled"),
 );
 
+export type CalendarEventCreateInput = {
+  title: string;
+  description?: string;
+  location?: string;
+  link?: string;
+  startAt: number;
+  endAt: number;
+  timeZone: string;
+  allDay?: boolean;
+  startDate?: string;
+  endDate?: string;
+  status?: "confirmed" | "tentative" | "cancelled";
+  customerId: Id<"customers">;
+  assignedUserId: Id<"users">;
+  attendeeUserIds?: Id<"users">[];
+};
+
+export const calendarEventCreateArgs = {
+  title: v.string(),
+  description: v.optional(v.string()),
+  location: v.optional(v.string()),
+  link: v.optional(v.string()),
+  startAt: v.number(),
+  endAt: v.number(),
+  timeZone: v.string(),
+  allDay: v.optional(v.boolean()),
+  startDate: v.optional(v.string()),
+  endDate: v.optional(v.string()),
+  status: v.optional(eventStatusValidator),
+  customerId: v.id("customers"),
+  assignedUserId: v.id("users"),
+  attendeeUserIds: v.optional(v.array(v.id("users"))),
+};
+
 export const calendarEventUpdateArgs = {
   eventId: v.id("calendarEvents"),
   title: v.optional(v.string()),
