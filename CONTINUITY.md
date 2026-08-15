@@ -61,8 +61,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Cleanup must be updated to use rendered node dimensions after direct controls expanded the standard workflow cards.
-- 2026-08-15 [TOOL] Next: user review of the measured-node Cleanup design, then implementation planning and verification; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: the approved measured-node Cleanup plan is committed; implementation awaits the user’s execution-mode choice.
+- 2026-08-15 [TOOL] Next: implement and verify measured-node Cleanup spacing; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
@@ -76,6 +76,7 @@
 - `src/pages/workflowLayoutPersistence.ts`
 - `src/pages/workflowLayoutPersistence.test.ts`
 - `docs/superpowers/specs/2026-08-15-workflow-cleanup-measured-nodes-design.md`
+- `docs/superpowers/plans/2026-08-15-workflow-cleanup-measured-nodes.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -132,3 +133,4 @@
 - 2026-08-15 [CODE] Workflow node-controls design and implementation plan are committed as `1432038c` and `16193d83`; user-approved execution mode is pending.
 - 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 432 application/Convex test files (1,378 tests) and 63 Docs tests. Known unrelated test stderr remains non-failing.
 - 2026-08-15 [USER] Cleanup must account for the larger inline workflow controls; approved use of measured rendered node dimensions instead of fixed compact-card assumptions.
+- 2026-08-15 [CODE] Measured-node Cleanup design and implementation plan are committed as `b3d03c00` and `9e593307`; user-approved execution mode is pending.
