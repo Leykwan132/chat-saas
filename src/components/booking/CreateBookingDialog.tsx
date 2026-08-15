@@ -85,7 +85,6 @@ export function CreateBookingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[85vh] overflow-y-auto sm:max-w-xl"
-        overlayClassName="bg-black/10 supports-backdrop-filter:backdrop-blur-none"
       >
         <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
         <DialogHeader><DialogTitle>Create booking</DialogTitle></DialogHeader>

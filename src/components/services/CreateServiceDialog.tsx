@@ -126,7 +126,6 @@ export function CreateServiceDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) closeDialog(); }}>
       <DialogContent
         showCloseButton={false}
-        overlayClassName="bg-black/35 supports-backdrop-filter:backdrop-blur-none"
         className="max-h-[calc(100svh-2rem)] overflow-y-auto rounded-3xl sm:max-w-xl"
       >
         <DialogHeader>

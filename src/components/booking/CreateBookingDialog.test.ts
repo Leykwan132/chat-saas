@@ -81,3 +81,7 @@ test('uses the booking dialog for Calendar creation actions', () => {
   expect(calendarPageSource).toContain('useAction(calendarApi.create)');
   expect(calendarPageSource).not.toContain('useMutation(calendarApi.create)');
 });
+
+test('inherits the shared modal backdrop', () => {
+  expect(dialogSource).not.toContain('overlayClassName=');
+});

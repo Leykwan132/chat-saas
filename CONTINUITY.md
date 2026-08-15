@@ -21,11 +21,12 @@
 - 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately. The implementation plan is ready for execution.
 - 2026-08-15 [USER] D661 ACTIVE: Team-service access ignores the person's personal plan and is based only on the active workspace plan. On Free, hovering or focusing the Team card darkens it slightly, reveals a centered Upgrade control, and opens the shared workspace-plan upgrade modal.
 - 2026-08-15 [USER] D662 ACTIVE: creation collects only Name, Location, and Duration; Description is configured after creation. Duration, Gap, and Preferred time are directly visible in the service editor. The footer has no separator, and assignment cards use the compact stacked-card treatment.
-- 2026-08-15 [USER] D663 ACTIVE: Create Service uses a plain dim overlay without blur and a slightly tighter `rounded-3xl` container; shared dialogs remain unchanged.
+- 2026-08-15 [USER] D663 SUPERSEDED by D668: Create Service used a plain dim overlay without blur and a slightly tighter `rounded-3xl` container; shared dialogs remain unchanged.
 - 2026-08-15 [USER] D664 ACTIVE: service assignment uses the shared Field and RadioGroup choice-card pattern instead of a custom checked icon; each card has an icon above its title and description, with the radio at upper right.
 - 2026-08-15 [USER] D665 ACTIVE: Create Service Close uses the ghost button treatment; Back remains a text link.
 - 2026-08-15 [USER] D666 ACTIVE: the Google Meet Location option is visible only to accounts included in the Google Calendar feature flag; eligible but disconnected accounts receive connection guidance.
 - 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
+- 2026-08-15 [USER] D668 ACTIVE: all standard application Dialog and Sheet backdrops use Create Booking’s light `bg-black/10`, unblurred treatment; non-modal overlays and content-level effects remain unchanged.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -51,6 +52,7 @@
 - 2026-08-15 [CODE] The approved Create Service dialog design, including stacked assignment-card icons and advanced timing details, is committed at `7108bf85`.
 - 2026-08-15 [CODE] Create Service now hides Description and Advanced settings, removes the footer rule, and simplifies assignment cards; focused verification is pending commit.
 - 2026-08-15 [TOOL] Merged `origin/main` Book appointment empty-state implementation; its workflow changes and supporting spec/plan are retained.
+- 2026-08-15 [CODE] Dialog and Sheet backdrops now inherit the approved light, unblurred style; redundant visual overrides were removed from Booking, Create Service, and fullscreen Test Chat.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -93,3 +95,4 @@
 - 2026-08-15 [TOOL] Fresh full `bun run test` under Node v22.22.0 remains blocked by known Google Calendar projection (4), booking-sync (4), and projection-review (1) failures; the committed remote booking focused suite passed 43/43.
 - 2026-08-15 [CODE] Service details now combines basic setup and duration while Booking team and Booking form remain separate; Google Meet is a guarded Location dropdown option and service-card activation controls are vertically centered.
 - 2026-08-15 [TOOL] Focused Service details verification passed 9/9 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`.
+- 2026-08-15 [TOOL] Modal-backdrop focused verification passed 14/14 and `bun run build` passed under Node v22.22.0. The full suite reported 14 unrelated failures in Google Calendar availability/sync/projection and Calendar sidebar padding tests.
