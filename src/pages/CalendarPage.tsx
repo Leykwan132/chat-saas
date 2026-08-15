@@ -1112,10 +1112,18 @@ export default function CalendarPage() {
 
       <section className={cn(inboxColumnClassName, 'border-r border-border')}>
         <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>
-          <div>
+          <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
               {format(visibleMonth, 'MMMM yyyy')}
             </h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleSelectDate(new Date())}
+            >
+              Today
+            </Button>
           </div>
           <div className="flex items-center gap-1.5">
             {googleCalendar.status ? (

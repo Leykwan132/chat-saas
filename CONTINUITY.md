@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: local branch includes `origin/main` at merge commit `0b6c9760`; its focused Google Calendar booking tests pass under Node v22.
-- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch.
+- 2026-08-15 [TOOL] Now: Calendar header restores an always-visible Today button beside the visible month using the existing date-selection path; commit is pending.
+- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar header adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
@@ -22,6 +22,7 @@
 - 2026-08-15 [CODE] Task 7 committed initial Google-backed booking orchestration at `8494f5c6`; follow-up reservation/ownership changes remain on the feature history.
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
+- 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler; it remains unreleased.
 
 # Working set
 - `convex/appointmentBooking/availability.ts`
@@ -30,9 +31,8 @@
 - `convex/googleCalendar/bookingActions.ts`
 - `convex/googleCalendar/bookingSync.ts`
 - `convex/schema.ts`
-- `src/components/calendar/CalendarCreateBookingDialog.tsx`
-- `src/components/inbox/CreateCustomerBookingDialog.tsx`
-- `docs/superpowers/plans/2026-08-13-google-calendar-sync.md`
+- `src/components/calendar/GoogleCalendarConnection.test.tsx`
+- `src/pages/CalendarPage.tsx`
 - `docs/superpowers/plans/2026-08-15-calendar-today-button.md`
 - `docs/superpowers/specs/2026-08-15-calendar-today-button-design.md`
 - `CONTINUITY.md`
@@ -44,3 +44,4 @@
 - 2026-08-15 [TOOL] Focused booking verification passed: 26 tests in 4 suites under Node v22.22.0.
 - 2026-08-15 [USER] Approved the Calendar Today button design; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the spec and requested implementation planning for the Calendar Today button.
+- 2026-08-15 [TOOL] Calendar Today focused regression test passed 13/13 under Node v22.22.0; the first test run was RED because the formatted source places Today on a separate JSX line, then the assertion was made formatting-tolerant.

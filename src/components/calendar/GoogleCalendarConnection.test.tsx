@@ -171,7 +171,11 @@ describe("Google Calendar connection UI", () => {
     const header = page.slice(page.indexOf("inboxColumnHeaderClassName, 'justify-between px-4'"));
     expect(header.indexOf("<GoogleCalendarConnectionCard")).toBeLessThan(header.indexOf("<TimeZoneSelect"));
     expect(page).not.toContain("googleCalendarConnection=");
-    expect(page).not.toContain(">Today</Button>");
+    expect(header.indexOf("{format(visibleMonth, 'MMMM yyyy')}")).toBeLessThan(
+      header.indexOf("<Button"),
+    );
+    expect(header).toContain("Today");
+    expect(header).toContain('onClick={() => handleSelectDate(new Date())}');
   });
 
   it("keeps reconciling while the authorize tab is open", async () => {

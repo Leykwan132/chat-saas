@@ -29,18 +29,17 @@
 - Consumes: `handleSelectDate(date: Date | undefined)` in `CalendarPage`.
 - Produces: a header `Button` whose click handler calls `handleSelectDate(new Date())`.
 
-- [ ] **Step 1: Write the failing source-level regression test**
+- [x] **Step 1: Write the failing source-level regression test**
 
 Replace the assertion that forbids Today with assertions that require the month label before the button and require the existing selection handler:
 
 ```ts
-expect(header.indexOf("{format(visibleMonth, 'MMMM yyyy')}")).toBeLessThan(
-  header.indexOf(">Today</Button>"),
-);
+expect(header.indexOf("{format(visibleMonth, 'MMMM yyyy')}")).toBeLessThan(header.indexOf("<Button"));
+expect(header).toContain("Today");
 expect(header).toContain('onClick={() => handleSelectDate(new Date())}');
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run:
 
@@ -50,7 +49,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: FAIL because the current header does not render `>Today</Button>` or bind it to `handleSelectDate(new Date())`.
 
-- [ ] **Step 3: Add the minimal header control**
+- [x] **Step 3: Add the minimal header control**
 
 Replace the month-label wrapper with a horizontal group containing the existing heading and this existing shadcn Button:
 
@@ -67,7 +66,7 @@ Replace the month-label wrapper with a horizontal group containing the existing 
 
 Keep this group on the left side of the header and leave the right-side controls untouched.
 
-- [ ] **Step 4: Run the focused test to verify it passes**
+- [x] **Step 4: Run the focused test to verify it passes**
 
 Run:
 
