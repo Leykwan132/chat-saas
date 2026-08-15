@@ -29,7 +29,7 @@
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
-- 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
+- 2026-08-15 [TOOL] Open question: the remote feature branch remains at `5ed043cb` while local `d112f4a4` contains the resolved `origin/main` merge; publishing those 91 commits requires explicit approval to push.
 
 # Decisions
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events belong to the assigned teammate’s primary calendar, and absent connections fail explicitly.
