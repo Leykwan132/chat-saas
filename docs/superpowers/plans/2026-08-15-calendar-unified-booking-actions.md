@@ -28,7 +28,7 @@
 - Consumes: the public `CalendarDayHeader` component and CalendarPage’s existing grid callback wiring.
 - Produces: regression coverage for a full-width header and the renamed selected-day Create Booking grid action.
 
-- [ ] **Step 1: Write failing assertions**
+- [x] **Step 1: Write failing assertions**
 
 In `CalendarDayPanel.test.tsx`, add this assertion inside the authorized-header test:
 
@@ -50,7 +50,7 @@ test('uses the booking dialog for Calendar creation actions', () => {
 });
 ```
 
-- [ ] **Step 2: Run focused tests to verify they fail**
+- [x] **Step 2: Run focused tests to verify they fail**
 
 Run:
 
@@ -60,7 +60,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: FAIL because the header is not full width and the grid action still says Create event and opens the generic event sheet.
 
-- [ ] **Step 3: Make the header fill its parent width**
+- [x] **Step 3: Make the header fill its parent width**
 
 In `CalendarDayHeader.tsx`, change the outer class from:
 
@@ -74,7 +74,7 @@ to:
 className="flex w-full min-w-0 items-center justify-between gap-4"
 ```
 
-- [ ] **Step 4: Run the header test to verify it passes**
+- [x] **Step 4: Run the header test to verify it passes**
 
 Run:
 
@@ -95,7 +95,7 @@ Expected: PASS with the far-right header layout assertion passing.
 - `CalendarPage` supplies `onCreateBooking={(nextDay) => { handleSelectDate(nextDay); setCreateBookingOpen(true); }}`.
 - `CalendarCreateBookingDialog` remains the shared destination and reads the selected date through its existing `initialDate` prop.
 
-- [ ] **Step 1: Rename the grid callback and label**
+- [x] **Step 1: Rename the grid callback and label**
 
 In the `CalendarDayGridCell` props and context-menu item, use:
 
@@ -121,7 +121,7 @@ onCreateBooking={(nextDay) => {
 }}
 ```
 
-- [ ] **Step 2: Run focused tests to verify the unified path**
+- [x] **Step 2: Run focused tests to verify the unified path**
 
 Run:
 
@@ -132,7 +132,7 @@ git diff --check
 
 Expected: PASS with the header, shared-booking-path, and sidebar regressions passing.
 
-- [ ] **Step 3: Commit the implementation and verification ledger**
+- [x] **Step 3: Commit the implementation and verification ledger**
 
 Update `CONTINUITY.md` with the result and focused test receipt, then commit:
 

@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [CODE] Now: Calendar header, empty state, and grid context menu all open the booking dialog for the selected date; implementation commit is pending.
+- 2026-08-15 [CODE] Now: Calendar header, empty state, and grid context menu all open the booking dialog for the selected date; the implementation is committed.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the unified booking-action refinement.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -63,3 +63,4 @@
 - 2026-08-15 [USER] Approved a unified booking-dialog design for header, no-events, and grid context-menu actions; spec review is pending.
 - 2026-08-15 [USER] Approved the unified-booking spec and requested implementation planning.
 - 2026-08-15 [TOOL] Unified booking-action tests were RED before implementation, then focused Calendar verification passed 10/10 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [CODE] Committed unified Calendar booking actions as `ec1637d9`.
