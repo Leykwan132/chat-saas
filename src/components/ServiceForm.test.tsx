@@ -26,7 +26,8 @@ test('opens service details by default', () => {
   );
 
   expect(markup.indexOf('Service details')).toBeLessThan(markup.indexOf('Booking team'));
-  expect(markup.indexOf('Booking team')).toBeLessThan(markup.indexOf('Booking form'));
+  expect(markup.indexOf('Booking team')).toBeLessThan(markup.indexOf('Information collected'));
+  expect(markup).not.toContain('Booking form');
   expect(markup).not.toContain('Appointment duration');
   expect(markup).toContain('lucide-users-round size-4');
   expect(markup).toContain('lucide-briefcase-business size-4');

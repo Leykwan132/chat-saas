@@ -17,7 +17,7 @@ export const SERVICE_SECTION_COPY = {
     subtitle: 'Set how long appointments last and which times the AI should offer first.',
   },
   data: {
-    title: 'Booking form',
+    title: 'Information collected',
     subtitle: 'Choose what your AI agent gathers in chat before preparing the booking.',
   },
   assignment: {
