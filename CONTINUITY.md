@@ -59,11 +59,12 @@
 - 2026-08-15 D031 ACTIVE [USER] Full editable workflow nodes expose their primary action controls directly; Human escalation surfaces and directly edits its incoming `When` condition.
 - 2026-08-15 D032 ACTIVE [USER] Workflow Cleanup uses measured rendered node dimensions when available, preserving its horizontal or vertical arrangement without overlap.
 - 2026-08-15 D033 ACTIVE [USER] Workflow toolbar description is “Tighter control over every step of your agent’s responses, content, bookings, and conversation routing.”
+- 2026-08-15 D034 ACTIVE [USER] When Book appointment has no active services, its shared node and inspector control uses the standard Empty component with an agent-scoped Create service action.
 
 # State
 
-- 2026-08-15 [USER] Now: Book appointment workflow configuration must show the shared empty-state component and a direct service-creation action whenever the agent has no active services.
-- 2026-08-15 [TOOL] Baseline: Node v22.22.0 `bun run test` passes with 433 application/Convex files (1,381 tests) and 63 Docs tests; known non-failing stderr remains unrelated.
+- 2026-08-15 [CODE] Now: Book appointment's shared service control renders the standard Empty component and agent-scoped Create service action for an all-inactive service list; the change awaits review and PR publication.
+- 2026-08-15 [TOOL] RED then GREEN: the new no-active-services test first failed against the plain message, then passed with the reusable Empty state; Node v22.22.0 `bun run test`, `bun run build`, and `git diff --check` exit 0.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
@@ -74,11 +75,15 @@
 - `src/components/workflow/workflowLayoutMeasurements.test.ts`
 - `src/components/workflow/workflowLayout.test.ts`
 - `src/components/workflow/WorkflowCanvas.tsx`
+- `src/components/workflow/WorkflowBookingNodeServices.tsx`
+- `src/components/workflow/WorkflowBookingNodeServices.test.tsx`
 - `src/pages/useWorkflowMessageActions.ts`
 - `src/pages/workflowLayoutPersistence.ts`
 - `src/pages/workflowLayoutPersistence.test.ts`
 - `docs/superpowers/specs/2026-08-15-workflow-cleanup-measured-nodes-design.md`
 - `docs/superpowers/plans/2026-08-15-workflow-cleanup-measured-nodes.md`
+- `docs/superpowers/specs/2026-08-15-book-appointment-service-empty-state-design.md`
+- `docs/superpowers/plans/2026-08-15-book-appointment-service-empty-state.md`
 - `CONTINUITY.md`
 
 # Receipts

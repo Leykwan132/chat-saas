@@ -1,9 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'convex/react';
-import { UsersRound } from 'lucide-react';
+import { BriefcaseBusiness, UsersRound } from 'lucide-react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
 import type { Id } from '../../../convex/_generated/dataModel';
+import { Button } from '@/components/ui/button';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -89,7 +99,20 @@ export function WorkflowBookingNodeServices({
     >
       <span className="text-xs font-medium text-muted-foreground">Services</span>
       {activeServices.length === 0 ? (
-        <p className="mt-2 text-xs text-muted-foreground">No active services available.</p>
+        <Empty className="mt-2 rounded-xl border bg-muted/20 px-4 py-6">
+          <EmptyHeader>
+            <EmptyMedia variant="icon"><BriefcaseBusiness /></EmptyMedia>
+            <EmptyTitle className="text-sm">No active services</EmptyTitle>
+            <EmptyDescription className="text-xs">
+              Create a service before this workflow can book appointments.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <Button asChild size="sm">
+              <Link to={`/dashboard/${agentId}/services/new`}>Create service</Link>
+            </Button>
+          </EmptyContent>
+        </Empty>
       ) : (
         <TooltipProvider>
           <div className={presentation === 'node' ? 'mt-2 flex flex-col gap-1.5' : 'mt-2 flex flex-col gap-2'}>
