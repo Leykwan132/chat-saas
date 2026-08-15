@@ -20,6 +20,7 @@
 - 2026-08-15 [CODE] Now: services support Remote or In person meeting locations; remote AI and staff bookings use an idempotent Google Meet request only when the assigned teammate is connected, and the returned Meet link is stored on the booking event.
 - 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately. The implementation plan is ready for execution.
 - 2026-08-15 [USER] D661 ACTIVE: Team-service access ignores the person's personal plan and is based only on the active workspace plan. On Free, hovering or focusing the Team card darkens it slightly, reveals a centered Upgrade control, and opens the shared workspace-plan upgrade modal.
+- 2026-08-15 [TOOL] Now: Create Service dialog focused verification passed 25/25 with TypeScript and diff checks clean. Full `bun run test` remains blocked by Google Calendar projection, booking-sync, and availability-interval failures; output count is UNCONFIRMED because the terminal output was truncated.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions

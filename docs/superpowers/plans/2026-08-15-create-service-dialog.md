@@ -72,7 +72,7 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/compo
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/services/createServiceDialogModel.ts src/components/services/createServiceDialogModel.test.ts && git commit -m "Add service creation entitlement model"
@@ -120,7 +120,7 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/compo
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/services src/components/ServiceForm.tsx && git commit -m "Group advanced service timing settings"
@@ -162,7 +162,7 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/compo
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceAssignmentCards.test.tsx && git commit -m "Add plan-aware service assignment cards"
@@ -214,7 +214,7 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/compo
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add src/components/services/CreateServiceInfoStep.tsx src/components/services/CreateServiceTeamStep.tsx src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx && git commit -m "Add two-step service creation dialog"
@@ -257,7 +257,7 @@ Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/pages
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A src/pages src/components/services src/components/calendar/googleCalendarBranding.ts src/components/booking/CreateBookingDialog.tsx src/main.tsx && git commit -m "Open service creation in a dialog"
@@ -268,13 +268,13 @@ git add -A src/pages src/components/services src/components/calendar/googleCalen
 **Files:**
 - Modify: `CONTINUITY.md`
 
-- [ ] **Step 1: Run focused verification**
+- [x] **Step 1: Run focused verification**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/createServiceDialogModel.test.ts src/components/services/CreateServiceAssignmentCards.test.tsx src/components/services/CreateServiceDialog.test.tsx src/components/services/ServiceTimingFields.test.tsx src/components/services/serviceFormShared.test.tsx src/components/ServiceForm.test.tsx src/pages/ServicesPage.test.tsx src/pages/ServicePage.test.tsx && bunx tsc --noEmit && git diff --check`
 
 Expected: focused tests pass, TypeScript has no errors, and diff check is clean.
 
-- [ ] **Step 2: Run the full suite**
+- [x] **Step 2: Run the full suite**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bun run test`
 
