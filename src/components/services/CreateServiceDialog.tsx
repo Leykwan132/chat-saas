@@ -134,7 +134,7 @@ export function CreateServiceDialog({
         {error ? <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p> : null}
         {step === 1 ? <CreateServiceInfoStep form={form} setForm={setForm} mode={mode} teamEnabled={teamEnabled} onModeChange={setMode} onUpgrade={openUpgradeModal} /> : null}
         {step === 2 ? <CreateServiceTeamStep form={form} setForm={setForm} teamUserOptions={teamUserOptions} /> : null}
-        <DialogFooter className="border-t pt-4 sm:justify-between">
+        <DialogFooter className="pt-2 sm:justify-between">
           <div>{step === 2 ? <Button type="button" variant="link" className="px-0" onClick={() => { setStep(1); setError(null); }}>Back</Button> : null}</div>
           <div className="flex items-center gap-3">
             <Button type="button" variant="link" className="px-0 text-muted-foreground" onClick={closeDialog}>Close</Button>

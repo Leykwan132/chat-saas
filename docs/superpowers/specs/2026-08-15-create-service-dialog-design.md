@@ -8,11 +8,11 @@ Replace the full-screen, four-step service wizard with a compact modal that lets
 
 The Services page opens the dialog from both Add a service entry points. The existing `/services/new` route redirects to the Services page so the modal is the sole creation experience.
 
-The footer has a text-only Close button that immediately discards the in-progress form and closes the dialog. After a successful create, the dialog closes and the app opens that service's detail page.
+The footer has a text-only Close button that immediately discards the in-progress form and closes the dialog. It has no separating rule above it. After a successful create, the dialog closes and the app opens that service's detail page.
 
 ## Step 1: Service info and assignment mode
 
-The first dialog step collects the service's Name, Description, Location, and Duration. Description appears directly below Name. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field.
+The first dialog step collects only the service's Name, Location, and Duration. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field. Description and Advanced timing settings are configured from the service detail page after creation.
 
 Below the service information are two selectable cards:
 

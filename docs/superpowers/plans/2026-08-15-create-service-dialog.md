@@ -287,3 +287,42 @@ Update `CONTINUITY.md` with commits, focused verification, and full-suite blocke
 ```bash
 git add CONTINUITY.md && git commit -m "Record service dialog verification"
 ```
+
+### Task 7: Simplify the creation-step surface
+
+**Files:**
+- Create: `src/components/services/CreateServiceBasicsFields.tsx`
+- Modify: `src/components/services/CreateServiceInfoStep.tsx`, `src/components/services/CreateServiceAssignmentCards.tsx`, `src/components/services/CreateServiceDialog.tsx`
+- Test: `src/components/services/CreateServiceDialog.test.tsx`
+
+**Interfaces:** `CreateServiceBasicsFields({ form, setForm })` renders only Name, Location, and Duration. `CreateServiceInfoStep` uses it instead of edit-only details and timing modules.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).toContain('CreateServiceBasicsFields');
+expect(source).not.toContain('ServiceDetailsFields');
+expect(source).not.toContain('ServiceTimingFields');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx`
+
+Expected: FAIL because the creation step still reused both edit-only field groups.
+
+- [x] **Step 3: Implement the compact surface**
+
+Render Name, Location, and Duration with the existing Minutes suffix in a focused component. Remove Description and Advanced timing from creation while preserving them in the service detail editor. Remove the footer top border. Retain the approved stacked-card motif but use a smaller tile and a checked radio indicator, with concise service wording.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx src/components/services/CreateServiceAssignmentCards.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/CreateServiceBasicsFields.tsx src/components/services/CreateServiceInfoStep.tsx src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Simplify service creation dialog"
+```

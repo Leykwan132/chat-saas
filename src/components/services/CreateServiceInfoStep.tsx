@@ -1,5 +1,4 @@
-import { ServiceDetailsFields } from '@/components/services/ServiceDetailsFields';
-import { ServiceTimingFields } from '@/components/services/ServiceTimingFields';
+import { CreateServiceBasicsFields } from '@/components/services/CreateServiceBasicsFields';
 import { CreateServiceAssignmentCards } from '@/components/services/CreateServiceAssignmentCards';
 import type { CreateServiceAssignmentMode } from '@/components/services/createServiceDialogModel';
 import type { ServiceForm } from '@/lib/serviceForm';
@@ -20,9 +19,8 @@ export function CreateServiceInfoStep({
   onUpgrade: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-6">
-      <ServiceDetailsFields form={form} setForm={setForm} />
-      <ServiceTimingFields form={form} setForm={setForm} />
+    <div className="flex flex-col gap-5">
+      <CreateServiceBasicsFields form={form} setForm={setForm} />
       <CreateServiceAssignmentCards
         mode={mode}
         teamEnabled={teamEnabled}

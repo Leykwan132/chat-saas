@@ -14,3 +14,14 @@ test('creates a personal service from the first step and retains a team-only sec
   expect(source).toContain('navigate(`/dashboard/${agentId}/services/${serviceId}`)');
   expect(source).toContain('variant="link"');
 });
+
+test('keeps creation focused on name, location, and duration without advanced settings', () => {
+  const source = readFileSync(new URL('./CreateServiceInfoStep.tsx', import.meta.url), 'utf8');
+
+  expect(source).toContain('CreateServiceBasicsFields');
+  expect(source).not.toContain('ServiceDetailsFields');
+  expect(source).not.toContain('ServiceTimingFields');
+
+  const dialogSource = readFileSync(new URL('./CreateServiceDialog.tsx', import.meta.url), 'utf8');
+  expect(dialogSource).not.toContain('border-t pt-4');
+});
