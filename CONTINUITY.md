@@ -15,6 +15,7 @@
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog; the grid action is named Create Booking and first selects its date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access, currently enabled only for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: a connected event creator's manual calendar event is fail-closed: Google write failure prevents the event from being retained locally.
+- 2026-08-15 [USER] D659 ACTIVE: remote bookings generate a Google Meet link only through the assigned staff member's connected Google Calendar; connecting remains optional.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
