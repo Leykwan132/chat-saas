@@ -57,26 +57,25 @@
 - 2026-08-15 D029 SUPERSEDED [USER] Standard Book appointment nodes remain the direct service-selection surface; their detail panels also show a read-only summary of currently enabled services and assigned teammates.
 - 2026-08-15 D030 ACTIVE [USER] Book appointment nodes and their detail panels use the same direct service-switch controls; only their surrounding layout differs.
 - 2026-08-15 D031 ACTIVE [USER] Full editable workflow nodes expose their primary action controls directly; Human escalation surfaces and directly edits its incoming `When` condition.
+- 2026-08-15 D032 ACTIVE [USER] Workflow Cleanup uses measured rendered node dimensions when available, preserving its horizontal or vertical arrangement without overlap.
 
 # State
 
-- 2026-08-15 [CODE] Now: full editable workflow nodes have direct message, media, booking, escalation-condition, and close-conversation controls; the workflow toolbar has its supporting description.
-- 2026-08-15 [TOOL] Next: user chooses whether to merge locally, push/create a PR, or keep the verified branch; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Cleanup must be updated to use rendered node dimensions after direct controls expanded the standard workflow cards.
+- 2026-08-15 [TOOL] Next: user review of the measured-node Cleanup design, then implementation planning and verification; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
 
-- `convex/workflowNodeCanvasControls.ts`
-- `convex/workflowNodeCanvasControls.test.ts`
 - `src/components/workflow/WorkflowNode.tsx`
-- `src/components/workflow/WorkflowNodeDirectControls.tsx`
-- `src/components/workflow/WorkflowNodeMessageControl.tsx`
-- `src/components/workflow/WorkflowNodeConditionControl.tsx`
-- `src/components/workflow/WorkflowSendMediaSection.tsx`
-- `src/components/workflow/workflowFlowModel.ts`
-- `src/components/workflow/workflowFlowModel.test.ts`
-- `docs/superpowers/plans/2026-08-15-workflow-node-controls.md`
-- `src/components/workflow/WorkflowToolbar.tsx`
+- `src/components/workflow/workflowLayout.ts`
+- `src/components/workflow/workflowLayout.test.ts`
+- `src/components/workflow/WorkflowCanvas.tsx`
+- `src/components/workflow/workflowTypes.ts`
+- `src/pages/useWorkflowMessageActions.ts`
+- `src/pages/workflowLayoutPersistence.ts`
+- `src/pages/workflowLayoutPersistence.test.ts`
+- `docs/superpowers/specs/2026-08-15-workflow-cleanup-measured-nodes-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -132,3 +131,4 @@
 - 2026-08-15 [USER] Full editable nodes should provide direct action controls, and Human escalation must show its incoming `When` condition.
 - 2026-08-15 [CODE] Workflow node-controls design and implementation plan are committed as `1432038c` and `16193d83`; user-approved execution mode is pending.
 - 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 432 application/Convex test files (1,378 tests) and 63 Docs tests. Known unrelated test stderr remains non-failing.
+- 2026-08-15 [USER] Cleanup must account for the larger inline workflow controls; approved use of measured rendered node dimensions instead of fixed compact-card assumptions.
