@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { Suggestion, Suggestions } from '@/components/ai-elements/suggestion';
 import { DataCollectFieldIcon } from '@/components/services/DataCollectFieldIcon';
 import { PreferredTimesEditor } from '@/components/services/PreferredTimesEditor';
+import { ServiceLocationField } from '@/components/services/ServiceLocationField';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -392,35 +393,10 @@ export function ServiceDetailsFields({
           className="h-12 text-base"
         />
       </label>
-      <div className="flex flex-col gap-3">
-        <span className="text-sm font-medium">Meeting location</span>
-        <RadioGroup
-          value={form.locationMode}
-          onValueChange={(locationMode) =>
-            setForm((prev) => ({
-              ...prev,
-              locationMode: locationMode as ServiceForm['locationMode'],
-              location: locationMode === 'remote' ? '' : prev.location,
-            }))
-          }
-          disabled={disabled}
-          className="grid gap-3 sm:grid-cols-2"
-        >
-          <Label className={cn('rounded-xl border p-4 font-normal', disabled ? 'opacity-60' : 'cursor-pointer')}>
-            <RadioGroupItem value="remote" />
-            <span className="ml-2 font-medium">Remote</span>
-            <span className="mt-1 block text-xs text-muted-foreground">Create a Google Meet link when connected.</span>
-          </Label>
-          <Label className={cn('rounded-xl border p-4 font-normal', disabled ? 'opacity-60' : 'cursor-pointer')}>
-            <RadioGroupItem value="in_person" />
-            <span className="ml-2 font-medium">In person</span>
-            <span className="mt-1 block text-xs text-muted-foreground">Optionally add the appointment address.</span>
-          </Label>
-        </RadioGroup>
-      </div>
+      <ServiceLocationField form={form} setForm={setForm} disabled={disabled} />
       {form.locationMode === 'in_person' ? (
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium">Address</span>
+          <span className="text-sm font-medium">Address (optional)</span>
           <Input
             value={form.location}
             disabled={disabled}
