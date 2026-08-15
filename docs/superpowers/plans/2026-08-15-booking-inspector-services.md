@@ -23,51 +23,52 @@
 **Files:**
 - Create: `src/components/workflow/WorkflowBookingInspectorServices.tsx`
 - Modify: `src/components/workflow/WorkflowInspectorForm.tsx`
-- Modify: `src/components/workflow/WorkflowInspectorForm.test.ts`
-- Test: `src/components/workflow/WorkflowBookingInspectorServices.test.ts`
+- Modify: `src/components/workflow/workflowBookingNodeServicesModel.ts`
+- Modify: `src/components/workflow/workflowBookingNodeServicesModel.test.ts`
 
 **Interfaces:**
-- Consumes: `api.workflowAppointmentServices.listForAgent({ agentId })`, `getEffectiveBookingServiceIds(allowedServiceIds, services)`, and `bookingTeammateAvailabilityLabel(count)`.
+- Consumes: `api.workflowAppointmentServices.listForAgent({ agentId })`, `getSelectedBookingServices(allowedServiceIds, services)`, and `bookingTeammateAvailabilityLabel(count)`.
 - Produces: `WorkflowBookingInspectorServices({ agentId, allowedServiceIds })`, a read-only section for enabled active services.
+- Produces: `getSelectedBookingServices(allowedServiceIds, services)`, which returns active services permitted by an explicit selection or a legacy missing selection.
 - Integrates: `WorkflowInspectorForm` renders the component only when `node.kind === 'bookAppointment'` and `agentId` is present; `WorkflowInspectorSaveValues` remains unchanged.
 
 - [ ] **Step 1: Write the failing tests**
 
-Add a source-level integration assertion in `WorkflowInspectorForm.test.ts`:
+Add a behavior test in `workflowBookingNodeServicesModel.test.ts`:
 
 ```ts
-test('book appointment inspector displays a read-only services summary', () => {
-  expect(source).toContain('WorkflowBookingInspectorServices');
-  expect(source).toContain("node.kind === 'bookAppointment' && agentId");
-  expect(source).not.toContain('allowedAppointmentServiceIds');
+test('returns only active services enabled for an inspector booking node', () => {
+  const services = [
+    { _id: 'service-a', isActive: true },
+    { _id: 'service-b', isActive: false },
+    { _id: 'service-c', isActive: true },
+  ];
+
+  expect(getSelectedBookingServices(['service-a', 'service-b'], services))
+    .toEqual([{ _id: 'service-a', isActive: true }]);
+  expect(getSelectedBookingServices(undefined, services))
+    .toEqual([
+      { _id: 'service-a', isActive: true },
+      { _id: 'service-c', isActive: true },
+    ]);
 });
 ```
 
-Create `WorkflowBookingInspectorServices.test.ts` with source-level checks for the required presentation boundary:
-
-```ts
-test('booking inspector lists selected services without editable switches', () => {
-  expect(source).toContain('No services selected.');
-  expect(source).toContain('bookingTeammateAvailabilityLabel');
-  expect(source).toContain('Available teammates');
-  expect(source).toContain('decoration-dotted');
-  expect(source).not.toContain('<Switch');
-});
-```
+The regression fails if a future change includes an inactive or unselected service, or stops treating legacy nodes as selecting all active services.
 
 - [ ] **Step 2: Run the focused tests to verify RED**
 
 Run:
 
 ```bash
-source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/WorkflowInspectorForm.test.ts src/components/workflow/WorkflowBookingInspectorServices.test.ts
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/workflowBookingNodeServicesModel.test.ts
 ```
 
-Expected: FAIL because the inspector component and its source references do not exist.
+Expected: FAIL because `getSelectedBookingServices` does not exist.
 
 - [ ] **Step 3: Add the minimal read-only component and wire it into the inspector**
 
-Create a query-backed `WorkflowBookingInspectorServices` component with this interface:
+Add `getSelectedBookingServices` to `workflowBookingNodeServicesModel.ts`; it uses `getEffectiveBookingServiceIds` and returns only active selected rows. Create a query-backed `WorkflowBookingInspectorServices` component with this interface:
 
 ```ts
 type WorkflowBookingInspectorServicesProps = {
@@ -76,7 +77,7 @@ type WorkflowBookingInspectorServicesProps = {
 };
 ```
 
-The component must query `listForAgent`, filter to active rows whose IDs are in `getEffectiveBookingServiceIds`, show a compact loading placeholder while the query is unresolved, and render the service name plus the existing teammate-count tooltip pattern. The count must use a dotted underline and pointer cursor to signal its hoverable teammate list. Render `No services selected.` when filtering leaves no rows. Do not import or render `Switch` and do not mutate workflow services.
+The component must query `listForAgent`, use `getSelectedBookingServices` to derive its rows, show a compact loading placeholder while the query is unresolved, and render the service name plus the existing teammate-count tooltip pattern. The count must use a dotted underline and pointer cursor to signal its hoverable teammate list. Render `No services selected.` when filtering leaves no rows. Do not import or render `Switch` and do not mutate workflow services.
 
 In `WorkflowInspectorForm`, pass `node.allowedAppointmentServiceIds` only to the new child component and render it directly below the Book appointment action fields:
 
@@ -96,7 +97,7 @@ Do not add the IDs to `WorkflowInspectorSaveValues` or `handleApply`.
 Run:
 
 ```bash
-source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/WorkflowInspectorForm.test.ts src/components/workflow/WorkflowBookingInspectorServices.test.ts src/components/workflow/workflowBookingNodeServicesModel.test.ts
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/workflowBookingNodeServicesModel.test.ts
 ```
 
 Expected: PASS.
@@ -114,7 +115,7 @@ Expected: exits 0.
 - [ ] **Step 6: Commit the implementation**
 
 ```bash
-git add src/components/workflow/WorkflowBookingInspectorServices.tsx src/components/workflow/WorkflowBookingInspectorServices.test.ts src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/WorkflowInspectorForm.test.ts CONTINUITY.md
+git add src/components/workflow/WorkflowBookingInspectorServices.tsx src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/workflowBookingNodeServicesModel.ts src/components/workflow/workflowBookingNodeServicesModel.test.ts CONTINUITY.md
 git commit -m "feat: show services in booking inspector"
 ```
 
