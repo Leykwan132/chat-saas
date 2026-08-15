@@ -21,7 +21,7 @@ Below the service information are two selectable cards:
 - For myself is selected by default. It assigns only the signed-in user and makes the footer action Create.
 - For team lets the user include teammates and makes the footer action Continue.
 
-Each card has a leading icon inside a small foreground card with two offset, bordered cards visibly stacked behind it. The card treatment is decorative; selecting either card remains a single accessible radio-style interaction.
+Each choice uses the shared Field and RadioGroup choice-card pattern, with its native radio control at the right. A leading icon sits in a small foreground tile with two subtle, rotated tiles offset behind it to the left and right. The card treatment is decorative; selecting either card remains a single accessible radio-style interaction.
 
 The Team-card entitlement is determined only from the active workspace's current plan, using the same workspace plan source as the shared upgrade modal; the signed-in person's personal plan never controls it. For example, a Free-plan person working in a paid workspace can select For team without an upgrade prompt. For a workspace on the Free plan, For team is visibly locked but retains its normal card label. Hovering or keyboard-focusing the card adds a slightly darker background overlay and reveals a centered Upgrade control. Activating the card or its Upgrade control opens the existing shared upgrade modal for that workspace plan and does not change the selected For myself card or advance the dialog. Workspaces on an eligible paid plan can select For team normally.
 

@@ -22,3 +22,13 @@ test('shows a selected personal card and a locked Team upgrade overlay', () => {
   expect(source).toContain('group-focus-within');
   expect(source).toContain('onUpgrade');
 });
+
+test('uses the shared Field and RadioGroup choice-card controls', () => {
+  const source = readFileSync(new URL('./CreateServiceAssignmentCards.tsx', import.meta.url), 'utf8');
+
+  expect(source).toContain('RadioGroup');
+  expect(source).toContain('RadioGroupItem');
+  expect(source).toContain('FieldLabel');
+  expect(source).toContain('FieldContent');
+  expect(source).not.toContain("import { Check");
+});

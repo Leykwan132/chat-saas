@@ -363,3 +363,42 @@ Expected: PASS.
 ```bash
 git add src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Refine service dialog presentation"
 ```
+
+### Task 9: Use shared choice cards for service assignment
+
+**Files:**
+- Modify: `src/components/services/CreateServiceAssignmentCards.tsx`
+- Test: `src/components/services/CreateServiceAssignmentCards.test.tsx`
+
+**Interfaces:** `CreateServiceAssignmentCards` keeps `mode`, `teamEnabled`, `onModeChange`, and `onUpgrade`, while rendering shared `Field` and controlled `RadioGroup` primitives.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).toContain('RadioGroup');
+expect(source).toContain('RadioGroupItem');
+expect(source).toContain('FieldLabel');
+expect(source).not.toContain("import { Check");
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx`
+
+Expected: FAIL because the choices used a custom button and check icon.
+
+- [x] **Step 3: Implement shared choice cards**
+
+Use a controlled `RadioGroup` with `FieldLabel`, `Field`, `FieldContent`, `FieldTitle`, `FieldDescription`, and `RadioGroupItem`. Keep locked Team focusable so it triggers `onUpgrade` and retains the hover/focus overlay without changing the selected value. Render the approved front icon tile with left and right rotated rear tiles.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceAssignmentCards.test.tsx src/components/services/CreateServiceDialog.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceAssignmentCards.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Use service assignment choice cards"
+```

@@ -1,4 +1,6 @@
-import { Check, UserRound, UsersRound } from 'lucide-react';
+import { UserRound, UsersRound } from 'lucide-react';
+import { Field, FieldContent, FieldDescription, FieldLabel, FieldTitle } from '@/components/ui/field';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { cn } from '@/lib/utils';
 import type { CreateServiceAssignmentMode } from '@/components/services/createServiceDialogModel';
 
@@ -10,20 +12,20 @@ type CreateServiceAssignmentCardsProps = {
 };
 
 type AssignmentCardProps = {
+  value: CreateServiceAssignmentMode;
   title: string;
   description: string;
   selected: boolean;
   locked?: boolean;
   icon: React.ComponentType<{ className?: string }>;
-  onClick: () => void;
 };
 
 function StackedIcon({ Icon }: { Icon: AssignmentCardProps['icon'] }) {
   return (
-    <span className="relative flex size-10 shrink-0 items-center justify-center">
-      <span className="absolute inset-1.5 translate-x-1 translate-y-1 rounded-md border border-border/70" />
-      <span className="absolute inset-1.5 translate-x-0.5 translate-y-0.5 rounded-md border border-border/80" />
-      <span className="relative flex size-8 items-center justify-center rounded-md border border-border bg-card shadow-sm">
+    <span className="relative flex size-11 shrink-0 items-center justify-center">
+      <span className="pointer-events-none absolute bottom-px left-0 flex size-9 origin-bottom-left -translate-x-0.5 -rotate-10 scale-[.84] items-center justify-center rounded-md border bg-card shadow-none" />
+      <span className="pointer-events-none absolute right-0 bottom-px flex size-9 origin-bottom-right translate-x-0.5 rotate-10 scale-[.84] items-center justify-center rounded-md border bg-card shadow-none" />
+      <span className="relative flex size-9 items-center justify-center rounded-md border bg-card shadow-sm">
         <Icon className="size-4" />
       </span>
     </span>
@@ -31,41 +33,37 @@ function StackedIcon({ Icon }: { Icon: AssignmentCardProps['icon'] }) {
 }
 
 function AssignmentCard({
+  value,
   title,
   description,
   selected,
   locked = false,
   icon,
-  onClick,
 }: AssignmentCardProps) {
+  const id = `service-assignment-${value}`;
+
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      aria-label={title}
-      onClick={onClick}
+    <FieldLabel
+      htmlFor={id}
       className={cn(
-        'group relative flex min-h-32 w-full overflow-hidden rounded-lg border p-4 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-        selected ? 'border-foreground/70 bg-background shadow-sm' : 'border-border hover:border-foreground/30 hover:bg-accent/25',
+        'group relative cursor-pointer has-[>[data-slot=field]]:rounded-lg has-[>[data-slot=field]]:border-foreground/70 has-[>[data-slot=field]]:transition-colors',
+        selected ? 'has-[>[data-slot=field]]:bg-background has-[>[data-slot=field]]:shadow-sm' : 'has-[>[data-slot=field]]:border-border hover:has-[>[data-slot=field]]:border-foreground/30 hover:has-[>[data-slot=field]]:bg-accent/25',
       )}
     >
-      <span className="flex min-w-0 flex-1 flex-col gap-3">
+      <Field orientation="horizontal" className="min-h-32 items-start gap-3">
         <StackedIcon Icon={icon} />
-        <span className="flex flex-col gap-1">
-          <span className="text-sm font-semibold text-foreground">{title}</span>
-          <span className="text-xs leading-snug text-muted-foreground">{description}</span>
-        </span>
-      </span>
-      <span className={cn('flex size-4 shrink-0 items-center justify-center rounded-full border', selected ? 'border-foreground bg-foreground text-background' : 'border-muted-foreground/40')}>
-        {selected ? <Check className="size-2.5 stroke-[3]" /> : null}
-      </span>
+        <FieldContent className="pt-0.5">
+          <FieldTitle>{title}</FieldTitle>
+          <FieldDescription className="text-xs leading-snug">{description}</FieldDescription>
+        </FieldContent>
+        <RadioGroupItem value={value} id={id} />
+      </Field>
       {locked ? (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-foreground/10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
+        <span className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-lg bg-foreground/10 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
           <span className="rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background">Upgrade</span>
         </span>
       ) : null}
-    </button>
+    </FieldLabel>
   );
 }
 
@@ -75,23 +73,31 @@ export function CreateServiceAssignmentCards({
   onModeChange,
   onUpgrade,
 }: CreateServiceAssignmentCardsProps) {
+  const chooseMode = (value: string) => {
+    if (value === 'team' && !teamEnabled) {
+      onUpgrade();
+      return;
+    }
+    onModeChange(value as CreateServiceAssignmentMode);
+  };
+
   return (
-    <div role="radiogroup" aria-label="Service assignment" className="grid gap-3 sm:grid-cols-2">
+    <RadioGroup value={mode} onValueChange={chooseMode} aria-label="Service assignment" className="grid gap-3 sm:grid-cols-2">
       <AssignmentCard
+        value="self"
         title="For myself"
         description="Create a service only for you."
         selected={mode === 'self'}
         icon={UserRound}
-        onClick={() => onModeChange('self')}
       />
       <AssignmentCard
+        value="team"
         title="For team"
         description="Let teammates deliver this service."
         selected={mode === 'team'}
         locked={!teamEnabled}
         icon={UsersRound}
-        onClick={teamEnabled ? () => onModeChange('team') : onUpgrade}
       />
-    </div>
+    </RadioGroup>
   );
 }
