@@ -1099,14 +1099,12 @@ export default function CalendarPage() {
     <div className="grid h-full min-h-0 grid-cols-[18rem_minmax(0,1fr)_20rem] overflow-hidden bg-background">
       <CalendarSidebar
         assignedToMeOnly={assignedToMeOnly}
-        canManageCalendar={canManageCalendar}
         eventFilterCounts={eventFilterCounts}
         hasCurrentUser={currentUser !== null && currentUser !== undefined}
         selectedDate={selectedDate}
         visibleMonth={visibleMonth}
         onAssignedToMe={() => setAssignedToMeOnly(true)}
         onChangeMonth={handleChangeMonth}
-        onCreateBooking={() => setCreateBookingOpen(true)}
         onShowAllEvents={() => setAssignedToMeOnly(false)}
       />
 
@@ -1208,20 +1206,33 @@ export default function CalendarPage() {
       </section>
 
       <aside className={inboxColumnClassName}>
-        <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>
-          <div className="flex min-w-0 items-center gap-2">
-            {selectedDayKey === todayKey ? (
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-                  {format(selectedDate, 'd')}
-                </span>
-              </div>
-            ) : (
-              <h2 className="truncate text-sm font-semibold text-foreground">
-                {format(selectedDate, 'EEEE, MMM d')}
-              </h2>
-            )}
+        <div className={cn(inboxColumnHeaderClassName, 'px-4')}>
+          <div className="flex min-w-0 items-center gap-[15px]">
+            <div className="flex min-w-0 items-center gap-2">
+              {selectedDayKey === todayKey ? (
+                <div className="flex min-w-0 items-center gap-2">
+                  <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
+                  <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+                    {format(selectedDate, 'd')}
+                  </span>
+                </div>
+              ) : (
+                <h2 className="truncate text-sm font-semibold text-foreground">
+                  {format(selectedDate, 'EEEE, MMM d')}
+                </h2>
+              )}
+            </div>
+            {canManageCalendar ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCreateBookingOpen(true)}
+              >
+                <Plus data-icon="inline-start" />
+                New Booking
+              </Button>
+            ) : null}
           </div>
         </div>
 

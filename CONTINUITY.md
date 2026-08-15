@@ -2,12 +2,10 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: Calendar sidebar New Booking is committed as a labeled bottom-right floating action at `c17934b5`; its focused test passes. The full suite has unrelated existing Google Calendar failures.
-- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar sidebar adjustment.
+- 2026-08-15 [CODE] Now: New Booking has moved from the sidebar to the right Calendar panel’s selected-day header with a 15px gap; it opens the dialog using the selected date. The full suite has unrelated existing Google Calendar failures.
+- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar header adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
-- 2026-08-15 [USER] Approved Calendar sidebar design: move the labeled New Booking action to the entire sidebar’s absolute bottom-right.
-- 2026-08-15 [USER] Approved implementation planning for the Calendar New Booking floating action.
 - 2026-08-15 [USER] Superseded sidebar/page-level placement: New Booking belongs directly after the Today/date group in the right Calendar panel header, with a 15px gap.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar New Booking header action.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
@@ -27,20 +25,17 @@
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
-- 2026-08-15 [CODE] Calendar New Booking moved from inline sidebar content to a permission-gated bottom-right floating action at `c17934b5`; it remains unreleased.
+- 2026-08-15 [CODE] Calendar New Booking now appears after the right-panel selected-day label with a 15px gap, remains permission-gated, and keeps the selected date for the dialog; it remains unreleased.
 
 # Working set
-- `convex/appointmentBooking/availability.ts`
-- `convex/appointmentBooking/availabilityRoster.ts`
-- `convex/calendarEvents.ts`
 - `convex/googleCalendar/bookingActions.ts`
 - `convex/googleCalendar/bookingSync.ts`
 - `convex/schema.ts`
 - `src/components/calendar/CalendarSidebar.tsx`
 - `src/components/calendar/CalendarSidebar.test.tsx`
-- `docs/superpowers/plans/2026-08-15-calendar-new-booking-floating-action.md`
+- `src/pages/CalendarPage.tsx`
+- `src/pages/CalendarNewBookingAction.test.ts`
 - `docs/superpowers/plans/2026-08-15-calendar-new-booking-header-action.md`
-- `docs/superpowers/specs/2026-08-15-calendar-new-booking-floating-action-design.md`
 - `docs/superpowers/specs/2026-08-15-calendar-new-booking-header-action-design.md`
 - `CONTINUITY.md`
 
@@ -58,3 +53,4 @@
 - 2026-08-15 [TOOL] Calendar sidebar floating-action test passed 3/3 under Node v22.22.0; the first test run was RED because New Booking appeared before View without positioning classes.
 - 2026-08-15 [USER] Corrected New Booking placement to the right Calendar panel header, after the Today/date group; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the corrected header-placement spec and requested implementation planning.
+- 2026-08-15 [TOOL] Header-action test was RED before implementation; focused Calendar tests then passed 3/3 under Node v22.22.0, and `git diff --check` passed.

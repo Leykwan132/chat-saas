@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
-import { Calendar as CalendarIcon, Plus, User } from 'lucide-react';
+import { Calendar as CalendarIcon, User } from 'lucide-react';
 import { SidebarPageTitleRow } from '@/components/SidebarPageTitleRow';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
   inboxColumnClassName,
@@ -20,7 +19,6 @@ import { cn } from '@/lib/utils';
 type CalendarSidebarProps = {
   selectedDate: Date;
   visibleMonth: Date;
-  canManageCalendar: boolean;
   assignedToMeOnly: boolean;
   hasCurrentUser: boolean;
   eventFilterCounts?: {
@@ -28,7 +26,6 @@ type CalendarSidebarProps = {
     assigned?: number;
   };
   onChangeMonth: (date: Date) => void;
-  onCreateBooking: () => void;
   onShowAllEvents: () => void;
   onAssignedToMe: () => void;
 };
@@ -87,19 +84,17 @@ function CalendarSidebarFilterSection({
 export function CalendarSidebar({
   selectedDate,
   visibleMonth,
-  canManageCalendar,
   assignedToMeOnly,
   hasCurrentUser,
   eventFilterCounts,
   onChangeMonth,
-  onCreateBooking,
   onShowAllEvents,
   onAssignedToMe,
 }: CalendarSidebarProps) {
   return (
-    <aside className={cn(inboxColumnClassName, 'relative border-r border-border')}>
+    <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
       <SidebarPageTitleRow title="Calendar" />
-      <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem] pb-20')}>
+      <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem]')}>
         <div
           className="flex justify-center pb-[0.675rem]"
           data-calendar-sidebar-section="month"
@@ -131,17 +126,6 @@ export function CalendarSidebar({
           />
         </CalendarSidebarFilterSection>
       </div>
-      {canManageCalendar ? (
-        <Button
-          type="button"
-          size="lg"
-          className="absolute bottom-4 right-4 h-11 gap-2 px-5 py-3"
-          onClick={onCreateBooking}
-        >
-          <Plus data-icon="inline-start" />
-          New Booking
-        </Button>
-      ) : null}
     </aside>
   );
 }
