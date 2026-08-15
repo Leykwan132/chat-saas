@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: Calendar header restores an always-visible Today button beside the visible month using the existing date-selection path; commit is pending.
+- 2026-08-15 [TOOL] Now: Calendar header Today button is committed at `29ea71fb`; its focused test passes. The full suite has unrelated existing Google Calendar failures.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar header adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -22,7 +22,7 @@
 - 2026-08-15 [CODE] Task 7 committed initial Google-backed booking orchestration at `8494f5c6`; follow-up reservation/ownership changes remain on the feature history.
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
-- 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler; it remains unreleased.
+- 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
 
 # Working set
 - `convex/appointmentBooking/availability.ts`
@@ -45,3 +45,4 @@
 - 2026-08-15 [USER] Approved the Calendar Today button design; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the spec and requested implementation planning for the Calendar Today button.
 - 2026-08-15 [TOOL] Calendar Today focused regression test passed 13/13 under Node v22.22.0; the first test run was RED because the formatted source places Today on a separate JSX line, then the assertion was made formatting-tolerant.
+- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 failed in five existing Convex Google Calendar suites (14 failures): projection, booking sync, projection review, availability intervals, and availability roster budget. The Calendar header suite passed 13/13.

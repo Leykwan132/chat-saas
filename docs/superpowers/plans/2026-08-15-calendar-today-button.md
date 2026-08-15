@@ -76,7 +76,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: PASS with all tests in the file passing.
 
-- [ ] **Step 5: Check formatting and commit**
+- [x] **Step 5: Check formatting and commit**
 
 Run:
 
