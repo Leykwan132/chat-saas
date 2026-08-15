@@ -27,7 +27,7 @@
 - Consumes: `GoogleCalendarSourceBadge({ origin?: 'google' | 'kilobot' })`.
 - Produces: `null` for `origin='google'` or no origin, and the existing Kilobot badge for `origin='kilobot'`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Replace the source-badge expectation and the Google event-details assertion with the desired rendered behavior:
 
@@ -43,7 +43,7 @@ expect(markup).toContain('aria-label="Update event"');
 expect(markup).toContain('aria-label="Delete event"');
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run:
 
@@ -53,7 +53,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: FAIL because `GoogleCalendarSourceBadge` still renders the Google label.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Make the shared badge opt out of Google-origin rendering while preserving its existing Kilobot markup:
 
@@ -67,7 +67,7 @@ return (
 );
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run:
 
@@ -77,7 +77,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Go
 
 Expected: PASS with Google-origin event badges absent and Kilobot badges retained.
 
-- [ ] **Step 5: Check formatting and commit**
+- [x] **Step 5: Check formatting and commit**
 
 Run:
 

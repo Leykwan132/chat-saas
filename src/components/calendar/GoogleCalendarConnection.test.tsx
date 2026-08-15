@@ -111,8 +111,8 @@ describe("Google Calendar connection UI", () => {
     expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
   });
 
-  it("renders Google and Kilobot source badges", () => {
-    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="google" />)).toContain("Google");
+  it("hides Google source badges and retains Kilobot source badges", () => {
+    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="google" />)).toBe("");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toContain("Kilobot");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge />)).toBe("");
   });
@@ -142,7 +142,7 @@ describe("Google Calendar connection UI", () => {
         }
       />,
     );
-    expect(markup).toContain("Google");
+    expect(markup).not.toContain("Google");
     expect(markup).toContain("aria-label=\"Update event\"");
     expect(markup).toContain("aria-label=\"Delete event\"");
   });
