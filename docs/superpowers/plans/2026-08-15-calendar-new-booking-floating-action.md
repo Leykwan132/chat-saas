@@ -80,7 +80,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: PASS with every test in the file passing.
 
-- [ ] **Step 5: Check formatting and commit**
+- [x] **Step 5: Check formatting and commit**
 
 Run:
 

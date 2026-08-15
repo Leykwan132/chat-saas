@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: Calendar sidebar New Booking is a labeled bottom-right floating action using its existing callback; commit is pending. The full suite has unrelated existing Google Calendar failures.
+- 2026-08-15 [TOOL] Now: Calendar sidebar New Booking is committed as a labeled bottom-right floating action at `c17934b5`; its focused test passes. The full suite has unrelated existing Google Calendar failures.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar sidebar adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -25,7 +25,7 @@
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
-- 2026-08-15 [CODE] Calendar New Booking moved from inline sidebar content to a permission-gated bottom-right floating action; it remains unreleased.
+- 2026-08-15 [CODE] Calendar New Booking moved from inline sidebar content to a permission-gated bottom-right floating action at `c17934b5`; it remains unreleased.
 
 # Working set
 - `convex/appointmentBooking/availability.ts`
