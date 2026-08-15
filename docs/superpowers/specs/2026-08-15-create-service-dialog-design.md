@@ -21,7 +21,7 @@ Below the service information are two selectable cards:
 
 Each card has a leading icon inside a small foreground card with two offset, bordered cards visibly stacked behind it. The card treatment is decorative; selecting either card remains a single accessible radio-style interaction.
 
-For a Free-plan workspace, For team is visibly locked: it uses the muted card treatment and displays an Upgrade badge beside its label. Clicking or keyboard-activating that card opens the existing shared upgrade modal and does not change the selected For myself card or advance the dialog. Paid workspaces can select For team normally.
+For a Free-plan workspace, For team is visibly locked but retains its normal card label. Hovering or keyboard-focusing the card adds a slightly darker background overlay and reveals a centered Upgrade control. Activating the card or its Upgrade control opens the existing shared upgrade modal and does not change the selected For myself card or advance the dialog. Paid workspaces can select For team normally.
 
 Choosing For myself and pressing Create creates the service immediately. Choosing For team and pressing Continue moves to the team-selection step.
 
