@@ -178,7 +178,7 @@ git add src/components/services/CreateServiceAssignmentCards.tsx src/components/
 
 **Interfaces:** `CreateServiceDialog({ agentId, teamUserOptions, currentWorkosUserId, workspacePlan, open, onOpenChange })` consumes `createService`, `updateService`, `useUpgradeModal`, and Tasks 1–3.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 ```tsx
 renderDialog({ currentWorkosUserId: 'user-ley', workspacePlan: 'starter' });
@@ -198,17 +198,17 @@ expect(updateService).toHaveBeenCalledWith(expect.objectContaining({
 
 Add tests for Close discarding a reopened draft, Team showing Continue, no teammate blocking Create, surfaced mutation error, and navigation to `/dashboard/agent-1/services/service-1`.
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx`
 
 Expected: FAIL because the dialog is absent.
 
-- [ ] **Step 3: Implement the dialog**
+- [x] **Step 3: Implement the dialog**
 
 Reset to `DEFAULT_SERVICE_FORM` plus personal defaults on each closed-to-open transition. Step 1 renders details, Duration, and cards, requiring a trimmed Name. Self-mode Create calls `createService`, then `updateService`, then closes and navigates to its detail page. Team-mode Continue opens teammate selection; its Create calls `validateServiceAssignment` then the same mutations. Close is text-only and immediately discards. Do not retain progress or success screens.
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx src/components/services/CreateServiceAssignmentCards.test.tsx src/components/services/createServiceDialogModel.test.ts`
 
