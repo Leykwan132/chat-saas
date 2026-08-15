@@ -18,3 +18,9 @@ test('workflow toolbar exposes a toggle-style horizontal or vertical button', ()
   expect(source).not.toContain('aria-pressed={layoutOrientation ===');
   expect(source).not.toContain("layoutOrientation === 'vertical' && 'border-border bg-secondary");
 });
+
+test('workflow toolbar explains the purpose of the canvas', () => {
+  expect(source).toContain(
+    'Map how your agent responds, sends content, handles bookings, and routes conversations.',
+  );
+});
