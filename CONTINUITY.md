@@ -78,3 +78,4 @@
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 still reports pre-existing Google Calendar projection and booking-sync failures; the manual-event and connection-card suites passed.
 - 2026-08-15 [CODE] Service location settings are committed at `1b524e6b`; the verified, uncommitted follow-up makes remote bookings request an idempotent Google Meet conference and requires Google to return its video link before local finalization.
 - 2026-08-15 [TOOL] Final focused verification passed 43/43 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`; `convex/googleCalendarBookingSync.test.ts` continues to have its known four unrelated failures.
+- 2026-08-15 [TOOL] Fresh full `bun run test` under Node v22.22.0 remains blocked by known Google Calendar projection (4), booking-sync (4), and projection-review (1) failures; the committed remote booking focused suite passed 43/43.
