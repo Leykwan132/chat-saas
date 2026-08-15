@@ -14,7 +14,7 @@ Create Service uses a plain black dim overlay without background blur and a `rou
 
 ## Step 1: Service info and assignment mode
 
-The first dialog step collects only the service's Name, Location, and Duration. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field. Description and Advanced timing settings are configured from the service detail page after creation.
+The first dialog step collects only the service's Name, Location, and Duration. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field. Description is configured from the service detail page after creation.
 
 Below the service information are two selectable cards:
 
@@ -37,7 +37,7 @@ Step 2 appears only for For team. It lets the user select one or more teammates.
 
 Creation always saves the existing default booking form with Booking Date, Booking Time, Customer Name, and Phone Number. The dialog does not expose booking-form configuration. New services remain enabled by default.
 
-On the service detail page, Description appears directly below Name. Duration remains in the main details area. Gap and Preferred time are grouped under a collapsed Advanced accordion.
+On the service detail page, Description appears directly below Name. Duration, Gap, and Preferred time are visible directly in the main details area.
 
 ## Data and error behavior
 

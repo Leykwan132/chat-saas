@@ -65,7 +65,7 @@ test('blocks Google Meet until Google Calendar is connected', () => {
   expect(source).toContain('Connect Google Calendar');
 });
 
-test('keeps description below name and timing controls advanced', () => {
+test('keeps description below name and shows all timing controls directly', () => {
   const detailsMarkup = renderToStaticMarkup(
     <ServiceDetailsFields form={DEFAULT_SERVICE_FORM} setForm={vi.fn()} />,
   );
@@ -77,7 +77,8 @@ test('keeps description below name and timing controls advanced', () => {
   expect(detailsMarkup.indexOf('>Name<')).toBeLessThan(detailsMarkup.indexOf('>Description<'));
   expect(detailsMarkup.indexOf('>Description<')).toBeLessThan(detailsMarkup.indexOf('>Location<'));
   expect(timingMarkup).toContain('>Minutes<');
-  expect(timingMarkup).toContain('>Advanced<');
-  expect(timingSource).toContain('label="Gap"');
-  expect(timingSource).toContain('PreferredTimesEditor');
+  expect(timingMarkup).toContain('>Gap<');
+  expect(timingMarkup).toContain('Preferred Time');
+  expect(timingMarkup).not.toContain('>Advanced<');
+  expect(timingSource).not.toContain('Accordion');
 });

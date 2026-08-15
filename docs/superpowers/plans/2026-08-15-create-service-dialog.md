@@ -402,3 +402,42 @@ Expected: PASS.
 ```bash
 git add src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceAssignmentCards.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Use service assignment choice cards"
 ```
+
+### Task 10: Show service timing controls directly
+
+**Files:**
+- Modify: `src/components/services/ServiceTimingFields.tsx`
+- Test: `src/components/services/serviceFormShared.test.tsx`
+
+**Interfaces:** `ServiceTimingFields` retains its existing form props and renders Duration, Gap, and `PreferredTimesEditor` directly without Accordion primitives.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(timingMarkup).toContain('>Gap<');
+expect(timingMarkup).toContain('Preferred Time');
+expect(timingMarkup).not.toContain('>Advanced<');
+expect(timingSource).not.toContain('Accordion');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx`
+
+Expected: FAIL because Gap and Preferred Time are hidden in the collapsed accordion.
+
+- [x] **Step 3: Render timing controls directly**
+
+Remove Accordion imports and render the existing Gap number field and `PreferredTimesEditor` immediately after Duration. Preserve all field bindings, validation, disabled behavior, and helper text.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx src/components/ServiceForm.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/ServiceTimingFields.tsx src/components/services/serviceFormShared.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Show service timing settings directly"
+```

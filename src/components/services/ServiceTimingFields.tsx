@@ -1,11 +1,5 @@
 import { PreferredTimesEditor } from '@/components/services/PreferredTimesEditor';
 import { WizardNumberField } from '@/components/services/serviceFormControls';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import type { ServiceForm } from '@/lib/serviceForm';
 
 export function ServiceTimingFields({
@@ -27,30 +21,23 @@ export function ServiceTimingFields({
         disabled={disabled}
         onChange={(value) => setForm((previous) => ({ ...previous, durationMinutes: value }))}
       />
-      <Accordion type="single" collapsible>
-        <AccordionItem value="advanced">
-          <AccordionTrigger>Advanced</AccordionTrigger>
-          <AccordionContent className="flex flex-col gap-6">
-            <WizardNumberField
-              label="Gap"
-              inputSuffix="Minutes"
-              hint="Minutes blocked after each appointment. 0 = back-to-back."
-              value={form.bufferMinutes}
-              disabled={disabled}
-              onChange={(value) => setForm((previous) => ({ ...previous, bufferMinutes: value }))}
-            />
-            <PreferredTimesEditor
-              enabled={form.preferredTimeEnabled}
-              times={form.preferredTimes}
-              disabled={disabled}
-              onEnabledChange={(checked) =>
-                setForm((previous) => ({ ...previous, preferredTimeEnabled: checked }))
-              }
-              onTimesChange={(times) => setForm((previous) => ({ ...previous, preferredTimes: times }))}
-            />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <WizardNumberField
+        label="Gap"
+        inputSuffix="Minutes"
+        hint="Minutes blocked after each appointment. 0 = back-to-back."
+        value={form.bufferMinutes}
+        disabled={disabled}
+        onChange={(value) => setForm((previous) => ({ ...previous, bufferMinutes: value }))}
+      />
+      <PreferredTimesEditor
+        enabled={form.preferredTimeEnabled}
+        times={form.preferredTimes}
+        disabled={disabled}
+        onEnabledChange={(checked) =>
+          setForm((previous) => ({ ...previous, preferredTimeEnabled: checked }))
+        }
+        onTimesChange={(times) => setForm((previous) => ({ ...previous, preferredTimes: times }))}
+      />
     </div>
   );
 }
