@@ -5,6 +5,7 @@
 - 2026-08-15 [TOOL] Now: local branch includes `origin/main` at merge commit `0b6c9760`; its focused Google Calendar booking tests pass under Node v22.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
+- 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
@@ -32,6 +33,7 @@
 - `src/components/calendar/CalendarCreateBookingDialog.tsx`
 - `src/components/inbox/CreateCustomerBookingDialog.tsx`
 - `docs/superpowers/plans/2026-08-13-google-calendar-sync.md`
+- `docs/superpowers/plans/2026-08-15-calendar-today-button.md`
 - `docs/superpowers/specs/2026-08-15-calendar-today-button-design.md`
 - `CONTINUITY.md`
 
@@ -41,3 +43,4 @@
 - 2026-08-15 [TOOL] `git merge --no-ff origin/main` encountered conflicts only in `CONTINUITY.md` and `convex/appointmentBooking/availability.ts`; merge commit `0b6c9760` combines both feature sets.
 - 2026-08-15 [TOOL] Focused booking verification passed: 26 tests in 4 suites under Node v22.22.0.
 - 2026-08-15 [USER] Approved the Calendar Today button design; implementation awaits review of its written spec.
+- 2026-08-15 [USER] Approved the spec and requested implementation planning for the Calendar Today button.
