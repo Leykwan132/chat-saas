@@ -114,7 +114,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc --noEmit && git diff --check
 
 Expected: exits 0.
 
-- [ ] **Step 6: Commit the implementation**
+- [x] **Step 6: Commit the implementation**
 
 ```bash
 git add src/components/workflow/WorkflowBookingNodeServices.test.tsx src/components/workflow/WorkflowBookingNodeServices.tsx src/components/workflow/WorkflowInspectorForm.test.ts src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/workflowBookingNodeServicesModel.test.ts src/components/workflow/workflowBookingNodeServicesModel.ts CONTINUITY.md
@@ -131,7 +131,7 @@ git commit -m "feat: share booking service controls"
 - Consumes: the unified booking-service component from Task 1.
 - Produces: an evidence-backed completion record with no production-release claim.
 
-- [ ] **Step 1: Run the full suite**
+- [x] **Step 1: Run the full suite**
 
 Run:
 
@@ -141,7 +141,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bun run test
 
 Expected: all application, Convex, and Docs tests pass.
 
-- [ ] **Step 2: Record verification and commit it**
+- [x] **Step 2: Record verification and commit it**
 
 Add the command outcome, totals, and Node version to `CONTINUITY.md`, then run:
 

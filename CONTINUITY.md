@@ -130,3 +130,4 @@
 - 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 429 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
 - 2026-08-15 [USER] Book appointment detail panels must use the same switch-enabled service component as their canvas nodes.
 - 2026-08-15 [TOOL] RED then GREEN: inspector-presentation markup initially lacked the shared component presentation marker; it now renders every active service with its existing live switch and excludes inactive services. Three focused workflow suites, TypeScript validation, and `git diff --check` pass under Node v22.22.0.
+- 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 430 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
