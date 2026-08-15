@@ -2,7 +2,7 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [CODE] Now: Calendar day header and no-events state use separate presentation components with dark permission-gated booking actions; integration commit is pending.
+- 2026-08-15 [CODE] Now: Calendar day header and no-events state use separate presentation components with dark permission-gated booking actions; the implementation is committed.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the Calendar action refinement.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -56,3 +56,4 @@
 - 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
 - 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
 - 2026-08-15 [TOOL] Calendar day component tests were RED before the components existed, then focused Calendar verification passed 5/5 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [CODE] Committed the Calendar action components as `f2641c33` and CalendarPage integration as `5c08c8ef`.

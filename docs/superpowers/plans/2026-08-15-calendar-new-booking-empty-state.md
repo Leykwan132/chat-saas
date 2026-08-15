@@ -31,7 +31,7 @@
 - `CalendarDayEmptyState` consumes `canManageCalendar: boolean` and `onCreateBooking: () => void`.
 - Both components produce a compact dark New Booking Button only for authorized users.
 
-- [ ] **Step 1: Write failing rendered-component tests**
+- [x] **Step 1: Write failing rendered-component tests**
 
 Create `CalendarDayPanel.test.tsx` using `renderToStaticMarkup`, then add these tests:
 
@@ -81,7 +81,7 @@ it('renders a dark booking action in the no-events empty state', () => {
 });
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run:
 
@@ -91,7 +91,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: FAIL because neither presentation component exists.
 
-- [ ] **Step 3: Implement the two presentation components**
+- [x] **Step 3: Implement the two presentation components**
 
 Create `CalendarDayHeader.tsx` with this component:
 
@@ -185,7 +185,7 @@ export function CalendarDayEmptyState({
 }
 ```
 
-- [ ] **Step 4: Run the component tests to verify they pass**
+- [x] **Step 4: Run the component tests to verify they pass**
 
 Run:
 
@@ -195,7 +195,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: PASS with all authorized and unauthorized rendered-state assertions passing.
 
-- [ ] **Step 5: Commit the presentation components**
+- [x] **Step 5: Commit the presentation components**
 
 ```bash
 git add src/components/calendar/CalendarDayHeader.tsx src/components/calendar/CalendarDayEmptyState.tsx src/components/calendar/CalendarDayPanel.test.tsx
@@ -214,7 +214,7 @@ git commit -m "Add Calendar day booking actions"
 - `CalendarPage` passes `canManageCalendar` and the same callback into `CalendarDayEmptyState`.
 - `CalendarCreateBookingDialog` retains `initialDate={format(selectedDate, 'yyyy-MM-dd')}`.
 
-- [ ] **Step 1: Replace the inline header and no-events branches**
+- [x] **Step 1: Replace the inline header and no-events branches**
 
 Add these imports to `CalendarPage.tsx`:
 
@@ -249,11 +249,11 @@ Keep this dialog prop unchanged:
 initialDate={format(selectedDate, 'yyyy-MM-dd')}
 ```
 
-- [ ] **Step 2: Remove the obsolete source-level test**
+- [x] **Step 2: Remove the obsolete source-level test**
 
 Delete `src/pages/CalendarNewBookingAction.test.ts`; its rendered-component coverage has moved to `CalendarDayPanel.test.tsx`.
 
-- [ ] **Step 3: Run focused verification**
+- [x] **Step 3: Run focused verification**
 
 Run:
 
@@ -264,7 +264,7 @@ git diff --check
 
 Expected: PASS with all component and sidebar tests passing, and no whitespace errors.
 
-- [ ] **Step 4: Commit the integration and verification ledger**
+- [x] **Step 4: Commit the integration and verification ledger**
 
 Update `CONTINUITY.md` with the result and focused test receipt, then commit:
 
