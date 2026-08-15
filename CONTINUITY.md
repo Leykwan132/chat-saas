@@ -61,17 +61,17 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: the approved measured-node Cleanup plan is committed; implementation awaits the user’s execution-mode choice.
-- 2026-08-15 [TOOL] Next: implement and verify measured-node Cleanup spacing; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: Workflow Cleanup forwards actual rendered persisted-node dimensions into Dagre and falls back safely for unmeasured/template nodes.
+- 2026-08-15 [TOOL] Next: user chooses whether to merge locally, push/create a PR, or keep the verified branch; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
 
-- `src/components/workflow/WorkflowNode.tsx`
 - `src/components/workflow/workflowLayout.ts`
+- `src/components/workflow/workflowLayoutMeasurements.ts`
+- `src/components/workflow/workflowLayoutMeasurements.test.ts`
 - `src/components/workflow/workflowLayout.test.ts`
 - `src/components/workflow/WorkflowCanvas.tsx`
-- `src/components/workflow/workflowTypes.ts`
 - `src/pages/useWorkflowMessageActions.ts`
 - `src/pages/workflowLayoutPersistence.ts`
 - `src/pages/workflowLayoutPersistence.test.ts`
@@ -134,3 +134,4 @@
 - 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 432 application/Convex test files (1,378 tests) and 63 Docs tests. Known unrelated test stderr remains non-failing.
 - 2026-08-15 [USER] Cleanup must account for the larger inline workflow controls; approved use of measured rendered node dimensions instead of fixed compact-card assumptions.
 - 2026-08-15 [CODE] Measured-node Cleanup design and implementation plan are committed as `b3d03c00` and `9e593307`; user-approved execution mode is pending.
+- 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 433 application/Convex test files (1,381 tests) and 63 Docs tests after measured Cleanup verification. Known unrelated test stderr remains non-failing.
