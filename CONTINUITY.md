@@ -8,6 +8,7 @@
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Approved Calendar sidebar design: move the labeled New Booking action to the entire sidebar’s absolute bottom-right.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar New Booking floating action.
+- 2026-08-15 [USER] Superseded sidebar/page-level placement: New Booking belongs directly after the Today/date group in the right Calendar panel header, with a 15px gap.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
@@ -38,6 +39,7 @@
 - `src/components/calendar/CalendarSidebar.test.tsx`
 - `docs/superpowers/plans/2026-08-15-calendar-new-booking-floating-action.md`
 - `docs/superpowers/specs/2026-08-15-calendar-new-booking-floating-action-design.md`
+- `docs/superpowers/specs/2026-08-15-calendar-new-booking-header-action-design.md`
 - `CONTINUITY.md`
 
 # Receipts
@@ -52,3 +54,4 @@
 - 2026-08-15 [USER] Approved the Calendar sidebar New Booking floating-action design; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the floating-action spec and requested implementation planning.
 - 2026-08-15 [TOOL] Calendar sidebar floating-action test passed 3/3 under Node v22.22.0; the first test run was RED because New Booking appeared before View without positioning classes.
+- 2026-08-15 [USER] Corrected New Booking placement to the right Calendar panel header, after the Today/date group; implementation awaits review of its written spec.
