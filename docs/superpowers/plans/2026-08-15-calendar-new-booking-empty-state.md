@@ -4,44 +4,81 @@
 
 **Goal:** Right-align a dark New Booking action in the Calendar day header and make it available from the shared no-events empty state.
 
-**Architecture:** `CalendarPage` remains the sole owner of `setCreateBookingOpen` and `selectedDate`. Its header uses a `justify-between` layout, and its no-events branch composes the existing `Empty` primitives with the same permission-gated dark Button. The existing dialog remains unchanged so all entry points use its selected-date `initialDate`.
+**Architecture:** Extract the selected-day header and no-events presentation into two small Calendar components with explicit props. `CalendarPage` continues to own the selected date, permission, and dialog state, passing one `onCreateBooking` callback into both components. Component tests server-render the components with permission variations to verify the visible user experience.
 
-**Tech Stack:** React, TypeScript, Tailwind CSS, shadcn/ui Button and Empty primitives, Lucide, Vitest, Bun, Node v22.
+**Tech Stack:** React, TypeScript, date-fns, Tailwind CSS, shadcn/ui Button and Empty primitives, Lucide, Vitest, Bun, Node v22.
 
 ## Global Constraints
 
 - Run every script with `source ~/.nvm/nvm.sh && nvm use 22` in the same shell command.
 - Use `Button` with `variant="default"` and `size="sm"` for both dark New Booking actions.
 - Render each action only when `canManageCalendar` is true.
-- Keep `initialDate={format(selectedDate, 'yyyy-MM-dd')}` unchanged.
-- Use `Empty`, `EmptyContent`, `EmptyDescription`, `EmptyHeader`, `EmptyMedia`, and `EmptyTitle` from the shared UI component.
+- Keep `initialDate={format(selectedDate, 'yyyy-MM-dd')}` unchanged in `CalendarPage`.
+- Use the shared `Empty` primitives for the no-events state.
 - Do not add a dependency, alter booking-dialog behavior, add code comments, or add a release-changelog entry.
 
 ---
 
-### Task 1: Align the day-header action and compose the no-events action
+### Task 1: Create testable selected-day presentation components
 
 **Files:**
-- Modify: `src/pages/CalendarPage.tsx:31-91,1208-1295`
-- Modify: `src/pages/CalendarNewBookingAction.test.ts:1-14`
+- Create: `src/components/calendar/CalendarDayHeader.tsx`
+- Create: `src/components/calendar/CalendarDayEmptyState.tsx`
+- Create: `src/components/calendar/CalendarDayPanel.test.tsx`
 
 **Interfaces:**
-- Consumes: `canManageCalendar`, `setCreateBookingOpen`, and `selectedDate` already owned by `CalendarPage`.
-- Produces: two permission-gated dark New Booking actions that call `setCreateBookingOpen(true)` and continue to use `CalendarCreateBookingDialog` with the selected date.
+- `CalendarDayHeader` consumes `selectedDate: Date`, `isToday: boolean`, `canManageCalendar: boolean`, and `onCreateBooking: () => void`.
+- `CalendarDayEmptyState` consumes `canManageCalendar: boolean` and `onCreateBooking: () => void`.
+- Both components produce a compact dark New Booking Button only for authorized users.
 
-- [ ] **Step 1: Write the failing source-level regression test**
+- [ ] **Step 1: Write failing rendered-component tests**
 
-Replace the existing test body in `src/pages/CalendarNewBookingAction.test.ts` with assertions for the header alignment, dark buttons, shared empty component, permission gate, and selected-date dialog:
+Create `CalendarDayPanel.test.tsx` using `renderToStaticMarkup`, then add these tests:
 
-```ts
-expect(page).toContain('className="flex min-w-0 items-center justify-between gap-4"');
-expect(page).toContain('variant="default"');
-expect(page).toContain("from '@/components/ui/empty'");
-expect(page).toContain('<EmptyTitle>No events</EmptyTitle>');
-expect(page).toContain('<EmptyContent>');
-expect(page).toContain('{canManageCalendar ? (');
-expect(page).toContain('onClick={() => setCreateBookingOpen(true)}');
-expect(page).toContain("initialDate={format(selectedDate, 'yyyy-MM-dd')}");
+```tsx
+it('renders the selected day left of a dark booking action', () => {
+  const markup = renderToStaticMarkup(
+    <CalendarDayHeader
+      canManageCalendar
+      isToday
+      selectedDate={new Date(2026, 7, 15)}
+      onCreateBooking={() => undefined}
+    />,
+  );
+
+  expect(markup).toContain('justify-between');
+  expect(markup).toContain('Today');
+  expect(markup).toContain('>15<');
+  expect(markup).toContain('New Booking');
+  expect(markup).toContain('bg-primary');
+});
+
+it('hides booking actions without calendar permission', () => {
+  const header = renderToStaticMarkup(
+    <CalendarDayHeader
+      canManageCalendar={false}
+      isToday={false}
+      selectedDate={new Date(2026, 7, 16)}
+      onCreateBooking={() => undefined}
+    />,
+  );
+  const emptyState = renderToStaticMarkup(
+    <CalendarDayEmptyState canManageCalendar={false} onCreateBooking={() => undefined} />,
+  );
+
+  expect(header).not.toContain('New Booking');
+  expect(emptyState).not.toContain('New Booking');
+});
+
+it('renders a dark booking action in the no-events empty state', () => {
+  const markup = renderToStaticMarkup(
+    <CalendarDayEmptyState canManageCalendar onCreateBooking={() => undefined} />,
+  );
+
+  expect(markup).toContain('Nothing scheduled for this day yet.');
+  expect(markup).toContain('New Booking');
+  expect(markup).toContain('bg-primary');
+});
 ```
 
 - [ ] **Step 2: Run the focused test to verify it fails**
@@ -49,16 +86,65 @@ expect(page).toContain("initialDate={format(selectedDate, 'yyyy-MM-dd')}");
 Run:
 
 ```bash
-source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/CalendarNewBookingAction.test.ts
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/CalendarDayPanel.test.tsx
 ```
 
-Expected: FAIL because the header currently has a fixed gap, the button is outlined, and the no-events branch uses custom markup.
+Expected: FAIL because neither presentation component exists.
 
-- [ ] **Step 3: Implement the compact dark actions**
+- [ ] **Step 3: Implement the two presentation components**
 
-In `CalendarPage.tsx`, add this shared UI import:
+Create `CalendarDayHeader.tsx` with this component:
 
-```ts
+```tsx
+import { format } from 'date-fns';
+import { Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+type CalendarDayHeaderProps = {
+  selectedDate: Date;
+  isToday: boolean;
+  canManageCalendar: boolean;
+  onCreateBooking: () => void;
+};
+
+export function CalendarDayHeader({
+  selectedDate,
+  isToday,
+  canManageCalendar,
+  onCreateBooking,
+}: CalendarDayHeaderProps) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-2">
+        {isToday ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
+              {format(selectedDate, 'd')}
+            </span>
+          </div>
+        ) : (
+          <h2 className="truncate text-sm font-semibold text-foreground">
+            {format(selectedDate, 'EEEE, MMM d')}
+          </h2>
+        )}
+      </div>
+      {canManageCalendar ? (
+        <Button type="button" variant="default" size="sm" onClick={onCreateBooking}>
+          <Plus data-icon="inline-start" />
+          New Booking
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+```
+
+Create `CalendarDayEmptyState.tsx` with this component:
+
+```tsx
+import { Calendar as CalendarIcon, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import {
   Empty,
   EmptyContent,
@@ -67,73 +153,123 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+
+type CalendarDayEmptyStateProps = {
+  canManageCalendar: boolean;
+  onCreateBooking: () => void;
+};
+
+export function CalendarDayEmptyState({
+  canManageCalendar,
+  onCreateBooking,
+}: CalendarDayEmptyStateProps) {
+  return (
+    <Empty className="h-full border-0 p-4">
+      <EmptyHeader>
+        <EmptyMedia variant="icon">
+          <CalendarIcon />
+        </EmptyMedia>
+        <EmptyTitle>No events</EmptyTitle>
+        <EmptyDescription>Nothing scheduled for this day yet.</EmptyDescription>
+      </EmptyHeader>
+      {canManageCalendar ? (
+        <EmptyContent>
+          <Button type="button" variant="default" size="sm" onClick={onCreateBooking}>
+            <Plus data-icon="inline-start" />
+            New Booking
+          </Button>
+        </EmptyContent>
+      ) : null}
+    </Empty>
+  );
+}
 ```
 
-Replace the header wrapper and action with a right-aligned row:
-
-```tsx
-<div className="flex min-w-0 items-center justify-between gap-4">
-  <div className="flex min-w-0 items-center gap-2">
-    {selectedDayKey === todayKey ? (
-      <div className="flex min-w-0 items-center gap-2">
-        <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
-        <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-          {format(selectedDate, 'd')}
-        </span>
-      </div>
-    ) : (
-      <h2 className="truncate text-sm font-semibold text-foreground">
-        {format(selectedDate, 'EEEE, MMM d')}
-      </h2>
-    )}
-  </div>
-  {canManageCalendar ? (
-    <Button type="button" variant="default" size="sm" onClick={() => setCreateBookingOpen(true)}>
-      <Plus data-icon="inline-start" />
-      New Booking
-    </Button>
-  ) : null}
-</div>
-```
-
-Replace the no-events branch with the shared empty composition:
-
-```tsx
-<Empty className="h-full border-0 p-4">
-  <EmptyHeader>
-    <EmptyMedia variant="icon">
-      <CalendarIcon />
-    </EmptyMedia>
-    <EmptyTitle>No events</EmptyTitle>
-    <EmptyDescription>Nothing scheduled for this day yet.</EmptyDescription>
-  </EmptyHeader>
-  {canManageCalendar ? (
-    <EmptyContent>
-      <Button type="button" variant="default" size="sm" onClick={() => setCreateBookingOpen(true)}>
-        <Plus data-icon="inline-start" />
-        New Booking
-      </Button>
-    </EmptyContent>
-  ) : null}
-</Empty>
-```
-
-- [ ] **Step 4: Run focused verification**
+- [ ] **Step 4: Run the component tests to verify they pass**
 
 Run:
 
 ```bash
-source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/pages/CalendarNewBookingAction.test.ts src/components/calendar/CalendarSidebar.test.tsx
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/CalendarDayPanel.test.tsx
+```
+
+Expected: PASS with all authorized and unauthorized rendered-state assertions passing.
+
+- [ ] **Step 5: Commit the presentation components**
+
+```bash
+git add src/components/calendar/CalendarDayHeader.tsx src/components/calendar/CalendarDayEmptyState.tsx src/components/calendar/CalendarDayPanel.test.tsx
+git commit -m "Add Calendar day booking actions"
+```
+
+### Task 2: Wire the components into CalendarPage
+
+**Files:**
+- Modify: `src/pages/CalendarPage.tsx:80-90,1208-1295`
+- Delete: `src/pages/CalendarNewBookingAction.test.ts`
+- Modify: `CONTINUITY.md`
+
+**Interfaces:**
+- `CalendarPage` passes `selectedDate`, `selectedDayKey === todayKey`, `canManageCalendar`, and `() => setCreateBookingOpen(true)` into `CalendarDayHeader`.
+- `CalendarPage` passes `canManageCalendar` and the same callback into `CalendarDayEmptyState`.
+- `CalendarCreateBookingDialog` retains `initialDate={format(selectedDate, 'yyyy-MM-dd')}`.
+
+- [ ] **Step 1: Replace the inline header and no-events branches**
+
+Add these imports to `CalendarPage.tsx`:
+
+```ts
+import { CalendarDayEmptyState } from '@/components/calendar/CalendarDayEmptyState';
+import { CalendarDayHeader } from '@/components/calendar/CalendarDayHeader';
+```
+
+Replace the right-panel header child with:
+
+```tsx
+<CalendarDayHeader
+  selectedDate={selectedDate}
+  isToday={selectedDayKey === todayKey}
+  canManageCalendar={canManageCalendar}
+  onCreateBooking={() => setCreateBookingOpen(true)}
+/>
+```
+
+Replace the no-events branch with:
+
+```tsx
+<CalendarDayEmptyState
+  canManageCalendar={canManageCalendar}
+  onCreateBooking={() => setCreateBookingOpen(true)}
+/>
+```
+
+Keep this dialog prop unchanged:
+
+```tsx
+initialDate={format(selectedDate, 'yyyy-MM-dd')}
+```
+
+- [ ] **Step 2: Remove the obsolete source-level test**
+
+Delete `src/pages/CalendarNewBookingAction.test.ts`; its rendered-component coverage has moved to `CalendarDayPanel.test.tsx`.
+
+- [ ] **Step 3: Run focused verification**
+
+Run:
+
+```bash
+source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/CalendarDayPanel.test.tsx src/components/calendar/CalendarSidebar.test.tsx
 git diff --check
 ```
 
-Expected: PASS with all focused assertions, and no whitespace errors.
+Expected: PASS with all component and sidebar tests passing, and no whitespace errors.
 
-- [ ] **Step 5: Commit the implementation and verification ledger**
+- [ ] **Step 4: Commit the integration and verification ledger**
 
 Update `CONTINUITY.md` with the result and focused test receipt, then commit:
 
 ```bash
-git add src/pages/CalendarPage.tsx src/pages/CalendarNewBookingAction.test.ts CONTINUITY.md
+git add src/pages/CalendarPage.tsx CONTINUITY.md
+git add -u src/pages/CalendarNewBookingAction.test.ts
 git commit -m "Refine Calendar booking actions"
 ```

@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [USER] Now: approved a Calendar header refinement: Today/date left and dark New Booking right, plus a shared empty-state booking action.
-- 2026-08-15 [USER] Next: choose an execution approach for the planned Calendar header refinement.
+- 2026-08-15 [USER] Now: approved a Calendar header refinement: Today/date left and dark New Booking right, plus a shared empty-state booking action tested through extracted presentation components.
+- 2026-08-15 [USER] Next: execute the revised testable-component implementation plan inline.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Superseded fixed-gap header placement: New Booking is right-aligned with the Today/date group left, and it appears in the no-events state.
@@ -56,3 +56,4 @@
 - 2026-08-15 [TOOL] Header-action test was RED before implementation; focused Calendar tests then passed 3/3 under Node v22.22.0, and `git diff --check` passed.
 - 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).
 - 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
+- 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
