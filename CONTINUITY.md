@@ -6,6 +6,7 @@
 - 2026-08-15 [CODE] Now: Google-origin event badges are hidden while Kilobot badges remain; focused verification passed and the change is ready to commit.
 - 2026-08-15 [CODE] Now: connected Google Calendar status is solid green, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is ready to commit.
 - 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
+- 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is ready to commit.
 - 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
@@ -46,7 +47,6 @@
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-15 [TOOL] Header-action test was RED before implementation; focused Calendar tests then passed 3/3 under Node v22.22.0, and `git diff --check` passed.
 - 2026-08-15 [CODE] Committed the Calendar header action as `c4bde34a` (`Place Calendar New Booking in day header`).
 - 2026-08-15 [USER] Approved the right-aligned dark header action and the no-events booking action design and spec; implementation plan is pending review.
 - 2026-08-15 [USER] Approved replacing the source-level regression check with extracted Calendar presentation components and rendered behavior tests.
@@ -66,3 +66,4 @@
 - 2026-08-15 [TOOL] Expanded the active PostHog connection-control rollout to the two approved email accounts, each at 100%.
 - 2026-08-15 [TOOL] Google badge regression test was RED before implementation, then focused Calendar verification passed 13/13 under Node v22.22.0 with `git diff --check` passing.
 - 2026-08-15 [TOOL] Google event-indicator tests were RED before implementation, then focused Calendar verification passed 14/14 under Node v22.22.0 with `git diff --check` passing.
+- 2026-08-15 [TOOL] Modal Google icon test was RED before implementation, then focused Calendar verification passed 15/15 under Node v22.22.0 with `git diff --check` passing.

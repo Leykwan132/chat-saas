@@ -126,6 +126,18 @@ describe("Google Calendar connection UI", () => {
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge />)).toBe("");
   });
 
+  it("uses a larger Google source icon in event-details headings", () => {
+    const headingMarkup = renderToStaticMarkup(
+      <TooltipProvider>
+        <GoogleCalendarSourceBadge origin="google" size="heading" />
+      </TooltipProvider>,
+    );
+    expect(headingMarkup).toContain('class="size-5"');
+    const detailsSource = readFileSync(new URL("./CalendarEventDetailsBody.tsx", import.meta.url), "utf8");
+    expect(detailsSource).toContain('<GoogleCalendarSourceBadge origin={details.externalOrigin} size="heading" />');
+    expect(detailsSource).toContain("items-center gap-2");
+  });
+
   it("places source indicators before event titles in calendar lists", () => {
     const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
     const eventTitleSource = '<span className="min-w-0 truncate">{event.title}</span>';

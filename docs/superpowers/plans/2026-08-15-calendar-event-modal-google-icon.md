@@ -29,7 +29,7 @@
 - Consumes: the `heading` variant in `CalendarEventDetailsBody`.
 - Preserves: compact `size-3.5` Google icons in `CalendarPage` and the existing Kilobot behavior.
 
-- [ ] **Step 1: Write failing modal variant tests**
+- [x] **Step 1: Write failing modal variant tests**
 
 ```tsx
 const headingMarkup = renderToStaticMarkup(
@@ -44,13 +44,13 @@ expect(detailsSource).toContain('<GoogleCalendarSourceBadge origin={details.exte
 expect(detailsSource).toContain('items-center gap-2');
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/GoogleCalendarConnection.test.tsx`.
 
 Expected: FAIL because the source component has no heading variant and the modal still uses `items-start`.
 
-- [ ] **Step 3: Add the minimal variant and modal layout change**
+- [x] **Step 3: Add the minimal variant and modal layout change**
 
 ```tsx
 export function GoogleCalendarSourceBadge({ origin, size = 'compact' }: {
@@ -62,12 +62,12 @@ export function GoogleCalendarSourceBadge({ origin, size = 'compact' }: {
 
 Use `iconClassName` on the Google image. In `CalendarEventDetailsBody`, request `size="heading"` and replace `items-start` with `items-center` on its title row.
 
-- [ ] **Step 4: Run focused verification and formatting checks**
+- [x] **Step 4: Run focused verification and formatting checks**
 
 Run `source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/GoogleCalendarConnection.test.tsx`, then `git diff --check`.
 
 Expected: PASS, with a `size-5` modal icon, compact list icons, and no diff errors.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Run `git add src/components/calendar/GoogleCalendarSourceBadge.tsx src/components/calendar/CalendarEventDetailsBody.tsx src/components/calendar/GoogleCalendarConnection.test.tsx CONTINUITY.md docs/superpowers/plans/2026-08-15-calendar-event-modal-google-icon.md && git commit -m "Enlarge modal Google calendar icon"`.
