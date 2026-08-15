@@ -39,10 +39,10 @@
 - `src/lib/posthogFeatureFlags.ts`
 - `src/lib/posthogFeatureFlags.test.ts`
 - `src/components/calendar/GoogleCalendarConnection.test.tsx`
-- `docs/superpowers/specs/2026-08-15-calendar-unified-booking-actions-design.md`
 - `docs/superpowers/specs/2026-08-15-google-calendar-connect-early-access-design.md`
 - `docs/superpowers/plans/2026-08-15-google-calendar-connect-early-access.md`
 - `docs/superpowers/specs/2026-08-15-calendar-google-event-indicators-design.md`
+- `docs/superpowers/plans/2026-08-15-calendar-google-event-indicators.md`
 - `CONTINUITY.md`
 
 # Receipts
