@@ -59,37 +59,35 @@ export function ServiceLocationField({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)">
-          {canUseGoogleMeet ? (
-            <DropdownMenuItem onSelect={() => chooseLocation('remote')}>
-              <GoogleMeetIcon />
-              Google Meet
-            </DropdownMenuItem>
-          ) : (
-            <HoverCard openDelay={150} closeDelay={100}>
-              <HoverCardTrigger asChild>
-                <button
-                  type="button"
-                  aria-disabled="true"
-                  disabled={disabled}
-                  className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-sm font-medium text-muted-foreground opacity-60 outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-                  onClick={(event) => event.preventDefault()}
-                >
-                  <GoogleMeetIcon />
-                  Google Meet
-                </button>
-              </HoverCardTrigger>
-              <HoverCardContent align="start" className="flex flex-col gap-3">
-                {googleCalendarEnabled ? (
-                  <>
-                    <p>Google Meet requires you to connect your Google Calendar.</p>
-                    <Button type="button" size="sm" onClick={() => void googleCalendar.connectGoogleCalendar()}>
-                      Connect Google Calendar
-                    </Button>
-                  </>
-                ) : <p>Google Meet is not available yet.</p>}
-              </HoverCardContent>
-            </HoverCard>
-          )}
+          {googleCalendarEnabled ? (
+            canUseGoogleMeet ? (
+              <DropdownMenuItem onSelect={() => chooseLocation('remote')}>
+                <GoogleMeetIcon />
+                Google Meet
+              </DropdownMenuItem>
+            ) : (
+              <HoverCard openDelay={150} closeDelay={100}>
+                <HoverCardTrigger asChild>
+                  <button
+                    type="button"
+                    aria-disabled="true"
+                    disabled={disabled}
+                    className="flex w-full items-center gap-2.5 rounded-2xl px-3 py-2 text-left text-sm font-medium text-muted-foreground opacity-60 outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={(event) => event.preventDefault()}
+                  >
+                    <GoogleMeetIcon />
+                    Google Meet
+                  </button>
+                </HoverCardTrigger>
+                <HoverCardContent align="start" className="flex flex-col gap-3">
+                  <p>Google Meet requires you to connect your Google Calendar.</p>
+                  <Button type="button" size="sm" onClick={() => void googleCalendar.connectGoogleCalendar()}>
+                    Connect Google Calendar
+                  </Button>
+                </HoverCardContent>
+              </HoverCard>
+            )
+          ) : null}
           <DropdownMenuItem onSelect={() => chooseLocation('in_person')}>
             <MapPin />
             In person

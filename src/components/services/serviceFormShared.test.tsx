@@ -47,7 +47,7 @@ test('uses switches to select teammates and limits bulk selection to creation', 
   expect(editMarkup).not.toContain('size-4 rounded border-input');
 });
 
-test('blocks Google Meet until Google Calendar is connected', () => {
+test('shows Google Meet only to feature-flagged accounts and blocks it until connected', () => {
   const markup = renderToStaticMarkup(
     <ServiceDetailsFields form={DEFAULT_SERVICE_FORM} setForm={vi.fn()} />,
   );
@@ -61,8 +61,10 @@ test('blocks Google Meet until Google Calendar is connected', () => {
   expect(source).toContain('GOOGLE_MEET_ICON_SRC');
   expect(source).not.toContain('<Video');
   expect(source).toContain('aria-disabled="true"');
+  expect(source).toContain('{googleCalendarEnabled ? (');
   expect(source).toContain('Google Meet requires you to connect your Google Calendar.');
   expect(source).toContain('Connect Google Calendar');
+  expect(source).not.toContain('Google Meet is not available yet.');
 });
 
 test('keeps description below name and shows all timing controls directly', () => {

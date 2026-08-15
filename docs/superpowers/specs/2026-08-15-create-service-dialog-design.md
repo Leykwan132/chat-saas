@@ -27,7 +27,7 @@ The Team-card entitlement is determined only from the active workspace's current
 
 Choosing For myself and pressing Create creates the service immediately. Choosing For team and pressing Continue moves to the team-selection step.
 
-Google Meet and In person retain the approved Location dropdown behavior. Google Meet continues to require the eligible current user to connect Google Calendar and uses the hosted Google Meet product image.
+In person is always present in the Location dropdown. Google Meet is shown only when the current account is eligible for the Google Calendar feature flag. For eligible accounts, Google Meet continues to require a Google Calendar connection and uses the hosted Google Meet product image.
 
 ## Step 2: Team assignment
 

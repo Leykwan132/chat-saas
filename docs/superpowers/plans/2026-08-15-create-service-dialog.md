@@ -515,3 +515,40 @@ Expected: PASS.
 ```bash
 git add src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Use ghost service dialog close button"
 ```
+
+### Task 13: Hide Google Meet outside early access
+
+**Files:**
+- Modify: `src/components/services/ServiceLocationField.tsx`
+- Test: `src/components/services/serviceFormShared.test.tsx`
+
+**Interfaces:** `useEnableGoogleCalendarConnect` continues to drive `googleCalendarEnabled`; it now gates rendering of the Google Meet menu entry itself.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).toContain('{googleCalendarEnabled ? (');
+expect(source).not.toContain('Google Meet is not available yet.');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx`
+
+Expected: FAIL because non-flagged accounts still receive a disabled Google Meet entry and unavailable copy.
+
+- [x] **Step 3: Gate the menu entry**
+
+Render the Google Meet menu entry only when `googleCalendarEnabled` is true. Within that branch, preserve the enabled selection for connected accounts and the disabled hover-card connection guidance for disconnected accounts. Keep In person visible for every account.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/serviceFormShared.test.tsx src/components/ServiceForm.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/ServiceLocationField.tsx src/components/services/serviceFormShared.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Gate service Google Meet option"
+```
