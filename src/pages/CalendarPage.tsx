@@ -432,7 +432,7 @@ function CalendarDayGridCell({
   todayKey,
   onSelectDate,
   onSelectEvent,
-  onCreateEvent,
+  onCreateBooking,
 }: {
   day: Date;
   dayEvents: CalendarEvent[];
@@ -444,7 +444,7 @@ function CalendarDayGridCell({
   todayKey: string;
   onSelectDate: (day: Date) => void;
   onSelectEvent: (day: Date, eventId: string) => void;
-  onCreateEvent: (day: Date) => void;
+  onCreateBooking: (day: Date) => void;
 }) {
   const visibleEvents = dayEvents.slice(0, CALENDAR_GRID_VISIBLE_EVENT_LIMIT);
   const hiddenEventCount = dayEvents.length - visibleEvents.length;
@@ -540,10 +540,10 @@ function CalendarDayGridCell({
       <ContextMenuContent className="min-w-[9.5rem] rounded-lg border border-border p-1 shadow-md ring-0">
         <ContextMenuItem
           className="gap-2 rounded-md px-2.5 py-1.5 text-sm font-normal focus:bg-muted"
-          onClick={() => onCreateEvent(day)}
+          onClick={() => onCreateBooking(day)}
         >
           <Plus className="size-3.5" />
-          Create event
+          Create Booking
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -1191,9 +1191,9 @@ export default function CalendarPage() {
                 const calendarEvent = (events ?? []).find((item) => item._id === eventId);
                 if (calendarEvent) handleSelectEvent(calendarEvent);
               }}
-              onCreateEvent={(nextDay) => {
+              onCreateBooking={(nextDay) => {
                 handleSelectDate(nextDay);
-                openCreateEventSheet(nextDay);
+                setCreateBookingOpen(true);
               }}
             />
           ))}

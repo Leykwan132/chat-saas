@@ -15,6 +15,7 @@ describe('Calendar day booking actions', () => {
     );
 
     expect(markup).toContain('justify-between');
+    expect(markup).toContain('w-full');
     expect(markup).toContain('Today');
     expect(markup).toContain('>15<');
     expect(markup).toContain('New Booking');

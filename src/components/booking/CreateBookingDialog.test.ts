@@ -70,9 +70,12 @@ test('uses a searchable scrollable customer Combobox', () => {
   expect(calendarEventsSource).toContain('.collect()');
 });
 
-test('keeps generic event creation separate from the primary booking action', () => {
-  expect(calendarSidebarSource).toContain('New Booking');
+test('uses the booking dialog for Calendar creation actions', () => {
+  expect(calendarSidebarSource).not.toContain('New Booking');
   expect(calendarPageSource).toContain('<CalendarCreateBookingDialog');
-  expect(calendarPageSource).toContain('openCreateEventSheet(nextDay)');
-  expect(calendarPageSource).toContain("editingEvent ? 'Event Details' : 'New Event'");
+  expect(calendarPageSource).toContain('onCreateBooking={(nextDay) =>');
+  expect(calendarPageSource).toContain('handleSelectDate(nextDay);');
+  expect(calendarPageSource).toContain('setCreateBookingOpen(true);');
+  expect(calendarPageSource).toContain('Create Booking');
+  expect(calendarPageSource).not.toContain('Create event');
 });

@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [USER] Now: approved unified Calendar booking actions: header, empty state, and grid context menu all open the booking dialog for the selected date.
-- 2026-08-15 [USER] Next: choose an execution approach for the unified Calendar booking-actions plan.
+- 2026-08-15 [CODE] Now: Calendar header, empty state, and grid context menu all open the booking dialog for the selected date; implementation commit is pending.
+- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the unified booking-action refinement.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Superseded header action layout: New Booking fills the day-header row and is pinned to the far-right edge.
@@ -25,7 +25,7 @@
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
-- 2026-08-15 [CODE] Calendar New Booking is available in the selected-day header and shared no-events state; the approved unified-action refinement remains unreleased.
+- 2026-08-15 [CODE] Calendar New Booking is pinned to the selected-day header edge, shown in the shared no-events state, and opened by the grid Create Booking action after selecting its date; it remains unreleased.
 
 # Working set
 - `src/components/calendar/CalendarSidebar.test.tsx`
@@ -62,3 +62,4 @@
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 reconfirmed existing Google Calendar failures, including projection (4) and booking-sync (4); the new Calendar day-panel suite passed.
 - 2026-08-15 [USER] Approved a unified booking-dialog design for header, no-events, and grid context-menu actions; spec review is pending.
 - 2026-08-15 [USER] Approved the unified-booking spec and requested implementation planning.
+- 2026-08-15 [TOOL] Unified booking-action tests were RED before implementation, then focused Calendar verification passed 10/10 under Node v22.22.0 with `git diff --check` passing.

@@ -16,7 +16,7 @@ export function CalendarDayHeader({
   onCreateBooking,
 }: CalendarDayHeaderProps) {
   return (
-    <div className="flex min-w-0 items-center justify-between gap-4">
+    <div className="flex w-full min-w-0 items-center justify-between gap-4">
       <div className="flex min-w-0 items-center gap-2">
         {isToday ? (
           <div className="flex min-w-0 items-center gap-2">
