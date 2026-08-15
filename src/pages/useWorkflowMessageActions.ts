@@ -145,7 +145,6 @@ export function useWorkflowMessageActions({
         description: values.description,
         conditionLabel: values.conditionName,
         conditionDetail: values.conditionDetail,
-        allowedAppointmentServiceIds: values.allowedAppointmentServiceIds,
       });
       onGraph(nextGraph);
       toast.success("Node updated");

@@ -30,6 +30,10 @@ export default function ScheduleUserAvailabilityPage() {
     return <ScheduleUserAvailabilitySkeleton />;
   }
 
+  if (currentUser === null) {
+    return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
+  }
+
   const isOwnSchedule = decodedWorkosUserId === currentUser.workosUserId;
   const canEditAvailability = canManage || isOwnSchedule;
   const detailPath = `/dashboard/${typedAgentId}/availability/${encodeURIComponent(decodedWorkosUserId)}`;

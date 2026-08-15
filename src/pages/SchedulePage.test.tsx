@@ -6,7 +6,7 @@ import SchedulePage from './SchedulePage';
 const mocks = vi.hoisted(() => ({
   useMutation: vi.fn(),
   useQuery: vi.fn(),
-  activeTeam: { type: 'organizational' as const },
+  activeTeam: { type: 'organizational' as 'organizational' | 'personal' },
   role: 'owner' as 'owner' | 'admin' | 'member',
 }));
 

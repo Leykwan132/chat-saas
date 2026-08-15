@@ -181,7 +181,9 @@ export default function SchedulePage({ hideHeader = false }: { hideHeader?: bool
                     label={label}
                     email={teammate.email}
                     role={teammate.role}
-                    assignedLeadCount={openLeadCounts[teammate.workosUserId] ?? 0}
+                    assignedLeadCount={showTeamRoster && openLeadCounts
+                      ? openLeadCounts[teammate.workosUserId] ?? 0
+                      : 0}
                     shifts={existing?.shifts ?? []}
                     timeOff={timeOff}
                     isMemberView={!showTeamRoster}

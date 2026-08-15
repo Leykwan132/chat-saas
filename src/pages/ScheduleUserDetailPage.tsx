@@ -56,6 +56,10 @@ export default function ScheduleUserDetailPage() {
     );
   }
 
+  if (currentUser === null) {
+    return <Navigate to={`/dashboard/${typedAgentId}`} replace />;
+  }
+
   const isOwnProfile = decodedWorkosUserId === currentUser.workosUserId;
   if (!canManage && !isOwnProfile) {
     return <Navigate to={`/dashboard/${typedAgentId}/availability`} replace />;

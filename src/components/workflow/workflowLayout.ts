@@ -47,13 +47,20 @@ type WorkflowLayoutPosition = WorkflowCleanupPosition & {
   centerY: number;
 };
 
+type WorkflowNodeSize = {
+  width: number;
+  height: number;
+};
+
 export function getNextWorkflowLayoutOrientation(
   orientation: WorkflowLayoutOrientation,
 ): WorkflowLayoutOrientation {
   return orientation === 'horizontal' ? 'vertical' : 'horizontal';
 }
 
-export function getWorkflowLayoutNodeSize(node: WorkflowGraph['nodes'][number]) {
+export function getWorkflowLayoutNodeSize(
+  node: WorkflowGraph['nodes'][number],
+): WorkflowNodeSize {
   const title = workflowNodeDisplayTitle(node.kind, node.title);
   const titleWidth = title.length * TITLE_CHARACTER_WIDTH + NODE_HORIZONTAL_PADDING;
   const descriptionWidth = node.description
@@ -82,8 +89,11 @@ function getWorkflowNodeControlRailWidth(node: WorkflowGraph['nodes'][number]) {
   );
 }
 
-function isFinitePositiveSize(size: { width: number; height: number } | undefined) {
-  return size !== undefined &&
+function isFinitePositiveSize(
+  size: { width?: number; height?: number } | undefined,
+): size is WorkflowNodeSize {
+  return typeof size?.width === 'number' &&
+    typeof size.height === 'number' &&
     Number.isFinite(size.width) &&
     Number.isFinite(size.height) &&
     size.width > 0 &&
@@ -92,8 +102,8 @@ function isFinitePositiveSize(size: { width: number; height: number } | undefine
 
 export function getWorkflowCleanupNodeSize(
   node: WorkflowGraph['nodes'][number],
-  measuredSize?: { width: number; height: number },
-) {
+  measuredSize?: { width?: number; height?: number },
+): WorkflowNodeSize {
   if (isFinitePositiveSize(measuredSize)) return { ...measuredSize };
   const size = getWorkflowLayoutNodeSize(node);
 

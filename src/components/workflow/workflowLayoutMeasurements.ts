@@ -7,15 +7,24 @@ export type WorkflowLayoutNodeMeasurements = ReadonlyMap<
   { width: number; height: number }
 >;
 
+function hasMeasuredNodeSize(
+  size: { width?: number; height?: number },
+): size is { width: number; height: number } {
+  return typeof size.width === 'number' &&
+    typeof size.height === 'number' &&
+    Number.isFinite(size.width) &&
+    Number.isFinite(size.height) &&
+    size.width > 0 &&
+    size.height > 0;
+}
+
 export function getWorkflowLayoutNodeMeasurements(
   nodes: WorkflowFlowNode[],
 ): WorkflowLayoutNodeMeasurements {
   return new Map(nodes.flatMap((node) => {
     if (!isPersistedWorkflowFlowNode(node)) return [];
     const { width, height } = node.measured ?? {};
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-      return [];
-    }
+    if (!hasMeasuredNodeSize({ width, height })) return [];
     return [[node.data.nodeId, { width, height }] as const];
   }));
 }

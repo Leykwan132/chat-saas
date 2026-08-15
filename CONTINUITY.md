@@ -61,7 +61,7 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Workflow Cleanup forwards actual rendered persisted-node dimensions into Dagre and falls back safely for unmeasured/template nodes.
+- 2026-08-15 [CODE] Now: Workflow Cleanup validates optional rendered measurements before layout, and Availability/inspector save paths satisfy strict TypeScript checks.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
@@ -136,3 +136,4 @@
 - 2026-08-15 [CODE] Measured-node Cleanup design and implementation plan are committed as `b3d03c00` and `9e593307`; user-approved execution mode is pending.
 - 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 433 application/Convex test files (1,381 tests) and 63 Docs tests after measured Cleanup verification. Known unrelated test stderr remains non-failing.
 - 2026-08-15 [TOOL] Pushed `codex/show-unavailable-availability` through `b8348407`; existing PR #59 targets `main` from that branch. Connector metadata update returned 403 `Resource not accessible by integration`; local `gh` authentication is expired.
+- 2026-08-15 [TOOL] GREEN: fixed the pasted `tsc -b` errors; 6 focused suites (16 tests), Node v22.22.0 `bun run build`, and `git diff --check` pass.
