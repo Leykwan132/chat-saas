@@ -143,7 +143,7 @@ test("a teammate receives Busy without private fields from the server", async ()
   expect(events[0]).not.toHaveProperty("externalEventId");
   expect(events[0]).not.toHaveProperty("externalProvider");
   expect(events[0]).not.toHaveProperty("externalOrigin");
-  expect(events[0]).not.toHaveProperty("participants");
+  expect((events[0] as { participants: unknown[] }).participants).toEqual([]);
   expect(details).toMatchObject({ title: "Busy", collectedFields: {}, attendeeNames: [] });
   expect(details).not.toHaveProperty("description");
   expect(details).not.toHaveProperty("link");

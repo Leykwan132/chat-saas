@@ -67,6 +67,7 @@ function teammateBusyProjection(event: Doc<"calendarEvents">) {
     startDate: event.startDate,
     endDate: event.endDate,
     status: event.status,
+    participants: [],
     viewerCanMutate: false as const,
   };
 }
