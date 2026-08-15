@@ -27,6 +27,7 @@
 - 2026-08-15 [USER] D666 ACTIVE: the Google Meet Location option is visible only to accounts included in the Google Calendar feature flag; eligible but disconnected accounts receive connection guidance.
 - 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
 - 2026-08-15 [USER] D668 ACTIVE: all standard application Dialog and Sheet backdrops use Create Booking’s light `bg-black/10`, unblurred treatment; non-modal overlays and content-level effects remain unchanged.
+- 2026-08-16 [USER] D669 ACTIVE: Service-card descriptions appear directly below the service title while the booking count and active switch remain at the card bottom.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -53,6 +54,7 @@
 - 2026-08-15 [CODE] Create Service now hides Description and Advanced settings, removes the footer rule, and simplifies assignment cards; focused verification is pending commit.
 - 2026-08-15 [TOOL] Merged `origin/main` Book appointment empty-state implementation; its workflow changes and supporting spec/plan are retained.
 - 2026-08-15 [CODE] Dialog and Sheet backdrops now inherit the approved light, unblurred style; redundant visual overrides were removed from Booking, Create Service, and fullscreen Test Chat.
+- 2026-08-16 [CODE] Service-card titles no longer expand vertically, so descriptions sit directly beneath them.
 
 # Working set
 - `src/pages/CalendarPage.tsx`

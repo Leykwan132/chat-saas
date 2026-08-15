@@ -45,7 +45,7 @@ export function ServiceCard({
       )}
     >
       <div className="flex min-h-0 flex-1 flex-col">
-        <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{service.name}</h3>
+        <h3 className="min-w-0 truncate text-sm font-medium text-foreground">{service.name}</h3>
         {service.description?.trim() ? <p className="mt-1.5 text-xs leading-snug text-muted-foreground">{service.description.trim()}</p> : null}
       </div>
       <div className="mt-auto flex items-end justify-between gap-2 pt-3">

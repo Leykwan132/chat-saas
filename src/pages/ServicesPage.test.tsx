@@ -74,6 +74,7 @@ test('service cards show status text aligned with their switches', () => {
   expect(markup).toContain('aria-label="Turn off Consultation"');
   expect(markup).toContain('aria-checked="false"');
   expect(markup).toContain('aria-label="Turn on Installation"');
+  expect(serviceCardsSource).not.toContain('flex-1 truncate text-sm font-medium text-foreground');
 });
 
 test('services and appointments use line tabs instead of section headings', () => {
