@@ -2,8 +2,8 @@
 
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [TOOL] Now: Calendar header Today button is committed at `29ea71fb`; its focused test passes. The full suite has unrelated existing Google Calendar failures.
-- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar header adjustment.
+- 2026-08-15 [TOOL] Now: Calendar sidebar New Booking is a labeled bottom-right floating action using its existing callback; commit is pending. The full suite has unrelated existing Google Calendar failures.
+- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the requested Calendar sidebar adjustment.
 - 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
 - 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
 - 2026-08-15 [USER] Approved Calendar sidebar design: move the labeled New Booking action to the entire sidebar’s absolute bottom-right.
@@ -25,6 +25,7 @@
 - 2026-08-15 [TOOL] Fast-forwarded the local target branch by four commits from its remote tracking branch before merging `origin/main`.
 - 2026-08-15 [CODE] Merge resolution retains Google Calendar availability health/cached-conflict checks plus service teammate assignment filtering.
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
+- 2026-08-15 [CODE] Calendar New Booking moved from inline sidebar content to a permission-gated bottom-right floating action; it remains unreleased.
 
 # Working set
 - `convex/appointmentBooking/availability.ts`
@@ -33,13 +34,9 @@
 - `convex/googleCalendar/bookingActions.ts`
 - `convex/googleCalendar/bookingSync.ts`
 - `convex/schema.ts`
-- `src/components/calendar/GoogleCalendarConnection.test.tsx`
 - `src/components/calendar/CalendarSidebar.tsx`
 - `src/components/calendar/CalendarSidebar.test.tsx`
-- `src/pages/CalendarPage.tsx`
-- `docs/superpowers/plans/2026-08-15-calendar-today-button.md`
 - `docs/superpowers/plans/2026-08-15-calendar-new-booking-floating-action.md`
-- `docs/superpowers/specs/2026-08-15-calendar-today-button-design.md`
 - `docs/superpowers/specs/2026-08-15-calendar-new-booking-floating-action-design.md`
 - `CONTINUITY.md`
 
@@ -54,3 +51,4 @@
 - 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 failed in five existing Convex Google Calendar suites (14 failures): projection, booking sync, projection review, availability intervals, and availability roster budget. The Calendar header suite passed 13/13.
 - 2026-08-15 [USER] Approved the Calendar sidebar New Booking floating-action design; implementation awaits review of its written spec.
 - 2026-08-15 [USER] Approved the floating-action spec and requested implementation planning.
+- 2026-08-15 [TOOL] Calendar sidebar floating-action test passed 3/3 under Node v22.22.0; the first test run was RED because New Booking appeared before View without positioning classes.

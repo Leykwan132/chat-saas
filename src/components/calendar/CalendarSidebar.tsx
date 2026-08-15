@@ -97,9 +97,9 @@ export function CalendarSidebar({
   onAssignedToMe,
 }: CalendarSidebarProps) {
   return (
-    <aside className={cn(inboxColumnClassName, 'border-r border-border')}>
+    <aside className={cn(inboxColumnClassName, 'relative border-r border-border')}>
       <SidebarPageTitleRow title="Calendar" />
-      <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem]')}>
+      <div className={cn(inboxColumnScrollClassName, 'no-scrollbar px-[0.45rem] py-[0.675rem] pb-20')}>
         <div
           className="flex justify-center pb-[0.675rem]"
           data-calendar-sidebar-section="month"
@@ -112,20 +112,6 @@ export function CalendarSidebar({
             className="rounded-xl border border-border bg-card p-2"
           />
         </div>
-
-        {canManageCalendar ? (
-          <div className="px-4 pb-3">
-            <Button
-              type="button"
-              size="lg"
-              className="h-11 w-full gap-2 px-5 py-3"
-              onClick={onCreateBooking}
-            >
-              <Plus data-icon="inline-start" />
-              New Booking
-            </Button>
-          </div>
-        ) : null}
 
         <CalendarSidebarFilterSection title="View">
           <CalendarSidebarFilterRow
@@ -145,6 +131,17 @@ export function CalendarSidebar({
           />
         </CalendarSidebarFilterSection>
       </div>
+      {canManageCalendar ? (
+        <Button
+          type="button"
+          size="lg"
+          className="absolute bottom-4 right-4 h-11 gap-2 px-5 py-3"
+          onClick={onCreateBooking}
+        >
+          <Plus data-icon="inline-start" />
+          New Booking
+        </Button>
+      ) : null}
     </aside>
   );
 }

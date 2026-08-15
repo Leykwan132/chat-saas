@@ -31,7 +31,7 @@
 - Consumes: `canManageCalendar: boolean` and `onCreateBooking(): void` from `CalendarSidebarProps`.
 - Produces: a permission-gated Button rendered after the scrollable sidebar content at the sidebar’s absolute bottom-right.
 
-- [ ] **Step 1: Write the failing sidebar layout test**
+- [x] **Step 1: Write the failing sidebar layout test**
 
 Replace the current ordering assertion with assertions that require the View section before the action and require the positioning/reserved-space classes:
 
@@ -42,7 +42,7 @@ expect(markup).toContain('pb-20');
 expect(markup).toContain('absolute bottom-4 right-4');
 ```
 
-- [ ] **Step 2: Run the focused test to verify it fails**
+- [x] **Step 2: Run the focused test to verify it fails**
 
 Run:
 
@@ -52,7 +52,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/calendar/Ca
 
 Expected: FAIL because New Booking is currently inside the scrollable content before View and has no bottom-right absolute positioning.
 
-- [ ] **Step 3: Move the existing Button**
+- [x] **Step 3: Move the existing Button**
 
 Make the `<aside>` relative, add `pb-20` to the scrollable-content classes, and remove the inline booking Button. After the scrollable-content closing tag, add the existing permission-gated Button:
 
@@ -70,7 +70,7 @@ Make the `<aside>` relative, add `pb-20` to the scrollable-content classes, and 
 ) : null}
 ```
 
-- [ ] **Step 4: Run the focused test to verify it passes**
+- [x] **Step 4: Run the focused test to verify it passes**
 
 Run:
 

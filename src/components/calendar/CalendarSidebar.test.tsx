@@ -20,13 +20,13 @@ function renderCalendarSidebar(canManageCalendar = true) {
 }
 
 describe('CalendarSidebar', () => {
-  it('renders the month calendar before New Booking and View', () => {
+  it('renders New Booking at the sidebar bottom-right after View', () => {
     const markup = renderCalendarSidebar();
 
-    expect(markup.indexOf('data-calendar-sidebar-section="month"')).toBeLessThan(
-      markup.indexOf('New Booking'),
-    );
-    expect(markup.indexOf('New Booking')).toBeLessThan(markup.indexOf('>View<'));
+    expect(markup.indexOf('>View<')).toBeLessThan(markup.indexOf('New Booking'));
+    expect(markup).toContain('relative');
+    expect(markup).toContain('pb-20');
+    expect(markup).toContain('absolute bottom-4 right-4');
   });
 
   it('keeps New Booking hidden without Calendar management permission', () => {
