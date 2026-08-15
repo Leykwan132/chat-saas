@@ -63,7 +63,8 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: Book appointment's shared service control renders the standard Empty component and agent-scoped Create service action for an all-inactive service list; its CTA is drag/pan isolated in workflow-node presentation and awaits PR publication.
+- 2026-08-15 [CODE] Now: Book appointment's shared service control renders the standard Empty component and agent-scoped Create service action for an all-inactive service list; its CTA is drag/pan isolated in workflow-node presentation and the branch is pushed.
+- 2026-08-15 [TOOL] PR creation is blocked: the GitHub integration returns 403 `Resource not accessible by integration` and local `gh auth status` reports the active token invalid. The pushed compare URL is `https://github.com/Leykwan132/chat-saas/compare/main...codex/book-appointment-service-empty-state?expand=1`.
 - 2026-08-15 [TOOL] RED then GREEN: no-active-services and node CTA-isolation regressions failed against the old rendering, then passed; Node v22.22.0 `bun run test`, `bun run build`, and `git diff --check` exit 0 after review fixes.
 - 2026-08-15 [TOOL] PR #59 is open at the latest verified branch commit `b8348407`; GitHub integration metadata updates remain blocked by a 403 permission error. Production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
