@@ -141,7 +141,7 @@ export function CreateServiceDialog({
         <DialogFooter className="pt-2 sm:justify-between">
           <div>{step === 2 ? <Button type="button" variant="link" className="px-0" onClick={() => { setStep(1); setError(null); }}>Back</Button> : null}</div>
           <div className="flex items-center gap-3">
-            <Button type="button" variant="link" className="px-0 text-muted-foreground" onClick={closeDialog}>Close</Button>
+            <Button type="button" variant="ghost" className="text-muted-foreground" onClick={closeDialog}>Close</Button>
             <Button type="button" disabled={saving || !form.name.trim()} onClick={() => void saveService()}>{saving ? 'Creating…' : primaryAction}</Button>
           </div>
         </DialogFooter>

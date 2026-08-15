@@ -32,3 +32,9 @@ test('uses a plain dimmed backdrop with a tighter modal radius', () => {
   expect(source).toContain('overlayClassName="bg-black/35 supports-backdrop-filter:backdrop-blur-none"');
   expect(source).toContain('rounded-3xl');
 });
+
+test('uses a ghost button to close the dialog', () => {
+  const source = readFileSync(new URL('./CreateServiceDialog.tsx', import.meta.url), 'utf8');
+
+  expect(source).toContain('variant="ghost" className="text-muted-foreground" onClick={closeDialog}>Close</Button>');
+});

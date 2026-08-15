@@ -479,3 +479,39 @@ Expected: PASS.
 ```bash
 git add src/components/services/CreateServiceAssignmentCards.tsx src/components/services/CreateServiceAssignmentCards.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Simplify service assignment cards"
 ```
+
+### Task 12: Use a ghost Close button
+
+**Files:**
+- Modify: `src/components/services/CreateServiceDialog.tsx`
+- Test: `src/components/services/CreateServiceDialog.test.tsx`
+
+**Interfaces:** `closeDialog` retains its reset-and-close behavior; only its Button variant changes from link to ghost.
+
+- [x] **Step 1: Write the failing test**
+
+```ts
+expect(source).toContain('variant="ghost" className="text-muted-foreground" onClick={closeDialog}>Close</Button>');
+```
+
+- [x] **Step 2: Run test to verify it fails**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx`
+
+Expected: FAIL because Close uses the underlined link button variant.
+
+- [x] **Step 3: Use the ghost button variant**
+
+Set only Close to `variant="ghost"` and retain muted foreground styling. Keep Back as its existing text-link action.
+
+- [x] **Step 4: Run focused verification**
+
+Run: `source ~/.nvm/nvm.sh && nvm use 22 >/dev/null && bunx vitest run src/components/services/CreateServiceDialog.test.tsx src/components/services/CreateServiceAssignmentCards.test.tsx && bunx tsc --noEmit && git diff --check`
+
+Expected: PASS.
+
+- [x] **Step 5: Commit**
+
+```bash
+git add src/components/services/CreateServiceDialog.tsx src/components/services/CreateServiceDialog.test.tsx docs/superpowers/specs/2026-08-15-create-service-dialog-design.md docs/superpowers/plans/2026-08-15-create-service-dialog.md CONTINUITY.md && git commit -m "Use ghost service dialog close button"
+```

@@ -8,7 +8,7 @@ Replace the full-screen, four-step service wizard with a compact modal that lets
 
 The Services page opens the dialog from both Add a service entry points. The existing `/services/new` route redirects to the Services page so the modal is the sole creation experience.
 
-The footer has a text-only Close button that immediately discards the in-progress form and closes the dialog. It has no separating rule above it. After a successful create, the dialog closes and the app opens that service's detail page.
+The footer has a ghost-style Close button that immediately discards the in-progress form and closes the dialog. It has no separating rule above it. After a successful create, the dialog closes and the app opens that service's detail page.
 
 Create Service uses a plain black dim overlay without background blur and a `rounded-3xl` container. This presentation override applies only to Create Service, not shared dialogs.
 
