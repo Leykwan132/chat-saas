@@ -112,7 +112,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx tsc --noEmit && git diff --check
 
 Expected: exits 0.
 
-- [ ] **Step 6: Commit the implementation**
+- [x] **Step 6: Commit the implementation**
 
 ```bash
 git add src/components/workflow/WorkflowBookingInspectorServices.tsx src/components/workflow/WorkflowInspectorForm.tsx src/components/workflow/workflowBookingNodeServicesModel.ts src/components/workflow/workflowBookingNodeServicesModel.test.ts CONTINUITY.md
@@ -128,7 +128,7 @@ git commit -m "feat: show services in booking inspector"
 - Consumes: the completed inspector summary from Task 1.
 - Produces: an evidence-backed completion record without customer release claims.
 
-- [ ] **Step 1: Run the full suite**
+- [x] **Step 1: Run the full suite**
 
 Run:
 
@@ -138,7 +138,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bun run test
 
 Expected: all application, Convex, and Docs tests pass.
 
-- [ ] **Step 2: Record the verification receipt**
+- [x] **Step 2: Record the verification receipt**
 
 Add the command outcome, test totals, and Node version to `CONTINUITY.md`. Preserve the user-owned untracked `pricing-knowledge-base-updated.md`.
 
