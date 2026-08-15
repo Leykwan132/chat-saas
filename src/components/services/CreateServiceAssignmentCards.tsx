@@ -39,7 +39,7 @@ function AssignmentCard({
         selected ? 'has-[>[data-slot=field]]:bg-background has-[>[data-slot=field]]:shadow-sm' : 'has-[>[data-slot=field]]:border-border hover:has-[>[data-slot=field]]:border-foreground/30 hover:has-[>[data-slot=field]]:bg-accent/25',
       )}
     >
-      <Field orientation="horizontal" className="relative min-h-32 flex-col items-start gap-3">
+      <Field orientation="horizontal" className="relative flex-col items-start gap-3">
         <Icon className="size-5" />
         <FieldContent>
           <FieldTitle>{title}</FieldTitle>

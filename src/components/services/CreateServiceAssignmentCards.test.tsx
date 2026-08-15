@@ -18,6 +18,7 @@ test('shows a selected personal card and a locked Team upgrade overlay', () => {
   expect(markup).toContain('For team');
   expect(markup).toContain('Upgrade');
   expect(markup).toContain('aria-checked="true"');
+  expect(markup).not.toContain('min-h-32');
   expect(source).toContain('group-hover');
   expect(source).toContain('group-focus-within');
   expect(source).toContain('onUpgrade');
