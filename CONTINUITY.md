@@ -18,6 +18,7 @@
 - 2026-08-15 [USER] D659 ACTIVE: remote bookings generate a Google Meet link only through the assigned staff member's connected Google Calendar; connecting remains optional.
 - 2026-08-15 [USER] D660 ACTIVE: service configuration exposes only Google Meet and In person; Google Meet remains unavailable until the current eligible user connects Google Calendar, with hover/focus connection guidance.
 - 2026-08-15 [CODE] Now: services support Remote or In person meeting locations; remote AI and staff bookings use an idempotent Google Meet request only when the assigned teammate is connected, and the returned Meet link is stored on the booking event.
+- 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately.
 - 2026-08-15 [USER] Open question: production availability is UNCONFIRMED; no release changelog entry is due.
 
 # Decisions
@@ -37,6 +38,7 @@
 - 2026-08-15 [CODE] Calendar Today button is restored beside the visible month using the existing shadcn Button and date-selection handler at `29ea71fb`; it remains unreleased.
 - 2026-08-15 [CODE] Calendar New Booking is pinned to the selected-day header edge, shown in the shared no-events state, and opened by the grid Create Booking action after selecting its date; it remains unreleased.
 - 2026-08-15 [CODE] Manual calendar-event creation now uses the Google-aware action, synchronizes connected creators' primary calendars fail-closed, and retains local-only behavior without a connection; connection status now shows a white check in its green badge. The feature remains unreleased.
+- 2026-08-15 [CODE] The approved Create Service dialog design, including stacked assignment-card icons and advanced timing details, is committed at `7108bf85`.
 
 # Working set
 - `src/components/calendar/GoogleCalendarConnectionCard.tsx`
@@ -54,8 +56,11 @@
 - `convex/googleCalendar/writeProvider.ts`
 - `convex/googleCalendarProvider.test.ts`
 - `src/components/services/ServiceLocationField.tsx`
+- `src/components/services/CreateServiceWizard.tsx`
 - `src/components/ServiceForm.tsx`
+- `src/pages/ServicePage.tsx`
 - `src/pages/ServicesPage.tsx`
+- `docs/superpowers/specs/2026-08-15-create-service-dialog-design.md`
 - `docs/superpowers/specs/2026-08-15-service-location-card-layout-design.md`
 - `docs/superpowers/plans/2026-08-15-service-details-google-meet-guard.md`
 - `docs/superpowers/specs/2026-08-15-manual-event-google-calendar-sync-design.md`
