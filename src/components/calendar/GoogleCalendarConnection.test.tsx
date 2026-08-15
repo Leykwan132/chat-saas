@@ -106,6 +106,9 @@ describe("Google Calendar connection UI", () => {
     expect(hook).not.toContain("@workos-inc/widgets");
     expect(page).not.toContain("GoogleCalendarPipesDialog");
     expect(page).not.toContain("@workos-inc/widgets");
+    expect(page).toContain('useEnableGoogleCalendarConnect');
+    expect(page).toContain('isProductFeatureEnabled(googleCalendarConnectState)');
+    expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
   });
 
   it("renders Google and Kilobot source badges", () => {

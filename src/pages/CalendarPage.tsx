@@ -84,6 +84,10 @@ import { GoogleCalendarDisconnectDialog } from '@/components/calendar/GoogleCale
 import { GoogleCalendarSourceBadge } from '@/components/calendar/GoogleCalendarSourceBadge';
 import { useGoogleCalendarConnection } from '@/components/calendar/useGoogleCalendarConnection';
 import { cn } from '@/lib/utils';
+import {
+  isProductFeatureEnabled,
+  useEnableGoogleCalendarConnect,
+} from '@/lib/posthogFeatureFlags';
 
 const calendarApi = api.calendarEvents;
 
@@ -686,6 +690,8 @@ export default function CalendarPage() {
   const { agentId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { can, isLoading: permissionsLoading } = usePermissions();
+  const googleCalendarConnectState = useEnableGoogleCalendarConnect();
+  const googleCalendarConnectEnabled = isProductFeatureEnabled(googleCalendarConnectState);
   const canReadCalendar = can(Permission.CALENDAR_READ);
   const canManageCalendar = can(Permission.CALENDAR_MANAGE);
 
@@ -1119,7 +1125,7 @@ export default function CalendarPage() {
             </Button>
           </div>
           <div className="flex items-center gap-1.5">
-            {googleCalendar.status ? (
+            {googleCalendarConnectEnabled && googleCalendar.status ? (
               <GoogleCalendarConnectionCard
                 {...googleCalendar.status}
                 pending={googleCalendar.pending}
