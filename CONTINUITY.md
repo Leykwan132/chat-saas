@@ -60,28 +60,23 @@
 
 # State
 
-- 2026-08-15 [CODE] Now: the approved workflow-node-controls plan is committed; implementation awaits the user’s execution-mode choice.
-- 2026-08-15 [TOOL] Next: implement and verify direct controls for standard workflow nodes; production deployment remains unapproved.
+- 2026-08-15 [CODE] Now: full editable workflow nodes have direct message, media, booking, escalation-condition, and close-conversation controls; the workflow toolbar has its supporting description.
+- 2026-08-15 [TOOL] Next: user chooses whether to merge locally, push/create a PR, or keep the verified branch; production deployment remains unapproved.
 - 2026-08-14 [USER] Open question: owner-controlled admin roster permission remains a separate pending design.
 
 # Working set
 
-- `convex/workflowAppointmentServices.ts`
-- `convex/workflowAppointmentServices.test.ts`
-- `src/components/workflow/WorkflowBookingNodeServices.tsx`
-- `src/components/workflow/workflowBookingNodeServicesModel.ts`
-- `src/components/workflow/workflowBookingNodeServicesModel.test.ts`
+- `convex/workflowNodeCanvasControls.ts`
+- `convex/workflowNodeCanvasControls.test.ts`
 - `src/components/workflow/WorkflowNode.tsx`
-- `src/components/workflow/WorkflowInspectorForm.tsx`
+- `src/components/workflow/WorkflowNodeDirectControls.tsx`
+- `src/components/workflow/WorkflowNodeMessageControl.tsx`
+- `src/components/workflow/WorkflowNodeConditionControl.tsx`
+- `src/components/workflow/WorkflowSendMediaSection.tsx`
 - `src/components/workflow/workflowFlowModel.ts`
 - `src/components/workflow/workflowFlowModel.test.ts`
-- `src/pages/WorkflowPage.tsx`
-- `docs/superpowers/specs/2026-08-15-booking-node-services-design.md`
-- `docs/superpowers/specs/2026-08-15-booking-inspector-services-design.md`
-- `docs/superpowers/specs/2026-08-15-shared-booking-service-controls-design.md`
-- `docs/superpowers/specs/2026-08-15-workflow-node-controls-design.md`
 - `docs/superpowers/plans/2026-08-15-workflow-node-controls.md`
-- `docs/superpowers/plans/2026-08-15-booking-node-services.md`
+- `src/components/workflow/WorkflowToolbar.tsx`
 - `CONTINUITY.md`
 
 # Receipts
@@ -136,3 +131,4 @@
 - 2026-08-15 [TOOL] GREEN: `bun run test` passes under Node v22.22.0 with 430 application/Convex test files (1,370 tests) and 63 Docs tests. Known test-runner stderr remains non-failing and unrelated to this UI change.
 - 2026-08-15 [USER] Full editable nodes should provide direct action controls, and Human escalation must show its incoming `When` condition.
 - 2026-08-15 [CODE] Workflow node-controls design and implementation plan are committed as `1432038c` and `16193d83`; user-approved execution mode is pending.
+- 2026-08-15 [TOOL] GREEN: Node v22.22.0 `bun run test` completed with 432 application/Convex test files (1,378 tests) and 63 Docs tests. Known unrelated test stderr remains non-failing.

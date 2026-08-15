@@ -34,7 +34,7 @@
 - Produces `api.workflowNodeCanvasControls.updateIncomingCondition({ agentId, nodeId, conditionDetail })` for the edge targeting a `humanEscalation` node.
 - Produces `WorkflowNodeData.agentId?: Id<'agents'>` and `incomingCondition?: { edgeId: Id<'workflowEdges'>; detail?: string }` for standard flow nodes.
 
-- [ ] **Step 1: Write failing mutation and flow-data tests**
+- [x] **Step 1: Write failing mutation and flow-data tests**
 
 In `convex/workflowNodeCanvasControls.test.ts`, set up a manageable agent, workflow, `sendText` node, `humanEscalation` node, and incoming edge. Assert the user-visible persisted effects:
 
@@ -61,7 +61,7 @@ expect(await getIncomingEdge(escalationNodeId)).toMatchObject({
 
 Also assert each mutation rejects a node of the wrong kind. In `workflowFlowModel.test.ts`, assert a human-escalation node receives `agentId` and the incoming edge detail.
 
-- [ ] **Step 2: Run the focused tests to verify RED**
+- [x] **Step 2: Run the focused tests to verify RED**
 
 Run:
 
@@ -71,13 +71,13 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run convex/workflowNodeCanvasC
 
 Expected: FAIL because the canvas-control API and incoming-condition data do not exist.
 
-- [ ] **Step 3: Add the minimal authorized backend and flow mappings**
+- [x] **Step 3: Add the minimal authorized backend and flow mappings**
 
 In `workflowNodeCanvasControls.ts`, use `assertManageableAgent`, `getWorkflowForAgent`, and node/edge ownership checks. Both mutations trim their text, patch only their intended document, advance `workflow.updatedAt`, call `refreshWorkflowNodeReadinessForAgent`, and return `null`.
 
 Map `agentId` to every persisted flow node. Build a target-node edge lookup from the workflow graph and map only human-escalation incoming edge ID/detail into `incomingCondition`.
 
-- [ ] **Step 4: Generate types and run the focused tests to verify GREEN**
+- [x] **Step 4: Generate types and run the focused tests to verify GREEN**
 
 Run:
 
@@ -87,7 +87,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx convex codegen && bunx vitest run con
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit the data layer**
+- [x] **Step 5: Commit the data layer**
 
 ```bash
 git add convex/workflowNodeCanvasControls.ts convex/workflowNodeCanvasControls.test.ts src/components/workflow/workflowTypes.ts src/components/workflow/workflowFlowModel.ts src/components/workflow/workflowFlowModel.test.ts convex/_generated
@@ -111,7 +111,7 @@ git commit -m "feat: add workflow canvas control data"
 - `WorkflowNodeConditionControl` calls `updateIncomingCondition` after a 500 ms debounce and labels the field `When`.
 - `WorkflowSendMediaSection` accepts `presentation?: 'inspector' | 'node'` and optional readiness callback/warning properties; node presentation keeps its existing query, grid, uploader, deletion, import, and error behavior while fitting the node card.
 
-- [ ] **Step 1: Write failing direct-control rendering tests**
+- [x] **Step 1: Write failing direct-control rendering tests**
 
 Create `WorkflowNodeDirectControls.test.tsx` with Convex hook mocks and actual server rendering. Verify the behavior that users see:
 
@@ -126,7 +126,7 @@ expect(render('closeConversation')).toContain('Closes the conversation.');
 
 Assert `WorkflowNode` renders direct controls only when `data.density !== 'compact'` and an agent ID exists.
 
-- [ ] **Step 2: Run focused tests to verify RED**
+- [x] **Step 2: Run focused tests to verify RED**
 
 Run:
 
@@ -136,7 +136,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: FAIL because direct-control components and their node integration do not exist.
 
-- [ ] **Step 3: Implement the focused direct controls**
+- [x] **Step 3: Implement the focused direct controls**
 
 Create `WorkflowNodeDirectControls` with `nodrag nopan` event suppression around every input and uploader. It renders:
 
@@ -162,7 +162,7 @@ Use `presentation="node"` in `WorkflowSendMediaSection` to remove inspector-only
 
 In `WorkflowNode`, add `hasDirectControls` for standard nodes with `data.agentId`; expand card width only when controls exist and render `WorkflowNodeDirectControls` beneath the description. Remove booking-only card-size branches in favor of this unified control block.
 
-- [ ] **Step 4: Run focused tests to verify GREEN**
+- [x] **Step 4: Run focused tests to verify GREEN**
 
 Run:
 
@@ -172,7 +172,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: PASS.
 
-- [ ] **Step 5: Run static validation and commit**
+- [x] **Step 5: Run static validation and commit**
 
 Run:
 
@@ -197,7 +197,7 @@ git commit -m "feat: add direct workflow node controls"
 **Interfaces:**
 - Produces the exact description: `Map how your agent responds, sends content, handles bookings, and routes conversations.`
 
-- [ ] **Step 1: Write the failing toolbar test**
+- [x] **Step 1: Write the failing toolbar test**
 
 Add this behavior assertion to `WorkflowToolbar.test.ts`:
 
@@ -207,7 +207,7 @@ expect(markup).toContain(
 );
 ```
 
-- [ ] **Step 2: Run the focused test to verify RED**
+- [x] **Step 2: Run the focused test to verify RED**
 
 Run:
 
@@ -217,7 +217,7 @@ source ~/.nvm/nvm.sh && nvm use 22 && bunx vitest run src/components/workflow/Wo
 
 Expected: FAIL because the workflow introduction does not render.
 
-- [ ] **Step 3: Add the workflow introduction, verify, and commit**
+- [x] **Step 3: Add the workflow introduction, verify, and commit**
 
 Render the sentence directly below the Workflow heading as muted supporting copy. Then run:
 
@@ -232,7 +232,7 @@ git add src/components/workflow/WorkflowToolbar.tsx src/components/workflow/Work
 git commit -m "feat: describe workflow canvas"
 ```
 
-- [ ] **Step 4: Run the full suite and record verification**
+- [x] **Step 4: Run the full suite and record verification**
 
 Run:
 
