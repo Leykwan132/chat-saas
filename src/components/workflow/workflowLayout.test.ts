@@ -191,3 +191,36 @@ test('layout caps node width for long titles', () => {
 
   expect(getWorkflowLayoutNodeSize(node).width).toBe(300);
 });
+
+test('cleanup uses measured expanded node footprints without duplicating the control rail', () => {
+  const start = workflowNode('start', 'start', 'Message enters');
+  const escalation = workflowNode('escalation', 'humanEscalation', 'Human escalation');
+  const booking = workflowNode('booking', 'bookAppointment', 'Book appointment');
+  const graph = workflowGraph(
+    [start, escalation, booking],
+    [
+      workflowEdge('start-escalation', start._id, escalation._id),
+      workflowEdge('start-booking', start._id, booking._id),
+    ],
+  );
+  const measurements = new Map([
+    [escalation._id, { width: 340, height: 310 }],
+    [booking._id, { width: 340, height: 250 }],
+  ]);
+
+  const positions = new Map(
+    getWorkflowCleanupPositions(graph, 'horizontal', measurements).map((item) => [
+      item.nodeId,
+      item.position,
+    ]),
+  );
+  const escalationPosition = positions.get(escalation._id)!;
+  const bookingPosition = positions.get(booking._id)!;
+
+  expect(getWorkflowCleanupNodeSize(escalation, measurements.get(escalation._id)))
+    .toEqual({ width: 340, height: 310 });
+  expect(
+    escalationPosition.y + 310 <= bookingPosition.y ||
+      bookingPosition.y + 250 <= escalationPosition.y,
+  ).toBe(true);
+});

@@ -55,7 +55,7 @@ test("manual booking checks and revalidates the exact selected slot", async () =
       createdAt: now,
       updatedAt: now,
     });
-    await ctx.db.insert("userSchedules", {
+    const userScheduleId = await ctx.db.insert("userSchedules", {
       agentId,
       workosUserId,
       mode: "manual",
@@ -65,6 +65,14 @@ test("manual booking checks and revalidates the exact selected slot", async () =
       createdAt: now,
       updatedAt: now,
     });
+    for (let dayOfWeek = 0; dayOfWeek < 7; dayOfWeek += 1) {
+      await ctx.db.insert("userShifts", {
+        userScheduleId,
+        dayOfWeek,
+        startMinutes: 0,
+        endMinutes: 24 * 60,
+      });
+    }
     const customerId = await ctx.db.insert("customers", {
       orgId: "",
       service: "whatsapp",

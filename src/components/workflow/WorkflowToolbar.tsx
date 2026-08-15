@@ -61,6 +61,9 @@ export function WorkflowToolbar({
         <h1 className="font-title text-3xl font-normal tracking-tight text-foreground">
           Workflow
         </h1>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          Tighter control over every step of your agent’s responses, content, bookings, and conversation routing.
+        </p>
         <div className="flex items-center gap-1 rounded-lg border border-border bg-background/95 p-1 backdrop-blur">
           <Button type="button" variant="ghost" size="icon-sm" onClick={() => zoomIn()}>
             <ZoomIn data-icon="inline-start" />

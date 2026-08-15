@@ -162,9 +162,13 @@ export function workflowGraphToFlow(
   layoutOrientation: WorkflowLayoutOrientation = 'horizontal',
   disabled = false,
   nodeDensity: WorkflowNodeDensity = 'standard',
+  agentId?: Id<'agents'>,
 ): { nodes: WorkflowFlowNode[]; edges: WorkflowFlowEdge[] } {
   const edgeRoutes = getWorkflowEdgeRoutes(graph, layoutOrientation);
   const handlePositions = getPersistedNodeHandlePositions(layoutOrientation);
+  const incomingEdgesByTargetNodeId = new Map(
+    graph.edges.map((edge) => [edge.targetNodeId, edge]),
+  );
 
   return {
     nodes: [
@@ -181,6 +185,16 @@ export function workflowGraphToFlow(
           kind: node.kind,
           title: workflowNodeDisplayTitle(node.kind, node.title),
           description: node.description,
+          allowedAppointmentServiceIds: node.allowedAppointmentServiceIds,
+          agentId,
+          incomingCondition: node.kind === 'humanEscalation'
+            ? (() => {
+              const edge = incomingEdgesByTargetNodeId.get(node._id);
+              return edge === undefined
+                ? undefined
+                : { edgeId: edge._id, detail: edge.detail?.trim() || undefined };
+            })()
+            : undefined,
           isReady: node.isReady === true,
           readinessIssueCount: node.readinessIssueCount ?? (node.isReady === true ? 0 : 1),
           density: nodeDensity,

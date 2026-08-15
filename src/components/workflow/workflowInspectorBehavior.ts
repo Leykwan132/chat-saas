@@ -27,13 +27,6 @@ export function getWorkflowInspectorBehavior(
   };
 }
 
-export function bookingAvailabilityBlocksApply(
-  kind: WorkflowNodeKind,
-  hasAcceptingLeadMember: boolean | undefined,
-) {
-  return kind === 'bookAppointment' && hasAcceptingLeadMember !== true;
-}
-
 export function conditionDetailBlocksApply(
   conditionEnabled: boolean,
   conditionDetail: string,

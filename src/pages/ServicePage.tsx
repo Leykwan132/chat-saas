@@ -25,6 +25,7 @@ import {
   DEFAULT_SERVICE_FORM,
   serviceFormsEqual,
   serviceToForm,
+  validateServiceAssignment,
   teamMemberRoleLabel,
   type ServiceForm as ServiceFormValues,
   type ServiceRow,
@@ -32,10 +33,6 @@ import {
   type TeamUserOption,
 } from '@/lib/serviceForm';
 import { Permission } from '../../shared/permissions';
-import {
-  APPOINTMENT_BOOKING_SESSION_METRIC_STATUSES,
-  APPOINTMENT_BOOKING_SESSION_STATUS_LABELS,
-} from '@/lib/appointmentBookingSessionStatus';
 
 type TeamUser = Doc<'users'> & { isAdmin: boolean; role: TeamMemberRole };
 
@@ -57,10 +54,6 @@ export default function ServicePage() {
   const overview = useQuery(
     api.appointmentBooking.services.getOverview,
     typedAgentId && canRead ? { agentId: typedAgentId } : 'skip',
-  );
-  const serviceMetrics = useQuery(
-    api.appointmentBooking.services.getServiceMetrics,
-    typedServiceId && canRead ? { serviceId: typedServiceId } : 'skip',
   );
   const teamUsers = useQuery(api.users.getUsers, {});
   const updateService = useMutation(api.appointmentBooking.services.updateService);
@@ -90,11 +83,11 @@ export default function ServicePage() {
 
   useEffect(() => {
     if (!isEditMode || !editingService || formInitialized) return;
-    const nextForm = serviceToForm(editingService);
+    const nextForm = serviceToForm(editingService, teamUserOptions.map((user) => user.value));
     setForm(nextForm);
     setSavedForm(nextForm);
     setFormInitialized(true);
-  }, [editingService, formInitialized, isEditMode]);
+  }, [editingService, formInitialized, isEditMode, teamUserOptions]);
 
   const isDirty = useMemo(
     () => formInitialized && !serviceFormsEqual(form, savedForm),
@@ -116,7 +109,6 @@ export default function ServicePage() {
     teamUsers === undefined ||
     (isEditMode &&
       (overview === undefined ||
-        serviceMetrics === undefined ||
         !formInitialized ||
         !editingService));
 
@@ -144,6 +136,11 @@ export default function ServicePage() {
     const trimmedName = form.name.trim();
     if (!trimmedName) {
       toast.error('Service name is required');
+      return;
+    }
+    const assignmentError = validateServiceAssignment(form);
+    if (assignmentError) {
+      toast.error(assignmentError);
       return;
     }
 
@@ -207,6 +204,9 @@ export default function ServicePage() {
 
           {canManage ? (
             <div className="flex shrink-0 items-center gap-2">
+              <span className="text-sm font-medium text-foreground">
+                {form.isActive ? 'Active' : 'Inactive'}
+              </span>
               <Switch
                 checked={form.isActive}
                 onCheckedChange={(checked) => setForm((prev) => ({ ...prev, isActive: checked }))}
@@ -227,18 +227,6 @@ export default function ServicePage() {
           ) : null}
         </div>
       </header>
-
-      {serviceMetrics ? (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-          {APPOINTMENT_BOOKING_SESSION_METRIC_STATUSES.map((status) => (
-            <ServiceMetricCard
-              key={status}
-              label={APPOINTMENT_BOOKING_SESSION_STATUS_LABELS[status]}
-              value={serviceMetrics[status]}
-            />
-          ))}
-        </div>
-      ) : null}
 
       <ServiceForm
         form={form}
@@ -302,19 +290,6 @@ export default function ServicePage() {
   );
 }
 
-function ServiceMetricCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col gap-2 rounded-xl bg-muted/50 px-5 py-5">
-      <div className="text-4xl font-semibold tracking-tight tabular-nums text-foreground">
-        {value.toLocaleString()}
-      </div>
-      <span className="text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
-        {label}
-      </span>
-    </div>
-  );
-}
-
 function CreateServiceSkeleton() {
   return (
     <div className="flex min-h-[100svh] flex-col bg-background">
@@ -340,11 +315,6 @@ function EditServiceSkeleton() {
         <Skeleton className="h-9 w-40" />
         <Skeleton className="mt-4 h-9 w-56" />
         <Skeleton className="mt-3 h-4 w-96" />
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-        <Skeleton className="h-[88px] rounded-xl" />
-        <Skeleton className="h-[88px] rounded-xl" />
-        <Skeleton className="h-[88px] rounded-xl" />
       </div>
       <Skeleton className="h-[640px] rounded-xl" />
     </div>

@@ -4,10 +4,6 @@ import { expect, test } from 'vitest';
 
 const sourcePath = fileURLToPath(new URL('./WorkflowInspectorForm.tsx', import.meta.url));
 const source = readFileSync(sourcePath, 'utf8');
-const bookingRequirementsSource = readFileSync(
-  fileURLToPath(new URL('./WorkflowBookingInspectorRequirements.tsx', import.meta.url)),
-  'utf8',
-);
 const mediaSectionSource = readFileSync(
   fileURLToPath(new URL('./WorkflowSendMediaSection.tsx', import.meta.url)),
   'utf8',
@@ -27,24 +23,22 @@ test('workflow inspector allows immediate media and keeps Apply icon-free', () =
   expect(source).toContain('<Loader2');
 });
 
-test('book appointment places availability below services and gates Apply', () => {
-  expect(source).toContain('<WorkflowBookingInspectorRequirements');
-  expect(bookingRequirementsSource.indexOf('<WorkflowBookingServicesSection')).toBeLessThan(
-    bookingRequirementsSource.indexOf('<WorkflowBookingAvailabilitySection'),
-  );
-  expect(source).toContain('bookingAvailabilityBlocksApply(');
-  expect(source).toContain('onAvailabilityEligibilityChange={setHasAcceptingLeadMember}');
+test('book appointment inspector shares the node service controls', () => {
+  expect(source).not.toContain('WorkflowBookingInspectorRequirements');
+  expect(source).not.toContain('WorkflowBookingInspectorServices');
+  expect(source).toContain('WorkflowBookingNodeServices');
+  expect(source).toContain('presentation="inspector"');
+  expect(source).not.toContain('hasBookableService');
+  expect(source).not.toContain('bookingAvailabilityBlocksApply(');
 });
 
 test('keeps workflow labels close to their booking controls', () => {
   expect(source).toContain('<Field className="items-start gap-2 text-left">');
-  expect(bookingRequirementsSource).toContain('<div className="flex flex-col gap-3">');
 });
 
-test('uses the shared required label for condition, booking, and file requirements', () => {
+test('uses the shared required label for condition and file requirements', () => {
   expect(source).toContain('<WorkflowRequiredLabel>Detail</WorkflowRequiredLabel>');
   expect(source).toMatch(/id="workflow-node-condition-detail"[\s\S]*?required/);
-  expect(bookingRequirementsSource).toContain('<WorkflowRequiredLabel as="h4">{title}</WorkflowRequiredLabel>');
   expect(source).toContain('conditionDetailBlocksApply(');
 });
 
@@ -52,13 +46,6 @@ test('explains incomplete requirements when Apply is attempted', () => {
   expect(source).toContain('attemptedApply');
   expect(source).toContain('Detail is required before applying.');
   expect(source).toContain('is required before applying.');
-  expect(bookingRequirementsSource).toContain('Select at least one active service before applying.');
-  expect(bookingRequirementsSource).toContain('Select at least one teammate who can accept appointment leads.');
   expect(mediaSectionSource).toContain('Please add at least one photo or video before applying.');
   expect(mediaSectionSource).toContain('Please add at least one file before applying.');
-});
-
-test('uses the matching sidebar icons for booking sections', () => {
-  expect(bookingRequirementsSource).toContain('ShoppingCart');
-  expect(bookingRequirementsSource).toContain('Clock3');
 });

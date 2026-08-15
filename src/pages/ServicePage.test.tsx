@@ -63,4 +63,10 @@ test('Back to Services darkens without adding a hover background', () => {
   expect(backLink).toContain('hover:bg-transparent');
   expect(backLink).toContain('dark:hover:bg-transparent');
   expect(backLink).toContain('hover:text-foreground');
+  expect(markup).toContain('>Active</span>');
+  expect(markup).not.toContain('>Confirming</span>');
+  expect(markup).not.toContain('>Booked</span>');
+  expect(markup).not.toContain('>Completed</span>');
+  expect(markup).not.toContain('>Cancelled</span>');
+  expect(markup).not.toContain('>No-show</span>');
 });

@@ -72,6 +72,7 @@ import type * as appointmentBooking_fields from "../appointmentBooking/fields.js
 import type * as appointmentBooking_manualBooking from "../appointmentBooking/manualBooking.js";
 import type * as appointmentBooking_manualBookingCore from "../appointmentBooking/manualBookingCore.js";
 import type * as appointmentBooking_manualBookingFields from "../appointmentBooking/manualBookingFields.js";
+import type * as appointmentBooking_serviceAssignments from "../appointmentBooking/serviceAssignments.js";
 import type * as appointmentBooking_services from "../appointmentBooking/services.js";
 import type * as appointmentBooking_sessionStore from "../appointmentBooking/sessionStore.js";
 import type * as appointmentBooking_sessions from "../appointmentBooking/sessions.js";
@@ -207,6 +208,7 @@ import type * as referralCodeRecords from "../referralCodeRecords.js";
 import type * as referralProgramConfig from "../referralProgramConfig.js";
 import type * as referralRedemption from "../referralRedemption.js";
 import type * as referrals from "../referrals.js";
+import type * as serviceAvailabilityMigration from "../serviceAvailabilityMigration.js";
 import type * as signedRequest from "../signedRequest.js";
 import type * as stripe from "../stripe.js";
 import type * as stripeBillingSessions from "../stripeBillingSessions.js";
@@ -325,6 +327,7 @@ import type * as workflowMediaInternal from "../workflowMediaInternal.js";
 import type * as workflowMediaShared from "../workflowMediaShared.js";
 import type * as workflowMessageGraphSave from "../workflowMessageGraphSave.js";
 import type * as workflowMigrations from "../workflowMigrations.js";
+import type * as workflowNodeCanvasControls from "../workflowNodeCanvasControls.js";
 import type * as workflowNodeConfig from "../workflowNodeConfig.js";
 import type * as workflowNodeReadiness from "../workflowNodeReadiness.js";
 import type * as workflowNodeReadinessMigration from "../workflowNodeReadinessMigration.js";
@@ -417,6 +420,7 @@ declare const fullApi: ApiFromModules<{
   "appointmentBooking/manualBooking": typeof appointmentBooking_manualBooking;
   "appointmentBooking/manualBookingCore": typeof appointmentBooking_manualBookingCore;
   "appointmentBooking/manualBookingFields": typeof appointmentBooking_manualBookingFields;
+  "appointmentBooking/serviceAssignments": typeof appointmentBooking_serviceAssignments;
   "appointmentBooking/services": typeof appointmentBooking_services;
   "appointmentBooking/sessionStore": typeof appointmentBooking_sessionStore;
   "appointmentBooking/sessions": typeof appointmentBooking_sessions;
@@ -552,6 +556,7 @@ declare const fullApi: ApiFromModules<{
   referralProgramConfig: typeof referralProgramConfig;
   referralRedemption: typeof referralRedemption;
   referrals: typeof referrals;
+  serviceAvailabilityMigration: typeof serviceAvailabilityMigration;
   signedRequest: typeof signedRequest;
   stripe: typeof stripe;
   stripeBillingSessions: typeof stripeBillingSessions;
@@ -670,6 +675,7 @@ declare const fullApi: ApiFromModules<{
   workflowMediaShared: typeof workflowMediaShared;
   workflowMessageGraphSave: typeof workflowMessageGraphSave;
   workflowMigrations: typeof workflowMigrations;
+  workflowNodeCanvasControls: typeof workflowNodeCanvasControls;
   workflowNodeConfig: typeof workflowNodeConfig;
   workflowNodeReadiness: typeof workflowNodeReadiness;
   workflowNodeReadinessMigration: typeof workflowNodeReadinessMigration;

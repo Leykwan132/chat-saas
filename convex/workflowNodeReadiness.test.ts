@@ -32,7 +32,6 @@ function readinessFacts(
   return {
     readyMediaNodeIds: new Set(),
     activeAppointmentServiceIds: new Set(),
-    hasAcceptingLeadMember: false,
     configuredConditionNodeIds: new Set([
       'workflow-node' as Id<'workflowNodes'>,
       mediaNodeId,
@@ -63,17 +62,13 @@ test('requires a ready asset before a media node is ready', () => {
   }))).toBe(true);
 });
 
-test('requires active services and an accepting teammate before a booking node is ready', () => {
+test('requires an active service before a booking node is ready', () => {
   const bookingNode = workflowNode('bookAppointment', {
     allowedAppointmentServiceIds: [serviceId],
   });
 
   expect(getWorkflowNodeReadiness(bookingNode, readinessFacts({
     activeAppointmentServiceIds: new Set([serviceId]),
-  }))).toBe(false);
-  expect(getWorkflowNodeReadiness(bookingNode, readinessFacts({
-    activeAppointmentServiceIds: new Set([serviceId]),
-    hasAcceptingLeadMember: true,
   }))).toBe(true);
 });
 
@@ -83,7 +78,7 @@ test('counts every missing booking requirement', () => {
       allowedAppointmentServiceIds: [serviceId],
     }),
     readinessFacts(),
-  )).toBe(2);
+  )).toBe(1);
 });
 
 test('marks configuration-free workflow nodes ready', () => {
