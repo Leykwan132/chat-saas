@@ -61,6 +61,8 @@ export function useCreateBookingController({
   const [remarks, setRemarks] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
+  const [loadingNearestSlot, setLoadingNearestSlot] = useState(false);
+  const [nearestSlotMessage, setNearestSlotMessage] = useState<string | null>(null);
   const availabilityRequestRef = useRef(0);
   const nearestSlotRequestRef = useRef(0);
   const loadNearestSlotRef = useRef(loadNearestSlot);
@@ -140,27 +142,45 @@ export function useCreateBookingController({
     setRemarks('');
     setAvailability({ kind: 'idle' });
     setBusy(false);
+    setLoadingNearestSlot(loadNearestSlotRef.current !== undefined);
+    setNearestSlotMessage(null);
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const loadNearestSlot = loadNearestSlotRef.current;
-    if (!service || !loadNearestSlot) return;
+    if (!service || !loadNearestSlot) {
+      setLoadingNearestSlot(false);
+      return;
+    }
     const requestId = ++nearestSlotRequestRef.current;
+    setLoadingNearestSlot(true);
+    setNearestSlotMessage(null);
     void (async () => {
-      const slot = await loadNearestSlot(service.serviceId);
-      if (nearestSlotRequestRef.current !== requestId || slot === null) return;
-      const nextSchedule = manualBookingScheduleFromSlot(slot, service.timeZone);
-      endTimeCustomizedRef.current = false;
-      setDate(nextSchedule.date);
-      setStartTime(nextSchedule.startTime);
-      setEndTime(nextSchedule.endTime);
-      void runAvailabilityCheck(
-        service.serviceId,
-        nextSchedule.date,
-        nextSchedule.startTime,
-        nextSchedule.endTime,
-      );
+      try {
+        const slot = await loadNearestSlot(service.serviceId);
+        if (nearestSlotRequestRef.current !== requestId) return;
+        setLoadingNearestSlot(false);
+        if (slot === null) {
+          setNearestSlotMessage('No upcoming available times for this service.');
+          return;
+        }
+        const nextSchedule = manualBookingScheduleFromSlot(slot, service.timeZone);
+        endTimeCustomizedRef.current = false;
+        setDate(nextSchedule.date);
+        setStartTime(nextSchedule.startTime);
+        setEndTime(nextSchedule.endTime);
+        void runAvailabilityCheck(
+          service.serviceId,
+          nextSchedule.date,
+          nextSchedule.startTime,
+          nextSchedule.endTime,
+        );
+      } catch {
+        if (nearestSlotRequestRef.current !== requestId) return;
+        setLoadingNearestSlot(false);
+        setNearestSlotMessage('Could not load the next available time.');
+      }
     })();
   }, [effectiveServiceId, open, service?.timeZone]);
 
@@ -181,11 +201,13 @@ export function useCreateBookingController({
 
   return {
     serviceId: effectiveServiceId, date, startTime, endTime, title, remarks,
-    feedback, selectionAvailable, busy, resetCustomerFields, setRemarks,
+    feedback, selectionAvailable, busy, loadingNearestSlot, nearestSlotMessage, resetCustomerFields, setRemarks,
     setService(value: string) {
       const nextService = services.find((item) => item.serviceId === value);
       const nextEnd = nextService ? defaultManualBookingEndTime(startTime, nextService.durationMinutes) : '';
       setServiceId(value); setEndTime(nextEnd); endTimeCustomizedRef.current = false;
+      setLoadingNearestSlot(loadNearestSlotRef.current !== undefined);
+      setNearestSlotMessage(null);
       void runAvailabilityCheck(value, date, startTime, nextEnd);
     },
     setDate(value: string) { setDate(value); void runAvailabilityCheck(effectiveServiceId, value, startTime, endTime); },

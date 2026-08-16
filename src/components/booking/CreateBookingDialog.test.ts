@@ -104,4 +104,8 @@ test('resets each new Calendar booking to a clean next-available slot', () => {
   expect(controllerSource).toContain('}, [open]);');
   expect(controllerSource).toContain('}, [effectiveServiceId, open, service?.timeZone]);');
   expect(controllerSource).toContain('if (open && !titleCustomizedRef.current) setTitle(defaultTitle);');
+  expect(controllerSource).toContain('const [loadingNearestSlot, setLoadingNearestSlot] = useState(false);');
+  expect(controllerSource).toContain('loadingNearestSlot,');
+  expect(dialogSource).toContain('controller.loadingNearestSlot ? (');
+  expect(dialogSource).toContain('Loading next available time…');
 });

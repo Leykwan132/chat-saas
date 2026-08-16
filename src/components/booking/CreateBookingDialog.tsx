@@ -193,16 +193,31 @@ export function CreateBookingDialog({
                 onChange={(event) => controller.setTitle(event.target.value)}
               />
             </div>
-            <ManualBookingScheduleField
-              date={controller.date}
-              startTime={controller.startTime}
-              endTime={controller.endTime}
-              feedback={controller.feedback}
-              portalContainer={comboboxPortalContainerRef}
-              onDateChange={controller.setDate}
-              onStartTimeChange={controller.setStartTime}
-              onEndTimeChange={controller.setEndTime}
-            />
+            {controller.loadingNearestSlot ? (
+              <div className="grid gap-3">
+                <Label>Date & time</Label>
+                <div className="flex h-10 items-center gap-2 rounded-md bg-muted px-3 text-sm text-muted-foreground">
+                  <Spinner className="size-4" />
+                  Loading next available time…
+                </div>
+              </div>
+            ) : controller.nearestSlotMessage ? (
+              <div className="grid gap-3">
+                <Label>Date & time</Label>
+                <p className="text-sm text-muted-foreground">{controller.nearestSlotMessage}</p>
+              </div>
+            ) : (
+              <ManualBookingScheduleField
+                date={controller.date}
+                startTime={controller.startTime}
+                endTime={controller.endTime}
+                feedback={controller.feedback}
+                portalContainer={comboboxPortalContainerRef}
+                onDateChange={controller.setDate}
+                onStartTimeChange={controller.setStartTime}
+                onEndTimeChange={controller.setEndTime}
+              />
+            )}
             <div className="grid gap-2">
               <Label htmlFor="manual-booking-remarks">Remarks</Label>
               <Textarea
