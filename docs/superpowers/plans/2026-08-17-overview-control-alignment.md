@@ -14,6 +14,7 @@
 - Keep the title left-aligned and the date plus ranges right-aligned at the `sm` breakpoint and above.
 - Keep the Daily/Cumulative selector in that same header control row.
 - Keep the compact metric cards selectable and content-sized.
+- Use a 12px label-to-value gap with the 24px value typography.
 - Keep code self-explanatory with no comments and under 300 lines per code file.
 - Run tests with Node 22 in the same shell command.
 
@@ -60,6 +61,8 @@ In `AgentOverviewPage.tsx`, use a responsive header container with `sm:justify-b
 In `AgentOverviewTimeRangeButtons.tsx`, switch the ToggleGroup variant to `ghost` and retain its existing `data-state=on` muted fill behavior from the shared component.
 
 In `AgentOverviewMetrics.tsx`, remove the unused `rows` destructuring, remove `min-h-[116px]` and `justify-between` from metric cells and skeletons, and keep the two-line label/value spacing.
+
+Use `gap-3` for the label/value stack and `text-2xl` for the value.
 
 - [ ] **Step 4: Run the test to verify it passes**
 

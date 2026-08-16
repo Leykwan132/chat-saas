@@ -28,11 +28,11 @@ function MetricCell({
         isSelected ? 'bg-muted/50 hover:bg-muted/50' : 'bg-card hover:bg-muted/40',
       )}
     >
-      <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-3">
         <div className="max-w-[13rem] text-sm font-medium leading-tight text-muted-foreground">
           {item.label}
         </div>
-        <div className="break-words text-3xl font-light leading-none tracking-normal text-foreground">
+        <div className="break-words text-2xl font-light leading-none tracking-normal text-foreground">
           {item.value}
         </div>
       </div>
@@ -74,9 +74,9 @@ export function AgentOverviewMetricsSkeleton() {
     <Card className="overflow-hidden rounded-lg border border-border bg-border p-0 shadow-none">
       <CardContent className="grid gap-px bg-border p-0 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="flex flex-col gap-2 bg-card px-5 py-4">
+          <div key={index} className="flex flex-col gap-3 bg-card px-5 py-4">
             <Skeleton className="h-4 w-36 rounded-md" />
-            <Skeleton className="h-9 w-28 rounded-md" />
+            <Skeleton className="h-7 w-28 rounded-md" />
           </div>
         ))}
       </CardContent>

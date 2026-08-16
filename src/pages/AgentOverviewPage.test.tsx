@@ -81,6 +81,9 @@ test('renders compact metric cards with labels above values and no previews', ()
   expect(markup.indexOf('AI conversations')).toBeLessThan(markup.indexOf('12'));
   expect(markup).not.toContain('<svg');
   expect(markup).not.toContain('min-h-[116px]');
+  expect(markup).toContain('flex min-w-0 flex-col gap-3');
+  expect(markup).toContain('text-2xl');
+  expect(markup).not.toContain('text-3xl');
 });
 
 test('uses a compact height when the selected trend has no activity', () => {
