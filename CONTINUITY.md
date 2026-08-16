@@ -39,6 +39,7 @@
 - 2026-08-16 [USER] D678 ACTIVE: Weekly availability accepts any valid typed time, retaining it as the selected custom value when it is outside the preset grid; weekday switch and label rows are vertically centered with their time controls.
 - 2026-08-16 [USER] D679 ACTIVE: Weekly availability renders Save inside the availability card footer, below the 24/7 setting; Timezone remains beside the card, which sizes to its contents without flex growth or an explicit minimum width.
 - 2026-08-16 [USER] D680 ACTIVE: Google Calendar provider failures log only the HTTP status and validated machine-readable reason, excluding tokens, request bodies, and customer data.
+- 2026-08-16 [USER] D681 ACTIVE: Each Calendar New Booking action, including a grid right-click action, begins a fresh booking session at the selected service's next available slot and clears prior customer search, selection, title edits, remarks, and custom times.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -71,6 +72,7 @@
 - 2026-08-16 [CODE] The availability card no longer sets a minimum width.
 - 2026-08-16 [CODE] The availability card no longer expands across unused row space.
 - 2026-08-16 [CODE] Google Calendar failed requests now emit safe diagnostics that identify the rejected provider condition.
+- 2026-08-16 [CODE] Reopened Calendar booking dialogs reset their prior form state and always reload the next available slot.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -123,3 +125,4 @@
 - 2026-08-16 [TOOL] Availability layout verification remained green at 8/8 with `git diff --check` after removing the card minimum width under Node v22.22.0.
 - 2026-08-16 [TOOL] Availability card sizing test was RED before removing flex growth, then focused availability verification passed 9/9 with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Google provider diagnostic test was RED before implementation, then passed 25/25 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0; `bunx convex dev --once` deployed successfully to the connected development deployment.
+- 2026-08-16 [TOOL] Calendar booking reset test was RED before implementation, then focused booking and Calendar action verification passed 10/10 with `git diff --check` under Node v22.22.0.

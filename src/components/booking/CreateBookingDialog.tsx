@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CalendarCheck, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -62,7 +62,14 @@ export function CreateBookingDialog({
   const [selectedCustomer, setSelectedCustomer] = useState<BookingCustomer | null>(null);
   const customer = fixedCustomer ?? selectedCustomer;
   const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open || fixedCustomer !== undefined) return;
+    setSelectedCustomer(null);
+    onCustomerQueryChange?.('');
+  }, [fixedCustomer, onCustomerQueryChange, open]);
+
   const controller = useCreateBookingController({
+    open,
     services: services ?? [],
     customer,
     initialDate,

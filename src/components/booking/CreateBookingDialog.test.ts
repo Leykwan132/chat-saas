@@ -90,3 +90,18 @@ test('uses the booking dialog for Calendar creation actions', () => {
 test('inherits the shared modal backdrop', () => {
   expect(dialogSource).not.toContain('overlayClassName=');
 });
+
+test('resets each new Calendar booking to a clean next-available slot', () => {
+  expect(dialogSource).toContain('if (!open || fixedCustomer !== undefined) return;');
+  expect(dialogSource).toContain('setSelectedCustomer(null);');
+  expect(dialogSource).toContain("onCustomerQueryChange?.('');");
+  expect(dialogSource).toContain('open={open}');
+  expect(controllerSource).toContain('if (!open) return;');
+  expect(controllerSource).toContain("setServiceId('');");
+  expect(controllerSource).toContain("setStartTime('');");
+  expect(controllerSource).toContain("setEndTime('');");
+  expect(controllerSource).toContain("setRemarks('');");
+  expect(controllerSource).toContain('}, [open]);');
+  expect(controllerSource).toContain('}, [effectiveServiceId, open, service?.timeZone]);');
+  expect(controllerSource).toContain('if (open && !titleCustomizedRef.current) setTitle(defaultTitle);');
+});

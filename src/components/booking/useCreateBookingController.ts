@@ -37,6 +37,7 @@ function defaultManualBookingTitle(
 }
 
 export function useCreateBookingController({
+  open,
   services,
   customer,
   initialDate,
@@ -44,6 +45,7 @@ export function useCreateBookingController({
   createBooking,
   loadNearestSlot,
 }: {
+  open: boolean;
   services: BookingService[];
   customer: BookingCustomerDetails | null;
   initialDate?: string;
@@ -125,6 +127,23 @@ export function useCreateBookingController({
   };
 
   useEffect(() => {
+    if (!open) return;
+    availabilityRequestRef.current += 1;
+    nearestSlotRequestRef.current += 1;
+    endTimeCustomizedRef.current = false;
+    titleCustomizedRef.current = false;
+    setServiceId('');
+    setDate(format(new Date(), 'yyyy-MM-dd'));
+    setStartTime('');
+    setEndTime('');
+    setTitle('');
+    setRemarks('');
+    setAvailability({ kind: 'idle' });
+    setBusy(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
     const loadNearestSlot = loadNearestSlotRef.current;
     if (!service || !loadNearestSlot) return;
     const requestId = ++nearestSlotRequestRef.current;
@@ -143,11 +162,11 @@ export function useCreateBookingController({
         nextSchedule.endTime,
       );
     })();
-  }, [effectiveServiceId, service?.timeZone]);
+  }, [effectiveServiceId, open, service?.timeZone]);
 
   useEffect(() => {
-    if (!titleCustomizedRef.current) setTitle(defaultTitle);
-  }, [defaultTitle]);
+    if (open && !titleCustomizedRef.current) setTitle(defaultTitle);
+  }, [defaultTitle, open]);
 
   useEffect(() => {
     const previousCustomer = previousCustomerRef.current;
