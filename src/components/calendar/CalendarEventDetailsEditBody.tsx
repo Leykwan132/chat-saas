@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   AlignLeft,
   Calendar,
@@ -8,7 +8,7 @@ import {
   Phone,
   User,
 } from 'lucide-react';
-import { TimeSelectInput } from '@/components/TimeSelectInput';
+import { EditableTimeCombobox } from '@/components/EditableTimeCombobox';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -146,11 +146,13 @@ export function CalendarEventDetailsEditBody({
   onFormChange: (patch: Partial<EventEditFormState>) => void;
   onCollectedFieldChange: (key: string, value: string) => void;
 }) {
+  const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
   const selectedMember = teamUsers.find((user) => user._id === form.assignedUserId);
   const selectedMemberName = selectedMember ? memberLabel(selectedMember) : 'Team member';
 
   return (
-    <form id="calendar-event-detail-edit-form" className="flex flex-col gap-8">
+    <form id="calendar-event-detail-edit-form" className="relative flex flex-col gap-8">
+      <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
       <div className="flex flex-wrap items-start justify-between gap-5">
         <Input
           value={form.title}
@@ -179,15 +181,18 @@ export function CalendarEventDetailsEditBody({
           {!form.allDay ? (
             <EditRow label="Time" icon={Clock}>
               <div className="grid grid-cols-2 gap-3">
-                <TimeSelectInput
-                  hideLabel
+                <EditableTimeCombobox
                   value={form.startTime}
-                  onChange={(value) => onFormChange({ startTime: value })}
+                  onChange={(startTime) => onFormChange({ startTime })}
+                  ariaLabel="Start time"
+                  portalContainer={comboboxPortalContainerRef}
                 />
-                <TimeSelectInput
-                  hideLabel
+                <EditableTimeCombobox
                   value={form.endTime}
-                  onChange={(value) => onFormChange({ endTime: value })}
+                  onChange={(endTime) => onFormChange({ endTime })}
+                  ariaLabel="End time"
+                  portalContainer={comboboxPortalContainerRef}
+                  contentAlign="end"
                 />
               </div>
             </EditRow>
