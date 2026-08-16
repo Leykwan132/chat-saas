@@ -12,6 +12,7 @@
 
 - Keep the selected range visibly filled and all unselected ranges ghost-style.
 - Keep the title and date left-aligned, with the date directly below the title, and ranges right-aligned at the `sm` breakpoint and above.
+- Use an 8px title-date gap in the left-side header group.
 - Bottom-align the right-side range and Daily/Cumulative controls with the title/date header block.
 - Keep the Daily/Cumulative selector in that same header control row.
 - Keep the compact metric cards selectable and content-sized.
@@ -61,7 +62,7 @@ Expected: FAIL because the header has no responsive split layout, the range Togg
 
 - [ ] **Step 3: Write the minimal implementation**
 
-In `AgentOverviewPage.tsx`, use a responsive header container with `sm:items-end sm:justify-between`, place the period label directly below the title in its left-side group, and keep the range controls plus Daily/Cumulative selector in its right-side group. Remove the selector from the trend-card actions.
+In `AgentOverviewPage.tsx`, use a responsive header container with `sm:items-end sm:justify-between`, place the period label directly below the title in its left-side group with `gap-2`, and keep the range controls plus Daily/Cumulative selector in its right-side group. Remove the selector from the trend-card actions.
 
 In `AgentOverviewTimeRangeButtons.tsx`, switch the ToggleGroup variant to `ghost` and retain its existing `data-state=on` muted fill behavior from the shared component.
 

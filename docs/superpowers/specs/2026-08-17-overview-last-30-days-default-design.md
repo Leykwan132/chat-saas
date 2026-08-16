@@ -11,6 +11,7 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 - Keep only 1d, 7d, 30d, and 90d selectable after the page loads.
 - Leave dedicated usage pages unchanged.
 - Display the Overview title with the active date range directly beneath it on the left, and persistent 1d, 7d, 30d, and 90d controls on the right on wider screens.
+- Separate the title and date with an 8px gap for easy scanning.
 - Align the right-side range and Daily/Cumulative controls to the bottom of the title/date header block.
 - Use unoutlined ghost controls; give the selected range a muted color fill.
 - Place the existing Daily/Cumulative selector in the same right-aligned header control row.
