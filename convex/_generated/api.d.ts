@@ -155,6 +155,7 @@ import type * as creditSourceBreakdown from "../creditSourceBreakdown.js";
 import type * as creditUsageAnalytics from "../creditUsageAnalytics.js";
 import type * as credits from "../credits.js";
 import type * as crons from "../crons.js";
+import type * as customerAgentMigration from "../customerAgentMigration.js";
 import type * as customerAgentScope from "../customerAgentScope.js";
 import type * as customerImportPool from "../customerImportPool.js";
 import type * as customerSearch from "../customerSearch.js";
@@ -584,6 +585,7 @@ declare const fullApi: ApiFromModules<{
   creditUsageAnalytics: typeof creditUsageAnalytics;
   credits: typeof credits;
   crons: typeof crons;
+  customerAgentMigration: typeof customerAgentMigration;
   customerAgentScope: typeof customerAgentScope;
   customerImportPool: typeof customerImportPool;
   customerSearch: typeof customerSearch;

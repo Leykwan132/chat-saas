@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
-- 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries also persist their owner scope.
+- 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog and preserve the selected date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: connected-calendar manual events fail closed: a Google write failure prevents local retention.
@@ -42,9 +42,12 @@
 - 2026-08-16 [CODE] Google Calendar health now blocks only Google Meet availability; In person remains subject to schedule and calendar conflicts but not connection-health rejection.
 - 2026-08-16 [CODE] Removed the Google Calendar 60-second freshness health limit and the daily stale-sync sweep while retaining daily Watch renewal.
 - 2026-08-16 [CODE] Manual and CSV customer creation now persist validated agent scope so customers appear in the agent dashboard.
+- 2026-08-16 [TOOL] Safe legacy personal-manual customer migration completed successfully after scanning 31 records; only records with a verified sole personal agent were eligible.
 
 # Working set
 - `convex/customerAgentScope.ts`
+- `convex/customerAgentMigration.ts`
+- `convex/customerAgentMigration.test.ts`
 - `convex/customers.ts`
 - `convex/customerImportPool.ts`
 - `convex/customerSearch.test.ts`
@@ -60,3 +63,4 @@
 - 2026-08-16 [TOOL] `bunx convex dev --once` deployed the location-aware Google-health rule successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Simplified Google Calendar health and maintenance passed 34 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Agent-scoped manual and CSV customer creation passed focused customer tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
+- 2026-08-16 [TOOL] Safe personal-manual customer migration passed 5 focused tests, Convex and workspace TypeScript checks, deployed successfully, completed a dry run, and scanned 31 records successfully.
