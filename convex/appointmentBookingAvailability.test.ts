@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { afterEach, expect, test, vi } from "vitest";
 import type { Doc } from "./_generated/dataModel";
 import { isAssignedToService } from "./appointmentBooking/availability";
 import { availabilityRejectionReasons } from "./appointmentBooking/availabilityEligibility";
@@ -7,6 +7,10 @@ import type { AvailabilityRosterEntry } from "./appointmentBooking/availabilityR
 const service = {
   assignedWorkosUserIds: ["selected-user"],
 } as Doc<"appointmentServices">;
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 test("only considers teammates selected for a service", () => {
   expect(isAssignedToService(service, "selected-user")).toBe(true);
@@ -49,4 +53,17 @@ test("only requires Google Calendar health for Google Meet services", () => {
 
   expect(inPersonReasons).not.toContain("google_calendar_unhealthy");
   expect(googleMeetReasons).toContain("google_calendar_unhealthy");
+});
+
+test("availability eligibility does not emit temporary debug logs", () => {
+  const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+  availabilityRejectionReasons({
+    service: { assignedWorkosUserIds: ["selected-user"], locationMode: "in_person" } as Doc<"appointmentServices">,
+    entry: scheduledEntry,
+    startAt: Date.UTC(2026, 7, 17, 9),
+    endAt: Date.UTC(2026, 7, 17, 9, 30),
+  });
+
+  expect(log).not.toHaveBeenCalled();
 });
