@@ -45,7 +45,13 @@ export function availabilityRejectionReasons(args: {
   if (!isAssignedToService(args.service, args.entry.schedule.workosUserId)) reasons.push("service_not_assigned");
   if (!isWithinShift(args.startAt, args.endAt, args.entry.schedule, args.entry.shifts)) reasons.push("outside_shift");
   if (hasTimeOffOverlap(args.startAt, args.endAt, args.entry.timeOff)) reasons.push("time_off");
-  if (!args.ignoreGoogleHealth && !args.entry.googleCalendarHealthy) reasons.push("google_calendar_unhealthy");
+  if (
+    args.service.locationMode === "remote" &&
+    !args.ignoreGoogleHealth &&
+    !args.entry.googleCalendarHealthy
+  ) {
+    reasons.push("google_calendar_unhealthy");
+  }
   if (!args.entry.calendarAvailability.safe) reasons.push("calendar_data_unavailable");
   else if (calendarAvailabilityHasConflict(args.entry.calendarAvailability, args.startAt, args.endAt, args.excludeEventId)) {
     reasons.push("calendar_conflict");

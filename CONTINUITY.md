@@ -1,66 +1,28 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0`; merge the current `origin/main` baseline locally.
-- 2026-08-15 [CODE] Now: the active PostHog Google Calendar connect flag is wired into CalendarPage and hides the connection control until it evaluates true; the implementation is committed.
-- 2026-08-16 [CODE] Now: only Google-synced events show a source indicator; local events no longer show a Kilobot tag.
-- 2026-08-15 [CODE] Now: connected Google Calendar status has a solid green badge with a white check, and Google-synced events show an icon before the title with the approved hover text; focused verification passed and the change is committed.
-- 2026-08-15 [USER] Now: Google-synced event icons use a larger, vertically centered heading variant in the event-details modal only.
-- 2026-08-15 [CODE] Now: the larger modal heading icon is implemented and focused verification passed; the change is committed.
-- 2026-08-15 [CODE] Now: manual calendar events are local-only for disconnected creators and otherwise use the creator's primary Google Calendar with one refresh, idempotent writes, and rollback on failure; the implementation is committed.
-- 2026-08-15 [USER] Next: continue Google Calendar feature work on this branch after the early-access connection gate.
-- 2026-08-15 [USER] Approved Calendar header design: keep Today beside the visible month label; it selects today and switches the visible month to today.
-- 2026-08-15 [USER] Approved implementation planning for the Calendar Today button.
-- 2026-08-15 [USER] Superseded header action layout: New Booking fills the day-header row and is pinned to the far-right edge.
-- 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog; the grid action is named Create Booking and first selects its date.
-- 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access, currently enabled only for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
-- 2026-08-15 [USER] D658 ACTIVE: a connected event creator's manual calendar event is fail-closed: Google write failure prevents the event from being retained locally.
-- 2026-08-15 [USER] D659 ACTIVE: remote bookings generate a Google Meet link only through the assigned staff member's connected Google Calendar; connecting remains optional.
-- 2026-08-15 [USER] D660 ACTIVE: service configuration exposes only Google Meet and In person; Google Meet remains unavailable until the current eligible user connects Google Calendar, with hover/focus connection guidance.
-- 2026-08-15 [CODE] Now: services support Remote or In person meeting locations; remote AI and staff bookings use an idempotent Google Meet request only when the assigned teammate is connected, and the returned Meet link is stored on the booking event.
-- 2026-08-15 [USER] Now: approved a two-step Create Service dialog: a personal service creates from the first step; a team service collects teammates on a second step. Close discards immediately. The implementation plan is ready for execution.
-- 2026-08-15 [USER] D661 ACTIVE: Team-service access ignores the person's personal plan and is based only on the active workspace plan. On Free, hovering or focusing the Team card darkens it slightly, reveals a centered Upgrade control, and opens the shared workspace-plan upgrade modal.
-- 2026-08-15 [USER] D662 ACTIVE: creation collects only Name, Location, and Duration; Description is configured after creation. Duration, Gap, and Preferred time are directly visible in the service editor. The footer has no separator, and assignment cards use the compact stacked-card treatment.
-- 2026-08-15 [USER] D663 SUPERSEDED by D668: Create Service used a plain dim overlay without blur and a slightly tighter `rounded-3xl` container; shared dialogs remain unchanged.
-- 2026-08-15 [USER] D664 ACTIVE: service assignment uses the shared Field and RadioGroup choice-card pattern instead of a custom checked icon; each card has an icon above its title and description, with the radio at upper right.
-- 2026-08-15 [USER] D665 ACTIVE: Create Service Close uses the ghost button treatment; Back remains a text link.
-- 2026-08-15 [USER] D666 ACTIVE: the Google Meet Location option is visible only to accounts included in the Google Calendar feature flag; eligible but disconnected accounts receive connection guidance.
-- 2026-08-15 [USER] D667 ACTIVE: the service editor calls the details gathered before a booking “Information collected.”
-- 2026-08-15 [USER] D668 ACTIVE: all standard application Dialog and Sheet backdrops use Create Booking’s light `bg-black/10`, unblurred treatment; non-modal overlays and content-level effects remain unchanged.
-- 2026-08-16 [USER] D669 ACTIVE: Service-card descriptions appear directly below the service title while the booking count and active switch remain at the card bottom.
-- 2026-08-16 [USER] D670 ACTIVE: Calendar Internal details places Summary beside staff details on desktop, uses neutral text surfaces for Summary and Internal notes, and aligns their icons at the top. Calendar edit time fields normalize existing event values for prefill.
-- 2026-08-16 [USER] D671 ACTIVE: Calendar provenance communicates Google synchronization only; connected Google Calendar status uses one white check inside a solid green circle.
-- 2026-08-16 [USER] D672 ACTIVE: Create Service assignment cards use content height without a forced minimum; desktop siblings remain equal-height through the grid.
-- 2026-08-16 [USER] D673 ACTIVE: service creation explains and focuses a missing Name; Calendar Internal details uses icon-and-label header rows; weekly availability accepts typed compatible times; Routing replaces Lead Assignment with the approved icon swap; Google connection uses a green badge with only a white tick; and Calendar header account/timezone controls have subtle hover feedback.
-- 2026-08-16 [USER] D674 ACTIVE: the authenticated-header support control shows `Need help?` beside its existing question-mark icon.
-- 2026-08-16 [USER] D675 ACTIVE: deleting a Google-synced calendar event deletes it from Google first, then removes the local event and participant records.
-- 2026-08-16 [USER] D676 ACTIVE: the Google Calendar connected-status badge is vertically centered with the account email in the Calendar header.
-- 2026-08-16 [USER] D677 ACTIVE: Create booking places an editable Title immediately below Service, prefilled as `Service – Customer`; the chosen title is used for both local and connected Google Calendar bookings.
-- 2026-08-16 [USER] D678 ACTIVE: Weekly availability accepts any valid typed time, retaining it as the selected custom value when it is outside the preset grid; weekday switch and label rows are vertically centered with their time controls.
-- 2026-08-16 [USER] D679 ACTIVE: Weekly availability renders Save inside the availability card footer, below the 24/7 setting; Timezone remains beside the card, which sizes to its contents without flex growth or an explicit minimum width.
-- 2026-08-16 [USER] D680 ACTIVE: Google Calendar provider failures log only the HTTP status and validated machine-readable reason, excluding tokens, request bodies, and customer data.
-- 2026-08-16 [USER] D681 SUPERSEDED by D689: Each Calendar New Booking action, including a grid right-click action, reset prior customer search, selection, title edits, remarks, and custom times before availability-controlled prefill was replaced.
-- 2026-08-16 [USER] D682 ACTIVE: The Google Calendar connected-status check badge uses the compact 16px size.
-- 2026-08-16 [USER] D683 SUPERSEDED by D689: New Booking previously held Date & time in a loading state while resolving an available slot.
-- 2026-08-16 [USER] D684 ACTIVE: Google Calendar event indicators reflect synchronized provider status, so both Google-imported events and Kilobot-created bookings successfully written to Google display the icon.
-- 2026-08-16 [USER] D685 ACTIVE: Calendar Internal notes and Summary headers use compact, consistently spaced icons.
-- 2026-08-16 [USER] D686 ACTIVE: Calendar Internal details title includes a small visual gap before its content.
-- 2026-08-16 [USER] D687 ACTIVE: Calendar Summary and Internal notes include a shared 12px gap between their labels and content surfaces.
-- 2026-08-16 [USER] D688 ACTIVE: Create booking has an accessible, visually hidden dialog description to avoid Radix accessibility warnings.
-- 2026-08-16 [USER] D689 ACTIVE: Each New Booking action pre-fills the next 30-minute clock slot for the selected service without searching availability; availability still determines whether creation is allowed.
-- 2026-08-16 [USER] D690 ACTIVE: The availability card Save footer has no separator above it.
-- 2026-08-16 [USER] D691 ACTIVE: Calendar New Booking actions preserve the date selected in the sidebar or grid, while the time defaults to the next 30-minute slot.
-- 2026-08-16 [USER] D692 ACTIVE: Booking availability checks start as soon as service, date, and time form a valid interval; selecting a customer triggers a routing-aware re-check, while creating still requires a customer.
-- 2026-08-16 [USER] D693 ACTIVE: A conflicting booking timeslot shows a same-row, right-aligned `Change availability` action that opens the agent’s Availability settings.
-- 2026-08-16 [USER] D694 ACTIVE: Failed Calendar booking availability checks emit privacy-safe backend diagnostics with machine-readable candidate rejection reasons and no customer, token, or calendar-event payload data.
-- 2026-08-16 [USER] D695 ACTIVE: Personal services must assign only their owning WorkOS user; stale assignee records are repaired through the personal-service assignment migration.
-- 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
-- 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
-- 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
-- 2026-08-15 [TOOL] Open question: the remote feature branch remains at `5ed043cb` while local `d112f4a4` contains the resolved `origin/main` merge; publishing those 91 commits requires explicit approval to push.
+- 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
+- 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
+- 2026-08-16 [CODE] Next: await user validation of the latest location-aware availability rule.
+- 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog and preserve the selected date.
+- 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
+- 2026-08-15 [USER] D658 ACTIVE: connected-calendar manual events fail closed: a Google write failure prevents local retention.
+- 2026-08-15 [USER] D659 ACTIVE: remote bookings generate Google Meet links only through the assigned staff member’s connected calendar.
+- 2026-08-15 [USER] D660 ACTIVE: Service location offers Google Meet and In person; Google Meet is unavailable until the eligible user connects Google Calendar.
+- 2026-08-15 [USER] D668 ACTIVE: standard Dialog and Sheet backdrops use the unblurred light overlay.
+- 2026-08-16 [USER] D671 ACTIVE: calendar provenance communicates Google synchronization only, with one white check inside a solid green circle.
+- 2026-08-16 [USER] D677 ACTIVE: Create Booking has an editable, prefilled Title that is used locally and in Google Calendar.
+- 2026-08-16 [USER] D678 ACTIVE: Weekly availability accepts valid custom times outside the preset grid.
+- 2026-08-16 [USER] D679 ACTIVE: Availability Save appears inside the content-sized card footer, without a separator.
+- 2026-08-16 [USER] D689 ACTIVE: New Booking pre-fills the next 30-minute clock slot for its selected service without searching availability.
+- 2026-08-16 [USER] D692 ACTIVE: availability checks begin with service, date, and time; customer selection triggers a routing-aware re-check.
+- 2026-08-16 [USER] D693 ACTIVE: unavailable booking slots expose a same-row `Change availability` action.
+- 2026-08-16 [USER] D694 ACTIVE: failed availability checks emit privacy-safe backend rejection diagnostics.
+- 2026-08-16 [USER] D695 ACTIVE: personal services assign only their owner; legacy records are repaired by migration.
+- 2026-08-16 [USER] D696 ACTIVE: only Google Meet (`locationMode: "remote"`) services require healthy Google Calendar synchronization; In person and legacy-location services do not reject availability for `google_calendar_unhealthy`.
 
 # Decisions
-- 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events belong to the assigned teammate’s primary calendar, and absent connections fail explicitly.
+- 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
 - 2026-08-13 [USER] D640 ACTIVE: customer-facing agent mutations are limited to confirmed Kilobot-created events in the active conversation.
@@ -69,102 +31,28 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-13 [CODE] Google Calendar connection, sync, private availability, watch lifecycle, and idempotent writes landed through `5c650fd6`.
 - 2026-08-15 [CODE] The feature branch merged `origin/main`, preserving Google availability checks and service teammate filtering.
-- 2026-08-15 [CODE] Calendar booking creation is unified across header, empty-state, and grid actions; connected manual events synchronize fail-closed to the creator's primary calendar.
-- 2026-08-15 [CODE] Google Calendar connection is early access for the two approved accounts; synced events include the approved indicator treatment.
-- 2026-08-15 [CODE] Service creation, location, Google Meet booking links, workspace-plan team access, and personal-service migration are implemented locally.
-- 2026-08-15 [CODE] Standard Dialog and Sheet backdrops use the unblurred light overlay, and service-card descriptions sit directly below their titles.
-- 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, Internal details uses the approved responsive Summary/notes presentation, source/status indicators use the simplified Google-only treatment, and Create Service assignment cards no longer reserve empty lower space.
-- 2026-08-16 [CODE] Implemented the approved service validation, availability combobox, Routing copy/icons, Calendar connection badge, and Calendar header hover refinements; focused verification passed.
-- 2026-08-16 [CODE] Added the compact `Need help?` label to the existing header support control.
-- 2026-08-16 [CODE] Google-synced event deletion now runs booking cleanup and removes the local calendar event after Google confirms deletion.
-- 2026-08-16 [CODE] The connected Google Calendar badge uses a centered wrapper and block SVG to stay visually aligned with the account email.
-- 2026-08-16 [CODE] Manual booking creation now accepts a custom event title while preserving the prior generated title as its fallback.
-- 2026-08-16 [CODE] Weekly availability time comboboxes retain valid non-grid values as selectable custom options.
-- 2026-08-16 [CODE] Weekly availability Save is rendered inside the card footer instead of beneath the page layout.
-- 2026-08-16 [CODE] The availability card no longer sets a minimum width.
-- 2026-08-16 [CODE] The availability card no longer expands across unused row space.
-- 2026-08-16 [CODE] Google Calendar failed requests now emit safe diagnostics that identify the rejected provider condition.
-- 2026-08-16 [CODE] Reopened Calendar booking dialogs reset their prior form state and always reload the next available slot.
-- 2026-08-16 [CODE] The Google Calendar connected-status check badge uses the compact size.
-- 2026-08-16 [CODE] New Booking visibly loads its next available time before exposing schedule inputs.
-- 2026-08-16 [CODE] Google Calendar indicators now use `externalProvider` rather than event origin, and booking details return that provider status.
-- 2026-08-16 [CODE] Calendar Internal notes and Summary header icons use a 16px size and an 8px label gap.
-- 2026-08-16 [CODE] Calendar Internal details title includes a 4px bottom margin.
-- 2026-08-16 [CODE] Calendar Summary and Internal notes both use a 12px label-to-content gap.
-- 2026-08-16 [CODE] Create booking exposes the assistive description “Create a booking for a customer.”
-- 2026-08-16 [CODE] New Booking no longer calls the next-available-slot mutations for prefill; it computes the service-duration interval from the next half-hour locally.
-- 2026-08-16 [CODE] The availability card Save footer retains top spacing without a border.
-- 2026-08-16 [CODE] Booking prefill uses the Calendar action's `initialDate` for both reset and availability checking instead of overwriting it with today.
-- 2026-08-16 [CODE] Calendar booking availability checks no longer wait for a customer selection; the required customer validation remains on booking creation.
-- 2026-08-16 [CODE] Booking conflicts provide a direct Availability settings action alongside the explanatory message.
-- 2026-08-16 [CODE] Calendar availability conflicts now log candidate rejection reasons for backend diagnosis.
-- 2026-08-16 [TOOL] Ran the personal-service assignment migration on the connected development deployment; it repaired 9 service records in one completed batch.
+- 2026-08-15 [CODE] Google Calendar connection, synchronization, idempotent writes, and staff Google Meet booking links were implemented.
+- 2026-08-16 [CODE] Calendar booking actions, selected-date prefill, custom title, availability feedback, source indicators, and booking detail refinements were implemented.
+- 2026-08-16 [CODE] Service creation and editing, location gating, workspace-plan team access, routing copy, and custom availability times were implemented.
+- 2026-08-16 [TOOL] The personal-service assignment migration repaired 9 legacy service records on the connected development deployment.
+- 2026-08-16 [CODE] Google Calendar health now blocks only Google Meet availability; In person remains subject to schedule and calendar conflicts but not connection-health rejection.
 
 # Working set
+- `convex/appointmentBooking/availabilityEligibility.ts`
+- `convex/appointmentBooking/availability.ts`
+- `convex/appointmentBooking/availabilityRoster.ts`
+- `convex/appointmentBookingAvailability.test.ts`
+- `convex/googleCalendar/availability.ts`
+- `convex/googleCalendar/staffBookingPrepare.ts`
 - `src/pages/CalendarPage.tsx`
-- `src/components/calendar/GoogleCalendarConnectionCard.tsx`
-- `src/components/booking/CreateBookingDialog.test.ts`
-- `convex/calendarEvents.ts`
-- `convex/googleCalendar/calendarEventCreatePrepare.ts`
-- `convex/googleCalendar/calendarEventCreateSync.ts`
-- `convex/appointmentBooking/services.ts`
-- `convex/serviceAvailabilityMigration.ts`
+- `src/components/booking/CreateBookingDialog.tsx`
 - `src/components/services/ServiceLocationField.tsx`
-- `src/components/services/CreateServiceWizard.tsx`
-- `src/components/ServiceForm.tsx`
-- `src/pages/ServicePage.tsx`
-- `src/components/workflow/WorkflowBookingNodeServices.tsx`
+- `convex/serviceAvailabilityMigration.ts`
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-15 [CODE] Committed the Calendar action components as `f2641c33` and CalendarPage integration as `5c08c8ef`.
-- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 reconfirmed existing Google Calendar failures, including projection (4) and booking-sync (4); the new Calendar day-panel suite passed.
-- 2026-08-15 [USER] Approved a unified booking-dialog design for header, no-events, and grid context-menu actions; spec review is pending.
-- 2026-08-15 [USER] Approved the unified-booking spec and requested implementation planning.
-- 2026-08-15 [TOOL] Unified booking-action tests were RED before implementation, then focused Calendar verification passed 10/10 under Node v22.22.0 with `git diff --check` passing.
-- 2026-08-15 [CODE] Committed unified Calendar booking actions as `ec1637d9`.
-- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 again reproduced the existing Google Calendar projection (4) and booking-sync (4) failures; the unified Calendar day-panel suite passed.
-- 2026-08-15 [TOOL] Created active PostHog flag `enable_google_calendar_connect` (ID `822558`) with a 100% exact-email rollout for the requested early-access account.
-- 2026-08-15 [USER] Approved the Google Calendar connect early-access spec and requested implementation planning.
-- 2026-08-15 [TOOL] PostHog flag and Google Calendar connection focused tests were RED before implementation, then passed 17/17 under Node v22.22.0 with `git diff --check` passing.
-- 2026-08-15 [CODE] Committed the client-side PostHog gate as `a9385f61`.
-- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 again reproduced the existing Google Calendar projection (4) and booking-sync (4) failures; the PostHog connection-gate suite passed 13/13.
-- 2026-08-15 [TOOL] Expanded the active PostHog connection-control rollout to the two approved email accounts, each at 100%.
-- 2026-08-15 [TOOL] Google badge regression test was RED before implementation, then focused Calendar verification passed 13/13 under Node v22.22.0 with `git diff --check` passing.
-- 2026-08-15 [TOOL] Google event-indicator tests were RED before implementation, then focused Calendar verification passed 14/14 under Node v22.22.0 with `git diff --check` passing.
-- 2026-08-15 [TOOL] Modal Google icon test was RED before implementation, then focused Calendar verification passed 15/15 under Node v22.22.0 with `git diff --check` passing.
-- 2026-08-15 [TOOL] Manual-event Google sync tests were RED before implementation, then focused API, backend, and UI verification passed 26/26 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check` passing.
-- 2026-08-15 [CODE] Committed manual-event Google synchronization as `e7f62b4d`, the public action integration as `c2a0d0de`, and the white-check indicator as `65f39dc2`.
-- 2026-08-15 [TOOL] Full `bun run test` under Node v22.22.0 still reports pre-existing Google Calendar projection and booking-sync failures; the manual-event and connection-card suites passed.
-- 2026-08-15 [CODE] Service location settings are committed at `1b524e6b`; the verified, uncommitted follow-up makes remote bookings request an idempotent Google Meet conference and requires Google to return its video link before local finalization.
-- 2026-08-15 [TOOL] Final focused verification passed 43/43 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`; `convex/googleCalendarBookingSync.test.ts` continues to have its known four unrelated failures.
-- 2026-08-15 [TOOL] Fresh full `bun run test` under Node v22.22.0 remains blocked by known Google Calendar projection (4), booking-sync (4), and projection-review (1) failures; the committed remote booking focused suite passed 43/43.
-- 2026-08-15 [CODE] Service details now combines basic setup and duration while Booking team and Booking form remain separate; Google Meet is a guarded Location dropdown option and service-card activation controls are vertically centered.
-- 2026-08-15 [TOOL] Focused Service details verification passed 9/9 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`.
-- 2026-08-15 [TOOL] Modal-backdrop focused verification passed 14/14 and `bun run build` passed under Node v22.22.0. The full suite reported 14 unrelated failures in Google Calendar availability/sync/projection and Calendar sidebar padding tests.
-- 2026-08-16 [TOOL] Google-synced deletion regression test was RED before implementation, then Calendar removal/write focused verification passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Google Calendar connection-card alignment test was RED before implementation, then passed 15/15 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] `calendarEventSync.ts` deletion preparation now type-checks; focused deletion tests passed 11/11. Full `tsc -b` now stops only on the unrelated unused `UserRoundCheck` import in `src/components/app-sidebar-nav.ts`.
-- 2026-08-16 [TOOL] Custom booking-title tests were RED before implementation, then Calendar and Inbox manual-booking coverage passed 8/8; Convex codegen deployed successfully and `tsc -b` plus `git diff --check` passed under Node v22.22.0.
-- 2026-08-16 [TOOL] Custom weekly-time and row-alignment tests were RED before implementation, then focused availability verification passed 7/7 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability card-footer tests were RED before implementation, then focused WeeklyAvailabilityEditor and ScheduleAvailabilityEditor verification passed 8/8 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability layout verification remained green at 8/8 with `git diff --check` after removing the card minimum width under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability card sizing test was RED before removing flex growth, then focused availability verification passed 9/9 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Google provider diagnostic test was RED before implementation, then passed 25/25 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0; `bunx convex dev --once` deployed successfully to the connected development deployment.
-- 2026-08-16 [TOOL] Calendar booking reset test was RED before implementation, then focused booking and Calendar action verification passed 10/10 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Google connection badge-size test was RED before implementation, then focused verification passed 15/15 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] New Booking time-loading test was RED before implementation, then focused booking and schedule verification passed 16/16 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Google sync-indicator regression was RED for a Kilobot-originated event with provider `google`; Calendar UI tests passed 16/16, `bunx tsc --noEmit` and `git diff --check` passed, and `bunx convex dev --once` deployed successfully. The broader projection suite retains four pre-existing availability failures.
-- 2026-08-16 [TOOL] Internal-details header spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Internal-details title-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Calendar Summary and Internal notes content-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Create booking description regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Next-half-hour booking-prefill regressions were RED before implementation, then focused schedule and booking tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability-footer separator regression was RED before implementation, then focused availability tests passed 9/9 with `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Selected-date booking-prefill regression was RED before implementation, then focused booking/schedule tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Customer-free Calendar availability regression was RED on the required customer validator, then passed with the booking dialog suite (9/9), `bunx tsc --noEmit`, `bunx convex dev --once`, and `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability-action UI regression was RED before implementation, then focused booking schedule tests passed 11/11 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
-- 2026-08-16 [TOOL] Availability-diagnostic regression was RED before implementation, then passed with Convex and workspace TypeScript checks, focused availability tests (3/3), `git diff --check`, and `bunx convex dev --once` under Node v22.22.0.
-- 2026-08-16 [TOOL] `serviceAvailabilityMigration:runNormalizePersonalServiceAssignments` completed its one-batch repair for 9 records on the connected development deployment.
+- 2026-08-16 [TOOL] Calendar availability diagnostics regression was RED before implementation, then passed with Convex and workspace type checks, focused availability tests, `git diff --check`, and deployment.
+- 2026-08-16 [TOOL] `serviceAvailabilityMigration:runNormalizePersonalServiceAssignments` completed in one batch for 9 records on the connected development deployment.
+- 2026-08-16 [TOOL] Location-aware Google-health regression was RED for an in-person service, then passed 4/4 focused availability tests with Convex and workspace TypeScript checks and `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] `bunx convex dev --once` deployed the location-aware Google-health rule successfully to the connected development deployment.
