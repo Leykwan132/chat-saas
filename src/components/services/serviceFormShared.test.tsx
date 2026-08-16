@@ -51,15 +51,24 @@ test('shows Google Meet only to feature-flagged accounts and blocks it until con
   const markup = renderToStaticMarkup(
     <ServiceDetailsFields form={DEFAULT_SERVICE_FORM} setForm={vi.fn()} />,
   );
+  const videoCallMarkup = renderToStaticMarkup(
+    <ServiceDetailsFields
+      form={{ ...DEFAULT_SERVICE_FORM, locationMode: 'video_call' }}
+      setForm={vi.fn()}
+    />,
+  );
 
   expect(markup).toContain('>Location</');
+  expect(videoCallMarkup).toContain('Video call');
+  expect(videoCallMarkup).toContain('Create and share a meeting link with your customer.');
   expect(markup).toContain('In person');
   expect(markup).toContain('Address (optional)');
 
   const source = readFileSync(new URL('./ServiceLocationField.tsx', import.meta.url), 'utf8');
   expect(source).toContain('Google Meet');
   expect(source).toContain('GOOGLE_MEET_ICON_SRC');
-  expect(source).not.toContain('<Video');
+  expect(source).toContain("chooseLocation('video_call')");
+  expect(source).toContain('Create and share a meeting link with your customer.');
   expect(source).toContain('aria-disabled="true"');
   expect(source).toContain('{googleCalendarEnabled ? (');
   expect(source).toContain('Google Meet requires you to connect your Google Calendar.');

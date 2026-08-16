@@ -1,4 +1,4 @@
-import { ChevronDown, MapPin } from 'lucide-react';
+import { ChevronDown, MapPin, Video } from 'lucide-react';
 import { GOOGLE_MEET_ICON_SRC } from '@/components/calendar/googleCalendarBranding';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,11 +19,19 @@ type ServiceLocationFieldProps = {
 };
 
 function locationName(locationMode: ServiceForm['locationMode']) {
-  return locationMode === 'remote' ? 'Google Meet' : 'In person';
+  if (locationMode === 'remote') return 'Google Meet';
+  if (locationMode === 'video_call') return 'Video call';
+  return 'In person';
 }
 
 function GoogleMeetIcon() {
   return <img src={GOOGLE_MEET_ICON_SRC} alt="" className="size-4 shrink-0" />;
+}
+
+function LocationIcon({ locationMode }: { locationMode: ServiceForm['locationMode'] }) {
+  if (locationMode === 'remote') return <GoogleMeetIcon />;
+  if (locationMode === 'video_call') return <Video className="size-4" />;
+  return <MapPin className="size-4" />;
 }
 
 export function ServiceLocationField({
@@ -41,7 +49,7 @@ export function ServiceLocationField({
     setForm((previous) => ({
       ...previous,
       locationMode,
-      location: locationMode === 'remote' ? '' : previous.location,
+      location: locationMode === 'in_person' ? previous.location : '',
     }));
   };
 
@@ -52,13 +60,17 @@ export function ServiceLocationField({
         <DropdownMenuTrigger asChild>
           <Button type="button" variant="outline" disabled={disabled} className="w-full justify-between">
             <span className="flex items-center gap-2">
-              {form.locationMode === 'remote' ? <GoogleMeetIcon /> : <MapPin className="size-4" />}
+              <LocationIcon locationMode={form.locationMode} />
               {locationName(form.locationMode)}
             </span>
             <ChevronDown className="size-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-(--radix-dropdown-menu-trigger-width)">
+          <DropdownMenuItem onSelect={() => chooseLocation('video_call')}>
+            <Video />
+            Video call
+          </DropdownMenuItem>
           {googleCalendarEnabled ? (
             canUseGoogleMeet ? (
               <DropdownMenuItem onSelect={() => chooseLocation('remote')}>
@@ -94,6 +106,11 @@ export function ServiceLocationField({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {form.locationMode === 'video_call' ? (
+        <p className="text-sm text-muted-foreground">
+          Create and share a meeting link with your customer.
+        </p>
+      ) : null}
     </div>
   );
 }
