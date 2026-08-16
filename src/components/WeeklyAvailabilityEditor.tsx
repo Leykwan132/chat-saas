@@ -243,7 +243,7 @@ export function WeeklyAvailabilityEditor({
         {footer ? (
           <div
             data-slot="availability-footer"
-            className="flex justify-end border-t border-border pt-4"
+            className="flex justify-end pt-4"
           >
             {footer}
           </div>
