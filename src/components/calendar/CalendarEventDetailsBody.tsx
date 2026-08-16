@@ -42,6 +42,7 @@ export type AppointmentDetails = {
   remarks?: string;
   conversationId?: Id<'conversations'>;
   externalOrigin?: 'google' | 'kilobot';
+  externalProvider?: 'google';
 };
 
 const DEFAULT_FIELD_KEYS = new Set(['date', 'time', 'name', 'phone']);
@@ -220,7 +221,7 @@ export function EventDetailsBody({
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          <GoogleCalendarSourceBadge origin={details.externalOrigin} size="heading" />
+          <GoogleCalendarSourceBadge provider={details.externalProvider} size="heading" />
           <h2 className="min-w-0 flex-1 break-words text-2xl font-semibold leading-tight text-foreground">
             {details.title}
           </h2>

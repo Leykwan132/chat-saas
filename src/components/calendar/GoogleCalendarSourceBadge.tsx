@@ -2,14 +2,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { GOOGLE_CALENDAR_ICON_SRC } from "./googleCalendarBranding";
 
 export function GoogleCalendarSourceBadge({
-  origin,
+  provider,
   size = "compact",
 }: {
-  origin?: "google" | "kilobot";
+  provider?: "google";
   size?: "compact" | "heading";
 }) {
   const iconClassName = size === "heading" ? "size-5" : "size-3.5";
-  if (origin !== "google") return null;
+  if (provider !== "google") return null;
 
   return (
     <Tooltip>

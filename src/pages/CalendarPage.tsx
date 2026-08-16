@@ -125,6 +125,7 @@ type CalendarEvent = {
   remarks?: string;
   participants: CalendarParticipant[];
   externalOrigin?: 'google' | 'kilobot';
+  externalProvider?: 'google';
   externalOwnerUserId?: Id<'users'>;
   externalCanEdit?: boolean;
   viewerCanMutate?: boolean;
@@ -410,7 +411,7 @@ function CalendarGridEventItem({
       )}
     >
       <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] leading-tight text-foreground">
-        <GoogleCalendarSourceBadge origin={event.externalOrigin} />
+        <GoogleCalendarSourceBadge provider={event.externalProvider} />
         <span className="min-w-0 truncate">{event.title}</span>
       </span>
       <span
@@ -594,7 +595,7 @@ function CalendarDayEventRow({
               : 'font-normal text-foreground/80',
           )}
         >
-          <GoogleCalendarSourceBadge origin={event.externalOrigin} />
+          <GoogleCalendarSourceBadge provider={event.externalProvider} />
           <span className="min-w-0 truncate">{event.title}</span>
         </span>
         <span className="mt-0.5 block truncate text-sm leading-snug text-muted-foreground">

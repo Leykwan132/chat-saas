@@ -42,6 +42,7 @@
 - 2026-08-16 [USER] D681 ACTIVE: Each Calendar New Booking action, including a grid right-click action, begins a fresh booking session at the selected service's next available slot and clears prior customer search, selection, title edits, remarks, and custom times.
 - 2026-08-16 [USER] D682 ACTIVE: The Google Calendar connected-status check badge uses the compact 16px size.
 - 2026-08-16 [USER] D683 ACTIVE: New Booking holds the Date & time section in a loading state until the next available slot is resolved; it never presents cleared time fields as a ready form, and explains unavailable or failed lookups.
+- 2026-08-16 [USER] D684 ACTIVE: Google Calendar event indicators reflect synchronized provider status, so both Google-imported events and Kilobot-created bookings successfully written to Google display the icon.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -77,6 +78,7 @@
 - 2026-08-16 [CODE] Reopened Calendar booking dialogs reset their prior form state and always reload the next available slot.
 - 2026-08-16 [CODE] The Google Calendar connected-status check badge uses the compact size.
 - 2026-08-16 [CODE] New Booking visibly loads its next available time before exposing schedule inputs.
+- 2026-08-16 [CODE] Google Calendar indicators now use `externalProvider` rather than event origin, and booking details return that provider status.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -132,3 +134,4 @@
 - 2026-08-16 [TOOL] Calendar booking reset test was RED before implementation, then focused booking and Calendar action verification passed 10/10 with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Google connection badge-size test was RED before implementation, then focused verification passed 15/15 with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] New Booking time-loading test was RED before implementation, then focused booking and schedule verification passed 16/16 with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Google sync-indicator regression was RED for a Kilobot-originated event with provider `google`; Calendar UI tests passed 16/16, `bunx tsc --noEmit` and `git diff --check` passed, and `bunx convex dev --once` deployed successfully. The broader projection suite retains four pre-existing availability failures.

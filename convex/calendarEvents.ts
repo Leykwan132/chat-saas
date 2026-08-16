@@ -97,6 +97,7 @@ export const getAppointmentDetails = query({
       conversationId: event.conversationId,
       remarks: event.remarks,
       externalOrigin: event.externalOrigin,
+      externalProvider: event.externalProvider,
     };
   },
 });

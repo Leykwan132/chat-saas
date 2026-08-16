@@ -112,6 +112,10 @@ test("the connection owner receives full Google event details", async () => {
   const t = convexTest(schema, modules);
   const fixture = await setupPrivacyFixture(t);
   const events = await listRange(t, "external-owner", fixture.startAt);
+  const details = await t.withIdentity({ subject: "external-owner" }).query(
+    api.calendarEvents.getAppointmentDetails,
+    { eventId: fixture.eventId },
+  );
 
   expect(events).toMatchObject([{
     title: "Private interview",
@@ -121,6 +125,7 @@ test("the connection owner receives full Google event details", async () => {
     externalOrigin: "google",
   }]);
   expect((events[0] as { participants: unknown[] }).participants).toHaveLength(1);
+  expect(details).toMatchObject({ externalProvider: "google", externalOrigin: "google" });
 });
 
 test("a teammate receives Busy without private fields from the server", async () => {

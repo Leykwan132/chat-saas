@@ -112,41 +112,40 @@ describe("Google Calendar connection UI", () => {
     expect(page).toContain('googleCalendarConnectEnabled && googleCalendar.status');
   });
 
-  it("shows Google source icons and hides local source badges", () => {
+  it("shows Google source icons for events synchronized with Google", () => {
     const googleSourceMarkup = renderToStaticMarkup(
       <TooltipProvider>
-        <GoogleCalendarSourceBadge origin="google" />
+        <GoogleCalendarSourceBadge provider="google" />
       </TooltipProvider>,
     );
     expect(googleSourceMarkup).toContain(GOOGLE_CALENDAR_ICON_SRC);
     expect(googleSourceMarkup).toContain('aria-label="Event synced with Google Calendar"');
     const source = readFileSync(new URL("./GoogleCalendarSourceBadge.tsx", import.meta.url), "utf8");
     expect(source).toContain("Event synced with Google Calendar");
-    expect(renderToStaticMarkup(<GoogleCalendarSourceBadge origin="kilobot" />)).toBe("");
     expect(renderToStaticMarkup(<GoogleCalendarSourceBadge />)).toBe("");
   });
 
   it("uses a larger Google source icon in event-details headings", () => {
     const headingMarkup = renderToStaticMarkup(
       <TooltipProvider>
-        <GoogleCalendarSourceBadge origin="google" size="heading" />
+        <GoogleCalendarSourceBadge provider="google" size="heading" />
       </TooltipProvider>,
     );
     expect(headingMarkup).toContain('class="size-5"');
     const detailsSource = readFileSync(new URL("./CalendarEventDetailsBody.tsx", import.meta.url), "utf8");
-    expect(detailsSource).toContain('<GoogleCalendarSourceBadge origin={details.externalOrigin} size="heading" />');
+    expect(detailsSource).toContain('<GoogleCalendarSourceBadge provider={details.externalProvider} size="heading" />');
     expect(detailsSource).toContain("items-center gap-2");
   });
 
   it("places source indicators before event titles in calendar lists", () => {
     const page = readFileSync(new URL("../../pages/CalendarPage.tsx", import.meta.url), "utf8");
     const eventTitleSource = '<span className="min-w-0 truncate">{event.title}</span>';
-    const sourceBadge = "<GoogleCalendarSourceBadge origin={event.externalOrigin} />";
+    const sourceBadge = "<GoogleCalendarSourceBadge provider={event.externalProvider} />";
     expect(page.indexOf(sourceBadge)).toBeLessThan(page.indexOf(eventTitleSource));
     expect(page.lastIndexOf(sourceBadge)).toBeLessThan(page.lastIndexOf(eventTitleSource));
   });
 
-  it("shows owner edit and delete on a Google event", () => {
+  it("shows the Google indicator on a Kilobot booking synchronized with Google", () => {
     const details: AppointmentDetails = {
       eventId: "jd7event" as Id<"calendarEvents">,
       title: "Dentist",
@@ -158,7 +157,8 @@ describe("Google Calendar connection UI", () => {
       date: "Thu, 13 Aug 2026",
       timeRange: "9:00 AM – 10:00 AM",
       attendeeNames: [],
-      externalOrigin: "google",
+      externalOrigin: "kilobot",
+      externalProvider: "google",
     };
     const markup = renderToStaticMarkup(
       <TooltipProvider>
