@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { afterAll, expect, test } from "vitest";
+import { afterAll, expect, test, vi } from "vitest";
 import { createUserScopedGoogleCalendarAuthorizeUrl } from "./googleCalendar/connectionWorkos";
 import {
   getGoogleCalendarCredential,
@@ -297,6 +297,32 @@ test.each([
       withAccessToken(async () => new Response("provider diagnostic", { status })),
     ),
   ).rejects.toMatchObject({ kind: expectedKind });
+});
+
+test("logs a safe provider diagnostic for a rejected Google request", async () => {
+  const error = vi.spyOn(console, "error").mockImplementation(() => undefined);
+  try {
+    await expect(
+      googleCalendarRequest(
+        actor,
+        { method: "POST", path: "/calendars/primary/events", body: { summary: "Meeting" } },
+        withAccessToken(async () => responseJson({
+          error: {
+            errors: [{ reason: "invalidConferenceType", message: "Sensitive provider message" }],
+            code: 400,
+            message: "Sensitive provider message",
+          },
+        }, 400)),
+      ),
+    ).rejects.toMatchObject({ kind: "invalid_request" });
+
+    expect(error).toHaveBeenCalledWith("Google Calendar API request failed", {
+      status: 400,
+      reason: "invalidConferenceType",
+    });
+  } finally {
+    error.mockRestore();
+  }
 });
 
 test("classifies network failures as retryable without exposing the error", async () => {

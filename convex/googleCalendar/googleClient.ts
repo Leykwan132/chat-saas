@@ -104,6 +104,20 @@ function requestBody(request: GoogleCalendarRequest): string | undefined {
   }
 }
 
+function providerFailureReason(responseBody: string) {
+  try {
+    const payload = JSON.parse(responseBody) as {
+      error?: { errors?: Array<{ reason?: unknown }> };
+    };
+    const reason = payload.error?.errors?.[0]?.reason;
+    return typeof reason === "string" && /^[A-Za-z0-9_.-]{1,80}$/.test(reason)
+      ? reason
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function accessTokenError(kind: "not_connected" | "needs_reauthorization" | "retryable" | "failed") {
   if (kind === "retryable") return new GoogleCalendarProviderError("retryable");
   if (kind === "failed") return new GoogleCalendarProviderError("failed");
@@ -145,6 +159,11 @@ export async function googleCalendarRequest<T>(
     throw new GoogleCalendarProviderError("retryable");
   }
   if (!response.ok) {
+    const reason = providerFailureReason(await response.text());
+    console.error("Google Calendar API request failed", {
+      status: response.status,
+      ...(reason === undefined ? {} : { reason }),
+    });
     throw new GoogleCalendarProviderError(
       errorKindForStatus(response.status, request.invalidSyncTokenOnGone === true),
     );
