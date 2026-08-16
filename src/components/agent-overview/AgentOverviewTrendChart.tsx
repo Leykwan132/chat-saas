@@ -113,9 +113,9 @@ export function AgentOverviewTrendChart({
   return (
     <Card className="rounded-lg py-0 shadow-none ring-1 ring-border/70">
       <CardHeader className="flex flex-col gap-3 px-5 pt-5 pb-0 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <CardTitle className="text-lg font-semibold">{selectedLabel}</CardTitle>
-          <CardDescription>{trendDescription}</CardDescription>
+        <div className="space-y-0.5">
+          <CardTitle className="text-lg font-semibold leading-tight">{selectedLabel}</CardTitle>
+          <CardDescription className="leading-tight">{trendDescription}</CardDescription>
         </div>
       </CardHeader>
       <CardContent className="px-5 pt-0 pb-6">

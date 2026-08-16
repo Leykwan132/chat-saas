@@ -140,8 +140,8 @@ function OverviewPanelTitle({
 }) {
   return (
     <div>
-      <div className="font-medium">{title}</div>
-      <div className="mt-1 text-sm font-normal leading-tight text-muted-foreground">
+      <div className="font-medium leading-tight">{title}</div>
+      <div className="mt-0.5 text-sm font-normal leading-tight text-muted-foreground">
         {description}
       </div>
     </div>

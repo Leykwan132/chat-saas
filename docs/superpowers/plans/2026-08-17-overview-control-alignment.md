@@ -17,6 +17,7 @@
 - Use a 12px label-to-value gap with the 24px value typography.
 - Display a graph subtitle for the selected metric and its Daily/Cumulative aggregation.
 - Display muted descriptions below the Common Topics and Customer Sentiment titles, using medium title weights.
+- Use a 2px title-description gap and tight line-height across Overview chart and panel headers.
 - Keep code self-explanatory with no comments and under 300 lines per code file.
 - Run tests with Node 22 in the same shell command.
 
@@ -69,6 +70,8 @@ Use `gap-3` for the label/value stack and `text-2xl` for the value.
 In `AgentOverviewTrendChart.tsx`, accept the existing `OverviewTrendDataMode` and render a muted subtitle below the chart title, such as `Daily AI conversations in the selected period.`
 
 In `AgentOverviewTopicsAndSentiment.tsx`, use composed `AnalyticsChartShell` titles to render each panel's medium-weight title and its muted description without changing shared analytics panels.
+
+Use `space-y-0.5` for the trend graph title block and `mt-0.5` for the lower panel descriptions.
 
 - [ ] **Step 4: Run the test to verify it passes**
 

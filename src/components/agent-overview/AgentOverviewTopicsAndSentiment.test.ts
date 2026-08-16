@@ -59,4 +59,5 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup).toContain('Most discussed themes across conversations in the selected period.');
   expect(markup).toContain('Sentiment breakdown across conversations in the selected period.');
   expect(markup.match(/font-medium/g)).toHaveLength(2);
+  expect(markup).toContain('mt-0.5');
 });

@@ -35,6 +35,7 @@
 - 2026-08-17 [USER] D705 ACTIVE: Overview’s Daily/Cumulative selector shares the right-aligned header control row with the date and range controls.
 - 2026-08-17 [USER] D706 ACTIVE: Overview graph titles include a muted subtitle naming the selected metric and whether values are Daily or Cumulative.
 - 2026-08-17 [USER] D707 ACTIVE: Common Topics and Customer Sentiment use muted descriptive subtitles with medium-weight titles.
+- 2026-08-17 [USER] D708 ACTIVE: Overview graph and lower-panel titles use tight line-height with a 2px title-description gap.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -44,7 +45,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows content-sized text-only metrics with increased label/value spacing and smaller values, exposes right-aligned date, range, and Daily/Cumulative controls, and describes its graph plus lower panels; draft PR #62 tracks commit `f239eebd` on `codex/overview-date-range-controls`.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows content-sized text-only metrics with increased label/value spacing and smaller values, exposes right-aligned date, range, and Daily/Cumulative controls, and uses tightly paired title-description blocks across its graph and lower panels; PR #62 branch update pending commit.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -63,6 +64,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Tight title-description spacing passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit and push to PR #62 remain pending.
 - 2026-08-17 [TOOL] Lower-panel descriptions and lighter titles passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `f239eebd` was pushed to PR #62.
 - 2026-08-17 [TOOL] Graph-subtitle revision passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `570b1524` was pushed to PR #62.
 - 2026-08-17 [TOOL] Metric spacing and typography refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `98174118` was pushed to PR #62.
