@@ -24,10 +24,15 @@ type CalendarEventPrepareResult =
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
   FunctionReference<"mutation", "internal", TArgs, TResult>;
 
-type GoogleCalendarRemovePreparation = Extract<
-  CalendarEventPrepareResult,
-  { kind: "google"; action: "delete" }
->;
+type GoogleCalendarRemovePreparation = {
+  kind: "google";
+  connectionId: Id<"googleCalendarConnections">;
+  calendarEventId: Id<"calendarEvents">;
+  operationKey: string;
+  action: "delete";
+  event: GoogleCalendarWriteInput;
+  now: number;
+};
 
 type CalendarEventRemoveDependencies = {
   prepare: (args: { eventId: Id<"calendarEvents">; refreshed: boolean }) => Promise<CalendarEventPrepareResult>;
@@ -143,9 +148,13 @@ export async function runPreparedCalendarEventRemove(
   }
   if (prepared.kind === "google") {
     if (prepared.action !== "delete") throw new Error("Calendar deletion prepared an invalid Google operation");
-    const write = await dependencies.write(prepared);
+    const deletePreparation: GoogleCalendarRemovePreparation = {
+      ...prepared,
+      action: "delete",
+    };
+    const write = await dependencies.write(deletePreparation);
     if (write.kind !== "success") throw new Error(write.message);
-    await dependencies.applyGoogleCancellation({ eventId: prepared.calendarEventId });
+    await dependencies.applyGoogleCancellation({ eventId: deletePreparation.calendarEventId });
   }
   return await dependencies.applyRemove(args);
 }

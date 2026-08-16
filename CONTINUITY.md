@@ -106,3 +106,4 @@
 - 2026-08-15 [TOOL] Modal-backdrop focused verification passed 14/14 and `bun run build` passed under Node v22.22.0. The full suite reported 14 unrelated failures in Google Calendar availability/sync/projection and Calendar sidebar padding tests.
 - 2026-08-16 [TOOL] Google-synced deletion regression test was RED before implementation, then Calendar removal/write focused verification passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Google Calendar connection-card alignment test was RED before implementation, then passed 15/15 with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] `calendarEventSync.ts` deletion preparation now type-checks; focused deletion tests passed 11/11. Full `tsc -b` now stops only on the unrelated unused `UserRoundCheck` import in `src/components/app-sidebar-nav.ts`.
