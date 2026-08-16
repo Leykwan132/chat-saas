@@ -37,6 +37,7 @@
 - 2026-08-16 [USER] D676 ACTIVE: the Google Calendar connected-status badge is vertically centered with the account email in the Calendar header.
 - 2026-08-16 [USER] D677 ACTIVE: Create booking places an editable Title immediately below Service, prefilled as `Service – Customer`; the chosen title is used for both local and connected Google Calendar bookings.
 - 2026-08-16 [USER] D678 ACTIVE: Weekly availability accepts any valid typed time, retaining it as the selected custom value when it is outside the preset grid; weekday switch and label rows are vertically centered with their time controls.
+- 2026-08-16 [USER] D679 ACTIVE: Weekly availability renders Save inside the availability card footer, below the 24/7 setting; Timezone remains beside the card.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -65,6 +66,7 @@
 - 2026-08-16 [CODE] The connected Google Calendar badge uses a centered wrapper and block SVG to stay visually aligned with the account email.
 - 2026-08-16 [CODE] Manual booking creation now accepts a custom event title while preserving the prior generated title as its fallback.
 - 2026-08-16 [CODE] Weekly availability time comboboxes retain valid non-grid values as selectable custom options.
+- 2026-08-16 [CODE] Weekly availability Save is rendered inside the card footer instead of beneath the page layout.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -113,3 +115,4 @@
 - 2026-08-16 [TOOL] `calendarEventSync.ts` deletion preparation now type-checks; focused deletion tests passed 11/11. Full `tsc -b` now stops only on the unrelated unused `UserRoundCheck` import in `src/components/app-sidebar-nav.ts`.
 - 2026-08-16 [TOOL] Custom booking-title tests were RED before implementation, then Calendar and Inbox manual-booking coverage passed 8/8; Convex codegen deployed successfully and `tsc -b` plus `git diff --check` passed under Node v22.22.0.
 - 2026-08-16 [TOOL] Custom weekly-time and row-alignment tests were RED before implementation, then focused availability verification passed 7/7 with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Availability card-footer tests were RED before implementation, then focused WeeklyAvailabilityEditor and ScheduleAvailabilityEditor verification passed 8/8 with `git diff --check` under Node v22.22.0.

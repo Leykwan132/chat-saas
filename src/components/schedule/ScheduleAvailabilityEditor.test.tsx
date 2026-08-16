@@ -1,7 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, expect, test, vi } from 'vitest';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { ScheduleAvailabilityEditor } from './ScheduleAvailabilityEditor';
+
+const source = readFileSync(new URL('./ScheduleAvailabilityEditor.tsx', import.meta.url), 'utf8');
 
 const mocks = vi.hoisted(() => ({
   useMutation: vi.fn(),
@@ -64,4 +67,9 @@ test('renders fetched available hours without returning to the loading skeleton'
   expect(markup).toContain('Monday');
   expect(markup).toContain('Unavailable');
   expect(markup).not.toContain('data-slot="skeleton"');
+});
+
+test('passes Save into the weekly availability container', () => {
+  expect(source).toContain('footer={hasChanges ? (');
+  expect(source).not.toContain('<div className="flex justify-end">');
 });

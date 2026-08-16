@@ -70,4 +70,20 @@ describe('Available 24/7 editor', () => {
     expect(editorSource).not.toContain('text-lg font-medium');
     expect(editorSource).toContain('className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"');
   });
+
+  it('renders an optional save footer inside the availability container', () => {
+    const markup = renderToStaticMarkup(
+      createElement(WeeklyAvailabilityEditor, {
+        shiftDrafts: [],
+        onShiftDraftsChange: () => undefined,
+        timezone: 'Asia/Kuala_Lumpur',
+        onTimezoneChange: () => undefined,
+        timeOptions: SCHEDULE_TIME_OPTIONS,
+        footer: createElement('button', { type: 'button' }, 'Save'),
+      }),
+    );
+
+    expect(markup).toContain('data-slot="availability-footer"');
+    expect(markup).toContain('>Save</button>');
+  });
 });

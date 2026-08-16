@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScheduleTimeCombobox } from '@/components/ScheduleTimeCombobox';
@@ -118,12 +119,14 @@ export function WeeklyAvailabilityEditor({
   timezone,
   onTimezoneChange,
   timeOptions,
+  footer,
 }: {
   shiftDrafts: ShiftDraft[];
   onShiftDraftsChange: (drafts: ShiftDraft[]) => void;
   timezone: string;
   onTimezoneChange: (timezone: string) => void;
   timeOptions: TimeOption[];
+  footer?: ReactNode;
 }) {
   const available24x7 = isFullWeekAllDay(shiftDrafts);
 
@@ -237,6 +240,14 @@ export function WeeklyAvailabilityEditor({
             />
           </div>
         </div>
+        {footer ? (
+          <div
+            data-slot="availability-footer"
+            className="flex justify-end border-t border-border pt-4"
+          >
+            {footer}
+          </div>
+        ) : null}
       </div>
 
       <div className="flex shrink-0 flex-col gap-2 self-start">
