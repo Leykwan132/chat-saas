@@ -111,9 +111,13 @@ test('prefills each new booking with the next local 30-minute slot', () => {
   expect(controllerSource).toContain('}, [open]);');
   expect(controllerSource).toContain('manualBookingScheduleFromNextHalfHour');
   expect(controllerSource).toContain('Date.now(), service.timeZone, service.durationMinutes');
+  expect(controllerSource).toContain("setDate(initialDate ?? format(new Date(), 'yyyy-MM-dd'));");
+  expect(controllerSource).toContain('const selectedDate = initialDate ?? nextSchedule.date;');
+  expect(controllerSource).toContain('setDate(selectedDate);');
   expect(controllerSource).not.toContain('loadNearestSlot');
   expect(controllerSource).not.toContain('nearestSlotMessage');
   expect(controllerSource).toContain('if (open && !titleCustomizedRef.current) setTitle(defaultTitle);');
   expect(dialogSource).not.toContain('controller.loadingNearestSlot');
   expect(dialogSource).not.toContain('No upcoming available times for this service.');
+  expect(calendarDialogSource).toContain('initialDate={initialDate}');
 });

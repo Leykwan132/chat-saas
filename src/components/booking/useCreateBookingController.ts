@@ -126,7 +126,7 @@ export function useCreateBookingController({
     endTimeCustomizedRef.current = false;
     titleCustomizedRef.current = false;
     setServiceId('');
-    setDate(format(new Date(), 'yyyy-MM-dd'));
+    setDate(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
     setStartTime('');
     setEndTime('');
     setTitle('');
@@ -140,13 +140,14 @@ export function useCreateBookingController({
     const nextSchedule = manualBookingScheduleFromNextHalfHour(
       Date.now(), service.timeZone, service.durationMinutes,
     );
+    const selectedDate = initialDate ?? nextSchedule.date;
     endTimeCustomizedRef.current = false;
-    setDate(nextSchedule.date);
+    setDate(selectedDate);
     setStartTime(nextSchedule.startTime);
     setEndTime(nextSchedule.endTime);
     void runAvailabilityCheck(
       service.serviceId,
-      nextSchedule.date,
+      selectedDate,
       nextSchedule.startTime,
       nextSchedule.endTime,
     );

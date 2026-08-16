@@ -49,6 +49,7 @@
 - 2026-08-16 [USER] D688 ACTIVE: Create booking has an accessible, visually hidden dialog description to avoid Radix accessibility warnings.
 - 2026-08-16 [USER] D689 ACTIVE: Each New Booking action pre-fills the next 30-minute clock slot for the selected service without searching availability; availability still determines whether creation is allowed.
 - 2026-08-16 [USER] D690 ACTIVE: The availability card Save footer has no separator above it.
+- 2026-08-16 [USER] D691 ACTIVE: Calendar New Booking actions preserve the date selected in the sidebar or grid, while the time defaults to the next 30-minute slot.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -91,6 +92,7 @@
 - 2026-08-16 [CODE] Create booking exposes the assistive description “Create a booking for a customer.”
 - 2026-08-16 [CODE] New Booking no longer calls the next-available-slot mutations for prefill; it computes the service-duration interval from the next half-hour locally.
 - 2026-08-16 [CODE] The availability card Save footer retains top spacing without a border.
+- 2026-08-16 [CODE] Booking prefill uses the Calendar action's `initialDate` for both reset and availability checking instead of overwriting it with today.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -153,3 +155,4 @@
 - 2026-08-16 [TOOL] Create booking description regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Next-half-hour booking-prefill regressions were RED before implementation, then focused schedule and booking tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Availability-footer separator regression was RED before implementation, then focused availability tests passed 9/9 with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Selected-date booking-prefill regression was RED before implementation, then focused booking/schedule tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
