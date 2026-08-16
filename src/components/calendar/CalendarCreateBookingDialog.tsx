@@ -23,7 +23,6 @@ export function CalendarCreateBookingDialog({
   const customers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
   const checkAvailability = useMutation(api.appointmentBooking.calendarManualBooking.checkAvailability);
   const createBooking = useAction(api.appointmentBooking.calendarManualBooking.create);
-  const loadNearestSlot = useMutation(api.appointmentBooking.calendarManualBooking.getNextAvailableSlot);
 
   return (
     <CreateBookingDialog
@@ -35,7 +34,6 @@ export function CalendarCreateBookingDialog({
       customers={customers}
       customerQuery={customerQuery}
       onCustomerQueryChange={setCustomerQuery}
-      loadNearestSlot={(serviceId) => loadNearestSlot({ agentId, serviceId })}
       checkAvailability={(input) => {
         if (!input.customerId) throw new Error('Select a customer');
         return checkAvailability({

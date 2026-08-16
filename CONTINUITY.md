@@ -39,14 +39,15 @@
 - 2026-08-16 [USER] D678 ACTIVE: Weekly availability accepts any valid typed time, retaining it as the selected custom value when it is outside the preset grid; weekday switch and label rows are vertically centered with their time controls.
 - 2026-08-16 [USER] D679 ACTIVE: Weekly availability renders Save inside the availability card footer, below the 24/7 setting; Timezone remains beside the card, which sizes to its contents without flex growth or an explicit minimum width.
 - 2026-08-16 [USER] D680 ACTIVE: Google Calendar provider failures log only the HTTP status and validated machine-readable reason, excluding tokens, request bodies, and customer data.
-- 2026-08-16 [USER] D681 ACTIVE: Each Calendar New Booking action, including a grid right-click action, begins a fresh booking session at the selected service's next available slot and clears prior customer search, selection, title edits, remarks, and custom times.
+- 2026-08-16 [USER] D681 SUPERSEDED by D689: Each Calendar New Booking action, including a grid right-click action, reset prior customer search, selection, title edits, remarks, and custom times before availability-controlled prefill was replaced.
 - 2026-08-16 [USER] D682 ACTIVE: The Google Calendar connected-status check badge uses the compact 16px size.
-- 2026-08-16 [USER] D683 ACTIVE: New Booking holds the Date & time section in a loading state until the next available slot is resolved; it never presents cleared time fields as a ready form, and explains unavailable or failed lookups.
+- 2026-08-16 [USER] D683 SUPERSEDED by D689: New Booking previously held Date & time in a loading state while resolving an available slot.
 - 2026-08-16 [USER] D684 ACTIVE: Google Calendar event indicators reflect synchronized provider status, so both Google-imported events and Kilobot-created bookings successfully written to Google display the icon.
 - 2026-08-16 [USER] D685 ACTIVE: Calendar Internal notes and Summary headers use compact, consistently spaced icons.
 - 2026-08-16 [USER] D686 ACTIVE: Calendar Internal details title includes a small visual gap before its content.
 - 2026-08-16 [USER] D687 ACTIVE: Calendar Summary and Internal notes include a shared 12px gap between their labels and content surfaces.
 - 2026-08-16 [USER] D688 ACTIVE: Create booking has an accessible, visually hidden dialog description to avoid Radix accessibility warnings.
+- 2026-08-16 [USER] D689 ACTIVE: Each New Booking action pre-fills the next 30-minute clock slot for the selected service without searching availability; availability still determines whether creation is allowed.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -87,6 +88,7 @@
 - 2026-08-16 [CODE] Calendar Internal details title includes a 4px bottom margin.
 - 2026-08-16 [CODE] Calendar Summary and Internal notes both use a 12px label-to-content gap.
 - 2026-08-16 [CODE] Create booking exposes the assistive description “Create a booking for a customer.”
+- 2026-08-16 [CODE] New Booking no longer calls the next-available-slot mutations for prefill; it computes the service-duration interval from the next half-hour locally.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -147,3 +149,4 @@
 - 2026-08-16 [TOOL] Internal-details title-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Calendar Summary and Internal notes content-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Create booking description regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Next-half-hour booking-prefill regressions were RED before implementation, then focused schedule and booking tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.

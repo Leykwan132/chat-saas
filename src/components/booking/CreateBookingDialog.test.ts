@@ -17,8 +17,10 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(calendarDialogSource).toContain('api.appointmentBooking.calendarManualBooking');
   expect(calendarDialogSource).toContain('useAction(api.appointmentBooking.calendarManualBooking.create)');
   expect(inboxSource).toContain('useAction(api.appointmentBooking.manualBooking.create)');
-  expect(calendarDialogSource).toContain('getNextAvailableSlot');
-  expect(calendarDialogSource).toContain('loadNearestSlot={(serviceId) =>');
+  expect(calendarDialogSource).not.toContain('getNextAvailableSlot');
+  expect(calendarDialogSource).not.toContain('loadNearestSlot=');
+  expect(inboxSource).not.toContain('getNextAvailableSlot');
+  expect(inboxSource).not.toContain('loadNearestSlot=');
   expect(controllerSource).toContain('if (customer === previousCustomer) return;');
   expect(controllerSource).toContain('const customerRef = useRef(customer);');
   expect(controllerSource).toContain('const checkAvailabilityRef = useRef(checkAvailability);');
@@ -96,7 +98,7 @@ test('describes the Create booking dialog for assistive technology', () => {
   expect(dialogSource).toContain('Create a booking for a customer.');
 });
 
-test('resets each new Calendar booking to a clean next-available slot', () => {
+test('prefills each new booking with the next local 30-minute slot', () => {
   expect(dialogSource).toContain('if (!open || fixedCustomer !== undefined) return;');
   expect(dialogSource).toContain('setSelectedCustomer(null);');
   expect(dialogSource).toContain("onCustomerQueryChange?.('');");
@@ -107,10 +109,11 @@ test('resets each new Calendar booking to a clean next-available slot', () => {
   expect(controllerSource).toContain("setEndTime('');");
   expect(controllerSource).toContain("setRemarks('');");
   expect(controllerSource).toContain('}, [open]);');
-  expect(controllerSource).toContain('}, [effectiveServiceId, open, service?.timeZone]);');
+  expect(controllerSource).toContain('manualBookingScheduleFromNextHalfHour');
+  expect(controllerSource).toContain('Date.now(), service.timeZone, service.durationMinutes');
+  expect(controllerSource).not.toContain('loadNearestSlot');
+  expect(controllerSource).not.toContain('nearestSlotMessage');
   expect(controllerSource).toContain('if (open && !titleCustomizedRef.current) setTitle(defaultTitle);');
-  expect(controllerSource).toContain('const [loadingNearestSlot, setLoadingNearestSlot] = useState(false);');
-  expect(controllerSource).toContain('loadingNearestSlot,');
-  expect(dialogSource).toContain('controller.loadingNearestSlot ? (');
-  expect(dialogSource).toContain('Loading next available time…');
+  expect(dialogSource).not.toContain('controller.loadingNearestSlot');
+  expect(dialogSource).not.toContain('No upcoming available times for this service.');
 });
