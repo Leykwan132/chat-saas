@@ -91,6 +91,11 @@ test('inherits the shared modal backdrop', () => {
   expect(dialogSource).not.toContain('overlayClassName=');
 });
 
+test('describes the Create booking dialog for assistive technology', () => {
+  expect(dialogSource).toContain('DialogDescription');
+  expect(dialogSource).toContain('Create a booking for a customer.');
+});
+
 test('resets each new Calendar booking to a clean next-available slot', () => {
   expect(dialogSource).toContain('if (!open || fixedCustomer !== undefined) return;');
   expect(dialogSource).toContain('setSelectedCustomer(null);');

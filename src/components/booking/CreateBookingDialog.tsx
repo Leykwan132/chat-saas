@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Empty,
   EmptyContent,
@@ -95,7 +95,10 @@ export function CreateBookingDialog({
         className="max-h-[85vh] overflow-y-auto sm:max-w-xl"
       >
         <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
-        <DialogHeader><DialogTitle>Create booking</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Create booking</DialogTitle>
+          <DialogDescription className="sr-only">Create a booking for a customer.</DialogDescription>
+        </DialogHeader>
         {services === undefined ? (
           <div className="h-32 rounded-md bg-muted motion-safe:animate-pulse" />
         ) : services.length === 0 ? (

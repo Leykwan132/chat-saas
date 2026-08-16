@@ -46,6 +46,7 @@
 - 2026-08-16 [USER] D685 ACTIVE: Calendar Internal notes and Summary headers use compact, consistently spaced icons.
 - 2026-08-16 [USER] D686 ACTIVE: Calendar Internal details title includes a small visual gap before its content.
 - 2026-08-16 [USER] D687 ACTIVE: Calendar Summary and Internal notes include a shared 12px gap between their labels and content surfaces.
+- 2026-08-16 [USER] D688 ACTIVE: Create booking has an accessible, visually hidden dialog description to avoid Radix accessibility warnings.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -85,6 +86,7 @@
 - 2026-08-16 [CODE] Calendar Internal notes and Summary header icons use a 16px size and an 8px label gap.
 - 2026-08-16 [CODE] Calendar Internal details title includes a 4px bottom margin.
 - 2026-08-16 [CODE] Calendar Summary and Internal notes both use a 12px label-to-content gap.
+- 2026-08-16 [CODE] Create booking exposes the assistive description “Create a booking for a customer.”
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -144,3 +146,4 @@
 - 2026-08-16 [TOOL] Internal-details header spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Internal-details title-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Calendar Summary and Internal notes content-spacing regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Create booking description regression was RED before implementation, then passed with `git diff --check` under Node v22.22.0.
