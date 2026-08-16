@@ -197,6 +197,7 @@ export function CreateBookingDialog({
               startTime={controller.startTime}
               endTime={controller.endTime}
               feedback={controller.feedback}
+              availabilityHref={`/dashboard/${agentId}/availability`}
               portalContainer={comboboxPortalContainerRef}
               onDateChange={controller.setDate}
               onStartTimeChange={controller.setStartTime}
