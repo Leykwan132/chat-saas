@@ -1,8 +1,6 @@
-import { paginationOptsValidator, type FunctionReference } from "convex/server";
+import { paginationOptsValidator } from "convex/server";
 import { v } from "convex/values";
-import { internal } from "../_generated/api";
-import { internalMutation, internalQuery } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
+import { internalQuery } from "../_generated/server";
 
 const connectionStateValidator = v.union(
   v.literal("connected"),
@@ -10,19 +8,6 @@ const connectionStateValidator = v.union(
   v.literal("needs_reauthorization"),
   v.literal("disconnected"),
 );
-
-const watchableConnectionStateValidator = v.union(
-  v.literal("connected"),
-  v.literal("syncing"),
-);
-
-const syncWorker = (internal as unknown as {
-  googleCalendar: {
-    syncWorker: {
-      run: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, unknown>;
-    };
-  };
-}).googleCalendar.syncWorker.run;
 
 export const listMaintenanceConnectionIds = internalQuery({
   args: { state: connectionStateValidator, paginationOpts: paginationOptsValidator },
@@ -69,22 +54,5 @@ export const getWatchMaintenance = internalQuery({
       retiringChannelIds: retiring.map((channel) => channel._id),
       connectionState: connection.state,
     };
-  },
-});
-
-export const scheduleStaleSyncBatch = internalMutation({
-  args: { state: watchableConnectionStateValidator, paginationOpts: paginationOptsValidator, staleBefore: v.number(), now: v.number() },
-  returns: v.object({ isDone: v.boolean(), continueCursor: v.string() }),
-  handler: async (ctx, args) => {
-    const page = await ctx.db.query("googleCalendarConnections")
-      .withIndex("by_state", (q) => q.eq("state", args.state))
-      .paginate(args.paginationOpts);
-    for (const connection of page.page) {
-      if (connection.lastSuccessfulSyncAt === undefined || connection.lastSuccessfulSyncAt <= args.staleBefore) {
-        await ctx.db.patch(connection._id, { dirtyGeneration: connection.dirtyGeneration + 1, updatedAt: args.now });
-        await ctx.scheduler.runAfter(0, syncWorker, { connectionId: connection._id });
-      }
-    }
-    return { isDone: page.isDone, continueCursor: page.continueCursor };
   },
 });

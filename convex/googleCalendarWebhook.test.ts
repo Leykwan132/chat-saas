@@ -25,7 +25,6 @@ const watchActions = (internal as unknown as {
     renewExpiringGoogleCalendarWatches: FunctionReference<"action", "internal", Record<string, never>, null>;
     stopGoogleCalendarWatch: FunctionReference<"action", "internal", { channelId: Id<"googleCalendarWatchChannels"> }, unknown>;
     runDailyGoogleCalendarMaintenance: FunctionReference<"action", "internal", Record<string, never>, null>;
-    runStaleSyncSweepPage: FunctionReference<"action", "internal", { state: "connected" | "syncing"; cursor: string | null }, null>;
   } };
 }).googleCalendar.watchActions;
 
@@ -258,20 +257,9 @@ test("stopping tolerates Google not finding an unexpired channel", async () => {
   expect((await t.run(async (ctx) => await ctx.db.get(channelId)))?.state).toBe("retired");
 });
 
-test("daily maintenance delegates immediately to renewal and stale-sync sweeps", async () => {
+test("daily maintenance delegates immediately to watch renewal", async () => {
   const t = convexTest(schema, modules);
   await t.action(watchActions.runDailyGoogleCalendarMaintenance, {});
   const names = await t.run(async (ctx) => (await ctx.db.system.query("_scheduled_functions").take(10)).map((row) => row.name).sort());
-  expect(names).toEqual([
-    "googleCalendar/watchActions:renewExpiringGoogleCalendarWatches",
-    "googleCalendar/watchActions:sweepStaleGoogleCalendarSyncs",
-  ]);
-});
-
-test("the stale-sync sweep durably dirties and schedules old connections", async () => {
-  const { t, connectionId } = await fixture();
-  await t.action(watchActions.runStaleSyncSweepPage, { state: "connected", cursor: null });
-  expect((await t.run(async (ctx) => await ctx.db.get(connectionId)))?.dirtyGeneration).toBe(1);
-  const names = await t.run(async (ctx) => (await ctx.db.system.query("_scheduled_functions").take(10)).map((row) => row.name));
-  expect(names).toEqual(["googleCalendar/syncWorker:run"]);
+  expect(names).toEqual(["googleCalendar/watchActions:renewExpiringGoogleCalendarWatches"]);
 });

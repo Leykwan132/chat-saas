@@ -5,7 +5,6 @@ import type { Doc, Id } from "./_generated/dataModel";
 import { api, internal } from "./_generated/api";
 import type { FunctionReference } from "convex/server";
 import { resolveAvailableInterval } from "./appointmentBooking/availability";
-import { AVAILABILITY_FRESHNESS_MS } from "./googleCalendar/constants";
 import schema from "./schema";
 const modules = import.meta.glob("./**/*.ts");
 type CalendarTest = TestConvex<typeof schema>;
@@ -227,11 +226,16 @@ async function setupAvailabilityFixture(t: CalendarTest, connected = true): Prom
         templateKey: "blank", fileSize: 0, userId: `${connected ? "connected" : "local"}-manager`,
         orgId: workosOrgId, createdAt: now, updatedAt: now,
       });
-      await ctx.db.insert("userSchedules", {
+      const userScheduleId = await ctx.db.insert("userSchedules", {
         agentId, workosUserId: connected ? "connected-staff" : "local-staff",
         mode: "manual", manualStatus: "available", timezone: "UTC", enabled: true,
         createdAt: now, updatedAt: now,
       });
+      for (const dayOfWeek of [0, 1, 2, 3, 4, 5, 6]) {
+        await ctx.db.insert("userShifts", {
+          userScheduleId, dayOfWeek, startMinutes: 0, endMinutes: 24 * 60,
+        });
+      }
       const serviceId = await ctx.db.insert("appointmentServices", {
         agentId, name: "Consultation", isActive: true, sortOrder: 0, durationMinutes: 30,
         fields: [], timeSlotPolicy: "offer_slots", salesStyle: "neutral",
@@ -318,22 +322,21 @@ test("users with no Google connection retain local-only availability", async () 
   expect(await availability(t, fixture, 0, now + hour)).not.toBeNull();
 });
 
-test("ever-enabled stale or failed connections fail closed at the freshness boundary", async () => {
+test("connections with an old successful sync remain available while failed connections block", async () => {
   const now = Date.UTC(2026, 7, 13, 12, 0, 0);
   vi.useFakeTimers();
   vi.setSystemTime(now);
   const t = convexTest(schema, modules);
   const fixture = await setupAvailabilityFixture(t);
   const connectionId = fixture.connectionId!;
+  await t.run((ctx) => ctx.db.patch(fixture.teams[0]!.serviceId, {
+    locationMode: "remote",
+  }));
   await t.run((ctx) => ctx.db.patch(connectionId, {
-    lastSuccessfulSyncAt: now - AVAILABILITY_FRESHNESS_MS,
+    lastSuccessfulSyncAt: now - 24 * hour,
   }));
 
   expect(await availability(t, fixture, 0, now + hour)).not.toBeNull();
-  await t.run((ctx) => ctx.db.patch(connectionId, {
-    lastSuccessfulSyncAt: now - AVAILABILITY_FRESHNESS_MS - 1,
-  }));
-  expect(await availability(t, fixture, 0, now + hour)).toBeNull();
   await t.run((ctx) => ctx.db.patch(connectionId, {
     lastSuccessfulSyncAt: now,
     lastErrorKind: "retryable",

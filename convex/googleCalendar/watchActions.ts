@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { Id } from "../_generated/dataModel";
 import { internalAction, type ActionCtx } from "../_generated/server";
-import { CALENDAR_PAGE_FRESHNESS_MS, WATCH_RENEWAL_WINDOW_MS } from "./constants";
+import { WATCH_RENEWAL_WINDOW_MS } from "./constants";
 import { createGoogleCalendarChannelToken } from "./channelToken";
 import { googleCalendarRequest } from "./googleClient";
 import {
@@ -61,14 +61,11 @@ type GoogleWatchRefs = {
   watchMaintenance: {
     listMaintenanceConnectionIds: FunctionReference<"query", "internal", { state: ConnectionState; paginationOpts: { numItems: number; cursor: string | null } }, PaginationResult>;
     getWatchMaintenance: FunctionReference<"query", "internal", { connectionId: Id<"googleCalendarConnections">; now: number }, Maintenance>;
-    scheduleStaleSyncBatch: FunctionReference<"mutation", "internal", { state: WatchableConnectionState; paginationOpts: { numItems: number; cursor: string | null }; staleBefore: number; now: number }, { isDone: boolean; continueCursor: string }>;
   };
   watchActions: {
     continueWatchRenewal: FunctionReference<"action", "internal", { state: ConnectionState; cursor: string | null }, null>;
     renewConnectionWatch: FunctionReference<"action", "internal", { connectionId: Id<"googleCalendarConnections"> }, null>;
-    runStaleSyncSweepPage: FunctionReference<"action", "internal", { state: ConnectionState; cursor: string | null }, null>;
     renewExpiringGoogleCalendarWatches: FunctionReference<"action", "internal", Record<string, never>, null>;
-    sweepStaleGoogleCalendarSyncs: FunctionReference<"action", "internal", Record<string, never>, null>;
     cleanupRetiringWatch: FunctionReference<"action", "internal", { channelId: Id<"googleCalendarWatchChannels"> }, null>;
   };
 };
@@ -229,29 +226,10 @@ export const renewExpiringGoogleCalendarWatches = internalAction({
   },
 });
 
-export const runStaleSyncSweepPage = internalAction({
-  args: { state: v.union(v.literal("connected"), v.literal("syncing")), cursor: v.union(v.string(), v.null()) },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const result = await ctx.runMutation(refs.watchMaintenance.scheduleStaleSyncBatch, { state: args.state, paginationOpts: { numItems: 20, cursor: args.cursor }, staleBefore: Date.now() - CALENDAR_PAGE_FRESHNESS_MS, now: Date.now() });
-    if (!result.isDone) await ctx.scheduler.runAfter(0, refs.watchActions.runStaleSyncSweepPage, { state: args.state, cursor: result.continueCursor });
-    return null;
-  },
-});
-
-export const sweepStaleGoogleCalendarSyncs = internalAction({
-  args: {}, returns: v.null(),
-  handler: async (ctx) => {
-    for (const state of ["connected", "syncing"] as const) await ctx.scheduler.runAfter(0, refs.watchActions.runStaleSyncSweepPage, { state, cursor: null });
-    return null;
-  },
-});
-
 export const runDailyGoogleCalendarMaintenance = internalAction({
   args: {}, returns: v.null(),
   handler: async (ctx) => {
     await ctx.scheduler.runAfter(0, refs.watchActions.renewExpiringGoogleCalendarWatches, {});
-    await ctx.scheduler.runAfter(0, refs.watchActions.sweepStaleGoogleCalendarSyncs, {});
     return null;
   },
 });

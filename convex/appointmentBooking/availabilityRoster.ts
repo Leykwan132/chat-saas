@@ -71,7 +71,7 @@ export async function loadAvailabilityRoster(
       worker,
     };
   }
-  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds, now);
+  const healthByUser = await loadGoogleCalendarHealthByUser(ctx, userIds);
   const futureCounts = new Map(await Promise.all(userIds.map(async (userId) => {
     const rows = await ctx.db
       .query("calendarEventParticipants")

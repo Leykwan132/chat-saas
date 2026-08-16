@@ -37,10 +37,15 @@ async function setup(t: CalendarTest) {
         systemPrompt: "Test", templateKey: "blank", fileSize: 0,
         userId: "review-manager", orgId: `org_review_${suffix}`, createdAt: now, updatedAt: now,
       });
-      await ctx.db.insert("userSchedules", {
+      const userScheduleId = await ctx.db.insert("userSchedules", {
         agentId, workosUserId: "review-staff", mode: "manual", manualStatus: "available",
         timezone: "UTC", enabled: true, createdAt: now, updatedAt: now,
       });
+      for (const dayOfWeek of [0, 1, 2, 3, 4, 5, 6]) {
+        await ctx.db.insert("userShifts", {
+          userScheduleId, dayOfWeek, startMinutes: 0, endMinutes: 24 * 60,
+        });
+      }
       const serviceId = await ctx.db.insert("appointmentServices", {
         agentId, name: "Review", isActive: true, sortOrder: 0, durationMinutes: 30,
         fields: [], timeSlotPolicy: "offer_slots", salesStyle: "neutral",
@@ -184,7 +189,7 @@ test("connection health is queried once per distinct roster user", async () => {
   });
 
   const health = await t.run(async (ctx) => {
-    const byUser = await loadGoogleCalendarHealthByUser(ctx, [userId, userId, userId], now);
+    const byUser = await loadGoogleCalendarHealthByUser(ctx, [userId, userId, userId]);
     return byUser.get(userId);
   });
   expect(health).toBe(true);
