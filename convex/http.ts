@@ -9,6 +9,7 @@ import {
 import { receive as instagramReceive } from "./instagramWebhook";
 import { receive as messengerReceive } from "./messengerWebhook";
 import { telegramWebhook } from "./telegramWebhook";
+import { googleCalendarWebhook } from "./googleCalendar/webhook";
 import { authKit } from "./auth";
 import { decodeOAuthState, redirectResponse } from "./oauthShared";
 import {
@@ -229,6 +230,12 @@ http.route({
   path: "/webhook/telegram",
   method: "POST",
   handler: telegramWebhook,
+});
+
+http.route({
+  path: "/webhook/google-calendar",
+  method: "POST",
+  handler: googleCalendarWebhook,
 });
 
 const whatsappDispatch = httpAction(async (ctx, req) => {

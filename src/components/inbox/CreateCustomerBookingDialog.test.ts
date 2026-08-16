@@ -28,8 +28,8 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(source).toContain('<SelectContent className="text-sm">');
   expect(source).toContain('className="py-2.5 text-sm"');
   expect(source).toContain("import { Link } from 'react-router'");
-  expect(source).toContain("import { Plus } from 'lucide-react'");
-  expect(source).toContain('to={`/dashboard/${agentId}/services/new`}');
+  expect(source).toContain("import { CalendarCheck, Plus } from 'lucide-react'");
+  expect(source).toContain('to={`/dashboard/${agentId}/services?create=1`}');
   expect(source).toContain('Create new service');
   expect(source).toContain('const comboboxPortalContainerRef = useRef<HTMLDivElement>(null)');
   expect(source).toContain('portalContainer={comboboxPortalContainerRef}');
@@ -38,7 +38,7 @@ test('uses shared schedule controls and automatic exact-slot availability', () =
   expect(buttonVariantsSource).toContain('linkAccent: "text-link underline-offset-4 hover:text-link/80 hover:underline"');
   expect(themeSource).toContain('--color-link: var(--link);');
   expect(themeSource.match(/--link:/g)).toHaveLength(2);
-  expect(source).toContain('overlayClassName="bg-black/10 supports-backdrop-filter:backdrop-blur-none"');
+  expect(source).not.toContain('overlayClassName=');
   expect(source).toContain('<div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />');
   expect(source).not.toContain('<DialogContent ref={comboboxPortalContainerRef}');
   expect(source).toContain('<Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>');

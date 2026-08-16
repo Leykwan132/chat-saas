@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import {
   addMonths,
   endOfMonth,
@@ -14,14 +14,7 @@ import {
   startOfWeek,
   subMonths,
 } from 'date-fns';
-import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Search,
-  Trash2,
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Search, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
@@ -83,8 +76,18 @@ import { EditBookingDialog } from '@/components/calendar/EditBookingDialog';
 import { canEditCalendarEvent } from '@/lib/calendarEditPolicy';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { CalendarCreateBookingDialog } from '@/components/calendar/CalendarCreateBookingDialog';
+import { CalendarDayEmptyState } from '@/components/calendar/CalendarDayEmptyState';
+import { CalendarDayHeader } from '@/components/calendar/CalendarDayHeader';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
+import { GoogleCalendarConnectionCard } from '@/components/calendar/GoogleCalendarConnectionCard';
+import { GoogleCalendarDisconnectDialog } from '@/components/calendar/GoogleCalendarDisconnectDialog';
+import { GoogleCalendarSourceBadge } from '@/components/calendar/GoogleCalendarSourceBadge';
+import { useGoogleCalendarConnection } from '@/components/calendar/useGoogleCalendarConnection';
 import { cn } from '@/lib/utils';
+import {
+  isProductFeatureEnabled,
+  useEnableGoogleCalendarConnect,
+} from '@/lib/posthogFeatureFlags';
 
 const calendarApi = api.calendarEvents;
 
@@ -121,6 +124,11 @@ type CalendarEvent = {
   customFieldResponses?: Record<string, string | number | boolean | null>;
   remarks?: string;
   participants: CalendarParticipant[];
+  externalOrigin?: 'google' | 'kilobot';
+  externalProvider?: 'google';
+  externalOwnerUserId?: Id<'users'>;
+  externalCanEdit?: boolean;
+  viewerCanMutate?: boolean;
 };
 
 type CustomerOption = {
@@ -402,8 +410,9 @@ function CalendarGridEventItem({
         isSelected && 'ring-1 ring-inset ring-foreground/15',
       )}
     >
-      <span className="min-w-0 flex-1 truncate text-[11px] leading-tight text-foreground">
-        {event.title}
+      <span className="flex min-w-0 flex-1 items-center gap-1 truncate text-[11px] leading-tight text-foreground">
+        <GoogleCalendarSourceBadge provider={event.externalProvider} />
+        <span className="min-w-0 truncate">{event.title}</span>
       </span>
       <span
         className={cn(
@@ -428,7 +437,7 @@ function CalendarDayGridCell({
   todayKey,
   onSelectDate,
   onSelectEvent,
-  onCreateEvent,
+  onCreateBooking,
 }: {
   day: Date;
   dayEvents: CalendarEvent[];
@@ -440,7 +449,7 @@ function CalendarDayGridCell({
   todayKey: string;
   onSelectDate: (day: Date) => void;
   onSelectEvent: (day: Date, eventId: string) => void;
-  onCreateEvent: (day: Date) => void;
+  onCreateBooking: (day: Date) => void;
 }) {
   const visibleEvents = dayEvents.slice(0, CALENDAR_GRID_VISIBLE_EVENT_LIMIT);
   const hiddenEventCount = dayEvents.length - visibleEvents.length;
@@ -536,10 +545,10 @@ function CalendarDayGridCell({
       <ContextMenuContent className="min-w-[9.5rem] rounded-lg border border-border p-1 shadow-md ring-0">
         <ContextMenuItem
           className="gap-2 rounded-md px-2.5 py-1.5 text-sm font-normal focus:bg-muted"
-          onClick={() => onCreateEvent(day)}
+          onClick={() => onCreateBooking(day)}
         >
           <Plus className="size-3.5" />
-          Create event
+          Create Booking
         </ContextMenuItem>
       </ContextMenuContent>
     </ContextMenu>
@@ -580,13 +589,14 @@ function CalendarDayEventRow({
       <span className="min-w-0 flex-1">
         <span
           className={cn(
-            'block truncate text-[0.9375rem]',
+            'flex min-w-0 items-center gap-1.5 truncate text-[0.9375rem]',
             isNotPast
               ? 'font-medium text-foreground'
               : 'font-normal text-foreground/80',
           )}
         >
-          {event.title}
+          <GoogleCalendarSourceBadge provider={event.externalProvider} />
+          <span className="min-w-0 truncate">{event.title}</span>
         </span>
         <span className="mt-0.5 block truncate text-sm leading-snug text-muted-foreground">
           {range}
@@ -681,10 +691,13 @@ export default function CalendarPage() {
   const { agentId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const { can, isLoading: permissionsLoading } = usePermissions();
+  const googleCalendarConnectState = useEnableGoogleCalendarConnect();
+  const googleCalendarConnectEnabled = isProductFeatureEnabled(googleCalendarConnectState);
   const canReadCalendar = can(Permission.CALENDAR_READ);
   const canManageCalendar = can(Permission.CALENDAR_MANAGE);
 
   const currentUser = useQuery(api.users.currentUser);
+  const googleCalendar = useGoogleCalendarConnection();
   const activeTeam = useQuery(api.teams.getActiveTeam);
   const teamUsers = useQuery(api.users.getUsers, {});
   const customerOptions = useQuery(calendarApi.listCustomerOptions, {});
@@ -735,9 +748,9 @@ export default function CalendarPage() {
       : 'skip',
   ) as CalendarEvent[] | undefined;
 
-  const createEvent = useMutation(calendarApi.create);
-  const updateEvent = useMutation(calendarApi.update);
-  const removeEvent = useMutation(calendarApi.remove);
+  const createEvent = useAction(calendarApi.create);
+  const updateEvent = useAction(calendarApi.update);
+  const removeEvent = useAction(calendarApi.remove);
   const updateTeamTimeZone = useMutation(api.teams.updateActiveTeamTimeZone);
 
   const editingAppointmentDetails = useQuery(
@@ -813,8 +826,28 @@ export default function CalendarPage() {
   }, [editingEvent, formState, savedFormState]);
 
   const canEditEventSheet = editingEvent
-    ? canEditCalendarEvent({ canManageCalendar, endAt: editingEvent.endAt })
+    ? canEditCalendarEvent({
+        canManageCalendar,
+        endAt: editingEvent.endAt,
+        viewerCanMutate: editingEvent.viewerCanMutate,
+        externalOrigin: editingEvent.externalOrigin,
+        externalOwnerUserId: editingEvent.externalOwnerUserId,
+        viewerUserId: currentUser?._id,
+        externalCanEdit: editingEvent.externalCanEdit,
+      })
     : canManageCalendar;
+  const detailsEvent = events?.find((event) => event._id === detailsDialogEventId);
+  const canEditDetailsEvent = detailsEvent
+    ? canEditCalendarEvent({
+        canManageCalendar,
+        endAt: detailsEvent.endAt,
+        viewerCanMutate: detailsEvent.viewerCanMutate,
+        externalOrigin: detailsEvent.externalOrigin,
+        externalOwnerUserId: detailsEvent.externalOwnerUserId,
+        viewerUserId: currentUser?._id,
+        externalCanEdit: detailsEvent.externalCanEdit,
+      })
+    : false;
 
   const filteredDayEvents = useMemo(() => {
     const query = dayEventSearchQuery.trim().toLowerCase();
@@ -888,19 +921,6 @@ export default function CalendarPage() {
       toast.error(err instanceof Error ? err.message : 'Could not update time zone');
     }
   };
-
-  const openCreateEventSheet = (date = selectedDate) => {
-    setEditingEvent(null);
-    setFormState(
-      createInitialFormState(
-        date,
-        displayTimeZone,
-        currentUser?._id as Id<'users'> | undefined,
-      ),
-    );
-    setEventSheetOpen(true);
-  };
-
 
   const handleSelectEvent = (event: CalendarEvent) => {
     setSelectedEventId(event._id);
@@ -1068,41 +1088,48 @@ export default function CalendarPage() {
     <div className="grid h-full min-h-0 grid-cols-[18rem_minmax(0,1fr)_20rem] overflow-hidden bg-background">
       <CalendarSidebar
         assignedToMeOnly={assignedToMeOnly}
-        canManageCalendar={canManageCalendar}
         eventFilterCounts={eventFilterCounts}
         hasCurrentUser={currentUser !== null && currentUser !== undefined}
         selectedDate={selectedDate}
         visibleMonth={visibleMonth}
         onAssignedToMe={() => setAssignedToMeOnly(true)}
         onChangeMonth={handleChangeMonth}
-        onCreateBooking={() => setCreateBookingOpen(true)}
         onShowAllEvents={() => setAssignedToMeOnly(false)}
       />
 
       <section className={cn(inboxColumnClassName, 'border-r border-border')}>
         <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>
-          <div>
+          <div className="flex items-center gap-2">
             <h2 className="text-sm font-semibold text-foreground">
               {format(visibleMonth, 'MMMM yyyy')}
             </h2>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => handleSelectDate(new Date())}
+            >
+              Today
+            </Button>
           </div>
           <div className="flex items-center gap-1.5">
+            {googleCalendarConnectEnabled && googleCalendar.status ? (
+              <GoogleCalendarConnectionCard
+                {...googleCalendar.status}
+                pending={googleCalendar.pending}
+                onConnect={() => void googleCalendar.connectGoogleCalendar()}
+                onReconnect={() => void googleCalendar.connectGoogleCalendar()}
+                onDisconnect={() => googleCalendar.setDisconnectOpen(true)}
+              />
+            ) : null}
             <TimeZoneSelect
               value={displayTimeZone}
               options={CALENDAR_TIMEZONE_OPTIONS}
               onChange={handleChangeTimeZone}
               showGlobe
               triggerAriaLabel="Calendar time zone"
-              triggerClassName="w-fit border-transparent bg-input/50 px-2.5 py-1.5 hover:bg-input/50"
+              triggerClassName="w-fit border-transparent bg-input/50 px-2.5 py-1.5 transition-colors hover:bg-muted"
             />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => handleSelectDate(new Date(`${todayKey}T00:00:00`))}
-            >
-              Today
-            </Button>
             <div className="flex items-center">
               <Button
                 type="button"
@@ -1158,9 +1185,9 @@ export default function CalendarPage() {
                 const calendarEvent = (events ?? []).find((item) => item._id === eventId);
                 if (calendarEvent) handleSelectEvent(calendarEvent);
               }}
-              onCreateEvent={(nextDay) => {
+              onCreateBooking={(nextDay) => {
                 handleSelectDate(nextDay);
-                openCreateEventSheet(nextDay);
+                setCreateBookingOpen(true);
               }}
             />
           ))}
@@ -1168,21 +1195,13 @@ export default function CalendarPage() {
       </section>
 
       <aside className={inboxColumnClassName}>
-        <div className={cn(inboxColumnHeaderClassName, 'justify-between px-4')}>
-          <div className="flex min-w-0 items-center gap-2">
-            {selectedDayKey === todayKey ? (
-              <div className="flex min-w-0 items-center gap-2">
-                <h2 className="truncate text-sm font-semibold text-red-500">Today</h2>
-                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-red-500 text-xs font-medium text-white">
-                  {format(selectedDate, 'd')}
-                </span>
-              </div>
-            ) : (
-              <h2 className="truncate text-sm font-semibold text-foreground">
-                {format(selectedDate, 'EEEE, MMM d')}
-              </h2>
-            )}
-          </div>
+        <div className={cn(inboxColumnHeaderClassName, 'px-4')}>
+          <CalendarDayHeader
+            selectedDate={selectedDate}
+            isToday={selectedDayKey === todayKey}
+            canManageCalendar={canManageCalendar}
+            onCreateBooking={() => setCreateBookingOpen(true)}
+          />
         </div>
 
         <div className={cn(inboxColumnScrollClassName, 'min-h-0 flex-1 p-3')}>
@@ -1233,13 +1252,10 @@ export default function CalendarPage() {
               )}
             </div>
           ) : (
-            <div className="flex h-full flex-col items-center justify-center px-4 text-center">
-              <CalendarIcon className="mb-3 size-8 text-muted-foreground" />
-              <h3 className="text-sm font-semibold text-foreground">No events</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Nothing scheduled for this day yet.
-              </p>
-            </div>
+            <CalendarDayEmptyState
+              canManageCalendar={canManageCalendar}
+              onCreateBooking={() => setCreateBookingOpen(true)}
+            />
           )}
         </div>
       </aside>
@@ -1530,8 +1546,15 @@ export default function CalendarPage() {
         eventId={detailsDialogEventId}
         open={detailsDialogOpen}
         onOpenChange={setDetailsDialogOpen}
-        canEdit={canManageCalendar}
+        canEdit={canEditDetailsEvent}
         onDeleteSuccess={() => setSelectedEventId(null)}
+      />
+
+      <GoogleCalendarDisconnectDialog
+        open={googleCalendar.disconnectOpen}
+        pending={googleCalendar.pending}
+        onOpenChange={googleCalendar.setDisconnectOpen}
+        onConfirm={() => void googleCalendar.disconnectConnection()}
       />
 
       {editDialogOpen && editDialogEventId && (

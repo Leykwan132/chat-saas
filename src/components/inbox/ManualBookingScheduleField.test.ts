@@ -1,5 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MemoryRouter } from 'react-router';
 import { expect, test } from 'vitest';
+import { ManualBookingAvailabilityFeedback } from './ManualBookingScheduleField';
 
 const sourceUrl = new URL('./ManualBookingScheduleField.tsx', import.meta.url);
 const source = existsSync(sourceUrl) ? readFileSync(sourceUrl, 'utf8') : '';
@@ -18,4 +22,21 @@ test('composes one clock-led date start and end schedule row', () => {
   expect(source).toContain('contentAlign="end"');
   expect(source).toContain('aria-hidden="true">–</span>');
   expect(source).toContain('Slot is available.');
+});
+
+test('offers availability settings when the selected slot conflicts', () => {
+  const markup = renderToStaticMarkup(
+    createElement(
+      MemoryRouter,
+      null,
+      createElement(ManualBookingAvailabilityFeedback, {
+        feedback: { kind: 'conflict', message: 'That slot is no longer available.' },
+        availabilityHref: '/dashboard/agent-1/availability',
+      }),
+    ),
+  );
+
+  expect(markup).toContain('That slot is no longer available.');
+  expect(markup).toContain('Change availability');
+  expect(markup).toContain('href="/dashboard/agent-1/availability"');
 });

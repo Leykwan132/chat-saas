@@ -27,6 +27,7 @@ test('uses the requested icons and fully clickable three-card composition', () =
   expect(componentSource).toContain('MessageCircleQuestionMark');
   expect(componentSource).toContain('SiWhatsapp');
   expect(componentSource).toContain('aria-label="Contact support"');
+  expect(componentSource).toContain('Need help?');
   expect(componentSource).toContain('grid grid-cols-2 gap-3');
   expect(componentSource).toContain('SUPPORT_OPTIONS.map');
   expect(componentSource).toContain('<a');

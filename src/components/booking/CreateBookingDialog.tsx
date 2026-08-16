@@ -1,11 +1,19 @@
-import { useRef, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { CalendarCheck, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +25,6 @@ import type {
   BookingCreateInput,
   BookingCustomer,
   BookingCustomerDetails,
-  BookingDefaultSlot,
   BookingIntervalInput,
   BookingService,
 } from './bookingDialogTypes';
@@ -35,7 +42,6 @@ export function CreateBookingDialog({
   initialDate,
   checkAvailability,
   createBooking,
-  loadNearestSlot,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -48,18 +54,23 @@ export function CreateBookingDialog({
   initialDate?: string;
   checkAvailability: (input: BookingIntervalInput) => Promise<BookingAvailabilityResult>;
   createBooking: (input: BookingCreateInput) => Promise<unknown>;
-  loadNearestSlot?: (serviceId: Id<'appointmentServices'>) => Promise<BookingDefaultSlot | null>;
 }) {
   const [selectedCustomer, setSelectedCustomer] = useState<BookingCustomer | null>(null);
   const customer = fixedCustomer ?? selectedCustomer;
   const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open || fixedCustomer !== undefined) return;
+    setSelectedCustomer(null);
+    onCustomerQueryChange?.('');
+  }, [fixedCustomer, onCustomerQueryChange, open]);
+
   const controller = useCreateBookingController({
+    open,
     services: services ?? [],
     customer,
     initialDate,
     checkAvailability: (input) => checkAvailability({ customerId: customer?._id, ...input }),
     createBooking: (input) => createBooking({ customerId: customer?._id, ...input }),
-    loadNearestSlot,
   });
 
   const handleCreate = async () => {
@@ -77,14 +88,34 @@ export function CreateBookingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className="max-h-[85vh] overflow-y-auto sm:max-w-xl"
-        overlayClassName="bg-black/10 supports-backdrop-filter:backdrop-blur-none"
       >
         <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
-        <DialogHeader><DialogTitle>Create booking</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Create booking</DialogTitle>
+          <DialogDescription className="sr-only">Create a booking for a customer.</DialogDescription>
+        </DialogHeader>
         {services === undefined ? (
           <div className="h-32 rounded-md bg-muted motion-safe:animate-pulse" />
         ) : services.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No active Services are configured.</p>
+          <Empty className="py-6">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CalendarCheck />
+              </EmptyMedia>
+              <EmptyTitle>No active services</EmptyTitle>
+              <EmptyDescription>
+                Create a service so you can book appointments.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button asChild>
+                <Link to={`/dashboard/${agentId}/services?create=1`}>
+                  <Plus data-icon="inline-start" />
+                  Create service
+                </Link>
+              </Button>
+            </EmptyContent>
+          </Empty>
         ) : (
           <div className="grid gap-5">
             {fixedCustomer === undefined ? (
@@ -133,7 +164,7 @@ export function CreateBookingDialog({
               <div className="flex items-center justify-between gap-3">
                 <Label>Service</Label>
                 <Button asChild variant="linkAccent" size="sm" className="h-auto p-0">
-                  <Link to={`/dashboard/${agentId}/services/new`}>
+                  <Link to={`/dashboard/${agentId}/services?create=1`}>
                     <Plus data-icon="inline-start" aria-hidden="true" />
                     Create new service
                   </Link>
@@ -152,11 +183,20 @@ export function CreateBookingDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div className="grid gap-2">
+              <Label htmlFor="manual-booking-title">Title</Label>
+              <Input
+                id="manual-booking-title"
+                value={controller.title}
+                onChange={(event) => controller.setTitle(event.target.value)}
+              />
+            </div>
             <ManualBookingScheduleField
               date={controller.date}
               startTime={controller.startTime}
               endTime={controller.endTime}
               feedback={controller.feedback}
+              availabilityHref={`/dashboard/${agentId}/availability`}
               portalContainer={comboboxPortalContainerRef}
               onDateChange={controller.setDate}
               onStartTimeChange={controller.setStartTime}
@@ -176,14 +216,16 @@ export function CreateBookingDialog({
         )}
         <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button
-            type="button"
-            disabled={controller.busy || !controller.selectionAvailable}
-            onClick={() => void handleCreate()}
-          >
-            {controller.busy && <Spinner data-icon="inline-start" />}
-            Create booking
-          </Button>
+          {services !== undefined && services.length > 0 ? (
+            <Button
+              type="button"
+              disabled={controller.busy || !controller.selectionAvailable}
+              onClick={() => void handleCreate()}
+            >
+              {controller.busy && <Spinner data-icon="inline-start" />}
+              Create booking
+            </Button>
+          ) : null}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -47,6 +47,19 @@ export function manualBookingScheduleFromSlot(
   };
 }
 
+export function manualBookingScheduleFromNextHalfHour(
+  now: number,
+  timeZone: string,
+  durationMinutes: number,
+) {
+  const slotDuration = 30 * 60 * 1000;
+  const startAt = Math.ceil(now / slotDuration) * slotDuration;
+  return manualBookingScheduleFromSlot({
+    startAt,
+    endAt: startAt + durationMinutes * 60 * 1000,
+  }, timeZone);
+}
+
 export function getManualBookingSelection(
   serviceId: string,
   date: string,

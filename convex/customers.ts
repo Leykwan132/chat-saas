@@ -5,10 +5,10 @@ import {
   mutation,
   query,
   type MutationCtx,
-  type QueryCtx,
 } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
-import { getAuthContext, PERSONAL_ORG_FALLBACK, resolveChannelOrgId } from "./authUtils";
+import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";
 import { logConversationEvent } from "./conversationLogs";
 import { customerSearchText } from "./customerSearch";
 import { markConversationAnalyticsDirty } from "./analyticsDirtyRequest";
@@ -37,37 +37,6 @@ function assertNotLeadTemperatureTag(tag: string) {
   }
 }
 
-async function getAgentForBroadcast(
-  ctx: QueryCtx,
-  agentId: Id<"agents">,
-) {
-  const { userId, orgId } = await getAuthContext(ctx);
-  const agent = await ctx.db.get(agentId);
-  if (agent === null) {
-    return null;
-  }
-
-  const normalizedOrgId =
-    !orgId || orgId === "personal" ? PERSONAL_ORG_FALLBACK : orgId;
-  const agentOrgId =
-    !agent.orgId || agent.orgId === "personal"
-      ? PERSONAL_ORG_FALLBACK
-      : agent.orgId;
-
-  if (agentOrgId !== PERSONAL_ORG_FALLBACK) {
-    if (agentOrgId === normalizedOrgId) {
-      return agent;
-    }
-    return null;
-  }
-
-  if (agent.userId !== userId) {
-    return null;
-  }
-
-  return agent;
-}
-
 function resolveBroadcastPhone(customer: Doc<"customers">): string | null {
   const phone = customer.phone?.trim();
   if (phone) {
@@ -89,7 +58,7 @@ export const listForAgentBroadcast = query({
     const { orgId, userId } = await getAuthContext(ctx);
     const resolvedOrgId = resolveChannelOrgId(orgId, userId);
 
-    const agent = await getAgentForBroadcast(ctx, args.agentId);
+    const agent = await getCustomerAgentForCurrentWorkspace(ctx, args.agentId);
     if (agent === null) {
       throw new Error("Agent not found");
     }
@@ -420,6 +389,7 @@ export const getById = query({
 // merge wrong people in v1.
 export const addManually = mutation({
   args: {
+    agentId: v.id("agents"),
     name: v.string(),
     email: v.optional(v.string()),
     phone: v.optional(v.string()),
@@ -429,6 +399,10 @@ export const addManually = mutation({
   handler: async (ctx, args) => {
     const { orgId, userId } = await getAuthContext(ctx);
     const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const agent = await getCustomerAgentForCurrentWorkspace(ctx, args.agentId);
+    if (agent === null) {
+      throw new Error("Agent not found");
+    }
     const name = args.name.trim();
     if (!name) {
       throw new Error("Customer name is required");
@@ -442,6 +416,8 @@ export const addManually = mutation({
     }
     return await ctx.db.insert("customers", {
       orgId: resolvedOrgId,
+      userId,
+      agentId: agent._id,
       service: "manual",
       contactAddress: "",
       name,

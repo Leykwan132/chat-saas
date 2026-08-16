@@ -165,7 +165,7 @@ test("manual booking checks and revalidates the exact selected slot", async () =
     selection,
   )).resolves.toEqual({ available: true });
 
-  const created = await authed.mutation(api.appointmentBooking.manualBooking.create, {
+  const created = await authed.action(api.appointmentBooking.manualBooking.create, {
     ...selection,
     collectedFields: { date: "2026-07-14", time: "9:11am" },
     remarks: "  Bring the sample catalogue.  ",
@@ -195,7 +195,7 @@ test("manual booking checks and revalidates the exact selected slot", async () =
     available: false,
     message: "That slot is no longer available.",
   });
-  await expect(authed.mutation(api.appointmentBooking.manualBooking.create, {
+  await expect(authed.action(api.appointmentBooking.manualBooking.create, {
     ...selection,
     collectedFields: { date: "2026-07-14", time: "9:11 AM" },
   })).rejects.toThrow("That slot is no longer available.");

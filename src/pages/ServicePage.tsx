@@ -5,7 +5,6 @@ import { ArrowLeft, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../convex/_generated/api';
 import type { Doc, Id } from '../../convex/_generated/dataModel';
-import { CreateServiceWizard } from '@/components/services/CreateServiceWizard';
 import { ServiceForm } from '@/components/ServiceForm';
 import { DetailPageActionFooter } from '@/components/automation/DetailPageActionFooter';
 import { Button } from '@/components/ui/button';
@@ -112,16 +111,14 @@ export default function ServicePage() {
         !formInitialized ||
         !editingService));
 
-  if (isLoading) {
-    return isEditMode ? <EditServiceSkeleton /> : <CreateServiceSkeleton />;
+  if (!isEditMode) {
+    return <Navigate to={`/dashboard/${typedAgentId}/services?create=1`} replace />;
   }
+
+  if (isLoading) return <EditServiceSkeleton />;
 
   if (isEditMode && !editingService) {
     return <Navigate to={`/dashboard/${typedAgentId}/services`} replace />;
-  }
-
-  if (!isEditMode) {
-    return <CreateServiceWizard agentId={typedAgentId} teamUserOptions={teamUserOptions} />;
   }
 
   const backHref = `/dashboard/${typedAgentId}/services`;
@@ -289,25 +286,6 @@ export default function ServicePage() {
     </div>
   );
 }
-
-function CreateServiceSkeleton() {
-  return (
-    <div className="flex min-h-[100svh] flex-col bg-background">
-      <div className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/75 px-6 py-4 backdrop-blur-xl">
-        <Skeleton className="h-9 w-40" />
-      </div>
-      <div className="flex flex-1 pt-14">
-        <div className="flex flex-1 flex-col justify-center px-20 py-12">
-          <Skeleton className="h-12 w-72" />
-          <Skeleton className="mt-8 h-12 w-full max-w-md" />
-          <Skeleton className="mt-4 h-24 w-full max-w-md" />
-        </div>
-        <Skeleton className="hidden w-[40%] lg:block" />
-      </div>
-    </div>
-  );
-}
-
 function EditServiceSkeleton() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">

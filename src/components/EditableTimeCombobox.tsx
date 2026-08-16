@@ -55,7 +55,7 @@ export function EditableTimeCombobox({
           aria-label={ariaLabel}
           aria-invalid={invalid}
           placeholder="Time"
-          className="h-10 min-w-32 w-full rounded-md border-input bg-background"
+          className="h-10 min-w-32 w-full rounded-full border-input bg-background"
           onBlur={normalizeValue}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {

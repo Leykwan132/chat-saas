@@ -619,7 +619,6 @@ export function TestChatWindow({
       {embedded ? (
         <Dialog open={fullscreenOpen} onOpenChange={setFullscreenOpen}>
           <DialogContent
-            overlayClassName="bg-black/55 supports-backdrop-filter:backdrop-blur-md"
             className="flex h-[min(92vh,960px)] w-full max-w-[min(calc(100%-2rem),70rem)] flex-col gap-0 overflow-hidden rounded-lg border border-border bg-card p-0 shadow-sm sm:max-w-[min(calc(100%-2rem),70rem)]"
           >
             <DialogHeader className="sr-only">

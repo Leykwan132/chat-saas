@@ -449,10 +449,12 @@ export function ImportCustomersDialog({
   open,
   onOpenChange,
   existingTags,
+  agentId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   existingTags?: string[];
+  agentId: Id<'agents'>;
 }) {
   const suggestedTags = useMemo(() => {
     const set = new Set([...DEFAULT_SUGGESTED_TAGS, ...(existingTags ?? [])]);
@@ -689,6 +691,7 @@ export function ImportCustomersDialog({
         const chunk = rowObjects.slice(i, i + CHUNK_SIZE);
         await startImport({
           importId: generatedImportId,
+          agentId,
           fileName: file?.name ?? 'import.csv',
           rows: chunk,
           fieldMapping: updatedFieldMapping,

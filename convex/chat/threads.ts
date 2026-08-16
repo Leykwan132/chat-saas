@@ -40,6 +40,7 @@ import { aiReplyMessageBreakBlock } from "./aiReplyMessages";
 import { chatResponseFormattingBlock } from "./responseFormatting";
 import { buildToolUsageBlock } from "./toolPrompt";
 import { buildIdentityPriorityBlock } from "./identityPriorityPrompt";
+import { registerGoogleCalendarTools } from "../googleCalendar/agentTools";
 import type {
   BroadcastMessageKind,
   BroadcastPresentation,
@@ -683,7 +684,7 @@ export function buildAgent(
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
-        return await ctx.runMutation(internal.appointmentBooking.bookAppointment.bookAppointment, {
+        return await ctx.runAction(internal.appointmentBooking.bookAppointment.bookAppointment, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,
           startAt,
@@ -703,7 +704,7 @@ export function buildAgent(
         if (!Number.isFinite(startAt)) {
           return { success: false, message: "Invalid appointment start time." };
         }
-        return await ctx.runMutation(internal.appointmentBooking.updateAppointment.updateBookingAppointment, {
+        return await ctx.runAction(internal.appointmentBooking.updateAppointment.updateBookingAppointment, {
           conversationId,
           serviceId: input.serviceId as Id<"appointmentServices">,
           startAt,
@@ -738,10 +739,18 @@ export function buildAgent(
         "Cancels the customer's in-progress booking session or discards a booking edit. During an edit, this keeps the original booking unchanged.",
       inputSchema: z.object({}),
       execute: async (toolCtx) => {
-        return await toolCtx.runMutation(internal.appointmentBooking.cancellations.cancelBookingSession, {
+        return await toolCtx.runAction(internal.appointmentBooking.cancellations.cancelBookingSession, {
           conversationId,
         });
       },
+    });
+  }
+
+  if (conversationId) {
+    registerGoogleCalendarTools({
+      tools,
+      conversationId,
+      eligible: appointmentBookingEnabled,
     });
   }
 

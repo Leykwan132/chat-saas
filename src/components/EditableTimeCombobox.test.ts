@@ -16,6 +16,7 @@ test('supports editable custom times and standard dropdown options', () => {
   expect(source).toContain('inputValue={value}');
   expect(source).toContain('onInputValueChange={onChange}');
   expect(source).toContain('min-w-32');
+  expect(source).toContain('rounded-full border-input bg-background');
   expect(source).toContain('const inputAnchorRef = React.useRef<HTMLDivElement>(null)');
   expect(source).toContain('<div ref={inputAnchorRef} className="w-full">');
   expect(source).toContain('anchor={inputAnchorRef}');

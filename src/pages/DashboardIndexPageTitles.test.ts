@@ -36,7 +36,7 @@ test('uses KiloBot typography for authenticated index page titles', () => {
   expectBrandTitle(pageSource('./NotificationsPage.tsx'), '>Notifications</h1>');
   expectBrandTitle(pageSource('./BroadcastPage.tsx'), '>Broadcast</h1>');
   expectBrandTitle(pageSource('./TemplatesPage.tsx'), 'Message templates');
-  expectBrandTitle(pageSource('./LeadAssignmentPage.tsx'), 'Lead Assignment');
+  expectBrandTitle(pageSource('./LeadAssignmentPage.tsx'), '>\n          Routing\n');
 
   const analyticsSource = pageSource('../components/analytics/AnalyticsUi.tsx');
   const analyticsHeaderStart = analyticsSource.indexOf('export function AnalyticsSectionHeader');

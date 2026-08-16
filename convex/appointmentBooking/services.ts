@@ -126,6 +126,12 @@ export const updateService = mutation({
     serviceId: v.id("appointmentServices"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
+    locationMode: v.optional(v.union(
+      v.literal("remote"),
+      v.literal("video_call"),
+      v.literal("in_person"),
+    )),
+    location: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
     durationMinutes: v.optional(v.number()),
     bufferMinutes: v.optional(v.number()),
@@ -153,6 +159,7 @@ export const updateService = mutation({
       throw new Error("Selected teammate is not part of this team");
     }
     const assignmentStrategy = args.assignmentStrategy ?? service.assignmentStrategy;
+    const locationMode = args.locationMode ?? service.locationMode ?? "in_person";
     const specificWorkosUserId = args.specificWorkosUserId?.trim() || service.specificWorkosUserId;
     if (
       assignmentStrategy === "specific_user" &&
@@ -163,6 +170,12 @@ export const updateService = mutation({
     const patch: Partial<Doc<"appointmentServices">> = { updatedAt: Date.now() };
     if (args.name !== undefined) patch.name = args.name.trim() || service.name;
     if (args.description !== undefined) patch.description = args.description.trim() || undefined;
+    if (args.locationMode !== undefined) patch.locationMode = args.locationMode;
+    if (locationMode !== "in_person") {
+      patch.location = undefined;
+    } else if (args.location !== undefined) {
+      patch.location = args.location.trim() || undefined;
+    }
     if (args.isActive !== undefined) patch.isActive = args.isActive;
     if (args.durationMinutes !== undefined) patch.durationMinutes = Math.max(5, Math.round(args.durationMinutes));
     if (args.bufferMinutes !== undefined) patch.bufferMinutes = Math.max(0, Math.round(args.bufferMinutes));

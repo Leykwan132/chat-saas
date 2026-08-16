@@ -45,4 +45,5 @@ test('WorkflowEdge renders a condition detail tooltip', () => {
 
   expect(markup).toContain('Long internal condition detail');
   expect(markup).toContain('Customer asks about billing');
+  expect(markup).toContain('lucide-signpost-big');
 });

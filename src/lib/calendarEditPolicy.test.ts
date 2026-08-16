@@ -19,4 +19,25 @@ describe('canEditCalendarEvent', () => {
       }),
     ).toBe(false);
   });
+
+  test('allows a Google event owner to edit without calendar management permission', () => {
+    expect(
+      canEditCalendarEvent({
+        canManageCalendar: false,
+        externalOrigin: 'google',
+        externalOwnerUserId: 'user_1',
+        viewerUserId: 'user_1',
+        externalCanEdit: true,
+      }),
+    ).toBe(true);
+  });
+
+  test('does not allow teammates to edit a Busy Google event', () => {
+    expect(
+      canEditCalendarEvent({
+        canManageCalendar: true,
+        viewerCanMutate: false,
+      }),
+    ).toBe(false);
+  });
 });

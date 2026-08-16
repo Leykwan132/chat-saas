@@ -1,144 +1,54 @@
+import { v } from "convex/values";
 import type { Doc, Id } from "../_generated/dataModel";
-import type { MutationCtx } from "../_generated/server";
+import { internalMutation, type MutationCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
 import { getZonedDayAndMinutes } from "../leadRouting/eligibility";
-import { getUserByWorkosId } from "../teamHelpers";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
+import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
+import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
+import { entryAvailableForSlot } from "./availabilityEligibility";
 
-async function loadRoster(ctx: MutationCtx, agentId: Id<"agents">): Promise<RosterEntry[]> {
-  const schedules = await ctx.db
-    .query("userSchedules")
-    .withIndex("by_agentId", (q) => q.eq("agentId", agentId))
-    .take(100);
-  const entries: RosterEntry[] = [];
-  for (const schedule of schedules) {
-    const shifts = await ctx.db
-      .query("userShifts")
-      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
-      .take(100);
-    const timeOff = await ctx.db
-      .query("userTimeOff")
-      .withIndex("by_userScheduleId", (q) => q.eq("userScheduleId", schedule._id))
-      .take(100);
-    const user = await getUserByWorkosId(ctx, schedule.workosUserId);
-    entries.push({ schedule, shifts, timeOff, user });
-  }
-  return entries;
-}
+export { isAssignedToService } from "./availabilityEligibility";
 
-function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
-  const start = getZonedDayAndMinutes(startAt, schedule.timezone);
-  const end = getZonedDayAndMinutes(Math.max(startAt, endAt - 1), schedule.timezone);
-  if (start.dayOfWeek !== end.dayOfWeek) return false;
-  return shifts.some(
-    (shift) =>
-      shift.dayOfWeek === start.dayOfWeek &&
-      start.minutes >= shift.startMinutes &&
-      end.minutes < shift.endMinutes,
-  );
-}
-
-export function isAssignedToService(
-  service: Doc<"appointmentServices">,
-  workosUserId: string,
-) {
-  return service.assignedWorkosUserIds === undefined || service.assignedWorkosUserIds.includes(workosUserId);
-}
-
-function overlaps(startA: number, endA: number, startB: number, endB: number) {
-  return startA < endB && endA > startB;
-}
-
-function hasTimeOffOverlap(startAt: number, endAt: number, rows: Doc<"userTimeOff">[]) {
-  return rows.some((row) => overlaps(startAt, endAt, row.startAt, row.endAt));
-}
-
-async function hasCalendarConflict(
+async function loadRoster(
   ctx: MutationCtx,
   args: {
+    agentId: Id<"agents">;
     teamId: Id<"teams">;
-    userId: Id<"users">;
-    startAt: number;
-    endAt: number;
-    excludeEventId?: Id<"calendarEvents">;
+    windowStartAt: number;
+    windowEndAt: number;
   },
-) {
-  const participants = await ctx.db
-    .query("calendarEventParticipants")
-    .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) =>
-      q
-        .eq("teamId", args.teamId)
-        .eq("role", "assigned")
-        .eq("userId", args.userId)
-        .gte("eventStartAt", args.startAt - 24 * 60 * 60 * 1000)
-        .lt("eventStartAt", args.endAt),
-    )
-    .take(100);
-  for (const participant of participants) {
-    const event = await ctx.db.get(participant.eventId);
-    if (
-      event !== null &&
-      event._id !== args.excludeEventId &&
-      event.status !== "cancelled" &&
-      overlaps(args.startAt, args.endAt, event.startAt, event.endAt)
-    ) {
-      return true;
-    }
+): Promise<AvailabilityRosterEntry[]> {
+  const loaded = await loadAvailabilityRoster(ctx, args);
+  if (loaded.worker !== undefined) {
+    await ctx.scheduler.runAfter(
+      0,
+      internal.appointmentBooking.availability.continueCalendarAvailabilityPreload,
+      loaded.worker,
+    );
   }
-  return false;
+  return loaded.entries;
 }
 
-async function entryAvailableForSlot(
-  ctx: MutationCtx,
-  service: Doc<"appointmentServices">,
-  teamId: Id<"teams">,
-  entry: RosterEntry,
-  startAt: number,
-  endAt: number,
-  excludeEventId?: Id<"calendarEvents">,
-) {
-  if (entry.user === null) return false;
-  if (!isAssignedToService(service, entry.schedule.workosUserId)) return false;
-  if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
-  if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
-  return !(await hasCalendarConflict(ctx, {
-    teamId,
-    userId: entry.user._id,
-    startAt,
-    endAt,
-    excludeEventId,
-  }));
-}
-
-async function countFutureAssignedEvents(ctx: MutationCtx, teamId: Id<"teams">, userId: Id<"users">, now: number) {
-  const rows = await ctx.db
-    .query("calendarEventParticipants")
-    .withIndex("by_teamId_and_role_and_userId_and_eventStartAt", (q) =>
-      q
-        .eq("teamId", teamId)
-        .eq("role", "assigned")
-        .eq("userId", userId)
-        .gte("eventStartAt", now),
-    )
-    .take(100);
-  return rows.length;
-}
-
-async function chooseAssigneeForSlot(
-  ctx: MutationCtx,
+function chooseAssigneeForSlot(
   args: {
     service: Doc<"appointmentServices">;
     conversation?: Doc<"conversations">;
     teamId: Id<"teams">;
-    entries: RosterEntry[];
+    entries: AvailabilityRosterEntry[];
     startAt: number;
     endAt: number;
     excludeEventId?: Id<"calendarEvents">;
+    ignoreGoogleHealth?: boolean;
   },
-): Promise<RosterEntry | null> {
-  const available: RosterEntry[] = [];
+): RosterEntry | null {
+  const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
-    if (await entryAvailableForSlot(ctx, args.service, args.teamId, entry, args.startAt, args.endAt, args.excludeEventId)) {
+    if (entryAvailableForSlot({
+      service: args.service, entry, startAt: args.startAt, endAt: args.endAt,
+      excludeEventId: args.excludeEventId, ignoreGoogleHealth: args.ignoreGoogleHealth,
+    })) {
       available.push(entry);
     }
   }
@@ -161,14 +71,10 @@ async function chooseAssigneeForSlot(
     return sorted[(lastIndex + 1) % sorted.length] ?? null;
   }
 
-  const withCounts = [];
-  for (const entry of available) {
-    if (entry.user === null) continue;
-    withCounts.push({
-      entry,
-      count: await countFutureAssignedEvents(ctx, args.teamId, entry.user._id, Date.now()),
-    });
-  }
+  const withCounts = available.map((entry) => ({
+    entry,
+    count: entry.futureAssignedEventCount,
+  }));
   withCounts.sort((a, b) => {
     if (a.count !== b.count) return a.count - b.count;
     return a.entry.schedule.createdAt - b.entry.schedule.createdAt;
@@ -222,20 +128,34 @@ export async function generateSlots(
     limit: number;
     prioritizePreferredTimes?: boolean;
     excludeEventId?: Id<"calendarEvents">;
+    ignoreGoogleHealth?: boolean;
   },
 ): Promise<BookingSlot[]> {
-  const roster = await loadRoster(ctx, args.service.agentId);
   const durationMs = args.service.durationMinutes * 60 * 1000;
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
   const slots: BookingSlot[] = [];
-  const maxCandidates = args.prioritizePreferredTimes === false ? args.limit : 200;
+  const firstStartAt = roundUpToSlotInterval(args.rangeStartAt);
+  if (firstStartAt + durationMs > args.rangeEndAt) return [];
+  const stopOnFilledLimit = args.prioritizePreferredTimes === false;
+  const lastCandidateStartAt = stopOnFilledLimit
+    ? args.rangeEndAt - durationMs
+    : Math.min(args.rangeEndAt - durationMs, firstStartAt + 199 * 30 * 60 * 1000);
+  const roster = await loadRoster(ctx, {
+    agentId: args.service.agentId,
+    teamId: args.teamId,
+    windowStartAt: firstStartAt - bufferMs,
+    windowEndAt: lastCandidateStartAt + durationMs + bufferMs,
+  });
+  let candidateCount = 0;
   for (
-    let startAt = roundUpToSlotInterval(args.rangeStartAt);
-    startAt + durationMs <= args.rangeEndAt && slots.length < maxCandidates;
+    let startAt = firstStartAt;
+    startAt + durationMs <= args.rangeEndAt &&
+    (stopOnFilledLimit ? slots.length < args.limit : candidateCount < 200);
     startAt += 30 * 60 * 1000
   ) {
+    candidateCount += 1;
     const endAt = startAt + durationMs;
-    const assignee = await chooseAssigneeForSlot(ctx, {
+    const assignee = chooseAssigneeForSlot({
       service: args.service,
       conversation: args.conversation,
       teamId: args.teamId,
@@ -243,6 +163,7 @@ export async function generateSlots(
       startAt: startAt - bufferMs,
       endAt: endAt + bufferMs,
       excludeEventId: args.excludeEventId,
+      ignoreGoogleHealth: args.ignoreGoogleHealth,
     });
     if (assignee?.user) {
       slots.push({
@@ -268,18 +189,26 @@ export async function resolveAvailableInterval(
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;
+    ignoreGoogleHealth?: boolean;
+    logUnavailableReason?: boolean;
   },
 ): Promise<BookingSlot | null> {
   if (args.endAt <= args.startAt) return null;
-  const entries = await loadRoster(ctx, args.service.agentId);
   const bufferMs = (args.service.bufferMinutes ?? 0) * 60 * 1000;
-  const assignee = await chooseAssigneeForSlot(ctx, {
+  const entries = await loadRoster(ctx, {
+    agentId: args.service.agentId,
+    teamId: args.teamId,
+    windowStartAt: args.startAt - bufferMs,
+    windowEndAt: args.endAt + bufferMs,
+  });
+  const assignee = chooseAssigneeForSlot({
     service: args.service,
     conversation: args.conversation,
     teamId: args.teamId,
     entries,
     startAt: args.startAt - bufferMs,
     endAt: args.endAt + bufferMs,
+    ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
   if (assignee?.user === undefined || assignee.user === null) return null;
   return {
@@ -290,3 +219,22 @@ export async function resolveAvailableInterval(
     assignedDisplayName: displayNameForUser(assignee.user),
   };
 }
+
+export const continueCalendarAvailabilityPreload = internalMutation({
+  args: {
+    preloadId: v.id("calendarAvailabilityPreloads"),
+    generation: v.number(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const result = await advanceCalendarAvailabilityPreload(ctx, { ...args, now: Date.now() });
+    if (result.continue && result.worker !== undefined) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.appointmentBooking.availability.continueCalendarAvailabilityPreload,
+        result.worker,
+      );
+    }
+    return null;
+  },
+});

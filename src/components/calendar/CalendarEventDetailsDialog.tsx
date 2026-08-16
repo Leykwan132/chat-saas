@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useQuery } from 'convex/react';
 import { PencilLine, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -12,14 +12,12 @@ import {
   type AppointmentDetails,
 } from '@/components/calendar/CalendarEventDetailsBody';
 import {
-  buildCustomFieldResponses,
-  combineDateTime,
   formStateFromEvent,
-  getAllDayBounds,
   type CalendarEventForEditing,
   type EventEditFormState,
   type TeamUserOption,
 } from '@/components/calendar/calendarEventEditModel';
+import { calendarEventUpdateArgsFromForm } from '@/components/calendar/calendarEventDetailsSave';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -50,8 +48,8 @@ export function CalendarEventDetailsDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const updateEvent = useMutation(api.calendarEvents.update);
-  const removeEvent = useMutation(api.calendarEvents.remove);
+  const updateEvent = useAction(api.calendarEvents.update);
+  const removeEvent = useAction(api.calendarEvents.remove);
 
   const details = useQuery(
     api.calendarEvents.getAppointmentDetails,
@@ -122,57 +120,9 @@ export function CalendarEventDetailsDialog({
       toast.error('Event title is required');
       return;
     }
-    if (!editFormState.customerId || !editFormState.assignedUserId) {
-      toast.error('Customer and team member are required');
-      return;
-    }
-
-    const timeRange = editFormState.allDay
-      ? getAllDayBounds(editFormState.date, editFormState.timeZone)
-      : {
-          startAt: combineDateTime(
-            editFormState.date,
-            editFormState.startTime,
-            editFormState.timeZone,
-          ),
-          endAt: combineDateTime(
-            editFormState.date,
-            editFormState.endTime,
-            editFormState.timeZone,
-          ),
-        };
-    const { startAt, endAt } = timeRange;
-    if (startAt === null || endAt === null) {
-      toast.error('Enter a valid start and end time');
-      return;
-    }
-    if (endAt <= startAt) {
-      toast.error('End time must be after start time');
-      return;
-    }
-
     setIsSaving(true);
     try {
-      await updateEvent({
-        eventId,
-        title: editFormState.title,
-        description: editFormState.description || undefined,
-        link: editFormState.link || undefined,
-        startAt,
-        endAt,
-        timeZone: editFormState.timeZone,
-        allDay: editFormState.allDay,
-        startDate: editFormState.allDay ? editFormState.date : undefined,
-        endDate: editFormState.allDay ? editFormState.date : undefined,
-        customerId: editFormState.customerId as Id<'customers'>,
-        assignedUserId: editFormState.assignedUserId as Id<'users'>,
-        attendeeUserIds: editFormState.attendeeUserIds as Id<'users'>[],
-        customFieldResponses: buildCustomFieldResponses(
-          editFormState.collectedFields,
-          details.serviceFields,
-        ),
-        remarks: editFormState.remarks.trim(),
-      });
+      await updateEvent(calendarEventUpdateArgsFromForm(eventId, editFormState, details));
       toast.success('Event updated');
       setIsEditing(false);
       setFormState(null);
@@ -212,6 +162,7 @@ export function CalendarEventDetailsDialog({
                 form={editFormState}
                 serviceFields={details.serviceFields}
                 teamUsers={teamUsers}
+                bookingFields={details.externalOrigin !== 'google'}
                 actions={
                   canEdit && eventId ? (
                     <Button

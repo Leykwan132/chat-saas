@@ -5,14 +5,13 @@ import {
   buildManualBookingCollectedFields,
   defaultManualBookingEndTime,
   getManualBookingSelection,
-  manualBookingScheduleFromSlot,
+  manualBookingScheduleFromNextHalfHour,
 } from '@/components/inbox/manualBookingScheduleModel';
 import type { ManualBookingScheduleFeedback } from '@/components/inbox/ManualBookingScheduleField';
 import type {
   BookingAvailabilityResult,
   BookingCreateInput,
   BookingCustomerDetails,
-  BookingDefaultSlot,
   BookingIntervalInput,
   BookingService,
 } from './bookingDialogTypes';
@@ -23,38 +22,48 @@ type AvailabilityStatus =
   | { kind: 'available'; key: string }
   | { kind: 'conflict'; key: string; message: string };
 
+function defaultManualBookingTitle(
+  service: BookingService | undefined,
+  customer: BookingCustomerDetails | null,
+) {
+  if (service === undefined) return '';
+  const customerName = customer?.name?.trim()
+    || customer?.email?.trim()
+    || customer?.phone?.trim()
+    || customer?.contactAddress?.trim()
+    || 'Customer';
+  return `${service.name} - ${customerName}`;
+}
+
 export function useCreateBookingController({
+  open,
   services,
   customer,
   initialDate,
   checkAvailability,
   createBooking,
-  loadNearestSlot,
 }: {
+  open: boolean;
   services: BookingService[];
   customer: BookingCustomerDetails | null;
   initialDate?: string;
   checkAvailability: (input: BookingIntervalInput) => Promise<BookingAvailabilityResult>;
   createBooking: (input: BookingCreateInput) => Promise<unknown>;
-  loadNearestSlot?: (serviceId: Id<'appointmentServices'>) => Promise<BookingDefaultSlot | null>;
 }) {
   const [serviceId, setServiceId] = useState('');
   const [date, setDate] = useState(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [title, setTitle] = useState('');
   const [remarks, setRemarks] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
-  const nearestSlotRequestRef = useRef(0);
-  const loadNearestSlotRef = useRef(loadNearestSlot);
   const checkAvailabilityRef = useRef(checkAvailability);
-  const customerRef = useRef(customer);
   const previousCustomerRef = useRef(customer);
   const endTimeCustomizedRef = useRef(false);
-  loadNearestSlotRef.current = loadNearestSlot;
+  const titleCustomizedRef = useRef(false);
   checkAvailabilityRef.current = checkAvailability;
-  customerRef.current = customer;
   const effectiveServiceId = serviceId || services[0]?.serviceId || '';
   const effectiveFields = {
     name: customer?.name ?? '',
@@ -62,6 +71,7 @@ export function useCreateBookingController({
     phone: customer?.phone ?? '',
   };
   const service = services.find((item) => item.serviceId === effectiveServiceId);
+  const defaultTitle = defaultManualBookingTitle(service, customer);
   const selection = service
     ? getManualBookingSelection(effectiveServiceId, date, startTime, endTime, service.timeZone)
     : { kind: 'incomplete' as const };
@@ -82,7 +92,7 @@ export function useCreateBookingController({
     const nextSelection = nextService
       ? getManualBookingSelection(nextServiceId, nextDate, nextStart, nextEnd, nextService.timeZone)
       : { kind: 'incomplete' as const };
-    if (customerRef.current === null || nextSelection.kind !== 'ready') {
+    if (nextSelection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
@@ -109,31 +119,47 @@ export function useCreateBookingController({
   };
 
   useEffect(() => {
-    const loadNearestSlot = loadNearestSlotRef.current;
-    if (!service || !loadNearestSlot) return;
-    const requestId = ++nearestSlotRequestRef.current;
-    void (async () => {
-      const slot = await loadNearestSlot(service.serviceId);
-      if (nearestSlotRequestRef.current !== requestId || slot === null) return;
-      const nextSchedule = manualBookingScheduleFromSlot(slot, service.timeZone);
-      endTimeCustomizedRef.current = false;
-      setDate(nextSchedule.date);
-      setStartTime(nextSchedule.startTime);
-      setEndTime(nextSchedule.endTime);
-      void runAvailabilityCheck(
-        service.serviceId,
-        nextSchedule.date,
-        nextSchedule.startTime,
-        nextSchedule.endTime,
-      );
-    })();
-  }, [effectiveServiceId, service?.timeZone]);
+    if (!open) return;
+    availabilityRequestRef.current += 1;
+    endTimeCustomizedRef.current = false;
+    titleCustomizedRef.current = false;
+    setServiceId('');
+    setDate(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
+    setStartTime('');
+    setEndTime('');
+    setTitle('');
+    setRemarks('');
+    setAvailability({ kind: 'idle' });
+    setBusy(false);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open || !service) return;
+    const nextSchedule = manualBookingScheduleFromNextHalfHour(
+      Date.now(), service.timeZone, service.durationMinutes,
+    );
+    const selectedDate = initialDate ?? nextSchedule.date;
+    endTimeCustomizedRef.current = false;
+    setDate(selectedDate);
+    setStartTime(nextSchedule.startTime);
+    setEndTime(nextSchedule.endTime);
+    void runAvailabilityCheck(
+      service.serviceId,
+      selectedDate,
+      nextSchedule.startTime,
+      nextSchedule.endTime,
+    );
+  }, [effectiveServiceId, open, service?.durationMinutes, service?.timeZone]);
+
+  useEffect(() => {
+    if (open && !titleCustomizedRef.current) setTitle(defaultTitle);
+  }, [defaultTitle, open]);
 
   useEffect(() => {
     const previousCustomer = previousCustomerRef.current;
     previousCustomerRef.current = customer;
     if (customer === previousCustomer) return;
-    if (customer === null || selection.kind !== 'ready') {
+    if (selection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
@@ -141,7 +167,7 @@ export function useCreateBookingController({
   }, [customer, effectiveServiceId, date, startTime, endTime]);
 
   return {
-    serviceId: effectiveServiceId, date, startTime, endTime, remarks,
+    serviceId: effectiveServiceId, date, startTime, endTime, title, remarks,
     feedback, selectionAvailable, busy, resetCustomerFields, setRemarks,
     setService(value: string) {
       const nextService = services.find((item) => item.serviceId === value);
@@ -158,6 +184,10 @@ export function useCreateBookingController({
       endTimeCustomizedRef.current = true; setEndTime(value);
       void runAvailabilityCheck(effectiveServiceId, date, startTime, value);
     },
+    setTitle(value: string) {
+      titleCustomizedRef.current = true;
+      setTitle(value);
+    },
     async submit() {
       if (!selectionAvailable || selection.kind !== 'ready') return false;
       setBusy(true);
@@ -165,6 +195,7 @@ export function useCreateBookingController({
         await createBooking({
           serviceId: effectiveServiceId as Id<'appointmentServices'>,
           collectedFields: buildManualBookingCollectedFields(effectiveFields, date, startTime),
+          title: title.trim() || undefined,
           startAt: selection.startAt,
           endAt: selection.endAt,
           remarks: remarks.trim() || undefined,

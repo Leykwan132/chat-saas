@@ -1,0 +1,52 @@
+# Create Service Dialog Design
+
+## Goal
+
+Replace the full-screen, four-step service wizard with a compact modal that lets a user create a personal service in one final action or set up a team service in two steps.
+
+## Entry and completion
+
+The Services page opens the dialog from both Add a service entry points. The existing `/services/new` route redirects to the Services page so the modal is the sole creation experience.
+
+The footer has a ghost-style Close button that immediately discards the in-progress form and closes the dialog. It has no separating rule above it. After a successful create, the dialog closes and the app opens that service's detail page.
+
+Create Service uses a plain black dim overlay without background blur and a `rounded-3xl` container. This presentation override applies only to Create Service, not shared dialogs.
+
+## Step 1: Service info and assignment mode
+
+The first dialog step collects only the service's Name, Location, and Duration. Duration is a numeric input with a right-aligned `Minutes` suffix inside the field. Description is configured from the service detail page after creation.
+
+Below the service information are two selectable cards:
+
+- For myself is selected by default. It assigns only the signed-in user and makes the footer action Create.
+- For team lets the user include teammates and makes the footer action Continue.
+
+Each choice uses the shared Field and RadioGroup choice-card pattern, with its native radio control at the upper right. A simple leading icon sits above the title and description. Selecting either card remains a single accessible radio-style interaction.
+
+The Team-card entitlement is determined only from the active workspace's current plan, using the same workspace plan source as the shared upgrade modal; the signed-in person's personal plan never controls it. For example, a Free-plan person working in a paid workspace can select For team without an upgrade prompt. For a workspace on the Free plan, For team is visibly locked but retains its normal card label. Hovering or keyboard-focusing the card adds a slightly darker background overlay and reveals a centered Upgrade control. Activating the card or its Upgrade control opens the existing shared upgrade modal for that workspace plan and does not change the selected For myself card or advance the dialog. Workspaces on an eligible paid plan can select For team normally.
+
+Choosing For myself and pressing Create creates the service immediately. Choosing For team and pressing Continue moves to the team-selection step.
+
+In person is always present in the Location dropdown. Google Meet is shown only when the current account is eligible for the Google Calendar feature flag. For eligible accounts, Google Meet continues to require a Google Calendar connection and uses the hosted Google Meet product image.
+
+## Step 2: Team assignment
+
+Step 2 appears only for For team. It lets the user select one or more teammates. It has a Back action, a text-only Close action, and a Create action. Creation is blocked until at least one teammate is selected.
+
+## Defaults and service detail page
+
+Creation always saves the existing default booking form with Booking Date, Booking Time, Customer Name, and Phone Number. The dialog does not expose booking-form configuration. New services remain enabled by default.
+
+On the service detail page, Description appears directly below Name. Duration, Gap, and Preferred time are visible directly in the main details area.
+
+## Data and error behavior
+
+The form uses the existing service mutation payload and persistence model. For myself stores the signed-in user's WorkOS ID as the sole assignment. For team stores the selected teammate IDs and retains the existing assignment validation. Name is required before proceeding or creating. Mutations report errors in the active dialog step and preserve the draft for correction.
+
+## Scope
+
+This replaces the creation wizard UI and changes no calendar-sync, service-location persistence, booking routing, or existing service-edit behavior beyond the requested field ordering and Advanced timing grouping. It does not add assignment strategies, booking-form configuration during creation, or additional location providers.
+
+## Verification
+
+Focused tests cover opening and closing the dialog, Free-plan Team upgrade behavior, personal and team branching, current-user-only default assignment, default booking fields, navigation to the created service, location guard behavior, minutes suffix, and Advanced timing accordion. TypeScript and diff checks run under Node v22.

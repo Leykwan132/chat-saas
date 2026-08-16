@@ -3,6 +3,10 @@ import type { MutationCtx } from "../_generated/server";
 import { displayNameForUser } from "./fields";
 import type { CollectedFields } from "./types";
 import { customerSearchText } from "../customerSearch";
+import {
+  removeParticipantAvailabilityIntervals,
+  syncCalendarEventAvailabilityIntervals,
+} from "../calendarAvailabilityIntervals";
 
 export async function resolveCustomerForConversation(
   ctx: MutationCtx,
@@ -58,6 +62,7 @@ export async function insertCalendarParticipants(
     assignedUser: Doc<"users">;
     bookingDisplayName: string;
     eventStartAt: number;
+    eventEndAt: number;
     now: number;
   },
 ) {
@@ -70,6 +75,7 @@ export async function insertCalendarParticipants(
     email: args.customer.email?.trim() || args.customer.contactAddress,
     displayName: args.bookingDisplayName,
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "needsAction",
     createdAt: args.now,
     updatedAt: args.now,
@@ -83,10 +89,12 @@ export async function insertCalendarParticipants(
     email: args.assignedUser.email,
     displayName: displayNameForUser(args.assignedUser),
     eventStartAt: args.eventStartAt,
+    eventEndAt: args.eventEndAt,
     responseStatus: "accepted",
     createdAt: args.now,
     updatedAt: args.now,
   });
+  await syncCalendarEventAvailabilityIntervals(ctx, args.eventId, args.now);
 }
 
 async function deleteCalendarParticipants(ctx: MutationCtx, eventId: Id<"calendarEvents">) {
@@ -95,6 +103,7 @@ async function deleteCalendarParticipants(ctx: MutationCtx, eventId: Id<"calenda
     .withIndex("by_eventId", (q) => q.eq("eventId", eventId))
     .take(100);
   for (const participant of participants) {
+    await removeParticipantAvailabilityIntervals(ctx, participant._id);
     await ctx.db.delete(participant._id);
   }
 }
@@ -108,6 +117,7 @@ export async function replaceCalendarParticipants(
     assignedUser: Doc<"users">;
     bookingDisplayName: string;
     eventStartAt: number;
+    eventEndAt: number;
     now: number;
   },
 ) {

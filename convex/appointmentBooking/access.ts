@@ -2,8 +2,8 @@ import type { Doc, Id } from "../_generated/dataModel";
 import { getAuthContext } from "../authUtils";
 import { getOwnedAgent } from "../leadRouting/helpers";
 import {
-  getActiveTeamForUser,
   getTeamByWorkosOrgId,
+  getPersonalTeamForUser,
   getUserByWorkosId,
 } from "../teamHelpers";
 import {
@@ -114,7 +114,11 @@ export async function resolveTeamForAgent(ctx: DbCtx, agent: Doc<"agents">) {
   if (owner === null) {
     throw new Error("Agent owner not found");
   }
-  return await getActiveTeamForUser(ctx, owner);
+  const personalTeam = await getPersonalTeamForUser(ctx, owner._id);
+  if (personalTeam === null) {
+    throw new Error("Personal team not found");
+  }
+  return personalTeam;
 }
 
 export async function listActiveBookingServicesForAgent(ctx: DbCtx, agentId: Id<"agents">) {

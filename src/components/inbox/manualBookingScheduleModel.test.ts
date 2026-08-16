@@ -3,6 +3,7 @@ import {
   buildManualBookingCollectedFields,
   defaultManualBookingEndTime,
   getManualBookingSelection,
+  manualBookingScheduleFromNextHalfHour,
   manualBookingScheduleFromSlot,
   manualBookingCustomerFields,
 } from './manualBookingScheduleModel';
@@ -55,6 +56,18 @@ describe('manual booking schedule model', () => {
         endAt: Date.UTC(2026, 6, 14, 2, 15),
       },
       'Asia/Kuala_Lumpur',
+    )).toEqual({
+      date: '2026-07-14',
+      startTime: '9:30am',
+      endTime: '10:15am',
+    });
+  });
+
+  it('prefills the next 30-minute slot in the service time zone', () => {
+    expect(manualBookingScheduleFromNextHalfHour(
+      Date.UTC(2026, 6, 14, 1, 7),
+      'Asia/Kuala_Lumpur',
+      45,
     )).toEqual({
       date: '2026-07-14',
       startTime: '9:30am',

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '../../../convex/_generated/api';
@@ -59,8 +59,8 @@ export function EditBookingDialog({
     api.appointmentBooking.editBookingStatus.getEditBookingStatus,
     open ? { bookingId: eventId } : 'skip',
   );
-  const updateEvent = useMutation(api.calendarEvents.update);
-  const removeEvent = useMutation(api.calendarEvents.remove);
+  const updateEvent = useAction(api.calendarEvents.update);
+  const removeEvent = useAction(api.calendarEvents.remove);
   const updateBookingStatus = useMutation(api.appointmentBooking.statusTransition.updateBookingStatus);
   const displayTimeZone = useMemo(
     () => activeTeam?.timeZone ? normalizeCalendarTimeZone(activeTeam.timeZone) : getClientTimeZone(),

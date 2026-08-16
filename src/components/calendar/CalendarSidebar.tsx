@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
-import { Calendar as CalendarIcon, Plus, User } from 'lucide-react';
+import { Calendar as CalendarIcon, User } from 'lucide-react';
 import { SidebarPageTitleRow } from '@/components/SidebarPageTitleRow';
-import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import {
   inboxColumnClassName,
@@ -20,7 +19,6 @@ import { cn } from '@/lib/utils';
 type CalendarSidebarProps = {
   selectedDate: Date;
   visibleMonth: Date;
-  canManageCalendar: boolean;
   assignedToMeOnly: boolean;
   hasCurrentUser: boolean;
   eventFilterCounts?: {
@@ -28,7 +26,6 @@ type CalendarSidebarProps = {
     assigned?: number;
   };
   onChangeMonth: (date: Date) => void;
-  onCreateBooking: () => void;
   onShowAllEvents: () => void;
   onAssignedToMe: () => void;
 };
@@ -87,12 +84,10 @@ function CalendarSidebarFilterSection({
 export function CalendarSidebar({
   selectedDate,
   visibleMonth,
-  canManageCalendar,
   assignedToMeOnly,
   hasCurrentUser,
   eventFilterCounts,
   onChangeMonth,
-  onCreateBooking,
   onShowAllEvents,
   onAssignedToMe,
 }: CalendarSidebarProps) {
@@ -112,20 +107,6 @@ export function CalendarSidebar({
             className="rounded-xl border border-border bg-card p-2"
           />
         </div>
-
-        {canManageCalendar ? (
-          <div className="px-4 pb-3">
-            <Button
-              type="button"
-              size="lg"
-              className="h-11 w-full gap-2 px-5 py-3"
-              onClick={onCreateBooking}
-            >
-              <Plus data-icon="inline-start" />
-              New Booking
-            </Button>
-          </div>
-        ) : null}
 
         <CalendarSidebarFilterSection title="View">
           <CalendarSidebarFilterRow

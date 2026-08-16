@@ -1,7 +1,8 @@
+import { useRef } from 'react';
 import type { Doc } from '../../../convex/_generated/dataModel';
 import { CalendarDatePickerField } from '@/components/calendar/CalendarDatePickerField';
 import { EditBookingStatusField } from '@/components/calendar/EditBookingStatusField';
-import { TimeSelectInput } from '@/components/TimeSelectInput';
+import { EditableTimeCombobox } from '@/components/EditableTimeCombobox';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,8 +52,11 @@ export function EditBookingForm({
   disabled,
   autoFocusRemarks,
 }: Props) {
+  const comboboxPortalContainerRef = useRef<HTMLDivElement>(null);
+
   return (
-    <form id="edit-booking-form" onSubmit={onSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <form id="edit-booking-form" onSubmit={onSubmit} className="relative grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div ref={comboboxPortalContainerRef} className="pointer-events-none absolute inset-0" />
       <div className="flex flex-col gap-6">
         <div className="space-y-4">
           <SectionTitle>Event Schedule</SectionTitle>
@@ -67,9 +71,23 @@ export function EditBookingForm({
               <Switch id="dialog-event-all-day" checked={state.allDay} onCheckedChange={(allDay) => update({ allDay })} disabled={disabled} />
             </div>
             {!state.allDay ? (
-              <div className="grid grid-cols-2 gap-4">
-                <TimeSelectInput label="From" value={state.startTime} onChange={(startTime) => update({ startTime })} disabled={disabled} />
-                <TimeSelectInput label="To" value={state.endTime} onChange={(endTime) => update({ endTime })} disabled={disabled} />
+              <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                <EditableTimeCombobox
+                  value={state.startTime}
+                  onChange={(startTime) => update({ startTime })}
+                  ariaLabel="Start time"
+                  disabled={disabled}
+                  portalContainer={comboboxPortalContainerRef}
+                />
+                <span className="text-muted-foreground" aria-hidden="true">–</span>
+                <EditableTimeCombobox
+                  value={state.endTime}
+                  onChange={(endTime) => update({ endTime })}
+                  ariaLabel="End time"
+                  disabled={disabled}
+                  portalContainer={comboboxPortalContainerRef}
+                  contentAlign="end"
+                />
               </div>
             ) : null}
           </div>

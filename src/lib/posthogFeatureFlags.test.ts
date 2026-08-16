@@ -11,6 +11,7 @@ describe('PostHog product feature flags', () => {
       showSavedReplies: 'show-saved-replies',
       enableAvatarFeature: 'enable_avatar_feature',
       enableReferralProgram: 'enable_referral_program',
+      enableGoogleCalendarConnect: 'enable_google_calendar_connect',
     });
   });
 

@@ -42,6 +42,11 @@ import {
   teamDeletionJobsTable,
   teamDeletionStatusValidator,
 } from "./teamDeletion/schema";
+import {
+  googleCalendarExternalEventFields,
+  googleCalendarTables,
+} from "./googleCalendar/schema";
+import { GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX } from "./googleCalendar/constants";
 
 const customerSentimentValidator = v.union(
   ...CUSTOMER_SENTIMENTS.map((sentiment) => v.literal(sentiment)),
@@ -1491,6 +1496,12 @@ export default defineSchema({
     agentId: v.id("agents"),
     name: v.string(),
     description: v.optional(v.string()),
+    locationMode: v.optional(v.union(
+      v.literal("remote"),
+      v.literal("video_call"),
+      v.literal("in_person"),
+    )),
+    location: v.optional(v.string()),
     isActive: v.boolean(),
     archivedAt: v.optional(v.number()),
     sortOrder: v.number(),
@@ -1595,6 +1606,7 @@ export default defineSchema({
     externalEtag: v.optional(v.string()),
     externalHtmlLink: v.optional(v.string()),
     externalUpdatedAt: v.optional(v.number()),
+    ...googleCalendarExternalEventFields,
     agentId: v.optional(v.id("agents")),
     conversationId: v.optional(v.id("conversations")),
     appointmentServiceId: v.optional(v.id("appointmentServices")),
@@ -1620,7 +1632,19 @@ export default defineSchema({
       "teamId",
       "externalProvider",
       "externalEventId",
+    ])
+    .index(GOOGLE_CALENDAR_EXTERNAL_EVENT_INDEX, [
+      "teamId",
+      "externalOwnerUserId",
+      "externalCalendarId",
+      "externalEventId",
+      "externalOriginalStartAt",
+    ])
+    .index("by_externalOwnerUserId_and_externalOrigin", [
+      "externalOwnerUserId",
+      "externalOrigin",
     ]),
+  ...googleCalendarTables,
   calendarEventParticipants: defineTable({
     eventId: v.id("calendarEvents"),
     teamId: v.id("teams"),
@@ -1635,6 +1659,8 @@ export default defineSchema({
     email: v.string(),
     displayName: v.optional(v.string()),
     eventStartAt: v.number(),
+    eventEndAt: v.optional(v.number()),
+    availabilityIndexedAt: v.optional(v.number()),
     responseStatus: v.optional(
       v.union(
         v.literal("needsAction"),
@@ -1663,12 +1689,94 @@ export default defineSchema({
       "userId",
       "eventStartAt",
     ])
+    .index("by_teamId_and_role_and_userId_and_eventEndAt", [
+      "teamId",
+      "role",
+      "userId",
+      "eventEndAt",
+    ])
+    .index("by_teamId_and_role_and_userId_and_availabilityIndexedAt", [
+      "teamId",
+      "role",
+      "userId",
+      "availabilityIndexedAt",
+    ])
     .index("by_teamId_and_role_and_customerId_and_eventStartAt", [
       "teamId",
       "role",
       "customerId",
       "eventStartAt",
     ]),
+  calendarAvailabilityIntervals: defineTable({
+    participantId: v.id("calendarEventParticipants"),
+    eventId: v.id("calendarEvents"),
+    teamId: v.id("teams"),
+    userId: v.id("users"),
+    bucketKind: v.union(v.literal("day"), v.literal("month"), v.literal("long")),
+    bucketKey: v.string(),
+    startAt: v.number(),
+    endAt: v.number(),
+    externalOwnerUserId: v.optional(v.id("users")),
+    createdAt: v.number(),
+  })
+    .index("by_participantId", ["participantId"])
+    .index("by_teamId_and_userId_and_bucketKind_and_bucketKey_and_startAt", [
+      "teamId",
+      "userId",
+      "bucketKind",
+      "bucketKey",
+      "startAt",
+    ])
+    .index("by_teamId_and_userId_and_bucketKind_and_bucketKey_and_endAt", [
+      "teamId",
+      "userId",
+      "bucketKind",
+      "bucketKey",
+      "endAt",
+    ]),
+  calendarAvailabilityRevisions: defineTable({
+    teamId: v.id("teams"),
+    revision: v.number(),
+    updatedAt: v.number(),
+  }).index("by_teamId", ["teamId"]),
+  calendarAvailabilityPreloads: defineTable({
+    teamId: v.id("teams"),
+    agentId: v.id("agents"),
+    windowStartAt: v.number(),
+    windowEndAt: v.number(),
+    userIds: v.array(v.id("users")),
+    state: v.union(v.literal("pending"), v.literal("ready")),
+    phase: v.union(v.literal("cleanup"), v.literal("repair"), v.literal("load")),
+    generation: v.number(),
+    nextUserIndex: v.number(),
+    revision: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    completedAt: v.optional(v.number()),
+  }).index("by_teamId_and_agentId_and_windowStartAt_and_windowEndAt", [
+    "teamId",
+    "agentId",
+    "windowStartAt",
+    "windowEndAt",
+  ]),
+  calendarAvailabilityPreloadUsers: defineTable({
+    preloadId: v.id("calendarAvailabilityPreloads"),
+    teamId: v.id("teams"),
+    userId: v.id("users"),
+    generation: v.number(),
+    safe: v.boolean(),
+    intervals: v.array(v.object({
+      eventId: v.id("calendarEvents"),
+      startAt: v.number(),
+      endAt: v.number(),
+      externalOwnerUserId: v.optional(v.id("users")),
+    })),
+    updatedAt: v.number(),
+  })
+    .index("by_preloadId", ["preloadId"])
+    .index("by_preloadId_and_generation", ["preloadId", "generation"])
+    .index("by_preloadId_and_userId", ["preloadId", "userId"])
+    .index("by_teamId", ["teamId"]),
   whatsappBroadcastSchedules: defineTable({
     agentId: v.id("agents"),
     orgId: v.string(),
@@ -1888,6 +1996,7 @@ export default defineSchema({
   customerImportJobs: defineTable({
     importId: v.optional(v.id("customerImports")),
     orgId: v.string(),
+    agentId: v.optional(v.id("agents")),
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

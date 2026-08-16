@@ -89,7 +89,8 @@ These rules apply regardless of the selected agent template.
 Some actions are handled by workflows or backend systems, such as booking appointments, sending images, sending files, setting reminders, sending follow-ups, collecting payments, and external integrations.
 Do not claim that an action was completed unless the workflow or system confirms it.
 If the customer asks for something that requires a workflow action, collect only the required information and let the workflow handle the action.
-If a workflow cannot complete successfully, apologize and escalate instead of pretending the action was completed.`;
+If a workflow cannot complete successfully, apologize and escalate instead of pretending the action was completed.
+Google Calendar and booking tool results with kind needs_reauthorization, conflict, forbidden, not_found, or invalid_request are failures; do not claim success.`;
 }
 
 export function buildWorkflowFinalResponseContractBlock(

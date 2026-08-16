@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
@@ -82,6 +82,8 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       sortOrder: 0,
       durationMinutes: 45,
       timeZone: "UTC",
+      locationMode: "in_person",
+      location: "  88 Jalan Ampang, Kuala Lumpur  ",
       fields: [
         { key: "date", label: "Booking Date", type: "date" },
         { key: "time", label: "Booking Time", type: "time" },
@@ -127,7 +129,17 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     selection,
   )).resolves.toEqual({ available: true });
 
-  const result = await authed.mutation(
+  await expect(authed.mutation(
+    api.appointmentBooking.calendarManualBooking.checkAvailability,
+    {
+      agentId: fixture.agentId,
+      serviceId: fixture.serviceId,
+      startAt,
+      endAt,
+    },
+  )).resolves.toEqual({ available: true });
+
+  const result = await authed.action(
     api.appointmentBooking.calendarManualBooking.create,
     {
       ...selection,
@@ -135,6 +147,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
         date: "2026-07-16",
         time: "1:15am",
       },
+      title: "  Priority viewing  ",
       remarks: "  Customer prefers the window seat.  ",
     },
   );
@@ -153,7 +166,9 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     agentId: fixture.agentId,
     appointmentServiceId: fixture.serviceId,
     bookingSource: "manual",
+    title: "Priority viewing",
     remarks: "Customer prefers the window seat.",
+    location: "88 Jalan Ampang, Kuala Lumpur",
     startAt,
     endAt,
   });
@@ -193,17 +208,23 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       endAt: timeOffEndAt,
     });
   });
-  await expect(authed.mutation(
-    api.appointmentBooking.calendarManualBooking.checkAvailability,
-    {
-      ...selection,
-      startAt: timeOffStartAt,
-      endAt: timeOffEndAt,
-    },
-  )).resolves.toEqual({
-    available: false,
-    message: "That slot is no longer available.",
-  });
+  const unavailableLog = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  try {
+    await expect(authed.mutation(
+      api.appointmentBooking.calendarManualBooking.checkAvailability,
+      {
+        ...selection,
+        startAt: timeOffStartAt,
+        endAt: timeOffEndAt,
+      },
+    )).resolves.toEqual({
+      available: false,
+      message: "That slot is no longer available.",
+    });
+    expect(unavailableLog).not.toHaveBeenCalled();
+  } finally {
+    unavailableLog.mockRestore();
+  }
 
   await expect(authed.mutation(
     api.appointmentBooking.statusTransition.updateBookingStatus,

@@ -119,15 +119,12 @@ function LoadedScheduleAvailabilityEditor({
         timezone={timezoneDraft}
         onTimezoneChange={setTimezoneDraft}
         timeOptions={SCHEDULE_TIME_OPTIONS}
-      />
-
-      {hasChanges ? (
-        <div className="flex justify-end">
+        footer={hasChanges ? (
           <Button type="button" disabled={saving} onClick={() => void handleSave()}>
             {saving ? 'Saving…' : 'Save'}
           </Button>
-        </div>
-      ) : null}
+        ) : null}
+      />
     </div>
   );
 }

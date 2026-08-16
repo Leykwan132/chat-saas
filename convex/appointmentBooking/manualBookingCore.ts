@@ -6,6 +6,7 @@ import {
   bookingDisplayName,
   buildCalendarEventDescription,
   serviceTimeZone,
+  serviceBookingLocation,
 } from "./fields";
 import type { BookingSlot, CollectedFields } from "./types";
 
@@ -26,8 +27,13 @@ export async function createManualBookingRecords(
     assignedUser: Doc<"users">;
     selectedSlot: BookingSlot;
     collectedFields: CollectedFields;
+    title?: string;
     remarks?: string;
     bookingSource: "manual" | "ai";
+    googlePending?: {
+      ownerUserId: Id<"users">;
+      operationKey: string;
+    };
   },
 ) {
   const now = Date.now();
@@ -36,13 +42,14 @@ export async function createManualBookingRecords(
   const remarks = args.remarks?.trim() || undefined;
   const eventId = await ctx.db.insert("calendarEvents", {
     teamId: args.team._id,
-    title: `${args.service.name} - ${attendeeName}`,
+    title: args.title?.trim() || `${args.service.name} - ${attendeeName}`,
     description: buildCalendarEventDescription({
       service: args.service,
       customer: args.customer,
       conversation: args.conversation,
       collectedFields: args.collectedFields,
     }),
+    location: serviceBookingLocation(args.service),
     startAt: args.selectedSlot.startAt,
     endAt: args.selectedSlot.endAt,
     timeZone,
@@ -54,6 +61,17 @@ export async function createManualBookingRecords(
     bookingSource: args.bookingSource,
     remarks,
     customFieldResponses: args.collectedFields,
+    ...(args.googlePending !== undefined ? {
+      externalProvider: "google" as const,
+      externalCalendarId: "primary" as const,
+      externalOwnerUserId: args.googlePending.ownerUserId,
+      externalOrigin: "kilobot" as const,
+      externalStatus: "confirmed" as const,
+      externalTransparency: "opaque" as const,
+      externalCanEdit: true,
+      externalSyncState: "pending" as const,
+      externalOperationKey: args.googlePending.operationKey,
+    } : {}),
     createdAt: now,
     updatedAt: now,
   });
@@ -64,6 +82,7 @@ export async function createManualBookingRecords(
     assignedUser: args.assignedUser,
     bookingDisplayName: attendeeName,
     eventStartAt: args.selectedSlot.startAt,
+    eventEndAt: args.selectedSlot.endAt,
     now,
   });
   const sessionId = await ctx.db.insert("appointmentBookingSessions", {

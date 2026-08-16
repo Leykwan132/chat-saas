@@ -40,14 +40,10 @@ export type BookingIntervalInput = {
 
 export type BookingCreateInput = BookingIntervalInput & {
   collectedFields: ManualBookingCollectedFields;
+  title?: string;
   remarks?: string;
 };
 
 export type BookingAvailabilityResult =
   | { available: true }
   | { available: false; message: string };
-
-export type BookingDefaultSlot = {
-  startAt: number;
-  endAt: number;
-};

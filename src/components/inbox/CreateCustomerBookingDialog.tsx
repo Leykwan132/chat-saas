@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import { useParams } from 'react-router';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
@@ -20,8 +20,7 @@ export function CreateCustomerBookingDialog({
     open ? { conversationId } : 'skip',
   );
   const checkAvailability = useMutation(api.appointmentBooking.manualBooking.checkAvailability);
-  const createBooking = useMutation(api.appointmentBooking.manualBooking.create);
-  const loadNearestSlot = useMutation(api.appointmentBooking.manualBooking.getNextAvailableSlot);
+  const createBooking = useAction(api.appointmentBooking.manualBooking.create);
 
   return (
     <CreateBookingDialog
@@ -30,7 +29,6 @@ export function CreateCustomerBookingDialog({
       agentId={agentId}
       services={options?.services}
       fixedCustomer={options?.customer}
-      loadNearestSlot={(serviceId) => loadNearestSlot({ conversationId, serviceId })}
       checkAvailability={(input) => checkAvailability({ conversationId, ...input })}
       createBooking={(input) => createBooking({ conversationId, ...input })}
     />

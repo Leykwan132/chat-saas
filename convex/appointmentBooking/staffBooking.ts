@@ -17,8 +17,13 @@ type StaffBookingInput = {
   assignedUser: Doc<"users">;
   selectedSlot: BookingSlot;
   collectedFields: CollectedFields;
+  title?: string;
   remarks?: string;
   recordInboxBooking: boolean;
+  googlePending?: {
+    ownerUserId: Doc<"users">["_id"];
+    operationKey: string;
+  };
 };
 
 export async function createStaffBooking(
@@ -33,9 +38,14 @@ export async function createStaffBooking(
     assignedUser: args.assignedUser,
     selectedSlot: args.selectedSlot,
     collectedFields: args.collectedFields,
+    title: args.title,
     remarks: args.remarks,
     bookingSource: "manual",
+    googlePending: args.googlePending,
   });
+  if (args.googlePending !== undefined) {
+    return { eventId, sessionId };
+  }
   if (args.recordInboxBooking) {
     if (!args.conversation) {
       throw new Error("Inbox staff booking requires a conversation");

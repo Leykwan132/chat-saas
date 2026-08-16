@@ -36,6 +36,7 @@ async function buildConfirmation(ctx: Parameters<typeof getLatestBookedSession>[
     timeZone: serviceTimeZone(service, team ?? undefined),
     assignedTo: assigned?.displayName ?? assigned?.email,
     bookingId: event._id,
+    meetingLink: event.link,
     updated,
   });
 

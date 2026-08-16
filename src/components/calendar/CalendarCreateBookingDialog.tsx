@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery } from 'convex/react';
+import { useAction, useMutation, useQuery } from 'convex/react';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { CreateBookingDialog } from '@/components/booking/CreateBookingDialog';
@@ -22,8 +22,7 @@ export function CalendarCreateBookingDialog({
   );
   const customers = useQuery(api.calendarEvents.listCustomerOptions, open ? {} : 'skip');
   const checkAvailability = useMutation(api.appointmentBooking.calendarManualBooking.checkAvailability);
-  const createBooking = useMutation(api.appointmentBooking.calendarManualBooking.create);
-  const loadNearestSlot = useMutation(api.appointmentBooking.calendarManualBooking.getNextAvailableSlot);
+  const createBooking = useAction(api.appointmentBooking.calendarManualBooking.create);
 
   return (
     <CreateBookingDialog
@@ -35,12 +34,10 @@ export function CalendarCreateBookingDialog({
       customers={customers}
       customerQuery={customerQuery}
       onCustomerQueryChange={setCustomerQuery}
-      loadNearestSlot={(serviceId) => loadNearestSlot({ agentId, serviceId })}
       checkAvailability={(input) => {
-        if (!input.customerId) throw new Error('Select a customer');
         return checkAvailability({
           agentId,
-          customerId: input.customerId,
+          ...(input.customerId ? { customerId: input.customerId } : {}),
           serviceId: input.serviceId,
           startAt: input.startAt,
           endAt: input.endAt,
@@ -53,6 +50,7 @@ export function CalendarCreateBookingDialog({
           customerId: input.customerId,
           serviceId: input.serviceId,
           collectedFields: input.collectedFields,
+          title: input.title,
           startAt: input.startAt,
           endAt: input.endAt,
         });

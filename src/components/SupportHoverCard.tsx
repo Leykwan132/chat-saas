@@ -60,12 +60,13 @@ export function SupportHoverCard() {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
-          className="size-9 rounded-full focus-visible:ring-0"
+          size="sm"
+          className="h-9 gap-1.5 rounded-full px-3 focus-visible:ring-0"
           aria-label="Contact support"
           onClick={() => setOpen(true)}
         >
           <MessageCircleQuestionMark data-icon="inline-start" />
+          <span>Need help?</span>
         </Button>
       </HoverCardTrigger>
       <HoverCardContent

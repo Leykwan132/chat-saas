@@ -113,7 +113,7 @@ async function createFixture(status: "booked" | "editing") {
 test("cancelBookingSession cancels an existing confirmed appointment", async () => {
   const { t, conversationId, eventId, sessionId } = await createFixture("booked");
 
-  const result = await t.mutation(internal.appointmentBooking.cancellations.cancelBookingSession, {
+  const result = await t.action(internal.appointmentBooking.cancellations.cancelBookingSession, {
     conversationId,
   });
 
@@ -129,7 +129,7 @@ test("cancelBookingSession cancels an existing confirmed appointment", async () 
 test("cancelBookingSession cancels an edit without cancelling the appointment", async () => {
   const { t, conversationId, eventId, sessionId } = await createFixture("editing");
 
-  const result = await t.mutation(internal.appointmentBooking.cancellations.cancelBookingSession, {
+  const result = await t.action(internal.appointmentBooking.cancellations.cancelBookingSession, {
     conversationId: conversationId as Id<"conversations">,
   });
 

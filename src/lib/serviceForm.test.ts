@@ -31,6 +31,20 @@ test('uses the team for a service that has not been migrated', () => {
     .assignedWorkosUserIds).toEqual(['owner-id', 'member-id']);
 });
 
+test('replaces stale service teammates with the active workspace team', () => {
+  expect(serviceToForm({ ...service, assignedWorkosUserIds: ['former-org-member'] }, ['owner-id'])
+    .assignedWorkosUserIds).toEqual(['owner-id']);
+});
+
+test('replaces a stale specific teammate with the active workspace owner', () => {
+  expect(serviceToForm({
+    ...service,
+    assignedWorkosUserIds: ['former-org-member'],
+    assignmentStrategy: 'specific_user',
+    specificWorkosUserId: 'former-org-member',
+  }, ['owner-id']).specificWorkosUserId).toBe('owner-id');
+});
+
 test('requires a selected teammate and a selected specific teammate', () => {
   expect(validateServiceAssignment({ ...DEFAULT_SERVICE_FORM, assignedWorkosUserIds: [] }))
     .toBe('Select at least one teammate.');
@@ -40,4 +54,39 @@ test('requires a selected teammate and a selected specific teammate', () => {
     assignmentStrategy: 'specific_user',
     specificWorkosUserId: 'member-id',
   })).toBe('Select the specific teammate for this service.');
+});
+
+test('maps meeting locations for remote and in-person services', () => {
+  expect(DEFAULT_SERVICE_FORM).toMatchObject({
+    locationMode: 'in_person',
+    location: '',
+  });
+  expect(serviceToForm({
+    ...service,
+    locationMode: 'remote',
+    location: 'Old office',
+  }, ['owner-id'])).toMatchObject({
+    locationMode: 'remote',
+    location: '',
+  });
+  expect(buildServiceMutationArgs({
+    ...DEFAULT_SERVICE_FORM,
+    locationMode: 'in_person',
+    location: 'Level 8, KL',
+  })).toMatchObject({
+    locationMode: 'in_person',
+    location: 'Level 8, KL',
+  });
+  expect(serviceToForm({
+    ...service,
+    locationMode: 'video_call',
+    location: 'Old meeting link',
+  }, ['owner-id'])).toMatchObject({
+    locationMode: 'video_call',
+    location: '',
+  });
+  expect(buildServiceMutationArgs({
+    ...DEFAULT_SERVICE_FORM,
+    locationMode: 'video_call',
+  }).locationMode).toBe('video_call');
 });

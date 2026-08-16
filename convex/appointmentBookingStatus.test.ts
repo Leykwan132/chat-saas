@@ -112,7 +112,7 @@ test("bookAppointment marks the conversation as booked", async () => {
     return { conversationId, serviceId };
   });
 
-  const result = await t.mutation(internal.appointmentBooking.bookAppointment.bookAppointment, {
+  const result = await t.action(internal.appointmentBooking.bookAppointment.bookAppointment, {
     conversationId: ids.conversationId as Id<"conversations">,
     serviceId: ids.serviceId as Id<"appointmentServices">,
     startAt,
