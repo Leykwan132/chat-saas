@@ -1992,6 +1992,7 @@ export default defineSchema({
   customerImportJobs: defineTable({
     importId: v.optional(v.id("customerImports")),
     orgId: v.string(),
+    agentId: v.optional(v.id("agents")),
     status: v.union(
       v.literal("pending"),
       v.literal("processing"),

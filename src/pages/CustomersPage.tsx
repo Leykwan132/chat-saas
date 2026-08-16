@@ -261,7 +261,7 @@ export default function CustomersPage() {
             <Upload className="size-4" />
             Import CSV
           </Button>
-          <AddCustomerDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+          <AddCustomerDialog agentId={agentId as Id<'agents'>} open={dialogOpen} onOpenChange={setDialogOpen} />
         </div>
       </div>
 
@@ -272,6 +272,7 @@ export default function CustomersPage() {
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         existingTags={allExistingTags}
+        agentId={agentId as Id<'agents'>}
       />
 
       {status === 'LoadingFirstPage' ? (
@@ -746,9 +747,11 @@ export default function CustomersPage() {
 }
 
 function AddCustomerDialog({
+  agentId,
   open,
   onOpenChange,
 }: {
+  agentId: Id<'agents'>;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
@@ -777,6 +780,7 @@ function AddCustomerDialog({
     setBusy(true);
     try {
       await addCustomer({
+        agentId,
         name: trimmedName,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,

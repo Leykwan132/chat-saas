@@ -8,6 +8,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthContext, resolveChannelOrgId } from "./authUtils";
+import { getCustomerAgentForCurrentWorkspace } from "./customerAgentScope";
 import { customerSearchText } from "./customerSearch";
 import { canProcessWorkspaceActivity } from "./teamDeletion/access";
 
@@ -49,6 +50,7 @@ export const createImportSession = mutation({
 export const startImport = mutation({
   args: {
     importId: v.id("customerImports"),
+    agentId: v.id("agents"),
     fileName: v.string(),
     /** Array of raw row objects (header → value). Already parsed on the client. */
     rows: v.array(v.record(v.string(), v.string())),
@@ -62,12 +64,17 @@ export const startImport = mutation({
   handler: async (ctx, args) => {
     const { userId, orgId } = await getAuthContext(ctx);
     const resolvedOrgId = resolveChannelOrgId(orgId, userId);
+    const agent = await getCustomerAgentForCurrentWorkspace(ctx, args.agentId);
+    if (agent === null) {
+      throw new Error("Agent not found");
+    }
     const now = Date.now();
 
     // Create the job row
     const jobId = await ctx.db.insert("customerImportJobs", {
       importId: args.importId,
       orgId: resolvedOrgId,
+      agentId: agent._id,
       status: "processing",
       fileName: args.fileName,
       totalRows: args.rows.length,
@@ -135,6 +142,9 @@ export const importBatchWorker = internalMutation({
     await ctx.db.patch(args.batchId, { status: "processing" });
 
     const orgId = job.orgId;
+    if (job.agentId === undefined) {
+      throw new Error("Customer import job is missing an agent");
+    }
     const fieldMapping = job.fieldMapping;
     const now = Date.now();
 
@@ -215,6 +225,8 @@ export const importBatchWorker = internalMutation({
         // Insert the customer
         await ctx.db.insert("customers", {
           orgId,
+          userId: job.createdBy,
+          agentId: job.agentId,
           service: "manual",
           contactAddress,
           name,

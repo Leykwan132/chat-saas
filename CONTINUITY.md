@@ -3,7 +3,7 @@
 # Snapshot
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
-- 2026-08-16 [CODE] Now: Google Calendar health is state/error/success based; routine sync is push-assisted and daily maintenance renews watch channels only.
+- 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries also persist their owner scope.
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog and preserve the selected date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: connected-calendar manual events fail closed: a Google write failure prevents local retention.
@@ -21,6 +21,7 @@
 - 2026-08-16 [USER] D695 ACTIVE: personal services assign only their owner; legacy records are repaired by migration.
 - 2026-08-16 [USER] D696 ACTIVE: only Google Meet (`locationMode: "remote"`) services require healthy Google Calendar synchronization; In person and legacy-location services do not reject availability for `google_calendar_unhealthy`.
 - 2026-08-16 [USER] D697 ACTIVE: a successful Google Calendar sync remains healthy regardless of age; the daily maintenance job renews watches only and does not run stale-sync sweeps.
+- 2026-08-16 [USER] D698 ACTIVE: manually created and CSV-imported customers are assigned to the active agent, with personal-workspace owner scope retained.
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
@@ -40,18 +41,16 @@
 - 2026-08-16 [TOOL] The personal-service assignment migration repaired 9 legacy service records on the connected development deployment.
 - 2026-08-16 [CODE] Google Calendar health now blocks only Google Meet availability; In person remains subject to schedule and calendar conflicts but not connection-health rejection.
 - 2026-08-16 [CODE] Removed the Google Calendar 60-second freshness health limit and the daily stale-sync sweep while retaining daily Watch renewal.
+- 2026-08-16 [CODE] Manual and CSV customer creation now persist validated agent scope so customers appear in the agent dashboard.
 
 # Working set
-- `convex/appointmentBooking/availabilityEligibility.ts`
-- `convex/appointmentBooking/availability.ts`
-- `convex/appointmentBooking/availabilityRoster.ts`
-- `convex/appointmentBookingAvailability.test.ts`
-- `convex/googleCalendar/availability.ts`
-- `convex/googleCalendar/staffBookingPrepare.ts`
-- `src/pages/CalendarPage.tsx`
-- `src/components/booking/CreateBookingDialog.tsx`
-- `src/components/services/ServiceLocationField.tsx`
-- `convex/serviceAvailabilityMigration.ts`
+- `convex/customerAgentScope.ts`
+- `convex/customers.ts`
+- `convex/customerImportPool.ts`
+- `convex/customerSearch.test.ts`
+- `convex/schema.ts`
+- `src/pages/CustomersPage.tsx`
+- `src/components/ImportCustomersDialog.tsx`
 - `CONTINUITY.md`
 
 # Receipts
@@ -60,3 +59,4 @@
 - 2026-08-16 [TOOL] Location-aware Google-health regression was RED for an in-person service, then passed 4/4 focused availability tests with Convex and workspace TypeScript checks and `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] `bunx convex dev --once` deployed the location-aware Google-health rule successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Simplified Google Calendar health and maintenance passed 34 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
+- 2026-08-16 [TOOL] Agent-scoped manual and CSV customer creation passed focused customer tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
