@@ -6,6 +6,7 @@ import { runDeleteGoogleCalendarEvent } from "./writeExecution";
 import { runUpdateGoogleCalendarEvent } from "./writeUpdateExecution";
 import { googleCalendarWriteActionDependencies } from "./writeActions";
 import type { GoogleCalendarWriteInput } from "./writeTypes";
+import type { GoogleCalendarOperationResult } from "./contracts";
 
 type CalendarEventPrepareResult =
   | { kind: "local" }
@@ -22,6 +23,19 @@ type CalendarEventPrepareResult =
 
 type StoreMutation<TArgs extends Record<string, unknown>, TResult> =
   FunctionReference<"mutation", "internal", TArgs, TResult>;
+
+type GoogleCalendarRemovePreparation = Extract<
+  CalendarEventPrepareResult,
+  { kind: "google"; action: "delete" }
+>;
+
+type CalendarEventRemoveDependencies = {
+  prepare: (args: { eventId: Id<"calendarEvents">; refreshed: boolean }) => Promise<CalendarEventPrepareResult>;
+  refresh: (args: { connectionId: Id<"googleCalendarConnections"> }) => Promise<unknown>;
+  write: (prepared: GoogleCalendarRemovePreparation) => Promise<GoogleCalendarOperationResult>;
+  applyGoogleCancellation: (args: { eventId: Id<"calendarEvents"> }) => Promise<null>;
+  applyRemove: (args: { eventId: Id<"calendarEvents"> }) => Promise<null>;
+};
 
 const googleInternal = (internal as unknown as {
   googleCalendar: {
@@ -92,23 +106,46 @@ export async function runCalendarEventRemove(
   ctx: ActionCtx,
   args: { eventId: Id<"calendarEvents"> },
 ) {
-  let prepared = await ctx.runMutation(googleInternal.googleCalendar.calendarEventPrepare.prepareRemove, {
-    ...args,
-    refreshed: false,
+  return await runPreparedCalendarEventRemove(args, {
+    prepare: (prepareArgs) => ctx.runMutation(
+      googleInternal.googleCalendar.calendarEventPrepare.prepareRemove,
+      prepareArgs,
+    ),
+    refresh: (refreshArgs) => ctx.runAction(
+      googleInternal.googleCalendar.syncWorker.run,
+      refreshArgs,
+    ),
+    write: (prepared) => runDeleteGoogleCalendarEvent({
+      connectionId: prepared.connectionId,
+      calendarEventId: prepared.calendarEventId,
+      operationKey: prepared.operationKey,
+      now: prepared.now,
+    }, googleCalendarWriteActionDependencies(ctx)),
+    applyGoogleCancellation: (removeArgs) => ctx.runMutation(
+      googleInternal.googleCalendar.calendarEventPrepare.applyGoogleCancellation,
+      removeArgs,
+    ),
+    applyRemove: (removeArgs) => ctx.runMutation(
+      googleInternal.calendarEventsMutate.applyRemove,
+      removeArgs,
+    ),
   });
+}
+
+export async function runPreparedCalendarEventRemove(
+  args: { eventId: Id<"calendarEvents"> },
+  dependencies: CalendarEventRemoveDependencies,
+) {
+  let prepared = await dependencies.prepare({ ...args, refreshed: false });
   if (prepared.kind === "needs_refresh") {
-    await ctx.runAction(googleInternal.googleCalendar.syncWorker.run, { connectionId: prepared.connectionId });
-    prepared = await ctx.runMutation(googleInternal.googleCalendar.calendarEventPrepare.prepareRemove, {
-      ...args,
-      refreshed: true,
-    });
+    await dependencies.refresh({ connectionId: prepared.connectionId });
+    prepared = await dependencies.prepare({ ...args, refreshed: true });
   }
   if (prepared.kind === "google") {
-    await writePrepared(ctx, prepared);
-    await ctx.runMutation(googleInternal.googleCalendar.calendarEventPrepare.applyGoogleCancellation, {
-      eventId: prepared.calendarEventId,
-    });
-    return null;
+    if (prepared.action !== "delete") throw new Error("Calendar deletion prepared an invalid Google operation");
+    const write = await dependencies.write(prepared);
+    if (write.kind !== "success") throw new Error(write.message);
+    await dependencies.applyGoogleCancellation({ eventId: prepared.calendarEventId });
   }
-  return await ctx.runMutation(googleInternal.calendarEventsMutate.applyRemove, args);
+  return await dependencies.applyRemove(args);
 }

@@ -33,6 +33,7 @@
 - 2026-08-16 [USER] D672 ACTIVE: Create Service assignment cards use content height without a forced minimum; desktop siblings remain equal-height through the grid.
 - 2026-08-16 [USER] D673 ACTIVE: service creation explains and focuses a missing Name; Calendar Internal details uses icon-and-label header rows; weekly availability accepts typed compatible times; Routing replaces Lead Assignment with the approved icon swap; Google connection uses a green badge with only a white tick; and Calendar header account/timezone controls have subtle hover feedback.
 - 2026-08-16 [USER] D674 ACTIVE: the authenticated-header support control shows `Need help?` beside its existing question-mark icon.
+- 2026-08-16 [USER] D675 ACTIVE: deleting a Google-synced calendar event deletes it from Google first, then removes the local event and participant records.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -57,6 +58,7 @@
 - 2026-08-16 [CODE] Calendar edit-time selectors prefill canonical existing times, Internal details uses the approved responsive Summary/notes presentation, source/status indicators use the simplified Google-only treatment, and Create Service assignment cards no longer reserve empty lower space.
 - 2026-08-16 [CODE] Implemented the approved service validation, availability combobox, Routing copy/icons, Calendar connection badge, and Calendar header hover refinements; focused verification passed.
 - 2026-08-16 [CODE] Added the compact `Need help?` label to the existing header support control.
+- 2026-08-16 [CODE] Google-synced event deletion now runs booking cleanup and removes the local calendar event after Google confirms deletion.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -100,3 +102,4 @@
 - 2026-08-15 [CODE] Service details now combines basic setup and duration while Booking team and Booking form remain separate; Google Meet is a guarded Location dropdown option and service-card activation controls are vertically centered.
 - 2026-08-15 [TOOL] Focused Service details verification passed 9/9 under Node v22.22.0 with `bunx tsc --noEmit` and `git diff --check`.
 - 2026-08-15 [TOOL] Modal-backdrop focused verification passed 14/14 and `bun run build` passed under Node v22.22.0. The full suite reported 14 unrelated failures in Google Calendar availability/sync/projection and Calendar sidebar padding tests.
+- 2026-08-16 [TOOL] Google-synced deletion regression test was RED before implementation, then Calendar removal/write focused verification passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
