@@ -230,13 +230,14 @@ export function serviceBookingLocation(
 }
 
 export function buildBookingConfirmationMessage(args: {
-  service: Doc<"appointmentServices">;
+  service: Pick<Doc<"appointmentServices">, "name" | "fields" | "locationMode" | "timeZone">;
   collectedFields: CollectedFields;
   startAt: number;
   endAt: number;
   timeZone?: string;
   assignedTo?: string;
   bookingId: Id<"calendarEvents">;
+  meetingLink?: string;
   updated?: boolean;
 }) {
   const { date, timeRange } = formatBookingDateTime(
@@ -260,6 +261,9 @@ export function buildBookingConfirmationMessage(args: {
     `Time: ${timeRange}`,
     ...detailLines.filter((line) => !line.startsWith("Booking Date:") && !line.startsWith("Booking Time:")),
     args.assignedTo ? `Team Member: ${args.assignedTo}` : undefined,
+    args.service.locationMode === "remote" && args.meetingLink?.trim()
+      ? `Meeting link: ${args.meetingLink.trim()}`
+      : undefined,
     `Booking reference: ${args.bookingId}`,
     "",
     "Thank you — we look forward to seeing you!",

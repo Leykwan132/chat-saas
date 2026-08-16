@@ -4,6 +4,7 @@
 - 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
+- 2026-08-16 [TOOL] Now: PR #56 is current with the local branch and a full-change description.
 - 2026-08-15 [USER] D656 ACTIVE: Calendar creation actions use the booking dialog and preserve the selected date.
 - 2026-08-15 [USER] D657 ACTIVE: Google Calendar connection controls are PostHog early access for `leykwan132@gmail.com` and `kwanrealtyofficial@gmail.com`.
 - 2026-08-15 [USER] D658 ACTIVE: connected-calendar manual events fail closed: a Google write failure prevents local retention.
@@ -22,6 +23,7 @@
 - 2026-08-16 [USER] D696 ACTIVE: only Google Meet (`locationMode: "remote"`) services require healthy Google Calendar synchronization; In person and legacy-location services do not reject availability for `google_calendar_unhealthy`.
 - 2026-08-16 [USER] D697 ACTIVE: a successful Google Calendar sync remains healthy regardless of age; the daily maintenance job renews watches only and does not run stale-sync sweeps.
 - 2026-08-16 [USER] D698 ACTIVE: manually created and CSV-imported customers are assigned to the active agent, with personal-workspace owner scope retained.
+- 2026-08-16 [USER] D699 ACTIVE: remote-service customer confirmations include the generated Google Meet link when the booking has one.
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
@@ -34,24 +36,23 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-15 [CODE] The feature branch merged `origin/main`, preserving Google availability checks and service teammate filtering.
-- 2026-08-15 [CODE] Google Calendar connection, synchronization, idempotent writes, and staff Google Meet booking links were implemented.
-- 2026-08-16 [CODE] Calendar booking actions, selected-date prefill, custom title, availability feedback, source indicators, and booking detail refinements were implemented.
-- 2026-08-16 [CODE] Service creation and editing, location gating, workspace-plan team access, routing copy, and custom availability times were implemented.
-- 2026-08-16 [TOOL] The personal-service assignment migration repaired 9 legacy service records on the connected development deployment.
-- 2026-08-16 [CODE] Google Calendar health now blocks only Google Meet availability; In person remains subject to schedule and calendar conflicts but not connection-health rejection.
-- 2026-08-16 [CODE] Removed the Google Calendar 60-second freshness health limit and the daily stale-sync sweep while retaining daily Watch renewal.
-- 2026-08-16 [CODE] Manual and CSV customer creation now persist validated agent scope so customers appear in the agent dashboard.
-- 2026-08-16 [TOOL] Safe legacy personal-manual customer migration completed successfully after scanning 31 records; only records with a verified sole personal agent were eligible.
+- 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
+- 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and location gating were implemented.
+- 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
+- 2026-08-16 [CODE] Manual and CSV customers persist active-agent scope; personal workspace entries keep owner scope.
+- 2026-08-16 [TOOL] Personal-service assignment repair (9 records) and safe personal-customer backfill (31 scanned) completed on the development deployment.
+- 2026-08-16 [TOOL] Pushed 51 local commits to `cursor/google-calendar-booking-sync-10b0` and rewrote PR #56 to cover the full change set.
+- 2026-08-16 [CODE] Remote booking confirmation and update messages now include the Google Meet link when available.
 
 # Working set
 - `convex/customerAgentScope.ts`
-- `convex/customerAgentMigration.ts`
-- `convex/customerAgentMigration.test.ts`
 - `convex/customers.ts`
 - `convex/customerImportPool.ts`
 - `convex/customerSearch.test.ts`
 - `convex/schema.ts`
+- `convex/appointmentBooking/fields.ts`
+- `convex/appointmentBooking/fields.test.ts`
+- `convex/appointmentBooking/confirmations.ts`
 - `src/pages/CustomersPage.tsx`
 - `src/components/ImportCustomersDialog.tsx`
 - `CONTINUITY.md`
@@ -64,3 +65,5 @@
 - 2026-08-16 [TOOL] Simplified Google Calendar health and maintenance passed 34 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Agent-scoped manual and CSV customer creation passed focused customer tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] Safe personal-manual customer migration passed 5 focused tests, Convex and workspace TypeScript checks, deployed successfully, completed a dry run, and scanned 31 records successfully.
+- 2026-08-16 [TOOL] Remote booking confirmation link regression passed 3 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
+- 2026-08-16 [TOOL] `git push` published `136f2315..889d8a25` to `origin/cursor/google-calendar-booking-sync-10b0`; `gh pr edit 56` replaced the stale Task 7–9 body with the full calendar, service, availability, and customer-scope change set.
