@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { CalendarCheck, Plus } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import type { Id } from '../../../convex/_generated/dataModel';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
