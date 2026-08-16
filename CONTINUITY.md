@@ -52,6 +52,7 @@
 - 2026-08-16 [USER] D691 ACTIVE: Calendar New Booking actions preserve the date selected in the sidebar or grid, while the time defaults to the next 30-minute slot.
 - 2026-08-16 [USER] D692 ACTIVE: Booking availability checks start as soon as service, date, and time form a valid interval; selecting a customer triggers a routing-aware re-check, while creating still requires a customer.
 - 2026-08-16 [USER] D693 ACTIVE: A conflicting booking timeslot shows a same-row, right-aligned `Change availability` action that opens the agent’s Availability settings.
+- 2026-08-16 [USER] D694 ACTIVE: Failed Calendar booking availability checks emit privacy-safe backend diagnostics with machine-readable candidate rejection reasons and no customer, token, or calendar-event payload data.
 - 2026-08-15 [TOOL] Now: the full `tsc -b && vite build` check passes after aligning Calendar update/delete hooks with their Convex action APIs and removing stale imports and callbacks.
 - 2026-08-15 [CODE] Now: privacy-safe Busy calendar projections preserve the event list contract with an empty participant array, preventing teammate views from crashing.
 - 2026-08-15 [CODE] Now: personal services resolve only their owner’s personal team; a resumable migration repairs legacy assignee and specific-user IDs. It is implemented locally but has not been deployed or run.
@@ -97,6 +98,7 @@
 - 2026-08-16 [CODE] Booking prefill uses the Calendar action's `initialDate` for both reset and availability checking instead of overwriting it with today.
 - 2026-08-16 [CODE] Calendar booking availability checks no longer wait for a customer selection; the required customer validation remains on booking creation.
 - 2026-08-16 [CODE] Booking conflicts provide a direct Availability settings action alongside the explanatory message.
+- 2026-08-16 [CODE] Calendar availability conflicts now log candidate rejection reasons for backend diagnosis.
 
 # Working set
 - `src/pages/CalendarPage.tsx`
@@ -162,3 +164,4 @@
 - 2026-08-16 [TOOL] Selected-date booking-prefill regression was RED before implementation, then focused booking/schedule tests passed 15/15 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Customer-free Calendar availability regression was RED on the required customer validator, then passed with the booking dialog suite (9/9), `bunx tsc --noEmit`, `bunx convex dev --once`, and `git diff --check` under Node v22.22.0.
 - 2026-08-16 [TOOL] Availability-action UI regression was RED before implementation, then focused booking schedule tests passed 11/11 with `bunx tsc --noEmit` and `git diff --check` under Node v22.22.0.
+- 2026-08-16 [TOOL] Availability-diagnostic regression was RED before implementation, then passed with Convex and workspace TypeScript checks, focused availability tests (3/3), `git diff --check`, and `bunx convex dev --once` under Node v22.22.0.

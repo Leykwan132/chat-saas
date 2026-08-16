@@ -5,9 +5,14 @@ import { internal } from "../_generated/api";
 import { getZonedDayAndMinutes } from "../leadRouting/eligibility";
 import { displayNameForUser, serviceTimeZone } from "./fields";
 import type { BookingSlot, RosterEntry } from "./types";
-import { calendarAvailabilityHasConflict } from "../googleCalendar/availability";
 import { advanceCalendarAvailabilityPreload } from "../calendarAvailabilityPreload";
 import { loadAvailabilityRoster, type AvailabilityRosterEntry } from "./availabilityRoster";
+import {
+  availabilityRejectionReasons,
+  entryAvailableForSlot,
+} from "./availabilityEligibility";
+
+export { isAssignedToService } from "./availabilityEligibility";
 
 async function loadRoster(
   ctx: MutationCtx,
@@ -29,54 +34,6 @@ async function loadRoster(
   return loaded.entries;
 }
 
-function isWithinShift(startAt: number, endAt: number, schedule: Doc<"userSchedules">, shifts: Doc<"userShifts">[]) {
-  const start = getZonedDayAndMinutes(startAt, schedule.timezone);
-  const end = getZonedDayAndMinutes(Math.max(startAt, endAt - 1), schedule.timezone);
-  if (start.dayOfWeek !== end.dayOfWeek) return false;
-  return shifts.some(
-    (shift) =>
-      shift.dayOfWeek === start.dayOfWeek &&
-      start.minutes >= shift.startMinutes &&
-      end.minutes < shift.endMinutes,
-  );
-}
-
-export function isAssignedToService(
-  service: Doc<"appointmentServices">,
-  workosUserId: string,
-) {
-  return service.assignedWorkosUserIds === undefined || service.assignedWorkosUserIds.includes(workosUserId);
-}
-
-function overlaps(startA: number, endA: number, startB: number, endB: number) {
-  return startA < endB && endA > startB;
-}
-
-function hasTimeOffOverlap(startAt: number, endAt: number, rows: Doc<"userTimeOff">[]) {
-  return rows.some((row) => overlaps(startAt, endAt, row.startAt, row.endAt));
-}
-
-function entryAvailableForSlot(
-  service: Doc<"appointmentServices">,
-  entry: AvailabilityRosterEntry,
-  startAt: number,
-  endAt: number,
-  excludeEventId?: Id<"calendarEvents">,
-  ignoreGoogleHealth = false,
-) {
-  if (entry.user === null) return false;
-  if (!isAssignedToService(service, entry.schedule.workosUserId)) return false;
-  if (!isWithinShift(startAt, endAt, entry.schedule, entry.shifts)) return false;
-  if (hasTimeOffOverlap(startAt, endAt, entry.timeOff)) return false;
-  if (!ignoreGoogleHealth && !entry.googleCalendarHealthy) return false;
-  return !calendarAvailabilityHasConflict(
-    entry.calendarAvailability,
-    startAt,
-    endAt,
-    excludeEventId,
-  );
-}
-
 function chooseAssigneeForSlot(
   args: {
     service: Doc<"appointmentServices">;
@@ -91,9 +48,10 @@ function chooseAssigneeForSlot(
 ): RosterEntry | null {
   const available: AvailabilityRosterEntry[] = [];
   for (const entry of args.entries) {
-    if (entryAvailableForSlot(
-      args.service, entry, args.startAt, args.endAt, args.excludeEventId, args.ignoreGoogleHealth,
-    )) {
+    if (entryAvailableForSlot({
+      service: args.service, entry, startAt: args.startAt, endAt: args.endAt,
+      excludeEventId: args.excludeEventId, ignoreGoogleHealth: args.ignoreGoogleHealth,
+    })) {
       available.push(entry);
     }
   }
@@ -235,6 +193,7 @@ export async function resolveAvailableInterval(
     startAt: number;
     endAt: number;
     ignoreGoogleHealth?: boolean;
+    logUnavailableReason?: boolean;
   },
 ): Promise<BookingSlot | null> {
   if (args.endAt <= args.startAt) return null;
@@ -254,7 +213,24 @@ export async function resolveAvailableInterval(
     endAt: args.endAt + bufferMs,
     ignoreGoogleHealth: args.ignoreGoogleHealth,
   });
-  if (assignee?.user === undefined || assignee.user === null) return null;
+  if (assignee?.user === undefined || assignee.user === null) {
+    if (args.logUnavailableReason) {
+      console.warn("booking_slot_unavailable", {
+        serviceId: args.service._id,
+        assignmentStrategy: args.service.assignmentStrategy,
+        startAt: args.startAt,
+        endAt: args.endAt,
+        candidates: entries.map((entry) => ({
+          userId: entry.user?._id ?? null,
+          reasons: availabilityRejectionReasons({
+            service: args.service, entry, startAt: args.startAt - bufferMs, endAt: args.endAt + bufferMs,
+            ignoreGoogleHealth: args.ignoreGoogleHealth,
+          }),
+        })),
+      });
+    }
+    return null;
+  }
   return {
     startAt: args.startAt,
     endAt: args.endAt,

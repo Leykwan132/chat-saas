@@ -49,6 +49,7 @@ async function resolveCalendarSlot(
     teamId: Id<"teams">;
     startAt: number;
     endAt: number;
+    logUnavailableReason?: boolean;
   },
 ) {
   return await resolveAvailableInterval(ctx, args);
@@ -121,6 +122,7 @@ export const checkAvailability = mutation({
       teamId: scope.team._id,
       startAt: args.startAt,
       endAt: args.endAt,
+      logUnavailableReason: true,
     });
     return slot
       ? { available: true as const }

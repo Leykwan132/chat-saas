@@ -57,6 +57,7 @@ import type * as analyticsTopicProjection from "../analyticsTopicProjection.js";
 import type * as analyticsTopicRecords from "../analyticsTopicRecords.js";
 import type * as appointmentBooking_access from "../appointmentBooking/access.js";
 import type * as appointmentBooking_availability from "../appointmentBooking/availability.js";
+import type * as appointmentBooking_availabilityEligibility from "../appointmentBooking/availabilityEligibility.js";
 import type * as appointmentBooking_availabilityRoster from "../appointmentBooking/availabilityRoster.js";
 import type * as appointmentBooking_bookAppointment from "../appointmentBooking/bookAppointment.js";
 import type * as appointmentBooking_bookingEvents from "../appointmentBooking/bookingEvents.js";
@@ -484,6 +485,7 @@ declare const fullApi: ApiFromModules<{
   analyticsTopicRecords: typeof analyticsTopicRecords;
   "appointmentBooking/access": typeof appointmentBooking_access;
   "appointmentBooking/availability": typeof appointmentBooking_availability;
+  "appointmentBooking/availabilityEligibility": typeof appointmentBooking_availabilityEligibility;
   "appointmentBooking/availabilityRoster": typeof appointmentBooking_availabilityRoster;
   "appointmentBooking/bookAppointment": typeof appointmentBooking_bookAppointment;
   "appointmentBooking/bookingEvents": typeof appointmentBooking_bookingEvents;

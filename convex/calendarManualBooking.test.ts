@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { api } from "./_generated/api";
 import schema from "./schema";
 import { AppointmentBookingSessionStatus } from "./appointmentBookingSessionStatus";
@@ -208,17 +208,29 @@ test("creates and transitions a customer-direct Calendar booking without a conve
       endAt: timeOffEndAt,
     });
   });
-  await expect(authed.mutation(
-    api.appointmentBooking.calendarManualBooking.checkAvailability,
-    {
-      ...selection,
+  const unavailableLog = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  try {
+    await expect(authed.mutation(
+      api.appointmentBooking.calendarManualBooking.checkAvailability,
+      {
+        ...selection,
+        startAt: timeOffStartAt,
+        endAt: timeOffEndAt,
+      },
+    )).resolves.toEqual({
+      available: false,
+      message: "That slot is no longer available.",
+    });
+    expect(unavailableLog).toHaveBeenCalledWith("booking_slot_unavailable", {
+      serviceId: fixture.serviceId,
+      assignmentStrategy: "balanced",
       startAt: timeOffStartAt,
       endAt: timeOffEndAt,
-    },
-  )).resolves.toEqual({
-    available: false,
-    message: "That slot is no longer available.",
-  });
+      candidates: [{ userId: fixture.userId, reasons: ["time_off"] }],
+    });
+  } finally {
+    unavailableLog.mockRestore();
+  }
 
   await expect(authed.mutation(
     api.appointmentBooking.statusTransition.updateBookingStatus,
