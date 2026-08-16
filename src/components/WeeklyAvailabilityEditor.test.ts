@@ -86,4 +86,8 @@ describe('Available 24/7 editor', () => {
     expect(markup).toContain('data-slot="availability-footer"');
     expect(markup).toContain('>Save</button>');
   });
+
+  it('lets the availability card size to its content', () => {
+    expect(editorSource).not.toContain('flex-1 rounded-xl border border-border bg-card p-6');
+  });
 });
