@@ -15,7 +15,6 @@ import {
   ScanFace,
   ShoppingCart,
   Split,
-  UserRoundCheck,
   Users,
   Workflow,
   type LucideIcon,

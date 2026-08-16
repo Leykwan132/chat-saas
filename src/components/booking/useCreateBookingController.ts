@@ -23,6 +23,19 @@ type AvailabilityStatus =
   | { kind: 'available'; key: string }
   | { kind: 'conflict'; key: string; message: string };
 
+function defaultManualBookingTitle(
+  service: BookingService | undefined,
+  customer: BookingCustomerDetails | null,
+) {
+  if (service === undefined) return '';
+  const customerName = customer?.name?.trim()
+    || customer?.email?.trim()
+    || customer?.phone?.trim()
+    || customer?.contactAddress?.trim()
+    || 'Customer';
+  return `${service.name} - ${customerName}`;
+}
+
 export function useCreateBookingController({
   services,
   customer,
@@ -42,6 +55,7 @@ export function useCreateBookingController({
   const [date, setDate] = useState(initialDate ?? format(new Date(), 'yyyy-MM-dd'));
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [title, setTitle] = useState('');
   const [remarks, setRemarks] = useState('');
   const [availability, setAvailability] = useState<AvailabilityStatus>({ kind: 'idle' });
   const [busy, setBusy] = useState(false);
@@ -52,6 +66,7 @@ export function useCreateBookingController({
   const customerRef = useRef(customer);
   const previousCustomerRef = useRef(customer);
   const endTimeCustomizedRef = useRef(false);
+  const titleCustomizedRef = useRef(false);
   loadNearestSlotRef.current = loadNearestSlot;
   checkAvailabilityRef.current = checkAvailability;
   customerRef.current = customer;
@@ -62,6 +77,7 @@ export function useCreateBookingController({
     phone: customer?.phone ?? '',
   };
   const service = services.find((item) => item.serviceId === effectiveServiceId);
+  const defaultTitle = defaultManualBookingTitle(service, customer);
   const selection = service
     ? getManualBookingSelection(effectiveServiceId, date, startTime, endTime, service.timeZone)
     : { kind: 'incomplete' as const };
@@ -130,6 +146,10 @@ export function useCreateBookingController({
   }, [effectiveServiceId, service?.timeZone]);
 
   useEffect(() => {
+    if (!titleCustomizedRef.current) setTitle(defaultTitle);
+  }, [defaultTitle]);
+
+  useEffect(() => {
     const previousCustomer = previousCustomerRef.current;
     previousCustomerRef.current = customer;
     if (customer === previousCustomer) return;
@@ -141,7 +161,7 @@ export function useCreateBookingController({
   }, [customer, effectiveServiceId, date, startTime, endTime]);
 
   return {
-    serviceId: effectiveServiceId, date, startTime, endTime, remarks,
+    serviceId: effectiveServiceId, date, startTime, endTime, title, remarks,
     feedback, selectionAvailable, busy, resetCustomerFields, setRemarks,
     setService(value: string) {
       const nextService = services.find((item) => item.serviceId === value);
@@ -158,6 +178,10 @@ export function useCreateBookingController({
       endTimeCustomizedRef.current = true; setEndTime(value);
       void runAvailabilityCheck(effectiveServiceId, date, startTime, value);
     },
+    setTitle(value: string) {
+      titleCustomizedRef.current = true;
+      setTitle(value);
+    },
     async submit() {
       if (!selectionAvailable || selection.kind !== 'ready') return false;
       setBusy(true);
@@ -165,6 +189,7 @@ export function useCreateBookingController({
         await createBooking({
           serviceId: effectiveServiceId as Id<'appointmentServices'>,
           collectedFields: buildManualBookingCollectedFields(effectiveFields, date, startTime),
+          title: title.trim() || undefined,
           startAt: selection.startAt,
           endAt: selection.endAt,
           remarks: remarks.trim() || undefined,

@@ -121,6 +121,7 @@ export async function runCalendarStaffBooking(
     customerId: Id<"customers">;
     serviceId: Id<"appointmentServices">;
     collectedFields: Record<string, string | number | boolean | null>;
+    title?: string;
     remarks?: string;
     startAt: number;
     endAt: number;
@@ -142,6 +143,7 @@ export async function runInboxStaffBooking(
     conversationId: Id<"conversations">;
     serviceId: Id<"appointmentServices">;
     collectedFields: Record<string, string | number | boolean | null>;
+    title?: string;
     remarks?: string;
     startAt: number;
     endAt: number;

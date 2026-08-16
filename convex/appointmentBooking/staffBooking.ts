@@ -17,6 +17,7 @@ type StaffBookingInput = {
   assignedUser: Doc<"users">;
   selectedSlot: BookingSlot;
   collectedFields: CollectedFields;
+  title?: string;
   remarks?: string;
   recordInboxBooking: boolean;
   googlePending?: {
@@ -37,6 +38,7 @@ export async function createStaffBooking(
     assignedUser: args.assignedUser,
     selectedSlot: args.selectedSlot,
     collectedFields: args.collectedFields,
+    title: args.title,
     remarks: args.remarks,
     bookingSource: "manual",
     googlePending: args.googlePending,

@@ -131,6 +131,7 @@ export const create = action({
     customerId: v.id("customers"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    title: v.optional(v.string()),
     remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),

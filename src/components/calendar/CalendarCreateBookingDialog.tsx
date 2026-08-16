@@ -53,6 +53,7 @@ export function CalendarCreateBookingDialog({
           customerId: input.customerId,
           serviceId: input.serviceId,
           collectedFields: input.collectedFields,
+          title: input.title,
           startAt: input.startAt,
           endAt: input.endAt,
         });

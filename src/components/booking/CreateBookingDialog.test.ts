@@ -34,6 +34,11 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(customerSummarySource).toContain('<Icon aria-label={source.label}');
   expect(dialogSource).toContain('<Label htmlFor="manual-booking-remarks">Remarks</Label>');
   expect(dialogSource).toContain('placeholder="Add optional internal notes"');
+  expect(dialogSource).toContain('<Label htmlFor="manual-booking-title">Title</Label>');
+  expect(dialogSource).toContain('value={controller.title}');
+  expect(dialogSource).toContain('onChange={(event) => controller.setTitle(event.target.value)}');
+  expect(controllerSource).toContain('const defaultTitle =');
+  expect(controllerSource).toContain('title: title.trim() || undefined');
   expect(dialogSource).not.toContain('manualBookingCustomerFields');
   expect(dialogSource).not.toContain('controller.updateField');
 });

@@ -140,6 +140,7 @@ export const create = action({
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    title: v.optional(v.string()),
     remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),

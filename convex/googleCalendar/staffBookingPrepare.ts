@@ -91,6 +91,7 @@ async function completeStaffBooking(
     startAt: number;
     endAt: number;
     collectedFields: CollectedFields;
+    title?: string;
     remarks?: string;
     recordInboxBooking: boolean;
     refreshed?: boolean;
@@ -121,6 +122,7 @@ async function completeStaffBooking(
     assignedUser,
     selectedSlot: resolved.selectedSlot,
     collectedFields: args.collectedFields,
+    title: args.title,
     remarks: args.remarks,
     recordInboxBooking: args.recordInboxBooking,
     googlePending: gate.kind === "google"
@@ -149,6 +151,7 @@ export const prepareCalendarStaffBook = internalMutation({
     customerId: v.id("customers"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    title: v.optional(v.string()),
     remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),
@@ -178,6 +181,7 @@ export const prepareCalendarStaffBook = internalMutation({
       startAt: args.startAt,
       endAt: args.endAt,
       collectedFields: manualBookingFieldsForCustomer(customer, args.collectedFields),
+      title: args.title,
       remarks: args.remarks,
       recordInboxBooking: false,
       refreshed: args.refreshed,
@@ -190,6 +194,7 @@ export const prepareInboxStaffBook = internalMutation({
     conversationId: v.id("conversations"),
     serviceId: v.id("appointmentServices"),
     collectedFields: collectedFieldsValidator,
+    title: v.optional(v.string()),
     remarks: v.optional(v.string()),
     startAt: v.number(),
     endAt: v.number(),
@@ -217,6 +222,7 @@ export const prepareInboxStaffBook = internalMutation({
       startAt: args.startAt,
       endAt: args.endAt,
       collectedFields: manualBookingFieldsForCustomer(customer, args.collectedFields),
+      title: args.title,
       remarks: args.remarks,
       recordInboxBooking: true,
       refreshed: args.refreshed,

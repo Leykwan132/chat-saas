@@ -27,6 +27,7 @@ export async function createManualBookingRecords(
     assignedUser: Doc<"users">;
     selectedSlot: BookingSlot;
     collectedFields: CollectedFields;
+    title?: string;
     remarks?: string;
     bookingSource: "manual" | "ai";
     googlePending?: {
@@ -41,7 +42,7 @@ export async function createManualBookingRecords(
   const remarks = args.remarks?.trim() || undefined;
   const eventId = await ctx.db.insert("calendarEvents", {
     teamId: args.team._id,
-    title: `${args.service.name} - ${attendeeName}`,
+    title: args.title?.trim() || `${args.service.name} - ${attendeeName}`,
     description: buildCalendarEventDescription({
       service: args.service,
       customer: args.customer,

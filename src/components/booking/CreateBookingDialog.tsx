@@ -14,6 +14,7 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
@@ -176,6 +177,14 @@ export function CreateBookingDialog({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="manual-booking-title">Title</Label>
+              <Input
+                id="manual-booking-title"
+                value={controller.title}
+                onChange={(event) => controller.setTitle(event.target.value)}
+              />
             </div>
             <ManualBookingScheduleField
               date={controller.date}

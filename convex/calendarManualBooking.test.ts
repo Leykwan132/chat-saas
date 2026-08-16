@@ -137,6 +137,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
         date: "2026-07-16",
         time: "1:15am",
       },
+      title: "  Priority viewing  ",
       remarks: "  Customer prefers the window seat.  ",
     },
   );
@@ -155,6 +156,7 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     agentId: fixture.agentId,
     appointmentServiceId: fixture.serviceId,
     bookingSource: "manual",
+    title: "Priority viewing",
     remarks: "Customer prefers the window seat.",
     location: "88 Jalan Ampang, Kuala Lumpur",
     startAt,
