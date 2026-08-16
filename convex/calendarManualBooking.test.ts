@@ -129,6 +129,16 @@ test("creates and transitions a customer-direct Calendar booking without a conve
     selection,
   )).resolves.toEqual({ available: true });
 
+  await expect(authed.mutation(
+    api.appointmentBooking.calendarManualBooking.checkAvailability,
+    {
+      agentId: fixture.agentId,
+      serviceId: fixture.serviceId,
+      startAt,
+      endAt,
+    },
+  )).resolves.toEqual({ available: true });
+
   const result = await authed.action(
     api.appointmentBooking.calendarManualBooking.create,
     {

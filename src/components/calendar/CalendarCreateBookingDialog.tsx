@@ -35,10 +35,9 @@ export function CalendarCreateBookingDialog({
       customerQuery={customerQuery}
       onCustomerQueryChange={setCustomerQuery}
       checkAvailability={(input) => {
-        if (!input.customerId) throw new Error('Select a customer');
         return checkAvailability({
           agentId,
-          customerId: input.customerId,
+          ...(input.customerId ? { customerId: input.customerId } : {}),
           serviceId: input.serviceId,
           startAt: input.startAt,
           endAt: input.endAt,

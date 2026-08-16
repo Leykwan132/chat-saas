@@ -22,7 +22,6 @@ test('shares the booking dialog between Inbox and Calendar', () => {
   expect(inboxSource).not.toContain('getNextAvailableSlot');
   expect(inboxSource).not.toContain('loadNearestSlot=');
   expect(controllerSource).toContain('if (customer === previousCustomer) return;');
-  expect(controllerSource).toContain('const customerRef = useRef(customer);');
   expect(controllerSource).toContain('const checkAvailabilityRef = useRef(checkAvailability);');
   expect(calendarDialogSource).not.toContain('searchCustomerOptions');
   expect(calendarDialogSource).not.toContain('api.calendarEvents.create');

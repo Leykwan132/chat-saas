@@ -16,10 +16,13 @@ import { runCalendarStaffBooking } from "../googleCalendar/staffBookingSync";
 
 async function loadCalendarBookingScope(
   ctx: MutationCtx,
-  args: { agentId: Id<"agents">; customerId: Id<"customers"> },
+  args: { agentId: Id<"agents">; customerId?: Id<"customers"> },
 ) {
   const agent = await assertAppointmentBookingManage(ctx, args.agentId);
   const team = await resolveTeamForAgent(ctx, agent);
+  if (args.customerId === undefined) {
+    return { agent, team, conversation: undefined };
+  }
   const auth = await getAuthContext(ctx);
   const customer = await ctx.db.get(args.customerId);
   const orgId = resolveChannelOrgId(auth.orgId, auth.userId);
@@ -100,7 +103,7 @@ export const getNextAvailableSlot = mutation({
 export const checkAvailability = mutation({
   args: {
     agentId: v.id("agents"),
-    customerId: v.id("customers"),
+    customerId: v.optional(v.id("customers")),
     serviceId: v.id("appointmentServices"),
     startAt: v.number(),
     endAt: v.number(),

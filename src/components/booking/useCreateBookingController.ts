@@ -60,12 +60,10 @@ export function useCreateBookingController({
   const [busy, setBusy] = useState(false);
   const availabilityRequestRef = useRef(0);
   const checkAvailabilityRef = useRef(checkAvailability);
-  const customerRef = useRef(customer);
   const previousCustomerRef = useRef(customer);
   const endTimeCustomizedRef = useRef(false);
   const titleCustomizedRef = useRef(false);
   checkAvailabilityRef.current = checkAvailability;
-  customerRef.current = customer;
   const effectiveServiceId = serviceId || services[0]?.serviceId || '';
   const effectiveFields = {
     name: customer?.name ?? '',
@@ -94,7 +92,7 @@ export function useCreateBookingController({
     const nextSelection = nextService
       ? getManualBookingSelection(nextServiceId, nextDate, nextStart, nextEnd, nextService.timeZone)
       : { kind: 'incomplete' as const };
-    if (customerRef.current === null || nextSelection.kind !== 'ready') {
+    if (nextSelection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
@@ -161,7 +159,7 @@ export function useCreateBookingController({
     const previousCustomer = previousCustomerRef.current;
     previousCustomerRef.current = customer;
     if (customer === previousCustomer) return;
-    if (customer === null || selection.kind !== 'ready') {
+    if (selection.kind !== 'ready') {
       setAvailability({ kind: 'idle' });
       return;
     }
