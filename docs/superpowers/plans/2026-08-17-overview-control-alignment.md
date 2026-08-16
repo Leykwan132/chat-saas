@@ -18,6 +18,7 @@
 - Display a short graph subtitle for the selected metric and its Daily/Cumulative aggregation.
 - Display short muted descriptions below the Common Topics and Customer Sentiment titles, using the same medium sans-serif typography as the graph title.
 - Use a 2px title-description gap and tight line-height across Overview chart and panel headers.
+- Use the metric-card 20px horizontal inset for Common Topics and Customer Sentiment headers.
 - Keep code self-explanatory with no comments and under 300 lines per code file.
 - Run tests with Node 22 in the same shell command.
 
@@ -70,6 +71,8 @@ Use `gap-3` for the label/value stack and `text-2xl` for the value.
 In `AgentOverviewTrendChart.tsx`, accept the existing `OverviewTrendDataMode`, render a short muted subtitle below the chart title, and use `font-sans text-xl font-medium tracking-tight` so it matches the lower panels.
 
 In `AgentOverviewTopicsAndSentiment.tsx`, use composed `AnalyticsChartShell` titles to render each panel's medium-weight title and its muted description without changing shared analytics panels.
+
+Extend `AnalyticsChartShell` with an optional header class override and pass `px-5` only to the two Overview lower panels.
 
 Use `space-y-0.5` for the trend graph title block and `mt-0.5` for the lower panel descriptions.
 

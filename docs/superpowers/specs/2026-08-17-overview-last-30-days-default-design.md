@@ -23,6 +23,7 @@ Show the rolling last 30 days when a user opens an agent Overview page, make its
 - Display a short, plain-language graph subtitle that explains the selected metric and its Daily/Cumulative aggregation.
 - Give Common Topics and Customer Sentiment short, plain-language descriptions, and match their medium sans-serif title typography to the selected graph.
 - Keep every Overview title and description visually close, using a 2px gap and tight line-height.
+- Align Common Topics and Customer Sentiment to the metric cards' 20px horizontal inset.
 
 ## Testing
 

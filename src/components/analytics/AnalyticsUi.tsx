@@ -1108,6 +1108,7 @@ type AnalyticsChartShellProps = {
   emptyMessage?: string;
   isEmpty?: boolean;
   className?: string;
+  headerClassName?: string;
   contentClassName?: string;
   shellHeightClass?: string;
   shellStyle?: CSSProperties;
@@ -1122,6 +1123,7 @@ export function AnalyticsChartShell({
   emptyMessage,
   isEmpty = false,
   className,
+  headerClassName,
   contentClassName,
   shellHeightClass = ANALYTICS_CHART_SHELL_HEIGHT_CLASS,
   shellStyle,
@@ -1135,7 +1137,11 @@ export function AnalyticsChartShell({
       )}
       style={shellStyle}
     >
-      <div className="flex items-center justify-between gap-4 px-4 pb-3 pt-5">
+      <div className={cn(
+        'flex items-center justify-between gap-4',
+        headerClassName ?? 'px-4',
+        'pb-3 pt-5',
+      )}>
         <div className={ANALYTICS_CHART_TITLE_CLASS}>
           {title}
           {titleSuffix ? (

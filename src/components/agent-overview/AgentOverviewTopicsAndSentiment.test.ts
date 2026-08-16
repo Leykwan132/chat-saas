@@ -60,4 +60,5 @@ test('distributes full-width topic rows with separators', () => {
   expect(markup).toContain('Conversation sentiment.');
   expect(markup.match(/font-sans font-medium leading-tight/g)).toHaveLength(2);
   expect(markup).toContain('mt-0.5');
+  expect(markup.match(/px-5 pb-3 pt-5/g) ?? []).toHaveLength(2);
 });

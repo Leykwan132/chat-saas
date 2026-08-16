@@ -171,6 +171,7 @@ export function AgentOverviewTopicsAndSentiment({
           />
         )}
         className="bg-background"
+        headerClassName="px-5"
         isEmpty={topicChartData.length === 0}
         emptyMessage="Nothing available yet."
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
@@ -221,6 +222,7 @@ export function AgentOverviewTopicsAndSentiment({
           />
         )}
         className="bg-background"
+        headerClassName="px-5"
         shellStyle={{ height: COMMON_TOPICS_SHELL_HEIGHT }}
       >
         <div className="grid min-h-0 flex-1 grid-cols-1 items-start gap-8 px-5 pb-5 pt-2 md:grid-cols-[minmax(0,1fr)_minmax(220px,300px)]">
