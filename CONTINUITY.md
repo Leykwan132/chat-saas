@@ -71,3 +71,4 @@
 - 2026-08-16 [TOOL] Remote booking confirmation link regression passed 3 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
 - 2026-08-16 [TOOL] `git push` published `136f2315..889d8a25` to `origin/cursor/google-calendar-booking-sync-10b0`; `gh pr edit 56` replaced the stale Task 7–9 body with the full calendar, service, availability, and customer-scope change set.
 - 2026-08-16 [TOOL] Video call service location passed 15 focused tests, Convex and workspace TypeScript checks, `git diff --check`, and deployed successfully to the connected development deployment.
+- 2026-08-16 [TOOL] Full `bun test` is blocked by repository test-runner configuration outside this change: missing Stripe price environment variables, Bun lacks `import.meta.glob`, and a test expects unavailable `vi.advanceTimersByTimeAsync`; the Video call-focused tests remain green.
