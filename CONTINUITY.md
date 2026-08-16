@@ -31,6 +31,7 @@
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
 - 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only selectable controls; the selected chart is 400px tall and uses `AI conversations`.
 - 2026-08-17 [USER] D703 ACTIVE: Overview date controls are read-only date text plus Billing period, 7d, 30d, and 90d shortcut buttons; no custom range picker is available.
+- 2026-08-17 [USER] D704 ACTIVE: Overview date controls offer only 1d, 7d, 30d, and 90d; Billing period is removed.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -57,6 +58,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Overview 1d-range regression passed 4 focused tests; the production build passed, while Convex codegen's embedded typecheck did not report diagnostics.
 - 2026-08-17 [TOOL] Draft PR #62 was created from `codex/overview-date-range-controls` against `main`; the local checkout tracks the pushed branch and is clean.
 - 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
 - 2026-08-17 [TOOL] Overview date-range and compact-layout regression was RED before implementation, then passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.

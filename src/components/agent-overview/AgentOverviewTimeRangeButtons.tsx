@@ -8,7 +8,7 @@ const OVERVIEW_TIME_RANGE_OPTIONS: Array<{
   value: CreditTimeRange;
   label: string;
 }> = [
-  { value: 'period', label: 'Billing period' },
+  { value: '1d', label: '1d' },
   { value: '7d', label: '7d' },
   { value: '30d', label: '30d' },
   { value: '90d', label: '90d' },
@@ -41,4 +41,3 @@ export function AgentOverviewTimeRangeButtons({
     </ToggleGroup>
   );
 }
-

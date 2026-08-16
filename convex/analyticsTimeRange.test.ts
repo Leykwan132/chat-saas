@@ -8,6 +8,12 @@ test("rolling ranges ignore billing period boundaries", () => {
   const periodEndMs = nowMs + 30 * DAY_MS;
 
   expect(
+    resolveAnalyticsTimeRange("1d", periodStartMs, periodEndMs, nowMs),
+  ).toEqual({
+    rangeStartMs: nowMs,
+    rangeEndMs: nowMs,
+  });
+  expect(
     resolveAnalyticsTimeRange("90d", periodStartMs, periodEndMs, nowMs),
   ).toEqual({
     rangeStartMs: nowMs - 89 * DAY_MS,
