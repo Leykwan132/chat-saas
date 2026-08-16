@@ -54,7 +54,7 @@ describe("Google Calendar connection UI", () => {
     expect(markup).not.toContain("Connected ");
     expect(markup).toContain('fill="currentColor"');
     expect(markup).toContain('stroke="white"');
-    expect(markup).toContain('inline-flex size-5 shrink-0 self-center items-center justify-center leading-none text-green-600');
+    expect(markup).toContain('inline-flex size-4 shrink-0 self-center items-center justify-center leading-none text-green-600');
     expect(markup).toContain('class="block size-full"');
     expect(markup.match(/<svg/g)).toHaveLength(1);
     expect(markup).toContain('aria-label="Active"');
