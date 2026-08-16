@@ -169,7 +169,7 @@ export function WeeklyAvailabilityEditor({
 
   return (
     <div className="flex items-start gap-4">
-      <div className="min-w-0 flex-1 rounded-xl border border-border bg-card p-6">
+      <div className="flex-1 rounded-xl border border-border bg-card p-6">
         <div className="divide-y divide-border">
         {SCHEDULE_DAYS.map((day) => {
           const dayDrafts = shiftDrafts
