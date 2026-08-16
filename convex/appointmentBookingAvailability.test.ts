@@ -50,8 +50,14 @@ test("only requires Google Calendar health for Google Meet services", () => {
     entry: scheduledEntry,
     ...bookingInterval,
   });
+  const videoCallReasons = availabilityRejectionReasons({
+    service: { assignedWorkosUserIds: ["selected-user"], locationMode: "video_call" } as Doc<"appointmentServices">,
+    entry: scheduledEntry,
+    ...bookingInterval,
+  });
 
   expect(inPersonReasons).not.toContain("google_calendar_unhealthy");
+  expect(videoCallReasons).not.toContain("google_calendar_unhealthy");
   expect(googleMeetReasons).toContain("google_calendar_unhealthy");
 });
 

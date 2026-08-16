@@ -77,4 +77,16 @@ test('maps meeting locations for remote and in-person services', () => {
     locationMode: 'in_person',
     location: 'Level 8, KL',
   });
+  expect(serviceToForm({
+    ...service,
+    locationMode: 'video_call',
+    location: 'Old meeting link',
+  }, ['owner-id'])).toMatchObject({
+    locationMode: 'video_call',
+    location: '',
+  });
+  expect(buildServiceMutationArgs({
+    ...DEFAULT_SERVICE_FORM,
+    locationMode: 'video_call',
+  }).locationMode).toBe('video_call');
 });

@@ -6,7 +6,7 @@ import {
 
 export type FieldType = 'text' | 'number' | 'select' | 'boolean' | 'date' | 'time' | 'phone';
 export type SalesStyle = 'proactive' | 'neutral' | 'gentle';
-export type ServiceLocationMode = 'remote' | 'in_person';
+export type ServiceLocationMode = 'remote' | 'video_call' | 'in_person';
 export type AssignmentStrategy = 'conversation_owner' | 'balanced' | 'round_robin' | 'specific_user';
 export type TeamMemberRole = 'owner' | 'admin' | 'member';
 
@@ -154,7 +154,7 @@ export function serviceToForm(service: ServiceRow, teamWorkosUserIds: string[]):
     name: service.name,
     description: service.description ?? '',
     locationMode: service.locationMode ?? 'in_person',
-    location: service.locationMode === 'remote' ? '' : service.location ?? '',
+    location: service.locationMode === 'in_person' ? service.location ?? '' : '',
     isActive: service.isActive,
     durationMinutes: service.durationMinutes,
     bufferMinutes: service.bufferMinutes ?? 0,

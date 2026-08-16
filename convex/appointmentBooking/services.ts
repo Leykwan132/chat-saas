@@ -126,7 +126,11 @@ export const updateService = mutation({
     serviceId: v.id("appointmentServices"),
     name: v.optional(v.string()),
     description: v.optional(v.string()),
-    locationMode: v.optional(v.union(v.literal("remote"), v.literal("in_person"))),
+    locationMode: v.optional(v.union(
+      v.literal("remote"),
+      v.literal("video_call"),
+      v.literal("in_person"),
+    )),
     location: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
     durationMinutes: v.optional(v.number()),
@@ -167,7 +171,7 @@ export const updateService = mutation({
     if (args.name !== undefined) patch.name = args.name.trim() || service.name;
     if (args.description !== undefined) patch.description = args.description.trim() || undefined;
     if (args.locationMode !== undefined) patch.locationMode = args.locationMode;
-    if (locationMode === "remote") {
+    if (locationMode !== "in_person") {
       patch.location = undefined;
     } else if (args.location !== undefined) {
       patch.location = args.location.trim() || undefined;

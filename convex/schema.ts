@@ -1496,7 +1496,11 @@ export default defineSchema({
     agentId: v.id("agents"),
     name: v.string(),
     description: v.optional(v.string()),
-    locationMode: v.optional(v.union(v.literal("remote"), v.literal("in_person"))),
+    locationMode: v.optional(v.union(
+      v.literal("remote"),
+      v.literal("video_call"),
+      v.literal("in_person"),
+    )),
     location: v.optional(v.string()),
     isActive: v.boolean(),
     archivedAt: v.optional(v.number()),
