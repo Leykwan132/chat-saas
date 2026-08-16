@@ -48,7 +48,7 @@ export default function AgentOverviewPage() {
   const selectedAgentId = agentId as Id<'agents'> | undefined;
   const { can, isLoading: permissionsLoading } = usePermissions();
   const [chartMode, setChartMode] = useState<OverviewChartMode>('aiAssistedConversations');
-  const [timeRange, setTimeRange] = useState<CreditTimeRange>('period');
+  const [timeRange, setTimeRange] = useState<CreditTimeRange>('30d');
   const [trendDataMode, setTrendDataMode] = useState<OverviewTrendDataMode>('daily');
   const canReadAnalytics = !permissionsLoading && can(Permission.ANALYTICS_READ);
   const summary = useQuery(
@@ -89,7 +89,7 @@ export default function AgentOverviewPage() {
 
   const primaryMetrics = [
     {
-      label: 'AI-assisted conversation',
+      label: 'AI conversations',
       value: formatWholeNumber(summary.aiAssistedConversationCount),
       mode: 'aiAssistedConversations',
     },

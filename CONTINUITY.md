@@ -1,7 +1,7 @@
 # CONTINUITY.md
 
 # Snapshot
-- 2026-08-15 [USER] Goal: develop Google Calendar booking sync on `cursor/google-calendar-booking-sync-10b0` against the merged `origin/main` baseline.
+- 2026-08-17 [USER] Goal: default the Agent Overview homepage analytics range to Last 30 days; retain Billing period as a user-selectable option.
 - 2026-08-16 [CODE] Now: calendar booking availability is deployed with source indicators, Google Meet booking links, diagnostics, and personal-service assignment repair.
 - 2026-08-16 [CODE] Now: manual and CSV customer creation persist the active agent scope; personal entries retain owner scope, and the safe legacy personal-customer backfill has completed.
 - 2026-08-16 [TOOL] Now: PR #56 is current with the local branch and a full-change description.
@@ -28,6 +28,8 @@
 - 2026-08-16 [TOOL] Investigation: `service_not_assigned` compares service assignee WorkOS IDs with each roster schedule’s WorkOS ID. The inspected service was created after the personal-assignment migration and already belongs to the agent owner; its logged candidate is a distinct user’s schedule, so the migration is not the proven cause of that log.
 
 # Decisions
+- 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
+- 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only selectable controls; the selected chart is 400px tall and uses `AI conversations`.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -37,30 +39,24 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows `AI conversations`, uses compact text-only metric cards, and has a 400px selected trend chart; local commit pending.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
 - 2026-08-16 [CODE] Manual and CSV customers persist active-agent scope; personal workspace entries keep owner scope.
-- 2026-08-16 [TOOL] Personal-service assignment repair (9 records) and safe personal-customer backfill (31 scanned) completed on the development deployment.
-- 2026-08-16 [TOOL] Pushed 51 local commits to `cursor/google-calendar-booking-sync-10b0` and rewrote PR #56 to cover the full change set.
 - 2026-08-16 [CODE] Remote booking confirmation and update messages now include the Google Meet link when available.
 
 # Working set
-- `convex/schema.ts`
-- `convex/appointmentBooking/fields.ts`
-- `convex/appointmentBooking/fields.test.ts`
-- `convex/appointmentBooking/confirmations.ts`
-- `convex/appointmentBooking/services.ts`
-- `convex/appointmentBookingAvailability.test.ts`
-- `src/lib/serviceForm.ts`
-- `src/lib/serviceForm.test.ts`
-- `src/components/services/ServiceLocationField.tsx`
-- `src/components/services/serviceFormShared.test.tsx`
-- `docs/superpowers/specs/2026-08-16-service-video-call-location-design.md`
-- `docs/superpowers/plans/2026-08-16-service-video-call-location.md`
+- `src/pages/AgentOverviewPage.tsx`
+- `src/pages/AgentOverviewPage.test.tsx`
+- `src/components/agent-overview/AgentOverviewMetrics.tsx`
+- `src/components/agent-overview/AgentOverviewTrendChart.tsx`
+- `docs/superpowers/specs/2026-08-17-overview-last-30-days-default-design.md`
+- `docs/superpowers/plans/2026-08-17-overview-date-range-and-metric-layout.md`
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Overview date-range and compact-layout regression was RED before implementation, then passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
 - 2026-08-16 [TOOL] Calendar availability diagnostics regression was RED before implementation, then passed with Convex and workspace type checks, focused availability tests, `git diff --check`, and deployment.
 - 2026-08-16 [TOOL] `serviceAvailabilityMigration:runNormalizePersonalServiceAssignments` completed in one batch for 9 records on the connected development deployment.
 - 2026-08-16 [TOOL] Location-aware Google-health regression was RED for an in-person service, then passed 4/4 focused availability tests with Convex and workspace TypeScript checks and `git diff --check` under Node v22.22.0.

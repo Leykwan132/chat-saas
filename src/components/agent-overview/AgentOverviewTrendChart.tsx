@@ -36,11 +36,11 @@ export type OverviewTrendRow = {
   humanEscalations: number;
 };
 
-const CHART_HEIGHT = 497;
+const CHART_HEIGHT = 400;
 
 const CHART_CONFIG = {
   aiAssistedConversations: {
-    label: 'AI-assisted conversation',
+    label: 'AI conversations',
     color: 'var(--chart-3)',
   },
   credits: { label: 'Total credits spent', color: 'var(--primary)' },
@@ -49,7 +49,7 @@ const CHART_CONFIG = {
 } satisfies ChartConfig;
 
 const CHART_LABELS: Record<OverviewChartMode, string> = {
-  aiAssistedConversations: 'AI-assisted conversation',
+  aiAssistedConversations: 'AI conversations',
   credits: 'Total credits spent',
   bookings: 'Booked appointments',
   humanEscalations: 'Human escalation',
@@ -180,5 +180,5 @@ export function AgentOverviewTrendChart({
 }
 
 export function AgentOverviewTrendChartSkeleton() {
-  return <Skeleton className="h-[607px] rounded-lg" />;
+  return <Skeleton className="h-[510px] rounded-lg" />;
 }
