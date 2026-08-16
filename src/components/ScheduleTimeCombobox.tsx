@@ -9,6 +9,10 @@ export function ScheduleTimeCombobox({ value, options, maxValue, ariaLabel, onCh
   const anchorRef = useRef<HTMLDivElement>(null);
   const [inputValue, setInputValue] = useState(formatMinutesCalLabel(value));
   const selectedOption = options.find((option) => Number(option.value) === value) ?? null;
+  const selectableOptions = selectedOption === null
+    ? [{ value: String(value), label: formatMinutesCalLabel(value) }, ...options]
+    : options;
+  const selectedValue = selectableOptions.find((option) => Number(option.value) === value) ?? null;
 
   useEffect(() => setInputValue(formatMinutesCalLabel(value)), [value]);
 
@@ -20,7 +24,7 @@ export function ScheduleTimeCombobox({ value, options, maxValue, ariaLabel, onCh
   };
 
   return (
-    <Combobox<TimeOption> items={options} value={selectedOption} inputValue={inputValue} onInputValueChange={setInputValue} onValueChange={(option) => { if (option) { onChange(Number(option.value)); setInputValue(option.label); } }} itemToStringLabel={(option) => option.label} itemToStringValue={(option) => option.value} isItemEqualToValue={(option, selected) => option.value === selected.value} filter={null}>
+    <Combobox<TimeOption> items={selectableOptions} value={selectedValue} inputValue={inputValue} onInputValueChange={setInputValue} onValueChange={(option) => { if (option) { onChange(Number(option.value)); setInputValue(option.label); } }} itemToStringLabel={(option) => option.label} itemToStringValue={(option) => option.value} isItemEqualToValue={(option, selected) => option.value === selected.value} filter={null}>
       <div ref={anchorRef} className="w-[6.75rem]"><ComboboxInput aria-label={ariaLabel} className="h-8 w-full text-base" onBlur={commitInput} onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); commitInput(); } }} /></div>
       <ComboboxContent anchor={anchorRef} className="w-(--anchor-width) min-w-(--anchor-width) rounded-xl"><ComboboxEmpty>Enter a valid time</ComboboxEmpty><ComboboxList className="max-h-60">{(option) => <ComboboxItem key={option.value} value={option} className="rounded-lg px-3 py-2.5 font-normal">{option.label}</ComboboxItem>}</ComboboxList></ComboboxContent>
     </Combobox>
