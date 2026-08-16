@@ -235,7 +235,7 @@ export function EventDetailsBody({
       </div>
 
       <section className="flex flex-col gap-5">
-        <h3 className="text-xl font-semibold tracking-tight text-foreground">
+        <h3 className="mb-1 text-xl font-semibold tracking-tight text-foreground">
           Internal details
         </h3>
         <div className={hasSummary ? 'grid grid-cols-1 gap-5 sm:grid-cols-2' : 'flex flex-col gap-5'}>
