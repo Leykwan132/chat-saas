@@ -14,7 +14,7 @@ import {
 } from '@/components/agent-overview/AgentOverviewMetrics';
 import { AgentOverviewDataModeSelect } from '@/components/agent-overview/AgentOverviewDataModeSelect';
 import { AgentOverviewSkeleton } from '@/components/agent-overview/AgentOverviewSkeleton';
-import { AgentOverviewTimeRangeSelect } from '@/components/agent-overview/AgentOverviewTimeRangeSelect';
+import { AgentOverviewTimeRangeButtons } from '@/components/agent-overview/AgentOverviewTimeRangeButtons';
 import { AgentOverviewTopicsAndSentiment } from '@/components/agent-overview/AgentOverviewTopicsAndSentiment';
 import {
   AgentOverviewTrendChart,
@@ -118,9 +118,12 @@ export default function AgentOverviewPage() {
 
   return (
     <div className="flex w-full max-w-none flex-col gap-6">
-      <div className="flex min-w-0 flex-col gap-1">
+      <div className="flex min-w-0 flex-col gap-2">
         <h1 className="font-title text-3xl font-normal tracking-tight">Overview</h1>
-        <p className="text-sm text-muted-foreground">{periodLabel}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm text-muted-foreground">{periodLabel}</p>
+          <AgentOverviewTimeRangeButtons value={timeRange} onChange={setTimeRange} />
+        </div>
       </div>
       <AgentOverviewMetrics
         primary={primaryMetrics}
@@ -134,7 +137,6 @@ export default function AgentOverviewPage() {
         mode={chartMode}
         actions={(
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-            <AgentOverviewTimeRangeSelect value={timeRange} onChange={setTimeRange} />
             <AgentOverviewDataModeSelect
               value={trendDataMode}
               onChange={setTrendDataMode}

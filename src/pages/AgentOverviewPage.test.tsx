@@ -56,6 +56,11 @@ test('opens Overview with last 30 days and the shortened AI label', () => {
 
   expect(markup).toContain('<h1 class="font-title text-3xl font-normal tracking-tight">Overview</h1>');
   expect(markup).toContain('AI conversations');
+  expect(markup).toContain('data-slot="toggle-group"');
+  expect(markup).toContain('>Billing period</button>');
+  expect(markup).toContain('>7d</button>');
+  expect(markup).toContain('>30d</button>');
+  expect(markup).toContain('>90d</button>');
 });
 
 test('renders compact metric cards with labels above values and no previews', () => {

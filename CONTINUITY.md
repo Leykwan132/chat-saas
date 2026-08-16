@@ -30,6 +30,7 @@
 # Decisions
 - 2026-08-17 [USER] D701 ACTIVE: Overview defaults to the rolling Last 30 days; dedicated usage pages retain their existing defaults.
 - 2026-08-17 [USER] D702 ACTIVE: Overview metric cards are compact, text-only selectable controls; the selected chart is 400px tall and uses `AI conversations`.
+- 2026-08-17 [USER] D703 ACTIVE: Overview date controls are read-only date text plus Billing period, 7d, 30d, and 90d shortcut buttons; no custom range picker is available.
 - 2026-08-12 [USER] D637 ACTIVE: Google connections are individual; agent-created events use the assigned teammate’s primary calendar.
 - 2026-08-12 [USER] D638 ACTIVE: Convex is the normalized read-through cache; synchronization is idempotent and refreshes at calendar, availability, and agent-operation boundaries.
 - 2026-08-12 [USER] D639 ACTIVE: owners see external event details; teammates see Busy-only projections.
@@ -39,7 +40,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows `AI conversations`, uses compact text-only metric cards, and has a 400px selected trend chart; local commit pending.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows compact text-only metrics, and exposes read-only date-adjacent range shortcuts; local commit pending.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -56,6 +57,7 @@
 - `CONTINUITY.md`
 
 # Receipts
+- 2026-08-17 [TOOL] Date-shortcut regression passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
 - 2026-08-17 [TOOL] Overview date-range and compact-layout regression was RED before implementation, then passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; work remains local for user testing.
 - 2026-08-16 [TOOL] Calendar availability diagnostics regression was RED before implementation, then passed with Convex and workspace type checks, focused availability tests, `git diff --check`, and deployment.
 - 2026-08-16 [TOOL] `serviceAvailabilityMigration:runNormalizePersonalServiceAssignments` completed in one batch for 9 records on the connected development deployment.
