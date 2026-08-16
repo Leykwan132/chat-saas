@@ -48,7 +48,7 @@
 - 2026-08-14 [USER] D013 ACTIVE: booking availability requires service teammate assignment and calendar availability, while lead eligibility follows weekly hours and time off.
 
 # Done (recent)
-- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows the active date beneath its title with an 8px gap, content-sized text-only metrics with increased label/value spacing and smaller values, bottom-aligned right-side range and Daily/Cumulative controls, and tightly paired plain-language title-description blocks in matching graph and lower-panel typography with aligned 20px insets; draft PR #62 branch update is pending commit on `codex/overview-date-range-controls`.
+- 2026-08-17 [CODE] Agent Overview now defaults to Last 30 days, shows the active date beneath its title with an 8px gap, content-sized text-only metrics with increased label/value spacing and smaller values, bottom-aligned right-side range and Daily/Cumulative controls, and tightly paired plain-language title-description blocks in matching graph and lower-panel typography with aligned 20px insets; draft PR #62 tracks commit `0d66102d` on `codex/overview-date-range-controls`.
 - 2026-08-15 [CODE] Milestone: Google Calendar connection, sync, fail-closed writes, Meet links, and `origin/main` merge landed on this branch.
 - 2026-08-16 [CODE] Calendar booking UI, availability feedback, custom times, service dialogs, and Video call/Google Meet location behavior were implemented; booking create and edit flows share the fully rounded availability time combobox with a start–end separator.
 - 2026-08-16 [CODE] Google health now blocks only Meet availability; daily maintenance renews watches and no longer sweeps stale syncs.
@@ -67,7 +67,7 @@
 - `CONTINUITY.md`
 
 # Receipts
-- 2026-08-17 [TOOL] Title-date spacing refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit and push to PR #62 remain pending.
+- 2026-08-17 [TOOL] Title-date spacing refinement passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `0d66102d` was pushed to PR #62.
 - 2026-08-17 [TOOL] Bottom-aligned header controls passed the focused Overview regression, the Node v22.22.0 production build, and `git diff --check`; commit `125b1678` was pushed to PR #62.
 - 2026-08-17 [TOOL] Lower-panel inset alignment passed 5 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `b82de7b4` was pushed to PR #62.
 - 2026-08-17 [TOOL] Overview copy and title-type refinement passed 7 focused tests, the Node v22.22.0 production build, and `git diff --check`; commit `82432d30` was pushed to PR #62.
